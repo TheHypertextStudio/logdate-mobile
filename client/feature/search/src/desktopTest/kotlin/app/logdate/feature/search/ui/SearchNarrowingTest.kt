@@ -111,7 +111,7 @@ class SearchNarrowingTest {
                 }
             }
 
-            onNodeWithText("Lake Mead 29").performClick()
+            onNodeWithText("Lake Mead").performClick()
 
             assertEquals(lake, chosenPlace)
             onNodeWithTag(SEARCH_TIME_STRIP_TAG).assertIsDisplayed()
