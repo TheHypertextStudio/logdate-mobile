@@ -30,6 +30,7 @@ import app.logdate.client.database.dao.MediaCaptionDao
 import app.logdate.client.database.dao.PlaceDao
 import app.logdate.client.database.dao.PostcardDao
 import app.logdate.client.database.dao.SearchDao
+import app.logdate.client.database.dao.SearchDetailsDao
 import app.logdate.client.database.dao.StickerDao
 import app.logdate.client.database.dao.StorageMetadataDao
 import app.logdate.client.database.dao.TextNoteDao
@@ -290,6 +291,8 @@ abstract class LogDateDatabase : RoomDatabase() {
     abstract fun transcriptionDao(): TranscriptionDao
 
     abstract fun searchDao(): SearchDao
+
+    abstract fun searchDetailsDao(): SearchDetailsDao
 
     abstract fun downloadInboxDao(): DownloadInboxDao
 

@@ -43,6 +43,7 @@ import app.logdate.client.data.rewind.OfflineFirstReflectionPromptResponseReposi
 import app.logdate.client.data.rewind.OfflineFirstRewindRepository
 import app.logdate.client.data.search.DataStoreRecentSearchesRepository
 import app.logdate.client.data.search.OfflineFirstSearchRepository
+import app.logdate.client.data.search.OfflineFirstSearchResultDetailsRepository
 import app.logdate.client.data.stickers.OfflineFirstStickerRepository
 import app.logdate.client.data.streak.DefaultStreakSettingsRepository
 import app.logdate.client.data.timeline.OfflineFirstActivityTimelineRepository
@@ -94,6 +95,7 @@ import app.logdate.client.repository.rewind.RewindGenerationManager
 import app.logdate.client.repository.rewind.RewindRepository
 import app.logdate.client.repository.search.RecentSearchesRepository
 import app.logdate.client.repository.search.SearchRepository
+import app.logdate.client.repository.search.SearchResultDetailsRepository
 import app.logdate.client.repository.stickers.StickerRepository
 import app.logdate.client.repository.streak.StreakSettingsRepository
 import app.logdate.client.repository.timeline.ActivityTimelineRepository
@@ -415,6 +417,7 @@ actual val dataModule: Module =
 
         // Search
         single<SearchRepository> { OfflineFirstSearchRepository(searchDao = get(), personDao = get(), featureFlags = get()) }
+        single<SearchResultDetailsRepository> { OfflineFirstSearchResultDetailsRepository(get(), get()) }
         single<RecentSearchesRepository> { DataStoreRecentSearchesRepository(get()) }
 
         // Streaks
