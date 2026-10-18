@@ -19,14 +19,14 @@ import kotlin.test.assertEquals
 @OptIn(ExperimentalTestApi::class)
 class SearchWorkspaceLayoutTest {
     @Test
-    fun `a wide window places all three panels`() =
+    fun `a wide window places results beside a preview with the narrowing row above the results`() =
         runComposeUiTest {
             setContent { LogDateTheme { Layout(1180, 740) } }
 
-            onNodeWithTag("narrowing_Panel").assertExists()
+            onNodeWithTag("narrowing_Row").assertExists()
             onNodeWithTag("results").assertExists()
             onNodeWithTag("preview").assertExists()
-            onNodeWithTag("narrowing_Row").assertDoesNotExist()
+            onNodeWithTag("narrowing_Panel").assertDoesNotExist()
         }
 
     @Test
@@ -71,7 +71,7 @@ class SearchWorkspaceLayoutTest {
             }
 
             onNodeWithTag("results").assertExists()
-            assertEquals(SearchPanels.NarrowingResultsAndPreview, seen.last())
+            assertEquals(SearchPanels.ResultsAndPreview, seen.last())
         }
 
     @Composable
