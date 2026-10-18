@@ -14,12 +14,14 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchEntryActivity
 import app.logdate.client.repository.search.SearchPreviewEntry
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
@@ -41,11 +43,16 @@ class AdaptiveSearchBodyTest {
     private val rewind = result("Summer 2025", SearchContentType.REWIND, "2025-09-22T12:00:00Z")
     private val note = result("A day on the water", SearchContentType.TEXT_NOTE, "2025-07-19T15:00:00Z")
     private val voice = result("The water was so clear", SearchContentType.TRANSCRIPTION, "2025-07-19T18:00:00Z")
+    private val place = result("Boulder Beach", SearchContentType.PLACE, "2025-07-01T12:00:00Z")
+    private val person = result("Sam Rivera", SearchContentType.PERSON, "2025-07-02T12:00:00Z")
     private val postcard = result("Postcard to Dad", SearchContentType.POSTCARD, "2025-11-21T12:00:00Z")
     private val results = listOf(journal, rewind, postcard, note, voice)
+    private val withEntities = listOf(place, person) + results
     private val details =
         mapOf(
             journal.key to SearchResultDetail.Journal(coverUri = null, entryCount = 14),
+            place.key to SearchResultDetail.Place(latitude = 36.0, longitude = -114.7),
+            person.key to SearchResultDetail.Person(photoUri = null, relationshipLabel = "Friend"),
             rewind.key to
                 SearchResultDetail.Rewind(
                     start = Instant.parse("2025-06-21T12:00:00Z"),
@@ -236,6 +243,100 @@ class AdaptiveSearchBodyTest {
             assertEquals(emptyList(), asked)
         }
 
+    private val activity =
+        SearchEntryActivity(
+            entryCount = 12,
+            dayCount = 5,
+            first = Instant.parse("2024-06-01T12:00:00Z"),
+            latest = Instant.parse("2025-07-19T12:00:00Z"),
+            byYear = mapOf(2024 to 3, 2025 to 9),
+        )
+    private val recent = SearchPreviewEntry(Uuid.random(), "Packed the kayak", Instant.parse("2025-07-19T15:00:00Z"))
+
+    @Test
+    fun `a place preview shows its map, activity and recent entries`() =
+        runComposeUiTest {
+            val known = mapOf(place.key to SearchResultPreview.Place(activity, listOf(recent)))
+            setContent {
+                LogDateTheme {
+                    Body(
+                        1180,
+                        740,
+                        shown = withEntities,
+                        knownPreviews = known,
+                        placeMap = {
+                            name,
+                            latitude,
+                            longitude,
+                            modifier,
+                            ->
+                            Text("map $name $latitude,$longitude", modifier.testTag("place_map"))
+                        },
+                    )
+                }
+            }
+
+            onAllNodesWithText("Boulder Beach")[0].performClick()
+
+            onNodeWithTag("place_map").assertTextEquals("map Boulder Beach 36.0,-114.7")
+            onNodeWithTag(SEARCH_PREVIEW_ACTIVITY_TAG).assertExists()
+            onNodeWithTag(SEARCH_PREVIEW_YEARS_TAG).assertExists()
+            onNodeWithText("Packed the kayak").assertIsDisplayed()
+        }
+
+    @Test
+    fun `a place preview narrows search to the place`() =
+        runComposeUiTest {
+            var narrowed: Uuid? = null
+            val known = mapOf(place.key to SearchResultPreview.Place(activity, emptyList()))
+            setContent { LogDateTheme { Body(1180, 740, shown = withEntities, knownPreviews = known, onTogglePlace = { narrowed = it }) } }
+
+            onAllNodesWithText("Boulder Beach")[0].performClick()
+            onNodeWithTag(SEARCH_PREVIEW_NARROW_TAG).performClick()
+
+            assertEquals(place.uid, narrowed)
+        }
+
+    @Test
+    fun `choosing a recent entry in a preview opens its day`() =
+        runComposeUiTest {
+            var opened: SearchResult? = null
+            val known = mapOf(place.key to SearchResultPreview.Place(activity, listOf(recent)))
+            setContent { LogDateTheme { Body(1180, 740, shown = withEntities, knownPreviews = known, onOpenDay = { opened = it }) } }
+
+            onAllNodesWithText("Boulder Beach")[0].performClick()
+            onNodeWithText("Packed the kayak").performClick()
+
+            assertEquals(recent.uid, opened?.uid)
+            assertEquals(recent.created, opened?.created)
+        }
+
+    @Test
+    fun `a person preview shows their relationship, activity and mentions, and narrows to them`() =
+        runComposeUiTest {
+            var narrowed: Uuid? = null
+            val known = mapOf(person.key to SearchResultPreview.Person(activity, listOf(recent)))
+            setContent { LogDateTheme { Body(1180, 740, shown = withEntities, knownPreviews = known, onTogglePerson = { narrowed = it }) } }
+
+            onAllNodesWithText("Sam Rivera")[0].performClick()
+
+            onNodeWithTag(SEARCH_PREVIEW_ACTIVITY_TAG).assertExists()
+            onNodeWithText("Packed the kayak").assertIsDisplayed()
+            onNodeWithTag(SEARCH_PREVIEW_NARROW_TAG).performClick()
+            assertEquals(person.uid, narrowed)
+        }
+
+    @Test
+    fun `a place without a map slot still previews`() =
+        runComposeUiTest {
+            val known = mapOf(place.key to SearchResultPreview.Place(activity, emptyList()))
+            setContent { LogDateTheme { Body(1180, 740, shown = withEntities, knownPreviews = known) } }
+
+            onAllNodesWithText("Boulder Beach")[0].performClick()
+
+            onNodeWithTag(SEARCH_PREVIEW_ACTIVITY_TAG).assertExists()
+        }
+
     @Composable
     private fun Body(
         width: Int,
@@ -244,26 +345,32 @@ class AdaptiveSearchBodyTest {
         dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
         loadPreview: suspend (SearchResultKey) -> SearchResultPreview? = { null },
         knownPreviews: Map<SearchResultKey, SearchResultPreview> = emptyMap(),
+        onTogglePlace: (Uuid) -> Unit = {},
+        onTogglePerson: (Uuid) -> Unit = {},
+        onOpenDay: (SearchResult) -> Unit = {},
+        placeMap: (@Composable (String, Double, Double, Modifier) -> Unit)? = null,
+        shown: List<SearchResult> = results,
     ) {
         Box(Modifier.requiredSize(width.dp, height.dp)) {
             AdaptiveSearchBody(
-                results = results,
+                results = shown,
                 details = details,
                 narrowing = SearchNarrowingOptions(places = listOf(NarrowingOption(Uuid.random(), "Lake Mead", 4, false))),
                 actions =
                     AdaptiveSearchActions(
                         onResultClick = onResultClick,
                         onResultLongClick = {},
-                        onOpenDay = {},
+                        onOpenDay = onOpenDay,
                         onToggleType = {},
-                        onTogglePerson = {},
-                        onTogglePlace = {},
+                        onTogglePerson = onTogglePerson,
+                        onTogglePlace = onTogglePlace,
                         onToggleYear = {},
                         onClearNarrowing = {},
                     ),
                 dayPreview = dayPreview,
                 loadPreview = loadPreview,
                 knownPreviews = knownPreviews,
+                placeMap = placeMap,
             )
         }
     }

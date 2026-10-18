@@ -138,6 +138,7 @@ fun SearchScreen(
     adaptive: Boolean = false,
     showPeople: Boolean = false,
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
+    placeMap: (@Composable (String, Double, Double, Modifier) -> Unit)? = null,
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = koinViewModel(),
 ) {
@@ -189,6 +190,7 @@ fun SearchScreen(
         onTogglePlace = viewModel::togglePlace,
         onToggleYear = viewModel::toggleYear,
         dayPreview = dayPreview,
+        placeMap = placeMap,
         loadPreview = viewModel::loadPreview,
         modifier = modifier,
     )
@@ -225,6 +227,7 @@ fun SearchScreenContent(
     onTogglePlace: (Uuid) -> Unit = {},
     onToggleYear: (Int) -> Unit = {},
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
+    placeMap: (@Composable (String, Double, Double, Modifier) -> Unit)? = null,
     loadPreview: suspend (SearchResultKey) -> SearchResultPreview? = { null },
     modifier: Modifier = Modifier,
 ) {
@@ -331,6 +334,7 @@ fun SearchScreenContent(
                 onTogglePlace = onTogglePlace,
                 onToggleYear = onToggleYear,
                 dayPreview = dayPreview,
+                placeMap = placeMap,
                 loadPreview = loadPreview,
             )
         }
@@ -384,6 +388,7 @@ private fun SearchBodyContent(
     onTogglePlace: (Uuid) -> Unit,
     onToggleYear: (Int) -> Unit,
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)?,
+    placeMap: (@Composable (String, Double, Double, Modifier) -> Unit)?,
     loadPreview: suspend (SearchResultKey) -> SearchResultPreview?,
 ) {
     if (adaptive && searchState is SearchScreenState.Results) {
@@ -406,6 +411,7 @@ private fun SearchBodyContent(
                     onClearNarrowing = onClearFilters,
                 ),
             dayPreview = dayPreview,
+            placeMap = placeMap,
             loadPreview = loadPreview,
         )
         return

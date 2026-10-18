@@ -12,6 +12,7 @@ import app.logdate.client.database.entities.TextNoteEntity
 import app.logdate.client.database.entities.VideoNoteEntity
 import app.logdate.client.database.entities.journals.JournalContentEntityLink
 import app.logdate.client.database.entities.people.PersonEntity
+import app.logdate.client.database.entities.people.PersonLinkEntity
 import app.logdate.client.database.entities.rewind.RewindEntity
 import app.logdate.client.database.entities.rewind.RewindImageContentEntity
 import app.logdate.client.database.getRoomDatabase
@@ -299,5 +300,56 @@ class OfflineFirstSearchResultDetailsRepositoryTest {
         runTest {
             assertEquals(null, repository.preview(SearchResultKey(SearchContentType.TEXT_NOTE, Uuid.random())))
             assertEquals(null, repository.preview(SearchResultKey(SearchContentType.JOURNAL, Uuid.random())))
+        }
+
+    @Test
+    fun `a place previews its activity and newest entries`() =
+        runTest {
+            val place = Uuid.random()
+            database.placeDao().insert(
+                PlaceEntity(id = place, name = "Lake Mead", latitude = 36.0, longitude = -114.7, created = created, lastUpdated = created),
+            )
+            val note =
+                TextNoteEntity(content = "Packed the kayak", uid = Uuid.random(), created = created, lastUpdated = created, placeId = place)
+            database.textNoteDao().addNote(note)
+
+            val preview = repository.preview(SearchResultKey(SearchContentType.PLACE, place)) as SearchResultPreview.Place
+
+            assertEquals(1, preview.activity.entryCount)
+            assertEquals(created, preview.activity.latest)
+            assertEquals(listOf(SearchPreviewEntry(note.uid, "Packed the kayak", created)), preview.recentEntries)
+            assertEquals(null, repository.preview(SearchResultKey(SearchContentType.PLACE, Uuid.random())))
+        }
+
+    @Test
+    fun `a person previews their activity and the newest entries that mention them`() =
+        runTest {
+            val person = Uuid.random()
+            database.personDao().insert(
+                PersonEntity(id = person, name = "Sam", origin = "MANUAL", created = created, lastUpdated = created),
+            )
+            val note = TextNoteEntity(content = "Lunch with Sam", uid = Uuid.random(), created = created, lastUpdated = created)
+            database.textNoteDao().addNote(note)
+            database.personLinkDao().insertAll(
+                listOf(
+                    PersonLinkEntity(
+                        id = Uuid.random(),
+                        personId = person,
+                        targetType = "ENTRY",
+                        targetId = note.uid,
+                        provenance = "EXPLICIT",
+                        confidence = 1.0,
+                        status = "ACTIVE",
+                        created = created,
+                        lastUpdated = created,
+                    ),
+                ),
+            )
+
+            val preview = repository.preview(SearchResultKey(SearchContentType.PERSON, person)) as SearchResultPreview.Person
+
+            assertEquals(1, preview.activity.entryCount)
+            assertEquals(listOf(SearchPreviewEntry(note.uid, "Lunch with Sam", created)), preview.recentMentions)
+            assertEquals(null, repository.preview(SearchResultKey(SearchContentType.PERSON, Uuid.random())))
         }
 }

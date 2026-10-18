@@ -8,6 +8,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchEntryActivity
 import app.logdate.client.repository.search.SearchPreviewEntry
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
@@ -24,6 +25,7 @@ import app.logdate.feature.search.ui.SearchNarrowingOptions
 import app.logdate.feature.search.ui.SearchScreenContent
 import app.logdate.feature.search.ui.SearchScreenState
 import app.logdate.feature.search.ui.groupSearchResults
+import app.logdate.feature.timeline.ui.details.PlaceLocationMap
 import kotlinx.datetime.TimeZone
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -131,6 +133,12 @@ internal val catalogSearchScenes: List<SharedScreenshotSceneSpec> =
         sharedScene(SharedScreenshotSceneId.SearchPreviewRewind, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
             AdaptiveSearchScene(adaptiveSearchResults.filterNot { it.contentType == SearchContentType.JOURNAL })
         },
+        sharedScene(SharedScreenshotSceneId.SearchPreviewPlace, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            AdaptiveSearchScene(listOf(adaptivePlace) + adaptiveSearchResults.filter { it.contentType == SearchContentType.TEXT_NOTE })
+        },
+        sharedScene(SharedScreenshotSceneId.SearchPreviewPerson, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            AdaptiveSearchScene(listOf(adaptivePerson) + adaptiveSearchResults.filter { it.contentType == SearchContentType.TEXT_NOTE })
+        },
         sharedScene(SharedScreenshotSceneId.SearchPreviewPostcard, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
             AdaptiveSearchScene(
                 adaptiveSearchResults.filterNot {
@@ -159,6 +167,7 @@ private fun AdaptiveSearchScene(results: List<SearchResult>) {
                     onClearNarrowing = {},
                 ),
             knownPreviews = adaptiveSearchPreviews,
+            placeMap = { name, latitude, longitude, modifier -> PlaceLocationMap(name, latitude, longitude, modifier) },
         )
     }
 }
@@ -199,6 +208,12 @@ private val adaptiveSearchResults: List<SearchResult> =
         ),
     )
 
+private val adaptivePlace =
+    searchResult("00000000-0000-0000-0000-000000000091", "Lake Mead", baseInstant - 200.days, SearchContentType.PLACE)
+
+private val adaptivePerson =
+    searchResult("00000000-0000-0000-0000-000000000081", "Sam Rivera", baseInstant - 200.days, SearchContentType.PERSON)
+
 private val adaptiveSearchDetails: Map<app.logdate.client.repository.search.SearchResultKey, SearchResultDetail> =
     mapOf(
         adaptiveSearchResults[0].key to SearchResultDetail.Journal(coverUri = null, entryCount = 14),
@@ -207,6 +222,31 @@ private val adaptiveSearchDetails: Map<app.logdate.client.repository.search.Sear
         adaptiveSearchResults[2].key to SearchResultDetail.Postcard(coverUri = null, modifiedAt = baseInstant - 90.days),
         adaptiveSearchResults[4].key to SearchResultDetail.Audio(durationMs = 48_000),
         adaptiveSearchResults[5].key to SearchResultDetail.Image(uri = "file:///sample-photo.jpg"),
+        adaptivePlace.key to SearchResultDetail.Place(latitude = 36.0, longitude = -114.7),
+        adaptivePerson.key to SearchResultDetail.Person(photoUri = null, relationshipLabel = "Friend"),
+    )
+
+private val sampleActivity =
+    SearchEntryActivity(
+        entryCount = 29,
+        dayCount = 11,
+        first = baseInstant - 700.days,
+        latest = baseInstant - 3.hours,
+        byYear = mapOf(2023 to 6, 2024 to 8, 2025 to 15),
+    )
+
+private val sampleRecentEntries =
+    listOf(
+        SearchPreviewEntry(
+            Uuid.parse("00000000-0000-0000-0000-000000000074"),
+            "Packed the kayak and drove out to the lake before it got hot.",
+            baseInstant - 3.hours,
+        ),
+        SearchPreviewEntry(
+            Uuid.parse("00000000-0000-0000-0000-000000000077"),
+            "First lake day of the year. Cold, empty, perfect.",
+            baseInstant - 40.days,
+        ),
     )
 
 private val adaptiveSearchPreviews: Map<app.logdate.client.repository.search.SearchResultKey, SearchResultPreview> =
@@ -234,6 +274,16 @@ private val adaptiveSearchPreviews: Map<app.logdate.client.repository.search.Sea
                 highlights = listOf("The water was so clear we could see the anchor from the boat.", "We stayed until dark."),
                 people = listOf("Sam", "Maya"),
                 place = "Lake Mead",
+            ),
+        adaptivePlace.key to
+            SearchResultPreview.Place(
+                activity = sampleActivity,
+                recentEntries = sampleRecentEntries,
+            ),
+        adaptivePerson.key to
+            SearchResultPreview.Person(
+                activity = sampleActivity,
+                recentMentions = sampleRecentEntries,
             ),
     )
 

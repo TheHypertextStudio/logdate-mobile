@@ -4,16 +4,19 @@ package app.logdate.feature.search.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,11 +32,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchEntryActivity
+import app.logdate.client.repository.search.SearchPreviewEntry
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultKey
@@ -53,14 +59,22 @@ import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.search.generated.resources.Res
 import logdate.client.feature.search.generated.resources.search_date_range
 import logdate.client.feature.search.generated.resources.search_entry_count
+import logdate.client.feature.search.generated.resources.search_preview_by_year
 import logdate.client.feature.search.generated.resources.search_preview_changed
+import logdate.client.feature.search.generated.resources.search_preview_day_count
 import logdate.client.feature.search.generated.resources.search_preview_empty
+import logdate.client.feature.search.generated.resources.search_preview_first_written
 import logdate.client.feature.search.generated.resources.search_preview_highlights
+import logdate.client.feature.search.generated.resources.search_preview_last_written
 import logdate.client.feature.search.generated.resources.search_preview_latest_entries
+import logdate.client.feature.search.generated.resources.search_preview_narrow_person
+import logdate.client.feature.search.generated.resources.search_preview_narrow_place
 import logdate.client.feature.search.generated.resources.search_preview_open
 import logdate.client.feature.search.generated.resources.search_preview_open_day
 import logdate.client.feature.search.generated.resources.search_preview_people
 import logdate.client.feature.search.generated.resources.search_preview_place
+import logdate.client.feature.search.generated.resources.search_preview_recent_entries
+import logdate.client.feature.search.generated.resources.search_preview_recent_mentions
 import logdate.client.feature.search.generated.resources.search_preview_started
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -71,6 +85,9 @@ const val SEARCH_PREVIEW_TITLE_TAG = "search_preview_title"
 const val SEARCH_PREVIEW_OPEN_TAG = "search_preview_open"
 const val SEARCH_PREVIEW_PERIOD_TAG = "search_preview_period"
 const val SEARCH_PREVIEW_ENTRIES_TAG = "search_preview_entries"
+const val SEARCH_PREVIEW_ACTIVITY_TAG = "search_preview_activity"
+const val SEARCH_PREVIEW_YEARS_TAG = "search_preview_years"
+const val SEARCH_PREVIEW_NARROW_TAG = "search_preview_narrow"
 
 /** What the adaptive search body can do on the person's behalf. */
 class AdaptiveSearchActions(
@@ -101,6 +118,8 @@ private val SelectionSaver =
  *
  * @param dayPreview What a selected day looks like. When the host has no day content, a summary of
  *   the day's matches is shown.
+ * @param placeMap Draws a map of a named place at a latitude and longitude. Where the host has none, a place
+ *   previews without a map.
  * @param knownPreviews Previews already read, shown without asking [loadPreview] again.
  * @param loadPreview Reads what the preview of a journal or rewind shows beyond its row. It is only
  *   asked where a preview shows, and a result it cannot read previews as its summary alone.
@@ -115,6 +134,7 @@ fun AdaptiveSearchBody(
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
     loadPreview: suspend (SearchResultKey) -> SearchResultPreview? = { null },
     knownPreviews: Map<SearchResultKey, SearchResultPreview> = emptyMap(),
+    placeMap: (@Composable (name: String, latitude: Double, longitude: Double, modifier: Modifier) -> Unit)? = null,
 ) {
     val previews = remember(knownPreviews) { mutableStateMapOf<SearchResultKey, SearchResultPreview>().apply { putAll(knownPreviews) } }
     val zone = TimeZone.currentSystemDefault()
@@ -165,6 +185,8 @@ fun AdaptiveSearchBody(
                 dayPreview = dayPreview,
                 loadPreview = loadPreview,
                 previews = previews,
+                actions = actions,
+                placeMap = placeMap,
             )
         },
     )
@@ -181,6 +203,8 @@ private fun SearchPreview(
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)?,
     loadPreview: suspend (SearchResultKey) -> SearchResultPreview?,
     previews: MutableMap<SearchResultKey, SearchResultPreview>,
+    actions: AdaptiveSearchActions,
+    placeMap: (@Composable (String, Double, Double, Modifier) -> Unit)?,
 ) {
     Column(Modifier.fillMaxSize().testTag(SEARCH_PREVIEW_TAG)) {
         when (selection) {
@@ -216,7 +240,7 @@ private fun SearchPreview(
                             Napier.w("Could not load the preview of ${result.key}", error)
                         }
                     }
-                    ResultSummary(result, details[result.key], previews[result.key], onOpenResult)
+                    ResultSummary(result, details[result.key], previews[result.key], actions, placeMap)
                 }
             }
         }
@@ -228,7 +252,8 @@ private fun ResultSummary(
     result: SearchResult,
     detail: SearchResultDetail?,
     preview: SearchResultPreview?,
-    onOpen: (SearchResult) -> Unit,
+    actions: AdaptiveSearchActions,
+    placeMap: (@Composable (String, Double, Double, Modifier) -> Unit)?,
 ) {
     val state = result.toUniversalSearchResultUiState(rememberSearchHighlightStyle())
     val zone = TimeZone.currentSystemDefault()
@@ -236,6 +261,7 @@ private fun ResultSummary(
         when (detail) {
             is SearchResultDetail.Journal -> pluralStringResource(Res.plurals.search_entry_count, detail.entryCount, detail.entryCount)
             is SearchResultDetail.Person -> detail.relationshipLabel
+            is SearchResultDetail.Place -> null
             else -> state.createdReadable
         }
     val period =
@@ -300,8 +326,33 @@ private fun ResultSummary(
                 }
             }
         }
-        Button(onClick = { onOpen(result) }, modifier = Modifier.testTag(SEARCH_PREVIEW_OPEN_TAG)) {
-            Text(stringResource(Res.string.search_preview_open))
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            if (result.contentType != SearchContentType.PLACE) {
+                Button(onClick = { actions.onResultClick(result) }, modifier = Modifier.testTag(SEARCH_PREVIEW_OPEN_TAG)) {
+                    Text(stringResource(Res.string.search_preview_open))
+                }
+            }
+            when (result.contentType) {
+                SearchContentType.PLACE -> {
+                    FilledTonalButton(
+                        onClick = { actions.onTogglePlace(result.uid) },
+                        modifier = Modifier.testTag(SEARCH_PREVIEW_NARROW_TAG),
+                    ) {
+                        Text(stringResource(Res.string.search_preview_narrow_place))
+                    }
+                }
+
+                SearchContentType.PERSON -> {
+                    FilledTonalButton(
+                        onClick = { actions.onTogglePerson(result.uid) },
+                        modifier = Modifier.testTag(SEARCH_PREVIEW_NARROW_TAG),
+                    ) {
+                        Text(stringResource(Res.string.search_preview_narrow_person))
+                    }
+                }
+
+                else -> {}
+            }
         }
         when (preview) {
             is SearchResultPreview.Journal -> {
@@ -312,7 +363,117 @@ private fun ResultSummary(
                 RewindPreviewBody(preview)
             }
 
+            is SearchResultPreview.Place -> {
+                ActivityPreviewBody(
+                    activity = preview.activity,
+                    entries = preview.recentEntries,
+                    entriesTitle = stringResource(Res.string.search_preview_recent_entries),
+                    zone = zone,
+                    onOpenEntry = { actions.onOpenDay(it.asEntryResult()) },
+                    map =
+                        (detail as? SearchResultDetail.Place)?.let { place ->
+                            placeMap?.let { map -> { map(state.contentText.text, place.latitude, place.longitude, Modifier) } }
+                        },
+                )
+            }
+
+            is SearchResultPreview.Person -> {
+                ActivityPreviewBody(
+                    activity = preview.activity,
+                    entries = preview.recentMentions,
+                    entriesTitle = stringResource(Res.string.search_preview_recent_mentions),
+                    zone = zone,
+                    onOpenEntry = { actions.onOpenDay(it.asEntryResult()) },
+                    map = null,
+                )
+            }
+
             null -> {}
+        }
+    }
+}
+
+/** A recent entry as the text note a day route can open. */
+private fun SearchPreviewEntry.asEntryResult() =
+    SearchResult(uid = uid, content = text, created = created, contentType = SearchContentType.TEXT_NOTE)
+
+@Composable
+private fun ActivityPreviewBody(
+    activity: SearchEntryActivity,
+    entries: List<SearchPreviewEntry>,
+    entriesTitle: String,
+    zone: TimeZone,
+    onOpenEntry: (SearchPreviewEntry) -> Unit,
+    map: (@Composable () -> Unit)?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+        if (map != null) {
+            Box(Modifier.fillMaxWidth().height(200.dp).clip(MaterialTheme.shapes.large)) { map() }
+        }
+        Column(Modifier.testTag(SEARCH_PREVIEW_ACTIVITY_TAG), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(
+                pluralStringResource(Res.plurals.search_entry_count, activity.entryCount, activity.entryCount),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                pluralStringResource(Res.plurals.search_preview_day_count, activity.dayCount, activity.dayCount),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            activity.first?.let {
+                Text(
+                    stringResource(Res.string.search_preview_first_written, it.toLocalDateTime(zone).date.toReadableDateShort()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            activity.latest?.let {
+                Text(
+                    stringResource(Res.string.search_preview_last_written, it.toLocalDateTime(zone).date.toReadableDateShort()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (activity.byYear.isNotEmpty()) {
+            PreviewSection(stringResource(Res.string.search_preview_by_year)) {
+                Column(Modifier.testTag(SEARCH_PREVIEW_YEARS_TAG), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    activity.byYear.entries.sortedByDescending { it.key }.forEach { (year, count) ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(year.toString(), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                count.toString(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        if (entries.isNotEmpty()) {
+            PreviewSection(entriesTitle) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    entries.forEach { entry ->
+                        ListItem(
+                            headlineContent = { Text(entry.text, maxLines = 3, overflow = TextOverflow.Ellipsis) },
+                            supportingContent = {
+                                Text(
+                                    entry.created
+                                        .toLocalDateTime(zone)
+                                        .date
+                                        .toReadableDateShort(),
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            modifier = Modifier.focusableWithRing().clickable { onOpenEntry(entry) },
+                        )
+                    }
+                }
+            }
         }
     }
 }

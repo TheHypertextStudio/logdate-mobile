@@ -54,6 +54,50 @@ interface SearchDetailsDao {
         limit: Int,
     ): List<JournalEntryRow>
 
+    /** When each entry at a place was written, as epoch milliseconds, whatever kind of note it is. */
+    @Query(
+        "SELECT created FROM text_notes WHERE place_id = :placeId AND deletedAt IS NULL " +
+            "UNION ALL SELECT created FROM audio_notes WHERE place_id = :placeId AND deletedAt IS NULL " +
+            "UNION ALL SELECT created FROM image_notes WHERE place_id = :placeId AND deletedAt IS NULL " +
+            "UNION ALL SELECT created FROM video_notes WHERE place_id = :placeId AND deletedAt IS NULL",
+    )
+    suspend fun placeEntryTimes(placeId: String): List<Long>
+
+    /** The newest [limit] text notes at a place, newest first. */
+    @Query(
+        "SELECT uid AS uid, content AS content, created AS created FROM text_notes " +
+            "WHERE place_id = :placeId AND deletedAt IS NULL ORDER BY created DESC LIMIT :limit",
+    )
+    suspend fun latestPlaceEntries(
+        placeId: String,
+        limit: Int,
+    ): List<JournalEntryRow>
+
+    /** When each entry linked to a person was written, as epoch milliseconds, whatever kind of note it is. */
+    @Query(
+        "SELECT n.created FROM text_notes n INNER JOIN person_links l ON l.target_id = n.uid " +
+            "WHERE l.person_id = :personId AND l.target_type = 'ENTRY' AND l.status = 'ACTIVE' AND n.deletedAt IS NULL " +
+            "UNION ALL SELECT n.created FROM audio_notes n INNER JOIN person_links l ON l.target_id = n.uid " +
+            "WHERE l.person_id = :personId AND l.target_type = 'ENTRY' AND l.status = 'ACTIVE' AND n.deletedAt IS NULL " +
+            "UNION ALL SELECT n.created FROM image_notes n INNER JOIN person_links l ON l.target_id = n.uid " +
+            "WHERE l.person_id = :personId AND l.target_type = 'ENTRY' AND l.status = 'ACTIVE' AND n.deletedAt IS NULL " +
+            "UNION ALL SELECT n.created FROM video_notes n INNER JOIN person_links l ON l.target_id = n.uid " +
+            "WHERE l.person_id = :personId AND l.target_type = 'ENTRY' AND l.status = 'ACTIVE' AND n.deletedAt IS NULL",
+    )
+    suspend fun personEntryTimes(personId: String): List<Long>
+
+    /** The newest [limit] text notes linked to a person, newest first. */
+    @Query(
+        "SELECT n.uid AS uid, n.content AS content, n.created AS created FROM text_notes n " +
+            "INNER JOIN person_links l ON l.target_id = n.uid " +
+            "WHERE l.person_id = :personId AND l.target_type = 'ENTRY' AND l.status = 'ACTIVE' AND n.deletedAt IS NULL " +
+            "ORDER BY n.created DESC LIMIT :limit",
+    )
+    suspend fun latestPersonEntries(
+        personId: String,
+        limit: Int,
+    ): List<JournalEntryRow>
+
     /** The date range of each rewind, with the first image in it as a cover. */
     @Query(
         "SELECT r.uid AS uid, r.startDate AS startDate, r.endDate AS endDate, " +
