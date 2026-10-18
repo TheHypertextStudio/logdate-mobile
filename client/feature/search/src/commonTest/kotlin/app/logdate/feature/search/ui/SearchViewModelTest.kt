@@ -6,6 +6,9 @@ import app.logdate.client.repository.search.RecentSearchesRepository
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
+import app.logdate.client.repository.search.SearchResultDetail
+import app.logdate.client.repository.search.SearchResultDetailsRepository
+import app.logdate.client.repository.search.SearchResultKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -60,7 +63,11 @@ class SearchViewModelTest {
                     ),
                 )
             val viewModel =
-                SearchViewModel(UniversalSearchUseCase(repository), ObserveRecentSearchesUseCase(FakeRecentSearchesRepository()))
+                SearchViewModel(
+                    UniversalSearchUseCase(repository),
+                    ObserveRecentSearchesUseCase(FakeRecentSearchesRepository()),
+                    NoDetails,
+                )
             backgroundScope.launch { viewModel.searchState.collect() }
             runCurrent()
 
@@ -91,6 +98,7 @@ class SearchViewModelTest {
                 SearchViewModel(
                     universalSearchUseCase = UniversalSearchUseCase(repository),
                     observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(recentSearchesRepository),
+                    searchResultDetailsRepository = NoDetails,
                 )
             backgroundScope.launch { viewModel.searchState.collect() }
             runCurrent()
@@ -126,6 +134,7 @@ class SearchViewModelTest {
                 SearchViewModel(
                     universalSearchUseCase = UniversalSearchUseCase(repository),
                     observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(FakeRecentSearchesRepository()),
+                    searchResultDetailsRepository = NoDetails,
                 )
             backgroundScope.launch { viewModel.searchState.collect() }
             runCurrent()
@@ -158,6 +167,10 @@ class SearchViewModelTest {
         override suspend fun clearRecentSearches() {
             flow.value = emptyList()
         }
+    }
+
+    private object NoDetails : SearchResultDetailsRepository {
+        override suspend fun describe(results: List<SearchResult>): Map<SearchResultKey, SearchResultDetail> = emptyMap()
     }
 
     private class FakeSearchRepository(

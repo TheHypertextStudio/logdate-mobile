@@ -19,6 +19,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.logdate.client.data.search.AndroidPlatformSearchIndexManager
 import app.logdate.client.data.search.AndroidPlatformSearchRepository
 import app.logdate.client.data.search.OfflineFirstSearchRepository
+import app.logdate.client.data.search.OfflineFirstSearchResultDetailsRepository
 import app.logdate.client.database.LogDateDatabase
 import app.logdate.client.database.entities.TextNoteEntity
 import app.logdate.client.database.getRoomDatabase
@@ -131,6 +132,11 @@ class SearchScreenE2ETest {
             SearchViewModel(
                 universalSearchUseCase = UniversalSearchUseCase(searchRepository),
                 observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(recentSearchesRepository),
+                searchResultDetailsRepository =
+                    OfflineFirstSearchResultDetailsRepository(
+                        detailsDao = database.searchDetailsDao(),
+                        personDao = database.personDao(),
+                    ),
             )
     }
 

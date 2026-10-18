@@ -9,6 +9,11 @@ import app.logdate.client.domain.search.SearchQuery
 import app.logdate.client.domain.search.UniversalSearchUseCase
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
+import app.logdate.client.repository.search.SearchResultDetail
+import app.logdate.client.repository.search.SearchResultDetailsRepository
+import app.logdate.client.repository.search.SearchResultKey
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,6 +41,7 @@ import kotlinx.coroutines.launch
 class SearchViewModel(
     private val universalSearchUseCase: UniversalSearchUseCase,
     private val observeRecentSearchesUseCase: ObserveRecentSearchesUseCase,
+    private val searchResultDetailsRepository: SearchResultDetailsRepository,
 ) : ViewModel() {
     private val queryState = MutableStateFlow(SearchQuery.Empty)
     private val filtersState = MutableStateFlow(SearchFilters.Default)
@@ -63,6 +70,29 @@ class SearchViewModel(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = SearchResultSnapshot(SearchQuery.Empty, emptyList()),
             )
+
+    /**
+     * The media, dates and covers of the current results, keyed by result.
+     *
+     * Looked up once per settled result set. A result with no entry has nothing to show beyond its
+     * text, and a failed lookup leaves every result showing just its text.
+     */
+    val resultDetails: StateFlow<Map<SearchResultKey, SearchResultDetail>> =
+        latestResultsState
+            .mapLatest { snapshot -> describe(snapshot.results) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    private suspend fun describe(results: List<SearchResult>): Map<SearchResultKey, SearchResultDetail> {
+        if (results.isEmpty()) return emptyMap()
+        return try {
+            searchResultDetailsRepository.describe(results)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Napier.w("Could not describe ${results.size} search results; showing them without media", error)
+            emptyMap()
+        }
+    }
 
     val queryText: StateFlow<String> =
         queryState
