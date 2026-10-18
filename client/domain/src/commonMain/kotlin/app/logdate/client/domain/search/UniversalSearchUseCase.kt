@@ -24,14 +24,14 @@ class UniversalSearchUseCase(
     private val timeZone: () -> TimeZone = { TimeZone.currentSystemDefault() },
 ) {
     /**
-     * Searches all indexed content with optional filtering.
+     * Searches all indexed content with optional narrowing.
      *
-     * Filtering is applied after FTS5 returns results (in-memory). For the date-range filter the
-     * window is resolved against [clock] at the moment results are produced, so a long-lived flow
-     * keeps using the same window until a new result batch arrives.
+     * The filters are resolved to a scope and applied by the repository inside its query, before
+     * the result limit, so narrowing never hides matches that the limit would have cut. Relative
+     * date windows are resolved against [clock] when the search starts.
      *
      * @param queryFlow Flow of search queries from the UI
-     * @param filters Optional filters to restrict result types, date window, or count
+     * @param filters Optional filters to narrow result types, people, places, dates, or count
      * @return Flow of ranked search results across all entity types
      */
     operator fun invoke(
@@ -45,23 +45,11 @@ class UniversalSearchUseCase(
                 if (queryText.isBlank()) {
                     flowOf(emptyList())
                 } else {
-                    searchRepository.searchRanked(queryText, filters.maxResults).map { results ->
-                        results.applyFilters(filters)
-                    }
+                    searchRepository.searchScoped(
+                        query = queryText,
+                        scope = filters.toScope(clock.now(), timeZone()),
+                        limit = filters.maxResults,
+                    )
                 }
             }
-
-    private fun List<SearchResult>.applyFilters(filters: SearchFilters): List<SearchResult> {
-        val window =
-            if (filters.dateRange == DateRangeFilter.AllTime) {
-                null
-            } else {
-                filters.dateRange.window(clock.now(), timeZone())
-            }
-        if (filters.contentTypes == null && window == null) return this
-        return filter { result ->
-            (filters.contentTypes == null || result.contentType in filters.contentTypes) &&
-                (window == null || (result.created >= window.from && result.created < window.toExclusive))
-        }
-    }
 }

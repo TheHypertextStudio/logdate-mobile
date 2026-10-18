@@ -1,6 +1,7 @@
 package app.logdate.client.repository.search
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -44,6 +45,20 @@ interface SearchRepository {
     ): Flow<List<SearchResult>>
 
     /**
+     * Searches like [searchRanked], narrowed by [scope] before [limit] is applied.
+     *
+     * Narrowing first means the best matches inside the scope are returned, instead of whatever
+     * remains of the best matches overall. This default can only narrow by what a result carries
+     * itself (its type and creation time); implementations backed by the index also narrow by
+     * person and place, which a result does not carry.
+     */
+    fun searchScoped(
+        query: String,
+        scope: SearchScope,
+        limit: Int = 50,
+    ): Flow<List<SearchResult>> = searchRanked(query, limit).map { results -> results.filter(scope::allows) }
+
+    /**
      * Searches entries within a specific journal.
      */
     fun searchInJournal(
@@ -51,6 +66,29 @@ interface SearchRepository {
         journalId: Uuid,
         limit: Int = 50,
     ): Flow<List<SearchResult>>
+}
+
+/**
+ * What a search is narrowed to. A null option does not narrow.
+ *
+ * @property contentTypes Keep only these types of result.
+ * @property personId Keep results linked to this person, and the person themself.
+ * @property placeId Keep results captured at this place, and the place itself.
+ * @property createdFrom Keep results created at or after this instant.
+ * @property createdBefore Keep results created before this instant.
+ */
+data class SearchScope(
+    val contentTypes: Set<SearchContentType>? = null,
+    val personId: Uuid? = null,
+    val placeId: Uuid? = null,
+    val createdFrom: Instant? = null,
+    val createdBefore: Instant? = null,
+) {
+    /** Whether [result] passes the narrowing that its own type and creation time can decide. */
+    fun allows(result: SearchResult): Boolean =
+        (contentTypes == null || result.contentType in contentTypes) &&
+            (createdFrom == null || result.created >= createdFrom) &&
+            (createdBefore == null || result.created < createdBefore)
 }
 
 /**
