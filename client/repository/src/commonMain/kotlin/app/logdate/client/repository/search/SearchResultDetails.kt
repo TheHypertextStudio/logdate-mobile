@@ -76,6 +76,34 @@ sealed interface SearchResultDetail {
     ) : SearchResultDetail
 }
 
+/** One of a journal's latest entries: its text and when it was written. */
+data class SearchPreviewEntry(
+    val uid: Uuid,
+    val text: String,
+    val created: Instant,
+)
+
+/**
+ * What the preview beside the results shows of a result beyond its row.
+ *
+ * Loaded when a result is chosen rather than with every row, since it reads the content itself.
+ */
+sealed interface SearchResultPreview {
+    /** A journal's description, when it was started and the entries written most recently. */
+    data class Journal(
+        val description: String,
+        val created: Instant,
+        val latestEntries: List<SearchPreviewEntry>,
+    ) : SearchResultPreview
+
+    /** A rewind's highlights and the people and place it covers. */
+    data class Rewind(
+        val highlights: List<String>,
+        val people: List<String>,
+        val place: String?,
+    ) : SearchResultPreview
+}
+
 /** How a person is named in a narrowing option. */
 data class SearchPersonLabel(
     val name: String,
@@ -113,4 +141,10 @@ interface SearchResultDetailsRepository {
         personIds: Collection<Uuid>,
         placeIds: Collection<Uuid>,
     ): SearchFacetLabels = SearchFacetLabels.Empty
+
+    /**
+     * Reads what the preview of [key] shows beyond its row, or null when that kind of result has
+     * no preview of its own or its content has since been deleted. The default has no previews.
+     */
+    suspend fun preview(key: SearchResultKey): SearchResultPreview? = null
 }

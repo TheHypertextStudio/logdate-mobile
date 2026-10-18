@@ -35,6 +35,25 @@ interface SearchDetailsDao {
     )
     suspend fun journalDetails(ids: List<String>): List<JournalDetailRow>
 
+    /** What a journal preview shows of one journal, or nothing when it is unknown or deleted. */
+    @Query(
+        "SELECT title AS title, description AS description, created AS created, coverImageUri AS coverUri " +
+            "FROM journals WHERE id = :id AND deletedAt IS NULL",
+    )
+    suspend fun journalPreview(id: String): JournalPreviewRow?
+
+    /** The newest [limit] text notes in a journal, newest first. */
+    @Query(
+        "SELECT t.uid AS uid, t.content AS content, t.created AS created FROM text_notes t " +
+            "INNER JOIN journal_content_links l ON l.content_id = t.uid " +
+            "WHERE l.journal_id = :journalId AND l.deletedAt IS NULL AND t.deletedAt IS NULL " +
+            "ORDER BY t.created DESC LIMIT :limit",
+    )
+    suspend fun latestJournalEntries(
+        journalId: String,
+        limit: Int,
+    ): List<JournalEntryRow>
+
     /** The date range of each rewind, with the first image in it as a cover. */
     @Query(
         "SELECT r.uid AS uid, r.startDate AS startDate, r.endDate AS endDate, " +
@@ -88,6 +107,21 @@ data class JournalDetailRow(
     val id: String,
     val coverUri: String?,
     val entryCount: Int,
+)
+
+/** A journal's title, description, creation time as epoch milliseconds, and cover if it has one. */
+data class JournalPreviewRow(
+    val title: String,
+    val description: String,
+    val created: Long,
+    val coverUri: String?,
+)
+
+/** A text note in a journal and when it was written, as epoch milliseconds. */
+data class JournalEntryRow(
+    val uid: String,
+    val content: String,
+    val created: Long,
 )
 
 /** The range of a rewind as epoch milliseconds, and its cover image if it has one. */

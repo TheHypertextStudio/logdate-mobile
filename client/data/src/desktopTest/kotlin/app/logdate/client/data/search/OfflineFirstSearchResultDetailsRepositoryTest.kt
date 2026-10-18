@@ -18,9 +18,13 @@ import app.logdate.client.database.getRoomDatabase
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchFacetLabels
 import app.logdate.client.repository.search.SearchPersonLabel
+import app.logdate.client.repository.search.SearchPreviewEntry
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultKey
+import app.logdate.client.repository.search.SearchResultPreview
+import app.logdate.shared.model.Rewind
+import app.logdate.shared.model.RewindMetadata
 import kotlinx.coroutines.test.runTest
 import java.nio.file.Files
 import kotlin.test.AfterTest
@@ -33,7 +37,8 @@ import kotlin.uuid.Uuid
 class OfflineFirstSearchResultDetailsRepositoryTest {
     private val file = Files.createTempFile("logdate-search-details-", ".db")
     private val database = getRoomDatabase(Room.databaseBuilder<LogDateDatabase>(file.toString()))
-    private val repository = OfflineFirstSearchResultDetailsRepository(database.searchDetailsDao(), database.personDao())
+    private val repository =
+        OfflineFirstSearchResultDetailsRepository(database.searchDetailsDao(), database.personDao(), RewindLookup { null })
     private val created = Instant.parse("2025-07-19T15:00:00Z")
 
     @AfterTest
@@ -237,4 +242,62 @@ class OfflineFirstSearchResultDetailsRepositoryTest {
         uid: Uuid,
         type: SearchContentType,
     ) = SearchResultKey(type, uid)
+
+    @Test
+    fun `a journal previews its description, start and latest entries`() =
+        runTest {
+            val journal = JournalEntity(title = "Lake Days", description = "On the water", created = created, lastUpdated = created)
+            database.journalDao().create(journal)
+            val note = TextNoteEntity(content = "Packed the kayak", uid = Uuid.random(), created = created, lastUpdated = created)
+            database.textNoteDao().addNote(note)
+            database.journalContentDao().addContentToJournal(JournalContentEntityLink(journal.id, note.uid))
+
+            val preview = repository.preview(SearchResultKey(SearchContentType.JOURNAL, journal.id))
+
+            assertEquals(
+                SearchResultPreview.Journal(
+                    description = "On the water",
+                    created = created,
+                    latestEntries = listOf(SearchPreviewEntry(note.uid, "Packed the kayak", created)),
+                ),
+                preview,
+            )
+        }
+
+    @Test
+    fun `a rewind previews from the rewind found for it`() =
+        runTest {
+            val id = Uuid.random()
+            val rewind =
+                Rewind(
+                    uid = id,
+                    startDate = created,
+                    endDate = created,
+                    generationDate = created,
+                    label = "2025#29",
+                    title = "Summer",
+                    metadata =
+                        RewindMetadata(
+                            detectedActivities = emptyList(),
+                            locationSummary = null,
+                            milestones = emptyList(),
+                            peopleHighlighted = listOf("Sam"),
+                        ),
+                )
+            val withRewind =
+                OfflineFirstSearchResultDetailsRepository(database.searchDetailsDao(), database.personDao(), RewindLookup { rewind })
+
+            assertEquals(
+                SearchResultPreview.Rewind(highlights = emptyList(), people = listOf("Sam"), place = null),
+                withRewind.preview(SearchResultKey(SearchContentType.REWIND, id)),
+            )
+            assertEquals(null, repository.preview(SearchResultKey(SearchContentType.REWIND, id)))
+        }
+
+    @Test
+    fun `results with nothing beyond their row have no preview`() =
+        runTest {
+            assertEquals(null, repository.preview(SearchResultKey(SearchContentType.TEXT_NOTE, Uuid.random())))
+            assertEquals(null, repository.preview(SearchResultKey(SearchContentType.JOURNAL, Uuid.random())))
+        }
 }

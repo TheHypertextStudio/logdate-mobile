@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <plurals name="search_result_count">
         <item quantity="one">%1$d result</item>
@@ -29,5 +29,11 @@
     </plurals>
     <string name="search_preview_open">Open</string>
     <string name="search_preview_open_day">Open day</string>
+    <string name="search_preview_started">Started %1$s</string>
+    <string name="search_preview_changed">Changed %1$s</string>
+    <string name="search_preview_latest_entries">Latest entries</string>
+    <string name="search_preview_highlights">Highlights</string>
+    <string name="search_preview_people">With</string>
+    <string name="search_preview_place">Place</string>
     <string name="search_preview_empty">Choose a result to see it here</string>
 </resources>

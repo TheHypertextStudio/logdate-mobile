@@ -16,6 +16,7 @@ import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultDetailsRepository
 import app.logdate.client.repository.search.SearchResultKey
+import app.logdate.client.repository.search.SearchResultPreview
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -101,6 +102,20 @@ class SearchViewModel(
             emptyMap()
         }
     }
+
+    /**
+     * What the preview of [key] shows beyond its row, or null when it has none or cannot be read.
+     * An unreadable preview leaves the result showing its row's summary alone.
+     */
+    suspend fun loadPreview(key: SearchResultKey): SearchResultPreview? =
+        try {
+            searchResultDetailsRepository.preview(key)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Napier.w("Could not read the preview of $key", error)
+            null
+        }
 
     /**
      * How many results each narrowing option would leave, and the names of the people and places

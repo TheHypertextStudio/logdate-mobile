@@ -10,6 +10,7 @@ import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultDetailsRepository
 import app.logdate.client.repository.search.SearchResultKey
+import app.logdate.client.repository.search.SearchResultPreview
 import app.logdate.client.repository.search.key
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +32,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -97,6 +99,27 @@ class SearchViewModelDetailsTest {
             assertEquals(emptyMap(), viewModel.resultDetails.value)
         }
 
+    @Test
+    fun `a chosen result is previewed from what the repository reads for it`() =
+        runTest(dispatcher) {
+            val journal = SearchResult(Uuid.random(), "Lake Days", created, SearchContentType.JOURNAL)
+            val preview = SearchResultPreview.Journal("On the water", created, emptyList())
+            val details = FakeDetails(emptyMap(), previews = mapOf(journal.key to preview))
+            val viewModel = viewModel(listOf(journal), details)
+
+            assertEquals(preview, viewModel.loadPreview(journal.key))
+            assertNull(viewModel.loadPreview(SearchResultKey(SearchContentType.JOURNAL, Uuid.random())))
+        }
+
+    @Test
+    fun `a preview that cannot be read leaves the result without one`() =
+        runTest(dispatcher) {
+            val journal = SearchResult(Uuid.random(), "Lake Days", created, SearchContentType.JOURNAL)
+            val viewModel = viewModel(listOf(journal), FakeDetails(emptyMap(), failure = IllegalStateException("unreadable")))
+
+            assertNull(viewModel.loadPreview(journal.key))
+        }
+
     private fun TestScope.observe(viewModel: SearchViewModel) {
         backgroundScope.launch { viewModel.searchState.collect {} }
         backgroundScope.launch { viewModel.resultDetails.collect {} }
@@ -119,7 +142,13 @@ class SearchViewModelDetailsTest {
     private class FakeDetails(
         private val details: Map<SearchResultKey, SearchResultDetail>,
         private val failure: Throwable? = null,
+        private val previews: Map<SearchResultKey, SearchResultPreview> = emptyMap(),
     ) : SearchResultDetailsRepository {
+        override suspend fun preview(key: SearchResultKey): SearchResultPreview? {
+            failure?.let { throw it }
+            return previews[key]
+        }
+
         val requests = mutableListOf<List<SearchResult>>()
 
         override suspend fun describe(results: List<SearchResult>): Map<SearchResultKey, SearchResultDetail> {

@@ -7,6 +7,7 @@ import app.logdate.client.database.entities.JournalEntity
 import app.logdate.client.database.entities.PlaceEntity
 import app.logdate.client.database.entities.PostcardEntity
 import app.logdate.client.database.entities.StickerEntity
+import app.logdate.client.database.entities.TextNoteEntity
 import app.logdate.client.database.entities.VideoNoteEntity
 import app.logdate.client.database.entities.journals.JournalContentEntityLink
 import app.logdate.client.database.entities.rewind.RewindEntity
@@ -18,6 +19,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -234,6 +236,69 @@ class SearchDetailsDaoJvmTest {
 
             assertEquals(listOf(lake.toString() to "Lake Mead"), rows.map { it.id to it.name })
         }
+
+    @Test
+    fun `a journal preview returns its title, description, creation and cover`() =
+        runTest {
+            val db = openDatabase()
+            val journal =
+                JournalEntity(
+                    title = "Lake Days",
+                    description = "On the water",
+                    created = created,
+                    lastUpdated = created,
+                    coverImageUri = "file:///cover.jpg",
+                )
+            db.journalDao().create(journal)
+
+            val row = db.searchDetailsDao().journalPreview(journal.id.toString())
+
+            assertEquals("Lake Days", row?.title)
+            assertEquals("On the water", row?.description)
+            assertEquals(created.toEpochMilliseconds(), row?.created)
+            assertEquals("file:///cover.jpg", row?.coverUri)
+        }
+
+    @Test
+    fun `a deleted or unknown journal has no preview`() =
+        runTest {
+            val db = openDatabase()
+            val journal = JournalEntity(title = "Gone", description = "", created = created, lastUpdated = created)
+            db.journalDao().create(journal)
+            db.journalDao().delete(journal.id)
+
+            assertEquals(null, db.searchDetailsDao().journalPreview(journal.id.toString()))
+            assertEquals(null, db.searchDetailsDao().journalPreview(Uuid.random().toString()))
+        }
+
+    @Test
+    fun `the latest entries of a journal are its newest text notes, newest first, without deleted ones`() =
+        runTest {
+            val db = openDatabase()
+            val journal = JournalEntity(title = "Lake Days", description = "", created = created, lastUpdated = created)
+            db.journalDao().create(journal)
+            val oldest = textNote("first", created)
+            val middle = textNote("second", created.plus(1.days))
+            val newest = textNote("third", created.plus(2.days))
+            val deleted = textNote("deleted", created.plus(3.days))
+            val elsewhere = textNote("another journal", created.plus(4.days))
+            listOf(oldest, middle, newest, deleted, elsewhere).forEach { db.textNoteDao().addNote(it) }
+            listOf(oldest, middle, newest, deleted).forEach {
+                db.journalContentDao().addContentToJournal(JournalContentEntityLink(journal.id, it.uid))
+            }
+            db.textNoteDao().removeNote(deleted.uid)
+
+            val latest = db.searchDetailsDao().latestJournalEntries(journal.id.toString(), limit = 2)
+
+            assertEquals(listOf("third", "second"), latest.map { it.content })
+            assertEquals(listOf(newest.uid.toString(), middle.uid.toString()), latest.map { it.uid })
+            assertEquals(created.plus(2.days).toEpochMilliseconds(), latest.first().created)
+        }
+
+    private fun textNote(
+        content: String,
+        at: Instant,
+    ) = TextNoteEntity(content = content, uid = Uuid.random(), created = at, lastUpdated = at)
 
     private fun openDatabase(): LogDateDatabase {
         database?.close()

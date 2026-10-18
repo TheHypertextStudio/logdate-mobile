@@ -59,6 +59,7 @@ import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultKey
+import app.logdate.client.repository.search.SearchResultPreview
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.handwritingDelegate
 import app.logdate.ui.platform.PlatformIcons
@@ -188,6 +189,7 @@ fun SearchScreen(
         onTogglePlace = viewModel::togglePlace,
         onToggleYear = viewModel::toggleYear,
         dayPreview = dayPreview,
+        loadPreview = viewModel::loadPreview,
         modifier = modifier,
     )
 }
@@ -223,6 +225,7 @@ fun SearchScreenContent(
     onTogglePlace: (Uuid) -> Unit = {},
     onToggleYear: (Int) -> Unit = {},
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
+    loadPreview: suspend (SearchResultKey) -> SearchResultPreview? = { null },
     modifier: Modifier = Modifier,
 ) {
     val searchBarState = rememberSearchBarState()
@@ -328,6 +331,7 @@ fun SearchScreenContent(
                 onTogglePlace = onTogglePlace,
                 onToggleYear = onToggleYear,
                 dayPreview = dayPreview,
+                loadPreview = loadPreview,
             )
         }
     }
@@ -380,6 +384,7 @@ private fun SearchBodyContent(
     onTogglePlace: (Uuid) -> Unit,
     onToggleYear: (Int) -> Unit,
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)?,
+    loadPreview: suspend (SearchResultKey) -> SearchResultPreview?,
 ) {
     if (adaptive && searchState is SearchScreenState.Results) {
         AdaptiveSearchBody(
@@ -401,6 +406,7 @@ private fun SearchBodyContent(
                     onClearNarrowing = onClearFilters,
                 ),
             dayPreview = dayPreview,
+            loadPreview = loadPreview,
         )
         return
     }
