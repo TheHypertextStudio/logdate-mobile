@@ -106,6 +106,7 @@ enum class SharedScreenshotSceneId(
     SearchSearching("search-searching"),
     SearchEmpty("search-empty"),
     SearchResults("search-results"),
+    SearchResultsAdaptive("search-results-adaptive"),
     RewindCoverCard("rewind-cover-card"),
     RewindOverviewCanonical("rewind-overview-canonical"),
     RewindDetailPopulated("rewind-detail-populated"),

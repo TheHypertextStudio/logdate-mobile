@@ -57,6 +57,8 @@ import app.logdate.client.domain.search.DateRangeFilter
 import app.logdate.client.domain.search.SearchFilters
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
+import app.logdate.client.repository.search.SearchResultDetail
+import app.logdate.client.repository.search.SearchResultKey
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.handwritingDelegate
 import app.logdate.ui.platform.PlatformIcons
@@ -130,10 +132,12 @@ fun SearchScreen(
     initialQuery: String = "",
     initialTypeFtsValues: List<String> = emptyList(),
     initialDateRangeName: String = "",
+    adaptive: Boolean = false,
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = koinViewModel(),
 ) {
     val searchState by viewModel.searchState.collectAsState()
+    val resultDetails by viewModel.resultDetails.collectAsState()
     val queryText by viewModel.queryText.collectAsState()
     val filters by viewModel.filters.collectAsState()
     val onRemoveRecent: (String) -> Unit = viewModel::removeRecentSearch
@@ -171,6 +175,8 @@ fun SearchScreen(
         onResultOpenDay = onResultOpenDay,
         onShareResult = onShareResult,
         onGoBack = onGoBack,
+        adaptive = adaptive,
+        resultDetails = resultDetails,
         modifier = modifier,
     )
 }
@@ -199,6 +205,8 @@ fun SearchScreenContent(
     onRemoveRecent: (String) -> Unit = {},
     onClearAllRecents: () -> Unit = {},
     onShareResult: ((SearchResult) -> Unit)? = null,
+    adaptive: Boolean = false,
+    resultDetails: Map<SearchResultKey, SearchResultDetail> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     val searchBarState = rememberSearchBarState()
@@ -296,6 +304,9 @@ fun SearchScreenContent(
                 onClearAllRecents = onClearAllRecents,
                 onResultClick = onResultClick,
                 onLongClickResult = { result -> sheetTarget = result },
+                onOpenDay = onResultOpenDay,
+                adaptive = adaptive,
+                resultDetails = resultDetails,
             )
         }
     }
@@ -340,6 +351,9 @@ private fun SearchBodyContent(
     onClearAllRecents: () -> Unit,
     onResultClick: (SearchResult) -> Unit,
     onLongClickResult: (SearchResult) -> Unit,
+    onOpenDay: (SearchResult) -> Unit,
+    adaptive: Boolean,
+    resultDetails: Map<SearchResultKey, SearchResultDetail>,
 ) {
     FoldableBookLayout(
         modifier = Modifier.fillMaxSize(),
@@ -365,6 +379,9 @@ private fun SearchBodyContent(
                 onClearAllRecents = onClearAllRecents,
                 onResultClick = onResultClick,
                 onLongClickResult = onLongClickResult,
+                onOpenDay = onOpenDay,
+                adaptive = adaptive,
+                resultDetails = resultDetails,
             )
         },
         standardContent = {
@@ -385,6 +402,9 @@ private fun SearchBodyContent(
                     onClearAllRecents = onClearAllRecents,
                     onResultClick = onResultClick,
                     onLongClickResult = onLongClickResult,
+                    onOpenDay = onOpenDay,
+                    adaptive = adaptive,
+                    resultDetails = resultDetails,
                 )
             }
         },
@@ -448,6 +468,9 @@ private fun SearchStateContent(
     onClearAllRecents: () -> Unit,
     onResultClick: (SearchResult) -> Unit,
     onLongClickResult: (SearchResult) -> Unit,
+    onOpenDay: (SearchResult) -> Unit,
+    adaptive: Boolean,
+    resultDetails: Map<SearchResultKey, SearchResultDetail>,
 ) {
     when (searchState) {
         is SearchScreenState.Idle -> {
@@ -501,58 +524,72 @@ private fun SearchStateContent(
             }
         }
 
-        is SearchScreenState.Results -> {
-            val highlightStyle = rememberSearchHighlightStyle()
-            val groupedRows =
-                remember(searchState.results, highlightStyle) {
-                    bucketSearchResults(
-                        results = searchState.results,
-                        now = Clock.System.now(),
-                        timeZone = TimeZone.currentSystemDefault(),
-                    ).map { (bucket, items) ->
-                        bucket to
-                            items.map { result ->
-                                SearchResultRow(
-                                    result = result,
-                                    uiState = result.toUniversalSearchResultUiState(highlightStyle),
+        is SearchScreenState.Results ->
+            if (adaptive) {
+                val groups = remember(searchState.results) { groupSearchResults(searchState.results, TimeZone.currentSystemDefault()) }
+                AdaptiveSearchResults(
+                    groups = groups,
+                    details = resultDetails,
+                    onResultClick = { result ->
+                        onCommitSearch()
+                        onResultClick(result)
+                    },
+                    onResultLongClick = onLongClickResult,
+                    onOpenDay = onOpenDay,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                val highlightStyle = rememberSearchHighlightStyle()
+                val groupedRows =
+                    remember(searchState.results, highlightStyle) {
+                        bucketSearchResults(
+                            results = searchState.results,
+                            now = Clock.System.now(),
+                            timeZone = TimeZone.currentSystemDefault(),
+                        ).map { (bucket, items) ->
+                            bucket to
+                                items.map { result ->
+                                    SearchResultRow(
+                                        result = result,
+                                        uiState = result.toUniversalSearchResultUiState(highlightStyle),
+                                    )
+                                }
+                        }
+                    }
+                // Cap reading width on tablets / desktop / unfolded foldables so result rows stay
+                // scannable instead of stretching to a 1200dp line. Phones at compact width fall
+                // under the cap and use the full screen.
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    LazyColumn(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = SearchBarMaxWidth),
+                    ) {
+                        groupedRows.forEach { (bucket, bucketRows) ->
+                            stickyHeader(key = "header_${bucket.name}") {
+                                BucketHeader(bucket)
+                            }
+                            items(
+                                items = bucketRows,
+                                key = { it.uiState.id },
+                            ) { resultRow ->
+                                UniversalSearchResultItem(
+                                    state = resultRow.uiState,
+                                    onClick = {
+                                        onCommitSearch()
+                                        onResultClick(resultRow.result)
+                                    },
+                                    onLongClick = { onLongClickResult(resultRow.result) },
                                 )
                             }
-                    }
-                }
-            // Cap reading width on tablets / desktop / unfolded foldables so result rows stay
-            // scannable instead of stretching to a 1200dp line. Phones at compact width fall
-            // under the cap and use the full screen.
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.TopCenter,
-            ) {
-                LazyColumn(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .widthIn(max = SearchBarMaxWidth),
-                ) {
-                    groupedRows.forEach { (bucket, bucketRows) ->
-                        stickyHeader(key = "header_${bucket.name}") {
-                            BucketHeader(bucket)
-                        }
-                        items(
-                            items = bucketRows,
-                            key = { it.uiState.id },
-                        ) { resultRow ->
-                            UniversalSearchResultItem(
-                                state = resultRow.uiState,
-                                onClick = {
-                                    onCommitSearch()
-                                    onResultClick(resultRow.result)
-                                },
-                                onLongClick = { onLongClickResult(resultRow.result) },
-                            )
                         }
                     }
                 }
             }
-        }
     }
 }
 

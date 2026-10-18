@@ -23,6 +23,8 @@ kotlin {
             implementation(libs.compose.material.icons.extended)
             implementation(libs.compose.ui.tooling.preview)
 
+            implementation(libs.coil.compose)
+
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
         }
@@ -33,6 +35,12 @@ kotlin {
 
         sourceSets.getByName("desktopMain").dependencies {
             implementation(libs.compose.desktop)
+        }
+
+        val desktopTest by getting
+        desktopTest.dependencies {
+            implementation(libs.compose.ui.test)
+            implementation(compose.desktop.currentOs)
         }
     }
 }

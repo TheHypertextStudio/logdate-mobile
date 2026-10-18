@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="search_result_count">
+        <item quantity="one">%1$d result</item>
+        <item quantity="other">%1$d results</item>
+    </plurals>
+    <plurals name="search_day_match_count">
+        <item quantity="one">%1$d match</item>
+        <item quantity="other">%1$d matches</item>
+    </plurals>
+    <plurals name="search_entry_count">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+    <string name="search_section_top_matches">Top matches</string>
+    <string name="search_section_collections">Rewinds and postcards</string>
+    <string name="search_section_days">Days</string>
+    <string name="search_date_range">%1$s – %2$s</string>
+    <string name="search_more_in_day">+%1$d more</string>
+</resources>
