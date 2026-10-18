@@ -142,6 +142,16 @@ enum class FeatureFlag(
      * server supports it and this device can confirm with a passkey.
      */
     IDENTITY_RECOVERY_KEY(key = "identity_recovery_key_enabled", defaultEnabled = true),
+
+    /**
+     * The adaptive search presentation: results shaped by content type, a preview beside the list on
+     * larger windows, and narrowing by year, person, place and type with counts.
+     *
+     * Off by default while it is built. The flag changes presentation only; search data, narrowing
+     * and counts never depend on it. Once it ships to everyone, delete this flag together with the
+     * previous search presentation.
+     */
+    ADAPTIVE_SEARCH(key = "adaptive_search_enabled", defaultEnabled = false),
     ;
 
     companion object {
