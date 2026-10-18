@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.domain.search.DateRangeFilter
 import app.logdate.client.domain.search.ObserveRecentSearchesUseCase
+import app.logdate.client.domain.search.ObserveSearchFacetsUseCase
+import app.logdate.client.domain.search.SearchFacetCounts
 import app.logdate.client.domain.search.SearchFilters
 import app.logdate.client.domain.search.SearchQuery
 import app.logdate.client.domain.search.UniversalSearchUseCase
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchFacetLabels
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultDetailsRepository
@@ -30,6 +33,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.Uuid
 
 /**
  * ViewModel for the universal search screen.
@@ -42,6 +46,7 @@ class SearchViewModel(
     private val universalSearchUseCase: UniversalSearchUseCase,
     private val observeRecentSearchesUseCase: ObserveRecentSearchesUseCase,
     private val searchResultDetailsRepository: SearchResultDetailsRepository,
+    private val observeSearchFacetsUseCase: ObserveSearchFacetsUseCase,
 ) : ViewModel() {
     private val queryState = MutableStateFlow(SearchQuery.Empty)
     private val filtersState = MutableStateFlow(SearchFilters.Default)
@@ -91,6 +96,43 @@ class SearchViewModel(
         } catch (error: Exception) {
             Napier.w("Could not describe ${results.size} search results; showing them without media", error)
             emptyMap()
+        }
+    }
+
+    /**
+     * How many results each narrowing option would leave, and the names of the people and places
+     * those options stand for.
+     *
+     * Counts follow every narrowing except their own, count only content types that are available,
+     * and are empty while the query is blank.
+     */
+    val narrowing: StateFlow<SearchNarrowingState> =
+        combine(settledQueryState, filtersState) { query, filters -> query to filters }
+            .flatMapLatest { (settledQuery, filters) ->
+                val launchFilters = filters.copy(contentTypes = filters.contentTypes ?: launchSearchContentTypes)
+                observeSearchFacetsUseCase(flowOf(settledQuery), launchFilters).mapLatest { counts ->
+                    val launchCounts = counts.copy(byType = counts.byType.filterKeys { it in launchSearchContentTypes })
+                    SearchNarrowingState(
+                        counts = launchCounts,
+                        labels = labelFacets(launchCounts),
+                        filters = filters,
+                    )
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = SearchNarrowingState(),
+            )
+
+    private suspend fun labelFacets(counts: SearchFacetCounts): SearchFacetLabels {
+        if (counts.byPerson.isEmpty() && counts.byPlace.isEmpty()) return SearchFacetLabels.Empty
+        return try {
+            searchResultDetailsRepository.labelFacets(counts.byPerson.keys, counts.byPlace.keys)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Napier.w("Could not name the people and places in search narrowing", error)
+            SearchFacetLabels.Empty
         }
     }
 
@@ -145,6 +187,21 @@ class SearchViewModel(
             val next = if (type in active) active - type else active + type
             current.copy(contentTypes = next.takeIf { it.isNotEmpty() })
         }
+    }
+
+    /** Narrows to one person, or clears the person narrowing when [personId] is already chosen. */
+    fun togglePerson(personId: Uuid) {
+        filtersState.update { it.copy(personId = personId.takeUnless { chosen -> chosen == it.personId }) }
+    }
+
+    /** Narrows to one place, or clears the place narrowing when [placeId] is already chosen. */
+    fun togglePlace(placeId: Uuid) {
+        filtersState.update { it.copy(placeId = placeId.takeUnless { chosen -> chosen == it.placeId }) }
+    }
+
+    /** Narrows to one calendar year, or clears the year narrowing when [year] is already chosen. */
+    fun toggleYear(year: Int) {
+        filtersState.update { it.copy(year = year.takeUnless { chosen -> chosen == it.year }) }
     }
 
     /**
@@ -221,6 +278,16 @@ sealed interface SearchScreenState {
         val results: List<SearchResult>,
     ) : SearchScreenState
 }
+
+/**
+ * What the narrowing options show: the counts, the names of the people and places they stand for,
+ * and the narrowing that is currently chosen.
+ */
+data class SearchNarrowingState(
+    val counts: SearchFacetCounts = SearchFacetCounts.Empty,
+    val labels: SearchFacetLabels = SearchFacetLabels.Empty,
+    val filters: SearchFilters = SearchFilters.Default,
+)
 
 private data class SearchResultSnapshot(
     val query: SearchQuery,

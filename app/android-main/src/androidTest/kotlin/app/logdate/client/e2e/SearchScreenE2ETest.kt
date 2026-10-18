@@ -26,6 +26,7 @@ import app.logdate.client.database.getRoomDatabase
 import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.datastore.featureflags.DataStoreFeatureFlagStore
 import app.logdate.client.domain.search.ObserveRecentSearchesUseCase
+import app.logdate.client.domain.search.ObserveSearchFacetsUseCase
 import app.logdate.client.domain.search.UniversalSearchUseCase
 import app.logdate.client.repository.search.RecentSearchesRepository
 import app.logdate.client.repository.search.SearchContentType
@@ -137,6 +138,7 @@ class SearchScreenE2ETest {
                         detailsDao = database.searchDetailsDao(),
                         personDao = database.personDao(),
                     ),
+                observeSearchFacetsUseCase = ObserveSearchFacetsUseCase(searchRepository),
             )
     }
 

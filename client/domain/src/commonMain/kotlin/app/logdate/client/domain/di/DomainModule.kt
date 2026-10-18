@@ -87,6 +87,7 @@ import app.logdate.client.domain.rewind.PreferencesCurationConfigProvider
 import app.logdate.client.domain.rewind.RefreshCurrentWeekRewindUseCase
 import app.logdate.client.domain.rewind.SaveReflectionPromptResponseUseCase
 import app.logdate.client.domain.search.ObserveRecentSearchesUseCase
+import app.logdate.client.domain.search.ObserveSearchFacetsUseCase
 import app.logdate.client.domain.search.SearchEntriesUseCase
 import app.logdate.client.domain.search.SearchInJournalUseCase
 import app.logdate.client.domain.search.SearchJournalsUseCase
@@ -317,6 +318,7 @@ val domainModule: Module =
         factory { SearchInJournalUseCase(get()) }
         factory { SearchJournalsUseCase(get()) }
         factory { UniversalSearchUseCase(get()) }
+        factory { ObserveSearchFacetsUseCase(get()) }
         factory { ObserveRecentSearchesUseCase(get()) }
 
         // Recommendations

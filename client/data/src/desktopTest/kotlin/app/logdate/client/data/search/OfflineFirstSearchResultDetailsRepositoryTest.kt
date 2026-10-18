@@ -16,6 +16,8 @@ import app.logdate.client.database.entities.rewind.RewindEntity
 import app.logdate.client.database.entities.rewind.RewindImageContentEntity
 import app.logdate.client.database.getRoomDatabase
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchFacetLabels
+import app.logdate.client.repository.search.SearchPersonLabel
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultKey
@@ -177,6 +179,39 @@ class OfflineFirstSearchResultDetailsRepositoryTest {
             val details = repository.describe(listOf(result(person, SearchContentType.PERSON)))
 
             assertEquals(SearchResultDetail.Person("file:///sam.jpg", "Friend"), details[key(person, SearchContentType.PERSON)])
+        }
+
+    @Test
+    fun `facet labels name the people and places asked about`() =
+        runTest {
+            val person = Uuid.random()
+            val missingPerson = Uuid.random()
+            val place = Uuid.random()
+            val missingPlace = Uuid.random()
+            database.personDao().insert(
+                PersonEntity(
+                    id = person,
+                    name = "Sam",
+                    photoUri = "file:///sam.jpg",
+                    origin = "MANUAL",
+                    created = created,
+                    lastUpdated = created,
+                ),
+            )
+            database.placeDao().insert(
+                PlaceEntity(id = place, name = "Lake Mead", latitude = 36.1, longitude = -114.7, created = created, lastUpdated = created),
+            )
+
+            val labels = repository.labelFacets(listOf(person, missingPerson), listOf(place, missingPlace))
+
+            assertEquals(mapOf(person to SearchPersonLabel("Sam", "file:///sam.jpg")), labels.people)
+            assertEquals(mapOf(place to "Lake Mead"), labels.places)
+        }
+
+    @Test
+    fun `facet labels for nothing need no lookups`() =
+        runTest {
+            assertEquals(SearchFacetLabels.Empty, repository.labelFacets(emptyList(), emptyList()))
         }
 
     @Test
