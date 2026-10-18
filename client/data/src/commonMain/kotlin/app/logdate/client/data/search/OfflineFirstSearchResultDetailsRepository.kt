@@ -1,8 +1,10 @@
 package app.logdate.client.data.search
 
+import app.logdate.client.database.dao.JournalEntryRow
 import app.logdate.client.database.dao.SearchDetailsDao
 import app.logdate.client.database.dao.people.PersonDao
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchEntryActivity
 import app.logdate.client.repository.search.SearchFacetLabels
 import app.logdate.client.repository.search.SearchPersonLabel
 import app.logdate.client.repository.search.SearchPreviewEntry
@@ -14,6 +16,8 @@ import app.logdate.client.repository.search.SearchResultPreview
 import app.logdate.shared.model.Rewind
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -70,16 +74,34 @@ class OfflineFirstSearchResultDetailsRepository(
         when (key.contentType) {
             SearchContentType.JOURNAL -> journalPreview(key.uid)
             SearchContentType.REWIND -> rewindPreview(key.uid)
+            SearchContentType.PLACE -> placePreview(key.uid)
+            SearchContentType.PERSON -> personPreview(key.uid)
             else -> null
         }
+
+    private fun zone() = TimeZone.currentSystemDefault()
 
     private suspend fun journalPreview(id: Uuid): SearchResultPreview.Journal? {
         val journal = detailsDao.journalPreview(id.toString()) ?: return null
         val entries =
-            detailsDao.latestJournalEntries(id.toString(), JOURNAL_PREVIEW_ENTRIES).map {
-                SearchPreviewEntry(Uuid.parse(it.uid), it.content, Instant.fromEpochMilliseconds(it.created))
-            }
+            detailsDao.latestJournalEntries(id.toString(), RECENT_ENTRIES).map { it.toPreviewEntry() }
         return SearchResultPreview.Journal(journal.description, Instant.fromEpochMilliseconds(journal.created), entries)
+    }
+
+    private suspend fun placePreview(id: Uuid): SearchResultPreview.Place? {
+        if (detailsDao.placeNames(listOf(id.toString())).isEmpty()) return null
+        return SearchResultPreview.Place(
+            activity = summarizeEntryTimes(detailsDao.placeEntryTimes(id.toString()).map(Instant::fromEpochMilliseconds), zone()),
+            recentEntries = detailsDao.latestPlaceEntries(id.toString(), RECENT_ENTRIES).map { it.toPreviewEntry() },
+        )
+    }
+
+    private suspend fun personPreview(id: Uuid): SearchResultPreview.Person? {
+        if (personDao.getById(id) == null) return null
+        return SearchResultPreview.Person(
+            activity = summarizeEntryTimes(detailsDao.personEntryTimes(id.toString()).map(Instant::fromEpochMilliseconds), zone()),
+            recentMentions = detailsDao.latestPersonEntries(id.toString(), RECENT_ENTRIES).map { it.toPreviewEntry() },
+        )
     }
 
     private suspend fun rewindPreview(id: Uuid): SearchResultPreview.Rewind? =
@@ -167,8 +189,32 @@ class OfflineFirstSearchResultDetailsRepository(
     ) = SearchResultKey(type, Uuid.parse(id))
 }
 
-private const val JOURNAL_PREVIEW_ENTRIES = 5
+private const val RECENT_ENTRIES = 5
 private const val REWIND_PREVIEW_HIGHLIGHTS = 3
+
+private fun JournalEntryRow.toPreviewEntry() = SearchPreviewEntry(Uuid.parse(uid), content, Instant.fromEpochMilliseconds(created))
+
+/** Counts entries, the local days they fall on, the first and latest, and entries per local year. */
+internal fun summarizeEntryTimes(
+    times: List<Instant>,
+    zone: TimeZone,
+): SearchEntryActivity {
+    if (times.isEmpty()) return SearchEntryActivity(0, 0, null, null, emptyMap())
+    val dates = times.map { it.toLocalDateTime(zone).date }
+    return SearchEntryActivity(
+        entryCount = times.size,
+        dayCount = dates.distinct().size,
+        first = times.min(),
+        latest = times.max(),
+        byYear =
+            dates
+                .groupingBy { it.year }
+                .eachCount()
+                .entries
+                .sortedBy { it.key }
+                .associate { it.key to it.value },
+    )
+}
 
 /** What a search preview shows of a rewind: its quoted lines and milestones, people and main place. */
 internal fun Rewind.toSearchPreview(): SearchResultPreview.Rewind {

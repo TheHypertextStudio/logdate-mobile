@@ -112,6 +112,8 @@ enum class SharedScreenshotSceneId(
     SearchAdaptiveLayout("search-adaptive-layout"),
     SearchPreviewRewind("search-preview-rewind"),
     SearchPreviewPostcard("search-preview-postcard"),
+    SearchPreviewPlace("search-preview-place"),
+    SearchPreviewPerson("search-preview-person"),
     RewindCoverCard("rewind-cover-card"),
     RewindOverviewCanonical("rewind-overview-canonical"),
     RewindDetailPopulated("rewind-detail-populated"),

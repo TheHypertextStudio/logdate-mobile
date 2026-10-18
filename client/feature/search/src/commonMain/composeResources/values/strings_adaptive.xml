@@ -35,5 +35,16 @@
     <string name="search_preview_highlights">Highlights</string>
     <string name="search_preview_people">With</string>
     <string name="search_preview_place">Place</string>
+    <plurals name="search_preview_day_count">
+        <item quantity="one">On %1$d day</item>
+        <item quantity="other">On %1$d days</item>
+    </plurals>
+    <string name="search_preview_first_written">First written %1$s</string>
+    <string name="search_preview_last_written">Most recent %1$s</string>
+    <string name="search_preview_by_year">By year</string>
+    <string name="search_preview_recent_entries">Recent entries</string>
+    <string name="search_preview_recent_mentions">Recent mentions</string>
+    <string name="search_preview_narrow_place">Show entries here</string>
+    <string name="search_preview_narrow_person">Show entries with this person</string>
     <string name="search_preview_empty">Choose a result to see it here</string>
 </resources>

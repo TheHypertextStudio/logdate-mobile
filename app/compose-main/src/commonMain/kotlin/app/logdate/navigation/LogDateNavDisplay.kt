@@ -95,6 +95,7 @@ import app.logdate.feature.postcards.navigation.postcardsEntries
 import app.logdate.feature.rewind.navigation.RewindDetailRoute
 import app.logdate.feature.rewind.navigation.rewindDetailEntry
 import app.logdate.feature.search.ui.SearchScreen
+import app.logdate.feature.timeline.ui.details.PlaceLocationMap
 import app.logdate.navigation.scenes.RelatedContentSceneStrategy
 import app.logdate.ui.LocalNavAnimatedVisibilityScope
 import app.logdate.ui.LocalSharedTransitionScope
@@ -463,6 +464,14 @@ fun LogDateNavDisplay(
                                             initialDateRangeName = route.dateRangeName,
                                             adaptive = adaptiveSearchEnabled,
                                             showPeople = peopleEnabled,
+                                            placeMap = {
+                                                name,
+                                                latitude,
+                                                longitude,
+                                                modifier,
+                                                ->
+                                                PlaceLocationMap(name, latitude, longitude, modifier)
+                                            },
                                             dayPreview = { date, highlight ->
                                                 TimelineDetailEntry(
                                                     date = date,

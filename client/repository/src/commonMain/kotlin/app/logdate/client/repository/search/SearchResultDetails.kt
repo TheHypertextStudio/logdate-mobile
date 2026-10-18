@@ -84,6 +84,18 @@ data class SearchPreviewEntry(
 )
 
 /**
+ * How much has been written at a place or with a person: entries, the days they fall on, the first
+ * and latest, and entries per local calendar year, oldest year first.
+ */
+data class SearchEntryActivity(
+    val entryCount: Int,
+    val dayCount: Int,
+    val first: Instant?,
+    val latest: Instant?,
+    val byYear: Map<Int, Int>,
+)
+
+/**
  * What the preview beside the results shows of a result beyond its row.
  *
  * Loaded when a result is chosen rather than with every row, since it reads the content itself.
@@ -101,6 +113,18 @@ sealed interface SearchResultPreview {
         val highlights: List<String>,
         val people: List<String>,
         val place: String?,
+    ) : SearchResultPreview
+
+    /** How much has been written at a place and the newest entries there. */
+    data class Place(
+        val activity: SearchEntryActivity,
+        val recentEntries: List<SearchPreviewEntry>,
+    ) : SearchResultPreview
+
+    /** How much has been written with a person and the newest entries that mention them. */
+    data class Person(
+        val activity: SearchEntryActivity,
+        val recentMentions: List<SearchPreviewEntry>,
     ) : SearchResultPreview
 }
 

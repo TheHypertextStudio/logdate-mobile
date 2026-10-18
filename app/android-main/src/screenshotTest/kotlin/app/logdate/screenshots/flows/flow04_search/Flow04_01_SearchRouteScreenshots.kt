@@ -57,6 +57,16 @@ fun S09_SearchPreviewRewind() = SharedSearchScene(SharedScreenshotSceneId.Search
 @Composable
 fun S10_SearchPreviewPostcard() = SharedSearchScene(SharedScreenshotSceneId.SearchPreviewPostcard)
 
+@PreviewTest
+@ScreenshotPreviewMatrix
+@Composable
+fun S11_SearchPreviewPlace() = SharedSearchScene(SharedScreenshotSceneId.SearchPreviewPlace)
+
+@PreviewTest
+@ScreenshotPreviewMatrix
+@Composable
+fun S12_SearchPreviewPerson() = SharedSearchScene(SharedScreenshotSceneId.SearchPreviewPerson)
+
 @Composable
 private fun SharedSearchScene(sceneId: SharedScreenshotSceneId) {
     ScreenshotTheme {

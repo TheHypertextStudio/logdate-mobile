@@ -10,6 +10,8 @@ import app.logdate.client.database.entities.StickerEntity
 import app.logdate.client.database.entities.TextNoteEntity
 import app.logdate.client.database.entities.VideoNoteEntity
 import app.logdate.client.database.entities.journals.JournalContentEntityLink
+import app.logdate.client.database.entities.people.PersonEntity
+import app.logdate.client.database.entities.people.PersonLinkEntity
 import app.logdate.client.database.entities.rewind.RewindEntity
 import app.logdate.client.database.entities.rewind.RewindImageContentEntity
 import kotlinx.coroutines.test.runTest
@@ -295,10 +297,130 @@ class SearchDetailsDaoJvmTest {
             assertEquals(created.plus(2.days).toEpochMilliseconds(), latest.first().created)
         }
 
+    @Test
+    fun `the entries at a place are every kind of note there, without deleted ones or other places`() =
+        runTest {
+            val db = openDatabase()
+            val lake = savePlace(db, "Lake Mead")
+            val home = savePlace(db, "Home")
+            val text = textNote("at the lake", created, placeId = lake)
+            val audio = Uuid.random()
+            val image = Uuid.random()
+            val video = Uuid.random()
+            db.textNoteDao().addNote(text)
+            db.textNoteDao().addNote(textNote("at home", created, placeId = home))
+            db.audioNoteDao().addNote(
+                AudioNoteEntity("a.m4a", 1_000, uid = audio, created = created.plus(1.days), lastUpdated = created, placeId = lake),
+            )
+            db.imageNoteDao().addNote(
+                ImageNoteEntity(
+                    contentUri = "file:///a.jpg",
+                    uid = image,
+                    created = created.plus(2.days),
+                    lastUpdated = created,
+                    placeId = lake,
+                ),
+            )
+            db.videoNoteDao().addNote(
+                VideoNoteEntity("file:///b.mp4", 1_000, uid = video, created = created.plus(3.days), lastUpdated = created, placeId = lake),
+            )
+            val deleted = textNote("deleted", created.plus(4.days), placeId = lake)
+            db.textNoteDao().addNote(deleted)
+            db.textNoteDao().removeNote(deleted.uid)
+
+            val times = db.searchDetailsDao().placeEntryTimes(lake.toString())
+
+            assertEquals(
+                listOf(created, created.plus(1.days), created.plus(2.days), created.plus(3.days)).map { it.toEpochMilliseconds() },
+                times.sorted(),
+            )
+        }
+
+    @Test
+    fun `the latest entries at a place are its newest text notes, newest first`() =
+        runTest {
+            val db = openDatabase()
+            val lake = savePlace(db, "Lake Mead")
+            val older = textNote("older", created, placeId = lake)
+            val newer = textNote("newer", created.plus(1.days), placeId = lake)
+            listOf(older, newer, textNote("elsewhere", created.plus(2.days))).forEach { db.textNoteDao().addNote(it) }
+
+            val latest = db.searchDetailsDao().latestPlaceEntries(lake.toString(), limit = 5)
+
+            assertEquals(listOf("newer", "older"), latest.map { it.content })
+        }
+
+    @Test
+    fun `the entries with a person are the notes linked to them by an active link`() =
+        runTest {
+            val db = openDatabase()
+            val sam = savePerson(db, "Sam")
+            val maya = savePerson(db, "Maya")
+            val withSam = textNote("with Sam", created)
+            val dismissed = textNote("dismissed", created.plus(1.days))
+            val withMaya = textNote("with Maya", created.plus(2.days))
+            val photo = Uuid.random()
+            listOf(withSam, dismissed, withMaya).forEach { db.textNoteDao().addNote(it) }
+            db.imageNoteDao().addNote(
+                ImageNoteEntity(contentUri = "file:///a.jpg", uid = photo, created = created.plus(3.days), lastUpdated = created),
+            )
+            db.personLinkDao().insertAll(
+                listOf(
+                    personLink(sam, withSam.uid),
+                    personLink(sam, dismissed.uid, status = "DISMISSED"),
+                    personLink(sam, photo),
+                    personLink(maya, withMaya.uid),
+                ),
+            )
+
+            val times = db.searchDetailsDao().personEntryTimes(sam.toString())
+            val latest = db.searchDetailsDao().latestPersonEntries(sam.toString(), limit = 5)
+
+            assertEquals(listOf(created, created.plus(3.days)).map { it.toEpochMilliseconds() }, times.sorted())
+            assertEquals(listOf("with Sam"), latest.map { it.content })
+        }
+
+    private suspend fun savePlace(
+        db: LogDateDatabase,
+        name: String,
+    ): Uuid {
+        val id = Uuid.random()
+        db.placeDao().insert(
+            PlaceEntity(id = id, name = name, latitude = 36.0, longitude = -114.7, created = created, lastUpdated = created),
+        )
+        return id
+    }
+
+    private suspend fun savePerson(
+        db: LogDateDatabase,
+        name: String,
+    ): Uuid {
+        val id = Uuid.random()
+        db.personDao().insert(PersonEntity(id = id, name = name, origin = "MANUAL", created = created, lastUpdated = created))
+        return id
+    }
+
+    private fun personLink(
+        personId: Uuid,
+        targetId: Uuid,
+        status: String = "ACTIVE",
+    ) = PersonLinkEntity(
+        id = Uuid.random(),
+        personId = personId,
+        targetType = "ENTRY",
+        targetId = targetId,
+        provenance = "EXPLICIT",
+        confidence = 1.0,
+        status = status,
+        created = created,
+        lastUpdated = created,
+    )
+
     private fun textNote(
         content: String,
         at: Instant,
-    ) = TextNoteEntity(content = content, uid = Uuid.random(), created = at, lastUpdated = at)
+        placeId: Uuid? = null,
+    ) = TextNoteEntity(content = content, uid = Uuid.random(), created = at, lastUpdated = at, placeId = placeId)
 
     private fun openDatabase(): LogDateDatabase {
         database?.close()
