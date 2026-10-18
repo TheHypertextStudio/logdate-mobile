@@ -9,6 +9,7 @@ import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
+import app.logdate.client.repository.search.SearchScope
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -93,6 +94,39 @@ class OfflineFirstSearchRepository(
             }
         }
 
+    override fun searchScoped(
+        query: String,
+        scope: SearchScope,
+        limit: Int,
+    ): Flow<List<SearchResult>> =
+        observedFtsFlow(query, includePerson = scope::includesPerson) { preparedQuery ->
+            val effectiveLimit =
+                if (preparedQuery.isSingleCharacterPlainQuery) {
+                    minOf(limit, SHORT_QUERY_RESULT_LIMIT)
+                } else {
+                    limit
+                }
+            searchDao
+                .searchScoped(
+                    query = preparedQuery.query,
+                    typesEnabled = scope.contentTypes != null,
+                    types = scope.contentTypes?.map { it.ftsValue } ?: listOf(""),
+                    personId = scope.personId?.toString(),
+                    placeId = scope.placeId?.toString(),
+                    createdFrom = scope.createdFrom?.toEpochMilliseconds(),
+                    createdBefore = scope.createdBefore?.toEpochMilliseconds(),
+                    limit = effectiveLimit,
+                ).map { entity ->
+                    SearchResult(
+                        uid = entity.getUuid(),
+                        content = entity.content,
+                        created = entity.getCreatedInstant(),
+                        contentType = SearchContentType.fromFtsValue(entity.contentType),
+                        rank = entity.rank,
+                    )
+                }
+        }
+
     override fun searchInJournal(
         query: String,
         journalId: Uuid,
@@ -116,6 +150,7 @@ class OfflineFirstSearchRepository(
      */
     private fun observedFtsFlow(
         query: String,
+        includePerson: (SearchResult) -> Boolean = { true },
         block: suspend (preparedQuery: PreparedFtsQuery) -> List<SearchResult>,
     ): Flow<List<SearchResult>> {
         val prepared = prepareFtsQuery(query) ?: return flowOf(emptyList())
@@ -134,7 +169,7 @@ class OfflineFirstSearchRepository(
                 }
 
         return combine(ftsResults, observePeopleResults(query)) { fts, people ->
-            mergeSearchResults(fts = fts, people = people)
+            mergeSearchResults(fts = fts, people = people.filter(includePerson))
         }
     }
 
@@ -283,6 +318,21 @@ class OfflineFirstSearchRepository(
         const val SHORT_QUERY_RESULT_LIMIT = 20
         const val TWO_CHARACTER_PREFIX_MIN_LENGTH = 5
     }
+}
+
+/**
+ * Whether this person result survives the scope.
+ *
+ * People are matched by name outside the FTS index and have no capture date or place, so any place
+ * or date narrowing removes them. A person narrowing keeps only that person.
+ */
+private fun SearchScope.includesPerson(person: SearchResult): Boolean {
+    val types = contentTypes
+    return (types == null || SearchContentType.PERSON in types) &&
+        placeId == null &&
+        createdFrom == null &&
+        createdBefore == null &&
+        (personId == null || person.uid == personId)
 }
 
 /**

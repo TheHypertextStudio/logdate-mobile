@@ -1,6 +1,7 @@
 package app.logdate.client.domain.search
 
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchScope
 import app.logdate.util.getLocaleFirstDayOfWeek
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
@@ -11,23 +12,59 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /**
  * Filters that narrow universal search results.
  *
  * @property contentTypes Restrict results to specific entity types. Null means all types.
  * @property dateRange Restrict results to a relative window. Defaults to [DateRangeFilter.AllTime].
+ * @property personId Restrict results to those linked to this person, plus the person.
+ * @property placeId Restrict results to those captured at this place, plus the place.
+ * @property year Restrict results to this calendar year in the local time zone.
  * @property maxResults Maximum number of results to return.
  */
 data class SearchFilters(
     val contentTypes: Set<SearchContentType>? = null,
     val dateRange: DateRangeFilter = DateRangeFilter.AllTime,
+    val personId: Uuid? = null,
+    val placeId: Uuid? = null,
+    val year: Int? = null,
     val maxResults: Int = 50,
 ) {
     companion object {
         /** Filters with no restrictions — returns all content types, up to 50 results. */
         val Default = SearchFilters()
     }
+}
+
+/**
+ * Converts these filters to the [SearchScope] a repository applies inside its query.
+ *
+ * The relative [SearchFilters.dateRange] and the calendar [SearchFilters.year] are resolved
+ * against [now] and [timeZone] and combined to their overlap. When they do not overlap the
+ * resulting window is empty (`createdFrom >= createdBefore`), so no result qualifies.
+ */
+fun SearchFilters.toScope(
+    now: Instant,
+    timeZone: TimeZone,
+): SearchScope {
+    val range = dateRange.takeIf { it != DateRangeFilter.AllTime }?.window(now, timeZone)
+    val yearRange =
+        year?.let { year ->
+            InstantRange(
+                from = LocalDate(year, 1, 1).atStartOfDayIn(timeZone),
+                toExclusive = LocalDate(year + 1, 1, 1).atStartOfDayIn(timeZone),
+            )
+        }
+    val windows = listOfNotNull(range, yearRange)
+    return SearchScope(
+        contentTypes = contentTypes,
+        personId = personId,
+        placeId = placeId,
+        createdFrom = windows.maxOfOrNull { it.from },
+        createdBefore = windows.minOfOrNull { it.toExclusive },
+    )
 }
 
 /**

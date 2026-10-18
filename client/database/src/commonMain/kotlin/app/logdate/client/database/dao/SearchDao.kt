@@ -297,6 +297,43 @@ interface SearchDao {
     ): List<RankedSearchResultEntity>
 
     /**
+     * Ranked search narrowed by content type, creation window, person and place.
+     *
+     * Every narrowing option is applied inside the query, before [limit], so a narrowed search
+     * returns the best matches within the narrowing rather than the narrowed remainder of the
+     * best matches overall. Pass `null` for an option that should not narrow the results.
+     *
+     * @param typesEnabled Whether [types] narrows the results. When false, [types] is ignored.
+     * @param types FTS content type values to keep when [typesEnabled] is true.
+     * @param personId Keep results linked to this person through an active link.
+     * @param placeId Keep results captured at this place, and the place itself.
+     * @param createdFrom Keep results created at or after this epoch-millisecond instant.
+     * @param createdBefore Keep results created before this epoch-millisecond instant.
+     */
+    @Query(
+        "SELECT f.uid AS uid, " +
+            "snippet(entries_fts, 1, '[', ']', '...', 24) AS content, " +
+            "f.created AS created, " +
+            "f.contentType AS contentType, " +
+            "bm25(entries_fts) AS result_rank " +
+            "FROM entries_fts f " +
+            "WHERE entries_fts MATCH :query " +
+            SCOPE_FILTERS +
+            "ORDER BY bm25(entries_fts), f.created DESC " +
+            "LIMIT :limit",
+    )
+    suspend fun searchScoped(
+        query: String,
+        typesEnabled: Boolean,
+        types: List<String>,
+        personId: String?,
+        placeId: String?,
+        createdFrom: Long?,
+        createdBefore: Long?,
+        limit: Int,
+    ): List<RankedSearchResultEntity>
+
+    /**
      * Returns indexed terms for typo-tolerant fallback against the FTS vocabulary.
      */
     @Query(
@@ -316,6 +353,37 @@ interface SearchDao {
         limit: Int,
     ): List<String>
 }
+
+/**
+ * The place a search row was captured at, as a SQL expression over an `entries_fts` alias `f`.
+ *
+ * A place row is its own place. Notes, recordings and media carry a place id; rows with no place
+ * (journals, rewinds, stickers, postcards) evaluate to null and so never match a place.
+ */
+private const val PLACE_OF_ROW =
+    "CASE f.contentType " +
+        "WHEN 'text_note' THEN (SELECT t.place_id FROM text_notes t WHERE t.uid = f.uid) " +
+        "WHEN 'transcription' THEN (SELECT a.place_id FROM audio_notes a WHERE a.uid = f.uid) " +
+        "WHEN 'ambient_sound' THEN (SELECT a.place_id FROM audio_notes a WHERE a.uid = f.uid) " +
+        "WHEN 'media_caption' THEN COALESCE(" +
+        "(SELECT i.place_id FROM image_notes i WHERE i.uid = f.uid), " +
+        "(SELECT v.place_id FROM video_notes v WHERE v.uid = f.uid)) " +
+        "WHEN 'place' THEN f.uid " +
+        "END"
+
+/**
+ * Narrowing clauses shared by scoped searches and counts. Expects the `entries_fts` alias `f` and
+ * the parameters `typesEnabled`, `types`, `personId`, `placeId`, `createdFrom` and `createdBefore`.
+ */
+private const val SCOPE_FILTERS =
+    "AND (:typesEnabled = 0 OR f.contentType IN (:types)) " +
+        "AND (:createdFrom IS NULL OR f.created >= :createdFrom) " +
+        "AND (:createdBefore IS NULL OR f.created < :createdBefore) " +
+        "AND (:placeId IS NULL OR " + PLACE_OF_ROW + " = :placeId) " +
+        "AND (:personId IS NULL OR EXISTS (" +
+        "SELECT 1 FROM person_links pl " +
+        "WHERE pl.person_id = :personId AND pl.target_id = f.uid " +
+        "AND pl.target_type = 'ENTRY' AND pl.status = 'ACTIVE')) "
 
 /**
  * Entity representing a ranked search result with FTS5 relevance score.

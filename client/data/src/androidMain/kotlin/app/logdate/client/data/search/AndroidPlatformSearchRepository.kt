@@ -2,6 +2,7 @@ package app.logdate.client.data.search
 
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
+import app.logdate.client.repository.search.SearchScope
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -54,6 +55,13 @@ class AndroidPlatformSearchRepository(
             limit = limit,
             fallback = { roomSearchRepository.searchRanked(query, limit) },
         )
+
+    // The platform index holds no person or place links, so scoped searches always use the local index.
+    override fun searchScoped(
+        query: String,
+        scope: SearchScope,
+        limit: Int,
+    ): Flow<List<SearchResult>> = roomSearchRepository.searchScoped(query, scope, limit)
 
     override fun searchInJournal(
         query: String,
