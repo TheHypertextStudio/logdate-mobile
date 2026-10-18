@@ -7,6 +7,7 @@ import app.logdate.client.database.entities.people.PersonEntity
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchFacets
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchScope
@@ -24,6 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
@@ -144,6 +146,99 @@ class OfflineFirstSearchRepository(
             }
         }
 
+    override fun observeFacets(
+        query: String,
+        scope: SearchScope,
+    ): Flow<SearchFacets> {
+        val prepared = prepareFtsQuery(query) ?: return flowOf(SearchFacets.Empty)
+
+        val indexFacets =
+            searchDao
+                .observeGeneration()
+                .distinctUntilChanged()
+                .mapLatest { executePreparedQuery(prepared, isEmpty = { it.isEmpty }) { countIndexFacets(it, scope) } }
+                .catch { error ->
+                    Napier.e("Search facet query failed for \"$query\": ${error.message}", error)
+                    emit(IndexFacets())
+                }
+
+        val typeScope = scope.copy(contentTypes = null)
+        return combine(indexFacets, observePeopleResults(query)) { index, people ->
+            val matchingPeople = people.count(typeScope::includesPerson)
+            SearchFacets(
+                byType =
+                    index.byType.let { counts ->
+                        if (matchingPeople > 0) counts + (SearchContentType.PERSON to matchingPeople) else counts
+                    },
+                byPerson = index.byPerson,
+                byPlace = index.byPlace,
+                createdAt = index.createdAt,
+            )
+        }
+    }
+
+    /**
+     * Counts matches once per narrowing option, each ignoring the option it counts so a count is
+     * what choosing that option would leave.
+     */
+    private suspend fun countIndexFacets(
+        prepared: PreparedFtsQuery,
+        scope: SearchScope,
+    ): IndexFacets {
+        val typeScope = scope.copy(contentTypes = null)
+        val personScope = scope.copy(personId = null)
+        val placeScope = scope.copy(placeId = null)
+        val timeScope = scope.copy(createdFrom = null, createdBefore = null)
+        return IndexFacets(
+            byType =
+                searchDao
+                    .countByContentType(
+                        prepared.query,
+                        typeScope.contentTypes != null,
+                        typeScope.typeValues(),
+                        typeScope.personId?.toString(),
+                        typeScope.placeId?.toString(),
+                        typeScope.createdFrom?.toEpochMilliseconds(),
+                        typeScope.createdBefore?.toEpochMilliseconds(),
+                    ).associate { SearchContentType.fromFtsValue(it.contentType) to it.total },
+            byPerson =
+                searchDao
+                    .countByPerson(
+                        prepared.query,
+                        personScope.contentTypes != null,
+                        personScope.typeValues(),
+                        personScope.personId?.toString(),
+                        personScope.placeId?.toString(),
+                        personScope.createdFrom?.toEpochMilliseconds(),
+                        personScope.createdBefore?.toEpochMilliseconds(),
+                    ).associate { Uuid.parse(it.personId) to it.total },
+            byPlace =
+                searchDao
+                    .countByPlace(
+                        prepared.query,
+                        placeScope.contentTypes != null,
+                        placeScope.typeValues(),
+                        placeScope.personId?.toString(),
+                        placeScope.placeId?.toString(),
+                        placeScope.createdFrom?.toEpochMilliseconds(),
+                        placeScope.createdBefore?.toEpochMilliseconds(),
+                    ).associate { Uuid.parse(it.placeId) to it.total },
+            createdAt =
+                searchDao
+                    .findCreatedTimes(
+                        prepared.query,
+                        timeScope.contentTypes != null,
+                        timeScope.typeValues(),
+                        timeScope.personId?.toString(),
+                        timeScope.placeId?.toString(),
+                        timeScope.createdFrom?.toEpochMilliseconds(),
+                        timeScope.createdBefore?.toEpochMilliseconds(),
+                    ).map { Instant.fromEpochMilliseconds(it) },
+        )
+    }
+
+    private fun SearchScope.typeValues(): List<String> = contentTypes?.map { it.ftsValue } ?: listOf("")
+
     /**
      * Re-runs the same prepared query when the search index changes. A burst of changes, such as
      * a sync applying many records, re-runs it once after the changes settle.
@@ -162,7 +257,7 @@ class OfflineFirstSearchRepository(
                 .debounceAfterFirst(INDEX_CHANGE_SETTLE_TIME)
                 .mapLatest {
                     ensureIndexCurrent()
-                    executePreparedQuery(prepared, block)
+                    executePreparedQuery(prepared, isEmpty = List<SearchResult>::isEmpty, block = block)
                 }.catch { error ->
                     Napier.e("Search query failed", error)
                     emit(emptyList())
@@ -227,12 +322,13 @@ class OfflineFirstSearchRepository(
         }
     }
 
-    private suspend fun executePreparedQuery(
+    private suspend fun <T> executePreparedQuery(
         prepared: PreparedFtsQuery,
-        block: suspend (preparedQuery: PreparedFtsQuery) -> List<SearchResult>,
-    ): List<SearchResult> {
+        isEmpty: (T) -> Boolean,
+        block: suspend (preparedQuery: PreparedFtsQuery) -> T,
+    ): T {
         val primaryResults = block(prepared)
-        if (primaryResults.isNotEmpty() || prepared.usesExplicitSyntax || prepared.tokens.isEmpty()) {
+        if (!isEmpty(primaryResults) || prepared.usesExplicitSyntax || prepared.tokens.isEmpty()) {
             return primaryResults
         }
 
@@ -318,6 +414,17 @@ class OfflineFirstSearchRepository(
         const val SHORT_QUERY_RESULT_LIMIT = 20
         const val TWO_CHARACTER_PREFIX_MIN_LENGTH = 5
     }
+}
+
+/** Counts from the full-text index, before people are added to the type counts. */
+private data class IndexFacets(
+    val byType: Map<SearchContentType, Int> = emptyMap(),
+    val byPerson: Map<Uuid, Int> = emptyMap(),
+    val byPlace: Map<Uuid, Int> = emptyMap(),
+    val createdAt: List<Instant> = emptyList(),
+) {
+    /** True when nothing in the index matched, which is when a typo-corrected retry is worth making. */
+    val isEmpty: Boolean get() = byType.isEmpty()
 }
 
 /**
