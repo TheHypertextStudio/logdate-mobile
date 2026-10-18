@@ -3,12 +3,15 @@
 package app.logdate.screenshots.shared
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.key
+import app.logdate.feature.search.ui.AdaptiveSearchActions
+import app.logdate.feature.search.ui.AdaptiveSearchBody
 import app.logdate.feature.search.ui.AdaptiveSearchResults
 import app.logdate.feature.search.ui.NarrowingOption
 import app.logdate.feature.search.ui.NarrowingYear
@@ -116,6 +119,26 @@ internal val catalogSearchScenes: List<SharedScreenshotSceneSpec> =
                     onTogglePlace = {},
                     onToggleYear = {},
                     onClear = {},
+                )
+            }
+        },
+        sharedScene(SharedScreenshotSceneId.SearchAdaptiveLayout, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainer, modifier = Modifier.fillMaxSize()) {
+                AdaptiveSearchBody(
+                    results = adaptiveSearchResults,
+                    details = adaptiveSearchDetails,
+                    narrowing = narrowingOptions,
+                    actions =
+                        AdaptiveSearchActions(
+                            onResultClick = {},
+                            onResultLongClick = {},
+                            onOpenDay = {},
+                            onToggleType = {},
+                            onTogglePerson = {},
+                            onTogglePlace = {},
+                            onToggleYear = {},
+                            onClearNarrowing = {},
+                        ),
                 )
             }
         },
