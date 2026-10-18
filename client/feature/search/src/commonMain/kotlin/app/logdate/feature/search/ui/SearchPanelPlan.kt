@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.foldable.FoldableLayoutInfo
-import app.logdate.ui.foldable.relativeTo
 import app.logdate.ui.workspace.PanelConstraints
 import app.logdate.ui.workspace.resolveWorkspaceComposition
 
@@ -16,9 +15,6 @@ enum class SearchPanels {
 
     /** The results beside a preview of the chosen result, with the narrowing options above the results. */
     ResultsAndPreview,
-
-    /** The narrowing options, the results and the preview side by side. */
-    NarrowingResultsAndPreview,
 }
 
 /**
@@ -26,15 +22,6 @@ enum class SearchPanels {
  * the panels the plan promises are the panels the layout places.
  */
 internal object SearchPanelConstraints {
-    /** The narrowing panel, when all three panels fit. */
-    val Narrowing = PanelConstraints(260.dp, 280.dp, 300.dp)
-
-    /** The results, when they sit between the narrowing panel and the preview. */
-    val ResultsBetween = PanelConstraints(360.dp, 460.dp, 560.dp)
-
-    /** The preview beside the results, when all three panels fit. */
-    val PreviewTrailing = PanelConstraints(360.dp, 440.dp, 600.dp)
-
     /** The results beside a preview, as for other collections with a detail. */
     val ResultsBeside = PanelConstraints(320.dp, 400.dp, 440.dp)
 
@@ -46,8 +33,8 @@ internal object SearchPanelConstraints {
  * Chooses the panels search shows for a window of [width] by [height] with the given fold.
  *
  * The workspace layout decides what fits, and this asks it with the same constraints the layout
- * will use. Flat windows try all three panels, then results with a preview. Folded windows put the
- * results on one page, or above the fold, and the preview on the other.
+ * will use. Search never shows more than two panels: the results and a preview of the chosen result,
+ * side by side, or on either side of a fold. Room beyond that is left empty.
  */
 fun planSearchPanels(
     width: Dp,
@@ -56,23 +43,7 @@ fun planSearchPanels(
     origin: DpOffset,
     layoutDirection: LayoutDirection,
 ): SearchPanels {
-    val separated = foldable.relativeTo(origin).hinge?.isSeparating == true
-    if (!separated) {
-        val three =
-            resolveWorkspaceComposition(
-                width = width,
-                height = height,
-                focus = SearchPanelConstraints.ResultsBetween,
-                browse = SearchPanelConstraints.Narrowing,
-                inspector = SearchPanelConstraints.PreviewTrailing,
-                foldable = foldable,
-                origin = origin,
-                browseOnStart = true,
-                layoutDirection = layoutDirection,
-            )
-        if (three.browse != null && three.inspector != null) return SearchPanels.NarrowingResultsAndPreview
-    }
-    val two =
+    val composition =
         resolveWorkspaceComposition(
             width = width,
             height = height,
@@ -83,5 +54,5 @@ fun planSearchPanels(
             browseOnStart = true,
             layoutDirection = layoutDirection,
         )
-    return if (two.browse != null) SearchPanels.ResultsAndPreview else SearchPanels.ResultsOnly
+    return if (composition.browse != null) SearchPanels.ResultsAndPreview else SearchPanels.ResultsOnly
 }

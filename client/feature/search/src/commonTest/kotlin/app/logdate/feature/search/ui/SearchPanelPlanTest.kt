@@ -61,9 +61,9 @@ class SearchPanelPlanTest {
     }
 
     @Test
-    fun `a wide window shows narrowing results and preview side by side`() {
-        assertEquals(SearchPanels.NarrowingResultsAndPreview, plan(1180, 740))
-        assertEquals(SearchPanels.NarrowingResultsAndPreview, plan(1440, 900))
+    fun `a wide window shows two panels and never three`() {
+        assertEquals(SearchPanels.ResultsAndPreview, plan(1180, 740))
+        assertEquals(SearchPanels.ResultsAndPreview, plan(1920, 1080))
     }
 
     @Test
@@ -98,6 +98,6 @@ class SearchPanelPlanTest {
 
     @Test
     fun `right to left windows plan the same panels`() {
-        assertEquals(SearchPanels.NarrowingResultsAndPreview, plan(1180, 740, direction = LayoutDirection.Rtl))
+        assertEquals(SearchPanels.ResultsAndPreview, plan(1180, 740, direction = LayoutDirection.Rtl))
     }
 }

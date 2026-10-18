@@ -17,10 +17,10 @@ import app.logdate.ui.workspace.WorkspacePanel
 /**
  * Places search in the workspace's panels for the space it has and the fold it sits across.
  *
- * With room for three panels the narrowing options, the results and the preview sit side by side.
- * With room for two, the results and the preview do, and the narrowing options become a row above
- * the results. Folded, the results take one page, or the lower half, and the preview the other.
- * Otherwise only the results show, under the narrowing row.
+ * With room for two panels the results and the preview sit side by side, and the narrowing options
+ * are a row above the results. Folded, the results take one page, or the lower half, and the preview
+ * the other. Otherwise only the results show, under the narrowing row. Space beyond that is left
+ * empty rather than filled with more panels.
  *
  * Content responds only to its panel: the layout decides which panels exist and where.
  *
@@ -60,17 +60,6 @@ fun SearchWorkspaceLayout(
                         }
                     },
                     focus = { WorkspacePanel(Modifier.fillMaxSize()) { preview() } },
-                )
-            SearchPanels.NarrowingResultsAndPreview ->
-                AdaptiveWorkspaceLayout(
-                    modifier = Modifier.fillMaxSize(),
-                    focusConstraints = SearchPanelConstraints.ResultsBetween,
-                    browseConstraints = SearchPanelConstraints.Narrowing,
-                    inspectorConstraints = SearchPanelConstraints.PreviewTrailing,
-                    browseOnStart = true,
-                    browse = { CollectionPanel { narrowing(SearchNarrowingLayout.Panel) } },
-                    focus = { CollectionPanel { results(panels) } },
-                    inspector = { WorkspacePanel(Modifier.fillMaxSize()) { preview() } },
                 )
         }
     }
