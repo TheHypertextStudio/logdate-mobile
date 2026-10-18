@@ -10,6 +10,11 @@ import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.key
 import app.logdate.feature.search.ui.AdaptiveSearchResults
+import app.logdate.feature.search.ui.NarrowingOption
+import app.logdate.feature.search.ui.NarrowingYear
+import app.logdate.feature.search.ui.SearchNarrowing
+import app.logdate.feature.search.ui.SearchNarrowingLayout
+import app.logdate.feature.search.ui.SearchNarrowingOptions
 import app.logdate.feature.search.ui.SearchScreenContent
 import app.logdate.feature.search.ui.SearchScreenState
 import app.logdate.feature.search.ui.groupSearchResults
@@ -87,6 +92,33 @@ internal val catalogSearchScenes: List<SharedScreenshotSceneSpec> =
                 )
             }
         },
+        sharedScene(SharedScreenshotSceneId.SearchNarrowingPanel, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                SearchNarrowing(
+                    options = narrowingOptions,
+                    layout = SearchNarrowingLayout.Panel,
+                    onToggleType = {},
+                    onTogglePerson = {},
+                    onTogglePlace = {},
+                    onToggleYear = {},
+                    onClear = {},
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        },
+        sharedScene(SharedScreenshotSceneId.SearchNarrowingRow, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                SearchNarrowing(
+                    options = narrowingOptions,
+                    layout = SearchNarrowingLayout.Row,
+                    onToggleType = {},
+                    onTogglePerson = {},
+                    onTogglePlace = {},
+                    onToggleYear = {},
+                    onClear = {},
+                )
+            }
+        },
     )
 
 private val adaptiveSearchResults: List<SearchResult> =
@@ -141,3 +173,59 @@ private fun searchResult(
     created: kotlin.time.Instant,
     type: SearchContentType,
 ) = SearchResult(uid = Uuid.parse(id), content = content, created = created, contentType = type)
+
+private val narrowingOptions =
+    SearchNarrowingOptions(
+        types =
+            listOf(
+                NarrowingOption(SearchContentType.TEXT_NOTE, null, 31, false),
+                NarrowingOption(SearchContentType.TRANSCRIPTION, null, 6, false),
+                NarrowingOption(SearchContentType.MEDIA_CAPTION, null, 14, false),
+                NarrowingOption(SearchContentType.JOURNAL, null, 2, true),
+                NarrowingOption(SearchContentType.REWIND, null, 3, false),
+            ),
+        people =
+            listOf(
+                NarrowingOption(Uuid.parse("00000000-0000-0000-0000-000000000081"), "Sam", 23, false),
+                NarrowingOption(Uuid.parse("00000000-0000-0000-0000-000000000082"), "Maya", 9, false),
+                NarrowingOption(Uuid.parse("00000000-0000-0000-0000-000000000083"), "Priya", 4, false),
+            ),
+        places =
+            listOf(
+                NarrowingOption(Uuid.parse("00000000-0000-0000-0000-000000000091"), "Lake Mead", 29, true),
+                NarrowingOption(Uuid.parse("00000000-0000-0000-0000-000000000092"), "Las Vegas", 12, false),
+                NarrowingOption(Uuid.parse("00000000-0000-0000-0000-000000000093"), "Chicago", 5, false),
+            ),
+        years =
+            listOf(
+                NarrowingYear(2022, List(12) { if (it == 4) 2 else 0 }, selected = false),
+                NarrowingYear(2023, List(12) { if (it == 7) 5 else 0 }, selected = false),
+                NarrowingYear(
+                    2024,
+                    List(12) {
+                        if (it == 5) {
+                            3
+                        } else if (it == 7) {
+                            1
+                        } else {
+                            0
+                        }
+                    },
+                    selected = false,
+                ),
+                NarrowingYear(
+                    2025,
+                    List(12) {
+                        if (it in 6..7) {
+                            9 - it
+                        } else if (it == 2) {
+                            2
+                        } else {
+                            0
+                        }
+                    },
+                    selected = true,
+                ),
+                NarrowingYear(2026, List(12) { if (it == 3) 4 else 0 }, selected = false),
+            ),
+    )

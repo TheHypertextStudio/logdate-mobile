@@ -17,4 +17,14 @@
     <string name="search_section_days">Days</string>
     <string name="search_date_range">%1$s – %2$s</string>
     <string name="search_more_in_day">+%1$d more</string>
+    <string name="search_narrowing_when">When</string>
+    <string name="search_narrowing_people">People</string>
+    <string name="search_narrowing_places">Places</string>
+    <string name="search_narrowing_types">Type</string>
+    <string name="search_narrowing_clear">Clear narrowing</string>
+    <string name="search_narrowing_unnamed">Unnamed</string>
+    <plurals name="search_year_result_count">
+        <item quantity="one">%1$d, %2$d result</item>
+        <item quantity="other">%1$d, %2$d results</item>
+    </plurals>
 </resources>
