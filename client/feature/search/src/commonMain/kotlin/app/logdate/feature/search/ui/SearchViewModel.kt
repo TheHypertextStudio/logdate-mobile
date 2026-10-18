@@ -1,5 +1,6 @@
 package app.logdate.feature.search.ui
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.domain.search.DateRangeFilter
@@ -39,7 +40,8 @@ import kotlin.uuid.Uuid
  * ViewModel for the universal search screen.
  *
  * Manages search query state, recent searches, filter state (content types + date range), and
- * ranked results across all indexed content types.
+ * ranked results across all indexed content types. The query and the chosen narrowing are kept in
+ * [savedStateHandle] so they survive the screen being recreated.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class SearchViewModel(
@@ -47,9 +49,10 @@ class SearchViewModel(
     private val observeRecentSearchesUseCase: ObserveRecentSearchesUseCase,
     private val searchResultDetailsRepository: SearchResultDetailsRepository,
     private val observeSearchFacetsUseCase: ObserveSearchFacetsUseCase,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
-    private val queryState = MutableStateFlow(SearchQuery.Empty)
-    private val filtersState = MutableStateFlow(SearchFilters.Default)
+    private val queryState = MutableStateFlow(SearchQuery(savedStateHandle.savedQuery()))
+    private val filtersState = MutableStateFlow(savedStateHandle.savedFilters())
     private val searchDebounceMs = 150L
 
     private val settledQueryState: StateFlow<SearchQuery> =
@@ -174,7 +177,17 @@ class SearchViewModel(
 
     /** Updates the search query text. */
     fun updateQuery(newQuery: String) {
-        queryState.update { SearchQuery(newQuery) }
+        setQuery(SearchQuery(newQuery))
+    }
+
+    private fun setQuery(query: SearchQuery) {
+        queryState.value = query
+        savedStateHandle.saveQuery(query.text)
+    }
+
+    private fun updateFilters(transform: (SearchFilters) -> SearchFilters) {
+        filtersState.update(transform)
+        savedStateHandle.saveFilters(filtersState.value)
     }
 
     /**
@@ -182,7 +195,7 @@ class SearchViewModel(
      */
     fun toggleContentType(type: SearchContentType) {
         if (type !in launchSearchContentTypes) return
-        filtersState.update { current ->
+        updateFilters { current ->
             val active = current.contentTypes ?: emptySet()
             val next = if (type in active) active - type else active + type
             current.copy(contentTypes = next.takeIf { it.isNotEmpty() })
@@ -191,31 +204,31 @@ class SearchViewModel(
 
     /** Narrows to one person, or clears the person narrowing when [personId] is already chosen. */
     fun togglePerson(personId: Uuid) {
-        filtersState.update { it.copy(personId = personId.takeUnless { chosen -> chosen == it.personId }) }
+        updateFilters { it.copy(personId = personId.takeUnless { chosen -> chosen == it.personId }) }
     }
 
     /** Narrows to one place, or clears the place narrowing when [placeId] is already chosen. */
     fun togglePlace(placeId: Uuid) {
-        filtersState.update { it.copy(placeId = placeId.takeUnless { chosen -> chosen == it.placeId }) }
+        updateFilters { it.copy(placeId = placeId.takeUnless { chosen -> chosen == it.placeId }) }
     }
 
     /** Narrows to one calendar year, or clears the year narrowing when [year] is already chosen. */
     fun toggleYear(year: Int) {
-        filtersState.update { it.copy(year = year.takeUnless { chosen -> chosen == it.year }) }
+        updateFilters { it.copy(year = year.takeUnless { chosen -> chosen == it.year }) }
     }
 
     /**
      * Sets the date-range filter (single-select).
      */
     fun setDateRange(range: DateRangeFilter) {
-        filtersState.update { it.copy(dateRange = range) }
+        updateFilters { it.copy(dateRange = range) }
     }
 
     /**
      * Resets type and date filters to the defaults.
      */
     fun clearFilters() {
-        filtersState.update { SearchFilters.Default }
+        updateFilters { SearchFilters.Default }
     }
 
     /**
