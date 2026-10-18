@@ -73,6 +73,7 @@ import app.logdate.ui.search.toUniversalSearchResultUiState
 import app.logdate.ui.theme.Spacing
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import logdate.client.feature.search.generated.resources.Res
 import logdate.client.feature.search.generated.resources.clear_search
@@ -135,6 +136,7 @@ fun SearchScreen(
     initialDateRangeName: String = "",
     adaptive: Boolean = false,
     showPeople: Boolean = false,
+    dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = koinViewModel(),
 ) {
@@ -185,6 +187,7 @@ fun SearchScreen(
         onTogglePerson = viewModel::togglePerson,
         onTogglePlace = viewModel::togglePlace,
         onToggleYear = viewModel::toggleYear,
+        dayPreview = dayPreview,
         modifier = modifier,
     )
 }
@@ -219,6 +222,7 @@ fun SearchScreenContent(
     onTogglePerson: (Uuid) -> Unit = {},
     onTogglePlace: (Uuid) -> Unit = {},
     onToggleYear: (Int) -> Unit = {},
+    dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val searchBarState = rememberSearchBarState()
@@ -323,6 +327,7 @@ fun SearchScreenContent(
                 onTogglePerson = onTogglePerson,
                 onTogglePlace = onTogglePlace,
                 onToggleYear = onToggleYear,
+                dayPreview = dayPreview,
             )
         }
     }
@@ -374,7 +379,31 @@ private fun SearchBodyContent(
     onTogglePerson: (Uuid) -> Unit,
     onTogglePlace: (Uuid) -> Unit,
     onToggleYear: (Int) -> Unit,
+    dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)?,
 ) {
+    if (adaptive && searchState is SearchScreenState.Results) {
+        AdaptiveSearchBody(
+            results = searchState.results,
+            details = resultDetails,
+            narrowing = narrowingOptions,
+            actions =
+                AdaptiveSearchActions(
+                    onResultClick = { result ->
+                        onCommitSearch()
+                        onResultClick(result)
+                    },
+                    onResultLongClick = onLongClickResult,
+                    onOpenDay = onOpenDay,
+                    onToggleType = onToggleType,
+                    onTogglePerson = onTogglePerson,
+                    onTogglePlace = onTogglePlace,
+                    onToggleYear = onToggleYear,
+                    onClearNarrowing = onClearFilters,
+                ),
+            dayPreview = dayPreview,
+        )
+        return
+    }
     FoldableBookLayout(
         modifier = Modifier.fillMaxSize(),
         minPaneWidth = 320.dp,
@@ -412,9 +441,6 @@ private fun SearchBodyContent(
                 onClearAllRecents = onClearAllRecents,
                 onResultClick = onResultClick,
                 onLongClickResult = onLongClickResult,
-                onOpenDay = onOpenDay,
-                adaptive = adaptive,
-                resultDetails = resultDetails,
             )
         },
         standardContent = {
@@ -447,9 +473,6 @@ private fun SearchBodyContent(
                     onClearAllRecents = onClearAllRecents,
                     onResultClick = onResultClick,
                     onLongClickResult = onLongClickResult,
-                    onOpenDay = onOpenDay,
-                    adaptive = adaptive,
-                    resultDetails = resultDetails,
                 )
             }
         },
@@ -513,9 +536,6 @@ private fun SearchStateContent(
     onClearAllRecents: () -> Unit,
     onResultClick: (SearchResult) -> Unit,
     onLongClickResult: (SearchResult) -> Unit,
-    onOpenDay: (SearchResult) -> Unit,
-    adaptive: Boolean,
-    resultDetails: Map<SearchResultKey, SearchResultDetail>,
 ) {
     when (searchState) {
         is SearchScreenState.Idle -> {
@@ -569,72 +589,58 @@ private fun SearchStateContent(
             }
         }
 
-        is SearchScreenState.Results ->
-            if (adaptive) {
-                val groups = remember(searchState.results) { groupSearchResults(searchState.results, TimeZone.currentSystemDefault()) }
-                AdaptiveSearchResults(
-                    groups = groups,
-                    details = resultDetails,
-                    onResultClick = { result ->
-                        onCommitSearch()
-                        onResultClick(result)
-                    },
-                    onResultLongClick = onLongClickResult,
-                    onOpenDay = onOpenDay,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                val highlightStyle = rememberSearchHighlightStyle()
-                val groupedRows =
-                    remember(searchState.results, highlightStyle) {
-                        bucketSearchResults(
-                            results = searchState.results,
-                            now = Clock.System.now(),
-                            timeZone = TimeZone.currentSystemDefault(),
-                        ).map { (bucket, items) ->
-                            bucket to
-                                items.map { result ->
-                                    SearchResultRow(
-                                        result = result,
-                                        uiState = result.toUniversalSearchResultUiState(highlightStyle),
-                                    )
-                                }
-                        }
-                    }
-                // Cap reading width on tablets / desktop / unfolded foldables so result rows stay
-                // scannable instead of stretching to a 1200dp line. Phones at compact width fall
-                // under the cap and use the full screen.
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    LazyColumn(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = SearchBarMaxWidth),
-                    ) {
-                        groupedRows.forEach { (bucket, bucketRows) ->
-                            stickyHeader(key = "header_${bucket.name}") {
-                                BucketHeader(bucket)
-                            }
-                            items(
-                                items = bucketRows,
-                                key = { it.uiState.id },
-                            ) { resultRow ->
-                                UniversalSearchResultItem(
-                                    state = resultRow.uiState,
-                                    onClick = {
-                                        onCommitSearch()
-                                        onResultClick(resultRow.result)
-                                    },
-                                    onLongClick = { onLongClickResult(resultRow.result) },
+        is SearchScreenState.Results -> {
+            val highlightStyle = rememberSearchHighlightStyle()
+            val groupedRows =
+                remember(searchState.results, highlightStyle) {
+                    bucketSearchResults(
+                        results = searchState.results,
+                        now = Clock.System.now(),
+                        timeZone = TimeZone.currentSystemDefault(),
+                    ).map { (bucket, items) ->
+                        bucket to
+                            items.map { result ->
+                                SearchResultRow(
+                                    result = result,
+                                    uiState = result.toUniversalSearchResultUiState(highlightStyle),
                                 )
                             }
+                    }
+                }
+            // Cap reading width on tablets / desktop / unfolded foldables so result rows stay
+            // scannable instead of stretching to a 1200dp line. Phones at compact width fall
+            // under the cap and use the full screen.
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                LazyColumn(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = SearchBarMaxWidth),
+                ) {
+                    groupedRows.forEach { (bucket, bucketRows) ->
+                        stickyHeader(key = "header_${bucket.name}") {
+                            BucketHeader(bucket)
+                        }
+                        items(
+                            items = bucketRows,
+                            key = { it.uiState.id },
+                        ) { resultRow ->
+                            UniversalSearchResultItem(
+                                state = resultRow.uiState,
+                                onClick = {
+                                    onCommitSearch()
+                                    onResultClick(resultRow.result)
+                                },
+                                onLongClick = { onLongClickResult(resultRow.result) },
+                            )
                         }
                     }
                 }
             }
+        }
     }
 }
 

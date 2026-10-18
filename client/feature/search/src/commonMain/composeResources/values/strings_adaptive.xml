@@ -27,4 +27,7 @@
         <item quantity="one">%1$d, %2$d result</item>
         <item quantity="other">%1$d, %2$d results</item>
     </plurals>
+    <string name="search_preview_open">Open</string>
+    <string name="search_preview_open_day">Open day</string>
+    <string name="search_preview_empty">Choose a result to see it here</string>
 </resources>

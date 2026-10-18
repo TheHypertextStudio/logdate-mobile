@@ -463,6 +463,16 @@ fun LogDateNavDisplay(
                                             initialDateRangeName = route.dateRangeName,
                                             adaptive = adaptiveSearchEnabled,
                                             showPeople = peopleEnabled,
+                                            dayPreview = { date, highlight ->
+                                                TimelineDetailEntry(
+                                                    date = date,
+                                                    scrollToEntryId = highlight?.uid?.toString(),
+                                                    onClose = {},
+                                                    onOpenLocations = { backStack.add(LocationTimelineRoute) },
+                                                    onOpenEvent = { backStack.add(EventDetailRoute(it)) },
+                                                    onOpenNote = { backStack.add(NoteDetailRoute(it)) },
+                                                )
+                                            },
                                         )
                                     }
                                     // Location timeline (top-level)

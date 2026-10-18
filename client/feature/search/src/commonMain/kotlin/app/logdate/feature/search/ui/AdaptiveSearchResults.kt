@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
@@ -84,6 +85,7 @@ private const val MAX_LINES_PER_DAY = 3
  * @param onResultClick Opens the destination of a single result.
  * @param onResultLongClick Opens the actions for a single result.
  * @param onOpenDay Opens the day a result belongs to.
+ * @param selected The result or day shown in a preview beside the list, marked in the list.
  */
 @Composable
 fun AdaptiveSearchResults(
@@ -93,6 +95,7 @@ fun AdaptiveSearchResults(
     onResultLongClick: (SearchResult) -> Unit,
     onOpenDay: (SearchResult) -> Unit,
     modifier: Modifier = Modifier,
+    selected: SearchSelection? = null,
 ) {
     LazyColumn(
         modifier = modifier.fillMaxWidth().testTag(ADAPTIVE_SEARCH_RESULTS_TAG),
@@ -110,14 +113,18 @@ fun AdaptiveSearchResults(
         if (groups.topMatches.isNotEmpty()) {
             item(key = "top_matches") {
                 ResultGroup(stringResource(Res.string.search_section_top_matches), ADAPTIVE_SEARCH_TOP_MATCHES_TAG) {
-                    groups.topMatches.forEach { result -> EntityItem(result, details[result.key], onResultClick, onResultLongClick) }
+                    groups.topMatches.forEach { result ->
+                        EntityItem(result, details[result.key], selected.isResult(result), onResultClick, onResultLongClick)
+                    }
                 }
             }
         }
         if (groups.collections.isNotEmpty()) {
             item(key = "collections") {
                 ResultGroup(stringResource(Res.string.search_section_collections), ADAPTIVE_SEARCH_COLLECTIONS_TAG) {
-                    groups.collections.forEach { result -> CollectionItem(result, details[result.key], onResultClick, onResultLongClick) }
+                    groups.collections.forEach { result ->
+                        CollectionItem(result, details[result.key], selected.isResult(result), onResultClick, onResultLongClick)
+                    }
                 }
             }
         }
@@ -126,7 +133,7 @@ fun AdaptiveSearchResults(
                 SectionHeading(stringResource(Res.string.search_section_days), ADAPTIVE_SEARCH_DAYS_TAG)
             }
             items(groups.days, key = { "day_${it.date}" }) { day ->
-                DayCard(day, details, onResultClick, onResultLongClick, onOpenDay)
+                DayCard(day, details, selected, onResultClick, onResultLongClick, onOpenDay)
             }
         }
     }
@@ -167,6 +174,7 @@ private fun ResultGroup(
 private fun EntityItem(
     result: SearchResult,
     detail: SearchResultDetail?,
+    selected: Boolean,
     onClick: (SearchResult) -> Unit,
     onLongClick: (SearchResult) -> Unit,
 ) {
@@ -185,6 +193,7 @@ private fun EntityItem(
         typeLabel = stringResource(state.typeLabelKey),
         cover = cover,
         icon = state.typeIcon,
+        selected = selected,
         onClick = onClick,
         onLongClick = onLongClick,
     )
@@ -194,6 +203,7 @@ private fun EntityItem(
 private fun CollectionItem(
     result: SearchResult,
     detail: SearchResultDetail?,
+    selected: Boolean,
     onClick: (SearchResult) -> Unit,
     onLongClick: (SearchResult) -> Unit,
 ) {
@@ -229,6 +239,7 @@ private fun CollectionItem(
         typeLabel = stringResource(state.typeLabelKey),
         cover = cover,
         icon = state.typeIcon,
+        selected = selected,
         onClick = onClick,
         onLongClick = onLongClick,
     )
@@ -243,6 +254,7 @@ private fun ResultItem(
     typeLabel: String,
     cover: String?,
     icon: ImageVector,
+    selected: Boolean,
     onClick: (SearchResult) -> Unit,
     onLongClick: (SearchResult) -> Unit,
 ) {
@@ -254,7 +266,7 @@ private fun ResultItem(
             },
         leadingContent = { Cover(result.contentType, cover, icon, typeLabel) },
         trailingContent = { Text(typeLabel, style = MaterialTheme.typography.labelSmall) },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors = ListItemDefaults.colors(containerColor = selectedContainer(selected)),
         modifier =
             Modifier
                 .focusableWithRing()
@@ -264,23 +276,30 @@ private fun ResultItem(
 
 /** A tonal square holding a cover image, or the icon of the kind of result when it has none. */
 @Composable
-private fun Cover(
+internal fun Cover(
     type: SearchContentType,
     uri: String?,
     icon: ImageVector,
     label: String,
+    size: Dp = 56.dp,
 ) {
     val (container, content) = type.tonalColors()
-    Surface(color = container, contentColor = content, shape = MaterialTheme.shapes.medium, modifier = Modifier.size(56.dp)) {
+    Surface(color = container, contentColor = content, shape = MaterialTheme.shapes.medium, modifier = Modifier.size(size)) {
         Box(contentAlignment = Alignment.Center) {
             if (uri != null) {
-                AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(56.dp))
+                AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size))
             } else {
                 Icon(imageVector = icon, contentDescription = label)
             }
         }
     }
 }
+
+/** The container of a list row: the selected tone when it is the one previewed, otherwise the card behind it. */
+@Composable
+private fun selectedContainer(selected: Boolean): Color = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+
+private fun SearchSelection?.isResult(result: SearchResult): Boolean = this is SearchSelection.Result && key == result.key
 
 @Composable
 private fun SearchContentType.tonalColors(): Pair<Color, Color> {
@@ -301,6 +320,7 @@ private fun SearchContentType.tonalColors(): Pair<Color, Color> {
 private fun DayCard(
     day: SearchDayGroup,
     details: Map<SearchResultKey, SearchResultDetail>,
+    selected: SearchSelection?,
     onResultClick: (SearchResult) -> Unit,
     onResultLongClick: (SearchResult) -> Unit,
     onOpenDay: (SearchResult) -> Unit,
@@ -308,8 +328,17 @@ private fun DayCard(
     val highlight = rememberSearchHighlightStyle()
     val thumbnails = day.results.filter { details[it.key].hasArt() }.take(MAX_THUMBNAILS_PER_DAY)
     val lines = day.results.filterNot { details[it.key].hasArt() }
+    val daySelected = selected is SearchSelection.Day && selected.date == day.date
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (daySelected && selected.highlight == null) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLow
+                    },
+            ),
         modifier = Modifier.fillMaxWidth().testTag("adaptive_search_day_${day.date}"),
     ) {
         ListItem(
@@ -332,7 +361,14 @@ private fun DayCard(
             }
         }
         lines.take(MAX_LINES_PER_DAY).forEach { result ->
-            DayLine(result, details[result.key], highlight, onResultClick, onResultLongClick)
+            DayLine(
+                result,
+                details[result.key],
+                highlight,
+                daySelected && selected.highlight == result.key,
+                onResultClick,
+                onResultLongClick,
+            )
         }
         if (lines.size > MAX_LINES_PER_DAY) {
             TextButton(onClick = { onOpenDay(day.results.first()) }, modifier = Modifier.padding(start = Spacing.sm)) {
@@ -380,6 +416,7 @@ private fun DayLine(
     result: SearchResult,
     detail: SearchResultDetail?,
     highlight: SpanStyle,
+    selected: Boolean,
     onClick: (SearchResult) -> Unit,
     onLongClick: (SearchResult) -> Unit,
 ) {
@@ -392,7 +429,7 @@ private fun DayLine(
             durationMs?.takeIf { it > 0 }?.let { ms ->
                 { Text(formatDuration(ms), style = MaterialTheme.typography.labelMedium) }
             },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors = ListItemDefaults.colors(containerColor = selectedContainer(selected)),
         modifier =
             Modifier
                 .focusableWithRing()
