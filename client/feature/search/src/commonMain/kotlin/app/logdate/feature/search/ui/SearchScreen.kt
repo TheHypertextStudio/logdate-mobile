@@ -114,6 +114,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
+import kotlin.uuid.Uuid
 import logdate.client.ui.generated.resources.Res as UiRes
 
 const val SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG = "search_screen_input"
@@ -133,11 +134,14 @@ fun SearchScreen(
     initialTypeFtsValues: List<String> = emptyList(),
     initialDateRangeName: String = "",
     adaptive: Boolean = false,
+    showPeople: Boolean = false,
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = koinViewModel(),
 ) {
     val searchState by viewModel.searchState.collectAsState()
     val resultDetails by viewModel.resultDetails.collectAsState()
+    val narrowing by viewModel.narrowing.collectAsState()
+    val narrowingOptions = remember(narrowing, showPeople) { buildNarrowingOptions(narrowing, showPeople) }
     val queryText by viewModel.queryText.collectAsState()
     val filters by viewModel.filters.collectAsState()
     val onRemoveRecent: (String) -> Unit = viewModel::removeRecentSearch
@@ -177,6 +181,10 @@ fun SearchScreen(
         onGoBack = onGoBack,
         adaptive = adaptive,
         resultDetails = resultDetails,
+        narrowingOptions = narrowingOptions,
+        onTogglePerson = viewModel::togglePerson,
+        onTogglePlace = viewModel::togglePlace,
+        onToggleYear = viewModel::toggleYear,
         modifier = modifier,
     )
 }
@@ -207,6 +215,10 @@ fun SearchScreenContent(
     onShareResult: ((SearchResult) -> Unit)? = null,
     adaptive: Boolean = false,
     resultDetails: Map<SearchResultKey, SearchResultDetail> = emptyMap(),
+    narrowingOptions: SearchNarrowingOptions = SearchNarrowingOptions(),
+    onTogglePerson: (Uuid) -> Unit = {},
+    onTogglePlace: (Uuid) -> Unit = {},
+    onToggleYear: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val searchBarState = rememberSearchBarState()
@@ -307,6 +319,10 @@ fun SearchScreenContent(
                 onOpenDay = onResultOpenDay,
                 adaptive = adaptive,
                 resultDetails = resultDetails,
+                narrowingOptions = narrowingOptions,
+                onTogglePerson = onTogglePerson,
+                onTogglePlace = onTogglePlace,
+                onToggleYear = onToggleYear,
             )
         }
     }
@@ -354,19 +370,36 @@ private fun SearchBodyContent(
     onOpenDay: (SearchResult) -> Unit,
     adaptive: Boolean,
     resultDetails: Map<SearchResultKey, SearchResultDetail>,
+    narrowingOptions: SearchNarrowingOptions,
+    onTogglePerson: (Uuid) -> Unit,
+    onTogglePlace: (Uuid) -> Unit,
+    onToggleYear: (Int) -> Unit,
 ) {
     FoldableBookLayout(
         modifier = Modifier.fillMaxSize(),
         minPaneWidth = 320.dp,
         startPane = {
-            SearchContextPane(
-                searchState = searchState,
-                filters = filters,
-                onToggleType = onToggleType,
-                onSetDateRange = onSetDateRange,
-                onClearFilters = onClearFilters,
-                modifier = Modifier.fillMaxSize(),
-            )
+            if (adaptive) {
+                SearchNarrowing(
+                    options = narrowingOptions,
+                    layout = SearchNarrowingLayout.Panel,
+                    onToggleType = onToggleType,
+                    onTogglePerson = onTogglePerson,
+                    onTogglePlace = onTogglePlace,
+                    onToggleYear = onToggleYear,
+                    onClear = onClearFilters,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                SearchContextPane(
+                    searchState = searchState,
+                    filters = filters,
+                    onToggleType = onToggleType,
+                    onSetDateRange = onSetDateRange,
+                    onClearFilters = onClearFilters,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         },
         endPane = {
             SearchStateContent(
@@ -386,12 +419,24 @@ private fun SearchBodyContent(
         },
         standardContent = {
             Column(modifier = Modifier.fillMaxSize()) {
-                FilterChipRow(
-                    filters = filters,
-                    onToggleType = onToggleType,
-                    onSetDateRange = onSetDateRange,
-                    onClearFilters = onClearFilters,
-                )
+                if (adaptive) {
+                    SearchNarrowing(
+                        options = narrowingOptions,
+                        layout = SearchNarrowingLayout.Row,
+                        onToggleType = onToggleType,
+                        onTogglePerson = onTogglePerson,
+                        onTogglePlace = onTogglePlace,
+                        onToggleYear = onToggleYear,
+                        onClear = onClearFilters,
+                    )
+                } else {
+                    FilterChipRow(
+                        filters = filters,
+                        onToggleType = onToggleType,
+                        onSetDateRange = onSetDateRange,
+                        onClearFilters = onClearFilters,
+                    )
+                }
                 SearchStateContent(
                     searchState = searchState,
                     filters = filters,
@@ -752,7 +797,7 @@ private fun DateRangeFilter.labelKey(): StringResource =
         DateRangeFilter.ThisYear -> Res.string.search_filter_date_this_year
     }
 
-private fun SearchContentType.labelKey(): StringResource =
+internal fun SearchContentType.labelKey(): StringResource =
     when (this) {
         SearchContentType.TEXT_NOTE -> Res.string.search_filter_type_notes
         SearchContentType.TRANSCRIPTION -> Res.string.search_filter_type_voice_notes

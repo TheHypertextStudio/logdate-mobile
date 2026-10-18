@@ -158,6 +158,8 @@ fun LogDateNavDisplay(
     }.collectAsState(initial = false)
     val adaptiveSearchEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.ADAPTIVE_SEARCH) }
         .collectAsState(initial = FeatureFlag.ADAPTIVE_SEARCH.defaultEnabled)
+    val peopleEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.PEOPLE) }
+        .collectAsState(initial = false)
     val backStack = rememberNavBackStack(appNavSavedStateConfiguration, BaseRoute)
     val placesEnabled by rememberPlacesBetaNavigation(workspaceFlags, backStack, appUiState.isOnboarded, appUiState.requiresUnlock)
 
@@ -460,6 +462,7 @@ fun LogDateNavDisplay(
                                             initialTypeFtsValues = route.typeFtsValues,
                                             initialDateRangeName = route.dateRangeName,
                                             adaptive = adaptiveSearchEnabled,
+                                            showPeople = peopleEnabled,
                                         )
                                     }
                                     // Location timeline (top-level)
