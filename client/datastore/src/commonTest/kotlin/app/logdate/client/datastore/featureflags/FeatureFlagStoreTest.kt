@@ -88,6 +88,17 @@ class FeatureFlagStoreTest {
             assertFalse(store.isEnabled(FeatureFlag.EVENTS))
             assertFalse(store.isEnabled(FeatureFlag.PEOPLE))
             assertTrue(store.isEnabled(FeatureFlag.JOURNAL_MERGE))
+            assertFalse(store.isEnabled(FeatureFlag.ADAPTIVE_SEARCH))
+        }
+
+    @Test
+    fun `adaptive search can be turned on and back off`() =
+        runTest {
+            store.setEnabled(FeatureFlag.ADAPTIVE_SEARCH, true)
+            assertTrue(store.isEnabled(FeatureFlag.ADAPTIVE_SEARCH))
+
+            store.setEnabled(FeatureFlag.ADAPTIVE_SEARCH, false)
+            assertFalse(store.isEnabled(FeatureFlag.ADAPTIVE_SEARCH))
         }
 
     @Test
