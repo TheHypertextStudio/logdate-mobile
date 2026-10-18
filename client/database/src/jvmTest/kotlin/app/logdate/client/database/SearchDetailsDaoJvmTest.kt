@@ -209,6 +209,32 @@ class SearchDetailsDaoJvmTest {
             assertEquals(-114.7, row.longitude)
         }
 
+    @Test
+    fun `place names are returned for the places asked about and skip deleted places`() =
+        runTest {
+            val db = openDatabase()
+            val lake = Uuid.random()
+            val gone = Uuid.random()
+            db.placeDao().insert(
+                PlaceEntity(id = lake, name = "Lake Mead", latitude = 36.1, longitude = -114.7, created = created, lastUpdated = created),
+            )
+            db.placeDao().insert(
+                PlaceEntity(
+                    id = gone,
+                    name = "Old place",
+                    latitude = 1.0,
+                    longitude = 2.0,
+                    created = created,
+                    lastUpdated = created,
+                    deletedAt = created,
+                ),
+            )
+
+            val rows = db.searchDetailsDao().placeNames(listOf(lake.toString(), gone.toString()))
+
+            assertEquals(listOf(lake.toString() to "Lake Mead"), rows.map { it.id to it.name })
+        }
+
     private fun openDatabase(): LogDateDatabase {
         database?.close()
         Files.deleteIfExists(databasePath)

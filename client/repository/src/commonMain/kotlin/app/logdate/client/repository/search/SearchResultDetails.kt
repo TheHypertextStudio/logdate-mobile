@@ -76,6 +76,26 @@ sealed interface SearchResultDetail {
     ) : SearchResultDetail
 }
 
+/** How a person is named in a narrowing option. */
+data class SearchPersonLabel(
+    val name: String,
+    val photoUri: String?,
+)
+
+/**
+ * The names of the people and places that narrowing options stand for, since the counts that
+ * back the options identify them only by id.
+ */
+data class SearchFacetLabels(
+    val people: Map<Uuid, SearchPersonLabel> = emptyMap(),
+    val places: Map<Uuid, String> = emptyMap(),
+) {
+    companion object {
+        /** Labels for no one and nowhere. */
+        val Empty = SearchFacetLabels()
+    }
+}
+
 /** Describes search results with the media, dates and covers their rows show. */
 interface SearchResultDetailsRepository {
     /**
@@ -84,4 +104,13 @@ interface SearchResultDetailsRepository {
      * Results that have no detail, or whose content has since been deleted, are left out of the map.
      */
     suspend fun describe(results: List<SearchResult>): Map<SearchResultKey, SearchResultDetail>
+
+    /**
+     * Names the given people and places. Ids that no longer exist are left out. The default names
+     * no one, for implementations that cannot look names up.
+     */
+    suspend fun labelFacets(
+        personIds: Collection<Uuid>,
+        placeIds: Collection<Uuid>,
+    ): SearchFacetLabels = SearchFacetLabels.Empty
 }

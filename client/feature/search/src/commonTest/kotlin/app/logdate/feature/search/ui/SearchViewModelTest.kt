@@ -1,6 +1,7 @@
 package app.logdate.feature.search.ui
 
 import app.logdate.client.domain.search.ObserveRecentSearchesUseCase
+import app.logdate.client.domain.search.ObserveSearchFacetsUseCase
 import app.logdate.client.domain.search.UniversalSearchUseCase
 import app.logdate.client.repository.search.RecentSearchesRepository
 import app.logdate.client.repository.search.SearchContentType
@@ -67,6 +68,7 @@ class SearchViewModelTest {
                     UniversalSearchUseCase(repository),
                     ObserveRecentSearchesUseCase(FakeRecentSearchesRepository()),
                     NoDetails,
+                    ObserveSearchFacetsUseCase(repository),
                 )
             backgroundScope.launch { viewModel.searchState.collect() }
             runCurrent()
@@ -99,6 +101,7 @@ class SearchViewModelTest {
                     universalSearchUseCase = UniversalSearchUseCase(repository),
                     observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(recentSearchesRepository),
                     searchResultDetailsRepository = NoDetails,
+                    observeSearchFacetsUseCase = ObserveSearchFacetsUseCase(repository),
                 )
             backgroundScope.launch { viewModel.searchState.collect() }
             runCurrent()
@@ -135,6 +138,7 @@ class SearchViewModelTest {
                     universalSearchUseCase = UniversalSearchUseCase(repository),
                     observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(FakeRecentSearchesRepository()),
                     searchResultDetailsRepository = NoDetails,
+                    observeSearchFacetsUseCase = ObserveSearchFacetsUseCase(repository),
                 )
             backgroundScope.launch { viewModel.searchState.collect() }
             runCurrent()

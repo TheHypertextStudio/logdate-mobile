@@ -1,6 +1,7 @@
 package app.logdate.feature.search.ui
 
 import app.logdate.client.domain.search.ObserveRecentSearchesUseCase
+import app.logdate.client.domain.search.ObserveSearchFacetsUseCase
 import app.logdate.client.domain.search.UniversalSearchUseCase
 import app.logdate.client.repository.search.RecentSearchesRepository
 import app.logdate.client.repository.search.SearchContentType
@@ -105,11 +106,15 @@ class SearchViewModelDetailsTest {
     private fun viewModel(
         results: List<SearchResult>,
         details: SearchResultDetailsRepository,
-    ) = SearchViewModel(
-        universalSearchUseCase = UniversalSearchUseCase(FixedResultsRepository(results)),
-        observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(EmptyRecents()),
-        searchResultDetailsRepository = details,
-    )
+    ): SearchViewModel {
+        val repository = FixedResultsRepository(results)
+        return SearchViewModel(
+            universalSearchUseCase = UniversalSearchUseCase(repository),
+            observeRecentSearchesUseCase = ObserveRecentSearchesUseCase(EmptyRecents()),
+            searchResultDetailsRepository = details,
+            observeSearchFacetsUseCase = ObserveSearchFacetsUseCase(repository),
+        )
+    }
 
     private class FakeDetails(
         private val details: Map<SearchResultKey, SearchResultDetail>,

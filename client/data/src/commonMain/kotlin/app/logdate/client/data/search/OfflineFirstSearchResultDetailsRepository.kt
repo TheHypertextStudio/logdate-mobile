@@ -3,6 +3,8 @@ package app.logdate.client.data.search
 import app.logdate.client.database.dao.SearchDetailsDao
 import app.logdate.client.database.dao.people.PersonDao
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchFacetLabels
+import app.logdate.client.repository.search.SearchPersonLabel
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultDetailsRepository
@@ -31,6 +33,26 @@ class OfflineFirstSearchResultDetailsRepository(
             idsByType[SearchContentType.PLACE]?.let { putPlaces(it) }
             idsByType[SearchContentType.PERSON]?.let { putPeople(it) }
         }
+    }
+
+    override suspend fun labelFacets(
+        personIds: Collection<Uuid>,
+        placeIds: Collection<Uuid>,
+    ): SearchFacetLabels {
+        if (personIds.isEmpty() && placeIds.isEmpty()) return SearchFacetLabels.Empty
+        val places =
+            if (placeIds.isEmpty()) {
+                emptyMap()
+            } else {
+                detailsDao.placeNames(placeIds.map(Uuid::toString)).associate { Uuid.parse(it.id) to it.name }
+            }
+        val people =
+            personIds
+                .distinct()
+                .mapNotNull { id ->
+                    personDao.getById(id)?.let { id to SearchPersonLabel(it.name, it.photoUri) }
+                }.toMap()
+        return SearchFacetLabels(people = people, places = places)
     }
 
     private suspend fun MutableMap<SearchResultKey, SearchResultDetail>.putMedia(ids: List<Uuid>) {

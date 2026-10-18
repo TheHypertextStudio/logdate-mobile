@@ -55,6 +55,10 @@ interface SearchDetailsDao {
     )
     suspend fun postcardDetails(ids: List<String>): List<PostcardDetailRow>
 
+    /** The name of each place. */
+    @Query("SELECT id AS id, name AS name FROM places WHERE id IN (:ids) AND deleted_at IS NULL")
+    suspend fun placeNames(ids: List<String>): List<PlaceNameRow>
+
     /** The coordinates of each place. */
     @Query("SELECT id AS id, latitude AS latitude, longitude AS longitude FROM places WHERE id IN (:ids) AND deleted_at IS NULL")
     suspend fun placeDetails(ids: List<String>): List<PlaceDetailRow>
@@ -112,4 +116,10 @@ data class PlaceDetailRow(
     val id: String,
     val latitude: Double,
     val longitude: Double,
+)
+
+/** The name of a place. */
+data class PlaceNameRow(
+    val id: String,
+    val name: String,
 )
