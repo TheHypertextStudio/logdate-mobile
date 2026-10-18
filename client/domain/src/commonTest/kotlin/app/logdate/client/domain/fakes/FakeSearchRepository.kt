@@ -1,10 +1,12 @@
 package app.logdate.client.domain.fakes
 
+import app.logdate.client.repository.search.SearchFacets
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlin.uuid.Uuid
 
@@ -13,8 +15,13 @@ import kotlin.uuid.Uuid
  */
 class FakeSearchRepository(
     initialResults: List<SearchResult> = emptyList(),
+    private val facets: SearchFacets = SearchFacets.Empty,
 ) : SearchRepository {
     private val resultsFlow = MutableStateFlow(initialResults)
+
+    /** The scope of the most recent [observeFacets] call, or null if none has been made. */
+    var lastFacetScope: SearchScope? = null
+        private set
 
     /** The scope of the most recent [searchScoped] call, or null if none has been made. */
     var lastScope: SearchScope? = null
@@ -57,6 +64,14 @@ class FakeSearchRepository(
         lastScope = scope
         lastScopedLimit = limit
         return super.searchScoped(query, scope, limit)
+    }
+
+    override fun observeFacets(
+        query: String,
+        scope: SearchScope,
+    ): Flow<SearchFacets> {
+        lastFacetScope = scope
+        return flowOf(facets)
     }
 
     override fun searchInJournal(

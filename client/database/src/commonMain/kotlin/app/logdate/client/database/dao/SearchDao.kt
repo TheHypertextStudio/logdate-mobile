@@ -334,6 +334,93 @@ interface SearchDao {
     ): List<RankedSearchResultEntity>
 
     /**
+     * Counts matches by content type under the same narrowing as [searchScoped]. There is no limit,
+     * so counts cover every match in the index. Pass a disabled or null option for the dimension
+     * being counted so a count describes what choosing that option would leave.
+     */
+    @Query(
+        "SELECT f.contentType AS contentType, COUNT(*) AS total " +
+            "FROM entries_fts f " +
+            "WHERE entries_fts MATCH :query " +
+            SCOPE_FILTERS +
+            "GROUP BY f.contentType",
+    )
+    suspend fun countByContentType(
+        query: String,
+        typesEnabled: Boolean,
+        types: List<String>,
+        personId: String?,
+        placeId: String?,
+        createdFrom: Long?,
+        createdBefore: Long?,
+    ): List<ContentTypeCount>
+
+    /**
+     * Counts matches by the place they were captured at, skipping the places themselves and
+     * results with no place. See [countByContentType] for how to use the narrowing options.
+     */
+    @Query(
+        "SELECT " + PLACE_OF_ROW + " AS placeId, COUNT(*) AS total " +
+            "FROM entries_fts f " +
+            "WHERE entries_fts MATCH :query AND f.contentType <> 'place' " +
+            SCOPE_FILTERS +
+            "GROUP BY placeId HAVING placeId IS NOT NULL",
+    )
+    suspend fun countByPlace(
+        query: String,
+        typesEnabled: Boolean,
+        types: List<String>,
+        personId: String?,
+        placeId: String?,
+        createdFrom: Long?,
+        createdBefore: Long?,
+    ): List<PlaceCount>
+
+    /**
+     * Counts matches by the people actively linked to them. A match linked to several people is
+     * counted once for each. See [countByContentType] for how to use the narrowing options.
+     */
+    @Query(
+        "SELECT link.person_id AS personId, COUNT(DISTINCT f.uid) AS total " +
+            "FROM entries_fts f " +
+            "INNER JOIN person_links link ON link.target_id = f.uid " +
+            "AND link.target_type = 'ENTRY' AND link.status = 'ACTIVE' " +
+            "WHERE entries_fts MATCH :query " +
+            SCOPE_FILTERS +
+            "GROUP BY link.person_id",
+    )
+    suspend fun countByPerson(
+        query: String,
+        typesEnabled: Boolean,
+        types: List<String>,
+        personId: String?,
+        placeId: String?,
+        createdFrom: Long?,
+        createdBefore: Long?,
+    ): List<PersonCount>
+
+    /**
+     * Lists the creation time of every match, oldest first, so callers can bucket matches by
+     * period in their own time zone. See [countByContentType] for the narrowing options.
+     */
+    @Query(
+        "SELECT f.created AS created " +
+            "FROM entries_fts f " +
+            "WHERE entries_fts MATCH :query " +
+            SCOPE_FILTERS +
+            "ORDER BY f.created",
+    )
+    suspend fun findCreatedTimes(
+        query: String,
+        typesEnabled: Boolean,
+        types: List<String>,
+        personId: String?,
+        placeId: String?,
+        createdFrom: Long?,
+        createdBefore: Long?,
+    ): List<Long>
+
+    /**
      * Returns indexed terms for typo-tolerant fallback against the FTS vocabulary.
      */
     @Query(
@@ -381,9 +468,27 @@ private const val SCOPE_FILTERS =
         "AND (:createdBefore IS NULL OR f.created < :createdBefore) " +
         "AND (:placeId IS NULL OR " + PLACE_OF_ROW + " = :placeId) " +
         "AND (:personId IS NULL OR EXISTS (" +
-        "SELECT 1 FROM person_links pl " +
-        "WHERE pl.person_id = :personId AND pl.target_id = f.uid " +
-        "AND pl.target_type = 'ENTRY' AND pl.status = 'ACTIVE')) "
+        "SELECT 1 FROM person_links pf " +
+        "WHERE pf.person_id = :personId AND pf.target_id = f.uid " +
+        "AND pf.target_type = 'ENTRY' AND pf.status = 'ACTIVE')) "
+
+/** The number of search matches of one FTS content type. */
+data class ContentTypeCount(
+    val contentType: String,
+    val total: Int,
+)
+
+/** The number of search matches captured at one place. */
+data class PlaceCount(
+    val placeId: String,
+    val total: Int,
+)
+
+/** The number of search matches actively linked to one person. */
+data class PersonCount(
+    val personId: String,
+    val total: Int,
+)
 
 /**
  * Entity representing a ranked search result with FTS5 relevance score.

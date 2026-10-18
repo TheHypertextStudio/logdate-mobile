@@ -1,6 +1,7 @@
 package app.logdate.client.repository.search
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -59,6 +60,20 @@ interface SearchRepository {
     ): Flow<List<SearchResult>> = searchRanked(query, limit).map { results -> results.filter(scope::allows) }
 
     /**
+     * Counts the results of [query] by content type, person, place and creation time.
+     *
+     * Each count describes what choosing that option would leave: it follows every narrowing in
+     * [scope] except its own. The type counts ignore the type narrowing, the person counts ignore
+     * the person, the place counts ignore the place, and the creation times ignore the date window.
+     * Counts cover every match, not only the first page of results. The default has no counts, for
+     * implementations that cannot count.
+     */
+    fun observeFacets(
+        query: String,
+        scope: SearchScope,
+    ): Flow<SearchFacets> = flowOf(SearchFacets.Empty)
+
+    /**
      * Searches entries within a specific journal.
      */
     fun searchInJournal(
@@ -89,6 +104,26 @@ data class SearchScope(
         (contentTypes == null || result.contentType in contentTypes) &&
             (createdFrom == null || result.created >= createdFrom) &&
             (createdBefore == null || result.created < createdBefore)
+}
+
+/**
+ * How many results each narrowing option would leave. See [SearchRepository.observeFacets].
+ *
+ * @property byType Result counts by content type, including people.
+ * @property byPerson Counts of results actively linked to each person.
+ * @property byPlace Counts of results captured at each place, not counting the places themselves.
+ * @property createdAt The creation time of every result, for bucketing by period.
+ */
+data class SearchFacets(
+    val byType: Map<SearchContentType, Int> = emptyMap(),
+    val byPerson: Map<Uuid, Int> = emptyMap(),
+    val byPlace: Map<Uuid, Int> = emptyMap(),
+    val createdAt: List<Instant> = emptyList(),
+) {
+    companion object {
+        /** Counts for a search that has no results to count. */
+        val Empty = SearchFacets()
+    }
 }
 
 /**

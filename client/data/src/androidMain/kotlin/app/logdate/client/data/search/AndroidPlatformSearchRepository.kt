@@ -1,5 +1,6 @@
 package app.logdate.client.data.search
 
+import app.logdate.client.repository.search.SearchFacets
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchScope
@@ -62,6 +63,11 @@ class AndroidPlatformSearchRepository(
         scope: SearchScope,
         limit: Int,
     ): Flow<List<SearchResult>> = roomSearchRepository.searchScoped(query, scope, limit)
+
+    override fun observeFacets(
+        query: String,
+        scope: SearchScope,
+    ): Flow<SearchFacets> = roomSearchRepository.observeFacets(query, scope)
 
     override fun searchInJournal(
         query: String,

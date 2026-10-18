@@ -10,6 +10,7 @@ import app.logdate.client.database.getRoomDatabase
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchFacets
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchScope
 import kotlinx.coroutines.flow.Flow
@@ -127,6 +128,72 @@ class OfflineFirstSearchRepositoryScopeTest {
             seed()
 
             assertEquals(emptyList(), repository.searchScoped(" ", SearchScope(personId = samId)).first())
+        }
+
+    @Test
+    fun `facets count every type person place and creation time`() =
+        runTest {
+            seed()
+
+            val facets = repository.observeFacets("sam", SearchScope()).first()
+
+            assertEquals(mapOf(SearchContentType.TEXT_NOTE to 2, SearchContentType.PERSON to 1), facets.byType)
+            assertEquals(mapOf(samId to 1), facets.byPerson)
+            assertEquals(mapOf(lakeId to 1), facets.byPlace)
+            assertEquals(listOf(created, created), facets.createdAt)
+        }
+
+    @Test
+    fun `each facet ignores its own narrowing and follows the rest`() =
+        runTest {
+            seed()
+
+            val facets = repository.observeFacets("sam", SearchScope(personId = samId, placeId = lakeId)).first()
+
+            // Type counts ignore no type narrowing, so they show person and place narrowing only.
+            assertEquals(mapOf(SearchContentType.TEXT_NOTE to 1), facets.byType)
+            // Person counts ignore the person but keep the place: one linked note at the lake.
+            assertEquals(mapOf(samId to 1), facets.byPerson)
+            // Place counts ignore the place but keep the person.
+            assertEquals(mapOf(lakeId to 1), facets.byPlace)
+        }
+
+    @Test
+    fun `type facet ignores the type narrowing while the other facets follow it`() =
+        runTest {
+            seed()
+
+            val facets = repository.observeFacets("sam", SearchScope(contentTypes = setOf(SearchContentType.PERSON))).first()
+
+            assertEquals(mapOf(SearchContentType.TEXT_NOTE to 2, SearchContentType.PERSON to 1), facets.byType)
+            assertEquals(emptyMap(), facets.byPerson)
+            assertEquals(emptyMap(), facets.byPlace)
+        }
+
+    @Test
+    fun `creation times ignore the date window so a time strip can show every period`() =
+        runTest {
+            seed()
+
+            val facets =
+                repository
+                    .observeFacets(
+                        "sam",
+                        SearchScope(
+                            createdFrom = Instant.parse("2020-01-01T00:00:00Z"),
+                            createdBefore = Instant.parse("2021-01-01T00:00:00Z"),
+                        ),
+                    ).first()
+
+            assertEquals(listOf(created, created), facets.createdAt)
+        }
+
+    @Test
+    fun `blank query has no facets`() =
+        runTest {
+            seed()
+
+            assertEquals(SearchFacets.Empty, repository.observeFacets(" ", SearchScope()).first())
         }
 
     private fun List<SearchResult>.uids(): Set<Uuid> = map { it.uid }.toSet()

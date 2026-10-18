@@ -140,6 +140,123 @@ class SearchScopeJvmTest {
             assertEquals(setOf(fixture.homeNote), results.uids())
         }
 
+    @Test
+    fun `type counts cover every indexed type that matches`() =
+        runTest {
+            seed()
+
+            assertEquals(
+                mapOf("text_note" to 3, "transcription" to 1, "journal" to 1, "place" to 1),
+                typeCounts("lake*"),
+            )
+        }
+
+    @Test
+    fun `type counts follow the other narrowing`() =
+        runTest {
+            seed()
+
+            assertEquals(
+                mapOf("text_note" to 2, "transcription" to 1, "place" to 1),
+                typeCounts("lake*", placeId = lake),
+            )
+        }
+
+    @Test
+    fun `place counts count entries at each place and not the places themselves`() =
+        runTest {
+            seed()
+
+            assertEquals(mapOf(lake.toString() to 3, home.toString() to 1), placeCounts("lake*"))
+        }
+
+    @Test
+    fun `place counts follow person narrowing and skip places with no matches`() =
+        runTest {
+            seed()
+
+            assertEquals(mapOf(lake.toString() to 2), placeCounts("lake*", personId = sam))
+        }
+
+    @Test
+    fun `person counts include only active links`() =
+        runTest {
+            seed()
+
+            assertEquals(mapOf(sam.toString() to 2), personCounts("lake*"))
+        }
+
+    @Test
+    fun `person counts follow place narrowing`() =
+        runTest {
+            seed()
+
+            assertEquals(emptyMap(), personCounts("lake*", placeId = home))
+        }
+
+    @Test
+    fun `created times list every match inside the narrowing`() =
+        runTest {
+            seed()
+
+            val all = createdTimes("lake*")
+            val withinYear =
+                createdTimes(
+                    "lake*",
+                    createdFrom = Instant.parse("2025-01-01T00:00:00Z"),
+                    createdBefore = Instant.parse("2026-01-01T00:00:00Z"),
+                )
+
+            assertEquals(6, all.size)
+            assertEquals(5, withinYear.size)
+            assertEquals(winter2024.toEpochMilliseconds(), all.min())
+        }
+
+    private suspend fun typeCounts(
+        query: String,
+        personId: Uuid? = null,
+        placeId: Uuid? = null,
+    ): Map<String, Int> =
+        requireNotNull(database)
+            .searchDao()
+            .countByContentType(query, false, listOf(""), personId?.toString(), placeId?.toString(), null, null)
+            .associate { it.contentType to it.total }
+
+    private suspend fun placeCounts(
+        query: String,
+        personId: Uuid? = null,
+    ): Map<String, Int> =
+        requireNotNull(database)
+            .searchDao()
+            .countByPlace(query, false, listOf(""), personId?.toString(), null, null, null)
+            .associate { it.placeId to it.total }
+
+    private suspend fun personCounts(
+        query: String,
+        placeId: Uuid? = null,
+    ): Map<String, Int> =
+        requireNotNull(database)
+            .searchDao()
+            .countByPerson(query, false, listOf(""), null, placeId?.toString(), null, null)
+            .associate { it.personId to it.total }
+
+    private suspend fun createdTimes(
+        query: String,
+        createdFrom: Instant? = null,
+        createdBefore: Instant? = null,
+    ): List<Long> =
+        requireNotNull(database)
+            .searchDao()
+            .findCreatedTimes(
+                query,
+                false,
+                listOf(""),
+                null,
+                null,
+                createdFrom?.toEpochMilliseconds(),
+                createdBefore?.toEpochMilliseconds(),
+            )
+
     private suspend fun scoped(
         query: String,
         types: List<String>? = null,
