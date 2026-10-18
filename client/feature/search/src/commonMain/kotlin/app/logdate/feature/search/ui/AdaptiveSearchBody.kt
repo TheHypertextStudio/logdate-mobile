@@ -19,7 +19,9 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
@@ -29,24 +31,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultKey
+import app.logdate.client.repository.search.SearchResultPreview
 import app.logdate.client.repository.search.key
 import app.logdate.ui.common.focusableWithRing
 import app.logdate.ui.search.rememberSearchHighlightStyle
 import app.logdate.ui.search.toUniversalSearchResultUiState
 import app.logdate.ui.theme.Spacing
 import app.logdate.util.formatDateLocalized
+import app.logdate.util.toReadableDateShort
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.search.generated.resources.Res
+import logdate.client.feature.search.generated.resources.search_date_range
 import logdate.client.feature.search.generated.resources.search_entry_count
+import logdate.client.feature.search.generated.resources.search_preview_changed
 import logdate.client.feature.search.generated.resources.search_preview_empty
+import logdate.client.feature.search.generated.resources.search_preview_highlights
+import logdate.client.feature.search.generated.resources.search_preview_latest_entries
 import logdate.client.feature.search.generated.resources.search_preview_open
 import logdate.client.feature.search.generated.resources.search_preview_open_day
+import logdate.client.feature.search.generated.resources.search_preview_people
+import logdate.client.feature.search.generated.resources.search_preview_place
+import logdate.client.feature.search.generated.resources.search_preview_started
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.Uuid
@@ -54,6 +69,8 @@ import kotlin.uuid.Uuid
 const val SEARCH_PREVIEW_TAG = "search_preview"
 const val SEARCH_PREVIEW_TITLE_TAG = "search_preview_title"
 const val SEARCH_PREVIEW_OPEN_TAG = "search_preview_open"
+const val SEARCH_PREVIEW_PERIOD_TAG = "search_preview_period"
+const val SEARCH_PREVIEW_ENTRIES_TAG = "search_preview_entries"
 
 /** What the adaptive search body can do on the person's behalf. */
 class AdaptiveSearchActions(
@@ -84,6 +101,9 @@ private val SelectionSaver =
  *
  * @param dayPreview What a selected day looks like. When the host has no day content, a summary of
  *   the day's matches is shown.
+ * @param knownPreviews Previews already read, shown without asking [loadPreview] again.
+ * @param loadPreview Reads what the preview of a journal or rewind shows beyond its row. It is only
+ *   asked where a preview shows, and a result it cannot read previews as its summary alone.
  */
 @Composable
 fun AdaptiveSearchBody(
@@ -93,7 +113,10 @@ fun AdaptiveSearchBody(
     actions: AdaptiveSearchActions,
     modifier: Modifier = Modifier,
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)? = null,
+    loadPreview: suspend (SearchResultKey) -> SearchResultPreview? = { null },
+    knownPreviews: Map<SearchResultKey, SearchResultPreview> = emptyMap(),
 ) {
+    val previews = remember(knownPreviews) { mutableStateMapOf<SearchResultKey, SearchResultPreview>().apply { putAll(knownPreviews) } }
     val zone = TimeZone.currentSystemDefault()
     val groups = remember(results, zone) { groupSearchResults(results, zone) }
     var chosen by rememberSaveable(stateSaver = SelectionSaver) { mutableStateOf<SearchSelection?>(null) }
@@ -140,6 +163,8 @@ fun AdaptiveSearchBody(
                 onOpenResult = actions.onResultClick,
                 onOpenDay = actions.onOpenDay,
                 dayPreview = dayPreview,
+                loadPreview = loadPreview,
+                previews = previews,
             )
         },
     )
@@ -154,11 +179,16 @@ private fun SearchPreview(
     onOpenResult: (SearchResult) -> Unit,
     onOpenDay: (SearchResult) -> Unit,
     dayPreview: (@Composable (LocalDate, SearchResultKey?) -> Unit)?,
+    loadPreview: suspend (SearchResultKey) -> SearchResultPreview?,
+    previews: MutableMap<SearchResultKey, SearchResultPreview>,
 ) {
     Column(Modifier.fillMaxSize().testTag(SEARCH_PREVIEW_TAG)) {
         when (selection) {
-            null -> Text(stringResource(Res.string.search_preview_empty), modifier = Modifier.padding(Spacing.lg))
-            is SearchSelection.Day ->
+            null -> {
+                Text(stringResource(Res.string.search_preview_empty), modifier = Modifier.padding(Spacing.lg))
+            }
+
+            is SearchSelection.Day -> {
                 if (dayPreview != null) {
                     dayPreview(selection.date, selection.highlight)
                 } else {
@@ -172,10 +202,23 @@ private fun SearchPreview(
                         onOpenDay,
                     )
                 }
-            is SearchSelection.Result ->
+            }
+
+            is SearchSelection.Result -> {
                 (groups.topMatches + groups.collections).firstOrNull { it.key == selection.key }?.let { result ->
-                    ResultSummary(result, details[result.key], onOpenResult)
+                    LaunchedEffect(result.key) {
+                        if (result.key in previews) return@LaunchedEffect
+                        try {
+                            loadPreview(result.key)?.let { previews[result.key] = it }
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (error: Exception) {
+                            Napier.w("Could not load the preview of ${result.key}", error)
+                        }
+                    }
+                    ResultSummary(result, details[result.key], previews[result.key], onOpenResult)
                 }
+            }
         }
     }
 }
@@ -184,14 +227,46 @@ private fun SearchPreview(
 private fun ResultSummary(
     result: SearchResult,
     detail: SearchResultDetail?,
+    preview: SearchResultPreview?,
     onOpen: (SearchResult) -> Unit,
 ) {
     val state = result.toUniversalSearchResultUiState(rememberSearchHighlightStyle())
+    val zone = TimeZone.currentSystemDefault()
     val supporting =
         when (detail) {
             is SearchResultDetail.Journal -> pluralStringResource(Res.plurals.search_entry_count, detail.entryCount, detail.entryCount)
             is SearchResultDetail.Person -> detail.relationshipLabel
             else -> state.createdReadable
+        }
+    val period =
+        when (detail) {
+            is SearchResultDetail.Rewind -> {
+                stringResource(
+                    Res.string.search_date_range,
+                    detail.start
+                        .toLocalDateTime(zone)
+                        .date
+                        .toReadableDateShort(),
+                    detail.end
+                        .toLocalDateTime(zone)
+                        .date
+                        .toReadableDateShort(),
+                )
+            }
+
+            is SearchResultDetail.Postcard -> {
+                stringResource(
+                    Res.string.search_preview_changed,
+                    detail.modifiedAt
+                        .toLocalDateTime(zone)
+                        .date
+                        .toReadableDateShort(),
+                )
+            }
+
+            else -> {
+                null
+            }
         }
     val cover =
         when (detail) {
@@ -213,7 +288,14 @@ private fun ResultSummary(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.testTag(SEARCH_PREVIEW_TITLE_TAG),
                 )
-                if (!supporting.isNullOrBlank()) {
+                if (period != null) {
+                    Text(
+                        period,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag(SEARCH_PREVIEW_PERIOD_TAG),
+                    )
+                } else if (!supporting.isNullOrBlank()) {
                     Text(supporting, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -221,6 +303,105 @@ private fun ResultSummary(
         Button(onClick = { onOpen(result) }, modifier = Modifier.testTag(SEARCH_PREVIEW_OPEN_TAG)) {
             Text(stringResource(Res.string.search_preview_open))
         }
+        when (preview) {
+            is SearchResultPreview.Journal -> {
+                JournalPreviewBody(preview, zone)
+            }
+
+            is SearchResultPreview.Rewind -> {
+                RewindPreviewBody(preview)
+            }
+
+            null -> {}
+        }
+    }
+}
+
+@Composable
+private fun JournalPreviewBody(
+    preview: SearchResultPreview.Journal,
+    zone: TimeZone,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+        if (preview.description.isNotBlank()) {
+            Text(preview.description, style = MaterialTheme.typography.bodyLarge)
+        }
+        Text(
+            stringResource(
+                Res.string.search_preview_started,
+                preview.created
+                    .toLocalDateTime(zone)
+                    .date
+                    .toReadableDateShort(),
+            ),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (preview.latestEntries.isNotEmpty()) {
+            PreviewSection(stringResource(Res.string.search_preview_latest_entries)) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    modifier = Modifier.fillMaxWidth().testTag(SEARCH_PREVIEW_ENTRIES_TAG),
+                ) {
+                    preview.latestEntries.forEach { entry ->
+                        ListItem(
+                            headlineContent = { Text(entry.text, maxLines = 3, overflow = TextOverflow.Ellipsis) },
+                            supportingContent = {
+                                Text(
+                                    entry.created
+                                        .toLocalDateTime(zone)
+                                        .date
+                                        .toReadableDateShort(),
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RewindPreviewBody(preview: SearchResultPreview.Rewind) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+        if (preview.highlights.isNotEmpty()) {
+            PreviewSection(stringResource(Res.string.search_preview_highlights)) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    preview.highlights.forEach { highlight ->
+                        ListItem(
+                            headlineContent = { Text(highlight, maxLines = 3, overflow = TextOverflow.Ellipsis) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        )
+                    }
+                }
+            }
+        }
+        if (preview.people.isNotEmpty()) {
+            PreviewSection(stringResource(Res.string.search_preview_people)) {
+                Text(preview.people.joinToString(", "), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+        preview.place?.let { place ->
+            PreviewSection(stringResource(Res.string.search_preview_place)) {
+                Text(place, style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewSection(
+    title: String,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        content()
     }
 }
 

@@ -44,6 +44,7 @@ import app.logdate.client.data.rewind.OfflineFirstRewindRepository
 import app.logdate.client.data.search.DataStoreRecentSearchesRepository
 import app.logdate.client.data.search.OfflineFirstSearchRepository
 import app.logdate.client.data.search.OfflineFirstSearchResultDetailsRepository
+import app.logdate.client.data.search.RewindLookup
 import app.logdate.client.data.stickers.OfflineFirstStickerRepository
 import app.logdate.client.data.streak.DefaultStreakSettingsRepository
 import app.logdate.client.data.timeline.OfflineFirstActivityTimelineRepository
@@ -109,6 +110,7 @@ import app.logdate.shared.config.LogDateConfigRepository
 import app.logdate.shared.config.configModule
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.json.Json
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -417,7 +419,13 @@ actual val dataModule: Module =
 
         // Search
         single<SearchRepository> { OfflineFirstSearchRepository(searchDao = get(), personDao = get(), featureFlags = get()) }
-        single<SearchResultDetailsRepository> { OfflineFirstSearchResultDetailsRepository(get(), get()) }
+        single<SearchResultDetailsRepository> {
+            OfflineFirstSearchResultDetailsRepository(
+                get(),
+                get(),
+                RewindLookup { id -> get<RewindRepository>().getRewind(id).firstOrNull() },
+            )
+        }
         single<RecentSearchesRepository> { DataStoreRecentSearchesRepository(get()) }
 
         // Streaks

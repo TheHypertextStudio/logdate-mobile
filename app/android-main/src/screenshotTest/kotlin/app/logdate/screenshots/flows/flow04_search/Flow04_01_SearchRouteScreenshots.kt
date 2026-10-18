@@ -47,6 +47,16 @@ fun S07_SearchNarrowingRow() = SharedSearchScene(SharedScreenshotSceneId.SearchN
 @Composable
 fun S08_SearchAdaptiveLayout() = SharedSearchScene(SharedScreenshotSceneId.SearchAdaptiveLayout)
 
+@PreviewTest
+@ScreenshotPreviewMatrix
+@Composable
+fun S09_SearchPreviewRewind() = SharedSearchScene(SharedScreenshotSceneId.SearchPreviewRewind)
+
+@PreviewTest
+@ScreenshotPreviewMatrix
+@Composable
+fun S10_SearchPreviewPostcard() = SharedSearchScene(SharedScreenshotSceneId.SearchPreviewPostcard)
+
 @Composable
 private fun SharedSearchScene(sceneId: SharedScreenshotSceneId) {
     ScreenshotTheme {

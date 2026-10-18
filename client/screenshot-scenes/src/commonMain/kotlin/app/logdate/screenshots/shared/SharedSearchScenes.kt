@@ -5,10 +5,13 @@ package app.logdate.screenshots.shared
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import app.logdate.client.repository.search.SearchContentType
+import app.logdate.client.repository.search.SearchPreviewEntry
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
+import app.logdate.client.repository.search.SearchResultPreview
 import app.logdate.client.repository.search.key
 import app.logdate.feature.search.ui.AdaptiveSearchActions
 import app.logdate.feature.search.ui.AdaptiveSearchBody
@@ -123,26 +126,42 @@ internal val catalogSearchScenes: List<SharedScreenshotSceneSpec> =
             }
         },
         sharedScene(SharedScreenshotSceneId.SearchAdaptiveLayout, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer, modifier = Modifier.fillMaxSize()) {
-                AdaptiveSearchBody(
-                    results = adaptiveSearchResults,
-                    details = adaptiveSearchDetails,
-                    narrowing = narrowingOptions,
-                    actions =
-                        AdaptiveSearchActions(
-                            onResultClick = {},
-                            onResultLongClick = {},
-                            onOpenDay = {},
-                            onToggleType = {},
-                            onTogglePerson = {},
-                            onTogglePlace = {},
-                            onToggleYear = {},
-                            onClearNarrowing = {},
-                        ),
-                )
-            }
+            AdaptiveSearchScene(adaptiveSearchResults)
+        },
+        sharedScene(SharedScreenshotSceneId.SearchPreviewRewind, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            AdaptiveSearchScene(adaptiveSearchResults.filterNot { it.contentType == SearchContentType.JOURNAL })
+        },
+        sharedScene(SharedScreenshotSceneId.SearchPreviewPostcard, ScreenshotSceneGroup.SEARCH, standardMatrixVariants) {
+            AdaptiveSearchScene(
+                adaptiveSearchResults.filterNot {
+                    it.contentType == SearchContentType.JOURNAL || it.contentType == SearchContentType.REWIND
+                },
+            )
         },
     )
+
+@Composable
+private fun AdaptiveSearchScene(results: List<SearchResult>) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, modifier = Modifier.fillMaxSize()) {
+        AdaptiveSearchBody(
+            results = results,
+            details = adaptiveSearchDetails,
+            narrowing = narrowingOptions,
+            actions =
+                AdaptiveSearchActions(
+                    onResultClick = {},
+                    onResultLongClick = {},
+                    onOpenDay = {},
+                    onToggleType = {},
+                    onTogglePerson = {},
+                    onTogglePlace = {},
+                    onToggleYear = {},
+                    onClearNarrowing = {},
+                ),
+            knownPreviews = adaptiveSearchPreviews,
+        )
+    }
+}
 
 private val adaptiveSearchResults: List<SearchResult> =
     listOf(
@@ -188,6 +207,34 @@ private val adaptiveSearchDetails: Map<app.logdate.client.repository.search.Sear
         adaptiveSearchResults[2].key to SearchResultDetail.Postcard(coverUri = null, modifiedAt = baseInstant - 90.days),
         adaptiveSearchResults[4].key to SearchResultDetail.Audio(durationMs = 48_000),
         adaptiveSearchResults[5].key to SearchResultDetail.Image(uri = "file:///sample-photo.jpg"),
+    )
+
+private val adaptiveSearchPreviews: Map<app.logdate.client.repository.search.SearchResultKey, SearchResultPreview> =
+    mapOf(
+        adaptiveSearchResults[0].key to
+            SearchResultPreview.Journal(
+                description = "Summers on the water: early mornings, long drives and the same stretch of shore.",
+                created = baseInstant - 600.days,
+                latestEntries =
+                    listOf(
+                        SearchPreviewEntry(
+                            Uuid.parse("00000000-0000-0000-0000-000000000074"),
+                            "Packed the kayak and drove out to the lake before it got hot.",
+                            baseInstant - 3.hours,
+                        ),
+                        SearchPreviewEntry(
+                            Uuid.parse("00000000-0000-0000-0000-000000000077"),
+                            "First lake day of the year. Cold, empty, perfect.",
+                            baseInstant - 40.days,
+                        ),
+                    ),
+            ),
+        adaptiveSearchResults[1].key to
+            SearchResultPreview.Rewind(
+                highlights = listOf("The water was so clear we could see the anchor from the boat.", "We stayed until dark."),
+                people = listOf("Sam", "Maya"),
+                place = "Lake Mead",
+            ),
     )
 
 private fun searchResult(
