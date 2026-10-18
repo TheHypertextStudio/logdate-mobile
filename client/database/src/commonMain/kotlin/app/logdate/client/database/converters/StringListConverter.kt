@@ -16,11 +16,12 @@ class StringListConverter {
             .orEmpty()
 
     @TypeConverter
-    fun toString(values: List<String>?): String? =
+    fun toString(values: List<String>?): String =
         values
-            ?.map(String::trim)
-            ?.filter(String::isNotEmpty)
-            ?.joinToString(SEPARATOR)
+            .orEmpty()
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .joinToString(SEPARATOR)
 
     private companion object {
         const val SEPARATOR = "\u001F"
