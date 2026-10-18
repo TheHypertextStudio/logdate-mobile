@@ -4,7 +4,6 @@
 package app.logdate.feature.search.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,21 +11,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -35,7 +36,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
@@ -76,6 +76,9 @@ private const val MAX_LINES_PER_DAY = 3
  * postcards with their covers, then entries grouped by day with their photos, stickers and
  * recordings.
  *
+ * Each group sits in a tonal card of Material 3 list items, the same row anatomy the other search
+ * results use.
+ *
  * @param details The media, durations and covers of the results; a result with no entry shows only
  *   its text.
  * @param onResultClick Opens the destination of a single result.
@@ -93,35 +96,34 @@ fun AdaptiveSearchResults(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxWidth().testTag(ADAPTIVE_SEARCH_RESULTS_TAG),
-        contentPadding = PaddingValues(bottom = Spacing.lg),
+        contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         item(key = "result_count") {
             Text(
                 text = pluralStringResource(Res.plurals.search_result_count, groups.total, groups.total),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+                modifier = Modifier.padding(vertical = Spacing.sm),
             )
         }
         if (groups.topMatches.isNotEmpty()) {
-            item(key = "header_top_matches") {
-                SectionHeader(stringResource(Res.string.search_section_top_matches), ADAPTIVE_SEARCH_TOP_MATCHES_TAG)
-            }
-            items(groups.topMatches, key = { "top_${it.contentType.ftsValue}_${it.uid}" }) { result ->
-                EntityRow(result, details[result.key], onResultClick, onResultLongClick)
+            item(key = "top_matches") {
+                ResultGroup(stringResource(Res.string.search_section_top_matches), ADAPTIVE_SEARCH_TOP_MATCHES_TAG) {
+                    groups.topMatches.forEach { result -> EntityItem(result, details[result.key], onResultClick, onResultLongClick) }
+                }
             }
         }
         if (groups.collections.isNotEmpty()) {
-            item(key = "header_collections") {
-                SectionHeader(stringResource(Res.string.search_section_collections), ADAPTIVE_SEARCH_COLLECTIONS_TAG)
-            }
-            items(groups.collections, key = { "collection_${it.contentType.ftsValue}_${it.uid}" }) { result ->
-                CollectionRow(result, details[result.key], onResultClick, onResultLongClick)
+            item(key = "collections") {
+                ResultGroup(stringResource(Res.string.search_section_collections), ADAPTIVE_SEARCH_COLLECTIONS_TAG) {
+                    groups.collections.forEach { result -> CollectionItem(result, details[result.key], onResultClick, onResultLongClick) }
+                }
             }
         }
         if (groups.days.isNotEmpty()) {
-            item(key = "header_days") {
-                SectionHeader(stringResource(Res.string.search_section_days), ADAPTIVE_SEARCH_DAYS_TAG)
+            item(key = "days_heading") {
+                SectionHeading(stringResource(Res.string.search_section_days), ADAPTIVE_SEARCH_DAYS_TAG)
             }
             items(groups.days, key = { "day_${it.date}" }) { day ->
                 DayCard(day, details, onResultClick, onResultLongClick, onOpenDay)
@@ -131,24 +133,38 @@ fun AdaptiveSearchResults(
 }
 
 @Composable
-private fun SectionHeader(
+private fun SectionHeading(
     text: String,
     tag: String,
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.md, bottom = Spacing.sm)
-                .testTag(tag),
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm).testTag(tag),
     )
 }
 
+/** A heading over a tonal card whose rows are the group's results. */
 @Composable
-private fun EntityRow(
+private fun ResultGroup(
+    title: String,
+    tag: String,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        SectionHeading(title, tag)
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(vertical = Spacing.xs)) { content() }
+        }
+    }
+}
+
+@Composable
+private fun EntityItem(
     result: SearchResult,
     detail: SearchResultDetail?,
     onClick: (SearchResult) -> Unit,
@@ -161,40 +177,28 @@ private fun EntityRow(
             is SearchResultDetail.Person -> detail.relationshipLabel
             else -> null
         }
-    ResultRow(
+    val cover = (detail as? SearchResultDetail.Journal)?.coverUri ?: (detail as? SearchResultDetail.Person)?.photoUri
+    ResultItem(
         result = result,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        leading = {
-            val cover = (detail as? SearchResultDetail.Journal)?.coverUri ?: (detail as? SearchResultDetail.Person)?.photoUri
-            Cover(
-                uri = cover,
-                icon = state.typeIcon,
-                shape =
-                    if (result.contentType ==
-                        SearchContentType.JOURNAL
-                    ) {
-                        RoundedCornerShape(10.dp)
-                    } else {
-                        CircleShape
-                    },
-                size = 44.dp,
-            )
-        },
         title = state.contentText,
         supporting = supporting,
         typeLabel = stringResource(state.typeLabelKey),
+        cover = cover,
+        icon = state.typeIcon,
+        onClick = onClick,
+        onLongClick = onLongClick,
     )
 }
 
 @Composable
-private fun CollectionRow(
+private fun CollectionItem(
     result: SearchResult,
     detail: SearchResultDetail?,
     onClick: (SearchResult) -> Unit,
     onLongClick: (SearchResult) -> Unit,
 ) {
     val state = result.toUniversalSearchResultUiState(rememberSearchHighlightStyle())
+    val zone = TimeZone.currentSystemDefault()
     val (cover, supporting) =
         when (detail) {
             is SearchResultDetail.Rewind ->
@@ -202,110 +206,97 @@ private fun CollectionRow(
                     stringResource(
                         Res.string.search_date_range,
                         detail.start
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                            .toLocalDateTime(zone)
                             .date
                             .toReadableDateShort(),
                         detail.end
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                            .toLocalDateTime(zone)
                             .date
                             .toReadableDateShort(),
                     )
             is SearchResultDetail.Postcard ->
                 detail.coverUri to
                     detail.modifiedAt
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .toLocalDateTime(zone)
                         .date
                         .toReadableDateShort()
             else -> null to state.createdReadable
         }
-    ResultRow(
+    ResultItem(
         result = result,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        leading = { Cover(uri = cover, icon = state.typeIcon, shape = RoundedCornerShape(10.dp), size = 64.dp, width = 92.dp) },
         title = state.contentText,
         supporting = supporting,
         typeLabel = stringResource(state.typeLabelKey),
+        cover = cover,
+        icon = state.typeIcon,
+        onClick = onClick,
+        onLongClick = onLongClick,
     )
 }
 
+/** One result as a Material 3 list item: a tonal cover or icon, the text, and the kind of result. */
 @Composable
-private fun ResultRow(
+private fun ResultItem(
     result: SearchResult,
-    onClick: (SearchResult) -> Unit,
-    onLongClick: (SearchResult) -> Unit,
-    leading: @Composable () -> Unit,
     title: AnnotatedString,
     supporting: String?,
     typeLabel: String,
+    cover: String?,
+    icon: ImageVector,
+    onClick: (SearchResult) -> Unit,
+    onLongClick: (SearchResult) -> Unit,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+    ListItem(
+        headlineContent = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        supportingContent =
+            supporting?.takeIf { it.isNotBlank() }?.let { text ->
+                { Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            },
+        leadingContent = { Cover(result.contentType, cover, icon, typeLabel) },
+        trailingContent = { Text(typeLabel, style = MaterialTheme.typography.labelSmall) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier =
             Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.sm)
-                .clip(RoundedCornerShape(16.dp))
                 .focusableWithRing()
-                .combinedClickable(onClick = { onClick(result) }, onLongClick = { onLongClick(result) })
-                .padding(horizontal = Spacing.md, vertical = Spacing.md),
-    ) {
-        leading()
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (!supporting.isNullOrBlank()) {
-                Text(
-                    text = supporting,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                .combinedClickable(onClick = { onClick(result) }, onLongClick = { onLongClick(result) }),
+    )
+}
+
+/** A tonal square holding a cover image, or the icon of the kind of result when it has none. */
+@Composable
+private fun Cover(
+    type: SearchContentType,
+    uri: String?,
+    icon: ImageVector,
+    label: String,
+) {
+    val (container, content) = type.tonalColors()
+    Surface(color = container, contentColor = content, shape = MaterialTheme.shapes.medium, modifier = Modifier.size(56.dp)) {
+        Box(contentAlignment = Alignment.Center) {
+            if (uri != null) {
+                AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(56.dp))
+            } else {
+                Icon(imageVector = icon, contentDescription = label)
             }
         }
-        Text(
-            text = typeLabel,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
 @Composable
-private fun Cover(
-    uri: String?,
-    icon: ImageVector,
-    shape: Shape,
-    size: Dp,
-    width: Dp = size,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-            Modifier
-                .size(width = width, height = size)
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-    ) {
-        if (uri != null) {
-            AsyncImage(
-                model = uri,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(width = width, height = size),
-            )
-        } else {
-            Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
-        }
+private fun SearchContentType.tonalColors(): Pair<Color, Color> {
+    val scheme = MaterialTheme.colorScheme
+    return when (this) {
+        SearchContentType.JOURNAL, SearchContentType.REWIND, SearchContentType.PERSON ->
+            scheme.primaryContainer to scheme.onPrimaryContainer
+        SearchContentType.TRANSCRIPTION, SearchContentType.AMBIENT_SOUND, SearchContentType.PLACE ->
+            scheme.tertiaryContainer to scheme.onTertiaryContainer
+        SearchContentType.MEDIA_CAPTION -> scheme.surfaceContainerHigh to scheme.onSurface
+        SearchContentType.TEXT_NOTE, SearchContentType.STICKER, SearchContentType.POSTCARD ->
+            scheme.secondaryContainer to scheme.onSecondaryContainer
     }
 }
 
+/** One day's matches in a tonal card: the date, photo and sticker thumbnails, then a line for each other match. */
 @Composable
 private fun DayCard(
     day: SearchDayGroup,
@@ -317,48 +308,36 @@ private fun DayCard(
     val highlight = rememberSearchHighlightStyle()
     val thumbnails = day.results.filter { details[it.key].hasArt() }.take(MAX_THUMBNAILS_PER_DAY)
     val lines = day.results.filterNot { details[it.key].hasArt() }
-    Column(
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.sm).testTag("adaptive_search_day_${day.date}"),
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        modifier = Modifier.fillMaxWidth().testTag("adaptive_search_day_${day.date}"),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .focusableWithRing()
-                    .combinedClickable(onClick = { onOpenDay(day.results.first()) })
-                    .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        ) {
-            Text(text = formatDateLocalized(day.date), style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = pluralStringResource(Res.plurals.search_day_match_count, day.results.size, day.results.size),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        ListItem(
+            headlineContent = { Text(formatDateLocalized(day.date), style = MaterialTheme.typography.titleMedium) },
+            trailingContent = {
+                Text(
+                    text = pluralStringResource(Res.plurals.search_day_match_count, day.results.size, day.results.size),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            modifier = Modifier.focusableWithRing().combinedClickable(onClick = { onOpenDay(day.results.first()) }),
+        )
         if (thumbnails.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                modifier = Modifier.padding(horizontal = Spacing.md),
+                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.xs),
             ) {
-                thumbnails.forEach { result ->
-                    DayThumbnail(result, details[result.key], onResultClick, onResultLongClick)
-                }
+                thumbnails.forEach { result -> DayThumbnail(result, details[result.key], onResultClick, onResultLongClick) }
             }
         }
         lines.take(MAX_LINES_PER_DAY).forEach { result ->
             DayLine(result, details[result.key], highlight, onResultClick, onResultLongClick)
         }
         if (lines.size > MAX_LINES_PER_DAY) {
-            Text(
-                text = stringResource(Res.string.search_more_in_day, lines.size - MAX_LINES_PER_DAY),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = Spacing.md),
-            )
+            TextButton(onClick = { onOpenDay(day.results.first()) }, modifier = Modifier.padding(start = Spacing.sm)) {
+                Text(stringResource(Res.string.search_more_in_day, lines.size - MAX_LINES_PER_DAY))
+            }
         }
     }
 }
@@ -377,18 +356,22 @@ private fun DayThumbnail(
             is SearchResultDetail.Sticker -> detail.imageUri
             else -> null
         }
-    val fit = if (detail is SearchResultDetail.Sticker) ContentScale.Fit else ContentScale.Crop
-    Box(
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.small,
         modifier =
             Modifier
-                .size(width = 84.dp, height = 64.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .size(width = 96.dp, height = 72.dp)
                 .focusableWithRing()
                 .semantics { contentDescription = result.content }
                 .combinedClickable(onClick = { onClick(result) }, onLongClick = { onLongClick(result) }),
     ) {
-        AsyncImage(model = uri, contentDescription = null, contentScale = fit, modifier = Modifier.size(width = 84.dp, height = 64.dp))
+        AsyncImage(
+            model = uri,
+            contentDescription = null,
+            contentScale = if (detail is SearchResultDetail.Sticker) ContentScale.Fit else ContentScale.Crop,
+            modifier = Modifier.size(width = 96.dp, height = 72.dp),
+        )
     }
 }
 
@@ -402,38 +385,19 @@ private fun DayLine(
 ) {
     val state = result.toUniversalSearchResultUiState(highlight)
     val durationMs = (detail as? SearchResultDetail.Audio)?.durationMs
-    Row(
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+    ListItem(
+        headlineContent = { Text(state.contentText, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        leadingContent = { Icon(imageVector = state.typeIcon, contentDescription = stringResource(state.typeLabelKey)) },
+        trailingContent =
+            durationMs?.takeIf { it > 0 }?.let { ms ->
+                { Text(formatDuration(ms), style = MaterialTheme.typography.labelMedium) }
+            },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier =
             Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
                 .focusableWithRing()
-                .combinedClickable(onClick = { onClick(result) }, onLongClick = { onLongClick(result) })
-                .padding(horizontal = Spacing.md, vertical = Spacing.xs),
-    ) {
-        Icon(
-            imageVector = state.typeIcon,
-            contentDescription = stringResource(state.typeLabelKey),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-        )
-        Text(
-            text = state.contentText,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (durationMs != null && durationMs > 0) {
-            Text(
-                text = formatDuration(durationMs),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+                .combinedClickable(onClick = { onClick(result) }, onLongClick = { onLongClick(result) }),
+    )
 }
 
 private fun SearchResultDetail?.hasArt(): Boolean =
