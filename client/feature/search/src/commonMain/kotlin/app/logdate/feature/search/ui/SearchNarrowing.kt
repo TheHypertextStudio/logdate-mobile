@@ -142,7 +142,11 @@ private fun NarrowingPanel(
         ChipGroup(stringResource(Res.string.search_narrowing_places), places)
         ChipGroup(stringResource(Res.string.search_narrowing_types), types)
         if (options.anyChosen) {
-            TextButton(onClick = onClear, modifier = Modifier.testTag(SEARCH_NARROWING_CLEAR_TAG)) {
+            TextButton(
+                onClick = onClear,
+                contentPadding = PaddingValues(start = 0.dp, end = Spacing.md),
+                modifier = Modifier.testTag(SEARCH_NARROWING_CLEAR_TAG),
+            ) {
                 Text(stringResource(Res.string.search_narrowing_clear))
             }
         }

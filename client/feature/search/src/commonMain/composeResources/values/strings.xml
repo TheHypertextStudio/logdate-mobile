@@ -4,7 +4,7 @@
     <string name="search">Search</string>
     <string name="search_entries">Search entries...</string>
     <string name="search_for_entries">Search for entries</string>
-    <string name="search_no_results">No results for "%1$s"</string>
+    <string name="search_no_results">No results for “%1$s”</string>
     <string name="searching_entries">Searching entries...</string>
     <string name="search_filter_clear">Clear filters</string>
     <string name="search_filter_date_all_time">All time</string>
@@ -24,6 +24,7 @@
     <string name="search_filter_type_people">People</string>
     <string name="search_recent_remove">Remove recent search</string>
     <string name="search_recent_clear_all">Clear all</string>
+    <string name="search_recent_title">Recent searches</string>
     <string name="search_empty_clear_filters">Clear filters</string>
     <string name="search_action_open_day">Open day view</string>
     <string name="search_action_copy_text">Copy text</string>

@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -155,8 +156,10 @@ private fun SectionHeading(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .padding(top = Spacing.lg)
                 .height(40.dp)
-                .wrapContentHeight(Alignment.CenterVertically)
+                .wrapContentHeight(Alignment.Bottom)
+                .padding(bottom = Spacing.sm)
                 .testTag(tag),
     )
 }
@@ -168,7 +171,7 @@ private fun ResultGroup(
     tag: String,
     content: @Composable () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+    Column {
         SectionHeading(title, tag)
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -273,10 +276,12 @@ private fun ResultItem(
             supporting?.takeIf { it.isNotBlank() }?.let { text ->
                 { Text(text, maxLines = 2, overflow = TextOverflow.Ellipsis) }
             },
-        leadingContent = { Cover(result.contentType, cover, icon, typeLabel) },
+        leadingContent = { Cover(result.contentType, cover, icon, typeLabel, selected = selected) },
         colors = ListItemDefaults.colors(containerColor = selectedContainer(selected)),
         modifier =
             Modifier
+                .padding(horizontal = Spacing.sm)
+                .clip(MaterialTheme.shapes.large)
                 .focusableWithRing()
                 .combinedClickable(onClick = { onClick(result) }, onLongClick = { onLongClick(result) }),
     )
@@ -290,11 +295,17 @@ internal fun Cover(
     icon: ImageVector,
     label: String,
     size: Dp = 56.dp,
+    selected: Boolean = false,
 ) {
     val (container, content) = type.tonalColors()
     val journal = type == SearchContentType.JOURNAL
     Surface(
-        color = if (journal) MaterialTheme.colorScheme.tertiary else container,
+        color =
+            when {
+                journal -> MaterialTheme.colorScheme.tertiary
+                selected -> MaterialTheme.colorScheme.surface
+                else -> container
+            },
         contentColor = if (journal) MaterialTheme.colorScheme.onTertiary else content,
         shape = if (journal) RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp) else MaterialTheme.shapes.medium,
         modifier = if (journal) Modifier.size(width = size * 0.75f, height = size) else Modifier.size(size),
