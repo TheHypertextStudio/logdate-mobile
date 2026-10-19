@@ -142,54 +142,56 @@ fun AdaptiveSearchBody(
     var chosen by rememberSaveable(stateSaver = SelectionSaver) { mutableStateOf<SearchSelection?>(null) }
     val selection = chosen?.takeIf { groups.contains(it) } ?: groups.firstSelection(zone)
 
-    SearchWorkspaceLayout(
-        modifier = modifier.fillMaxSize(),
-        narrowing = { layout ->
-            SearchNarrowing(
-                options = narrowing,
-                layout = layout,
-                onToggleType = actions.onToggleType,
-                onTogglePerson = actions.onTogglePerson,
-                onTogglePlace = actions.onTogglePlace,
-                onToggleYear = actions.onToggleYear,
-                onClear = actions.onClearNarrowing,
-            )
-        },
-        results = { panels ->
-            val previewing = panels != SearchPanels.ResultsOnly
-            AdaptiveSearchResults(
-                groups = groups,
-                details = details,
-                onResultClick = { result ->
-                    if (previewing) chosen = searchSelectionFor(result, zone) else actions.onResultClick(result)
-                },
-                onResultLongClick = actions.onResultLongClick,
-                onOpenDay = { result ->
-                    if (previewing) {
-                        chosen = (searchSelectionFor(result, zone) as? SearchSelection.Day)?.copy(highlight = null)
-                    } else {
-                        actions.onOpenDay(result)
-                    }
-                },
-                selected = selection.takeIf { previewing },
-                modifier = Modifier.fillMaxSize(),
-            )
-        },
-        preview = {
-            SearchPreview(
-                selection = selection,
-                groups = groups,
-                details = details,
-                onOpenResult = actions.onResultClick,
-                onOpenDay = actions.onOpenDay,
-                dayPreview = dayPreview,
-                loadPreview = loadPreview,
-                previews = previews,
-                actions = actions,
-                placeMap = placeMap,
-            )
-        },
-    )
+    SearchTypography {
+        SearchWorkspaceLayout(
+            modifier = modifier.fillMaxSize(),
+            narrowing = { layout ->
+                SearchNarrowing(
+                    options = narrowing,
+                    layout = layout,
+                    onToggleType = actions.onToggleType,
+                    onTogglePerson = actions.onTogglePerson,
+                    onTogglePlace = actions.onTogglePlace,
+                    onToggleYear = actions.onToggleYear,
+                    onClear = actions.onClearNarrowing,
+                )
+            },
+            results = { panels ->
+                val previewing = panels != SearchPanels.ResultsOnly
+                AdaptiveSearchResults(
+                    groups = groups,
+                    details = details,
+                    onResultClick = { result ->
+                        if (previewing) chosen = searchSelectionFor(result, zone) else actions.onResultClick(result)
+                    },
+                    onResultLongClick = actions.onResultLongClick,
+                    onOpenDay = { result ->
+                        if (previewing) {
+                            chosen = (searchSelectionFor(result, zone) as? SearchSelection.Day)?.copy(highlight = null)
+                        } else {
+                            actions.onOpenDay(result)
+                        }
+                    },
+                    selected = selection.takeIf { previewing },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            preview = {
+                SearchPreview(
+                    selection = selection,
+                    groups = groups,
+                    details = details,
+                    onOpenResult = actions.onResultClick,
+                    onOpenDay = actions.onOpenDay,
+                    dayPreview = dayPreview,
+                    loadPreview = loadPreview,
+                    previews = previews,
+                    actions = actions,
+                    placeMap = placeMap,
+                )
+            },
+        )
+    }
 }
 
 /** The preview of the chosen result: the host's day content for a day, otherwise a summary. */

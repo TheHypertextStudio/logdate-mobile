@@ -263,83 +263,92 @@ fun SearchScreenContent(
         }
     }
 
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.statusBarsPadding()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().height(72.dp).padding(start = Spacing.xs, end = Spacing.sm),
-            ) {
-                IconButton(onClick = onGoBack) {
-                    Icon(
-                        painter = PlatformIcons.back(),
-                        contentDescription = stringResource(UiRes.string.common_go_back),
+    // The two adaptive panels use the whole window; everything else keeps a readable width.
+    val contentWidth =
+        if (adaptive && searchState is SearchScreenState.Results) {
+            Modifier.fillMaxWidth()
+        } else {
+            Modifier.widthIn(max = SearchBarMaxWidth).fillMaxWidth()
+        }
+    SearchTypography {
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = modifier.fillMaxSize()) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.statusBarsPadding()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = contentWidth.height(72.dp).padding(start = Spacing.xs, end = Spacing.sm),
+                ) {
+                    IconButton(onClick = onGoBack) {
+                        Icon(
+                            painter = PlatformIcons.back(),
+                            contentDescription = stringResource(UiRes.string.common_go_back),
+                        )
+                    }
+                    TextField(
+                        state = textFieldState,
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        textStyle = MaterialTheme.typography.titleMedium,
+                        placeholder = {
+                            Text(
+                                stringResource(Res.string.search_entries),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        },
+                        colors =
+                            TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        onKeyboardAction = { onCommitSearch() },
+                        trailingIcon = {
+                            if (textFieldState.text.isNotEmpty()) {
+                                IconButton(onClick = { textFieldState.clearText() }) {
+                                    Icon(
+                                        painter = PlatformIcons.close(),
+                                        contentDescription = stringResource(Res.string.clear_search),
+                                    )
+                                }
+                            }
+                        },
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester)
+                                .handwritingDelegate()
+                                .testTag(SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG)
+                                .semantics {
+                                    contentDescription = SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG
+                                },
                     )
                 }
-                TextField(
-                    state = textFieldState,
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    textStyle = MaterialTheme.typography.titleMedium,
-                    placeholder = {
-                        Text(
-                            stringResource(Res.string.search_entries),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    },
-                    colors =
-                        TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    onKeyboardAction = { onCommitSearch() },
-                    trailingIcon = {
-                        if (textFieldState.text.isNotEmpty()) {
-                            IconButton(onClick = { textFieldState.clearText() }) {
-                                Icon(
-                                    painter = PlatformIcons.close(),
-                                    contentDescription = stringResource(Res.string.clear_search),
-                                )
-                            }
-                        }
-                    },
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .focusRequester(focusRequester)
-                            .handwritingDelegate()
-                            .testTag(SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG)
-                            .semantics {
-                                contentDescription = SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG
-                            },
-                )
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                SearchBodyContent(
-                    searchState = searchState,
-                    filters = filters,
-                    onToggleType = onToggleType,
-                    onSetDateRange = onSetDateRange,
-                    onClearFilters = onClearFilters,
-                    onQueryChange = onQueryChange,
-                    onCommitSearch = onCommitSearch,
-                    onRemoveRecent = onRemoveRecent,
-                    onClearAllRecents = onClearAllRecents,
-                    onResultClick = onResultClick,
-                    onLongClickResult = { result -> sheetTarget = result },
-                    onOpenDay = onResultOpenDay,
-                    adaptive = adaptive,
-                    resultDetails = resultDetails,
-                    narrowingOptions = narrowingOptions,
-                    onTogglePerson = onTogglePerson,
-                    onTogglePlace = onTogglePlace,
-                    onToggleYear = onToggleYear,
-                    dayPreview = dayPreview,
-                    placeMap = placeMap,
-                    loadPreview = loadPreview,
-                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Box(modifier = contentWidth.weight(1f)) {
+                    SearchBodyContent(
+                        searchState = searchState,
+                        filters = filters,
+                        onToggleType = onToggleType,
+                        onSetDateRange = onSetDateRange,
+                        onClearFilters = onClearFilters,
+                        onQueryChange = onQueryChange,
+                        onCommitSearch = onCommitSearch,
+                        onRemoveRecent = onRemoveRecent,
+                        onClearAllRecents = onClearAllRecents,
+                        onResultClick = onResultClick,
+                        onLongClickResult = { result -> sheetTarget = result },
+                        onOpenDay = onResultOpenDay,
+                        adaptive = adaptive,
+                        resultDetails = resultDetails,
+                        narrowingOptions = narrowingOptions,
+                        onTogglePerson = onTogglePerson,
+                        onTogglePlace = onTogglePlace,
+                        onToggleYear = onToggleYear,
+                        dayPreview = dayPreview,
+                        placeMap = placeMap,
+                        loadPreview = loadPreview,
+                    )
+                }
             }
         }
     }
