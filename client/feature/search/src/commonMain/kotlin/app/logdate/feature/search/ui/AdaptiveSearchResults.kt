@@ -10,11 +10,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -146,9 +150,14 @@ private fun SectionHeading(
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm).testTag(tag),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .wrapContentHeight(Alignment.CenterVertically)
+                .testTag(tag),
     )
 }
 
@@ -284,10 +293,16 @@ internal fun Cover(
     size: Dp = 56.dp,
 ) {
     val (container, content) = type.tonalColors()
-    Surface(color = container, contentColor = content, shape = MaterialTheme.shapes.medium, modifier = Modifier.size(size)) {
+    val journal = type == SearchContentType.JOURNAL
+    Surface(
+        color = if (journal) MaterialTheme.colorScheme.tertiary else container,
+        contentColor = if (journal) MaterialTheme.colorScheme.onTertiary else content,
+        shape = if (journal) RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp) else MaterialTheme.shapes.medium,
+        modifier = if (journal) Modifier.size(width = size * 0.75f, height = size) else Modifier.size(size),
+    ) {
         Box(contentAlignment = Alignment.Center) {
             if (uri != null) {
-                AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size))
+                AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
             } else {
                 Icon(imageVector = icon, contentDescription = label)
             }

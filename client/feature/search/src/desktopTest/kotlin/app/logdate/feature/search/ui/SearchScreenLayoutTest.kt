@@ -112,6 +112,7 @@ class SearchScreenLayoutTest {
             }
 
             onNodeWithContentDescription("Clear search").performClick()
+            waitForIdle()
 
             assertEquals("", queries.last())
         }
