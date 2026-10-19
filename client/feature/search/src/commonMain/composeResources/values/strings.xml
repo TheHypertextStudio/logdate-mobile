@@ -22,11 +22,6 @@
     <string name="search_filter_type_postcards">Postcards</string>
     <string name="search_filter_type_soundscapes">Soundscapes</string>
     <string name="search_filter_type_people">People</string>
-    <string name="search_bucket_today">Today</string>
-    <string name="search_bucket_yesterday">Yesterday</string>
-    <string name="search_bucket_this_week">This week</string>
-    <string name="search_bucket_this_month">This month</string>
-    <string name="search_bucket_earlier">Earlier</string>
     <string name="search_recent_remove">Remove recent search</string>
     <string name="search_recent_clear_all">Clear all</string>
     <string name="search_empty_clear_filters">Clear filters</string>
@@ -34,4 +29,7 @@
     <string name="search_action_copy_text">Copy text</string>
     <string name="search_action_actions_for">Actions</string>
     <string name="search_action_share">Share</string>
+    <string name="search_section_journals">Journals</string>
+    <string name="search_section_people">People</string>
+    <string name="search_section_notes">Notes</string>
 </resources>
