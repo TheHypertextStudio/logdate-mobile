@@ -13,15 +13,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -29,13 +31,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,10 +50,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import app.logdate.client.domain.search.DateRangeFilter
 import app.logdate.client.domain.search.SearchFilters
@@ -199,7 +205,7 @@ fun SearchScreen(
 /**
  * Stateless content for the universal search screen.
  *
- * Renders an MD3 SearchBar that auto-expands on entry. Shows recent searches
+ * Renders a search field at the top of the page with the results below it. Shows recent searches
  * when idle, a "no results" message when empty, or a ranked list of
  * [UniversalSearchResultItem]s when results are available.
  */
@@ -231,7 +237,6 @@ fun SearchScreenContent(
     loadPreview: suspend (SearchResultKey) -> SearchResultPreview? = { null },
     modifier: Modifier = Modifier,
 ) {
-    val searchBarState = rememberSearchBarState()
     val textFieldState =
         rememberSaveable(saver = TextFieldState.Saver) {
             TextFieldState(initialText = initialQuery)
@@ -239,9 +244,10 @@ fun SearchScreenContent(
     var sheetTarget by remember { mutableStateOf<SearchResult?>(null) }
     val clipboard = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        searchBarState.animateToExpanded()
+        focusRequester.requestFocus()
     }
 
     LaunchedEffect(textFieldState) {
@@ -258,62 +264,52 @@ fun SearchScreenContent(
         }
     }
 
-    Box(modifier = modifier) {
-        SearchBar(
-            state = searchBarState,
-            inputField = {
-                SearchBarDefaults.InputField(
-                    searchBarState = searchBarState,
-                    textFieldState = textFieldState,
-                    onSearch = { onCommitSearch() },
-                    placeholder = { Text(stringResource(Res.string.search_entries)) },
-                    leadingIcon = {
+    Column(modifier = modifier.fillMaxSize().statusBarsPadding()) {
+        TextField(
+            state = textFieldState,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            placeholder = { Text(stringResource(Res.string.search_entries)) },
+            shape = SearchBarDefaults.inputFieldShape,
+            colors =
+                TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            onKeyboardAction = { onCommitSearch() },
+            leadingIcon = {
+                IconButton(onClick = onGoBack) {
+                    Icon(
+                        painter = PlatformIcons.back(),
+                        contentDescription = stringResource(UiRes.string.common_go_back),
+                    )
+                }
+            },
+            trailingIcon = {
+                if (textFieldState.text.isNotEmpty()) {
+                    IconButton(onClick = { textFieldState.clearText() }) {
                         Icon(
-                            painter = PlatformIcons.search(),
-                            contentDescription = stringResource(Res.string.search),
+                            painter = PlatformIcons.close(),
+                            contentDescription = stringResource(Res.string.clear_search),
                         )
-                    },
-                )
+                    }
+                }
             },
-            modifier = Modifier.searchBarMaxWidth(),
+            modifier =
+                Modifier
+                    .searchBarMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
+                    .focusRequester(focusRequester)
+                    .handwritingDelegate()
+                    .testTag(SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG)
+                    .semantics {
+                        contentDescription = SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG
+                    },
         )
-
-        ExpandedFullScreenSearchBar(
-            state = searchBarState,
-            inputField = {
-                SearchBarDefaults.InputField(
-                    searchBarState = searchBarState,
-                    textFieldState = textFieldState,
-                    onSearch = { onCommitSearch() },
-                    modifier =
-                        Modifier
-                            .handwritingDelegate()
-                            .testTag(SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG)
-                            .semantics {
-                                contentDescription = SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG
-                            },
-                    placeholder = { Text(stringResource(Res.string.search_entries)) },
-                    leadingIcon = {
-                        IconButton(onClick = onGoBack) {
-                            Icon(
-                                painter = PlatformIcons.back(),
-                                contentDescription = stringResource(UiRes.string.common_go_back),
-                            )
-                        }
-                    },
-                    trailingIcon = {
-                        if (textFieldState.text.isNotEmpty()) {
-                            IconButton(onClick = { textFieldState.clearText() }) {
-                                Icon(
-                                    painter = PlatformIcons.close(),
-                                    contentDescription = stringResource(Res.string.clear_search),
-                                )
-                            }
-                        }
-                    },
-                )
-            },
-        ) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             SearchBodyContent(
                 searchState = searchState,
                 filters = filters,
