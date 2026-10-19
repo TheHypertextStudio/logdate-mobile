@@ -6,6 +6,7 @@ package app.logdate.feature.search.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -25,6 +26,10 @@ import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.ui.common.focusableWithRing
 import app.logdate.ui.search.UniversalSearchResultUiState
+import app.logdate.ui.theme.Spacing
+import app.logdate.util.toReadableDateShort
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.search.generated.resources.Res
 import logdate.client.feature.search.generated.resources.search_entry_count
 import org.jetbrains.compose.resources.pluralStringResource
@@ -47,7 +52,14 @@ internal fun SearchResultListItem(
         when (detail) {
             is SearchResultDetail.Journal -> pluralStringResource(Res.plurals.search_entry_count, detail.entryCount, detail.entryCount)
             is SearchResultDetail.Person -> detail.relationshipLabel ?: typeLabel
-            else -> listOfNotNull(state.createdReadable, typeLabel).joinToString(" · ")
+            else ->
+                listOf(
+                    result.created
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .date
+                        .toReadableDateShort(),
+                    typeLabel,
+                ).joinToString(" · ")
         }
     ListItem(
         headlineContent = {
@@ -68,7 +80,12 @@ internal fun SearchResultListItem(
         },
         leadingContent = { Leading(state, result, detail) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.focusableWithRing().combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        modifier =
+            Modifier
+                .padding(
+                    vertical = Spacing.xs,
+                ).focusableWithRing()
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     )
 }
 
@@ -86,7 +103,7 @@ private fun Leading(
                 (detail as? SearchResultDetail.Journal)?.coverUri,
                 state.typeIcon,
                 label,
-                size = 48.dp,
+                size = 53.dp,
             )
         SearchContentType.PERSON ->
             Surface(

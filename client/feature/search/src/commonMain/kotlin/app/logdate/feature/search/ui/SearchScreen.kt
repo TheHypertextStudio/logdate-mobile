@@ -21,12 +21,16 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -34,6 +38,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -113,6 +118,7 @@ import logdate.client.feature.search.generated.resources.search_for_entries
 import logdate.client.feature.search.generated.resources.search_no_results
 import logdate.client.feature.search.generated.resources.search_recent_clear_all
 import logdate.client.feature.search.generated.resources.search_recent_remove
+import logdate.client.feature.search.generated.resources.search_recent_title
 import logdate.client.feature.search.generated.resources.search_section_journals
 import logdate.client.feature.search.generated.resources.search_section_notes
 import logdate.client.feature.search.generated.resources.search_section_people
@@ -576,13 +582,15 @@ private fun SearchStateContent(
         }
 
         is SearchScreenState.Searching -> {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize(),
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+                modifier = Modifier.fillMaxSize().padding(top = Spacing.xxl),
             ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 Text(
                     text = stringResource(Res.string.searching_entries),
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -593,12 +601,12 @@ private fun SearchStateContent(
                 filters.contentTypes != null || filters.dateRange != DateRangeFilter.AllTime
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically),
-                modifier = Modifier.fillMaxSize().padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg, Alignment.Top),
+                modifier = Modifier.fillMaxSize().padding(horizontal = Spacing.lg).padding(top = Spacing.xxl),
             ) {
                 Text(
                     text = stringResource(Res.string.search_no_results, searchState.query),
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (anyFilterActive) {
@@ -639,6 +647,7 @@ private fun SearchStateContent(
                 contentAlignment = Alignment.TopCenter,
             ) {
                 LazyColumn(
+                    contentPadding = PaddingValues(bottom = Spacing.lg),
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -781,8 +790,8 @@ private fun FilterChipRow(
         filters.contentTypes != null || filters.dateRange != DateRangeFilter.AllTime
     val selectedColors =
         FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     LazyRow(
         contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.sm),
@@ -809,6 +818,7 @@ private fun FilterChipRow(
                 selected = filters.dateRange == range,
                 onClick = { onSetDateRange(range) },
                 label = { Text(stringResource(range.labelKey())) },
+                leadingIcon = selectedIcon(filters.dateRange == range),
                 colors = selectedColors,
             )
         }
@@ -817,11 +827,20 @@ private fun FilterChipRow(
                 selected = filters.contentTypes?.contains(type) == true,
                 onClick = { onToggleType(type) },
                 label = { Text(stringResource(type.labelKey())) },
+                leadingIcon = selectedIcon(filters.contentTypes?.contains(type) == true),
                 colors = selectedColors,
             )
         }
     }
 }
+
+/** The check mark a chosen chip shows, or nothing for one that is not chosen. */
+private fun selectedIcon(selected: Boolean): (@Composable () -> Unit)? =
+    if (selected) {
+        { Icon(Icons.Filled.Done, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+    } else {
+        null
+    }
 
 private fun DateRangeFilter.labelKey(): StringResource =
     when (this) {
@@ -855,22 +874,28 @@ private fun RecentSearchesList(
 ) {
     if (recentSearches.isEmpty()) {
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter,
+            modifier = Modifier.fillMaxSize().padding(top = Spacing.xxl),
         ) {
             Text(
                 text = stringResource(Res.string.search_for_entries),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             item(key = "recents_clear_all") {
-                Box(
-                    contentAlignment = Alignment.CenterEnd,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().height(40.dp).padding(start = Spacing.lg, end = Spacing.sm),
                 ) {
+                    Text(
+                        text = stringResource(Res.string.search_recent_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                     TextButton(onClick = onClearAllRecents) {
                         Text(stringResource(Res.string.search_recent_clear_all))
                     }
@@ -880,7 +905,16 @@ private fun RecentSearchesList(
                 ListItem(
                     headlineContent = { Text(query) },
                     leadingContent = {
-                        Icon(painter = PlatformIcons.history(), contentDescription = null)
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            shape = CircleShape,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(painter = PlatformIcons.history(), contentDescription = null)
+                            }
+                        }
                     },
                     trailingContent = {
                         IconButton(onClick = { onRemoveRecent(query) }) {
@@ -891,6 +925,7 @@ private fun RecentSearchesList(
                             )
                         }
                     },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier.clickable { onSelectRecent(query) },
                 )
             }
