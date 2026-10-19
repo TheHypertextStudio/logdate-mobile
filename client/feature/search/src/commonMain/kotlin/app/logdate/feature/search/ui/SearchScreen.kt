@@ -83,7 +83,6 @@ import app.logdate.ui.theme.Spacing
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import logdate.client.feature.search.generated.resources.Res
 import logdate.client.feature.search.generated.resources.clear_search
 import logdate.client.feature.search.generated.resources.search
@@ -91,11 +90,6 @@ import logdate.client.feature.search.generated.resources.search_action_actions_f
 import logdate.client.feature.search.generated.resources.search_action_copy_text
 import logdate.client.feature.search.generated.resources.search_action_open_day
 import logdate.client.feature.search.generated.resources.search_action_share
-import logdate.client.feature.search.generated.resources.search_bucket_earlier
-import logdate.client.feature.search.generated.resources.search_bucket_this_month
-import logdate.client.feature.search.generated.resources.search_bucket_this_week
-import logdate.client.feature.search.generated.resources.search_bucket_today
-import logdate.client.feature.search.generated.resources.search_bucket_yesterday
 import logdate.client.feature.search.generated.resources.search_empty_clear_filters
 import logdate.client.feature.search.generated.resources.search_entries
 import logdate.client.feature.search.generated.resources.search_filter_clear
@@ -118,12 +112,14 @@ import logdate.client.feature.search.generated.resources.search_for_entries
 import logdate.client.feature.search.generated.resources.search_no_results
 import logdate.client.feature.search.generated.resources.search_recent_clear_all
 import logdate.client.feature.search.generated.resources.search_recent_remove
+import logdate.client.feature.search.generated.resources.search_section_journals
+import logdate.client.feature.search.generated.resources.search_section_notes
+import logdate.client.feature.search.generated.resources.search_section_people
 import logdate.client.feature.search.generated.resources.searching_entries
 import logdate.client.ui.generated.resources.common_go_back
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 import kotlin.uuid.Uuid
 import logdate.client.ui.generated.resources.Res as UiRes
 
@@ -612,12 +608,8 @@ private fun SearchStateContent(
             val highlightStyle = rememberSearchHighlightStyle()
             val groupedRows =
                 remember(searchState.results, highlightStyle) {
-                    bucketSearchResults(
-                        results = searchState.results,
-                        now = Clock.System.now(),
-                        timeZone = TimeZone.currentSystemDefault(),
-                    ).map { (bucket, items) ->
-                        bucket to
+                    sectionSearchResults(searchState.results).map { (section, items) ->
+                        section to
                             items.map { result ->
                                 SearchResultRow(
                                     result = result,
@@ -639,12 +631,12 @@ private fun SearchStateContent(
                             .fillMaxWidth()
                             .widthIn(max = SearchBarMaxWidth),
                 ) {
-                    groupedRows.forEach { (bucket, bucketRows) ->
-                        stickyHeader(key = "header_${bucket.name}") {
-                            BucketHeader(bucket)
+                    groupedRows.forEach { (section, sectionRows) ->
+                        stickyHeader(key = "header_${section.name}") {
+                            SectionHeader(section)
                         }
                         items(
-                            items = bucketRows,
+                            items = sectionRows,
                             key = { it.uiState.id },
                         ) { resultRow ->
                             UniversalSearchResultItem(
@@ -731,14 +723,14 @@ private fun ResultActionsSheet(
  * blend into the rows above and below them.
  */
 @Composable
-private fun BucketHeader(bucket: ResultDateBucket) {
+private fun SectionHeader(section: SearchSection) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
-            text = stringResource(bucket.labelKey()),
+            text = stringResource(section.labelKey()),
             style = MaterialTheme.typography.titleMedium,
             modifier =
                 Modifier
@@ -750,13 +742,11 @@ private fun BucketHeader(bucket: ResultDateBucket) {
     }
 }
 
-private fun ResultDateBucket.labelKey(): StringResource =
+private fun SearchSection.labelKey(): StringResource =
     when (this) {
-        ResultDateBucket.Today -> Res.string.search_bucket_today
-        ResultDateBucket.Yesterday -> Res.string.search_bucket_yesterday
-        ResultDateBucket.ThisWeek -> Res.string.search_bucket_this_week
-        ResultDateBucket.ThisMonth -> Res.string.search_bucket_this_month
-        ResultDateBucket.Earlier -> Res.string.search_bucket_earlier
+        SearchSection.Journals -> Res.string.search_section_journals
+        SearchSection.People -> Res.string.search_section_people
+        SearchSection.Notes -> Res.string.search_section_notes
     }
 
 /**
