@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -27,11 +30,11 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -75,7 +78,6 @@ import app.logdate.ui.search.SearchBarMaxWidth
 import app.logdate.ui.search.UniversalSearchResultItem
 import app.logdate.ui.search.UniversalSearchResultUiState
 import app.logdate.ui.search.rememberSearchHighlightStyle
-import app.logdate.ui.search.searchBarMaxWidth
 import app.logdate.ui.search.toUniversalSearchResultUiState
 import app.logdate.ui.theme.Spacing
 import kotlinx.coroutines.flow.collectLatest
@@ -264,75 +266,84 @@ fun SearchScreenContent(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize().statusBarsPadding()) {
-        TextField(
-            state = textFieldState,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            placeholder = { Text(stringResource(Res.string.search_entries)) },
-            shape = SearchBarDefaults.inputFieldShape,
-            colors =
-                TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            onKeyboardAction = { onCommitSearch() },
-            leadingIcon = {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.statusBarsPadding()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().height(72.dp).padding(start = Spacing.xs, end = Spacing.sm),
+            ) {
                 IconButton(onClick = onGoBack) {
                     Icon(
                         painter = PlatformIcons.back(),
                         contentDescription = stringResource(UiRes.string.common_go_back),
                     )
                 }
-            },
-            trailingIcon = {
-                if (textFieldState.text.isNotEmpty()) {
-                    IconButton(onClick = { textFieldState.clearText() }) {
-                        Icon(
-                            painter = PlatformIcons.close(),
-                            contentDescription = stringResource(Res.string.clear_search),
+                TextField(
+                    state = textFieldState,
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    textStyle = MaterialTheme.typography.titleMedium,
+                    placeholder = {
+                        Text(
+                            stringResource(Res.string.search_entries),
+                            style = MaterialTheme.typography.titleMedium,
                         )
-                    }
-                }
-            },
-            modifier =
-                Modifier
-                    .searchBarMaxWidth()
-                    .align(Alignment.CenterHorizontally)
-                    .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
-                    .focusRequester(focusRequester)
-                    .handwritingDelegate()
-                    .testTag(SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG)
-                    .semantics {
-                        contentDescription = SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG
                     },
-        )
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            SearchBodyContent(
-                searchState = searchState,
-                filters = filters,
-                onToggleType = onToggleType,
-                onSetDateRange = onSetDateRange,
-                onClearFilters = onClearFilters,
-                onQueryChange = onQueryChange,
-                onCommitSearch = onCommitSearch,
-                onRemoveRecent = onRemoveRecent,
-                onClearAllRecents = onClearAllRecents,
-                onResultClick = onResultClick,
-                onLongClickResult = { result -> sheetTarget = result },
-                onOpenDay = onResultOpenDay,
-                adaptive = adaptive,
-                resultDetails = resultDetails,
-                narrowingOptions = narrowingOptions,
-                onTogglePerson = onTogglePerson,
-                onTogglePlace = onTogglePlace,
-                onToggleYear = onToggleYear,
-                dayPreview = dayPreview,
-                placeMap = placeMap,
-                loadPreview = loadPreview,
-            )
+                    colors =
+                        TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    onKeyboardAction = { onCommitSearch() },
+                    trailingIcon = {
+                        if (textFieldState.text.isNotEmpty()) {
+                            IconButton(onClick = { textFieldState.clearText() }) {
+                                Icon(
+                                    painter = PlatformIcons.close(),
+                                    contentDescription = stringResource(Res.string.clear_search),
+                                )
+                            }
+                        }
+                    },
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester)
+                            .handwritingDelegate()
+                            .testTag(SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG)
+                            .semantics {
+                                contentDescription = SEARCH_SCREEN_INPUT_ACCESSIBILITY_TAG
+                            },
+                )
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                SearchBodyContent(
+                    searchState = searchState,
+                    filters = filters,
+                    onToggleType = onToggleType,
+                    onSetDateRange = onSetDateRange,
+                    onClearFilters = onClearFilters,
+                    onQueryChange = onQueryChange,
+                    onCommitSearch = onCommitSearch,
+                    onRemoveRecent = onRemoveRecent,
+                    onClearAllRecents = onClearAllRecents,
+                    onResultClick = onResultClick,
+                    onLongClickResult = { result -> sheetTarget = result },
+                    onOpenDay = onResultOpenDay,
+                    adaptive = adaptive,
+                    resultDetails = resultDetails,
+                    narrowingOptions = narrowingOptions,
+                    onTogglePerson = onTogglePerson,
+                    onTogglePlace = onTogglePlace,
+                    onToggleYear = onToggleYear,
+                    dayPreview = dayPreview,
+                    placeMap = placeMap,
+                    loadPreview = loadPreview,
+                )
+            }
         }
     }
 
@@ -722,14 +733,19 @@ private fun ResultActionsSheet(
 @Composable
 private fun BucketHeader(bucket: ResultDateBucket) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text = stringResource(bucket.labelKey()),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+            style = MaterialTheme.typography.titleMedium,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .wrapContentHeight(Alignment.CenterVertically)
+                    .padding(horizontal = Spacing.lg),
         )
     }
 }
