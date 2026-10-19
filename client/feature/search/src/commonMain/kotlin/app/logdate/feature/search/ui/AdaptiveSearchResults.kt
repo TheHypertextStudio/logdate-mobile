@@ -271,10 +271,9 @@ private fun ResultItem(
         headlineContent = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         supportingContent =
             supporting?.takeIf { it.isNotBlank() }?.let { text ->
-                { Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                { Text(text, maxLines = 2, overflow = TextOverflow.Ellipsis) }
             },
         leadingContent = { Cover(result.contentType, cover, icon, typeLabel) },
-        trailingContent = { Text(typeLabel, style = MaterialTheme.typography.labelSmall) },
         colors = ListItemDefaults.colors(containerColor = selectedContainer(selected)),
         modifier =
             Modifier
