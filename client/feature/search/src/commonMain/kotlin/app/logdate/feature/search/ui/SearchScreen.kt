@@ -69,6 +69,7 @@ import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.repository.search.SearchResultDetail
 import app.logdate.client.repository.search.SearchResultKey
 import app.logdate.client.repository.search.SearchResultPreview
+import app.logdate.client.repository.search.key
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.handwritingDelegate
 import app.logdate.ui.platform.PlatformIcons
@@ -456,6 +457,7 @@ private fun SearchBodyContent(
                 onClearAllRecents = onClearAllRecents,
                 onResultClick = onResultClick,
                 onLongClickResult = onLongClickResult,
+                resultDetails = resultDetails,
             )
         },
         standardContent = {
@@ -488,6 +490,7 @@ private fun SearchBodyContent(
                     onClearAllRecents = onClearAllRecents,
                     onResultClick = onResultClick,
                     onLongClickResult = onLongClickResult,
+                    resultDetails = resultDetails,
                 )
             }
         },
@@ -551,6 +554,7 @@ private fun SearchStateContent(
     onClearAllRecents: () -> Unit,
     onResultClick: (SearchResult) -> Unit,
     onLongClickResult: (SearchResult) -> Unit,
+    resultDetails: Map<SearchResultKey, SearchResultDetail>,
 ) {
     when (searchState) {
         is SearchScreenState.Idle -> {
@@ -639,8 +643,10 @@ private fun SearchStateContent(
                             items = sectionRows,
                             key = { it.uiState.id },
                         ) { resultRow ->
-                            UniversalSearchResultItem(
+                            SearchResultListItem(
                                 state = resultRow.uiState,
+                                result = resultRow.result,
+                                detail = resultDetails[resultRow.result.key],
                                 onClick = {
                                     onCommitSearch()
                                     onResultClick(resultRow.result)
