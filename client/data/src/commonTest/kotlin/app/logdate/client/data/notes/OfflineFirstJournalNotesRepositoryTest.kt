@@ -96,6 +96,20 @@ class OfflineFirstJournalNotesRepositoryTest {
             assertEquals(2, fence.claims)
         }
 
+    @Test
+    fun `media reference recovery writes run inside the media claim fence`() =
+        runTest {
+            val fence = RecordingMediaClaimFence()
+            val local = createRepository(mediaClaimFence = fence)
+            val note = createTestImageNote()
+            imageNoteDao.addNote(note.toEntity())
+
+            local.updateMediaRef(note.uid, "/media/recovered.jpg")
+
+            assertEquals(1, fence.claims)
+            assertEquals("/media/recovered.jpg", (local.getNoteById(note.uid) as JournalNote.Image).mediaRef)
+        }
+
     @BeforeTest
     fun setup() {
         textNoteDao = FakeTextNoteDao()
