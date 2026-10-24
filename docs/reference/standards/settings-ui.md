@@ -1,23 +1,23 @@
 # Settings UI composition
 
 Settings pages use the same row grouping as the main Settings page. Start with
-`SettingsOverviewSections.kt` and `NativeBackupSettingsSection.kt` before adding a
-new presentation. These are production examples of navigation and passive status rows.
+`SettingsOverviewSections.kt` before adding a new presentation. Use settings rows
+for actions and preferences; explanatory content uses ordinary text layouts.
 
 ## Choose an existing component
 
-| Content | Component | Interaction |
-| --- | --- | --- |
-| Settings destination | `SettingsScaffold` | Owns page title, back action, scrolling and insets |
-| Related rows | `SettingsSection` | Owns heading, container shape and spacing between rows |
-| Opens another screen | `SettingsNavigationItem` | Whole row is clickable; supplies the trailing chevron |
-| Specialized compound row | `SettingsRow` | Shared layout and text roles; use only when an ordinary wrapper cannot express independent actions |
-| Status or an inline action | `SimpleSettingsItem` | Use `onClick = null` for passive information; supply an action only when useful |
-| One of several choices | `SettingsChoiceItem` | Whole row selects one value and owns radio-button semantics |
-| Boolean preference | `ToggleSettingsItem` | Represents a preference the app can actually change |
-| Linked preference | `LinkedToggleSettingsItem` | Uses the established linked-toggle behavior |
-| Feature-wide enablement | `MasterFeatureToggle` | Enables or disables a real feature, not a status indicator |
-| Account or backup summary | `MaterialCard` | Uses theme shape and filled-card defaults; semantic colors are paired |
+| Content                   | Component                  | Interaction                                                                                        |
+| ------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------- |
+| Settings destination      | `SettingsScaffold`         | Owns page title, back action, scrolling and insets                                                 |
+| Related rows              | `SettingsSection`          | Owns heading, container shape and spacing between rows                                             |
+| Opens another screen      | `SettingsNavigationItem`   | Whole row is clickable; supplies the trailing chevron                                              |
+| Specialized compound row  | `SettingsRow`              | Shared layout and text roles; use only when an ordinary wrapper cannot express independent actions |
+| An inline action          | `SimpleSettingsItem`       | Supply the real action and its callback                                                            |
+| One of several choices    | `SettingsChoiceItem`       | Whole row selects one value and owns radio-button semantics                                        |
+| Boolean preference        | `ToggleSettingsItem`       | Represents a preference the app can actually change                                                |
+| Linked preference         | `LinkedToggleSettingsItem` | Uses the established linked-toggle behavior                                                        |
+| Feature-wide enablement   | `MasterFeatureToggle`      | Enables or disables a real feature, not a status indicator                                         |
+| Account or backup summary | `MaterialCard`             | Uses theme shape and filled-card defaults; semantic colors are paired                              |
 
 Export and import options are destinations, including when they open sheets. Use
 `SettingsNavigationItem` for the entire row rather than a button beside a passive
@@ -26,7 +26,10 @@ platform coverage only; place archive navigation in the page's data-management
 section or its separate archive row.
 
 Android cloud backup and device transfer are platform-managed capabilities. Their
-coverage rows are passive information, not in-app switches or navigation targets.
+coverage is explanatory text, without a settings container, row background or
+navigation affordance. `NativeBackupSettingsSection` keeps actual recovery actions
+interactive. Backup's separate “Export and import” destination comes before the
+platform explanations so both saving and restoring a file are discoverable.
 Keep LogDate Cloud account actions in the shared `SyncPromotionCard` and signed-in
 status in `BackupStatusItem` rather than recreating those cards in each page.
 
@@ -268,7 +271,8 @@ Render and validate the shared native states with the desktop harness:
 ```sh
 ./gradlew -Dlogdate.desktopScreenshots.sceneFilter=native-backup \
   :app:compose-main:updateDesktopScreenshotTest --tests '*shared catalog matches baselines*'
-./gradlew -Dlogdate.desktopScreenshots.sceneFilter=native-backup \
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles \
+  ./gradlew -Dlogdate.desktopScreenshots.sceneFilter=native-backup \
   :app:compose-main:desktopTest --tests '*shared catalog matches baselines*'
 ```
 

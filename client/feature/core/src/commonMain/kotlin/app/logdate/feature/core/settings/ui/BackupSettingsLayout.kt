@@ -3,7 +3,7 @@
 package app.logdate.feature.core.settings.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.ImportExport
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,7 +14,7 @@ import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.backup_archive_detail
 import logdate.client.feature.core.generated.resources.backup_cloud_detail
 import logdate.client.feature.core.generated.resources.backup_cloud_title
-import logdate.client.feature.core.generated.resources.native_backup_export
+import logdate.client.feature.core.generated.resources.export_and_import
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -60,9 +60,9 @@ internal fun BackupArchiveItem(
 ) {
     MaterialContainer(modifier = modifier) {
         SettingsNavigationItem(
-            title = stringResource(Res.string.native_backup_export),
+            title = stringResource(Res.string.export_and_import),
             description = stringResource(Res.string.backup_archive_detail),
-            icon = { Icon(Icons.Rounded.Download, contentDescription = null) },
+            icon = { Icon(Icons.Rounded.ImportExport, contentDescription = null) },
             onClick = onExportArchive,
         )
     }

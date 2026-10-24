@@ -66,8 +66,8 @@ class NativeBackupSettingsTest {
                     }
                 }
             }
-            onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Export archive"))
-            onNodeWithText("Export archive").performClick()
+            onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Export & Import"))
+            onNodeWithText("Export & Import").performClick()
             assertEquals(1, exports)
         }
 
@@ -98,9 +98,9 @@ class NativeBackupSettingsTest {
             onNodeWithText("Your signed-in devices stay in sync").assertDoesNotExist()
             onNodeWithText("Create Account").performClick()
             onNodeWithText("Sign in").performClick()
-            onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Export archive"))
-            onNodeWithText("Export archive").performClick()
-            onAllNodesWithText("Export archive").assertCountEquals(1)
+            onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Export & Import"))
+            onNodeWithText("Export & Import").performClick()
+            onAllNodesWithText("Export & Import").assertCountEquals(1)
             assertEquals(1, accounts)
             assertEquals(1, signIns)
             assertEquals(1, exports)
@@ -135,8 +135,8 @@ class NativeBackupSettingsTest {
                 "An Android backup exceeded its size limit. Export an archive to save a copy.",
                 substring = true,
             ).assertExists()
-            onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Export archive"))
-            onNodeWithText("Export archive").performClick()
+            onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Export & Import"))
+            onNodeWithText("Export & Import").performClick()
             assertEquals(1, exports)
             assertEquals(0, accounts)
             assertEquals(0, signIns)

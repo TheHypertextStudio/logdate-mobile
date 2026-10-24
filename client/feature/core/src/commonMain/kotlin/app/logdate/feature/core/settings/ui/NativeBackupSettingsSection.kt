@@ -2,18 +2,27 @@
 
 package app.logdate.feature.core.settings.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudQueue
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import app.logdate.client.device.restore.NativeBackupStatus
 import app.logdate.client.device.restore.NativeRestoreCustodyStatus
+import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsNavigationItem
-import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.common.SimpleSettingsItem
+import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.native_backup_cloud_detail
 import logdate.client.feature.core.generated.resources.native_backup_cloud_requirement
@@ -48,20 +57,17 @@ internal fun NativeBackupSettingsSection(
                 null
             },
         ).joinToString("\n")
-    SettingsSection(stringResource(Res.string.native_backup_title), modifier) {
-        SimpleSettingsItem(
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        Text(stringResource(Res.string.native_backup_title), style = MaterialTheme.typography.titleSmall)
+        NativeBackupExplanation(
             title = stringResource(Res.string.native_backup_cloud_title),
-            leadingContent = { Icon(Icons.Rounded.CloudQueue, contentDescription = null) },
             description = cloudDescription,
-            onClick = null,
-            action = {},
+            icon = Icons.Rounded.CloudQueue,
         )
-        SimpleSettingsItem(
+        NativeBackupExplanation(
             title = stringResource(Res.string.native_backup_transfer_title),
-            leadingContent = { Icon(Icons.Rounded.Devices, contentDescription = null) },
             description = stringResource(Res.string.native_backup_transfer_detail),
-            onClick = null,
-            action = {},
+            icon = Icons.Rounded.Devices,
         )
         when (status.custodyStatus) {
             NativeRestoreCustodyStatus.CLEAR -> {
@@ -69,21 +75,40 @@ internal fun NativeBackupSettingsSection(
             }
 
             NativeRestoreCustodyStatus.RECOVERING -> {
-                SimpleSettingsItem(
-                    title = stringResource(Res.string.native_backup_recovering_title),
-                    description = stringResource(Res.string.native_backup_recovering_detail),
-                    onClick = onRetryRecovery,
-                    action = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
-                )
+                MaterialContainer {
+                    SimpleSettingsItem(
+                        title = stringResource(Res.string.native_backup_recovering_title),
+                        description = stringResource(Res.string.native_backup_recovering_detail),
+                        onClick = onRetryRecovery,
+                        action = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
+                    )
+                }
             }
 
             NativeRestoreCustodyStatus.NEEDS_TRANSFER -> {
-                SettingsNavigationItem(
-                    title = stringResource(Res.string.native_backup_recovery_title),
-                    description = stringResource(Res.string.native_backup_recovery_detail),
-                    onClick = onOpenArchive,
-                )
+                MaterialContainer {
+                    SettingsNavigationItem(
+                        title = stringResource(Res.string.native_backup_recovery_title),
+                        description = stringResource(Res.string.native_backup_recovery_detail),
+                        onClick = onOpenArchive,
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun NativeBackupExplanation(
+    title: String,
+    description: String,
+    icon: ImageVector,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

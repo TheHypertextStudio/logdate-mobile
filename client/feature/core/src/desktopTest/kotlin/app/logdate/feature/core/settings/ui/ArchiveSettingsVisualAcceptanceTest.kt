@@ -1,6 +1,7 @@
 package app.logdate.feature.core.settings.ui
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import app.logdate.client.device.restore.NativeBackupQuotaFailure
 import app.logdate.client.device.restore.NativeBackupStatus
 import app.logdate.client.device.restore.NativeRestoreCustodyStatus
@@ -26,14 +28,25 @@ import app.logdate.client.domain.export.ExportSchemaVersion
 import app.logdate.client.domain.export.ExportStats
 import app.logdate.client.domain.restore.ArchivePreview
 import app.logdate.client.sync.SyncStatus
+import app.logdate.feature.core.export.ExportBottomSheet
 import app.logdate.feature.core.export.ExportState
 import app.logdate.feature.core.restore.ImportOptions
+import app.logdate.feature.core.restore.RestoreBottomSheet
 import app.logdate.feature.core.restore.RestoreState
+import app.logdate.ui.foldable.FoldableHingeBounds
+import app.logdate.ui.foldable.FoldableHingeInfo
+import app.logdate.ui.foldable.FoldableHingeOrientation
+import app.logdate.ui.foldable.FoldableHingeState
+import app.logdate.ui.foldable.FoldableLayoutInfo
+import app.logdate.ui.foldable.FoldableOcclusionType
+import app.logdate.ui.foldable.FoldablePosture
+import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.theme.LogDateTheme
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.time.Instant
 
@@ -77,6 +90,45 @@ class ArchiveSettingsVisualAcceptanceTest {
                 runOnIdle { assertEquals(1, phraseOpens) }
             }
         }
+    }
+
+    @Test
+    fun dataSettingsDialogsPaintAboveTheBookPostureBackground() {
+        listOf(false, true).forEach { importing ->
+            val introductions = mutableListOf<ImageBitmap>()
+            listOf(true, false).forEach { standalone ->
+                runDesktopComposeUiTest(width = 1440, height = 900) {
+                    setContent {
+                        CompositionLocalProvider(LocalInspectionMode provides true) {
+                            LogDateTheme(dynamicColor = false, darkTheme = false) {
+                                provideFoldableLayoutInfo(archiveBookPosture()) {
+                                    dataSettingsOverlayFixture(importing, standalone)
+                                }
+                            }
+                        }
+                    }
+                    val introduction = if (importing) "Review what's in this archive." else "Export your data"
+                    introductions += onNodeWithText(introduction).captureToImage()
+                    if (!standalone) {
+                        save("data-settings-${if (importing) "import" else "export"}-book", onRoot().captureToImage())
+                    }
+                }
+            }
+            val expected = introductions[0]
+            val actual = introductions[1]
+            assertEquals(expected.width, actual.width)
+            assertEquals(expected.height, actual.height)
+            assertContentEquals(
+                renderedPixels(expected),
+                renderedPixels(actual),
+                "Settings rows must not paint over the dialog introduction",
+            )
+        }
+    }
+
+    private fun renderedPixels(image: ImageBitmap): IntArray {
+        val pixels = image.toPixelMap()
+        return IntArray(image.width * image.height) { index -> pixels[index % image.width, index / image.width].toArgb() }
     }
 
     @Test
@@ -216,7 +268,7 @@ class ArchiveSettingsVisualAcceptanceTest {
                         }
                     }
                     save("$page-${variant.name}-initial", onRoot().captureToImage())
-                    val label = if (page == "data") "Export data" else "Export archive"
+                    val label = if (page == "data") "Export data" else "Export & Import"
                     onNode(hasScrollToNodeAction()).performScrollToNode(hasText(label))
                     onNodeWithText(label).assertIsDisplayed().performClick()
                     runOnIdle { assertEquals(1, exports) }
@@ -246,4 +298,69 @@ class ArchiveSettingsVisualAcceptanceTest {
         for (y in 0 until image.height) for (x in 0 until image.width) output.setRGB(x, y, pixels[x, y].toArgb())
         ImageIO.write(output, "png", File(directory, "$name.png"))
     }
+}
+
+private fun archiveBookPosture() =
+    FoldableLayoutInfo(
+        isFoldable = true,
+        posture = FoldablePosture.Book,
+        hinge =
+            FoldableHingeInfo(
+                orientation = FoldableHingeOrientation.Vertical,
+                state = FoldableHingeState.HalfOpened,
+                occlusionType = FoldableOcclusionType.Full,
+                bounds = FoldableHingeBounds(708.dp, 0.dp, 732.dp, 900.dp, 24.dp, 900.dp),
+                isSeparating = true,
+            ),
+    )
+
+@Composable
+private fun dataSettingsOverlayFixture(
+    importing: Boolean,
+    standalone: Boolean,
+) {
+    val exportState = if (importing) ExportState.Idle else ExportState.Configuring(counts = ExportCounts(5, 42, 3, 18))
+    val restoreState =
+        if (importing) {
+            RestoreState.Previewing(
+                ArchivePreview(ExportSchemaVersion.CURRENT, Instant.parse("2026-10-15T12:00:00Z"), "1.0", ExportStats(5, 42, 3, 18)),
+                "journal.zip",
+                ImportOptions(),
+            )
+        } else {
+            RestoreState.Idle
+        }
+    if (standalone) {
+        if (importing) {
+            RestoreBottomSheet(restoreState, {}, {}, {}, {}, {}, {})
+        } else {
+            ExportBottomSheet(exportState, {}, {}, {}, {}, {})
+        }
+        return
+    }
+    DataSettingsContent(
+        onBack = {},
+        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
+        isQuotaAvailable = false,
+        exportState = exportState,
+        onShowExportOptions = {},
+        onUpdateExportOptions = {},
+        onConfirmExport = {},
+        onCancelExport = {},
+        onRetryExport = {},
+        onDismissExport = {},
+        restoreState = restoreState,
+        onShowRestoreSheet = {},
+        onSelectRestoreFile = {},
+        onUpdateImportOptions = {},
+        onConfirmImport = {},
+        onCancelRestore = {},
+        onRetryRestore = {},
+        onDismissRestore = {},
+        integrityState = IntegrityState(),
+        onRunIntegrityCheck = {},
+        onRepairIntegrity = {},
+        snackbarHostState = SnackbarHostState(),
+        isAuthenticated = false,
+    )
 }

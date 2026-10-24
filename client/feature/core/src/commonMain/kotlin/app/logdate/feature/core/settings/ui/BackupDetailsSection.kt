@@ -15,19 +15,12 @@ import androidx.compose.ui.Modifier
 import app.logdate.client.sync.SyncStatus
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.theme.Spacing
-import app.logdate.util.asTime
-import app.logdate.util.formatDateLocalized
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.backup_overview_conflicts
-import logdate.client.feature.core.generated.resources.backup_overview_date_time
-import logdate.client.feature.core.generated.resources.backup_overview_last_saved
 import logdate.client.feature.core.generated.resources.backup_overview_pending
 import logdate.client.feature.core.generated.resources.sync_review_earlier
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Instant
 
 @Composable
 internal fun BackupDetailsSection(
@@ -41,7 +34,6 @@ internal fun BackupDetailsSection(
     if (!state.hasDetails) return
     MaterialContainer(modifier = modifier) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
-            state.lastBackupAt?.let { BackupSavedCopyInfo(it) }
             if (state.pendingChanges > 0) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
@@ -65,21 +57,5 @@ internal fun BackupDetailsSection(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun BackupSavedCopyInfo(lastSavedAt: Long) {
-    val lastSaved = Instant.fromEpochMilliseconds(lastSavedAt)
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        Text(stringResource(Res.string.backup_overview_last_saved), style = MaterialTheme.typography.labelLarge)
-        Text(
-            stringResource(
-                Res.string.backup_overview_date_time,
-                formatDateLocalized(lastSaved.toLocalDateTime(TimeZone.currentSystemDefault()).date),
-                lastSaved.asTime,
-            ),
-            style = MaterialTheme.typography.bodyLarge,
-        )
     }
 }
