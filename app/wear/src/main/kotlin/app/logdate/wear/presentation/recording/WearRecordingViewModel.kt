@@ -161,27 +161,52 @@ class WearRecordingViewModel(
 
     override fun onCleared() {
         when (_uiState.value.phase) {
-            RecordingPhase.RECORDING, RecordingPhase.PAUSED -> applicationScope.launch { stopAndSaveDetached() }
-            RecordingPhase.STARTING -> recorder.requestStop()
-            RecordingPhase.ERROR ->
+            RecordingPhase.RECORDING, RecordingPhase.PAUSED -> {
+                applicationScope.launch { stopAndSaveDetached() }
+            }
+
+            RecordingPhase.STARTING -> {
+                recorder.requestStop()
+            }
+
+            RecordingPhase.ERROR -> {
                 unsavedPath?.let { path -> applicationScope.launch { saver.save(path, recorder.elapsed.value) } }
-            else -> Unit
+            }
+
+            else -> {
+                Unit
+            }
         }
         super.onCleared()
     }
 
     fun onPress() {
         when (_uiState.value.phase) {
-            RecordingPhase.READY -> beginRecording()
-            RecordingPhase.ERROR -> retrySaveOrBeginRecording()
+            RecordingPhase.READY -> {
+                beginRecording()
+            }
+
+            RecordingPhase.ERROR -> {
+                retrySaveOrBeginRecording()
+            }
+
             RecordingPhase.SAVED -> {
                 // Recording again leaves the last note in place; the undo window ends.
                 afterSave.close()
                 beginRecording()
             }
-            RecordingPhase.RECORDING -> if (_uiState.value.isLatched) stopAndSave()
-            RecordingPhase.PAUSED -> stopAndSave()
-            RecordingPhase.STARTING, RecordingPhase.SAVING, RecordingPhase.TOO_SHORT -> Unit
+
+            RecordingPhase.RECORDING -> {
+                if (_uiState.value.isLatched) stopAndSave()
+            }
+
+            RecordingPhase.PAUSED -> {
+                stopAndSave()
+            }
+
+            RecordingPhase.STARTING, RecordingPhase.SAVING, RecordingPhase.TOO_SHORT -> {
+                Unit
+            }
         }
     }
 
@@ -308,8 +333,14 @@ class WearRecordingViewModel(
 
     private suspend fun saveRecording(path: String) {
         when (val result = saver.save(path, recorder.elapsed.value)) {
-            is AudioSaveResult.Saved -> onSaved(result.note)
-            AudioSaveResult.TooShort -> showTooShort()
+            is AudioSaveResult.Saved -> {
+                onSaved(result.note)
+            }
+
+            AudioSaveResult.TooShort -> {
+                showTooShort()
+            }
+
             is AudioSaveResult.Failed -> {
                 unsavedPath = result.path
                 _uiState.update { it.copy(phase = RecordingPhase.ERROR, error = RecordingError.SAVE_FAILED) }
@@ -394,9 +425,11 @@ class WearRecordingViewModel(
                 haptics.pause()
                 _uiState.update { it.copy(phase = RecordingPhase.PAUSED, pausedByInterruption = interrupted) }
             }
+
             paused && phase == RecordingPhase.PAUSED -> {
                 _uiState.update { it.copy(pausedByInterruption = interrupted) }
             }
+
             !paused && phase == RecordingPhase.PAUSED -> {
                 haptics.resume()
                 _uiState.update { it.copy(phase = RecordingPhase.RECORDING, pausedByInterruption = false) }

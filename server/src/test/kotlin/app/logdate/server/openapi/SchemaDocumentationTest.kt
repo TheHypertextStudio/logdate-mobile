@@ -108,8 +108,14 @@ class SchemaDocumentationTest {
                 (element["\$ref"] as? JsonPrimitive)?.content?.removePrefix("#/components/schemas/")?.let(into::add)
                 element.values.forEach { collectRefs(it, into) }
             }
-            is JsonArray -> element.forEach { collectRefs(it, into) }
-            else -> Unit
+
+            is JsonArray -> {
+                element.forEach { collectRefs(it, into) }
+            }
+
+            else -> {
+                Unit
+            }
         }
     }
 }

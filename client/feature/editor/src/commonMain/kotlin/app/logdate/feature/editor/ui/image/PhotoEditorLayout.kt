@@ -58,8 +58,11 @@ internal fun PhotoEditorLayout(
             val border = if (framed) 12.dp.roundToPx() else 0
             val pane =
                 when (split) {
-                    is FoldableSplitLayout.Vertical -> split.leftPane
-                    is FoldableSplitLayout.Horizontal ->
+                    is FoldableSplitLayout.Vertical -> {
+                        split.leftPane
+                    }
+
+                    is FoldableSplitLayout.Horizontal -> {
                         if (fold.hinge?.occlusionType ==
                             FoldableOcclusionType.Full
                         ) {
@@ -67,7 +70,11 @@ internal fun PhotoEditorLayout(
                         } else {
                             null
                         }
-                    FoldableSplitLayout.None -> null
+                    }
+
+                    FoldableSplitLayout.None -> {
+                        null
+                    }
                 }
             val availableWidth = (pane?.width?.roundToPx() ?: width) - gap * 2
             val availableHeight = (pane?.height?.roundToPx() ?: height) - gap * 2

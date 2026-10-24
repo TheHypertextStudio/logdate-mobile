@@ -60,10 +60,22 @@ class StoredPlanCatalogService(
 
     private fun parseTier(raw: String): EntitlementTierWire =
         when (raw.lowercase()) {
-            "free" -> EntitlementTierWire.FREE
-            "standard" -> EntitlementTierWire.STANDARD
-            "pro" -> EntitlementTierWire.PRO
-            "unlimited" -> EntitlementTierWire.UNLIMITED
+            "free" -> {
+                EntitlementTierWire.FREE
+            }
+
+            "standard" -> {
+                EntitlementTierWire.STANDARD
+            }
+
+            "pro" -> {
+                EntitlementTierWire.PRO
+            }
+
+            "unlimited" -> {
+                EntitlementTierWire.UNLIMITED
+            }
+
             else -> {
                 Napier.w("Plan catalog: unrecognized tier '$raw'; treating as free")
                 EntitlementTierWire.FREE

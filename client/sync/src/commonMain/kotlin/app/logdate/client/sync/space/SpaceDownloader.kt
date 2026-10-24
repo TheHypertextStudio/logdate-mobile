@@ -158,7 +158,10 @@ internal class SpaceDownloader(
                         WireDownload(change.rkey, change.seq, false, read.payload.encode())
                     settled += change.rkey
                 }
-                is Read.Unreadable -> unreadable += WireDownload(change.rkey, change.seq, false, read.retained) to read.reason
+
+                is Read.Unreadable -> {
+                    unreadable += WireDownload(change.rkey, change.seq, false, read.retained) to read.reason
+                }
             }
         }
         if (unreadable.isNotEmpty()) rows[SPACE_UNREADABLE] = unreadable.map { it.first }.toMutableList()
@@ -210,6 +213,7 @@ internal class SpaceDownloader(
                     inbox.stageAll(SPACE_CHECKPOINT, 0, mapOf(type to listOf(staged)), selected)
                     inbox.skipped(SPACE_UNREADABLE, row.entityId, row.version, selected)
                 }
+
                 is Read.Unreadable -> {
                     // Record what was tried, so it isn't opened again until something changes.
                     inbox.replacePayload(SPACE_UNREADABLE, row.entityId, row.version, read.retained, selected)

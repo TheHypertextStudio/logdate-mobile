@@ -45,6 +45,10 @@ class DiscoveryFixture:
         }
         self.h = SimpleNamespace(
             TARGET=target,
+            live_managed_candidates=lambda selected, avd, **diagnostics: ENTRY[
+                "live_managed_candidates"
+            ](selected, avd, process_identity=self.current_identity),
+            ManagedPairAmbiguousError=ENTRY["ManagedPairAmbiguousError"],
             PREPARATION=ENTRY["PREPARATION"],
             EMULATOR={
                 "owned_managed_candidates": lambda directory, selected, nonce: selected
@@ -68,13 +72,16 @@ class DiscoveryFixture:
 
     def identity(self, pid):
         self.operations.append((self.now, "identity", pid))
+        return self.current_identity(pid)
+
+    def current_identity(self, pid):
         if (self.index, pid) in self.unready:
             return None
         return {
             "birth": "changed"
             if self.drift and self.index > 0 and pid == 101
             else f"birth-{pid}",
-            "command": f"qemu-{pid}",
+            "command": f"qemu-system-aarch64 @managed-avd -id owned-{pid}_GradleManagedDevice",
         }
 
     def command(self, *args, **kwargs):
@@ -169,7 +176,10 @@ class ManagedPairDiscoveryTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "boot observation expired"):
             f.run(budget=0.5)
         self.assertEqual(
-            {p: candidate(p) for p in (101, 202)},
+            {
+                p: {**candidate(p), "identity": f.current_identity(p)}
+                for p in (101, 202)
+            },
             f.custody.get("observedCandidates"),
         )
         self.assertEqual({101, 202, 303}, f.observed)
@@ -181,7 +191,13 @@ class ManagedPairDiscoveryTest(unittest.TestCase):
         f = DiscoveryFixture([selected])
         with self.assertRaisesRegex(RuntimeError, "boot observation expired"):
             f.run(budget=0.5)
-        self.assertEqual(selected, f.custody.get("observedCandidates"))
+        self.assertEqual(
+            {
+                p: {**item, "identity": f.current_identity(p)}
+                for p, item in selected.items()
+            },
+            f.custody.get("observedCandidates"),
+        )
         self.assertEqual({}, f.custody["targets"])
         self.assertEqual([], f.operations)
 

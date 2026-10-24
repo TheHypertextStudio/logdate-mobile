@@ -17,13 +17,19 @@ object WatchCaptureReceipt {
         incoming: JournalNote,
     ): Boolean =
         when {
-            stored is JournalNote.Text && incoming is JournalNote.Text ->
+            stored is JournalNote.Text && incoming is JournalNote.Text -> {
                 stored.copy(syncVersion = 0, capturedOn = stored.capturedOn ?: CaptureDevice.WATCH) ==
                     incoming.copy(syncVersion = 0, capturedOn = incoming.capturedOn ?: CaptureDevice.WATCH)
-            stored is JournalNote.Audio && incoming is JournalNote.Audio ->
+            }
+
+            stored is JournalNote.Audio && incoming is JournalNote.Audio -> {
                 stored.copy(mediaRef = "", syncVersion = 0, capturedOn = stored.capturedOn ?: CaptureDevice.WATCH) ==
                     incoming.copy(mediaRef = "", syncVersion = 0, capturedOn = incoming.capturedOn ?: CaptureDevice.WATCH)
-            else -> false
+            }
+
+            else -> {
+                false
+            }
         }
 
     suspend fun existingAudioMatches(

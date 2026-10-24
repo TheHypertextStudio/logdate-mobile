@@ -46,15 +46,21 @@ internal class LegacyLocalBackfill(
         if (firstSyncEnqueueStore.hasEnqueuedLocalScope(selected.owner, selected.origin, entityType)) return
         val ids =
             when (entityType) {
-                EntityType.JOURNAL ->
+                EntityType.JOURNAL -> {
                     journalRepository.allJournalsObserved
                         .first()
                         .map { it.id }
-                EntityType.NOTE ->
+                }
+
+                EntityType.NOTE -> {
                     journalNotesRepository.allNotesObserved
                         .first()
                         .map { it.uid }
-                else -> return
+                }
+
+                else -> {
+                    return
+                }
             }
         for (id in ids) {
             check(selected == inbox.currentScope()) { "Download scope changed" }

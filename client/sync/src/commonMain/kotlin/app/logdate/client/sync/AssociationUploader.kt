@@ -105,6 +105,7 @@ internal class AssociationUploader(
 
             when (pending.operation) {
                 PendingOperation.DELETE -> deletes.add(association, pending.entityId)
+
                 PendingOperation.CREATE,
                 PendingOperation.UPDATE,
                 -> creates.add(association, pending.entityId)

@@ -100,7 +100,7 @@ class WatchNoteDelivery(
             val identity = CaptureIdentity.of(pending.entityId, pending.operationId ?: continue) ?: continue
             val key = if (pending.operation == PendingOperation.DELETE) identity.removalLedgerKey else identity.ledgerKey
             val entry = ledger.get(peer.ledgerScope, DeliveryDirection.TO_PHONE, EntityType.NOTE, key)
-            if (entry == null || entry.holdReason == null && entry.nextAttemptAt == null) {
+            if (entry == null || (entry.holdReason == null && entry.nextAttemptAt == null)) {
                 deadlines += entry?.nextAttemptAt ?: now()
             } else {
                 entry.nextAttemptAt?.let(deadlines::add)
@@ -199,8 +199,14 @@ class WatchNoteDelivery(
                 routeConditions,
             )
         return when (val route = router.route(input)) {
-            Route.Settle -> settle(peer, transport, capture, entry)
-            Route.SendToPhone -> send(peer, transport, capture, entry)
+            Route.Settle -> {
+                settle(peer, transport, capture, entry)
+            }
+
+            Route.SendToPhone -> {
+                send(peer, transport, capture, entry)
+            }
+
             Route.UploadDirect -> {
                 if (!isCurrent(peer) || !outbox.isCurrentOperation(EntityType.NOTE, capture.pending)) return Step()
                 val moved = ledger.moveTo(entry, DeliveryState.CLOUD_PENDING, nextAttemptAt = now() + HoldTimes.RECHECK_MS)
@@ -210,6 +216,7 @@ class WatchNoteDelivery(
                     Step()
                 }
             }
+
             is Route.Wait -> {
                 ledger.moveTo(entry, entry.state, route.reason, HoldTimes.recheckAt(route.reason, entry, now()))
                 Step()
@@ -359,10 +366,14 @@ class WatchNoteDelivery(
                     ?: return null
             val compatible =
                 response.cloud == CloudPresence.UNKNOWN ||
-                    response.cloud == CloudPresence.NO_ACCOUNT &&
-                    peer.mode == LinkMode.PAIR ||
-                    response.cloud == CloudPresence.SIGNED_IN &&
-                    peer.mode == LinkMode.CLOUD
+                    (
+                        response.cloud == CloudPresence.NO_ACCOUNT &&
+                            peer.mode == LinkMode.PAIR
+                    ) ||
+                    (
+                        response.cloud == CloudPresence.SIGNED_IN &&
+                            peer.mode == LinkMode.CLOUD
+                    )
             if (response.context != peer || !compatible) return null
             receipts.apply(peer.phoneNode, answer)
             if (isCurrent(peer)) response else null

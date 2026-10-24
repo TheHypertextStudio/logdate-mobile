@@ -74,19 +74,19 @@ For every configurable value except the version, precedence is:
 
 Supported overrides:
 
-| Purpose | Gradle Property | Environment Variable | Default |
-| --- | --- | --- | --- |
-| Group | `atproto.group` | `ATPROTO_GROUP` | `studio.hypertext.atproto` |
-| Version | `atproto.version` | `ATPROTO_VERSION` | `0.1.0` |
-| Repository URL (legacy / GH Packages) | `atproto.publish.url` | `ATPROTO_PUBLISH_URL` | none |
-| Repository username (legacy / GH Packages) | `atproto.publish.username` | `ATPROTO_PUBLISH_USERNAME` | none |
-| Repository password (legacy / GH Packages) | `atproto.publish.password` | `ATPROTO_PUBLISH_PASSWORD` | none |
-| Maven Central username | `ossrh.username` | `OSSRH_USERNAME` | none |
-| Maven Central password | `ossrh.password` | `OSSRH_PASSWORD` | none |
-| Maven Central URL override | `ossrh.publish.url` | `OSSRH_PUBLISH_URL` | `https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/` |
-| Signing key ID | `signingKeyId` | `SIGNING_KEY_ID` | optional |
-| Signing key | `signingKey` | `SIGNING_KEY` | none |
-| Signing password | `signingPassword` | `SIGNING_PASSWORD` | none |
+| Purpose                                    | Gradle Property            | Environment Variable       | Default                                                             |
+| ------------------------------------------ | -------------------------- | -------------------------- | ------------------------------------------------------------------- |
+| Group                                      | `atproto.group`            | `ATPROTO_GROUP`            | `studio.hypertext.atproto`                                          |
+| Version                                    | `atproto.version`          | `ATPROTO_VERSION`          | `0.1.0`                                                             |
+| Repository URL (legacy / GH Packages)      | `atproto.publish.url`      | `ATPROTO_PUBLISH_URL`      | none                                                                |
+| Repository username (legacy / GH Packages) | `atproto.publish.username` | `ATPROTO_PUBLISH_USERNAME` | none                                                                |
+| Repository password (legacy / GH Packages) | `atproto.publish.password` | `ATPROTO_PUBLISH_PASSWORD` | none                                                                |
+| Maven Central username                     | `ossrh.username`           | `OSSRH_USERNAME`           | none                                                                |
+| Maven Central password                     | `ossrh.password`           | `OSSRH_PASSWORD`           | none                                                                |
+| Maven Central URL override                 | `ossrh.publish.url`        | `OSSRH_PUBLISH_URL`        | `https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/` |
+| Signing key ID                             | `signingKeyId`             | `SIGNING_KEY_ID`           | optional                                                            |
+| Signing key                                | `signingKey`               | `SIGNING_KEY`              | none                                                                |
+| Signing password                           | `signingPassword`          | `SIGNING_PASSWORD`         | none                                                                |
 
 The version is the one exception: `ATPROTO_VERSION` wins over `atproto.version`. Gradle
 properties include the entries in the repository's root
@@ -162,7 +162,7 @@ The convention writes the same POM metadata to every ATProto module:
 
 - project name from the Gradle project name
 - project description from the module `description`
-- repository URL pointing at the main repo, <https://github.com/WillieCubed/logdate-mobile>
+- repository URL pointing at the main repo, <https://github.com/TheHypertextStudio/logdate-mobile>
 - Apache 2.0 license
 - organization metadata for The Hypertext Studio
 - developer metadata for The Hypertext Studio
@@ -266,7 +266,7 @@ set the same repository env vars yourself and choose the version with either
 environment wins over `-P`):
 
 ```bash
-ATPROTO_PUBLISH_URL=https://maven.pkg.github.com/WillieCubed/logdate-mobile \
+ATPROTO_PUBLISH_URL=https://maven.pkg.github.com/TheHypertextStudio/logdate-mobile \
 ATPROTO_PUBLISH_USERNAME=<your-github-username> \
 ATPROTO_PUBLISH_PASSWORD=<personal-access-token-with-write:packages> \
   ./gradlew :shared:atproto-syntax:publishAllPublicationsToAtprotoRepository \
@@ -294,16 +294,16 @@ The Maven Central wiring is already in place — both the convention plugin
 and `publish-atproto.yml` have the slots — and only switches on once the
 following repo-scoped GH Actions secrets are configured:
 
-| Secret | Purpose |
-| --- | --- |
-| `OSSRH_USERNAME` | Sonatype OSSRH portal username (or token name for the new central-publishing portal) |
-| `OSSRH_PASSWORD` | Sonatype OSSRH password (or token secret) |
-| `OSSRH_PUBLISH_URL` *(optional)* | Override the default `https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/` if the namespace migrates to a different host |
-| `SIGNING_KEY_ID` *(optional)* | Short ID of the GPG key, only useful when multiple keys live in the keyring |
-| `SIGNING_KEY` | ASCII-armored GPG **secret** key (`gpg --armor --export-secret-keys <id>`) |
-| `SIGNING_PASSWORD` | Passphrase for the secret key |
+| Secret                           | Purpose                                                                                                                                |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `OSSRH_USERNAME`                 | Sonatype OSSRH portal username (or token name for the new central-publishing portal)                                                   |
+| `OSSRH_PASSWORD`                 | Sonatype OSSRH password (or token secret)                                                                                              |
+| `OSSRH_PUBLISH_URL` _(optional)_ | Override the default `https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/` if the namespace migrates to a different host |
+| `SIGNING_KEY_ID` _(optional)_    | Short ID of the GPG key, only useful when multiple keys live in the keyring                                                            |
+| `SIGNING_KEY`                    | ASCII-armored GPG **secret** key (`gpg --armor --export-secret-keys <id>`)                                                             |
+| `SIGNING_PASSWORD`               | Passphrase for the secret key                                                                                                          |
 
-When *all four* of `OSSRH_USERNAME`, `OSSRH_PASSWORD`, `SIGNING_KEY`, and
+When _all four_ of `OSSRH_USERNAME`, `OSSRH_PASSWORD`, `SIGNING_KEY`, and
 `SIGNING_PASSWORD` are present, the workflow runs an additional
 `publishAllPublicationsToAtprotoMavenCentralRepository` step after the GH
 Packages publish. Missing any of them skips the MC step silently — GH

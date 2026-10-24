@@ -65,9 +65,15 @@ internal fun WearVoiceMemoriesContent(
                 }
             }
             when {
-                !state.isLoaded -> Unit
-                state.memories.isEmpty() -> item(key = "empty") { EmptyMemories(Modifier.transformedHeight(this, spec)) }
-                else ->
+                !state.isLoaded -> {
+                    Unit
+                }
+
+                state.memories.isEmpty() -> {
+                    item(key = "empty") { EmptyMemories(Modifier.transformedHeight(this, spec)) }
+                }
+
+                else -> {
                     state.memories.groupBy { it.createdAt.toLocalDateTime(timeZone).date }.forEach { (day, memories) ->
                         item(key = "day-$day") {
                             ListSubHeader(
@@ -87,6 +93,7 @@ internal fun WearVoiceMemoriesContent(
                             )
                         }
                     }
+                }
             }
         }
     }

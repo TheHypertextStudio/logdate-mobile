@@ -98,7 +98,7 @@ class MarkdownAudioParityScreenshotsTest {
                                 ) {
                                     Text("Quiet streets · ${mode.value}", style = MaterialTheme.typography.titleMedium)
                                     when (mode.value) {
-                                        "source" ->
+                                        "source" -> {
                                             TextBlockContent(
                                                 block = remember { TextBlockUiState(content = markdown) },
                                                 isExpanded = false,
@@ -106,8 +106,15 @@ class MarkdownAudioParityScreenshotsTest {
                                                 onTextChanged = {},
                                                 onFocused = {},
                                             )
-                                        "reading" -> MarkdownText(markdown)
-                                        else -> MarkdownPreviewText(markdown, maxLines = 5)
+                                        }
+
+                                        "reading" -> {
+                                            MarkdownText(markdown)
+                                        }
+
+                                        else -> {
+                                            MarkdownPreviewText(markdown, maxLines = 5)
+                                        }
                                     }
                                 }
                             }

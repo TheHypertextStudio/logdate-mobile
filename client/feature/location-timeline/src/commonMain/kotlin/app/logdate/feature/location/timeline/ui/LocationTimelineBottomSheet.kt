@@ -136,12 +136,16 @@ fun LocationTimelineQuickPeekSheetContent(
         }
 
         when (uiState) {
-            is LocationTimelineUiState.Error -> QuickPeekErrorState(error = uiState.error, onRetry = onRetry)
-            is LocationTimelineUiState.Content ->
+            is LocationTimelineUiState.Error -> {
+                QuickPeekErrorState(error = uiState.error, onRetry = onRetry)
+            }
+
+            is LocationTimelineUiState.Content -> {
                 QuickPeekContentState(
                     uiState = uiState,
                     onSelectPlace = onSelectPlace,
                 )
+            }
         }
 
         FilledTonalButton(

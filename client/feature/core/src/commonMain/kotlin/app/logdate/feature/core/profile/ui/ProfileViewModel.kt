@@ -163,6 +163,7 @@ class ProfileViewModel(
                             // Local save succeeded, but cloud sync failed - still show success but log the sync error
                             Napier.w("Local profile updated but cloud sync failed: ${cloudResult.error}")
                         }
+
                         is UpdateProfileUseCase.Result.Success -> {
                             Napier.d("Display name updated both locally and on cloud")
                         }

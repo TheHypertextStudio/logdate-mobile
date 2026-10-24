@@ -189,7 +189,10 @@ private suspend inline fun <reified T> ApplicationCall.migrationBody(): T? =
 
 private suspend inline fun <reified T : Any> ApplicationCall.respondOutcome(outcome: SpaceMigrationResult<T>) {
     when (outcome) {
-        is SpaceMigrationResult.Done -> respond(outcome.value)
+        is SpaceMigrationResult.Done -> {
+            respond(outcome.value)
+        }
+
         is SpaceMigrationResult.Refused -> {
             val status = if (outcome.code == LegacyMediaCopier.MEDIA_NOT_FOUND) HttpStatusCode.NotFound else HttpStatusCode.Conflict
             respond(status, error(outcome.code, outcome.message))

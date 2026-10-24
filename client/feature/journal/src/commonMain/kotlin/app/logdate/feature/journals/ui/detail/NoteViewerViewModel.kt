@@ -117,16 +117,29 @@ class NoteViewerViewModel(
             )
         _uiState.value =
             when (note) {
-                is JournalNote.Handwriting -> NoteViewerUiState.HandwritingContent(shared, note.document, note.unreadableContent != null)
-                is JournalNote.Text -> NoteViewerUiState.TextContent(shared, note.content)
-                is JournalNote.Image -> NoteViewerUiState.ImageContent(shared, note.mediaRef)
-                is JournalNote.Video -> NoteViewerUiState.VideoContent(shared, note.mediaRef)
-                is JournalNote.Audio ->
+                is JournalNote.Handwriting -> {
+                    NoteViewerUiState.HandwritingContent(shared, note.document, note.unreadableContent != null)
+                }
+
+                is JournalNote.Text -> {
+                    NoteViewerUiState.TextContent(shared, note.content)
+                }
+
+                is JournalNote.Image -> {
+                    NoteViewerUiState.ImageContent(shared, note.mediaRef)
+                }
+
+                is JournalNote.Video -> {
+                    NoteViewerUiState.VideoContent(shared, note.mediaRef)
+                }
+
+                is JournalNote.Audio -> {
                     NoteViewerUiState.AudioContent(
                         shared = shared,
                         mediaRef = note.mediaRef,
                         durationMs = note.durationMs,
                     )
+                }
             }
     }
 
@@ -187,16 +200,22 @@ class NoteViewerViewModel(
             is NoteViewerUiState.TextContent -> {
                 sharingLauncher.shareContent(text = state.text, chooserTitle = chooserTitle)
             }
+
             is NoteViewerUiState.ImageContent -> {
                 sharingLauncher.shareContent(mediaUris = listOf(state.mediaRef), chooserTitle = chooserTitle)
             }
+
             is NoteViewerUiState.VideoContent -> {
                 sharingLauncher.shareContent(mediaUris = listOf(state.mediaRef), chooserTitle = chooserTitle)
             }
+
             is NoteViewerUiState.AudioContent -> {
                 sharingLauncher.shareContent(mediaUris = listOf(state.mediaRef), chooserTitle = chooserTitle)
             }
-            else -> Unit
+
+            else -> {
+                Unit
+            }
         }
     }
 }

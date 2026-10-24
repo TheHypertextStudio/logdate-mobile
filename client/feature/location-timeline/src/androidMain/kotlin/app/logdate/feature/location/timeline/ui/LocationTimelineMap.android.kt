@@ -217,7 +217,10 @@ private fun buildMapAnnotations(
     selectedPlaceId: String?,
 ): List<LocationMapAnnotation> =
     when {
-        zoom < 10f -> clusterPlaces(places, zoom)
+        zoom < 10f -> {
+            clusterPlaces(places, zoom)
+        }
+
         zoom >= 14f && selectedPlaceId != null -> {
             val selectedPlace = places.firstOrNull { it.id == selectedPlaceId }
             buildList {
@@ -239,7 +242,10 @@ private fun buildMapAnnotations(
                 )
             }
         }
-        else -> places.map(LocationMapAnnotation::Place)
+
+        else -> {
+            places.map(LocationMapAnnotation::Place)
+        }
     }
 
 private fun clusterPlaces(

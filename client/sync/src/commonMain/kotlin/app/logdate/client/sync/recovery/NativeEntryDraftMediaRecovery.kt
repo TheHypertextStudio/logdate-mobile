@@ -55,7 +55,10 @@ internal class NativeEntryDraftMediaRecovery(
             requireCurrent(scope)
             if (!missing(note)) continue
             when (val result = transfer.hydrate(accessToken, note) { scope == inbox.currentScope() }) {
-                is MediaHydrationResult.Pending -> if (reason == null) reason = result.reason
+                is MediaHydrationResult.Pending -> {
+                    if (reason == null) reason = result.reason
+                }
+
                 is MediaHydrationResult.Available -> {
                     requireCurrent(scope)
                     result.mapping?.let { refs.upsert(it.copy(ownerId = scope.owner, serverOrigin = scope.origin)) }

@@ -88,16 +88,7 @@ class OfflineFirstTranscriptionRepository(
                             val final = matchesMedia && existing?.hasValidFinalDocument() == true
                             if (final && existing.documentJson == null) {
                                 updateTranscription(note.uid, existing.text.orEmpty(), TranscriptionStatus.COMPLETED)
-                            } else if (existing == null ||
-                                !matchesMedia ||
-                                existing.status == DbTranscriptionStatus.COMPLETED &&
-                                !final ||
-                                existing.status == DbTranscriptionStatus.PENDING ||
-                                existing.status == DbTranscriptionStatus.FAILED &&
-                                recovery ||
-                                existing.status == DbTranscriptionStatus.IN_PROGRESS &&
-                                (recovery || now() - existing.lastUpdated >= staleAfter)
-                            ) {
+                            } else if (requiresAutomaticTranscription(existing, matchesMedia, final, recovery)) {
                                 if (attempted.add(mediaRevision)) {
                                     val priority = if (recovery) TranscriptionPriority.RECOVERY else TranscriptionPriority.FOREGROUND
                                     requestTranscription(
@@ -112,6 +103,22 @@ class OfflineFirstTranscriptionRepository(
                     }
             }
     }
+
+    private fun requiresAutomaticTranscription(
+        existing: TranscriptionEntity?,
+        matchesMedia: Boolean,
+        final: Boolean,
+        recovery: Boolean,
+    ): Boolean =
+        existing == null ||
+            !matchesMedia ||
+            (existing.status == DbTranscriptionStatus.COMPLETED && !final) ||
+            existing.status == DbTranscriptionStatus.PENDING ||
+            (existing.status == DbTranscriptionStatus.FAILED && recovery) ||
+            (
+                existing.status == DbTranscriptionStatus.IN_PROGRESS &&
+                    (recovery || now() - existing.lastUpdated >= staleAfter)
+            )
 
     override fun observeAllTranscriptions(): Flow<List<TranscriptionData>> =
         transcriptionDao.observeAllTranscriptions().map { rows -> rows.map { it.toTranscriptionData() } }
@@ -251,8 +258,10 @@ class OfflineFirstTranscriptionRepository(
                 val existing = transcriptionDao.getTranscriptionByNoteId(work.noteId)
                 if (note.deletedAt != null ||
                     note.contentUri != work.audioUri ||
-                    work.durationMs != null &&
-                    note.durationMs != work.durationMs ||
+                    (
+                        work.durationMs != null &&
+                            note.durationMs != work.durationMs
+                    ) ||
                     existing?.revision != work.transcriptRevision ||
                     existing.id != work.transcriptionId ||
                     existing.documentJson != work.documentJson ||
@@ -375,7 +384,7 @@ class OfflineFirstTranscriptionRepository(
         status: DbTranscriptionStatus,
     ): TranscriptionEntity {
         val base = existing ?: TranscriptionEntity(noteId = note.uid, text = null, status = status, created = now(), lastUpdated = now())
-        val invalid = !base.matchesMedia(note) || base.status == DbTranscriptionStatus.COMPLETED && !base.hasValidFinalDocument()
+        val invalid = !base.matchesMedia(note) || (base.status == DbTranscriptionStatus.COMPLETED && !base.hasValidFinalDocument())
         val row =
             if (invalid) {
                 base.copy(

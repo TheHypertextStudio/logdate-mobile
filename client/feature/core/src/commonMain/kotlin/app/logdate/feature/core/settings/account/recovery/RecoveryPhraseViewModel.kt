@@ -131,8 +131,14 @@ class RecoveryPhraseViewModel(
             AppAuthState.AUTHENTICATED, AppAuthState.NO_PROMPT_NEEDED -> {
                 if (screenActive) readRevealedPhrase(token) else authenticatedWhileStopped = true
             }
-            AppAuthState.REQUIRE_PROMPT -> updateReveal(token, PhraseRevealState.Hidden)
-            else -> updateReveal(token, PhraseRevealState.Failed(RevealFailure.AUTHENTICATION_UNAVAILABLE))
+
+            AppAuthState.REQUIRE_PROMPT -> {
+                updateReveal(token, PhraseRevealState.Hidden)
+            }
+
+            else -> {
+                updateReveal(token, PhraseRevealState.Failed(RevealFailure.AUTHENTICATION_UNAVAILABLE))
+            }
         }
     }
 

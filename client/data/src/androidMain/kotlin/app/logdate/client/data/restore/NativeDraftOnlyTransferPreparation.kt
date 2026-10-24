@@ -32,11 +32,21 @@ internal fun prepareNativeDraftOnlyDatabase(
             preferences.asMap().any { (key, value) ->
                 if (value !is String) return@any false
                 when {
-                    isRetainedDraftStorageKey(key.name) -> ArchiveDraftStorageState.decode(json, value).drafts.isNotEmpty()
-                    key.name == "entry_drafts" -> ArchiveDraftStorageState.decode(json, value).drafts.isNotEmpty()
-                    key.name.startsWith("editor_drafts_native_unparsed_") ->
+                    isRetainedDraftStorageKey(key.name) -> {
+                        ArchiveDraftStorageState.decode(json, value).drafts.isNotEmpty()
+                    }
+
+                    key.name == "entry_drafts" -> {
+                        ArchiveDraftStorageState.decode(json, value).drafts.isNotEmpty()
+                    }
+
+                    key.name.startsWith("editor_drafts_native_unparsed_") -> {
                         PartialDraftStorageRecovery.recover(json, value).drafts.isNotEmpty()
-                    else -> false
+                    }
+
+                    else -> {
+                        false
+                    }
                 }
             }
         }

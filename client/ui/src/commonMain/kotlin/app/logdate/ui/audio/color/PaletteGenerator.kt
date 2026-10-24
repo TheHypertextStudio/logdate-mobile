@@ -18,7 +18,7 @@ class PaletteGenerator {
 
     private fun getBasePalette(period: DaylightPeriod): AudioPalette =
         when (period) {
-            DaylightPeriod.DAWN ->
+            DaylightPeriod.DAWN -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF1A1A2E,
                     waveformGradientEnd = 0xFFFF9F7F,
@@ -27,8 +27,9 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF0D0D1A,
                     contentColor = 0xFFFFD4C2,
                 )
+            }
 
-            DaylightPeriod.MORNING ->
+            DaylightPeriod.MORNING -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF2D2D44,
                     waveformGradientEnd = 0xFFFFD699,
@@ -37,8 +38,9 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF1A1A2E,
                     contentColor = 0xFFFFF3E0,
                 )
+            }
 
-            DaylightPeriod.MIDDAY ->
+            DaylightPeriod.MIDDAY -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF3D5A80,
                     waveformGradientEnd = 0xFFF5F5F5,
@@ -47,8 +49,9 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF1A2A40,
                     contentColor = 0xFFE8F4FD,
                 )
+            }
 
-            DaylightPeriod.AFTERNOON ->
+            DaylightPeriod.AFTERNOON -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF4A5568,
                     waveformGradientEnd = 0xFFFFE4B5,
@@ -57,8 +60,9 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF2D2D2D,
                     contentColor = 0xFFFFF8F0,
                 )
+            }
 
-            DaylightPeriod.GOLDEN_HOUR ->
+            DaylightPeriod.GOLDEN_HOUR -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF4A3728,
                     waveformGradientEnd = 0xFFFFD700,
@@ -67,8 +71,9 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF1A1208,
                     contentColor = 0xFFFFF9E6,
                 )
+            }
 
-            DaylightPeriod.EVENING ->
+            DaylightPeriod.EVENING -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF1A1A2E,
                     waveformGradientEnd = 0xFF9B59B6,
@@ -77,8 +82,9 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF0D0D1A,
                     contentColor = 0xFFE8D5F0,
                 )
+            }
 
-            DaylightPeriod.NIGHT ->
+            DaylightPeriod.NIGHT -> {
                 AudioPalette(
                     waveformGradientStart = 0xFF0D0D1A,
                     waveformGradientEnd = 0xFF2C3E50,
@@ -87,5 +93,6 @@ class PaletteGenerator {
                     immersiveBackground = 0xFF050508,
                     contentColor = 0xFFCDD8E3,
                 )
+            }
         }
 }

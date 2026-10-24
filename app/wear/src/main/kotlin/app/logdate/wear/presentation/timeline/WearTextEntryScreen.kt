@@ -68,8 +68,11 @@ fun WearTextEntryScreen(
                 )
             }
             when {
-                loading -> item { CircularProgressIndicator() }
-                currentNote == null ->
+                loading -> {
+                    item { CircularProgressIndicator() }
+                }
+
+                currentNote == null -> {
                     item {
                         Text(
                             text = stringResource(R.string.wear_text_entry_missing),
@@ -78,6 +81,8 @@ fun WearTextEntryScreen(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
+                }
+
                 else -> {
                     item {
                         Text(

@@ -132,6 +132,7 @@ private fun UsernameSetupContent(
                             strokeWidth = 2.dp,
                         )
                     }
+
                     UsernameAvailability.Available -> {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
@@ -139,6 +140,7 @@ private fun UsernameSetupContent(
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
+
                     UsernameAvailability.Taken -> {
                         Icon(
                             imageVector = Icons.Default.Cancel,
@@ -146,6 +148,7 @@ private fun UsernameSetupContent(
                             tint = MaterialTheme.colorScheme.error,
                         )
                     }
+
                     UsernameAvailability.Error -> {
                         Icon(
                             imageVector = Icons.Default.Warning,
@@ -153,12 +156,15 @@ private fun UsernameSetupContent(
                             tint = MaterialTheme.colorScheme.error,
                         )
                     }
-                    UsernameAvailability.Unknown -> null
+
+                    UsernameAvailability.Unknown -> {
+                        null
+                    }
                 }
             },
             supportingText = {
                 when (usernameAvailability) {
-                    UsernameAvailability.Available ->
+                    UsernameAvailability.Available -> {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
                             verticalAlignment = Alignment.CenterVertically,
@@ -174,13 +180,18 @@ private fun UsernameSetupContent(
                                 color = MaterialTheme.colorScheme.primary,
                             )
                         }
-                    UsernameAvailability.Taken ->
+                    }
+
+                    UsernameAvailability.Taken -> {
                         Text(
                             text = stringResource(Res.string.username_is_already_taken),
                             color = MaterialTheme.colorScheme.error,
                         )
-                    else ->
+                    }
+
+                    else -> {
                         Text(stringResource(Res.string.account_username_domain_hint, handleDomain))
+                    }
                 }
             },
             isError = usernameAvailability == UsernameAvailability.Taken,

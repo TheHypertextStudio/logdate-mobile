@@ -89,12 +89,19 @@ internal fun DeviceConnectionDialog(
         },
         dismissButton = {
             when (state) {
-                is DeviceApprovalUiState.Confirm ->
+                is DeviceApprovalUiState.Confirm -> {
                     TextButton(
                         onClick = onReject,
                     ) { Text(stringResource(Res.string.connect_device_reject)) }
-                is DeviceApprovalUiState.Failed -> TextButton(onClick = onDismiss) { Text(stringResource(Res.string.connect_device_done)) }
-                else -> Unit
+                }
+
+                is DeviceApprovalUiState.Failed -> {
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.connect_device_done)) }
+                }
+
+                else -> {
+                    Unit
+                }
             }
         },
     )
@@ -103,17 +110,32 @@ internal fun DeviceConnectionDialog(
 @Composable
 private fun connectionTitle(state: DeviceApprovalUiState): String =
     when (state) {
-        is DeviceApprovalUiState.Confirm -> stringResource(Res.string.connect_device_confirmation_title, state.deviceName)
-        DeviceApprovalUiState.LookingUp -> stringResource(Res.string.connect_device_looking_up)
-        is DeviceApprovalUiState.Working ->
+        is DeviceApprovalUiState.Confirm -> {
+            stringResource(Res.string.connect_device_confirmation_title, state.deviceName)
+        }
+
+        DeviceApprovalUiState.LookingUp -> {
+            stringResource(Res.string.connect_device_looking_up)
+        }
+
+        is DeviceApprovalUiState.Working -> {
             stringResource(
                 if (state.connecting) Res.string.connect_device_connecting else Res.string.connect_device_rejecting,
                 state.deviceName,
             )
-        is DeviceApprovalUiState.Done ->
+        }
+
+        is DeviceApprovalUiState.Done -> {
             stringResource(if (state.connected) Res.string.connect_device_success_title else Res.string.connect_device_rejected_title)
-        is DeviceApprovalUiState.Failed -> stringResource(Res.string.connect_device_failed_title)
-        DeviceApprovalUiState.Idle -> ""
+        }
+
+        is DeviceApprovalUiState.Failed -> {
+            stringResource(Res.string.connect_device_failed_title)
+        }
+
+        DeviceApprovalUiState.Idle -> {
+            ""
+        }
     }
 
 @Composable
@@ -130,6 +152,7 @@ private fun ConnectionDetails(state: DeviceApprovalUiState) {
                 Text(stringResource(Res.string.connect_device_confirmation_help))
                 state.failure?.let { Text(stringResource(it.message), color = MaterialTheme.colorScheme.error) }
             }
+
             is DeviceApprovalUiState.Done -> {
                 Text(state.deviceName, style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -138,8 +161,14 @@ private fun ConnectionDetails(state: DeviceApprovalUiState) {
                     ),
                 )
             }
-            is DeviceApprovalUiState.Failed -> Text(stringResource(state.reason.message))
-            else -> Unit
+
+            is DeviceApprovalUiState.Failed -> {
+                Text(stringResource(state.reason.message))
+            }
+
+            else -> {
+                Unit
+            }
         }
     }
 }

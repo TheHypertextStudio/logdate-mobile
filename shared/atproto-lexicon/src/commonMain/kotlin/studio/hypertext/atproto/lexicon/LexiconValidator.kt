@@ -132,12 +132,25 @@ public object LexiconValidator {
                 val shapes = PARAMETER_SHAPES[resource]
                 val wellFormed = shapes?.let { checkShapes(at, resource, permission, it) }.orEmpty()
                 when (resource) {
-                    "repo" -> checkRepoPermission(at, permission, group, wellFormed)
-                    "rpc" -> checkRpcPermission(at, permission, group, wellFormed)
-                    "space" -> checkSpacePermission(at, permission, group, wellFormed)
-                    "blob", "account", "identity" ->
+                    "repo" -> {
+                        checkRepoPermission(at, permission, group, wellFormed)
+                    }
+
+                    "rpc" -> {
+                        checkRpcPermission(at, permission, group, wellFormed)
+                    }
+
+                    "space" -> {
+                        checkSpacePermission(at, permission, group, wellFormed)
+                    }
+
+                    "blob", "account", "identity" -> {
                         report(at, "$resource permissions can't be in a permission set; apps ask for them directly")
-                    else -> report(at, "'$resource' isn't a resource a permission set can grant")
+                    }
+
+                    else -> {
+                        report(at, "'$resource' isn't a resource a permission set can grant")
+                    }
                 }
             }
         }
@@ -170,20 +183,26 @@ public object LexiconValidator {
             value: JsonElement,
         ): String? =
             when (shape) {
-                ParameterShape.LIST ->
+                ParameterShape.LIST -> {
                     when {
                         value !is JsonArray -> "$name must be a list, even for one value"
                         value.isEmpty() -> "$name can't be an empty list"
                         value.any { (it as? JsonPrimitive)?.isString != true } -> "$name must list only strings"
                         else -> null
                     }
-                ParameterShape.STRING ->
+                }
+
+                ParameterShape.STRING -> {
                     when {
                         value is JsonArray -> "$name must be a single value, not a list"
                         (value as? JsonPrimitive)?.isString != true -> "$name must be a string"
                         else -> null
                     }
-                ParameterShape.BOOLEAN -> if (value.asBoolean() == null) "$name must be true or false" else null
+                }
+
+                ParameterShape.BOOLEAN -> {
+                    if (value.asBoolean() == null) "$name must be true or false" else null
+                }
             }
 
         private fun JsonElement.asBoolean(): Boolean? = (this as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull
@@ -292,21 +311,41 @@ public object LexiconValidator {
             requiredNames: Set<String> = emptySet(),
         ) {
             when (field.type) {
-                LexiconType.REF -> checkRef(path, field.reference)
-                LexiconType.UNION -> checkUnion(path, field)
-                LexiconType.BLOB -> checkBlob(path, field)
-                LexiconType.BYTES -> checkLengths(path, field)
-                LexiconType.UNSUPPORTED -> report(path, "Unsupported lexicon type '${field.unsupportedType}'")
-                LexiconType.ARRAY ->
+                LexiconType.REF -> {
+                    checkRef(path, field.reference)
+                }
+
+                LexiconType.UNION -> {
+                    checkUnion(path, field)
+                }
+
+                LexiconType.BLOB -> {
+                    checkBlob(path, field)
+                }
+
+                LexiconType.BYTES -> {
+                    checkLengths(path, field)
+                }
+
+                LexiconType.UNSUPPORTED -> {
+                    report(path, "Unsupported lexicon type '${field.unsupportedType}'")
+                }
+
+                LexiconType.ARRAY -> {
                     field.items?.let { checkField("$path[]", it) }
                         ?: report(path, "array definitions must declare items")
+                }
+
                 LexiconType.OBJECT, LexiconType.PARAMS -> {
                     requiredNames.filterNot(field.properties::containsKey).forEach { name ->
                         report(path, "Required field '$name' is missing from properties")
                     }
                     field.properties.forEach { (name, property) -> checkField("$path.$name", property) }
                 }
-                else -> Unit
+
+                else -> {
+                    Unit
+                }
             }
         }
 
@@ -329,9 +368,13 @@ public object LexiconValidator {
             field.refs.forEach { reference ->
                 val target = resolve(reference)
                 when {
-                    target == null -> report(path, "Unresolved ref target ${reference.label}")
-                    target.type != LexiconType.OBJECT && target.type != LexiconType.RECORD ->
+                    target == null -> {
+                        report(path, "Unresolved ref target ${reference.label}")
+                    }
+
+                    target.type != LexiconType.OBJECT && target.type != LexiconType.RECORD -> {
                         report(path, "Union member ${reference.label} must be an object or a record")
+                    }
                 }
             }
         }

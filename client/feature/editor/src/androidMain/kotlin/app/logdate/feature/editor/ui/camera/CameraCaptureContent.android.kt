@@ -229,8 +229,14 @@ actual fun CameraCaptureContent(
     LaunchedEffect(remoteControl.commands, viewModel) {
         remoteControl.commands.collect { command ->
             when (command) {
-                CameraRemoteCommand.Capture -> viewModel.capture(currentOnPrepareCaptureTarget)
-                CameraRemoteCommand.Close -> currentOnClose()
+                CameraRemoteCommand.Capture -> {
+                    viewModel.capture(currentOnPrepareCaptureTarget)
+                }
+
+                CameraRemoteCommand.Close -> {
+                    currentOnClose()
+                }
+
                 is CameraRemoteCommand.SelectCameraCategory -> {
                     val deviceId =
                         viewModel
@@ -244,8 +250,14 @@ actual fun CameraCaptureContent(
                         viewModel.selectCameraDevice(deviceId)
                     }
                 }
-                is CameraRemoteCommand.SelectCameraDevice -> viewModel.selectCameraDevice(command.deviceId)
-                CameraRemoteCommand.SwitchBuiltInCamera -> viewModel.switchCamera()
+
+                is CameraRemoteCommand.SelectCameraDevice -> {
+                    viewModel.selectCameraDevice(command.deviceId)
+                }
+
+                CameraRemoteCommand.SwitchBuiltInCamera -> {
+                    viewModel.switchCamera()
+                }
             }
         }
     }
@@ -285,21 +297,23 @@ fun CameraCapturePreviewContent(
     modifier: Modifier = Modifier,
 ) {
     when (state) {
-        CameraCapturePreviewState.PermissionRequired ->
+        CameraCapturePreviewState.PermissionRequired -> {
             CameraPermissionRequest(
                 onRequestPermission = {},
                 modifier = modifier,
             )
+        }
 
-        is CameraCapturePreviewState.LiveCapture ->
+        is CameraCapturePreviewState.LiveCapture -> {
             PreviewInlineCameraCapture(
                 aspectRatio = state.aspectRatio,
                 captureMode = state.captureMode,
                 isRecording = state.isRecording,
                 modifier = modifier,
             )
+        }
 
-        is CameraCapturePreviewState.Review ->
+        is CameraCapturePreviewState.Review -> {
             MediaReviewContent(
                 uri = state.uri,
                 mediaType = state.mediaType,
@@ -307,6 +321,7 @@ fun CameraCapturePreviewContent(
                 onUse = {},
                 modifier = modifier,
             )
+        }
     }
 }
 

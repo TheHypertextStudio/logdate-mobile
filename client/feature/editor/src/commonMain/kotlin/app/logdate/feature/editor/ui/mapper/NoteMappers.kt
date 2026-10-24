@@ -33,7 +33,8 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 syncVersion = syncVersion,
             )
         }
-        is JournalNote.Text ->
+
+        is JournalNote.Text -> {
             TextBlockUiState(
                 id = uid,
                 timestamp = creationTimestamp,
@@ -41,8 +42,9 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 content = content,
                 timeZoneId = timeZoneId,
             )
+        }
 
-        is JournalNote.Image ->
+        is JournalNote.Image -> {
             ImageBlockUiState(
                 id = uid,
                 timestamp = creationTimestamp,
@@ -52,8 +54,9 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 presentation = presentation,
                 timeZoneId = timeZoneId,
             )
+        }
 
-        is JournalNote.Video ->
+        is JournalNote.Video -> {
             VideoBlockUiState(
                 id = uid,
                 timestamp = creationTimestamp,
@@ -62,8 +65,9 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 caption = caption,
                 timeZoneId = timeZoneId,
             )
+        }
 
-        is JournalNote.Audio ->
+        is JournalNote.Audio -> {
             AudioBlockUiState(
                 id = uid,
                 timestamp = creationTimestamp,
@@ -73,6 +77,7 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 transcription = transcription,
                 timeZoneId = timeZoneId,
             )
+        }
     }
 
 /**
@@ -96,6 +101,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                 syncVersion = syncVersion,
             )
         }
+
         is TextBlockUiState -> {
             if (!hasContent()) return null
             JournalNote.Text(
@@ -124,7 +130,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
             if (!hasContent()) return null
             val mediaRef = uri ?: return null
             when (mediaType) {
-                CapturedMediaType.PHOTO ->
+                CapturedMediaType.PHOTO -> {
                     JournalNote.Image(
                         uid = id,
                         creationTimestamp = timestamp,
@@ -133,7 +139,9 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                         caption = caption,
                         timeZoneId = timeZoneId,
                     )
-                CapturedMediaType.VIDEO ->
+                }
+
+                CapturedMediaType.VIDEO -> {
                     JournalNote.Video(
                         uid = id,
                         creationTimestamp = timestamp,
@@ -142,6 +150,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                         caption = caption,
                         timeZoneId = timeZoneId,
                     )
+                }
             }
         }
 

@@ -128,7 +128,7 @@ class MoveServerViewModel(
     private var destinationAccount: ServerScopedAccount? = null
     private var progressJob: Job? = null
 
-    /** Starts a new move, or picks up one the app was closed during. */
+    // Starts a new move, or picks up one the app was closed during.
     init {
         viewModelScope.launch {
             val record = move.inProgress()
@@ -154,13 +154,17 @@ class MoveServerViewModel(
         viewModelScope.launch {
             _state.value =
                 when (val check = checkServer(choose.address)) {
-                    is ServerCheck.Unusable -> choose.copy(problem = ChooseProblem.Server(check.problem))
-                    is ServerCheck.Usable ->
+                    is ServerCheck.Unusable -> {
+                        choose.copy(problem = ChooseProblem.Server(check.problem))
+                    }
+
+                    is ServerCheck.Usable -> {
                         if (check.server.origin == choose.source.origin) {
                             choose.copy(problem = ChooseProblem.SameAsCurrent)
                         } else {
                             MoveServerUiState.Review(source = choose.source, destination = check.server, survey = move.survey())
                         }
+                    }
                 }
         }
     }
@@ -168,11 +172,17 @@ class MoveServerViewModel(
     fun back() {
         _state.update { state ->
             when (state) {
-                is MoveServerUiState.Review ->
+                is MoveServerUiState.Review -> {
                     if (state.isWorking) state else MoveServerUiState.ChooseServer(state.source, address = state.destination.origin)
-                is MoveServerUiState.CreateAccount ->
+                }
+
+                is MoveServerUiState.CreateAccount -> {
                     if (state.isWorking) state else MoveServerUiState.Review(state.source, state.destination, state.survey)
-                else -> state
+                }
+
+                else -> {
+                    state
+                }
             }
         }
     }

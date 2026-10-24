@@ -1,3 +1,5 @@
+import re
+
 """Native acceptance safety contracts for workflow."""
 
 import json
@@ -199,3 +201,39 @@ class NativeWorkflowSafety:
         self.assertIn("app/compose-main/src/androidMain/", workflow)
         self.assertIn("client/**", workflow)
         self.assertIn("shared/model/**", workflow)
+
+    def test_modern_callback_contract_covers_every_source_case_without_a_stale_driver_count(
+        self,
+    ):
+        contract = json.loads(
+            (ROOT / "tests/e2e/native-modern-callback-cases.json").read_text()
+        )
+        for classname, expected in contract.items():
+            source = (
+                ROOT
+                / "app/android-main/src/androidTest/kotlin"
+                / (classname.replace(".", "/") + ".kt")
+            ).read_text()
+            methods = [
+                quoted or plain
+                for quoted, plain in re.findall(
+                    r"@Test\s+fun\s+(?:`([^`]+)`|(\w+))", source
+                )
+            ]
+            self.assertCountEqual(expected, methods)
+        driver = (
+            ROOT
+            / "tools/native-restore-driver/src/androidTest/kotlin/app/logdate/tools/restoredriver/NativeModernRestoreCallbackTest.kt"
+        ).read_text()
+        declared_counts = [
+            int(value)
+            for value in re.findall(
+                r"assertEquals\(\s*(\d+),\s*cases\.size\s*\)", driver
+            )
+        ]
+        self.assertTrue(declared_counts, "Keep the driver's explicit cardinality gate")
+        self.assertEqual(
+            {sum(len(methods) for methods in contract.values())},
+            set(declared_counts),
+            "Every driver count must match the complete current source contract",
+        )

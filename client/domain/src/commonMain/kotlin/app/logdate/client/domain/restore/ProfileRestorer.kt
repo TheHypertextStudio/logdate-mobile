@@ -20,7 +20,7 @@ internal class ProfileRestorer(
         val existing = profileRepository.getCurrentProfile()
         val replacement =
             when {
-                options.preservePopulatedLocalProfile ->
+                options.preservePopulatedLocalProfile -> {
                     existing.copy(
                         displayName = existing.displayName.takeIf { it.isNotBlank() } ?: profile.displayName,
                         birthday = existing.birthday ?: profile.birthday,
@@ -30,9 +30,19 @@ internal class ProfileRestorer(
                         createdAt = if (existing.createdAt == Instant.DISTANT_PAST) profile.createdAt else existing.createdAt,
                         lastUpdatedAt = maxOf(existing.lastUpdatedAt, profile.lastUpdatedAt),
                     )
-                shouldOverwrite(existing.lastUpdatedAt, profile.lastUpdatedAt, options.strategy) -> profile
-                existing == LogDateProfile() -> profile
-                else -> existing
+                }
+
+                shouldOverwrite(existing.lastUpdatedAt, profile.lastUpdatedAt, options.strategy) -> {
+                    profile
+                }
+
+                existing == LogDateProfile() -> {
+                    profile
+                }
+
+                else -> {
+                    existing
+                }
             }
         profileRepository.compareAndSetProfileForRestore(existing, replacement, scope, recoveryId)
     }

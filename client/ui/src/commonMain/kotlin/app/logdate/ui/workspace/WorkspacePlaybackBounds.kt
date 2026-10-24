@@ -41,6 +41,7 @@ internal fun resolveWorkspacePlaybackBounds(
                     }
                 if (preferred.width >= 560.dp) preferred else viewport
             }
+
             FoldableHingeOrientation.Horizontal -> {
                 val top = hinge.bounds.top.coerceIn(0.dp, height)
                 val bottom = hinge.bounds.bottom.coerceIn(top, height)
@@ -48,7 +49,10 @@ internal fun resolveWorkspacePlaybackBounds(
                 val lower = PanelBounds(0.dp, bottom, width, height - bottom)
                 if (upper.height >= 220.dp || upper.height >= lower.height) upper else lower
             }
-            else -> viewport
+
+            else -> {
+                viewport
+            }
         }
     val storyWidth = region.width.coerceAtMost(1200.dp)
     return region.copy(x = region.x + (region.width - storyWidth) / 2, width = storyWidth)

@@ -109,24 +109,45 @@ internal enum class ApplicationStartupFailureMessage {
 
 internal fun applicationStartupFailureMessage(cause: Throwable): ApplicationStartupFailureMessage =
     when {
-        cause.hasStorageFullCause() -> ApplicationStartupFailureMessage.STORAGE_FULL
-        cause.hasNativeMediaQuarantinePending() -> ApplicationStartupFailureMessage.NATIVE_MEDIA_PENDING
-        cause.hasNativeRestoreInProgress() -> ApplicationStartupFailureMessage.NATIVE_RESTORE_PENDING
-        cause.causesAndSuppressed().any { it is NewerDatabaseVersionException } -> ApplicationStartupFailureMessage.UPDATE_REQUIRED
-        cause.causesAndSuppressed().any { it is NativeRestorePrivacyMetadataRequiredException } ->
+        cause.hasStorageFullCause() -> {
+            ApplicationStartupFailureMessage.STORAGE_FULL
+        }
+
+        cause.hasNativeMediaQuarantinePending() -> {
+            ApplicationStartupFailureMessage.NATIVE_MEDIA_PENDING
+        }
+
+        cause.hasNativeRestoreInProgress() -> {
+            ApplicationStartupFailureMessage.NATIVE_RESTORE_PENDING
+        }
+
+        cause.causesAndSuppressed().any { it is NewerDatabaseVersionException } -> {
+            ApplicationStartupFailureMessage.UPDATE_REQUIRED
+        }
+
+        cause.causesAndSuppressed().any { it is NativeRestorePrivacyMetadataRequiredException } -> {
             ApplicationStartupFailureMessage.PRIVACY_METADATA_RECOVERY
+        }
+
         cause.causesAndSuppressed().any {
             it is DatabaseKeyRecoveryRequiredException
-        } -> ApplicationStartupFailureMessage.DATABASE_KEY_RECOVERY
-        else -> ApplicationStartupFailureMessage.GENERIC
+        } -> {
+            ApplicationStartupFailureMessage.DATABASE_KEY_RECOVERY
+        }
+
+        else -> {
+            ApplicationStartupFailureMessage.GENERIC
+        }
     }
 
 private fun ApplicationStartupFailureMessage.titleResource(): Int =
     when (this) {
         ApplicationStartupFailureMessage.UPDATE_REQUIRED -> R.string.database_update_required_title
+
         ApplicationStartupFailureMessage.DATABASE_KEY_RECOVERY,
         ApplicationStartupFailureMessage.PRIVACY_METADATA_RECOVERY,
         -> R.string.database_key_recovery_title
+
         else -> R.string.application_startup_failed_title
     }
 

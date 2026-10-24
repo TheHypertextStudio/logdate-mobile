@@ -227,8 +227,14 @@ private fun ModelProgress(status: ModelDownloadStatus) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
-        ModelDownloadStatus.Extracting -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        else -> Unit
+
+        ModelDownloadStatus.Extracting -> {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+
+        else -> {
+            Unit
+        }
     }
 }
 
@@ -239,14 +245,21 @@ private fun ModelAction(
 ) {
     val label =
         when (status) {
-            ModelDownloadStatus.Idle -> stringResource(Res.string.voice_notes_model_action_download)
-            is ModelDownloadStatus.Failure ->
+            ModelDownloadStatus.Idle -> {
+                stringResource(Res.string.voice_notes_model_action_download)
+            }
+
+            is ModelDownloadStatus.Failure -> {
                 if (status == ModelDownloadStatus.NotSupported) {
                     return // Nothing the user can do — hide the button
                 } else {
                     stringResource(Res.string.voice_notes_model_action_retry)
                 }
-            else -> return // Downloading, Extracting, Completed — no button
+            }
+
+            else -> {
+                return
+            } // Downloading, Extracting, Completed — no button
         }
     Row(
         modifier = Modifier.fillMaxWidth(),

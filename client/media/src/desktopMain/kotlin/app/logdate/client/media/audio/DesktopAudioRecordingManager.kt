@@ -71,13 +71,18 @@ class DesktopAudioRecordingManager(
                     is TranscriptionResult.Success -> {
                         transcriptionFlow.value = result.text
                     }
+
                     is TranscriptionResult.Error -> {
                         Napier.e("Transcription error: ${result.reason}")
                     }
+
                     is TranscriptionResult.InProgress -> {
                         // Just wait for the text
                     }
-                    TranscriptionResult.Cancelled -> Unit
+
+                    TranscriptionResult.Cancelled -> {
+                        Unit
+                    }
                 }
             }
         }
@@ -313,6 +318,7 @@ class DesktopAudioRecordingManager(
                             val unsignedByte = buffer[i].toInt() and 0xFF
                             unsignedByte / 128.0 - 1.0 // Convert to -1.0 to 1.0 range
                         }
+
                         16 -> {
                             // 16-bit audio (handle endianness)
                             val low = buffer[i].toInt() and 0xFF
@@ -320,7 +326,10 @@ class DesktopAudioRecordingManager(
                             val sample = if (audioFormat.isBigEndian) (high shl 8) or low else (low shl 8) or high
                             sample / 32768.0 // Convert to -1.0 to 1.0 range
                         }
-                        else -> 0.0
+
+                        else -> {
+                            0.0
+                        }
                     }
 
                 sum += Math.abs(amplitude)

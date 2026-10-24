@@ -48,10 +48,19 @@ object ArchiveLeakScanner {
         key: String?,
     ): List<String> =
         when (element) {
-            is JsonObject -> element.entries.flatMap { (name, value) -> findIn(value, name) }
-            is JsonArray -> element.flatMap { findIn(it, key) }
-            JsonNull -> emptyList()
-            is JsonPrimitive ->
+            is JsonObject -> {
+                element.entries.flatMap { (name, value) -> findIn(value, name) }
+            }
+
+            is JsonArray -> {
+                element.flatMap { findIn(it, key) }
+            }
+
+            JsonNull -> {
+                emptyList()
+            }
+
+            is JsonPrimitive -> {
                 if (key in exempt ||
                     !element.isString
                 ) {
@@ -59,5 +68,6 @@ object ArchiveLeakScanner {
                 } else {
                     patterns.filter { it.containsMatchIn(element.content) }.map { element.content }
                 }
+            }
         }
 }

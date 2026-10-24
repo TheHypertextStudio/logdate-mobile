@@ -5,101 +5,101 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - ".github/workflows/native-restore-acceptance.yml"
-      - "app/android-main/src/androidTest/**/NativeBackupTransferProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeJournalFixture.kt"
-      - "app/android-main/src/androidTest/**/NativeTransferRuntimeChecks.kt"
-      - "app/android-main/src/androidTest/**/NativeSourceSession*.kt"
-      - "app/android-main/src/androidTest/**/NativeDeviceEnrollment*.kt"
-      - "app/android-main/src/androidTest/**/NativeAutomaticMediaWorkerProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeDeferredOriginalUploadProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeOriginalMediaProbe.kt"
-      - "app/android-main/src/androidTest/**/NativeMediaReauthenticationProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeCurrentDraftRecoveryProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeNetworkPolicyHandoff.kt"
-      - "app/android-main/src/androidTest/**/NativeEmulatorUiObstructions.kt"
-      - "app/android-main/src/androidTest/**/NativeRestoredWidgetProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeReleasedUpgradeProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeRetainedDraftShortcutProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeRetainedOfflineEditProbeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeRestorePrivacyRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeBackgroundCredentialCallbackTest.kt"
-      - "app/android-main/src/androidTest/**/NativeMissingMediaE2ETest.kt"
-      - "app/android-main/src/androidTest/**/ArchiveMediaRecoveryE2ETest.kt"
-      - "app/android-main/src/androidTest/**/ArchiveLowStorageRecoveryTest.kt"
-      - "app/android-main/src/androidTest/**/RestoreStateAccessibilityRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/RestoreTalkBackRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/StartupRecoveryTalkBackScenario.kt"
-      - "app/android-main/src/androidTest/**/CloudArchiveWorkerFixture.kt"
-      - "app/android-main/src/androidTest/**/RestoredJournalLockRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/RestoredAppLockEnrollmentRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/InterruptedDatabaseKeyRecoveryTest.kt"
-      - "app/android-main/src/androidTest/**/NativeRetainedKeyFailureTest.kt"
-      - "app/android-main/src/androidTest/**/LegacyPlaintextMigrationTest.kt"
-      - "app/android-main/src/androidTest/**/NewerJournalRecoveryRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeRecoveryWorkStateTest.kt"
-      - "app/android-main/src/androidTest/**/CloudRestoreWorkPersistenceProbeTest.kt"
-      - "app/android-main/src/androidTest/**/AndroidSync*Runtime*.kt"
-      - "app/android-main/src/androidTest/**/RestoreWorkerSessionRecoveryTest.kt"
-      - "app/android-main/src/androidTest/**/RestoreWorkerTestBindings.kt"
-      - "app/android-main/src/androidTest/**/NativeRestoredEntryEditingTest.kt"
-      - "app/android-main/src/androidTest/**/TransferredInstallationTrustTest.kt"
-      - "app/android-main/src/androidTest/**/NativeTransferredPublicationProbeTest.kt"
-      - "app/android-main/src/androidTest/**/RestoredReminderSchedulingRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/RestoredAlarmDeliveryRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/RestoredReminderColdStartTest.kt"
-      - "app/android-main/src/androidTest/**/RecoveryFixtureCleanup*.kt"
-      - "app/android-main/src/androidTest/**/RestoredNotificationDeliveryTest.kt"
-      - "app/android-main/src/androidTest/**/RestoredShortcutTargetsRuntimeTest.kt"
-      - "app/android-main/src/androidTest/**/NativeRestoredSettingsE2ETest.kt"
-      - "app/android-main/src/androidTest/**/CompletedRecordingRestartTest.kt"
-      - "app/android-main/src/androidTest/**/CompletedRecordingColdStartTest.kt"
-      - "app/android-main/src/androidTest/assets/recovery/**"
-      - "app/android-main/src/main/**"
-      - "app/compose-main/src/androidMain/**"
-      - "app/compose-main/src/commonMain/**"
-      - "client/**"
-      - "build-logic/src/**/GenerateAndroidShortcuts*"
-      - "build-logic/src/main/kotlin/app/logdate/LogDateReleasePlugin.kt"
-      - "scripts/tests/native-backup/**"
-      - "scripts/ci/start-test-services.py"
-      - "scripts/ci/screenshot-build-cache.gradle.kts"
-      - "scripts/tests/ci/test-acceptance-parallelism.py"
-      - "server/**"
-      - "shared/model/**"
-      - "tests/e2e/managed-talkback-acceptance.py"
-      - "tests/e2e/test_managed_talkback_acceptance.py"
-      - "tests/e2e/managed-permission-acceptance.py"
-      - "tests/e2e/test_managed_permission_acceptance.py"
-      - "tests/e2e/managed-native-*.py"
-      - "tests/e2e/managed-modern-callback-acceptance.sh"
-      - "tests/e2e/test_managed_native*.py"
-      - "tools/native-restore-driver/**"
-      - "tests/e2e/native-talkback-touch.c"
-      - "tests/e2e/native-backup-acceptance.py"
-      - "tests/e2e/native-publication-acceptance.py"
-      - "tests/e2e/native-instrumentation-results.py"
-      - "tests/e2e/native-key-recovery-cases.json"
-      - "tests/e2e/native-recording-recovery-cases.json"
-      - "tests/e2e/native-alarm-delivery-cases.json"
-      - "tests/e2e/native-modern-callback-cases.json"
-      - "tests/e2e/native-modern-callback-driver-cases.json"
-      - "tests/e2e/test_native*.py"
-      - "tests/e2e/native-d2d-acceptance.py"
-      - "tests/e2e/native-missing-media-acceptance.py"
-      - "tests/e2e/native-storage-recovery-acceptance.py"
-      - "tests/e2e/native-recovery-ui-acceptance.py"
-      - "tests/e2e/native-permission-acceptance.py"
-      - "tests/e2e/native-post-transfer-acceptance.py"
-      - "tests/e2e/native-restore-work-restart-acceptance.py"
-      - "tests/e2e/native-device-enrollment-acceptance.py"
-      - "tests/e2e/native-automatic-media-worker-acceptance.py"
-      - "tests/e2e/native-media-reauthentication-acceptance.py"
-      - "tests/e2e/native-widget-transfer-acceptance.py"
-      - "tests/e2e/native-released-upgrade-acceptance.py"
-      - "integration/server-client-e2e/src/test/kotlin/app/logdate/integration/e2e/harness/**"
-      - "integration/server-client-e2e/build.gradle.kts"
-      - "build.gradle.kts"
+      - '.github/workflows/native-restore-acceptance.yml'
+      - 'app/android-main/src/androidTest/**/NativeBackupTransferProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeJournalFixture.kt'
+      - 'app/android-main/src/androidTest/**/NativeTransferRuntimeChecks.kt'
+      - 'app/android-main/src/androidTest/**/NativeSourceSession*.kt'
+      - 'app/android-main/src/androidTest/**/NativeDeviceEnrollment*.kt'
+      - 'app/android-main/src/androidTest/**/NativeAutomaticMediaWorkerProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeDeferredOriginalUploadProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeOriginalMediaProbe.kt'
+      - 'app/android-main/src/androidTest/**/NativeMediaReauthenticationProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeCurrentDraftRecoveryProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeNetworkPolicyHandoff.kt'
+      - 'app/android-main/src/androidTest/**/NativeEmulatorUiObstructions.kt'
+      - 'app/android-main/src/androidTest/**/NativeRestoredWidgetProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeReleasedUpgradeProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeRetainedDraftShortcutProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeRetainedOfflineEditProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeRestorePrivacyRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeBackgroundCredentialCallbackTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeMissingMediaE2ETest.kt'
+      - 'app/android-main/src/androidTest/**/ArchiveMediaRecoveryE2ETest.kt'
+      - 'app/android-main/src/androidTest/**/ArchiveLowStorageRecoveryTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoreStateAccessibilityRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoreTalkBackRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/StartupRecoveryTalkBackScenario.kt'
+      - 'app/android-main/src/androidTest/**/CloudArchiveWorkerFixture.kt'
+      - 'app/android-main/src/androidTest/**/RestoredJournalLockRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoredAppLockEnrollmentRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/InterruptedDatabaseKeyRecoveryTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeRetainedKeyFailureTest.kt'
+      - 'app/android-main/src/androidTest/**/LegacyPlaintextMigrationTest.kt'
+      - 'app/android-main/src/androidTest/**/NewerJournalRecoveryRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeRecoveryWorkStateTest.kt'
+      - 'app/android-main/src/androidTest/**/CloudRestoreWorkPersistenceProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/AndroidSync*Runtime*.kt'
+      - 'app/android-main/src/androidTest/**/RestoreWorkerSessionRecoveryTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoreWorkerTestBindings.kt'
+      - 'app/android-main/src/androidTest/**/NativeRestoredEntryEditingTest.kt'
+      - 'app/android-main/src/androidTest/**/TransferredInstallationTrustTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeTransferredPublicationProbeTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoredReminderSchedulingRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoredAlarmDeliveryRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoredReminderColdStartTest.kt'
+      - 'app/android-main/src/androidTest/**/RecoveryFixtureCleanup*.kt'
+      - 'app/android-main/src/androidTest/**/RestoredNotificationDeliveryTest.kt'
+      - 'app/android-main/src/androidTest/**/RestoredShortcutTargetsRuntimeTest.kt'
+      - 'app/android-main/src/androidTest/**/NativeRestoredSettingsE2ETest.kt'
+      - 'app/android-main/src/androidTest/**/CompletedRecordingRestartTest.kt'
+      - 'app/android-main/src/androidTest/**/CompletedRecordingColdStartTest.kt'
+      - 'app/android-main/src/androidTest/assets/recovery/**'
+      - 'app/android-main/src/main/**'
+      - 'app/compose-main/src/androidMain/**'
+      - 'app/compose-main/src/commonMain/**'
+      - 'client/**'
+      - 'build-logic/src/**/GenerateAndroidShortcuts*'
+      - 'build-logic/src/main/kotlin/app/logdate/LogDateReleasePlugin.kt'
+      - 'scripts/tests/native-backup/**'
+      - 'scripts/ci/start-test-services.py'
+      - 'scripts/ci/screenshot-build-cache.gradle.kts'
+      - 'scripts/tests/ci/test-acceptance-parallelism.py'
+      - 'server/**'
+      - 'shared/model/**'
+      - 'tests/e2e/managed-talkback-acceptance.py'
+      - 'tests/e2e/test_managed_talkback_acceptance.py'
+      - 'tests/e2e/managed-permission-acceptance.py'
+      - 'tests/e2e/test_managed_permission_acceptance.py'
+      - 'tests/e2e/managed-native-*.py'
+      - 'tests/e2e/managed-modern-callback-acceptance.sh'
+      - 'tests/e2e/test_managed_native*.py'
+      - 'tools/native-restore-driver/**'
+      - 'tests/e2e/native-talkback-touch.c'
+      - 'tests/e2e/native-backup-acceptance.py'
+      - 'tests/e2e/native-publication-acceptance.py'
+      - 'tests/e2e/native-instrumentation-results.py'
+      - 'tests/e2e/native-key-recovery-cases.json'
+      - 'tests/e2e/native-recording-recovery-cases.json'
+      - 'tests/e2e/native-alarm-delivery-cases.json'
+      - 'tests/e2e/native-modern-callback-cases.json'
+      - 'tests/e2e/native-modern-callback-driver-cases.json'
+      - 'tests/e2e/test_native*.py'
+      - 'tests/e2e/native-d2d-acceptance.py'
+      - 'tests/e2e/native-missing-media-acceptance.py'
+      - 'tests/e2e/native-storage-recovery-acceptance.py'
+      - 'tests/e2e/native-recovery-ui-acceptance.py'
+      - 'tests/e2e/native-permission-acceptance.py'
+      - 'tests/e2e/native-post-transfer-acceptance.py'
+      - 'tests/e2e/native-restore-work-restart-acceptance.py'
+      - 'tests/e2e/native-device-enrollment-acceptance.py'
+      - 'tests/e2e/native-automatic-media-worker-acceptance.py'
+      - 'tests/e2e/native-media-reauthentication-acceptance.py'
+      - 'tests/e2e/native-widget-transfer-acceptance.py'
+      - 'tests/e2e/native-released-upgrade-acceptance.py'
+      - 'integration/server-client-e2e/src/test/kotlin/app/logdate/integration/e2e/harness/**'
+      - 'integration/server-client-e2e/build.gradle.kts'
+      - 'build.gradle.kts'
   workflow_dispatch:
 
 # Superseded PR runs use disposable hosted emulators and can release their runners.
@@ -144,7 +144,7 @@ jobs:
         uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
@@ -197,10 +197,16 @@ jobs:
         uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Prepare native runner capacity
+        shell: bash
+        run: |
+          python3 scripts/ci/prepare-native-host.py reclaim \
+            --keep-image 'system-images;android-34;google_apis;x86_64'
 
       - name: Verify same-run native compilation artifact binding
         env:
@@ -254,6 +260,12 @@ jobs:
             tools/native-restore-driver/build/outputs/apk/androidTest/debug/native-restore-driver-debug-androidTest.apk \
             > "$RUNNER_TEMP/native-inputs/native-acceptance-apks.sha256"
           sha256sum --check "$RUNNER_TEMP/native-inputs/native-acceptance-apks.sha256"
+
+      - name: Check native runner capacity
+        shell: bash
+        run: |
+          python3 scripts/ci/prepare-native-host.py check \
+            --path "${ANDROID_AVD_HOME:-$HOME/.android/avd}" --path "$RUNNER_TEMP"
 
       - name: Verify restored reminder schedules on a managed device
         run: |
@@ -495,10 +507,19 @@ jobs:
         uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Prepare native runner capacity
+        shell: bash
+        run: |
+          image='system-images;android-34;google_apis;x86_64'
+          if [[ "$NATIVE_SCENARIO" == d2d ]]; then
+            image='system-images;android-34;google_apis_playstore;x86_64'
+          fi
+          python3 scripts/ci/prepare-native-host.py reclaim --keep-image "$image"
 
       - name: Verify same-run native compilation artifact binding
         env:
@@ -576,6 +597,12 @@ jobs:
               'LOGDATE_BLOB_STORAGE_DIR': str(root / 'native-enrollment-blobs'),
           }))
           PY
+
+      - name: Check native runner capacity
+        shell: bash
+        run: |
+          python3 scripts/ci/prepare-native-host.py check \
+            --path "${ANDROID_AVD_HOME:-$HOME/.android/avd}" --path "$RUNNER_TEMP"
 
       - name: Run native oracles inside the managed lifecycle
         shell: bash
@@ -669,10 +696,16 @@ jobs:
         uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Prepare native runner capacity
+        shell: bash
+        run: |
+          python3 scripts/ci/prepare-native-host.py reclaim \
+            --keep-image 'system-images;android-36.1;google_apis_playstore;x86_64'
 
       - name: Verify same-run native compilation artifact binding
         env:
@@ -725,6 +758,12 @@ jobs:
             tools/native-restore-driver/build/outputs/apk/androidTest/debug/native-restore-driver-debug-androidTest.apk \
             > "$RUNNER_TEMP/native-inputs/native-acceptance-apks.sha256"
           sha256sum --check "$RUNNER_TEMP/native-inputs/native-acceptance-apks.sha256"
+
+      - name: Check native runner capacity
+        shell: bash
+        run: |
+          python3 scripts/ci/prepare-native-host.py check \
+            --path "${ANDROID_AVD_HOME:-$HOME/.android/avd}" --path "$RUNNER_TEMP"
 
       - name: Verify the exact Android 16 QPR2 callback contract on a managed device
         run: bash tests/e2e/managed-modern-callback-acceptance.sh "$RUNNER_TEMP/native-restore-api36-1"

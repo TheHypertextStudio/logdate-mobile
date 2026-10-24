@@ -62,6 +62,7 @@ internal fun AndroidAudioRecordingManager.onTranscriptionResult(
             transcriptionFlow.value = result.text
             structuredTranscriptionFlow.value = result
         }
+
         is TranscriptionResult.Error -> {
             Napier.e("Transcription error: ${result.reason}")
             if (result.reason != TranscriptionFailure.PersistenceError) {
@@ -69,9 +70,12 @@ internal fun AndroidAudioRecordingManager.onTranscriptionResult(
             }
             structuredTranscriptionFlow.value = result
         }
+
         is TranscriptionResult.InProgress,
         TranscriptionResult.Cancelled,
-        -> structuredTranscriptionFlow.value = result
+        -> {
+            structuredTranscriptionFlow.value = result
+        }
     }
 }
 
@@ -124,7 +128,10 @@ internal fun AndroidAudioRecordingManager.applyLiveStart(start: TranscriptionSta
     when (start) {
         TranscriptionStartResult.Started,
         TranscriptionStartResult.AlreadyRunning,
-        -> liveTranscriptionStarted = true
+        -> {
+            liveTranscriptionStarted = true
+        }
+
         is TranscriptionStartResult.Failed -> {
             structuredTranscriptionFlow.value = TranscriptionResult.Error(start.reason)
         }

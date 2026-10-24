@@ -176,21 +176,40 @@ private fun AppUpdateSection(
 
     val statusMessage =
         when (appUpdateUiState.status) {
-            AppUpdateStatus.Idle -> null
-            AppUpdateStatus.Checking -> stringResource(Res.string.app_update_checking)
-            AppUpdateStatus.UpToDate ->
+            AppUpdateStatus.Idle -> {
+                null
+            }
+
+            AppUpdateStatus.Checking -> {
+                stringResource(Res.string.app_update_checking)
+            }
+
+            AppUpdateStatus.UpToDate -> {
                 appUpdateUiState.message?.asString() ?: stringResource(Res.string.app_update_up_to_date)
-            AppUpdateStatus.Available ->
+            }
+
+            AppUpdateStatus.Available -> {
                 when (appUpdateUiState.flowType) {
                     AppUpdateFlowType.Immediate -> stringResource(Res.string.app_update_immediate_required)
                     else -> stringResource(Res.string.app_update_available)
                 }
-            AppUpdateStatus.Downloading -> stringResource(Res.string.app_update_downloading)
-            AppUpdateStatus.Downloaded -> stringResource(Res.string.app_update_downloaded)
-            AppUpdateStatus.Unsupported ->
+            }
+
+            AppUpdateStatus.Downloading -> {
+                stringResource(Res.string.app_update_downloading)
+            }
+
+            AppUpdateStatus.Downloaded -> {
+                stringResource(Res.string.app_update_downloaded)
+            }
+
+            AppUpdateStatus.Unsupported -> {
                 appUpdateUiState.message?.asString() ?: stringResource(Res.string.app_update_unsupported)
-            AppUpdateStatus.Error ->
+            }
+
+            AppUpdateStatus.Error -> {
                 appUpdateUiState.message?.asString() ?: stringResource(Res.string.app_update_check_failed)
+            }
         }
 
     val buttonEnabled = appUpdateUiState.status != AppUpdateStatus.Checking

@@ -172,27 +172,41 @@ class AccountLinkedDevicesRepository(
 
     private suspend fun revoke(id: String): LinkedDeviceRemoval =
         when (val call = withSession { links, token -> links.revoke(id, token) }) {
-            Call.NoSession -> LinkedDeviceRemoval.Failed(LinkedDevicesFailure.SignInRequired)
-            is Call.Success -> LinkedDeviceRemoval.Removed
-            is Call.Failure ->
+            Call.NoSession -> {
+                LinkedDeviceRemoval.Failed(LinkedDevicesFailure.SignInRequired)
+            }
+
+            is Call.Success -> {
+                LinkedDeviceRemoval.Removed
+            }
+
+            is Call.Failure -> {
                 if (call.failure == LinkedDevicesFailure.Refused(HTTP_NOT_FOUND)) {
                     confirmGone(id)
                 } else {
                     LinkedDeviceRemoval.Failed(call.failure)
                 }
+            }
         }
 
     /** A removal the server answered with 404 succeeded if the device is no longer listed. */
     private suspend fun confirmGone(id: String): LinkedDeviceRemoval =
         when (val call = withSession { links, token -> links.listDevices(token) }) {
-            Call.NoSession -> LinkedDeviceRemoval.Failed(LinkedDevicesFailure.SignInRequired)
-            is Call.Failure -> LinkedDeviceRemoval.Failed(call.failure)
-            is Call.Success ->
+            Call.NoSession -> {
+                LinkedDeviceRemoval.Failed(LinkedDevicesFailure.SignInRequired)
+            }
+
+            is Call.Failure -> {
+                LinkedDeviceRemoval.Failed(call.failure)
+            }
+
+            is Call.Success -> {
                 if (call.value.none { it.id == id }) {
                     LinkedDeviceRemoval.Removed
                 } else {
                     LinkedDeviceRemoval.Failed(LinkedDevicesFailure.Refused(HTTP_NOT_FOUND))
                 }
+            }
         }
 
     /** The paired watch's session, or null when there is none or the watch connection does not answer in time. */
@@ -288,16 +302,29 @@ class AccountLinkedDevicesRepository(
 
         fun classify(error: Throwable): LinkedDevicesFailure =
             when (error) {
-                is DeviceLinkApiException ->
+                is DeviceLinkApiException -> {
                     if (error.status == HTTP_UNAUTHORIZED) {
                         LinkedDevicesFailure.SignInRequired
                     } else {
                         LinkedDevicesFailure.Refused(error.status)
                     }
-                is CloudApiException -> classifyRefresh(error)
-                is SerializationException -> LinkedDevicesFailure.UnreadableAnswer
-                is IOException -> LinkedDevicesFailure.Unreachable
-                else -> LinkedDevicesFailure.Unexpected
+                }
+
+                is CloudApiException -> {
+                    classifyRefresh(error)
+                }
+
+                is SerializationException -> {
+                    LinkedDevicesFailure.UnreadableAnswer
+                }
+
+                is IOException -> {
+                    LinkedDevicesFailure.Unreachable
+                }
+
+                else -> {
+                    LinkedDevicesFailure.Unexpected
+                }
             }
 
         /** A refresh the server refuses means signing in again; other answers keep their status. */

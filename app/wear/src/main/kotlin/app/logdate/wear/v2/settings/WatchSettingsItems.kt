@@ -98,10 +98,19 @@ private fun TransformingLazyColumnScope.statusItem(
     spec: TransformationSpec,
 ) {
     when (val status = state.status) {
-        WatchStatus.Healthy -> Unit
-        is WatchStatus.WaitingForPhone -> item { WaitingForPhone(status.pending) }
-        WatchStatus.NeedsDeviceLink -> item { NeedsDeviceLink() }
-        is WatchStatus.SendFailing ->
+        WatchStatus.Healthy -> {
+            Unit
+        }
+
+        is WatchStatus.WaitingForPhone -> {
+            item { WaitingForPhone(status.pending) }
+        }
+
+        WatchStatus.NeedsDeviceLink -> {
+            item { NeedsDeviceLink() }
+        }
+
+        is WatchStatus.SendFailing -> {
             item {
                 RetryCard(
                     R.string.wear_settings_send_failing,
@@ -111,7 +120,9 @@ private fun TransformingLazyColumnScope.statusItem(
                     SurfaceTransformation(spec),
                 )
             }
-        is WatchStatus.BackupFailing ->
+        }
+
+        is WatchStatus.BackupFailing -> {
             item {
                 RetryCard(
                     R.string.wear_settings_backup_failing,
@@ -121,6 +132,7 @@ private fun TransformingLazyColumnScope.statusItem(
                     SurfaceTransformation(spec),
                 )
             }
+        }
     }
 }
 

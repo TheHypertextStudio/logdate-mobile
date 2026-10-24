@@ -347,9 +347,13 @@ internal fun archiveDetails(
             stringResource(Res.string.restore_archive_version, it)
         }
     return when {
-        localizedDate != null && localizedVersion != null ->
+        localizedDate != null && localizedVersion != null -> {
             stringResource(Res.string.restore_archive_metadata_pair, localizedDate, localizedVersion)
-        else -> localizedDate ?: localizedVersion
+        }
+
+        else -> {
+            localizedDate ?: localizedVersion
+        }
     }
 }
 

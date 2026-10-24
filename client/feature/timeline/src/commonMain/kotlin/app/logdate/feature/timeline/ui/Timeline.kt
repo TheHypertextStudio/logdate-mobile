@@ -327,13 +327,15 @@ private fun TimelineContentItem(
             }
             // Actual content
             when (item) {
-                is JournalNote.Handwriting ->
+                is JournalNote.Handwriting -> {
                     HandwritingPreview(
                         item.document,
                         Modifier.fillMaxWidth().height(240.dp),
                         unreadable =
                             item.unreadableContent != null,
                     )
+                }
+
                 is JournalNote.Text -> {
                     MarkdownText(
                         content = item.content,
@@ -371,20 +373,24 @@ private fun determineHeaderTitle(date: Instant): String {
         in today.date.minus(DatePeriod(days = 1))..today.date.plus(DatePeriod(days = 7)) -> {
             stringResource(Res.string.period_this_week)
         }
+
         // If the date is within the previous week, show "Last Week"
         in today.date.minus(DatePeriod(days = 7))..today.date -> {
             stringResource(Res.string.period_last_week)
         }
+
         // If the date is within the last month, show the number of weeks ago
         in today.date.minus(DatePeriod(days = 30))..today.date -> {
             val weeksAgo = (today.date.dayOfYear - localDateTime.date.dayOfYear) / 7
             pluralStringResource(Res.plurals.period_weeks_ago, weeksAgo, weeksAgo)
         }
+
         // If the date was more than five weeks ago, show the number of months ago
         in today.date.minus(DatePeriod(days = 365))..today.date -> {
             val monthsAgo = (today.date.dayOfYear - localDateTime.date.dayOfYear) / 30
             pluralStringResource(Res.plurals.period_months_ago, monthsAgo, monthsAgo)
         }
+
         // If the date was more than a year ago, show the number of years ago
         else -> {
             val yearsAgo = today.date.year - localDateTime.date.year
@@ -402,14 +408,17 @@ private fun determineTitle(date: Instant): String {
         today.date -> {
             stringResource(Res.string.timeline_today)
         }
+
         // If the date is yesterday, show "Yesterday"
         today.date.minus(DatePeriod(days = 1)) -> {
             stringResource(Res.string.timeline_yesterday)
         }
+
         // If the date is within the last calendar week, show the day of the week
         in today.date.minus(DatePeriod(days = 7))..today.date -> {
             localDateTime.date.dayOfWeek.name
         }
+
         // Otherwise, show the date
         else -> {
             localDateTime.toReadableDateShort()

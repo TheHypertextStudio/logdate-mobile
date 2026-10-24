@@ -88,12 +88,19 @@ class PhoneReminderDelivery(
                     recordPosted(final, trigger.trigger)
                     PhoneReminderOutcome.WATCH_POSTED
                 }
+
                 ReminderDeliveryStatus.NOT_POSTED -> {
                     val fallback = fresh(initial) ?: return PhoneReminderOutcome.HELD
                     post(fallback, day)
                 }
-                ReminderDeliveryStatus.ALREADY_HANDLED -> PhoneReminderOutcome.HELD
-                null -> PhoneReminderOutcome.UNCERTAIN
+
+                ReminderDeliveryStatus.ALREADY_HANDLED -> {
+                    PhoneReminderOutcome.HELD
+                }
+
+                null -> {
+                    PhoneReminderOutcome.UNCERTAIN
+                }
             }
         }
         return post(final, day)

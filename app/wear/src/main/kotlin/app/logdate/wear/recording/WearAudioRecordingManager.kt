@@ -163,11 +163,15 @@ class WearAudioRecordingManager(
                 Napier.e("Recording service did not confirm a start within $startTimeout")
                 null
             }
+
             !state.isRecording -> {
                 Napier.e("Recording service failed to start: ${state.failureMessage}")
                 null
             }
-            else -> state
+
+            else -> {
+                state
+            }
         }
     }
 

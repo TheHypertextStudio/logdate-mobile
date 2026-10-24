@@ -156,16 +156,25 @@ public object LexiconCodegen {
 
         private fun writeDefinition(definition: LexiconDefinition) {
             when (definition.type) {
-                LexiconType.OBJECT, LexiconType.PARAMS ->
+                LexiconType.OBJECT, LexiconType.PARAMS -> {
                     writeClass(className(document.id, definition.name), definition.description, definition.properties)
+                }
 
-                LexiconType.RECORD -> definition.record?.let { record -> writeRecord(definition, record) }
+                LexiconType.RECORD -> {
+                    definition.record?.let { record -> writeRecord(definition, record) }
+                }
 
-                LexiconType.SPACE -> definition.space?.let { space -> writeSpace(definition, space) }
+                LexiconType.SPACE -> {
+                    definition.space?.let { space -> writeSpace(definition, space) }
+                }
 
-                LexiconType.PERMISSION_SET -> writePermissionSet(definition)
+                LexiconType.PERMISSION_SET -> {
+                    writePermissionSet(definition)
+                }
 
-                in aliasedTypes -> writeAlias(definition)
+                in aliasedTypes -> {
+                    writeAlias(definition)
+                }
 
                 LexiconType.QUERY, LexiconType.PROCEDURE -> {
                     definition.parameters?.let { writeClass("${prefix}Params", it.description, it.properties) }
@@ -177,7 +186,9 @@ public object LexiconCodegen {
                     }
                 }
 
-                else -> Unit
+                else -> {
+                    Unit
+                }
             }
         }
 
@@ -308,19 +319,44 @@ public object LexiconCodegen {
             unionName: String,
         ): String =
             when (field.type) {
-                LexiconType.STRING, LexiconType.TOKEN -> "String"
-                LexiconType.BOOLEAN -> "Boolean"
-                LexiconType.INTEGER -> "Long"
+                LexiconType.STRING, LexiconType.TOKEN -> {
+                    "String"
+                }
+
+                LexiconType.BOOLEAN -> {
+                    "Boolean"
+                }
+
+                LexiconType.INTEGER -> {
+                    "Long"
+                }
+
                 LexiconType.ARRAY -> {
                     val items = requireNotNull(field.items)
                     val itemType = kotlinType(items, unionName = "${unionName}Item")
                     "List<$itemType${if (items.nullable) "?" else ""}>"
                 }
-                LexiconType.BLOB -> runtimeType(BLOB)
-                LexiconType.CID_LINK -> runtimeType(CID_LINK)
-                LexiconType.BYTES -> runtimeType(BYTES)
-                LexiconType.REF -> typeName(requireNotNull(field.reference))
-                LexiconType.UNION -> writeUnion(unionName, field)
+
+                LexiconType.BLOB -> {
+                    runtimeType(BLOB)
+                }
+
+                LexiconType.CID_LINK -> {
+                    runtimeType(CID_LINK)
+                }
+
+                LexiconType.BYTES -> {
+                    runtimeType(BYTES)
+                }
+
+                LexiconType.REF -> {
+                    typeName(requireNotNull(field.reference))
+                }
+
+                LexiconType.UNION -> {
+                    writeUnion(unionName, field)
+                }
+
                 else -> {
                     imports += JSON_ELEMENT
                     "JsonElement"

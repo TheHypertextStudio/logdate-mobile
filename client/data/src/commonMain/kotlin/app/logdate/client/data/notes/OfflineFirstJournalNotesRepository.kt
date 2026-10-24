@@ -192,6 +192,7 @@ class OfflineFirstJournalNotesRepository(
                     textNoteDao.addNote(note.toEntity(linkedPlaceId))
                     note.uid
                 }
+
                 is JournalNote.Text -> {
                     textNoteDao.addNote(note.toEntity(linkedPlaceId))
                     note.uid

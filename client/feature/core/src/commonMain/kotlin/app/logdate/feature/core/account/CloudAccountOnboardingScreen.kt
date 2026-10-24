@@ -314,22 +314,37 @@ private fun InitialSyncProgressScreen(
         Text(
             text =
                 when (val message = initialSyncMessageFor(status, total, completed)) {
-                    is InitialSyncMessage.Progress ->
+                    is InitialSyncMessage.Progress -> {
                         stringResource(Res.string.first_sync_progress, message.completed, message.total)
+                    }
 
-                    InitialSyncMessage.Running -> stringResource(Res.string.first_sync_running)
-                    InitialSyncMessage.Success -> stringResource(Res.string.first_sync_success)
-                    InitialSyncMessage.Partial -> stringResource(Res.string.first_sync_partial)
+                    InitialSyncMessage.Running -> {
+                        stringResource(Res.string.first_sync_running)
+                    }
 
-                    is InitialSyncMessage.TimedOut ->
+                    InitialSyncMessage.Success -> {
+                        stringResource(Res.string.first_sync_success)
+                    }
+
+                    InitialSyncMessage.Partial -> {
+                        stringResource(Res.string.first_sync_partial)
+                    }
+
+                    is InitialSyncMessage.TimedOut -> {
                         if (message.total != null && message.total > 0) {
                             stringResource(Res.string.first_sync_timed_out_progress, message.completed, message.total)
                         } else {
                             stringResource(Res.string.first_sync_timed_out)
                         }
+                    }
 
-                    InitialSyncMessage.Failed -> stringResource(Res.string.first_sync_failed)
-                    InitialSyncMessage.None -> ""
+                    InitialSyncMessage.Failed -> {
+                        stringResource(Res.string.first_sync_failed)
+                    }
+
+                    InitialSyncMessage.None -> {
+                        ""
+                    }
                 },
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 24.dp),
@@ -372,18 +387,33 @@ internal fun initialSyncMessageFor(
     completed: Int,
 ): InitialSyncMessage =
     when (status) {
-        InitialSyncStatus.Running ->
+        InitialSyncStatus.Running -> {
             if (total != null && total > 0) {
                 InitialSyncMessage.Progress(completed, total)
             } else {
                 InitialSyncMessage.Running
             }
+        }
 
-        InitialSyncStatus.Success -> InitialSyncMessage.Success
-        InitialSyncStatus.Partial -> InitialSyncMessage.Partial
-        InitialSyncStatus.TimedOut -> InitialSyncMessage.TimedOut(completed, total)
-        InitialSyncStatus.Failed -> InitialSyncMessage.Failed
-        InitialSyncStatus.NotStarted -> InitialSyncMessage.None
+        InitialSyncStatus.Success -> {
+            InitialSyncMessage.Success
+        }
+
+        InitialSyncStatus.Partial -> {
+            InitialSyncMessage.Partial
+        }
+
+        InitialSyncStatus.TimedOut -> {
+            InitialSyncMessage.TimedOut(completed, total)
+        }
+
+        InitialSyncStatus.Failed -> {
+            InitialSyncMessage.Failed
+        }
+
+        InitialSyncStatus.NotStarted -> {
+            InitialSyncMessage.None
+        }
     }
 
 private data class ServerPresentation(

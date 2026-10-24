@@ -152,20 +152,23 @@ class RemoteCameraActivity : FragmentActivity() {
 private fun String.toRemoteJournalNote(mediaType: CapturedMediaType): JournalNote {
     val now = Clock.System.now()
     return when (mediaType) {
-        CapturedMediaType.PHOTO ->
+        CapturedMediaType.PHOTO -> {
             JournalNote.Image(
                 creationTimestamp = now,
                 lastUpdated = now,
                 mediaRef = this,
                 timeZoneId = SystemCaptureTimeZone.currentTimeZoneId(),
             )
-        CapturedMediaType.VIDEO ->
+        }
+
+        CapturedMediaType.VIDEO -> {
             JournalNote.Video(
                 creationTimestamp = now,
                 lastUpdated = now,
                 mediaRef = this,
                 timeZoneId = SystemCaptureTimeZone.currentTimeZoneId(),
             )
+        }
     }
 }
 

@@ -234,9 +234,18 @@ private fun PlayerStatus(
     memory: VoiceMemoryItem,
 ) {
     when {
-        blocked -> PlayerMessage(stringResource(R.string.wear_playback_choose_output))
-        playback is WearPlaybackUiState.Preparing -> PlayerMessage(stringResource(R.string.wear_playback_preparing_audio))
-        playback is WearPlaybackUiState.Error -> PlayerMessage(stringResource(R.string.wear_playback_retry_download))
+        blocked -> {
+            PlayerMessage(stringResource(R.string.wear_playback_choose_output))
+        }
+
+        playback is WearPlaybackUiState.Preparing -> {
+            PlayerMessage(stringResource(R.string.wear_playback_preparing_audio))
+        }
+
+        playback is WearPlaybackUiState.Error -> {
+            PlayerMessage(stringResource(R.string.wear_playback_retry_download))
+        }
+
         playback is WearPlaybackUiState.Active -> {
             val position = (memory.durationMs * playback.progress).toLong()
             Text(
@@ -245,7 +254,10 @@ private fun PlayerStatus(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        else -> PlayerMessage(formatDuration(memory.durationMs))
+
+        else -> {
+            PlayerMessage(formatDuration(memory.durationMs))
+        }
     }
 }
 

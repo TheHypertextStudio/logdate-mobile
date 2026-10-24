@@ -71,19 +71,28 @@ internal class RestoreDraftDecoder(
         existing: SerializableEntryBlock?,
     ): SerializableEntryBlock =
         when (block) {
-            is app.logdate.shared.model.SerializableHandwritingBlock, is SerializableTextBlock -> block
-            is SerializableImageBlock ->
+            is app.logdate.shared.model.SerializableHandwritingBlock, is SerializableTextBlock -> {
+                block
+            }
+
+            is SerializableImageBlock -> {
                 block.copy(
                     uri = resolve(draftId, block.id, block.uri, fallback = (existing as? SerializableImageBlock)?.uri, kind = "image"),
                 )
-            is SerializableAudioBlock ->
+            }
+
+            is SerializableAudioBlock -> {
                 block.copy(
                     uri = resolve(draftId, block.id, block.uri, fallback = (existing as? SerializableAudioBlock)?.uri, kind = "audio"),
                 )
-            is SerializableCameraBlock ->
+            }
+
+            is SerializableCameraBlock -> {
                 block.copy(
                     uri = resolve(draftId, block.id, block.uri, fallback = (existing as? SerializableCameraBlock)?.uri, kind = "camera"),
                 )
+            }
+
             is SerializableVideoBlock -> {
                 val previous = existing as? SerializableVideoBlock
                 val uri = resolve(draftId, block.id, block.uri, fallback = previous?.uri, kind = "video")

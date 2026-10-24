@@ -293,15 +293,25 @@ class PostRestoreDetector(
             if (initializedFile().exists() && !pending.exists()) return@synchronized PostRestoreType.NONE
             if (!isOnboarded && !pending.exists()) return@synchronized PostRestoreType.NONE
             when (readDelivery()?.first) {
-                CONTENT_PRESENT, "content-complete" -> PostRestoreType.CONTENT_RESTORED
-                CONTENT_MISSING -> PostRestoreType.CONTENT_MISSING
-                RESTORE_IN_PROGRESS -> PostRestoreType.RECOVERY_REQUIRED
-                else ->
+                CONTENT_PRESENT, "content-complete" -> {
+                    PostRestoreType.CONTENT_RESTORED
+                }
+
+                CONTENT_MISSING -> {
+                    PostRestoreType.CONTENT_MISSING
+                }
+
+                RESTORE_IN_PROGRESS -> {
+                    PostRestoreType.RECOVERY_REQUIRED
+                }
+
+                else -> {
                     when {
                         hasDatabase() -> PostRestoreType.CONTENT_RESTORED
                         pending.exists() -> PostRestoreType.RECOVERY_REQUIRED
                         else -> PostRestoreType.CONTENT_MISSING
                     }
+                }
             }
         }
 

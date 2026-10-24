@@ -94,11 +94,14 @@ internal class IosTranscriptionService(
                 recognizer.recognitionTaskWithRequest(request) { result, error ->
                     if (!cont.isActive) return@recognitionTaskWithRequest
                     when {
-                        error != null ->
+                        error != null -> {
                             cont.resumeWithException(Exception(error.localizedDescription))
+                        }
+
                         // isFinal() is an ObjC getter exposed as a function in Kotlin/Native.
-                        result?.isFinal() == true ->
+                        result?.isFinal() == true -> {
                             cont.resume(result.bestTranscription.formattedString)
+                        }
                     }
                 }
             cont.invokeOnCancellation { task.cancel() }

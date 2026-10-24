@@ -124,47 +124,75 @@ class RetainedTranscriptionRecoveryPersistenceTest {
         val transcripts: TranscriptionDao =
             proxy { name, args ->
                 when (name) {
-                    "getTranscriptionByNoteId" -> row
-                    "observeAllTranscriptions" -> MutableStateFlow(row?.let { listOf(it) }.orEmpty())
+                    "getTranscriptionByNoteId" -> {
+                        row
+                    }
+
+                    "observeAllTranscriptions" -> {
+                        MutableStateFlow(row?.let { listOf(it) }.orEmpty())
+                    }
+
                     "deleteSegmentsByNoteId" -> {
                         val size = segments.size
                         segments = emptyList()
                         size
                     }
+
                     "deleteTranscriptionByNoteId" -> {
                         val count = if (row == null) 0 else 1
                         row = null
                         count
                     }
-                    "getTranscriptionById" -> foreign?.takeIf { it.id == args[0] } ?: row?.takeIf { it.id == args[0] }
-                    "getSegmentsByNoteId" -> segments
+
+                    "getTranscriptionById" -> {
+                        foreign?.takeIf { it.id == args[0] } ?: row?.takeIf { it.id == args[0] }
+                    }
+
+                    "getSegmentsByNoteId" -> {
+                        segments
+                    }
+
                     "insertTranscription" -> {
                         row = args[0] as TranscriptionEntity
                         1L
                     }
+
                     "updateTranscription" -> {
                         row = args[0] as TranscriptionEntity
                         1
                     }
+
                     "replaceSegmentsForNote" -> {
                         if (fault) throw IllegalStateException("Interrupted segment write")
                         @Suppress("UNCHECKED_CAST")
                         segments = args[1] as List<TranscriptionSegmentEntity>
                         Unit
                     }
-                    else -> error("Unexpected transcript DAO call: $name")
+
+                    else -> {
+                        error("Unexpected transcript DAO call: $name")
+                    }
                 }
             }
         val audioDao: AudioNoteDao =
             proxy { name, args ->
                 when (name) {
-                    "findNoteOneOff", "getNoteOneOff" -> audio
+                    "findNoteOneOff", "getNoteOneOff" -> {
+                        audio
+                    }
+
                     "updateForRestore" -> {
                         audio = args[0] as AudioNoteEntity
                         1
                     }
-                    "getAllNotes" -> MutableStateFlow(audio?.let { listOf(it) }.orEmpty())
-                    else -> error("Unexpected audio call $name")
+
+                    "getAllNotes" -> {
+                        MutableStateFlow(audio?.let { listOf(it) }.orEmpty())
+                    }
+
+                    else -> {
+                        error("Unexpected audio call $name")
+                    }
                 }
             }
         var enqueued = 0
@@ -175,8 +203,14 @@ class RetainedTranscriptionRecoveryPersistenceTest {
                         enqueued++
                         true
                     }
-                    "cancelTranscription" -> true
-                    else -> error(name)
+
+                    "cancelTranscription" -> {
+                        true
+                    }
+
+                    else -> {
+                        error(name)
+                    }
                 }
             }
         val deletions =

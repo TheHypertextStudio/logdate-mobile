@@ -74,7 +74,7 @@ dependencyResolutionManagement {
         if (gprUser != null && gprToken != null) {
             maven {
                 name = "atproto-github-packages"
-                url = uri("https://maven.pkg.github.com/WillieCubed/logdate-mobile")
+                url = uri("https://maven.pkg.github.com/TheHypertextStudio/logdate-mobile")
                 credentials {
                     username = gprUser
                     password = gprToken

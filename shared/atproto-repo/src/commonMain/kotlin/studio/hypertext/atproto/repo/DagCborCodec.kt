@@ -76,15 +76,25 @@ public object DagCborCodec {
 
     private fun encodeJsonElement(element: JsonElement): ByteArray =
         when (element) {
-            is JsonObject ->
+            is JsonObject -> {
                 when {
                     linkOrNull(element) != null -> encodeLink(requireNotNull(linkOrNull(element)))
                     bytesOrNull(element) != null -> encodeByteString(requireNotNull(bytesOrNull(element)))
                     else -> encodeMap(element)
                 }
-            is JsonArray -> encodeArray(element)
-            JsonNull -> byteArrayOf(NULL_SIMPLE_VALUE)
-            is JsonPrimitive -> encodePrimitive(element)
+            }
+
+            is JsonArray -> {
+                encodeArray(element)
+            }
+
+            JsonNull -> {
+                byteArrayOf(NULL_SIMPLE_VALUE)
+            }
+
+            is JsonPrimitive -> {
+                encodePrimitive(element)
+            }
         }
 
     private fun encodeMap(map: JsonObject): ByteArray {
@@ -173,10 +183,22 @@ public object DagCborCodec {
             val majorType = header shr MAJOR_TYPE_SHIFT
             val info = header and INFO_MASK
             return when (majorType) {
-                MAJOR_TYPE_UNSIGNED_INT -> JsonPrimitive(readLength(info))
-                MAJOR_TYPE_NEGATIVE_INT -> JsonPrimitive(-(readLength(info) + 1))
-                MAJOR_TYPE_BYTE_STRING -> bytes(readBytes(readLength(info).toInt()))
-                MAJOR_TYPE_TEXT -> JsonPrimitive(readText(readLength(info).toInt()))
+                MAJOR_TYPE_UNSIGNED_INT -> {
+                    JsonPrimitive(readLength(info))
+                }
+
+                MAJOR_TYPE_NEGATIVE_INT -> {
+                    JsonPrimitive(-(readLength(info) + 1))
+                }
+
+                MAJOR_TYPE_BYTE_STRING -> {
+                    bytes(readBytes(readLength(info).toInt()))
+                }
+
+                MAJOR_TYPE_TEXT -> {
+                    JsonPrimitive(readText(readLength(info).toInt()))
+                }
+
                 MAJOR_TYPE_ARRAY -> {
                     val size = readLength(info).toInt()
                     JsonArray(List(size) { decodeElement() })
@@ -195,30 +217,39 @@ public object DagCborCodec {
                 }
 
                 MAJOR_TYPE_TAG -> {
-                    val tag = readLength(info)
-                    when (tag) {
-                        CID_LINK_TAG -> {
-                            val tagged = decodeElement()
-                            val encodedCid = bytesOrNull(tagged) ?: error("CID link tag must wrap a byte string")
-                            require(encodedCid.isNotEmpty() && encodedCid.first() == CID_LINK_LEAD_BYTE) {
-                                "CID link payload must begin with 0x00"
-                            }
-                            link(Cid.fromBytes(encodedCid.copyOfRange(1, encodedCid.size)))
-                        }
-
-                        else -> error("Unsupported DAG-CBOR tag $tag")
-                    }
+                    decodeTag(info)
                 }
 
-                MAJOR_TYPE_SIMPLE ->
+                MAJOR_TYPE_SIMPLE -> {
                     when (header.toByte()) {
                         FALSE_SIMPLE_VALUE -> JsonPrimitive(false)
                         TRUE_SIMPLE_VALUE -> JsonPrimitive(true)
                         NULL_SIMPLE_VALUE -> JsonNull
                         else -> error("Unsupported simple value 0x${header.toString(16)}")
                     }
+                }
 
-                else -> error("Unsupported DAG-CBOR major type $majorType")
+                else -> {
+                    error("Unsupported DAG-CBOR major type $majorType")
+                }
+            }
+        }
+
+        private fun decodeTag(info: Int): JsonElement {
+            val tag = readLength(info)
+            return when (tag) {
+                CID_LINK_TAG -> {
+                    val tagged = decodeElement()
+                    val encodedCid = bytesOrNull(tagged) ?: error("CID link tag must wrap a byte string")
+                    require(encodedCid.isNotEmpty() && encodedCid.first() == CID_LINK_LEAD_BYTE) {
+                        "CID link payload must begin with 0x00"
+                    }
+                    link(Cid.fromBytes(encodedCid.copyOfRange(1, encodedCid.size)))
+                }
+
+                else -> {
+                    error("Unsupported DAG-CBOR tag $tag")
+                }
             }
         }
 

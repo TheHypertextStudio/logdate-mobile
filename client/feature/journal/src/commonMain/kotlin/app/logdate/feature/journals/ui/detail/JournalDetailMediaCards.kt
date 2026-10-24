@@ -217,9 +217,13 @@ internal fun AudioEntryCard(
     val palette =
         remember(labelResult) {
             when (labelResult) {
-                is app.logdate.feature.editor.audio.AudioLabelResult.Contextual ->
+                is app.logdate.feature.editor.audio.AudioLabelResult.Contextual -> {
                     paletteGenerator.generate(labelResult.period)
-                else -> null
+                }
+
+                else -> {
+                    null
+                }
             }
         }
     val accentColor = palette?.let { Color(it.accentColor) }
@@ -332,7 +336,7 @@ private fun formatAudioDuration(ms: Long): String {
 
 // region Entry card shell
 
-/**
+/*
  * Card wrapper for entry types that display media content filling the width.
  * Renders a timestamp label above the card, media content, and an overflow menu.
  */

@@ -253,6 +253,7 @@ internal fun isMicrophoneInputType(type: Int): Boolean =
         AudioDeviceInfo.TYPE_LINE_ANALOG,
         AudioDeviceInfo.TYPE_LINE_DIGITAL,
         -> true
+
         else -> false
     }
 
@@ -293,18 +294,45 @@ private fun AudioDeviceInfo.labelFor(kind: MediaDeviceKind): UiText {
     val isInput = kind == MediaDeviceKind.AUDIO_INPUT
     val label =
         when (type) {
-            AudioDeviceInfo.TYPE_WIRED_HEADSET ->
+            AudioDeviceInfo.TYPE_WIRED_HEADSET -> {
                 if (isInput) Res.string.media_device_route_headset_microphone else Res.string.media_device_route_wired_headset
-            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> Res.string.media_device_route_wired_headphones
-            AudioDeviceInfo.TYPE_USB_DEVICE -> Res.string.media_device_route_usb_audio_device
-            AudioDeviceInfo.TYPE_USB_HEADSET ->
+            }
+
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> {
+                Res.string.media_device_route_wired_headphones
+            }
+
+            AudioDeviceInfo.TYPE_USB_DEVICE -> {
+                Res.string.media_device_route_usb_audio_device
+            }
+
+            AudioDeviceInfo.TYPE_USB_HEADSET -> {
                 if (isInput) Res.string.media_device_route_usb_microphone else Res.string.media_device_route_usb_headset
-            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> Res.string.media_device_route_bluetooth_headset
-            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> Res.string.media_device_route_bluetooth_audio
-            AudioDeviceInfo.TYPE_BLE_HEADSET -> Res.string.media_device_route_bluetooth_le_headset
-            AudioDeviceInfo.TYPE_BLE_SPEAKER -> Res.string.media_device_route_bluetooth_le_speaker
-            AudioDeviceInfo.TYPE_BLE_BROADCAST -> Res.string.media_device_route_bluetooth_broadcast
-            else -> if (isInput) Res.string.media_device_route_external_microphone else Res.string.media_device_route_audio_output
+            }
+
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> {
+                Res.string.media_device_route_bluetooth_headset
+            }
+
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> {
+                Res.string.media_device_route_bluetooth_audio
+            }
+
+            AudioDeviceInfo.TYPE_BLE_HEADSET -> {
+                Res.string.media_device_route_bluetooth_le_headset
+            }
+
+            AudioDeviceInfo.TYPE_BLE_SPEAKER -> {
+                Res.string.media_device_route_bluetooth_le_speaker
+            }
+
+            AudioDeviceInfo.TYPE_BLE_BROADCAST -> {
+                Res.string.media_device_route_bluetooth_broadcast
+            }
+
+            else -> {
+                if (isInput) Res.string.media_device_route_external_microphone else Res.string.media_device_route_audio_output
+            }
         }
     return label.toUiText()
 }
@@ -314,20 +342,24 @@ private fun categoryForType(type: Int): MediaDeviceCategory =
         AudioDeviceInfo.TYPE_BUILTIN_MIC,
         AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
         -> MediaDeviceCategory.BUILT_IN
+
         AudioDeviceInfo.TYPE_USB_DEVICE,
         AudioDeviceInfo.TYPE_USB_HEADSET,
         -> MediaDeviceCategory.USB
+
         AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
         AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
         AudioDeviceInfo.TYPE_BLE_HEADSET,
         AudioDeviceInfo.TYPE_BLE_SPEAKER,
         AudioDeviceInfo.TYPE_BLE_BROADCAST,
         -> MediaDeviceCategory.BLUETOOTH
+
         AudioDeviceInfo.TYPE_WIRED_HEADSET,
         AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
         AudioDeviceInfo.TYPE_LINE_ANALOG,
         AudioDeviceInfo.TYPE_LINE_DIGITAL,
         -> MediaDeviceCategory.WIRED
+
         else -> MediaDeviceCategory.EXTERNAL
     }
 
@@ -336,5 +368,6 @@ private fun isExternalType(type: Int): Boolean =
         AudioDeviceInfo.TYPE_BUILTIN_MIC,
         AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
         -> false
+
         else -> true
     }

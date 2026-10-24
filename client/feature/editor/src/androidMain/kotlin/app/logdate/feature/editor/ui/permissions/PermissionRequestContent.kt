@@ -79,10 +79,13 @@ fun PermissionRequestContent(
                     if (isPermanentlyDenied) {
                         when (permission) {
                             Manifest.permission.CAMERA -> stringResource(Res.string.permission_permanently_denied_camera)
+
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             "android.permission.READ_MEDIA_IMAGES",
                             -> stringResource(Res.string.permission_permanently_denied_gallery)
+
                             Manifest.permission.RECORD_AUDIO -> stringResource(Res.string.permission_permanently_denied_microphone)
+
                             else -> stringResource(Res.string.permission_permanently_denied_gallery)
                         }
                     } else {

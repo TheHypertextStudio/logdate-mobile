@@ -22,15 +22,15 @@ these onto the runner before the build. The operator-side CLI
 `scripts/sync-firebase-configs.sh` handles upload — drop the file on disk,
 run one command.
 
-| Secret | Source file | Rotation |
-|---|---|---|
-| `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_DEBUG_BASE64` | `app/android-main/google-services.json` (debug Firebase project) | When Firebase debug project config changes. |
-| `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_RELEASE_BASE64` | `app/android-main/src/release/google-services.json` (release Firebase project) | When Firebase release project config changes. |
-| `LOGDATE_IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` | `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` (single iOS Firebase project) | When Firebase iOS project config changes. |
-| `LOGDATE_GOOGLE_MAPS_API_KEY_DEBUG` | Dedicated debug-project Android key restricted to `studio.hypertext.logdate.debug`, its matching debug signing certificate, Places API, and Maps SDK for Android. | When the debug signing key or API restriction changes. |
-| `LOGDATE_CI_DEBUG_KEYSTORE_BASE64` | Dedicated CI-only debug keystore, alias `androiddebugkey`, with the standard Android debug password. Used only by native-map acceptance. | Rotate together with the CI Maps key restriction and `LOGDATE_CI_DEBUG_CERT_SHA1` repository variable. |
-| `LOGDATE_CI_GOOGLE_MAPS_API_KEY` | `logdate-dev` Maps SDK for Android key restricted to `studio.hypertext.logdate.debug` and the exact dedicated CI debug certificate. | When the CI signing identity changes. |
-| `LOGDATE_GOOGLE_MAPS_API_KEY_RELEASE` | Dedicated release-project Android key restricted to `studio.hypertext.logdate` and the applicable release signing certificates, Places API, and Maps SDK for Android. | When the upload or Play signing key changes. |
+| Secret                                                | Source file                                                                                                                                                           | Rotation                                                                                               |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_DEBUG_BASE64`   | `app/android-main/google-services.json` (debug Firebase project)                                                                                                      | When Firebase debug project config changes.                                                            |
+| `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_RELEASE_BASE64` | `app/android-main/src/release/google-services.json` (release Firebase project)                                                                                        | When Firebase release project config changes.                                                          |
+| `LOGDATE_IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64`        | `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` (single iOS Firebase project)                                                                               | When Firebase iOS project config changes.                                                              |
+| `LOGDATE_GOOGLE_MAPS_API_KEY_DEBUG`                   | Dedicated debug-project Android key restricted to `studio.hypertext.logdate.debug`, its matching debug signing certificate, Places API, and Maps SDK for Android.     | When the debug signing key or API restriction changes.                                                 |
+| `LOGDATE_CI_DEBUG_KEYSTORE_BASE64`                    | Dedicated CI-only debug keystore, alias `androiddebugkey`, with the standard Android debug password. Used only by native-map acceptance.                              | Rotate together with the CI Maps key restriction and `LOGDATE_CI_DEBUG_CERT_SHA1` repository variable. |
+| `LOGDATE_CI_GOOGLE_MAPS_API_KEY`                      | `logdate-dev` Maps SDK for Android key restricted to `studio.hypertext.logdate.debug` and the exact dedicated CI debug certificate.                                   | When the CI signing identity changes.                                                                  |
+| `LOGDATE_GOOGLE_MAPS_API_KEY_RELEASE`                 | Dedicated release-project Android key restricted to `studio.hypertext.logdate` and the applicable release signing certificates, Places API, and Maps SDK for Android. | When the upload or Play signing key changes.                                                           |
 
 The iOS plist must come from the production Firebase registration for
 `studio.hypertext.apps.logdate`. Set the repository variable
@@ -44,10 +44,10 @@ continuity requirements](../reference/ios-build-setup.md#provider-registration-a
 The build workflows pass the web/server OAuth client ID separately from
 `google-services.json`. These are GitHub repository variables, not secrets:
 
-| Variable | Environment | Authoritative source |
-|---|---|---|
-| `LOGDATE_GOOGLE_SERVER_CLIENT_ID_DEBUG` | Debug | Web/server OAuth client in the debug Google Auth Platform project |
-| `LOGDATE_GOOGLE_SERVER_CLIENT_ID_RELEASE` | Release | Web/server OAuth client in the release Google Auth Platform project |
+| Variable                                  | Environment | Authoritative source                                                |
+| ----------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| `LOGDATE_GOOGLE_SERVER_CLIENT_ID_DEBUG`   | Debug       | Web/server OAuth client in the debug Google Auth Platform project   |
+| `LOGDATE_GOOGLE_SERVER_CLIENT_ID_RELEASE` | Release     | Web/server OAuth client in the release Google Auth Platform project |
 
 The release project must also contain an Android OAuth client restricted to package
 `studio.hypertext.logdate` and the upload-signing certificate. Read the client and certificate
@@ -85,12 +85,12 @@ against the repo.
 
 ## GitHub Secrets — Android publish (`production` environment)
 
-| Secret | What it is | Rotation |
-|---|---|---|
-| `LOGDATE_RELEASE_STORE_BASE64` | Base64 of the Android release keystore (`logdate-release.jks`). | Never (a new keystore = a new app on Play). |
-| `LOGDATE_RELEASE_STORE_PASSWORD` | Password for the keystore. | When rotated alongside the keystore. |
-| `LOGDATE_RELEASE_KEY_ALIAS` | Key alias inside the keystore. | When rotated alongside the keystore. |
-| `LOGDATE_RELEASE_KEY_PASSWORD` | Password for the signing key. | When rotated alongside the keystore. |
+| Secret                           | What it is                                                      | Rotation                                    |
+| -------------------------------- | --------------------------------------------------------------- | ------------------------------------------- |
+| `LOGDATE_RELEASE_STORE_BASE64`   | Base64 of the Android release keystore (`logdate-release.jks`). | Never (a new keystore = a new app on Play). |
+| `LOGDATE_RELEASE_STORE_PASSWORD` | Password for the keystore.                                      | When rotated alongside the keystore.        |
+| `LOGDATE_RELEASE_KEY_ALIAS`      | Key alias inside the keystore.                                  | When rotated alongside the keystore.        |
+| `LOGDATE_RELEASE_KEY_PASSWORD`   | Password for the signing key.                                   | When rotated alongside the keystore.        |
 
 These live in the `production` GitHub environment, not at repository scope,
 so only `main` and release tags can read them. `./run setup production`
@@ -115,7 +115,7 @@ required for normal `debug` development.
 
 To enable it on a machine, set these four environment variables (or the
 equivalent `logdate.release.*` Gradle properties — see `resolveRelease()`
-near the top of `app/android-main/build.gradle.kts`) to the *same* upload
+near the top of `app/android-main/build.gradle.kts`) to the _same_ upload
 keystore used for real releases, stored however you already keep local
 secrets on that machine:
 
@@ -156,7 +156,7 @@ Store Connect, used both by `xcrun altool --upload-app` and by
    `APP_STORE_CONNECT_API_ISSUER_ID`.
 8. Click **Download API Key** — Apple gives you the `.p8` file
    **exactly once**. Save the file content (the entire `-----BEGIN
-   PRIVATE KEY-----` block) as `APP_STORE_CONNECT_API_KEY_P8`.
+PRIVATE KEY-----` block) as `APP_STORE_CONNECT_API_KEY_P8`.
 
 If you lose the `.p8`, you have to revoke the key in App Store Connect
 and start over. Keep an out-of-band backup in your password manager.
@@ -204,7 +204,7 @@ before expiry to avoid surprises.
    capabilities: HealthKit, Associated Domains, Push Notifications).
 3. Pick the distribution certificate you exported above.
 4. Name the profile something stable, e.g. `LogDate App Store
-   Distribution`.
+Distribution`.
 5. **Generate**, then **Download**. Save the `.mobileprovision` file.
 6. Convert to base64:
 
@@ -247,12 +247,12 @@ Apple's review queue with no human gate.
 
 ## Rotation calendar
 
-| Item | Cadence | Last rotated |
-|---|---|---|
-| Apple Distribution cert | every 3 years | _record date here_ |
-| App Store provisioning profile | every 1 year | _record date here_ |
-| App Store Connect API key | when team membership changes | _record date here_ |
-| Android keystore | never (one keystore for the app's lifetime on Play) | n/a |
+| Item                           | Cadence                                             | Last rotated       |
+| ------------------------------ | --------------------------------------------------- | ------------------ |
+| Apple Distribution cert        | every 3 years                                       | _record date here_ |
+| App Store provisioning profile | every 1 year                                        | _record date here_ |
+| App Store Connect API key      | when team membership changes                        | _record date here_ |
+| Android keystore               | never (one keystore for the app's lifetime on Play) | n/a                |
 
 Add a recurring calendar reminder 30 days ahead of each rotation
 window. Apple's expiry notices land in the dev-portal email; they're
@@ -264,7 +264,7 @@ easy to miss in a shared inbox.
 
 Run through this once before the first production tag:
 
-1. `gh secret list --repo WillieCubed/logdate-mobile` — confirm all
+1. `gh secret list --repo TheHypertextStudio/logdate-mobile` — confirm all
    six iOS secrets are present.
 2. `./run setup production --check` reports every step ok, and
    **Settings → Environments** lists `ios-production` with at least one

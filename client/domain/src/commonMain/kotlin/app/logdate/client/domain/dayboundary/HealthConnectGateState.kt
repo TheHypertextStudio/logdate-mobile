@@ -29,22 +29,30 @@ fun reduceHealthConnectGateState(
     previousResolvedGateState: HealthConnectGateState? = null,
 ): HealthConnectGateState =
     when (healthConnectStatus) {
-        HealthConnectStatus.CONNECTED -> HealthConnectGateState(HealthConnectGateKind.READY)
+        HealthConnectStatus.CONNECTED -> {
+            HealthConnectGateState(HealthConnectGateKind.READY)
+        }
+
         HealthConnectStatus.PERMISSIONS_NEEDED -> {
             when {
-                hasPermission -> HealthConnectGateState(HealthConnectGateKind.READY)
+                hasPermission -> {
+                    HealthConnectGateState(HealthConnectGateKind.READY)
+                }
+
                 sleepBasedPreferenceEnabled -> {
                     HealthConnectGateState(
                         kind = HealthConnectGateKind.RECOVERY_REQUIRED,
                         missingRequirement = HealthConnectMissingRequirement.PERMISSION,
                     )
                 }
+
                 permissionRequested -> {
                     HealthConnectGateState(
                         kind = HealthConnectGateKind.PERMISSION_DENIED,
                         missingRequirement = HealthConnectMissingRequirement.PERMISSION,
                     )
                 }
+
                 else -> {
                     HealthConnectGateState(
                         kind = HealthConnectGateKind.NEEDS_PERMISSION,
@@ -53,6 +61,7 @@ fun reduceHealthConnectGateState(
                 }
             }
         }
+
         HealthConnectStatus.PROVIDER_UPDATE_REQUIRED -> {
             if (sleepBasedPreferenceEnabled) {
                 HealthConnectGateState(
@@ -66,6 +75,7 @@ fun reduceHealthConnectGateState(
                 )
             }
         }
+
         HealthConnectStatus.NOT_AVAILABLE -> {
             if (sleepBasedPreferenceEnabled) {
                 HealthConnectGateState(
@@ -79,5 +89,8 @@ fun reduceHealthConnectGateState(
                 )
             }
         }
-        HealthConnectStatus.CHECKING -> previousResolvedGateState ?: HealthConnectGateState(HealthConnectGateKind.CHECKING)
+
+        HealthConnectStatus.CHECKING -> {
+            previousResolvedGateState ?: HealthConnectGateState(HealthConnectGateKind.CHECKING)
+        }
     }

@@ -64,7 +64,11 @@ class SyncDiagnosticRecorder(
                                     runCatching { Napier.i(tag = TAG, message = Json.encodeToString(command.value)) }
                                     history.append(command.value, verbose = verboseMode?.isEnabled() == true)
                                 }
-                                is Command.Report -> command.result.complete(history.report())
+
+                                is Command.Report -> {
+                                    command.result.complete(history.report())
+                                }
+
                                 is Command.Clear -> {
                                     history.clear()
                                     command.result.complete(Unit)
@@ -128,20 +132,33 @@ class SyncDiagnosticRecorder(
                         observed.copy(
                             network =
                                 when {
-                                    event.reason == app.logdate.shared.model.diagnostics.DiagnosticReason.OFFLINE ->
+                                    event.reason == app.logdate.shared.model.diagnostics.DiagnosticReason.OFFLINE -> {
                                         app.logdate.shared.model.diagnostics.DiagnosticNetworkState.OFFLINE
-                                    event.httpStatus != null -> app.logdate.shared.model.diagnostics.DiagnosticNetworkState.ONLINE
-                                    else -> observed.network
+                                    }
+
+                                    event.httpStatus != null -> {
+                                        app.logdate.shared.model.diagnostics.DiagnosticNetworkState.ONLINE
+                                    }
+
+                                    else -> {
+                                        observed.network
+                                    }
                                 },
                             scheduler =
                                 when (event.outcome) {
-                                    app.logdate.shared.model.diagnostics.DiagnosticOutcome.STARTED ->
+                                    app.logdate.shared.model.diagnostics.DiagnosticOutcome.STARTED -> {
                                         app.logdate.shared.model.diagnostics.DiagnosticSchedulerState.RUNNING
+                                    }
+
                                     app.logdate.shared.model.diagnostics.DiagnosticOutcome.QUEUED,
                                     app.logdate.shared.model.diagnostics.DiagnosticOutcome.RETRY_SCHEDULED,
-                                    ->
+                                    -> {
                                         app.logdate.shared.model.diagnostics.DiagnosticSchedulerState.WAITING
-                                    else -> observed.scheduler
+                                    }
+
+                                    else -> {
+                                        observed.scheduler
+                                    }
                                 },
                         )
                     },

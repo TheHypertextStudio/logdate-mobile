@@ -55,9 +55,15 @@ fun WearRemoteCameraScreen(
     }
 
     when (uiState.phase) {
-        RemoteCameraPhase.IDLE -> IdleContent(onRequest = viewModel::requestCamera)
-        RemoteCameraPhase.REQUESTING -> RequestingContent()
-        RemoteCameraPhase.READY ->
+        RemoteCameraPhase.IDLE -> {
+            IdleContent(onRequest = viewModel::requestCamera)
+        }
+
+        RemoteCameraPhase.REQUESTING -> {
+            RequestingContent()
+        }
+
+        RemoteCameraPhase.READY -> {
             ReadyContent(
                 selectedCameraLabel = uiState.selectedCameraLabel.asString(),
                 selectedCameraDeviceId = uiState.selectedCameraDeviceId,
@@ -69,18 +75,26 @@ fun WearRemoteCameraScreen(
                 onSwitchCamera = viewModel::switchCamera,
                 onCancel = viewModel::dismiss,
             )
-        RemoteCameraPhase.CAPTURING -> CapturingContent()
-        RemoteCameraPhase.PREVIEW ->
+        }
+
+        RemoteCameraPhase.CAPTURING -> {
+            CapturingContent()
+        }
+
+        RemoteCameraPhase.PREVIEW -> {
             PreviewContent(
                 message = uiState.captureStatusMessage?.asString(),
                 onSave = viewModel::dismiss,
                 onMore = viewModel::captureMore,
             )
-        RemoteCameraPhase.ERROR ->
+        }
+
+        RemoteCameraPhase.ERROR -> {
             ErrorContent(
                 message = uiState.errorMessage?.asString(),
                 onDismiss = viewModel::dismiss,
             )
+        }
     }
 }
 
@@ -249,10 +263,13 @@ private val MediaDeviceUiState.icon: ImageVector
     get() =
         when (category) {
             MediaDeviceCategory.FRONT_CAMERA -> Icons.Default.CameraFront
+
             MediaDeviceCategory.BACK_CAMERA -> Icons.Default.CameraRear
+
             MediaDeviceCategory.USB,
             MediaDeviceCategory.EXTERNAL,
             -> Icons.Default.Videocam
+
             else -> Icons.Default.CameraAlt
         }
 

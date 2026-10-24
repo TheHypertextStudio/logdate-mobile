@@ -101,15 +101,21 @@ class PhoneMomentReminderNotifier(
                 .setData(Uri.parse("logdate://reminder/$day/${candidate.reminderTrigger()}"))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         when (val payload = candidate.payload) {
-            is AmbientPromptPayload.DraftRescue ->
+            is AmbientPromptPayload.DraftRescue -> {
                 intent
                     .putExtra(EXTRA_AMBIENT_PROMPT_TARGET, AMBIENT_PROMPT_TARGET_DRAFT)
                     .putExtra(EXTRA_AMBIENT_PROMPT_DRAFT_ID, payload.draftId.toString())
-            is AmbientPromptPayload.MemoryRecall ->
+            }
+
+            is AmbientPromptPayload.MemoryRecall -> {
                 intent
                     .putExtra(EXTRA_AMBIENT_PROMPT_TARGET, AMBIENT_PROMPT_TARGET_MEMORY_RECALL)
                     .putExtra(EXTRA_AMBIENT_PROMPT_RECALL_DATE, payload.date.toString())
-            else -> error("Unsupported supplemental reminder")
+            }
+
+            else -> {
+                error("Unsupported supplemental reminder")
+            }
         }
         return PendingIntent.getActivity(
             context,
@@ -121,19 +127,39 @@ class PhoneMomentReminderNotifier(
 
     private fun content(trigger: ReminderTrigger): Pair<Int, Int> =
         when (trigger) {
-            ReminderTrigger.MOVING_ENDED -> R.string.moment_reminder_moving_title to R.string.moment_reminder_moving_body
-            ReminderTrigger.TRIP_ENDED -> R.string.moment_reminder_trip_title to R.string.moment_reminder_trip_body
-            ReminderTrigger.WORKOUT_ENDED -> R.string.moment_reminder_workout_title to R.string.moment_reminder_workout_body
-            ReminderTrigger.ARRIVED_SOMEWHERE_NEW -> R.string.moment_reminder_arrival_title to R.string.moment_reminder_arrival_body
-            ReminderTrigger.CAMPFIRE_EMBERS -> R.string.moment_reminder_campfire_title to R.string.moment_reminder_campfire_body
-            ReminderTrigger.WIND_DOWN ->
+            ReminderTrigger.MOVING_ENDED -> {
+                R.string.moment_reminder_moving_title to R.string.moment_reminder_moving_body
+            }
+
+            ReminderTrigger.TRIP_ENDED -> {
+                R.string.moment_reminder_trip_title to R.string.moment_reminder_trip_body
+            }
+
+            ReminderTrigger.WORKOUT_ENDED -> {
+                R.string.moment_reminder_workout_title to R.string.moment_reminder_workout_body
+            }
+
+            ReminderTrigger.ARRIVED_SOMEWHERE_NEW -> {
+                R.string.moment_reminder_arrival_title to R.string.moment_reminder_arrival_body
+            }
+
+            ReminderTrigger.CAMPFIRE_EMBERS -> {
+                R.string.moment_reminder_campfire_title to R.string.moment_reminder_campfire_body
+            }
+
+            ReminderTrigger.WIND_DOWN -> {
                 R.string.moment_reminder_wind_down_title to R.string.moment_reminder_wind_down_body
-            ReminderTrigger.DRAFT_RESCUE ->
+            }
+
+            ReminderTrigger.DRAFT_RESCUE -> {
                 NotificationResources.string.ambient_prompt_draft_rescue_title to
                     NotificationResources.string.ambient_prompt_draft_rescue_body
-            ReminderTrigger.MEMORY_RECALL ->
+            }
+
+            ReminderTrigger.MEMORY_RECALL -> {
                 NotificationResources.string.ambient_prompt_memory_recall_title to
                     NotificationResources.string.ambient_prompt_memory_recall_body
+            }
         }
 
     companion object {

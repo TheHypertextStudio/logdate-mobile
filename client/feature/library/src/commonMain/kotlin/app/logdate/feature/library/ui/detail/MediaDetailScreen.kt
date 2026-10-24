@@ -256,9 +256,15 @@ fun MediaDetailContent(
                 )
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     when (state) {
-                        MediaDetailUiState.Loading -> CircularProgressIndicator()
-                        is MediaDetailUiState.Error -> Text(stringResource(state.message), Modifier.padding(Spacing.lg))
-                        is MediaDetailUiState.AudioContent ->
+                        MediaDetailUiState.Loading -> {
+                            CircularProgressIndicator()
+                        }
+
+                        is MediaDetailUiState.Error -> {
+                            Text(stringResource(state.message), Modifier.padding(Spacing.lg))
+                        }
+
+                        is MediaDetailUiState.AudioContent -> {
                             AudioMediaDetailContent(
                                 state,
                                 audioProgress,
@@ -267,6 +273,7 @@ fun MediaDetailContent(
                                 { onSeekAudio(state.mediaRef, it, state.durationMs) },
                                 onBack,
                             )
+                        }
                     }
                 }
             }
@@ -875,6 +882,7 @@ private fun CompactMediaDetailViewer(
                                             onPresentItem(next)
                                             true
                                         }
+
                                         Key.DirectionLeft -> {
                                             val prev =
                                                 (presenterState.currentIndex - 1)
@@ -882,11 +890,15 @@ private fun CompactMediaDetailViewer(
                                             onPresentItem(prev)
                                             true
                                         }
+
                                         Key.Escape -> {
                                             onStopPresenting()
                                             true
                                         }
-                                        else -> false
+
+                                        else -> {
+                                            false
+                                        }
                                     }
                                 }
                         } else {

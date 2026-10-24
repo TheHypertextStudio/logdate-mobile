@@ -82,14 +82,16 @@ class ActivityPresenter(
                 endedAt - ended.startedAt >= ended.kind.minimum
         if (!offered || ended == null || endedAt == null) return ActivityUiState(voiceFirst = voiceFirst)
         return when (ended.kind) {
-            ActivityKind.MOVING, ActivityKind.IN_VEHICLE ->
+            ActivityKind.MOVING, ActivityKind.IN_VEHICLE -> {
                 ActivityUiState(
                     voiceFirst = voiceFirst,
                     suggestion =
                         ActivitySuggestion(ended, (endedAt - ended.startedAt).inWholeMinutes.toInt())
                             .takeUnless { history.closed(SuggestionKind.AFTER_ACTIVITY, ended) },
                 )
-            ActivityKind.SLEEP ->
+            }
+
+            ActivityKind.SLEEP -> {
                 ActivityUiState(
                     voiceFirst = voiceFirst,
                     morningStart =
@@ -97,6 +99,7 @@ class ActivityPresenter(
                             history.closed(SuggestionKind.MORNING_START, it)
                         },
                 )
+            }
         }
     }
 

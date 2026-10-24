@@ -32,16 +32,19 @@ internal fun ConfirmEntryExitDialog(
 ) {
     val (title, description) =
         when (dialogType) {
-            ConfirmDialogType.EXIT_EDITOR ->
+            ConfirmDialogType.EXIT_EDITOR -> {
                 Pair(
                     stringResource(Res.string.editor_discard_dialog_title),
                     stringResource(Res.string.editor_discard_dialog_description),
                 )
-            ConfirmDialogType.DELETE_BLOCK ->
+            }
+
+            ConfirmDialogType.DELETE_BLOCK -> {
                 Pair(
                     stringResource(Res.string.editor_delete_block_dialog_title),
                     stringResource(Res.string.editor_delete_block_dialog_description),
                 )
+            }
         }
 
     AlertDialog(

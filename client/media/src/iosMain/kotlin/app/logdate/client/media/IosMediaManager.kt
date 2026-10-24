@@ -268,14 +268,16 @@ class IosMediaManager(
             } ?: Instant.fromEpochMilliseconds(0)
 
         return when {
-            imageExtensions.contains(extension) ->
+            imageExtensions.contains(extension) -> {
                 MediaObject.Image(
                     uri = "file://$path",
                     size = size.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                     name = name,
                     timestamp = timestamp,
                 )
-            videoExtensions.contains(extension) ->
+            }
+
+            videoExtensions.contains(extension) -> {
                 MediaObject.Video(
                     name = name,
                     uri = "file://$path",
@@ -283,7 +285,11 @@ class IosMediaManager(
                     timestamp = timestamp,
                     duration = resolveDuration(path),
                 )
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
     }
 

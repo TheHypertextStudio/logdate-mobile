@@ -333,6 +333,12 @@ def complete_history(repo):
 
 
 def tree_policy(repo, tree):
+    entry = git(repo, "ls-tree", tree, "--", POLICY_PATH)
+    if not re.fullmatch(
+        r"100(?:644|755) blob (?:[a-f0-9]{40}|[a-f0-9]{64})\t" + re.escape(POLICY_PATH),
+        entry,
+    ):
+        raise ValueError("Published branch registry must be a regular file")
     return validate_policy(
         json.loads(
             git(repo, "show", tree + ":" + POLICY_PATH), object_pairs_hook=unique
@@ -662,8 +668,41 @@ def verify_push(repo, remote, updates, policy, remote_url=None):
                 raise ValueError(
                     "Remote history is unavailable locally; fetch the remote before pushing"
                 ) from error
-            base = git(repo, "merge-base", previous, head)
-            authorized_policy(repo, policy, tree_policy(repo, previous))
+            entry = git(repo, "ls-tree", previous, "--", POLICY_PATH)
+            if not entry and remote_ref != "refs/heads/main":
+                digest = hashlib.sha256(
+                    read_text(Path(repo) / POLICY_PATH).encode("utf-8")
+                ).hexdigest()
+                if os.environ.get("HYPERTEXT_APPROVED_COMMIT_POLICY_SHA256") != digest:
+                    raise ValueError(
+                        "Legacy branch registry adoption requires exact owner-approved policy authorization"
+                    )
+                # The old branch predates policy adoption. Anchor its replacement
+                # to published main, never an editable local tracking reference.
+                if not queried:
+                    url = remote_url or git(repo, "remote", "get-url", "--push", remote)
+                    advertised = git(
+                        repo, "ls-remote", "--", url, "refs/heads/main"
+                    ).splitlines()
+                    if len(advertised) != 1 or not re.fullmatch(
+                        r"(?:[a-f0-9]{40}|[a-f0-9]{64})\trefs/heads/main", advertised[0]
+                    ):
+                        raise ValueError(
+                            "Legacy branch adoption requires one published main"
+                        )
+                    published = commit(advertised[0].split()[0])
+                    queried = True
+                if published is None:
+                    raise ValueError(
+                        "Legacy branch adoption requires one published main"
+                    )
+                previous = published
+                authorized_policy(repo, policy, tree_policy(repo, previous))
+                git(repo, "merge-base", "--is-ancestor", previous, head)
+                base = previous
+            else:
+                base = git(repo, "merge-base", previous, head)
+                authorized_policy(repo, policy, tree_policy(repo, previous))
             if remote_ref == "refs/heads/main" and base != previous:
                 raise ValueError("Rewriting main history is prohibited")
         else:

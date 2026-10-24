@@ -8,51 +8,6 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
 
-enum class MarkdownStyleKind {
-    HEADING_1,
-    HEADING_2,
-    HEADING_3,
-    HEADING_4,
-    HEADING_5,
-    HEADING_6,
-    STRONG,
-    EMPHASIS,
-    STRIKETHROUGH,
-    INLINE_CODE,
-    CODE_BLOCK,
-    LINK,
-    BLOCK_QUOTE,
-    LIST_MARKER,
-}
-
-enum class MarkdownBlockKind {
-    HEADING,
-    PARAGRAPH,
-    ORDERED_LIST,
-    UNORDERED_LIST,
-    BLOCK_QUOTE,
-    CODE_BLOCK,
-    DIVIDER,
-    TABLE,
-    HTML,
-}
-
-/** Half-open UTF-16 ranges in the exact source and in the readable text. */
-data class MarkdownSemanticSpan(
-    val kind: MarkdownStyleKind,
-    val sourceStart: Int,
-    val sourceEnd: Int,
-    val textStart: Int,
-    val textEnd: Int,
-    val destination: String? = null,
-)
-
-data class MarkdownBlock(
-    val kind: MarkdownBlockKind,
-    val sourceStart: Int,
-    val sourceEnd: Int,
-)
-
 class MarkdownDocument internal constructor(
     val source: String,
     val plainText: String,
@@ -101,27 +56,72 @@ private class MarkdownDocumentBuilder(
     private fun render(node: ASTNode) {
         val start = text.length
         when (node.type) {
-            MarkdownElementTypes.ATX_1, MarkdownElementTypes.SETEXT_1 -> heading(node, MarkdownStyleKind.HEADING_1)
-            MarkdownElementTypes.ATX_2, MarkdownElementTypes.SETEXT_2 -> heading(node, MarkdownStyleKind.HEADING_2)
-            MarkdownElementTypes.ATX_3 -> heading(node, MarkdownStyleKind.HEADING_3)
-            MarkdownElementTypes.ATX_4 -> heading(node, MarkdownStyleKind.HEADING_4)
-            MarkdownElementTypes.ATX_5 -> heading(node, MarkdownStyleKind.HEADING_5)
-            MarkdownElementTypes.ATX_6 -> heading(node, MarkdownStyleKind.HEADING_6)
-            MarkdownElementTypes.STRONG -> delimited(node, MarkdownStyleKind.STRONG, 2)
-            MarkdownElementTypes.EMPH -> if (node.children.isEmpty()) appendRaw(node) else delimited(node, MarkdownStyleKind.EMPHASIS, 1)
-            GFMElementTypes.STRIKETHROUGH -> delimited(node, MarkdownStyleKind.STRIKETHROUGH, 2)
-            MarkdownElementTypes.CODE_SPAN -> inlineCode(node)
-            MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK -> codeBlock(node)
+            MarkdownElementTypes.ATX_1, MarkdownElementTypes.SETEXT_1 -> {
+                heading(node, MarkdownStyleKind.HEADING_1)
+            }
+
+            MarkdownElementTypes.ATX_2, MarkdownElementTypes.SETEXT_2 -> {
+                heading(node, MarkdownStyleKind.HEADING_2)
+            }
+
+            MarkdownElementTypes.ATX_3 -> {
+                heading(node, MarkdownStyleKind.HEADING_3)
+            }
+
+            MarkdownElementTypes.ATX_4 -> {
+                heading(node, MarkdownStyleKind.HEADING_4)
+            }
+
+            MarkdownElementTypes.ATX_5 -> {
+                heading(node, MarkdownStyleKind.HEADING_5)
+            }
+
+            MarkdownElementTypes.ATX_6 -> {
+                heading(node, MarkdownStyleKind.HEADING_6)
+            }
+
+            else -> {
+                renderInlineOrBlock(node)
+            }
+        }
+        projections[node] = start..<text.length
+    }
+
+    private fun renderInlineOrBlock(node: ASTNode) {
+        when (node.type) {
+            MarkdownElementTypes.STRONG -> {
+                delimited(node, MarkdownStyleKind.STRONG, 2)
+            }
+
+            MarkdownElementTypes.EMPH -> {
+                if (node.children.isEmpty()) appendRaw(node) else delimited(node, MarkdownStyleKind.EMPHASIS, 1)
+            }
+
+            GFMElementTypes.STRIKETHROUGH -> {
+                delimited(node, MarkdownStyleKind.STRIKETHROUGH, 2)
+            }
+
+            MarkdownElementTypes.CODE_SPAN -> {
+                inlineCode(node)
+            }
+
+            MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK -> {
+                codeBlock(node)
+            }
+
             MarkdownElementTypes.BLOCK_QUOTE -> {
                 if (node.children.isNotEmpty()) {
                     val first = node.children.firstOrNull { it.type == MarkdownElementTypes.PARAGRAPH || it.children.isNotEmpty() }
                     if (first != null) styled(MarkdownStyleKind.BLOCK_QUOTE, first.startOffset, node.endOffset) { children(node) }
                 }
             }
-            MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK ->
+
+            MarkdownElementTypes.INLINE_LINK, MarkdownElementTypes.FULL_REFERENCE_LINK, MarkdownElementTypes.SHORT_REFERENCE_LINK -> {
                 link(
                     node,
                 )
+            }
+
             MarkdownElementTypes.AUTOLINK -> {
                 val content = node.children.filterNot { it.type == MarkdownTokenTypes.LT || it.type == MarkdownTokenTypes.GT }
                 if (content.isNotEmpty()) {
@@ -130,19 +130,60 @@ private class MarkdownDocumentBuilder(
                     }
                 }
             }
-            MarkdownElementTypes.IMAGE -> label(node)
-            MarkdownElementTypes.LINK_DEFINITION -> Unit
-            MarkdownElementTypes.LIST_ITEM -> listItem(node)
-            MarkdownElementTypes.ORDERED_LIST -> orderedList(node)
-            GFMElementTypes.TABLE -> table(node)
-            MarkdownElementTypes.HTML_BLOCK -> text.append(source.substring(node.startOffset, node.endOffset))
-            MarkdownTokenTypes.HORIZONTAL_RULE -> text.append('—')
-            MarkdownTokenTypes.HARD_LINE_BREAK -> Unit // The following EOL owns the newline.
-            MarkdownTokenTypes.BLOCK_QUOTE -> Unit
-            GFMTokenTypes.GFM_AUTOLINK -> styled(MarkdownStyleKind.LINK, node.startOffset, node.endOffset, raw(node)) { appendRaw(node) }
-            else -> if (node.children.isEmpty()) appendRaw(node) else children(node)
+
+            MarkdownElementTypes.IMAGE -> {
+                label(node)
+            }
+
+            else -> {
+                renderStructure(node)
+            }
         }
-        projections[node] = start..<text.length
+    }
+
+    private fun renderStructure(node: ASTNode) {
+        when (node.type) {
+            MarkdownElementTypes.LINK_DEFINITION -> {
+                Unit
+            }
+
+            MarkdownElementTypes.LIST_ITEM -> {
+                listItem(node)
+            }
+
+            MarkdownElementTypes.ORDERED_LIST -> {
+                orderedList(node)
+            }
+
+            GFMElementTypes.TABLE -> {
+                table(node)
+            }
+
+            MarkdownElementTypes.HTML_BLOCK -> {
+                text.append(source.substring(node.startOffset, node.endOffset))
+            }
+
+            MarkdownTokenTypes.HORIZONTAL_RULE -> {
+                text.append('—')
+            }
+
+            MarkdownTokenTypes.HARD_LINE_BREAK -> {
+                Unit
+            }
+
+            // The following EOL owns the newline.
+            MarkdownTokenTypes.BLOCK_QUOTE -> {
+                Unit
+            }
+
+            GFMTokenTypes.GFM_AUTOLINK -> {
+                styled(MarkdownStyleKind.LINK, node.startOffset, node.endOffset, raw(node)) { appendRaw(node) }
+            }
+
+            else -> {
+                if (node.children.isEmpty()) appendRaw(node) else children(node)
+            }
+        }
     }
 
     private fun children(node: ASTNode) {
@@ -218,8 +259,14 @@ private class MarkdownDocumentBuilder(
                         val line = raw(child)
                         text.append(if (line.startsWith('\t')) line.drop(1) else line.removePrefix("    "))
                     }
-                    MarkdownTokenTypes.EOL -> text.append('\n')
-                    else -> Unit
+
+                    MarkdownTokenTypes.EOL -> {
+                        text.append('\n')
+                    }
+
+                    else -> {
+                        Unit
+                    }
                 }
             }
         }
@@ -315,11 +362,16 @@ private class MarkdownDocumentBuilder(
                         }
                     }
                 }
-                GFMTokenTypes.CHECK_BOX ->
+
+                GFMTokenTypes.CHECK_BOX -> {
                     styled(MarkdownStyleKind.LIST_MARKER, child.startOffset, child.startOffset + 3) {
                         text.append(if (raw(child).getOrNull(1)?.lowercaseChar() == 'x') "☑ " else "☐ ")
                     }
-                else -> render(child)
+                }
+
+                else -> {
+                    render(child)
+                }
             }
         }
     }
@@ -394,14 +446,23 @@ private class MarkdownDocumentBuilder(
             MarkdownElementTypes.ATX_4, MarkdownElementTypes.ATX_5, MarkdownElementTypes.ATX_6,
             MarkdownElementTypes.SETEXT_1, MarkdownElementTypes.SETEXT_2,
             -> MarkdownBlockKind.HEADING
+
             MarkdownElementTypes.PARAGRAPH -> MarkdownBlockKind.PARAGRAPH
+
             MarkdownElementTypes.ORDERED_LIST -> MarkdownBlockKind.ORDERED_LIST
+
             MarkdownElementTypes.UNORDERED_LIST -> MarkdownBlockKind.UNORDERED_LIST
+
             MarkdownElementTypes.BLOCK_QUOTE -> MarkdownBlockKind.BLOCK_QUOTE
+
             MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK -> MarkdownBlockKind.CODE_BLOCK
+
             MarkdownTokenTypes.HORIZONTAL_RULE -> MarkdownBlockKind.DIVIDER
+
             GFMElementTypes.TABLE -> MarkdownBlockKind.TABLE
+
             MarkdownElementTypes.HTML_BLOCK -> MarkdownBlockKind.HTML
+
             else -> null
         }
 

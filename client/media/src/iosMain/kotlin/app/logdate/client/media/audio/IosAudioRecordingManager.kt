@@ -76,11 +76,13 @@ class IosAudioRecordingManager(
                     pauseRecording()
                 }
             }
+
             is AudioSessionEvent.InterruptionEnded -> {
                 if (event.shouldResume && recordingActive && recordingPaused) {
                     resumeRecording()
                 }
             }
+
             AudioSessionEvent.OutputRouteRemoved -> {
                 // Headphones unplugged or AirPlay disconnected — pause so the user notices
                 // before audio routes through an unexpected speaker.

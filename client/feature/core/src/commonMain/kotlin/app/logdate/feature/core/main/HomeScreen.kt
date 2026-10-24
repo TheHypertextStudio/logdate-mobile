@@ -138,7 +138,9 @@ fun HomeScreen(
             SyncAction.ReviewConflicts, SyncAction.ReviewIssues -> onOpenSyncIssues()
 
             SyncAction.OpenStatus -> onOpenSyncSettings()
+
             SyncAction.EnterRecoveryPhrase -> onEnterRecoveryPhrase()
+
             SyncAction.UpdateApp -> updateScope.launch { appUpdates.checkForUpdates(AppUpdateCheckTrigger.Manual) }
         }
     }

@@ -46,27 +46,36 @@ internal fun AccountRecoveryNotice(
     onRetry: () -> Unit,
 ) {
     when (state) {
-        AccountRecoveryUiState.Checking -> Unit
+        AccountRecoveryUiState.Checking -> {
+            Unit
+        }
 
-        AccountRecoveryUiState.Ready -> DoneLine(stringResource(Res.string.account_recovery_ready))
+        AccountRecoveryUiState.Ready -> {
+            DoneLine(stringResource(Res.string.account_recovery_ready))
+        }
 
-        AccountRecoveryUiState.NeedsSetup ->
+        AccountRecoveryUiState.NeedsSetup -> {
             Prompt(stringResource(Res.string.account_recovery_needs_setup), stringResource(Res.string.account_recovery_finish), onFinish)
+        }
 
-        AccountRecoveryUiState.Finishing ->
+        AccountRecoveryUiState.Finishing -> {
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 Text(stringResource(Res.string.account_recovery_finishing), style = MaterialTheme.typography.bodyMedium)
             }
+        }
 
-        is AccountRecoveryUiState.Retrying ->
+        is AccountRecoveryUiState.Retrying -> {
             Prompt(retryingMessage(state.failure), stringResource(Res.string.account_recovery_try_now), onRetry)
+        }
 
-        AccountRecoveryUiState.CheckFailed ->
+        AccountRecoveryUiState.CheckFailed -> {
             Prompt(stringResource(Res.string.account_recovery_check_failed), stringResource(Res.string.account_recovery_try_again), onRetry)
+        }
 
-        is AccountRecoveryUiState.SetupFailed ->
+        is AccountRecoveryUiState.SetupFailed -> {
             Prompt(setupFailureMessage(state.failure), stringResource(Res.string.account_recovery_finish), onFinish)
+        }
     }
 }
 

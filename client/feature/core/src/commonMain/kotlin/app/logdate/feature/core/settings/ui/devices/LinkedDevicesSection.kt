@@ -86,13 +86,20 @@ fun LinkedDevicesSection(
     }
     SettingsSection(title = stringResource(Res.string.linked_devices_title), modifier = modifier.testTag(LinkedDevicesTags.SECTION)) {
         when (state) {
-            LinkedDevicesUiState.Unavailable -> Unit
-            LinkedDevicesUiState.Loading ->
+            LinkedDevicesUiState.Unavailable -> {
+                Unit
+            }
+
+            LinkedDevicesUiState.Loading -> {
                 SimpleSettingsItem(title = stringResource(Res.string.linked_devices_loading), description = null, action = {})
-            is LinkedDevicesUiState.Failed ->
+            }
+
+            is LinkedDevicesUiState.Failed -> {
                 SimpleSettingsItem(title = loadFailureMessage(state.failure), description = null) {
                     TextButton(onClick = onRetry) { Text(stringResource(UiRes.string.common_try_again)) }
                 }
+            }
+
             is LinkedDevicesUiState.Listed -> {
                 state.notice?.let { notice ->
                     LinkedDeviceNoticeRow(
@@ -151,13 +158,15 @@ private fun LinkedDeviceNoticeRow(
     onDismiss: () -> Unit,
 ) {
     when (notice) {
-        is LinkedDeviceNotice.ErasesOnNextConnect ->
+        is LinkedDeviceNotice.ErasesOnNextConnect -> {
             SettingsRow(
                 headlineContent = { Text(stringResource(Res.string.linked_device_erases_on_next_connect, notice.deviceName)) },
                 trailingContent = { TextButton(onClick = onDismiss) { Text(stringResource(UiRes.string.common_dismiss)) } },
                 modifier = Modifier.testTag(LinkedDevicesTags.NOTICE),
             )
-        is LinkedDeviceNotice.RemoveFailed ->
+        }
+
+        is LinkedDeviceNotice.RemoveFailed -> {
             SettingsRow(
                 headlineContent = { Text(removeFailureMessage(notice.deviceName, notice.failure)) },
                 trailingContent = {
@@ -165,19 +174,36 @@ private fun LinkedDeviceNoticeRow(
                 },
                 modifier = Modifier.testTag(LinkedDevicesTags.NOTICE),
             )
+        }
     }
 }
 
 @Composable
 private fun loadFailureMessage(failure: LinkedDevicesFailure): String =
     when (failure) {
-        LinkedDevicesFailure.Unreachable -> stringResource(Res.string.linked_devices_error_unreachable)
-        LinkedDevicesFailure.SignInRequired -> stringResource(Res.string.linked_devices_error_sign_in)
-        is LinkedDevicesFailure.Refused -> stringResource(Res.string.linked_devices_error_refused, failure.status)
-        LinkedDevicesFailure.UnreadableAnswer -> stringResource(Res.string.linked_devices_error_unreadable)
-        LinkedDevicesFailure.AccountChanged -> stringResource(Res.string.linked_devices_error_account_changed)
-        is LinkedDevicesFailure.WatchRemovalStopped, LinkedDevicesFailure.Unexpected ->
+        LinkedDevicesFailure.Unreachable -> {
+            stringResource(Res.string.linked_devices_error_unreachable)
+        }
+
+        LinkedDevicesFailure.SignInRequired -> {
+            stringResource(Res.string.linked_devices_error_sign_in)
+        }
+
+        is LinkedDevicesFailure.Refused -> {
+            stringResource(Res.string.linked_devices_error_refused, failure.status)
+        }
+
+        LinkedDevicesFailure.UnreadableAnswer -> {
+            stringResource(Res.string.linked_devices_error_unreadable)
+        }
+
+        LinkedDevicesFailure.AccountChanged -> {
+            stringResource(Res.string.linked_devices_error_account_changed)
+        }
+
+        is LinkedDevicesFailure.WatchRemovalStopped, LinkedDevicesFailure.Unexpected -> {
             stringResource(Res.string.linked_devices_error_unexpected)
+        }
     }
 
 @Composable
@@ -186,13 +212,31 @@ private fun removeFailureMessage(
     failure: LinkedDevicesFailure,
 ): String =
     when (failure) {
-        LinkedDevicesFailure.Unreachable -> stringResource(Res.string.linked_device_remove_unreachable, name)
-        LinkedDevicesFailure.SignInRequired -> stringResource(Res.string.linked_device_remove_sign_in, name)
-        is LinkedDevicesFailure.Refused -> stringResource(Res.string.linked_device_remove_refused, name, failure.status)
-        LinkedDevicesFailure.UnreadableAnswer -> stringResource(Res.string.linked_device_remove_unreadable, name)
-        LinkedDevicesFailure.AccountChanged -> stringResource(Res.string.linked_device_remove_account_changed, name)
-        LinkedDevicesFailure.Unexpected -> stringResource(Res.string.linked_device_remove_unexpected, name)
-        is LinkedDevicesFailure.WatchRemovalStopped ->
+        LinkedDevicesFailure.Unreachable -> {
+            stringResource(Res.string.linked_device_remove_unreachable, name)
+        }
+
+        LinkedDevicesFailure.SignInRequired -> {
+            stringResource(Res.string.linked_device_remove_sign_in, name)
+        }
+
+        is LinkedDevicesFailure.Refused -> {
+            stringResource(Res.string.linked_device_remove_refused, name, failure.status)
+        }
+
+        LinkedDevicesFailure.UnreadableAnswer -> {
+            stringResource(Res.string.linked_device_remove_unreadable, name)
+        }
+
+        LinkedDevicesFailure.AccountChanged -> {
+            stringResource(Res.string.linked_device_remove_account_changed, name)
+        }
+
+        LinkedDevicesFailure.Unexpected -> {
+            stringResource(Res.string.linked_device_remove_unexpected, name)
+        }
+
+        is LinkedDevicesFailure.WatchRemovalStopped -> {
             when (failure.step) {
                 "sync" -> stringResource(Res.string.linked_device_remove_watch_sync, name)
                 "revoke" -> stringResource(Res.string.linked_device_remove_watch_revoke, name)
@@ -201,4 +245,5 @@ private fun removeFailureMessage(
                 "link changed" -> stringResource(Res.string.linked_device_remove_watch_changed, name)
                 else -> stringResource(Res.string.linked_device_remove_watch_unfinished, name)
             }
+        }
     }

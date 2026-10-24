@@ -97,18 +97,21 @@ class SpaceMigrationChecksTest {
             val engine =
                 MockEngine { request ->
                     when (request.url.encodedPath) {
-                        "/api/v1/space-migration" ->
+                        "/api/v1/space-migration" -> {
                             respond(
                                 """{"phase":"switched","migrationId":"m1","switchedAt":5,"legacyKeptUntil":9,"future":true}""",
                                 HttpStatusCode.OK,
                                 headersOf(HttpHeaders.ContentType, "application/json"),
                             )
-                        else ->
+                        }
+
+                        else -> {
                             respond(
                                 """{"code":"${SpaceMigrationErrorCodes.HOLD_NOT_READY}","message":"wait"}""",
                                 HttpStatusCode.Conflict,
                                 headersOf(HttpHeaders.ContentType, "application/json"),
                             )
+                        }
                     }
                 }
             HttpClient(engine).use { client ->

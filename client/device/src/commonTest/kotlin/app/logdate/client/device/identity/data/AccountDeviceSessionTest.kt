@@ -46,12 +46,17 @@ class AccountDeviceSessionTest {
                                 refreshes++
                                 respond("""{"success":true,"data":{"accessToken":"fresh"}}""")
                             }
-                            request.headers[HttpHeaders.Authorization] == "Bearer expired" -> respond("", HttpStatusCode.Unauthorized)
-                            else ->
+
+                            request.headers[HttpHeaders.Authorization] == "Bearer expired" -> {
+                                respond("", HttpStatusCode.Unauthorized)
+                            }
+
+                            else -> {
                                 respond(
                                     """[{"id":"$id","name":"Test device","platform":"MACOS",
                     "appVersion":"1","createdAt":1000,"lastActive":2000}]""",
                                 )
+                            }
                         }
                     }
                 }
@@ -94,8 +99,14 @@ class AccountDeviceSessionTest {
                     when {
                         request.url.encodedPath.endsWith(
                             "/auth/token/refresh",
-                        ) -> respond("""{"success":true,"data":{"accessToken":"fresh"}}""")
-                        request.headers[HttpHeaders.Authorization] == "Bearer expired" -> respond("", HttpStatusCode.Unauthorized)
+                        ) -> {
+                            respond("""{"success":true,"data":{"accessToken":"fresh"}}""")
+                        }
+
+                        request.headers[HttpHeaders.Authorization] == "Bearer expired" -> {
+                            respond("", HttpStatusCode.Unauthorized)
+                        }
+
                         else -> {
                             assertEquals("Bearer fresh", request.headers[HttpHeaders.Authorization])
                             respond("[]")

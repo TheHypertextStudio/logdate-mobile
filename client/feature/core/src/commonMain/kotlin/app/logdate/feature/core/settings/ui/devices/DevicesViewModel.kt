@@ -121,9 +121,14 @@ class DevicesViewModel(
         removalJob =
             viewModelScope.launch {
                 when (val result = withContext(NonCancellable) { linkedDevices.remove(device) }) {
-                    LinkedDeviceRemoval.Removed -> refreshLinkedDevices(notice = null)
-                    LinkedDeviceRemoval.RemovedWillWipeOnNextConnect ->
+                    LinkedDeviceRemoval.Removed -> {
+                        refreshLinkedDevices(notice = null)
+                    }
+
+                    LinkedDeviceRemoval.RemovedWillWipeOnNextConnect -> {
                         refreshLinkedDevices(notice = LinkedDeviceNotice.ErasesOnNextConnect(device.name))
+                    }
+
                     is LinkedDeviceRemoval.Failed -> {
                         Napier.w("Linked device ${device.id} was not removed: ${result.failure}")
                         val notice = LinkedDeviceNotice.RemoveFailed(device.id, device.name, result.failure)
@@ -146,11 +151,15 @@ class DevicesViewModel(
         if (_uiState.value.linked !is LinkedDevicesUiState.Listed) setLinked(LinkedDevicesUiState.Loading)
         val state =
             when (val loaded = linkedDevices.load()) {
-                LinkedDevicesLoad.Unavailable -> LinkedDevicesUiState.Unavailable
+                LinkedDevicesLoad.Unavailable -> {
+                    LinkedDevicesUiState.Unavailable
+                }
+
                 is LinkedDevicesLoad.Failed -> {
                     Napier.w("Linked devices could not be listed: ${loaded.failure}")
                     LinkedDevicesUiState.Failed(loaded.failure)
                 }
+
                 is LinkedDevicesLoad.Loaded -> {
                     linkedSessions = loaded.devices
                     LinkedDevicesUiState.Listed(loaded.devices.map { it.toUiState() }, notice = notice)

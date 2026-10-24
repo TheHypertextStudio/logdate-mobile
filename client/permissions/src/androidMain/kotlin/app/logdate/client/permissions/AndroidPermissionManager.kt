@@ -27,20 +27,26 @@ class AndroidPermissionManager(
     // Map PermissionType to Android permissions
     private fun getAndroidPermissions(type: PermissionType): Array<String> =
         when (type) {
-            PermissionType.LOCATION ->
+            PermissionType.LOCATION -> {
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
-            PermissionType.CAMERA ->
+            }
+
+            PermissionType.CAMERA -> {
                 arrayOf(
                     Manifest.permission.CAMERA,
                 )
-            PermissionType.MICROPHONE ->
+            }
+
+            PermissionType.MICROPHONE -> {
                 arrayOf(
                     Manifest.permission.RECORD_AUDIO,
                 )
-            PermissionType.STORAGE ->
+            }
+
+            PermissionType.STORAGE -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     // Android 14+: include READ_MEDIA_VISUAL_USER_SELECTED so the
                     // system serves the three-way photo-picker prompt. The
@@ -66,32 +72,43 @@ class AndroidPermissionManager(
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     )
                 }
-            PermissionType.NOTIFICATION ->
+            }
+
+            PermissionType.NOTIFICATION -> {
                 if (Build.VERSION.SDK_INT >= 33) {
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
                     arrayOf() // Not needed before Android 13
                 }
-            PermissionType.CALENDAR ->
+            }
+
+            PermissionType.CALENDAR -> {
                 arrayOf(
                     Manifest.permission.READ_CALENDAR,
                     Manifest.permission.WRITE_CALENDAR,
                 )
-            PermissionType.CONTACTS ->
+            }
+
+            PermissionType.CONTACTS -> {
                 arrayOf(
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.WRITE_CONTACTS,
                 )
-            PermissionType.BIOMETRIC ->
+            }
+
+            PermissionType.BIOMETRIC -> {
                 arrayOf(
                     Manifest.permission.USE_BIOMETRIC,
                 )
-            PermissionType.ACTIVITY_RECOGNITION ->
+            }
+
+            PermissionType.ACTIVITY_RECOGNITION -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)
                 } else {
                     arrayOf()
                 }
+            }
         }
 
     override fun isPermissionGranted(type: PermissionType): Boolean {
@@ -110,14 +127,21 @@ class AndroidPermissionManager(
         // (READ_MEDIA_VISUAL_USER_SELECTED) counts as granted even when the
         // user denied READ_MEDIA_IMAGES.
         return when (type) {
-            PermissionType.LOCATION -> permissions.any(isGranted)
-            PermissionType.STORAGE ->
+            PermissionType.LOCATION -> {
+                permissions.any(isGranted)
+            }
+
+            PermissionType.STORAGE -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     permissions.any(isGranted)
                 } else {
                     permissions.all(isGranted)
                 }
-            else -> permissions.all(isGranted)
+            }
+
+            else -> {
+                permissions.all(isGranted)
+            }
         }
     }
 
@@ -147,14 +171,21 @@ class AndroidPermissionManager(
         }
         val granted =
             when (type) {
-                PermissionType.LOCATION -> permissions.any(isGranted)
-                PermissionType.STORAGE ->
+                PermissionType.LOCATION -> {
+                    permissions.any(isGranted)
+                }
+
+                PermissionType.STORAGE -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         permissions.any(isGranted)
                     } else {
                         permissions.all(isGranted)
                     }
-                else -> permissions.all(isGranted)
+                }
+
+                else -> {
+                    permissions.all(isGranted)
+                }
             }
 
         return if (granted) {

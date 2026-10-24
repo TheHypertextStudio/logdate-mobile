@@ -179,25 +179,39 @@ private fun SerializableEntryBlock.toArchiveBlock(media: MediaReferences): Archi
     val location = if (latitude != null && longitude != null) ArchiveLocation(latitude, longitude, altitudeMeters = altitude) else null
     val base = ArchiveDraftBlock(id = id.toString(), type = ArchiveBlockType.TEXT, timestamp = timestamp, location = location)
     return when (this) {
-        is SerializableTextBlock -> base.copy(text = content)
-        is app.logdate.shared.model.SerializableHandwritingBlock -> base.copy(type = ArchiveBlockType.HANDWRITING, handwriting = document)
-        is SerializableImageBlock ->
+        is SerializableTextBlock -> {
+            base.copy(text = content)
+        }
+
+        is app.logdate.shared.model.SerializableHandwritingBlock -> {
+            base.copy(type = ArchiveBlockType.HANDWRITING, handwriting = document)
+        }
+
+        is SerializableImageBlock -> {
             base.copy(
                 type = ArchiveBlockType.IMAGE,
                 media = uri?.let(media::refFor),
                 caption = caption.ifEmpty { null },
                 photoPresentation = presentation.name,
             )
-        is SerializableVideoBlock ->
+        }
+
+        is SerializableVideoBlock -> {
             base.copy(
                 type = ArchiveBlockType.VIDEO,
                 media = uri?.let(media::refFor),
                 thumbnail = thumbnailUri?.let(media::refFor),
                 caption = caption.ifEmpty { null },
             )
-        is SerializableAudioBlock ->
+        }
+
+        is SerializableAudioBlock -> {
             base.copy(type = ArchiveBlockType.AUDIO, media = uri?.let(media::refFor), durationMs = duration, transcription = transcription)
-        is SerializableCameraBlock -> base.copy(type = ArchiveBlockType.CAMERA, media = uri?.let(media::refFor))
+        }
+
+        is SerializableCameraBlock -> {
+            base.copy(type = ArchiveBlockType.CAMERA, media = uri?.let(media::refFor))
+        }
     }
 }
 

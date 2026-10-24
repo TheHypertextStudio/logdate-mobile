@@ -46,6 +46,7 @@ class WatchWindowExtrasSource(
                                 is RewindContent.TextNote, is RewindContent.AudioNote,
                                 is RewindContent.Image, is RewindContent.Video,
                                 -> content.sourceId
+
                                 else -> null
                             }
                         }.toSet(),

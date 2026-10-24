@@ -117,6 +117,7 @@ class DesktopExportLauncher :
                     showExportErrorDialog(outcome.message)
                     completionCallback?.invoke(ExportOutcome.Failed(outcome.message.toUiText()))
                 }
+
                 is ArchiveFileOutcome.Completed -> {
                     completed = true
                     Napier.i("Desktop: Archive export completed")

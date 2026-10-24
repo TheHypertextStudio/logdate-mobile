@@ -21,18 +21,20 @@ fun ApplicationScope.LogDateApplication(state: LogDateApplicationState) {
     for (window in state.windows) {
         key(window) {
             when (window) {
-                is MainWindowState ->
+                is MainWindowState -> {
                     MainWindow(
                         appState = state,
                         onOpenEditor = state::openNoteEditor,
                         state = window,
                     )
+                }
 
-                is EntryEditorWindowState ->
+                is EntryEditorWindowState -> {
                     EntryEditorWindow(
                         appState = state,
                         state = window,
                     )
+                }
             }
         }
     }

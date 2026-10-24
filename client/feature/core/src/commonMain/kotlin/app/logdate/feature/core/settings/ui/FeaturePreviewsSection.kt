@@ -90,19 +90,37 @@ fun FeaturePreviewsSection(
 
 private fun FeatureFlag.previewText(): Pair<StringResource, StringResource> =
     when (this) {
-        FeatureFlag.QUICK_SETTINGS_TILES ->
+        FeatureFlag.QUICK_SETTINGS_TILES -> {
             Res.string.feature_preview_quick_settings_tiles_title to Res.string.feature_preview_quick_settings_tiles_description
-        FeatureFlag.LIVE_UPDATES -> Res.string.feature_preview_live_updates_title to Res.string.feature_preview_live_updates_description
-        FeatureFlag.NOTIFICATION_QUICK_REPLY ->
+        }
+
+        FeatureFlag.LIVE_UPDATES -> {
+            Res.string.feature_preview_live_updates_title to Res.string.feature_preview_live_updates_description
+        }
+
+        FeatureFlag.NOTIFICATION_QUICK_REPLY -> {
             Res.string.feature_preview_quick_reply_title to
                 Res.string.feature_preview_quick_reply_description
-        FeatureFlag.RECORDING_BUBBLE ->
+        }
+
+        FeatureFlag.RECORDING_BUBBLE -> {
             Res.string.feature_preview_recording_bubble_title to Res.string.feature_preview_recording_bubble_description
-        FeatureFlag.LOCK_SCREEN_CAPTURE_WIDGET ->
+        }
+
+        FeatureFlag.LOCK_SCREEN_CAPTURE_WIDGET -> {
             Res.string.feature_preview_lock_screen_widget_title to Res.string.feature_preview_lock_screen_widget_description
-        FeatureFlag.APP_FUNCTIONS -> Res.string.feature_preview_app_functions_title to Res.string.feature_preview_app_functions_description
-        FeatureFlag.EDITOR_HANDOFF ->
+        }
+
+        FeatureFlag.APP_FUNCTIONS -> {
+            Res.string.feature_preview_app_functions_title to Res.string.feature_preview_app_functions_description
+        }
+
+        FeatureFlag.EDITOR_HANDOFF -> {
             Res.string.feature_preview_editor_handoff_title to
                 Res.string.feature_preview_editor_handoff_description
-        else -> error("$this is not an OS integration preview")
+        }
+
+        else -> {
+            error("$this is not an OS integration preview")
+        }
     }

@@ -37,24 +37,29 @@ class DefaultPlaceFamiliarityRepository(
         val existing = records[placeKey]
         val updated =
             when {
-                existing == null ->
+                existing == null -> {
                     PlaceFamiliarityRecord(
                         placeKey = placeKey,
                         displayName = displayName,
                         visitCount = 1,
                         lastSeenAt = visitedAt,
                     )
-                visitedAt - existing.lastSeenAt < REVISIT_COLLAPSE_WINDOW ->
+                }
+
+                visitedAt - existing.lastSeenAt < REVISIT_COLLAPSE_WINDOW -> {
                     existing.copy(
                         displayName = displayName ?: existing.displayName,
                         lastSeenAt = visitedAt,
                     )
-                else ->
+                }
+
+                else -> {
                     existing.copy(
                         displayName = displayName ?: existing.displayName,
                         visitCount = existing.visitCount + 1,
                         lastSeenAt = visitedAt,
                     )
+                }
             }
         records[placeKey] = updated
         val encoded = json.encodeToString(records.values.sortedBy(PlaceFamiliarityRecord::placeKey))

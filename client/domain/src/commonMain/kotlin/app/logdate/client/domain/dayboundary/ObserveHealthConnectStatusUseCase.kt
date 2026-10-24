@@ -40,11 +40,15 @@ class ObserveHealthConnectStatusUseCase(
                     emit(HealthConnectStatus.NOT_AVAILABLE)
                     return@flow
                 }
+
                 HealthDataAvailability.PROVIDER_UPDATE_REQUIRED -> {
                     emit(HealthConnectStatus.PROVIDER_UPDATE_REQUIRED)
                     return@flow
                 }
-                HealthDataAvailability.AVAILABLE -> Unit
+
+                HealthDataAvailability.AVAILABLE -> {
+                    Unit
+                }
             }
 
             val hasPermissions = healthRepository.hasSleepPermissions()

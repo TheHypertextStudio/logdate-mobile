@@ -42,9 +42,18 @@ fun resolveWatchConnectionState(
     transport: WatchTransportSnapshot,
 ): WatchConnectionState =
     when (association) {
-        WatchAssociationSnapshot.Unsupported -> resolveLegacyWatchConnectionState(transport)
-        WatchAssociationSnapshot.Pending -> WatchConnectionState.AssociationPending
-        is WatchAssociationSnapshot.Associated -> resolveAssociatedWatchConnectionState(association, transport)
+        WatchAssociationSnapshot.Unsupported -> {
+            resolveLegacyWatchConnectionState(transport)
+        }
+
+        WatchAssociationSnapshot.Pending -> {
+            WatchConnectionState.AssociationPending
+        }
+
+        is WatchAssociationSnapshot.Associated -> {
+            resolveAssociatedWatchConnectionState(association, transport)
+        }
+
         WatchAssociationSnapshot.Unassociated -> {
             val connectedWatch = transport.connectedNodes.firstOrNull()
             if (connectedWatch == null) {

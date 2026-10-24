@@ -129,7 +129,10 @@ class AutomaticMediaRecovery(
                     }
                     throw MediaRecoveryException(result.reason)
                 }
-                is MediaHydrationResult.Available -> requireNotNull(result.note.mediaRefOrNull()) to result.mapping
+
+                is MediaHydrationResult.Available -> {
+                    requireNotNull(result.note.mediaRefOrNull()) to result.mapping
+                }
             }
         } else {
             val mappings = mutableListOf<DraftAssetMapping>()

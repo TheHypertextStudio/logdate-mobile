@@ -45,9 +45,11 @@ class ConversionVectorsTest {
                     "centimeters" -> {
                         { input.toCentimeters("vector") }
                     }
+
                     "bearing" -> {
                         { input.toBearingHundredths("vector") }
                     }
+
                     else -> {
                         { input.toThousandths("vector") }
                     }

@@ -42,13 +42,15 @@ class ApplyHistoryEdits {
             val validStart = if (start <= end) start else item.start
             val validEnd = if (start <= end) end else item.end
             when (item) {
-                is PlaceVisit ->
+                is PlaceVisit -> {
                     item.copy(
                         start = validStart,
                         end = validEnd,
                         place = places.firstOrNull { it.id == unique[HistoryField.PLACE] } ?: item.place,
                     )
-                is JourneyLeg ->
+                }
+
+                is JourneyLeg -> {
                     item.copy(
                         start = validStart,
                         end = validEnd,
@@ -56,7 +58,11 @@ class ApplyHistoryEdits {
                             unique[HistoryField.ACTIVITY]?.let { name -> TravelMode.entries.firstOrNull { it.name == name } } ?: item.mode,
                         userConfirmed = unique[HistoryField.ACTIVITY] != null,
                     )
-                else -> item
+                }
+
+                else -> {
+                    item
+                }
             }
         }
     }

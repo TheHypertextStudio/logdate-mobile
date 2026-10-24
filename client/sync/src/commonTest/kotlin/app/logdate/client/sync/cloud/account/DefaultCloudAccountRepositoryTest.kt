@@ -402,6 +402,6 @@ private fun scopedKey(
     backendUrl: String,
 ): String = "${baseKey}_${backendUrl.trim().removePrefix("https://").removePrefix("http://").replace(Regex("[^A-Za-z0-9]"), "_")}"
 
-/**
+/*
  * A fake [CloudApiClient] for testing account repository operations.
  */

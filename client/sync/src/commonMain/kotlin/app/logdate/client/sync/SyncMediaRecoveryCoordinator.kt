@@ -27,7 +27,7 @@ internal class SyncMediaRecoveryCoordinator(
     ) {
         val inbox = downloadInbox ?: return
         when (entityType) {
-            EntityType.NOTE ->
+            EntityType.NOTE -> {
                 app.logdate.client.sync.recovery
                     .SyncMediaRecovery(
                         inbox,
@@ -36,7 +36,9 @@ internal class SyncMediaRecoveryCoordinator(
                         mediaSyncRefStore,
                         transactionManager,
                     ).recover(accessToken)
-            EntityType.JOURNAL ->
+            }
+
+            EntityType.JOURNAL -> {
                 app.logdate.client.sync.recovery
                     .SyncJournalCoverRecovery(
                         inbox,
@@ -45,7 +47,9 @@ internal class SyncMediaRecoveryCoordinator(
                         mediaSyncRefStore,
                         transactionManager,
                     ).recover(accessToken)
-            EntityType.DRAFT ->
+            }
+
+            EntityType.DRAFT -> {
                 app.logdate.client.sync.recovery
                     .SyncDraftMediaRecovery(
                         inbox,
@@ -54,7 +58,11 @@ internal class SyncMediaRecoveryCoordinator(
                         mediaSyncRefStore,
                         transactionManager,
                     ).recover(accessToken)
-            else -> Unit
+            }
+
+            else -> {
+                Unit
+            }
         }
         app.logdate.client.sync.recovery
             .NativeMediaRecovery(

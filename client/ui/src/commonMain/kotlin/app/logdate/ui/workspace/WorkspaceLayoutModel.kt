@@ -60,12 +60,14 @@ fun resolveWorkspaceComposition(
     val hinge = foldable.relativeTo(origin).hinge?.takeIf { it.isSeparating }
     val regions =
         when (hinge?.orientation) {
-            FoldableHingeOrientation.Vertical ->
+            FoldableHingeOrientation.Vertical -> {
                 listOf(
                     PanelBounds(0.dp, 0.dp, hinge.bounds.left.coerceIn(0.dp, width), height),
                     PanelBounds(hinge.bounds.right.coerceIn(0.dp, width), 0.dp, (width - hinge.bounds.right).coerceAtLeast(0.dp), height),
                 )
-            FoldableHingeOrientation.Horizontal ->
+            }
+
+            FoldableHingeOrientation.Horizontal -> {
                 listOf(
                     PanelBounds(0.dp, 0.dp, width, hinge.bounds.top.coerceIn(0.dp, height)),
                     PanelBounds(
@@ -75,7 +77,11 @@ fun resolveWorkspaceComposition(
                         (height - hinge.bounds.bottom).coerceAtLeast(0.dp),
                     ),
                 )
-            else -> emptyList()
+            }
+
+            else -> {
+                emptyList()
+            }
         }.map { it.inset(16.dp) }
     if (regions.size == 2) {
         return resolveHingeComposition(

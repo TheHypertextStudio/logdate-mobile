@@ -48,15 +48,25 @@ private class JournalOrMerge(
         if (remote.mergedInto != null) return ConflictResolution.KeepRemote(remote)
         if (local.mergedInto != null) return ConflictResolution.KeepLocal(local)
         return when (val resolution = journals.resolve(local.journal, remote.journal, localTimestamp, remoteTimestamp)) {
-            is ConflictResolution.KeepLocal -> ConflictResolution.KeepLocal(SpaceJournal(resolution.value))
-            is ConflictResolution.KeepRemote -> ConflictResolution.KeepRemote(SpaceJournal(resolution.value))
-            is ConflictResolution.Merge -> ConflictResolution.Merge(SpaceJournal(resolution.merged))
-            is ConflictResolution.RequiresManualResolution ->
+            is ConflictResolution.KeepLocal -> {
+                ConflictResolution.KeepLocal(SpaceJournal(resolution.value))
+            }
+
+            is ConflictResolution.KeepRemote -> {
+                ConflictResolution.KeepRemote(SpaceJournal(resolution.value))
+            }
+
+            is ConflictResolution.Merge -> {
+                ConflictResolution.Merge(SpaceJournal(resolution.merged))
+            }
+
+            is ConflictResolution.RequiresManualResolution -> {
                 ConflictResolution.RequiresManualResolution(
                     SpaceJournal(resolution.local),
                     SpaceJournal(resolution.remote),
                     resolution.reason,
                 )
+            }
         }
     }
 

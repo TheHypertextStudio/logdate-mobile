@@ -36,9 +36,11 @@ internal class StayDetector(
             start =
                 when {
                     stay != null -> stay.range.last + 1
+
                     // A long candidate that failed (riding, drifting) would fail again from its next
                     // sample, so halve the distance to its end rather than regrowing it from every one.
                     candidate != null -> maxOf(start + 1, (start + candidate.range.last) / 2)
+
                     else -> start + 1
                 }
             stay?.let(stays::add)

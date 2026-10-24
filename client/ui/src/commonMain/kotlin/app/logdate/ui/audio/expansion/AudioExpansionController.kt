@@ -64,10 +64,12 @@ class AudioExpansionController(
                 inlineState = AudioExpansionState.SPATIAL_EXPANDED
                 currentState = AudioExpansionState.SPATIAL_EXPANDED
             }
+
             AudioExpansionState.SPATIAL_EXPANDED -> {
                 inlineState = AudioExpansionState.COLLAPSED
                 currentState = AudioExpansionState.COLLAPSED
             }
+
             else -> {} // No-op in overlay states
         }
     }

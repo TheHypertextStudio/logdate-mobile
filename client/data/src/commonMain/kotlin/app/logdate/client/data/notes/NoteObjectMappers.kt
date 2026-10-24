@@ -39,9 +39,15 @@ private fun mapLocation(
         val resolved = place?.takeIf { it.id == source?.id }
         val projected =
             when {
-                resolved == null -> source
-                !stored.preserveSourcePlace -> resolved
-                else ->
+                resolved == null -> {
+                    source
+                }
+
+                !stored.preserveSourcePlace -> {
+                    resolved
+                }
+
+                else -> {
                     source?.let { snapshot ->
                         snapshot.copy(
                             name = snapshot.name ?: resolved.name,
@@ -49,6 +55,7 @@ private fun mapLocation(
                             longitude = snapshot.longitude ?: resolved.longitude,
                         )
                     }
+                }
             }
         return NoteLocation(stored.coordinates, projected)
     }

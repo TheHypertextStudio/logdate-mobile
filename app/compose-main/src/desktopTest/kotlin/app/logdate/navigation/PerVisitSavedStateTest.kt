@@ -180,25 +180,68 @@ private inline fun <reified T> inert(): T =
 /** Desktop's restoration codec is unavailable; detach every mutable snapshot container before disposal. */
 private fun copySavedValue(value: Any?): Any? =
     when (value) {
-        null, is String, is Number, is Boolean, is Char, is NavKey -> value
-        is SavedState -> savedState(value.read { toMap() }.mapValues { (_, item) -> copySavedValue(item) })
-        is Map<*, *> -> value.entries.associate { copySavedValue(it.key) to copySavedValue(it.value) }.toMutableMap()
-        is List<*> -> value.map(::copySavedValue).toMutableList()
-        is Set<*> -> value.map(::copySavedValue).toMutableSet()
-        is Array<*> ->
+        null, is String, is Number, is Boolean, is Char, is NavKey -> {
+            value
+        }
+
+        is SavedState -> {
+            savedState(value.read { toMap() }.mapValues { (_, item) -> copySavedValue(item) })
+        }
+
+        is Map<*, *> -> {
+            value.entries.associate { copySavedValue(it.key) to copySavedValue(it.value) }.toMutableMap()
+        }
+
+        is List<*> -> {
+            value.map(::copySavedValue).toMutableList()
+        }
+
+        is Set<*> -> {
+            value.map(::copySavedValue).toMutableSet()
+        }
+
+        is Array<*> -> {
             java.lang.reflect.Array.newInstance(value.javaClass.componentType, value.size).also { copy ->
                 value.forEachIndexed { index, item ->
                     java.lang.reflect.Array
                         .set(copy, index, copySavedValue(item))
                 }
             }
-        is BooleanArray -> value.copyOf()
-        is ByteArray -> value.copyOf()
-        is CharArray -> value.copyOf()
-        is DoubleArray -> value.copyOf()
-        is FloatArray -> value.copyOf()
-        is IntArray -> value.copyOf()
-        is LongArray -> value.copyOf()
-        is ShortArray -> value.copyOf()
-        else -> error("Unsupported saved snapshot value: ${value::class}")
+        }
+
+        is BooleanArray -> {
+            value.copyOf()
+        }
+
+        is ByteArray -> {
+            value.copyOf()
+        }
+
+        is CharArray -> {
+            value.copyOf()
+        }
+
+        is DoubleArray -> {
+            value.copyOf()
+        }
+
+        is FloatArray -> {
+            value.copyOf()
+        }
+
+        is IntArray -> {
+            value.copyOf()
+        }
+
+        is LongArray -> {
+            value.copyOf()
+        }
+
+        is ShortArray -> {
+            value.copyOf()
+        }
+
+        else -> {
+            error("Unsupported saved snapshot value: ${value::class}")
+        }
     }

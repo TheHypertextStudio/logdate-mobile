@@ -59,7 +59,7 @@ class ArchiveSnapshotPreconditionTest(unittest.TestCase):
                 prepare_for_snapshot=lambda: events.append("prepare"),
             )
         self.assertEqual(
-            ["launch", "prepare", "snapshot", "backup", "snapshot"], events
+            ["launch", "timeline", "prepare", "snapshot", "backup", "snapshot"], events
         )
 
     def test_timeout_launch_waits_for_timeline_before_preparing(self):
@@ -85,7 +85,7 @@ class ArchiveSnapshotPreconditionTest(unittest.TestCase):
             with self.assertRaises(RuntimeError) as caught:
                 H.backup_source("emulator-5554", output, prepare_for_snapshot=prepare)
         self.assertIs(failure, caught.exception)
-        self.assertEqual(["launch"], events)
+        self.assertEqual(["launch", "timeline"], events)
 
     def test_post_prepare_archive_mutation_still_fails_exact_snapshot_comparison(self):
         with self.backup(changed=True) as (events, output, archive):
@@ -99,7 +99,7 @@ class ArchiveSnapshotPreconditionTest(unittest.TestCase):
                 )
             self.assertIn(archive, str(caught.exception))
         self.assertEqual(
-            ["launch", "prepare", "snapshot", "backup", "snapshot"], events
+            ["launch", "timeline", "prepare", "snapshot", "backup", "snapshot"], events
         )
 
     def test_unprepared_backup_preserves_original_order_and_strict_comparison(self):

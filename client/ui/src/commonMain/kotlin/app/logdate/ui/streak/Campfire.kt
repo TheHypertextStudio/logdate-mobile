@@ -142,12 +142,16 @@ private fun DrawScope.drawCampfire(
             shapes += StickerShape(flamePath(grid, OuterFlame, scale, sway, stretch), OuterFlameColor, outline)
             shapes += StickerShape(flamePath(grid, InnerFlame, scale, sway * 0.6f, stretch), InnerFlameColor, outline * 0.8f)
         }
+
         CampfirePhase.EMBERS -> {
             EMBERS.forEach { ember ->
                 shapes += StickerShape(circlePath(grid, ember.x, ember.y, ember.radius), ember.color, outline * 0.8f)
             }
         }
-        CampfirePhase.OUT, CampfirePhase.UNLIT -> Unit
+
+        CampfirePhase.OUT, CampfirePhase.UNLIT -> {
+            Unit
+        }
     }
 
     val backing = Stroke(width = outline * DIE_CUT_SCALE, join = StrokeJoin.Round, cap = StrokeCap.Round)

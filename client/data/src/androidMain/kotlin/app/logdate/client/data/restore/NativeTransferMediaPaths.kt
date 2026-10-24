@@ -25,6 +25,7 @@ internal fun nativeTransferMediaPaths(
                     val relative = "$root/${parsed.ref.path}"
                     if (safeNativeMediaRelative(relative)) add("files/$relative")
                 }
+
                 is MediaReference.LocalFile -> {
                     val paths =
                         listOfNotNull(parsed.path, parsed.alternatePath)
@@ -38,7 +39,10 @@ internal fun nativeTransferMediaPaths(
                     val selected = paths.firstOrNull { File(filesDir, it).exists() } ?: paths.firstOrNull()
                     selected?.let { add("files/$it") }
                 }
-                is MediaReference.External -> Unit
+
+                is MediaReference.External -> {
+                    Unit
+                }
             }
         }
     }

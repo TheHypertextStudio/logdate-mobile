@@ -69,14 +69,17 @@ class RewindGenerationWorker(
                     }
                     Result.success()
                 }
+
                 is GenerateBasicRewindResult.AlreadyInProgress -> {
                     Napier.d("RewindGenerationWorker: generation already in progress")
                     Result.success()
                 }
+
                 is GenerateBasicRewindResult.NoContent -> {
                     Napier.d("RewindGenerationWorker: no content for last week, skipping")
                     Result.success()
                 }
+
                 is GenerateBasicRewindResult.Error -> {
                     Napier.w("RewindGenerationWorker: generation failed — ${weeklyResult.error}")
                     Result.retry()

@@ -99,6 +99,7 @@ internal fun JournalMergeReviewLayout(
                     decision(Modifier.width(decisionWidth).heightIn(min = decisionHeight), spacious)
                 }
             }
+
             maxHeight >= 720.dp && maxWidth >= 312.dp * fontScale && fontScale < 1.5f -> {
                 val availableHeight = maxHeight
                 Layout(
@@ -120,6 +121,7 @@ internal fun JournalMergeReviewLayout(
                     }
                 }
             }
+
             else -> {
                 Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 72.dp),

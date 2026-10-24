@@ -267,13 +267,28 @@ fun MediaDeviceSelectorSheet(
 
 private fun MediaDeviceUiState?.iconFor(kind: MediaDeviceKind): ImageVector =
     when (this?.category) {
-        MediaDeviceCategory.FRONT_CAMERA -> Icons.Rounded.CameraFront
-        MediaDeviceCategory.BACK_CAMERA -> Icons.Rounded.CameraRear
+        MediaDeviceCategory.FRONT_CAMERA -> {
+            Icons.Rounded.CameraFront
+        }
+
+        MediaDeviceCategory.BACK_CAMERA -> {
+            Icons.Rounded.CameraRear
+        }
+
         MediaDeviceCategory.USB,
         MediaDeviceCategory.EXTERNAL,
-        -> Icons.Rounded.SettingsInputComponent
-        MediaDeviceCategory.BLUETOOTH -> Icons.Rounded.BluetoothAudio
-        MediaDeviceCategory.WIRED -> Icons.Rounded.Headphones
+        -> {
+            Icons.Rounded.SettingsInputComponent
+        }
+
+        MediaDeviceCategory.BLUETOOTH -> {
+            Icons.Rounded.BluetoothAudio
+        }
+
+        MediaDeviceCategory.WIRED -> {
+            Icons.Rounded.Headphones
+        }
+
         MediaDeviceCategory.BUILT_IN -> {
             when (kind) {
                 MediaDeviceKind.CAMERA -> Icons.Rounded.CameraRear
@@ -281,6 +296,7 @@ private fun MediaDeviceUiState?.iconFor(kind: MediaDeviceKind): ImageVector =
                 MediaDeviceKind.AUDIO_OUTPUT -> Icons.Rounded.Speaker
             }
         }
+
         MediaDeviceCategory.SYSTEM_DEFAULT,
         null,
         -> {

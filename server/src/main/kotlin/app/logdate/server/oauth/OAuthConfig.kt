@@ -133,6 +133,6 @@ data class OAuthConfig(
     }
 }
 
-/**
+/*
  * RFC 8414-style authorization server metadata for AT Protocol clients.
  */

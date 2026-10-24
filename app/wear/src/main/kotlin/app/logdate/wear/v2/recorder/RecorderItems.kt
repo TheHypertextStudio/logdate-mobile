@@ -142,12 +142,19 @@ private fun runFailureAction(
             openAppSettings(context)
             actions.dismiss()
         }
+
         RecorderFailure.NOT_ENOUGH_STORAGE -> {
             openStorageSettings(context)
             actions.dismiss()
         }
-        RecorderFailure.MICROPHONE_DENIED, RecorderFailure.SAVE_FAILED -> actions.retry()
-        RecorderFailure.RECORDER_UNAVAILABLE, RecorderFailure.RECORDING_LOST -> actions.dismiss()
+
+        RecorderFailure.MICROPHONE_DENIED, RecorderFailure.SAVE_FAILED -> {
+            actions.retry()
+        }
+
+        RecorderFailure.RECORDER_UNAVAILABLE, RecorderFailure.RECORDING_LOST -> {
+            actions.dismiss()
+        }
     }
 }
 
@@ -183,18 +190,30 @@ private fun ElapsedTime(elapsed: Duration) {
 @Composable
 private fun LiveStatus(live: RecorderState.Live) {
     when {
-        live.confirmingDiscard ->
+        live.confirmingDiscard -> {
             RecorderMessage(
                 text = stringResource(R.string.wear_today_recorder_discard_confirm),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 live = true,
             )
-        live.mode == LiveMode.HOLDING -> LockHint(live.lockProgress)
-        live.pausedByInterruption ->
+        }
+
+        live.mode == LiveMode.HOLDING -> {
+            LockHint(live.lockProgress)
+        }
+
+        live.pausedByInterruption -> {
             RecorderMessage(stringResource(R.string.wear_today_recorder_paused_by_app), style = MaterialTheme.typography.bodySmall)
-        live.paused -> RecorderMessage(stringResource(R.string.wear_today_recorder_paused))
-        else -> RecorderMessage(stringResource(R.string.wear_today_recorder_recording))
+        }
+
+        live.paused -> {
+            RecorderMessage(stringResource(R.string.wear_today_recorder_paused))
+        }
+
+        else -> {
+            RecorderMessage(stringResource(R.string.wear_today_recorder_recording))
+        }
     }
 }
 

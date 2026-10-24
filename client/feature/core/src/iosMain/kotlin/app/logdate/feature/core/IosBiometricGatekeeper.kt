@@ -103,13 +103,17 @@ class IosBiometricGatekeeper : BiometricGatekeeper {
             LAErrorPasscodeNotSet,
             LAErrorBiometryNotAvailable,
             -> AppAuthState.UNSUPPORTED
+
             LAErrorBiometryNotEnrolled -> AppAuthState.REQUEST_ENROLLMENT
+
             LAErrorUserCancel,
             LAErrorAppCancel,
             LAErrorSystemCancel,
             LAErrorUserFallback,
             -> AppAuthState.REQUIRE_PROMPT
+
             LAErrorAuthenticationFailed -> AppAuthState.UNKNOWN
+
             else -> AppAuthState.UNKNOWN
         }
 

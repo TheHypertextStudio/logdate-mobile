@@ -186,13 +186,29 @@ fun TimelineSuggestionBlock(
 ) {
     val suggestedTypeTitle =
         when (state.type) {
-            TimelineSuggestionBlockType.COMPLETE_DRAFT -> stringResource(Res.string.suggestion_label_draft)
-            TimelineSuggestionBlockType.EMPTY_DAY -> stringResource(Res.string.suggestion_label_today)
-            TimelineSuggestionBlockType.MEMORY_RECALL -> stringResource(Res.string.suggestion_label_memory)
-            TimelineSuggestionBlockType.UPCOMING_EVENT -> stringResource(Res.string.suggestion_label_upcoming)
-            TimelineSuggestionBlockType.AFTER_ACTIVITY ->
+            TimelineSuggestionBlockType.COMPLETE_DRAFT -> {
+                stringResource(Res.string.suggestion_label_draft)
+            }
+
+            TimelineSuggestionBlockType.EMPTY_DAY -> {
+                stringResource(Res.string.suggestion_label_today)
+            }
+
+            TimelineSuggestionBlockType.MEMORY_RECALL -> {
+                stringResource(Res.string.suggestion_label_memory)
+            }
+
+            TimelineSuggestionBlockType.UPCOMING_EVENT -> {
+                stringResource(Res.string.suggestion_label_upcoming)
+            }
+
+            TimelineSuggestionBlockType.AFTER_ACTIVITY -> {
                 stringResource(if (state.activityTrip) Res.string.suggestion_label_trip else Res.string.suggestion_label_activity)
-            TimelineSuggestionBlockType.MORNING_START -> stringResource(Res.string.suggestion_label_morning)
+            }
+
+            TimelineSuggestionBlockType.MORNING_START -> {
+                stringResource(Res.string.suggestion_label_morning)
+            }
         }
 
     val containerColor =
@@ -372,6 +388,7 @@ private fun SuggestionActions(
                     },
                 )
             }
+
             TimelineSuggestionBlockType.EMPTY_DAY -> {
                 AssistChip(
                     onClick = onStartWriting,
@@ -385,6 +402,7 @@ private fun SuggestionActions(
                     },
                 )
             }
+
             TimelineSuggestionBlockType.MEMORY_RECALL -> {
                 AssistChip(
                     onClick = { state.memoryDate?.let(onViewMemoryDay) },
@@ -410,6 +428,7 @@ private fun SuggestionActions(
                     },
                 )
             }
+
             TimelineSuggestionBlockType.AFTER_ACTIVITY, TimelineSuggestionBlockType.MORNING_START -> {
                 TextButton(onClick = onDismiss, modifier = Modifier.testTag(TimelineSuggestionTags.DISMISS)) {
                     Text(stringResource(Res.string.common_dismiss))
@@ -438,6 +457,7 @@ private fun SuggestionActions(
                     }
                 }
             }
+
             TimelineSuggestionBlockType.UPCOMING_EVENT -> {
                 AssistChip(
                     onClick = onStartWriting,

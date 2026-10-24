@@ -26,16 +26,24 @@ internal fun resolveAndroidAuthenticationAvailability(canAuthenticate: (Int) -> 
     val state =
         when {
             credentialResult == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ||
-                combinedResult == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> AppAuthState.REQUEST_ENROLLMENT
-            combinedResult == BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> AppAuthState.UPDATE_REQUIRED
-            else ->
+                combinedResult == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                AppAuthState.REQUEST_ENROLLMENT
+            }
+
+            combinedResult == BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED -> {
+                AppAuthState.UPDATE_REQUIRED
+            }
+
+            else -> {
                 when (combinedResult) {
                     BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
                     BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
                     BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED,
                     -> AppAuthState.UNSUPPORTED
+
                     else -> AppAuthState.UNKNOWN
                 }
+            }
         }
     return AndroidAuthenticationAvailability.Unavailable(state)
 }

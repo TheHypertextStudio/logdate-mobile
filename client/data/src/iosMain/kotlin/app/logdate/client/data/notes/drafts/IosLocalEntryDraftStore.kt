@@ -83,7 +83,9 @@ class IosLocalEntryDraftStore : LocalEntryDraftStore {
             caption =
                 when (this) {
                     is JournalNote.Image -> caption
+
                     is JournalNote.Video -> caption
+
                     is JournalNote.Handwriting,
                     is JournalNote.Text,
                     is JournalNote.Audio,
@@ -111,18 +113,15 @@ class IosLocalEntryDraftStore : LocalEntryDraftStore {
         val updatedTimestamp = Instant.fromEpochMilliseconds(lastUpdated ?: createdAt)
 
         return when (noteType) {
-            NoteType.HANDWRITING -> toHandwritingNote(noteId, timestamp, updatedTimestamp)
-            NoteType.TEXT ->
-                JournalNote.Text(
-                    uid = noteId,
-                    creationTimestamp = timestamp,
-                    lastUpdated = updatedTimestamp,
-                    content = content,
-                    syncVersion = syncVersion,
-                    location = location,
-                    timeZoneId = timeZoneId,
-                )
-            NoteType.AUDIO ->
+            NoteType.HANDWRITING -> {
+                toHandwritingNote(noteId, timestamp, updatedTimestamp)
+            }
+
+            NoteType.TEXT -> {
+                toTextNote(noteId, timestamp, updatedTimestamp)
+            }
+
+            NoteType.AUDIO -> {
                 JournalNote.Audio(
                     uid = noteId,
                     creationTimestamp = timestamp,
@@ -133,7 +132,9 @@ class IosLocalEntryDraftStore : LocalEntryDraftStore {
                     location = location,
                     timeZoneId = timeZoneId,
                 )
-            NoteType.IMAGE ->
+            }
+
+            NoteType.IMAGE -> {
                 JournalNote.Image(
                     uid = noteId,
                     creationTimestamp = timestamp,
@@ -144,7 +145,9 @@ class IosLocalEntryDraftStore : LocalEntryDraftStore {
                     location = location,
                     timeZoneId = timeZoneId,
                 )
-            NoteType.VIDEO ->
+            }
+
+            NoteType.VIDEO -> {
                 JournalNote.Video(
                     uid = noteId,
                     creationTimestamp = timestamp,
@@ -155,10 +158,28 @@ class IosLocalEntryDraftStore : LocalEntryDraftStore {
                     location = location,
                     timeZoneId = timeZoneId,
                 )
-            NoteType.LOCATION ->
+            }
+
+            NoteType.LOCATION -> {
                 throw IllegalArgumentException("A draft cannot contain a LOCATION journal note")
+            }
         }
     }
+
+    private fun SerializableJournalNote.toTextNote(
+        noteId: Uuid,
+        created: Instant,
+        updated: Instant,
+    ): JournalNote.Text =
+        JournalNote.Text(
+            uid = noteId,
+            creationTimestamp = created,
+            lastUpdated = updated,
+            content = content,
+            syncVersion = syncVersion,
+            location = location,
+            timeZoneId = timeZoneId,
+        )
 
     private fun SerializableJournalNote.toHandwritingNote(
         noteId: Uuid,

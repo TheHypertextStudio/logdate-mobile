@@ -76,12 +76,17 @@ internal fun WatchSetupContent(
     modifier: Modifier = Modifier,
 ) {
     when (status) {
-        null ->
+        null -> {
             WatchSetupHero(stringResource(Res.string.watch_loading), null, Icons.Default.Watch, modifier) {
                 CircularProgressIndicator()
             }
-        WatchStatus.Unsupported -> WatchSetupHero(stringResource(Res.string.watch_unsupported), null, Icons.Default.Watch, modifier) {}
-        WatchStatus.NoWatch ->
+        }
+
+        WatchStatus.Unsupported -> {
+            WatchSetupHero(stringResource(Res.string.watch_unsupported), null, Icons.Default.Watch, modifier) {}
+        }
+
+        WatchStatus.NoWatch -> {
             WatchSetupHero(
                 stringResource(Res.string.watch_setup_pair_title),
                 stringResource(Res.string.watch_setup_pair_description),
@@ -93,24 +98,31 @@ internal fun WatchSetupContent(
                     label = stringResource(Res.string.watch_setup_start_action),
                 )
             }
-        is WatchStatus.SettingUp ->
+        }
+
+        is WatchStatus.SettingUp -> {
             when (val step = status.step) {
-                is WatchSetupStep.PairWithPhone ->
+                is WatchSetupStep.PairWithPhone -> {
                     WatchSetupHero(
                         stringResource(Res.string.watch_setup_associate_title, step.watchName),
                         stringResource(Res.string.watch_setup_associate_description),
                         Icons.Default.Watch,
                         modifier,
                     ) { Button(onClick = onAssociate) { Text(stringResource(Res.string.watch_setup_associate_action)) } }
-                WatchSetupStep.ConfirmOnPhone ->
+                }
+
+                WatchSetupStep.ConfirmOnPhone -> {
                     WatchSetupHero(
                         stringResource(Res.string.watch_association_pending),
                         stringResource(Res.string.watch_association_pending_description),
                         Icons.Default.Watch,
                         modifier,
                     ) { CircularProgressIndicator() }
+                }
             }
-        is WatchStatus.NotInstalled ->
+        }
+
+        is WatchStatus.NotInstalled -> {
             WatchSetupHero(
                 stringResource(Res.string.watch_setup_install_title, status.watchName),
                 stringResource(Res.string.watch_setup_install_description),
@@ -127,7 +139,11 @@ internal fun WatchSetupContent(
                 }
                 requestFailure?.let { WatchRequestFailureMessage(it) }
             }
-        is WatchStatus.Ready, is WatchStatus.NeedsAttention -> Unit
+        }
+
+        is WatchStatus.Ready, is WatchStatus.NeedsAttention -> {
+            Unit
+        }
     }
 }
 

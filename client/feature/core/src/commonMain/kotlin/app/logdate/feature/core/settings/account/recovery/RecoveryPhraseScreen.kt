@@ -126,11 +126,15 @@ fun RecoveryPhraseScreen(
                         viewModel.onScreenActive()
                         started = true
                     }
+
                     Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP -> {
                         started = false
                         viewModel.onScreenInactive()
                     }
-                    else -> Unit
+
+                    else -> {
+                        Unit
+                    }
                 }
             }
         lifecycle.addObserver(observer)
@@ -238,18 +242,22 @@ fun RecoveryPhraseContent(
                                 onClick = {},
                             )
                         }
+
                         RecoveryPhraseUiState.NotOnThisDevice -> {
                             Text(stringResource(Res.string.recovery_phrase_missing_title), style = MaterialTheme.typography.titleMedium)
                             Text(stringResource(Res.string.recovery_phrase_missing_body), style = MaterialTheme.typography.bodyMedium)
                             SettingsAction(label = stringResource(Res.string.recovery_phrase_enter), onClick = onEnterPhrase)
                         }
-                        RecoveryPhraseUiState.Unreadable ->
+
+                        RecoveryPhraseUiState.Unreadable -> {
                             SettingsAction(
                                 label = stringResource(Res.string.recovery_phrase_retry),
                                 status = SettingsActionStatus.FAILED,
                                 error = stringResource(Res.string.recovery_phrase_unreadable),
                                 onClick = onRetry,
                             )
+                        }
+
                         is RecoveryPhraseUiState.Available -> {
                             if (revealed == null) {
                                 if (compactHeight) {

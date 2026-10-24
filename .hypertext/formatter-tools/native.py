@@ -8,11 +8,23 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import urllib.request
 
-VERSION = "1.5.0"
-SHA256 = "a27854622198800f50971a049dcdba38f2105d47e7e7258786c7d28045c5735d"
-URL = "https://repo.maven.apache.org/maven2/com/pinterest/ktlint/ktlint-cli/1.5.0/ktlint-cli-1.5.0-all.jar"
+ROOT = Path(__file__).resolve().parents[2]
+VERSION = tomllib.loads((ROOT / "gradle/libs.versions.toml").read_text())["versions"][
+    "ktlintEngine"
+]
+# A catalog upgrade requires deliberate review of the new official artifact.
+ARTIFACTS = {
+    "1.8.0": "369ad2b789f95a011f807e1fcb690ccef80bd7cd014fd139e73ae82dcc0baeab"
+}
+if VERSION not in ARTIFACTS:
+    raise SystemExit(
+        "Native formatter blocked: catalog engine needs a reviewed artifact checksum"
+    )
+SHA256 = ARTIFACTS[VERSION]
+URL = f"https://repo.maven.apache.org/maven2/com/pinterest/ktlint/ktlint-cli/{VERSION}/ktlint-cli-{VERSION}-all.jar"
 CACHE = (
     Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
     / "hypertext-studio/formatters"
@@ -56,11 +68,14 @@ def setup():
     result = subprocess.run(
         java_command() + ["--version"], capture_output=True, timeout=30
     )
-    if result.returncode or result.stdout.strip() != b"ktlint version 1.5.0":
+    if (
+        result.returncode
+        or result.stdout.strip() != f"ktlint version {VERSION}".encode()
+    ):
         raise ValueError(
-            "Pinned KtLint 1.5.0 could not execute; use the repository JDK"
+            f"Pinned KtLint {VERSION} could not execute; use the repository JDK"
         )
-    print("Pinned KtLint 1.5.0 ready in the shared native cache.")
+    print(f"Pinned KtLint {VERSION} ready in the shared native cache.")
 
 
 def java_command():
@@ -70,6 +85,53 @@ def java_command():
             "Java is unavailable; prepare the repository JDK before formatter setup"
         )
     return [java, "-Djava.awt.headless=true", "-jar", str(JAR)]
+
+
+KTLINT_STDIN = r"""
+import com.pinterest.ktlint.rule.engine.api.Code;
+import com.pinterest.ktlint.rule.engine.api.EditorConfigDefaults;
+import com.pinterest.ktlint.rule.engine.api.EditorConfigOverride;
+import com.pinterest.ktlint.rule.engine.api.KtLintRuleEngine;
+import com.pinterest.ktlint.ruleset.standard.StandardRuleSetProvider;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import kotlin.Unit;
+
+/** Preserve staged stdin bytes and the original config path without CLI printf expansion. */
+public final class KtlintStdin {
+    @SuppressWarnings("deprecation")
+    public static void main(String[] args) throws Exception {
+        ((ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("ROOT"))
+            .setLevel(ch.qos.logback.classic.Level.OFF);
+        String input = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
+        var engine = new KtLintRuleEngine(
+            new StandardRuleSetProvider().getRuleProviders(),
+            EditorConfigDefaults.Companion.getEMPTY_EDITOR_CONFIG_DEFAULTS(),
+            EditorConfigOverride.Companion.getEMPTY_EDITOR_CONFIG_OVERRIDE(),
+            true,
+            FileSystems.getDefault());
+        var code = Code.Companion.fromSnippetWithPath(input, Path.of(args[0]));
+        boolean[] failed = {false};
+        String result = engine.format(code, (error, corrected) -> {
+            if (!corrected) {
+                failed[0] = true;
+                System.err.println(error);
+            }
+            return Unit.INSTANCE;
+        });
+        // Check the final result as well: a non-correctable rule must block the hook.
+        engine.lint(Code.Companion.fromSnippetWithPath(result, Path.of(args[0])), error -> {
+            failed[0] = true;
+            System.err.println(error);
+            return Unit.INSTANCE;
+        });
+        if (failed[0]) System.exit(1);
+        System.out.write(result.getBytes(StandardCharsets.UTF_8));
+        System.out.flush();
+    }
+}
+"""
 
 
 def main():
@@ -82,18 +144,20 @@ def main():
         raise ValueError(
             "Pinned KtLint is missing or changed. Run python3 .hypertext/formatter-tools/native.py --setup before committing"
         )
-    # The virtual source path preserves nested .editorconfig discovery and script
-    # parsing, while --stdin ensures the source file itself is never opened for write.
-    command = java_command() + [
-        "--log-level=none",
-        "--format",
-        "--stdin",
-        "--stdin-path",
-        str((Path(__file__).resolve().parents[2] / sys.argv[2]).resolve()),
-    ]
-    source = sys.stdin.buffer.read()
-    result = subprocess.run(command, input=source, capture_output=True)
-    # KtLint 1.5.0 can report a parse error on stderr and exit zero with
+    # ktlint 1.8 CLI passes formatted stdin to printf, corrupting literal %
+    # sequences. Use the same verified engine API and original virtual path.
+    with tempfile.TemporaryDirectory(prefix="hypertext-ktlint-") as directory:
+        bridge = Path(directory) / "KtlintStdin.java"
+        bridge.write_text(KTLINT_STDIN, encoding="utf-8")
+        command = java_command()[:2] + [
+            "--class-path",
+            str(JAR),
+            str(bridge),
+            str((Path(__file__).resolve().parents[2] / sys.argv[2]).resolve()),
+        ]
+        source = sys.stdin.buffer.read()
+        result = subprocess.run(command, input=source, capture_output=True)
+    # KtLint can report a parse error on stderr and exit zero with
     # no stdout. Never expose that as a successful formatting operation.
     if (
         result.returncode

@@ -98,7 +98,9 @@ internal fun BackupStatusItem(
                 AccountSyncStatus.BACKGROUND_RESTRICTED -> Res.string.sync_heading_background
 
                 AccountSyncStatus.STORAGE_FULL -> Res.string.sync_heading_storage
+
                 AccountSyncStatus.ACCOUNT_STORAGE_UNSUPPORTED -> Res.string.sync_heading_update
+
                 AccountSyncStatus.UNKNOWN, AccountSyncStatus.SERVER_UNAVAILABLE, AccountSyncStatus.CONNECTION_UNAVAILABLE,
                 AccountSyncStatus.DEVICE_ACCESS_REQUIRED, AccountSyncStatus.CONFLICT, AccountSyncStatus.LOCAL_DATA_UNAVAILABLE,
                 AccountSyncStatus.MEDIA_TOO_LARGE,
@@ -184,10 +186,17 @@ internal fun BackupStatusItem(
                     } else if (title != status.messageResource() && !noSavedBackup && !savedBackupAvailable) {
                         val detail =
                             when {
-                                status == AccountSyncStatus.ACCOUNT_STORAGE_UNSUPPORTED ->
+                                status == AccountSyncStatus.ACCOUNT_STORAGE_UNSUPPORTED -> {
                                     Res.string.sync_account_storage_unsupported_detail
-                                status == AccountSyncStatus.UNKNOWN -> Res.string.sync_retry_automatic_detail
-                                else -> status.messageResource()
+                                }
+
+                                status == AccountSyncStatus.UNKNOWN -> {
+                                    Res.string.sync_retry_automatic_detail
+                                }
+
+                                else -> {
+                                    status.messageResource()
+                                }
                             }
                         Text(
                             stringResource(detail),

@@ -354,8 +354,11 @@ private fun String.safeLinkDestination(): String? =
             startsWith("http://", ignoreCase = true) ||
             startsWith("mailto:", ignoreCase = true) ||
             startsWith("tel:", ignoreCase = true) -> this
+
         startsWith("www.", ignoreCase = true) -> "https://$this"
+
         contains('@') && !contains(':') && !contains(' ') -> "mailto:$this"
+
         else -> null
     }
 

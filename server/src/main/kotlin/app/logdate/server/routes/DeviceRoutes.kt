@@ -67,19 +67,25 @@ private fun Route.createLinkRoute(
         val claims = call.requireAccess(verifier, allowSyncScope = false) ?: return@post
         val accountId = call.accountUuid(claims) ?: return@post
         when (val minted = linkService.mint(accountId)) {
-            is DeviceLinkMint.Minted -> call.respond(HttpStatusCode.OK, minted.code)
-            DeviceLinkMint.DeviceLimitReached ->
+            is DeviceLinkMint.Minted -> {
+                call.respond(HttpStatusCode.OK, minted.code)
+            }
+
+            DeviceLinkMint.DeviceLimitReached -> {
                 call.respondDeviceError(
                     HttpStatusCode.Conflict,
                     DeviceLinkErrorCodes.DEVICE_LIMIT_REACHED,
                     "This account already has ${DeviceLinkService.MAX_ACTIVE_DEVICES} linked devices",
                 )
-            DeviceLinkMint.RateLimited ->
+            }
+
+            DeviceLinkMint.RateLimited -> {
                 call.respondDeviceError(
                     HttpStatusCode.TooManyRequests,
                     DeviceLinkErrorCodes.DEVICE_LINK_RATE_LIMITED,
                     "Too many link codes this hour",
                 )
+            }
         }
     }
 }
@@ -106,21 +112,29 @@ private fun Route.redeemLinkRoute(
             call.receiveRedeemRequest()
                 ?: return@post call.respondDeviceError(HttpStatusCode.BadRequest, "INVALID_REQUEST", "Request body is invalid")
         when (val redeemed = linkService.redeem(request)) {
-            is DeviceLinkRedemption.Redeemed -> call.respond(HttpStatusCode.OK, redeemed.response)
-            DeviceLinkRedemption.InvalidCode ->
+            is DeviceLinkRedemption.Redeemed -> {
+                call.respond(HttpStatusCode.OK, redeemed.response)
+            }
+
+            DeviceLinkRedemption.InvalidCode -> {
                 call.respondDeviceError(
                     HttpStatusCode.BadRequest,
                     DeviceLinkErrorCodes.LINK_CODE_INVALID,
                     "The link code is invalid, expired, or already used",
                 )
-            DeviceLinkRedemption.InvalidDevice ->
+            }
+
+            DeviceLinkRedemption.InvalidDevice -> {
                 call.respondDeviceError(HttpStatusCode.BadRequest, "VALIDATION_ERROR", "Device name or platform is invalid")
-            DeviceLinkRedemption.DeviceLimitReached ->
+            }
+
+            DeviceLinkRedemption.DeviceLimitReached -> {
                 call.respondDeviceError(
                     HttpStatusCode.Conflict,
                     DeviceLinkErrorCodes.DEVICE_LIMIT_REACHED,
                     "This account already has ${DeviceLinkService.MAX_ACTIVE_DEVICES} linked devices",
                 )
+            }
         }
     }
 }
@@ -182,12 +196,21 @@ private suspend fun ApplicationCall.requireAccess(
         return null
     }
     when (val check = verifier.verify(token, allowSyncScope)) {
-        is AccessCheck.Granted -> return check.claims
-        AccessCheck.SessionRevoked ->
+        is AccessCheck.Granted -> {
+            return check.claims
+        }
+
+        AccessCheck.SessionRevoked -> {
             respondDeviceError(HttpStatusCode.Unauthorized, DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED, REVOKED_MESSAGE)
-        AccessCheck.ScopeDenied -> respondDeviceError(HttpStatusCode.Forbidden, DeviceLinkErrorCodes.DEVICE_SCOPE_DENIED, SCOPE_MESSAGE)
-        AccessCheck.Missing, AccessCheck.Invalid ->
+        }
+
+        AccessCheck.ScopeDenied -> {
+            respondDeviceError(HttpStatusCode.Forbidden, DeviceLinkErrorCodes.DEVICE_SCOPE_DENIED, SCOPE_MESSAGE)
+        }
+
+        AccessCheck.Missing, AccessCheck.Invalid -> {
             respondDeviceError(HttpStatusCode.Unauthorized, "INVALID_TOKEN", "Invalid or expired access token")
+        }
     }
     return null
 }

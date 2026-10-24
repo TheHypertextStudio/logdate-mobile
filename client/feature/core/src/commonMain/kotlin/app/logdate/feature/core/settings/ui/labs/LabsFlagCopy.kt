@@ -24,20 +24,28 @@ internal data class LabsFlagCopy(
  */
 internal fun FeatureFlag.labsCopy(): LabsFlagCopy? =
     when (this) {
-        FeatureFlag.WATCH_EXPERIENCE_V2 ->
+        FeatureFlag.WATCH_EXPERIENCE_V2 -> {
             LabsFlagCopy(
                 title = Res.string.labs_watch_experience_title,
                 description = Res.string.labs_watch_experience_description,
             )
-        FeatureFlag.ACTIVITY_AWARENESS ->
+        }
+
+        FeatureFlag.ACTIVITY_AWARENESS -> {
             LabsFlagCopy(
                 title = Res.string.labs_activity_awareness_title,
                 description = Res.string.labs_activity_awareness_description,
             )
-        FeatureFlag.IDENTITY_RECOVERY_KEY ->
+        }
+
+        FeatureFlag.IDENTITY_RECOVERY_KEY -> {
             LabsFlagCopy(
                 title = Res.string.labs_identity_recovery_key_title,
                 description = Res.string.labs_identity_recovery_key_description,
             )
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }

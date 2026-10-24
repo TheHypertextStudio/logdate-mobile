@@ -407,7 +407,10 @@ internal fun mapNotificationStatus(status: Long): PermissionStatus =
         UNAuthorizationStatusProvisional,
         UNAuthorizationStatusEphemeral,
         -> PermissionStatus.GRANTED
+
         UNAuthorizationStatusDenied -> PermissionStatus.PERMANENTLY_DENIED
+
         UNAuthorizationStatusNotDetermined -> PermissionStatus.DENIED
+
         else -> PermissionStatus.UNKNOWN
     }

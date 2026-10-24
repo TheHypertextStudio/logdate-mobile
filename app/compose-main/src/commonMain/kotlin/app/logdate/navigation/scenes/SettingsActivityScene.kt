@@ -106,6 +106,7 @@ internal fun SettingsActivityLayout(
                     ) { detail() }
                 }
             }
+
             is FoldableSplitLayout.Horizontal -> {
                 val topHeight = (split.hingeBounds.top - origin.y).coerceIn(0.dp, maxHeight)
                 val hingeEnd = (split.hingeBounds.bottom - origin.y).coerceIn(0.dp, maxHeight)
@@ -118,6 +119,7 @@ internal fun SettingsActivityLayout(
                         .width(maxWidth),
                 ) { detail() }
             }
+
             FoldableSplitLayout.None -> {
                 if (supportsDualPane && enoughHeight && maxWidth >= minimumCategories + minimumDetail + Spacing.lg * 3) {
                     Row(

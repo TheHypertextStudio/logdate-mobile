@@ -35,14 +35,30 @@ fun MutableList<NavKey>.completeJournalMerge(operation: JournalMergeOperation) {
     val activeMergeRoute = lastOrNull { it is JournalMergeRoute }
     removeAll { route ->
         when (route) {
-            is JournalDetailsRoute ->
+            is JournalDetailsRoute -> {
                 route.journalId == operation.sourceId.toString() ||
                     route.journalId == operation.destinationId.toString()
-            is JournalSettingsRoute -> route.journalId == operation.sourceId.toString()
-            is ShareJournalRoute -> route.journalId == operation.sourceId.toString()
-            is JournalContentPickerRoute -> route.journalId == operation.sourceId.toString()
-            is JournalMergeRoute -> route == activeMergeRoute || route.sourceId == operation.sourceId.toString()
-            else -> false
+            }
+
+            is JournalSettingsRoute -> {
+                route.journalId == operation.sourceId.toString()
+            }
+
+            is ShareJournalRoute -> {
+                route.journalId == operation.sourceId.toString()
+            }
+
+            is JournalContentPickerRoute -> {
+                route.journalId == operation.sourceId.toString()
+            }
+
+            is JournalMergeRoute -> {
+                route == activeMergeRoute || route.sourceId == operation.sourceId.toString()
+            }
+
+            else -> {
+                false
+            }
         }
     }
     add(JournalDetailsRoute(operation.destinationId.toString(), mergedSourceTitle = operation.sourceTitle))

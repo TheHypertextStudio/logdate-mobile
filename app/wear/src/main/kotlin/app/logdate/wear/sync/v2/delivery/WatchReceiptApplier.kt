@@ -51,11 +51,15 @@ class WatchReceiptApplier(
         if (sourceNodeId != peer.phoneNode) return 0
         val response =
             when (val decoded = WearJson.decode(payload, WearProtocol.RECEIPTS_SCHEMA, ReceiptsResponse.serializer())) {
-                is Decoded.Supported -> decoded.value
+                is Decoded.Supported -> {
+                    decoded.value
+                }
+
                 is Decoded.Unsupported -> {
                     Napier.w("The phone's receipts use schema ${decoded.schema}; the watch waits and asks again")
                     return 0
                 }
+
                 is Decoded.Malformed -> {
                     Napier.e("The phone's receipts could not be read: ${decoded.reason}; the watch asks again")
                     return 0

@@ -27,9 +27,19 @@ val TimelineSummaryUnavailableReason.notice: StringResource
  */
 fun CurrentLocationDescription.toUiText(): UiText =
     when (this) {
-        is CurrentLocationDescription.NamedPlace -> name.toUiText()
-        is CurrentLocationDescription.Street -> Res.string.timeline_suggestion_location_street.toUiText(street, locality)
-        is CurrentLocationDescription.Neighborhood ->
+        is CurrentLocationDescription.NamedPlace -> {
+            name.toUiText()
+        }
+
+        is CurrentLocationDescription.Street -> {
+            Res.string.timeline_suggestion_location_street.toUiText(street, locality)
+        }
+
+        is CurrentLocationDescription.Neighborhood -> {
             Res.string.timeline_suggestion_location_neighborhood.toUiText(neighborhood, locality)
-        is CurrentLocationDescription.Area -> Res.string.timeline_suggestion_location_area.toUiText(name)
+        }
+
+        is CurrentLocationDescription.Area -> {
+            Res.string.timeline_suggestion_location_area.toUiText(name)
+        }
     }

@@ -17,7 +17,10 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun formatAudioLabel(result: AudioLabelResult): String =
     when (result) {
-        is AudioLabelResult.Caption -> result.text
+        is AudioLabelResult.Caption -> {
+            result.text
+        }
+
         is AudioLabelResult.Contextual -> {
             val periodName = stringResource(result.period.stringRes)
             if (result.locationName != null) {
@@ -36,7 +39,10 @@ fun formatAudioLabel(result: AudioLabelResult): String =
 suspend fun formatAudioLabelAsync(result: AudioLabelResult): String =
     runCatching {
         when (result) {
-            is AudioLabelResult.Caption -> result.text
+            is AudioLabelResult.Caption -> {
+                result.text
+            }
+
             is AudioLabelResult.Contextual -> {
                 val periodName = getString(result.period.stringRes)
                 if (result.locationName != null) {
@@ -53,7 +59,10 @@ suspend fun formatAudioLabelAsync(result: AudioLabelResult): String =
 
 private fun fallbackAudioLabel(result: AudioLabelResult): String =
     when (result) {
-        is AudioLabelResult.Caption -> result.text
+        is AudioLabelResult.Caption -> {
+            result.text
+        }
+
         is AudioLabelResult.Contextual -> {
             val periodName =
                 result.period.name

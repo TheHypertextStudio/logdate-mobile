@@ -120,13 +120,17 @@ class IosSubscriptionBiller : SubscriptionBiller {
                         _isSubscribed.value = true
                         queue.finishTransaction(transaction)
                     }
+
                     SKPaymentTransactionState.SKPaymentTransactionStateFailed -> {
                         Napier.w(
                             "StoreKit purchase failed: ${transaction.error?.localizedDescription}",
                         )
                         queue.finishTransaction(transaction)
                     }
-                    else -> Unit // purchasing / deferred — wait for the next callback
+
+                    else -> {
+                        Unit
+                    } // purchasing / deferred — wait for the next callback
                 }
             }
         }

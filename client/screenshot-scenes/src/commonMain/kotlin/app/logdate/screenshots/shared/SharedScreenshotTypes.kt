@@ -182,6 +182,7 @@ private fun halfOpenedFoldable(
                 val top = (height - HingeThickness) / 2
                 FoldableHingeBounds(0.dp, top, width, top + HingeThickness, width, HingeThickness)
             }
+
             else -> {
                 val left = (width - HingeThickness) / 2
                 FoldableHingeBounds(left, 0.dp, left + HingeThickness, height, HingeThickness, height)

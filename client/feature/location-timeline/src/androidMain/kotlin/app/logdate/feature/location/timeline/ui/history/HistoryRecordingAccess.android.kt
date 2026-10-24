@@ -60,7 +60,7 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
         }
         val access =
             when {
-                !granted(Manifest.permission.ACCESS_FINE_LOCATION) && !granted(Manifest.permission.ACCESS_COARSE_LOCATION) ->
+                !granted(Manifest.permission.ACCESS_FINE_LOCATION) && !granted(Manifest.permission.ACCESS_COARSE_LOCATION) -> {
                     HistoryRecordingAccess(
                         message = Res.string.history_access_location_message,
                         actionLabel = Res.string.history_access_location_action,
@@ -71,41 +71,52 @@ internal actual fun rememberHistoryRecordingAccess(): HistoryRecordingAccess {
                             )
                         },
                     )
-                context.getSystemService(LocationManager::class.java)?.isLocationEnabled != true ->
+                }
+
+                context.getSystemService(LocationManager::class.java)?.isLocationEnabled != true -> {
                     HistoryRecordingAccess(
                         message = Res.string.history_access_location_services_message,
                         actionLabel = Res.string.history_access_location_services_action,
                         reducedMotion = motion,
                         resolve = { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) },
                     )
-                !granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ->
+                }
+
+                !granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION) -> {
                     HistoryRecordingAccess(
                         message = Res.string.history_access_background_message,
                         actionLabel = Res.string.history_access_background_action,
                         reducedMotion = motion,
                         resolve = settings,
                     )
-                !granted(Manifest.permission.ACTIVITY_RECOGNITION) ->
+                }
+
+                !granted(Manifest.permission.ACTIVITY_RECOGNITION) -> {
                     HistoryRecordingAccess(
                         message = Res.string.history_access_activity_message,
                         actionLabel = Res.string.history_access_activity_action,
                         reducedMotion = motion,
                         resolve = { request.launch(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION)) },
                     )
-                Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS) ->
+                }
+
+                Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS) -> {
                     HistoryRecordingAccess(
                         message = Res.string.history_access_notifications_message,
                         actionLabel = Res.string.history_access_notifications_action,
                         reducedMotion = motion,
                         resolve = { request.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS)) },
                     )
-                else ->
+                }
+
+                else -> {
                     HistoryRecordingAccess(
                         true,
                         Res.string.history_access_ready_message,
                         Res.string.history_access_ready_action,
                         motion,
                     )
+                }
             }
         access.copy(
             openSettings = settings,

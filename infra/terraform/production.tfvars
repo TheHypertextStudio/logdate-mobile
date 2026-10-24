@@ -16,7 +16,7 @@ webauthn_rp_id  = "logdate.app"
 webauthn_origin = "https://cloud.logdate.app"
 
 enable_github_oidc = true
-github_repo        = "WillieCubed/logdate-mobile"
+github_repo        = "TheHypertextStudio/logdate-mobile"
 
 # `logdate.hypertext.studio` used to live here too but it's owned by the
 # Hypertext org's main site and just redirects to LogDate — it's not a

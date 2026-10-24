@@ -155,9 +155,11 @@ internal fun AndroidAudioRecordingManager.runAmbientTagging(
                             }
                         audioTagRepository.replaceTagsForNote(noteId, domainTags)
                     }
+
                     is AudioTaggingResult.Error -> {
                         Napier.w("Audio tagging failed for $noteId: ${result.message}")
                     }
+
                     AudioTaggingResult.Unavailable -> {
                         Napier.d("Audio tagging unavailable for $noteId because its optional model is not installed")
                     }

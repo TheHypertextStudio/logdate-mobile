@@ -132,6 +132,33 @@ def run_backup_probe(h, serial, output, *arguments):
                 "Partial instrumentation evidence unavailable: "
                 + type(diagnostic).__name__,
             )
+        # Caller cleanup starts another invocation of the same test method.
+        # Preserve this phase before UTP replaces its shared method logcat.
+        try:
+            data = h.adb(
+                serial,
+                "logcat",
+                "-d",
+                "-t",
+                "4000",
+                "-v",
+                "threadtime",
+                "-s",
+                "NativeTransferProbeTrace:D",
+                "NativeCurrentDraftTrace:D",
+                "TestRunner:I",
+                "AndroidRuntime:E",
+                timeout=20,
+            )
+            h.private_file(
+                output.with_suffix(".timeout.logcat.log"),
+                _bounded_startup_output(data),
+            )
+        except Exception as diagnostic:
+            h.add_failure_note(
+                failure,
+                "Timed-out probe logcat unavailable: " + type(diagnostic).__name__,
+            )
         raise
     h.private_file(output, result)
     return result

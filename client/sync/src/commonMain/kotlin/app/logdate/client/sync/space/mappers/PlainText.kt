@@ -59,8 +59,14 @@ private fun escapeLineStart(
 ): String {
     val first = line.firstOrNull() ?: return body
     return when {
-        first == '#' || first == '>' -> "\\$body"
-        ruleOrUnderline.matches(line) || bulletMarker.containsMatchIn(line) -> "\\$body"
+        first == '#' || first == '>' -> {
+            "\\$body"
+        }
+
+        ruleOrUnderline.matches(line) || bulletMarker.containsMatchIn(line) -> {
+            "\\$body"
+        }
+
         else -> {
             val ordered = orderedListMarker.find(line) ?: return body
             val delimiterAt = ordered.groupValues[1].length

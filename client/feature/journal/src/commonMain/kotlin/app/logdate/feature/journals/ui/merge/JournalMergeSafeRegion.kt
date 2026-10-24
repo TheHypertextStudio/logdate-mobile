@@ -43,6 +43,7 @@ internal fun MergeSafeRegion(
                         .height(if (useAbove) above else below),
                 ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) { content() } }
             }
+
             hinge?.orientation == FoldableHingeOrientation.Vertical -> {
                 val left = hinge.bounds.left.coerceIn(0.dp, maxWidth)
                 val right = (maxWidth - hinge.bounds.right).coerceIn(0.dp, maxWidth)
@@ -55,7 +56,10 @@ internal fun MergeSafeRegion(
                         .fillMaxHeight(),
                 ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) { content() } }
             }
-            else -> content()
+
+            else -> {
+                content()
+            }
         }
     }
 }

@@ -29,7 +29,10 @@ class HasLogDateCloudAccountUseCase(
                     }
                 }
             }
-            else -> throw IllegalStateException("Unexpected result type from GetCurrentAccountUseCase")
+
+            else -> {
+                throw IllegalStateException("Unexpected result type from GetCurrentAccountUseCase")
+            }
         }
     }
 

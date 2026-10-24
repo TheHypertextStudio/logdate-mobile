@@ -154,26 +154,29 @@ fun SignInMethodsContent(
         snackbarHostState = snackbarHostState,
     ) {
         when (state) {
-            SignInMethodsUiState.Loading ->
+            SignInMethodsUiState.Loading -> {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(Spacing.xl), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
+            }
 
-            SignInMethodsUiState.NotLoaded ->
+            SignInMethodsUiState.NotLoaded -> {
                 item {
                     FilledTonalButton(onClick = onRetry, modifier = Modifier.padding(horizontal = Spacing.lg)) {
                         Text(stringResource(Res.string.sign_in_methods_load_again))
                     }
                 }
+            }
 
-            is SignInMethodsUiState.Failed ->
+            is SignInMethodsUiState.Failed -> {
                 item { LoadFailed(reason = state.reason, onRetry = onRetry) }
+            }
 
             is SignInMethodsUiState.Loaded -> {
                 when (val refresh = state.refresh) {
-                    SignInMethodsRefreshState.Running ->
+                    SignInMethodsRefreshState.Running -> {
                         item {
                             Row(
                                 modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -184,8 +187,15 @@ fun SignInMethodsContent(
                                 Text(stringResource(Res.string.sign_in_methods_refreshing))
                             }
                         }
-                    is SignInMethodsRefreshState.Failed -> item { LoadFailed(refresh.reason, onRetry) }
-                    SignInMethodsRefreshState.Idle -> Unit
+                    }
+
+                    is SignInMethodsRefreshState.Failed -> {
+                        item { LoadFailed(refresh.reason, onRetry) }
+                    }
+
+                    SignInMethodsRefreshState.Idle -> {
+                        Unit
+                    }
                 }
                 item {
                     Text(
@@ -286,14 +296,18 @@ private fun PasskeyItem(
         },
         trailingContent = {
             when {
-                isRemoving -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                passkey.canRemove ->
+                isRemoving -> {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                }
+
+                passkey.canRemove -> {
                     IconButton(onClick = onRemove, enabled = enabled) {
                         Icon(
                             Icons.Outlined.Delete,
                             contentDescription = stringResource(Res.string.sign_in_methods_remove_passkey_action, name),
                         )
                     }
+                }
             }
         },
     )
@@ -366,13 +380,17 @@ private fun LinkedProviderItem(provider: LinkedProviderRow) {
         }
     val supporting =
         when {
-            provider.email != null && lastSignIn != null ->
+            provider.email != null && lastSignIn != null -> {
                 stringResource(
                     Res.string.sign_in_methods_detail_pair,
                     provider.email,
                     lastSignIn,
                 )
-            else -> provider.email ?: lastSignIn
+            }
+
+            else -> {
+                provider.email ?: lastSignIn
+            }
         }
     SettingsRow(
         leadingContent = { Icon(Icons.Outlined.AccountCircle, contentDescription = null) },
@@ -434,10 +452,14 @@ private fun relativeDay(
 
 private suspend fun SignInMethodsEvent.message(): String =
     when (this) {
-        is SignInMethodsEvent.PasskeyAdded ->
+        is SignInMethodsEvent.PasskeyAdded -> {
             deviceName?.let { getString(Res.string.sign_in_methods_passkey_added_for, it) }
                 ?: getString(Res.string.sign_in_methods_passkey_added)
-        SignInMethodsEvent.PasskeyRemoved -> getString(Res.string.sign_in_methods_passkey_removed)
+        }
+
+        SignInMethodsEvent.PasskeyRemoved -> {
+            getString(Res.string.sign_in_methods_passkey_removed)
+        }
     }
 
 private val AddPasskeyFailure.message: StringResource

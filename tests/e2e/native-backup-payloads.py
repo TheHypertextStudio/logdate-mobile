@@ -220,12 +220,22 @@ def rewrite_native_full_backup(h, payload, transform):
 
 def selected_database_snapshot(h, payload, *, cloud_backup=False):
     """Hash the journal file selected by the backup agent, not the live WAL database."""
-    full_backup_name = f"1/_full/{h.PACKAGE}"
     selected_database = f"apps/{h.PACKAGE}/" + (
         "db/logdate"
         if cloud_backup
         else "f/native_journal_transfer/current/database/logdate"
     )
+    contents = h.selected_backup_contents(
+        payload, selected_database, description="selected journal database"
+    )
+    return {"bytes": len(contents), "sha256": hashlib.sha256(contents).hexdigest()}
+
+
+def selected_backup_contents(
+    h, payload, selected_path, *, description="selected backup file"
+):
+    """Read the exact selected file from Android's nested immutable source archive."""
+    full_backup_name = f"1/_full/{h.PACKAGE}"
     with tarfile.open(fileobj=io.BytesIO(payload), mode="r:") as transport:
         full_backup_item = next(
             (
@@ -249,17 +259,37 @@ def selected_database_snapshot(h, payload, *, cloud_backup=False):
                 (
                     item
                     for item in app_backup.getmembers()
-                    if item.name == selected_database and item.isfile()
+                    if item.name == selected_path and item.isfile()
                 ),
                 None,
             )
             database = app_backup.extractfile(database_item) if database_item else None
             if database is None:
                 raise RuntimeError(
-                    "native transport did not contain the selected journal database"
+                    "native transport did not contain the " + description
                 )
-            contents = database.read()
-    return {"bytes": len(contents), "sha256": hashlib.sha256(contents).hexdigest()}
+            return database.read()
+
+
+def verify_privacy_repair_snapshot(
+    h, before, after, before_preferences, after_preferences, source_preferences
+):
+    """A late policy repair preserves the occupied journal and changes exactly two fields."""
+    policy_names = {"is_onboarded", "security_level"}
+    h.assert_snapshot_preserved(
+        before, after, ignored_paths={"files/logdate.preferences_pb"}
+    )
+    changes = h.preference_changes(before_preferences, after_preferences)
+    if changes != {"added": sorted(policy_names), "removed": [], "changed": []}:
+        raise RuntimeError(
+            "privacy repair changed fields beyond the two missing policy values"
+        )
+    if h.canonical_preferences(
+        after_preferences, allowed_names=policy_names
+    ) != h.canonical_preferences(source_preferences, allowed_names=policy_names):
+        raise RuntimeError(
+            "privacy repair did not restore the authenticated source policy"
+        )
 
 
 def assert_cloud_backup_contents(h, payload):
@@ -471,6 +501,8 @@ def without_portable_recovery_keys_from_full_backup(h, payload):
 
 
 FUNCTIONS = {
+    "selected_backup_contents": selected_backup_contents,
+    "verify_privacy_repair_snapshot": verify_privacy_repair_snapshot,
     "is_user_content_path": is_user_content_path,
     "contains_user_content": contains_user_content,
     "contains_media_files": contains_media_files,

@@ -18,6 +18,7 @@ fun <T : Any> rememberWorkspaceRouteDecorator(): NavEntryDecorator<T> =
                 is ActivityPresentation.Collection,
                 is ActivityPresentation.Detail,
                 -> ActivityRouteFrame { entry.Content() }
+
                 else -> entry.Content()
             }
         }

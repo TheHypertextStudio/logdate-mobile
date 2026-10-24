@@ -36,13 +36,17 @@ class GetAccountSetupDataUseCase(
         data: AccountSetupData? = null,
     ): AccountSetupData =
         when (action) {
-            Action.Get -> getAccountData()
+            Action.Get -> {
+                getAccountData()
+            }
+
             is Action.Save -> {
                 if (data != null) {
                     saveAccountData(data)
                 }
                 data ?: AccountSetupData()
             }
+
             Action.Clear -> {
                 clearAccountData()
                 AccountSetupData()

@@ -190,18 +190,28 @@ class RecordConformanceTest {
             val message = issue.message
             return when {
                 issue.path == "\$type" -> "wrong-record-type"
+
                 message == "required field is missing" -> "missing-required"
+
                 message.startsWith("expected ") ||
                     message.startsWith("not a valid blob") ||
                     message == "not valid bytes" ||
                     message == "not a valid content link" -> "wrong-type"
+
                 message.startsWith("a union member must have") -> "union-member-missing-type"
+
                 message.contains("in this closed union") -> "union-member-not-allowed"
+
                 message.startsWith("longer than") || Regex("^more than \\d+ items$").matches(message) -> "too-long"
+
                 message.startsWith("shorter than") || message.startsWith("fewer than") -> "too-short"
+
                 message.contains("the minimum of") || message.contains("the maximum of") -> "out-of-range"
+
                 message.startsWith("not a valid ") -> "invalid-format"
+
                 message.contains("allowed values") || message.startsWith("must be ") -> "not-allowed-value"
+
                 else -> "unclassified: $message"
             }
         }

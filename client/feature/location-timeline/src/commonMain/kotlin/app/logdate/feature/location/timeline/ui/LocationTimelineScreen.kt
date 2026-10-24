@@ -166,8 +166,11 @@ fun LocationTimelineContent(
     modifier: Modifier = Modifier,
 ) {
     when (uiState) {
-        is LocationTimelineUiState.Error -> ErrorState(error = uiState.error, onRetry = onRetry, modifier = modifier)
-        is LocationTimelineUiState.Content ->
+        is LocationTimelineUiState.Error -> {
+            ErrorState(error = uiState.error, onRetry = onRetry, modifier = modifier)
+        }
+
+        is LocationTimelineUiState.Content -> {
             ContentState(
                 uiState = uiState,
                 onSelectPlace = onSelectPlace,
@@ -178,6 +181,7 @@ fun LocationTimelineContent(
                 onOpenNote = onOpenNote,
                 modifier = modifier,
             )
+        }
     }
 }
 
@@ -357,10 +361,17 @@ private fun ContentState(
                     derivedStateOf {
                         val collapseFraction =
                             when {
-                                listState.firstVisibleItemIndex > 0 -> 1f
-                                collapseRangePx <= 0f -> 0f
-                                else ->
+                                listState.firstVisibleItemIndex > 0 -> {
+                                    1f
+                                }
+
+                                collapseRangePx <= 0f -> {
+                                    0f
+                                }
+
+                                else -> {
                                     (listState.firstVisibleItemScrollOffset / collapseRangePx).coerceIn(0f, 1f)
+                                }
                             }
                         expandedMapHeight - (collapseRange * collapseFraction)
                     }

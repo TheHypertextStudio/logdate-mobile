@@ -52,7 +52,10 @@ private fun resolveDesktopCacheDir(): File {
     val home = System.getProperty("user.home")
     val base =
         when {
-            os.contains("mac") -> File(home, "Library/Caches/$APP_DIR_NAME")
+            os.contains("mac") -> {
+                File(home, "Library/Caches/$APP_DIR_NAME")
+            }
+
             os.contains("win") -> {
                 val localAppData = System.getenv("LOCALAPPDATA")
                 if (localAppData != null) {
@@ -61,6 +64,7 @@ private fun resolveDesktopCacheDir(): File {
                     File(home, "AppData/Local/$APP_DIR_NAME")
                 }
             }
+
             else -> {
                 val xdg = System.getenv("XDG_CACHE_HOME")
                 if (xdg != null) File(xdg, APP_DIR_NAME) else File(home, ".cache/$APP_DIR_NAME")

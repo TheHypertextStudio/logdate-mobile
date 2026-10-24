@@ -30,7 +30,10 @@ internal suspend fun LogDateCloudApiClient.requestUploadContent(
                 val responseBody = response.body<ContentUploadResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -61,7 +64,10 @@ internal suspend fun LogDateCloudApiClient.requestGetContentChanges(
                 val responseBody = response.body<ContentChangesResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -93,7 +99,10 @@ internal suspend fun LogDateCloudApiClient.requestUpdateContent(
                 val responseBody = response.body<ContentUpdateResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -145,9 +154,13 @@ internal suspend fun LogDateCloudApiClient.requestUploadDraft(
                 setBody(draft)
             }
         when (response.status) {
-            HttpStatusCode.OK, HttpStatusCode.Created ->
+            HttpStatusCode.OK, HttpStatusCode.Created -> {
                 Result.success(response.body<DraftUploadResponse>())
-            else -> handleApiError(response)
+            }
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -169,9 +182,13 @@ internal suspend fun LogDateCloudApiClient.requestGetDraftChanges(
                 limit?.let { parameter("limit", it) }
             }
         when (response.status) {
-            HttpStatusCode.OK ->
+            HttpStatusCode.OK -> {
                 Result.success(response.body<DraftChangesResponse>())
-            else -> handleApiError(response)
+            }
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e

@@ -12,12 +12,12 @@ import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.plugins.signing.SigningExtension
 
-private const val DefaultAtprotoGroup = "studio.hypertext.atproto"
-private const val DefaultAtprotoVersion = "0.1.0"
-private const val RepoUrl = "https://github.com/WillieCubed/logdate-mobile"
-private const val ScmConnection = "scm:git:$RepoUrl.git"
-private const val ScmDeveloperConnection = "scm:git:ssh://git@github.com/WillieCubed/logdate-mobile.git"
-private const val OrgUrl = "https://thehypertext.studio"
+private const val DEFAULT_ATPROTO_GROUP = "studio.hypertext.atproto"
+private const val DEFAULT_ATPROTO_VERSION = "0.1.0"
+private const val REPO_URL = "https://github.com/TheHypertextStudio/logdate-mobile"
+private const val SCM_CONNECTION = "scm:git:$REPO_URL.git"
+private const val SCM_DEVELOPER_CONNECTION = "scm:git:ssh://git@github.com/TheHypertextStudio/logdate-mobile.git"
+private const val ORG_URL = "https://thehypertext.studio"
 
 /**
  * Convention plugin for publishable `shared/atproto-*` modules.
@@ -65,8 +65,8 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
             pluginManager.apply("maven-publish")
             pluginManager.apply("signing")
 
-            group = propertyOrEnv("atproto.group", "ATPROTO_GROUP") ?: DefaultAtprotoGroup
-            version = envOrProperty("ATPROTO_VERSION", "atproto.version") ?: DefaultAtprotoVersion
+            group = propertyOrEnv("atproto.group", "ATPROTO_GROUP") ?: DEFAULT_ATPROTO_GROUP
+            version = envOrProperty("ATPROTO_VERSION", "atproto.version") ?: DEFAULT_ATPROTO_VERSION
 
             val dokkaHtmlJar =
                 tasks.register("dokkaHtmlJar", Jar::class.java) {
@@ -121,8 +121,9 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
         registerNamedRepository(
             publishing = publishing,
             name = "atprotoMavenCentral",
-            url = propertyOrEnv("ossrh.publish.url", "OSSRH_PUBLISH_URL")
-                ?: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/",
+            url =
+                propertyOrEnv("ossrh.publish.url", "OSSRH_PUBLISH_URL")
+                    ?: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/",
             username = propertyOrEnv("ossrh.username", "OSSRH_USERNAME"),
             password = propertyOrEnv("ossrh.password", "OSSRH_PASSWORD"),
             requireCredentials = true,
@@ -177,7 +178,7 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
                     publication.artifact(dokkaHtmlJar)
                     publication.pom.name.set(project.name)
                     publication.pom.description.set(project.description ?: "Kotlin Multiplatform AT Protocol module.")
-                    publication.pom.url.set(RepoUrl)
+                    publication.pom.url.set(REPO_URL)
                     publication.pom.inceptionYear.set("2026")
                     publication.pom.withXml(
                         object : Action<XmlProvider> {
@@ -185,7 +186,7 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
                                 val root = xml.asNode()
                                 root.appendNodeIfMissing("organization").apply {
                                     appendNodeIfMissing("name").setValue("The Hypertext Studio")
-                                    appendNodeIfMissing("url").setValue(OrgUrl)
+                                    appendNodeIfMissing("url").setValue(ORG_URL)
                                 }
                                 root.appendNodeIfMissing("licenses").appendNodeIfMissing("license").apply {
                                     appendNodeIfMissing("name").setValue("Apache-2.0")
@@ -194,16 +195,16 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
                                 root.appendNodeIfMissing("developers").appendNodeIfMissing("developer").apply {
                                     appendNodeIfMissing("id").setValue("thehypertextstudio")
                                     appendNodeIfMissing("name").setValue("The Hypertext Studio")
-                                    appendNodeIfMissing("url").setValue(OrgUrl)
+                                    appendNodeIfMissing("url").setValue(ORG_URL)
                                 }
                                 root.appendNodeIfMissing("scm").apply {
-                                    appendNodeIfMissing("url").setValue(RepoUrl)
-                                    appendNodeIfMissing("connection").setValue(ScmConnection)
-                                    appendNodeIfMissing("developerConnection").setValue(ScmDeveloperConnection)
+                                    appendNodeIfMissing("url").setValue(REPO_URL)
+                                    appendNodeIfMissing("connection").setValue(SCM_CONNECTION)
+                                    appendNodeIfMissing("developerConnection").setValue(SCM_DEVELOPER_CONNECTION)
                                 }
                                 root.appendNodeIfMissing("issueManagement").apply {
                                     appendNodeIfMissing("system").setValue("GitHub")
-                                    appendNodeIfMissing("url").setValue("$RepoUrl/issues")
+                                    appendNodeIfMissing("url").setValue("$REPO_URL/issues")
                                 }
                             }
                         },
@@ -253,6 +254,5 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
      * The POM customization hooks may be invoked repeatedly by Gradle during publication
      * configuration. This helper keeps the generated XML stable and avoids duplicate nodes.
      */
-    private fun Node.appendNodeIfMissing(name: String): Node =
-        (get(name) as? List<*>)?.firstOrNull() as? Node ?: appendNode(name)
+    private fun Node.appendNodeIfMissing(name: String): Node = (get(name) as? List<*>)?.firstOrNull() as? Node ?: appendNode(name)
 }

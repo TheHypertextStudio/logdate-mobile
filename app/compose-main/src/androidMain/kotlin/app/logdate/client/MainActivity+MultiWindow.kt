@@ -52,7 +52,9 @@ fun MainActivity.handleMultiWindowIntent(intent: Intent): Boolean {
             true
         }
 
-        else -> false
+        else -> {
+            false
+        }
     }
 }
 

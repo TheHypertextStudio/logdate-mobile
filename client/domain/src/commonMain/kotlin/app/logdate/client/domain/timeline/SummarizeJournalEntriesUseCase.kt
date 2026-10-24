@@ -48,13 +48,17 @@ ${it.content}
         val summaryKey = generateHashKey(entries.map { it.uid.toString() })
 
         return when (val result = summarizer.summarize(summaryKey, summaryPrompt)) {
-            is AIResult.Success ->
+            is AIResult.Success -> {
                 SummarizeJournalEntriesResult.Success(result.value)
-            is AIResult.Unavailable ->
+            }
+
+            is AIResult.Unavailable -> {
                 when (result.reason) {
                     AIUnavailableReason.NoNetwork -> SummarizeJournalEntriesResult.NetworkUnavailable
                     else -> SummarizeJournalEntriesResult.SummaryUnavailable
                 }
+            }
+
             is AIResult.Error -> {
                 Napier.e(
                     tag = "SummarizeJournalEntriesUseCase",

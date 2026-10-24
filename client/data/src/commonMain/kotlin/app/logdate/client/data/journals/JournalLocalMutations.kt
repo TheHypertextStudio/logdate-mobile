@@ -100,10 +100,17 @@ internal class JournalLocalMutations(
                                 receipts.containsLocalDeletion(scope, LocalDeletionType.JOURNAL, journalId)
                         )
                 when {
-                    deletedHere -> return@transaction finishRecovery(scope, recoveryId, journalId, false)
-                    resolve(replacement.id) != replacement.id || journalDao.getJournalById(replacement.id)?.toModel() != expected ->
+                    deletedHere -> {
                         return@transaction finishRecovery(scope, recoveryId, journalId, false)
-                    expected == replacement -> return@transaction finishRecovery(scope, recoveryId, journalId, true)
+                    }
+
+                    resolve(replacement.id) != replacement.id || journalDao.getJournalById(replacement.id)?.toModel() != expected -> {
+                        return@transaction finishRecovery(scope, recoveryId, journalId, false)
+                    }
+
+                    expected == replacement -> {
+                        return@transaction finishRecovery(scope, recoveryId, journalId, true)
+                    }
                 }
                 val operation = if (expected == null) PendingOperation.CREATE else PendingOperation.UPDATE
                 val uploadScope = scope?.let { UploadScope(it.ownerId, it.serverOrigin) }

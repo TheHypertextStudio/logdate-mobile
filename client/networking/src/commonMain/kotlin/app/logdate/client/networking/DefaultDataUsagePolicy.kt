@@ -30,10 +30,17 @@ class DefaultDataUsagePolicy(
 
 internal fun NetworkSaverState.toDataRestriction(): DataRestriction =
     when {
-        connectionType == NetworkConnectionType.NONE -> DataRestriction.OFFLINE
-        isDataSaverEnabled && (isMetered || connectionType == NetworkConnectionType.BLUETOOTH_PROXY) ->
+        connectionType == NetworkConnectionType.NONE -> {
+            DataRestriction.OFFLINE
+        }
+
+        isDataSaverEnabled && (isMetered || connectionType == NetworkConnectionType.BLUETOOTH_PROXY) -> {
             DataRestriction.BACKGROUND_DATA_BLOCKED
-        else -> DataRestriction.NONE
+        }
+
+        else -> {
+            DataRestriction.NONE
+        }
     }
 
 internal fun NetworkSaverState.toDataUsageMode(): DataUsageMode =

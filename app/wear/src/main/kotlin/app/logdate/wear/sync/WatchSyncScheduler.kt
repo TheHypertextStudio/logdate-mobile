@@ -62,7 +62,10 @@ class WatchSyncScheduler(
         val connected = dataLayerClient.isPhoneConnected()
         val dueAt =
             when (val notes = noteSchedule()) {
-                NoteSchedule.Outbox -> if (connected) earliestAttemptAt(UPLOADED_TYPES) else null
+                NoteSchedule.Outbox -> {
+                    if (connected) earliestAttemptAt(UPLOADED_TYPES) else null
+                }
+
                 is NoteSchedule.Ledger -> {
                     val collections = if (connected) earliestAttemptAt(UPLOADED_TYPES.filterNot { it == EntityType.NOTE }) else null
                     listOfNotNull(notes.dueAt, collections).minOrNull()

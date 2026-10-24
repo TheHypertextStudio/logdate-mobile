@@ -28,11 +28,13 @@ class ObserveLocationRetryStatusUseCase(
                     )
                 }
             }
+
             is RetryStatusRequest.PendingCount -> {
                 locationRetryWorker.pendingRetries.map { pendingLogs ->
                     RetryStatusResult.PendingCount(pendingLogs.size)
                 }
             }
+
             is RetryStatusRequest.HasActiveRetries -> {
                 locationRetryWorker.pendingRetries.map { pendingLogs ->
                     RetryStatusResult.HasActiveRetries(pendingLogs.isNotEmpty())

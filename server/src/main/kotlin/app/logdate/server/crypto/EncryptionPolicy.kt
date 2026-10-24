@@ -30,6 +30,7 @@ class EncryptionPolicy(
                     PolicyDecision.AcceptPlaintext
                 }
             }
+
             PayloadType.CLIENT_CIPHERTEXT -> {
                 if (allowPassthroughClientCiphertext) {
                     PolicyDecision.AcceptClientCiphertext
@@ -37,7 +38,10 @@ class EncryptionPolicy(
                     PolicyDecision.EncryptAtRest
                 }
             }
-            PayloadType.SERVER_CIPHERTEXT -> PolicyDecision.AcceptServerCiphertext
+
+            PayloadType.SERVER_CIPHERTEXT -> {
+                PolicyDecision.AcceptServerCiphertext
+            }
         }
 
     private fun detectPayloadType(payload: ByteArray): PayloadType =

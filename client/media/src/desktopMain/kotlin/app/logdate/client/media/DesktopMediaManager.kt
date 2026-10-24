@@ -223,14 +223,16 @@ class DesktopMediaManager(
         val timestamp = fileTimeToInstant(lastModified)
 
         return when (extension) {
-            "jpg", "jpeg", "png", "gif", "webp", "heic", "heif" ->
+            "jpg", "jpeg", "png", "gif", "webp", "heic", "heif" -> {
                 MediaObject.Image(
                     uri = "file://${path.pathString}",
                     size = size,
                     name = name,
                     timestamp = timestamp,
                 )
-            "mp4", "mov", "m4v" ->
+            }
+
+            "mp4", "mov", "m4v" -> {
                 MediaObject.Video(
                     name = name,
                     uri = "file://${path.pathString}",
@@ -238,7 +240,11 @@ class DesktopMediaManager(
                     timestamp = timestamp,
                     duration = Duration.ZERO,
                 )
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
     }
 

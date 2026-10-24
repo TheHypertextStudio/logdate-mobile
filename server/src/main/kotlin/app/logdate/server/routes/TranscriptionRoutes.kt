@@ -133,6 +133,7 @@ private fun EntitlementStatus.allowsCloudTranscription(): Boolean =
         EntitlementStatus.GRACE,
         EntitlementStatus.SELF_HOST,
         -> true
+
         EntitlementStatus.CANCELLED -> false
     }
 

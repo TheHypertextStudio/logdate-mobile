@@ -62,10 +62,21 @@ fun SyncStatus.issue(): SyncIssue? {
             return if (backgroundWorkLimited) SyncIssue.Waiting.BackgroundData else SyncIssue.Waiting.WiFi
         }
 
-        SyncPausedReason.NEEDS_RECOVERY_PHRASE -> return SyncIssue.Failure.KeyRecovery
-        SyncPausedReason.NEEDS_DEVICE_LINK -> return SyncIssue.Failure.DeviceLink
-        SyncPausedReason.LOCAL_STORAGE_UNAVAILABLE -> return SyncIssue.Failure.LocalData
-        null -> Unit
+        SyncPausedReason.NEEDS_RECOVERY_PHRASE -> {
+            return SyncIssue.Failure.KeyRecovery
+        }
+
+        SyncPausedReason.NEEDS_DEVICE_LINK -> {
+            return SyncIssue.Failure.DeviceLink
+        }
+
+        SyncPausedReason.LOCAL_STORAGE_UNAVAILABLE -> {
+            return SyncIssue.Failure.LocalData
+        }
+
+        null -> {
+            Unit
+        }
     }
     if (!queueReadable) return SyncIssue.Failure.LocalData
     if (lastError?.type == SyncErrorType.KEY_RECOVERY_ERROR) return SyncIssue.Failure.KeyRecovery

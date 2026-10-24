@@ -150,7 +150,9 @@ fun OnboardingDayBoundariesScreen(
                 pendingEnableAfterPermission = false
             }
 
-            DayBoundariesPostPermissionAction.NONE -> Unit
+            DayBoundariesPostPermissionAction.NONE -> {
+                Unit
+            }
         }
     }
 
@@ -162,14 +164,19 @@ fun OnboardingDayBoundariesScreen(
                 gateState.kind == HealthConnectGateKind.READY -> {
                     persistAndContinue(enabled = true)
                 }
+
                 gateState.missingRequirement == HealthConnectMissingRequirement.PERMISSION -> {
                     pendingEnableAfterPermission = true
                     permissionState.requestPermission()
                 }
+
                 gateState.missingRequirement == HealthConnectMissingRequirement.SETUP -> {
                     onSetUpHealthConnect()
                 }
-                else -> Unit
+
+                else -> {
+                    Unit
+                }
             }
         },
         onSkip = {
@@ -203,10 +210,14 @@ internal fun resolveDayBoundariesPostPermissionAction(
         hasPermission && gateState.kind == HealthConnectGateKind.READY -> {
             DayBoundariesPostPermissionAction.ENABLE_AND_CONTINUE
         }
+
         permissionRequested && !hasPermission && !isRequestInFlight -> {
             DayBoundariesPostPermissionAction.RESET_REQUEST_STATE
         }
-        else -> DayBoundariesPostPermissionAction.NONE
+
+        else -> {
+            DayBoundariesPostPermissionAction.NONE
+        }
     }
 }
 
@@ -270,34 +281,41 @@ private class DayBoundariesStatus(
 
 private fun dayBoundariesStatus(gateState: HealthConnectGateState): DayBoundariesStatus =
     when {
-        gateState.kind == HealthConnectGateKind.READY ->
+        gateState.kind == HealthConnectGateKind.READY -> {
             DayBoundariesStatus(
                 icon = Icons.Rounded.CheckCircle,
                 title = Res.string.onboarding_day_boundaries_status_connected_title,
                 description = Res.string.onboarding_day_boundaries_status_connected_description,
                 actionLabel = Res.string.onboarding_day_boundaries_enable,
             )
-        gateState.missingRequirement == HealthConnectMissingRequirement.PERMISSION ->
+        }
+
+        gateState.missingRequirement == HealthConnectMissingRequirement.PERMISSION -> {
             DayBoundariesStatus(
                 icon = Icons.Rounded.VpnKey,
                 title = Res.string.onboarding_day_boundaries_status_permissions_title,
                 description = Res.string.onboarding_day_boundaries_status_permissions_description,
                 actionLabel = Res.string.onboarding_day_boundaries_grant_access,
             )
-        gateState.missingRequirement == HealthConnectMissingRequirement.SETUP ->
+        }
+
+        gateState.missingRequirement == HealthConnectMissingRequirement.SETUP -> {
             DayBoundariesStatus(
                 icon = Icons.Rounded.Download,
                 title = Res.string.onboarding_day_boundaries_status_setup_required_title,
                 description = Res.string.onboarding_day_boundaries_status_setup_required_description,
                 actionLabel = Res.string.onboarding_day_boundaries_set_up_health_connect,
             )
-        else ->
+        }
+
+        else -> {
             DayBoundariesStatus(
                 icon = Icons.Rounded.Sync,
                 title = Res.string.onboarding_day_boundaries_status_checking_title,
                 description = Res.string.onboarding_day_boundaries_status_checking_description,
                 actionLabel = Res.string.onboarding_day_boundaries_status_checking_title,
             )
+        }
     }
 
 @Preview

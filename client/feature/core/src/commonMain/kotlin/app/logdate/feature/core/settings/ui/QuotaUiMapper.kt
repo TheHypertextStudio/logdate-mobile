@@ -96,13 +96,27 @@ private fun categoryLabel(categoryName: String): StringResource =
  */
 private fun getCategoryColor(categoryName: String): Color =
     when (categoryName.uppercase()) {
-        "IMAGE_NOTES" -> Color(0xFF4CAF50) // Green
-        "TEXT_NOTES" -> Color(0xFF2196F3) // Blue
-        "VIDEO_NOTES" -> Color(0xFFF44336) // Red
-        "VOICE_NOTES" -> Color(0xFFFF9800) // Orange
-        "JOURNAL_DATA" -> Color(0xFF9C27B0) // Purple
-        "ATTACHMENTS" -> Color(0xFF607D8B) // Blue Gray
-        "USER_PROFILE" -> Color(0xFF795548) // Brown
+        "IMAGE_NOTES" -> Color(0xFF4CAF50)
+
+        // Green
+        "TEXT_NOTES" -> Color(0xFF2196F3)
+
+        // Blue
+        "VIDEO_NOTES" -> Color(0xFFF44336)
+
+        // Red
+        "VOICE_NOTES" -> Color(0xFFFF9800)
+
+        // Orange
+        "JOURNAL_DATA" -> Color(0xFF9C27B0)
+
+        // Purple
+        "ATTACHMENTS" -> Color(0xFF607D8B)
+
+        // Blue Gray
+        "USER_PROFILE" -> Color(0xFF795548)
+
+        // Brown
         else -> Color(0xFF9E9E9E) // Gray
     }
 
@@ -113,6 +127,6 @@ private fun getCategoryColor(categoryName: String): Color =
  */
 fun CloudStorageQuota.toQuotaUsageUi(): StorageQuotaUi = orDefault().toStorageQuotaUi()
 
-/**
+/*
  * Formats byte size to human-readable string (e.g., "1.5 GB").
  */

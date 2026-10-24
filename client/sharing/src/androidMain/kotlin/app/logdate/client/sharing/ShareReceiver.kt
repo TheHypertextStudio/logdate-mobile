@@ -28,10 +28,17 @@ class ShareReceiver : BroadcastReceiver() {
         intent: Intent,
     ) {
         when (intent.action) {
-            CustomIntents.ACTION_COPY_LINK ->
+            CustomIntents.ACTION_COPY_LINK -> {
                 finishAfter { copyLinkToClipboard(context, intent.getStringExtra(CustomIntents.EXTRA_SHARE_TEXT)) }
-            CustomIntents.ACTION_SHARE_QR_CODE -> finishAfter { shareQrCode(context, intent) }
-            else -> logChosenComponent(intent)
+            }
+
+            CustomIntents.ACTION_SHARE_QR_CODE -> {
+                finishAfter { shareQrCode(context, intent) }
+            }
+
+            else -> {
+                logChosenComponent(intent)
+            }
         }
     }
 

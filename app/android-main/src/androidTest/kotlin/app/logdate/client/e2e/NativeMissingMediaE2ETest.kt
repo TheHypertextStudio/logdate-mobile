@@ -25,6 +25,7 @@ import app.logdate.client.ensureLogDateApplicationStarted
 import app.logdate.client.media.MediaFileSource
 import app.logdate.client.media.MediaManager
 import app.logdate.client.media.MediaPayload
+import app.logdate.client.media.storage.MediaFileResolver
 import app.logdate.client.media.storage.StoredMediaReferences
 import app.logdate.client.media.storage.UnavailableMediaReferences
 import app.logdate.client.media.storage.androidMediaFileResolver
@@ -96,6 +97,64 @@ class NativeMissingMediaE2ETest : CloudArchiveWorkerFixture() {
 
     private fun ensureApplicationStarted() {
         ensureLogDateApplicationStarted(context.applicationContext as android.app.Application)
+    }
+
+    @Test
+    fun partialNativeMediaRecognizesMissingOriginalAcrossReferenceSpellings() =
+        runBlocking {
+            requireEmulator()
+            ensureApplicationStarted()
+            val resolver = androidMediaFileResolver(context)
+            val directory = File(context.filesDir, "media/native-partial-${Uuid.random()}")
+            check(directory.mkdirs())
+            try {
+                val available =
+                    listOf("proof.wav", "proof.mp4").flatMap { name ->
+                        val bytes =
+                            InstrumentationRegistry
+                                .getInstrumentation()
+                                .context.assets
+                                .open(
+                                    "recovery/$name",
+                                ).use { it.readBytes() }
+                        val file = File(directory, name).apply { writeBytes(bytes) }
+                        val raw = file.toURI().toString()
+                        val owned = requireNotNull(resolver.refFor(file.absolutePath)).toString()
+                        assertContentEquals(bytes, media.readMedia(raw).data)
+                        assertContentEquals(bytes, media.readMedia(owned).data)
+                        listOf(raw, owned)
+                    }
+                assertPartialNativeMediaStates(File(directory, "missing.png"), available, resolver)
+            } finally {
+                check(directory.deleteRecursively())
+            }
+        }
+
+    private suspend fun assertPartialNativeMediaStates(
+        missing: File,
+        available: List<String>,
+        resolver: MediaFileResolver,
+    ) {
+        val missingOwned = requireNotNull(resolver.refFor(missing.absolutePath)).toString()
+        val missingRaw = missing.toURI().toString()
+        assertFalse(missing.exists())
+
+        suspend fun settled(
+            references: List<String>,
+            expected: String = missingOwned,
+        ): Boolean = partialNativeMediaSettled(references, expected, resolver, media::exists)
+
+        val rawUnavailable = UnavailableMediaReferences.nativeRestore(missingRaw)
+        val ownedUnavailable = UnavailableMediaReferences.nativeRestore(missingOwned)
+        val references = listOf(rawUnavailable, ownedUnavailable) + available
+        assertEquals(6, references.size)
+        assertEquals(missingRaw, UnavailableMediaReferences.nativeSource(rawUnavailable))
+        assertTrue(settled(references))
+        assertTrue(settled(references, missingRaw))
+        assertFalse(settled(listOf(missingRaw, ownedUnavailable) + available))
+        assertFalse(settled(available))
+        val wrong = UnavailableMediaReferences.nativeRestore(File(missing.parentFile, "wrong.png").toURI().toString())
+        assertFalse(settled(listOf(wrong, ownedUnavailable) + available))
     }
 
     @Test

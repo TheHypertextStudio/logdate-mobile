@@ -38,13 +38,19 @@ class ArchiveSchemaValidationTest {
 
     private fun strict(element: JsonElement): JsonElement =
         when (element) {
-            is JsonArray -> JsonArray(element.map(::strict))
+            is JsonArray -> {
+                JsonArray(element.map(::strict))
+            }
+
             is JsonObject -> {
                 val children = element.mapValues { strict(it.value) }
                 val isObjectSchema = (element["type"] as? JsonPrimitive)?.content == "object" && "properties" in element
                 JsonObject(if (isObjectSchema) children + ("additionalProperties" to JsonPrimitive(false)) else children)
             }
-            else -> element
+
+            else -> {
+                element
+            }
         }
 
     private fun <T> json(

@@ -51,13 +51,20 @@ class RecoveryKeyService(
         withChangeLock(accountId) {
             val target = currentIdentity(accountId)
             when (target.account.plcRecoveryDidKey) {
-                recoveryDidKey -> RegisteredPlcRecoveryKey(account = target.account, recoveryDidKey = recoveryDidKey)
-                null -> installRecoveryKey(target, recoveryDidKey)
-                else ->
+                recoveryDidKey -> {
+                    RegisteredPlcRecoveryKey(account = target.account, recoveryDidKey = recoveryDidKey)
+                }
+
+                null -> {
+                    installRecoveryKey(target, recoveryDidKey)
+                }
+
+                else -> {
                     throw IdentityLifecycleConflictException(
                         "A different recovery key is already registered for this identity",
                         code = AtprotoIdentityService.RECOVERY_KEY_ALREADY_SET,
                     )
+                }
             }
         }
 
@@ -73,13 +80,20 @@ class RecoveryKeyService(
         withChangeLock(accountId) {
             val target = currentIdentity(accountId)
             when (target.account.plcRecoveryDidKey) {
-                null ->
+                null -> {
                     throw IdentityLifecycleConflictException(
                         "No recovery key is registered for this identity",
                         code = AtprotoIdentityService.RECOVERY_KEY_NOT_SET,
                     )
-                recoveryDidKey -> RegisteredPlcRecoveryKey(account = target.account, recoveryDidKey = recoveryDidKey)
-                else -> installRecoveryKey(target, recoveryDidKey)
+                }
+
+                recoveryDidKey -> {
+                    RegisteredPlcRecoveryKey(account = target.account, recoveryDidKey = recoveryDidKey)
+                }
+
+                else -> {
+                    installRecoveryKey(target, recoveryDidKey)
+                }
             }
         }
 

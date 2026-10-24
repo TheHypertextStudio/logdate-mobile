@@ -9,12 +9,34 @@ import org.junit.Assume.assumeTrue
 import java.net.BindException
 import java.net.InetSocketAddress
 import java.net.ServerSocket
+import java.net.URI
 import java.sql.DriverManager
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class ServerClientHarnessLifecycleTest {
+    @Test
+    fun `an automatically assigned server port stays owned until the harness closes`() =
+        runBlocking {
+            var assignedPort = 0
+            withServerClientHarness {
+                assignedPort = URI(baseUrl).port
+                assertTrue(assignedPort in 1..65535)
+                ServerSocket().use { competing ->
+                    competing.reuseAddress = false
+                    assertFailsWith<BindException> {
+                        competing.bind(InetSocketAddress("127.0.0.1", assignedPort))
+                    }
+                }
+            }
+            ServerSocket().use { released ->
+                released.reuseAddress = true
+                released.bind(InetSocketAddress("127.0.0.1", assignedPort))
+                assertTrue(released.isBound)
+            }
+        }
+
     @Test
     fun `stopping a test server releases its database connections`() =
         runBlocking {

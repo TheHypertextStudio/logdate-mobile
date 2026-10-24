@@ -175,8 +175,10 @@ internal fun resolveDayBoundarySummaryText(
 ): StringResource =
     when {
         !sleepBasedBoundariesEnabled -> Res.string.day_schedule_summary_off
+
         healthConnectStatus == HealthConnectStatus.CONNECTED ||
             healthConnectStatus == HealthConnectStatus.CHECKING
         -> Res.string.day_schedule_summary_on
+
         else -> Res.string.day_schedule_summary_paused
     }

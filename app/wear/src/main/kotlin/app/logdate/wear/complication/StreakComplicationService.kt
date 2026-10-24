@@ -34,18 +34,27 @@ import kotlin.time.Clock
 class StreakComplicationService : SuspendingComplicationDataSourceService() {
     override fun getPreviewData(type: ComplicationType): ComplicationData? =
         when (type) {
-            ComplicationType.SHORT_TEXT ->
+            ComplicationType.SHORT_TEXT -> {
                 createShortText(
                     streak = 7,
                     contentDescription = getString(R.string.wear_complication_streak_description),
                 )
-            ComplicationType.LONG_TEXT ->
+            }
+
+            ComplicationType.LONG_TEXT -> {
                 createLongText(
                     streak = 7,
                     contentDescription = getString(R.string.wear_complication_streak_description),
                 )
-            ComplicationType.RANGED_VALUE -> campfireComplicationData(this, PREVIEW_CAMPFIRE, type, createOpenAppIntent())
-            else -> null
+            }
+
+            ComplicationType.RANGED_VALUE -> {
+                campfireComplicationData(this, PREVIEW_CAMPFIRE, type, createOpenAppIntent())
+            }
+
+            else -> {
+                null
+            }
         }
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData {

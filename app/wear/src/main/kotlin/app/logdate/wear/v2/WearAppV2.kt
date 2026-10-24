@@ -323,9 +323,18 @@ private fun MomentEntry(
                                         playingMessage
                                     }
                                 }
-                                HandoffFailure.AUDIO_NOT_ON_PHONE -> audioNotReadyMessage
-                                HandoffFailure.PHONE_NEEDS_SETUP -> needsSetupMessage
-                                else -> playFailedMessage
+
+                                HandoffFailure.AUDIO_NOT_ON_PHONE -> {
+                                    audioNotReadyMessage
+                                }
+
+                                HandoffFailure.PHONE_NEEDS_SETUP -> {
+                                    needsSetupMessage
+                                }
+
+                                else -> {
+                                    playFailedMessage
+                                }
                             }
                         handoffBusy = false
                     }

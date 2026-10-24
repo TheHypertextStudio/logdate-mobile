@@ -78,20 +78,29 @@ fun WearOnboardingScreen(
     val context = LocalContext.current
 
     when (currentPage) {
-        0 -> WelcomePage(onNext = { currentPage = 1 })
-        1 -> PermissionsPage(onNext = { currentPage = 2 })
-        2 ->
+        0 -> {
+            WelcomePage(onNext = { currentPage = 1 })
+        }
+
+        1 -> {
+            PermissionsPage(onNext = { currentPage = 2 })
+        }
+
+        2 -> {
             PhoneConnectionPage(
                 viewModel = onboardingViewModel,
                 onNext = { currentPage = 3 },
             )
-        3 ->
+        }
+
+        3 -> {
             CompletePage(
                 onStart = {
                     markOnboardingComplete(context)
                     onComplete()
                 },
             )
+        }
     }
 }
 

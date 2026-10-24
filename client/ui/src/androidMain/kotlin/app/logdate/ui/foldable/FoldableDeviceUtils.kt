@@ -153,6 +153,7 @@ fun processFoldableInfo(
                     orientation = FoldingFeature.Orientation.VERTICAL,
                 )
             }
+
             FoldingFeature.Orientation.HORIZONTAL -> {
                 HingePosition(
                     x = null,
@@ -160,6 +161,7 @@ fun processFoldableInfo(
                     orientation = FoldingFeature.Orientation.HORIZONTAL,
                 )
             }
+
             else -> {
                 HingePosition(
                     x = null,
@@ -241,12 +243,16 @@ fun shouldUseDualPaneLayout(foldableInfo: FoldableDeviceInfo): Boolean {
             // In half-opened state (like tabletop or book mode), use dual-pane
             true
         }
+
         FoldingFeature.State.FLAT -> {
             // In flat state, device is fully unfolded
             // Could still use dual-pane if screen is large enough
             true
         }
-        else -> false
+
+        else -> {
+            false
+        }
     }
 }
 

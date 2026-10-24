@@ -258,3 +258,40 @@ class NativeBackupSafety:
             ],
             [call.args[1:] for call in adb.call_args_list],
         )
+
+    def test_archive_readiness_runs_after_launch_and_before_the_unchanged_snapshot(
+        self,
+    ):
+        events = []
+        retained = {"databases/logdate": {"sha256": "journal"}}
+
+        def adb(serial, *arguments):
+            if arguments[:3] == ("shell", "am", "start"):
+                events.append("launch")
+                return b"Status: ok"
+            if arguments[:3] == ("shell", "bmgr", "enabled"):
+                return b"Backup Manager currently enabled"
+            return f"Package {HARNESS.PACKAGE} with result: Success".encode()
+
+        def snapshot(serial):
+            events.append("snapshot")
+            return retained
+
+        with (
+            tempfile.TemporaryDirectory() as folder,
+            patch.object(HARNESS, "adb", side_effect=adb),
+            patch.object(
+                HARNESS,
+                "wait_for_timeline",
+                side_effect=lambda *args, **kwargs: events.append("timeline"),
+            ),
+            patch.object(HARNESS, "package_file_snapshot", side_effect=snapshot),
+        ):
+            HARNESS.backup_source(
+                "emulator-5554",
+                Path(folder) / "backup.log",
+                prepare_for_snapshot=lambda: events.append("ready"),
+            )
+        self.assertEqual(
+            ["launch", "timeline", "ready", "snapshot", "snapshot"], events
+        )

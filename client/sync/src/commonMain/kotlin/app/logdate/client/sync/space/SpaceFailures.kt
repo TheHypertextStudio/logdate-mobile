@@ -104,25 +104,48 @@ internal suspend fun <T> spaceCall(block: suspend () -> T): Result<T> =
 
 internal fun translateSpaceFailure(error: Throwable): Throwable =
     when (error) {
-        is DataHomeConflictException, is DataHomeCursorTooOldException -> error
-        is XrpcProtocolException -> error.toCloudFailure()
-        is DataHomeRateLimitedException, is DataHomeBusyException, is DataHomeQuotaExceededException ->
+        is DataHomeConflictException, is DataHomeCursorTooOldException -> {
+            error
+        }
+
+        is XrpcProtocolException -> {
+            error.toCloudFailure()
+        }
+
+        is DataHomeRateLimitedException, is DataHomeBusyException, is DataHomeQuotaExceededException -> {
             (error.cause as? XrpcProtocolException)?.toCloudFailure() ?: error
-        is XrpcTransportException -> CloudApiException("NETWORK_ERROR", "The personal space couldn't be reached", cause = error)
-        is XrpcSerializationException ->
+        }
+
+        is XrpcTransportException -> {
+            CloudApiException("NETWORK_ERROR", "The personal space couldn't be reached", cause = error)
+        }
+
+        is XrpcSerializationException -> {
             CloudApiException("INVALID_RESPONSE", "The server's personal space sent a response this version can't read", cause = error)
-        else -> error
+        }
+
+        else -> {
+            error
+        }
     }
 
 private fun XrpcProtocolException.toCloudFailure(): Throwable {
     val code = error
     val detail = errorMessage ?: "HTTP $statusCode"
     return when {
-        code == "BlobTooLarge" -> MediaTooLargeException("The server refused the file as too large: $detail")
-        code in QUOTA_ERRORS || statusCode == INSUFFICIENT_STORAGE ->
+        code == "BlobTooLarge" -> {
+            MediaTooLargeException("The server refused the file as too large: $detail")
+        }
+
+        code in QUOTA_ERRORS || statusCode == INSUFFICIENT_STORAGE -> {
             CloudApiException(STORAGE_QUOTA_EXCEEDED, "Cloud storage is full", statusCode, this)
-        statusCode == PAYLOAD_TOO_LARGE -> CloudApiException(code ?: "RECORD_TOO_LARGE", detail, statusCode, this)
-        else ->
+        }
+
+        statusCode == PAYLOAD_TOO_LARGE -> {
+            CloudApiException(code ?: "RECORD_TOO_LARGE", detail, statusCode, this)
+        }
+
+        else -> {
             CloudApiException(
                 errorCode = code ?: "HTTP_$statusCode",
                 message = detail,
@@ -130,6 +153,7 @@ private fun XrpcProtocolException.toCloudFailure(): Throwable {
                 cause = this,
                 retryAfterMillis = retryAfterSeconds?.let { it * 1_000 },
             )
+        }
     }
 }
 

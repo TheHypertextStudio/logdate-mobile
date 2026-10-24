@@ -138,4 +138,4 @@ private fun formatDuration(duration: Duration): String =
 private fun LocationDayItem.overlaps(
     start: Instant,
     end: Instant,
-): Boolean = this.start < end && (this.end > start || this.start == this.end && this.start >= start)
+): Boolean = this.start < end && (this.end > start || (this.start == this.end && this.start >= start))

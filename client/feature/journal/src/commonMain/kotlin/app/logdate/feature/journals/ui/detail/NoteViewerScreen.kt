@@ -98,12 +98,14 @@ fun NoteViewerScreen(
         NoteViewerUiState.Loading -> {
             NoteViewerLoadingContent(modifier = modifier.then(sharedBoundsModifier))
         }
+
         is NoteViewerUiState.Error -> {
             NoteViewerErrorContent(
                 message = state.message.asString(),
                 modifier = modifier.then(sharedBoundsModifier),
             )
         }
+
         is NoteViewerUiState.AudioContent -> {
             AudioNoteViewerEntry(
                 noteId = state.shared.noteId,
@@ -111,6 +113,7 @@ fun NoteViewerScreen(
                 modifier = modifier.then(sharedBoundsModifier),
             )
         }
+
         is NoteViewerUiState.HandwritingContent -> {
             NoteViewerScaffoldContent(
                 shared = state.shared,
@@ -124,6 +127,7 @@ fun NoteViewerScreen(
                 HandwritingPreview(state.document, Modifier.fillMaxWidth().height(480.dp), unreadable = state.unreadable)
             }
         }
+
         is NoteViewerUiState.TextContent -> {
             NoteViewerScaffoldContent(
                 shared = state.shared,
@@ -141,6 +145,7 @@ fun NoteViewerScreen(
                 )
             }
         }
+
         is NoteViewerUiState.ImageContent -> {
             NoteViewerScaffoldContent(
                 shared = state.shared,
@@ -157,6 +162,7 @@ fun NoteViewerScreen(
                 )
             }
         }
+
         is NoteViewerUiState.VideoContent -> {
             NoteViewerScaffoldContent(
                 shared = state.shared,

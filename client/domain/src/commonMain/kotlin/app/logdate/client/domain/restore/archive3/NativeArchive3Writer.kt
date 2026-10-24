@@ -98,22 +98,27 @@ internal object NativeArchive3Writer {
         if (source.locationSamples.isNotEmpty()) {
             writer.text(path("data/location-history.jsonl"), source.locationSamples.joinToString("\n", postfix = "\n"))
         }
-        val inventory =
-            media.map { item ->
-                val recorded = requireNotNull(writer.ledger[item.path])
-                buildJsonObject {
-                    put("path", item.path.value)
-                    put("mediaType", item.mediaType)
-                    put("bytes", recorded.bytes)
-                    put("sha256", recorded.sha256)
-                }
-            }
+        val inventory = mediaInventory(media, writer)
         writer.text(path("data/media.json"), buildJsonObject { put("files", JsonArray(inventory)) }.toString())
         writer.text(path("README.txt"), "LogDate native archive 3.0. No credentials are included.\n")
         NativeArchive3Schemas.documents.forEach { (name, schema) ->
             writer.text(path("schema/$name.schema.json"), schema)
         }
     }
+
+    private fun mediaInventory(
+        media: List<NativeArchive3MediaSource>,
+        writer: ArchiveWriter,
+    ): List<JsonObject> =
+        media.map { item ->
+            val recorded = requireNotNull(writer.ledger[item.path])
+            buildJsonObject {
+                put("path", item.path.value)
+                put("mediaType", item.mediaType)
+                put("bytes", recorded.bytes)
+                put("sha256", recorded.sha256)
+            }
+        }
 
     private fun contents(source: NativeArchive3ExportSource): List<JsonObject> =
         buildList {

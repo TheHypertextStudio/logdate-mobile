@@ -11,11 +11,17 @@ import app.logdate.wear.launch.WearLaunchRequest
 internal fun WearLaunchRequest?.toV1Route(): NavKey =
     when (this) {
         WearLaunchRequest.Memories -> WearVoiceMemoriesRoute
+
         WearLaunchRequest.MoodCheckIn -> WearMoodCheckInRoute
+
         WearLaunchRequest.QuickText -> WearQuickTextRoute
+
         WearLaunchRequest.Timeline -> WearTimelineRoute
+
         WearLaunchRequest.RemoteCamera -> WearRemoteCameraRoute
+
         WearLaunchRequest.Settings -> WearSettingsRoute
+
         null,
         WearLaunchRequest.Home,
         WearLaunchRequest.Record,

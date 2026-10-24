@@ -161,6 +161,90 @@ class PinnedNativeTransferArchiveTest(unittest.TestCase):
 
 
 class MissingPrivacyBackupFilterTest(unittest.TestCase):
+    def test_policy_repair_preserves_the_occupied_destination_and_only_adds_source_policy(
+        self,
+    ):
+        harness = NATIVE_BACKUP_ACCEPTANCE
+        before = {
+            "databases/logdate": {"sha256": "occupied-cloud"},
+            "files/db_recovery/passphrase_backup": {"sha256": "installed-key"},
+            "files/datastore/entry_drafts.preferences_pb": {"sha256": "draft"},
+        }
+        owner = harness.length_delimited_field(
+            1, BackupPayloadFixture.preference_entry("owner", "retained")
+        )
+        policy = self.policy(harness)
+        harness.verify_privacy_repair_snapshot(
+            before, dict(before), owner, owner + policy, policy
+        )
+        for path in before:
+            with (
+                self.subTest(path=path),
+                self.assertRaisesRegex(RuntimeError, "changed durable data"),
+            ):
+                changed = {**before, path: {"sha256": "incoming-replacement"}}
+                harness.verify_privacy_repair_snapshot(
+                    before, changed, owner, owner + policy, policy
+                )
+
+    def test_policy_repair_rejects_unrelated_changes_present_policy_and_wrong_source_policy(
+        self,
+    ):
+        harness = NATIVE_BACKUP_ACCEPTANCE
+        files = {"databases/logdate": {"sha256": "occupied"}}
+        owner = harness.length_delimited_field(
+            1, BackupPayloadFixture.preference_entry("owner", "retained")
+        )
+        policy = self.policy(harness)
+        other = harness.length_delimited_field(
+            1, BackupPayloadFixture.preference_entry("owner", "replaced")
+        )
+        none = self.policy(harness, security="NONE")
+        for before, after, source in (
+            (owner, other + policy, policy),
+            (owner + policy, owner + policy, policy),
+            (owner, owner + none, policy),
+            (owner, owner, policy),
+        ):
+            with (
+                self.subTest(before=bool(before), after=len(after)),
+                self.assertRaisesRegex(RuntimeError, "privacy repair"),
+            ):
+                harness.verify_privacy_repair_snapshot(
+                    files, files, before, after, source
+                )
+
+    def test_policy_oracle_selects_the_authenticated_snapshot_preferences(self):
+        harness = NATIVE_BACKUP_ACCEPTANCE
+        path = f"apps/{harness.PACKAGE}/f/native_journal_transfer/current/files/logdate.preferences_pb"
+        nested = PartialNativeTransportTest.make_tar(
+            [
+                (path, self.policy(harness)),
+                (
+                    f"apps/{harness.PACKAGE}/f/logdate.preferences_pb",
+                    self.policy(harness, security="NONE"),
+                ),
+            ]
+        )
+        outer = PartialNativeTransportTest.make_tar(
+            [(f"1/_full/{harness.PACKAGE}", nested)]
+        )
+        self.assertEqual(
+            self.policy(harness), harness.selected_backup_contents(outer, path)
+        )
+
+    @staticmethod
+    def policy(harness, security="BIOMETRIC"):
+        onboarded = harness.length_delimited_field(
+            1, b"is_onboarded"
+        ) + harness.length_delimited_field(2, b"\x08\x01")
+        return harness.length_delimited_field(
+            1, onboarded
+        ) + harness.length_delimited_field(
+            1,
+            BackupPayloadFixture.preference_entry("security_level", security),
+        )
+
     def test_requires_package_rejection_and_current_backup_agent_privacy_failure(self):
         harness = NATIVE_BACKUP_ACCEPTANCE
         result = f"Package {harness.PACKAGE} with result: Transport rejected package because it wasn't able to process it at the time\n".encode()

@@ -153,13 +153,20 @@ class ExportWorker(
                             trySetForeground(notificationHelper.createForegroundInfo(0, getString(Res.string.export_progress_starting)))
                             emitProgress(0, Res.string.export_progress_starting)
                         }
+
                         is ArchiveExportProgress.InProgress -> {
                             val percent = (progress.fraction * 100).toInt()
                             trySetForeground(notificationHelper.createForegroundInfo(percent, getString(progress.stage.defaultMessage)))
                             emitProgress(percent, progress.stage.defaultMessage)
                         }
-                        is ArchiveExportProgress.Completed -> summary = progress.summary
-                        is ArchiveExportProgress.Failed -> failure = progress.error.defaultMessage
+
+                        is ArchiveExportProgress.Completed -> {
+                            summary = progress.summary
+                        }
+
+                        is ArchiveExportProgress.Failed -> {
+                            failure = progress.error.defaultMessage
+                        }
                     }
                 }
             }

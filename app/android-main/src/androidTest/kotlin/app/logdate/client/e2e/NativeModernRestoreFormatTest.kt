@@ -100,7 +100,7 @@ class NativeModernRestoreFormatTest {
     @Test
     fun explicitNativeTransportFlagsRetainAnAlreadyAcceptedJournal() {
         for (flags in listOf(0, 1, 2, 3)) {
-            withFixture {
+            withFixture(transportFlags = flags) {
                 val rejected = agent()
                 rejectModern(rejected, database, 8, "")
                 rejected.onRestoreFinished()
@@ -199,6 +199,7 @@ class NativeModernRestoreFormatTest {
 
     private fun withFixture(
         completeDelivery: Boolean = true,
+        transportFlags: Int = 2,
         block: Fixture.() -> Unit,
     ) {
         InstrumentationRegistry.getArguments().getString("nativeRestoreRequiredSdkFull")?.let { required ->
@@ -207,11 +208,12 @@ class NativeModernRestoreFormatTest {
         }
         if (Build.VERSION.SDK_INT < 36 || Build.VERSION.SDK_INT_FULL < Build.VERSION_CODES_FULL.BAKLAVA_1) return
         require(Build.HARDWARE in setOf("ranchu", "goldfish"))
-        Fixture(completeDelivery).use { it.block() }
+        Fixture(completeDelivery, transportFlags).use { it.block() }
     }
 
     private class Fixture(
         completeDelivery: Boolean,
+        transportFlags: Int,
     ) : AutoCloseable {
         private val instrumentation = InstrumentationRegistry.getInstrumentation()
         private val root =
@@ -278,7 +280,7 @@ class NativeModernRestoreFormatTest {
             if (completeDelivery) {
                 val seed = object : NativeBackupAgent() {}
                 attach(seed)
-                seedFiles.forEach { (destination, payload) -> deliverModern(seed, destination, payload, 2, "") }
+                seedFiles.forEach { (destination, payload) -> deliverModern(seed, destination, payload, transportFlags, "") }
                 seed.onRestoreFinished()
                 seed.onDestroy()
                 val identity = assertNotNull(PostRestoreDetector(context).capturePrivacyRepairIdentity())

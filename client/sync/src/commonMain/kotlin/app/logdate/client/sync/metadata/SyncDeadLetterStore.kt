@@ -48,12 +48,16 @@ fun SyncDeadLetterRecord.effectiveReason(): SyncDeadLetterReason {
         lastError.contains("no longer exists", ignoreCase = true) ||
             lastError.contains("ENOENT", ignoreCase = true) ||
             lastError.contains("No such file", ignoreCase = true) -> SyncDeadLetterReason.MISSING_FILE
+
         lastError.contains("closed while uploading", ignoreCase = true) -> SyncDeadLetterReason.APP_CLOSED
+
         lastError.contains("Service Unavailable", ignoreCase = true) ||
             lastError.contains("HTTP 503", ignoreCase = true) ||
             lastError.contains("HTTP 502", ignoreCase = true) -> SyncDeadLetterReason.SERVER_UNAVAILABLE
+
         lastError.contains("HTTP 401", ignoreCase = true) ||
             lastError.contains("Unauthorized", ignoreCase = true) -> SyncDeadLetterReason.SIGN_IN_REQUIRED
+
         else -> SyncDeadLetterReason.UNKNOWN
     }
 }

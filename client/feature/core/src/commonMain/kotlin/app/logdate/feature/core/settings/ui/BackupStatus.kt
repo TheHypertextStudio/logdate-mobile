@@ -18,14 +18,35 @@ internal fun backupStatus(
     }
     if (archive == null || !archive.supportsBackup) return entries
     return when (archive.phase) {
-        CloudArchivePhase.RUNNING -> AccountSyncStatus.SYNCING
-        CloudArchivePhase.SIGNED_OUT -> AccountSyncStatus.SIGN_IN_REQUIRED
-        CloudArchivePhase.NEEDS_RECOVERY -> AccountSyncStatus.KEY_RECOVERY_REQUIRED
-        CloudArchivePhase.RETRYING -> AccountSyncStatus.RETRYING
-        CloudArchivePhase.FAILED, CloudArchivePhase.UNAVAILABLE -> AccountSyncStatus.UNKNOWN
-        CloudArchivePhase.CHECKING -> if (entries == AccountSyncStatus.UP_TO_DATE) AccountSyncStatus.CHECKING else entries
-        CloudArchivePhase.NEVER_BACKED_UP -> AccountSyncStatus.CHECKING
-        CloudArchivePhase.QUEUED ->
+        CloudArchivePhase.RUNNING -> {
+            AccountSyncStatus.SYNCING
+        }
+
+        CloudArchivePhase.SIGNED_OUT -> {
+            AccountSyncStatus.SIGN_IN_REQUIRED
+        }
+
+        CloudArchivePhase.NEEDS_RECOVERY -> {
+            AccountSyncStatus.KEY_RECOVERY_REQUIRED
+        }
+
+        CloudArchivePhase.RETRYING -> {
+            AccountSyncStatus.RETRYING
+        }
+
+        CloudArchivePhase.FAILED, CloudArchivePhase.UNAVAILABLE -> {
+            AccountSyncStatus.UNKNOWN
+        }
+
+        CloudArchivePhase.CHECKING -> {
+            if (entries == AccountSyncStatus.UP_TO_DATE) AccountSyncStatus.CHECKING else entries
+        }
+
+        CloudArchivePhase.NEVER_BACKED_UP -> {
+            AccountSyncStatus.CHECKING
+        }
+
+        CloudArchivePhase.QUEUED -> {
             if (status?.backgroundWorkLimited ==
                 true
             ) {
@@ -33,6 +54,10 @@ internal fun backupStatus(
             } else {
                 AccountSyncStatus.WAITING
             }
-        CloudArchivePhase.COMPLETE -> if (archive.lastCompletedAt == null) AccountSyncStatus.CHECKING else entries
+        }
+
+        CloudArchivePhase.COMPLETE -> {
+            if (archive.lastCompletedAt == null) AccountSyncStatus.CHECKING else entries
+        }
     }
 }

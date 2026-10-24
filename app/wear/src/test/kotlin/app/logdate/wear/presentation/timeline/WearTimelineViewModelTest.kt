@@ -77,7 +77,7 @@ class WearTimelineViewModelTest {
                 fixedTime.toEpochMilliseconds() + hoursOffset * 3_600_000L,
             )
         return when (type) {
-            "audio" ->
+            "audio" -> {
                 JournalNote.Audio(
                     uid = Uuid.random(),
                     creationTimestamp = timestamp,
@@ -85,13 +85,16 @@ class WearTimelineViewModelTest {
                     mediaRef = "/recording.aac",
                     durationMs = 4200,
                 )
-            else ->
+            }
+
+            else -> {
                 JournalNote.Text(
                     uid = Uuid.random(),
                     creationTimestamp = timestamp,
                     lastUpdated = timestamp,
                     content = content,
                 )
+            }
         }
     }
 

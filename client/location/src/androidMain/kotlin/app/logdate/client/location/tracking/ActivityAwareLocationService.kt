@@ -165,7 +165,10 @@ class ActivityAwareLocationService :
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
-            else -> startTracking()
+
+            else -> {
+                startTracking()
+            }
         }
         return START_STICKY
     }
@@ -198,13 +201,16 @@ class ActivityAwareLocationService :
         val profile =
             when (activityType) {
                 DetectedActivity.STILL -> LocationProfile.STILL
+
                 DetectedActivity.WALKING,
                 DetectedActivity.RUNNING,
                 DetectedActivity.ON_FOOT,
                 -> LocationProfile.ON_FOOT
+
                 DetectedActivity.IN_VEHICLE,
                 DetectedActivity.ON_BICYCLE,
                 -> LocationProfile.IN_VEHICLE
+
                 else -> LocationProfile.ON_FOOT
             }
 

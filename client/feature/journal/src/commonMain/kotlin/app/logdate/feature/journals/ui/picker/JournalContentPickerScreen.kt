@@ -338,20 +338,23 @@ private fun PickerItemTile(
                     }
                 }
                 when {
-                    previewMedia != null ->
+                    previewMedia != null -> {
                         Image(
                             painter = previewMedia,
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
                         )
-                    item.mediaRef != null ->
+                    }
+
+                    item.mediaRef != null -> {
                         AsyncImage(
                             model = item.mediaRef,
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop,
                         )
+                    }
                 }
                 if (item.kind == JournalContentPickerItemKind.VIDEO) {
                     Icon(

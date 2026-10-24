@@ -127,6 +127,7 @@ fun CalendarSyncSettingsContent(
                             modifier = Modifier.padding(horizontal = Spacing.lg),
                         )
                     }
+
                     PermissionState.Denied,
                     PermissionState.Unknown,
                     -> {
@@ -235,6 +236,7 @@ fun CalendarSyncSettingsContent(
                             }
                         }
                     }
+
                     PermissionState.Denied,
                     PermissionState.Unknown,
                     -> {

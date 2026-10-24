@@ -21,12 +21,13 @@ actual fun rememberMediaRouteSettingsAction(kind: MediaDeviceKind): MediaRouteSe
     val outputSwitcherLabel = stringResource(Res.string.media_route_open_output_switcher)
     return remember(context, kind, soundSettingsLabel, outputSwitcherLabel) {
         when (kind) {
-            MediaDeviceKind.AUDIO_INPUT ->
+            MediaDeviceKind.AUDIO_INPUT -> {
                 MediaRouteSettingsAction(label = soundSettingsLabel) {
                     context.openSoundSettings()
                 }
+            }
 
-            MediaDeviceKind.AUDIO_OUTPUT ->
+            MediaDeviceKind.AUDIO_OUTPUT -> {
                 MediaRouteSettingsAction(label = outputSwitcherLabel) {
                     val openedOutputSwitcher =
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -41,8 +42,11 @@ actual fun rememberMediaRouteSettingsAction(kind: MediaDeviceKind): MediaRouteSe
                         context.openSoundSettings()
                     }
                 }
+            }
 
-            MediaDeviceKind.CAMERA -> null
+            MediaDeviceKind.CAMERA -> {
+                null
+            }
         }
     }
 }

@@ -123,7 +123,7 @@ internal fun SemanticTimelineDayContent(
                         Box(itemModifier) { pendingMomentContent(pending) }
                     } else {
                         when (item.dayPresentation) {
-                            DayPresentation.FLOWING ->
+                            DayPresentation.FLOWING -> {
                                 FlowingMomentItem(
                                     moment = moment,
                                     style = style,
@@ -132,7 +132,9 @@ internal fun SemanticTimelineDayContent(
                                     pendingMomentContent = pendingMomentContent,
                                     onOpenTextNote = onOpenTextNote,
                                 )
-                            DayPresentation.STACKED ->
+                            }
+
+                            DayPresentation.STACKED -> {
                                 StackedMomentCard(
                                     moment = moment,
                                     style = style,
@@ -141,6 +143,7 @@ internal fun SemanticTimelineDayContent(
                                     pendingMomentContent = pendingMomentContent,
                                     onOpenTextNote = onOpenTextNote,
                                 )
+                            }
                         }
                     }
                 }
@@ -471,8 +474,11 @@ internal fun MomentMediaGrid(
     onOpenNote: (Uuid) -> Unit = {},
 ) {
     when (media.size) {
-        0 -> Unit
-        1 ->
+        0 -> {
+            Unit
+        }
+
+        1 -> {
             TimelineMediaTile(
                 media = TimelineMediaItemUiState(uri = media.first().uri, isVideo = media.first().isVideo),
                 onOpenNote = onOpenNote,
@@ -489,7 +495,9 @@ internal fun MomentMediaGrid(
                     },
                 modifier = modifier.fillMaxWidth(),
             )
-        2 ->
+        }
+
+        2 -> {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = modifier.fillMaxWidth(),
@@ -509,7 +517,9 @@ internal fun MomentMediaGrid(
                     modifier = Modifier.weight(1f),
                 )
             }
-        else ->
+        }
+
+        else -> {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 modifier = modifier.fillMaxWidth(),
@@ -536,6 +546,7 @@ internal fun MomentMediaGrid(
                     }
                 }
             }
+        }
     }
 }
 

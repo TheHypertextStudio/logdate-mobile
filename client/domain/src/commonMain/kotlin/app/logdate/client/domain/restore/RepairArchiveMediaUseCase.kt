@@ -22,8 +22,10 @@ class RepairArchiveMediaUseCase(
         check(
             expectedNoteScope == null ||
                 draftScope == null ||
-                draftScope.outboxOwnerId == expectedNoteScope.ownerId &&
-                draftScope.outboxServerOrigin == expectedNoteScope.serverOrigin,
+                (
+                    draftScope.outboxOwnerId == expectedNoteScope.ownerId &&
+                        draftScope.outboxServerOrigin == expectedNoteScope.serverOrigin
+                ),
         ) { "Archive media recovery draft account changed" }
         val session = ArchiveMediaRepairSession(notes, journals, importer, noteScope, draftScope)
         val remaining = pending.toMutableList()

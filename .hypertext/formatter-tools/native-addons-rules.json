@@ -1,20 +1,12 @@
 {
   "setup": [
-    [
-      "python3",
-      "{repo}/.hypertext/formatter-tools/native-addons.py",
-      "setup-swift"
-    ],
-    [
-      "python3",
-      "{repo}/.hypertext/formatter-tools/native-addons.py",
-      "setup-terraform"
-    ],
+    ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-swift"],
+    ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-terraform"],
     ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-c"]
   ],
   "rules": [
     {
-      "name": "SwiftFormat 0.64.0",
+      "name": "SwiftFormat",
       "patterns": ["**/*.swift", "*.swift"],
       "argv": [
         "python3",
@@ -25,15 +17,8 @@
       ]
     },
     {
-      "name": "Terraform 1.15.5",
-      "patterns": [
-        "**/*.tf",
-        "*.tf",
-        "**/*.tfvars",
-        "*.tfvars",
-        "**/*.hcl",
-        "*.hcl"
-      ],
+      "name": "Terraform",
+      "patterns": ["**/*.tf", "*.tf", "**/*.tfvars", "*.tfvars", "**/*.hcl", "*.hcl"],
       "argv": [
         "python3",
         "{repo}/.hypertext/formatter-tools/native-addons.py",

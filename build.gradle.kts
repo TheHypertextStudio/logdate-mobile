@@ -83,6 +83,8 @@ tasks.register("test") {
     dependsOn(gradle.includedBuild("build-logic").task(":test"))
 }
 
+val ktlintEngineVersion = libs.versions.ktlintEngine.get()
+
 subprojects {
     apply {
         // TODO: Migrate to version catalog
@@ -91,7 +93,7 @@ subprojects {
     }
 
     configure<KtlintExtension> {
-        version.set("1.5.0")
+        version.set(ktlintEngineVersion)
         filter {
             exclude { it.file.path.contains("/build/") }
         }
@@ -697,7 +699,7 @@ private val managedDeviceProfile =
 
 private fun managedDeviceConfigFor(projectPath: String): ManagedDeviceProjectConfig? =
     when (projectPath) {
-        ":app:android-main" ->
+        ":app:android-main" -> {
             if (managedDeviceProfile == "tabletOnly") {
                 ManagedDeviceProjectConfig(
                     localDevices =
@@ -863,8 +865,9 @@ private fun managedDeviceConfigFor(projectPath: String): ManagedDeviceProjectCon
                         ),
                 )
             }
+        }
 
-        ":tools:native-restore-driver" ->
+        ":tools:native-restore-driver" -> {
             ManagedDeviceProjectConfig(
                 localDevices =
                     listOf(
@@ -903,8 +906,9 @@ private fun managedDeviceConfigFor(projectPath: String): ManagedDeviceProjectCon
                         ),
                     ),
             )
+        }
 
-        ":app:wear" ->
+        ":app:wear" -> {
             ManagedDeviceProjectConfig(
                 localDevices =
                     listOf(
@@ -924,8 +928,11 @@ private fun managedDeviceConfigFor(projectPath: String): ManagedDeviceProjectCon
                         ),
                     ),
             )
+        }
 
-        else -> null
+        else -> {
+            null
+        }
     }
 
 private fun ApplicationExtension.configureManagedDevices(project: Project) {

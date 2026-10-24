@@ -141,10 +141,14 @@ Return a JSON object with a "message" field that contains the response.""",
                     ),
                 )
             when (response) {
-                is app.logdate.client.intelligence.AIResult.Success ->
+                is app.logdate.client.intelligence.AIResult.Success -> {
                     parseResponse(response.value.content)
                         ?: createFallbackResponse(name)
-                else -> createFallbackResponse(name)
+                }
+
+                else -> {
+                    createFallbackResponse(name)
+                }
             }
         } catch (e: Exception) {
             Napier.w("LLM processing failed, using fallback response", e)
@@ -160,12 +164,19 @@ Return a JSON object with a "message" field that contains the response.""",
                 allowEmbeddedJson = true,
             )
         return when (val result = parser.parse(raw)) {
-            is StructuredOutputResult.Success ->
+            is StructuredOutputResult.Success -> {
                 result.value.message
                     .trim()
                     .takeIf { it.isNotBlank() }
-            StructuredOutputResult.Empty -> null
-            StructuredOutputResult.Invalid -> null
+            }
+
+            StructuredOutputResult.Empty -> {
+                null
+            }
+
+            StructuredOutputResult.Invalid -> {
+                null
+            }
         }
     }
 

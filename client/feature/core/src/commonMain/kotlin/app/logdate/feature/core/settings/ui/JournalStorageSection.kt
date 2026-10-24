@@ -99,25 +99,34 @@ fun JournalStorageSection(
     }
     SettingsSection(title = stringResource(Res.string.journal_storage_title), modifier = modifier.testTag(JournalStorageTags.SECTION)) {
         when (state) {
-            JournalMoveState.NotOffered -> Unit
-            JournalMoveState.WaitingForSync ->
+            JournalMoveState.NotOffered -> {
+                Unit
+            }
+
+            JournalMoveState.WaitingForSync -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_upgrade_title),
                     description = stringResource(Res.string.journal_storage_waiting),
                     action = {},
                 )
-            is JournalMoveState.Uploading ->
+            }
+
+            is JournalMoveState.Uploading -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_upgrading_title),
                     description = stringResource(Res.string.journal_storage_uploading, state.done, state.total),
                     action = {},
                 )
-            JournalMoveState.Checking ->
+            }
+
+            JournalMoveState.Checking -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_upgrading_title),
                     description = stringResource(Res.string.journal_storage_checking),
                     action = {},
                 )
+            }
+
             is JournalMoveState.Moved -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_sealed_title),
@@ -133,18 +142,23 @@ fun JournalStorageSection(
                     )
                 }
             }
-            JournalMoveState.SwitchingBack ->
+
+            JournalMoveState.SwitchingBack -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_switching_back_title),
                     description = stringResource(Res.string.journal_storage_switching_back),
                     action = {},
                 )
-            JournalMoveState.SwitchedBack ->
+            }
+
+            JournalMoveState.SwitchedBack -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_previous_title),
                     description = stringResource(Res.string.journal_storage_previous),
                     action = {},
                 )
+            }
+
             is JournalMoveState.Stopped -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.journal_storage_paused_title),
@@ -188,21 +202,49 @@ private fun SwitchBackDialog(
 @Composable
 private fun problemText(problem: JournalMoveProblem): String =
     when (problem) {
-        is JournalMoveProblem.MissingOnThisDevice ->
+        is JournalMoveProblem.MissingOnThisDevice -> {
             pluralStringResource(Res.plurals.journal_storage_problem_missing_here, problem.count, problem.count, kindName(problem.kind))
-        is JournalMoveProblem.NotOnServer ->
+        }
+
+        is JournalMoveProblem.NotOnServer -> {
             pluralStringResource(Res.plurals.journal_storage_problem_not_on_server, problem.count, problem.count, kindName(problem.kind))
-        is JournalMoveProblem.CopyDiffers ->
+        }
+
+        is JournalMoveProblem.CopyDiffers -> {
             pluralStringResource(Res.plurals.journal_storage_problem_copy_differs, problem.count, problem.count, kindName(problem.kind))
-        is JournalMoveProblem.MediaUnavailable ->
+        }
+
+        is JournalMoveProblem.MediaUnavailable -> {
             pluralStringResource(Res.plurals.journal_storage_problem_media_unavailable, problem.count, problem.count)
-        is JournalMoveProblem.NotSyncedHere -> stringResource(Res.string.journal_storage_problem_not_synced_here, kindName(problem.kind))
-        JournalMoveProblem.AnotherDeviceMoving -> stringResource(Res.string.journal_storage_problem_another_device)
-        JournalMoveProblem.StorageFull -> stringResource(Res.string.journal_storage_problem_storage_full)
-        JournalMoveProblem.IdentityKeyMissing -> stringResource(Res.string.journal_storage_problem_identity_key)
-        JournalMoveProblem.Offline -> stringResource(Res.string.journal_storage_problem_offline)
-        is JournalMoveProblem.ServerRefused -> stringResource(Res.string.journal_storage_problem_refused, problem.code)
-        JournalMoveProblem.SwitchBackWindowClosed -> stringResource(Res.string.journal_storage_problem_window_closed)
+        }
+
+        is JournalMoveProblem.NotSyncedHere -> {
+            stringResource(Res.string.journal_storage_problem_not_synced_here, kindName(problem.kind))
+        }
+
+        JournalMoveProblem.AnotherDeviceMoving -> {
+            stringResource(Res.string.journal_storage_problem_another_device)
+        }
+
+        JournalMoveProblem.StorageFull -> {
+            stringResource(Res.string.journal_storage_problem_storage_full)
+        }
+
+        JournalMoveProblem.IdentityKeyMissing -> {
+            stringResource(Res.string.journal_storage_problem_identity_key)
+        }
+
+        JournalMoveProblem.Offline -> {
+            stringResource(Res.string.journal_storage_problem_offline)
+        }
+
+        is JournalMoveProblem.ServerRefused -> {
+            stringResource(Res.string.journal_storage_problem_refused, problem.code)
+        }
+
+        JournalMoveProblem.SwitchBackWindowClosed -> {
+            stringResource(Res.string.journal_storage_problem_window_closed)
+        }
     }
 
 @Composable

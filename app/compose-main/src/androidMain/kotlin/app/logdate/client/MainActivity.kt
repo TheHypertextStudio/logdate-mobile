@@ -422,15 +422,20 @@ class MainActivity : FragmentActivity() {
         }
 
         when (detected) {
-            PostRestoreType.NONE -> postRestoreDetector.markDeviceInitialized()
+            PostRestoreType.NONE -> {
+                postRestoreDetector.markDeviceInitialized()
+            }
+
             PostRestoreType.CONTENT_RESTORED -> {
                 if (databaseStartupState !is DatabaseStartupState.RecoveryRequired) {
                     postRestoreDetector.markDeviceInitialized()
                 }
             }
+
             PostRestoreType.RECOVERY_REQUIRED -> {
                 Napier.w("Native restore delivery state needs recovery", tag = APP_LAUNCH_TAG)
             }
+
             PostRestoreType.CONTENT_MISSING -> {
                 Napier.i("Native restore needs journal content recovery", tag = APP_LAUNCH_TAG)
             }

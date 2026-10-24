@@ -30,8 +30,10 @@ internal class RestoreDraftReconciler(
         recoveryScope = repository.getDraftRecoveryScope()
         check(
             expectedScope == null ||
-                recoveryScope?.outboxOwnerId == expectedScope.ownerId &&
-                recoveryScope?.outboxServerOrigin == expectedScope.serverOrigin,
+                (
+                    recoveryScope?.outboxOwnerId == expectedScope.ownerId &&
+                        recoveryScope?.outboxServerOrigin == expectedScope.serverOrigin
+                ),
         ) {
             "Draft recovery account changed"
         }

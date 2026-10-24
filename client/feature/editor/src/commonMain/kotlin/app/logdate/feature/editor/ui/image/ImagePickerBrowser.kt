@@ -162,7 +162,10 @@ internal fun ImagePickerBrowser(
         }
 
         when (importState) {
-            ManagedMediaSelectionState.Idle -> Unit
+            ManagedMediaSelectionState.Idle -> {
+                Unit
+            }
+
             ManagedMediaSelectionState.Importing -> {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     ImagePickerMessageCard(
@@ -278,7 +281,9 @@ internal fun ImagePickerBrowser(
                                     }
                                 }
 
-                                else -> null
+                                else -> {
+                                    null
+                                }
                             },
                     )
                 }
@@ -329,8 +334,11 @@ internal fun ImagePickerBrowser(
 
 private fun ImagePickerPreviewState.toLibraryState(): ImagePickerLibraryState =
     when (this) {
-        ImagePickerPreviewState.Loading -> ImagePickerLibraryState.Loading
-        is ImagePickerPreviewState.Loaded ->
+        ImagePickerPreviewState.Loading -> {
+            ImagePickerLibraryState.Loading
+        }
+
+        is ImagePickerPreviewState.Loaded -> {
             ImagePickerLibraryState.Loaded(
                 images =
                     List(itemCount.coerceAtLeast(1)) { index ->
@@ -342,10 +350,19 @@ private fun ImagePickerPreviewState.toLibraryState(): ImagePickerLibraryState =
                         )
                     },
             )
-        is ImagePickerPreviewState.PermissionRequired ->
+        }
+
+        is ImagePickerPreviewState.PermissionRequired -> {
             ImagePickerLibraryState.PermissionRequired(permanentlyDenied = permanentlyDenied)
-        ImagePickerPreviewState.Empty -> ImagePickerLibraryState.Empty
-        ImagePickerPreviewState.Error -> ImagePickerLibraryState.Error
+        }
+
+        ImagePickerPreviewState.Empty -> {
+            ImagePickerLibraryState.Empty
+        }
+
+        ImagePickerPreviewState.Error -> {
+            ImagePickerLibraryState.Error
+        }
     }
 
 @Composable

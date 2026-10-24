@@ -190,7 +190,11 @@ Respond ONLY with valid JSON."""
                         AIResult.Error(AIError.InvalidResponse)
                     }
                 }
-                is AIResult.Unavailable -> response
+
+                is AIResult.Unavailable -> {
+                    response
+                }
+
                 is AIResult.Error -> {
                     Napier.e("Failed to synthesize year narrative", throwable = response.throwable)
                     response
@@ -258,7 +262,11 @@ Respond ONLY with valid JSON."""
                         },
                 )
             }
-            StructuredOutputResult.Empty -> null
+
+            StructuredOutputResult.Empty -> {
+                null
+            }
+
             StructuredOutputResult.Invalid -> {
                 Napier.w("Failed to parse year narrative response: invalid structure")
                 null

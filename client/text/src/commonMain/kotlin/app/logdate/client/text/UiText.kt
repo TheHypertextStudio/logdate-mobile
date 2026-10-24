@@ -49,26 +49,40 @@ fun String.toUiText(): UiText = UiText.Raw(this)
 @Composable
 fun UiText.asString(): String =
     when (this) {
-        is UiText.Resource ->
+        is UiText.Resource -> {
             if (args.isEmpty()) {
                 stringResource(resource)
             } else {
                 stringResource(resource, *args.map { it.asArgument() }.toTypedArray())
             }
-        is UiText.Plural -> pluralStringResource(resource, quantity, *args.map { it.asArgument() }.toTypedArray())
-        is UiText.Raw -> value
+        }
+
+        is UiText.Plural -> {
+            pluralStringResource(resource, quantity, *args.map { it.asArgument() }.toTypedArray())
+        }
+
+        is UiText.Raw -> {
+            value
+        }
     }
 
 suspend fun UiText.resolve(): String =
     when (this) {
-        is UiText.Resource ->
+        is UiText.Resource -> {
             if (args.isEmpty()) {
                 getString(resource)
             } else {
                 getString(resource, *args.map { it.resolveArgument() }.toTypedArray())
             }
-        is UiText.Plural -> getPluralString(resource, quantity, *args.map { it.resolveArgument() }.toTypedArray())
-        is UiText.Raw -> value
+        }
+
+        is UiText.Plural -> {
+            getPluralString(resource, quantity, *args.map { it.resolveArgument() }.toTypedArray())
+        }
+
+        is UiText.Raw -> {
+            value
+        }
     }
 
 @Composable

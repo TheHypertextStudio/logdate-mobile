@@ -195,6 +195,7 @@ class LogDateCloudQuotaManager(
                 quotaSnapshots.value = CloudQuotaSnapshot.Available(accountId, serverQuota)
                 serverQuota
             }
+
             is QuotaResult.Error -> {
                 quotaSnapshots.value = CloudQuotaSnapshot.Unavailable(accountId)
                 throw Exception("Failed to sync with server: ${result.message}", result.throwable)

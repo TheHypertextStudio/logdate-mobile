@@ -112,7 +112,10 @@ fun WatchRemovalContent(
             MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                 Column(Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
                     when (val value = state) {
-                        WatchRemovalState.Loading -> Text(stringResource(Res.string.watch_remove_loading))
+                        WatchRemovalState.Loading -> {
+                            Text(stringResource(Res.string.watch_remove_loading))
+                        }
+
                         is WatchRemovalState.Review -> {
                             Text(
                                 stringResource(Res.string.watch_remove_review, value.target.displayName),
@@ -134,17 +137,31 @@ fun WatchRemovalContent(
                                     ),
                             ) { Text(stringResource(Res.string.watch_remove_confirm)) }
                         }
-                        WatchRemovalState.Removing -> Text(stringResource(Res.string.watch_remove_busy))
-                        WatchRemovalState.Unavailable -> Text(stringResource(Res.string.watch_remove_unavailable))
-                        is WatchRemovalState.Finished ->
+
+                        WatchRemovalState.Removing -> {
+                            Text(stringResource(Res.string.watch_remove_busy))
+                        }
+
+                        WatchRemovalState.Unavailable -> {
+                            Text(stringResource(Res.string.watch_remove_unavailable))
+                        }
+
+                        is WatchRemovalState.Finished -> {
                             when (val result = value.result) {
-                                WatchRemovalResult.Removed -> Text(stringResource(Res.string.watch_remove_done))
-                                WatchRemovalResult.RemovedWillWipeOnNextConnect -> Text(stringResource(Res.string.watch_remove_deferred))
+                                WatchRemovalResult.Removed -> {
+                                    Text(stringResource(Res.string.watch_remove_done))
+                                }
+
+                                WatchRemovalResult.RemovedWillWipeOnNextConnect -> {
+                                    Text(stringResource(Res.string.watch_remove_deferred))
+                                }
+
                                 is WatchRemovalResult.Failed -> {
                                     Text(stringResource(Res.string.watch_remove_failed))
                                     Button(onClick = onRetry) { Text(stringResource(Res.string.watch_remove_retry)) }
                                 }
                             }
+                        }
                     }
                 }
             }

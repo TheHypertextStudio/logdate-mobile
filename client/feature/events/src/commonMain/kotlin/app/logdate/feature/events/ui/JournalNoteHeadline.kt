@@ -18,7 +18,10 @@ import logdate.client.feature.events.generated.resources.event_note_headline_voi
  */
 internal fun JournalNote.headline(): UiText =
     when (this) {
-        is JournalNote.Handwriting -> Res.string.event_note_headline_handwriting.toUiText()
+        is JournalNote.Handwriting -> {
+            Res.string.event_note_headline_handwriting.toUiText()
+        }
+
         is JournalNote.Text -> {
             val firstLine =
                 content
@@ -29,7 +32,15 @@ internal fun JournalNote.headline(): UiText =
             if (firstLine.isEmpty()) Res.string.event_note_headline_text.toUiText() else firstLine.toUiText()
         }
 
-        is JournalNote.Image -> Res.string.event_note_headline_photo.toUiText()
-        is JournalNote.Video -> Res.string.event_note_headline_video.toUiText()
-        is JournalNote.Audio -> Res.string.event_note_headline_voice_memo.toUiText()
+        is JournalNote.Image -> {
+            Res.string.event_note_headline_photo.toUiText()
+        }
+
+        is JournalNote.Video -> {
+            Res.string.event_note_headline_video.toUiText()
+        }
+
+        is JournalNote.Audio -> {
+            Res.string.event_note_headline_voice_memo.toUiText()
+        }
     }

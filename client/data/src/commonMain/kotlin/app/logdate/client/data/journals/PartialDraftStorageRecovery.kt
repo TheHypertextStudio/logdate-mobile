@@ -48,39 +48,52 @@ internal object PartialDraftStorageRecovery {
                 continue
             }
             when (character) {
-                '"' -> quoted = true
-                '{', '[' -> depth++
-                '}' -> depth--
-                ']' ->
+                '"' -> {
+                    quoted = true
+                }
+
+                '{', '[' -> {
+                    depth++
+                }
+
+                '}' -> {
+                    depth--
+                }
+
+                ']' -> {
                     if (depth == 0) {
-                        value
-                            .substring(begin, index)
-                            .trim()
-                            .takeIf(String::isNotEmpty)
-                            ?.let(values::add)
+                        appendFragment(value, begin, index, values)
                         return values
                     } else {
                         depth--
                     }
-                ',' ->
+                }
+
+                ',' -> {
                     if (depth == 0) {
-                        value
-                            .substring(begin, index)
-                            .trim()
-                            .takeIf(String::isNotEmpty)
-                            ?.let(values::add)
+                        appendFragment(value, begin, index, values)
                         begin = index + 1
                     }
+                }
             }
         }
         if (depth == 0 && !quoted) {
-            value
-                .substring(begin)
-                .trim()
-                .takeIf(String::isNotEmpty)
-                ?.let(values::add)
+            appendFragment(value, begin, value.length, values)
         }
         return values
+    }
+
+    private fun appendFragment(
+        value: String,
+        begin: Int,
+        end: Int,
+        values: MutableList<String>,
+    ) {
+        value
+            .substring(begin, end)
+            .trim()
+            .takeIf(String::isNotEmpty)
+            ?.let(values::add)
     }
 
     private fun arrayStart(
@@ -94,8 +107,14 @@ internal object PartialDraftStorageRecovery {
         var index = first
         while (index < value.length) {
             when (value[index]) {
-                '{', '[' -> depth++
-                '}', ']' -> depth--
+                '{', '[' -> {
+                    depth++
+                }
+
+                '}', ']' -> {
+                    depth--
+                }
+
                 '"' -> {
                     val begin = index++
                     var escaped = false

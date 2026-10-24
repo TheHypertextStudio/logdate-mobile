@@ -86,7 +86,10 @@ class OpenAiClient(
 
     private fun mapResponseFormat(format: GenerativeAIResponseFormat?): OpenAiResponseFormat? {
         return when (format) {
-            null, GenerativeAIResponseFormat.Text -> null
+            null, GenerativeAIResponseFormat.Text -> {
+                null
+            }
+
             is GenerativeAIResponseFormat.JsonSchema -> {
                 val schema =
                     runCatching { Json.parseToJsonElement(format.schema) }.getOrNull()

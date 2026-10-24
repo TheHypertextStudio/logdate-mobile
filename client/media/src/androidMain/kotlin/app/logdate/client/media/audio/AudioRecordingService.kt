@@ -174,6 +174,7 @@ class AudioRecordingService : Service() {
                 sessionGeneration++
                 startForegroundRecording(outputPath, inputDeviceId)
             }
+
             SERVICE_ACTION_STOP -> {
                 Napier.d("Stopping audio recording service")
                 val session = sessionGeneration
@@ -188,10 +189,12 @@ class AudioRecordingService : Service() {
                     stopSelf(startId)
                 }
             }
+
             SERVICE_ACTION_PAUSE -> {
                 Napier.d("Pausing audio recording")
                 pauseRecording()
             }
+
             SERVICE_ACTION_RESUME -> {
                 Napier.d("Resuming audio recording")
                 resumeRecording()

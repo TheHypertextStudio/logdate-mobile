@@ -93,8 +93,14 @@ fun FlowPage(
                 }
             }
             when (state) {
-                FlowUiState.Loading -> Unit
-                FlowUiState.Failed -> item { FlowMessage(stringResource(R.string.wear_flow_failed)) }
+                FlowUiState.Loading -> {
+                    Unit
+                }
+
+                FlowUiState.Failed -> {
+                    item { FlowMessage(stringResource(R.string.wear_flow_failed)) }
+                }
+
                 is FlowUiState.Ready -> {
                     momentItems(state, actions, playback)
                     earlierItem(state, actions.onOpenArchive, spec)

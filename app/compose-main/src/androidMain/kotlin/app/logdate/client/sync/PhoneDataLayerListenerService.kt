@@ -119,21 +119,29 @@ open class PhoneDataLayerListenerService : WearableListenerService() {
                     val selection = messageEvent.data.decodeToString()
                     Napier.d("Watch requested camera selection: $selection")
                     when {
-                        selection == CAMERA_SELECT_FRONT ->
+                        selection == CAMERA_SELECT_FRONT -> {
                             sendCameraCommand(
                                 CameraRemoteCommand.SelectCameraCategory(MediaDeviceCategory.FRONT_CAMERA),
                             )
-                        selection == CAMERA_SELECT_BACK ->
+                        }
+
+                        selection == CAMERA_SELECT_BACK -> {
                             sendCameraCommand(
                                 CameraRemoteCommand.SelectCameraCategory(MediaDeviceCategory.BACK_CAMERA),
                             )
-                        selection.startsWith(CAMERA_SELECT_DEVICE_PREFIX) ->
+                        }
+
+                        selection.startsWith(CAMERA_SELECT_DEVICE_PREFIX) -> {
                             sendCameraCommand(
                                 CameraRemoteCommand.SelectCameraDevice(
                                     selection.removePrefix(CAMERA_SELECT_DEVICE_PREFIX),
                                 ),
                             )
-                        else -> Napier.w("Unknown remote camera selection: $selection")
+                        }
+
+                        else -> {
+                            Napier.w("Unknown remote camera selection: $selection")
+                        }
                     }
                 }
 
@@ -250,13 +258,26 @@ open class PhoneDataLayerListenerService : WearableListenerService() {
         request: ByteArray,
     ): ByteArray? =
         when {
-            path == WearPaths.LIVE_PLAYBACK_COMMAND ->
+            path == WearPaths.LIVE_PLAYBACK_COMMAND -> {
                 withTimeoutOrNull(5_000L) { resolveKoin()?.get<PhonePlaybackHandoffHandler>() }
                     ?.answer(nodeId, request)
-            path == WearPaths.RECEIPTS && receiptsActive() -> resolveKoin()?.get<WatchReceiptResponder>()?.answer(nodeId, request)
-            path == WearPaths.WINDOW_RESYNC -> resolveKoin()?.get<WindowResyncResponder>()?.answer(nodeId, request)
-            path == WearPaths.REMINDERS_CLAIM -> resolveKoin()?.get<ReminderClaimResponder>()?.answer(nodeId, request)
-            else -> readChannels.answer(nodeId, path, request)
+            }
+
+            path == WearPaths.RECEIPTS && receiptsActive() -> {
+                resolveKoin()?.get<WatchReceiptResponder>()?.answer(nodeId, request)
+            }
+
+            path == WearPaths.WINDOW_RESYNC -> {
+                resolveKoin()?.get<WindowResyncResponder>()?.answer(nodeId, request)
+            }
+
+            path == WearPaths.REMINDERS_CLAIM -> {
+                resolveKoin()?.get<ReminderClaimResponder>()?.answer(nodeId, request)
+            }
+
+            else -> {
+                readChannels.answer(nodeId, path, request)
+            }
         }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
@@ -318,15 +339,23 @@ open class PhoneDataLayerListenerService : WearableListenerService() {
         try {
             when {
                 WearPaths.parseWatchRecord(path) != null -> if (receiptsActive()) records?.onRecord(event.sourceNodeId, path, event.data)
+
                 NoteDataMapper.isDeletePath(path) -> handleNoteDelete(path, dependencies.noteIngestor)
+
                 NoteDataMapper.isNotePath(path) -> handleNoteSync(event, path, dependencies.noteIngestor)
+
                 JournalDataMapper.isDeletePath(path) -> handleJournalDelete(path, dependencies.journalIngestor)
+
                 JournalDataMapper.isJournalPath(path) -> handleJournalSync(event, path, dependencies.journalIngestor)
+
                 AssociationDataMapper.isDeletePath(path) -> handleAssociationDelete(path, dependencies.journalIngestor)
+
                 AssociationDataMapper.isAssociationPath(path) -> handleAssociationSync(event, path, dependencies.journalIngestor)
+
                 HealthSnapshotDataMapper.isHealthPath(
                     path,
                 ) -> handleHealthSync(event, path, dependencies.healthSnapshotDao, healthSnapshotDataMapper)
+
                 path == WearPaths.STATE -> acceptWatchState(event, dependencies.peerStates)
             }
         } catch (e: Exception) {

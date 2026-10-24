@@ -119,24 +119,29 @@ private fun StatusItem(
                 Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             } else {
                 when (displayedHealth) {
-                    null ->
+                    null -> {
                         if (check == ServerCheckState.Checking) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         } else {
                             Icon(Icons.Outlined.Language, contentDescription = null)
                         }
-                    is ServerHealth.Reachable ->
+                    }
+
+                    is ServerHealth.Reachable -> {
                         Icon(
                             Icons.Outlined.CheckCircle,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
-                    ServerHealth.Unreachable ->
+                    }
+
+                    ServerHealth.Unreachable -> {
                         Icon(
                             Icons.Outlined.CloudOff,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error,
                         )
+                    }
                 }
             }
         },
@@ -144,15 +149,24 @@ private fun StatusItem(
         headlineContent = {
             Text(
                 when {
-                    check == ServerCheckState.Failed -> stringResource(Res.string.hosting_check_failed)
-                    displayedHealth == null ->
+                    check == ServerCheckState.Failed -> {
+                        stringResource(Res.string.hosting_check_failed)
+                    }
+
+                    displayedHealth == null -> {
                         stringResource(
                             if (check == ServerCheckState.Checking) Res.string.hosting_checking else Res.string.hosting_not_checked,
                         )
-                    displayedHealth is ServerHealth.Reachable ->
+                    }
+
+                    displayedHealth is ServerHealth.Reachable -> {
                         displayedHealth.version?.let { stringResource(Res.string.hosting_connected_version, it) }
                             ?: stringResource(Res.string.hosting_connected)
-                    else -> stringResource(Res.string.hosting_unreachable)
+                    }
+
+                    else -> {
+                        stringResource(Res.string.hosting_unreachable)
+                    }
                 },
             )
         },

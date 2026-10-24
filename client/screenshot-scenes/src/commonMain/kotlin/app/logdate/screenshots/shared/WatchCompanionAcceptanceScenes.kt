@@ -70,19 +70,25 @@ private fun CompanionDiagnostics() {
             WatchDiagnosticsState.Ready(
                 WatchDiagnosticCheck.entries.map { check ->
                     when (check) {
-                        WatchDiagnosticCheck.SYNC ->
+                        WatchDiagnosticCheck.SYNC -> {
                             WatchDiagnosticStep(
                                 check,
                                 WatchDiagnosticOutcome.FIXABLE,
                                 WatchDiagnosticFix.SYNC,
                             )
-                        WatchDiagnosticCheck.NOTIFICATIONS ->
+                        }
+
+                        WatchDiagnosticCheck.NOTIFICATIONS -> {
                             WatchDiagnosticStep(
                                 check,
                                 WatchDiagnosticOutcome.FIXABLE,
                                 WatchDiagnosticFix.OPEN_WATCH,
                             )
-                        else -> WatchDiagnosticStep(check, WatchDiagnosticOutcome.PASSED)
+                        }
+
+                        else -> {
+                            WatchDiagnosticStep(check, WatchDiagnosticOutcome.PASSED)
+                        }
                     }
                 },
             ),

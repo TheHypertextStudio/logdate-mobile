@@ -150,14 +150,21 @@ class TodayViewModel(
             campfire = campfire?.toPresentation(),
             phoneCard =
                 when (phone) {
-                    is PhoneLink.AppMissing -> PhoneCard.GetApp(phone.nodeId)
-                    is PhoneLink.Connected ->
+                    is PhoneLink.AppMissing -> {
+                        PhoneCard.GetApp(phone.nodeId)
+                    }
+
+                    is PhoneLink.Connected -> {
                         if (link?.phoneNode == phone.nodeId && link.peerLinkState() == PeerLinkState.LINKED && !needsLink) {
                             PhoneCard.None
                         } else {
                             PhoneCard.SetUp(phone.nodeId)
                         }
-                    else -> PhoneCard.None
+                    }
+
+                    else -> {
+                        PhoneCard.None
+                    }
                 },
         )
     }

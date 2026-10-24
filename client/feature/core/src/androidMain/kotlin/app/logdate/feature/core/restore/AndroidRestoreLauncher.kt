@@ -134,14 +134,24 @@ class AndroidRestoreLauncher(
 
                     val outcome =
                         when (workInfo.state) {
-                            WorkInfo.State.SUCCEEDED -> completedWorkOutcome(workInfo)
-                            WorkInfo.State.FAILED ->
+                            WorkInfo.State.SUCCEEDED -> {
+                                completedWorkOutcome(workInfo)
+                            }
+
+                            WorkInfo.State.FAILED -> {
                                 RestoreOutcome.Failure(
                                     RestoreError.RESTORE_FAILED,
                                     workInfo.outputData.getString(RestoreWorker.RECOVERY_ID_KEY),
                                 )
-                            WorkInfo.State.CANCELLED -> RestoreOutcome.Cancelled
-                            else -> null
+                            }
+
+                            WorkInfo.State.CANCELLED -> {
+                                RestoreOutcome.Cancelled
+                            }
+
+                            else -> {
+                                null
+                            }
                         }
                     outcome?.let { completeRestoreForWork(currentWorkId, it) }
                 }
@@ -400,8 +410,14 @@ class AndroidRestoreLauncher(
     fun onRestoreSourceSelected(uri: Uri?) {
         synchronized(workCompletionLock) {
             when (val result = pickerRequests.consumeResult()) {
-                ArchivePickerResult.Ignored -> Unit
-                is ArchivePickerResult.Launch -> launchArchivePicker(result.request)
+                ArchivePickerResult.Ignored -> {
+                    Unit
+                }
+
+                is ArchivePickerResult.Launch -> {
+                    launchArchivePicker(result.request)
+                }
+
                 is ArchivePickerResult.Selected -> {
                     if (uri == null) {
                         Napier.i("User cancelled restore source selection")

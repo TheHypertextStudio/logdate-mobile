@@ -103,12 +103,21 @@ class RecordGestureMachine(
         event: RecordGestureEvent,
     ): RecordGestureStep =
         when (event) {
-            is RecordGestureEvent.Down, is RecordGestureEvent.Move -> RecordGestureStep(phase)
-            RecordGestureEvent.Claimed, RecordGestureEvent.Cancel ->
+            is RecordGestureEvent.Down, is RecordGestureEvent.Move -> {
+                RecordGestureStep(phase)
+            }
+
+            RecordGestureEvent.Claimed, RecordGestureEvent.Cancel -> {
                 RecordGestureStep(RecordGesturePhase.Idle, listOf(RecordGestureSignal.Yielded))
-            RecordGestureEvent.Up -> RecordGestureStep(RecordGesturePhase.Idle, listOf(RecordGestureSignal.Tapped))
-            RecordGestureEvent.Timeout ->
+            }
+
+            RecordGestureEvent.Up -> {
+                RecordGestureStep(RecordGesturePhase.Idle, listOf(RecordGestureSignal.Tapped))
+            }
+
+            RecordGestureEvent.Timeout -> {
                 RecordGestureStep(RecordGesturePhase.Holding(phase.downY, lockProgress = 0f), listOf(RecordGestureSignal.Committed))
+            }
         }
 
     private fun fromHolding(
@@ -116,10 +125,17 @@ class RecordGestureMachine(
         event: RecordGestureEvent,
     ): RecordGestureStep =
         when (event) {
-            is RecordGestureEvent.Down, RecordGestureEvent.Claimed, RecordGestureEvent.Timeout -> RecordGestureStep(phase)
-            is RecordGestureEvent.Move -> slide(phase, event.y)
-            RecordGestureEvent.Up, RecordGestureEvent.Cancel ->
+            is RecordGestureEvent.Down, RecordGestureEvent.Claimed, RecordGestureEvent.Timeout -> {
+                RecordGestureStep(phase)
+            }
+
+            is RecordGestureEvent.Move -> {
+                slide(phase, event.y)
+            }
+
+            RecordGestureEvent.Up, RecordGestureEvent.Cancel -> {
                 RecordGestureStep(RecordGesturePhase.Idle, listOf(RecordGestureSignal.Released))
+            }
         }
 
     private fun slide(

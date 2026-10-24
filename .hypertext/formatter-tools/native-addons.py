@@ -18,15 +18,15 @@ CACHE = (
     Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
     / "hypertext-formatters"
 )
-SWIFT_VERSION = "0.64.0"
-SWIFT_ARCHIVE = "95ea62625d0b898a7af870293311ae6f09e4a3147ecd900593687e4b9ab2fd98"
-SWIFT_BINARY = "c2b098cc3ae30ff9fdd1acf7342f9b6efac4c403cf0b4e2d473690c92ac41210"
-TF_VERSION = "1.15.5"
+SWIFT_VERSION = "0.64.1"
+SWIFT_ARCHIVE = "0e5762a848d738602c7a983b26812031e634d85e357db070968b9c805f253eff"
+SWIFT_BINARY = "8814dbe3f89c833e990948f692b3c063bc67fdd6dc5db49f7b205e7c541c8620"
+TF_VERSION = "1.17.0"
 TF_HASHES = {
-    "darwin_arm64": "01137660510005b918bba82154866fbeac4393163d8277c2abe861dfb5842c3c",
-    "darwin_amd64": "3687d07c034b3e7deed5b072cd8ae2b34835bcb139baec3fc4f5fd534dabf5ed",
-    "linux_arm64": "06e7b48de826146c6d9331ba35b13da12332d8392be30d1dd6b789ba4713fff0",
-    "linux_amd64": "702b2136af6728c8ff037f843dd2dbce2b7ad88786b7381d1d72aefa250f601c",
+    "darwin_arm64": "7472a54cca911d46c0e399a5ebbce44444912d0d4dad7495f37f1fa51e7ca6b7",
+    "darwin_amd64": "3773397524196e4ebbf7167e2b9fb478dff1962d555d649f616ba97ca446a143",
+    "linux_arm64": "f32478134ffc6d710eec474bbd316652cdddc0f4e336973a3745e8d3a3309cdf",
+    "linux_amd64": "c168cab7c637a8769fdb90089ddd19de701bc6ff8aca64dc2e2185fe46f59f67",
 }
 # Archive digests from HashiCorp's versioned SHA256SUMS and PyPI release metadata.
 CLANG_VERSION = "23.1.3"
@@ -197,6 +197,18 @@ def main():
         k: v for k, v in os.environ.items() if not k.startswith("TF_CLI_ARGS")
     }
     environment.update(CHECKPOINT_DISABLE="1", TF_IN_AUTOMATION="1")
+    if tool == "swift":
+        result = subprocess.run(
+            command,
+            input=sys.stdin.buffer.read(),
+            capture_output=True,
+            cwd=ROOT,
+            env=environment,
+        )
+        sys.stderr.buffer.write(result.stderr)
+        if not result.returncode:
+            sys.stdout.buffer.write(result.stdout)
+        return result.returncode
     return subprocess.call(command, cwd=ROOT, env=environment)
 
 

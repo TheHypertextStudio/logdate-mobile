@@ -152,17 +152,24 @@ private suspend fun RoutingCall.respondToSave(
             response.header(HttpHeaders.Location, "/api/v1/diagnostics/reports/$reportId")
             respond(HttpStatusCode.Created, DiagnosticReportReference(reportId.toString()))
         }
-        DiagnosticSaveResult.EXISTING -> respond(HttpStatusCode.OK, DiagnosticReportReference(reportId.toString()))
-        DiagnosticSaveResult.CONFLICT ->
+
+        DiagnosticSaveResult.EXISTING -> {
+            respond(HttpStatusCode.OK, DiagnosticReportReference(reportId.toString()))
+        }
+
+        DiagnosticSaveResult.CONFLICT -> {
             respond(
                 HttpStatusCode.Conflict,
                 error("REPORT_ID_CONFLICT", "Report reference already used"),
             )
-        DiagnosticSaveResult.DAILY_LIMIT ->
+        }
+
+        DiagnosticSaveResult.DAILY_LIMIT -> {
             respond(
                 HttpStatusCode.TooManyRequests,
                 error("REPORT_RATE_LIMITED", "Daily report limit reached"),
             )
+        }
     }
 }
 

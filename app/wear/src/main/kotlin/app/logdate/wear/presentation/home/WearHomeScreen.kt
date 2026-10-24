@@ -204,9 +204,18 @@ private fun RecorderStatusContent(
 ) {
     val secondary = MaterialTheme.colorScheme.onSurfaceVariant
     when (recordingState.phase) {
-        RecordingPhase.READY -> ReadyStatus(homeState, recordingState.showGestureHint)
-        RecordingPhase.STARTING -> StatusText(stringResource(R.string.wear_recorder_starting), secondary)
-        RecordingPhase.RECORDING -> RecordingStatus(recordingState)
+        RecordingPhase.READY -> {
+            ReadyStatus(homeState, recordingState.showGestureHint)
+        }
+
+        RecordingPhase.STARTING -> {
+            StatusText(stringResource(R.string.wear_recorder_starting), secondary)
+        }
+
+        RecordingPhase.RECORDING -> {
+            RecordingStatus(recordingState)
+        }
+
         RecordingPhase.PAUSED -> {
             val message =
                 if (recordingState.pausedByInterruption) {
@@ -233,10 +242,22 @@ private fun RecorderStatusContent(
                 }
             }
         }
-        RecordingPhase.SAVING -> StatusText(stringResource(R.string.wear_recording_saving), secondary)
-        RecordingPhase.SAVED -> SavedStatus(recordingState.saveFeedback)
-        RecordingPhase.TOO_SHORT -> StatusText(stringResource(R.string.wear_recording_too_short), secondary)
-        RecordingPhase.ERROR -> StatusText(errorText(recordingState.error), MaterialTheme.colorScheme.error)
+
+        RecordingPhase.SAVING -> {
+            StatusText(stringResource(R.string.wear_recording_saving), secondary)
+        }
+
+        RecordingPhase.SAVED -> {
+            SavedStatus(recordingState.saveFeedback)
+        }
+
+        RecordingPhase.TOO_SHORT -> {
+            StatusText(stringResource(R.string.wear_recording_too_short), secondary)
+        }
+
+        RecordingPhase.ERROR -> {
+            StatusText(errorText(recordingState.error), MaterialTheme.colorScheme.error)
+        }
     }
 }
 
@@ -368,7 +389,7 @@ private fun RecorderControls(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         when {
-            showRecordingControls ->
+            showRecordingControls -> {
                 SideControl(
                     icon = if (phase == RecordingPhase.PAUSED) Icons.Default.PlayArrow else Icons.Default.Pause,
                     description =
@@ -377,24 +398,38 @@ private fun RecorderControls(
                         ),
                     onClick = onPauseToggle,
                 )
-            isIdle ->
+            }
+
+            isIdle -> {
                 SideControl(Icons.Default.Headphones, stringResource(R.string.wear_home_memories), onNavigateToMemories)
-            else -> Spacer(Modifier.size(SIDE_CONTROL_SIZE))
+            }
+
+            else -> {
+                Spacer(Modifier.size(SIDE_CONTROL_SIZE))
+            }
         }
         RecordSurface(phase = phase, isLatched = recordingState.isLatched, onPress = onPress, onRelease = onRelease)
         when {
-            showRecordingControls && recordingState.confirmingDiscard ->
+            showRecordingControls && recordingState.confirmingDiscard -> {
                 SideControl(
                     icon = Icons.Default.DeleteForever,
                     description = stringResource(R.string.wear_recorder_discard_confirm),
                     onClick = onDiscard,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                 )
-            showRecordingControls ->
+            }
+
+            showRecordingControls -> {
                 SideControl(Icons.Default.Close, stringResource(R.string.wear_recorder_discard), onDiscard)
-            isIdle ->
+            }
+
+            isIdle -> {
                 SideControl(Icons.Default.Mood, stringResource(R.string.wear_home_mood_checkin), onNavigateToMoodCheckIn)
-            else -> Spacer(Modifier.size(SIDE_CONTROL_SIZE))
+            }
+
+            else -> {
+                Spacer(Modifier.size(SIDE_CONTROL_SIZE))
+            }
         }
     }
 }
@@ -430,18 +465,25 @@ private fun RecorderFollowUp(
         contentAlignment = Alignment.TopCenter,
     ) {
         when {
-            recordingState.phase == RecordingPhase.READY ->
+            recordingState.phase == RecordingPhase.READY -> {
                 CompactButton(
                     onClick = onNavigateToMore,
                     colors = ButtonDefaults.filledTonalButtonColors(),
                     label = { Text(stringResource(R.string.wear_home_more)) },
                 )
-            recordingState.phase == RecordingPhase.SAVED && recordingState.undoableNoteId != null ->
+            }
+
+            recordingState.phase == RecordingPhase.SAVED && recordingState.undoableNoteId != null -> {
                 CompactButton(onClick = onUndo, label = { Text(stringResource(R.string.wear_recorder_undo)) })
-            recordingState.phase == RecordingPhase.ERROR && recordingState.error == RecordingError.NOT_ENOUGH_STORAGE ->
+            }
+
+            recordingState.phase == RecordingPhase.ERROR && recordingState.error == RecordingError.NOT_ENOUGH_STORAGE -> {
                 CompactButton(onClick = onOpenStorageSettings, label = { Text(stringResource(R.string.wear_recorder_open_storage)) })
-            recordingState.phase == RecordingPhase.ERROR && recordingState.error == RecordingError.MICROPHONE_PERMISSION_DENIED ->
+            }
+
+            recordingState.phase == RecordingPhase.ERROR && recordingState.error == RecordingError.MICROPHONE_PERMISSION_DENIED -> {
                 CompactButton(onClick = onAllowMicrophone, label = { Text(stringResource(R.string.wear_onboarding_permissions_allow)) })
+            }
         }
     }
 }

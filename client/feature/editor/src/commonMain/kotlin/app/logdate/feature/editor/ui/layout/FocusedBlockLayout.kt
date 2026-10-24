@@ -66,11 +66,13 @@ internal fun FocusedBlockLayout(
                 editorX = split.rightPane.left.roundToPx()
                 editorWidth = split.rightPane.width.roundToPx()
             }
+
             is FoldableSplitLayout.Horizontal -> {
                 previewHeight = split.topPane.height.roundToPx()
                 editorY = split.bottomPane.top.roundToPx()
                 editorHeight = split.bottomPane.height.roundToPx()
             }
+
             FoldableSplitLayout.None -> {
                 if (preview != null && sideBySide) {
                     editorWidth = (if (textEditor) 640.dp else 360.dp).roundToPx().coerceAtMost(width * 2 / 3)

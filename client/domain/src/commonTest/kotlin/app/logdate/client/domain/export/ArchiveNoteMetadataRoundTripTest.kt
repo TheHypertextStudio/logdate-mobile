@@ -54,13 +54,22 @@ class ArchiveNoteMetadataRoundTripTest : ArchiveExportFixture() {
                 if (note is JournalNote.Audio) assertEquals("", encoded.getValue("transcription").jsonPrimitive.content)
                 val restored = roundTrip(note)
                 when (restored) {
-                    is JournalNote.Image -> assertEquals("", restored.caption)
-                    is JournalNote.Video -> assertEquals("", restored.caption)
+                    is JournalNote.Image -> {
+                        assertEquals("", restored.caption)
+                    }
+
+                    is JournalNote.Video -> {
+                        assertEquals("", restored.caption)
+                    }
+
                     is JournalNote.Audio -> {
                         assertEquals("", restored.caption)
                         assertEquals("", restored.transcription)
                     }
-                    is JournalNote.Text, is JournalNote.Handwriting -> error("Media note became a non-media note")
+
+                    is JournalNote.Text, is JournalNote.Handwriting -> {
+                        error("Media note became a non-media note")
+                    }
                 }
             }
         }

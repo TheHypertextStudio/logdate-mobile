@@ -219,7 +219,10 @@ private fun MarkPhotoSuggestionsContent(
     previewPhotoPainter: Painter?,
 ) {
     when (state) {
-        MarkPhotoSuggestions.Loading, MarkPhotoSuggestions.None, MarkPhotoSuggestions.NeedsAccess -> Unit
+        MarkPhotoSuggestions.Loading, MarkPhotoSuggestions.None, MarkPhotoSuggestions.NeedsAccess -> {
+            Unit
+        }
+
         is MarkPhotoSuggestions.Limited, is MarkPhotoSuggestions.Photos -> {
             val photos =
                 when (state) {

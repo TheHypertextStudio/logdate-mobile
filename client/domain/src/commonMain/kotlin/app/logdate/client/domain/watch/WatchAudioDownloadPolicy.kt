@@ -16,7 +16,7 @@ enum class WatchAudioDownloadPolicy(
         charging: Boolean,
     ): Boolean =
         when (this) {
-            WIFI_OR_CHARGING -> validatedUnmetered || charging && validatedConnected
+            WIFI_OR_CHARGING -> validatedUnmetered || (charging && validatedConnected)
             WIFI_ONLY -> validatedUnmetered
             CHARGING_ONLY -> charging && validatedConnected
             ON_DEMAND -> false

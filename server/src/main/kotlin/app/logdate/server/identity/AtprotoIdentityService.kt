@@ -123,7 +123,10 @@ class AtprotoIdentityService(
                         )
                     provisionedIdentity.did
                 }
-                HostedAccountDidMethod.WEB -> didForHandle(handle).toString()
+
+                HostedAccountDidMethod.WEB -> {
+                    didForHandle(handle).toString()
+                }
             }
         val signingKey = stored.signingKeyPublic ?: signingKeyService.ensureActiveKey(stored.id).publicKeyMultibase
 
@@ -250,7 +253,9 @@ class AtprotoIdentityService(
                 )
             }
 
-            else -> throw IdentityLifecycleConflictException("Signing key rotation is not supported for DID $did")
+            else -> {
+                throw IdentityLifecycleConflictException("Signing key rotation is not supported for DID $did")
+            }
         }
     }
 

@@ -40,7 +40,10 @@ class LogDateAccountAuth(
         val token = bearerToken(call.request.header(HttpHeaders.Authorization))
         val accountId =
             when (val check = verifier.verify(token, allowSyncScope = true)) {
-                is AccessCheck.Granted -> Uuid.parseOrNull(check.claims.accountId)
+                is AccessCheck.Granted -> {
+                    Uuid.parseOrNull(check.claims.accountId)
+                }
+
                 AccessCheck.SessionRevoked -> {
                     call.respond(
                         HttpStatusCode.Unauthorized,
@@ -48,7 +51,10 @@ class LogDateAccountAuth(
                     )
                     return null
                 }
-                AccessCheck.Missing, AccessCheck.Invalid, AccessCheck.ScopeDenied -> null
+
+                AccessCheck.Missing, AccessCheck.Invalid, AccessCheck.ScopeDenied -> {
+                    null
+                }
             }
         val account =
             accountId

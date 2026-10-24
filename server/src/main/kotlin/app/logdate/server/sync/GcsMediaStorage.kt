@@ -262,11 +262,17 @@ class GcsMediaStorage(
                 "users/${request.ownerId}/media/${request.blobId}/$sanitizedFileName"
             }
 
-            LogDateBlobNamespace.BACKUP -> "users/${request.ownerId}/backups/${request.blobId}.enc"
+            LogDateBlobNamespace.BACKUP -> {
+                "users/${request.ownerId}/backups/${request.blobId}.enc"
+            }
 
-            LogDateBlobNamespace.ATPROTO -> "users/${request.ownerId}/atproto/blobs/${request.blobId}"
+            LogDateBlobNamespace.ATPROTO -> {
+                "users/${request.ownerId}/atproto/blobs/${request.blobId}"
+            }
 
-            LogDateBlobNamespace.SPACE -> "users/${request.ownerId}/spaces/${request.blobId}"
+            LogDateBlobNamespace.SPACE -> {
+                "users/${request.ownerId}/spaces/${request.blobId}"
+            }
         }
 
     companion object {

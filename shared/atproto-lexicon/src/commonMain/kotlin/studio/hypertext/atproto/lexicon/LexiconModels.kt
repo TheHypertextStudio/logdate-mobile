@@ -266,12 +266,25 @@ public sealed interface LexiconRecordKey {
         /** Parses a schema's `key` value, or returns null when it isn't a known rule. */
         public fun parse(value: String): LexiconRecordKey? =
             when {
-                value == "tid" -> Tid
-                value == "nsid" -> Nsid
-                value == "any" -> Any
-                value.startsWith(LITERAL_PREFIX) ->
+                value == "tid" -> {
+                    Tid
+                }
+
+                value == "nsid" -> {
+                    Nsid
+                }
+
+                value == "any" -> {
+                    Any
+                }
+
+                value.startsWith(LITERAL_PREFIX) -> {
                     value.removePrefix(LITERAL_PREFIX).takeIf { it.isNotEmpty() }?.let(::Literal)
-                else -> null
+                }
+
+                else -> {
+                    null
+                }
             }
 
         private const val LITERAL_PREFIX = "literal:"
@@ -314,11 +327,12 @@ public data class LexiconReference(
             val trimmed = value.trim()
             require(trimmed.isNotBlank()) { "Lexicon ref must not be blank" }
             return when {
-                trimmed.startsWith('#') ->
+                trimmed.startsWith('#') -> {
                     LexiconReference(
                         documentId = owner,
                         definitionName = trimmed.removePrefix("#").ifBlank { MAIN_DEFINITION_NAME },
                     )
+                }
 
                 '#' in trimmed -> {
                     val documentId = Nsid.require(trimmed.substringBefore('#'))
@@ -326,11 +340,12 @@ public data class LexiconReference(
                     LexiconReference(documentId = documentId, definitionName = definitionName)
                 }
 
-                else ->
+                else -> {
                     LexiconReference(
                         documentId = Nsid.require(trimmed),
                         definitionName = MAIN_DEFINITION_NAME,
                     )
+                }
             }
         }
     }

@@ -138,13 +138,21 @@ class CreatePasskeyAccountUseCase(
             }
         }
         return when {
-            exception?.message?.contains("USER_CANCELLED", ignoreCase = true) == true ->
+            exception?.message?.contains("USER_CANCELLED", ignoreCase = true) == true -> {
                 CreateAccountError.PasskeyCancelled
-            exception?.message?.contains("NOT_SUPPORTED", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("NOT_SUPPORTED", ignoreCase = true) == true -> {
                 CreateAccountError.PasskeyNotSupported
-            exception?.message?.contains("PASSKEY", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("PASSKEY", ignoreCase = true) == true -> {
                 CreateAccountError.PasskeyFailed
-            else -> CreateAccountError.Unknown(exception?.message ?: "Unknown error")
+            }
+
+            else -> {
+                CreateAccountError.Unknown(exception?.message ?: "Unknown error")
+            }
         }
     }
 }

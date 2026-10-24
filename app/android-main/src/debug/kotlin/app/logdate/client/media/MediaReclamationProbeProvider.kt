@@ -27,7 +27,10 @@ class MediaReclamationProbeProvider : ContentProvider() {
         val root = File(context.noBackupFilesDir, "media-reclamation-probe/$runId")
         val journal = AndroidMediaReclamationJournal(root)
         return when (method) {
-            "pid" -> Bundle().apply { putInt("pid", Process.myPid()) }
+            "pid" -> {
+                Bundle().apply { putInt("pid", Process.myPid()) }
+            }
+
             "recordThenExit" -> {
                 runBlocking { journal.recordCandidate(requireNotNull(extras.getString("reference"))) }
                 Thread {
@@ -36,6 +39,7 @@ class MediaReclamationProbeProvider : ContentProvider() {
                 }.start()
                 Bundle().apply { putInt("pid", Process.myPid()) }
             }
+
             "holdLock" -> {
                 runBlocking { journal.pendingCandidates() }
                 FileChannel
@@ -51,7 +55,10 @@ class MediaReclamationProbeProvider : ContentProvider() {
                     }
                 Bundle.EMPTY
             }
-            else -> error("Unknown media reclamation probe")
+
+            else -> {
+                error("Unknown media reclamation probe")
+            }
         }
     }
 

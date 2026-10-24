@@ -150,10 +150,12 @@ actual fun ImagePickerContent(
                 libraryState =
                     when {
                         images.isEmpty() -> ImagePickerLibraryState.Empty
+
                         // On Android 14+, "Select photos" grants the user-selected
                         // permission but denies READ_MEDIA_IMAGES; surface a
                         // distinct state so the picker can show the Manage pill.
                         !hasFullImageAccess() -> ImagePickerLibraryState.PartialAccess(images)
+
                         else -> ImagePickerLibraryState.Loaded(images)
                     }
             }
@@ -229,13 +231,18 @@ actual fun ImagePickerContent(
  */
 private fun imageLibraryPermissions(): Array<String> =
     when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
             arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
             )
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+        }
+
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
             arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
-        else ->
+        }
+
+        else -> {
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
     }

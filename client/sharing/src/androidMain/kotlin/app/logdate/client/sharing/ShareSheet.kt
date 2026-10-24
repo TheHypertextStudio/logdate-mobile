@@ -123,17 +123,21 @@ internal fun Context.shareContent(request: ShareContentRequest) {
 private fun Context.buildShareIntent(request: ShareContentRequest): Intent {
     val shareIntent =
         when (request.mediaUris.size) {
-            0 ->
+            0 -> {
                 Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                 }
-            1 ->
+            }
+
+            1 -> {
                 Intent(Intent.ACTION_SEND).apply {
                     type = resolveMimeType(request.mediaUris)
                     putExtra(Intent.EXTRA_STREAM, request.mediaUris.first())
                     clipData = ClipData.newUri(contentResolver, request.title ?: "shared media", request.mediaUris.first())
                 }
-            else ->
+            }
+
+            else -> {
                 Intent(Intent.ACTION_SEND_MULTIPLE).apply {
                     type = resolveMimeType(request.mediaUris)
                     putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(request.mediaUris))
@@ -149,6 +153,7 @@ private fun Context.buildShareIntent(request: ShareContentRequest): Intent {
                                 }
                             }
                 }
+            }
         }
 
     return shareIntent.apply {

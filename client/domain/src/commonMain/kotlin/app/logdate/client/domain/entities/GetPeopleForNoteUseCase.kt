@@ -16,12 +16,16 @@ class GetPeopleForNoteUseCase(
         text: String,
     ): List<Person> =
         when (val result = extractPeopleUseCase(noteId, text)) {
-            is AIResult.Success ->
+            is AIResult.Success -> {
                 result.value.map { extractedPerson ->
                     peopleRepository.resolvePersonByName(extractedPerson.name) ?: extractedPerson
                 }
+            }
+
             is AIResult.Error,
             is AIResult.Unavailable,
-            -> emptyList()
+            -> {
+                emptyList()
+            }
         }
 }

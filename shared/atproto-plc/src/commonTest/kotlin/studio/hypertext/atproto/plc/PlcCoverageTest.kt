@@ -93,11 +93,12 @@ class PlcCoverageTest {
                             engine {
                                 addHandler { request ->
                                     when (request.url.encodedPath) {
-                                        "/export" ->
+                                        "/export" -> {
                                             respond(
                                                 content = "",
                                                 headers = headersOf("Content-Type", ContentType.Text.Plain.toString()),
                                             )
+                                        }
 
                                         "/did:plc:ewvi7nxzyoun6zhxrhs64oiz" -> {
                                             requestBodies += readBody(request.body)
@@ -107,7 +108,9 @@ class PlcCoverageTest {
                                             )
                                         }
 
-                                        else -> error("Unexpected PLC request: ${request.url}")
+                                        else -> {
+                                            error("Unexpected PLC request: ${request.url}")
+                                        }
                                     }
                                 }
                             }

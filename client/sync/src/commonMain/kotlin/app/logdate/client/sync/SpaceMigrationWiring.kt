@@ -99,10 +99,19 @@ private suspend fun DefaultSyncManager.movedKinds(
         val kind = registry.forEntityType(type) as? SpaceKind<Any> ?: return@mapNotNull null
         val ids: suspend () -> Collection<String> =
             when (type) {
-                EntityType.JOURNAL -> ({ journalRepository.allJournalsObserved.first().map { it.id.toString() } })
-                EntityType.NOTE -> ({ journalNotesRepository.allNotesObserved.first().map { it.uid.toString() } })
-                EntityType.ASSOCIATION -> ({ membershipIds() })
-                EntityType.DRAFT ->
+                EntityType.JOURNAL -> {
+                    ({ journalRepository.allJournalsObserved.first().map { it.id.toString() } })
+                }
+
+                EntityType.NOTE -> {
+                    ({ journalNotesRepository.allNotesObserved.first().map { it.uid.toString() } })
+                }
+
+                EntityType.ASSOCIATION -> {
+                    ({ membershipIds() })
+                }
+
+                EntityType.DRAFT -> {
                     if (profile.syncsDrafts) {
                         (
                             {
@@ -112,8 +121,13 @@ private suspend fun DefaultSyncManager.movedKinds(
                     } else {
                         return@mapNotNull null
                     }
-                EntityType.MOMENT -> if (momentSyncConfig?.enabled?.invoke() == true) ({ deps.liveMomentIds() }) else return@mapNotNull null
-                else ->
+                }
+
+                EntityType.MOMENT -> {
+                    if (momentSyncConfig?.enabled?.invoke() == true) ({ deps.liveMomentIds() }) else return@mapNotNull null
+                }
+
+                else -> {
                     if (history !=
                         null
                     ) {
@@ -121,6 +135,7 @@ private suspend fun DefaultSyncManager.movedKinds(
                     } else {
                         return@mapNotNull null
                     }
+                }
             }
         MigrationKind(kind, type.dataKind(), ids, prepareFor(type, preparer))
     }

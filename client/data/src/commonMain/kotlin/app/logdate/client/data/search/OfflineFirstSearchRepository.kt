@@ -187,8 +187,14 @@ class OfflineFirstSearchRepository(
             created = getCreatedInstant(),
             contentType =
                 when {
-                    isTextNote() -> SearchContentType.TEXT_NOTE
-                    isTranscription() -> SearchContentType.TRANSCRIPTION
+                    isTextNote() -> {
+                        SearchContentType.TEXT_NOTE
+                    }
+
+                    isTranscription() -> {
+                        SearchContentType.TRANSCRIPTION
+                    }
+
                     else -> {
                         Napier.w("Unknown search result content type: $contentType, falling back to TEXT_NOTE")
                         SearchContentType.fromFtsValue(contentType)

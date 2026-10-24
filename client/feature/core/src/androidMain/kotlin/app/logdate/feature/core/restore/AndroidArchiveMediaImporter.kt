@@ -62,13 +62,17 @@ internal class AndroidArchiveMediaImporter(
                         }
                         fromBytes
                     }
+
                     fromBytes != "application/octet-stream" && fromBytes != fromExtension -> {
                         // Extension may be inferred (e.g. .jpg for a HEIC file from a bare
                         // MediaStore content URI). Magic bytes win when they disagree.
                         Napier.w("Restore attachment type mismatch")
                         fromBytes
                     }
-                    else -> fromExtension
+
+                    else -> {
+                        fromExtension
+                    }
                 }
             val ticket = publicationTickets.reserve("archive-restore:$normalizedPath", tempFile.absolutePath)
             val savedPath =
@@ -119,13 +123,17 @@ internal class AndroidArchiveMediaImporter(
             val header = ByteArray(16)
             file.inputStream().use { it.read(header) }
             when {
-                header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte() ->
+                header[0] == 0xFF.toByte() && header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte() -> {
                     "image/jpeg"
+                }
+
                 header[0] == 0x89.toByte() &&
                     header[1] == 0x50.toByte() &&
                     header[2] == 0x4E.toByte() &&
-                    header[3] == 0x47.toByte() ->
+                    header[3] == 0x47.toByte() -> {
                     "image/png"
+                }
+
                 header[0] == 0x52.toByte() &&
                     header[1] == 0x49.toByte() &&
                     header[2] == 0x46.toByte() &&
@@ -133,13 +141,17 @@ internal class AndroidArchiveMediaImporter(
                     header[8] == 0x57.toByte() &&
                     header[9] == 0x45.toByte() &&
                     header[10] == 0x42.toByte() &&
-                    header[11] == 0x50.toByte() ->
+                    header[11] == 0x50.toByte() -> {
                     "image/webp"
+                }
+
                 header[0] == 0x47.toByte() &&
                     header[1] == 0x49.toByte() &&
                     header[2] == 0x46.toByte() &&
-                    header[3] == 0x38.toByte() ->
+                    header[3] == 0x38.toByte() -> {
                     "image/gif"
+                }
+
                 header[4] == 0x66.toByte() &&
                     header[5] == 0x74.toByte() &&
                     header[6] == 0x79.toByte() &&
@@ -151,7 +163,10 @@ internal class AndroidArchiveMediaImporter(
                         else -> "video/mp4"
                     }
                 }
-                else -> "application/octet-stream"
+
+                else -> {
+                    "application/octet-stream"
+                }
             }
         } catch (e: Exception) {
             Napier.w("Restore attachment type detection failed")

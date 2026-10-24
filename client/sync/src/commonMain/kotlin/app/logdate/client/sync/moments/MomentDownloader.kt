@@ -92,11 +92,15 @@ internal class MomentDownloader(
                 val incoming = mark.atMillisecondPrecision()
                 val merged = config.repository.applyFromSync(incoming)
                 when {
-                    merged == null && config.repository.getMark(mark.id) == null -> staged.settle(id, RemoteOutcome.DECLINED)
+                    merged == null && config.repository.getMark(mark.id) == null -> {
+                        staged.settle(id, RemoteOutcome.DECLINED)
+                    }
+
                     merged == null -> {
                         staged.settleFailed(id)
                         tally.errors += SyncError(SyncErrorType.CONFLICT_ERROR, "A marked moment could not be merged")
                     }
+
                     else -> {
                         // The version is transport metadata; only content that survived here needs to upload again.
                         val kept = merged.copy(syncVersion = incoming.syncVersion) != incoming

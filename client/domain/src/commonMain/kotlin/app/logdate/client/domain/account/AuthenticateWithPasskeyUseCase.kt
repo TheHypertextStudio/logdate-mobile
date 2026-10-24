@@ -83,21 +83,37 @@ class AuthenticateWithPasskeyUseCase(
             }
         }
         return when {
-            exception is LocalDataAdoptionRequiredException ->
+            exception is LocalDataAdoptionRequiredException -> {
                 AuthenticationError.LocalDataNeedsAdoption
-            exception?.message?.contains("USER_CANCELLED", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("USER_CANCELLED", ignoreCase = true) == true -> {
                 AuthenticationError.PasskeyCancelled
-            exception?.message?.contains("NOT_SUPPORTED", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("NOT_SUPPORTED", ignoreCase = true) == true -> {
                 AuthenticationError.PasskeyNotSupported
-            exception?.message?.contains("NOT_ALLOWED", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("NOT_ALLOWED", ignoreCase = true) == true -> {
                 AuthenticationError.NoCredentialsFound
-            exception?.message?.contains("ACCOUNT_NOT_FOUND", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("ACCOUNT_NOT_FOUND", ignoreCase = true) == true -> {
                 AuthenticationError.AccountNotFound
-            exception?.message?.contains("NETWORK_ERROR", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("NETWORK_ERROR", ignoreCase = true) == true -> {
                 AuthenticationError.NetworkError
-            exception?.message?.contains("PASSKEY", ignoreCase = true) == true ->
+            }
+
+            exception?.message?.contains("PASSKEY", ignoreCase = true) == true -> {
                 AuthenticationError.PasskeyFailed
-            else -> AuthenticationError.Unknown(exception?.message ?: "Unknown error")
+            }
+
+            else -> {
+                AuthenticationError.Unknown(exception?.message ?: "Unknown error")
+            }
         }
     }
 }

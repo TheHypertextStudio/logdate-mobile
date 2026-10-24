@@ -107,6 +107,7 @@ internal fun ProfileHeader(
                     }
                 }
             }
+
             else -> {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

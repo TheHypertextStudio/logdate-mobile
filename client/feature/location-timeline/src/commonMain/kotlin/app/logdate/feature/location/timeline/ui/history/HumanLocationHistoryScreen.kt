@@ -126,15 +126,24 @@ fun HumanLocationHistoryScreen(
             .PlatformBackHandler(enabled = workspace && openedPlace != null) { openedPlace = null }
         HumanLocationHistoryContent(
             when {
-                state.canRetry -> state
-                recordingEnabled && !access.ready ->
+                state.canRetry -> {
+                    state
+                }
+
+                recordingEnabled && !access.ready -> {
                     state.copy(recoveryMessage = access.message.toUiText(), recoveryActionLabel = access.actionLabel.toUiText())
-                interrupted ->
+                }
+
+                interrupted -> {
                     state.copy(
                         recoveryMessage = Res.string.history_recording_interrupted.toUiText(),
                         recoveryActionLabel = Res.string.history_resume_recording.toUiText(),
                     )
-                else -> state
+                }
+
+                else -> {
+                    state
+                }
             },
             HumanLocationHistoryActions(
                 onSelectItem = { viewModel.select(it) },
@@ -153,13 +162,22 @@ fun HumanLocationHistoryScreen(
                 onOpenMemory = { Uuid.parseOrNull(it)?.let(onOpenNote) },
                 onEdit = { id, action ->
                     when {
-                        action == HistoryEditAction.AddMemory && id != null -> viewModel.contextFor(id)?.let(onAddMemory)
+                        action == HistoryEditAction.AddMemory && id != null -> {
+                            viewModel.contextFor(id)?.let(onAddMemory)
+                        }
+
                         action == HistoryEditAction.LinkMemory && id != null -> {
                             viewModel.dismiss()
                             linkingVisit = id
                         }
-                        action == HistoryEditAction.Delete && id != null -> viewModel.delete(id)
-                        else -> edit = id to action
+
+                        action == HistoryEditAction.Delete && id != null -> {
+                            viewModel.delete(id)
+                        }
+
+                        else -> {
+                            edit = id to action
+                        }
                     }
                 },
                 onReplayPlaying = if (access.reducedMotion) null else viewModel::replay,
@@ -379,15 +397,21 @@ fun HumanLocationHistoryScreen(
                         edits.distinctBy { it.value }.forEach { edit ->
                             val label =
                                 when (edit.field) {
-                                    HistoryField.PLACE ->
+                                    HistoryField.PLACE -> {
                                         snapshot?.places?.firstOrNull { it.id == edit.value }?.name
                                             ?: stringResource(Res.string.history_conflict_saved_place)
-                                    HistoryField.ACTIVITY ->
+                                    }
+
+                                    HistoryField.ACTIVITY -> {
                                         stringResource(
                                             TravelMode.entries.firstOrNull { it.name == edit.value }?.humanName()
                                                 ?: Res.string.history_conflict_travelling,
                                         )
-                                    else -> edit.value
+                                    }
+
+                                    else -> {
+                                        edit.value
+                                    }
                                 }
                             TextButton(
                                 onClick = { viewModel.resolveConflict(edit.targetEvidenceId, edit.field, edit.value) },

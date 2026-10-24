@@ -30,7 +30,7 @@ fun unavailableRouteMessage(
 
 fun systemControlledSelection(kind: MediaDeviceKind): MediaDeviceSelectionUiState =
     when (kind) {
-        MediaDeviceKind.CAMERA ->
+        MediaDeviceKind.CAMERA -> {
             MediaDeviceSelectionUiState(
                 kind = MediaDeviceKind.CAMERA,
                 devices = listOf(DefaultMediaDevices.backCamera),
@@ -38,8 +38,9 @@ fun systemControlledSelection(kind: MediaDeviceKind): MediaDeviceSelectionUiStat
                 isSelectionControllable = false,
                 routeControlMessage = systemControlledRouteControlMessage(MediaDeviceKind.CAMERA),
             )
+        }
 
-        MediaDeviceKind.AUDIO_INPUT ->
+        MediaDeviceKind.AUDIO_INPUT -> {
             MediaDeviceSelectionUiState(
                 kind = MediaDeviceKind.AUDIO_INPUT,
                 devices = listOf(DefaultMediaDevices.systemMicrophone),
@@ -47,8 +48,9 @@ fun systemControlledSelection(kind: MediaDeviceKind): MediaDeviceSelectionUiStat
                 isSelectionControllable = false,
                 routeControlMessage = systemControlledRouteControlMessage(MediaDeviceKind.AUDIO_INPUT),
             )
+        }
 
-        MediaDeviceKind.AUDIO_OUTPUT ->
+        MediaDeviceKind.AUDIO_OUTPUT -> {
             MediaDeviceSelectionUiState(
                 kind = MediaDeviceKind.AUDIO_OUTPUT,
                 devices = listOf(DefaultMediaDevices.systemOutput),
@@ -56,6 +58,7 @@ fun systemControlledSelection(kind: MediaDeviceKind): MediaDeviceSelectionUiStat
                 isSelectionControllable = false,
                 routeControlMessage = systemControlledRouteControlMessage(MediaDeviceKind.AUDIO_OUTPUT),
             )
+        }
     }
 
 fun MediaDeviceSelectionUiState.asSystemControlledSelection(

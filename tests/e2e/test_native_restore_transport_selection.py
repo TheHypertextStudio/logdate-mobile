@@ -92,6 +92,7 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
         camera=False,
         snapshot_failure=None,
         post_repair_backup_succeeded=True,
+        transport_payloads=None,
     ):
         metadata = {
             "owner": "synthetic",
@@ -103,8 +104,11 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
         }
 
         backup_attempts = []
+        payloads = iter(transport_payloads) if transport_payloads is not None else None
 
         def adb(serial, *arguments, **kwargs):
+            if payloads is not None and arguments[:2] == ("exec-out", "tar"):
+                return next(payloads)
             if arguments[:3] == ("shell", "bmgr", "backupnow"):
                 backup_attempts.append(arguments)
                 result = (
@@ -121,6 +125,7 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
 
         mocks = {
             "prepare_source": Mock(),
+            "private_file": Mock(wraps=HARNESS.private_file),
             "adb": Mock(side_effect=adb),
             "backup_source": Mock(return_value=(b"backup", {})),
             "data_only_source_session": Mock(
@@ -135,6 +140,8 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
             "restore_transport": Mock(return_value=b"restoreFinished: 0"),
             "package_file_snapshot": Mock(return_value={}),
             "verify_restored_snapshot": Mock(),
+            "selected_backup_contents": Mock(return_value=b"authenticated policy"),
+            "verify_privacy_repair_snapshot": Mock(),
             "assert_snapshot_preserved": Mock(),
             "radio_state": Mock(return_value={}),
             "set_offline": Mock(),
@@ -146,7 +153,7 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
         }
         self.last_mocks = mocks
         if snapshot_failure is not None:
-            mocks["verify_restored_snapshot"].side_effect = [None, snapshot_failure]
+            mocks["verify_privacy_repair_snapshot"].side_effect = snapshot_failure
         with (
             tempfile.TemporaryDirectory() as directory,
             patch.multiple(HARNESS, **mocks),
@@ -163,7 +170,43 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
                 exercise_partial_media=partial,
                 exercise_pending_camera_draft=camera,
             )
+            if privacy:
+                self.retained_initial_payload = (
+                    Path(directory) / "native-transport-initial.tar"
+                ).read_bytes()
         return mocks
+
+    def test_privacy_repair_replays_the_intact_selected_cloud_generation(self):
+        initial, selected = (
+            b"initial cloud generation A",
+            b"selected cloud generation B",
+        )
+        mocks = self.transfer_probes(
+            privacy=True, transport_payloads=[initial, selected]
+        )
+        self.assertEqual(selected, mocks["without_privacy_metadata"].call_args.args[0])
+        writes = mocks["private_file"].call_args_list
+        original_writes = [
+            call
+            for call in writes
+            if call.args[0].name == "native-transport-original.tar"
+        ]
+        self.assertEqual(
+            [initial, selected, selected], [call.args[1] for call in original_writes]
+        )
+        self.assertEqual(initial, self.retained_initial_payload)
+        self.assertEqual("privacy-cloud-backup", original_writes[1].args[0].parent.name)
+        completed = [
+            call.args[1]
+            for call in writes
+            if call.args[0].name == "native-transport-complete.tar"
+        ]
+        self.assertEqual([selected], completed)
+        self.assertEqual(selected, mocks["selected_backup_contents"].call_args.args[0])
+        self.assertEqual(
+            f"apps/{HARNESS.PACKAGE}/f/logdate.preferences_pb",
+            mocks["selected_backup_contents"].call_args.args[1],
+        )
 
     def test_failed_privacy_repair_snapshot_stays_failed_and_collects_resolved_diagnostics(
         self,
@@ -258,12 +301,21 @@ class NativeRestoreTransportSelectionTest(unittest.TestCase):
         self.assertTrue(
             mocks["selected_database_snapshot"].call_args.kwargs["cloud_backup"]
         )
-        mocks["assert_cloud_backup_contents"].assert_called_once()
+        self.assertEqual(2, mocks["assert_cloud_backup_contents"].call_count)
         self.assertEqual(
             ["blocked", "blocked", "resolved", "resolved"],
             [call.args[1] for call in mocks["privacy_probe"].call_args_list],
         )
         mocks["verify_privacy_backup_refusal"].assert_called_once()
+        mocks["verify_privacy_repair_snapshot"].assert_called_once()
+        self.assertEqual(
+            b"authenticated policy",
+            mocks["verify_privacy_repair_snapshot"].call_args.args[4],
+        )
+        self.assertEqual(
+            f"apps/{HARNESS.PACKAGE}/f/logdate.preferences_pb",
+            mocks["selected_backup_contents"].call_args.args[1],
+        )
         self.assertEqual(
             0,
             mocks["probe"].call_count,

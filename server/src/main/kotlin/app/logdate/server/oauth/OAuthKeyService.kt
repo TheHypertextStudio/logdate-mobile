@@ -113,12 +113,19 @@ class OAuthKeyService(
                         OAuthKeyRotationStep.NONE
                     }
                 }
+
                 next == null && now - active.createdAt >= rotationPolicy.maxKeyAge -> {
                     repository.stageNext(::newStoredKey)
                     OAuthKeyRotationStep.STAGED
                 }
-                retiredDeleted -> OAuthKeyRotationStep.RETIRED
-                else -> OAuthKeyRotationStep.NONE
+
+                retiredDeleted -> {
+                    OAuthKeyRotationStep.RETIRED
+                }
+
+                else -> {
+                    OAuthKeyRotationStep.NONE
+                }
             }
         if (step != OAuthKeyRotationStep.NONE) snapshot = null
         return step

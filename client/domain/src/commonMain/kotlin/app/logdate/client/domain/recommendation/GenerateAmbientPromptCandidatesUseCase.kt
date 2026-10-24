@@ -56,7 +56,7 @@ class GenerateAmbientPromptCandidatesUseCase(
         if (settings.captureNudgesEnabled) {
             val hasNotesToday = hasNotesForToday().first()
             when (triggerContext) {
-                AmbientPromptTriggerContext.MORNING_SCHEDULE ->
+                AmbientPromptTriggerContext.MORNING_SCHEDULE -> {
                     if (settings.morningPromptEnabled && !hasNotesToday) {
                         candidates +=
                             AmbientPromptCandidate(
@@ -66,7 +66,9 @@ class GenerateAmbientPromptCandidatesUseCase(
                                 payload = AmbientPromptPayload.CaptureNudge(AmbientCaptureNudgeStyle.MORNING),
                             )
                     }
-                AmbientPromptTriggerContext.EVENING_SCHEDULE ->
+                }
+
+                AmbientPromptTriggerContext.EVENING_SCHEDULE -> {
                     if (settings.eveningPromptEnabled && !hasNotesToday) {
                         candidates +=
                             AmbientPromptCandidate(
@@ -76,6 +78,8 @@ class GenerateAmbientPromptCandidatesUseCase(
                                 payload = AmbientPromptPayload.CaptureNudge(AmbientCaptureNudgeStyle.EVENING),
                             )
                     }
+                }
+
                 AmbientPromptTriggerContext.PERIODIC -> {
                     val novelPlaceCandidate = buildNovelPlaceCandidate(notes = notes, currentTime = currentTime)
                     if (novelPlaceCandidate != null) {

@@ -225,6 +225,7 @@ class PhoneLinkInitiator(
                 Napier.i("Linked ${target.displayName} in ${plan.mode} mode")
                 if (plan.mode == LinkMode.PAIR) confirm(target, record, document, now)
             }
+
             is ExchangeOutcome.Failed -> {
                 val record =
                     store.recordFailure(target, plan, outcome.failure, at = now, seenWatchDocAt = seen, generation = generation) ?: return

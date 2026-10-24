@@ -141,7 +141,7 @@ fun MomentAudioCard(
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
         val cardModifier = Modifier.widthIn(max = 560.dp).fillMaxWidth().testTag("moment-audio-card")
         when (controller.currentState) {
-            AudioExpansionState.SPATIAL_EXPANDED ->
+            AudioExpansionState.SPATIAL_EXPANDED -> {
                 SpatialExpandedAudioBlock(
                     amplitudes = audioContext?.amplitudes.orEmpty(),
                     progress = progress,
@@ -157,7 +157,9 @@ fun MomentAudioCard(
                     playbackActions = playbackActions,
                     modifier = cardModifier,
                 )
-            else ->
+            }
+
+            else -> {
                 CollapsedAudioCard(
                     amplitudes = audioContext?.amplitudes.orEmpty(),
                     progress = progress,
@@ -170,6 +172,7 @@ fun MomentAudioCard(
                     playbackActions = playbackActions,
                     modifier = cardModifier,
                 )
+            }
         }
     }
 }

@@ -397,6 +397,12 @@ def discover_managed_pair(
             output / "managed-emulator-launches", candidates, nonce
         )
         observed_managed_pids.update(candidates)
+        try:
+            candidates = h.live_managed_candidates(
+                candidates, avd, diagnostics=output / "ambiguous-managed-processes.json"
+            )
+        except h.ManagedPairAmbiguousError as ambiguity:
+            candidates = ambiguity.candidates
         custody["observedCandidates"] = candidates
         if candidates:
             deadline = h.managed_boot_deadline(
@@ -427,10 +433,7 @@ def discover_managed_pair(
                     "An admitted managed target changed before the exact owned pair was ready"
                 )
         for pid, candidate in candidates.items():
-            identity = h.discovery_identity(pid)
-            if identity is None:
-                continue
-            candidate = {**candidate, "pid": pid, "identity": identity}
+            candidate = {**candidate, "pid": pid}
             listeners = h.command(
                 "lsof",
                 "-nP",

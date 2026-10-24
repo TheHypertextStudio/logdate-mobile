@@ -265,34 +265,42 @@ private fun JournalEntryItem(
                     )
                 }
             }
-            is EntryDisplayData.TextEntry ->
+
+            is EntryDisplayData.TextEntry -> {
                 TextEntryCard(
                     entry = entry,
                     onClick = onClick,
                     onRemoveFromJournal = onRemoveFromJournal,
                     cardModifier = noteViewerSharedBoundsModifier,
                 )
-            is EntryDisplayData.ImageEntry ->
+            }
+
+            is EntryDisplayData.ImageEntry -> {
                 ImageEntryCard(
                     entry = entry,
                     onClick = onClick,
                     onRemoveFromJournal = onRemoveFromJournal,
                     cardModifier = noteViewerSharedBoundsModifier,
                 )
-            is EntryDisplayData.VideoEntry ->
+            }
+
+            is EntryDisplayData.VideoEntry -> {
                 VideoEntryCard(
                     entry = entry,
                     onClick = onClick,
                     onRemoveFromJournal = onRemoveFromJournal,
                     cardModifier = noteViewerSharedBoundsModifier,
                 )
-            is EntryDisplayData.AudioEntry ->
+            }
+
+            is EntryDisplayData.AudioEntry -> {
                 AudioEntryCard(
                     entry = entry,
                     onClick = onClick,
                     onRemoveFromJournal = onRemoveFromJournal,
                     cardModifier = noteViewerSharedBoundsModifier,
                 )
+            }
         }
 
         if (entry.otherJournals.isNotEmpty()) {

@@ -73,6 +73,7 @@ for _concern in (
     "platform",
     "system-ui",
     "probes",
+    "privacy",
     "source",
     "sequences",
     "diagnostics",
@@ -175,10 +176,10 @@ def transfer(
     with data_only_source_session(
         source, output, exercise_data_only
     ) as source_session_id:
-        validate_source_integrity = lambda: probe(
+        validate_source_integrity = lambda evidence_output=output: probe(
             source,
             "source-backup-integrity",
-            output / "source-backup-integrity.log",
+            evidence_output / "source-backup-integrity.log",
             metadata,
             identity,
             source_has_session=exercise_data_only,
@@ -215,7 +216,15 @@ def transfer(
             output / "omitted-native-media-path.txt", missing_media_path.encode()
         )
     elif exercise_missing_privacy:
-        payload = without_privacy_metadata(payload)
+        (output / "native-transport-original.tar").rename(
+            output / "native-transport-initial.tar"
+        )
+        payload, selected_source_files, original_payload = (
+            capture_missing_privacy_payload(
+                source, destination, output, validate_source_integrity
+            )
+        )
+        private_file(output / "native-transport-original.tar", original_payload)
     private_file(output / "native-transport.tar", payload)
     print("Restoring through Android's destination backup service", flush=True)
     adb(

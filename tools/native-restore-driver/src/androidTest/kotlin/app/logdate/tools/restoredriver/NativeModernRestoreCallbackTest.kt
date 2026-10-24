@@ -68,8 +68,14 @@ class NativeModernRestoreCallbackTest {
         var currentMethod: String? = null
         raw.lineSequence().forEach { line ->
             when {
-                line.startsWith("INSTRUMENTATION_STATUS: class=") -> currentClass = line.substringAfter("class=").trimEnd('\r')
-                line.startsWith("INSTRUMENTATION_STATUS: test=") -> currentMethod = line.substringAfter("test=").trimEnd('\r')
+                line.startsWith("INSTRUMENTATION_STATUS: class=") -> {
+                    currentClass = line.substringAfter("class=").trimEnd('\r')
+                }
+
+                line.startsWith("INSTRUMENTATION_STATUS: test=") -> {
+                    currentMethod = line.substringAfter("test=").trimEnd('\r')
+                }
+
                 line.startsWith("INSTRUMENTATION_STATUS_CODE:") -> {
                     if (line.substringAfter(':').trim() == "0") completed += currentClass to currentMethod
                     currentClass = null

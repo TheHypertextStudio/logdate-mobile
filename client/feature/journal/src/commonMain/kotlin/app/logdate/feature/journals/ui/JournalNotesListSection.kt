@@ -112,13 +112,15 @@ private fun JournalNoteItem(
                 modifier = Modifier.padding(16.dp),
             ) {
                 when (note) {
-                    is JournalNote.Handwriting ->
+                    is JournalNote.Handwriting -> {
                         HandwritingPreview(
                             note.document,
                             Modifier.fillMaxWidth().height(240.dp),
                             unreadable =
                                 note.unreadableContent != null,
                         )
+                    }
+
                     is JournalNote.Text -> {
                         AnimatedVisibility(
                             visible = !expanded,
@@ -145,6 +147,7 @@ private fun JournalNoteItem(
                             )
                         }
                     }
+
                     is JournalNote.Image -> {
                         Text(
                             text = stringResource(Res.string.image_note),
@@ -160,12 +163,14 @@ private fun JournalNoteItem(
                             modifier = if (expanded) Modifier.fillMaxWidth() else Modifier,
                         )
                     }
+
                     is JournalNote.Video -> {
                         Text(
                             text = stringResource(Res.string.video_note),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
+
                     is JournalNote.Audio -> {
                         val labelResolver = remember { AudioLabelResolver() }
                         val labelResult =

@@ -160,6 +160,7 @@ class IosAudioSessionController {
                 Napier.d("Audio session interruption began")
                 _events.tryEmit(AudioSessionEvent.InterruptionBegan)
             }
+
             AVAudioSessionInterruptionTypeEnded -> {
                 val optionKey = AVAudioSessionInterruptionOptionKey
                 val rawOption =

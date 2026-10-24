@@ -93,6 +93,7 @@ internal class MomentUploader(
                     acknowledge(pending, mark, SyncUploadResult(created.serverVersion, created.syncedAt))
                     return true
                 }
+
                 is ConditionalCreateResult.AlreadyExists -> {
                     require(created.serverVersion > 0)
                     val remote = request(pending) { config.cloud.get(it, id) }.atMillisecondPrecision()
@@ -112,7 +113,10 @@ internal class MomentUploader(
                         return false
                     }
                 }
-                is ConditionalCreateResult.Deleted -> error("Deleted capture awaits its versioned download tombstone")
+
+                is ConditionalCreateResult.Deleted -> {
+                    error("Deleted capture awaits its versioned download tombstone")
+                }
             }
         }
         check(profile.uploadsUpdates) { "Watch edits must be relayed by the phone" }

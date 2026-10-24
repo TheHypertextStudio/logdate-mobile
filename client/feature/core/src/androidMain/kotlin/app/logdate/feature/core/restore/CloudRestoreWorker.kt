@@ -62,11 +62,15 @@ class CloudRestoreWorker(
         files: CloudRestoreFiles,
     ): Result {
         when (workState.validation()) {
-            NativeRestoreWorkState.Validation.CURRENT -> Unit
+            NativeRestoreWorkState.Validation.CURRENT -> {
+                Unit
+            }
+
             NativeRestoreWorkState.Validation.STALE -> {
                 resolveExistingArchiveOwnership(files)
                 return Result.success()
             }
+
             NativeRestoreWorkState.Validation.WAITING_FOR_SESSION -> {
                 resolveExistingArchiveOwnership(files)
                 return Result.retry()

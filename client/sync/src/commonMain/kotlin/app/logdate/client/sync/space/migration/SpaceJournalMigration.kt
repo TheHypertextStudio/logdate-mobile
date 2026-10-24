@@ -75,8 +75,14 @@ internal class SpaceJournalMigration(
                 if (!env.deps.serverOffersMove()) return showMoved(scope, saved)
                 return guarded(scope, saved) { settleIfNeeded(scope, saved) }
             }
-            is SpaceRoute.Blocked -> return publish(JournalMoveState.NotOffered)
-            SpaceRoute.Legacy -> Unit
+
+            is SpaceRoute.Blocked -> {
+                return publish(JournalMoveState.NotOffered)
+            }
+
+            SpaceRoute.Legacy -> {
+                Unit
+            }
         }
         // A server that stopped offering moves still lets a moved journal switch back, but starts no new move.
         if (!env.deps.serverOffersMove()) return publish(JournalMoveState.NotOffered)
@@ -227,14 +233,28 @@ internal class SpaceJournalMigration(
 /** What a failure means for the person. */
 internal fun problemOf(error: Throwable): JournalMoveProblem =
     when (error) {
-        is MigrationMismatchException -> error.problem
-        is MigrationUnsupportedItemsException -> JournalMoveProblem.CopyDiffers(error.kind, error.count)
-        is MigrationMediaUnavailableException -> JournalMoveProblem.MediaUnavailable(error.count)
+        is MigrationMismatchException -> {
+            error.problem
+        }
+
+        is MigrationUnsupportedItemsException -> {
+            JournalMoveProblem.CopyDiffers(error.kind, error.count)
+        }
+
+        is MigrationMediaUnavailableException -> {
+            JournalMoveProblem.MediaUnavailable(error.count)
+        }
+
         // The only mapping failure a retry can fix is a media file that didn't reach the personal space.
-        is SpaceRecordMappingException ->
+        is SpaceRecordMappingException -> {
             if (error.retryable) JournalMoveProblem.MediaUnavailable(1) else JournalMoveProblem.CopyDiffers(JournalDataKind.ENTRIES, 1)
-        is IdentityKeyNotFoundException -> JournalMoveProblem.IdentityKeyMissing
-        is CloudApiException ->
+        }
+
+        is IdentityKeyNotFoundException -> {
+            JournalMoveProblem.IdentityKeyMissing
+        }
+
+        is CloudApiException -> {
             when {
                 error.errorCode == SpaceMigrationErrorCodes.HELD_ELSEWHERE -> JournalMoveProblem.AnotherDeviceMoving
                 error.errorCode == SpaceMigrationErrorCodes.WINDOW_CLOSED -> JournalMoveProblem.SwitchBackWindowClosed
@@ -242,7 +262,11 @@ internal fun problemOf(error: Throwable): JournalMoveProblem =
                 error.errorCode == "NETWORK_ERROR" || error.statusCode in setOf(502, 503, 504) -> JournalMoveProblem.Offline
                 else -> JournalMoveProblem.ServerRefused(error.errorCode)
             }
-        else -> JournalMoveProblem.ServerRefused(error::class.simpleName ?: "UNKNOWN")
+        }
+
+        else -> {
+            JournalMoveProblem.ServerRefused(error::class.simpleName ?: "UNKNOWN")
+        }
     }
 
 /** How long the move waits on its own before trying again after [problem]; null to try on the next sync. */

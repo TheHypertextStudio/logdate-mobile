@@ -51,12 +51,30 @@ internal object HistoryRecordRoutes {
                     HistoryRoute.Unroutable
                 }
             }
-            "place" -> HistoryRoute.Item(EntityType.PLACE, record.id, operation)
-            "manual" -> HistoryRoute.Item(EntityType.PLACE_VISIT, record.id, operation)
-            "correction" -> HistoryRoute.Item(EntityType.PLACE_CORRECTION, record.id, operation)
-            "journey" -> HistoryRoute.Item(EntityType.PLACE_JOURNEY, record.id, operation)
-            "memory-link" -> linkRoute(record, operation)
-            else -> HistoryRoute.NotSyncedHere
+
+            "place" -> {
+                HistoryRoute.Item(EntityType.PLACE, record.id, operation)
+            }
+
+            "manual" -> {
+                HistoryRoute.Item(EntityType.PLACE_VISIT, record.id, operation)
+            }
+
+            "correction" -> {
+                HistoryRoute.Item(EntityType.PLACE_CORRECTION, record.id, operation)
+            }
+
+            "journey" -> {
+                HistoryRoute.Item(EntityType.PLACE_JOURNEY, record.id, operation)
+            }
+
+            "memory-link" -> {
+                linkRoute(record, operation)
+            }
+
+            else -> {
+                HistoryRoute.NotSyncedHere
+            }
         }
     }
 

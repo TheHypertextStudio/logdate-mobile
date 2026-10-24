@@ -63,15 +63,21 @@ fun HingeAwareOverlay(
 
         val paneModifier =
             when (splitLayout) {
-                is FoldableSplitLayout.Vertical ->
+                is FoldableSplitLayout.Vertical -> {
                     Modifier
                         .width(splitLayout.leftPane.width)
                         .fillMaxHeight()
-                is FoldableSplitLayout.Horizontal ->
+                }
+
+                is FoldableSplitLayout.Horizontal -> {
                     Modifier
                         .fillMaxWidth()
                         .height(splitLayout.topPane.height)
-                FoldableSplitLayout.None -> Modifier.fillMaxSize()
+                }
+
+                FoldableSplitLayout.None -> {
+                    Modifier.fillMaxSize()
+                }
             }
 
         Box(

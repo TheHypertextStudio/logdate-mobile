@@ -211,18 +211,28 @@ internal fun RetainedJournalDatabaseMerger.repairDraftMedia(
             val original = sourceBlocks[block.id] ?: return@map block
             val recovered = importedBlocks[block.id] ?: return@map block
             when {
-                block is SerializableImageBlock && original is SerializableImageBlock && recovered is SerializableImageBlock ->
+                block is SerializableImageBlock && original is SerializableImageBlock && recovered is SerializableImageBlock -> {
                     block.copy(uri = repairRetainedMediaReference(block.uri, original.uri, recovered.uri))
-                block is SerializableVideoBlock && original is SerializableVideoBlock && recovered is SerializableVideoBlock ->
+                }
+
+                block is SerializableVideoBlock && original is SerializableVideoBlock && recovered is SerializableVideoBlock -> {
                     block.copy(
                         uri = repairRetainedMediaReference(block.uri, original.uri, recovered.uri),
                         thumbnailUri = repairRetainedMediaReference(block.thumbnailUri, original.thumbnailUri, recovered.thumbnailUri),
                     )
-                block is SerializableAudioBlock && original is SerializableAudioBlock && recovered is SerializableAudioBlock ->
+                }
+
+                block is SerializableAudioBlock && original is SerializableAudioBlock && recovered is SerializableAudioBlock -> {
                     block.copy(uri = repairRetainedMediaReference(block.uri, original.uri, recovered.uri))
-                block is SerializableCameraBlock && original is SerializableCameraBlock && recovered is SerializableCameraBlock ->
+                }
+
+                block is SerializableCameraBlock && original is SerializableCameraBlock && recovered is SerializableCameraBlock -> {
                     block.copy(uri = repairRetainedMediaReference(block.uri, original.uri, recovered.uri))
-                else -> block
+                }
+
+                else -> {
+                    block
+                }
             }
         }
     return current.copy(blocks = repaired)

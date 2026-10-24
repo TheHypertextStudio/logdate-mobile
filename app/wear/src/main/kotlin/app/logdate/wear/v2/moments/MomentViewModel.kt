@@ -54,9 +54,15 @@ class MomentViewModel(
     val uiState: StateFlow<MomentUiState> =
         combine(load, player.state, player.speed, player.skipSilence, deleteFailed) { loaded, playback, speed, skipSilence, failed ->
             when (loaded) {
-                NoteLoad.Loading -> MomentUiState.Loading
-                NoteLoad.Missing -> MomentUiState.Missing
-                is NoteLoad.Found ->
+                NoteLoad.Loading -> {
+                    MomentUiState.Loading
+                }
+
+                NoteLoad.Missing -> {
+                    MomentUiState.Missing
+                }
+
+                is NoteLoad.Found -> {
                     MomentUiState.Ready(
                         note = loaded.note,
                         timeZone = timeZone(),
@@ -65,6 +71,7 @@ class MomentViewModel(
                         skipSilence = skipSilence,
                         deleteFailed = failed,
                     )
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), MomentUiState.Loading)
 

@@ -67,18 +67,22 @@ fun AudioTranscriptionUi(
                     modifier = Modifier,
                 )
             }
+
             is AudioUiState.TranscriptionState.Pending -> {
                 TranscriptionPendingUi()
             }
+
             is AudioUiState.TranscriptionState.InProgress -> {
                 TranscriptionInProgressUi()
             }
+
             is AudioUiState.TranscriptionState.Success -> {
                 TranscriptionSuccessUi(
                     text = state.text,
                     isRefining = state.isRefining,
                 )
             }
+
             is AudioUiState.TranscriptionState.Error -> {
                 TranscriptionErrorUi(
                     reason = state.reason,

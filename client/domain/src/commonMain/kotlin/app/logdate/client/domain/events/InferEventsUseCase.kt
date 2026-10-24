@@ -223,14 +223,23 @@ class InferEventsUseCase(
             }
         val description =
             when {
-                placeName != null && cluster.mediaCount > 0 ->
+                placeName != null && cluster.mediaCount > 0 -> {
                     Res.plurals.inferred_event_description_at_place_with_captures
                         .toUiText(cluster.mediaCount, placeName, cluster.mediaCount)
-                placeName != null -> Res.string.inferred_event_description_at_place.toUiText(placeName)
-                cluster.mediaCount > 0 ->
+                }
+
+                placeName != null -> {
+                    Res.string.inferred_event_description_at_place.toUiText(placeName)
+                }
+
+                cluster.mediaCount > 0 -> {
                     Res.plurals.inferred_event_description_time_of_day_with_captures
                         .toUiText(cluster.mediaCount, cluster.timeOfDay.lowercase(), cluster.mediaCount)
-                else -> Res.string.inferred_event_description_time_of_day.toUiText(cluster.timeOfDay.lowercase())
+                }
+
+                else -> {
+                    Res.string.inferred_event_description_time_of_day.toUiText(cluster.timeOfDay.lowercase())
+                }
             }
         return EventNameResult(title = title, description = resolveText(description))
     }

@@ -36,8 +36,10 @@ class ScopedCaptureIngestion(
         if (record.linkId != null && record.linkId != peer.linkId) return
         if (record.kind != envelope.kind ||
             record.id.toString() != envelope.id ||
-            record.operationId != null &&
-            record.operationId != envelope.operationId
+            (
+                record.operationId != null &&
+                    record.operationId != envelope.operationId
+            )
         ) {
             return
         }

@@ -273,8 +273,14 @@ class PublicRepoAccess(
                 }
                 element.values.forEach { collectBlobCids(it, into) }
             }
-            is JsonArray -> element.forEach { collectBlobCids(it, into) }
-            is JsonPrimitive -> Unit
+
+            is JsonArray -> {
+                element.forEach { collectBlobCids(it, into) }
+            }
+
+            is JsonPrimitive -> {
+                Unit
+            }
         }
     }
 

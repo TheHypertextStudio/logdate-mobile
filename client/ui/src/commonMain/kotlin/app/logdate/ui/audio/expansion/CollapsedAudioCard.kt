@@ -79,18 +79,21 @@ fun CollapsedAudioCard(
             modifier = Modifier.padding(Spacing.md),
         ) {
             when {
-                transcriptExcerpt != null ->
+                transcriptExcerpt != null -> {
                     Text(
                         text = transcriptExcerpt,
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
-                else ->
+                }
+
+                else -> {
                     Text(
                         text = stringResource(Res.string.search_type_label_voice_note),
                         style = MaterialTheme.typography.bodyLarge,
                     )
+                }
             }
             if (transcriptExcerpt == null && isTranscribing) {
                 Text(

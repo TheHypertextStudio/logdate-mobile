@@ -23,28 +23,37 @@ class TranscriptSessionCoordinator(
     fun apply(update: TranscriptSessionUpdate): TranscriptDocument {
         document =
             when (update) {
-                is TranscriptSessionUpdate.UpsertSegment ->
+                is TranscriptSessionUpdate.UpsertSegment -> {
                     document
                         .upsertSegment(update.segment)
                         .copy(status = document.status.coerceActive())
-                is TranscriptSessionUpdate.ReplaceDocument ->
+                }
+
+                is TranscriptSessionUpdate.ReplaceDocument -> {
                     update.document.copy(revision = maxOf(document.revision + 1, update.document.revision))
-                TranscriptSessionUpdate.MarkRefining ->
+                }
+
+                TranscriptSessionUpdate.MarkRefining -> {
                     document.copy(
                         revision = document.revision + 1,
                         status = TranscriptDocumentStatus.REFINING,
                     )
-                TranscriptSessionUpdate.MarkFinal ->
+                }
+
+                TranscriptSessionUpdate.MarkFinal -> {
                     document.copy(
                         revision = document.revision + 1,
                         status = TranscriptDocumentStatus.FINAL,
                         segments = document.segments.map { it.copy(isFinal = true) },
                     )
-                is TranscriptSessionUpdate.MarkFailed ->
+                }
+
+                is TranscriptSessionUpdate.MarkFailed -> {
                     document.copy(
                         revision = document.revision + 1,
                         status = TranscriptDocumentStatus.FAILED,
                     )
+                }
             }
 
         return document
@@ -55,6 +64,7 @@ class TranscriptSessionCoordinator(
             TranscriptDocumentStatus.FINAL,
             TranscriptDocumentStatus.FAILED,
             -> TranscriptDocumentStatus.LISTENING
+
             TranscriptDocumentStatus.LISTENING,
             TranscriptDocumentStatus.REFINING,
             -> this

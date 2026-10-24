@@ -22,20 +22,24 @@ fun deriveActivitiesFromThemes(themes: List<String>): List<ActivityType> {
                 theme.contains("vacation") ||
                 theme.contains("flight") ||
                 theme.contains("road") -> activities.add(ActivityType.TRAVEL)
+
             theme.contains("social") ||
                 theme.contains("friend") ||
                 theme.contains("party") ||
                 theme.contains("gathering") ||
                 theme.contains("dinner") -> activities.add(ActivityType.SOCIAL)
+
             theme.contains("work") ||
                 theme.contains("project") ||
                 theme.contains("deadline") ||
                 theme.contains("focus") ||
                 theme.contains("productive") -> activities.add(ActivityType.FOCUSED_WORK)
+
             theme.contains("quiet") ||
                 theme.contains("rest") ||
                 theme.contains("relax") ||
                 theme.contains("solitude") -> activities.add(ActivityType.QUIET)
+
             theme.contains("milestone") ||
                 theme.contains("achievement") ||
                 theme.contains("graduation") ||
