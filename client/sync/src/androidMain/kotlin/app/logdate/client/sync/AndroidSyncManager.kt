@@ -132,11 +132,20 @@ class AndroidSyncManager(
                 setupPeriodicSync(change.requirement)
                 resumeAuthenticatedSync(ownerChanged = change.ownerChanged)
             }
+
             PeriodicSyncScheduleChange.ResumeOwner,
             PeriodicSyncScheduleChange.ResumeMedia,
-            -> resumeAuthenticatedSync(ownerChanged = change == PeriodicSyncScheduleChange.ResumeOwner)
-            PeriodicSyncScheduleChange.Disable -> disableBackgroundSync()
-            PeriodicSyncScheduleChange.Unchanged -> Unit
+            -> {
+                resumeAuthenticatedSync(ownerChanged = change == PeriodicSyncScheduleChange.ResumeOwner)
+            }
+
+            PeriodicSyncScheduleChange.Disable -> {
+                disableBackgroundSync()
+            }
+
+            PeriodicSyncScheduleChange.Unchanged -> {
+                Unit
+            }
         }
     }
 

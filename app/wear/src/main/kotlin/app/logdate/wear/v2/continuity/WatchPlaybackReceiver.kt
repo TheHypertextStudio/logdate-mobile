@@ -38,7 +38,10 @@ class WatchPlaybackReceiver(
             val id = command?.noteId?.let(Uuid::parseOrNull)
             val failure =
                 when {
-                    context == null || context.phoneNode != node -> HandoffFailure.NOT_ALLOWED
+                    context == null || context.phoneNode != node -> {
+                        HandoffFailure.NOT_ALLOWED
+                    }
+
                     command == null ||
                         id == null ||
                         command.command !in
@@ -46,11 +49,17 @@ class WatchPlaybackReceiver(
                             PlaybackCommandType.CONTINUE_ON_WATCH,
                             PlaybackCommandType.PREPARE_ON_WATCH,
                         )
-                    -> HandoffFailure.NOT_ALLOWED
+                    -> {
+                        HandoffFailure.NOT_ALLOWED
+                    }
+
                     (command.positionMs ?: 0) < 0 ||
                         command.speed?.let {
                             !it.isFinite() || it !in 0.5f..3f
-                        } == true -> HandoffFailure.NOT_ALLOWED
+                        } == true -> {
+                        HandoffFailure.NOT_ALLOWED
+                    }
+
                     else -> {
                         val note = awaitNote(id, context)
                         if (command.command == PlaybackCommandType.PREPARE_ON_WATCH) {
@@ -65,28 +74,42 @@ class WatchPlaybackReceiver(
                                 PlaybackHandoffResult(accepted = failure == null, failure = failure),
                             )
                         }
-                        val started =
-                            if (note == null) {
-                                false
-                            } else {
-                                withContext(Dispatchers.Main.immediate) {
-                                    withTimeoutOrNull(20_000) {
-                                        player.continuePlayback(note, command.positionMs ?: 0, command.speed ?: 1f)
-                                    } ?: false
-                                }
-                            }
+                        val started = continuePlayback(note, command)
                         when {
-                            note == null -> HandoffFailure.AUDIO_NOT_ON_WATCH
-                            !started -> HandoffFailure.PLAYBACK_FAILED
+                            note == null -> {
+                                HandoffFailure.AUDIO_NOT_ON_WATCH
+                            }
+
+                            !started -> {
+                                HandoffFailure.PLAYBACK_FAILED
+                            }
+
                             !peer.isCurrent(context) -> {
                                 withContext(Dispatchers.Main.immediate) { player.stopIfPlaying(id) }
                                 HandoffFailure.NOT_ALLOWED
                             }
-                            else -> null
+
+                            else -> {
+                                null
+                            }
                         }
                     }
                 }
             WearJson.encodeToBytes(PlaybackHandoffResult.serializer(), PlaybackHandoffResult(accepted = failure == null, failure = failure))
+        }
+
+    private suspend fun continuePlayback(
+        note: JournalNote.Audio?,
+        command: LivePlaybackCommand,
+    ): Boolean =
+        if (note == null) {
+            false
+        } else {
+            withContext(Dispatchers.Main.immediate) {
+                withTimeoutOrNull(20_000) {
+                    player.continuePlayback(note, command.positionMs ?: 0, command.speed ?: 1f)
+                } ?: false
+            }
         }
 
     private suspend fun awaitNote(

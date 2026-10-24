@@ -102,18 +102,24 @@ class PhoneWindowBodyServer(
     private suspend fun readRecord(request: WindowBodyRequest): Any? {
         val id = Uuid.parseOrNull(request.noteId)?.takeIf { it.toString() == request.noteId } ?: return null
         return when (request.kind) {
-            RecordKind.NOTE ->
+            RecordKind.NOTE -> {
                 notes.getNoteById(id)?.takeIf {
                     it.uid == id &&
                         it.lastUpdated.toEpochMilliseconds() == request.contentVersion
                 }
-            RecordKind.MOMENT ->
+            }
+
+            RecordKind.MOMENT -> {
                 if (acceptsMoments(request.context)) {
                     moments?.getMark(id)?.takeIf { it.id == id && it.lastUpdated.toEpochMilliseconds() == request.contentVersion }
                 } else {
                     null
                 }
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
     }
 

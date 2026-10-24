@@ -184,11 +184,13 @@ class IosPasskeyManager : PasskeyManager {
                     pendingRegistration?.complete(Result.success(response))
                     pendingRegistration = null
                 }
+
                 is ASAuthorizationPlatformPublicKeyCredentialAssertion -> {
                     val response = encodeAssertion(credential)
                     pendingAuthentication?.complete(Result.success(response))
                     pendingAuthentication = null
                 }
+
                 else -> {
                     val ex =
                         PasskeyException(

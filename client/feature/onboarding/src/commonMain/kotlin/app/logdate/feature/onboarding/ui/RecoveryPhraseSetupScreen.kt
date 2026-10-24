@@ -58,6 +58,7 @@ fun RecoveryPhraseSetupScreen(
                 Text(stringResource(Res.string.deriving_encryption_keys))
             }
         }
+
         errorMessage != null -> {
             Column(
                 modifier =
@@ -80,7 +81,10 @@ fun RecoveryPhraseSetupScreen(
                 }
             }
         }
-        else -> RecoveryPhraseDisplayContent(words = words, onSaved = { onPhraseContinue(words) }, onLater = onLater)
+
+        else -> {
+            RecoveryPhraseDisplayContent(words = words, onSaved = { onPhraseContinue(words) }, onLater = onLater)
+        }
     }
 }
 

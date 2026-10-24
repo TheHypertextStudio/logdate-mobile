@@ -44,11 +44,23 @@ internal fun WatchDeviceCard(
 @Composable
 private fun watchDeviceDescription(status: WatchStatus?): String =
     when (status) {
-        null -> stringResource(Res.string.watch_loading)
-        WatchStatus.NoWatch -> stringResource(Res.string.watch_no_paired)
-        WatchStatus.Unsupported -> stringResource(Res.string.watch_unsupported)
-        is WatchStatus.NotInstalled -> stringResource(Res.string.watch_app_not_installed)
-        is WatchStatus.SettingUp ->
+        null -> {
+            stringResource(Res.string.watch_loading)
+        }
+
+        WatchStatus.NoWatch -> {
+            stringResource(Res.string.watch_no_paired)
+        }
+
+        WatchStatus.Unsupported -> {
+            stringResource(Res.string.watch_unsupported)
+        }
+
+        is WatchStatus.NotInstalled -> {
+            stringResource(Res.string.watch_app_not_installed)
+        }
+
+        is WatchStatus.SettingUp -> {
             stringResource(
                 if (status.step is WatchSetupStep.PairWithPhone) {
                     Res.string.watch_needs_association
@@ -56,16 +68,21 @@ private fun watchDeviceDescription(status: WatchStatus?): String =
                     Res.string.watch_association_pending
                 },
             )
-        is WatchStatus.NeedsAttention ->
+        }
+
+        is WatchStatus.NeedsAttention -> {
             when (val issue = status.issue) {
                 WatchIssue.SetUpAgain -> stringResource(Res.string.watch_attention_set_up_again)
                 is WatchIssue.CapturesNotSent -> stringResource(Res.string.watch_attention_not_sent, issue.count)
             }
-        is WatchStatus.Ready ->
+        }
+
+        is WatchStatus.Ready -> {
             when {
                 !status.nearby -> stringResource(Res.string.watch_out_of_range)
                 status.sync == null -> stringResource(Res.string.watch_connected)
                 status.sync.waiting > 0 -> stringResource(Res.string.watch_sync_pending, status.sync.waiting)
                 else -> stringResource(Res.string.watch_sync_up_to_date)
             }
+        }
     }

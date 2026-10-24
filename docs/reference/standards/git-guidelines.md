@@ -198,6 +198,12 @@ If someone else is working on the same branch, agree on the rebase with them bef
 
 ### Opening a Pull Request
 
+The tracked Git hooks use `.hypertext/git-hook.py` and the locked shared validator
+shipped with the checkout. They do not depend on a globally installed Studio plugin.
+The dispatcher also checks the declared product-hook hashes and preserves their
+order, including secret scans and pre-push compile and test checks. Both shared
+and product push checks receive the same native Git ref transaction.
+
 1. **Rebase on latest main**: `git fetch origin && git rebase origin/main`
 2. **Verify all commits are logical**: `git log --oneline origin/main..HEAD`
 3. **Fold fixup commits into their parent**: commit the fix with `git commit --fixup <sha>`, then
@@ -225,10 +231,6 @@ keep. Merge commits are disabled for this repository, and GitHub deletes the bra
 ## Workflow Rules and Exceptions
 
 - **Trust the tooling** — pre-commit hooks are authoritative
-- The hook dispatcher uses the installed Hypertext Git-gate options and runs the
-  repository checks registered in `.hypertext/git-hooks.json` in their declared
-  order. It verifies each check's digest before execution and forwards the same
-  native ref-update transaction to both pre-push stages.
 - **Fix, don't bypass** — resolve hook failures instead of skipping
 - **No proactive repo-wide validation** — avoid `./gradlew test` for whole repo unless:
   - You changed tooling/configuration that affects the whole repo

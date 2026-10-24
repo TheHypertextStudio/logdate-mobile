@@ -98,8 +98,16 @@ class SignificanceScorer {
         val lon = candidate.signals.longitude ?: return 0f
         val cell = LocationCell.from(lat, lon)
         return when (val visits = locationCellCounts[cell] ?: 0) {
-            0 -> 15f // brand-new cell
-            in 1..2 -> 8f // rare cell
+            0 -> {
+                15f
+            }
+
+            // brand-new cell
+            in 1..2 -> {
+                8f
+            }
+
+            // rare cell
             else -> {
                 if (visits >= 30) -2f else 0f // very common cell — slight penalty
             }
@@ -122,10 +130,17 @@ class SignificanceScorer {
             }
         }
         return when (count) {
-            1 -> 2f // lonely shot — slightly less interesting than a cluster
+            1 -> 2f
+
+            // lonely shot — slightly less interesting than a cluster
             2 -> 5f
-            in 3..7 -> 10f // sweet spot
-            in 8..15 -> 4f // probably a moment but already lots of evidence
+
+            in 3..7 -> 10f
+
+            // sweet spot
+            in 8..15 -> 4f
+
+            // probably a moment but already lots of evidence
             else -> 1f // huge cluster — likely a burst we didn't catch / repetitive scene
         }
     }
@@ -155,8 +170,12 @@ class SignificanceScorer {
             val seconds = media.duration.inWholeSeconds
             score +=
                 when {
-                    seconds in 3..60 -> 5f // panel-friendly clip length
-                    seconds > 300 -> -10f // long video is probably a screen recording
+                    seconds in 3..60 -> 5f
+
+                    // panel-friendly clip length
+                    seconds > 300 -> -10f
+
+                    // long video is probably a screen recording
                     else -> 0f
                 }
         }

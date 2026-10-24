@@ -464,15 +464,18 @@ fun Route.authV1Routes(
                             )
                         val verified =
                             when (verifiedOutcome) {
-                                is WebAuthnPasskeyService.VerificationOutcome.Failure ->
+                                is WebAuthnPasskeyService.VerificationOutcome.Failure -> {
                                     return@post call.respondApiError(
                                         HttpStatusCode.BadRequest,
                                         "PASSKEY_VERIFICATION_FAILED",
                                         verifiedOutcome.error,
                                         metrics,
                                     )
-                                is WebAuthnPasskeyService.VerificationOutcome.Success ->
+                                }
+
+                                is WebAuthnPasskeyService.VerificationOutcome.Success -> {
                                     verifiedOutcome.data.withNickname(request.nickname)
+                                }
                             }
 
                         if (
@@ -1294,14 +1297,18 @@ fun Route.authV1Routes(
                                 registrationResponse = request.credential.toPasskeyRegistrationResponse(),
                             )
                     ) {
-                        is WebAuthnPasskeyService.VerificationOutcome.Failure ->
+                        is WebAuthnPasskeyService.VerificationOutcome.Failure -> {
                             return@post call.respondApiError(
                                 HttpStatusCode.BadRequest,
                                 "PASSKEY_VERIFICATION_FAILED",
                                 outcome.error,
                                 metrics,
                             )
-                        is WebAuthnPasskeyService.VerificationOutcome.Success -> outcome.data.withNickname(request.nickname)
+                        }
+
+                        is WebAuthnPasskeyService.VerificationOutcome.Success -> {
+                            outcome.data.withNickname(request.nickname)
+                        }
                     }
 
                 if (!webAuthnService.storeVerifiedPasskey(account.id, verified)) {
@@ -1474,7 +1481,7 @@ fun Route.authV1Routes(
                             metrics,
                         )
                 when (val result = service.complete(account.id, txId, request.credentialJson)) {
-                    is EmailVerificationService.Result.Success ->
+                    is EmailVerificationService.Result.Success -> {
                         call.respond(
                             HttpStatusCode.OK,
                             EmailVerifiedResponse(
@@ -1482,18 +1489,23 @@ fun Route.authV1Routes(
                                 emailVerifiedAt = result.emailVerifiedAt,
                             ),
                         )
-                    is EmailVerificationService.Result.Conflict ->
+                    }
+
+                    is EmailVerificationService.Result.Conflict -> {
                         call.respond(
                             HttpStatusCode.Conflict,
                             EmailVerificationConflictResponse(
                                 message = "This email is already attached to another LogDate account.",
                             ),
                         )
-                    is EmailVerificationService.Result.Failed ->
+                    }
+
+                    is EmailVerificationService.Result.Failed -> {
                         call.respond(
                             HttpStatusCode.BadRequest,
                             EmailVerificationErrorResponse(reason = result.reason),
                         )
+                    }
                 }
             } catch (e: Exception) {
                 Napier.e("Failed to complete email verification", e)
@@ -2001,7 +2013,10 @@ private suspend fun resolveAuthenticatedSession(
     }
     val claims =
         when (val check = verifier.verify(token, allowSyncScope = true)) {
-            is AccessCheck.Granted -> check.claims
+            is AccessCheck.Granted -> {
+                check.claims
+            }
+
             AccessCheck.SessionRevoked -> {
                 call.respondApiError(
                     HttpStatusCode.Unauthorized,
@@ -2011,6 +2026,7 @@ private suspend fun resolveAuthenticatedSession(
                 )
                 return null
             }
+
             AccessCheck.Missing, AccessCheck.Invalid, AccessCheck.ScopeDenied -> {
                 call.respondApiError(HttpStatusCode.Unauthorized, "INVALID_TOKEN", "Invalid or expired access token", metrics)
                 return null
@@ -2046,8 +2062,10 @@ private suspend fun ApplicationCall.respondDeviceRefresh(
             )
             return false
         }
-        is DeviceSessionRefresh.Refreshed ->
+
+        is DeviceSessionRefresh.Refreshed -> {
             respond(HttpStatusCode.OK, RefreshTokenResponseV1(true, RefreshTokenDataV1(refreshed.accessToken, refreshed.refreshToken)))
+        }
     }
     return true
 }

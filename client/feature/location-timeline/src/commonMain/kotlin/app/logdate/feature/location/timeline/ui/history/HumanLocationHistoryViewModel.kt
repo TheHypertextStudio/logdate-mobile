@@ -38,22 +38,15 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_change_not_saved
-import logdate.client.feature.location.timeline.generated.resources.history_conflicts_message
 import logdate.client.feature.location.timeline.generated.resources.history_day_summary
 import logdate.client.feature.location.timeline.generated.resources.history_load_failed
 import logdate.client.feature.location.timeline.generated.resources.history_loading_day
 import logdate.client.feature.location.timeline.generated.resources.history_location_clue_count
 import logdate.client.feature.location.timeline.generated.resources.history_range_days
-import logdate.client.feature.location.timeline.generated.resources.history_recording_off
-import logdate.client.feature.location.timeline.generated.resources.history_recording_paused
 import logdate.client.feature.location.timeline.generated.resources.history_review_changes
-import logdate.client.feature.location.timeline.generated.resources.history_sections_failed
 import logdate.client.feature.location.timeline.generated.resources.history_today
 import logdate.client.feature.location.timeline.generated.resources.history_visit_count
-import logdate.client.feature.location.timeline.generated.resources.places_near
-import logdate.client.feature.location.timeline.generated.resources.places_somewhere_in
 import logdate.client.ui.generated.resources.common_try_again
-import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -419,16 +412,7 @@ class HumanLocationHistoryViewModel(
                         else -> null
                     },
                 canRetry = failedAction != null || data.failedSections.isNotEmpty(),
-                recoveryMessage =
-                    when {
-                        failedAction != null -> Res.string.history_change_not_saved.toUiText()
-                        data.failedSections.isNotEmpty() -> Res.string.history_sections_failed.toUiText()
-                        data.conflicts.isNotEmpty() -> Res.string.history_conflicts_message.toUiText()
-                        !tracking.backgroundTrackingEnabled && tracking.captureMode == LocationCaptureMode.PASSIVE ->
-                            Res.string.history_recording_off.toUiText()
-                        !tracking.backgroundTrackingEnabled -> Res.string.history_recording_paused.toUiText()
-                        else -> null
-                    },
+                recoveryMessage = snapshotRecoveryMessage(data, tracking, hasFailedAction = failedAction != null),
             )
         }
     }
@@ -463,19 +447,11 @@ class HumanLocationHistoryViewModel(
         result: PlaceResolutionResult,
         visit: PlaceVisit,
     ): SemanticPlace? {
-        val name =
-            when (result) {
-                is PlaceResolutionResult.UserDefinedPlace -> result.place.name
-                is PlaceResolutionResult.ExternalSuggestion -> getString(Res.string.places_near, result.suggestion.name)
-                is PlaceResolutionResult.CoarseLocation ->
-                    result.address.thoroughfare?.let { getString(Res.string.places_near, it) }
-                        ?: result.address.locality?.let { getString(Res.string.places_somewhere_in, it) }
-                else -> null
-            }
+        val name = resolvedHistoryPlaceName(result)
         if (name != null) {
             val place =
                 when (result) {
-                    is PlaceResolutionResult.UserDefinedPlace ->
+                    is PlaceResolutionResult.UserDefinedPlace -> {
                         SemanticPlace(
                             result.place.uid.toString(),
                             result.place.name,
@@ -483,7 +459,9 @@ class HumanLocationHistoryViewModel(
                             result.place.longitude,
                             userConfirmed = true,
                         )
-                    is PlaceResolutionResult.ExternalSuggestion ->
+                    }
+
+                    is PlaceResolutionResult.ExternalSuggestion -> {
                         SemanticPlace(
                             result.suggestion.externalId?.let {
                                 resolvedExternalPlaces.getOrPut(
@@ -497,7 +475,11 @@ class HumanLocationHistoryViewModel(
                             locality = result.suggestion.address,
                             externalId = result.suggestion.externalId,
                         )
-                    else -> SemanticPlace("evidence:${visit.evidenceIds.first()}", name, visit.latitude, visit.longitude)
+                    }
+
+                    else -> {
+                        SemanticPlace("evidence:${visit.evidenceIds.first()}", name, visit.latitude, visit.longitude)
+                    }
                 }
             return place
         }

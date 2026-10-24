@@ -116,6 +116,7 @@ internal class PublicRepoReads(
                 val rev = access.headIfShown(did)?.let { Tid.fromLong(it.revision) }
                 call.respond(HttpStatusCode.OK, GetRepoStatusResponse(did = did, active = true, rev = rev))
             }
+
             is RepoStanding.Inactive -> {
                 val rev = if (standing.deleted) null else access.publicHeadOf(did)?.let { Tid.fromLong(it.revision) }
                 call.respond(HttpStatusCode.OK, GetRepoStatusResponse(did = did, active = false, status = standing.status, rev = rev))
@@ -156,22 +157,30 @@ internal class PublicRepoReads(
     ): Boolean {
         val inactive = access.standing(did) as? RepoStanding.Inactive ?: return false
         when (inactive.status) {
-            AtprotoRepoStatus.DEACTIVATED ->
+            AtprotoRepoStatus.DEACTIVATED -> {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     PdsErrorResponse("RepoDeactivated", "Repo has been deactivated: $did"),
                 )
-            AtprotoRepoStatus.SUSPENDED ->
+            }
+
+            AtprotoRepoStatus.SUSPENDED -> {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     PdsErrorResponse("RepoSuspended", "Repo has been suspended: $did"),
                 )
-            AtprotoRepoStatus.TAKENDOWN ->
+            }
+
+            AtprotoRepoStatus.TAKENDOWN -> {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     PdsErrorResponse("RepoTakendown", "Repo has been taken down: $did"),
                 )
-            else -> call.respond(HttpStatusCode.NotFound, PdsErrorResponse("RepoNotFound", "Unknown repo: $did"))
+            }
+
+            else -> {
+                call.respond(HttpStatusCode.NotFound, PdsErrorResponse("RepoNotFound", "Unknown repo: $did"))
+            }
         }
         return true
     }

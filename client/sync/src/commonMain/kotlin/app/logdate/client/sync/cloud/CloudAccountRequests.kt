@@ -50,7 +50,10 @@ internal suspend fun LogDateCloudApiClient.requestCheckUsernameAvailability(user
                     handleApiError(response)
                 }
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -110,7 +113,10 @@ internal suspend fun LogDateCloudApiClient.requestBeginAccountCreation(
                     handleApiError(response)
                 }
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -162,7 +168,10 @@ internal suspend fun LogDateCloudApiClient.requestCompleteAccountCreation(
                     handleApiError(response)
                 }
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -207,7 +216,10 @@ internal suspend fun LogDateCloudApiClient.requestRefreshSession(refreshToken: S
                     handleApiError(response)
                 }
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -262,7 +274,10 @@ internal suspend fun LogDateCloudApiClient.requestGetAccountInfo(accessToken: St
                     )
                 }
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e

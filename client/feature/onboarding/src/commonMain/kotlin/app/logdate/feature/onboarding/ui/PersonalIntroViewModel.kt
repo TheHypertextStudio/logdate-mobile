@@ -167,14 +167,21 @@ class PersonalIntroViewModel(
 
     private fun errorMessageFor(reason: ProcessPersonalIntroductionUseCase.ErrorReason): StringResource =
         when (reason) {
-            ProcessPersonalIntroductionUseCase.ErrorReason.SaveDisplayNameFailed ->
+            ProcessPersonalIntroductionUseCase.ErrorReason.SaveDisplayNameFailed -> {
                 Res.string.onboarding_personal_intro_save_name_failed
-            ProcessPersonalIntroductionUseCase.ErrorReason.SaveBioFailed ->
+            }
+
+            ProcessPersonalIntroductionUseCase.ErrorReason.SaveBioFailed -> {
                 Res.string.onboarding_personal_intro_save_bio_failed
-            ProcessPersonalIntroductionUseCase.ErrorReason.ProfileUpdateFailed ->
+            }
+
+            ProcessPersonalIntroductionUseCase.ErrorReason.ProfileUpdateFailed -> {
                 Res.string.onboarding_personal_intro_profile_setup_failed
-            ProcessPersonalIntroductionUseCase.ErrorReason.UnexpectedFailure ->
+            }
+
+            ProcessPersonalIntroductionUseCase.ErrorReason.UnexpectedFailure -> {
                 Res.string.onboarding_personal_intro_save_failed
+            }
         }
 
     private fun updateUiState(update: (PersonalIntroUiState) -> PersonalIntroUiState) {

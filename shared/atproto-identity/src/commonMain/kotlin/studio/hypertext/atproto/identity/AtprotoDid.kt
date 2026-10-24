@@ -75,8 +75,13 @@ private fun validateAtprotoDid(value: Did) {
             }
         }
 
-        "web" -> validateDidWebIdentifier(value.identifier, value.value)
-        else -> throw InvalidAtprotoDidException(value.value)
+        "web" -> {
+            validateDidWebIdentifier(value.identifier, value.value)
+        }
+
+        else -> {
+            throw InvalidAtprotoDidException(value.value)
+        }
     }
 }
 

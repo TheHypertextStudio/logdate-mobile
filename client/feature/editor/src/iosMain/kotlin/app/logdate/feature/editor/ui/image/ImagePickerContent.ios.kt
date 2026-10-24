@@ -142,10 +142,13 @@ private fun PHAuthorizationStatus.toImagePickerState(): ImagePickerLibraryState 
         PHAuthorizationStatusAuthorized,
         PHAuthorizationStatusLimited,
         -> ImagePickerLibraryState.Loading
+
         PHAuthorizationStatusDenied,
         PHAuthorizationStatusRestricted,
         -> ImagePickerLibraryState.PermissionRequired(permanentlyDenied = true)
+
         PHAuthorizationStatusNotDetermined -> ImagePickerLibraryState.PermissionRequired(permanentlyDenied = false)
+
         else -> ImagePickerLibraryState.PermissionRequired(permanentlyDenied = false)
     }
 

@@ -258,12 +258,15 @@ internal class DesktopSherpaModelManager(
             val osName = System.getProperty("os.name")?.lowercase().orEmpty()
             val base =
                 when {
-                    "mac" in osName || "darwin" in osName ->
+                    "mac" in osName || "darwin" in osName -> {
                         File(home, "Library/Application Support/Logdate")
+                    }
+
                     "win" in osName -> {
                         val appData = System.getenv("APPDATA")?.let(::File) ?: File(home, "AppData/Roaming")
                         File(appData, "Logdate")
                     }
+
                     else -> {
                         // Linux + everything else: XDG data home, falling back to ~/.local/share.
                         val xdg = System.getenv("XDG_DATA_HOME")?.let(::File) ?: File(home, ".local/share")

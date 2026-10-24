@@ -8,7 +8,7 @@ internal fun ArchiveNoteLocation.validateForRestore() {
     coordinates?.let {
         validateCoordinates(it.latitude, it.longitude)
         require(it.altitudeMeters == null || it.altitudeMeters.isFinite()) { "Invalid note altitude" }
-        require(it.accuracyMeters == null || it.accuracyMeters >= 0 && it.accuracyMeters.toFloat().isFinite()) {
+        require(it.accuracyMeters == null || (it.accuracyMeters >= 0 && it.accuracyMeters.toFloat().isFinite())) {
             "Invalid note accuracy"
         }
     }

@@ -214,27 +214,39 @@ class WittyRewindMessageGenerator : RewindMessageGenerator {
 
         return when {
             // Late night pattern (high priority for delight)
-            hasLateNightEntries -> NIGHT_OWL_MESSAGES.random()
+            hasLateNightEntries -> {
+                NIGHT_OWL_MESSAGES.random()
+            }
 
             // Food lover pattern
-            foodMentions >= 3 -> FOODIE_MESSAGES.random()
+            foodMentions >= 3 -> {
+                FOODIE_MESSAGES.random()
+            }
 
             // Photo-heavy week (60%+ media)
-            totalContent > 0 && (totalMedia.toFloat() / totalContent) > 0.6f ->
+            totalContent > 0 && (totalMedia.toFloat() / totalContent) > 0.6f -> {
                 PHOTO_HEAVY_MESSAGES.random()
+            }
 
             // Text-heavy week (70%+ text)
-            totalContent > 0 && (textCount.toFloat() / totalContent) > 0.7f ->
+            totalContent > 0 && (textCount.toFloat() / totalContent) > 0.7f -> {
                 TEXT_HEAVY_MESSAGES.random()
+            }
 
             // Social week (4+ people)
-            peopleCount >= 4 -> SOCIAL_WEEK_MESSAGES.random()
+            peopleCount >= 4 -> {
+                SOCIAL_WEEK_MESSAGES.random()
+            }
 
             // Quiet week (less than 5 items)
-            totalContent < 5 -> QUIET_WEEK_MESSAGES.random()
+            totalContent < 5 -> {
+                QUIET_WEEK_MESSAGES.random()
+            }
 
             // Default: General message
-            else -> GENERAL_MESSAGES.random()
+            else -> {
+                GENERAL_MESSAGES.random()
+            }
         }
     }
 
@@ -251,37 +263,43 @@ class WittyRewindMessageGenerator : RewindMessageGenerator {
             when {
                 theme.contains("travel", ignoreCase = true) ||
                     theme.contains("vacation", ignoreCase = true) ||
-                    theme.contains("trip", ignoreCase = true) ->
+                    theme.contains("trip", ignoreCase = true) -> {
                     messages.addAll(TRAVEL_MESSAGES)
+                }
 
                 theme.contains("work", ignoreCase = true) ||
                     theme.contains("project", ignoreCase = true) ||
-                    theme.contains("deadline", ignoreCase = true) ->
+                    theme.contains("deadline", ignoreCase = true) -> {
                     messages.addAll(FOCUSED_WORK_MESSAGES)
+                }
 
                 theme.contains("social", ignoreCase = true) ||
                     theme.contains("relationship", ignoreCase = true) ||
                     theme.contains("connection", ignoreCase = true) ||
                     theme.contains("friend", ignoreCase = true) ||
-                    theme.contains("family", ignoreCase = true) ->
+                    theme.contains("family", ignoreCase = true) -> {
                     messages.addAll(SOCIAL_WEEK_MESSAGES)
+                }
 
                 theme.contains("celebration", ignoreCase = true) ||
                     theme.contains("milestone", ignoreCase = true) ||
                     theme.contains("achievement", ignoreCase = true) ||
-                    theme.contains("success", ignoreCase = true) ->
+                    theme.contains("success", ignoreCase = true) -> {
                     messages.addAll(MILESTONE_MESSAGES)
+                }
 
                 theme.contains("food", ignoreCase = true) ||
                     theme.contains("culinary", ignoreCase = true) ||
-                    theme.contains("dining", ignoreCase = true) ->
+                    theme.contains("dining", ignoreCase = true) -> {
                     messages.addAll(FOODIE_MESSAGES)
+                }
 
                 theme.contains("quiet", ignoreCase = true) ||
                     theme.contains("rest", ignoreCase = true) ||
                     theme.contains("peaceful", ignoreCase = true) ||
-                    theme.contains("calm", ignoreCase = true) ->
+                    theme.contains("calm", ignoreCase = true) -> {
                     messages.addAll(QUIET_WEEK_MESSAGES)
+                }
             }
         }
 

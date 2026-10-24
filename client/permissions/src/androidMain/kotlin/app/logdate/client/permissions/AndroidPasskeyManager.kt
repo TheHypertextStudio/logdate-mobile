@@ -76,6 +76,7 @@ class AndroidPasskeyManager(
                 is CreatePublicKeyCredentialResponse -> {
                     Result.success(result.registrationResponseJson)
                 }
+
                 else -> {
                     Result.failure(PasskeyException("Unexpected credential type", PasskeyErrorCodes.UNKNOWN_ERROR))
                 }
@@ -117,6 +118,7 @@ class AndroidPasskeyManager(
                 is PublicKeyCredential -> {
                     Result.success(parsePasskeyAuthenticationResult(credential.authenticationResponseJson))
                 }
+
                 else -> {
                     Result.failure(PasskeyException("Unexpected credential type", PasskeyErrorCodes.UNKNOWN_ERROR))
                 }
@@ -138,39 +140,63 @@ class AndroidPasskeyManager(
 
     private fun handleCreateCredentialException(e: CreateCredentialException): PasskeyException =
         when (e) {
-            is CreateCredentialCancellationException ->
+            is CreateCredentialCancellationException -> {
                 PasskeyException("User cancelled registration", PasskeyErrorCodes.USER_CANCELLED, e)
-            is CreateCredentialInterruptedException ->
+            }
+
+            is CreateCredentialInterruptedException -> {
                 PasskeyException("Registration interrupted", PasskeyErrorCodes.INVALID_STATE, e)
-            is CreateCredentialProviderConfigurationException ->
+            }
+
+            is CreateCredentialProviderConfigurationException -> {
                 PasskeyException("Provider configuration error", PasskeyErrorCodes.CONSTRAINT_ERROR, e)
-            is CreateCredentialUnknownException ->
+            }
+
+            is CreateCredentialUnknownException -> {
                 PasskeyException("Unknown registration error", PasskeyErrorCodes.UNKNOWN_ERROR, e)
-            is CreateCredentialUnsupportedException ->
+            }
+
+            is CreateCredentialUnsupportedException -> {
                 PasskeyException("Passkeys not supported", PasskeyErrorCodes.NOT_SUPPORTED, e)
+            }
+
             // Everything else -- most importantly CreatePublicKeyCredentialDomException, which
             // carries the WebAuthn DOMException naming the real cause. Reporting a bare
             // "Registration failed" throws that away and leaves nothing to diagnose from.
-            else ->
+            else -> {
                 PasskeyException(describe("Registration failed", e.type, e.errorMessage), PasskeyErrorCodes.UNKNOWN_ERROR, e)
+            }
         }
 
     private fun handleGetCredentialException(e: GetCredentialException): PasskeyException =
         when (e) {
-            is GetCredentialCancellationException ->
+            is GetCredentialCancellationException -> {
                 PasskeyException("User cancelled authentication", PasskeyErrorCodes.USER_CANCELLED, e)
-            is GetCredentialInterruptedException ->
+            }
+
+            is GetCredentialInterruptedException -> {
                 PasskeyException("Authentication interrupted", PasskeyErrorCodes.INVALID_STATE, e)
-            is GetCredentialProviderConfigurationException ->
+            }
+
+            is GetCredentialProviderConfigurationException -> {
                 PasskeyException("Provider configuration error", PasskeyErrorCodes.CONSTRAINT_ERROR, e)
-            is GetCredentialUnknownException ->
+            }
+
+            is GetCredentialUnknownException -> {
                 PasskeyException("Unknown authentication error", PasskeyErrorCodes.UNKNOWN_ERROR, e)
-            is GetCredentialUnsupportedException ->
+            }
+
+            is GetCredentialUnsupportedException -> {
                 PasskeyException("Passkeys not supported", PasskeyErrorCodes.NOT_SUPPORTED, e)
-            is NoCredentialException ->
+            }
+
+            is NoCredentialException -> {
                 PasskeyException("No credentials available", PasskeyErrorCodes.NOT_ALLOWED, e)
-            else ->
+            }
+
+            else -> {
                 PasskeyException(describe("Authentication failed", e.type, e.errorMessage), PasskeyErrorCodes.UNKNOWN_ERROR, e)
+            }
         }
 
     /**

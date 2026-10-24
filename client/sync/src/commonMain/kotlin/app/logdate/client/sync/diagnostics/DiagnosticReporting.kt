@@ -229,7 +229,10 @@ internal class DiagnosticReporting(
         result: DiagnosticDelivery,
     ): Pending? =
         when (result) {
-            DiagnosticDelivery.ACCEPTED, DiagnosticDelivery.REJECTED -> null
+            DiagnosticDelivery.ACCEPTED, DiagnosticDelivery.REJECTED -> {
+                null
+            }
+
             DiagnosticDelivery.RETRY, DiagnosticDelivery.RATE_LIMITED -> {
                 val attempts = (queued.attempts + 1).coerceAtMost(30)
                 val delay =

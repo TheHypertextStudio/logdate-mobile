@@ -114,12 +114,19 @@ actual fun DeviceApprovalAction() {
 
 private suspend fun requestCameraAccess(): Boolean =
     when (AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)) {
-        AVAuthorizationStatusAuthorized -> true
-        AVAuthorizationStatusNotDetermined ->
+        AVAuthorizationStatusAuthorized -> {
+            true
+        }
+
+        AVAuthorizationStatusNotDetermined -> {
             suspendCancellableCoroutine { continuation ->
                 AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted -> continuation.resume(granted) }
             }
-        else -> false
+        }
+
+        else -> {
+            false
+        }
     }
 
 @Composable

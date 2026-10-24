@@ -145,6 +145,7 @@ class WatchRemovalEndpoint(
                     val count = lock.prepare(peer.linkId) { pending() } ?: return@withLock reply(request, pending(), false)
                     reply(request, count, count == 0 && current() == peer && !recording() && lock.isPrepared(peer.linkId))
                 }
+
                 RemovalAction.WIPE -> {
                     if (current() != peer) return@withLock null
                     val count = lock.beginWipe(peer.linkId) { pending() } ?: return@withLock reply(request, pending(), false)
@@ -152,6 +153,7 @@ class WatchRemovalEndpoint(
                     wipe()
                     reply(request, 0, true)
                 }
+
                 RemovalAction.REVOKED_WIPE -> {
                     if (current() != peer || !lock.beginRevokedWipe(peer.linkId)) return@withLock null
                     forcedWipe()

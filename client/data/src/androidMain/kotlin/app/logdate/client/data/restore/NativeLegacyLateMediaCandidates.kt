@@ -69,7 +69,8 @@ private fun nativeLegacyLateMediaPaths(
             val relative = "$root/${parsed.ref.path}"
             if (safeLegacyRelative(relative, allowAuthenticatedStaging)) listOf("files/$relative") else emptyList()
         }
-        is MediaReference.LocalFile ->
+
+        is MediaReference.LocalFile -> {
             listOfNotNull(parsed.path, parsed.alternatePath)
                 .mapNotNull { path ->
                     val match = APP_PRIVATE_MEDIA.matchEntire(path) ?: return@mapNotNull null
@@ -83,7 +84,11 @@ private fun nativeLegacyLateMediaPaths(
                     }
                     "files/$relative"
                 }.distinct()
-        is MediaReference.External -> emptyList()
+        }
+
+        is MediaReference.External -> {
+            emptyList()
+        }
     }
 }
 

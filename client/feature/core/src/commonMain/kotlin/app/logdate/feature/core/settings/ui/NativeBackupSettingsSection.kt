@@ -64,20 +64,26 @@ internal fun NativeBackupSettingsSection(
             action = {},
         )
         when (status.custodyStatus) {
-            NativeRestoreCustodyStatus.CLEAR -> Unit
-            NativeRestoreCustodyStatus.RECOVERING ->
+            NativeRestoreCustodyStatus.CLEAR -> {
+                Unit
+            }
+
+            NativeRestoreCustodyStatus.RECOVERING -> {
                 SimpleSettingsItem(
                     title = stringResource(Res.string.native_backup_recovering_title),
                     description = stringResource(Res.string.native_backup_recovering_detail),
                     onClick = onRetryRecovery,
                     action = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                 )
-            NativeRestoreCustodyStatus.NEEDS_TRANSFER ->
+            }
+
+            NativeRestoreCustodyStatus.NEEDS_TRANSFER -> {
                 SettingsNavigationItem(
                     title = stringResource(Res.string.native_backup_recovery_title),
                     description = stringResource(Res.string.native_backup_recovery_detail),
                     onClick = onOpenArchive,
                 )
+            }
         }
     }
 }

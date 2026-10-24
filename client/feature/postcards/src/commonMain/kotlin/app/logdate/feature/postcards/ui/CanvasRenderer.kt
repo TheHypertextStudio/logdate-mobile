@@ -79,16 +79,29 @@ fun CanvasRenderer(
                 onTap = { onElementTap?.invoke(element.id) },
             ) {
                 when (element) {
-                    is CanvasElement.Photo ->
+                    is CanvasElement.Photo -> {
                         PhotoElementRenderer(
                             element,
                             viewportOffsetX,
                             viewportOffsetY,
                         )
-                    is CanvasElement.Text -> TextElementRenderer(element)
-                    is CanvasElement.Ink -> InkElementRenderer(element)
-                    is CanvasElement.Shape -> ShapeElementRenderer(element)
-                    is CanvasElement.Sticker -> StickerElementRenderer(element, stickerUriMap)
+                    }
+
+                    is CanvasElement.Text -> {
+                        TextElementRenderer(element)
+                    }
+
+                    is CanvasElement.Ink -> {
+                        InkElementRenderer(element)
+                    }
+
+                    is CanvasElement.Shape -> {
+                        ShapeElementRenderer(element)
+                    }
+
+                    is CanvasElement.Sticker -> {
+                        StickerElementRenderer(element, stickerUriMap)
+                    }
                 }
             }
         }
@@ -221,8 +234,14 @@ private fun SelectionChrome(element: CanvasElement) {
  */
 internal fun elementSizeDp(element: CanvasElement): Pair<Float, Float> =
     when (element) {
-        is CanvasElement.Photo -> PHOTO_RENDER_SIZE to PHOTO_RENDER_SIZE
-        is CanvasElement.Text -> TEXT_APPROX_WIDTH to TEXT_APPROX_HEIGHT
+        is CanvasElement.Photo -> {
+            PHOTO_RENDER_SIZE to PHOTO_RENDER_SIZE
+        }
+
+        is CanvasElement.Text -> {
+            TEXT_APPROX_WIDTH to TEXT_APPROX_HEIGHT
+        }
+
         is CanvasElement.Ink -> {
             if (element.points.size < MIN_STROKE_POINTS) {
                 0f to 0f
@@ -235,8 +254,14 @@ internal fun elementSizeDp(element: CanvasElement): Pair<Float, Float> =
                     (maxY - minY).coerceAtLeast(MIN_INK_BOUNDS)
             }
         }
-        is CanvasElement.Shape -> element.width to element.height
-        is CanvasElement.Sticker -> STICKER_RENDER_SIZE to STICKER_RENDER_SIZE
+
+        is CanvasElement.Shape -> {
+            element.width to element.height
+        }
+
+        is CanvasElement.Sticker -> {
+            STICKER_RENDER_SIZE to STICKER_RENDER_SIZE
+        }
     }
 
 @Composable
@@ -246,6 +271,7 @@ private fun CanvasBackgroundLayer(background: CanvasBackground) {
             is CanvasBackground.SolidColor -> {
                 drawRect(color = parseColor(background.value))
             }
+
             is CanvasBackground.Gradient -> {
                 val colors = background.stops.map { parseColor(it.color) }
                 if (colors.size >= 2) {
@@ -374,6 +400,7 @@ private fun ShapeElementRenderer(element: CanvasElement.Shape) {
                     cornerRadius = CornerRadius(SHAPE_CORNER_RADIUS, SHAPE_CORNER_RADIUS),
                 )
             }
+
             ShapeKind.CIRCLE -> {
                 val radius = minOf(size.width, size.height) / 2
                 if (fill != null) {
@@ -381,6 +408,7 @@ private fun ShapeElementRenderer(element: CanvasElement.Shape) {
                 }
                 drawCircle(color = strokeColor, radius = radius, style = strokeStyle)
             }
+
             ShapeKind.LINE -> {
                 drawLine(
                     color = strokeColor,
@@ -390,6 +418,7 @@ private fun ShapeElementRenderer(element: CanvasElement.Shape) {
                     cap = StrokeCap.Round,
                 )
             }
+
             ShapeKind.ARROW -> {
                 drawLine(
                     color = strokeColor,

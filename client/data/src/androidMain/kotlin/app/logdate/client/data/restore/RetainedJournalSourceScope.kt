@@ -110,8 +110,11 @@ internal suspend fun readRetainedJournalSourceScope(
                 ?.jsonPrimitive
                 ?.intOrNull
         ) {
-            1 -> Json.decodeFromString<RetainedSourceScopeAnchor>(encoded)
-            2, 3, 4 ->
+            1 -> {
+                Json.decodeFromString<RetainedSourceScopeAnchor>(encoded)
+            }
+
+            2, 3, 4 -> {
                 verifyNativeJournalSourceReceipt(anchorFile, file, databaseFiles).let {
                     RetainedSourceScopeAnchor(
                         version = 1,
@@ -122,7 +125,11 @@ internal suspend fun readRetainedJournalSourceScope(
                         originProvenance = it.originProvenance,
                     )
                 }
-            else -> return null
+            }
+
+            else -> {
+                return null
+            }
         }
     if (anchor.version != 1 || anchor.readState != "captured") return null
     val backendOrigin = anchor.backendOrigin ?: return null

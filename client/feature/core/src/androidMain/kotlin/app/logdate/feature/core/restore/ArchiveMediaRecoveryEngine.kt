@@ -137,12 +137,18 @@ internal class ArchiveMediaRecoveryEngine(
                     UploadScope(scope.ownerId, scope.serverOrigin),
                 )
         ) {
-            is AutomaticMediaRecoveryResult.Available -> result.reference
+            is AutomaticMediaRecoveryResult.Available -> {
+                result.reference
+            }
+
             is AutomaticMediaRecoveryResult.Pending -> {
                 reasons[asset.reference] = result.reason
                 null
             }
-            null -> null
+
+            null -> {
+                null
+            }
         }
     }
 }

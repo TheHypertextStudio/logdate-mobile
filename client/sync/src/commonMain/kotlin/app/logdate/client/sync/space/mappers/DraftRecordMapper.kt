@@ -150,13 +150,17 @@ class DraftRecordMapper(
         val createdAt = block.timestamp.toDatetime("$owner timestamp")
         val location = locationOf(block, owner)
         return when (block) {
-            is SerializableHandwritingBlock ->
+            is SerializableHandwritingBlock -> {
                 DraftBlocksItem.HandwritingBlock(
                     DraftHandwritingBlock(id = id, createdAt = createdAt, location = location, document = block.document.encode()),
                 )
-            is SerializableTextBlock ->
+            }
+
+            is SerializableTextBlock -> {
                 DraftBlocksItem.TextBlock(DraftTextBlock(id = id, createdAt = createdAt, location = location, text = block.content))
-            is SerializableImageBlock ->
+            }
+
+            is SerializableImageBlock -> {
                 DraftBlocksItem.ImageBlock(
                     DraftImageBlock(
                         id = id,
@@ -167,7 +171,9 @@ class DraftRecordMapper(
                         presentation = presentationValue(block.presentation),
                     ),
                 )
-            is SerializableVideoBlock ->
+            }
+
+            is SerializableVideoBlock -> {
                 DraftBlocksItem.VideoBlock(
                     DraftVideoBlock(
                         id = id,
@@ -178,6 +184,8 @@ class DraftRecordMapper(
                         caption = block.caption.ifEmpty { null },
                     ),
                 )
+            }
+
             is SerializableAudioBlock -> {
                 if (block.duration < 0) throw SpaceRecordMappingException("$owner: a recording length of ${block.duration} ms is negative")
                 DraftBlocksItem.AudioBlock(
@@ -191,10 +199,12 @@ class DraftRecordMapper(
                     ),
                 )
             }
-            is SerializableCameraBlock ->
+
+            is SerializableCameraBlock -> {
                 DraftBlocksItem.CameraBlock(
                     DraftCameraBlock(id = id, createdAt = createdAt, location = location, media = mediaOf(block.uri, owner)),
                 )
+            }
         }
     }
 
@@ -203,14 +213,33 @@ class DraftRecordMapper(
         draftOwner: String,
     ): SerializableEntryBlock =
         when (item) {
-            is DraftBlocksItem.HandwritingBlock -> handwritingBlock(item.value, draftOwner)
-            is DraftBlocksItem.TextBlock -> textBlock(item.value, draftOwner)
-            is DraftBlocksItem.ImageBlock -> imageBlock(item.value, draftOwner)
-            is DraftBlocksItem.VideoBlock -> videoBlock(item.value, draftOwner)
-            is DraftBlocksItem.AudioBlock -> audioBlock(item.value, draftOwner)
-            is DraftBlocksItem.CameraBlock -> cameraBlock(item.value, draftOwner)
-            is DraftBlocksItem.Unknown ->
+            is DraftBlocksItem.HandwritingBlock -> {
+                handwritingBlock(item.value, draftOwner)
+            }
+
+            is DraftBlocksItem.TextBlock -> {
+                textBlock(item.value, draftOwner)
+            }
+
+            is DraftBlocksItem.ImageBlock -> {
+                imageBlock(item.value, draftOwner)
+            }
+
+            is DraftBlocksItem.VideoBlock -> {
+                videoBlock(item.value, draftOwner)
+            }
+
+            is DraftBlocksItem.AudioBlock -> {
+                audioBlock(item.value, draftOwner)
+            }
+
+            is DraftBlocksItem.CameraBlock -> {
+                cameraBlock(item.value, draftOwner)
+            }
+
+            is DraftBlocksItem.Unknown -> {
                 throw SpaceRecordMappingException("$draftOwner: this version of LogDate can't show a ${item.type} block")
+            }
         }
 
     private fun handwritingBlock(

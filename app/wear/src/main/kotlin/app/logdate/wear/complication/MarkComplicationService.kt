@@ -40,7 +40,7 @@ internal fun markComplicationData(
     val description = PlainComplicationText.Builder(context.getString(R.string.wear_surface_mark_description)).build()
     val glyph = Icon.createWithResource(context, R.drawable.ic_glyph_mark)
     return when (type) {
-        ComplicationType.SHORT_TEXT ->
+        ComplicationType.SHORT_TEXT -> {
             ShortTextComplicationData
                 .Builder(
                     text = PlainComplicationText.Builder(context.getString(R.string.wear_surface_mark)).build(),
@@ -48,16 +48,24 @@ internal fun markComplicationData(
                 ).setMonochromaticImage(MonochromaticImage.Builder(glyph).build())
                 .setTapAction(tapAction)
                 .build()
-        ComplicationType.MONOCHROMATIC_IMAGE ->
+        }
+
+        ComplicationType.MONOCHROMATIC_IMAGE -> {
             MonochromaticImageComplicationData
                 .Builder(monochromaticImage = MonochromaticImage.Builder(glyph).build(), contentDescription = description)
                 .setTapAction(tapAction)
                 .build()
-        ComplicationType.SMALL_IMAGE ->
+        }
+
+        ComplicationType.SMALL_IMAGE -> {
             SmallImageComplicationData
                 .Builder(smallImage = SmallImage.Builder(glyph, SmallImageType.ICON).build(), contentDescription = description)
                 .setTapAction(tapAction)
                 .build()
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 }

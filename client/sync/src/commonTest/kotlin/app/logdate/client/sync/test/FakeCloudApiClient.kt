@@ -395,6 +395,6 @@ open class FakeCloudApiClient : CloudApiClient {
     }
 }
 
-/**
+/*
  * Fake CloudAccountRepository for testing authenticated vs unauthenticated states.
  */

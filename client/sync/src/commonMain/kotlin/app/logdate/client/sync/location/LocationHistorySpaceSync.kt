@@ -95,11 +95,16 @@ internal class LocationHistorySpaceSync(
         var unroutable = 0
         for (record in waiting) {
             when (val route = HistoryRecordRoutes.routeOf(record)) {
-                is HistoryRoute.Hour -> hours += route.device to route.hourStart
-                is HistoryRoute.Item ->
+                is HistoryRoute.Hour -> {
+                    hours += route.device to route.hourStart
+                }
+
+                is HistoryRoute.Item -> {
                     items[route.type to route.id] =
                         if (items[route.type to route.id] == PendingOperation.DELETE) PendingOperation.DELETE else route.operation
-                HistoryRoute.NothingToUpload ->
+                }
+
+                HistoryRoute.NothingToUpload -> {
                     store.acknowledge(
                         owner,
                         origin,
@@ -107,8 +112,15 @@ internal class LocationHistorySpaceSync(
                         record.deviceVersion,
                         maxOf(1, record.serverVersion),
                     )
-                HistoryRoute.NotSyncedHere -> Unit
-                HistoryRoute.Unroutable -> unroutable++
+                }
+
+                HistoryRoute.NotSyncedHere -> {
+                    Unit
+                }
+
+                HistoryRoute.Unroutable -> {
+                    unroutable++
+                }
             }
         }
         val samples = space.activeKind(EntityType.LOCATION_SAMPLES)?.local as? StoredLocationParts

@@ -107,6 +107,7 @@ private fun Modifier.applyCoverSize(
                     -> width(30.dp).aspectRatio(AspectRatios.RATIO_3_4)
 
                     CoverShape.PROFILE -> width(32.dp).aspectRatio(AspectRatios.SQUARE)
+
                     CoverShape.SQUARE -> width(32.dp).aspectRatio(AspectRatios.SQUARE)
                 }
             }
@@ -118,6 +119,7 @@ private fun Modifier.applyCoverSize(
                     -> width(40.dp).aspectRatio(AspectRatios.RATIO_3_4)
 
                     CoverShape.PROFILE -> width(40.dp).aspectRatio(AspectRatios.SQUARE)
+
                     CoverShape.SQUARE -> width(40.dp).aspectRatio(AspectRatios.SQUARE)
                 }
             }

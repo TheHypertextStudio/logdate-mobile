@@ -113,6 +113,7 @@ fun ShapeCaptureOverlay(
                     style = stroke,
                 )
             }
+
             ShapeKind.CIRCLE -> {
                 val radius = min(d.width, d.height) / 2
                 val center = Offset(d.x + d.width / 2, d.y + d.height / 2)
@@ -123,6 +124,7 @@ fun ShapeCaptureOverlay(
                     style = stroke,
                 )
             }
+
             ShapeKind.LINE -> {
                 drawLine(
                     color = parsedColor,
@@ -132,6 +134,7 @@ fun ShapeCaptureOverlay(
                     cap = StrokeCap.Round,
                 )
             }
+
             ShapeKind.ARROW -> {
                 drawLine(
                     color = parsedColor,

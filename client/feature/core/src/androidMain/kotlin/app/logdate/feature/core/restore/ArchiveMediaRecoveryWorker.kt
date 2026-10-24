@@ -141,8 +141,11 @@ internal object ArchiveRecoveryScheduler {
                                 phase =
                                     when (workInfo.state) {
                                         WorkInfo.State.RUNNING -> ArchiveRecoveryWorkPhase.RUNNING
+
                                         WorkInfo.State.ENQUEUED -> ArchiveRecoveryWorkPhase.ENQUEUED
+
                                         WorkInfo.State.BLOCKED -> ArchiveRecoveryWorkPhase.BLOCKED
+
                                         WorkInfo.State.SUCCEEDED,
                                         WorkInfo.State.FAILED,
                                         WorkInfo.State.CANCELLED,
@@ -201,10 +204,14 @@ internal object ArchiveRecoveryScheduler {
         policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
     ): Operation? {
         if (record.pausedByUser ||
-            record.requiresSource &&
-            !record.metadataApplied ||
-            record.metadataApplied &&
-            !record.options.includeMedia
+            (
+                record.requiresSource &&
+                    !record.metadataApplied
+            ) ||
+            (
+                record.metadataApplied &&
+                    !record.options.includeMedia
+            )
         ) {
             return null
         }

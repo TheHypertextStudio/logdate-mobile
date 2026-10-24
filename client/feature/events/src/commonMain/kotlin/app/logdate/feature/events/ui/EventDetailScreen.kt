@@ -150,14 +150,21 @@ fun EventDetailContent(
         },
     ) { contentPadding ->
         when (val state = uiState) {
-            EventDetailUiState.Loading -> CenteredProgress(contentPadding)
-            EventDetailUiState.NotFound -> CenteredEmptyState(contentPadding, stringResource(Res.string.event_detail_not_found))
-            is EventDetailUiState.Loaded ->
+            EventDetailUiState.Loading -> {
+                CenteredProgress(contentPadding)
+            }
+
+            EventDetailUiState.NotFound -> {
+                CenteredEmptyState(contentPadding, stringResource(Res.string.event_detail_not_found))
+            }
+
+            is EventDetailUiState.Loaded -> {
                 EventDetailLoadedBody(
                     state = state,
                     actions = actions,
                     contentPadding = contentPadding,
                 )
+            }
         }
     }
 

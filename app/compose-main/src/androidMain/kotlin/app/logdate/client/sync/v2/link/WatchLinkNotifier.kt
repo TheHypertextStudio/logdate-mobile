@@ -58,16 +58,24 @@ class AndroidWatchLinkNotifier(
 
     private fun attentionCopy(failure: PhoneLinkFailure): Pair<Int, Int>? =
         when (failure) {
-            PhoneLinkFailure.WATCH_BOUND_TO_ANOTHER_ACCOUNT ->
+            PhoneLinkFailure.WATCH_BOUND_TO_ANOTHER_ACCOUNT -> {
                 NotificationResources.string.notification_watch_other_account_title to
                     NotificationResources.string.notification_watch_other_account_body
-            PhoneLinkFailure.WATCH_KEY_CONFLICT ->
+            }
+
+            PhoneLinkFailure.WATCH_KEY_CONFLICT -> {
                 NotificationResources.string.notification_watch_key_conflict_title to
                     NotificationResources.string.notification_watch_key_conflict_body
-            PhoneLinkFailure.DEVICE_LIMIT_REACHED ->
+            }
+
+            PhoneLinkFailure.DEVICE_LIMIT_REACHED -> {
                 NotificationResources.string.notification_watch_device_limit_title to
                     NotificationResources.string.notification_watch_device_limit_body
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
 
     private fun post(

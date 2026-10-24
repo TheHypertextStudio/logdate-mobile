@@ -67,12 +67,15 @@ class MilestoneRewindCoordinator(
                     shortcutScheduler.enqueueImmediateRefresh()
                 }.onFailure { Napier.w("MilestoneRewindCoordinator: failed to tag milestone rewind", it) }
             }
+
             is GenerateBasicRewindResult.AlreadyInProgress -> {
                 Napier.d("MilestoneRewindCoordinator: generation already in progress for window")
             }
+
             is GenerateBasicRewindResult.NoContent -> {
                 Napier.d("MilestoneRewindCoordinator: no content for milestone window")
             }
+
             is GenerateBasicRewindResult.Error -> {
                 Napier.w("MilestoneRewindCoordinator: generation failed — ${result.error}")
             }

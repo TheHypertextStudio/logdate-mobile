@@ -351,8 +351,11 @@ internal class MockAtmosphere(
                     "use_dpop_nonce",
                     "Authorization server requires nonce in DPoP proof",
                 )
+
                 is DpopResult.Invalid -> return oauthError(HttpStatusCode.BadRequest, "invalid_dpop_proof", result.reason)
+
                 is DpopResult.Valid -> result
+
                 null -> return oauthError(HttpStatusCode.BadRequest, "invalid_dpop_proof", "DPoP proof required")
             }
         val client =

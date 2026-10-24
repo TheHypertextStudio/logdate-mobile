@@ -92,7 +92,9 @@ internal fun DiagnosticReason.shouldRetryArchiveMedia(hasSession: Boolean = true
         DiagnosticReason.OFFLINE, DiagnosticReason.SERVER_UNAVAILABLE, DiagnosticReason.RATE_LIMITED,
         DiagnosticReason.QUOTA_EXCEEDED, DiagnosticReason.UNKNOWN, DiagnosticReason.NETWORK_POLICY,
         -> hasSession
+
         DiagnosticReason.LOCAL_STORAGE, DiagnosticReason.PERSISTENCE_FAILED -> true
+
         else -> false
     }
 
@@ -111,14 +113,19 @@ internal class ArchiveRecoveryScheduleGate {
         mutex.withLock {
             when {
                 hasRunningWork() && change.restartRunningWork -> replaceRunningWork()
+
                 isDelayedRetry() && change.hasChanged -> replaceDelayedRetry()
+
                 hasQueuedWork() -> Unit
+
                 // Inventory changes can make a previously skipped asset available, but must let
                 // a useful in-flight download reach its durable checkpoint before the follow-up.
                 hasRunningWork() && change.mediaInventoryChanged -> enqueueSuccessor()
+
                 // Startup reconciliation trusts active work; only a readiness event that can
                 // unblock a stale attempt should replace its retry chain.
                 hasRunningWork() -> Unit
+
                 else -> enqueueSuccessor()
             }
         }

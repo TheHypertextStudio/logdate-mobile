@@ -117,14 +117,17 @@ class EmailVerificationApiClient(
                     val data = json.decodeFromString<EmailVerifiedResponse>(body)
                     Result.success(EmailVerificationCompletion.Success(data.email, data.emailVerifiedAt))
                 }
+
                 HttpStatusCode.Conflict -> {
                     val data = json.decodeFromString<EmailVerificationConflictResponse>(body)
                     Result.success(EmailVerificationCompletion.Conflict(data.message))
                 }
+
                 HttpStatusCode.BadRequest -> {
                     val data = json.decodeFromString<EmailVerificationErrorResponse>(body)
                     Result.success(EmailVerificationCompletion.Failed(data.reason))
                 }
+
                 else -> {
                     val err = runCatching { json.decodeFromString<ApiErrorResponse>(body) }.getOrNull()
                     Result.failure(

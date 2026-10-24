@@ -316,11 +316,21 @@ class SpaceRoutingMediaDataSource(
         mediaId: String,
     ): Result<MediaFile> =
         when {
-            SpaceMediaReference.parse(reference) != null && space is ReferencedMediaDataSource ->
+            SpaceMediaReference.parse(reference) != null && space is ReferencedMediaDataSource -> {
                 space.downloadReferencedMedia(accessToken, reference, mediaId)
-            SpaceMediaReference.parse(reference) != null -> space.downloadMedia(accessToken, mediaId)
-            legacy is ReferencedMediaDataSource -> legacy.downloadReferencedMedia(accessToken, reference, mediaId)
-            else -> legacy.downloadMedia(accessToken, mediaId)
+            }
+
+            SpaceMediaReference.parse(reference) != null -> {
+                space.downloadMedia(accessToken, mediaId)
+            }
+
+            legacy is ReferencedMediaDataSource -> {
+                legacy.downloadReferencedMedia(accessToken, reference, mediaId)
+            }
+
+            else -> {
+                legacy.downloadMedia(accessToken, mediaId)
+            }
         }
 }
 

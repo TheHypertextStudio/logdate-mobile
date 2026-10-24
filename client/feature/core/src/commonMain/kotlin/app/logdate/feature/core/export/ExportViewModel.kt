@@ -74,6 +74,7 @@ class UserDataExportViewModel(
                     _exportState.update { ExportState.Idle }
                     _isSheetVisible.value = false
                 }
+
                 is ExportOutcome.Failed -> {
                     _exportState.update {
                         ExportState.Failed(outcome.reason ?: Res.string.export_error_default.toUiText())
@@ -164,6 +165,7 @@ class UserDataExportViewModel(
             is ExportState.Completed,
             is ExportState.Failed,
             -> _exportState.update { ExportState.Idle }
+
             // Exporting/Selecting: export continues in background, state unchanged
             else -> Unit
         }

@@ -29,7 +29,10 @@ internal suspend fun LogDateCloudApiClient.requestUploadJournal(
                 val responseBody = response.body<JournalUploadResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -60,7 +63,10 @@ internal suspend fun LogDateCloudApiClient.requestGetJournalChanges(
                 val responseBody = response.body<JournalChangesResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -92,7 +98,10 @@ internal suspend fun LogDateCloudApiClient.requestUpdateJournal(
                 val responseBody = response.body<JournalUpdateResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -150,7 +159,10 @@ internal suspend fun LogDateCloudApiClient.requestUploadAssociations(
                 val responseBody = response.body<AssociationUploadResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -181,7 +193,10 @@ internal suspend fun LogDateCloudApiClient.requestGetAssociationChanges(
                 val responseBody = response.body<AssociationChangesResponse>()
                 Result.success(responseBody)
             }
-            else -> handleApiError(response)
+
+            else -> {
+                handleApiError(response)
+            }
         }
     } catch (e: Exception) {
         if (e is CancellationException) throw e

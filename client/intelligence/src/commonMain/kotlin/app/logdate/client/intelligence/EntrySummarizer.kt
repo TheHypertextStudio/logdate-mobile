@@ -51,17 +51,7 @@ class EntrySummarizer(
     ): AIResult<String> =
         withContext(ioDispatcher) {
             if (text.length > MAX_AI_INPUT_CHARACTERS) return@withContext AIResult.Unavailable(AIUnavailableReason.InputTooLarge)
-            val cacheRequest =
-                GenerativeAICacheRequest(
-                    contentType = GenerativeAICacheContentType.Summary,
-                    inputText = text,
-                    providerId = genAIClient.providerId,
-                    model = genAIClient.defaultModel,
-                    promptVersion = PROMPT_VERSION,
-                    schemaVersion = SCHEMA_VERSION,
-                    templateId = TEMPLATE_ID,
-                    policy = AICachePolicy(ttlSeconds = CACHE_TTL_SECONDS),
-                )
+            val cacheRequest = summaryCacheRequest(text)
             if (useCached) {
                 val cachedResponse = generativeAICache.getEntry(cacheRequest)
                 if (cachedResponse != null) {
@@ -97,7 +87,11 @@ class EntrySummarizer(
                     generativeAICache.putEntry(cacheRequest, response.value.content)
                     AIResult.Success(response.value.content, fromCache = false)
                 }
-                is AIResult.Unavailable -> response
+
+                is AIResult.Unavailable -> {
+                    response
+                }
+
                 is AIResult.Error -> {
                     Napier.e(
                         tag = "EntrySummarizer",
@@ -108,4 +102,16 @@ class EntrySummarizer(
                 }
             }
         }
+
+    private fun summaryCacheRequest(text: String): GenerativeAICacheRequest =
+        GenerativeAICacheRequest(
+            contentType = GenerativeAICacheContentType.Summary,
+            inputText = text,
+            providerId = genAIClient.providerId,
+            model = genAIClient.defaultModel,
+            promptVersion = PROMPT_VERSION,
+            schemaVersion = SCHEMA_VERSION,
+            templateId = TEMPLATE_ID,
+            policy = AICachePolicy(ttlSeconds = CACHE_TTL_SECONDS),
+        )
 }

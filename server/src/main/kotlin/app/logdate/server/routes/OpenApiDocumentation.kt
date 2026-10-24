@@ -203,28 +203,37 @@ private fun ResponsesConfig.errorResponse(
         }
         headers()
         when (envelope) {
-            ErrorEnvelope.API ->
+            ErrorEnvelope.API -> {
                 body<ApiErrorResponse> {
                     cases.forEach { case -> example(case.code) { value = ApiErrorResponse(ApiError(case.code, case.message)) } }
                 }
-            ErrorEnvelope.SYNC ->
+            }
+
+            ErrorEnvelope.SYNC -> {
                 body<SimpleErrorResponse> {
                     cases.forEach { case ->
                         example(case.code) { value = SimpleErrorResponse(case.code, case.message, details) }
                     }
                 }
-            ErrorEnvelope.PDS ->
+            }
+
+            ErrorEnvelope.PDS -> {
                 body<PdsErrorResponse> {
                     cases.forEach { case -> example(case.code) { value = PdsErrorResponse(case.code, case.message) } }
                 }
-            ErrorEnvelope.OAUTH ->
+            }
+
+            ErrorEnvelope.OAUTH -> {
                 body<OAuthErrorResponse> {
                     cases.forEach { case -> example(case.code) { value = OAuthErrorResponse(case.code, case.message) } }
                 }
-            ErrorEnvelope.MESSAGE ->
+            }
+
+            ErrorEnvelope.MESSAGE -> {
                 body<MessageErrorResponse> {
                     cases.forEach { case -> example(case.code) { value = MessageErrorResponse(case.message) } }
                 }
+            }
         }
     }
 }
@@ -271,12 +280,14 @@ internal fun ResponsesConfig.messageError(
 internal fun ResponsesConfig.bearerUnauthorized(envelope: ErrorEnvelope) {
     val advice = "Refresh the access token and retry once; if that also fails, sign in again."
     when (envelope) {
-        ErrorEnvelope.API ->
+        ErrorEnvelope.API -> {
             apiError(
                 HttpStatusCode.Unauthorized,
                 ErrorCase("INVALID_TOKEN", "The access token is missing, malformed or expired. $advice", "Invalid or expired access token"),
             )
-        ErrorEnvelope.SYNC ->
+        }
+
+        ErrorEnvelope.SYNC -> {
             syncError(
                 HttpStatusCode.Unauthorized,
                 ErrorCase(
@@ -285,7 +296,9 @@ internal fun ResponsesConfig.bearerUnauthorized(envelope: ErrorEnvelope) {
                     "Missing or invalid Authorization header",
                 ),
             )
-        ErrorEnvelope.PDS ->
+        }
+
+        ErrorEnvelope.PDS -> {
             pdsError(
                 HttpStatusCode.Unauthorized,
                 ErrorCase("AuthRequired", "No `Authorization: Bearer` header was sent.", "Missing bearer token"),
@@ -295,7 +308,9 @@ internal fun ResponsesConfig.bearerUnauthorized(envelope: ErrorEnvelope) {
                     "Authentication failed",
                 ),
             )
-        ErrorEnvelope.MESSAGE ->
+        }
+
+        ErrorEnvelope.MESSAGE -> {
             messageError(
                 HttpStatusCode.Unauthorized,
                 ErrorCase(
@@ -304,7 +319,9 @@ internal fun ResponsesConfig.bearerUnauthorized(envelope: ErrorEnvelope) {
                     "missing or invalid Authorization header",
                 ),
             )
-        ErrorEnvelope.OAUTH ->
+        }
+
+        ErrorEnvelope.OAUTH -> {
             oauthError(
                 HttpStatusCode.Unauthorized,
                 ErrorCase(
@@ -313,6 +330,7 @@ internal fun ResponsesConfig.bearerUnauthorized(envelope: ErrorEnvelope) {
                     "LogDate bearer authentication is required",
                 ),
             )
+        }
     }
 }
 

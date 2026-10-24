@@ -60,10 +60,12 @@ class LogCurrentLocationUseCase(
                     LocationLogResult.LogFailure(e)
                 }
             }
+
             is LocationLogRequest.GetRetryStatus -> {
                 val status = locationRetryWorker.getRetryStatus()
                 LocationLogResult.RetryStatusInfo(status)
             }
+
             is LocationLogRequest.CancelAllRetries -> {
                 locationRetryWorker.cancelAllRetries()
                 LocationLogResult.RetriesCancelled

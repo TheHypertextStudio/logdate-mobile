@@ -30,6 +30,11 @@ CONFIG_NAMES = {
     "package.json",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
+    "libs.versions.toml",
+    "gradle.properties",
+    "Cargo.toml",
+    "rust-toolchain.toml",
+    "global.json",
 }
 
 
@@ -44,12 +49,14 @@ def configuration_file(name):
         and base
         in {
             "tools.json",
+            "preset.mjs",
             "native-rules.json",
             "native-addons-rules.json",
             "document-rules.json",
             "dsl-rules.json",
             "kotlin.editorconfig",
             "npm-lock.json",
+            "requirements.txt",
         }
     )
 

@@ -136,15 +136,23 @@ internal class SpaceUploader(
                         recordProgress(1)
                         return 1
                     }
-                    is Attempt.Failed -> return fail(written.error)
-                    is Attempt.Conflicted ->
+
+                    is Attempt.Failed -> {
+                        return fail(written.error)
+                    }
+
+                    is Attempt.Conflicted -> {
                         when (val next = resolve(current, written.conflict)) {
                             is Next.Write -> {
                                 current = next.item
                                 read = next.bases
                             }
-                            is Next.Done -> return 0
+
+                            is Next.Done -> {
+                                return 0
+                            }
                         }
+                    }
                 }
             }
             return fail(DataHomeConflictException("The item kept changing on other devices"))
@@ -161,8 +169,14 @@ internal class SpaceUploader(
                     bases = remote.states
                 }
                 when (val removed = deleteAll(bases)) {
-                    is Attempt.Succeeded -> return deleted(removed.seq, afterDelete)
-                    is Attempt.Failed -> return fail(removed.error)
+                    is Attempt.Succeeded -> {
+                        return deleted(removed.seq, afterDelete)
+                    }
+
+                    is Attempt.Failed -> {
+                        return fail(removed.error)
+                    }
+
                     is Attempt.Conflicted -> {
                         val remote = readRemote().getOrElse { return fail(it) }
                         if (remote.item != null && keepsEdit(remote)) return keepEdit(remote, removed.conflict)
@@ -312,11 +326,15 @@ internal class SpaceUploader(
                     remoteTimestamp = kind.local.lastUpdatedOf(remoteItem),
                 )
             return when (resolution) {
-                is ConflictResolution.KeepLocal -> Next.Write(resolution.value, remote.states)
+                is ConflictResolution.KeepLocal -> {
+                    Next.Write(resolution.value, remote.states)
+                }
+
                 is ConflictResolution.Merge -> {
                     kind.local.replaceLocal(resolution.merged)
                     Next.Write(resolution.merged, remote.states)
                 }
+
                 is ConflictResolution.KeepRemote -> {
                     kind.local.replaceLocal(resolution.value)
                     remote.states.values.forEach { swapStore.put(access.scope, it) }
@@ -324,6 +342,7 @@ internal class SpaceUploader(
                     retryCoordinator.markUploadSettled(type, pending, Clock.System.now(), remote.latestSeq)
                     Next.Done(0)
                 }
+
                 is ConflictResolution.RequiresManualResolution -> {
                     errors +=
                         retryCoordinator.handleUploadConflict(type, pending, conflict, remote.latestSeq, kind.local.lastUpdatedOf(local))

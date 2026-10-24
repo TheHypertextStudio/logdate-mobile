@@ -135,12 +135,17 @@ class NoteEntryMapper(
     ): EntryBlocksItem {
         val id = note.uid.toString()
         return when (note) {
-            is JournalNote.Handwriting ->
+            is JournalNote.Handwriting -> {
                 EntryBlocksItem.HandwritingBlock(
                     EntryHandwritingBlock(id = id, document = note.unreadableContent ?: note.document.encode()),
                 )
-            is JournalNote.Text -> EntryBlocksItem.TextBlock(EntryTextBlock(id = id, text = note.content))
-            is JournalNote.Image ->
+            }
+
+            is JournalNote.Text -> {
+                EntryBlocksItem.TextBlock(EntryTextBlock(id = id, text = note.content))
+            }
+
+            is JournalNote.Image -> {
                 EntryBlocksItem.ImageBlock(
                     EntryImageBlock(
                         id = id,
@@ -149,7 +154,9 @@ class NoteEntryMapper(
                         presentation = presentationValue(note.presentation),
                     ),
                 )
-            is JournalNote.Video ->
+            }
+
+            is JournalNote.Video -> {
                 EntryBlocksItem.VideoBlock(
                     EntryVideoBlock(
                         id = id,
@@ -158,7 +165,9 @@ class NoteEntryMapper(
                         durationMs = note.durationMs?.also { requireDuration(it, owner) },
                     ),
                 )
-            is JournalNote.Audio ->
+            }
+
+            is JournalNote.Audio -> {
                 EntryBlocksItem.AudioBlock(
                     EntryAudioBlock(
                         id = id,
@@ -174,6 +183,7 @@ class NoteEntryMapper(
                             },
                     ),
                 )
+            }
         }
     }
 
@@ -183,13 +193,29 @@ class NoteEntryMapper(
         owner: String,
     ): JournalNote =
         when (block) {
-            is EntryBlocksItem.HandwritingBlock -> handwritingNoteOf(block.value, context, owner)
-            is EntryBlocksItem.TextBlock -> textNoteOf(block.value, context, owner)
-            is EntryBlocksItem.ImageBlock -> imageNoteOf(block.value, context, owner)
-            is EntryBlocksItem.VideoBlock -> videoNoteOf(block.value, context, owner)
-            is EntryBlocksItem.AudioBlock -> audioNoteOf(block.value, context, owner)
-            is EntryBlocksItem.Unknown ->
+            is EntryBlocksItem.HandwritingBlock -> {
+                handwritingNoteOf(block.value, context, owner)
+            }
+
+            is EntryBlocksItem.TextBlock -> {
+                textNoteOf(block.value, context, owner)
+            }
+
+            is EntryBlocksItem.ImageBlock -> {
+                imageNoteOf(block.value, context, owner)
+            }
+
+            is EntryBlocksItem.VideoBlock -> {
+                videoNoteOf(block.value, context, owner)
+            }
+
+            is EntryBlocksItem.AudioBlock -> {
+                audioNoteOf(block.value, context, owner)
+            }
+
+            is EntryBlocksItem.Unknown -> {
                 throw SpaceRecordMappingException("$owner: this version of LogDate can't show a ${block.type}")
+            }
         }
 
     private fun handwritingNoteOf(
@@ -415,11 +441,18 @@ class NoteEntryMapper(
         owner: String,
     ): String =
         when (block.format) {
-            null, MARKDOWN -> block.text
-            PLAIN ->
+            null, MARKDOWN -> {
+                block.text
+            }
+
+            PLAIN -> {
                 plainTextAsMarkdown(block.text)
                     ?: throw SpaceRecordMappingException("$owner: its plain text has a line that starts with whitespace")
-            else -> throw SpaceRecordMappingException("$owner: this version of LogDate can't show ${block.format} text")
+            }
+
+            else -> {
+                throw SpaceRecordMappingException("$owner: this version of LogDate can't show ${block.format} text")
+            }
         }
 
     private fun requireDuration(

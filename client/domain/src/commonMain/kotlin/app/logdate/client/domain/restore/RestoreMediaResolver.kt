@@ -30,13 +30,19 @@ internal class RestoreMediaResolver(
         val reason =
             when {
                 !includeMedia -> UnavailableMediaReason.NOT_SELECTED
+
                 source.startsWith(
                     "logdate-unavailable://archive/",
                 ) ||
-                    manifest != null &&
-                    entry == null -> UnavailableMediaReason.NOT_IN_ARCHIVE
+                    (
+                        manifest != null &&
+                            entry == null
+                    ) -> UnavailableMediaReason.NOT_IN_ARCHIVE
+
                 importer?.containsMedia(path) == false -> UnavailableMediaReason.NOT_IN_ARCHIVE
+
                 importer != null -> UnavailableMediaReason.IMPORT_FAILED
+
                 else -> null
             }
         return MediaResolution(source, false, reason == null, path, reason)

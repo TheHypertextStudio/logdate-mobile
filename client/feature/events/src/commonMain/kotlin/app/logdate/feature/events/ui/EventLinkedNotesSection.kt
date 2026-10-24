@@ -138,17 +138,21 @@ private fun NotePreview(note: JournalNote) {
     val previewSize = 56.dp
     val shape = RoundedCornerShape(Spacing.sm)
     when (note) {
-        is JournalNote.Handwriting ->
+        is JournalNote.Handwriting -> {
             app.logdate.ui.handwriting
                 .HandwritingPreview(note.document, Modifier.size(previewSize).clip(shape), unreadable = note.unreadableContent != null)
-        is JournalNote.Image ->
+        }
+
+        is JournalNote.Image -> {
             AsyncImage(
                 model = note.mediaRef,
                 contentDescription = stringResource(Res.string.cd_event_linked_photo),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(previewSize).clip(shape),
             )
-        is JournalNote.Video ->
+        }
+
+        is JournalNote.Video -> {
             Box(
                 modifier =
                     Modifier
@@ -163,7 +167,9 @@ private fun NotePreview(note: JournalNote) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        is JournalNote.Audio ->
+        }
+
+        is JournalNote.Audio -> {
             Box(
                 modifier =
                     Modifier
@@ -178,7 +184,9 @@ private fun NotePreview(note: JournalNote) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        is JournalNote.Text ->
+        }
+
+        is JournalNote.Text -> {
             Box(
                 modifier =
                     Modifier
@@ -187,5 +195,6 @@ private fun NotePreview(note: JournalNote) {
                         .clip(shape)
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             )
+        }
     }
 }

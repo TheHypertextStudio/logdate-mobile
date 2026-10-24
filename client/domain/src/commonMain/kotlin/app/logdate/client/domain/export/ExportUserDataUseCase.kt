@@ -154,7 +154,7 @@ class ExportUserDataUseCase(
                 val exportNotes =
                     notes.map { note ->
                         when (note) {
-                            is JournalNote.Handwriting ->
+                            is JournalNote.Handwriting -> {
                                 ExportNote(
                                     id = note.uid.toString(),
                                     type = "handwriting",
@@ -168,7 +168,9 @@ class ExportUserDataUseCase(
                                     capturedDuring = note.capturedDuring?.wireName,
                                     timeZone = note.timeZoneId,
                                 )
-                            is JournalNote.Text ->
+                            }
+
+                            is JournalNote.Text -> {
                                 ExportNote(
                                     id = note.uid.toString(),
                                     type = "text",
@@ -180,7 +182,9 @@ class ExportUserDataUseCase(
                                     capturedOn = note.capturedOn?.wireName,
                                     capturedDuring = note.capturedDuring?.wireName,
                                 )
-                            is JournalNote.Image ->
+                            }
+
+                            is JournalNote.Image -> {
                                 ExportNote(
                                     id = note.uid.toString(),
                                     type = "image",
@@ -194,7 +198,9 @@ class ExportUserDataUseCase(
                                     capturedOn = note.capturedOn?.wireName,
                                     capturedDuring = note.capturedDuring?.wireName,
                                 )
-                            is JournalNote.Audio ->
+                            }
+
+                            is JournalNote.Audio -> {
                                 ExportNote(
                                     id = note.uid.toString(),
                                     type = "audio",
@@ -209,7 +215,9 @@ class ExportUserDataUseCase(
                                     capturedOn = note.capturedOn?.wireName,
                                     capturedDuring = note.capturedDuring?.wireName,
                                 )
-                            is JournalNote.Video ->
+                            }
+
+                            is JournalNote.Video -> {
                                 ExportNote(
                                     id = note.uid.toString(),
                                     type = "video",
@@ -222,6 +230,7 @@ class ExportUserDataUseCase(
                                     capturedOn = note.capturedOn?.wireName,
                                     capturedDuring = note.capturedDuring?.wireName,
                                 )
+                            }
                         }
                     }
 

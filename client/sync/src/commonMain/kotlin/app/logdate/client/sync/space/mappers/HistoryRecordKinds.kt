@@ -370,6 +370,7 @@ private class StoredPlaces(
         when {
             // A saved place that location history never saw gets its history view now, as every place has one.
             row == null -> store(item, dirty = false, seq = seq)
+
             row.dirty -> access.acknowledge(row, seq)
         }
     }

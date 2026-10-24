@@ -35,7 +35,7 @@ class MomentReceiptBook(
         val row = marks.getById(id) ?: return null
         val receipt =
             if (query.removed || row.deletedAt != null) {
-                if (row.deletedAt == null || query.removed && proof.state != "DELETED_ON_PHONE") return null
+                if (row.deletedAt == null || (query.removed && proof.state != "DELETED_ON_PHONE")) return null
                 Receipt(
                     RecordKind.MOMENT,
                     query.id,

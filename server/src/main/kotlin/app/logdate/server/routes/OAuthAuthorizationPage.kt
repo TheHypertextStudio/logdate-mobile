@@ -50,8 +50,11 @@ internal fun renderAuthorizationPage(
     nonce: String,
 ): String =
     when (page) {
-        is OAuthPasskeyPage.SignIn -> signInPage(page, nonce)
-        OAuthPasskeyPage.RequestExpired ->
+        is OAuthPasskeyPage.SignIn -> {
+            signInPage(page, nonce)
+        }
+
+        OAuthPasskeyPage.RequestExpired -> {
             messagePage(
                 nonce = nonce,
                 title = "This sign-in link has expired",
@@ -59,7 +62,9 @@ internal fun renderAuthorizationPage(
                     "Sign-in links only last a few minutes, and each one works once. Go back to the app you were " +
                         "signing in to and start signing in again.",
             )
-        OAuthPasskeyPage.ServerError ->
+        }
+
+        OAuthPasskeyPage.ServerError -> {
             messagePage(
                 nonce = nonce,
                 title = "Sign-in isn't available right now",
@@ -67,13 +72,17 @@ internal fun renderAuthorizationPage(
                     "The LogDate server couldn't load this sign-in request. Try again in a few minutes from the app you " +
                         "were signing in to.",
             )
-        OAuthPasskeyPage.ClientMismatch ->
+        }
+
+        OAuthPasskeyPage.ClientMismatch -> {
             messagePage(
                 nonce = nonce,
                 title = "This sign-in link doesn't match its app",
                 body = "The link was changed after the app created it. Go back to the app and start signing in again.",
             )
-        is OAuthPasskeyPage.UnknownAccount ->
+        }
+
+        is OAuthPasskeyPage.UnknownAccount -> {
             messagePage(
                 nonce = nonce,
                 title = "No LogDate account for ${page.requestedAccount}",
@@ -81,6 +90,7 @@ internal fun renderAuthorizationPage(
                     "${page.clientLabel} asked to sign in as ${page.requestedAccount}, which isn't a LogDate account. Go back " +
                         "to the app and sign in with your LogDate handle.",
             )
+        }
     }
 
 private fun signInPage(

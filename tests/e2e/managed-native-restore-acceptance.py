@@ -240,6 +240,37 @@ def discovery_identity(pid, *, process_identity=TARGET["process_identity"]):
         return None
 
 
+class ManagedPairAmbiguousError(RuntimeError):
+    def __init__(self, candidates):
+        self.candidates = candidates
+        super().__init__("More than two new managed devices; custody is ambiguous")
+
+
+def live_managed_candidates(
+    candidates,
+    expected_avd,
+    *,
+    diagnostics=None,
+    process_identity=TARGET["process_identity"],
+):
+    """A ps snapshot may outlive a failed boot; bind only still-live matching instances."""
+    live = {}
+    for pid, candidate in candidates.items():
+        identity = discovery_identity(pid, process_identity=process_identity)
+        if identity is None:
+            continue
+        current = TARGET["managed_candidates"](
+            [f"{pid} {identity['command']}"], set(), expected_avd
+        )
+        if current.get(pid) == candidate:
+            live[pid] = {**candidate, "identity": identity}
+    if len(live) > 2:
+        if diagnostics is not None:
+            save(diagnostics, live)
+        raise ManagedPairAmbiguousError(live)
+    return live
+
+
 def observe_driver_receipt(
     adb,
     serial,

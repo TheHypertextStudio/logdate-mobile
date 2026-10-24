@@ -97,6 +97,7 @@ internal class IdentityKeyProvisioner(
                 )
                 identityRecoveryNeededStore.setNeeded(true)
             }
+
             false -> {
                 runCatching { manager.setupNewIdentity() }
                     .onFailure {
@@ -106,6 +107,7 @@ internal class IdentityKeyProvisioner(
                     }
                 if (manager.hasIdentityKey() && accountId != null) manager.bindToAccount(accountId)
             }
+
             null -> {
                 // Could not tell (offline, a server error). Leave things as they are; the next
                 // sync attempt checks again rather than guessing now.

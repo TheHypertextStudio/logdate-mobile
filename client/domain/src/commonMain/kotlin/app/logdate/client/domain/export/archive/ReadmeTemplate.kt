@@ -294,12 +294,18 @@ object ReadmeTemplate {
         var current = ""
         text.split(' ').filter { it.isNotEmpty() }.forEach { word ->
             when {
-                current.isEmpty() -> current = word
+                current.isEmpty() -> {
+                    current = word
+                }
+
                 current.length + 1 + word.length > width -> {
                     lines += current
                     current = word
                 }
-                else -> current = "$current $word"
+
+                else -> {
+                    current = "$current $word"
+                }
             }
         }
         if (current.isNotEmpty()) lines += current

@@ -54,13 +54,17 @@ fun Route.resourceRoutes(
 
                 resolved =
                     when {
-                        collectionsRepository.getJournal(userId, resourceId) != null ->
+                        collectionsRepository.getJournal(userId, resourceId) != null -> {
                             resourceResponse(ownerHandle, ResourceKind.JOURNAL, resourceId)
+                        }
 
-                        collectionsRepository.getEntry(userId, resourceId) != null ->
+                        collectionsRepository.getEntry(userId, resourceId) != null -> {
                             resourceResponse(ownerHandle, ResourceKind.NOTE, resourceId)
+                        }
 
-                        else -> null
+                        else -> {
+                            null
+                        }
                     }
                 if (resolved != null) break
             }

@@ -333,7 +333,7 @@ private fun MemorySelectionTopPane(
         }
 
         when {
-            !hasMediaPermission ->
+            !hasMediaPermission -> {
                 item {
                     MemorySelectionStatusCard(
                         title = stringResource(Res.string.memory_access_needed),
@@ -343,8 +343,9 @@ private fun MemorySelectionTopPane(
                         actionTag = MEMORY_SELECTION_PERMISSION_ACTION_TAG,
                     )
                 }
+            }
 
-            uiState.loadFailed ->
+            uiState.loadFailed -> {
                 item {
                     MemorySelectionStatusCard(
                         title = stringResource(Res.string.select_memories),
@@ -354,8 +355,9 @@ private fun MemorySelectionTopPane(
                         actionTag = MEMORY_SELECTION_STATUS_ACTION_TAG,
                     )
                 }
+            }
 
-            uiState.aiCuratedMemories.isEmpty() && uiState.allMemories.isEmpty() ->
+            uiState.aiCuratedMemories.isEmpty() && uiState.allMemories.isEmpty() -> {
                 item {
                     MemorySelectionStatusCard(
                         title = stringResource(Res.string.select_memories),
@@ -365,8 +367,9 @@ private fun MemorySelectionTopPane(
                         actionTag = MEMORY_SELECTION_STATUS_ACTION_TAG,
                     )
                 }
+            }
 
-            else ->
+            else -> {
                 item {
                     Text(
                         text = stringResource(Res.string.moments_that_might_matter_most),
@@ -374,6 +377,7 @@ private fun MemorySelectionTopPane(
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
+            }
         }
     }
 }
@@ -397,7 +401,7 @@ private fun SharedTransitionScope.MemorySelectionBottomPane(
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
     ) {
         when {
-            uiState.isLoading ->
+            uiState.isLoading -> {
                 item {
                     Box(
                         modifier =
@@ -409,6 +413,7 @@ private fun SharedTransitionScope.MemorySelectionBottomPane(
                         CircularProgressIndicator()
                     }
                 }
+            }
 
             uiState.aiCuratedMemories.isNotEmpty() || uiState.allMemories.isNotEmpty() -> {
                 if (uiState.aiCuratedMemories.isNotEmpty()) {

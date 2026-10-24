@@ -46,11 +46,21 @@ data class NoteTranscript(
     private companion object {
         fun jobOf(document: TranscriptDocument): TranscriptionStatus =
             when (document.status) {
-                TranscriptDocumentStatus.LISTENING ->
+                TranscriptDocumentStatus.LISTENING -> {
                     if (document.segments.isEmpty()) TranscriptionStatus.PENDING else TranscriptionStatus.IN_PROGRESS
-                TranscriptDocumentStatus.REFINING -> TranscriptionStatus.IN_PROGRESS
-                TranscriptDocumentStatus.FINAL -> TranscriptionStatus.COMPLETED
-                TranscriptDocumentStatus.FAILED -> TranscriptionStatus.FAILED
+                }
+
+                TranscriptDocumentStatus.REFINING -> {
+                    TranscriptionStatus.IN_PROGRESS
+                }
+
+                TranscriptDocumentStatus.FINAL -> {
+                    TranscriptionStatus.COMPLETED
+                }
+
+                TranscriptDocumentStatus.FAILED -> {
+                    TranscriptionStatus.FAILED
+                }
             }
     }
 }
@@ -238,11 +248,21 @@ class NoteTranscriptMapper : SpaceRecordMapper<NoteTranscript> {
         // A job that hasn't started has no segments, so a pending job with segments is already running.
         private fun statusValue(transcript: NoteTranscript): String =
             when (transcript.document.status) {
-                TranscriptDocumentStatus.LISTENING ->
+                TranscriptDocumentStatus.LISTENING -> {
                     if (transcript.job == TranscriptionStatus.PENDING && transcript.document.segments.isEmpty()) "pending" else "inProgress"
-                TranscriptDocumentStatus.REFINING -> "refining"
-                TranscriptDocumentStatus.FINAL -> "complete"
-                TranscriptDocumentStatus.FAILED -> "failed"
+                }
+
+                TranscriptDocumentStatus.REFINING -> {
+                    "refining"
+                }
+
+                TranscriptDocumentStatus.FINAL -> {
+                    "complete"
+                }
+
+                TranscriptDocumentStatus.FAILED -> {
+                    "failed"
+                }
             }
 
         private fun jobOf(

@@ -27,9 +27,18 @@ internal object ArchiveJsonKeyValidation {
             whitespace()
             require(index < text.length) { "Missing archive JSON value" }
             when (text[index]) {
-                '{' -> objectValue(depth)
-                '[' -> arrayValue(depth)
-                '"' -> string(false)
+                '{' -> {
+                    objectValue(depth)
+                }
+
+                '[' -> {
+                    arrayValue(depth)
+                }
+
+                '"' -> {
+                    string(false)
+                }
+
                 else -> {
                     val start = index
                     while (index < text.length && text[index] !in " \t\r\n,]}") index++
@@ -76,6 +85,7 @@ internal object ArchiveJsonKeyValidation {
                         index++
                         return if (decode) ArchiveJson.document.decodeFromString<String>(text.substring(start, index)) else null
                     }
+
                     '\\' -> {
                         index++
                         require(index < text.length) { "Truncated archive JSON escape" }
@@ -89,6 +99,7 @@ internal object ArchiveJsonKeyValidation {
                             index++
                         }
                     }
+
                     else -> {
                         require(character.code >= 0x20) { "Unescaped archive JSON control character" }
                         index++

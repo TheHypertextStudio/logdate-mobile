@@ -47,7 +47,7 @@ internal class SegmentAssembler(
         precise: Boolean,
     ): SegmentPart {
         val center = weightedCenter(samples)
-        val compact = samples.all { detector.belongs(center, it) || !precise && center.distanceTo(it) <= (it.accuracyMeters ?: 0f) }
+        val compact = samples.all { detector.belongs(center, it) || (!precise && center.distanceTo(it) <= (it.accuracyMeters ?: 0f)) }
         val lasting = samples.size >= 2 && samples.last().timestamp - samples.first().timestamp >= parameters.minimumStay
         val isVisit = compact && !showsMovement(samples)
         return when {

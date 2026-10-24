@@ -12,10 +12,15 @@ import app.logdate.client.networking.EmailVerificationCompletion
  */
 internal fun mapCompletionToOutcome(completion: EmailVerificationCompletion): EmailVerificationOutcome =
     when (completion) {
-        is EmailVerificationCompletion.Success ->
+        is EmailVerificationCompletion.Success -> {
             EmailVerificationOutcome.Success(completion.email, completion.verifiedAt)
-        is EmailVerificationCompletion.Conflict ->
+        }
+
+        is EmailVerificationCompletion.Conflict -> {
             EmailVerificationOutcome.Conflict(completion.message)
-        is EmailVerificationCompletion.Failed ->
+        }
+
+        is EmailVerificationCompletion.Failed -> {
             EmailVerificationOutcome.Failed(completion.reason)
+        }
     }

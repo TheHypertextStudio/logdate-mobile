@@ -79,11 +79,15 @@ fun handleIdentityBackfillCommand(args: Array<String>): Boolean {
             exitProcess(EXIT_FAILED)
         }
     when (outcome) {
-        is IdentityBackfillOutcome.DryRun -> Napier.i(IdentityNotices.backfillDryRun(outcome.pending))
+        is IdentityBackfillOutcome.DryRun -> {
+            Napier.i(IdentityNotices.backfillDryRun(outcome.pending))
+        }
+
         IdentityBackfillOutcome.RefusedPublishing -> {
             Napier.e(IdentityNotices.BACKFILL_REFUSED_PUBLISHING)
             exitProcess(EXIT_REFUSED)
         }
+
         is IdentityBackfillOutcome.Completed -> {
             Napier.i(
                 IdentityNotices.backfillComplete(

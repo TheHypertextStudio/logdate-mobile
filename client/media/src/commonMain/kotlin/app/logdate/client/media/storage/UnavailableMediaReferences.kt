@@ -21,8 +21,10 @@ object UnavailableMediaReferences {
     /** External identities belong to the source device, even if they resolve on this one. */
     fun requiresNativeQuarantine(reference: String): Boolean =
         reference.startsWith("content:", ignoreCase = true) ||
-            reference.isNotBlank() &&
-            reference.all(Char::isDigit) ||
+            (
+                reference.isNotBlank() &&
+                    reference.all(Char::isDigit)
+            ) ||
             (MediaReference.parse(reference) as? MediaReference.LocalFile)?.path?.let {
                 it.startsWith("/storage/") || it.startsWith("/sdcard/") || it.startsWith("/mnt/media_rw/")
             } == true

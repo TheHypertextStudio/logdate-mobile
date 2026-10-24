@@ -10,6 +10,69 @@ from native_backup_test_support import NATIVE_BACKUP_ACCEPTANCE as H
 
 
 class NativeStartupFailureEvidenceTest(unittest.TestCase):
+    def test_timeout_keeps_bounded_phase_logs_before_caller_cleanup(self):
+        failure = subprocess.TimeoutExpired(
+            "owned instrumentation", 600, output=b"entered"
+        )
+        events = []
+        raw = b"blocked phase\n" + b"x" * 600_000 + b"\nlast stack frame"
+
+        def adb(serial, *arguments, timeout):
+            self.assertEqual("emulator-5554", serial)
+            if "instrument" in arguments:
+                self.assertEqual(600, timeout)
+                raise failure
+            self.assertEqual("logcat", arguments[0])
+            self.assertIn("-t", arguments)
+            self.assertIn("NativeTransferProbeTrace:D", arguments)
+            self.assertEqual(20, timeout)
+            events.append("capture")
+            return raw
+
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(H, "adb", side_effect=adb),
+        ):
+            output = Path(directory) / "source-account-session.log"
+            with self.assertRaises(subprocess.TimeoutExpired) as raised:
+                try:
+                    H.probe("emulator-5554", "source-account-session", output)
+                finally:
+                    events.append("caller cleanup")
+            self.assertIs(failure, raised.exception)
+            saved = output.with_suffix(".timeout.logcat.log")
+            self.assertTrue(
+                saved.exists(),
+                "Capture the failed phase before cleanup replaces UTP method logs",
+            )
+            self.assertLessEqual(saved.stat().st_size, 512 * 1024)
+            self.assertTrue(saved.read_bytes().startswith(b"blocked phase\n"))
+            self.assertTrue(saved.read_bytes().endswith(b"\nlast stack frame"))
+            self.assertEqual(0o600, saved.stat().st_mode & 0o777)
+            self.assertEqual(["capture", "caller cleanup"], events)
+
+    def test_partial_output_write_failure_still_attempts_phase_capture(self):
+        failure = subprocess.TimeoutExpired(
+            "owned instrumentation", 600, output=b"entered"
+        )
+        calls = []
+
+        def adb(serial, *arguments, **kwargs):
+            calls.append(arguments[0])
+            if "instrument" in arguments:
+                raise failure
+            return b"blocked phase"
+
+        with (
+            patch.object(H, "adb", side_effect=adb),
+            patch.object(H, "private_file", side_effect=OSError("storage unavailable")),
+        ):
+            with self.assertRaises(subprocess.TimeoutExpired) as raised:
+                H.probe("emulator-5554", "source-account-session", Path("unused.log"))
+        self.assertIs(failure, raised.exception)
+        self.assertEqual(["shell", "logcat"], calls)
+        self.assertEqual(2, len(failure.__notes__))
+
     def test_timed_out_probes_keep_partial_output_and_the_original_failure(self):
         for method, mode in [
             ("probe", "seed"),

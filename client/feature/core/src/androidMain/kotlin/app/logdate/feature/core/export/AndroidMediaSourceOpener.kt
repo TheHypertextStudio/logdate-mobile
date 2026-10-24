@@ -59,15 +59,25 @@ class AndroidMediaSourceOpener(
         val id = MediaReferenceRecovery.legacyMediaStoreId(fileName) ?: return emptyList()
         val collections =
             when (MediaReferenceRecovery.collectionFor(fileName.substringAfterLast('.', ""))) {
-                MediaReferenceRecovery.Collection.IMAGES -> listOf(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                MediaReferenceRecovery.Collection.VIDEO -> listOf(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-                MediaReferenceRecovery.Collection.AUDIO -> listOf(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-                null ->
+                MediaReferenceRecovery.Collection.IMAGES -> {
+                    listOf(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                }
+
+                MediaReferenceRecovery.Collection.VIDEO -> {
+                    listOf(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                }
+
+                MediaReferenceRecovery.Collection.AUDIO -> {
+                    listOf(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+                }
+
+                null -> {
                     listOf(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                     )
+                }
             }
         return collections.map { Uri.withAppendedPath(it, id) }
     }

@@ -66,7 +66,7 @@ internal class JournalNoteRecoveryPersistence(
                     return@withTransaction false
                 }
                 val current = getNoteById(replacement.uid)
-                if (current != expected || current != null && current.type != replacement.type || expected == replacement) {
+                if (current != expected || (current != null && current.type != replacement.type) || expected == replacement) {
                     recordDecision(scope, recoveryId, replacement.uid)
                     return@withTransaction current == expected && expected == replacement
                 }
@@ -116,32 +116,50 @@ internal class JournalNoteRecoveryPersistence(
             }
         val count =
             when (note) {
-                is JournalNote.Handwriting ->
+                is JournalNote.Handwriting -> {
                     textNoteDao.updateForRestore(
                         note.toEntity(linkedPlaceId, preserveSourcePlace = true, sourceLocation = sourceLocation),
                     )
-                is JournalNote.Text ->
+                }
+
+                is JournalNote.Text -> {
                     textNoteDao.updateForRestore(
                         note.toEntity(linkedPlaceId, preserveSourcePlace = true, sourceLocation = sourceLocation),
                     )
-                is JournalNote.Image ->
+                }
+
+                is JournalNote.Image -> {
                     imageNoteDao.updateForRestore(
                         note.toEntity(linkedPlaceId, preserveSourcePlace = true, sourceLocation = sourceLocation),
                     )
-                is JournalNote.Audio ->
+                }
+
+                is JournalNote.Audio -> {
                     audioNoteDao.updateForRestore(
                         note.toEntity(linkedPlaceId, preserveSourcePlace = true, sourceLocation = sourceLocation),
                     )
-                is JournalNote.Video ->
+                }
+
+                is JournalNote.Video -> {
                     videoNoteDao.updateForRestore(
                         note.toEntity(linkedPlaceId, preserveSourcePlace = true, sourceLocation = sourceLocation),
                     )
+                }
             }
         check(count == 1) { "Note changed during archive recovery" }
         when (note) {
-            is JournalNote.Text, is JournalNote.Handwriting -> Unit
-            is JournalNote.Image -> mediaCaptionDao.upsertCaption(MediaCaptionEntity(note.uid, note.caption))
-            is JournalNote.Video -> mediaCaptionDao.upsertCaption(MediaCaptionEntity(note.uid, note.caption))
+            is JournalNote.Text, is JournalNote.Handwriting -> {
+                Unit
+            }
+
+            is JournalNote.Image -> {
+                mediaCaptionDao.upsertCaption(MediaCaptionEntity(note.uid, note.caption))
+            }
+
+            is JournalNote.Video -> {
+                mediaCaptionDao.upsertCaption(MediaCaptionEntity(note.uid, note.caption))
+            }
+
             is JournalNote.Audio -> {
                 val previous = (expected as JournalNote.Audio).mediaRef
                 if (previous != note.mediaRef) transcriptionRepository?.rebindMediaReference(note.uid, previous, note.mediaRef)
@@ -183,17 +201,25 @@ internal class JournalNoteRecoveryPersistence(
                     ?.id
                     ?.let { notePlaceResolver.get(it)?.id }
             when (storedNote) {
-                is JournalNote.Handwriting -> textNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
-                is JournalNote.Text -> textNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
+                is JournalNote.Handwriting -> {
+                    textNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
+                }
+
+                is JournalNote.Text -> {
+                    textNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
+                }
+
                 is JournalNote.Image -> {
                     imageNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
                     mediaCaptionDao.upsertCaption(MediaCaptionEntity(storedNote.uid, storedNote.caption))
                 }
+
                 is JournalNote.Audio -> {
                     audioNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
                     mediaCaptionDao.upsertCaption(MediaCaptionEntity(storedNote.uid, storedNote.caption))
                     storedNote.persistTranscript(transcriptionRepository)
                 }
+
                 is JournalNote.Video -> {
                     videoNoteDao.addNote(storedNote.toEntity(linkedPlaceId, preserveSourcePlace))
                     mediaCaptionDao.upsertCaption(MediaCaptionEntity(storedNote.uid, storedNote.caption))

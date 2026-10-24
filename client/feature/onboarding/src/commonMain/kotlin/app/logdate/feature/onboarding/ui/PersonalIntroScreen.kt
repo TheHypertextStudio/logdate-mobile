@@ -145,7 +145,7 @@ fun PersonalIntroContent(
         label = "Personal intro step",
     ) { step ->
         when (step) {
-            PersonalIntroStep.Name ->
+            PersonalIntroStep.Name -> {
                 NameStep(
                     name = uiState.name,
                     nameError = uiState.nameError,
@@ -155,8 +155,9 @@ fun PersonalIntroContent(
                     onBack = onBack,
                     autoFocus = autoFocusInputs,
                 )
+            }
 
-            PersonalIntroStep.Bio ->
+            PersonalIntroStep.Bio -> {
                 BioStep(
                     bio = uiState.bio,
                     bioError = uiState.bioError,
@@ -167,14 +168,16 @@ fun PersonalIntroContent(
                     onBack = onGoBackToName,
                     autoFocus = autoFocusInputs,
                 )
+            }
 
-            PersonalIntroStep.LlmResponse ->
+            PersonalIntroStep.LlmResponse -> {
                 LlmResponseStep(
                     userName = uiState.name,
                     llmResponse = uiState.llmResponse,
                     llmError = uiState.llmError,
                     isLoading = uiState.isLoading,
                 )
+            }
         }
     }
 }

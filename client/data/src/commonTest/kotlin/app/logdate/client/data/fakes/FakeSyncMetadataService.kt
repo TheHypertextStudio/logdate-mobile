@@ -117,24 +117,29 @@ open class FakeSyncMetadataService : SyncMetadataService {
     ): PendingOperation? {
         if (existing == null) return incoming
         return when (existing) {
-            PendingOperation.CREATE ->
+            PendingOperation.CREATE -> {
                 when (incoming) {
                     PendingOperation.UPDATE -> PendingOperation.CREATE
                     PendingOperation.DELETE -> null
                     PendingOperation.CREATE -> PendingOperation.CREATE
                 }
-            PendingOperation.UPDATE ->
+            }
+
+            PendingOperation.UPDATE -> {
                 when (incoming) {
                     PendingOperation.DELETE -> PendingOperation.DELETE
                     PendingOperation.CREATE -> PendingOperation.CREATE
                     PendingOperation.UPDATE -> PendingOperation.UPDATE
                 }
-            PendingOperation.DELETE ->
+            }
+
+            PendingOperation.DELETE -> {
                 when (incoming) {
                     PendingOperation.CREATE -> PendingOperation.CREATE
                     PendingOperation.UPDATE -> PendingOperation.CREATE
                     PendingOperation.DELETE -> PendingOperation.DELETE
                 }
+            }
         }
     }
 }

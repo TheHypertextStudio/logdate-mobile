@@ -76,39 +76,69 @@ class WatchSyncRouter(
 ) {
     fun route(input: RouteInput): Route =
         when (input.state) {
-            DeliveryState.BACKED_UP, DeliveryState.DELETED_ON_PHONE -> Route.Settle
-            DeliveryState.REJECTED -> if (directBlocker(input) == null) Route.UploadDirect else Route.Wait(HoldReason.PHONE_CANNOT_READ)
-            DeliveryState.ON_PHONE -> onPhone(input)
-            DeliveryState.CLOUD_PENDING -> directBlocker(input)?.let { Route.Wait(it) } ?: Route.UploadDirect
-            DeliveryState.SENT ->
+            DeliveryState.BACKED_UP, DeliveryState.DELETED_ON_PHONE -> {
+                Route.Settle
+            }
+
+            DeliveryState.REJECTED -> {
+                if (directBlocker(input) == null) Route.UploadDirect else Route.Wait(HoldReason.PHONE_CANNOT_READ)
+            }
+
+            DeliveryState.ON_PHONE -> {
+                onPhone(input)
+            }
+
+            DeliveryState.CLOUD_PENDING -> {
+                directBlocker(input)?.let { Route.Wait(it) } ?: Route.UploadDirect
+            }
+
+            DeliveryState.SENT -> {
                 if (input.stateAgeMs < receiptWaitMs) Route.Wait(HoldReason.AWAITING_RECEIPT) else beforeDelivery(input)
-            DeliveryState.NEW -> beforeDelivery(input)
+            }
+
+            DeliveryState.NEW -> {
+                beforeDelivery(input)
+            }
         }
 
     private fun onPhone(input: RouteInput): Route =
         when (input.conditions.phoneCloud) {
-            CloudPresence.NO_ACCOUNT -> Route.Settle
-            CloudPresence.UNKNOWN -> Route.Wait(HoldReason.AWAITING_RECEIPT)
-            CloudPresence.SIGNED_IN ->
+            CloudPresence.NO_ACCOUNT -> {
+                Route.Settle
+            }
+
+            CloudPresence.UNKNOWN -> {
+                Route.Wait(HoldReason.AWAITING_RECEIPT)
+            }
+
+            CloudPresence.SIGNED_IN -> {
                 if (input.stateAgeMs < backupGraceMs || directBlocker(input) != null) {
                     Route.Wait(HoldReason.PHONE_BACKING_UP)
                 } else {
                     Route.UploadDirect
                 }
+            }
         }
 
     private fun beforeDelivery(input: RouteInput): Route {
         val blocker = directBlocker(input)
         return when (input.conditions.phone) {
-            PhoneReach.NEARBY -> Route.SendToPhone
-            PhoneReach.RELAY_ONLY -> if (input.hasMedia && blocker == null) Route.UploadDirect else Route.SendToPhone
-            PhoneReach.UNREACHABLE ->
+            PhoneReach.NEARBY -> {
+                Route.SendToPhone
+            }
+
+            PhoneReach.RELAY_ONLY -> {
+                if (input.hasMedia && blocker == null) Route.UploadDirect else Route.SendToPhone
+            }
+
+            PhoneReach.UNREACHABLE -> {
                 when (blocker) {
                     null -> Route.UploadDirect
                     HoldReason.EDIT_NEEDS_PHONE -> Route.Wait(HoldReason.EDIT_NEEDS_PHONE)
                     HoldReason.NOT_LINKED -> Route.Wait(HoldReason.PHONE_UNREACHABLE)
                     else -> Route.Wait(blocker)
                 }
+            }
         }
     }
 

@@ -54,6 +54,7 @@ class CalendarImportWorker(
                 )
                 Result.success()
             }
+
             ImportResult.PermissionDenied -> {
                 Napier.d(tag = TAG, message = "Calendar permission missing, recording stats and skipping")
                 preferences.recordDeviceCalendarSyncRun(
@@ -67,6 +68,7 @@ class CalendarImportWorker(
                 // point the next periodic tick (or a "Run now" tap) will pick it up.
                 Result.success()
             }
+
             ImportResult.Failure -> {
                 Napier.w(tag = TAG, message = "Calendar import pass failed")
                 preferences.recordDeviceCalendarSyncRun(

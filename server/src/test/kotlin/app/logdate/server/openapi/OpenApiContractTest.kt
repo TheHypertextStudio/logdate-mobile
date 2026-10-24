@@ -235,8 +235,14 @@ class OpenApiContractTest {
                         element["\$ref"]?.jsonPrimitive?.content?.let(refs::add)
                         element.values.forEach(::collect)
                     }
-                    is JsonArray -> element.forEach(::collect)
-                    else -> Unit
+
+                    is JsonArray -> {
+                        element.forEach(::collect)
+                    }
+
+                    else -> {
+                        Unit
+                    }
                 }
             }
             collect(document)

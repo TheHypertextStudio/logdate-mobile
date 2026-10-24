@@ -36,16 +36,20 @@ class RecoveryPhraseViewModel(
                 runCatching {
                     val existingPhrase = identityKeyManager.getStoredRecoveryPhrase()
                     when {
-                        existingPhrase != null ->
+                        existingPhrase != null -> {
                             RecoveryPhraseSetupUiState(
                                 words = existingPhrase.words,
                                 isLoading = false,
                             )
-                        identityKeyManager.hasIdentityKey() ->
+                        }
+
+                        identityKeyManager.hasIdentityKey() -> {
                             RecoveryPhraseSetupUiState(
                                 isLoading = false,
                                 errorMessage = Res.string.onboarding_recovery_phrase_enter_existing,
                             )
+                        }
+
                         else -> {
                             // Goes through ensureIdentityKey so this shares the lock with the sync
                             // and onboarding provisioning paths; setupNewIdentity would race them.

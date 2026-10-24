@@ -281,8 +281,11 @@ private fun toSerializableBlock(
     val location = block.location
     val mediaPath = block.media?.toRestoreReference(draftId, block.id)
     return when (block.type) {
-        ArchiveBlockType.HANDWRITING -> block.toHandwritingBlock(id)
-        ArchiveBlockType.TEXT ->
+        ArchiveBlockType.HANDWRITING -> {
+            block.toHandwritingBlock(id)
+        }
+
+        ArchiveBlockType.TEXT -> {
             SerializableTextBlock(
                 id,
                 block.timestamp,
@@ -291,7 +294,9 @@ private fun toSerializableBlock(
                 location?.altitudeMeters,
                 block.text.orEmpty(),
             )
-        ArchiveBlockType.IMAGE ->
+        }
+
+        ArchiveBlockType.IMAGE -> {
             SerializableImageBlock(
                 id,
                 block.timestamp,
@@ -302,7 +307,9 @@ private fun toSerializableBlock(
                 block.caption.orEmpty(),
                 PhotoPresentation.entries.firstOrNull { it.name == block.photoPresentation } ?: PhotoPresentation.EdgeToEdge,
             )
-        ArchiveBlockType.VIDEO ->
+        }
+
+        ArchiveBlockType.VIDEO -> {
             SerializableVideoBlock(
                 id,
                 block.timestamp,
@@ -313,7 +320,9 @@ private fun toSerializableBlock(
                 thumbnailUri = block.thumbnail?.toRestoreReference(draftId, block.id, RecoveryMediaRole.THUMBNAIL),
                 caption = block.caption.orEmpty(),
             )
-        ArchiveBlockType.AUDIO ->
+        }
+
+        ArchiveBlockType.AUDIO -> {
             SerializableAudioBlock(
                 id,
                 block.timestamp,
@@ -324,8 +333,11 @@ private fun toSerializableBlock(
                 block.durationMs ?: 0,
                 block.transcription,
             )
-        ArchiveBlockType.CAMERA ->
+        }
+
+        ArchiveBlockType.CAMERA -> {
             SerializableCameraBlock(id, block.timestamp, location?.latitude, location?.longitude, location?.altitudeMeters, mediaPath)
+        }
     }
 }
 

@@ -122,34 +122,41 @@ internal fun TimelineDaySkeleton(modifier: Modifier = Modifier) {
 @Composable
 internal fun TimelineDayCardLayout.style(): TimelineDayStyle =
     when (this) {
-        TimelineDayCardLayout.MEDIA_LED ->
+        TimelineDayCardLayout.MEDIA_LED -> {
             TimelineDayStyle(
                 accentColor = MaterialTheme.colorScheme.primary,
                 softAccentColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
                 chipColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f),
                 textHighlightColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
             )
-        TimelineDayCardLayout.VOICE_LED ->
+        }
+
+        TimelineDayCardLayout.VOICE_LED -> {
             TimelineDayStyle(
                 accentColor = MaterialTheme.colorScheme.secondary,
                 softAccentColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.52f),
                 chipColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.34f),
                 textHighlightColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f),
             )
-        TimelineDayCardLayout.PLACE_LED ->
+        }
+
+        TimelineDayCardLayout.PLACE_LED -> {
             TimelineDayStyle(
                 accentColor = MaterialTheme.colorScheme.tertiary,
                 softAccentColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.52f),
                 chipColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.34f),
                 textHighlightColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.22f),
             )
-        TimelineDayCardLayout.STORY_LED ->
+        }
+
+        TimelineDayCardLayout.STORY_LED -> {
             TimelineDayStyle(
                 accentColor = MaterialTheme.colorScheme.primary,
                 softAccentColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 chipColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 textHighlightColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             )
+        }
     }
 
 internal fun Dp.toTimelineLayoutMode(): TimelineDayLayoutMode =

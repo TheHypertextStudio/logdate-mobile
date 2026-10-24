@@ -137,8 +137,14 @@ class SherpaOnnxTranscriptionService(
                         suspend fun readSamples(): Int {
                             val count = ar.read(shortBuffer, 0, shortBuffer.size)
                             when {
-                                count > 0 -> consecutiveEmptyReads = 0
-                                count < 0 -> throw AudioCaptureException("AudioRecord.read failed with code $count")
+                                count > 0 -> {
+                                    consecutiveEmptyReads = 0
+                                }
+
+                                count < 0 -> {
+                                    throw AudioCaptureException("AudioRecord.read failed with code $count")
+                                }
+
                                 else -> {
                                     consecutiveEmptyReads += 1
                                     if (consecutiveEmptyReads >= MAX_CONSECUTIVE_EMPTY_READS) {

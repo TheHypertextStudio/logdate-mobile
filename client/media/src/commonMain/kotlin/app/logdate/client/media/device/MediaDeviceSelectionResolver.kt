@@ -18,12 +18,18 @@ internal object MediaDeviceSelectionResolver {
                 ?: availableDevices.first().id
         val routeControlMessage =
             when {
-                preferredDeviceId != null && preferredDeviceId != selectedId ->
+                preferredDeviceId != null && preferredDeviceId != selectedId -> {
                     unavailableRouteMessage(MediaDeviceKind.AUDIO_INPUT, availableDevices.first().label)
+                }
+
                 availableDevices.size == 1 &&
-                    availableDevices.first().category == MediaDeviceCategory.SYSTEM_DEFAULT ->
+                    availableDevices.first().category == MediaDeviceCategory.SYSTEM_DEFAULT -> {
                     systemControlledRouteControlMessage(MediaDeviceKind.AUDIO_INPUT)
-                else -> null
+                }
+
+                else -> {
+                    null
+                }
             }
 
         return MediaDeviceSelectionUiState(
@@ -46,10 +52,17 @@ internal object MediaDeviceSelectionResolver {
             isSelectionConfirmed = routed != null,
             routeControlMessage =
                 error ?: when {
-                    routed == null -> Res.string.media_device_microphone_checking.toUiText()
-                    routed.id != selection.selectedDeviceId ->
+                    routed == null -> {
+                        Res.string.media_device_microphone_checking.toUiText()
+                    }
+
+                    routed.id != selection.selectedDeviceId -> {
                         Res.string.media_device_microphone_not_active.toUiText(routed.label)
-                    else -> null
+                    }
+
+                    else -> {
+                        null
+                    }
                 },
         )
     }

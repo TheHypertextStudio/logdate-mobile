@@ -210,15 +210,21 @@ private fun Long.toStageType(): SleepStageType =
     when (this) {
         // HKCategoryValueSleepAnalysisInBed = 0 → not really a sleep stage
         0L -> SleepStageType.UNKNOWN
+
         // HKCategoryValueSleepAnalysisAsleep (legacy) = 1
         1L -> SleepStageType.LIGHT
+
         // HKCategoryValueSleepAnalysisAwake = 2
         2L -> SleepStageType.AWAKE
+
         // iOS 16+: HKCategoryValueSleepAnalysisAsleepCore = 3
         3L -> SleepStageType.LIGHT
+
         // iOS 16+: HKCategoryValueSleepAnalysisAsleepDeep = 4
         4L -> SleepStageType.DEEP
+
         // iOS 16+: HKCategoryValueSleepAnalysisAsleepREM = 5
         5L -> SleepStageType.REM
+
         else -> SleepStageType.UNKNOWN
     }

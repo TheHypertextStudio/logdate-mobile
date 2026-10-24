@@ -153,14 +153,17 @@ fun CanvasEditorScreen(
                         onUndo()
                         true
                     }
+
                     isModifier && event.isShiftPressed && event.key == Key.Z -> {
                         onRedo()
                         true
                     }
+
                     isModifier && event.key == Key.S -> {
                         viewModel.save()
                         true
                     }
+
                     event.key == Key.Delete || event.key == Key.Backspace -> {
                         if (state.selectedElementId != null) {
                             viewModel.deleteSelectedElement()
@@ -169,6 +172,7 @@ fun CanvasEditorScreen(
                             false
                         }
                     }
+
                     event.key == Key.Escape -> {
                         if (state.isTextEditorVisible) {
                             viewModel.cancelTextEditing()
@@ -177,27 +181,35 @@ fun CanvasEditorScreen(
                         }
                         true
                     }
+
                     event.key == Key.One -> {
                         onToolSelected(CanvasTool.SELECT)
                         true
                     }
+
                     event.key == Key.Two -> {
                         onToolSelected(CanvasTool.INK)
                         true
                     }
+
                     event.key == Key.Three -> {
                         onToolSelected(CanvasTool.SHAPE)
                         true
                     }
+
                     event.key == Key.Four -> {
                         onToolSelected(CanvasTool.TEXT)
                         true
                     }
+
                     event.key == Key.Five -> {
                         onToolSelected(CanvasTool.STICKER)
                         true
                     }
-                    else -> false
+
+                    else -> {
+                        false
+                    }
                 }
             }
 
@@ -437,6 +449,7 @@ private fun CanvasArea(
                         Box(Modifier)
                     }
                 }
+
                 CanvasTool.INK -> {
                     InkCaptureOverlay(
                         tool = InkTool.PEN,
@@ -452,6 +465,7 @@ private fun CanvasArea(
                         },
                     )
                 }
+
                 CanvasTool.SHAPE -> {
                     ShapeCaptureOverlay(
                         shapeKind = ShapeKind.RECTANGLE,
@@ -470,6 +484,7 @@ private fun CanvasArea(
                         },
                     )
                 }
+
                 CanvasTool.TEXT -> {
                     LaunchedEffect(Unit) {
                         if (!state.isTextEditorVisible) {
@@ -478,6 +493,7 @@ private fun CanvasArea(
                     }
                     Box(Modifier)
                 }
+
                 CanvasTool.STICKER -> {
                     LaunchedEffect(Unit) {
                         viewModel.setShelfMode(ShelfMode.Stickers)

@@ -188,18 +188,24 @@ fun EntryEditorContent(
     val handleEditorBack: () -> Unit = {
         audioCaptureStartGate.runWhenIdle {
             when {
-                editorState.isSaving || editorState.shouldExit -> Unit
+                editorState.isSaving || editorState.shouldExit -> {
+                    Unit
+                }
+
                 activeCamera || activeHandwriting || (blockFocusEnabled && editorState.expandedBlockId != null) -> {
                     viewModel.dismissExpandedBlockOrClearSingleEmpty()
                     Unit
                 }
+
                 shouldReturnToPickerOnBack -> {
                     viewModel.clearSingleEmptyBlock()
                     Unit
                 }
+
                 !editorState.canExitWithoutSaving -> {
                     showExitConfirmation = true
                 }
+
                 else -> {
                     onNavigateBack()
                 }
@@ -241,12 +247,18 @@ fun EntryEditorContent(
     LaunchedEffect(editorState.shouldExit, editorState.exitReason) {
         if (editorState.shouldExit) {
             when (editorState.exitReason) {
-                EditorExitReason.DISCARDED -> onNavigateBack()
+                EditorExitReason.DISCARDED -> {
+                    onNavigateBack()
+                }
+
                 EditorExitReason.ENTRY_SAVED -> {
                     haptics.saveSucceeded()
                     onEntrySaved()
                 }
-                null -> onEntrySaved()
+
+                null -> {
+                    onEntrySaved()
+                }
             }
         }
     }

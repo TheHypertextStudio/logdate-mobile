@@ -60,9 +60,11 @@ class FileMigrationStorage(
                 osName.contains("win") -> {
                     Paths.get(System.getenv("APPDATA") ?: "$userHome\\AppData\\Roaming", "LogDate")
                 }
+
                 osName.contains("mac") -> {
                     Paths.get(userHome, "Library", "Application Support", "LogDate")
                 }
+
                 else -> {
                     // Linux or other Unix-like OS
                     Paths.get(userHome, ".logdate")

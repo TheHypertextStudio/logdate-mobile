@@ -115,7 +115,10 @@ class WatchSettingsViewModel(
                         onSent()
                         null
                     }
-                    is WatchRequestResult.Failed -> result.reason
+
+                    is WatchRequestResult.Failed -> {
+                        result.reason
+                    }
                 }
         }
     }

@@ -1,7 +1,10 @@
 package app.logdate
 
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.testing.Test
 import java.security.MessageDigest
 
@@ -16,11 +19,19 @@ import java.security.MessageDigest
  */
 class TestDatabaseEnvironmentPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        val url = project.providers.environmentVariable("DATABASE_URL").orElse("")
-        val user = project.providers.environmentVariable("DATABASE_USER").orElse("")
+        val variables =
+            listOf(
+                "DATABASE_URL",
+                "DATABASE_USER",
+                "DATABASE_PASSWORD",
+                "LOGDATE_DIAGNOSTIC_TEST_DATABASE_URL",
+                "LOGDATE_DIAGNOSTIC_TEST_DISPOSABLE",
+            ).associateWith(project.providers::environmentVariable)
+        val url = variables.getValue("DATABASE_URL").orElse("")
+        val user = variables.getValue("DATABASE_USER").orElse("")
         val hasPassword =
-            project.providers
-                .environmentVariable("DATABASE_PASSWORD")
+            variables
+                .getValue("DATABASE_PASSWORD")
                 .map { it.isNotEmpty() }
                 .orElse(false)
         val fingerprint =
@@ -28,19 +39,31 @@ class TestDatabaseEnvironmentPlugin : Plugin<Project> {
                 databaseFingerprint(u, name, password)
             }
         project.tasks.withType(Test::class.java).configureEach {
+            // Preserve lazy inheritance; bind managed fixture values only before a fork.
+            doFirst(RefreshDatabaseEnvironment(variables))
             inputs.property("databaseEnvironment", fingerprint)
             inputs.property(
                 "disposableDatabaseEnvironment",
-                project.providers
-                    .environmentVariable("LOGDATE_DIAGNOSTIC_TEST_DATABASE_URL")
+                variables
+                    .getValue("LOGDATE_DIAGNOSTIC_TEST_DATABASE_URL")
                     .orElse("")
                     .map { databaseFingerprint(it, "", false) },
             )
             inputs.property(
                 "disposableDatabaseAllowed",
-                project.providers.environmentVariable("LOGDATE_DIAGNOSTIC_TEST_DISPOSABLE").orElse(""),
+                variables.getValue("LOGDATE_DIAGNOSTIC_TEST_DISPOSABLE").orElse(""),
             )
         }
+    }
+}
+
+private class RefreshDatabaseEnvironment(
+    private val variables: Map<String, Provider<String>>,
+) : Action<Task> {
+    override fun execute(task: Task) {
+        val test = task as Test
+        val current = variables.mapNotNull { (name, value) -> value.orNull?.let { name to it } }.toMap()
+        test.setEnvironment(test.environment.filterKeys { it !in variables } + current)
     }
 }
 

@@ -3,21 +3,14 @@
   "scopes": {
     "auth": {
       "description": "Accounts and sign-in",
-      "includes": [
-        "account creation",
-        "sign-in and passkeys",
-        "account recovery"
-      ],
+      "includes": ["account creation", "sign-in and passkeys", "account recovery"],
       "excludes": ["profile presentation", "subscription entitlements"],
       "technical": false
     },
     "billing": {
       "description": "Subscriptions and purchases",
       "includes": ["purchase flows", "subscription entitlements"],
-      "excludes": [
-        "account authentication",
-        "payment-independent backup behavior"
-      ],
+      "excludes": ["account authentication", "payment-independent backup behavior"],
       "technical": false
     },
     "editor": {
@@ -106,10 +99,7 @@
     "events": {
       "description": "Events and linked memories",
       "includes": ["event creation and details", "calendar and linked entries"],
-      "excludes": [
-        "automatic location capture",
-        "general journal organization"
-      ],
+      "excludes": ["automatic location capture", "general journal organization"],
       "technical": false
     },
     "postcards": {
@@ -138,67 +128,43 @@
     },
     "reminders": {
       "description": "Journaling reminders",
-      "includes": [
-        "moment-aware reminder triggers",
-        "reminder limits and choices"
-      ],
-      "excludes": [
-        "generic notification-channel behavior",
-        "backup progress indicators"
-      ],
+      "includes": ["moment-aware reminder triggers", "reminder limits and choices"],
+      "excludes": ["generic notification-channel behavior", "backup progress indicators"],
       "technical": false
     },
     "wear": {
       "description": "Watch journaling",
-      "includes": [
-        "Wear companion interactions",
-        "watch-specific entry capture"
-      ],
+      "includes": ["Wear companion interactions", "watch-specific entry capture"],
       "excludes": ["phone entry editor", "shared reminder decision rules"],
       "technical": false
     },
     "health-connect": {
       "description": "Health context",
-      "includes": [
-        "Health Connect integration",
-        "health-context consent and access"
-      ],
+      "includes": ["Health Connect integration", "health-context consent and access"],
       "excludes": ["general device permissions", "location collection"],
       "technical": false
     },
     "intelligence": {
       "description": "Suggestions and insights",
-      "includes": [
-        "entry summarization and entity extraction",
-        "intelligent journal assistance"
-      ],
+      "includes": ["entry summarization and entity extraction", "intelligent journal assistance"],
       "excludes": ["search matching", "routine cloud backups"],
       "technical": false
     },
     "location": {
       "description": "Location capture",
-      "includes": [
-        "location tracking and geofencing",
-        "location consent and permission behavior"
-      ],
+      "includes": ["location tracking and geofencing", "location consent and permission behavior"],
       "excludes": ["Places browsing", "memory map presentation"],
       "technical": false
     },
     "media": {
       "description": "Capturing and playing media",
-      "includes": [
-        "photo video and audio capture",
-        "media playback and processing"
-      ],
+      "includes": ["photo video and audio capture", "media playback and processing"],
       "excludes": ["media library browsing", "entry text editing"],
       "technical": false
     },
     "sharing": {
       "description": "Sharing journal content",
-      "includes": [
-        "user-directed content sharing",
-        "federated sharing experiences"
-      ],
+      "includes": ["user-directed content sharing", "federated sharing experiences"],
       "excludes": ["standalone protocol libraries", "backup synchronization"],
       "technical": false
     },
@@ -231,20 +197,27 @@
     },
     "activitypub": {
       "description": "ActivityPub integration library",
-      "includes": [
-        "reusable ActivityPub protocol support",
-        "ActivityPub client contracts"
-      ],
+      "includes": ["reusable ActivityPub protocol support", "ActivityPub client contracts"],
       "excludes": ["LogDate sharing presentation", "AT Protocol libraries"],
       "technical": true
     },
     "atproto": {
       "description": "AT Protocol libraries",
-      "includes": [
-        "reusable AT Protocol libraries",
-        "identity repository and transport contracts"
-      ],
+      "includes": ["reusable AT Protocol libraries", "identity repository and transport contracts"],
       "excludes": ["LogDate account presentation", "ActivityPub libraries"],
+      "technical": true
+    },
+    "dx": {
+      "description": "Developer experience",
+      "includes": [
+        "shared pinned formatters and staged commit hooks",
+        "local bootstrap and repository identity configuration",
+        "build validation and native acceptance harnesses"
+      ],
+      "excludes": [
+        "application features and product behavior",
+        "production service operations and billing policy"
+      ],
       "technical": true
     }
   }

@@ -64,20 +64,31 @@ internal fun NotesListSection(
                     modifier = Modifier.clickable { onNoteClick(note.noteId) },
                 ) {
                     when (note) {
-                        is app.logdate.ui.timeline.HandwritingNoteUiState ->
+                        is app.logdate.ui.timeline.HandwritingNoteUiState -> {
                             app.logdate.ui.handwriting.HandwritingPreview(
                                 note.document,
                                 Modifier.fillMaxWidth().height(240.dp),
                                 unreadable = note.unreadable,
                             )
-                        is TextNoteUiState -> TextNoteSnippet(note)
-                        is ImageNoteUiState -> ImageNoteSnippet(note)
+                        }
+
+                        is TextNoteUiState -> {
+                            TextNoteSnippet(note)
+                        }
+
+                        is ImageNoteUiState -> {
+                            ImageNoteSnippet(note)
+                        }
+
                         is AudioNoteUiState -> {
                             AudioNoteSnippet(
                                 uiState = note,
                             )
                         }
-                        is VideoNoteUiState -> VideoNoteSnippet(note)
+
+                        is VideoNoteUiState -> {
+                            VideoNoteSnippet(note)
+                        }
                     }
                     JournalBadgeRow(journals = note.journals, onJournalClick = onJournalClick)
                 }

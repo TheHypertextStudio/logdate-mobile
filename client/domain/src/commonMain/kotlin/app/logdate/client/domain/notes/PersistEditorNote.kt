@@ -53,17 +53,11 @@ private fun JournalNote.withEditorChanges(
     updatedAt: kotlin.time.Instant = edited.lastUpdated,
 ): JournalNote =
     when (this) {
-        is JournalNote.Handwriting ->
-            (edited as JournalNote.Handwriting).let {
-                copy(
-                    document = it.document,
-                    unreadableContent = it.unreadableContent,
-                    creationTimestamp = it.creationTimestamp,
-                    lastUpdated = updatedAt,
-                    timeZoneId = it.timeZoneId ?: timeZoneId,
-                )
-            }
-        is JournalNote.Text ->
+        is JournalNote.Handwriting -> {
+            withHandwritingEditorChanges(edited as JournalNote.Handwriting, updatedAt)
+        }
+
+        is JournalNote.Text -> {
             (edited as JournalNote.Text).let {
                 copy(
                     content = it.content,
@@ -73,7 +67,9 @@ private fun JournalNote.withEditorChanges(
                         it.timeZoneId ?: timeZoneId,
                 )
             }
-        is JournalNote.Image ->
+        }
+
+        is JournalNote.Image -> {
             (edited as JournalNote.Image).let {
                 copy(
                     mediaRef = it.mediaRef,
@@ -84,7 +80,9 @@ private fun JournalNote.withEditorChanges(
                     timeZoneId = it.timeZoneId ?: timeZoneId,
                 )
             }
-        is JournalNote.Video ->
+        }
+
+        is JournalNote.Video -> {
             (edited as JournalNote.Video).let {
                 copy(
                     mediaRef = it.mediaRef,
@@ -95,7 +93,9 @@ private fun JournalNote.withEditorChanges(
                     timeZoneId = it.timeZoneId ?: timeZoneId,
                 )
             }
-        is JournalNote.Audio ->
+        }
+
+        is JournalNote.Audio -> {
             (edited as JournalNote.Audio).let {
                 copy(
                     mediaRef = it.mediaRef,
@@ -107,4 +107,17 @@ private fun JournalNote.withEditorChanges(
                     timeZoneId = it.timeZoneId ?: timeZoneId,
                 )
             }
+        }
     }
+
+private fun JournalNote.Handwriting.withHandwritingEditorChanges(
+    edited: JournalNote.Handwriting,
+    updatedAt: kotlin.time.Instant,
+): JournalNote.Handwriting =
+    copy(
+        document = edited.document,
+        unreadableContent = edited.unreadableContent,
+        creationTimestamp = edited.creationTimestamp,
+        lastUpdated = updatedAt,
+        timeZoneId = edited.timeZoneId ?: timeZoneId,
+    )

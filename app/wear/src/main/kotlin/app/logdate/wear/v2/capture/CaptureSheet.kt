@@ -139,10 +139,14 @@ fun CaptureConfirmationContent(result: CaptureResult) {
             val saved = stringResource(R.string.wear_capture_saved)
             SuccessConfirmationDialogContent(curvedText = { confirmationDialogCurvedText(saved, style) })
         }
+
         CaptureResult.FAILED -> {
             val failed = stringResource(R.string.wear_capture_failed)
             FailureConfirmationDialogContent(curvedText = { confirmationDialogCurvedText(failed, style) })
         }
-        CaptureResult.NONE -> Unit
+
+        CaptureResult.NONE -> {
+            Unit
+        }
     }
 }

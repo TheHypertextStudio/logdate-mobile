@@ -70,18 +70,21 @@ class AndroidMediaManager(
             val fileName = resolveFileName(parsedUri)
 
             when (resolveMediaKind(parsedUri, fileName)) {
-                MediaKind.IMAGE ->
+                MediaKind.IMAGE -> {
                     if (parsedUri.isFileBacked()) {
                         getImageMediaFromFileUri(parsedUri)
                     } else {
                         getImageMedia(parsedUri)
                     }
-                MediaKind.VIDEO ->
+                }
+
+                MediaKind.VIDEO -> {
                     if (parsedUri.isFileBacked()) {
                         getVideoMediaFromFileUri(parsedUri)
                     } else {
                         getVideoMedia(parsedUri)
                     }
+                }
             }
         }
 
@@ -254,15 +257,24 @@ class AndroidMediaManager(
 
         return withContext(ioDispatcher) {
             when (parsedUri.scheme) {
-                ContentResolver.SCHEME_CONTENT -> queryUriExists(parsedUri)
-                ContentResolver.SCHEME_FILE -> requireFileFromUri(parsedUri).exists()
+                ContentResolver.SCHEME_CONTENT -> {
+                    queryUriExists(parsedUri)
+                }
+
+                ContentResolver.SCHEME_FILE -> {
+                    requireFileFromUri(parsedUri).exists()
+                }
+
                 null, "" -> {
                     queryLegacyMediaStoreIdExists(mediaId) ||
                         File(mediaId).exists() ||
                         File(filesDir, "media/$mediaId").exists() ||
                         File(filesDir, "user_media/$mediaId").exists()
                 }
-                else -> queryUriExists(parsedUri)
+
+                else -> {
+                    queryUriExists(parsedUri)
+                }
             }
         }
     }

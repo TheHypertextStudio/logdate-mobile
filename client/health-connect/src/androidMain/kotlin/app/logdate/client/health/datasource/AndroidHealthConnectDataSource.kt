@@ -49,11 +49,17 @@ class AndroidHealthConnectDataSource(
             val availability = HealthConnectClient.getSdkStatus(context)
             Napier.i("Health Connect SDK status: ${sdkStatusLabel(availability)} ($availability)")
             when (availability) {
-                HealthConnectClient.SDK_AVAILABLE -> HealthDataAvailability.AVAILABLE
+                HealthConnectClient.SDK_AVAILABLE -> {
+                    HealthDataAvailability.AVAILABLE
+                }
+
                 HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
                     HealthDataAvailability.PROVIDER_UPDATE_REQUIRED
                 }
-                else -> HealthDataAvailability.NOT_AVAILABLE
+
+                else -> {
+                    HealthDataAvailability.NOT_AVAILABLE
+                }
             }
         } catch (e: Exception) {
             Napier.e("Error checking Health Connect availability", e)
@@ -323,10 +329,19 @@ private fun java.time.Instant.toKotlinxInstant(): Instant = Instant.fromEpochSec
 
 private fun sdkStatusLabel(status: Int): String =
     when (status) {
-        HealthConnectClient.SDK_AVAILABLE -> "SDK_AVAILABLE"
-        HealthConnectClient.SDK_UNAVAILABLE -> "SDK_UNAVAILABLE"
+        HealthConnectClient.SDK_AVAILABLE -> {
+            "SDK_AVAILABLE"
+        }
+
+        HealthConnectClient.SDK_UNAVAILABLE -> {
+            "SDK_UNAVAILABLE"
+        }
+
         HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
             "SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED"
         }
-        else -> "UNKNOWN"
+
+        else -> {
+            "UNKNOWN"
+        }
     }

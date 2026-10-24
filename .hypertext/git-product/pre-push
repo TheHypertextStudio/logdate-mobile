@@ -8,6 +8,10 @@
 
 set -euo pipefail
 
+# Keep every product push subprocess headless, including task discovery.
+# Retain caller JVM options and override an earlier headless=false value.
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+$JAVA_TOOL_OPTIONS }-Djava.awt.headless=true"
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 source "$REPO_ROOT/scripts/validation/hook-common.sh"

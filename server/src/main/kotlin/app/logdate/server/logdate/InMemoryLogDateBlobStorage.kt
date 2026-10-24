@@ -139,9 +139,17 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
                 "users/${request.ownerId}/media/${request.blobId}/$fileName"
             }
 
-            LogDateBlobNamespace.BACKUP -> "users/${request.ownerId}/backups/${request.blobId}.enc"
-            LogDateBlobNamespace.ATPROTO -> "users/${request.ownerId}/atproto/blobs/${request.blobId}"
-            LogDateBlobNamespace.SPACE -> "users/${request.ownerId}/spaces/${request.blobId}"
+            LogDateBlobNamespace.BACKUP -> {
+                "users/${request.ownerId}/backups/${request.blobId}.enc"
+            }
+
+            LogDateBlobNamespace.ATPROTO -> {
+                "users/${request.ownerId}/atproto/blobs/${request.blobId}"
+            }
+
+            LogDateBlobNamespace.SPACE -> {
+                "users/${request.ownerId}/spaces/${request.blobId}"
+            }
         }
 
     private data class StoredBlob(

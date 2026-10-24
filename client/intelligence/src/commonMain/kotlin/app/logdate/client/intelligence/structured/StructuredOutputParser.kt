@@ -51,16 +51,26 @@ private fun extractJsonObject(raw: String): String? {
             continue
         }
         when (char) {
-            '\\' -> if (inString) escape = true
-            '"' -> inString = !inString
-            '{' -> if (!inString) depth += 1
-            '}' ->
+            '\\' -> {
+                if (inString) escape = true
+            }
+
+            '"' -> {
+                inString = !inString
+            }
+
+            '{' -> {
+                if (!inString) depth += 1
+            }
+
+            '}' -> {
                 if (!inString) {
                     depth -= 1
                     if (depth == 0) {
                         return raw.substring(start, index + 1)
                     }
                 }
+            }
         }
     }
     return null

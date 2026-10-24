@@ -27,7 +27,7 @@
       "after": [
         {
           "path": ".hypertext/git-product/pre-push",
-          "sha256": "09f48bf8da1ce6dcd1809d170dd2197910da731d0bcff1ae8d01e4b8eea260ce"
+          "sha256": "d6e6a96a3d4602439b1e608a09903e31cdfa46c3422f23745360eb0d0d17da8d"
         }
       ]
     }

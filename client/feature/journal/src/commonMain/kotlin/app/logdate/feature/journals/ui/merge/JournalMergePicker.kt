@@ -147,11 +147,13 @@ internal fun JournalMergeDestinationPicker(
                     item(key = "error", span = { GridItemSpan(maxLineSpan) }) { JournalMergeFeedback(error) }
                 }
                 when {
-                    state.loading ->
+                    state.loading -> {
                         item(
                             span = { GridItemSpan(maxLineSpan) },
                         ) { JournalMergeNotice(stringResource(Res.string.journal_merge_loading)) }
-                    state.candidates.isEmpty() ->
+                    }
+
+                    state.candidates.isEmpty() -> {
                         item(span = {
                             GridItemSpan(maxLineSpan)
                         }) {
@@ -167,14 +169,18 @@ internal fun JournalMergeDestinationPicker(
                                 ),
                             )
                         }
-                    state.visibleCandidates.isEmpty() ->
+                    }
+
+                    state.visibleCandidates.isEmpty() -> {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Column {
                                 Text(stringResource(Res.string.journal_merge_no_matches))
                                 TextButton(onClick = { onQueryChange("") }) { Text(stringResource(Res.string.journal_merge_clear_search)) }
                             }
                         }
-                    else ->
+                    }
+
+                    else -> {
                         items(state.visibleCandidates, key = { it.journal.id }) { candidate ->
                             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                                 Column(
@@ -194,6 +200,7 @@ internal fun JournalMergeDestinationPicker(
                                 }
                             }
                         }
+                    }
                 }
             }
         }

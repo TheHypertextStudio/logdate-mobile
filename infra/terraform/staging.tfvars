@@ -11,7 +11,7 @@ webauthn_origin             = "https://app.staging.logdate.app"
 webauthn_additional_origins = []
 
 enable_github_oidc = true
-github_repo        = "WillieCubed/logdate-mobile"
+github_repo        = "TheHypertextStudio/logdate-mobile"
 
 enable_domain_mapping = true
 enable_load_balancer  = true

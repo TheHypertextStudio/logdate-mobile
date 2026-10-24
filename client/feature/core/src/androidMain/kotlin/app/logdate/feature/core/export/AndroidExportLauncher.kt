@@ -106,6 +106,7 @@ class AndroidExportLauncher(
                         currentWorkId = null
                         Napier.i("Export work succeeded")
                     }
+
                     WorkInfo.State.FAILED -> {
                         currentWorkId = null
                         _exportProgress.value = ExportProgressInfo()
@@ -113,13 +114,17 @@ class AndroidExportLauncher(
                         Napier.i("Export failed")
                         completionCallback?.invoke(ExportOutcome.Failed(reason?.toUiText()))
                     }
+
                     WorkInfo.State.CANCELLED -> {
                         currentWorkId = null
                         _exportProgress.value = ExportProgressInfo()
                         Napier.i("Export cancelled")
                         completionCallback?.invoke(ExportOutcome.Cancelled)
                     }
-                    else -> Unit
+
+                    else -> {
+                        Unit
+                    }
                 }
             }
 

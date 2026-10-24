@@ -23,11 +23,18 @@ internal class RetainedManagedMediaSource(
     fun resolve(reference: String): Asset? {
         val relative =
             when (val parsed = MediaReference.parse(UnavailableMediaReferences.nativeSource(reference) ?: reference)) {
-                is MediaReference.Owned -> collectionPath(parsed.ref.collection, parsed.ref.path)
-                is MediaReference.LocalFile ->
+                is MediaReference.Owned -> {
+                    collectionPath(parsed.ref.collection, parsed.ref.path)
+                }
+
+                is MediaReference.LocalFile -> {
                     retainedPrivateMediaPath(parsed.path)
                         ?: parsed.alternatePath?.let(::retainedPrivateMediaPath)
-                is MediaReference.External -> null
+                }
+
+                is MediaReference.External -> {
+                    null
+                }
             } ?: return null
         val key = "files/$relative"
         val digest = retainedCanonicalMediaDigest(reference)
@@ -152,36 +159,66 @@ private val RETAINED_CANONICAL_OBJECT =
 internal fun retainedMediaMimeType(name: String): String? =
     when (name.substringAfterLast('.', "").lowercase()) {
         "jpg", "jpeg" -> "image/jpeg"
+
         "png" -> "image/png"
+
         "heic" -> "image/heic"
+
         "heics" -> "image/heic-sequence"
+
         "heif" -> "image/heif"
+
         "heifs" -> "image/heif-sequence"
+
         "avif" -> "image/avif"
+
         "bmp" -> "image/bmp"
+
         "webp" -> "image/webp"
+
         "gif" -> "image/gif"
+
         "mp4" -> "video/mp4"
+
         "mpg" -> "video/mpeg"
+
         "ogv" -> "video/ogg"
+
         "mov" -> "video/quicktime"
+
         "webm" -> "video/webm"
+
         // The canonical file extension is shared by audio and video. Either media type
         // preserves the content-addressed path; the original bytes remain unchanged.
         "3gp" -> "video/3gpp"
+
         "3g2" -> "video/3gpp2"
+
         "mkv" -> "video/x-matroska"
+
         "avi" -> "video/x-msvideo"
+
         "wmv" -> "video/x-ms-wmv"
+
         "m4a" -> "audio/mp4"
+
         "mp3" -> "audio/mpeg"
+
         "wav" -> "audio/wav"
+
         "ogg" -> "audio/ogg"
+
         "opus" -> "audio/opus"
+
         "amr" -> "audio/amr"
+
         "mid" -> "audio/midi"
+
         "weba" -> "audio/webm"
+
         "flac" -> "audio/flac"
+
         "aac" -> "audio/aac"
+
         else -> null
     }

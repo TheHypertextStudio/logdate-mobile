@@ -25,9 +25,13 @@ class DefaultAudioBlockFinalizer(
         if (currentState is AudioCaptureState.Ready) return currentState
         resolver.resolvePending(blockId)?.let { return it }
         return when (currentState) {
-            is AudioCaptureState.Recording, is AudioCaptureState.Stopping ->
+            is AudioCaptureState.Recording, is AudioCaptureState.Stopping -> {
                 AudioCaptureState.Failed(Res.string.editor_error_recording_not_finalized)
-            else -> currentState
+            }
+
+            else -> {
+                currentState
+            }
         }
     }
 }

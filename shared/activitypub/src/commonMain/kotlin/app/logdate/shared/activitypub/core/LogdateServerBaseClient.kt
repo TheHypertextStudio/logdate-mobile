@@ -35,7 +35,7 @@ class LogdateServerClient(
     override var domain: String
         get() = _domain
 
-        /**
+        /*
          * Sets the domain of the LogDate server.
          *
          * Whenever the domain is changed, the client is reinitialized with the new domain.

@@ -54,11 +54,13 @@ fun AppUpdatePrompt(
             actionLabel = stringResource(Res.string.app_update_prompt_update)
             onAction = onLaunchUpdate
         }
+
         AppUpdateStatus.Downloaded -> {
             message = uiState.message?.asString() ?: stringResource(Res.string.app_update_prompt_downloaded)
             actionLabel = stringResource(Res.string.app_update_prompt_restart)
             onAction = onCompleteUpdate
         }
+
         else -> {
             message = null
             actionLabel = null

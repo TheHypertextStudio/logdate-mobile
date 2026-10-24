@@ -160,8 +160,14 @@ private fun journalReadingContextFits(
             val trailing = if (direction == LayoutDirection.Rtl) split.leftPane else split.rightPane
             leading.width >= 288.dp && trailing.width >= 480.dp
         }
-        is FoldableSplitLayout.Horizontal -> false
-        FoldableSplitLayout.None -> width >= 816.dp
+
+        is FoldableSplitLayout.Horizontal -> {
+            false
+        }
+
+        FoldableSplitLayout.None -> {
+            width >= 816.dp
+        }
     }
 }
 

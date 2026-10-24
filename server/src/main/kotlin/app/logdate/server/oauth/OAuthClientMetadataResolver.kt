@@ -74,12 +74,13 @@ class OAuthClientMetadataResolver(
         runCatching {
             val metadata = resolve(clientId).getOrThrow()
             when (metadata.token_endpoint_auth_method) {
-                TOKEN_ENDPOINT_AUTH_METHOD_NONE ->
+                TOKEN_ENDPOINT_AUTH_METHOD_NONE -> {
                     AuthenticatedOAuthClient(
                         metadata = metadata,
                         clientKeyId = null,
                         clientKeyThumbprint = null,
                     )
+                }
 
                 TOKEN_ENDPOINT_AUTH_METHOD_PRIVATE_KEY_JWT -> {
                     if (clientAssertionType != CLIENT_ASSERTION_TYPE_JWT_BEARER) {
@@ -98,7 +99,9 @@ class OAuthClientMetadataResolver(
                     )
                 }
 
-                else -> throw OAuthInvalidClientException("Unsupported token_endpoint_auth_method=${metadata.token_endpoint_auth_method}")
+                else -> {
+                    throw OAuthInvalidClientException("Unsupported token_endpoint_auth_method=${metadata.token_endpoint_auth_method}")
+                }
             }
         }
 
@@ -426,7 +429,9 @@ private fun OAuthClientMetadata.validated(expectedClientId: String): OAuthClient
             }
         }
 
-        else -> throw OAuthInvalidClientException("Unsupported token_endpoint_auth_method=$token_endpoint_auth_method")
+        else -> {
+            throw OAuthInvalidClientException("Unsupported token_endpoint_auth_method=$token_endpoint_auth_method")
+        }
     }
     return copy(
         redirect_uris = redirect_uris.map(String::trim),

@@ -60,11 +60,13 @@ fun MoodCheckInScreen(
     }
 
     when (uiState.step) {
-        MoodCheckInStep.SELECT_MOOD ->
+        MoodCheckInStep.SELECT_MOOD -> {
             SelectMoodContent(
                 onMoodSelected = { mood -> viewModel.selectMood(mood) },
             )
-        MoodCheckInStep.VOICE_PROMPT ->
+        }
+
+        MoodCheckInStep.VOICE_PROMPT -> {
             VoicePromptContent(
                 selectedMood = uiState.selectedMood,
                 isSaving = uiState.isSaving,
@@ -72,10 +74,13 @@ fun MoodCheckInScreen(
                 onAttachVoice = { viewModel.attachVoice() },
                 onSkip = { viewModel.skipVoiceAttachment() },
             )
-        MoodCheckInStep.SAVED ->
+        }
+
+        MoodCheckInStep.SAVED -> {
             MoodSavedContent(
                 saveFeedback = uiState.saveFeedback,
             )
+        }
     }
 }
 

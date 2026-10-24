@@ -262,17 +262,29 @@ private fun matchesFormat(
 ): Boolean =
     when (format) {
         "datetime" -> Datetime.isValid(value)
+
         "uri" -> uriPattern.matches(value)
+
         "at-uri" -> AtUri.isValid(value)
+
         "did" -> Did.isValid(value)
+
         "handle" -> Handle.isValid(value)
+
         "at-identifier" -> if (value.startsWith("did:")) Did.isValid(value) else Handle.isValid(value)
+
         "nsid" -> Nsid.isValid(value)
+
         "cid" -> cidPattern.matches(value)
+
         "language" -> LanguageTag.isValid(value)
+
         "tid" -> Tid.isValid(value)
+
         "record-key" -> RecordKey.isValid(value)
+
         "space-ref" -> isSpaceRef(value)
+
         // A format this version doesn't know, from a newer schema, isn't held against the record.
         else -> true
     }

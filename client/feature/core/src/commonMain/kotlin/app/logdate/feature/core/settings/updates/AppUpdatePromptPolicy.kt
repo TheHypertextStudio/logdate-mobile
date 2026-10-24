@@ -61,8 +61,11 @@ object AppUpdatePromptPolicy {
         }
 
         return when (trigger) {
-            AppUpdateCheckTrigger.Manual -> AppUpdateFlowType.Flexible
-            AppUpdateCheckTrigger.Automatic ->
+            AppUpdateCheckTrigger.Manual -> {
+                AppUpdateFlowType.Flexible
+            }
+
+            AppUpdateCheckTrigger.Automatic -> {
                 if (!context.isFlexiblePromptDeferred &&
                     (
                         context.updatePriority >= FLEXIBLE_PRIORITY_THRESHOLD ||
@@ -73,6 +76,7 @@ object AppUpdatePromptPolicy {
                 } else {
                     null
                 }
+            }
         }
     }
 }

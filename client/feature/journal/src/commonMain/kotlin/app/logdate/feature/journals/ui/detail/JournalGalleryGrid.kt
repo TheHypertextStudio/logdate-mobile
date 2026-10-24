@@ -60,12 +60,14 @@ fun JournalGalleryGrid(
                         onClick = { onOpenEntry(entry.id) },
                     )
                 }
+
                 is EntryDisplayData.VideoEntry -> {
                     VideoThumbnail(
                         mediaRef = entry.mediaRef,
                         onClick = { onOpenEntry(entry.id) },
                     )
                 }
+
                 else -> {
                     // Non-media entries don't appear in the gallery
                 }

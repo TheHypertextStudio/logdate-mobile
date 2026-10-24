@@ -192,6 +192,7 @@ fun RewindScreenContent(
                         ),
                     ) + state.pastRewinds.map { it.toPreview() }
                 }
+
                 is RewindOverviewScreenUiState.NotReady -> {
                     val (weekStart, weekEnd) = selectedWeekBounds(selectedPeriod, firstDayOfWeek, today)
                     val currentWeekPlaceholder =
@@ -214,6 +215,7 @@ fun RewindScreenContent(
 
                     listOf(currentWeekPlaceholder) + state.pastRewinds.map { it.toPreview() }
                 }
+
                 RewindOverviewScreenUiState.Loading -> {
                     val (weekStart, weekEnd) = selectedWeekBounds(selectedPeriod, firstDayOfWeek, today)
                     listOf(

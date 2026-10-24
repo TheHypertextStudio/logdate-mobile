@@ -59,26 +59,33 @@ fun AnimatedPlayPauseButton(
     iconSize: Dp = 24.dp,
     colors: IconButtonColors =
         when {
-            recordingState == RecordingState.RECORDING ->
+            recordingState == RecordingState.RECORDING -> {
                 IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.error,
                     contentColor = MaterialTheme.colorScheme.onError,
                 )
-            recordingState == RecordingState.PROCESSING ->
+            }
+
+            recordingState == RecordingState.PROCESSING -> {
                 IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
                     contentColor = MaterialTheme.colorScheme.onError,
                 )
-            playbackState == PlaybackState.PLAYING ->
+            }
+
+            playbackState == PlaybackState.PLAYING -> {
                 IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 )
-            else ->
+            }
+
+            else -> {
                 IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 )
+            }
         },
 ) {
     // Determine if the button is in an active state (playing or recording)
@@ -138,6 +145,7 @@ fun AnimatedPlayPauseButton(
                     tint = contentColor,
                 )
             }
+
             // Mic states: use AnimatedContent for mic icon
             recordingState == RecordingState.PAUSED ||
                 (recordingState == RecordingState.INACTIVE && playbackState == PlaybackState.STOPPED) -> {
@@ -158,6 +166,7 @@ fun AnimatedPlayPauseButton(
                     )
                 }
             }
+
             // Playback states: use morphing play/pause icon
             else -> {
                 MorphingPlayPauseIcon(

@@ -146,8 +146,14 @@ internal fun formatDayLabel(date: LocalDate): String {
     val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
     val yesterday = today.minus(1, DateTimeUnit.DAY)
     return when (date) {
-        today -> stringResource(R.string.wear_timeline_today)
-        yesterday -> stringResource(R.string.wear_timeline_yesterday)
+        today -> {
+            stringResource(R.string.wear_timeline_today)
+        }
+
+        yesterday -> {
+            stringResource(R.string.wear_timeline_yesterday)
+        }
+
         else -> {
             val monthName =
                 date.month.name

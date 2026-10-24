@@ -116,14 +116,15 @@ class OAuthClientMetadataResolverTest {
                 MockEngine {
                     requestIndex++
                     when (requestIndex) {
-                        1 ->
+                        1 -> {
                             respond(
                                 content = """{"error":"missing"}""",
                                 status = HttpStatusCode.NotFound,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        2 ->
+                        2 -> {
                             respond(
                                 content =
                                     clientMetadataJson(
@@ -134,8 +135,9 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        else ->
+                        else -> {
                             respond(
                                 content =
                                     clientMetadataJson(
@@ -146,6 +148,7 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
                     }
                 }
             val resolver = OAuthClientMetadataResolver(httpClient = HttpClient(engine))
@@ -167,7 +170,7 @@ class OAuthClientMetadataResolverTest {
                 MockEngine {
                     requestIndex++
                     when (requestIndex) {
-                        1 ->
+                        1 -> {
                             respond(
                                 content =
                                     """
@@ -185,8 +188,9 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        2 ->
+                        2 -> {
                             respond(
                                 content =
                                     """
@@ -202,8 +206,9 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        3 ->
+                        3 -> {
                             respond(
                                 content =
                                     """
@@ -219,8 +224,9 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        4 ->
+                        4 -> {
                             respond(
                                 content =
                                     """
@@ -236,8 +242,9 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        else ->
+                        else -> {
                             respond(
                                 content =
                                     """
@@ -253,6 +260,7 @@ class OAuthClientMetadataResolverTest {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf("Content-Type", ContentType.Application.Json.toString()),
                             )
+                        }
                     }
                 }
             val resolver = OAuthClientMetadataResolver(httpClient = HttpClient(engine))

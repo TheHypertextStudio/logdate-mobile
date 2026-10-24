@@ -254,10 +254,15 @@ internal fun validateDefaultLocationInput(
 @Composable
 private fun DefaultLocationInputError.message(): String =
     when (this) {
-        DefaultLocationInputError.InvalidLatitude ->
+        DefaultLocationInputError.InvalidLatitude -> {
             stringResource(Res.string.location_default_location_invalid_latitude)
-        DefaultLocationInputError.InvalidLongitude ->
+        }
+
+        DefaultLocationInputError.InvalidLongitude -> {
             stringResource(Res.string.location_default_location_invalid_longitude)
-        DefaultLocationInputError.InvalidAltitude ->
+        }
+
+        DefaultLocationInputError.InvalidAltitude -> {
             stringResource(Res.string.location_default_location_invalid_altitude)
+        }
     }

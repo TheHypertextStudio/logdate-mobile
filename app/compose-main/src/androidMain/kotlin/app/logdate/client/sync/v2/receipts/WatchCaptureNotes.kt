@@ -46,6 +46,7 @@ class WatchCaptureNotes(
                         createCapture(note)
                         false
                     }
+
                     existing.lastUpdated < note.lastUpdated && !outbox.hasPending(EntityType.NOTE, note.uid.toString()) -> {
                         requireCurrent()
                         delegate.deleteFromSync(existing.uid)
@@ -53,7 +54,10 @@ class WatchCaptureNotes(
                         outbox.enqueuePending(note.uid.toString(), EntityType.NOTE, PendingOperation.UPDATE)
                         true
                     }
-                    else -> false
+
+                    else -> {
+                        false
+                    }
                 }
             }
         if (updated) onUpdated()

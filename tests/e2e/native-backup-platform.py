@@ -153,6 +153,7 @@ def backup_source(
     if b"Status: ok" not in launch:
         if b"Status: timeout" not in launch:
             raise RuntimeError("The source app did not start before native backup")
+    if b"Status: ok" not in launch or prepare_for_snapshot is not None:
         h.wait_for_timeline(serial, output.parent, timeout_seconds=120, prefix="source")
     if prepare_for_snapshot is not None:
         prepare_for_snapshot()

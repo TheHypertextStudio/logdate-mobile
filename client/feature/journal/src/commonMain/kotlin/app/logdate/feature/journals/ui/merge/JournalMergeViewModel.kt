@@ -51,8 +51,10 @@ class JournalMergeViewModel(
                         (
                             operation.operationId != pendingOperationId ||
                                 savedStateHandle.get<String>(STAGE) == COMPLETE ||
-                                savedStateHandle.get<String>(STAGE) == MERGING &&
-                                operation.destinationId.toString() == restoredDestination
+                                (
+                                    savedStateHandle.get<String>(STAGE) == MERGING &&
+                                        operation.destinationId.toString() == restoredDestination
+                                )
                         )
                 if (operation != null && (pendingOperationId == null || recoveredCommit)) {
                     mutableState.update { it.copy(stage = JournalMergeStage.Complete(operation), loading = false) }
@@ -67,18 +69,7 @@ class JournalMergeViewModel(
                     }
                     mutableState.update { it.copy(sourceTitle = pending.sourceTitle) }
                 }
-                val destinationId = savedStateHandle.get<String>(DESTINATION)?.let(Uuid::parse)
-                if (destinationId != null && savedStateHandle.get<String>(STAGE) != PICKER) {
-                    choose(
-                        if (mutableState.value.pickerTarget ==
-                            JournalMergePickerTarget.Source
-                        ) {
-                            requireNotNull(this@JournalMergeViewModel.sourceId)
-                        } else {
-                            destinationId
-                        },
-                    )
-                }
+                restoreDestinationSelection()
                 mergeJournals.observeCandidates().collect { candidates ->
                     allCandidates = candidates
                     refreshCandidates()
@@ -89,6 +80,21 @@ class JournalMergeViewModel(
                 Napier.e("Could not load journals for merge", error)
                 mutableState.update { it.copy(loading = false, error = JournalMergeError.Failed) }
             }
+        }
+    }
+
+    private fun restoreDestinationSelection() {
+        val destinationId = savedStateHandle.get<String>(DESTINATION)?.let(Uuid::parse)
+        if (destinationId != null && savedStateHandle.get<String>(STAGE) != PICKER) {
+            choose(
+                if (mutableState.value.pickerTarget ==
+                    JournalMergePickerTarget.Source
+                ) {
+                    requireNotNull(sourceId)
+                } else {
+                    destinationId
+                },
+            )
         }
     }
 
@@ -240,14 +246,19 @@ class JournalMergeViewModel(
                     savedStateHandle[DESTINATION] = result.operation.destinationId.toString()
                     mutableState.update { it.copy(stage = JournalMergeStage.Complete(result.operation)) }
                 }
-                is JournalMergeResult.ReviewChanged ->
+
+                is JournalMergeResult.ReviewChanged -> {
                     mutableState.update {
                         it.copy(stage = JournalMergeStage.Review(result.preview), error = JournalMergeError.Changed)
                     }
-                JournalMergeResult.Failed ->
+                }
+
+                JournalMergeResult.Failed -> {
                     mutableState.update {
                         it.copy(stage = review, error = JournalMergeError.Failed)
                     }
+                }
+
                 JournalMergeResult.Unavailable -> {
                     savedStateHandle[STAGE] = PICKER
                     savedStateHandle[DESTINATION] = null

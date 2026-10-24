@@ -155,12 +155,18 @@ class RecorderViewModel(
         decision = GestureDecision.NONE
         when (started) {
             // The start is still running; it discards the recording when it finishes.
-            null -> Unit
+            null -> {
+                Unit
+            }
+
             true -> {
                 mutableState.value = RecorderState.Ready
                 viewModelScope.launch { recorder.discard() }
             }
-            false -> mutableState.value = RecorderState.Ready
+
+            false -> {
+                mutableState.value = RecorderState.Ready
+            }
         }
     }
 
@@ -260,14 +266,22 @@ class RecorderViewModel(
     override fun onCleared() {
         val current = mutableState.value
         when {
-            current is RecorderState.Live && current.mode == LiveMode.HOLDING -> applicationScope.launch { stopAndSaveDetached() }
-            current is RecorderState.Live -> Unit
+            current is RecorderState.Live && current.mode == LiveMode.HOLDING -> {
+                applicationScope.launch { stopAndSaveDetached() }
+            }
+
+            current is RecorderState.Live -> {
+                Unit
+            }
+
             current == RecorderState.Arming -> {
                 val decided = decision == GestureDecision.HOLD || decision == GestureDecision.LOCK || decision == GestureDecision.RELEASED
                 applicationScope.launch { if (decided) stopAndSaveDetached() else recorder.discard() }
             }
-            current is RecorderState.Failed && current.failure == RecorderFailure.SAVE_FAILED ->
+
+            current is RecorderState.Failed && current.failure == RecorderFailure.SAVE_FAILED -> {
                 unsavedPath?.let { path -> applicationScope.launch { saver.save(path, recorder.elapsed.value) } }
+            }
         }
         super.onCleared()
     }
@@ -302,9 +316,18 @@ class RecorderViewModel(
                 if (ok) recorder.discard()
                 mutableState.value = RecorderState.Ready
             }
-            GestureDecision.PENDING -> Unit
-            GestureDecision.HOLD, GestureDecision.LOCK -> applyDecision()
-            GestureDecision.RELEASED -> if (ok) stopAndSave() else failStart()
+
+            GestureDecision.PENDING -> {
+                Unit
+            }
+
+            GestureDecision.HOLD, GestureDecision.LOCK -> {
+                applyDecision()
+            }
+
+            GestureDecision.RELEASED -> {
+                if (ok) stopAndSave() else failStart()
+            }
         }
     }
 
@@ -400,8 +423,14 @@ class RecorderViewModel(
 
     private suspend fun handle(result: AudioSaveResult) {
         when (result) {
-            is AudioSaveResult.Saved -> onSaved(result.note)
-            AudioSaveResult.TooShort -> onTooShort()
+            is AudioSaveResult.Saved -> {
+                onSaved(result.note)
+            }
+
+            AudioSaveResult.TooShort -> {
+                onTooShort()
+            }
+
             is AudioSaveResult.Failed -> {
                 unsavedPath = result.path
                 fail(RecorderFailure.SAVE_FAILED)

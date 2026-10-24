@@ -110,15 +110,25 @@ internal class TestJournalRecords(
                 remoteTimestamp: Instant,
             ): ConflictResolution<SpaceJournal> =
                 when (val resolution = resolver.resolve(local.journal, remote.journal, localTimestamp, remoteTimestamp)) {
-                    is ConflictResolution.KeepLocal -> ConflictResolution.KeepLocal(SpaceJournal(resolution.value))
-                    is ConflictResolution.KeepRemote -> ConflictResolution.KeepRemote(SpaceJournal(resolution.value))
-                    is ConflictResolution.Merge -> ConflictResolution.Merge(SpaceJournal(resolution.merged))
-                    is ConflictResolution.RequiresManualResolution ->
+                    is ConflictResolution.KeepLocal -> {
+                        ConflictResolution.KeepLocal(SpaceJournal(resolution.value))
+                    }
+
+                    is ConflictResolution.KeepRemote -> {
+                        ConflictResolution.KeepRemote(SpaceJournal(resolution.value))
+                    }
+
+                    is ConflictResolution.Merge -> {
+                        ConflictResolution.Merge(SpaceJournal(resolution.merged))
+                    }
+
+                    is ConflictResolution.RequiresManualResolution -> {
                         ConflictResolution.RequiresManualResolution(
                             SpaceJournal(resolution.local),
                             SpaceJournal(resolution.remote),
                             resolution.reason,
                         )
+                    }
                 }
 
             override fun resolveDeletion(
@@ -164,13 +174,15 @@ internal object TestEntryMapper : SpaceRecordMapper<JournalNote> {
         val owner = "$collection/${value.uid}"
         val block =
             when (value) {
-                is JournalNote.Text ->
+                is JournalNote.Text -> {
                     buildJsonObject {
                         put("\$type", "$ENTRY_COLLECTION#textBlock")
                         put("id", value.uid.toString())
                         put("text", value.content)
                     }
-                is JournalNote.Audio ->
+                }
+
+                is JournalNote.Audio -> {
                     buildJsonObject {
                         put("\$type", "$ENTRY_COLLECTION#audioBlock")
                         put("id", value.uid.toString())
@@ -187,7 +199,11 @@ internal object TestEntryMapper : SpaceRecordMapper<JournalNote> {
                             )
                         }
                     }
-                else -> throw SpaceRecordMappingException("$owner: tests map only text and audio notes")
+                }
+
+                else -> {
+                    throw SpaceRecordMappingException("$owner: tests map only text and audio notes")
+                }
             }
         return buildJsonObject {
             put("\$type", ENTRY_COLLECTION)
@@ -208,13 +224,15 @@ internal object TestEntryMapper : SpaceRecordMapper<JournalNote> {
         val created = parseDatetime("$owner createdAt", record.getValue("createdAt").jsonPrimitive.content)
         val updated = record["updatedAt"]?.let { parseDatetime("$owner updatedAt", it.jsonPrimitive.content) } ?: created
         return when ((block["\$type"] as? JsonPrimitive)?.contentOrNull) {
-            "$ENTRY_COLLECTION#textBlock" ->
+            "$ENTRY_COLLECTION#textBlock" -> {
                 JournalNote.Text(
                     uid = uid,
                     creationTimestamp = created,
                     lastUpdated = updated,
                     content = block.getValue("text").jsonPrimitive.content,
                 )
+            }
+
             "$ENTRY_COLLECTION#audioBlock" -> {
                 val media = LexiconData.json.decodeFromJsonElement(DefsMedia.serializer(), block.getValue("media"))
                 JournalNote.Audio(
@@ -225,7 +243,10 @@ internal object TestEntryMapper : SpaceRecordMapper<JournalNote> {
                     durationMs = block.getValue("durationMs").jsonPrimitive.longOrNull ?: 0,
                 )
             }
-            else -> throw SpaceRecordMappingException("$owner: a block type tests don't map")
+
+            else -> {
+                throw SpaceRecordMappingException("$owner: a block type tests don't map")
+            }
         }
     }
 

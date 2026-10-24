@@ -175,7 +175,7 @@ class MediaDetailViewModel(
 
             _uiState.value =
                 when {
-                    media.isVideo ->
+                    media.isVideo -> {
                         MediaDetailUiState.VideoContent(
                             mediaId = media.id,
                             mediaRef = media.uri,
@@ -184,7 +184,9 @@ class MediaDetailViewModel(
                             locationDisplayName = locationDisplayName,
                             journals = journals,
                         )
-                    media.isAudio ->
+                    }
+
+                    media.isAudio -> {
                         MediaDetailUiState.AudioContent(
                             mediaId = media.id,
                             mediaRef = media.uri,
@@ -194,28 +196,34 @@ class MediaDetailViewModel(
                             locationDisplayName = locationDisplayName,
                             journals = journals,
                         )
-                    media.indexedMedia is IndexedMedia.Image ->
-                        MediaDetailUiState.ImageContent(
-                            mediaId = media.id,
-                            mediaRef = media.uri,
-                            createdAt = media.timestamp,
-                            location = primaryNote?.location,
-                            locationDisplayName = locationDisplayName,
-                            journals = journals,
-                            exif = exif,
-                        )
-                    else ->
-                        MediaDetailUiState.ImageContent(
-                            mediaId = media.id,
-                            mediaRef = media.uri,
-                            createdAt = media.timestamp,
-                            location = primaryNote?.location,
-                            locationDisplayName = locationDisplayName,
-                            journals = journals,
-                            exif = exif,
-                        )
+                    }
+
+                    media.indexedMedia is IndexedMedia.Image -> {
+                        imageContentState(media, primaryNote, locationDisplayName, journals, exif)
+                    }
+
+                    else -> {
+                        imageContentState(media, primaryNote, locationDisplayName, journals, exif)
+                    }
                 }
         }
+
+    private fun imageContentState(
+        media: LibraryMediaSource,
+        primaryNote: JournalNote?,
+        locationDisplayName: String?,
+        journals: List<JournalReference>,
+        exif: ExifDisplayData?,
+    ): MediaDetailUiState.ImageContent =
+        MediaDetailUiState.ImageContent(
+            mediaId = media.id,
+            mediaRef = media.uri,
+            createdAt = media.timestamp,
+            location = primaryNote?.location,
+            locationDisplayName = locationDisplayName,
+            journals = journals,
+            exif = exif,
+        )
 
     private suspend fun loadJournals(notes: List<JournalNote>): List<JournalReference> =
         notes
@@ -265,15 +273,24 @@ class MediaDetailViewModel(
                     )
                 val resolved =
                     when (val result = resolveLocationToPlaceUseCase(location)) {
-                        is PlaceResolutionResult.UserDefinedPlace -> result.place.name
-                        is PlaceResolutionResult.ExternalSuggestion -> result.suggestion.name
+                        is PlaceResolutionResult.UserDefinedPlace -> {
+                            result.place.name
+                        }
+
+                        is PlaceResolutionResult.ExternalSuggestion -> {
+                            result.suggestion.name
+                        }
+
                         is PlaceResolutionResult.CoarseLocation -> {
                             val addr = result.address
                             listOfNotNull(addr.locality, addr.adminArea)
                                 .joinToString(", ")
                                 .ifEmpty { null }
                         }
-                        is PlaceResolutionResult.UnknownLocation -> null
+
+                        is PlaceResolutionResult.UnknownLocation -> {
+                            null
+                        }
                     }
                 if (resolved != null) return resolved
             } catch (e: Exception) {

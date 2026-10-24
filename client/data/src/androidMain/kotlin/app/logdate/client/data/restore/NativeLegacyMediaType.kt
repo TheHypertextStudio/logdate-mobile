@@ -83,11 +83,17 @@ private fun nativeLegacyMediaHeaderMimeType(
         return when {
             brand in setOf("M4A ", "M4B ") ||
                 bytes.copyOfRange(12, minOf(bytes.size, 64)).toString(Charsets.ISO_8859_1).contains("M4A ") -> "audio/mp4"
+
             brand in setOf("avif", "avis") -> "image/avif"
+
             brand in setOf("heic", "heix", "hevc", "hevx", "mif1", "msf1") -> "image/heif"
+
             brand == "qt  " -> "video/quicktime"
+
             brand.startsWith("3gp") -> "video/3gpp"
+
             brand.startsWith("3g2") -> "video/3gpp2"
+
             else -> if (nameHint == "audio/mp4") "audio/mp4" else "video/mp4"
         }
     }

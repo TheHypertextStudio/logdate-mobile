@@ -140,7 +140,11 @@ If no names are present, return an empty array.
                     generativeAICache.putEntry(cacheRequest, content.trim())
                     AIResult.Success(people, fromCache = false)
                 }
-                is AIResult.Unavailable -> response
+
+                is AIResult.Unavailable -> {
+                    response
+                }
+
                 is AIResult.Error -> {
                     Napier.e(
                         tag = "PeopleExtractor",
@@ -160,13 +164,20 @@ If no names are present, return an empty array.
                 allowEmbeddedJson = true,
             )
         return when (val result = parser.parse(raw)) {
-            is StructuredOutputResult.Success ->
+            is StructuredOutputResult.Success -> {
                 result.value.names
                     .map { it.trim() }
                     .filter { it.isNotBlank() }
                     .map { Person(name = it) }
-            StructuredOutputResult.Empty -> emptyList()
-            StructuredOutputResult.Invalid -> null
+            }
+
+            StructuredOutputResult.Empty -> {
+                emptyList()
+            }
+
+            StructuredOutputResult.Invalid -> {
+                null
+            }
         }
     }
 

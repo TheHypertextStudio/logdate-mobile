@@ -62,14 +62,27 @@ internal class SpaceMigrationService(
         val current = store.get(accountId)
         val updated =
             when {
-                current == null || current.phase == SpaceMigrationPhase.REVERTED ->
+                current == null || current.phase == SpaceMigrationPhase.REVERTED -> {
                     SpaceMigration(accountId, migrationId, SpaceMigrationPhase.UPLOADING, now, now, version = (current?.version ?: 0) + 1)
-                current.phase != SpaceMigrationPhase.UPLOADING -> return wrongMode(account)
-                current.migrationId == migrationId -> current.next(now) { this }
+                }
+
+                current.phase != SpaceMigrationPhase.UPLOADING -> {
+                    return wrongMode(account)
+                }
+
+                current.migrationId == migrationId -> {
+                    current.next(now) { this }
+                }
+
                 !current.leaseLapsed(
                     now,
-                ) -> return refused(SpaceMigrationErrorCodes.HELD_ELSEWHERE, "Another device is moving this journal")
-                else -> current.next(now) { copy(migrationId = migrationId, startedAt = now, holdStartedAt = null) }
+                ) -> {
+                    return refused(SpaceMigrationErrorCodes.HELD_ELSEWHERE, "Another device is moving this journal")
+                }
+
+                else -> {
+                    current.next(now) { copy(migrationId = migrationId, startedAt = now, holdStartedAt = null) }
+                }
             }
         if (!store.replace(current, updated)) return raced()
         return SpaceMigrationResult.Done(updated.toStatus())
@@ -167,10 +180,17 @@ internal class SpaceMigrationService(
     ): SpaceMigrationResult.Refused? {
         val started = migration.holdStartedAt?.takeIf { migration.holds(now) }
         return when {
-            started == null -> refused(SpaceMigrationErrorCodes.HOLD_NOT_READY, "Writes aren't held; hold them and check again")
-            now < started + config.holdGrace ->
+            started == null -> {
+                refused(SpaceMigrationErrorCodes.HOLD_NOT_READY, "Writes aren't held; hold them and check again")
+            }
+
+            now < started + config.holdGrace -> {
                 refused(SpaceMigrationErrorCodes.HOLD_NOT_READY, "Writes are held from ${started + config.holdGrace}")
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
     }
 

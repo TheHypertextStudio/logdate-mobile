@@ -16,10 +16,14 @@ internal fun WearLaunchRequest?.toV2BackStack(): List<WearRoute> =
         WearLaunchRequest.RemoteCamera,
         WearLaunchRequest.Mark,
         -> listOf(WearRoute.Home)
+
         WearLaunchRequest.Timeline -> listOf(WearRoute.Home, WearRoute.Flow)
+
         WearLaunchRequest.Memories,
         WearLaunchRequest.OnThisDay,
         -> listOf(WearRoute.Home, WearRoute.Memories)
+
         WearLaunchRequest.Settings -> listOf(WearRoute.Home, WearRoute.Settings)
+
         is WearLaunchRequest.Moment -> listOf(WearRoute.Home, WearRoute.Moment(noteId.toString()))
     }

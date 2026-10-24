@@ -63,6 +63,7 @@ class AndroidRestoreCredentialManager(
                     Napier.i("Restore credential retrieved successfully")
                     Result.success(credential.authenticationResponseJson)
                 }
+
                 else -> {
                     Napier.w("Unexpected restore credential type: ${credential::class.simpleName}")
                     Result.failure(RestoreCredentialError.Unknown("Unexpected restore credential type"))
@@ -75,8 +76,10 @@ class AndroidRestoreCredentialManager(
             Result.failure(RestoreCredentialError.NoCredential(e))
         } catch (e: GetCredentialException) {
             when {
-                e.message?.contains("CANCELLED", ignoreCase = true) == true ->
+                e.message?.contains("CANCELLED", ignoreCase = true) == true -> {
                     Result.failure(RestoreCredentialError.Cancelled(e))
+                }
+
                 else -> {
                     Napier.e("Failed to retrieve restore credential", e)
                     Result.failure(RestoreCredentialError.Unknown("Failed to retrieve restore credential", e))

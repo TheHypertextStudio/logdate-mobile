@@ -470,7 +470,11 @@ Analyze this content and provide the narrative structure in JSON format as speci
                     AIResult.Error(AIError.InvalidResponse)
                 }
             }
-            is AIResult.Unavailable -> response
+
+            is AIResult.Unavailable -> {
+                response
+            }
+
             is AIResult.Error -> {
                 Napier.e("Failed to synthesize narrative", throwable = response.throwable)
                 response
@@ -512,6 +516,7 @@ Analyze this content and provide the narrative structure in JSON format as speci
                             appendLine("\n[${item.timestamp}] Photo (ID: ${item.uid})")
                             item.caption?.let { appendLine("Caption: $it") }
                         }
+
                         is IndexedMedia.Video -> {
                             appendLine("\n[${item.timestamp}] Video (ID: ${item.uid}) - Duration: ${item.duration}")
                             item.caption?.let { appendLine("Caption: $it") }
@@ -595,10 +600,12 @@ Analyze this content and provide the narrative structure in JSON format as speci
                         },
                 )
             }
+
             StructuredOutputResult.Empty -> {
                 Napier.w("Narrative response was empty")
                 null
             }
+
             StructuredOutputResult.Invalid -> {
                 Napier.w("Narrative response did not match schema")
                 null

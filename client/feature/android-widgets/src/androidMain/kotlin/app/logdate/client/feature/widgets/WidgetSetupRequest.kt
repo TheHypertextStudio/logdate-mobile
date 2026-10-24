@@ -27,10 +27,12 @@ internal data class WidgetSetupRequest(
         if (widgetId <= 0 || version != 1 || Uuid.parseOrNull(refreshEventId)?.toString() != refreshEventId) return false
         val strings = values.strings
         return when (target) {
-            WidgetSetupTarget.PINNED_MEMORY ->
+            WidgetSetupTarget.PINNED_MEMORY -> {
                 values.flags.isEmpty() &&
                     strings.keys == setOf("chosenNoteId") &&
                     Uuid.parseOrNull(strings.getValue("chosenNoteId")) != null
+            }
+
             WidgetSetupTarget.MEMORIES -> {
                 val types = strings["contentTypes"]?.split(',').orEmpty()
                 values.flags.isEmpty() &&
@@ -40,10 +42,12 @@ internal data class WidgetSetupRequest(
                     types.distinct() == types &&
                     types.all { type -> WidgetContentType.entries.any { it.name == type } }
             }
-            WidgetSetupTarget.PHOTO_PROMPT ->
+
+            WidgetSetupTarget.PHOTO_PROMPT -> {
                 strings.keys == setOf("photoShape") &&
                     values.flags.keys == setOf("usePhotoPrompt") &&
                     PhotoWidgetShape.entries.any { it.name == strings["photoShape"] }
+            }
         }
     }
 

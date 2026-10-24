@@ -58,11 +58,26 @@ object PlaceCorrectionRecordMapper : SpaceRecordMapper<HistoryCorrection> {
             )
         val record =
             when (value.field) {
-                HistoryField.LABEL -> base.copy(label = value.value)
-                HistoryField.PLACE -> base.copy(place = refTo(owner, Place.TYPE, value.value))
-                HistoryField.ACTIVITY -> base.copy(activity = TravelModes.toLexicon(owner, travelMode(owner, value.value)))
-                HistoryField.START -> base.copy(startsAt = standardTime(owner, value.value).toDatetime("$owner startsAt"))
-                HistoryField.END -> base.copy(endsAt = standardTime(owner, value.value).toDatetime("$owner endsAt"))
+                HistoryField.LABEL -> {
+                    base.copy(label = value.value)
+                }
+
+                HistoryField.PLACE -> {
+                    base.copy(place = refTo(owner, Place.TYPE, value.value))
+                }
+
+                HistoryField.ACTIVITY -> {
+                    base.copy(activity = TravelModes.toLexicon(owner, travelMode(owner, value.value)))
+                }
+
+                HistoryField.START -> {
+                    base.copy(startsAt = standardTime(owner, value.value).toDatetime("$owner startsAt"))
+                }
+
+                HistoryField.END -> {
+                    base.copy(endsAt = standardTime(owner, value.value).toDatetime("$owner endsAt"))
+                }
+
                 HistoryField.DELETE -> {
                     if (value.value != DELETE_VALUE) throw SpaceRecordMappingException("$owner: a delete has no value to keep")
                     base

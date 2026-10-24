@@ -147,15 +147,21 @@ class SettingsActivityRenderTest {
             assertTrue(if (rtl) detailBounds.right <= categoryBounds.left else categoryBounds.right <= detailBounds.left)
         }
         when (split) {
-            is FoldableSplitLayout.Vertical ->
+            is FoldableSplitLayout.Vertical -> {
                 assertTrue(
                     detailBounds.left >= split.hingeBounds.right.value || detailBounds.right <= split.hingeBounds.left.value,
                 )
-            is FoldableSplitLayout.Horizontal ->
+            }
+
+            is FoldableSplitLayout.Horizontal -> {
                 assertTrue(
                     detailBounds.bottom <= split.hingeBounds.top.value || detailBounds.top >= split.hingeBounds.bottom.value,
                 )
-            FoldableSplitLayout.None -> Unit
+            }
+
+            FoldableSplitLayout.None -> {
+                Unit
+            }
         }
         val directory = System.getenv("LOGDATE_ACTIVITY_SCREENSHOT_DIR")
         if (directory != null) {

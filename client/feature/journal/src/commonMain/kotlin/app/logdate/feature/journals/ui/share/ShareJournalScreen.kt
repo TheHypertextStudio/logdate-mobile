@@ -142,6 +142,7 @@ fun ShareJournalScreenContent(
                     Text(stringResource(UiRes.string.common_loading))
                 }
             }
+
             is ShareJournalUiState.Error -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -150,6 +151,7 @@ fun ShareJournalScreenContent(
                     Text(stringResource(Res.string.failed_to_load_journal))
                 }
             }
+
             is ShareJournalUiState.Success -> {
                 ShareJournalContent(
                     journal = state.journal,

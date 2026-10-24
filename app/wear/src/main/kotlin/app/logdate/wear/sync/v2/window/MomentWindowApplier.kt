@@ -146,7 +146,7 @@ class MomentWindowApplier(
         val state = members.read(peer)
         val snapshot = state.snapshotRevision ?: return false
         val id = path.id.toString()
-        if (revision <= snapshot && id in state.expected || (state.entries[id]?.revision ?: 0) >= revision) return false
+        if ((revision <= snapshot && id in state.expected) || (state.entries[id]?.revision ?: 0) >= revision) return false
         return retire(peer, id, revision)
     }
 
@@ -191,8 +191,10 @@ class MomentWindowApplier(
         val wanted = fingerprint(copy.moment)
         if ((state.retired[id] ?: 0) >= copy.ref.revision ||
             (entry?.revision ?: 0) > copy.ref.revision ||
-            entry?.revision == copy.ref.revision &&
-            entry.bodyFingerprint != wanted
+            (
+                entry?.revision == copy.ref.revision &&
+                    entry.bodyFingerprint != wanted
+            )
         ) {
             return false
         }

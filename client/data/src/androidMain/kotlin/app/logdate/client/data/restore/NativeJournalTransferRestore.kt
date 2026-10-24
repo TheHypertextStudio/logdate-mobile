@@ -135,8 +135,10 @@ internal class NativeJournalTransferRestore(
         val receipt = checkNotNull(authority.installedReceipt())
         val files = snapshotFiles()
         check(
-            authority.completedReceipt() == receipt &&
-                authority.matchesCompletedSnapshot(files) ||
+            (
+                authority.completedReceipt() == receipt &&
+                    authority.matchesCompletedSnapshot(files)
+            ) ||
                 files[NATIVE_SOURCE_RECEIPT_PATH]?.let(::checksum) == receipt,
         ) { "Uninstalled native journal inputs must remain in custody" }
         authority.rememberCompletedSnapshot(receipt, files)

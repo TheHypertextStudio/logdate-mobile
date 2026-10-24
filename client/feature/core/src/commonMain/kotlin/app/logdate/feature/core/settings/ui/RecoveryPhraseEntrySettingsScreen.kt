@@ -82,15 +82,21 @@ internal enum class RecoveryPhraseFailure { INVALID_WORDS, MISMATCH, UNAVAILABLE
 
 internal fun classifyRecoveryPhraseFailure(error: Throwable): RecoveryPhraseFailure =
     when (error) {
-        is RecoveryPhraseVerificationException ->
+        is RecoveryPhraseVerificationException -> {
             when (error.reason) {
                 RecoveryPhraseVerificationReason.MISMATCH -> RecoveryPhraseFailure.MISMATCH
                 RecoveryPhraseVerificationReason.UNAVAILABLE -> RecoveryPhraseFailure.UNAVAILABLE
                 RecoveryPhraseVerificationReason.NO_PROOF -> RecoveryPhraseFailure.NO_PROOF
             }
-        is IllegalArgumentException ->
+        }
+
+        is IllegalArgumentException -> {
             if (error.message == "Invalid recovery phrase") RecoveryPhraseFailure.INVALID_WORDS else RecoveryPhraseFailure.RETRYABLE
-        else -> RecoveryPhraseFailure.RETRYABLE
+        }
+
+        else -> {
+            RecoveryPhraseFailure.RETRYABLE
+        }
     }
 
 internal fun RecoveryPhraseFailure.messageResource(): StringResource =

@@ -353,7 +353,7 @@ class LocalFirstDraftRepository(
     ): Boolean =
         withStorage {
             val scope = selectedScope()
-            check(recoveryScope == null || scope?.ownerId == recoveryScope.ownerId && scope?.serverOrigin == recoveryScope.serverOrigin) {
+            check(recoveryScope == null || (scope?.ownerId == recoveryScope.ownerId && scope?.serverOrigin == recoveryScope.serverOrigin)) {
                 "Draft recovery account changed"
             }
             val state = ArchiveDraftStorageState.decode(json, keyValueStorage.getStringOrThrow(storageKey(scope)))
@@ -385,7 +385,7 @@ class LocalFirstDraftRepository(
     ): Boolean =
         withStorage {
             val scope = selectedScope()
-            check(recoveryScope == null || scope?.ownerId == recoveryScope.ownerId && scope?.serverOrigin == recoveryScope.serverOrigin) {
+            check(recoveryScope == null || (scope?.ownerId == recoveryScope.ownerId && scope?.serverOrigin == recoveryScope.serverOrigin)) {
                 "Draft recovery account changed"
             }
             val state = ArchiveDraftStorageState.decode(json, keyValueStorage.getStringOrThrow(storageKey(scope)))
@@ -406,7 +406,7 @@ class LocalFirstDraftRepository(
             require(expected == null || expected.id == targetId)
             require(replacement == null || replacement.id == targetId)
             val scope = selectedScope()
-            check(recoveryScope == null || scope?.ownerId == recoveryScope.ownerId && scope?.serverOrigin == recoveryScope.serverOrigin) {
+            check(recoveryScope == null || (scope?.ownerId == recoveryScope.ownerId && scope?.serverOrigin == recoveryScope.serverOrigin)) {
                 "Draft recovery account changed"
             }
             val drafts = visible(scope)

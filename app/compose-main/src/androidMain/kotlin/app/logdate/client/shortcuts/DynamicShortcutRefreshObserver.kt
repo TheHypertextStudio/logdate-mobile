@@ -67,15 +67,28 @@ class DynamicShortcutRefreshObserver(
     private fun Flow<RewindQueryResult>.mapToRewindSnapshot(): Flow<RewindShortcutSnapshot> =
         map { result ->
             when (result) {
-                is RewindQueryResult.Success ->
+                is RewindQueryResult.Success -> {
                     RewindShortcutSnapshot(
                         state = "success",
                         rewindId = result.rewind.uid,
                     )
-                RewindQueryResult.NotReady -> RewindShortcutSnapshot(state = "not_ready")
-                RewindQueryResult.Generating -> RewindShortcutSnapshot(state = "generating")
-                RewindQueryResult.NoneAvailable -> RewindShortcutSnapshot(state = "none")
-                RewindQueryResult.Failed -> RewindShortcutSnapshot(state = "failed")
+                }
+
+                RewindQueryResult.NotReady -> {
+                    RewindShortcutSnapshot(state = "not_ready")
+                }
+
+                RewindQueryResult.Generating -> {
+                    RewindShortcutSnapshot(state = "generating")
+                }
+
+                RewindQueryResult.NoneAvailable -> {
+                    RewindShortcutSnapshot(state = "none")
+                }
+
+                RewindQueryResult.Failed -> {
+                    RewindShortcutSnapshot(state = "failed")
+                }
             }
         }
 

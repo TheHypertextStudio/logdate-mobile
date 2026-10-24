@@ -50,7 +50,7 @@ publishing {
                         "`platform(\"studio.hypertext.atproto:atproto-bom\")` and reference " +
                         "any atproto-* module without an explicit version.",
                 )
-                url.set("https://github.com/WillieCubed/logdate-mobile")
+                url.set("https://github.com/TheHypertextStudio/logdate-mobile")
                 inceptionYear.set("2026")
                 organization {
                     name.set("The Hypertext Studio")
@@ -70,13 +70,13 @@ publishing {
                     }
                 }
                 scm {
-                    url.set("https://github.com/WillieCubed/logdate-mobile")
-                    connection.set("scm:git:https://github.com/WillieCubed/logdate-mobile.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/WillieCubed/logdate-mobile.git")
+                    url.set("https://github.com/TheHypertextStudio/logdate-mobile")
+                    connection.set("scm:git:https://github.com/TheHypertextStudio/logdate-mobile.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/TheHypertextStudio/logdate-mobile.git")
                 }
                 issueManagement {
                     system.set("GitHub")
-                    url.set("https://github.com/WillieCubed/logdate-mobile/issues")
+                    url.set("https://github.com/TheHypertextStudio/logdate-mobile/issues")
                 }
             }
         }

@@ -63,11 +63,17 @@ internal class AndroidCameraDeviceSelection(
                 ?: devices.first().id
         val routeControlMessage =
             when {
-                preferredDeviceId != null && preferredDeviceId != selectedId ->
+                preferredDeviceId != null && preferredDeviceId != selectedId -> {
                     unavailableRouteMessage(MediaDeviceKind.CAMERA, devices.first { it.id == selectedId }.label)
-                devices.none { it.isExternal } ->
+                }
+
+                devices.none { it.isExternal } -> {
                     Res.string.capture_state_external_cameras_hint.toUiText()
-                else -> null
+                }
+
+                else -> {
+                    null
+                }
             }
 
         return MediaDeviceSelectionUiState(

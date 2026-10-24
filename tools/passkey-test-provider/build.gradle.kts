@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-/**
+/*
  * Emulator-only WebAuthn credential provider.
  *
  * Google Password Manager refuses to create passkeys unless a Google account is signed in, so a

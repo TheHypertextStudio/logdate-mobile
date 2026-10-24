@@ -258,6 +258,6 @@ class FakeSyncMetadataService(
     }
 }
 
-/**
+/*
  * Fake JournalNotesRepository for testing.
  */

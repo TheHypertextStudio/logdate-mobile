@@ -38,13 +38,20 @@ fun HandoffDraftGate(
     val arrival by remember(draftId, attempt) { receiver.arrival(draftId) }.collectAsState(initial = null)
     when (val current = arrival) {
         // The first answer comes from this device's own drafts, so there is nothing to show yet.
-        null -> Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {}
-        is HandoffDraftArrival.Ready -> editor(current.draftId)
-        else ->
+        null -> {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {}
+        }
+
+        is HandoffDraftArrival.Ready -> {
+            editor(current.draftId)
+        }
+
+        else -> {
             HandoffDraftArrivalContent(
                 arrival = current,
                 onRetry = { attempt++ },
                 onStartNewEntry = { startedNewEntry = true },
             )
+        }
     }
 }

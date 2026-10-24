@@ -34,11 +34,15 @@ internal fun HistoryRecordEntity.rewriteHistoryOwner(newOwner: String): HistoryR
                 check(decoded.value.ownerId == ownerId) { "Observation owner does not match its local scope" }
                 decoded.copy(value = decoded.value.copy(ownerId = newOwner))
             }
+
             is HistoryPayload.Activity -> {
                 check(decoded.value.ownerId == ownerId) { "Activity owner does not match its local scope" }
                 decoded.copy(value = decoded.value.copy(ownerId = newOwner))
             }
-            else -> decoded
+
+            else -> {
+                decoded
+            }
         }
     return copy(payload = Json.encodeToString<HistoryPayload>(rewritten))
 }

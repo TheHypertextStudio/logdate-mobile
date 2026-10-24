@@ -53,10 +53,19 @@ class ArchiveIntegrityAdmissionTest {
         for (defect in listOf("missing", "malformed", "duplicate", "uncovered")) {
             val files = archiveIntegrityFixture()
             when (defect) {
-                "missing" -> files.remove("SHA256SUMS")
-                "malformed" -> files["SHA256SUMS"] = "not-a-hash  manifest.json\n".encodeToByteArray()
-                "duplicate" -> files["SHA256SUMS"] = (files.getValue("SHA256SUMS").decodeToString().repeat(2)).encodeToByteArray()
-                "uncovered" ->
+                "missing" -> {
+                    files.remove("SHA256SUMS")
+                }
+
+                "malformed" -> {
+                    files["SHA256SUMS"] = "not-a-hash  manifest.json\n".encodeToByteArray()
+                }
+
+                "duplicate" -> {
+                    files["SHA256SUMS"] = (files.getValue("SHA256SUMS").decodeToString().repeat(2)).encodeToByteArray()
+                }
+
+                "uncovered" -> {
                     files["SHA256SUMS"] =
                         files
                             .getValue("SHA256SUMS")
@@ -65,6 +74,7 @@ class ArchiveIntegrityAdmissionTest {
                             .filterNot { it.endsWith("  data/journals.json") }
                             .joinToString("\n")
                             .encodeToByteArray()
+                }
             }
             assertFailsWith<RuntimeException> { RestoreArchiveReader.readBytes(files.keys, files::get) }
         }

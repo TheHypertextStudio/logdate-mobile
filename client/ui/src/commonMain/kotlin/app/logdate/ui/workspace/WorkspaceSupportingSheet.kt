@@ -214,10 +214,17 @@ fun WorkspaceSupportingSheet(
                                             IconButton(enabled = allowsFocus || presentationExtent != SupportingExtent.Peek, onClick = {
                                                 extent =
                                                     when (presentationExtent) {
-                                                        SupportingExtent.Peek ->
+                                                        SupportingExtent.Peek -> {
                                                             if (anchors.canOverlay) SupportingExtent.Browsing else SupportingExtent.Focused
-                                                        SupportingExtent.Browsing -> SupportingExtent.Expanded
-                                                        else -> SupportingExtent.Peek
+                                                        }
+
+                                                        SupportingExtent.Browsing -> {
+                                                            SupportingExtent.Expanded
+                                                        }
+
+                                                        else -> {
+                                                            SupportingExtent.Peek
+                                                        }
                                                     }
                                             }) {
                                                 Icon(

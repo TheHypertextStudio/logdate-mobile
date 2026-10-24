@@ -237,7 +237,7 @@ class WindowApplier(
         val before = notes.getNoteById(copy.note.uid)
         val wanted = fingerprint(copy.note)
         // A matching phone echo may settle an edit to a known projection, never adopt an unknown capture.
-        if (before != null && (entry == null || fingerprint(before) !in entry.fingerprints && fingerprint(before) != wanted)) return false
+        if (before != null && (entry == null || (fingerprint(before) !in entry.fingerprints && fingerprint(before) != wanted))) return false
         if (entry?.revision == copy.ref.revision && wanted != entry.bodyFingerprint) return false
         val intent =
             WindowProjection(

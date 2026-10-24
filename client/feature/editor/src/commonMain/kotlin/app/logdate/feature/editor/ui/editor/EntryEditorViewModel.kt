@@ -57,9 +57,13 @@ class EntryEditorViewModel(
     internal val defaultAudioBlockFinalizer: AudioBlockFinalizer =
         AudioBlockFinalizer { _, currentState ->
             when (currentState) {
-                is AudioCaptureState.Recording, is AudioCaptureState.Stopping ->
+                is AudioCaptureState.Recording, is AudioCaptureState.Stopping -> {
                     AudioCaptureState.Failed(Res.string.editor_error_recording_not_finalized)
-                else -> currentState
+                }
+
+                else -> {
+                    currentState
+                }
             }
         },
     internal val pendingAudioRecoverer: PendingAudioRecoverer? = null,

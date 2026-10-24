@@ -164,6 +164,7 @@ class BackupCloudApiClientTest {
                                     headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                                 )
                             }
+
                             else -> {
                                 assertEquals("$baseUrl/backups/backup-1/binary", request.url.toString())
                                 respond(

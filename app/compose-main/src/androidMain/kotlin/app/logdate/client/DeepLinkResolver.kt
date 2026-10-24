@@ -105,25 +105,55 @@ private fun resolveCustomSchemeHost(
     uri: Uri,
 ): NavKey? =
     when (host) {
-        PATH_JOURNAL -> segments.firstOrNull()?.parseUuidTo { JournalDetailsRoute(it) }
-        PATH_DAY -> segments.firstOrNull()?.parseDateString { TimelineDetailRoute(it) }
-        "handoff" ->
+        PATH_JOURNAL -> {
+            segments.firstOrNull()?.parseUuidTo { JournalDetailsRoute(it) }
+        }
+
+        PATH_DAY -> {
+            segments.firstOrNull()?.parseDateString { TimelineDetailRoute(it) }
+        }
+
+        "handoff" -> {
             segments.firstOrNull()?.parseUuidTo { id ->
                 val target = uri.getQueryParameter("target")?.takeIf { it in setOf("edit", "share", "day", "play") } ?: "edit"
                 WatchHandoffRoute(id.toString(), target)
             }
-        PATH_NOTE -> segments.firstOrNull()?.parseUuidTo { NoteDetailRoute(it) }
-        PATH_POSTCARD -> segments.firstOrNull()?.parseUuidTo { PostcardViewerRoute(it) }
-        PATH_REWIND -> segments.firstOrNull()?.parseUuidTo { RewindDetailRoute(it) }
-        PATH_LOCATION -> LocationTimelineRoute
-        PATH_EVENT -> segments.firstOrNull()?.let { EventDetailRoute(it) }
-        PATH_SEARCH -> uri.toSearchRoute()
-        CAPTURE_HOST ->
+        }
+
+        PATH_NOTE -> {
+            segments.firstOrNull()?.parseUuidTo { NoteDetailRoute(it) }
+        }
+
+        PATH_POSTCARD -> {
+            segments.firstOrNull()?.parseUuidTo { PostcardViewerRoute(it) }
+        }
+
+        PATH_REWIND -> {
+            segments.firstOrNull()?.parseUuidTo { RewindDetailRoute(it) }
+        }
+
+        PATH_LOCATION -> {
+            LocationTimelineRoute
+        }
+
+        PATH_EVENT -> {
+            segments.firstOrNull()?.let { EventDetailRoute(it) }
+        }
+
+        PATH_SEARCH -> {
+            uri.toSearchRoute()
+        }
+
+        CAPTURE_HOST -> {
             captureRoute(
                 mode = segments.firstOrNull() ?: uri.getQueryParameter(EXTRA_CAPTURE_MODE),
                 journalId = uri.getQueryParameter(CAPTURE_JOURNAL_PARAM),
             )
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 
 private fun Uri.toSearchRoute(): SearchRoute =
@@ -147,49 +177,63 @@ private fun Uri.toSearchRoute(): SearchRoute =
  */
 fun NavKey.toWebUrl(): String? =
     when (this) {
-        is JournalDetailsRoute ->
+        is JournalDetailsRoute -> {
             LOGDATE_API_BASE_URL
                 .buildUpon()
                 .appendPath(PATH_JOURNAL)
                 .appendPath(journalId)
                 .build()
                 .toString()
-        is TimelineDetailRoute ->
+        }
+
+        is TimelineDetailRoute -> {
             LOGDATE_API_BASE_URL
                 .buildUpon()
                 .appendPath(PATH_DAY)
                 .appendPath(dateIso)
                 .build()
                 .toString()
-        is NoteDetailRoute ->
+        }
+
+        is NoteDetailRoute -> {
             LOGDATE_API_BASE_URL
                 .buildUpon()
                 .appendPath(PATH_NOTE)
                 .appendPath(noteId)
                 .build()
                 .toString()
-        is PostcardViewerRoute ->
+        }
+
+        is PostcardViewerRoute -> {
             LOGDATE_API_BASE_URL
                 .buildUpon()
                 .appendPath(PATH_POSTCARD)
                 .appendPath(postcardId)
                 .build()
                 .toString()
-        is RewindDetailRoute ->
+        }
+
+        is RewindDetailRoute -> {
             LOGDATE_API_BASE_URL
                 .buildUpon()
                 .appendPath(PATH_REWIND)
                 .appendPath(id)
                 .build()
                 .toString()
-        is EventDetailRoute ->
+        }
+
+        is EventDetailRoute -> {
             LOGDATE_API_BASE_URL
                 .buildUpon()
                 .appendPath(PATH_EVENT)
                 .appendPath(eventId)
                 .build()
                 .toString()
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 
 private fun resolveWebPath(segments: List<String>): NavKey? {
@@ -229,7 +273,9 @@ fun resolveMainActivityNavKey(intent: Intent?): NavKey? {
     // The first family the intent belongs to decides; a malformed one resolves to nothing rather
     // than to another family's destination.
     return when {
-        intent.action == Intent.ACTION_APPLICATION_PREFERENCES -> SettingsRoute()
+        intent.action == Intent.ACTION_APPLICATION_PREFERENCES -> {
+            SettingsRoute()
+        }
 
         intent.action == ACTION_CAPTURE -> {
             captureRoute(
@@ -239,13 +285,17 @@ fun resolveMainActivityNavKey(intent: Intent?): NavKey? {
             )
         }
 
-        navSource in WIDGET_AND_PLAYBACK_SOURCES -> resolveNavSourceRoute(intent, navSource)
+        navSource in WIDGET_AND_PLAYBACK_SOURCES -> {
+            resolveNavSourceRoute(intent, navSource)
+        }
 
         intent.getStringExtra(EXTRA_LOCATION_NAV_SOURCE) == NAV_SOURCE_LOCATION_HISTORY -> {
             LocationTimelineRoute
         }
 
-        ambientTarget in AMBIENT_PROMPT_TARGETS -> resolveAmbientPromptRoute(intent, ambientTarget)
+        ambientTarget in AMBIENT_PROMPT_TARGETS -> {
+            resolveAmbientPromptRoute(intent, ambientTarget)
+        }
 
         intent.getStringExtra(EXTRA_REWIND_NOTIFICATION_TARGET) == REWIND_NOTIFICATION_TARGET_DETAIL -> {
             val rewindId = intent.getStringExtra(EXTRA_REWIND_NOTIFICATION_ID) ?: return null
@@ -257,9 +307,13 @@ fun resolveMainActivityNavKey(intent: Intent?): NavKey? {
         }
 
         // Deep link URIs: logdate://journal/{id}, logdate://day/{date}, etc.
-        intent.data != null -> resolveDeepLinkUri(intent.data!!)
+        intent.data != null -> {
+            resolveDeepLinkUri(intent.data!!)
+        }
 
-        else -> null
+        else -> {
+            null
+        }
     }
 }
 
@@ -286,13 +340,24 @@ private fun resolveNavSourceRoute(
     navSource: String?,
 ): NavKey? =
     when (navSource) {
-        NAV_SOURCE_AUDIO_RECORDING ->
+        NAV_SOURCE_AUDIO_RECORDING -> {
             intent.getStringExtra(EXTRA_RECORDING_DRAFT_ID)?.parseUuidTo {
                 EntryEditorRoute(draftId = it.toString(), resumeRecording = true)
             }
-        NAV_SOURCE_AUDIO_PLAYBACK -> intent.getStringExtra(EXTRA_NOTE_ID)?.parseUuidTo(::NoteDetailRoute)
-        NAV_SOURCE_ON_THIS_DAY_WIDGET -> intent.getStringExtra(EXTRA_WIDGET_TARGET_DATE)?.parseDateString(::TimelineDetailRoute)
-        NAV_SOURCE_FIXED_MEMORY_WIDGET -> intent.getStringExtra(EXTRA_WIDGET_NOTE_ID)?.parseUuidTo(::NoteDetailRoute)
+        }
+
+        NAV_SOURCE_AUDIO_PLAYBACK -> {
+            intent.getStringExtra(EXTRA_NOTE_ID)?.parseUuidTo(::NoteDetailRoute)
+        }
+
+        NAV_SOURCE_ON_THIS_DAY_WIDGET -> {
+            intent.getStringExtra(EXTRA_WIDGET_TARGET_DATE)?.parseDateString(::TimelineDetailRoute)
+        }
+
+        NAV_SOURCE_FIXED_MEMORY_WIDGET -> {
+            intent.getStringExtra(EXTRA_WIDGET_NOTE_ID)?.parseUuidTo(::NoteDetailRoute)
+        }
+
         NAV_SOURCE_NEW_ENTRY_WIDGET -> {
             widgetCaptureRoute(
                 photoUri = intent.getStringExtra(EXTRA_WIDGET_PHOTO_URI),
@@ -300,7 +365,10 @@ private fun resolveNavSourceRoute(
                 camera = intent.getBooleanExtra(EXTRA_WIDGET_CAMERA, false),
             )
         }
-        else -> null
+
+        else -> {
+            null
+        }
     }
 
 /** Where a capture nudge or memory prompt opens, or null when its extras are missing or invalid. */
@@ -309,15 +377,23 @@ private fun resolveAmbientPromptRoute(
     target: String?,
 ): NavKey? =
     when (target) {
-        AMBIENT_PROMPT_TARGET_NEW_ENTRY -> EntryEditorRoute()
+        AMBIENT_PROMPT_TARGET_NEW_ENTRY -> {
+            EntryEditorRoute()
+        }
+
         AMBIENT_PROMPT_TARGET_DRAFT -> {
             intent.getStringExtra(EXTRA_AMBIENT_PROMPT_DRAFT_ID)?.parseUuidTo { EntryEditorRoute(draftId = it.toString()) }
         }
+
         AMBIENT_PROMPT_TARGET_MEMORY_RECALL -> {
             intent.getStringExtra(EXTRA_AMBIENT_PROMPT_RECALL_DATE)?.parseDateString(::TimelineDetailRoute)
         }
+
         AMBIENT_PROMPT_TARGET_EVENT_DETAIL -> {
             intent.getStringExtra(EXTRA_AMBIENT_PROMPT_EVENT_ID)?.let { runCatching { EventDetailRoute(it) }.getOrNull() }
         }
-        else -> null
+
+        else -> {
+            null
+        }
     }

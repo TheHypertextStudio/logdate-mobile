@@ -110,29 +110,39 @@ class GetHomeRecommendationUseCase(
             val nextUncapturedEvent =
                 if (settings.eventNudgesEnabled) firstUncapturedEvent(upcomingEvents) else null
             when {
-                recentDraft != null ->
+                recentDraft != null -> {
                     HomeRecommendation.CompleteYourDraft(
                         draftId = recentDraft.id,
                     )
-                nextUncapturedEvent != null ->
+                }
+
+                nextUncapturedEvent != null -> {
                     HomeRecommendation.UpcomingEvent(
                         eventId = nextUncapturedEvent.id,
                         title = nextUncapturedEvent.title,
                         startTime = nextUncapturedEvent.startTime,
                         placeName = null,
                     )
-                recall != null ->
+                }
+
+                recall != null -> {
                     HomeRecommendation.MemoryRecall(
                         date = recall.date,
                         summary = recall.summary,
                         people = recall.people,
                         mediaUris = recall.mediaUris,
                     )
-                !hasNotes ->
+                }
+
+                !hasNotes -> {
                     HomeRecommendation.EmptyDay(
                         location = location,
                     )
-                else -> HomeRecommendation.None
+                }
+
+                else -> {
+                    HomeRecommendation.None
+                }
             }
         }
 

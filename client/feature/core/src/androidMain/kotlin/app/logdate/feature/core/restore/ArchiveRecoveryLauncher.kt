@@ -124,7 +124,7 @@ internal fun ArchiveRecoveryRecord.canResumeFromRetainedSource(
     this.scope == scope &&
         sourceAvailable &&
         !requiresSource &&
-        (!metadataApplied || options.includeMedia && pending.isNotEmpty())
+        (!metadataApplied || (options.includeMedia && pending.isNotEmpty()))
 
 internal fun ArchiveRecoveryRecord.recoverySummary(canResume: Boolean = false): RestoreSummary =
     (
@@ -143,7 +143,7 @@ internal fun ArchiveRecoveryRecord.recoverySummary(canResume: Boolean = false): 
         recoveringMedia =
             !pausedByUser &&
                 (
-                    !metadataApplied && !requiresSource || metadataApplied && pending.isNotEmpty() && summary?.recoveringMedia == true
+                    (!metadataApplied && !requiresSource) || (metadataApplied && pending.isNotEmpty() && summary?.recoveringMedia == true)
                 ),
         unavailableOriginals = pending.count { it.role == RecoveryMediaRole.ORIGINAL },
         unavailablePreviews = pending.count { it.role == RecoveryMediaRole.THUMBNAIL },

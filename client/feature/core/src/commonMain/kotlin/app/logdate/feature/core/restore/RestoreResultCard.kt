@@ -92,7 +92,7 @@ internal fun RestoreSuccessCard(
     val fileDetails = archiveDetails(summary.exportDate?.toReadableDateShort(), summary.appVersion)
     val needsAction =
         incomplete &&
-            (!summary.recoveringMedia || summary.needsAnotherArchive && !summary.metadataIncomplete) &&
+            (!summary.recoveringMedia || (summary.needsAnotherArchive && !summary.metadataIncomplete)) &&
             summary.recoveryId != null
 
     Column(

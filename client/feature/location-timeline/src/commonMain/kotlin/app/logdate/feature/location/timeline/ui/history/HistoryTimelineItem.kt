@@ -93,14 +93,21 @@ internal fun HistoryTimelineItem(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 when (item.kind) {
-                    HistoryItemKind.Visit ->
+                    HistoryItemKind.Visit -> {
                         Box(
                             Modifier
                                 .size(if (isSelected) 12.dp else 8.dp)
                                 .background(if (isSelected) colors.primary else colors.outline, CircleShape),
                         )
-                    HistoryItemKind.Journey -> Icon(Icons.Default.Route, null, Modifier.size(18.dp))
-                    HistoryItemKind.Gap -> Icon(Icons.Default.MoreHoriz, null, Modifier.size(18.dp))
+                    }
+
+                    HistoryItemKind.Journey -> {
+                        Icon(Icons.Default.Route, null, Modifier.size(18.dp))
+                    }
+
+                    HistoryItemKind.Gap -> {
+                        Icon(Icons.Default.MoreHoriz, null, Modifier.size(18.dp))
+                    }
                 }
             }
         }

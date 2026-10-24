@@ -203,16 +203,19 @@ class CeremonyActivity : Activity() {
     private fun failCurrentCeremony(error: Throwable) {
         val result = Intent()
         when (intent.action) {
-            ACTION_CREATE ->
+            ACTION_CREATE -> {
                 PendingIntentHandler.setCreateCredentialException(
                     result,
                     CreateCredentialUnknownException(error.message),
                 )
-            else ->
+            }
+
+            else -> {
                 PendingIntentHandler.setGetCredentialException(
                     result,
                     GetCredentialUnknownException(error.message),
                 )
+            }
         }
         setResult(RESULT_OK, result)
     }

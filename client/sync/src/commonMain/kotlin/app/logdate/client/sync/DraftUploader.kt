@@ -59,6 +59,7 @@ internal class DraftUploader(
             val uploaded =
                 when (pending.operation) {
                     PendingOperation.DELETE -> deleteDraft(pending, draftId, errors)
+
                     PendingOperation.CREATE,
                     PendingOperation.UPDATE,
                     -> uploadDraft(pending, draftId, draftsById[pending.entityId], deviceId, errors)

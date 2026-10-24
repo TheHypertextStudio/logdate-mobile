@@ -49,14 +49,17 @@ class AnnualRewindGenerationWorker(
                 }
                 Result.success()
             }
+
             is GenerateBasicRewindResult.AlreadyInProgress -> {
                 Napier.d("AnnualRewindGenerationWorker: generation already in progress")
                 Result.success()
             }
+
             is GenerateBasicRewindResult.NoContent -> {
                 Napier.d("AnnualRewindGenerationWorker: no annual content for $priorYear, skipping")
                 Result.success()
             }
+
             is GenerateBasicRewindResult.Error -> {
                 Napier.w("AnnualRewindGenerationWorker: generation failed — ${annualResult.error}")
                 Result.retry()

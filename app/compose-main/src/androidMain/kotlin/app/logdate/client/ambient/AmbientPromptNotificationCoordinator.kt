@@ -108,14 +108,17 @@ class AmbientPromptNotificationCoordinator(
                     is AmbientPromptPayload.CaptureNudge -> {
                         putExtra(EXTRA_AMBIENT_PROMPT_TARGET, AMBIENT_PROMPT_TARGET_NEW_ENTRY)
                     }
+
                     is AmbientPromptPayload.DraftRescue -> {
                         putExtra(EXTRA_AMBIENT_PROMPT_TARGET, AMBIENT_PROMPT_TARGET_DRAFT)
                         putExtra(EXTRA_AMBIENT_PROMPT_DRAFT_ID, payload.draftId.toString())
                     }
+
                     is AmbientPromptPayload.MemoryRecall -> {
                         putExtra(EXTRA_AMBIENT_PROMPT_TARGET, AMBIENT_PROMPT_TARGET_MEMORY_RECALL)
                         putExtra(EXTRA_AMBIENT_PROMPT_RECALL_DATE, payload.date.toString())
                     }
+
                     is AmbientPromptPayload.EventNudge -> {
                         putExtra(EXTRA_AMBIENT_PROMPT_TARGET, AMBIENT_PROMPT_TARGET_EVENT_DETAIL)
                         putExtra(EXTRA_AMBIENT_PROMPT_EVENT_ID, payload.eventId.toString())
@@ -134,8 +137,11 @@ class AmbientPromptNotificationCoordinator(
     private fun AmbientPromptCandidate.channelKey(): LogDateNotificationChannelKey =
         when (family) {
             AmbientPromptFamily.CAPTURE_NUDGES -> LogDateNotificationChannelKey.CAPTURE_NUDGES
+
             AmbientPromptFamily.DRAFT_RESCUE -> LogDateNotificationChannelKey.DRAFT_RESCUE
+
             AmbientPromptFamily.MEMORY_RECALL -> LogDateNotificationChannelKey.MEMORY_RECALL
+
             // Event nudges live on the capture-nudge channel — they're the same kind of
             // "act now" reminder semantically, and the user already groups channel preferences
             // for capture nudges; piggybacking avoids forcing them to manage another channel.
@@ -144,21 +150,25 @@ class AmbientPromptNotificationCoordinator(
 
     private fun notificationContent(candidate: AmbientPromptCandidate): AmbientNotificationContent =
         when (val payload = candidate.payload) {
-            is AmbientPromptPayload.CaptureNudge ->
+            is AmbientPromptPayload.CaptureNudge -> {
                 when (payload.style) {
-                    AmbientCaptureNudgeStyle.MORNING ->
+                    AmbientCaptureNudgeStyle.MORNING -> {
                         AmbientNotificationContent(
                             title = context.getString(NotificationResources.string.ambient_prompt_capture_morning_title),
                             body = context.getString(NotificationResources.string.ambient_prompt_capture_morning_body),
                             category = NotificationCompat.CATEGORY_REMINDER,
                         )
-                    AmbientCaptureNudgeStyle.EVENING ->
+                    }
+
+                    AmbientCaptureNudgeStyle.EVENING -> {
                         AmbientNotificationContent(
                             title = context.getString(NotificationResources.string.ambient_prompt_capture_evening_title),
                             body = context.getString(NotificationResources.string.ambient_prompt_capture_evening_body),
                             category = NotificationCompat.CATEGORY_REMINDER,
                         )
-                    AmbientCaptureNudgeStyle.NOVEL_PLACE ->
+                    }
+
+                    AmbientCaptureNudgeStyle.NOVEL_PLACE -> {
                         AmbientNotificationContent(
                             title =
                                 payload.placeName?.let {
@@ -170,25 +180,33 @@ class AmbientPromptNotificationCoordinator(
                                 } ?: context.getString(NotificationResources.string.ambient_prompt_capture_novel_place_body_fallback),
                             category = NotificationCompat.CATEGORY_REMINDER,
                         )
+                    }
                 }
-            is AmbientPromptPayload.DraftRescue ->
+            }
+
+            is AmbientPromptPayload.DraftRescue -> {
                 AmbientNotificationContent(
                     title = context.getString(NotificationResources.string.ambient_prompt_draft_rescue_title),
                     body = context.getString(NotificationResources.string.ambient_prompt_draft_rescue_body),
                     category = NotificationCompat.CATEGORY_REMINDER,
                 )
-            is AmbientPromptPayload.MemoryRecall ->
+            }
+
+            is AmbientPromptPayload.MemoryRecall -> {
                 AmbientNotificationContent(
                     title = context.getString(NotificationResources.string.ambient_prompt_memory_recall_title),
                     body = payload.summary.ifBlank { context.getString(NotificationResources.string.ambient_prompt_memory_recall_body) },
                     category = NotificationCompat.CATEGORY_RECOMMENDATION,
                 )
-            is AmbientPromptPayload.EventNudge ->
+            }
+
+            is AmbientPromptPayload.EventNudge -> {
                 AmbientNotificationContent(
                     title = payload.title,
                     body = eventNudgeBody(payload),
                     category = NotificationCompat.CATEGORY_REMINDER,
                 )
+            }
         }
 
     /**

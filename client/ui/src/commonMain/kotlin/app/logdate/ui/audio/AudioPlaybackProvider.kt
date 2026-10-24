@@ -108,6 +108,7 @@ fun AudioPlaybackProvider(
                         accentColor = metadata.accentColor,
                     )
             }
+
             !statusValue.isPlaying && statusValue.progress == 0f && statusUri == null -> {
                 currentlyPlayingId = null
                 currentAudioUri = null

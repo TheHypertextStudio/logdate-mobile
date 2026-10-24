@@ -93,6 +93,7 @@ internal fun RestoreBottomSheet(
                             onDismiss = onDismiss,
                         )
                     }
+
                     is RestoreState.Selecting -> {
                         RestoreConfirmContent(
                             onSelectFile = onSelectFile,
@@ -100,6 +101,7 @@ internal fun RestoreBottomSheet(
                             buttonsEnabled = false,
                         )
                     }
+
                     is RestoreState.Previewing -> {
                         RestorePreviewContent(
                             preview = state.preview,
@@ -111,6 +113,7 @@ internal fun RestoreBottomSheet(
                             showActions = false,
                         )
                     }
+
                     is RestoreState.Restoring -> {
                         RestoreProgressCard(
                             progressPercent = state.progressPercent,
@@ -118,6 +121,7 @@ internal fun RestoreBottomSheet(
                             onCancel = onCancel,
                         )
                     }
+
                     is RestoreState.Completed -> {
                         RestoreSuccessCard(
                             summary = state.summary,
@@ -125,6 +129,7 @@ internal fun RestoreBottomSheet(
                             onRecoverMedia = onRetry,
                         )
                     }
+
                     is RestoreState.Failed -> {
                         RestoreFailureCard(
                             reason = resolveErrorText(state.error),
@@ -142,6 +147,7 @@ internal fun RestoreBottomSheet(
                                 },
                         )
                     }
+
                     is RestoreState.Idle -> {
                         Spacer(modifier = Modifier.height(Spacing.lg))
                     }

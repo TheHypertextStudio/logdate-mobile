@@ -16,15 +16,19 @@ class GetCurrentAccountUseCase(
      */
     suspend operator fun invoke(request: AccountRequest): AccountResult =
         when (request) {
-            is AccountRequest.GetCurrentAccount ->
+            is AccountRequest.GetCurrentAccount -> {
                 AccountResult.CurrentAccount(
                     passkeyAccountRepository.currentAccount,
                 )
-            is AccountRequest.GetAuthenticationStatus ->
+            }
+
+            is AccountRequest.GetAuthenticationStatus -> {
                 AccountResult.AuthenticationStatus(
                     passkeyAccountRepository.isAuthenticated,
                 )
-            is AccountRequest.GetAccountState ->
+            }
+
+            is AccountRequest.GetAccountState -> {
                 AccountResult.AccountState(
                     passkeyAccountRepository.currentAccount.map { account ->
                         when {
@@ -33,6 +37,8 @@ class GetCurrentAccountUseCase(
                         }
                     },
                 )
+            }
+
             is AccountRequest.RefreshAccountInfo -> {
                 val result = passkeyAccountRepository.getAccountInfo()
                 AccountResult.RefreshResult(result)

@@ -46,16 +46,23 @@ internal object RecoveryOperationCheck {
         val head = head(history)
         when {
             !PlcEncoding.encodeUnsigned(operation).contentEquals(payload) -> refuse("the bytes to sign are not the operation shown")
+
             operation.type != PlcOperation.TYPE -> refuse("the operation is a ${operation.type}")
+
             operation.prev != head.cid -> refuse("the operation does not follow the identity's latest change")
+
             operation.rotationKeys != listOf(recoveryDidKey, nextKey) -> refuse("the operation changes the rotation keys")
+
             operation.verificationMethods !=
                 mapOf(
                     ATPROTO_VERIFICATION_METHOD to nextKey,
                 )
             -> refuse("the operation changes the signing key")
+
             operation.alsoKnownAs != head.operation.alsoKnownAs -> refuse("the operation changes the handle")
+
             operation.alsoKnownAs != listOf("at://$handle") -> refuse("the operation names another handle")
+
             operation.services != head.operation.services -> refuse("the operation changes the services")
         }
     }

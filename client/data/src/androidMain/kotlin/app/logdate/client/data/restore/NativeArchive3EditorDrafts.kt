@@ -25,7 +25,11 @@ internal object NativeArchive3EditorDrafts {
                     check(value is String)
                     selected += Json.decodeFromString<List<EditorDraft>>(value)
                 }
-                name == "editor_drafts_legacy_owner" || name.endsWith("_legacy_copied") -> Unit
+
+                name == "editor_drafts_legacy_owner" || name.endsWith("_legacy_copied") -> {
+                    Unit
+                }
+
                 name == "editor_drafts" || name == "editor_drafts_anonymous" || name.startsWith("editor_drafts_scope_") -> {
                     check(value is String)
                     val state = ArchiveDraftStorageState.decode(Json, value)
@@ -34,13 +38,16 @@ internal object NativeArchive3EditorDrafts {
                     }
                     if (name == "editor_drafts" && legacyOwner != null && legacyOwner != selectedOwner) {
                         check(state.drafts.isEmpty()) { "A different owner has legacy editor drafts" }
-                    } else if (name == selectedScope && ownerBound || name in setOf("editor_drafts", "editor_drafts_anonymous")) {
+                    } else if ((name == selectedScope && ownerBound) || name in setOf("editor_drafts", "editor_drafts_anonymous")) {
                         selected += state.drafts
                     } else {
                         check(state.drafts.isEmpty()) { "A different owner has editor drafts" }
                     }
                 }
-                name.startsWith("editor_drafts") -> check(false) { "Unrecognized editor draft custody" }
+
+                name.startsWith("editor_drafts") -> {
+                    check(false) { "Unrecognized editor draft custody" }
+                }
             }
         }
         val byId = selected.groupBy { it.id }

@@ -101,6 +101,7 @@ fun UniversalSearchResultItem(
             containerColor = scheme.primaryContainer
             contentColor = scheme.onPrimaryContainer
         }
+
         SearchContentType.TRANSCRIPTION,
         SearchContentType.AMBIENT_SOUND,
         SearchContentType.PLACE,
@@ -108,10 +109,12 @@ fun UniversalSearchResultItem(
             containerColor = scheme.tertiaryContainer
             contentColor = scheme.onTertiaryContainer
         }
+
         SearchContentType.MEDIA_CAPTION -> {
             containerColor = scheme.surfaceContainerHigh
             contentColor = scheme.onSurface
         }
+
         SearchContentType.TEXT_NOTE,
         SearchContentType.STICKER,
         SearchContentType.POSTCARD,

@@ -1,3 +1,6 @@
+from unittest.mock import Mock
+import tempfile
+import json
 from pathlib import Path
 import os
 import re
@@ -311,6 +314,66 @@ class ManagedDriverControllerTest(unittest.TestCase):
         self.assertTrue(command[1].endswith("native-backup-acceptance.py"))
         self.assertIn("--seed-empty-source", command)
         self.assertEqual("--exercise-pending-camera-draft", command[-1])
+
+    def test_expired_process_snapshot_cannot_inflate_the_live_pair(self):
+        avd = "owned_avd"
+        candidates = {
+            pid: {"managedId": f"device{pid}_GradleManagedDevice", "avd": avd}
+            for pid in (11, 12, 13)
+        }
+
+        def identity(pid):
+            if pid == 11:
+                raise RuntimeError("The owned process is no longer live")
+            return {
+                "birth": str(pid),
+                "command": f"/sdk/qemu-system-x86_64 @{avd} -id device{pid}_GradleManagedDevice",
+            }
+
+        result = MODULE["live_managed_candidates"](
+            candidates, avd, process_identity=identity
+        )
+        self.assertEqual({12, 13}, set(result))
+        self.assertEqual("12", result[12]["identity"]["birth"])
+
+    def test_three_live_owned_launchers_remain_ambiguous_and_retain_evidence(self):
+        avd = "owned_avd"
+        candidates = {
+            pid: {"managedId": f"device{pid}_GradleManagedDevice", "avd": avd}
+            for pid in (11, 12, 13)
+        }
+
+        def identity(pid):
+            return {
+                "birth": str(pid),
+                "command": f"/sdk/qemu-system-x86_64 @{avd} -id device{pid}_GradleManagedDevice",
+            }
+
+        with tempfile.TemporaryDirectory() as folder:
+            diagnostic = Path(folder) / "ambiguous.json"
+            with self.assertRaisesRegex(RuntimeError, "custody is ambiguous"):
+                MODULE["live_managed_candidates"](
+                    candidates, avd, diagnostics=diagnostic, process_identity=identity
+                )
+            self.assertEqual(
+                {"11", "12", "13"}, set(json.loads(diagnostic.read_text()))
+            )
+            self.assertEqual(384, diagnostic.stat().st_mode & 511)
+
+    def test_reused_discovery_pid_cannot_adopt_a_different_managed_instance(self):
+        candidates = {
+            12: {"managedId": "original_GradleManagedDevice", "avd": "owned_avd"}
+        }
+        identity = {
+            "birth": "new",
+            "command": "/sdk/qemu-system-x86_64 @owned_avd -id foreign_GradleManagedDevice",
+        }
+        self.assertEqual(
+            {},
+            MODULE["live_managed_candidates"](
+                candidates, "owned_avd", process_identity=Mock(return_value=identity)
+            ),
+        )
 
 
 if __name__ == "__main__":

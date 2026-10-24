@@ -142,7 +142,10 @@ internal fun observeNativeRestoreDeliveryCompletions(
                 if (!completionPending || state == ApplicationStartupState.Loading) return@collect
                 completionPending = false
                 when (state) {
-                    ApplicationStartupState.Ready -> reconcile()
+                    ApplicationStartupState.Ready -> {
+                        reconcile()
+                    }
+
                     is ApplicationStartupState.Failed -> {
                         if (applicationStartupFailureMessage(state.cause) in
                             setOf(
@@ -154,7 +157,10 @@ internal fun observeNativeRestoreDeliveryCompletions(
                             startup.start()
                         }
                     }
-                    ApplicationStartupState.Loading -> Unit
+
+                    ApplicationStartupState.Loading -> {
+                        Unit
+                    }
                 }
             }
     }

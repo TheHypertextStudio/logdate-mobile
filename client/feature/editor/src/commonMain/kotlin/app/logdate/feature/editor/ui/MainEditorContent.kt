@@ -92,16 +92,29 @@ fun MainEditorContent(
 
     val displayState: EditorDisplay =
         when {
-            uiState.blocks.isEmpty() -> EditorDisplay.Empty
-            expandAnySelectedBlock && expandedBlock != null -> EditorDisplay.Expanded(expandedBlock)
+            uiState.blocks.isEmpty() -> {
+                EditorDisplay.Empty
+            }
+
+            expandAnySelectedBlock && expandedBlock != null -> {
+                EditorDisplay.Expanded(expandedBlock)
+            }
+
             focusState is EditorFocus.Drawing &&
                 expandedBlock != null &&
-                uiState.blockPresentations[expandedBlock.id]?.immersive == true -> EditorDisplay.Expanded(expandedBlock)
-            focusState is EditorFocus.Camera && expandedBlock is CameraBlockUiState && expandedBlock.uri == null ->
+                uiState.blockPresentations[expandedBlock.id]?.immersive == true -> {
+                EditorDisplay.Expanded(expandedBlock)
+            }
+
+            focusState is EditorFocus.Camera && expandedBlock is CameraBlockUiState && expandedBlock.uri == null -> {
                 EditorDisplay.Expanded(
                     expandedBlock,
                 )
-            else -> EditorDisplay.List
+            }
+
+            else -> {
+                EditorDisplay.List
+            }
         }
 
     val reduceMotion = rememberSystemReduceMotion().value

@@ -54,11 +54,13 @@ internal class ConditionalCreateSettler(
                 Napier.d("Created a record")
                 1
             }
+
             is ConditionalCreateResult.AlreadyExists -> {
                 retryCoordinator.markUploadSettled(entityType, pending, Clock.System.now(), outcome.serverVersion)
                 Napier.i("The record was already on the server; the next download brings its copy")
                 1
             }
+
             is ConditionalCreateResult.Deleted -> {
                 onDeleted()
                 retryCoordinator.markUploadSettled(entityType, pending, outcome.deletedAt, 0L)

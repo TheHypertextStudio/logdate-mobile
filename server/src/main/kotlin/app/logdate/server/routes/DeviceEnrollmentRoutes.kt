@@ -217,7 +217,7 @@ private fun Route.issueEnrollmentSessionRoute(
             repository.get(accountId, id, now)
                 ?: return@post call.respond(HttpStatusCode.NotFound, error("NOT_FOUND", "Enrollment unavailable"))
         when (repository.markSessionIssued(accountId, id, now)) {
-            SessionIssueResult.ISSUED, SessionIssueResult.ALREADY_ISSUED ->
+            SessionIssueResult.ISSUED, SessionIssueResult.ALREADY_ISSUED -> {
                 call.respond(
                     tokenService.generateEnrollmentTokens(
                         account.id.toString(),
@@ -226,10 +226,15 @@ private fun Route.issueEnrollmentSessionRoute(
                         Instant.fromEpochMilliseconds(enrollment.expiresAt - ENROLLMENT_LIFETIME_MS),
                     ),
                 )
-            SessionIssueResult.NOT_PENDING ->
+            }
+
+            SessionIssueResult.NOT_PENDING -> {
                 call.respond(HttpStatusCode.Conflict, error("ENROLLMENT_UNAVAILABLE", "Enrollment unavailable"))
-            SessionIssueResult.NOT_FOUND ->
+            }
+
+            SessionIssueResult.NOT_FOUND -> {
                 call.respond(HttpStatusCode.NotFound, error("NOT_FOUND", "Enrollment unavailable"))
+            }
         }
     }
 }

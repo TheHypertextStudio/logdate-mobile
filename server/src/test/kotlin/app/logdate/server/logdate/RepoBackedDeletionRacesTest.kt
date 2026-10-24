@@ -179,7 +179,9 @@ class RepoBackedDeletionRacesTest {
                 )
             }
 
-            LogDateCollectionKind.MOMENT -> error("Moments use their own repository")
+            LogDateCollectionKind.MOMENT -> {
+                error("Moments use their own repository")
+            }
 
             LogDateCollectionKind.DRAFT -> {
                 repository.upsertDraft(

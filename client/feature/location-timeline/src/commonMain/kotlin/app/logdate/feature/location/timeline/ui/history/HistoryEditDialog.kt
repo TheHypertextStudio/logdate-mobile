@@ -122,7 +122,7 @@ internal fun HistoryEditDialog(
     }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             when (action) {
-                HistoryEditAction.ChangeActivity ->
+                HistoryEditAction.ChangeActivity -> {
                     listOf(
                         TravelMode.WALKING,
                         TravelMode.RUNNING,
@@ -137,6 +137,8 @@ internal fun HistoryEditDialog(
                             onDismiss()
                         }) { Text(stringResource(mode.humanName())) }
                     }
+                }
+
                 HistoryEditAction.ChangeTime, HistoryEditAction.AddVisit -> {
                     TextButton(onClick = { choosingArrival = true }) { Text(stringResource(Res.string.history_arrived_on, arrivalDate)) }
                     OutlinedTextField(
@@ -153,7 +155,10 @@ internal fun HistoryEditDialog(
                         placeholder = { Text(stringResource(Res.string.history_left_time_placeholder)) },
                     )
                 }
-                else -> Unit
+
+                else -> {
+                    Unit
+                }
             }
             if (action == HistoryEditAction.ChangePlace || action == HistoryEditAction.AddVisit) {
                 OutlinedTextField(name, { name = it }, label = { Text(stringResource(Res.string.history_place_name)) })

@@ -39,10 +39,17 @@ class PhoneReminderEnvironmentReader(
         val backend = config.getCurrentBackendUrl()
         val audience =
             when {
-                session == null && bound == null -> "local"
-                bound != null && bound.session == session && bound.origin == backend && bound.session.accountId.isNotBlank() ->
+                session == null && bound == null -> {
+                    "local"
+                }
+
+                bound != null && bound.session == session && bound.origin == backend && bound.session.accountId.isNotBlank() -> {
                     Json.encodeToString(listOf("cloud", bound.origin, bound.session.accountId))
-                else -> ""
+                }
+
+                else -> {
+                    ""
+                }
             }
         val enabled = flags.isEnabled(FeatureFlag.WATCH_EXPERIENCE_V2) && shared.get(SharedPreferenceKey.RemindersEnabled)
         val capturePlaces = shared.get(SharedPreferenceKey.CapturePlaces) && locationAllowed()

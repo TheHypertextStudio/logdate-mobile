@@ -66,21 +66,29 @@ fun DateRangeFilter.window(
     val today: LocalDate = now.toLocalDateTime(timeZone).date
     val (fromDate: LocalDate, toExclusiveDate: LocalDate) =
         when (this) {
-            DateRangeFilter.Today -> today to today.plus(1, DateTimeUnit.DAY)
+            DateRangeFilter.Today -> {
+                today to today.plus(1, DateTimeUnit.DAY)
+            }
+
             DateRangeFilter.ThisWeek -> {
                 val offset = (today.dayOfWeek.ordinal - firstDayOfWeek.ordinal + 7) % 7
                 val startOfWeek = today.minus(offset, DateTimeUnit.DAY)
                 startOfWeek to startOfWeek.plus(7, DateTimeUnit.DAY)
             }
+
             DateRangeFilter.ThisMonth -> {
                 val startOfMonth = LocalDate(today.year, today.month, 1)
                 startOfMonth to startOfMonth.plus(1, DateTimeUnit.MONTH)
             }
+
             DateRangeFilter.ThisYear -> {
                 val startOfYear = LocalDate(today.year, 1, 1)
                 startOfYear to startOfYear.plus(1, DateTimeUnit.YEAR)
             }
-            DateRangeFilter.AllTime -> error("handled above")
+
+            DateRangeFilter.AllTime -> {
+                error("handled above")
+            }
         }
     return InstantRange(
         from = fromDate.atStartOfDayIn(timeZone),

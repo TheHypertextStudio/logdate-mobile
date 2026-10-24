@@ -90,9 +90,15 @@ private data class LibraryNoteMedia(
 
 private fun JournalNote.asLibraryNoteMedia(): LibraryNoteMedia? =
     when (this) {
-        is JournalNote.Image -> LibraryNoteMedia(note = this, uri = mediaRef, isVideo = false)
-        is JournalNote.Video -> LibraryNoteMedia(note = this, uri = mediaRef, isVideo = true)
-        is JournalNote.Audio ->
+        is JournalNote.Image -> {
+            LibraryNoteMedia(note = this, uri = mediaRef, isVideo = false)
+        }
+
+        is JournalNote.Video -> {
+            LibraryNoteMedia(note = this, uri = mediaRef, isVideo = true)
+        }
+
+        is JournalNote.Audio -> {
             LibraryNoteMedia(
                 note = this,
                 uri = mediaRef,
@@ -100,5 +106,9 @@ private fun JournalNote.asLibraryNoteMedia(): LibraryNoteMedia? =
                 isAudio = true,
                 durationMs = durationMs,
             )
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }

@@ -149,14 +149,29 @@ fun MoveServerContent(
     onKeepSource: () -> Unit,
 ) {
     when (state) {
-        MoveServerUiState.Loading, MoveServerUiState.Closed ->
+        MoveServerUiState.Loading, MoveServerUiState.Closed -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        }
 
-        is MoveServerUiState.ChooseServer -> ChooseServerStep(state, onClose, onAddressChange, onCheckServer)
-        is MoveServerUiState.Review -> ReviewStep(state, onBack, onContinueToAccount)
-        is MoveServerUiState.CreateAccount -> CreateAccountStep(state, onBack, onCreateAccount, onSignInInstead)
-        is MoveServerUiState.Uploading -> UploadingStep(state, onClose)
-        is MoveServerUiState.Finished -> FinishedStep(state, onDeleteSource, onSignInToSourceAndDelete, onKeepSource)
+        is MoveServerUiState.ChooseServer -> {
+            ChooseServerStep(state, onClose, onAddressChange, onCheckServer)
+        }
+
+        is MoveServerUiState.Review -> {
+            ReviewStep(state, onBack, onContinueToAccount)
+        }
+
+        is MoveServerUiState.CreateAccount -> {
+            CreateAccountStep(state, onBack, onCreateAccount, onSignInInstead)
+        }
+
+        is MoveServerUiState.Uploading -> {
+            UploadingStep(state, onClose)
+        }
+
+        is MoveServerUiState.Finished -> {
+            FinishedStep(state, onDeleteSource, onSignInToSourceAndDelete, onKeepSource)
+        }
     }
 }
 
@@ -386,7 +401,10 @@ private fun FinishedStep(
         hero = { StepHeroIcon(Icons.Outlined.CloudDone) },
         actions = {
             when (cleanup) {
-                is Cleanup.Blocked -> StepBusyButton(stringResource(Res.string.move_done_close), onClick = onKeep, busy = false)
+                is Cleanup.Blocked -> {
+                    StepBusyButton(stringResource(Res.string.move_done_close), onClick = onKeep, busy = false)
+                }
+
                 Cleanup.NeedsSignIn -> {
                     StepBusyButton(
                         stringResource(Res.string.move_done_sign_in_and_delete),
@@ -395,6 +413,7 @@ private fun FinishedStep(
                     )
                     TextButton(onClick = onKeep, modifier = Modifier.fillMaxWidth()) { Text(stringResource(Res.string.move_done_keep)) }
                 }
+
                 else -> {
                     StepBusyButton(
                         text = stringResource(Res.string.move_done_delete, source),
@@ -410,22 +429,35 @@ private fun FinishedStep(
     ) {
         val (message, isError) =
             when (cleanup) {
-                Cleanup.Offered, Cleanup.Deleting -> stringResource(Res.string.move_done_delete_body, destination, source) to false
-                Cleanup.NeedsSignIn -> stringResource(Res.string.move_done_needs_sign_in, source) to false
-                is Cleanup.Failed ->
+                Cleanup.Offered, Cleanup.Deleting -> {
+                    stringResource(Res.string.move_done_delete_body, destination, source) to false
+                }
+
+                Cleanup.NeedsSignIn -> {
+                    stringResource(Res.string.move_done_needs_sign_in, source) to false
+                }
+
+                is Cleanup.Failed -> {
                     stringResource(if (cleanup.offline) Res.string.move_done_failed_offline else Res.string.move_done_failed, source) to
                         true
-                is Cleanup.Blocked ->
+                }
+
+                is Cleanup.Blocked -> {
                     when (cleanup.reason) {
-                        CleanupBlock.MEDIA_ONLY_ON_OLD_SERVER ->
+                        CleanupBlock.MEDIA_ONLY_ON_OLD_SERVER -> {
                             pluralStringResource(
                                 Res.plurals.move_done_blocked_media,
                                 state.record.remoteOnlyMedia,
                                 state.record.remoteOnlyMedia,
                                 source,
                             )
-                        CleanupBlock.UPLOADS_FAILED -> stringResource(Res.string.move_done_blocked_uploads, destination, source)
+                        }
+
+                        CleanupBlock.UPLOADS_FAILED -> {
+                            stringResource(Res.string.move_done_blocked_uploads, destination, source)
+                        }
                     } to false
+                }
             }
         Text(
             text = message,
@@ -444,8 +476,11 @@ private fun Fact(text: String) {
 private fun chooseProblemMessage(problem: ChooseProblem): String =
     stringResource(
         when (problem) {
-            ChooseProblem.SameAsCurrent -> Res.string.move_problem_same_server
-            is ChooseProblem.Server ->
+            ChooseProblem.SameAsCurrent -> {
+                Res.string.move_problem_same_server
+            }
+
+            is ChooseProblem.Server -> {
                 when (problem.problem) {
                     ServerProblem.INVALID_ADDRESS -> Res.string.move_problem_invalid_address
                     ServerProblem.UNREACHABLE -> Res.string.move_problem_unreachable
@@ -453,6 +488,7 @@ private fun chooseProblemMessage(problem: ChooseProblem): String =
                     ServerProblem.OUT_OF_DATE -> Res.string.move_problem_out_of_date
                     ServerProblem.PASSKEYS_UNAVAILABLE_HERE -> Res.string.move_problem_passkeys_unavailable
                 }
+            }
         },
     )
 

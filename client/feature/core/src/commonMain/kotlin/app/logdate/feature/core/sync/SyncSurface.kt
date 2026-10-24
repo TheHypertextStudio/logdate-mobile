@@ -107,7 +107,9 @@ fun SyncStatusButton(
         SyncPresentation.MediaTooLarge,
         SyncPresentation.AccountStorageUnsupported,
         is SyncPresentation.ConflictError,
-        -> return
+        -> {
+            return
+        }
 
         is SyncPresentation.Syncing -> {
             val percent = presentation.progressPercent
@@ -260,12 +262,14 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
         is SyncPresentation.Syncing,
         is SyncPresentation.Pending,
         is SyncPresentation.Recovering,
-        -> null
+        -> {
+            null
+        }
 
         // Entries that cannot sync used to render a chip and nothing else, and the only route to
         // the screen listing them hung off the conflict banner -- so the one state a user needs to
         // act on was the one with no way to act. Once anything is actually stuck, offer the door.
-        is SyncPresentation.NetworkError ->
+        is SyncPresentation.NetworkError -> {
             if (pendingCount > 0) {
                 BannerVisual(
                     message = pluralStringResource(Res.plurals.sync_status_not_backed_up, pendingCount, pendingCount),
@@ -278,8 +282,9 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
             } else {
                 null
             }
+        }
 
-        SyncPresentation.NeedsRecovery ->
+        SyncPresentation.NeedsRecovery -> {
             BannerVisual(
                 message = stringResource(Res.string.sync_banner_needs_recovery),
                 icon = Icons.Filled.Lock,
@@ -288,8 +293,9 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
                 action = stringResource(Res.string.sync_banner_enter_recovery_phrase) to SyncAction.EnterRecoveryPhrase,
                 dismissible = false,
             )
+        }
 
-        SyncPresentation.AccountStorageUnsupported ->
+        SyncPresentation.AccountStorageUnsupported -> {
             BannerVisual(
                 message = stringResource(Res.string.sync_account_storage_unsupported),
                 icon = Icons.Filled.CloudOff,
@@ -298,8 +304,9 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
                 action = null,
                 dismissible = false,
             )
+        }
 
-        SyncPresentation.MediaTooLarge ->
+        SyncPresentation.MediaTooLarge -> {
             BannerVisual(
                 message = stringResource(Res.string.sync_account_media_too_large),
                 icon = Icons.Filled.CloudUpload,
@@ -308,8 +315,9 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
                 action = stringResource(Res.string.sync_banner_review) to SyncAction.ReviewIssues,
                 dismissible = false,
             )
+        }
 
-        SyncPresentation.AuthError ->
+        SyncPresentation.AuthError -> {
             BannerVisual(
                 message = stringResource(Res.string.sync_banner_session_expired),
                 icon = Icons.Filled.Lock,
@@ -319,8 +327,9 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
                 action = stringResource(Res.string.sync_feedback_sign_in_action) to SyncAction.SignIn,
                 dismissible = false,
             )
+        }
 
-        is SyncPresentation.StorageError ->
+        is SyncPresentation.StorageError -> {
             BannerVisual(
                 message =
                     if (pendingCount > 0) {
@@ -334,8 +343,9 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
                 action = stringResource(Res.string.sync_banner_manage) to SyncAction.ManageStorage,
                 dismissible = true,
             )
+        }
 
-        is SyncPresentation.ConflictError ->
+        is SyncPresentation.ConflictError -> {
             BannerVisual(
                 message = pluralStringResource(Res.plurals.sync_banner_conflicts, conflictCount, conflictCount),
                 icon = Icons.AutoMirrored.Filled.MergeType,
@@ -344,6 +354,7 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
                 action = stringResource(Res.string.sync_banner_review) to SyncAction.ReviewConflicts,
                 dismissible = false,
             )
+        }
     }
 }
 

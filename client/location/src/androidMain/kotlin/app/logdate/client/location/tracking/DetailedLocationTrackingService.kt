@@ -133,7 +133,9 @@ class DetailedLocationTrackingService :
                 stopSelf()
             }
 
-            else -> startDetailedTracking()
+            else -> {
+                startDetailedTracking()
+            }
         }
 
         return START_STICKY

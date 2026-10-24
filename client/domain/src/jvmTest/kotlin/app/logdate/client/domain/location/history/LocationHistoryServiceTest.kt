@@ -775,8 +775,10 @@ class LocationHistoryServiceTest {
                                 point.deviceId == deviceId &&
                                 (
                                     point.timestamp.toEpochMilliseconds() < beforeMillis ||
-                                        point.timestamp.toEpochMilliseconds() == beforeMillis &&
-                                        point.id < beforeSampleId
+                                        (
+                                            point.timestamp.toEpochMilliseconds() == beforeMillis &&
+                                                point.id < beforeSampleId
+                                        )
                                 )
                         }.sortedWith(
                             compareByDescending<Pair<HistoryRecord, LocationObservation>> {
@@ -829,7 +831,7 @@ class LocationHistoryServiceTest {
                                 .filter {
                                     it.userId == userId &&
                                         it.deviceId == deviceId &&
-                                        (it.timestamp < before || it.timestamp == before && it.sampleId < beforeSampleId)
+                                        (it.timestamp < before || (it.timestamp == before && it.sampleId < beforeSampleId))
                                 }.sortedWith(compareByDescending<LocationHistoryItem> { it.timestamp }.thenByDescending { it.sampleId })
                                 .take(limit)
 

@@ -130,10 +130,19 @@ private fun cborHeader(
 ): ByteArray {
     val mt = major shl 5
     return when {
-        value < 24 -> byteArrayOf((mt or value.toInt()).toByte())
-        value < 256 -> byteArrayOf((mt or 24).toByte(), value.toByte())
-        value < 65536 -> byteArrayOf((mt or 25).toByte(), (value shr 8).toByte(), value.toByte())
-        else ->
+        value < 24 -> {
+            byteArrayOf((mt or value.toInt()).toByte())
+        }
+
+        value < 256 -> {
+            byteArrayOf((mt or 24).toByte(), value.toByte())
+        }
+
+        value < 65536 -> {
+            byteArrayOf((mt or 25).toByte(), (value shr 8).toByte(), value.toByte())
+        }
+
+        else -> {
             byteArrayOf(
                 (mt or 26).toByte(),
                 (value shr 24).toByte(),
@@ -141,6 +150,7 @@ private fun cborHeader(
                 (value shr 8).toByte(),
                 value.toByte(),
             )
+        }
     }
 }
 

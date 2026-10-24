@@ -49,11 +49,15 @@ class FullLLMRewindStrategy(
 
         val narrative =
             when (narrativeResult) {
-                is AIResult.Success -> narrativeResult.value
+                is AIResult.Success -> {
+                    narrativeResult.value
+                }
+
                 is AIResult.Unavailable -> {
                     Napier.w("FullLLMRewindStrategy: narrative unavailable (${narrativeResult.reason}); falling back to local")
                     return fallback(input, narrativeResult.reason)
                 }
+
                 is AIResult.Error -> {
                     Napier.w("FullLLMRewindStrategy: narrative errored; falling back to local")
                     return fallback(input, aiUnavailableReason = null)
@@ -192,16 +196,25 @@ class FullLLMRewindStrategy(
         val activities = mutableSetOf<ActivityType>()
         themes.map { it.lowercase() }.forEach { theme ->
             when {
-                listOf("travel", "trip", "vacation", "flight", "road").any { theme.contains(it) } ->
+                listOf("travel", "trip", "vacation", "flight", "road").any { theme.contains(it) } -> {
                     activities.add(ActivityType.TRAVEL)
-                listOf("social", "friend", "party", "gathering", "dinner").any { theme.contains(it) } ->
+                }
+
+                listOf("social", "friend", "party", "gathering", "dinner").any { theme.contains(it) } -> {
                     activities.add(ActivityType.SOCIAL)
-                listOf("work", "project", "deadline", "focus", "productive").any { theme.contains(it) } ->
+                }
+
+                listOf("work", "project", "deadline", "focus", "productive").any { theme.contains(it) } -> {
                     activities.add(ActivityType.FOCUSED_WORK)
-                listOf("quiet", "rest", "relax", "solitude").any { theme.contains(it) } ->
+                }
+
+                listOf("quiet", "rest", "relax", "solitude").any { theme.contains(it) } -> {
                     activities.add(ActivityType.QUIET)
-                listOf("milestone", "achievement", "graduation", "birthday", "anniversary").any { theme.contains(it) } ->
+                }
+
+                listOf("milestone", "achievement", "graduation", "birthday", "anniversary").any { theme.contains(it) } -> {
                     activities.add(ActivityType.MILESTONE)
+                }
             }
         }
         return activities.toList().ifEmpty { listOf(ActivityType.MIXED) }

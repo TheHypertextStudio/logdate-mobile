@@ -56,8 +56,15 @@ internal inline fun <T> LogDateRecordState.createUnlessTaken(
     create: () -> T,
 ): ConditionalCreate<T> =
     when (this) {
-        is LogDateRecordState.Live -> ConditionalCreate.Exists(serverVersion)
-        is LogDateRecordState.Deleted ->
+        is LogDateRecordState.Live -> {
+            ConditionalCreate.Exists(serverVersion)
+        }
+
+        is LogDateRecordState.Deleted -> {
             if (respectTombstones) ConditionalCreate.Deleted(deletedAt, serverVersion) else ConditionalCreate.Created(create())
-        LogDateRecordState.Absent -> ConditionalCreate.Created(create())
+        }
+
+        LogDateRecordState.Absent -> {
+            ConditionalCreate.Created(create())
+        }
     }

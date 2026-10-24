@@ -35,22 +35,37 @@ class SpaceTransportGate(
 ) {
     suspend fun route(): SpaceRoute =
         when (storageMode()) {
-            AccountStorageMode.LEGACY -> SpaceRoute.Legacy
-            AccountStorageMode.PERSONAL_SPACE_V1 ->
+            AccountStorageMode.LEGACY -> {
+                SpaceRoute.Legacy
+            }
+
+            AccountStorageMode.PERSONAL_SPACE_V1 -> {
                 when {
-                    !serverOffersPersonalSpace() ->
+                    !serverOffersPersonalSpace() -> {
                         SpaceRoute.Blocked(
                             "This account's journal is stored in a personal space, and the server doesn't offer personal spaces",
                         )
-                    !enabledInThisBuild() ->
+                    }
+
+                    !enabledInThisBuild() -> {
                         SpaceRoute.Blocked(
                             "This account's journal is stored in a personal space, which this version of LogDate doesn't sync",
                         )
-                    else -> SpaceRoute.Space
+                    }
+
+                    else -> {
+                        SpaceRoute.Space
+                    }
                 }
-            AccountStorageMode.UNRECOGNIZED ->
+            }
+
+            AccountStorageMode.UNRECOGNIZED -> {
                 SpaceRoute.Blocked("The server stores this account in a way this version of LogDate doesn't know")
-            null -> SpaceRoute.Blocked("The server hasn't said how it stores this account")
+            }
+
+            null -> {
+                SpaceRoute.Blocked("The server hasn't said how it stores this account")
+            }
         }
 
     companion object {

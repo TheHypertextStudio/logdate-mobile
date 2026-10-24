@@ -93,6 +93,7 @@ fun HandoffDraftArrivalContent(
                             Button(onClick = onRetry) { Text(stringResource(Res.string.handoff_try_again)) }
                         }
                     }
+
                     else -> {
                         CircularProgressIndicator(modifier = Modifier.size(StatusSize))
                         Message(

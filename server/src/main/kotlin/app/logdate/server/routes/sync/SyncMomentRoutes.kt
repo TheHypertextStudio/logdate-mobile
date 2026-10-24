@@ -176,8 +176,14 @@ private fun Route.patchMomentRoute(
                 }
             val updated =
                 when (result) {
-                    is MomentUpdateResult.Updated -> result.moment
-                    MomentUpdateResult.Missing -> return@patch call.respond(HttpStatusCode.NotFound, error("NOT_FOUND", "Moment not found"))
+                    is MomentUpdateResult.Updated -> {
+                        result.moment
+                    }
+
+                    MomentUpdateResult.Missing -> {
+                        return@patch call.respond(HttpStatusCode.NotFound, error("NOT_FOUND", "Moment not found"))
+                    }
+
                     MomentUpdateResult.Conflict -> {
                         metrics.recordConflict()
                         return@patch call.respond(HttpStatusCode.Conflict, error("CONFLICT", "Server has a newer version"))

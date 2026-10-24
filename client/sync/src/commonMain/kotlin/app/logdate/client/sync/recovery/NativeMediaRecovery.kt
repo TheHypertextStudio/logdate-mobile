@@ -78,8 +78,11 @@ internal class NativeMediaRecovery(
                     continue
                 }
                 when (val result = transfer.hydrate(accessToken, original) { scope == inbox.currentScope() }) {
-                    is MediaHydrationResult.Pending -> inbox.failed(type, row.entityId, result.reason.name, row.version, scope)
-                    is MediaHydrationResult.Available ->
+                    is MediaHydrationResult.Pending -> {
+                        inbox.failed(type, row.entityId, result.reason.name, row.version, scope)
+                    }
+
+                    is MediaHydrationResult.Available -> {
                         transactions.withTransaction {
                             val current = notes.getNoteById(id)
                             if (current?.mediaRefOrNull() == row.payload && current.type == original.type) {
@@ -89,6 +92,7 @@ internal class NativeMediaRecovery(
                                 inbox.applied(type, row.entityId, row.version, scope)
                             }
                         }
+                    }
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled

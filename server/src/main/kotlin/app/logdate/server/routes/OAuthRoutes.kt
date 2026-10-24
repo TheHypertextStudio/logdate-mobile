@@ -256,7 +256,7 @@ fun Route.oauthRoutes(
 
         runCatching {
             when (val grantType = parameters.requireValue("grant_type")) {
-                "authorization_code" ->
+                "authorization_code" -> {
                     service
                         .exchangeAuthorizationCode(
                             AuthorizationCodeTokenRequest(
@@ -270,8 +270,9 @@ fun Route.oauthRoutes(
                                 htu = call.endpointUrl(config),
                             ),
                         ).getOrThrow()
+                }
 
-                "refresh_token" ->
+                "refresh_token" -> {
                     service
                         .exchangeRefreshToken(
                             RefreshTokenGrantRequest(
@@ -283,10 +284,12 @@ fun Route.oauthRoutes(
                                 htu = call.endpointUrl(config),
                             ),
                         ).getOrThrow()
+                }
 
-                else ->
+                else -> {
                     throw app.logdate.server.oauth
                         .OAuthUnsupportedGrantTypeException("Unsupported grant_type: $grantType")
+                }
             }
         }.onSuccess { response ->
             call.respondOAuthToken(response, service.nonce())

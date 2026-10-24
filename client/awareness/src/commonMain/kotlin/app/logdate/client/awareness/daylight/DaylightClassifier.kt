@@ -72,16 +72,22 @@ class DaylightClassifier {
         return when {
             // Dawn: 30 minutes before to 30 minutes after sunrise
             currentMinutes in (sunriseMinutes - 30)..(sunriseMinutes + 30) -> DaylightPeriod.DAWN
+
             // Morning: After dawn until 2 hours before solar noon
             currentMinutes in (sunriseMinutes + 31) until (noonMinutes - 120) -> DaylightPeriod.MORNING
+
             // Midday: 2 hours around solar noon
             currentMinutes in (noonMinutes - 120)..(noonMinutes + 120) -> DaylightPeriod.MIDDAY
+
             // Afternoon: After midday until 1 hour before sunset
             currentMinutes in (noonMinutes + 121) until (sunsetMinutes - 60) -> DaylightPeriod.AFTERNOON
+
             // Golden hour: Last hour before sunset
             currentMinutes in (sunsetMinutes - 60) until sunsetMinutes -> DaylightPeriod.GOLDEN_HOUR
+
             // Evening: 2 hours after sunset
             currentMinutes in sunsetMinutes..(sunsetMinutes + 120) -> DaylightPeriod.EVENING
+
             // Night: Everything else
             else -> DaylightPeriod.NIGHT
         }

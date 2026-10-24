@@ -64,11 +64,13 @@ LogDate Project
 Each module contains detailed documentation in its respective `README.md` file:
 
 ### App Modules
+
 - [`:app:android-main`](app/android-main/) - Android application wrapper/entry point
 - [`:app:compose-main`](app/compose-main/README.md) - Shared Compose Multiplatform app module (Android/iOS/Desktop)
 - [`:app:wear`](app/wear/README.md) - Wear OS companion, verified phone linking, and gated redesign; [internal acceptance checklist](docs/testing/wear-dogfood-checklist.md)
 
 ### Client Infrastructure
+
 - [`:client:database`](client/database/README.md) - Local data persistence with Room
 - [`:client:data`](client/data/README.md) - Data layer with repository pattern
 - [`:client:networking`](client/networking/README.md) - HTTP client and network management
@@ -78,6 +80,7 @@ Each module contains detailed documentation in its respective `README.md` file:
 - [`:client:logdate-datastore`](client/datastore/README.md) - Preferences and settings storage
 
 ### Client Features
+
 - [`:client:feature:editor`](client/feature/editor/README.md) - Entry creation and editing
 - [`:client:feature:timeline`](client/feature/timeline/README.md) - Timeline browsing and search
 - [`:client:feature:journal`](client/feature/journal/README.md) - Journal management
@@ -86,16 +89,19 @@ Each module contains detailed documentation in its respective `README.md` file:
 - [`:client:feature:core`](client/feature/core/README.md) - Core app features
 
 ### Shared Libraries
+
 - [`:shared:model`](shared/model/README.md) - Shared data models
 - [`:shared:config`](shared/config/README.md) - Configuration and constants
 - [`:shared:activitypub`](shared/activitypub/README.md) - ActivityPub protocol implementation
 
 ### Server
+
 - [`:server`](server/README.md) - Ktor-based backend API
 
 ## Technology Stack
 
 ### Frontend
+
 - **Kotlin Multiplatform**: Cross-platform business logic
 - **Compose Multiplatform**: Modern UI framework
 - **Room Database**: Local data persistence
@@ -104,18 +110,21 @@ Each module contains detailed documentation in its respective `README.md` file:
 - **Napier**: Multiplatform logging solution
 
 ### Backend
+
 - **Ktor Server**: Web framework
 - **PostgreSQL**: Primary database
 - **Firebase**: Analytics and cloud services
 - **Docker**: Containerization
 
 ### AI & Intelligence
+
 - **OpenAI API**: Content analysis and summarization
 - **On-device ML**: Privacy-focused processing (planned)
 
 ## Getting Started
 
 ### Prerequisites
+
 - Android Studio (latest stable)
 - JDK 17 or higher
 - Xcode (for iOS development)
@@ -130,7 +139,7 @@ One command sets up a fresh clone or worktree, and is safe to re-run at any
 time:
 
 ```bash
-git clone https://github.com/WillieCubed/logdate-mobile.git
+git clone https://github.com/TheHypertextStudio/logdate-mobile.git
 cd logdate-mobile
 ./run setup            # tools, git hooks, local.properties, Firebase configs, test deps
 ./run setup --check    # report what is missing without changing anything
@@ -151,23 +160,25 @@ The fastest way to get the LogDate server running locally:
    `docs/environment/setup.md` and `server/docs/environment-variables.md`.
 
 3. **Start the development environment**
+
    ```bash
    # Quick start (recommended)
    ./scripts/dev-start.sh
-   
+
    # Start with development tools
    ./scripts/dev-start.sh --with-tools
-   
+
    # Or manually with docker-compose
    docker-compose up logdate-postgres logdate-redis -d
    ```
 
 4. **Run the server**
+
    ```bash
    # Option 1: Run with Docker (full containerized setup)
    docker-compose --profile full-stack up
-   
-   # Option 2: Run locally (connect to containerized database)  
+
+   # Option 2: Run locally (connect to containerized database)
    export DATABASE_URL="jdbc:postgresql://localhost:15432/logdate"
    export DATABASE_USER=logdate
    export DATABASE_PASSWORD=logdate
@@ -211,6 +222,7 @@ If you prefer to set up dependencies manually:
 From the project root, you can use these Gradle tasks:
 
 ### Server Development
+
 ```bash
 # Start with Docker Compose (recommended)
 docker-compose up postgres redis -d
@@ -224,6 +236,7 @@ docker-compose --profile full-stack up
 ```
 
 ### Client Applications
+
 ```bash
 # Build the Android base APK only (dynamic feature code is not included)
 ./gradlew :app:android-main:assembleDebug
@@ -247,6 +260,7 @@ for a functional app installation. Installing the standalone APK produced by
 `assembleDebug` omits that split and therefore cannot provide transcription.
 
 ### Testing
+
 ```bash
 # Run all project tests
 ./gradlew test
@@ -260,6 +274,7 @@ Android release provenance/versioning, see
 [`docs/reference/google-play-publishing.md`](docs/reference/google-play-publishing.md).
 
 ### Code Quality
+
 ```bash
 # Run linting
 ./gradlew lint
@@ -271,11 +286,12 @@ Android release provenance/versioning, see
 ### Docker Commands
 
 **Convenience Scripts (Recommended):**
+
 ```bash
 # Start development environment
 ./scripts/dev-start.sh
 
-# Start with development tools (PgAdmin, Redis Commander) 
+# Start with development tools (PgAdmin, Redis Commander)
 ./scripts/dev-start.sh --with-tools
 
 # Check status of all services
@@ -295,6 +311,7 @@ Android release provenance/versioning, see
 ```
 
 **Manual Docker Compose:**
+
 ```bash
 # Development database only
 docker-compose up logdate-postgres logdate-redis -d
@@ -317,7 +334,9 @@ do not apply to this included build.
 ## Documentation
 
 ### Testing
+
 Comprehensive testing guides for all test types:
+
 - [Testing Overview](docs/testing/introduction.md) - Test pyramid and approach
 - [Unit Tests](docs/testing/unit-tests.md) - Testing individual components
 - [Integration Tests](docs/testing/integration-tests.md) - Database and API testing
@@ -325,14 +344,19 @@ Comprehensive testing guides for all test types:
 - [Screenshot Tests](docs/testing/screenshot-tests.md) - Visual regression testing
 
 ### API Documentation
+
 Generate comprehensive API documentation:
+
 ```bash
 ./gradlew dokkaHtmlMultiModule
 ```
+
 Documentation will be available in the `build/dokka/` directory.
 
 ### Module Documentation
+
 Each module contains detailed documentation covering:
+
 - Architecture and design decisions
 - Key components and responsibilities
 - Usage patterns and examples
@@ -341,21 +365,25 @@ Each module contains detailed documentation covering:
 ## Architecture Principles
 
 ### Clean Architecture
+
 - **Separation of Concerns**: Clear boundaries between UI, domain, and data layers
 - **Dependency Inversion**: High-level modules don't depend on low-level modules
 - **Single Responsibility**: Each module has a single, well-defined purpose
 
 ### Offline-First
+
 - **Local Data Priority**: All features work offline
 - **Background Sync**: Automatic synchronization when online
 - **Conflict Resolution**: Intelligent handling of data conflicts
 
 ### Privacy by Design
+
 - **Local Processing**: Sensitive operations performed on-device
 - **Minimal Data Collection**: Only collect necessary information
 - **User Control**: Granular privacy settings and data management
 
 ### Platform-Specific Optimization
+
 - **Native Feel**: Platform-appropriate UI and interactions
 - **Performance**: Optimized for each platform's constraints
 - **Integration**: Deep integration with platform services

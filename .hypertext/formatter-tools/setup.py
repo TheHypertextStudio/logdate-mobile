@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 """Prepare only pinned formatter dependencies; never run on commit."""
 
+import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
+from contextlib import contextmanager
+from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parents[1]
-SPEC = json.loads((TOOLS / "tools.json").read_text())
+SPEC = (
+    json.loads((TOOLS / "tools.json").read_text())
+    if (TOOLS / "tools.json").exists()
+    else None
+)
 CACHE = (
     Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
     / "hypertext-studio/formatters"
@@ -36,7 +44,9 @@ def prettier_version():
     if value and value.startswith("catalog:"):
         workspace = (ROOT / "pnpm-workspace.yaml").read_text()
         match = re.search(
-            r"^\s+prettier:\s*[\'\"]?(\d+\.\d+\.\d+)[\'\"]?\s*$", workspace, re.M
+            r"^\s+prettier:\s*[\'\"]?(\d+\.\d+\.\d+)[\'\"]?\s*$",
+            workspace,
+            re.MULTILINE,
         )
         value = match[1] if match else None
     if not value or not re.fullmatch(r"\d+\.\d+\.\d+", value):
@@ -96,7 +106,93 @@ def npm_inventory_matches(folder, lock, recipe):
     return True
 
 
+def install_npm(folder, recipe, arguments):
+    """Authenticate private packages only during explicit setup, without saved tokens."""
+    private = any(
+        name.startswith("@thehypertextstudio/") for name in recipe["dependencies"]
+    )
+    kwargs = {}
+    options = []
+    if private:
+        configuration = folder / ".npmrc"
+        content = (
+            "@thehypertextstudio:registry=https://npm.pkg.github.com\n"
+            "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\n"
+        )
+        if configuration.exists() and configuration.read_text() != content:
+            raise ValueError(
+                "Formatter cache registry configuration needs reconciliation"
+            )
+        environment = os.environ.copy()
+        token = (
+            environment.get("NODE_AUTH_TOKEN")
+            or environment.get("GH_TOKEN")
+            or environment.get("GITHUB_TOKEN")
+        )
+        if not token and shutil.which("gh"):
+            result = subprocess.run(
+                ["gh", "auth", "token", "--hostname", "github.com"],
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=15,
+            )
+            if result.returncode == 0:
+                token = result.stdout.strip()
+        if not token:
+            raise ValueError(
+                "Studio package access requires GitHub authentication or NODE_AUTH_TOKEN during setup"
+            )
+        environment["NODE_AUTH_TOKEN"] = token
+        configuration.write_text(content)
+        options = ["--userconfig", str(configuration)]
+        kwargs["env"] = environment
+    subprocess.run([*npm_command(), *arguments, *options], check=True, **kwargs)
+
+
+@contextmanager
+def cache_lock(folder, timeout=180):
+    """Serialize explicit setup across processes; commits never acquire this lock."""
+    folder.parent.mkdir(parents=True, exist_ok=True)
+    lock = folder.with_name(folder.name + ".lock")
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            lock.mkdir()
+            break
+        except FileExistsError:
+            if lock.is_symlink() or not lock.is_dir():
+                raise ValueError("Unsafe formatter setup lock: " + str(lock)) from None
+            if time.monotonic() >= deadline:
+                raise ValueError(
+                    "Formatter setup is locked; inspect its owner and retry: "
+                    + str(lock)
+                ) from None
+            time.sleep(0.1)
+    try:
+        (lock / "owner.json").write_text(json.dumps({"pid": os.getpid()}) + "\n")
+        yield
+    finally:
+        (lock / "owner.json").unlink(missing_ok=True)
+        lock.rmdir()
+
+
+def npm_cache_key(recipe, lock_bytes):
+    # Different reviewed transitive locks never mutate the same prepared runtime.
+    return hashlib.sha256(
+        json.dumps(recipe, sort_keys=True).encode() + b"\0" + lock_bytes
+    ).hexdigest()[:20]
+
+
 def prepare_npm(folder, recipe, lock_bytes):
+    with cache_lock(folder):
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "package.json").write_text(json.dumps(recipe, indent=2) + "\n")
+        (folder / "package-lock.json").write_bytes(lock_bytes)
+        _prepare_npm_locked(folder, recipe, lock_bytes)
+
+
+def _prepare_npm_locked(folder, recipe, lock_bytes):
     """Reuse only a complete install bound to the exact reviewed integrity lock."""
     data = json.loads(lock_bytes)
     if (
@@ -124,9 +220,10 @@ def prepare_npm(folder, recipe, lock_bytes):
     if complete and npm_inventory_matches(folder, data, recipe):
         return
     marker.unlink(missing_ok=True)
-    subprocess.run(
+    install_npm(
+        folder,
+        recipe,
         [
-            *npm_command(),
             "ci",
             "--prefix",
             str(folder),
@@ -135,7 +232,6 @@ def prepare_npm(folder, recipe, lock_bytes):
             "--no-fund",
             "--registry=https://registry.npmjs.org",
         ],
-        check=True,
     )
     if not npm_inventory_matches(folder, data, recipe):
         raise ValueError(
@@ -157,56 +253,64 @@ def main():
         "private": True,
         "dependencies": {"prettier": version, **SPEC["npm"]},
     }
-    key = hashlib.sha256(json.dumps(recipe, sort_keys=True).encode()).hexdigest()[:20]
-    folder = CACHE / "npm" / key
-    folder.mkdir(parents=True, exist_ok=True)
-    manifest = folder / "package.json"
-    manifest.write_text(json.dumps(recipe, indent=2) + "\n")
     lock = TOOLS / "npm-lock.json"
     if not lock.exists():
-        subprocess.run(
-            [
-                *npm_command(),
-                "install",
-                "--prefix",
-                str(folder),
-                "--package-lock-only",
-                "--ignore-scripts",
-                "--no-audit",
-                "--no-fund",
-                "--registry=https://registry.npmjs.org",
-            ],
-            check=True,
-        )
-        lock.write_bytes((folder / "package-lock.json").read_bytes())
-    data = json.loads(lock.read_text())
+        # Resolve a missing lock in a private temporary directory, never a shared runtime.
+        with tempfile.TemporaryDirectory(
+            prefix="studio-formatter-recipe-"
+        ) as temporary:
+            staging = Path(temporary)
+            (staging / "package.json").write_text(json.dumps(recipe, indent=2) + "\n")
+            install_npm(
+                staging,
+                recipe,
+                [
+                    "install",
+                    "--prefix",
+                    str(staging),
+                    "--package-lock-only",
+                    "--ignore-scripts",
+                    "--no-audit",
+                    "--no-fund",
+                    "--registry=https://registry.npmjs.org",
+                ],
+            )
+            temporary_lock = lock.with_suffix(".tmp." + str(os.getpid()))
+            try:
+                temporary_lock.write_bytes((staging / "package-lock.json").read_bytes())
+                os.replace(temporary_lock, lock)
+            finally:
+                temporary_lock.unlink(missing_ok=True)
+    lock_bytes = lock.read_bytes()
+    data = json.loads(lock_bytes)
     if data["packages"][""]["dependencies"] != recipe["dependencies"]:
         raise ValueError(
             "Formatter lock differs from current repository pins; regenerate npm-lock.json with the reviewed dependency change"
         )
-    (folder / "package-lock.json").write_bytes(lock.read_bytes())
-    prepare_npm(folder, recipe, lock.read_bytes())
+    folder = CACHE / "npm" / npm_cache_key(recipe, lock_bytes)
+    prepare_npm(folder, recipe, lock_bytes)
     ruffdir = CACHE / "ruff" / SPEC["ruff"]
     python = ruffdir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     ruff = ruffdir / ("Scripts/ruff.exe" if os.name == "nt" else "bin/ruff")
-    if not python.is_file():
-        subprocess.run([sys.executable, "-m", "venv", str(ruffdir)], check=True)
-    if (
-        not ruff.is_file()
-        or subprocess.check_output([str(ruff), "--version"]).strip()
-        != ("ruff " + SPEC["ruff"]).encode()
-    ):
-        subprocess.run(
-            [
-                str(python),
-                "-m",
-                "pip",
-                "install",
-                "--disable-pip-version-check",
-                "ruff==" + SPEC["ruff"],
-            ],
-            check=True,
-        )
+    with cache_lock(ruffdir):
+        if not python.is_file():
+            subprocess.run([sys.executable, "-m", "venv", str(ruffdir)], check=True)
+        if (
+            not ruff.is_file()
+            or subprocess.check_output([str(ruff), "--version"]).strip()
+            != ("ruff " + SPEC["ruff"]).encode()
+        ):
+            subprocess.run(
+                [
+                    str(python),
+                    "-m",
+                    "pip",
+                    "install",
+                    "--disable-pip-version-check",
+                    "ruff==" + SPEC["ruff"],
+                ],
+                check=True,
+            )
     for command in SPEC.get("native_setup", []):
         subprocess.run(
             [
@@ -227,4 +331,25 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:]:
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument("--npm-only", action="store_true", required=True)
+        parser.add_argument("command", choices=["ci"])
+        parser.add_argument("--prefix", type=Path, default=TOOLS)
+        arguments = parser.parse_args()
+        folder = arguments.prefix.resolve()
+        manifest = json.loads((folder / "package.json").read_text())
+        install_npm(
+            folder,
+            {"dependencies": manifest["devDependencies"]},
+            [
+                "ci",
+                "--prefix",
+                str(folder),
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+            ],
+        )
+    else:
+        main()

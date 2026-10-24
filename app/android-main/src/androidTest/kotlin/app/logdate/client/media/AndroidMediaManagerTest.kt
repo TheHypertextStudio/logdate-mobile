@@ -139,18 +139,24 @@ class AndroidMediaManagerTest {
                         )
                     } answers {
                         when (secondArg<Array<String>>().toList()) {
-                            listOf(MediaStore.MediaColumns.DISPLAY_NAME) ->
+                            listOf(MediaStore.MediaColumns.DISPLAY_NAME) -> {
                                 emptyCursor(MediaStore.MediaColumns.DISPLAY_NAME)
+                            }
+
                             listOf(
                                 MediaStore.MediaColumns.DATE_TAKEN,
                                 MediaStore.MediaColumns.DATE_ADDED,
                             ),
-                            ->
+                            -> {
                                 singleRowCursor(
                                     MediaStore.MediaColumns.DATE_TAKEN to 0L,
                                     MediaStore.MediaColumns.DATE_ADDED to 42L,
                                 )
-                            else -> emptyCursor(*secondArg<Array<String>>())
+                            }
+
+                            else -> {
+                                emptyCursor(*secondArg<Array<String>>())
+                            }
                         }
                     }
                     every {
@@ -633,18 +639,24 @@ class AndroidMediaManagerTest {
                     )
                 } answers {
                     when (secondArg<Array<String>>().toList()) {
-                        listOf(MediaStore.MediaColumns.DISPLAY_NAME) ->
+                        listOf(MediaStore.MediaColumns.DISPLAY_NAME) -> {
                             singleRowCursor(MediaStore.MediaColumns.DISPLAY_NAME to "../camera.png")
+                        }
+
                         listOf(
                             MediaStore.MediaColumns.DATE_TAKEN,
                             MediaStore.MediaColumns.DATE_ADDED,
                         ),
-                        ->
+                        -> {
                             singleRowCursor(
                                 MediaStore.MediaColumns.DATE_TAKEN to 1_000L,
                                 MediaStore.MediaColumns.DATE_ADDED to 1L,
                             )
-                        else -> emptyCursor(*secondArg<Array<String>>())
+                        }
+
+                        else -> {
+                            emptyCursor(*secondArg<Array<String>>())
+                        }
                     }
                 }
                 every { environment.contentResolver.openInputStream(sourceUri) } returns ByteArrayInputStream(payloadBytes)
@@ -688,18 +700,24 @@ class AndroidMediaManagerTest {
                     )
                 } answers {
                     when (secondArg<Array<String>>().toList()) {
-                        listOf(MediaStore.MediaColumns.DISPLAY_NAME) ->
+                        listOf(MediaStore.MediaColumns.DISPLAY_NAME) -> {
                             singleRowCursor(MediaStore.MediaColumns.DISPLAY_NAME to "../no-timestamp.png")
+                        }
+
                         listOf(
                             MediaStore.MediaColumns.DATE_TAKEN,
                             MediaStore.MediaColumns.DATE_ADDED,
                         ),
-                        ->
+                        -> {
                             emptyCursor(
                                 MediaStore.MediaColumns.DATE_TAKEN,
                                 MediaStore.MediaColumns.DATE_ADDED,
                             )
-                        else -> emptyCursor(*secondArg<Array<String>>())
+                        }
+
+                        else -> {
+                            emptyCursor(*secondArg<Array<String>>())
+                        }
                     }
                 }
 
@@ -736,18 +754,24 @@ class AndroidMediaManagerTest {
                     )
                 } answers {
                     when (secondArg<Array<String>>().toList()) {
-                        listOf(MediaStore.MediaColumns.DISPLAY_NAME) ->
+                        listOf(MediaStore.MediaColumns.DISPLAY_NAME) -> {
                             singleRowCursor(MediaStore.MediaColumns.DISPLAY_NAME to "fail.png")
+                        }
+
                         listOf(
                             MediaStore.MediaColumns.DATE_TAKEN,
                             MediaStore.MediaColumns.DATE_ADDED,
                         ),
-                        ->
+                        -> {
                             singleRowCursor(
                                 MediaStore.MediaColumns.DATE_TAKEN to 2_000L,
                                 MediaStore.MediaColumns.DATE_ADDED to 2L,
                             )
-                        else -> emptyCursor(*secondArg<Array<String>>())
+                        }
+
+                        else -> {
+                            emptyCursor(*secondArg<Array<String>>())
+                        }
                     }
                 }
                 every {

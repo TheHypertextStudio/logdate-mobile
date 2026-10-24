@@ -86,14 +86,24 @@ internal fun QuietSaveReturnEffect(
                 }
             val message =
                 when (quietSaveMessageKind(outcome.savedAt, now, captureZone, viewingZone, hours)) {
-                    QuietSaveMessageKind.Neutral -> getString(Res.string.quiet_save_neutral)
-                    QuietSaveMessageKind.Bedtime -> getString(Res.string.quiet_save_bedtime)
-                    QuietSaveMessageKind.Morning -> getString(Res.string.quiet_save_morning)
-                    QuietSaveMessageKind.Dated ->
+                    QuietSaveMessageKind.Neutral -> {
+                        getString(Res.string.quiet_save_neutral)
+                    }
+
+                    QuietSaveMessageKind.Bedtime -> {
+                        getString(Res.string.quiet_save_bedtime)
+                    }
+
+                    QuietSaveMessageKind.Morning -> {
+                        getString(Res.string.quiet_save_morning)
+                    }
+
+                    QuietSaveMessageKind.Dated -> {
                         getString(
                             Res.string.quiet_save_dated,
                             formatDateLocalized(audio.creationTimestamp.toLocalDateTime(captureZone).date),
                         )
+                    }
                 }
             val result =
                 showQuietSaveReturn(host, message, getString(Res.string.quiet_save_open_draft)) {

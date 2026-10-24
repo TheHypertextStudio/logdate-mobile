@@ -180,18 +180,24 @@ class EventDetailViewModel(
             }.collect { (event, linked, places) ->
                 _uiState.update { current ->
                     when {
-                        event == null -> EventDetailUiState.NotFound
-                        current is EventDetailUiState.Loaded ->
+                        event == null -> {
+                            EventDetailUiState.NotFound
+                        }
+
+                        current is EventDetailUiState.Loaded -> {
                             current.copy(
                                 linkedNotes = linked,
                                 availablePlaces = places,
                             )
-                        else ->
+                        }
+
+                        else -> {
                             EventDetailUiState.Loaded(
                                 event = event,
                                 linkedNotes = linked,
                                 availablePlaces = places,
                             )
+                        }
                     }
                 }
             }

@@ -180,6 +180,7 @@ actual fun VideoPlayerContent(
                                     isPlaying = false
                                     showThumbnail = true
                                 }
+
                                 Player.STATE_READY -> {
                                     if (isPlaying) {
                                         showThumbnail = false
@@ -212,11 +213,13 @@ actual fun VideoPlayerContent(
                             exoPlayer.pause()
                         }
                     }
+
                     Lifecycle.Event.ON_STOP -> {
                         if (activity?.isInPictureInPictureMode != true) {
                             exoPlayer.pause()
                         }
                     }
+
                     else -> {}
                 }
             }

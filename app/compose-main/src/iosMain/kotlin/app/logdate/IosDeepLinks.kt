@@ -48,10 +48,17 @@ private fun parseAction(url: NSURL): DeepLinkAction? {
     val segments = if (path.isEmpty()) emptyList() else path.split('/')
 
     return when {
-        scheme in APP_SCHEMES -> resolveSegments(host, segments)
-        scheme.startsWith("http") && isLogdateHost(host) && segments.isNotEmpty() ->
+        scheme in APP_SCHEMES -> {
+            resolveSegments(host, segments)
+        }
+
+        scheme.startsWith("http") && isLogdateHost(host) && segments.isNotEmpty() -> {
             resolveSegments(segments.first(), segments.drop(1))
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 }
 

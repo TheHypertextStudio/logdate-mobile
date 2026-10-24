@@ -136,11 +136,15 @@ class GenerateAnnualRewindUseCase(
 
             val narrative =
                 when (narrativeResult) {
-                    is AIResult.Success -> narrativeResult.value
+                    is AIResult.Success -> {
+                        narrativeResult.value
+                    }
+
                     is AIResult.Unavailable -> {
                         Napier.w("AI unavailable for annual rewind — falling back to local narrative")
                         buildLocalYearNarrative(year = year, weeklyRewinds = weeklyRewinds, resolveText = resolveText)
                     }
+
                     is AIResult.Error -> {
                         Napier.w("AI error for annual rewind — falling back to local narrative", narrativeResult.throwable)
                         buildLocalYearNarrative(year = year, weeklyRewinds = weeklyRewinds, resolveText = resolveText)

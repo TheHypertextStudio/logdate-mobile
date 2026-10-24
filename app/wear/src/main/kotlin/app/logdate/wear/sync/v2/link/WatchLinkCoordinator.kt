@@ -117,7 +117,10 @@ class WatchLinkCoordinator(
                 pending = Pending(sourceNodeId, step.value)
                 LinkWire.write(LinkAccept.serializer(), step.value.reply)
             }
-            is LinkStep.Failed -> refuse(step.failure.toRefusal(), "the offer failed its ${step.failure} check")
+
+            is LinkStep.Failed -> {
+                refuse(step.failure.toRefusal(), "the offer failed its ${step.failure} check")
+            }
         }
     }
 
@@ -151,7 +154,10 @@ class WatchLinkCoordinator(
                 Napier.i("This watch is paired with its phone")
                 LinkWire.write(LinkConfirm.serializer(), opened.confirm)
             }
-            LinkMode.CLOUD -> linkAccount(sourceNodeId, opened)
+
+            LinkMode.CLOUD -> {
+                linkAccount(sourceNodeId, opened)
+            }
         }
     }
 
@@ -202,6 +208,7 @@ class WatchLinkCoordinator(
                 store.saveCloudLink(phoneNode.orEmpty(), outcome.accountId, outcome.origin, current?.linkId, outcome.sessionId)
                 Napier.i("This watch now syncs with its phone's account")
             }
+
             is InstallOutcome.Failed -> {
                 store.recordProblem(phoneNode, outcome.problem)
                 Napier.w(

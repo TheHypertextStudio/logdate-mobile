@@ -57,7 +57,9 @@ class PlayDynamicFeatureLoader(
                         when (state.status()) {
                             SplitInstallSessionStatus.PENDING,
                             SplitInstallSessionStatus.REQUIRES_USER_CONFIRMATION,
-                            -> DynamicInstallState.NotInstalled
+                            -> {
+                                DynamicInstallState.NotInstalled
+                            }
 
                             SplitInstallSessionStatus.DOWNLOADING -> {
                                 val total = state.totalBytesToDownload()
@@ -66,20 +68,27 @@ class PlayDynamicFeatureLoader(
                                 DynamicInstallState.Downloading(progress)
                             }
 
-                            SplitInstallSessionStatus.INSTALLING -> DynamicInstallState.Downloading(1f)
+                            SplitInstallSessionStatus.INSTALLING -> {
+                                DynamicInstallState.Downloading(1f)
+                            }
 
-                            SplitInstallSessionStatus.INSTALLED -> DynamicInstallState.Installed
+                            SplitInstallSessionStatus.INSTALLED -> {
+                                DynamicInstallState.Installed
+                            }
 
                             SplitInstallSessionStatus.FAILED,
                             SplitInstallSessionStatus.CANCELED,
-                            ->
+                            -> {
                                 DynamicInstallState.Failed(
                                     RuntimeException(
                                         "Install of '$moduleName' failed with status ${state.status()}, error ${state.errorCode()}",
                                     ),
                                 )
+                            }
 
-                            else -> return@SplitInstallStateUpdatedListener
+                            else -> {
+                                return@SplitInstallStateUpdatedListener
+                            }
                         }
 
                     trySend(mapped)

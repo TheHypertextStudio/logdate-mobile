@@ -187,10 +187,22 @@ class CloudAccountOnboardingViewModel(
     fun goToNextStep() {
         val currentStep = _uiState.value.currentStep
         when (currentStep) {
-            OnboardingStep.Welcome -> prepareServerSelection(stepAfterWelcome())
-            OnboardingStep.SignIn -> _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Complete)
-            OnboardingStep.DisplayName -> _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Username)
-            OnboardingStep.Username -> _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.PasskeyCreation)
+            OnboardingStep.Welcome -> {
+                prepareServerSelection(stepAfterWelcome())
+            }
+
+            OnboardingStep.SignIn -> {
+                _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Complete)
+            }
+
+            OnboardingStep.DisplayName -> {
+                _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Username)
+            }
+
+            OnboardingStep.Username -> {
+                _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.PasskeyCreation)
+            }
+
             OnboardingStep.PasskeyCreation -> {
                 val next =
                     if (_uiState.value.isEmailVerificationAvailable) {
@@ -200,8 +212,14 @@ class CloudAccountOnboardingViewModel(
                     }
                 _uiState.value = _uiState.value.copy(currentStep = next)
             }
-            OnboardingStep.EmailVerification -> _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Complete)
-            OnboardingStep.Complete -> _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Complete)
+
+            OnboardingStep.EmailVerification -> {
+                _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Complete)
+            }
+
+            OnboardingStep.Complete -> {
+                _uiState.value = _uiState.value.copy(currentStep = OnboardingStep.Complete)
+            }
         }
     }
 
@@ -213,14 +231,33 @@ class CloudAccountOnboardingViewModel(
         }
         val previousStep =
             when (currentStep) {
-                OnboardingStep.Welcome -> OnboardingStep.Welcome
-                OnboardingStep.SignIn -> OnboardingStep.Welcome
-                OnboardingStep.DisplayName -> OnboardingStep.Welcome
-                OnboardingStep.Username ->
+                OnboardingStep.Welcome -> {
+                    OnboardingStep.Welcome
+                }
+
+                OnboardingStep.SignIn -> {
+                    OnboardingStep.Welcome
+                }
+
+                OnboardingStep.DisplayName -> {
+                    OnboardingStep.Welcome
+                }
+
+                OnboardingStep.Username -> {
                     if (_uiState.value.hasProfileDisplayName) OnboardingStep.Welcome else OnboardingStep.DisplayName
-                OnboardingStep.PasskeyCreation -> OnboardingStep.Username
-                OnboardingStep.EmailVerification -> OnboardingStep.PasskeyCreation
-                OnboardingStep.Complete -> OnboardingStep.Complete
+                }
+
+                OnboardingStep.PasskeyCreation -> {
+                    OnboardingStep.Username
+                }
+
+                OnboardingStep.EmailVerification -> {
+                    OnboardingStep.PasskeyCreation
+                }
+
+                OnboardingStep.Complete -> {
+                    OnboardingStep.Complete
+                }
             }
 
         _uiState.value = _uiState.value.copy(currentStep = previousStep)
@@ -298,6 +335,7 @@ class CloudAccountOnboardingViewModel(
                         )
                     performInitialSync(markCompletedBy = SyncCompletion.ACCOUNT_CREATED)
                 }
+
                 is CreatePasskeyAccountUseCase.Result.Error -> {
                     _uiState.value =
                         currentState.copy(
@@ -330,7 +368,10 @@ class CloudAccountOnboardingViewModel(
         val syncResult = triggerInitialSyncUseCase()
         val status =
             when (syncResult) {
-                is TriggerInitialSyncUseCase.Result.Success -> InitialSyncStatus.Success
+                is TriggerInitialSyncUseCase.Result.Success -> {
+                    InitialSyncStatus.Success
+                }
+
                 is TriggerInitialSyncUseCase.Result.Partial -> {
                     Napier.w(
                         "Initial sync partial: uploads=${syncResult.uploadedItems}, " +
@@ -338,8 +379,14 @@ class CloudAccountOnboardingViewModel(
                     )
                     InitialSyncStatus.Partial
                 }
-                is TriggerInitialSyncUseCase.Result.TimedOut -> InitialSyncStatus.TimedOut
-                is TriggerInitialSyncUseCase.Result.Error -> InitialSyncStatus.Failed
+
+                is TriggerInitialSyncUseCase.Result.TimedOut -> {
+                    InitialSyncStatus.TimedOut
+                }
+
+                is TriggerInitialSyncUseCase.Result.Error -> {
+                    InitialSyncStatus.Failed
+                }
             }
         _uiState.value =
             _uiState.value.copy(
@@ -409,6 +456,7 @@ class CloudAccountOnboardingViewModel(
                         )
                     performInitialSync(markCompletedBy = SyncCompletion.SIGNED_IN)
                 }
+
                 is AuthenticateWithPasskeyUseCase.Result.Error -> {
                     val needsConsent =
                         result.error == AuthenticateWithPasskeyUseCase.AuthenticationError.LocalDataNeedsAdoption
@@ -452,6 +500,7 @@ class CloudAccountOnboardingViewModel(
                         )
                     performInitialSync(markCompletedBy = SyncCompletion.SIGNED_IN)
                 }
+
                 is SignInWithGoogleUseCase.Result.Error -> {
                     // Semantic error type; the UI maps it to a localized string resource.
                     _uiState.value =
@@ -537,6 +586,7 @@ class CloudAccountOnboardingViewModel(
                                 UsernameAvailability.Taken
                             }
                         }
+
                         is CheckUsernameAvailabilityUseCase.Result.Error -> {
                             UsernameAvailability.Error
                         }
@@ -548,13 +598,14 @@ class CloudAccountOnboardingViewModel(
         viewModelScope.launch {
             val serverSelectionState = _uiState.value.serverSelectionState
             when (serverSelectionState.selectedPreset) {
-                ServerPreset.PRODUCTION ->
+                ServerPreset.PRODUCTION -> {
                     persistServerSelection(
                         nextStep = nextStep,
                         failureMessage = { error -> serverSelectionFailureMessage(error, ServerPreset.PRODUCTION) },
                     ) {
                         serverConfigurationCoordinator.saveLogDateCloudSelection()
                     }
+                }
 
                 ServerPreset.CUSTOM -> {
                     val customServerUrl = serverSelectionState.customServerUrl

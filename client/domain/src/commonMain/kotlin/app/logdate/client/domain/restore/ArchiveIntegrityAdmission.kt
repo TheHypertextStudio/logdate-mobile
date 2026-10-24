@@ -23,18 +23,7 @@ internal object ArchiveIntegrityAdmission {
     ): Map<String, ArchiveMediaIntegrity> {
         require(manifest.format == ArchiveManifest.FORMAT) { "Unsupported archive format" }
         if (manifest.schemaVersion.major != ExportSchemaVersion.V2_0.major) throw UnsupportedExportVersionException(manifest.schemaVersion)
-        require(
-            manifest.contents
-                .map { it.role }
-                .distinct()
-                .size == manifest.contents.size,
-        ) { "Repeated archive content role" }
-        require(
-            manifest.contents
-                .map { it.path }
-                .distinct()
-                .size == manifest.contents.size,
-        ) { "Repeated archive content path" }
+        requireUniqueContents(manifest)
         val checksumContent =
             requireNotNull(manifest.contents.singleOrNull { it.role == ArchiveRole.CHECKSUMS }) {
                 "V2 archive has no checksum manifest"
@@ -53,14 +42,21 @@ internal object ArchiveIntegrityAdmission {
         }
         for ((role, bytes) in contents) {
             when (role) {
-                ArchiveRole.README, ArchiveRole.CHECKSUMS, ArchiveRole.READABLE_INDEX -> Unit
-                ArchiveRole.LOCATION_HISTORY ->
+                ArchiveRole.README, ArchiveRole.CHECKSUMS, ArchiveRole.READABLE_INDEX -> {
+                    Unit
+                }
+
+                ArchiveRole.LOCATION_HISTORY -> {
                     bytes
                         .archiveText()
                         .lineSequence()
                         .filter { it.isNotBlank() }
                         .forEach { ArchiveJsonKeyValidation.requireUnique(it) }
-                else -> ArchiveJsonKeyValidation.requireUnique(bytes.archiveText())
+                }
+
+                else -> {
+                    ArchiveJsonKeyValidation.requireUnique(bytes.archiveText())
+                }
             }
         }
         val inventory =
@@ -76,6 +72,21 @@ internal object ArchiveIntegrityAdmission {
             }
         requireIncludedMediaCoverage(contents, integrity.keys)
         return integrity
+    }
+
+    private fun requireUniqueContents(manifest: ArchiveManifest) {
+        require(
+            manifest.contents
+                .map { it.role }
+                .distinct()
+                .size == manifest.contents.size,
+        ) { "Repeated archive content role" }
+        require(
+            manifest.contents
+                .map { it.path }
+                .distinct()
+                .size == manifest.contents.size,
+        ) { "Repeated archive content path" }
     }
 
     private fun requireIncludedMediaCoverage(

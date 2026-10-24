@@ -42,27 +42,32 @@ class AndroidMemoriesWidgetInstallController(
         val manager = GlanceAppWidgetManager(appContext)
         val accepted =
             when (kind) {
-                HomeWidgetKind.RECALL ->
+                HomeWidgetKind.RECALL -> {
                     manager.requestPinGlanceAppWidget(
                         receiver = OnThisDayWidgetReceiver::class.java,
                         preview = OnThisDayWidget(),
                         previewSize = DpSize(250.dp, 180.dp),
                         successCallback = successIntent,
                     )
-                HomeWidgetKind.FIXED_MEMORY ->
+                }
+
+                HomeWidgetKind.FIXED_MEMORY -> {
                     manager.requestPinGlanceAppWidget(
                         receiver = FixedMemoryWidgetReceiver::class.java,
                         preview = FixedMemoryWidget(),
                         previewSize = DpSize(250.dp, 180.dp),
                         successCallback = successIntent,
                     )
-                HomeWidgetKind.NEW_ENTRY ->
+                }
+
+                HomeWidgetKind.NEW_ENTRY -> {
                     manager.requestPinGlanceAppWidget(
                         receiver = NewEntryWidgetReceiver::class.java,
                         preview = NewEntryWidget(),
                         previewSize = DpSize(250.dp, 180.dp),
                         successCallback = successIntent,
                     )
+                }
             }
 
         if (!accepted) {

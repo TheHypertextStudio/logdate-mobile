@@ -36,6 +36,7 @@ internal class TranscriptionWorkRunner(
                             ?: TranscriptDocument.fromPlainText(result.text, source = TranscriptSource.LOCAL_REFINEMENT)
                     finish(noteId, work, document, TranscriptionStatus.COMPLETED)
                 }
+
                 is TranscriptionResult.Error -> {
                     if (result.reason == TranscriptionFailure.NoSpeechDetected) {
                         finish(noteId, work, TranscriptDocument(status = TranscriptDocumentStatus.FINAL), TranscriptionStatus.COMPLETED)
@@ -49,7 +50,10 @@ internal class TranscriptionWorkRunner(
                         )
                     }
                 }
-                is TranscriptionResult.InProgress, TranscriptionResult.Cancelled -> TranscriptionWorkOutcome.Retry
+
+                is TranscriptionResult.InProgress, TranscriptionResult.Cancelled -> {
+                    TranscriptionWorkOutcome.Retry
+                }
             }
         } catch (e: CancellationException) {
             throw e

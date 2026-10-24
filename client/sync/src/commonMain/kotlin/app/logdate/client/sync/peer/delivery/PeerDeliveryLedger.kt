@@ -221,7 +221,7 @@ class PeerDeliveryLedger(
             DeliveryState.CLOUD_PENDING -> next == this || next == DeliveryState.BACKED_UP || next == DeliveryState.DELETED_ON_PHONE
             DeliveryState.ON_PHONE -> next == this || next == DeliveryState.CLOUD_PENDING || canBecome(next)
             DeliveryState.NEW -> true
-            DeliveryState.SENT, DeliveryState.REJECTED -> next == this || next != DeliveryState.NEW && next != DeliveryState.SENT
+            DeliveryState.SENT, DeliveryState.REJECTED -> next == this || (next != DeliveryState.NEW && next != DeliveryState.SENT)
         }
 
     private fun DeliveryState.isTerminal(): Boolean = this == DeliveryState.BACKED_UP || this == DeliveryState.DELETED_ON_PHONE

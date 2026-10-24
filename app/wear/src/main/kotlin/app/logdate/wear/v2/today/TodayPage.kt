@@ -232,8 +232,14 @@ private fun TodayList(
             return@TransformingLazyColumn
         }
         when (state) {
-            TodayUiState.Loading -> Unit
-            TodayUiState.Failed -> item { CenteredText(stringResource(R.string.wear_today_failed)) }
+            TodayUiState.Loading -> {
+                Unit
+            }
+
+            TodayUiState.Failed -> {
+                item { CenteredText(stringResource(R.string.wear_today_failed)) }
+            }
+
             is TodayUiState.Ready -> {
                 voiceFirst?.let { ready ->
                     item { VoiceFirstButton(ready, Modifier.transformedHeight(this, spec), SurfaceTransformation(spec)) }

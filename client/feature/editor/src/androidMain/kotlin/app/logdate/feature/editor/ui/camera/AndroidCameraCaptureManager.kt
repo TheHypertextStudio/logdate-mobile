@@ -455,6 +455,7 @@ class AndroidCameraCaptureManager(
         val aspectRatioStrategy =
             when (_state.value.aspectRatio) {
                 CameraAspectRatio.STANDARD -> AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+
                 CameraAspectRatio.FULL,
                 CameraAspectRatio.SQUARE,
                 -> AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY

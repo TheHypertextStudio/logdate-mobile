@@ -69,8 +69,11 @@ fun WatchDiagnosticsContent(
             }
         }
         when (val current = state) {
-            WatchDiagnosticsState.Checking -> Unit
-            WatchDiagnosticsState.NeedsWatch ->
+            WatchDiagnosticsState.Checking -> {
+                Unit
+            }
+
+            WatchDiagnosticsState.NeedsWatch -> {
                 item {
                     MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                         Column(Modifier.padding(Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
@@ -80,8 +83,13 @@ fun WatchDiagnosticsContent(
                         }
                     }
                 }
-            WatchDiagnosticsState.Failed -> item { Text(stringResource(Res.string.watch_v2_check_error), Modifier.padding(Spacing.lg)) }
-            is WatchDiagnosticsState.Ready ->
+            }
+
+            WatchDiagnosticsState.Failed -> {
+                item { Text(stringResource(Res.string.watch_v2_check_error), Modifier.padding(Spacing.lg)) }
+            }
+
+            is WatchDiagnosticsState.Ready -> {
                 item {
                     MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                         current.steps.forEach { step ->
@@ -109,6 +117,7 @@ fun WatchDiagnosticsContent(
                         }
                     }
                 }
+            }
         }
     }
 }

@@ -32,24 +32,34 @@ internal fun JournalNote.hasSamePersistedContent(other: JournalNote): Boolean {
         return false
     }
     return when (this) {
-        is JournalNote.Text -> other is JournalNote.Text && content == other.content
-        is JournalNote.Handwriting ->
+        is JournalNote.Text -> {
+            other is JournalNote.Text && content == other.content
+        }
+
+        is JournalNote.Handwriting -> {
             other is JournalNote.Handwriting &&
                 document == other.document &&
                 unreadableContent == other.unreadableContent
-        is JournalNote.Image ->
+        }
+
+        is JournalNote.Image -> {
             other is JournalNote.Image && mediaRef == other.mediaRef && caption == other.caption && presentation == other.presentation
-        is JournalNote.Audio ->
+        }
+
+        is JournalNote.Audio -> {
             other is JournalNote.Audio &&
                 mediaRef == other.mediaRef &&
                 durationMs == other.durationMs &&
                 caption == other.caption &&
                 transcription == other.transcription
-        is JournalNote.Video ->
+        }
+
+        is JournalNote.Video -> {
             other is JournalNote.Video &&
                 mediaRef == other.mediaRef &&
                 caption == other.caption &&
                 sameKnownDuration(durationMs, other.durationMs)
+        }
     }
 }
 

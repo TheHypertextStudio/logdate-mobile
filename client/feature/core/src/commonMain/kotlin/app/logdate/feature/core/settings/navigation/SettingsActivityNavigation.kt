@@ -47,21 +47,33 @@ fun NavKey.settingsCategory(): SettingsCategory? =
         AccountSettingsRoute, SignInMethodsRoute, RecoveryPhraseRoute, HostingRoute,
         MoveServerRoute, DeleteAccountRoute, RecoveryPhraseEntrySettingsRoute,
         -> SettingsCategory.Account
+
         MemoriesSettingsRoute, RecommendationSettingsRoute -> SettingsCategory.Memories
+
         VoiceNotesSettingsRoute -> SettingsCategory.VoiceNotes
+
         TimelineSettingsRoute, DayBoundarySettingsRoute -> SettingsCategory.Timeline
+
         StreakSettingsRoute -> SettingsCategory.Streaks
+
         RewindSettingsRoute -> SettingsCategory.Rewind
+
         EventsSettingsRoute, EventsCalendarRoute, CalendarSyncSettingsRoute,
         CalendarSyncCalendarsRoute, CalendarSyncActivityRoute,
         -> SettingsCategory.Events
+
         PeopleSettingsRoute, PeopleDirectoryRoute, PeopleInboxRoute, is PersonDetailRoute -> SettingsCategory.People
+
         LibrarySettingsRoute -> SettingsCategory.Library
+
         PrivacySettingsRoute -> SettingsCategory.Privacy
+
         is DevicesRoute -> SettingsCategory.Devices
+
         LocationSettingsRoute, LocationTrackingOptionsRoute, LocationIntervalRoute,
         LocationAdvancedRoute,
         -> SettingsCategory.Location
+
         WatchSettingsRoute,
         WatchNotificationSettingsRoute,
         WatchTroubleshootingRoute,
@@ -69,11 +81,17 @@ fun NavKey.settingsCategory(): SettingsCategory? =
         WatchCheckConnectionRoute,
         WatchMicrophoneRoute,
         -> SettingsCategory.Watch
+
         SyncSettingsRoute, DataSettingsRoute -> SettingsCategory.Backup
+
         ExportSettingsRoute -> SettingsCategory.Export
+
         ResetSettingsRoute, ClearDataSettingsRoute, ResetAppSettingsRoute -> SettingsCategory.Reset
+
         AdvancedSettingsRoute, DeveloperToolsRoute, LabsSettingsRoute -> SettingsCategory.About
+
         BirthdaySettingsRoute -> SettingsCategory.Account
+
         else -> null
     }
 

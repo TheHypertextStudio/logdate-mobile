@@ -125,6 +125,7 @@ internal class IosPhotoLibrary(
                     timestamp = timestamp,
                 )
             }
+
             PHAssetMediaTypeVideo -> {
                 val uri = resolveRenderableUri(this) ?: photoLibraryUri(localIdentifier)
                 MediaObject.Video(
@@ -135,8 +136,14 @@ internal class IosPhotoLibrary(
                     duration = (duration * 1000).toLong().milliseconds,
                 )
             }
-            PHAssetMediaTypeAudio -> null
-            else -> null
+
+            PHAssetMediaTypeAudio -> {
+                null
+            }
+
+            else -> {
+                null
+            }
         }
     }
 
@@ -216,16 +223,22 @@ internal class IosPhotoLibrary(
                 .filterIsInstance<PHAssetResource>()
 
         return when (asset.mediaType) {
-            PHAssetMediaTypeImage ->
+            PHAssetMediaTypeImage -> {
                 resources.firstOrNull { it.type == PHAssetResourceTypeFullSizePhoto }
                     ?: resources.firstOrNull { it.type == PHAssetResourceTypePhoto }
                     ?: resources.firstOrNull()
-            PHAssetMediaTypeVideo ->
+            }
+
+            PHAssetMediaTypeVideo -> {
                 resources.firstOrNull { it.type == PHAssetResourceTypeFullSizeVideo }
                     ?: resources.firstOrNull { it.type == PHAssetResourceTypeVideo }
                     ?: resources.firstOrNull { it.type == PHAssetResourceTypePairedVideo }
                     ?: resources.firstOrNull()
-            else -> resources.firstOrNull()
+            }
+
+            else -> {
+                resources.firstOrNull()
+            }
         }
     }
 

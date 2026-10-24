@@ -98,12 +98,17 @@ object ProductionConfigValidator {
     ) {
         val jwtSecret = readEnv("JWT_SECRET")?.trim().orEmpty()
         when {
-            jwtSecret.isEmpty() ->
+            jwtSecret.isEmpty() -> {
                 failures += "JWT_SECRET is required in production (generate with: openssl rand -base64 32)."
-            jwtSecret.length < MIN_JWT_SECRET_LENGTH ->
+            }
+
+            jwtSecret.length < MIN_JWT_SECRET_LENGTH -> {
                 failures += "JWT_SECRET must be at least $MIN_JWT_SECRET_LENGTH characters (got ${jwtSecret.length})."
-            jwtSecret.lowercase() in INSECURE_JWT_SECRETS ->
+            }
+
+            jwtSecret.lowercase() in INSECURE_JWT_SECRETS -> {
                 failures += "JWT_SECRET is set to a known placeholder value — rotate it before deploying."
+            }
         }
     }
 
@@ -122,11 +127,21 @@ object ProductionConfigValidator {
         val value = readEnv(name)?.trim().orEmpty()
         val sharedWith = mustDifferFrom.firstOrNull { other -> value.isNotEmpty() && value == readEnv(other)?.trim() }
         when {
-            value.isEmpty() -> failures += "$name is required in production. $purpose"
-            value.length < MIN_DEDICATED_SECRET_LENGTH ->
+            value.isEmpty() -> {
+                failures += "$name is required in production. $purpose"
+            }
+
+            value.length < MIN_DEDICATED_SECRET_LENGTH -> {
                 failures += "$name must be at least $MIN_DEDICATED_SECRET_LENGTH characters (got ${value.length})."
-            value.lowercase() in INSECURE_JWT_SECRETS -> failures += "$name is set to a known placeholder value."
-            sharedWith != null -> failures += "$name must differ from $sharedWith; give it its own value."
+            }
+
+            value.lowercase() in INSECURE_JWT_SECRETS -> {
+                failures += "$name is set to a known placeholder value."
+            }
+
+            sharedWith != null -> {
+                failures += "$name must differ from $sharedWith; give it its own value."
+            }
         }
     }
 
@@ -138,10 +153,13 @@ object ProductionConfigValidator {
         val value = readEnv(name)?.trim().orEmpty()
         if (value.isEmpty()) return
         when {
-            value.length < MIN_DEDICATED_SECRET_LENGTH ->
+            value.length < MIN_DEDICATED_SECRET_LENGTH -> {
                 failures += "$name must be at least $MIN_DEDICATED_SECRET_LENGTH characters (got ${value.length})."
-            value == readEnv(AtprotoSigningKeyKek.envVar)?.trim() ->
+            }
+
+            value == readEnv(AtprotoSigningKeyKek.envVar)?.trim() -> {
                 failures += "$name must differ from ${AtprotoSigningKeyKek.envVar}; it only exists while moving to a new one."
+            }
         }
     }
 
@@ -153,10 +171,13 @@ object ProductionConfigValidator {
         val databaseUrl = readEnv("DATABASE_URL")?.trim().orEmpty()
         val dbUrlHasCredentials = databaseUrl.contains("@")
         when {
-            dbPassword.isEmpty() && !dbUrlHasCredentials ->
+            dbPassword.isEmpty() && !dbUrlHasCredentials -> {
                 failures += "DATABASE_PASSWORD is required in production (or embed credentials in DATABASE_URL)."
-            dbPassword.lowercase() in INSECURE_DB_PASSWORDS ->
+            }
+
+            dbPassword.lowercase() in INSECURE_DB_PASSWORDS -> {
                 failures += "DATABASE_PASSWORD is set to a known default — use a real secret."
+            }
         }
 
         val hasCloudSqlContract =
@@ -234,9 +255,13 @@ object ProductionConfigValidator {
         } else {
             val decoded = runCatching { Base64.getDecoder().decode(encodedKey) }.getOrNull()
             when {
-                decoded == null -> failures += "SERVER_ENCRYPTION_KEY must be valid base64."
-                decoded.size !in setOf(16, 24, 32) ->
+                decoded == null -> {
+                    failures += "SERVER_ENCRYPTION_KEY must be valid base64."
+                }
+
+                decoded.size !in setOf(16, 24, 32) -> {
                     failures += "SERVER_ENCRYPTION_KEY must decode to 16, 24, or 32 bytes (AES-128/192/256)."
+                }
             }
         }
 

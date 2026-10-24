@@ -264,8 +264,11 @@ class DefaultCloudContentDataSource(
         val lastUpdated = Instant.fromEpochMilliseconds(lastUpdated)
 
         return when (type) {
-            "HANDWRITING" -> toHandwritingNote(uid, creationTimestamp, lastUpdated)
-            "TEXT" ->
+            "HANDWRITING" -> {
+                toHandwritingNote(uid, creationTimestamp, lastUpdated)
+            }
+
+            "TEXT" -> {
                 JournalNote.Text(
                     uid = uid,
                     creationTimestamp = creationTimestamp,
@@ -276,20 +279,13 @@ class DefaultCloudContentDataSource(
                     capturedOn = decryptNoteCapturedOn(uid, capturedOn),
                     capturedDuring = decryptNoteCapturedDuring(uid, capturedDuring),
                 )
-            "IMAGE" ->
-                JournalNote.Image(
-                    uid = uid,
-                    creationTimestamp = creationTimestamp,
-                    lastUpdated = lastUpdated,
-                    mediaRef = mediaUri ?: "",
-                    caption = decryptNoteCaption(uid, caption.orEmpty()),
-                    presentation = PhotoPresentation.entries.firstOrNull { it.name == photoPresentation } ?: PhotoPresentation.EdgeToEdge,
-                    location = decryptNoteLocation(uid, location),
-                    syncVersion = serverVersion,
-                    capturedOn = decryptNoteCapturedOn(uid, capturedOn),
-                    capturedDuring = decryptNoteCapturedDuring(uid, capturedDuring),
-                )
-            "VIDEO" ->
+            }
+
+            "IMAGE" -> {
+                toImageNote(uid, creationTimestamp, lastUpdated)
+            }
+
+            "VIDEO" -> {
                 JournalNote.Video(
                     uid = uid,
                     creationTimestamp = creationTimestamp,
@@ -301,7 +297,9 @@ class DefaultCloudContentDataSource(
                     capturedOn = decryptNoteCapturedOn(uid, capturedOn),
                     capturedDuring = decryptNoteCapturedDuring(uid, capturedDuring),
                 )
-            "AUDIO" ->
+            }
+
+            "AUDIO" -> {
                 JournalNote.Audio(
                     uid = uid,
                     creationTimestamp = creationTimestamp,
@@ -315,9 +313,31 @@ class DefaultCloudContentDataSource(
                     capturedOn = decryptNoteCapturedOn(uid, capturedOn),
                     capturedDuring = decryptNoteCapturedDuring(uid, capturedDuring),
                 )
-            else -> throw UnsupportedRemoteFormatException()
+            }
+
+            else -> {
+                throw UnsupportedRemoteFormatException()
+            }
         }
     }
+
+    private suspend fun ContentChange.toImageNote(
+        uid: Uuid,
+        creationTimestamp: Instant,
+        lastUpdated: Instant,
+    ): JournalNote.Image =
+        JournalNote.Image(
+            uid = uid,
+            creationTimestamp = creationTimestamp,
+            lastUpdated = lastUpdated,
+            mediaRef = mediaUri ?: "",
+            caption = decryptNoteCaption(uid, caption.orEmpty()),
+            presentation = PhotoPresentation.entries.firstOrNull { it.name == photoPresentation } ?: PhotoPresentation.EdgeToEdge,
+            location = decryptNoteLocation(uid, location),
+            syncVersion = serverVersion,
+            capturedOn = decryptNoteCapturedOn(uid, capturedOn),
+            capturedDuring = decryptNoteCapturedDuring(uid, capturedDuring),
+        )
 
     private suspend fun ContentChange.toHandwritingNote(
         uid: Uuid,

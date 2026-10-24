@@ -17,11 +17,18 @@ import kotlin.uuid.Uuid
  */
 fun PlaceResolutionResult.toPlaceKey(): String? =
     when (this) {
-        is PlaceResolutionResult.UserDefinedPlace -> "user:${place.uid}"
-        is PlaceResolutionResult.ExternalSuggestion ->
+        is PlaceResolutionResult.UserDefinedPlace -> {
+            "user:${place.uid}"
+        }
+
+        is PlaceResolutionResult.ExternalSuggestion -> {
             suggestion.externalId?.let { externalId -> "external:$externalId" }
                 ?: "external:${suggestion.name.lowercase()}:${suggestion.latitude}:${suggestion.longitude}"
-        is PlaceResolutionResult.CoarseLocation, is PlaceResolutionResult.UnknownLocation -> null
+        }
+
+        is PlaceResolutionResult.CoarseLocation, is PlaceResolutionResult.UnknownLocation -> {
+            null
+        }
     }
 
 /**
@@ -34,14 +41,24 @@ fun PlaceResolutionResult.toPlaceKey(): String? =
  */
 fun PlaceResolutionResult.toDisplayName(): String? =
     when (this) {
-        is PlaceResolutionResult.UserDefinedPlace -> place.name
-        is PlaceResolutionResult.ExternalSuggestion -> suggestion.name
-        is PlaceResolutionResult.CoarseLocation ->
+        is PlaceResolutionResult.UserDefinedPlace -> {
+            place.name
+        }
+
+        is PlaceResolutionResult.ExternalSuggestion -> {
+            suggestion.name
+        }
+
+        is PlaceResolutionResult.CoarseLocation -> {
             address.locality
                 ?: address.subLocality
                 ?: address.thoroughfare
                 ?: address.adminArea
-        is PlaceResolutionResult.UnknownLocation -> null
+        }
+
+        is PlaceResolutionResult.UnknownLocation -> {
+            null
+        }
     }
 
 /**

@@ -46,11 +46,15 @@ internal suspend fun awaitNativeMediaQuarantine(
             )
         val result = recovery.run(delivery)
         when (result) {
-            NativeMediaQuarantineResult.COMPLETE -> return
+            NativeMediaQuarantineResult.COMPLETE -> {
+                return
+            }
+
             NativeMediaQuarantineResult.HANDED_OFF -> {
                 failedAttempts = 0
                 backoff = 1_000L
             }
+
             NativeMediaQuarantineResult.RETRY -> {
                 failedAttempts++
                 if (failedAttempts >= MAX_FOREGROUND_ATTEMPTS) {

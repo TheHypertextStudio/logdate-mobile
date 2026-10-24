@@ -77,15 +77,27 @@ internal fun widgetLifecycleEvent(
     val action = requireNotNull(intent.action)
     val ids =
         when (action) {
-            AppWidgetManager.ACTION_APPWIDGET_UPDATE, AppWidgetManager.ACTION_APPWIDGET_RESTORED ->
+            AppWidgetManager.ACTION_APPWIDGET_UPDATE, AppWidgetManager.ACTION_APPWIDGET_RESTORED -> {
                 requireNotNull(intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)).toList()
-            AppWidgetManager.ACTION_APPWIDGET_DELETED, AppWidgetManager.ACTION_APPWIDGET_OPTIONS_CHANGED ->
+            }
+
+            AppWidgetManager.ACTION_APPWIDGET_DELETED, AppWidgetManager.ACTION_APPWIDGET_OPTIONS_CHANGED -> {
                 listOf(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1))
-            "ACTION_TRIGGER_LAMBDA" -> listOf(intent.getIntExtra("EXTRA_APPWIDGET_ID", -1))
+            }
+
+            "ACTION_TRIGGER_LAMBDA" -> {
+                listOf(intent.getIntExtra("EXTRA_APPWIDGET_ID", -1))
+            }
+
             AppWidgetManager.ACTION_APPWIDGET_ENABLED, AppWidgetManager.ACTION_APPWIDGET_DISABLED,
             Intent.ACTION_LOCALE_CHANGED, GlanceAppWidgetReceiver.ACTION_DEBUG_UPDATE,
-            -> emptyList()
-            else -> error("Unsupported widget lifecycle action")
+            -> {
+                emptyList()
+            }
+
+            else -> {
+                error("Unsupported widget lifecycle action")
+            }
         }
     require(ids.size <= 4096 && ids.all { it > 0 } && ids.distinct().size == ids.size)
     val oldIds =
@@ -170,9 +182,13 @@ internal fun applyPendingWidgetSettings(
                 record.event.copy(sourceValues = values, sourceResolved = true)
             }
         when (event.action) {
-            AppWidgetManager.ACTION_APPWIDGET_RESTORED ->
+            AppWidgetManager.ACTION_APPWIDGET_RESTORED -> {
                 repair.remap(event.oldIds.toIntArray(), event.ids.toIntArray(), liveIds, sourceValues = event.sourceValues)
-            AppWidgetManager.ACTION_APPWIDGET_DELETED -> event.ids.filter { it !in liveIds }.forEach(repair::remove)
+            }
+
+            AppWidgetManager.ACTION_APPWIDGET_DELETED -> {
+                event.ids.filter { it !in liveIds }.forEach(repair::remove)
+            }
         }
         inbox.settingsApplied(event.id)
     }

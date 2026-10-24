@@ -18,17 +18,19 @@ repositories {
     // Only registered when credentials are present so an unauth'd dev doesn't
     // get a 401 on every resolve.
     val gprUser =
-        providers.gradleProperty("gpr.user")
+        providers
+            .gradleProperty("gpr.user")
             .orElse(providers.environmentVariable("GITHUB_ACTOR"))
             .orNull
     val gprToken =
-        providers.gradleProperty("gpr.token")
+        providers
+            .gradleProperty("gpr.token")
             .orElse(providers.environmentVariable("GITHUB_TOKEN"))
             .orNull
     if (gprUser != null && gprToken != null) {
         maven {
             name = "atproto-github-packages"
-            url = uri("https://maven.pkg.github.com/WillieCubed/logdate-mobile")
+            url = uri("https://maven.pkg.github.com/TheHypertextStudio/logdate-mobile")
             credentials {
                 username = gprUser
                 password = gprToken

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "prettier": {
-    "version": "3.9.6"
+    "version": "3.9.10"
   },
   "npm": {
     "prettier-plugin-sh": "0.20.2",
@@ -9,38 +9,19 @@
     "prettier-plugin-ini": "1.3.0",
     "prettier-plugin-properties": "0.3.1",
     "prettier-plugin-toml": "4.1.0",
-    "prettier-plugin-sql": "0.20.0"
+    "prettier-plugin-sql": "0.20.0",
+    "@thehypertextstudio/format-config": "0.0.1"
   },
-  "ruff": "0.15.9",
+  "ruff": "0.17.2",
   "native_setup": [
-    [
-      "python3",
-      "{repo}/.hypertext/formatter-tools/native-addons.py",
-      "setup-swift"
-    ],
-    [
-      "python3",
-      "{repo}/.hypertext/formatter-tools/native-addons.py",
-      "setup-terraform"
-    ],
-    [
-      "python3",
-      "{repo}/.hypertext/formatter-tools/native-addons.py",
-      "setup-c"
-    ],
-    [
-      "python3",
-      "{root}/.hypertext/formatter-tools/document-formats.py",
-      "setup-pbxproj"
-    ],
+    ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-swift"],
+    ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-terraform"],
+    ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-c"],
+    ["python3", "{root}/.hypertext/formatter-tools/document-formats.py", "setup-pbxproj"],
     ["python3", "{repo}/.hypertext/formatter-tools/dsl.py", "setup-docker"],
     ["python3", "{repo}/.hypertext/formatter-tools/dsl.py", "setup-awk"],
     ["python3", ".hypertext/formatter-tools/native.py", "--setup"],
-    [
-      "python3",
-      "{repo}/.hypertext/formatter-tools/formal_formats.py",
-      "prepare"
-    ]
+    ["python3", "{repo}/.hypertext/formatter-tools/formal_formats.py", "prepare"]
   ],
   "sql_dialect": "postgresql"
 }

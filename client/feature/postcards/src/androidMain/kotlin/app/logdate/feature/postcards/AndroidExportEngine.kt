@@ -384,6 +384,7 @@ class AndroidExportEngine(
                 fillPaint?.let { canvas.drawRoundRect(rect, SHAPE_CORNER_RADIUS, SHAPE_CORNER_RADIUS, it) }
                 canvas.drawRoundRect(rect, SHAPE_CORNER_RADIUS, SHAPE_CORNER_RADIUS, strokePaint)
             }
+
             ShapeKind.CIRCLE -> {
                 val cx = element.width / 2
                 val cy = element.height / 2
@@ -391,9 +392,11 @@ class AndroidExportEngine(
                 fillPaint?.let { canvas.drawCircle(cx, cy, radius, it) }
                 canvas.drawCircle(cx, cy, radius, strokePaint)
             }
+
             ShapeKind.LINE -> {
                 canvas.drawLine(0f, 0f, element.width, element.height, strokePaint)
             }
+
             ShapeKind.ARROW -> {
                 canvas.drawLine(0f, 0f, element.width, element.height, strokePaint)
                 val arrowSize = element.strokeWidth * ARROW_HEAD_SCALE
@@ -437,6 +440,7 @@ class AndroidExportEngine(
                     )
                 canvas.drawRect(rect, paint)
             }
+
             is CanvasBackground.Gradient -> {
                 val firstColor = background.stops.firstOrNull()?.let { parseColor(it.color) }
                 if (firstColor != null) {

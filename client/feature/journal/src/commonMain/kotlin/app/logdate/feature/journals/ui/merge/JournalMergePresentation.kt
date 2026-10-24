@@ -28,8 +28,14 @@ internal fun JournalMergePresentation(
                 lastPreview = stage.preview
                 settled = false
             }
-            is JournalMergeStage.Merging -> lastPreview = stage.preview
-            else -> Unit
+
+            is JournalMergeStage.Merging -> {
+                lastPreview = stage.preview
+            }
+
+            else -> {
+                Unit
+            }
         }
     }
     val complete = stage as? JournalMergeStage.Complete

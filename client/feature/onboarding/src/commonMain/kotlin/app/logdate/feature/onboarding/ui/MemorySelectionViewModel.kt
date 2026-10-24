@@ -286,20 +286,23 @@ class MemorySelectionViewModel(
         }
         val note =
             when (memory) {
-                is MediaObject.Image ->
+                is MediaObject.Image -> {
                     JournalNote.Image(
                         uid = noteId,
                         creationTimestamp = memory.timestamp,
                         lastUpdated = Clock.System.now(),
                         mediaRef = managedUri,
                     )
-                is MediaObject.Video ->
+                }
+
+                is MediaObject.Video -> {
                     JournalNote.Video(
                         uid = noteId,
                         creationTimestamp = memory.timestamp,
                         lastUpdated = Clock.System.now(),
                         mediaRef = managedUri,
                     )
+                }
             }
         try {
             notesRepository.create(note)

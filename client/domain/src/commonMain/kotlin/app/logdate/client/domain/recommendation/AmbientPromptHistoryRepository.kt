@@ -85,19 +85,25 @@ class DefaultAmbientPromptHistoryRepository(
 
     private fun AmbientPromptFamily.policy(): AmbientPromptPolicy =
         when (this) {
-            AmbientPromptFamily.CAPTURE_NUDGES ->
+            AmbientPromptFamily.CAPTURE_NUDGES -> {
                 AmbientPromptPolicy(
                     maxPerDay = 2,
                     minGap = 3.hours,
                 )
+            }
+
             AmbientPromptFamily.DRAFT_RESCUE,
             AmbientPromptFamily.MEMORY_RECALL,
-            -> AmbientPromptPolicy(maxPerDay = 1, minGap = 24.hours)
-            AmbientPromptFamily.EVENT_NUDGE ->
+            -> {
+                AmbientPromptPolicy(maxPerDay = 1, minGap = 24.hours)
+            }
+
+            AmbientPromptFamily.EVENT_NUDGE -> {
                 // Up to three event nudges per day with at least six hours between them. The
                 // dedupeKey is `event:<id>` so the same event can never fire twice regardless
                 // of these limits.
                 AmbientPromptPolicy(maxPerDay = 3, minGap = 6.hours)
+            }
         }
 
     companion object {

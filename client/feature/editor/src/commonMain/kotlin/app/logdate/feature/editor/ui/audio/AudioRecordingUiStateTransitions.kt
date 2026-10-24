@@ -150,7 +150,7 @@ internal fun AudioUiState.withRestoredRecording(previous: AudioUiState): AudioUi
 
 internal fun AudioUiState.withTranscriptionResult(result: TranscriptionResult): AudioUiState =
     when (result) {
-        is TranscriptionResult.Success ->
+        is TranscriptionResult.Success -> {
             copy(
                 transcriptionState =
                     AudioUiState.TranscriptionState.Success(
@@ -160,12 +160,21 @@ internal fun AudioUiState.withTranscriptionResult(result: TranscriptionResult): 
                         isRefining = result.isRefining,
                     ),
             )
-        is TranscriptionResult.Error -> copy(transcriptionState = AudioUiState.TranscriptionState.Error(result.reason))
-        is TranscriptionResult.InProgress ->
+        }
+
+        is TranscriptionResult.Error -> {
+            copy(transcriptionState = AudioUiState.TranscriptionState.Error(result.reason))
+        }
+
+        is TranscriptionResult.InProgress -> {
             if (transcriptionState is AudioUiState.TranscriptionState.Success) {
                 this
             } else {
                 copy(transcriptionState = AudioUiState.TranscriptionState.InProgress)
             }
-        TranscriptionResult.Cancelled -> copy(transcriptionState = AudioUiState.TranscriptionState.NotRequested)
+        }
+
+        TranscriptionResult.Cancelled -> {
+            copy(transcriptionState = AudioUiState.TranscriptionState.NotRequested)
+        }
     }

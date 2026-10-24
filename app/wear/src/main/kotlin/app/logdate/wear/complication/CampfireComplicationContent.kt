@@ -71,7 +71,7 @@ internal fun campfireComplicationData(
     val count = PlainComplicationText.Builder(content.runDays?.toString() ?: NO_FIRE_TEXT).build()
     val icon = MonochromaticImage.Builder(Icon.createWithResource(context, content.iconRes)).build()
     return when (type) {
-        ComplicationType.RANGED_VALUE ->
+        ComplicationType.RANGED_VALUE -> {
             RangedValueComplicationData
                 .Builder(
                     value = content.rangedValue,
@@ -83,18 +83,23 @@ internal fun campfireComplicationData(
                 .setColorRamp(ColorRamp(colors = CAMPFIRE_COLOR_RAMP, interpolated = false))
                 .setTapAction(tapAction)
                 .build()
-        ComplicationType.LONG_TEXT ->
+        }
+
+        ComplicationType.LONG_TEXT -> {
             LongTextComplicationData
                 .Builder(text = description, contentDescription = description)
                 .setMonochromaticImage(icon)
                 .setTapAction(tapAction)
                 .build()
-        else ->
+        }
+
+        else -> {
             ShortTextComplicationData
                 .Builder(text = count, contentDescription = description)
                 .setMonochromaticImage(icon)
                 .setTapAction(tapAction)
                 .build()
+        }
     }
 }
 

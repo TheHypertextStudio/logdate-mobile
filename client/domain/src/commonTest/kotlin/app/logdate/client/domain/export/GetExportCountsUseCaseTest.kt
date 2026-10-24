@@ -172,28 +172,36 @@ class GetExportCountsUseCaseTest {
             mockNotesRepository.testNotes =
                 (1..noteCount).map { i ->
                     when (i % 4) {
-                        0 -> JournalNote.Text(uid = Uuid.random(), creationTimestamp = now, lastUpdated = now, content = "Note $i")
-                        1 ->
+                        0 -> {
+                            JournalNote.Text(uid = Uuid.random(), creationTimestamp = now, lastUpdated = now, content = "Note $i")
+                        }
+
+                        1 -> {
                             JournalNote.Image(
                                 uid = Uuid.random(),
                                 creationTimestamp = now,
                                 lastUpdated = now,
                                 mediaRef = "file:///img$i.jpg",
                             )
-                        2 ->
+                        }
+
+                        2 -> {
                             JournalNote.Audio(
                                 uid = Uuid.random(),
                                 creationTimestamp = now,
                                 lastUpdated = now,
                                 mediaRef = "file:///audio$i.m4a",
                             )
-                        else ->
+                        }
+
+                        else -> {
                             JournalNote.Video(
                                 uid = Uuid.random(),
                                 creationTimestamp = now,
                                 lastUpdated = now,
                                 mediaRef = "file:///video$i.mp4",
                             )
+                        }
                     }
                 }
             mockJournalRepository.testDrafts =

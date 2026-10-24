@@ -23,20 +23,26 @@ data class CurationConfig(
          */
         fun forStrictness(strictness: Strictness): CurationConfig =
             when (strictness) {
-                Strictness.LENIENT ->
+                Strictness.LENIENT -> {
                     CurationConfig(
                         strictness = strictness,
                         maxItemsPerBeat = 6,
                         minSignificanceForFreeAgent = 25f,
                         excludeScreenshots = false,
                     )
-                Strictness.STANDARD -> CurationConfig(strictness = strictness)
-                Strictness.STRICT ->
+                }
+
+                Strictness.STANDARD -> {
+                    CurationConfig(strictness = strictness)
+                }
+
+                Strictness.STRICT -> {
                     CurationConfig(
                         strictness = strictness,
                         maxItemsPerBeat = 2,
                         minSignificanceForFreeAgent = 50f,
                     )
+                }
             }
     }
 }

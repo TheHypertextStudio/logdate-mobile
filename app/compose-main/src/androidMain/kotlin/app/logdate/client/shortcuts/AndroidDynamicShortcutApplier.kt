@@ -104,11 +104,21 @@ class AndroidDynamicShortcutApplier(
         rank: Int,
     ): ShortcutInfoCompat =
         when (descriptor) {
-            is DynamicShortcutDescriptor.ContinueDraft -> buildContinueDraft(descriptor, rank)
-            is DynamicShortcutDescriptor.TodayTimeline -> buildTodayTimeline(descriptor, rank)
-            is DynamicShortcutDescriptor.WeekRewind -> buildWeekRewind(descriptor, rank)
-            is DynamicShortcutDescriptor.ShareToJournal ->
+            is DynamicShortcutDescriptor.ContinueDraft -> {
+                buildContinueDraft(descriptor, rank)
+            }
+
+            is DynamicShortcutDescriptor.TodayTimeline -> {
+                buildTodayTimeline(descriptor, rank)
+            }
+
+            is DynamicShortcutDescriptor.WeekRewind -> {
+                buildWeekRewind(descriptor, rank)
+            }
+
+            is DynamicShortcutDescriptor.ShareToJournal -> {
                 error("Sharing descriptors are routed through the async builder")
+            }
         }
 
     private fun buildContinueDraft(

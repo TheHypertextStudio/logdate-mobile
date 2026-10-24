@@ -189,16 +189,29 @@ class IdentityPublishingService(
         reconcile: Boolean,
     ): IdentityPublishAction =
         when (inspection.state) {
-            IdentityPublicationState.UNPUBLISHED -> IdentityPublishAction.PUBLISH_GENESIS
-            IdentityPublicationState.NOT_PROVISIONED ->
+            IdentityPublicationState.UNPUBLISHED -> {
+                IdentityPublishAction.PUBLISH_GENESIS
+            }
+
+            IdentityPublicationState.NOT_PROVISIONED -> {
                 if (config.hostedAccountDidMethod == HostedAccountDidMethod.PLC) {
                     IdentityPublishAction.PROVISION_AND_PUBLISH
                 } else {
                     IdentityPublishAction.NONE
                 }
-            IdentityPublicationState.PUBLISHED_UNRECORDED -> IdentityPublishAction.RECORD_CID
-            IdentityPublicationState.MISMATCH -> if (reconcile) IdentityPublishAction.RECONCILE else IdentityPublishAction.NONE
-            else -> IdentityPublishAction.NONE
+            }
+
+            IdentityPublicationState.PUBLISHED_UNRECORDED -> {
+                IdentityPublishAction.RECORD_CID
+            }
+
+            IdentityPublicationState.MISMATCH -> {
+                if (reconcile) IdentityPublishAction.RECONCILE else IdentityPublishAction.NONE
+            }
+
+            else -> {
+                IdentityPublishAction.NONE
+            }
         }
 
     /** Carries out [action] and returns the account as it stands afterwards. */
@@ -213,13 +226,16 @@ class IdentityPublishingService(
                 beforeWrite()
                 plcIdentityService.publishStoredGenesis(requireNotNull(inspection.storedGenesis))
             }
+
             IdentityPublishAction.PROVISION_AND_PUBLISH -> {
                 beforeWrite()
                 return identityService.ensureIdentity(account)
             }
+
             IdentityPublishAction.RECORD_CID -> {
                 operationRepository.recordPublishedCid(requireNotNull(inspection.storedGenesis).id, requireNotNull(inspection.directoryCid))
             }
+
             IdentityPublishAction.RECONCILE -> {
                 beforeWrite()
                 plcIdentityService.reconcileHostedDid(
@@ -229,7 +245,10 @@ class IdentityPublishingService(
                     recoveryDidKey = account.plcRecoveryDidKey,
                 )
             }
-            IdentityPublishAction.NONE -> Unit
+
+            IdentityPublishAction.NONE -> {
+                Unit
+            }
         }
         return account
     }

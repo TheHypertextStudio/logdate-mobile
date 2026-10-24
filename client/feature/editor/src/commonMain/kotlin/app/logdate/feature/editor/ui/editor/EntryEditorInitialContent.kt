@@ -61,12 +61,16 @@ internal fun EntryEditorViewModel.initializePhotoPromptImpl(
 internal fun EntryEditorViewModel.initializeLaunchModeImpl(mode: EditorLaunchMode) {
     val blocks = mutableEditorState.value.blocks
     when (mode) {
-        EditorLaunchMode.Default, EditorLaunchMode.Text -> Unit
+        EditorLaunchMode.Default, EditorLaunchMode.Text -> {
+            Unit
+        }
+
         EditorLaunchMode.Voice -> {
             if (blocks.any { it is AudioBlockUiState }) return
             val audio = createNewBlock(BlockType.AUDIO) as AudioBlockUiState
             updateBlock(audio.copy(startOnOpen = true))
         }
+
         EditorLaunchMode.Camera, EditorLaunchMode.Video -> {
             if (blocks.any { it is CameraBlockUiState }) return
             val camera = createNewBlock(BlockType.CAMERA) as CameraBlockUiState
@@ -102,10 +106,12 @@ internal fun EntryEditorViewModel.setInitialAttachmentsImpl(attachmentUris: List
                         val block = createNewBlock(BlockType.IMAGE) as ImageBlockUiState
                         updateBlock(block.copy(uri = uri))
                     }
+
                     BlockType.VIDEO -> {
                         val block = createNewBlock(BlockType.VIDEO) as VideoBlockUiState
                         updateBlock(block.copy(uri = uri))
                     }
+
                     BlockType.AUDIO -> {
                         val block = createNewBlock(BlockType.AUDIO) as AudioBlockUiState
                         val attachment = AudioCaptureState.Ready(uri = uri, durationMs = 0L)
@@ -116,14 +122,22 @@ internal fun EntryEditorViewModel.setInitialAttachmentsImpl(attachmentUris: List
                             val attached = current.blocks.filterIsInstance<AudioBlockUiState>().find { it.id == block.id }
                             if (!current.isEditingLocked && !current.shouldExit && attached?.captureState == attachment) {
                                 when (resolved) {
-                                    is AudioCaptureState.Ready -> updateBlock(attached.copy(captureState = resolved))
-                                    is AudioCaptureState.Failed ->
+                                    is AudioCaptureState.Ready -> {
+                                        updateBlock(attached.copy(captureState = resolved))
+                                    }
+
+                                    is AudioCaptureState.Failed -> {
                                         mutableEditorState.update { it.copy(errorMessage = resolved.reason.toUiText()) }
-                                    else -> Unit
+                                    }
+
+                                    else -> {
+                                        Unit
+                                    }
                                 }
                             }
                         }
                     }
+
                     else -> {
                         Napier.w("Unhandled attachment type for URI: $uri")
                     }

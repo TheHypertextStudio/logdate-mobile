@@ -76,6 +76,7 @@ class WeekNarrativeSynthesizerTest {
                             appendLine("\n[${item.timestamp}] Photo (ID: ${item.uid})")
                             item.caption?.let { appendLine("Caption: $it") }
                         }
+
                         is IndexedMedia.Video -> {
                             appendLine("\n[${item.timestamp}] Video (ID: ${item.uid}) - Duration: ${item.duration}")
                             item.caption?.let { appendLine("Caption: $it") }

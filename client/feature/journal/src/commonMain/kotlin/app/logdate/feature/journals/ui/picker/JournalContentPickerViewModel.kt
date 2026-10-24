@@ -133,16 +133,20 @@ class JournalContentPickerViewModel(
 
     private fun JournalNote.toPickerItem(): JournalContentPickerItem =
         when (this) {
-            is JournalNote.Handwriting ->
+            is JournalNote.Handwriting -> {
                 JournalContentPickerItem(
                     uid,
                     JournalContentPickerItemKind.WRITING,
                     creationTimestamp,
                     title = null,
                 )
-            is JournalNote.Text ->
+            }
+
+            is JournalNote.Text -> {
                 JournalContentPickerItem(uid, JournalContentPickerItemKind.WRITING, creationTimestamp, content)
-            is JournalNote.Image ->
+            }
+
+            is JournalNote.Image -> {
                 JournalContentPickerItem(
                     uid,
                     JournalContentPickerItemKind.PHOTO,
@@ -150,7 +154,9 @@ class JournalContentPickerViewModel(
                     caption.ifBlank { null },
                     mediaRef,
                 )
-            is JournalNote.Video ->
+            }
+
+            is JournalNote.Video -> {
                 JournalContentPickerItem(
                     uid,
                     JournalContentPickerItemKind.VIDEO,
@@ -158,7 +164,9 @@ class JournalContentPickerViewModel(
                     caption.ifBlank { null },
                     mediaRef,
                 )
-            is JournalNote.Audio ->
+            }
+
+            is JournalNote.Audio -> {
                 JournalContentPickerItem(
                     uid,
                     JournalContentPickerItemKind.RECORDING,
@@ -166,6 +174,7 @@ class JournalContentPickerViewModel(
                     location?.displayName,
                     mediaRef,
                 )
+            }
         }
 
     private fun List<JournalContentPickerItem>.groupByDate(): List<JournalContentPickerDateGroup> =

@@ -1,13 +1,16 @@
 """Real staged-input formatter acceptance; no build programs may execute."""
 
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
+from unittest import mock
 
 HELPER = Path(__file__).with_name("dsl.py")
 ROOT = HELPER.parents[2]
@@ -21,6 +24,47 @@ SAMPLES = {
 
 
 class DSLFormatterTests(unittest.TestCase):
+    def test_cold_gawk_build_preserves_release_timestamps(self):
+        spec = importlib.util.spec_from_file_location("dsl_gawk_under_test", HELPER)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w:xz") as bundle:
+            for name, timestamp in [
+                ("aclocal.m4", 200),
+                ("configure.ac", 100),
+                ("configure", 300),
+            ]:
+                info = tarfile.TarInfo("gawk-5.4.1/" + name)
+                data = b"release fixture\n"
+                info.size = len(data)
+                info.mtime = timestamp
+                info.mode = 0o755 if name == "configure" else 0o644
+                bundle.addfile(info, io.BytesIO(data))
+        with tempfile.TemporaryDirectory() as directory:
+            module.CACHE = Path(directory)
+            binary = module.CACHE / "gawk/5.4.1" / module.key() / "bin/gawk"
+
+            def build(command, cwd, **kwargs):
+                source = Path(cwd)
+                self.assertEqual((source / "configure.ac").stat().st_mtime, 100)
+                self.assertEqual((source / "aclocal.m4").stat().st_mtime, 200)
+                self.assertEqual((source / "configure").stat().st_mtime, 300)
+                self.assertTrue(os.access(source / "configure", os.X_OK))
+                if command == ["make", "install"]:
+                    binary.parent.mkdir(parents=True)
+                    binary.write_bytes(b"compiled fixture")
+                return subprocess.CompletedProcess(command, 0, b"", b"")
+
+            with (
+                mock.patch.object(module, "artifact", return_value=archive.getvalue()),
+                mock.patch.object(module.subprocess, "run", side_effect=build),
+                mock.patch.object(
+                    module.subprocess, "check_output", return_value="GNU Awk 5.4.1\n"
+                ),
+            ):
+                self.assertEqual(module.gawk(setup=True), binary)
+
     def test_real_stdin_idempotence_and_source_preservation(self):
         for rule in RULES:
             tool = rule["argv"][-3]

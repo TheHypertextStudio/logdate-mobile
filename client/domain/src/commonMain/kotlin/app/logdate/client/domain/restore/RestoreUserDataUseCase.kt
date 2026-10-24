@@ -72,7 +72,7 @@ class RestoreUserDataUseCase(
         expectedNoteScope: app.logdate.client.repository.journals.JournalMergeScope? = null,
     ): RestoreResult =
         when (archive) {
-            is RestoreArchiveBundle.V1 ->
+            is RestoreArchiveBundle.V1 -> {
                 restore(
                     archive.bundle,
                     options,
@@ -82,7 +82,9 @@ class RestoreUserDataUseCase(
                     mediaRecoveryId,
                     expectedNoteScope,
                 )
-            is RestoreArchiveBundle.V2 ->
+            }
+
+            is RestoreArchiveBundle.V2 -> {
                 restore(
                     archive.bundle,
                     options,
@@ -92,6 +94,7 @@ class RestoreUserDataUseCase(
                     mediaRecoveryId,
                     expectedNoteScope,
                 )
+            }
         }
 
     suspend fun restore(
@@ -105,7 +108,7 @@ class RestoreUserDataUseCase(
     ): RestoreResult {
         val noteRecoveryScope = journalNotesRepository.getNoteRecoveryScope()
         val journalRecoveryScope = journalRepository.getJournalRecoveryScope()
-        check(expectedNoteScope == null || noteRecoveryScope == expectedNoteScope && journalRecoveryScope == expectedNoteScope) {
+        check(expectedNoteScope == null || (noteRecoveryScope == expectedNoteScope && journalRecoveryScope == expectedNoteScope)) {
             "Archive recovery account changed"
         }
         val metadata = json.decodeFromString<ExportMetadata>(bundle.metadataJson)

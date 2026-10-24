@@ -160,7 +160,7 @@ fun AccountContent(
 
     val title = stringResource(Res.string.account_title)
     when (state) {
-        AccountUiState.Loading ->
+        AccountUiState.Loading -> {
             SettingsScaffold(title = title, onBack = destinations.onBack, snackbarHostState = snackbarHostState) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(Spacing.xl), contentAlignment = Alignment.Center) {
@@ -168,13 +168,15 @@ fun AccountContent(
                     }
                 }
             }
+        }
 
-        AccountUiState.SignedOut ->
+        AccountUiState.SignedOut -> {
             SettingsScaffold(title = title, onBack = destinations.onBack, snackbarHostState = snackbarHostState) {
                 item { SignedOutPrompt(destinations) }
             }
+        }
 
-        is AccountUiState.SignedIn ->
+        is AccountUiState.SignedIn -> {
             FoldableBookLayout(
                 modifier = Modifier.fillMaxSize(),
                 minPaneWidth = 320.dp,
@@ -212,6 +214,7 @@ fun AccountContent(
                     }
                 },
             )
+        }
     }
 
     val signedIn = state as? AccountUiState.SignedIn
@@ -307,11 +310,21 @@ private fun SignInAndRecoverySection(
             description =
                 stringResource(
                     when {
-                        state.hasRecoveryPhrase == true && state.accountRecoveryNeedsAttention ->
+                        state.hasRecoveryPhrase == true && state.accountRecoveryNeedsAttention -> {
                             Res.string.account_recovery_phrase_finish_setup
-                        state.hasRecoveryPhrase == true -> Res.string.account_recovery_phrase_saved
-                        state.hasRecoveryPhrase == false -> Res.string.account_recovery_phrase_missing
-                        else -> Res.string.account_recovery_phrase_checking
+                        }
+
+                        state.hasRecoveryPhrase == true -> {
+                            Res.string.account_recovery_phrase_saved
+                        }
+
+                        state.hasRecoveryPhrase == false -> {
+                            Res.string.account_recovery_phrase_missing
+                        }
+
+                        else -> {
+                            Res.string.account_recovery_phrase_checking
+                        }
                     },
                 ),
             icon = {

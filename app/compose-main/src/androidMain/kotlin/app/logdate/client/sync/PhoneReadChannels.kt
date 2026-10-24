@@ -15,17 +15,23 @@ class PhoneReadChannels(
 
     suspend fun serve(channel: ChannelClient.Channel): Boolean =
         when {
-            channel.path.startsWith(WindowBodyPaths.CHANNEL_PREFIX) ->
+            channel.path.startsWith(WindowBodyPaths.CHANNEL_PREFIX) -> {
                 bodies()?.let {
                     it.serve(channel)
                     true
                 } ?: false
-            channel.path.startsWith(WearMediaPaths.CHANNEL_PREFIX) ->
+            }
+
+            channel.path.startsWith(WearMediaPaths.CHANNEL_PREFIX) -> {
                 media()?.let {
                     it.serve(channel)
                     true
                 } ?: false
-            else -> false
+            }
+
+            else -> {
+                false
+            }
         }
 
     suspend fun answer(

@@ -211,13 +211,20 @@ class PasskeyApiClient(
     private suspend fun HttpResponse.toPasskeyApiException(): PasskeyApiException {
         val envelope = runCatching { json.decodeFromString<ApiErrorResponse>(bodyAsText()) }.getOrNull()
         return when {
-            envelope != null -> PasskeyApiException(envelope.error.code, envelope.error.message)
-            status.value >= 500 -> PasskeyApiException(PasskeyApiErrorCodes.SERVER_UNAVAILABLE, "The server answered HTTP ${status.value}")
-            else ->
+            envelope != null -> {
+                PasskeyApiException(envelope.error.code, envelope.error.message)
+            }
+
+            status.value >= 500 -> {
+                PasskeyApiException(PasskeyApiErrorCodes.SERVER_UNAVAILABLE, "The server answered HTTP ${status.value}")
+            }
+
+            else -> {
                 PasskeyApiException(
                     PasskeyApiErrorCodes.UNEXPECTED_RESPONSE,
                     "The server answered HTTP ${status.value} without an error",
                 )
+            }
         }
     }
 

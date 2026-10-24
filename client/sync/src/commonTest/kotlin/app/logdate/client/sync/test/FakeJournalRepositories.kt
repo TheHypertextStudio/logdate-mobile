@@ -284,6 +284,6 @@ class TrackingJournalContentRepository : JournalContentRepository {
     ): Boolean = associations.contains(AssociationKey(contentId, journalId))
 }
 
-/**
+/*
  * SyncManager implementation that tracks all method calls for testing.
  */

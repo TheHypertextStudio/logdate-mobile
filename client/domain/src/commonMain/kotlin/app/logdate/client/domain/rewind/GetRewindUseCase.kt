@@ -73,14 +73,17 @@ class GetRewindUseCase(
                                 is GenerateBasicRewindResult.Success -> {
                                     Napier.i("Successfully generated rewind — UI will auto-update via repo flow")
                                 }
+
                                 is GenerateBasicRewindResult.AlreadyInProgress -> {
                                     Napier.d("Generation already in progress")
                                 }
+
                                 is GenerateBasicRewindResult.NoContent -> {
                                     Napier.w("No content available for rewind period")
                                     // Emit NoneAvailable so UI stops showing the loading state
                                     send(RewindQueryResult.NoneAvailable)
                                 }
+
                                 is GenerateBasicRewindResult.Error -> {
                                     Napier.e("Failed to generate rewind: ${result.error}", result.exception)
                                     send(RewindQueryResult.Failed)

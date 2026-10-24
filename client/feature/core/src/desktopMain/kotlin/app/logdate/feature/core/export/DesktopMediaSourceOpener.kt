@@ -36,10 +36,17 @@ private val WINDOWS_DRIVE_PATH = Regex("^[A-Za-z]:[\\\\/].*")
  */
 internal fun localFileCandidates(reference: String): List<File> =
     when {
-        reference.startsWith("file:") ->
+        reference.startsWith("file:") -> {
             listOfNotNull(fileFromUrl(reference), File(reference.removePrefix("file://").removePrefix("file:")))
-        reference.startsWith("/") || reference.startsWith("\\\\") || WINDOWS_DRIVE_PATH.matches(reference) -> listOf(File(reference))
-        else -> emptyList()
+        }
+
+        reference.startsWith("/") || reference.startsWith("\\\\") || WINDOWS_DRIVE_PATH.matches(reference) -> {
+            listOf(File(reference))
+        }
+
+        else -> {
+            emptyList()
+        }
     }
 
 private fun fileFromUrl(reference: String): File? =

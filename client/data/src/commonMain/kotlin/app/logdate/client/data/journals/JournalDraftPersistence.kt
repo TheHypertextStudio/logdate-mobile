@@ -33,8 +33,10 @@ internal class JournalDraftPersistence(
         check(
             storage?.ownerId == null ||
                 outbox == null ||
-                storage.ownerId == outbox.ownerId &&
-                storage.serverOrigin == outbox.serverOrigin,
+                (
+                    storage.ownerId == outbox.ownerId &&
+                        storage.serverOrigin == outbox.serverOrigin
+                ),
         ) {
             "Draft storage and upload scope differ"
         }
@@ -86,7 +88,7 @@ internal class JournalDraftPersistence(
         val storage = drafts.getDraftRecoveryScope() ?: return null
         val outbox = currentOutboxScope()
         check(drafts.getDraftRecoveryScope() == storage) { "Draft recovery account changed" }
-        check(storage.ownerId == null || storage.ownerId == outbox.ownerId && storage.serverOrigin == outbox.serverOrigin) {
+        check(storage.ownerId == null || (storage.ownerId == outbox.ownerId && storage.serverOrigin == outbox.serverOrigin)) {
             "Draft recovery storage and upload scope differ"
         }
         return storage.copy(outboxOwnerId = outbox.ownerId, outboxServerOrigin = outbox.serverOrigin)

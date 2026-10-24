@@ -48,11 +48,15 @@ fun MarkConfirmationContent(feedback: MarkFeedback) {
             val marked = stringResource(R.string.wear_mark_saved)
             ConfirmationDialogContent(curvedText = { confirmationDialogCurvedText(marked, style) }) { MarkGlyph() }
         }
+
         MarkFeedback.FAILED -> {
             val failed = stringResource(R.string.wear_mark_failed)
             FailureConfirmationDialogContent(curvedText = { confirmationDialogCurvedText(failed, style) })
         }
-        MarkFeedback.NONE -> Unit
+
+        MarkFeedback.NONE -> {
+            Unit
+        }
     }
 }
 

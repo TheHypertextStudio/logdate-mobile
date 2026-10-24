@@ -73,8 +73,13 @@ fun LocalDate.asRelativeDate(today: LocalDate): String {
             if (this.dayOfWeek > today.dayOfWeek) stringResource(Res.string.date_formatting_last_weekday, dayName) else dayName
         }
 
-        this.year == today.year -> stringResource(Res.string.date_formatting_month_day, stringResource(month.nameResource()), day)
-        else -> stringResource(Res.string.date_formatting_month_day_year, stringResource(month.nameResource()), day, year)
+        this.year == today.year -> {
+            stringResource(Res.string.date_formatting_month_day, stringResource(month.nameResource()), day)
+        }
+
+        else -> {
+            stringResource(Res.string.date_formatting_month_day_year, stringResource(month.nameResource()), day, year)
+        }
     }
 }
 

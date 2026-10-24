@@ -33,12 +33,16 @@ class PhoneMediaEndpoint(
                 if (request.schema != 1) return null
                 server.describe(node, request)?.let { WearJson.encodeToBytes(PhoneMediaDescriptor.serializer(), it) }
             }
+
             WearMediaPaths.RANGE -> {
                 val request = (WearJson.decode(payload, 1, PhoneMediaRangeRequest.serializer()) as? Decoded.Supported)?.value ?: return null
                 if (request.schema != 1) return null
                 server.prepare(node, request)?.let { WearJson.encodeToBytes(PhoneMediaRangeTicket.serializer(), it) }
             }
-            else -> null
+
+            else -> {
+                null
+            }
         }
     }
 

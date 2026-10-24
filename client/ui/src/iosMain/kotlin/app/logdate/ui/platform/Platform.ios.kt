@@ -12,7 +12,9 @@ import platform.UIKit.UIUserInterfaceIdiomPad
 actual val currentPlatform: PlatformKind =
     when (UIDevice.currentDevice.userInterfaceIdiom) {
         UIUserInterfaceIdiomPad -> PlatformKind.IpadOs
+
         // 0 = phone (UIUserInterfaceIdiomPhone), 5 = mac (UIUserInterfaceIdiomMac, Catalyst)
         5L -> PlatformKind.MacCatalyst
+
         else -> PlatformKind.Ios
     }

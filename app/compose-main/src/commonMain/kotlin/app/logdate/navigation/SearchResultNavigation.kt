@@ -19,11 +19,17 @@ import kotlinx.datetime.toLocalDateTime
 internal fun searchResultRoute(result: SearchResult): NavKey =
     when (result.contentType) {
         SearchContentType.JOURNAL -> JournalDetailsRoute(result.uid)
+
         SearchContentType.PERSON -> PersonDetailRoute(result.uid)
+
         SearchContentType.TEXT_NOTE -> NoteDetailRoute(result.uid)
+
         SearchContentType.POSTCARD -> PostcardViewerRoute(result.uid)
+
         SearchContentType.REWIND -> RewindDetailRoute(result.uid)
+
         SearchContentType.MEDIA_CAPTION -> MediaDetailRoute(result.uid)
+
         SearchContentType.TRANSCRIPTION,
         SearchContentType.AMBIENT_SOUND,
         SearchContentType.STICKER,

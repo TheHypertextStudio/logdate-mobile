@@ -39,17 +39,20 @@ class DefaultPlanCatalogClient(
             when {
                 // A server predating this endpoint, or one that has it switched off, is not a
                 // failure — it simply sells nothing, and the plan step is skipped.
-                response.status == HttpStatusCode.NotFound -> Result.success(emptyList())
+                response.status == HttpStatusCode.NotFound -> {
+                    Result.success(emptyList())
+                }
 
                 response.status.isSuccess() -> {
                     val payload = json.decodeFromString<PlanCatalogResponse>(response.bodyAsText())
                     Result.success(payload.data)
                 }
 
-                else ->
+                else -> {
                     Result.failure(
                         PlanCatalogException("Plan catalog request failed with ${response.status}"),
                     )
+                }
             }
         } catch (e: Exception) {
             Napier.e("Plan catalog lookup failed", e)

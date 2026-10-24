@@ -19,6 +19,7 @@ import app.logdate.client.device.crypto.link.BouncyCastleLinkHandshake
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.client.device.identity.DeviceIdProvider
 import app.logdate.client.device.storage.SecureStorage
+import app.logdate.client.domain.export.archive.ArchiveExportProgress
 import app.logdate.client.domain.export.archive.ExportArchiveUseCase
 import app.logdate.client.ensureLogDateApplicationStarted
 import app.logdate.client.repository.journals.JournalRepository
@@ -40,7 +41,10 @@ import app.logdate.client.sync.v2.window.WindowManifestStore
 import app.logdate.feature.core.export.CloudArchiveCipher
 import app.logdate.feature.core.export.CloudBackupWorker
 import app.logdate.feature.core.settings.ui.CloudArchiveStage
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.Test
@@ -212,11 +216,12 @@ class NativeTransferredPublicationProbeTest : CloudArchiveWorkerFixture() {
             }
         try {
             val cipher = koin.get<CloudArchiveCipher>()
+            val exportEvents = mutableListOf<String>()
             val worker =
                 CloudBackupWorker(
                     context,
                     params,
-                    koin.get<ExportArchiveUseCase>(),
+                    observedExporter(exportEvents),
                     transport,
                     FakeSessionStorage(
                         UserSession("synthetic-publication-access", "synthetic-publication-refresh", current.getString("owner")),
@@ -225,7 +230,11 @@ class NativeTransferredPublicationProbeTest : CloudArchiveWorkerFixture() {
                     koin.get<IdentityKeyManager>(),
                     cipher,
                 )
-            assertTrue(worker.doWork() is ListenableWorker.Result.Success)
+            val result = worker.doWork()
+            assertTrue(
+                result is ListenableWorker.Result.Success,
+                "Publication result=${result.javaClass.simpleName}; uploads=$uploads; export=$exportEvents",
+            )
             val stages = archiveProgress.mapNotNull { it.getString(CloudBackupWorker.PROGRESS_STAGE) }
             assertTrue(CloudArchiveStage.CHECKING.name in stages, "The worker must report its actual checking progress")
             assertTrue(CloudArchiveStage.UPLOADING.name in stages, "The worker must report its actual uploading progress")
@@ -243,6 +252,39 @@ class NativeTransferredPublicationProbeTest : CloudArchiveWorkerFixture() {
         } finally {
             encrypted.delete()
             plaintext.delete()
+        }
+    }
+
+    /** Observe the real export without replacing its data, progress, failures, or container. */
+    private fun observedExporter(events: MutableList<String>): ExportArchiveUseCase {
+        val real = koin.get<ExportArchiveUseCase>()
+        return mockk<ExportArchiveUseCase>().also { observer ->
+            every { observer.export(any(), any()) } answers {
+                real.export(firstArg(), secondArg()).onEach { progress ->
+                    events +=
+                        when (progress) {
+                            is ArchiveExportProgress.Starting -> {
+                                "starting"
+                            }
+
+                            is ArchiveExportProgress.InProgress -> {
+                                progress.stage.name
+                            }
+
+                            is ArchiveExportProgress.Failed -> {
+                                "failed:${progress.error}"
+                            }
+
+                            is ArchiveExportProgress.Completed -> {
+                                val omissions =
+                                    progress.summary.scope.omitted
+                                        .groupingBy { it.reason }
+                                        .eachCount()
+                                "completed:omissions=$omissions"
+                            }
+                        }
+                }
+            }
         }
     }
 

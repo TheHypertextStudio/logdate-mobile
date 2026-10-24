@@ -113,6 +113,7 @@ internal class CreateCollisionSettler(
                     if (settled) recordProgress(1)
                     settled
                 }
+
                 is CollisionOutcome.Deleted -> {
                     val settled = retryCoordinator.markUploadSettled(entityType, pending, outcome.deletedAt, 0L)
                     if (settled) {
@@ -121,8 +122,14 @@ internal class CreateCollisionSettler(
                     }
                     settled
                 }
-                is CollisionOutcome.RebaseAsUpdate -> rebase(entityType, pending, outcome.serverVersion)
-                CollisionOutcome.Retry -> false
+
+                is CollisionOutcome.RebaseAsUpdate -> {
+                    rebase(entityType, pending, outcome.serverVersion)
+                }
+
+                CollisionOutcome.Retry -> {
+                    false
+                }
             }
         }
     }
@@ -156,11 +163,13 @@ internal fun Result<ConditionalCreateResult>.asUploadResult(): Result<SyncUpload
     mapCatching { result ->
         when (result) {
             is ConditionalCreateResult.Created -> SyncUploadResult(result.serverVersion, result.syncedAt)
+
             is ConditionalCreateResult.AlreadyExists -> throw CloudApiException(
                 "CONTENT_EXISTS",
                 "Watch capture already exists",
                 statusCode = 412,
             )
+
             is ConditionalCreateResult.Deleted -> throw CloudApiException("CONTENT_DELETED", "Watch capture was deleted", statusCode = 410)
         }
     }

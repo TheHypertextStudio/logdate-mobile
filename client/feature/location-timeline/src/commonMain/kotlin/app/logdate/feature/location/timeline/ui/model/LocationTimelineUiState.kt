@@ -43,22 +43,31 @@ sealed interface LocationTimelineErrorUiState {
 
 internal fun Throwable.toLocationTimelineErrorUiState(): LocationTimelineErrorUiState =
     when {
-        this::class.simpleName == "SecurityException" -> LocationTimelineErrorUiState.PermissionRequired
+        this::class.simpleName == "SecurityException" -> {
+            LocationTimelineErrorUiState.PermissionRequired
+        }
+
         message?.contains("permission", ignoreCase = true) == true &&
             message?.contains("location", ignoreCase = true) == true -> {
             LocationTimelineErrorUiState.PermissionRequired
         }
+
         this is IllegalStateException &&
             message?.contains("location", ignoreCase = true) == true -> {
             LocationTimelineErrorUiState.LocationServicesDisabled
         }
+
         message?.contains("location disabled", ignoreCase = true) == true -> {
             LocationTimelineErrorUiState.LocationServicesDisabled
         }
+
         message?.contains("location unavailable", ignoreCase = true) == true -> {
             LocationTimelineErrorUiState.LocationServicesDisabled
         }
-        else -> LocationTimelineErrorUiState.TemporarilyUnavailable
+
+        else -> {
+            LocationTimelineErrorUiState.TemporarilyUnavailable
+        }
     }
 
 enum class LocationLabelSource {

@@ -51,13 +51,17 @@ class WatchDeliveryPeer(
         if (!context.isValid()) return null
         val accountMatches =
             when (record.mode) {
-                LinkMode.PAIR -> bound == null && session == null
-                LinkMode.CLOUD ->
+                LinkMode.PAIR -> {
+                    bound == null && session == null
+                }
+
+                LinkMode.CLOUD -> {
                     bound != null &&
                         bound.session == session &&
                         bound.session.accountId == record.accountId &&
                         bound.origin == record.serverOrigin &&
                         bound.origin == backend
+                }
             }
         if (!accountMatches ||
             (requireActive && !active()) ||

@@ -149,7 +149,11 @@ abstract class StructuredAIExtractor<Input, Output>(
                     generativeAICache.putEntry(cacheRequest, content.trim())
                     AIResult.Success(parsed, fromCache = false)
                 }
-                is AIResult.Unavailable -> response
+
+                is AIResult.Unavailable -> {
+                    response
+                }
+
                 is AIResult.Error -> {
                     Napier.e(
                         tag = tag,

@@ -1,65 +1,33 @@
 import hashlib
 import json
-import os
 from pathlib import Path
-import shutil
-import shlex
+import runpy
 import subprocess
-import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
+PORTABLE_FIXTURE = runpy.run_path(
+    str(ROOT / "scripts/tests/hooks/test-managed-hook-entrypoints.py")
+)
 
 
 class GitHookDispatchTests(unittest.TestCase):
+    run_command = PORTABLE_FIXTURE["ManagedHookEntrypointTests"].run_command
+    commit = PORTABLE_FIXTURE["ManagedHookEntrypointTests"].commit
+
     def setUp(self):
-        self.directory = tempfile.TemporaryDirectory()
-        self.addCleanup(self.directory.cleanup)
-        self.repo = Path(self.directory.name)
-        self.git("init", "-q")
-        self.git("config", "user.name", "Hook fixture")
-        self.git("config", "user.email", "fixture@hypertext.studio")
-        (self.repo / ".githooks").mkdir()
-        (self.repo / "scripts/validation").mkdir(parents=True)
-        (self.repo / ".hypertext/git-product").mkdir(parents=True)
-        shutil.copyfile(
-            ROOT / ".hypertext/commits.json", self.repo / ".hypertext/commits.json"
-        )
-        for hook in ("pre-commit", "commit-msg", "pre-push"):
-            content = (ROOT / ".githooks" / hook).read_text()
-            tool = next(
-                value
-                for value in shlex.split(content.splitlines()[-1])
-                if value.endswith("/hypertext.py")
-            )
-            fixture = ROOT / "scripts/tests/hooks/shared-git-gate-fixture.py"
-            (self.repo / ".githooks" / hook).write_text(
-                content.replace(tool, shlex.quote(str(fixture)))
-            )
-        helper = ROOT / "scripts/validation/run-git-hook.py"
-        if helper.exists():
-            shutil.copyfile(helper, self.repo / "scripts/validation" / helper.name)
-        oid = self.git("hash-object", "-w", ".hypertext/commits.json").strip()
-        self.git(
-            "update-index",
-            "--add",
-            "--cacheinfo",
-            "100644",
-            oid,
-            ".hypertext/commits.json",
-        )
+        PORTABLE_FIXTURE["ManagedHookEntrypointTests"].setUp(self)
         self.hooks = {
             name: {"before": [], "after": []}
             for name in ("pre-commit", "commit-msg", "pre-push")
         }
         self.save_metadata()
-        self.message = self.repo / ".git/message"
         self.message.write_text(
             "fix(settings): Open Android app preferences\n\nApp preferences open Settings.\n"
         )
 
     def git(self, *args):
-        return subprocess.check_output(["git", *args], cwd=self.repo, text=True)
+        return self.run_command("git", *args).stdout
 
     def save_metadata(self):
         (self.repo / ".hypertext/git-hooks.json").write_text(
@@ -78,7 +46,7 @@ class GitHookDispatchTests(unittest.TestCase):
         return path
 
     def invoke(self, hook, *args, data=None):
-        env = dict(os.environ)
+        env = self.environment.copy()
         env.pop("HYPERTEXT_AGENT_COAUTHOR", None)
         return subprocess.run(
             ["sh", str(self.repo / ".githooks" / hook), *args],
@@ -115,7 +83,11 @@ class GitHookDispatchTests(unittest.TestCase):
     def test_prepush_preserves_exact_native_input_for_product_gate(self):
         self.stage("pre-push", "after", "cat > received-refs")
         transaction = (
-            b"(delete) " + b"0" * 40 + b" refs/heads/obsolete " + b"1" * 40 + b"\n"
+            b"(delete) "
+            + b"0" * 40
+            + b" refs/heads/obsolete-\xff "
+            + b"1" * 40
+            + b"\r\n"
         )
         result = self.invoke("pre-push", "origin", str(self.repo), data=transaction)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -126,7 +98,7 @@ class GitHookDispatchTests(unittest.TestCase):
         path.write_text(path.read_text() + "echo modified\n")
         result = self.invoke("commit-msg", str(self.message))
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn(b"digest", result.stderr.lower())
+        self.assertIn(b"hash mismatch", result.stderr.lower())
         self.assertFalse((self.repo / "unexpected").exists())
 
 

@@ -133,27 +133,35 @@ fun TimelineList(
     val suggestionBlockState: TimelineSuggestionBlockUiState? =
         remember(timelineSuggestion, draftMessage, emptyDayMessage, emptyDayLocation, morningMessage, activityMessage) {
             when (timelineSuggestion) {
-                is TimelineSuggestionBlock.AfterActivity ->
+                is TimelineSuggestionBlock.AfterActivity -> {
                     TimelineSuggestionBlockUiState(
                         type = TimelineSuggestionBlockType.AFTER_ACTIVITY,
                         message = activityMessage.orEmpty(),
                         activityTrip = timelineSuggestion.trip,
                     )
-                TimelineSuggestionBlock.MorningStart ->
+                }
+
+                TimelineSuggestionBlock.MorningStart -> {
                     TimelineSuggestionBlockUiState(type = TimelineSuggestionBlockType.MORNING_START, message = morningMessage)
-                is TimelineSuggestionBlock.CompleteDraft ->
+                }
+
+                is TimelineSuggestionBlock.CompleteDraft -> {
                     TimelineSuggestionBlockUiState(
                         type = TimelineSuggestionBlockType.COMPLETE_DRAFT,
                         message = draftMessage,
                         draftId = timelineSuggestion.draftId,
                     )
-                is TimelineSuggestionBlock.EmptyDay ->
+                }
+
+                is TimelineSuggestionBlock.EmptyDay -> {
                     TimelineSuggestionBlockUiState(
                         type = TimelineSuggestionBlockType.EMPTY_DAY,
                         message = emptyDayMessage,
                         location = emptyDayLocation,
                     )
-                is TimelineSuggestionBlock.MemoryRecall ->
+                }
+
+                is TimelineSuggestionBlock.MemoryRecall -> {
                     TimelineSuggestionBlockUiState(
                         type = TimelineSuggestionBlockType.MEMORY_RECALL,
                         message = timelineSuggestion.title,
@@ -162,7 +170,9 @@ fun TimelineList(
                         mediaUris = timelineSuggestion.mediaUris,
                         isAiGenerated = timelineSuggestion.isAiGenerated,
                     )
-                is TimelineSuggestionBlock.UpcomingEvent ->
+                }
+
+                is TimelineSuggestionBlock.UpcomingEvent -> {
                     TimelineSuggestionBlockUiState(
                         type = TimelineSuggestionBlockType.UPCOMING_EVENT,
                         message = timelineSuggestion.title,
@@ -170,7 +180,11 @@ fun TimelineList(
                         eventStartTime = timelineSuggestion.startTime,
                         location = timelineSuggestion.placeName,
                     )
-                null -> null
+                }
+
+                null -> {
+                    null
+                }
             }
         }
     // Retain the last non-null state so the exit animation has content to render.

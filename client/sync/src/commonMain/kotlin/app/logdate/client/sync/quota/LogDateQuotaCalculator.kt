@@ -82,6 +82,7 @@ class LogDateQuotaCalculator(
             totalSizeBytes < 0 -> throw IllegalStateException(
                 "Invalid negative total size for $categoryName: $totalSizeBytes bytes",
             )
+
             totalSizeBytes > MAX_REASONABLE_TOTAL_SIZE -> throw IllegalStateException(
                 "Unreasonably large total size for $categoryName: $totalSizeBytes bytes " +
                     "(>${MAX_REASONABLE_TOTAL_SIZE / BYTES_PER_TERABYTE}TB)",

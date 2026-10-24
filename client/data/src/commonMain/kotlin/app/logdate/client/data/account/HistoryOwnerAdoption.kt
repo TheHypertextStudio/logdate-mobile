@@ -39,8 +39,10 @@ class HistoryOwnerAdoption(
                 (
                     !sameOwnerId(pending.newOwner, newOwner) ||
                         pending.origin != normalizedOrigin ||
-                        !sameOwnerId(current, pending.oldOwner) &&
-                        !sameOwnerId(current, pending.newOwner)
+                        (
+                            !sameOwnerId(current, pending.oldOwner) &&
+                                !sameOwnerId(current, pending.newOwner)
+                        )
                 )
             ) {
                 return@withLock false

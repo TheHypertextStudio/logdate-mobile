@@ -77,30 +77,42 @@ internal class NativePreferenceCapture(
     fun read(): ByteArray? {
         val snapshot = snapshot()
         return when (snapshot?.state) {
-            "captured" -> Base64.getDecoder().decode(requireNotNull(snapshot.source)).also { require(it.size <= 1_048_576) }
-            "omitted" -> null
+            "captured" -> {
+                Base64.getDecoder().decode(requireNotNull(snapshot.source)).also { require(it.size <= 1_048_576) }
+            }
+
+            "omitted" -> {
+                null
+            }
+
             "prepared" -> {
                 if (!deliveryComplete()) throw IOException("Native delivery is still in progress")
                 capture()
                 read()
             }
+
             "delivered" -> {
                 if (!deliveryComplete()) throw IOException("Native delivery is still in progress")
                 capture()
                 read()
             }
+
             "observed" -> {
                 if (!deliveryComplete()) throw IOException("Native delivery is still in progress")
                 if (deliveredDecision() == false) finish(false) else capture()
                 read()
             }
+
             "pending", null -> {
                 if (!deliveryComplete()) throw IOException("Native delivery is still in progress")
                 val delivered = deliveredDecision() ?: throw IOException("Restored preference delivery is still pending")
                 finish(delivered)
                 read()
             }
-            else -> throw IOException("Restored preference capture is still pending")
+
+            else -> {
+                throw IOException("Restored preference capture is still pending")
+            }
         }
     }
 

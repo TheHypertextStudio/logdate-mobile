@@ -35,8 +35,14 @@ class BeatBucketer {
             val matchingBeats = windows.withIndex().filter { (_, w) -> ts in w.startMs..w.endMs }
             val chosen: Int? =
                 when {
-                    matchingBeats.isEmpty() -> null
-                    matchingBeats.size == 1 -> matchingBeats.first().index
+                    matchingBeats.isEmpty() -> {
+                        null
+                    }
+
+                    matchingBeats.size == 1 -> {
+                        matchingBeats.first().index
+                    }
+
                     else -> {
                         val citedBeatIdx =
                             matchingBeats

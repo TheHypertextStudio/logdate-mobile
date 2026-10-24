@@ -89,8 +89,14 @@ data class WebAuthnConfig(
                 .filter { it.isNotBlank() }
                 .mapNotNull { entry ->
                     when {
-                        entry.startsWith(HTTPS_PREFIX) -> entry
-                        entry.startsWith(ANDROID_ORIGIN_PREFIX) && entry.length > ANDROID_ORIGIN_PREFIX.length -> entry
+                        entry.startsWith(HTTPS_PREFIX) -> {
+                            entry
+                        }
+
+                        entry.startsWith(ANDROID_ORIGIN_PREFIX) && entry.length > ANDROID_ORIGIN_PREFIX.length -> {
+                            entry
+                        }
+
                         else -> {
                             Napier.w("Skipping malformed WEBAUTHN_ALLOWED_ORIGINS entry: $entry")
                             null

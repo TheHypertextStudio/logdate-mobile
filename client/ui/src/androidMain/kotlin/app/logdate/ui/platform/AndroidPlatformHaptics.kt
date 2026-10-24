@@ -65,16 +65,25 @@ internal class AndroidPlatformHaptics(
         if (supportsComposition) {
             vibrateComposition {
                 when (strength) {
-                    HapticImpactStrength.Soft ->
+                    HapticImpactStrength.Soft -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.6f)
-                    HapticImpactStrength.Light ->
+                    }
+
+                    HapticImpactStrength.Light -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.7f)
-                    HapticImpactStrength.Medium ->
+                    }
+
+                    HapticImpactStrength.Medium -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.7f)
-                    HapticImpactStrength.Heavy ->
+                    }
+
+                    HapticImpactStrength.Heavy -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 1.0f)
-                    HapticImpactStrength.Rigid ->
+                    }
+
+                    HapticImpactStrength.Rigid -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 1.0f)
+                    }
                 }
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -105,10 +114,12 @@ internal class AndroidPlatformHaptics(
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.7f)
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.8f, 80)
                     }
+
                     HapticNotificationType.Warning -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.7f)
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.5f, 100)
                     }
+
                     HapticNotificationType.Error -> {
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.9f)
                         addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.9f, 80)

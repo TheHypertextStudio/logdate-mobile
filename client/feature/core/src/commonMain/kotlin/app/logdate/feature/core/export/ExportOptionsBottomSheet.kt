@@ -87,6 +87,7 @@ internal fun ExportBottomSheet(
                             )
                         }
                     }
+
                     is ExportState.Selecting -> {
                         {
                             ExportConfigActions(
@@ -97,7 +98,10 @@ internal fun ExportBottomSheet(
                             )
                         }
                     }
-                    else -> null
+
+                    else -> {
+                        null
+                    }
                 },
         ) {
             AnimatedContent(
@@ -117,6 +121,7 @@ internal fun ExportBottomSheet(
                             showActions = false,
                         )
                     }
+
                     is ExportState.Selecting -> {
                         // SAF picker is open on top — show config with disabled button
                         ExportConfigContent(
@@ -129,6 +134,7 @@ internal fun ExportBottomSheet(
                             showActions = false,
                         )
                     }
+
                     is ExportState.Exporting -> {
                         ExportProgressCard(
                             progressPercent = state.progressPercent,
@@ -136,6 +142,7 @@ internal fun ExportBottomSheet(
                             onCancel = onCancel,
                         )
                     }
+
                     is ExportState.Completed -> {
                         ExportSuccessCard(
                             fileName = state.fileName,
@@ -143,6 +150,7 @@ internal fun ExportBottomSheet(
                             onDismiss = onDismiss,
                         )
                     }
+
                     is ExportState.Failed -> {
                         ExportFailureCard(
                             reason = state.reason.asString(),
@@ -150,6 +158,7 @@ internal fun ExportBottomSheet(
                             onDismiss = onDismiss,
                         )
                     }
+
                     is ExportState.Idle -> {
                         // Sheet is being dismissed, show nothing
                         Spacer(modifier = Modifier.height(Spacing.lg))

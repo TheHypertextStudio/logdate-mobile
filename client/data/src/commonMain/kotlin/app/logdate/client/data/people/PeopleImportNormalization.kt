@@ -56,6 +56,8 @@ internal fun mergeImportedPersonOrigin(
             PersonOrigin.CONTACT_SELECTED
         }
 
-        else -> PersonOrigin.MANUAL
+        else -> {
+            PersonOrigin.MANUAL
+        }
     }
 }

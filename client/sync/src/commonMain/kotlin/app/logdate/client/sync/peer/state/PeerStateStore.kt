@@ -23,11 +23,15 @@ class PeerStateStore {
     ): StateDocument? {
         val document =
             when (decoded) {
-                is Decoded.Supported -> decoded.value
+                is Decoded.Supported -> {
+                    decoded.value
+                }
+
                 is Decoded.Unsupported -> {
                     Napier.w("A $expectedRole state document uses schema ${decoded.schema}; it is ignored until this device updates")
                     return null
                 }
+
                 is Decoded.Malformed -> {
                     Napier.e("A $expectedRole state document could not be read: ${decoded.reason}")
                     return null

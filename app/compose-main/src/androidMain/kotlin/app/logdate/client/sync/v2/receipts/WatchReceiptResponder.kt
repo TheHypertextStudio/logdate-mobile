@@ -19,11 +19,15 @@ class WatchReceiptResponder(
     ): ByteArray {
         val request =
             when (val decoded = WearJson.decode(payload, WearProtocol.RECEIPTS_SCHEMA, ReceiptsRequest.serializer())) {
-                is Decoded.Supported -> decoded.value
+                is Decoded.Supported -> {
+                    decoded.value
+                }
+
                 is Decoded.Unsupported -> {
                     Napier.w("A watch asked for receipts with schema ${decoded.schema}; it gets none until this phone updates")
                     return encodeUntrusted()
                 }
+
                 is Decoded.Malformed -> {
                     Napier.e("A watch's receipts request could not be read: ${decoded.reason}")
                     return encodeUntrusted()

@@ -172,8 +172,11 @@ class DeviceApprovalViewModel(
         if (!account.id.equals(session.accountId, ignoreCase = true)) throw ApprovalFailure(DeviceApprovalFailure.AccountMismatch)
         val request =
             when (code) {
-                is DeviceApprovalCode.ExistingRequest -> enrollmentApi.get(code.code.id, session.accessToken)
-                is DeviceApprovalCode.NewDevice ->
+                is DeviceApprovalCode.ExistingRequest -> {
+                    enrollmentApi.get(code.code.id, session.accessToken)
+                }
+
+                is DeviceApprovalCode.NewDevice -> {
                     enrollmentApi.createFromPhone(
                         deviceName = code.deviceName,
                         publicKey = code.publicKey,
@@ -181,6 +184,7 @@ class DeviceApprovalViewModel(
                         confirmationCode = code.confirmationCode,
                         accessToken = session.accessToken,
                     )
+                }
             }
         if (request.status != PENDING_STATUS || request.expiresAt <= now()) throw ApprovalFailure(DeviceApprovalFailure.Expired)
         if (code is DeviceApprovalCode.ExistingRequest) {

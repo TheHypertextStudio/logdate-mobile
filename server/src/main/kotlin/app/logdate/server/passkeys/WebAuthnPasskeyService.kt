@@ -187,7 +187,10 @@ class WebAuthnPasskeyService(
     ): RegistrationResult {
         val verified = verifyRegistrationOnly(userId, challenge, registrationResponse)
         return when (verified) {
-            is VerificationOutcome.Failure -> RegistrationResult(success = false, error = verified.error)
+            is VerificationOutcome.Failure -> {
+                RegistrationResult(success = false, error = verified.error)
+            }
+
             is VerificationOutcome.Success -> {
                 val data = verified.data
                 val storeResult = runCatching { storeVerifiedPasskey(userId, data) }
@@ -199,10 +202,14 @@ class WebAuthnPasskeyService(
                             error = "Registration verification failed: ${cause?.message}",
                         )
                     }
-                    storeResult.getOrDefault(false) ->
+
+                    storeResult.getOrDefault(false) -> {
                         RegistrationResult(success = true, credentialId = data.credentialId, passkey = data.passkey)
-                    else ->
+                    }
+
+                    else -> {
                         RegistrationResult(success = false, error = "Failed to store passkey")
+                    }
                 }
             }
         }

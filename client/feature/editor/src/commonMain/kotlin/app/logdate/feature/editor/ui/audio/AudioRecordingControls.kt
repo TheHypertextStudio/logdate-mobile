@@ -235,11 +235,14 @@ private fun RecordingStateRow(
             text =
                 when {
                     recordingState == RecordingState.RECORDING -> stringResource(Res.string.recording_in_progress)
+
                     recordingState == RecordingState.PROCESSING -> stringResource(Res.string.recording_recovering)
+
                     // The tap was accepted and the button is disabled, but without this the
                     // wait for the platform to confirm the recorder is running looked
                     // identical to nothing having happened at all.
                     isStarting -> stringResource(Res.string.recording_starting)
+
                     else -> stringResource(Res.string.ready_to_record)
                 },
             style = MaterialTheme.typography.titleMedium,

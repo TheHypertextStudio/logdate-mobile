@@ -156,12 +156,16 @@ internal class AssociationDownloader(
                             addMembership(membership)
                             RemoteOutcome.STORED
                         }
+
                         local.operation == PendingOperation.DELETE -> {
                             recordConflict(key, membership.syncVersion)
                             tally.conflicts++
                             RemoteOutcome.DECLINED
                         }
-                        else -> RemoteOutcome.KEPT_LOCAL
+
+                        else -> {
+                            RemoteOutcome.KEPT_LOCAL
+                        }
                     }
                 if (outcome == RemoteOutcome.STORED) tally.downloaded++
                 staged.settle(key, outcome)

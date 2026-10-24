@@ -18,15 +18,20 @@ class EncryptionService(
         val prefix = Files.newInputStream(input).use { it.readNBytes(5) }
         val decision = policy.evaluate(prefix)
         return when (decision) {
-            is PolicyDecision.Reject -> throw EncryptionPolicyException(decision.reason)
+            is PolicyDecision.Reject -> {
+                throw EncryptionPolicyException(decision.reason)
+            }
+
             PolicyDecision.EncryptAtRest -> {
                 codec.encryptBackupFile(input, output, checkActive)
                 true
             }
+
             PolicyDecision.AcceptPlaintext -> {
                 copyBackupFile(input, output, checkActive)
                 false
             }
+
             PolicyDecision.AcceptClientCiphertext, PolicyDecision.AcceptServerCiphertext -> {
                 copyBackupFile(input, output, checkActive)
                 true

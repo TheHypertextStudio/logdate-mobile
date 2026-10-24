@@ -22,18 +22,15 @@ internal fun ExportNote.toJournalNote(
         mediaResolution.uri ?: mediaPath?.takeIf { mediaResolution.allowSourceFallback && it.isNotBlank() }
     val note =
         when (type.lowercase()) {
-            "handwriting" -> toHandwritingNote(id, location)
-            "text" ->
-                JournalNote.Text(
-                    uid = id,
-                    creationTimestamp = createdAt,
-                    lastUpdated = updatedAt,
-                    content = content.orEmpty(),
-                    timeZoneId = timeZone,
-                    syncVersion = syncVersion,
-                    location = location,
-                )
-            "image" ->
+            "handwriting" -> {
+                toHandwritingNote(id, location)
+            }
+
+            "text" -> {
+                toTextNote(id, location)
+            }
+
+            "image" -> {
                 JournalNote.Image(
                     uid = id,
                     creationTimestamp = createdAt,
@@ -45,7 +42,9 @@ internal fun ExportNote.toJournalNote(
                     syncVersion = syncVersion,
                     location = location,
                 )
-            "video" ->
+            }
+
+            "video" -> {
                 JournalNote.Video(
                     uid = id,
                     creationTimestamp = createdAt,
@@ -57,7 +56,9 @@ internal fun ExportNote.toJournalNote(
                     location = location,
                     durationMs = durationMs,
                 )
-            "audio" ->
+            }
+
+            "audio" -> {
                 JournalNote.Audio(
                     uid = id,
                     creationTimestamp = createdAt,
@@ -71,10 +72,28 @@ internal fun ExportNote.toJournalNote(
                     syncVersion = syncVersion,
                     location = location,
                 )
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         } ?: return null
     return note.withCapturedOn(CaptureDevice.fromWireName(capturedOn)).withCapturedDuring(CaptureActivity.fromWireName(capturedDuring))
 }
+
+private fun ExportNote.toTextNote(
+    id: Uuid,
+    location: NoteLocation?,
+): JournalNote.Text =
+    JournalNote.Text(
+        uid = id,
+        creationTimestamp = createdAt,
+        lastUpdated = updatedAt,
+        content = content.orEmpty(),
+        timeZoneId = timeZone,
+        syncVersion = syncVersion,
+        location = location,
+    )
 
 private fun ExportNote.toHandwritingNote(
     id: Uuid,

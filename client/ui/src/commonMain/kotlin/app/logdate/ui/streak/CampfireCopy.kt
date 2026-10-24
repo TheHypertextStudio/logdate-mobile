@@ -24,15 +24,25 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun campfireHeadline(presentation: CampfirePresentation): String =
     when (presentation.phase) {
-        CampfirePhase.UNLIT -> stringResource(Res.string.campfire_unlit_headline)
-        CampfirePhase.BURNING ->
+        CampfirePhase.UNLIT -> {
+            stringResource(Res.string.campfire_unlit_headline)
+        }
+
+        CampfirePhase.BURNING -> {
             if (presentation.loggedToday) {
                 stringResource(Res.string.campfire_burning_headline)
             } else {
                 stringResource(Res.string.campfire_waiting_headline)
             }
-        CampfirePhase.EMBERS -> stringResource(Res.string.campfire_embers_headline)
-        CampfirePhase.OUT -> stringResource(Res.string.campfire_out_headline)
+        }
+
+        CampfirePhase.EMBERS -> {
+            stringResource(Res.string.campfire_embers_headline)
+        }
+
+        CampfirePhase.OUT -> {
+            stringResource(Res.string.campfire_out_headline)
+        }
     }
 
 /**
@@ -41,20 +51,29 @@ fun campfireHeadline(presentation: CampfirePresentation): String =
 @Composable
 fun campfireSupportingLine(presentation: CampfirePresentation): String =
     when (presentation.phase) {
-        CampfirePhase.UNLIT -> stringResource(Res.string.campfire_unlit_supporting)
-        CampfirePhase.BURNING ->
+        CampfirePhase.UNLIT -> {
+            stringResource(Res.string.campfire_unlit_supporting)
+        }
+
+        CampfirePhase.BURNING -> {
             if (presentation.loggedToday) {
                 pluralStringResource(Res.plurals.campfire_burning_supporting, presentation.runDays, presentation.runDays)
             } else {
                 stringResource(Res.string.campfire_waiting_supporting, presentation.runDays + 1)
             }
-        CampfirePhase.EMBERS -> stringResource(Res.string.campfire_embers_supporting, presentation.runDays)
-        CampfirePhase.OUT ->
+        }
+
+        CampfirePhase.EMBERS -> {
+            stringResource(Res.string.campfire_embers_supporting, presentation.runDays)
+        }
+
+        CampfirePhase.OUT -> {
             pluralStringResource(
                 Res.plurals.campfire_out_supporting,
                 presentation.longestRunDays,
                 presentation.longestRunDays,
             )
+        }
     }
 
 /**
@@ -63,8 +82,15 @@ fun campfireSupportingLine(presentation: CampfirePresentation): String =
 @Composable
 fun campfireShortDescription(presentation: CampfirePresentation): String =
     when (presentation.phase) {
-        CampfirePhase.UNLIT -> stringResource(Res.string.campfire_chip_description_unlit)
-        CampfirePhase.OUT -> stringResource(Res.string.campfire_chip_description_out)
-        CampfirePhase.BURNING, CampfirePhase.EMBERS ->
+        CampfirePhase.UNLIT -> {
+            stringResource(Res.string.campfire_chip_description_unlit)
+        }
+
+        CampfirePhase.OUT -> {
+            stringResource(Res.string.campfire_chip_description_out)
+        }
+
+        CampfirePhase.BURNING, CampfirePhase.EMBERS -> {
             pluralStringResource(Res.plurals.campfire_chip_description, presentation.runDays, presentation.runDays)
+        }
     }

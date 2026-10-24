@@ -62,11 +62,23 @@ internal fun PersonOrigin.labelResource(): StringResource =
 @Composable
 internal fun peopleSettingsNoticeText(notice: PeopleSettingsNotice): String =
     when (notice) {
-        PeopleSettingsNotice.SettingsUpdateFailed -> stringResource(Res.string.people_settings_update_failed)
-        PeopleSettingsNotice.PeopleDisabled -> stringResource(Res.string.people_disabled_import_notice)
-        PeopleSettingsNotice.ImportAllContactsFailed -> stringResource(Res.string.people_import_failed)
-        PeopleSettingsNotice.ImportSelectedContactsFailed -> stringResource(Res.string.people_selected_import_failed)
-        is PeopleSettingsNotice.ContactsImported ->
+        PeopleSettingsNotice.SettingsUpdateFailed -> {
+            stringResource(Res.string.people_settings_update_failed)
+        }
+
+        PeopleSettingsNotice.PeopleDisabled -> {
+            stringResource(Res.string.people_disabled_import_notice)
+        }
+
+        PeopleSettingsNotice.ImportAllContactsFailed -> {
+            stringResource(Res.string.people_import_failed)
+        }
+
+        PeopleSettingsNotice.ImportSelectedContactsFailed -> {
+            stringResource(Res.string.people_selected_import_failed)
+        }
+
+        is PeopleSettingsNotice.ContactsImported -> {
             when {
                 notice.importedCount == 0 && notice.updatedCount == 0 -> {
                     stringResource(Res.string.people_import_none)
@@ -88,4 +100,5 @@ internal fun peopleSettingsNoticeText(notice: PeopleSettingsNotice): String =
                     )
                 }
             }
+        }
     }

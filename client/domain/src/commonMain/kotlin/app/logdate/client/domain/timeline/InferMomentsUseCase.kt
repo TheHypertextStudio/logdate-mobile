@@ -59,10 +59,12 @@ class InferMomentsUseCase(
                     inferMomentsHeuristically(date, entries, places)
                 }
             }
+
             is AIResult.Unavailable -> {
                 Napier.d(tag = TAG, message = "AI unavailable for $date, using heuristic fallback")
                 inferMomentsHeuristically(date, entries, places)
             }
+
             is AIResult.Error -> {
                 Napier.e(tag = TAG, message = "AI error for $date, using heuristic fallback")
                 inferMomentsHeuristically(date, entries, places)
@@ -264,22 +266,28 @@ private fun serializeEntries(
         entries.sortedBy { it.creationTimestamp }.forEach { note ->
             appendLine("--- Entry [${note.uid}] at ${note.creationTimestamp} ---")
             when (note) {
-                is JournalNote.Handwriting -> appendLine("Type: original handwriting")
+                is JournalNote.Handwriting -> {
+                    appendLine("Type: original handwriting")
+                }
+
                 is JournalNote.Text -> {
                     appendLine("Type: text")
                     note.location?.displayName?.let { appendLine("Location: $it") }
                     appendLine("Content: ${note.content}")
                 }
+
                 is JournalNote.Image -> {
                     appendLine("Type: photo")
                     note.location?.displayName?.let { appendLine("Location: $it") }
                     if (note.caption.isNotBlank()) appendLine("Caption: ${note.caption}")
                 }
+
                 is JournalNote.Video -> {
                     appendLine("Type: video")
                     note.location?.displayName?.let { appendLine("Location: $it") }
                     if (note.caption.isNotBlank()) appendLine("Caption: ${note.caption}")
                 }
+
                 is JournalNote.Audio -> {
                     appendLine("Type: audio recording")
                     appendLine("Duration: ${note.durationMs}ms")

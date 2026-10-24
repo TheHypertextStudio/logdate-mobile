@@ -337,6 +337,7 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
+
             content.startsWith(TRANSITION_PREFIX) -> {
                 runCatching {
                     contentJson.decodeFromString<TransitionPayload>(
@@ -357,6 +358,7 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
+
             content.startsWith(MAP_PANEL_PREFIX) -> {
                 runCatching {
                     contentJson.decodeFromString<MapPanelPayload>(
@@ -377,6 +379,7 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
+
             content.startsWith(WEATHER_PANEL_PREFIX) -> {
                 runCatching {
                     contentJson.decodeFromString<WeatherPanelPayload>(
@@ -397,6 +400,7 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
+
             content.startsWith(PERSONALITY_CARD_PREFIX) -> {
                 runCatching {
                     contentJson.decodeFromString<PersonalityCardPayload>(
@@ -426,6 +430,7 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
+
             content.startsWith(TOP_LIST_PREFIX) -> {
                 runCatching {
                     contentJson.decodeFromString<TopListPayload>(
@@ -455,6 +460,7 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
+
             content.startsWith(AUDIO_NOTE_PREFIX) -> {
                 runCatching {
                     contentJson.decodeFromString<AudioNotePayload>(
@@ -478,12 +484,14 @@ class OfflineFirstRewindRepository(
                     )
                 }
             }
-            else ->
+
+            else -> {
                 RewindContent.TextNote(
                     timestamp = timestamp,
                     sourceId = sourceId,
                     content = content,
                 )
+            }
         }
 
     /**

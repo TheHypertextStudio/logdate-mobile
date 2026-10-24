@@ -72,22 +72,32 @@ internal fun WatchStatusCard(
 ) {
     MaterialContainer(modifier = modifier.testTag("watch_status_card")) {
         when (status) {
-            null -> LookingForWatch()
-            WatchStatus.Unsupported ->
+            null -> {
+                LookingForWatch()
+            }
+
+            WatchStatus.Unsupported -> {
                 CenteredStatus(
                     icon = Icons.Outlined.Watch,
                     iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                     title = stringResource(Res.string.watch_unsupported),
                 )
-            WatchStatus.NoWatch ->
+            }
+
+            WatchStatus.NoWatch -> {
                 CenteredStatus(
                     icon = Icons.Outlined.Watch,
                     iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                     title = stringResource(Res.string.watch_no_paired),
                     description = stringResource(Res.string.watch_no_paired_description),
                 ) { WatchSystemSetupButton() }
-            is WatchStatus.SettingUp -> SettingUpStatus(status.step, onBeginAssociation)
-            is WatchStatus.NotInstalled ->
+            }
+
+            is WatchStatus.SettingUp -> {
+                SettingUpStatus(status.step, onBeginAssociation)
+            }
+
+            is WatchStatus.NotInstalled -> {
                 CenteredStatus(
                     icon = Icons.Default.Download,
                     iconTint = MaterialTheme.colorScheme.primary,
@@ -99,8 +109,15 @@ internal fun WatchStatusCard(
                     }
                     requestFailure?.let { WatchRequestFailureMessage(it) }
                 }
-            is WatchStatus.Ready -> ReadyStatus(status, onRequestSync)
-            is WatchStatus.NeedsAttention -> AttentionStatus(status, onRequestSync)
+            }
+
+            is WatchStatus.Ready -> {
+                ReadyStatus(status, onRequestSync)
+            }
+
+            is WatchStatus.NeedsAttention -> {
+                AttentionStatus(status, onRequestSync)
+            }
         }
     }
 }
@@ -129,7 +146,7 @@ private fun SettingUpStatus(
     onBeginAssociation: () -> Unit,
 ) {
     when (step) {
-        is WatchSetupStep.PairWithPhone ->
+        is WatchSetupStep.PairWithPhone -> {
             CenteredStatus(
                 icon = Icons.Default.Watch,
                 iconTint = MaterialTheme.colorScheme.primary,
@@ -140,7 +157,9 @@ private fun SettingUpStatus(
                     Text(stringResource(Res.string.watch_pair_watch))
                 }
             }
-        WatchSetupStep.ConfirmOnPhone ->
+        }
+
+        WatchSetupStep.ConfirmOnPhone -> {
             Column(
                 modifier =
                     Modifier
@@ -160,6 +179,7 @@ private fun SettingUpStatus(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
     }
 }
 
@@ -259,12 +279,15 @@ private fun AttentionStatus(
 ) {
     val (title, description) =
         when (val issue = status.issue) {
-            WatchIssue.SetUpAgain ->
+            WatchIssue.SetUpAgain -> {
                 stringResource(Res.string.watch_attention_set_up_again) to
                     stringResource(Res.string.watch_attention_set_up_again_description)
-            is WatchIssue.CapturesNotSent ->
+            }
+
+            is WatchIssue.CapturesNotSent -> {
                 stringResource(Res.string.watch_attention_not_sent, issue.count) to
                     stringResource(Res.string.watch_attention_not_sent_description)
+            }
         }
     WatchReportSurface {
         WatchNameRow(name = status.watchName, supporting = title, accent = MaterialTheme.colorScheme.error)

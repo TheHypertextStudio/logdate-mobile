@@ -98,15 +98,28 @@ internal class MigrationMediaPreparer(
             blocks =
                 draft.blocks.map { block ->
                     when (block) {
-                        is SerializableImageBlock -> block.copy(uri = moveIfOffDevice(draft.id, block.id, "image", block.uri))
-                        is SerializableVideoBlock ->
+                        is SerializableImageBlock -> {
+                            block.copy(uri = moveIfOffDevice(draft.id, block.id, "image", block.uri))
+                        }
+
+                        is SerializableVideoBlock -> {
                             block.copy(
                                 uri = moveIfOffDevice(draft.id, block.id, "video", block.uri),
                                 thumbnailUri = moveIfOffDevice(draft.id, block.id, "thumbnail", block.thumbnailUri),
                             )
-                        is SerializableAudioBlock -> block.copy(uri = moveIfOffDevice(draft.id, block.id, "audio", block.uri))
-                        is SerializableCameraBlock -> block.copy(uri = moveIfOffDevice(draft.id, block.id, "camera", block.uri))
-                        else -> block
+                        }
+
+                        is SerializableAudioBlock -> {
+                            block.copy(uri = moveIfOffDevice(draft.id, block.id, "audio", block.uri))
+                        }
+
+                        is SerializableCameraBlock -> {
+                            block.copy(uri = moveIfOffDevice(draft.id, block.id, "camera", block.uri))
+                        }
+
+                        else -> {
+                            block
+                        }
                     }
                 },
         )

@@ -37,10 +37,16 @@ class PhonePlaybackHandoffHandler(
                     val command = decoded.value
                     val id = runCatching { Uuid.parse(command.noteId) }.getOrNull()
                     when {
-                        id == null || command.command != PlaybackCommandType.CONTINUE_ON_PHONE -> HandoffFailure.NOT_ALLOWED
+                        id == null || command.command != PlaybackCommandType.CONTINUE_ON_PHONE -> {
+                            HandoffFailure.NOT_ALLOWED
+                        }
+
                         (command.positionMs ?: 0) < 0 ||
-                            command.speed?.let { !it.isFinite() || it !in 0.5f..3f } == true -> HandoffFailure.NOT_ALLOWED
-                        else ->
+                            command.speed?.let { !it.isFinite() || it !in 0.5f..3f } == true -> {
+                            HandoffFailure.NOT_ALLOWED
+                        }
+
+                        else -> {
                             try {
                                 play(id, command.positionMs ?: 0, command.speed ?: 1f)
                             } catch (e: CancellationException) {
@@ -49,6 +55,7 @@ class PhonePlaybackHandoffHandler(
                                 Napier.w("Couldn't continue watch audio on the phone", e)
                                 HandoffFailure.PLAYBACK_FAILED
                             }
+                        }
                     }
                 }
             val verifiedFailure =

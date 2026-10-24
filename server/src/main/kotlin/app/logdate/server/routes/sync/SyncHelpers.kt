@@ -155,7 +155,9 @@ internal suspend fun ApplicationCall.receiveMediaMultipartUpload(): ParsedMediaM
                 }
             }
 
-            else -> Unit
+            else -> {
+                Unit
+            }
         }
         part.dispose()
     }
@@ -277,19 +279,29 @@ internal suspend fun extractSyncUserId(
     val token = bearerToken(call.request.header(HttpHeaders.Authorization))
     val claims =
         when (val check = verifier.verify(token, allowSyncScope = true)) {
-            is AccessCheck.Granted -> check.claims
-            AccessCheck.Missing ->
+            is AccessCheck.Granted -> {
+                check.claims
+            }
+
+            AccessCheck.Missing -> {
                 return call.rejectAccess(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Missing or invalid Authorization header")
-            AccessCheck.Invalid ->
+            }
+
+            AccessCheck.Invalid -> {
                 return call.rejectAccess(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Invalid or expired token")
-            AccessCheck.SessionRevoked ->
+            }
+
+            AccessCheck.SessionRevoked -> {
                 return call.rejectAccess(
                     HttpStatusCode.Unauthorized,
                     DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED,
                     DEVICE_SESSION_REVOKED_MESSAGE,
                 )
-            AccessCheck.ScopeDenied ->
+            }
+
+            AccessCheck.ScopeDenied -> {
                 return call.rejectAccess(HttpStatusCode.Forbidden, DeviceLinkErrorCodes.DEVICE_SCOPE_DENIED, DEVICE_SCOPE_DENIED_MESSAGE)
+            }
         }
     return call.parseAccountId(claims.accountId)?.let { call.requireLegacyStorage(it, storageModes) }
 }
@@ -313,13 +325,21 @@ internal suspend fun extractFullAccessUserId(
     val token = bearerToken(call.request.header(HttpHeaders.Authorization))
     val claims =
         when (val check = verifier.verify(token, allowSyncScope = false)) {
-            is AccessCheck.Granted -> check.claims
-            AccessCheck.Missing ->
+            is AccessCheck.Granted -> {
+                check.claims
+            }
+
+            AccessCheck.Missing -> {
                 return call.rejectAccess(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Missing or invalid Authorization header")
-            AccessCheck.Invalid, AccessCheck.SessionRevoked ->
+            }
+
+            AccessCheck.Invalid, AccessCheck.SessionRevoked -> {
                 return call.rejectAccess(HttpStatusCode.Unauthorized, "UNAUTHORIZED", "Invalid or expired token")
-            AccessCheck.ScopeDenied ->
+            }
+
+            AccessCheck.ScopeDenied -> {
                 return call.rejectAccess(HttpStatusCode.Forbidden, DeviceLinkErrorCodes.DEVICE_SCOPE_DENIED, DEVICE_SCOPE_DENIED_MESSAGE)
+            }
         }
     return call.parseAccountId(claims.accountId)?.let { call.requireLegacyStorage(it, storageModes) }
 }
@@ -415,10 +435,12 @@ internal suspend inline fun <T, reified R : Any> ApplicationCall.respondConditio
             response.headers.append(HttpHeaders.Location, location)
             respond(HttpStatusCode.Created, created(outcome.record))
         }
+
         is ConditionalCreate.Exists -> {
             val details = outcome.serverVersion?.let { mapOf("serverVersion" to it.toString()) }.orEmpty()
             respond(HttpStatusCode.PreconditionFailed, error("${code}_EXISTS", "$label already exists", details))
         }
+
         is ConditionalCreate.Deleted -> {
             val details = mapOf("deletedAt" to outcome.deletedAt.toString(), "serverVersion" to outcome.serverVersion.toString())
             respond(HttpStatusCode.Gone, error("${code}_DELETED", "$label was deleted", details))
@@ -433,12 +455,16 @@ internal suspend fun ApplicationCall.respondRecordState(state: LogDateRecordStat
             response.headers.append(SERVER_VERSION_HEADER, state.serverVersion.toString())
             respond(HttpStatusCode.OK)
         }
+
         is LogDateRecordState.Deleted -> {
             response.headers.append(SERVER_VERSION_HEADER, state.serverVersion.toString())
             response.headers.append(DELETED_AT_HEADER, state.deletedAt.toString())
             respond(HttpStatusCode.Gone)
         }
-        LogDateRecordState.Absent -> respond(HttpStatusCode.NotFound)
+
+        LogDateRecordState.Absent -> {
+            respond(HttpStatusCode.NotFound)
+        }
     }
 }
 
@@ -633,10 +659,13 @@ internal suspend fun respondQuotaExceeded(
 ) {
     val reasonMessage =
         when (denied.reason) {
-            QuotaReason.STORAGE_BYTES ->
+            QuotaReason.STORAGE_BYTES -> {
                 "Storage quota exceeded: ${denied.current} of ${denied.limit} bytes in use."
-            QuotaReason.BACKUP_COUNT ->
+            }
+
+            QuotaReason.BACKUP_COUNT -> {
                 "Backup quota exceeded: ${denied.current} of ${denied.limit} backups stored."
+            }
         }
     AuditLogger.emit(
         AuditCategory.SYNC_QUOTA_EXCEEDED,

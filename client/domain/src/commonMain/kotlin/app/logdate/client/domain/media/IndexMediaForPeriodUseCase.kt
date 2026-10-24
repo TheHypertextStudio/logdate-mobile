@@ -75,6 +75,7 @@ class IndexMediaForPeriodUseCase(
                             Napier.d("Indexed image: ${indexedItem.uid}")
                             indexedCount++
                         }
+
                         is MediaObject.Video -> {
                             val indexedItem =
                                 indexedMediaRepository.indexVideo(

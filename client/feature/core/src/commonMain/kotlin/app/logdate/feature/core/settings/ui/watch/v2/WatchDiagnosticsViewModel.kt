@@ -43,13 +43,23 @@ class WatchDiagnosticsViewModel(
         if (targetNode.isNullOrBlank() || mutableState.value !is WatchDiagnosticsState.Ready) return
         runAction {
             when (fix) {
-                WatchDiagnosticFix.PAIR -> manager.beginAssociation()
-                WatchDiagnosticFix.INSTALL, WatchDiagnosticFix.UPDATE ->
+                WatchDiagnosticFix.PAIR -> {
+                    manager.beginAssociation()
+                }
+
+                WatchDiagnosticFix.INSTALL, WatchDiagnosticFix.UPDATE -> {
                     kotlin.check(
                         manager.installAppOnWatch(checkNotNull(targetNode)) == WatchRequestResult.Sent,
                     )
-                WatchDiagnosticFix.OPEN_WATCH -> kotlin.check(manager.openAppOnWatch(checkNotNull(targetNode)) == WatchRequestResult.Sent)
-                WatchDiagnosticFix.SYNC -> manager.requestSync(checkNotNull(targetNode))
+                }
+
+                WatchDiagnosticFix.OPEN_WATCH -> {
+                    kotlin.check(manager.openAppOnWatch(checkNotNull(targetNode)) == WatchRequestResult.Sent)
+                }
+
+                WatchDiagnosticFix.SYNC -> {
+                    manager.requestSync(checkNotNull(targetNode))
+                }
             }
         }
     }

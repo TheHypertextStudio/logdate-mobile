@@ -162,13 +162,15 @@ class RewindSequencer(
                     backgroundImage = null,
                 )
             }
-            NarrativeOrigin.LOCAL_HEURISTIC ->
+
+            NarrativeOrigin.LOCAL_HEURISTIC -> {
                 RewindContent.PersonalityCard(
                     timestamp = earliest,
                     sourceId = Uuid.random(),
                     stats = stats,
                     dominantActivity = activities.firstOrNull() ?: ActivityType.MIXED,
                 )
+            }
         }
 
     private suspend fun createTransition(
@@ -178,12 +180,14 @@ class RewindSequencer(
         val transitionText =
             when {
                 previousBeat.emotionalWeight.contains("joyful", ignoreCase = true) &&
-                    currentBeat.emotionalWeight.contains("melancholy", ignoreCase = true) ->
+                    currentBeat.emotionalWeight.contains("melancholy", ignoreCase = true) -> {
                     Res.string.rewind_transition_things_shifted
+                }
 
                 previousBeat.emotionalWeight.contains("exhausted", ignoreCase = true) &&
-                    currentBeat.emotionalWeight.contains("triumphant", ignoreCase = true) ->
+                    currentBeat.emotionalWeight.contains("triumphant", ignoreCase = true) -> {
                     Res.string.rewind_transition_breakthrough
+                }
 
                 else -> {
                     val connector =
@@ -254,7 +258,7 @@ class RewindSequencer(
         beatMedia.forEach { c ->
             val score = curation.sigByMediaUid[c.media.uid]
             when (val m = c.media) {
-                is IndexedMedia.Image ->
+                is IndexedMedia.Image -> {
                     panels.add(
                         RewindContent.Image(
                             timestamp = m.timestamp,
@@ -264,7 +268,9 @@ class RewindSequencer(
                             significanceScore = score,
                         ),
                     )
-                is IndexedMedia.Video ->
+                }
+
+                is IndexedMedia.Video -> {
                     panels.add(
                         RewindContent.Video(
                             timestamp = m.timestamp,
@@ -275,6 +281,7 @@ class RewindSequencer(
                             significanceScore = score,
                         ),
                     )
+                }
             }
         }
 

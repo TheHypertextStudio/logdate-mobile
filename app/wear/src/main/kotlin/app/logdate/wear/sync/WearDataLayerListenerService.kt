@@ -200,12 +200,21 @@ class WearDataLayerListenerService : WearableListenerService() {
             for (event in events) {
                 if (!isChangeFromAnotherDevice(event.type, event.sourceNodeId, localNodeId)) continue
                 when (event.path) {
-                    RemoteCameraDeviceDataMapper.PATH_CAMERA_DEVICES -> handleRemoteCameraDevices(event.data)
+                    RemoteCameraDeviceDataMapper.PATH_CAMERA_DEVICES -> {
+                        handleRemoteCameraDevices(event.data)
+                    }
+
                     RemoteCameraCaptureResultDataMapper.PATH_CAMERA_CAPTURE_RESULT -> {
                         handleRemoteCameraCaptureResult(event.data)
                     }
-                    WearPaths.STATE -> mirrorPhoneState(event, localNodeId)
-                    else -> syncEvents.add(event)
+
+                    WearPaths.STATE -> {
+                        mirrorPhoneState(event, localNodeId)
+                    }
+
+                    else -> {
+                        syncEvents.add(event)
+                    }
                 }
             }
             if (syncEvents.isEmpty()) return@launch
@@ -246,15 +255,21 @@ class WearDataLayerListenerService : WearableListenerService() {
             try {
                 when {
                     koin.get<WindowDataEvents>().consume(WindowItem(event.sourceNodeId.orEmpty(), path, event.data)) -> Unit
+
                     NoteDataMapper.isDeletePath(
                         path,
                     ) -> if (koin.get<WindowDataEvents>().legacyNotesAllowed()) handleNoteDelete(path, notesRepository, koin.get())
+
                     NoteDataMapper.isNotePath(
                         path,
                     ) -> if (koin.get<WindowDataEvents>().legacyNotesAllowed()) handleNoteSync(path, event.data, notesRepository)
+
                     JournalDataMapper.isDeletePath(path) -> handleJournalDelete(path, journalRepository)
+
                     JournalDataMapper.isJournalPath(path) -> handleJournalSync(path, event.data, journalRepository)
+
                     AssociationDataMapper.isDeletePath(path) -> handleAssociationDelete(path, koin)
+
                     AssociationDataMapper.isAssociationPath(path) -> handleAssociationSync(path, event.data, koin)
                 }
             } catch (e: Exception) {

@@ -106,6 +106,7 @@ fun PostcardViewerScreen(
                 is PostcardViewerUiState.Loading -> {
                     CircularProgressIndicator()
                 }
+
                 is PostcardViewerUiState.Loaded -> {
                     // The Postcard is a single immersive canvas, so on a folded device it should
                     // live wholly inside one physical pane rather than straddle a separating hinge.
@@ -146,6 +147,7 @@ fun PostcardViewerScreen(
                         )
                     }
                 }
+
                 is PostcardViewerUiState.Error -> {
                     Text(stringResource(Res.string.postcards_viewer_load_error))
                 }

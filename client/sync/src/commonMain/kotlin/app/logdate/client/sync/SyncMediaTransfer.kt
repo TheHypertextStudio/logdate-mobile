@@ -220,9 +220,11 @@ internal class SyncMediaTransfer(
             }
         draft.blocks.forEachIndexed { index, block ->
             when (block) {
-                is SerializableImageBlock ->
+                is SerializableImageBlock -> {
                     blocks[index] =
                         block.copy(uri = recoverAsset(block.id, "image", block.uri))
+                }
+
                 is SerializableVideoBlock -> {
                     val video = block.copy(uri = recoverAsset(block.id, "video", block.uri))
                     blocks[index] = video
@@ -232,13 +234,20 @@ internal class SyncMediaTransfer(
                                 recoverAsset(block.id, "thumbnail", block.thumbnailUri),
                         )
                 }
-                is SerializableAudioBlock ->
+
+                is SerializableAudioBlock -> {
                     blocks[index] =
                         block.copy(uri = recoverAsset(block.id, "audio", block.uri))
-                is SerializableCameraBlock ->
+                }
+
+                is SerializableCameraBlock -> {
                     blocks[index] =
                         block.copy(uri = recoverAsset(block.id, "camera", block.uri))
-                else -> Unit
+                }
+
+                else -> {
+                    Unit
+                }
             }
         }
         val updated = draft.copy(blocks = blocks)

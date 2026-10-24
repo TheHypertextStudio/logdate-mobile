@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.core.app.ApplicationProvider
 import app.logdate.client.datastore.createAndroidMainDataStore
 import app.logdate.client.device.restore.PostRestoreDetector
+import app.logdate.client.device.restore.verifyNativeJournalMediaInventory
+import app.logdate.client.device.restore.writeNativeJournalMediaInventory
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.SerializableImageBlock
 import app.logdate.shared.model.SerializableTextBlock
@@ -171,6 +173,59 @@ class NativeDraftOnlyTransferPreparationTest {
                 }
             assertTrue(error.message.orEmpty().contains("Native restore must finish"))
             assertFalse(fixture.database.exists())
+        }
+    }
+
+    @Test
+    fun `snapshot emits selected originals while orphaned and unselected staging media stay local`() {
+        Fixture().use { fixture ->
+            val files = fixture.context.filesDir
+            val selected =
+                listOf("media/objects/photo.jpg", "media/objects/movie.mp4", "audio_notes/accepted.m4a", "user_media/retained.jpg")
+            val unselected = listOf("media/objects/deleted.jpg", "audio_notes/staging/unfinished.m4a", "user_media/orphan.jpg")
+            (selected + unselected).forEach { path ->
+                File(files, path).apply {
+                    parentFile!!.mkdirs()
+                    writeText(path)
+                }
+            }
+            val inventoryFile = File(files, "inventory.json")
+            val paths =
+                nativeTransferMediaPaths(
+                    selected.map {
+                        "file:///data/user/0/${fixture.context.packageName}/files/$it"
+                    },
+                    fixture.context.packageName,
+                    files,
+                )
+            writeNativeJournalMediaInventory(inventoryFile, files, paths)
+            val inventory = verifyNativeJournalMediaInventory(inventoryFile, nativeSnapshotChecksum(inventoryFile))
+            val pinnedPreferences =
+                File(files, "native_journal_transfer/current/files/logdate.preferences_pb").apply {
+                    parentFile!!.mkdirs()
+                    writeText("pinned preferences")
+                }
+            val snapshot = NativeJournalTransferSnapshot(fixture.context)
+            // Supply the verified selection at the emitter boundary without opening SQLCipher.
+            mapOf(
+                "prepared" to true,
+                "selectedMedia" to inventory.files,
+                "preferencesChecksum" to nativeSnapshotChecksum(pinnedPreferences),
+            ).forEach { (name, value) ->
+                snapshot.javaClass
+                    .getDeclaredField(name)
+                    .apply { isAccessible = true }
+                    .set(snapshot, value)
+            }
+            val emitted = mutableListOf<Pair<String, String>>()
+
+            snapshot.backupSelectedMedia { file -> emitted += file.relativeTo(files).invariantSeparatorsPath to file.readText() }
+
+            assertEquals(selected.sorted().map { it to it }, emitted.sortedBy { it.first })
+            assertTrue(unselected.all { File(files, it).isFile })
+            assertFailsWith<IllegalStateException> {
+                snapshot.backupSelectedMedia { it.writeText("changed during emission") }
+            }
         }
     }
 
