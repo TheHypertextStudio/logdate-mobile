@@ -11,6 +11,10 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import app.logdate.client.device.restore.NativeRestoredPreferenceFiles
 import app.logdate.client.device.restore.PostRestoreDetector
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.uuid.Uuid
 
@@ -198,5 +202,14 @@ internal fun applyPendingWidgetSettings(
 fun resumeWidgetLifecycle(context: Context) {
     if (widgetLifecycleInbox(context).pending().isNotEmpty()) scheduleWidgetLifecycle(context)
 }
+
+/** Startup replay retains application ownership without blocking the caller on durable inbox IO. */
+fun resumeWidgetLifecycle(
+    context: Context,
+    scope: CoroutineScope,
+): Job =
+    scope.launch(Dispatchers.IO) {
+        runCatching { resumeWidgetLifecycle(context) }.onFailure { Napier.w("Widget lifecycle recovery remains pending", it) }
+    }
 
 fun isWidgetIngressProcess(packageName: String): Boolean = Application.getProcessName() == packageName + WIDGET_INGRESS_PROCESS

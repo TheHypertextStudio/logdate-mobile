@@ -164,7 +164,7 @@ class LogdateApplication :
         dependenciesInitialized = true
         startupScope.launch { resumeNativeAccountRecovery(this@LogdateApplication) }
         startupScope.launch { resumeRetainedJournalReconciliation(this@LogdateApplication) }
-        runCatching { resumeWidgetLifecycle(this) }.onFailure { Napier.w("Widget lifecycle recovery remains pending", it) }
+        resumeWidgetLifecycle(this, startupScope)
         Napier.i("Application onCreate: Koin initialized", tag = APP_STARTUP_TAG)
     }
 
