@@ -34,6 +34,7 @@
         <exclude domain="file" path="identity_recovery/phrase_backup.part"/>
         <exclude domain="file" path="identity_recovery/account_key_backup.part"/>
         <exclude domain="file" path="identity_recovery/media_key_backup.part"/>
+        <exclude domain="file" path="logdate-os-transfer/"/>
     </cloud-backup>
     <device-transfer>
         <include domain="sharedpref" path="logdate_widget_instances.xml"/>
@@ -52,5 +53,6 @@
         <exclude domain="file" path="identity_recovery/phrase_backup.part"/>
         <exclude domain="file" path="identity_recovery/account_key_backup.part"/>
         <exclude domain="file" path="identity_recovery/media_key_backup.part"/>
+        <exclude domain="file" path="logdate-os-transfer/"/>
     </device-transfer>
 </data-extraction-rules>

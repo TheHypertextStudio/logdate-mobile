@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import app.logdate.client.data.notes.NativeMediaQuarantine
+import app.logdate.client.data.restore.discardAbandonedNativeIosTransfer
 import app.logdate.client.data.restore.resumeNativeAccountRecovery
 import app.logdate.client.data.restore.resumeRetainedJournalReconciliation
 import app.logdate.client.data.search.AndroidPlatformSearchIndexManager
@@ -80,7 +81,15 @@ class LogDateApplication :
         }
         startupScope.launch(Dispatchers.Main.immediate) {
             awaitAndroidUserUnlock()
+            val cleanup =
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        discardAbandonedNativeIosTransfer(this@LogDateApplication)
+                    }
+                }
+            cleanup.exceptionOrNull()?.let { if (it is kotlinx.coroutines.CancellationException) throw it }
             initializeUnlockedApplication()
+            cleanup.onFailure { Napier.w("Native transfer cleanup remains pending", it) }
         }
     }
 

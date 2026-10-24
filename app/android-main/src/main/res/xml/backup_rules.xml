@@ -52,4 +52,5 @@
     <exclude domain="file" path="identity_recovery/phrase_backup.part"/>
     <exclude domain="file" path="identity_recovery/account_key_backup.part"/>
     <exclude domain="file" path="identity_recovery/media_key_backup.part"/>
+    <exclude domain="file" path="logdate-os-transfer/"/>
 </full-backup-content>
