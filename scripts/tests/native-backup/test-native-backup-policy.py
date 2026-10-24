@@ -49,6 +49,45 @@ def included(domain, path, *, modern, transfer, encrypted=True):
 
 
 class NativeBackupPolicyTest(unittest.TestCase):
+    def test_default_rules_do_not_offer_ios_transfer(self):
+        rules = ET.parse(RULES / "data_extraction_rules.xml").getroot()
+        self.assertIsNone(rules.find("cross-platform-transfer"))
+
+    def test_private_ios_staging_never_enters_android_backup_or_transfer(self):
+        for modern in (False, True):
+            for transfer in (False, True):
+                for path in (
+                    "logdate-os-transfer/archive/manifest.json",
+                    "logdate-os-transfer/.logdate-os-private/custody-v1.json",
+                ):
+                    with self.subTest(modern=modern, transfer=transfer, path=path):
+                        self.assertFalse(
+                            included("file", path, modern=modern, transfer=transfer)
+                        )
+
+    def test_no_include_rule_reaches_private_ios_staging(self):
+        legacy = ET.parse(RULES / "backup_rules.xml").getroot()
+        modern = ET.parse(RULES / "data_extraction_rules.xml").getroot()
+        for name, section in (
+            ("legacy", legacy),
+            ("cloud", modern.find("cloud-backup")),
+            ("device", modern.find("device-transfer")),
+        ):
+            includes = section.findall("include")
+            self.assertTrue(
+                includes,
+                f"The {name} rules must list explicit includes so unlisted paths stay out",
+            )
+            for path in (
+                "logdate-os-transfer/archive/manifest.json",
+                "logdate-os-transfer/.logdate-os-private/custody-v1.json",
+            ):
+                with self.subTest(transport=name, path=path):
+                    self.assertFalse(
+                        any(matches(rule, "file", path) for rule in includes),
+                        "Private iOS staging must stay outside every backup include",
+                    )
+
     def test_cloud_preserves_actual_owner_preferences_and_database_keys(self):
         for modern in (False, True):
             for domain, path in (

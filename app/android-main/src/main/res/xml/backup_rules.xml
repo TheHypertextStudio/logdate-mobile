@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
    Backup rules for pre-API 31 devices.
    See https://developer.android.com/guide/topics/data/autobackup
@@ -12,44 +12,42 @@
    Device-bound preferences, background jobs, and incomplete media staging are omitted.
 -->
 <full-backup-content>
-    <include domain="sharedpref" path="logdate_widget_instances.xml" requireFlags="clientSideEncryption"/>
-    <include domain="sharedpref" path="logdate_widget_instances.xml" requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="logdate.preferences_pb"
-             requireFlags="clientSideEncryption"/>
-    <include domain="file" path="archive_recovery/records/" requireFlags="clientSideEncryption"/>
-    <include domain="file" path="datastore/"
-             requireFlags="clientSideEncryption"/>
-    <include domain="file" path="db_recovery/"
-             requireFlags="clientSideEncryption"/>
-    <include domain="file" path="identity_recovery/"
-             requireFlags="clientSideEncryption"/>
-    <include domain="database" path="logdate"
-             requireFlags="clientSideEncryption"/>
-    <include domain="database" path="logdate-wal"
-             requireFlags="clientSideEncryption"/>
-    <include domain="database" path="logdate-shm"
-             requireFlags="clientSideEncryption"/>
-    <include domain="file" path="logdate.preferences_pb"
-             requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="archive_recovery/records/" requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="retained_journals/" requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="native_journal_transfer/current/" requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="archive_recovery/sources/" requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="datastore/"
-             requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="db_recovery/"
-             requireFlags="deviceToDeviceTransfer"/>
-    <include domain="file" path="identity_recovery/"
-             requireFlags="deviceToDeviceTransfer"/>
-    <include domain="database" path="logdate"
-             requireFlags="deviceToDeviceTransfer"/>
-    <include domain="database" path="logdate-wal"
-             requireFlags="deviceToDeviceTransfer"/>
-    <include domain="database" path="logdate-shm"
-             requireFlags="deviceToDeviceTransfer"/>
-    <exclude domain="file" path="db_recovery/passphrase_backup.part"/>
-    <exclude domain="file" path="db_recovery/working_passphrase_backup.part"/>
-    <exclude domain="file" path="identity_recovery/phrase_backup.part"/>
-    <exclude domain="file" path="identity_recovery/account_key_backup.part"/>
-    <exclude domain="file" path="identity_recovery/media_key_backup.part"/>
+    <include
+    domain="sharedpref"
+    path="logdate_widget_instances.xml"
+    requireFlags="clientSideEncryption"
+  />
+    <include
+    domain="sharedpref"
+    path="logdate_widget_instances.xml"
+    requireFlags="deviceToDeviceTransfer"
+  />
+    <include domain="file" path="logdate.preferences_pb" requireFlags="clientSideEncryption" />
+    <include domain="file" path="archive_recovery/records/" requireFlags="clientSideEncryption" />
+    <include domain="file" path="datastore/" requireFlags="clientSideEncryption" />
+    <include domain="file" path="db_recovery/" requireFlags="clientSideEncryption" />
+    <include domain="file" path="identity_recovery/" requireFlags="clientSideEncryption" />
+    <include domain="database" path="logdate" requireFlags="clientSideEncryption" />
+    <include domain="database" path="logdate-wal" requireFlags="clientSideEncryption" />
+    <include domain="database" path="logdate-shm" requireFlags="clientSideEncryption" />
+    <include domain="file" path="logdate.preferences_pb" requireFlags="deviceToDeviceTransfer" />
+    <include domain="file" path="archive_recovery/records/" requireFlags="deviceToDeviceTransfer" />
+    <include domain="file" path="retained_journals/" requireFlags="deviceToDeviceTransfer" />
+    <include
+    domain="file"
+    path="native_journal_transfer/current/"
+    requireFlags="deviceToDeviceTransfer"
+  />
+    <include domain="file" path="archive_recovery/sources/" requireFlags="deviceToDeviceTransfer" />
+    <include domain="file" path="datastore/" requireFlags="deviceToDeviceTransfer" />
+    <include domain="file" path="db_recovery/" requireFlags="deviceToDeviceTransfer" />
+    <include domain="file" path="identity_recovery/" requireFlags="deviceToDeviceTransfer" />
+    <include domain="database" path="logdate" requireFlags="deviceToDeviceTransfer" />
+    <include domain="database" path="logdate-wal" requireFlags="deviceToDeviceTransfer" />
+    <include domain="database" path="logdate-shm" requireFlags="deviceToDeviceTransfer" />
+    <exclude domain="file" path="db_recovery/passphrase_backup.part" />
+    <exclude domain="file" path="db_recovery/working_passphrase_backup.part" />
+    <exclude domain="file" path="identity_recovery/phrase_backup.part" />
+    <exclude domain="file" path="identity_recovery/account_key_backup.part" />
+    <exclude domain="file" path="identity_recovery/media_key_backup.part" />
 </full-backup-content>

@@ -9,9 +9,11 @@ import app.logdate.shared.model.Journal
 import app.logdate.shared.model.Location
 import app.logdate.shared.model.LocationAltitude
 import app.logdate.shared.model.PhotoPresentation
+import app.logdate.shared.model.Place
 import app.logdate.shared.model.SerializableImageBlock
 import app.logdate.shared.model.profile.LogDateProfile
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -28,6 +30,78 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 class NativeArchive3SnapshotWriterTest {
+    @Test
+    fun `semantic place rows survive without a saved place`() =
+        runBlocking {
+            val parent = Files.createTempDirectory("logdate-archive3-semantic-place").toFile()
+            try {
+                val root = parent.resolve("archive").absolutePath.toPath()
+                val place =
+                    Json
+                        .parseToJsonElement(
+                            """{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","name":"Trailhead","latitude":36.1,"longitude":-115.1,"radius":30.0,"units":"m","created":1700000000123,"last_updated":1700000000456,"sync_version":7,"deleted_at":1700000000999}""",
+                        ).jsonObject
+                NativeArchive3SnapshotWriter.write(
+                    NativeArchive3SnapshotInput(
+                        exportedAt = "2026-10-23T00:00:00Z",
+                        journals = emptyList(),
+                        notes = emptyList(),
+                        journalIdsByNote = emptyMap(),
+                        drafts = emptyList(),
+                        profile = LogDateProfile(),
+                        places = emptyList(),
+                        semanticPlaces = kotlinx.serialization.json.JsonArray(listOf(place)),
+                        locationHistory = emptyList(),
+                        originals = emptyList(),
+                        unsupportedPopulatedCategories = emptySet(),
+                        validateContext = {},
+                    ),
+                    StagingDirectoryArchiveContainer(FileSystem.SYSTEM, root),
+                )
+                val places = Json.parseToJsonElement(parent.resolve("archive/data/places.json").readText()).jsonObject
+                assertEquals(listOf(place), places.getValue("nativeAndroidSemanticPlaces").jsonArray.toList())
+            } finally {
+                parent.deleteRecursively()
+            }
+        }
+
+    @Test
+    fun `saved places without source timestamps are refused`() =
+        runBlocking {
+            val parent = Files.createTempDirectory("logdate-archive3-place-times").toFile()
+            try {
+                val root = parent.resolve("archive").absolutePath.toPath()
+                val place =
+                    Place.UserDefined(
+                        id = Uuid.parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                        displayName = "Home",
+                        lat = 36.1699,
+                        lng = -115.1398,
+                        radiusMeters = 120.0,
+                    )
+                val source =
+                    NativeArchive3SnapshotInput(
+                        exportedAt = "2026-10-23T00:00:00Z",
+                        journals = emptyList(),
+                        notes = emptyList(),
+                        journalIdsByNote = emptyMap(),
+                        drafts = emptyList(),
+                        profile = LogDateProfile(),
+                        places = listOf(place),
+                        locationHistory = emptyList(),
+                        originals = emptyList(),
+                        unsupportedPopulatedCategories = emptySet(),
+                        validateContext = {},
+                    )
+                assertFailsWith<IllegalArgumentException> {
+                    NativeArchive3SnapshotWriter.write(source, StagingDirectoryArchiveContainer(FileSystem.SYSTEM, root))
+                }
+                assertFalse(FileSystem.SYSTEM.exists(root))
+            } finally {
+                parent.deleteRecursively()
+            }
+        }
+
     @Test
     fun `frozen journal and text note retain membership and original values`() =
         runBlocking {
@@ -87,6 +161,14 @@ class NativeArchive3SnapshotWriterTest {
                         ?.let { it as kotlinx.serialization.json.JsonPrimitive }
                         ?.content,
                 )
+                val orphaned = parent.resolve("orphaned-location").absolutePath.toPath()
+                assertFailsWith<IllegalArgumentException> {
+                    NativeArchive3SnapshotWriter.write(
+                        source.copy(noteSourceLocationMetadata = mapOf(Uuid.random() to "{}")),
+                        StagingDirectoryArchiveContainer(FileSystem.SYSTEM, orphaned),
+                    )
+                }
+                assertFalse(FileSystem.SYSTEM.exists(orphaned))
             } finally {
                 parent.deleteRecursively()
             }

@@ -938,6 +938,10 @@ The receiving implementation is the native app in `logdate-apple`, bundle
 `studio.hypertext.apps.logdate`, team `T95VDD3A4W`. An iOS application target and AppMigrationKit
 extension are required, together with the App Store Connect OS data transfer mapping.
 AppMigrationKit does not run in the macOS application.
+For a database-free Android source, the iOS sender emits no payload only when no transferable
+content exists. Profile or canonical-owner preferences first acquire the ordinary encrypted journal
+snapshot; unrepresented settings abort before any file is emitted. The iOS path remains disabled by
+default until source coverage and native Setup Assistant delivery are accepted.
 
 The two-emulator harness also supports `--exercise-data-only` to prove a signed-in synthetic source
 restores journal and media while leaving the destination signed out. `--exercise-credentials-only`
