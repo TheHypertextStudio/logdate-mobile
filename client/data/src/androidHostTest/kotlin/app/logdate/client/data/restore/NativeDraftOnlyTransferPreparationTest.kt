@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.core.app.ApplicationProvider
+import app.logdate.client.data.journals.ArchiveDraftStorageState
 import app.logdate.client.datastore.createAndroidMainDataStore
 import app.logdate.client.device.restore.PostRestoreDetector
 import app.logdate.client.device.restore.verifyNativeJournalMediaInventory
@@ -12,6 +13,7 @@ import app.logdate.client.device.restore.writeNativeJournalMediaInventory
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.SerializableImageBlock
 import app.logdate.shared.model.SerializableTextBlock
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -59,6 +61,103 @@ class NativeDraftOnlyTransferPreparationTest {
             prepareNativeDraftOnlyDatabase(fixture.context, { error("unexpected database initialization") })
 
             assertFalse(fixture.database.exists())
+        }
+    }
+
+    @Test
+    fun `an empty installation emits no Apple payload and creates no journal`() {
+        Fixture().use { fixture ->
+            val emitted = mutableListOf<File>()
+            runBlocking {
+                NativeIosTransferSender(fixture.context, NativeJournalTransferSnapshot(fixture.context))
+                    .send(9, emitted::add)
+            }
+
+            assertTrue(emitted.isEmpty())
+            assertFalse(fixture.database.exists())
+            assertFalse(File(fixture.context.filesDir, "logdate-os-transfer").exists())
+        }
+    }
+
+    @Test
+    fun `database-free settings content is not silently skipped`() {
+        Fixture().use { fixture ->
+            runBlocking {
+                createAndroidMainDataStore(fixture.context).edit { preferences ->
+                    preferences[stringPreferencesKey("theme_preference")] = "dark"
+                }
+            }
+            val emitted = mutableListOf<File>()
+            assertFailsWith<IllegalStateException> {
+                runBlocking {
+                    NativeIosTransferSender(fixture.context, NativeJournalTransferSnapshot(fixture.context))
+                        .send(9, emitted::add)
+                }
+            }
+
+            assertTrue(emitted.isEmpty())
+            assertFalse(fixture.database.exists())
+        }
+    }
+
+    @Test
+    fun `database-free draft deletion receipt is not silently skipped`() {
+        Fixture().use { fixture ->
+            runBlocking {
+                createAndroidMainDataStore(fixture.context).edit { preferences ->
+                    preferences[stringPreferencesKey("editor_drafts_anonymous")] =
+                        ArchiveDraftStorageState(localDeletionIds = setOf(Uuid.random().toString())).encode(Json)
+                }
+            }
+            val emitted = mutableListOf<File>()
+            assertFailsWith<IllegalStateException> {
+                runBlocking {
+                    NativeIosTransferSender(fixture.context, NativeJournalTransferSnapshot(fixture.context))
+                        .send(9, emitted::add)
+                }
+            }
+
+            assertTrue(emitted.isEmpty())
+            assertFalse(fixture.database.exists())
+        }
+    }
+
+    @Test
+    fun `profile-only database-free source requires journal preparation for Apple transfer`() {
+        Fixture().use { fixture ->
+            runBlocking {
+                createAndroidMainDataStore(fixture.context).edit { preferences ->
+                    preferences[stringPreferencesKey("display_name")] = "Alex"
+                }
+            }
+
+            val preferences = runBlocking { createAndroidMainDataStore(fixture.context).data.first() }
+            assertTrue(NativeArchive3SourceCensus.hasPreDatabaseIosContent(preferences))
+            prepareNativeDraftOnlyDatabase(
+                fixture.context,
+                {
+                    fixture.database.apply {
+                        parentFile!!.mkdirs()
+                        writeText("test journal")
+                    }
+                },
+                hasEntryDrafts = { NativeArchive3SourceCensus.hasPreDatabaseIosContent(preferences) },
+            )
+            assertTrue(fixture.database.isFile)
+        }
+    }
+
+    @Test
+    fun `canonical owner without a journal is also retained for Apple transfer`() {
+        Fixture().use { fixture ->
+            runBlocking {
+                createAndroidMainDataStore(fixture.context).edit { preferences ->
+                    preferences[stringPreferencesKey("identity.canonical_owner_id")] = Uuid.random().toString()
+                }
+            }
+
+            val preferences = runBlocking { createAndroidMainDataStore(fixture.context).data.first() }
+            assertTrue(NativeArchive3SourceCensus.hasPreDatabaseIosContent(preferences))
         }
     }
 

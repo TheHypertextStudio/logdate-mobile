@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
    Backup/restore rules for Android 12+ (API 31+).
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
@@ -20,37 +20,37 @@
 -->
 <data-extraction-rules>
     <cloud-backup disableIfNoEncryptionCapabilities="true">
-        <include domain="sharedpref" path="logdate_widget_instances.xml"/>
-        <include domain="file" path="logdate.preferences_pb"/>
-        <include domain="file" path="datastore/"/>
-        <include domain="file" path="archive_recovery/records/"/>
-        <include domain="file" path="db_recovery/"/>
-        <include domain="file" path="identity_recovery/"/>
-        <include domain="database" path="logdate"/>
-        <include domain="database" path="logdate-wal"/>
-        <include domain="database" path="logdate-shm"/>
-        <exclude domain="file" path="db_recovery/passphrase_backup.part"/>
-        <exclude domain="file" path="db_recovery/working_passphrase_backup.part"/>
-        <exclude domain="file" path="identity_recovery/phrase_backup.part"/>
-        <exclude domain="file" path="identity_recovery/account_key_backup.part"/>
-        <exclude domain="file" path="identity_recovery/media_key_backup.part"/>
+        <include domain="sharedpref" path="logdate_widget_instances.xml" />
+        <include domain="file" path="logdate.preferences_pb" />
+        <include domain="file" path="datastore/" />
+        <include domain="file" path="archive_recovery/records/" />
+        <include domain="file" path="db_recovery/" />
+        <include domain="file" path="identity_recovery/" />
+        <include domain="database" path="logdate" />
+        <include domain="database" path="logdate-wal" />
+        <include domain="database" path="logdate-shm" />
+        <exclude domain="file" path="db_recovery/passphrase_backup.part" />
+        <exclude domain="file" path="db_recovery/working_passphrase_backup.part" />
+        <exclude domain="file" path="identity_recovery/phrase_backup.part" />
+        <exclude domain="file" path="identity_recovery/account_key_backup.part" />
+        <exclude domain="file" path="identity_recovery/media_key_backup.part" />
     </cloud-backup>
     <device-transfer>
-        <include domain="sharedpref" path="logdate_widget_instances.xml"/>
-        <include domain="file" path="logdate.preferences_pb"/>
-        <include domain="file" path="datastore/"/>
-        <include domain="file" path="archive_recovery/records/"/>
-        <include domain="file" path="db_recovery/"/>
-        <include domain="file" path="identity_recovery/"/>
-        <include domain="file" path="retained_journals/"/>
-        <include domain="file" path="native_journal_transfer/current/"/>
-        <include domain="file" path="archive_recovery/sources/"/>
-        <exclude domain="file" path="db_recovery/passphrase_backup"/>
-        <exclude domain="file" path="db_recovery/working_passphrase_backup"/>
-        <exclude domain="file" path="db_recovery/passphrase_backup.part"/>
-        <exclude domain="file" path="db_recovery/working_passphrase_backup.part"/>
-        <exclude domain="file" path="identity_recovery/phrase_backup.part"/>
-        <exclude domain="file" path="identity_recovery/account_key_backup.part"/>
-        <exclude domain="file" path="identity_recovery/media_key_backup.part"/>
+        <include domain="sharedpref" path="logdate_widget_instances.xml" />
+        <include domain="file" path="logdate.preferences_pb" />
+        <include domain="file" path="datastore/" />
+        <include domain="file" path="archive_recovery/records/" />
+        <include domain="file" path="db_recovery/" />
+        <include domain="file" path="identity_recovery/" />
+        <include domain="file" path="retained_journals/" />
+        <include domain="file" path="native_journal_transfer/current/" />
+        <include domain="file" path="archive_recovery/sources/" />
+        <exclude domain="file" path="db_recovery/passphrase_backup" />
+        <exclude domain="file" path="db_recovery/working_passphrase_backup" />
+        <exclude domain="file" path="db_recovery/passphrase_backup.part" />
+        <exclude domain="file" path="db_recovery/working_passphrase_backup.part" />
+        <exclude domain="file" path="identity_recovery/phrase_backup.part" />
+        <exclude domain="file" path="identity_recovery/account_key_backup.part" />
+        <exclude domain="file" path="identity_recovery/media_key_backup.part" />
     </device-transfer>
 </data-extraction-rules>
