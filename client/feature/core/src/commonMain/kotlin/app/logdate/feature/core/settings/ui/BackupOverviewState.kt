@@ -9,7 +9,7 @@ internal data class BackupOverviewState(
     val canBackUpNow: Boolean,
     val needsReview: Boolean,
 ) {
-    val hasDetails: Boolean get() = lastBackupAt != null || pendingChanges > 0 || needsReview
+    val hasDetails: Boolean get() = pendingChanges > 0 || needsReview
 }
 
 internal fun backupOverviewState(

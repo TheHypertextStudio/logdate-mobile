@@ -9,7 +9,13 @@ import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -17,6 +23,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import app.logdate.client.device.restore.NativeBackupStatus
 import app.logdate.client.sync.SyncStatus
 import app.logdate.ui.theme.LogDateTheme
 import java.awt.image.BufferedImage
@@ -56,12 +63,45 @@ class BackupOverviewRenderTest {
                     backupPage(sync, archive)
                 }
             }
-            onNodeWithText("Saved backup available").assertExists()
+            onNodeWithText("Saved backup available").assertDoesNotExist()
             onNodeWithText("Preparing to sync…").assertDoesNotExist()
             onNodeWithText("Last saved backup").assertExists()
             onNodeWithText("Changes waiting to sync").assertExists()
             onNodeWithText("3").assertExists()
             save(onRoot().captureToImage(), "backup-tablet-dark")
+        }
+
+    @Test
+    fun `saved copy date appears once inside its cloud card`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            setContent {
+                LogDateTheme {
+                    backupPage(idle, CloudArchiveStatus(CloudArchivePhase.COMPLETE, 1793036520000L))
+                }
+            }
+            onNode(hasTestTag("backup_cloud_status") and hasAnyDescendant(hasText("Last saved backup"))).assertExists()
+            onAllNodesWithText("Last saved backup").assertCountEquals(1)
+            onNodeWithText("Saved backup available").assertDoesNotExist()
+            save(onRoot().captureToImage(), "backup-saved-copy")
+        }
+
+    @Test
+    fun `export and import are discoverable before Android explanations`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            var opened = 0
+            setContent {
+                LogDateTheme {
+                    backupPage(
+                        idle,
+                        CloudArchiveStatus(CloudArchivePhase.COMPLETE, 1793036520000L),
+                        nativeStatus = NativeBackupStatus.Available(lastQuotaFailure = null),
+                        onOpenArchive = { opened++ },
+                    )
+                }
+            }
+            onNodeWithText("Export & Import").assertIsDisplayed().performClick()
+            assertEquals(1, opened)
+            save(onRoot().captureToImage(), "backup-files-discovery")
         }
 
     @Test
@@ -101,6 +141,8 @@ class BackupOverviewRenderTest {
         archive: CloudArchiveStatus,
         onBackupNow: () -> Unit = {},
         onReview: () -> Unit = {},
+        nativeStatus: NativeBackupStatus = NativeBackupStatus.Unsupported,
+        onOpenArchive: () -> Unit = {},
     ) {
         SyncSettingsContent(
             onBack = {},
@@ -110,6 +152,8 @@ class BackupOverviewRenderTest {
             onSyncNow = {},
             onArchiveBackupNow = onBackupNow,
             onReviewSavedEdits = onReview,
+            nativeBackupStatus = nativeStatus,
+            onExportArchive = onOpenArchive,
             onNavigateToSignIn = {},
             quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 GB", formattedUsed = "0 B"),
             isQuotaAvailable = true,

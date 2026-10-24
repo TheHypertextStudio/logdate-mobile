@@ -1,18 +1,36 @@
 <resources>
     <string name="native_backup_title">Android backup</string>
     <string name="native_backup_cloud_title">Cloud backup</string>
-    <string name="native_backup_cloud_detail">Entries and settings. Original media is not included.</string>
-    <string name="native_backup_cloud_requirement">Requires encrypted Android backup · 25 MB limit</string>
+    <string
+    name="native_backup_cloud_detail"
+  >Entries and settings. Original media is not included.</string>
+    <string
+    name="native_backup_cloud_requirement"
+  >Requires encrypted Android backup · 25 MB limit</string>
     <string name="native_backup_transfer_title">Device transfer</string>
-    <string name="native_backup_transfer_detail">Entries, settings, and original media move during Android setup.</string>
-    <string name="native_backup_quota_failure">An Android backup exceeded its size limit. Export an archive to save a copy.</string>
+    <string
+    name="native_backup_transfer_detail"
+  >Entries, settings, and original media move during Android setup.</string>
+    <string
+    name="native_backup_quota_failure"
+  >An Android backup exceeded its size limit. Export an archive to save a copy.</string>
     <string name="native_backup_recovering_title">Finishing device transfer</string>
-    <string name="native_backup_recovering_detail">LogDate is checking the files Android delivered. Tap to try again.</string>
+    <string
+    name="native_backup_recovering_detail"
+  >LogDate is checking the files Android delivered. Tap to try again.</string>
     <string name="native_backup_recovery_title">Recover missing files</string>
-    <string name="native_backup_recovery_detail">Some originals are still missing. If you saved a LogDate archive, you can import it.</string>
-    <string name="native_backup_cloud_waiting">Cloud backup is currently unavailable for this journal. You can export an archive to keep a copy.</string>
+    <string
+    name="native_backup_recovery_detail"
+  >Some originals are still missing. If you saved a LogDate archive, you can import it.</string>
+    <string
+    name="native_backup_cloud_waiting"
+  >Cloud backup is currently unavailable for this journal. You can export an archive to keep a copy.</string>
     <string name="native_backup_export">Export archive</string>
     <string name="backup_cloud_title">LogDate Cloud</string>
-    <string name="backup_cloud_detail">Sign in to back up your entries and media automatically across your devices.</string>
-    <string name="backup_archive_detail">Save your entries and media to a file. No account needed.</string>
+    <string
+    name="backup_cloud_detail"
+  >Sign in to back up your entries and media automatically across your devices.</string>
+    <string
+    name="backup_archive_detail"
+  >Save a backup file, or restore from one. No account needed.</string>
 </resources>

@@ -177,6 +177,9 @@ fun SyncSettingsContent(
                 )
             }
         }
+        item {
+            BackupArchiveItem(onExportArchive, Modifier.padding(horizontal = Spacing.lg))
+        }
         if (nativeBackupStatus is NativeBackupStatus.Available) {
             item {
                 NativeBackupSettingsSection(
@@ -186,9 +189,6 @@ fun SyncSettingsContent(
                     onOpenArchive = onExportArchive,
                 )
             }
-        }
-        item {
-            BackupArchiveItem(onExportArchive, Modifier.padding(horizontal = Spacing.lg))
         }
         if (isAuthenticated == true) {
             items(mergeIssues, key = { it.operationId }) { operation ->

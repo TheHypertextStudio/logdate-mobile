@@ -36,6 +36,13 @@ class BackupOverviewStateTest {
     }
 
     @Test
+    fun `a saved copy alone does not create a second details block`() {
+        val state = backupOverviewState(idle, CloudArchiveStatus(CloudArchivePhase.COMPLETE, 1234L))
+        assertEquals(1234L, state.lastBackupAt)
+        assertFalse(state.hasDetails)
+    }
+
+    @Test
     fun `recovery requirements cannot be bypassed by the primary action`() {
         val state =
             backupOverviewState(

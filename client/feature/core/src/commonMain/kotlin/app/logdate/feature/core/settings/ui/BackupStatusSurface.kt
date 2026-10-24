@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -35,11 +36,16 @@ import app.logdate.feature.core.sync.SyncProgressIndicator
 import app.logdate.feature.core.sync.messageResource
 import app.logdate.ui.common.MaterialCard
 import app.logdate.ui.theme.Spacing
+import app.logdate.util.asTime
+import app.logdate.util.formatDateLocalized
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.backup_cloud_title
+import logdate.client.feature.core.generated.resources.backup_overview_date_time
+import logdate.client.feature.core.generated.resources.backup_overview_last_saved
 import logdate.client.feature.core.generated.resources.backup_overview_none
 import logdate.client.feature.core.generated.resources.backup_overview_now
-import logdate.client.feature.core.generated.resources.backup_overview_saved
 import logdate.client.feature.core.generated.resources.cloud_archive_checking_contents
 import logdate.client.feature.core.generated.resources.cloud_archive_encrypting
 import logdate.client.feature.core.generated.resources.cloud_archive_exporting
@@ -62,6 +68,7 @@ import logdate.client.feature.core.generated.resources.sync_heading_update
 import logdate.client.feature.core.generated.resources.sync_heading_wifi
 import logdate.client.feature.core.generated.resources.sync_retry_automatic_detail
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Instant
 
 @Composable
 internal fun BackupStatusItem(
@@ -88,7 +95,7 @@ internal fun BackupStatusItem(
         if (noSavedBackup) {
             Res.string.backup_overview_none
         } else if (savedBackupAvailable) {
-            Res.string.backup_overview_saved
+            Res.string.backup_overview_last_saved
         } else {
             when (status) {
                 AccountSyncStatus.WAITING_FOR_WIFI -> Res.string.sync_heading_wifi
@@ -110,7 +117,7 @@ internal fun BackupStatusItem(
             }
         }
     MaterialCard(
-        modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
+        modifier = modifier.fillMaxWidth().testTag("backup_cloud_status").semantics { liveRegion = LiveRegionMode.Polite },
         title = stringResource(Res.string.backup_cloud_title),
         titleStyle = MaterialTheme.typography.titleLarge,
         shape = MaterialTheme.shapes.extraLarge,
@@ -161,6 +168,20 @@ internal fun BackupStatusItem(
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
+                    cloudArchiveStatus.lastCompletedAt?.let { lastSavedAt ->
+                        val lastSaved = Instant.fromEpochMilliseconds(lastSavedAt)
+                        if (!savedBackupAvailable) {
+                            Text(stringResource(Res.string.backup_overview_last_saved), style = MaterialTheme.typography.labelLarge)
+                        }
+                        Text(
+                            stringResource(
+                                Res.string.backup_overview_date_time,
+                                formatDateLocalized(lastSaved.toLocalDateTime(TimeZone.currentSystemDefault()).date),
+                                lastSaved.asTime,
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                     if (archiveProgress != null) {
                         val stage =
                             when (archiveProgress.stage) {
