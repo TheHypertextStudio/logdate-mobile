@@ -483,7 +483,7 @@ class OfflineFirstJournalNotesRepository(
     override suspend fun updateMediaRef(
         noteId: Uuid,
         mediaRef: String,
-    ) = mediaMetadata.updateReference(noteId, mediaRef)
+    ) = mediaClaimFence.withClaim { mediaMetadata.updateReference(noteId, mediaRef) }
 
     private val contentSyncDebouncer =
         SyncDebouncer(scope = syncScope) {

@@ -20,6 +20,8 @@ import app.logdate.client.device.di.deviceInstanceModule
 import app.logdate.client.di.datastoreModule
 import app.logdate.client.domain.watch.StampedPreferenceStore
 import app.logdate.client.location.di.locationModule
+import app.logdate.client.media.storage.AndroidMediaClaimFence
+import app.logdate.client.media.storage.MediaClaimFence
 import app.logdate.client.media.storage.MediaRescuer
 import app.logdate.client.permissions.di.permissionsModule
 import app.logdate.client.repository.journals.DraftRepository
@@ -92,6 +94,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
@@ -111,6 +114,7 @@ val wearDataModule =
         includes(conflictResolverModule)
         includes(permissionsModule)
         includes(locationModule)
+        single<MediaClaimFence> { AndroidMediaClaimFence(androidContext().noBackupFilesDir) }
         single {
             OfflineFirstMarkedMomentRepository(get(), get<SyncTransactionManager>(WatchCloud), get())
         } binds arrayOf(MarkedMomentRepository::class, SyncableMarkedMomentRepository::class)
@@ -303,6 +307,7 @@ val wearDataModule =
                 syncMetadataService = get(),
                 transcriptionRepository = get<TranscriptionRepository>(),
                 mediaReferences = get(),
+                mediaClaimFence = get(),
             )
         }
         single {
