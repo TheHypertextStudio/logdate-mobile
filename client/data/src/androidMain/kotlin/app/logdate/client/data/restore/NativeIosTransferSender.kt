@@ -10,6 +10,7 @@ import app.logdate.client.device.restore.PrivateOsCustodyRecord
 import app.logdate.client.device.storage.createAndroidSecureStorage
 import app.logdate.client.domain.export.archive.StagingDirectoryArchiveContainer
 import app.logdate.client.domain.restore.archive3.NativeArchive3Bundle
+import kotlinx.coroutines.sync.Mutex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.source
@@ -21,7 +22,26 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.Uuid
+
+private val nativeIosTransferMutexes = ConcurrentHashMap<String, Mutex>()
+
+internal suspend fun <T> withNativeIosTransferLock(
+    lockFile: File,
+    block: suspend () -> T,
+): T {
+    val lockPath = lockFile.absoluteFile.normalize().path
+    val mutex = nativeIosTransferMutexes.computeIfAbsent(lockPath) { Mutex() }
+    mutex.lock()
+    return try {
+        FileChannel.open(lockFile.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE).use { channel ->
+            channel.lock().use { block() }
+        }
+    } finally {
+        mutex.unlock()
+    }
+}
 
 /** Emits only the verified Archive3 directory and its matching private record. */
 internal class NativeIosTransferSender(
@@ -48,10 +68,8 @@ internal class NativeIosTransferSender(
         transportFlags: Int,
         emit: (File) -> Unit,
     ) {
-        FileChannel.open(lockFile.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE).use { channel ->
-            channel.lock().use {
-                sendLocked(transportFlags, emit)
-            }
+        withNativeIosTransferLock(lockFile) {
+            sendLocked(transportFlags, emit)
         }
     }
 

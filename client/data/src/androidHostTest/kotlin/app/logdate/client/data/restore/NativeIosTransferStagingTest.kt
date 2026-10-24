@@ -1,11 +1,17 @@
 package app.logdate.client.data.restore
 
 import android.content.ContextWrapper
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,6 +19,61 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NativeIosTransferStagingTest {
+    @Test
+    fun `overlapping sender callbacks in one process serialize on the transfer lock`() =
+        runBlocking {
+            val sandbox = Files.createTempDirectory("native-ios-transfer-lock-").toFile()
+            try {
+                check(File(sandbox, "no_backup").mkdirs())
+                val lockFile = File(sandbox, "no_backup/native-ios-transfer.lock")
+                val active = AtomicInteger()
+                val maximumActive = AtomicInteger()
+                val firstEntered = CompletableDeferred<Unit>()
+                val releaseFirst = CompletableDeferred<Unit>()
+                val secondAttempted = CompletableDeferred<Unit>()
+                val secondEntered = CompletableDeferred<Unit>()
+
+                coroutineScope {
+                    val first =
+                        async(Dispatchers.Default) {
+                            withNativeIosTransferLock(lockFile) {
+                                val current = active.incrementAndGet()
+                                maximumActive.accumulateAndGet(current) { prior, observed -> maxOf(prior, observed) }
+                                firstEntered.complete(Unit)
+                                releaseFirst.await()
+                                active.decrementAndGet()
+                            }
+                        }
+                    firstEntered.await()
+                    val second =
+                        async(Dispatchers.Default) {
+                            secondAttempted.complete(Unit)
+                            withNativeIosTransferLock(lockFile) {
+                                val current = active.incrementAndGet()
+                                maximumActive.accumulateAndGet(current) { prior, observed -> maxOf(prior, observed) }
+                                secondEntered.complete(Unit)
+                                active.decrementAndGet()
+                            }
+                        }
+
+                    try {
+                        secondAttempted.await()
+                        delay(50)
+                        assertFalse(secondEntered.isCompleted)
+                    } finally {
+                        releaseFirst.complete(Unit)
+                    }
+
+                    first.await()
+                    secondEntered.await()
+                    second.await()
+                }
+                assertEquals(1, maximumActive.get())
+            } finally {
+                check(sandbox.deleteRecursively())
+            }
+        }
+
     @Test
     fun `only archive and private custody files are emitted and mutation aborts`() {
         val root = Files.createTempDirectory("native-ios-emission-").toFile()
