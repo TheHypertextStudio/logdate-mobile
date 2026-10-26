@@ -178,6 +178,7 @@ open class ArchiveExportFixture {
     fun useCase(
         opener: MediaSourceOpener = readable,
         ioDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+        clock: Clock = fixedClock,
     ) = ExportArchiveUseCase(
         journalRepository = journalsRepository,
         journalNotesRepository = notesRepository,
@@ -187,7 +188,7 @@ open class ArchiveExportFixture {
         userStateRepository = StubUserStateRepository(),
         appInfoProvider = StubAppInfoProvider(AppInfo(versionName = "9.9.9", versionCode = 1, packageName = "app.logdate.test")),
         mediaSourceOpener = opener,
-        clock = fixedClock,
+        clock = clock,
         exportZone = { denver },
         ioDispatcher = ioDispatcher,
     )

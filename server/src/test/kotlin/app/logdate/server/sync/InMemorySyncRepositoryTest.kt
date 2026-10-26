@@ -176,18 +176,18 @@ class InMemorySyncRepositoryTest {
         repository.deleteAssociations(userId, listOf(AssociationKey("j", "c")), deletedAt = 102)
 
         val perUserPurge = repository.purgeTombstones(userId, olderThan = 200)
-        assertTrue(perUserPurge.contentPurged >= 1)
-        assertTrue(perUserPurge.journalPurged >= 1)
-        assertTrue(perUserPurge.associationPurged >= 1)
+        assertEquals(0, perUserPurge.contentPurged)
+        assertEquals(0, perUserPurge.journalPurged)
+        assertEquals(0, perUserPurge.associationPurged)
 
         repository.deleteContent(userId, "n1", deletedAt = 300)
         repository.deleteJournal(userId, "j2", deletedAt = 301)
         repository.deleteAssociations(userId, listOf(AssociationKey("j2", "c2")), deletedAt = 302)
 
         val globalPurge = repository.purgeTombstonesOlderThan(400)
-        assertTrue(globalPurge.contentPurged >= 1)
-        assertTrue(globalPurge.journalPurged >= 1)
-        assertTrue(globalPurge.associationPurged >= 1)
+        assertEquals(0, globalPurge.contentPurged)
+        assertEquals(0, globalPurge.journalPurged)
+        assertEquals(0, globalPurge.associationPurged)
         assertEquals(0, globalPurge.mediaPurged)
     }
 

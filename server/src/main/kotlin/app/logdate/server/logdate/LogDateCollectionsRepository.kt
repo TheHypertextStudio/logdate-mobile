@@ -55,6 +55,7 @@ data class LogDateCollectionsStatus(
     val lastTimestamp: Long,
 )
 
+/** Counts payload records scrubbed; lightweight deletion markers are retained for offline clients. */
 data class LogDateCollectionsPurgeResult(
     val entryPurged: Int,
     val journalPurged: Int,

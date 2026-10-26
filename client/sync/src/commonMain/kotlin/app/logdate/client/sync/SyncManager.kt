@@ -213,6 +213,8 @@ enum class SyncPausedReason {
      * waits for the recovery phrase to be entered again.
      */
     NEEDS_RECOVERY_PHRASE,
+
+    LOCAL_STORAGE_UNAVAILABLE,
 }
 
 /**

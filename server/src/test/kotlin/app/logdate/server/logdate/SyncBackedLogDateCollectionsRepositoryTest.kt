@@ -180,9 +180,9 @@ class SyncBackedLogDateCollectionsRepositoryTest {
 
             val purged = repository.purgeTombstones(userId = userId, olderThan = 200L)
 
-            assertTrue(purged.entryPurged >= 1)
-            assertTrue(purged.journalPurged >= 1)
-            assertTrue(purged.associationPurged >= 1)
+            assertEquals(0, purged.entryPurged)
+            assertEquals(0, purged.journalPurged)
+            assertEquals(0, purged.associationPurged)
             assertEquals(200L, purged.cutoff)
         }
 }

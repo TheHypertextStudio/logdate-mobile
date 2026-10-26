@@ -44,10 +44,12 @@ class ForegroundSyncManager(
             // reporting itself healthy. Signing out already stops sync by clearing the session.
             sessionStorage
                 .getSessionFlow()
-                .map { it != null }
+                .map { it?.accountId to sessionStorage.getOriginBoundSession()?.origin }
                 .distinctUntilChanged()
-                .collect { shouldEnable ->
-                    if (shouldEnable) {
+                .collect { (accountId, _) ->
+                    if (accountId != null) {
+                        stopPeriodicSync()
+                        defaultSyncManager.readinessGate.allowProbe(manual = true)
                         startPeriodicSync()
                     } else {
                         stopPeriodicSync()
@@ -90,11 +92,7 @@ class ForegroundSyncManager(
                 .UploadScope(session.session.accountId, session.origin)
         withMobileDataConsent(scope) {
             defaultSyncManager.releaseUploadBackoff()
-            do {
-                val result = defaultSyncManager.fullSync()
-                if (!result.success || !result.hasMorePending) break
-                delay(1_000)
-            } while (true)
+            SyncPassLoop(runPass = { defaultSyncManager.fullSync() }).runUntilSettled()
         }
     }
 
@@ -133,13 +131,11 @@ class ForegroundSyncManager(
                 while (isActive) {
                     val mode = dataUsagePolicy.currentMode()
                     if (mode.shouldSyncMetadata()) {
-                        val status = defaultSyncManager.getSyncStatus()
-                        if (status.pendingUploads > 0 || status.hasErrors || defaultSyncManager.isLocationHistorySyncEnabled()) {
-                            do {
-                                val result = defaultSyncManager.fullSync()
-                                if (!result.success || !result.hasMorePending || !dataUsagePolicy.currentMode().shouldSyncMetadata()) break
-                                delay(1_000)
-                            } while (isActive)
+                        if (defaultSyncManager.hasDueWork() || defaultSyncManager.hasRemoteRefreshDue()) {
+                            SyncPassLoop(
+                                runPass = { defaultSyncManager.fullSync() },
+                                shouldContinue = { dataUsagePolicy.currentMode().shouldSyncMetadata() },
+                            ).runUntilSettled()
                         }
                     } else {
                         Napier.d("Skipping periodic sync cycle — data usage policy restricts metadata sync")

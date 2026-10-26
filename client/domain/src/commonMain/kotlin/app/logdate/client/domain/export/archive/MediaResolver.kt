@@ -1,11 +1,13 @@
 package app.logdate.client.domain.export.archive
 
+import app.logdate.client.sync.deviceBlockReason
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.datetime.TimeZone
 import okio.Buffer
 import okio.use
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Instant
 
 /** A media file an entry refers to, and the time and zone to name it by. */
@@ -97,6 +99,7 @@ class MediaResolver(
                 header.readByteArray()
             }
         } catch (failure: Exception) {
+            if (failure is CancellationException || deviceBlockReason(failure) != null) throw failure
             Napier.w("Media file could not be read for export", failure)
             null
         }

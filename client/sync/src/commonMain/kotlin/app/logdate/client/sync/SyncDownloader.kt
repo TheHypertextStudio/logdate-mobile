@@ -349,7 +349,7 @@ private fun JournalNote.uploadedFields(
     val updated = lastUpdated.wirePrecision()
     val uploadedLocation = location?.takeIf { it.hasLocation }
     return when (this) {
-        is JournalNote.Text ->
+        is JournalNote.Text -> {
             copy(
                 syncVersion = version,
                 creationTimestamp = created,
@@ -357,16 +357,9 @@ private fun JournalNote.uploadedFields(
                 location = uploadedLocation,
                 timeZoneId = null,
             )
-        is JournalNote.Image ->
-            copy(
-                syncVersion = version,
-                creationTimestamp = created,
-                lastUpdated = updated,
-                mediaRef = ref.orEmpty(),
-                location = uploadedLocation,
-                timeZoneId = null,
-            )
-        is JournalNote.Video ->
+        }
+
+        is JournalNote.Image -> {
             copy(
                 syncVersion = version,
                 creationTimestamp = created,
@@ -375,7 +368,9 @@ private fun JournalNote.uploadedFields(
                 location = uploadedLocation,
                 timeZoneId = null,
             )
-        is JournalNote.Audio ->
+        }
+
+        is JournalNote.Video -> {
             copy(
                 syncVersion = version,
                 creationTimestamp = created,
@@ -384,5 +379,17 @@ private fun JournalNote.uploadedFields(
                 location = uploadedLocation,
                 timeZoneId = null,
             )
+        }
+
+        is JournalNote.Audio -> {
+            copy(
+                syncVersion = version,
+                creationTimestamp = created,
+                lastUpdated = updated,
+                mediaRef = ref.orEmpty(),
+                location = uploadedLocation,
+                timeZoneId = null,
+            )
+        }
     }
 }

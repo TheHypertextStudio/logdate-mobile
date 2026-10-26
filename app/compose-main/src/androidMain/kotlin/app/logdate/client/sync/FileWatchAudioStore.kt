@@ -13,6 +13,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
 import kotlin.uuid.Uuid
 
 /**
@@ -110,6 +111,25 @@ class FileWatchAudioStore(
     }
 
     override suspend fun isDeleted(noteId: Uuid): Boolean = withContext(ioDispatcher) { deletionMarker(noteId).isFile }
+
+    override suspend fun matchesAudioDigest(
+        noteId: Uuid,
+        expectedDigest: String,
+    ): Boolean =
+        withContext(ioDispatcher) {
+            val file = audioFile(noteId)
+            if (!file.isFile) return@withContext false
+            val digest = MessageDigest.getInstance("SHA-256")
+            file.inputStream().buffered().use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    digest.update(buffer, 0, count)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it) } == expectedDigest
+        }
 
     private fun clearOlderThan(
         directory: File,

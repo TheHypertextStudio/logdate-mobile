@@ -2,75 +2,82 @@ package app.logdate.client.e2e
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.WorkerParameters
-import app.logdate.client.datastore.SessionStorage
 import app.logdate.client.datastore.OriginBoundSession
+import app.logdate.client.datastore.SessionStorage
 import app.logdate.client.datastore.UserSession
 import app.logdate.client.device.crypto.IdentityKeyManager
 import app.logdate.client.device.identity.DeviceIdProvider
 import app.logdate.client.domain.export.archive.ArchiveContainer
-import app.logdate.client.domain.export.archive.ArchiveCategory
 import app.logdate.client.domain.export.archive.ArchiveCounts
 import app.logdate.client.domain.export.archive.ArchiveExportProgress
 import app.logdate.client.domain.export.archive.ArchiveExportSummary
-import app.logdate.client.domain.export.archive.ArchiveOmission
-import app.logdate.client.domain.export.archive.ArchiveOmissionReason
 import app.logdate.client.domain.export.archive.ArchivePath
 import app.logdate.client.domain.export.archive.ArchiveScope
 import app.logdate.client.domain.export.archive.ExportArchiveUseCase
 import app.logdate.client.sync.cloud.BackupFile
 import app.logdate.client.sync.cloud.BackupMetadata
-import app.logdate.client.sync.cloud.BackupUploadResult
 import app.logdate.client.sync.cloud.BackupUploadFileRequest
-import app.logdate.client.sync.cloud.CloudApiException
+import app.logdate.client.sync.cloud.BackupUploadResult
 import app.logdate.client.sync.cloud.CloudBackupDataSource
 import app.logdate.feature.core.export.CloudArchiveCipher
-import app.logdate.feature.core.export.CloudBackupWorker
-import app.logdate.feature.core.restore.CloudRestoreWorker
-import io.mockk.every
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.IOException
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.io.files.Path
+import okio.buffer
+import java.io.File
 import java.util.UUID
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
-import okio.buffer
-import org.junit.runner.RunWith
 import kotlin.uuid.Uuid
 
 abstract class CloudArchiveWorkerFixture {
     protected val context = ApplicationProvider.getApplicationContext<Context>()
     protected val archiveCipher = CloudArchiveCipher { ByteArray(32) { 7 } }
-    protected val verifiedIdentity = mockk<IdentityKeyManager> {
-        coEvery { isRecoveryPhraseVerified() } returns true
-        coEvery { hasIdentityKey() } returns true
+    protected val verifiedIdentity =
+        mockk<IdentityKeyManager> {
+            coEvery { isRecoveryPhraseVerified() } returns true
+            coEvery { hasIdentityKey() } returns true
+            coEvery { canUseForAccount(any()) } returns true
+            coEvery { getIdentityKey() } returns ByteArray(32) { 7 }
+        }
+
+    protected val archiveProgress = mutableListOf<androidx.work.Data>()
+
+    @org.junit.Before
+    @org.junit.After
+    fun clearOwnedBackupTestArtifacts() {
+        listOf(".zip", ".scope", ".scope.part", ".plain.part", ".encrypted.part").forEach { suffix ->
+            File(context.noBackupFilesDir, "cloud-backup-pending$suffix").delete()
+        }
     }
 
+    protected fun workerParameters(): WorkerParameters =
+        mockk<WorkerParameters>(relaxed = true).also { params ->
+            every { params.id } returns UUID.randomUUID()
+            every { params.progressUpdater.updateProgress(any(), any(), any()) } answers {
+                archiveProgress += thirdArg<androidx.work.Data>()
+                androidx.work.impl.utils.futures.SettableFuture
+                    .create<Void>()
+                    .apply { set(null) }
+            }
+        }
 
     protected fun v2Exporter(
         manifest: String,
         scope: ArchiveScope = ArchiveScope(complete = true),
     ): ExportArchiveUseCase =
         mockk<ExportArchiveUseCase>().also { useCase ->
+            coEvery { useCase.sourceFingerprint(any()) } returns "test-content:$manifest"
             every { useCase.export(any(), any()) } answers {
                 val container = invocation.args[1] as ArchiveContainer
                 flow {
+                    emit(ArchiveExportProgress.Starting)
                     container.write("README.txt", "LogDate export")
                     container.write("manifest.json", manifest)
                     container.write("SHA256SUMS", "checksums")
@@ -79,6 +86,7 @@ abstract class CloudArchiveWorkerFixture {
                             ArchiveExportSummary(
                                 ArchiveCounts(0, 0, 0, 0, 0, 0, hasProfile = false),
                                 scope,
+                                sourceFingerprint = "test-content:$manifest",
                             ),
                         ),
                     )
@@ -149,15 +157,29 @@ abstract class CloudArchiveWorkerFixture {
         }
     }
 
-
-    protected class FakeSessionStorage(private var session: UserSession?) : SessionStorage {
+    protected class FakeSessionStorage(
+        private var session: UserSession?,
+    ) : SessionStorage {
         override fun getSession() = session
+
         override fun getOriginBoundSession() = session?.let { OriginBoundSession("https://sync.example", it) }
+
         override fun getSessionFlow() = MutableStateFlow(session)
+
         override suspend fun hasValidSession() = session != null
-        override suspend fun saveSession(session: UserSession) { this.session = session }
-        override suspend fun clearSession() { session = null }
-        override suspend fun replaceSessionIfCurrent(expected: OriginBoundSession, updated: UserSession): Boolean {
+
+        override suspend fun saveSession(session: UserSession) {
+            this.session = session
+        }
+
+        override suspend fun clearSession() {
+            session = null
+        }
+
+        override suspend fun replaceSessionIfCurrent(
+            expected: OriginBoundSession,
+            updated: UserSession,
+        ): Boolean {
             if (getOriginBoundSession() != expected || updated.accountId != expected.session.accountId) return false
             session = updated
             return true
@@ -170,7 +192,9 @@ abstract class CloudArchiveWorkerFixture {
 
     protected class FakeDeviceIdProvider : DeviceIdProvider {
         protected val id = MutableStateFlow(Uuid.parse("00000000-0000-0000-0000-000000000001"))
+
         override fun getDeviceId() = id
+
         override suspend fun refreshDeviceId() = Unit
     }
 
@@ -223,25 +247,29 @@ abstract class CloudArchiveWorkerFixture {
             }
             uploadedFileSize = source.length()
             uploadedFileHeader = source.inputStream().use { it.readNBytes(5).decodeToString() }
-            uploadedFileDigest = source.inputStream().use { input ->
-                val digest = java.security.MessageDigest.getInstance("SHA-256")
-                val buffer = ByteArray(64 * 1024)
-                while (true) {
-                    val count = input.read(buffer)
-                    if (count < 0) break
-                    digest.update(buffer, 0, count)
+            uploadedFileDigest =
+                source.inputStream().use { input ->
+                    val digest = java.security.MessageDigest.getInstance("SHA-256")
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        digest.update(buffer, 0, count)
+                    }
+                    digest.digest().joinToString("") { byte ->
+                        (byte.toInt() and 0xff).toString(16).padStart(2, '0')
+                    }
                 }
-                digest.digest().joinToString("") { byte ->
-                    (byte.toInt() and 0xff).toString(16).padStart(2, '0')
-                }
-            }
             uploadedFileDigests += requireNotNull(uploadedFileDigest)
             uploadedFileManifest = backup.manifest
             uploadedFileBytes = if (retainUploadedFileBytes) source.readBytes() else null
             return if (uploadResults.isNotEmpty()) uploadResults.removeAt(0) else uploadResult
         }
 
-        override suspend fun uploadBackup(accessToken: String, backup: BackupFile): Result<BackupUploadResult> {
+        override suspend fun uploadBackup(
+            accessToken: String,
+            backup: BackupFile,
+        ): Result<BackupUploadResult> {
             uploadCalls++
             uploadedBackup = backup
             return uploadResult
@@ -252,7 +280,10 @@ abstract class CloudArchiveWorkerFixture {
             return if (listResults.isNotEmpty()) listResults.removeAt(0) else Result.success(backups)
         }
 
-        override suspend fun downloadBackup(accessToken: String, backupId: String): Result<BackupFile> {
+        override suspend fun downloadBackup(
+            accessToken: String,
+            backupId: String,
+        ): Result<BackupFile> {
             downloadedBackupId = backupId
             return downloaded?.let(Result.Companion::success)
                 ?: Result.failure(UnsupportedOperationException())
@@ -282,11 +313,15 @@ abstract class CloudArchiveWorkerFixture {
                 val backup = downloaded ?: return Result.failure(UnsupportedOperationException())
                 destinationFile.writeBytes(backup.data)
             }
-            return scriptedResult ?: backups.firstOrNull { it.id == backupId }
+            return scriptedResult ?: backups
+                .firstOrNull { it.id == backupId }
                 ?.let(Result.Companion::success)
                 ?: Result.failure(IllegalStateException("Unknown backup"))
         }
 
-        override suspend fun deleteBackup(accessToken: String, backupId: String): Result<Unit> = Result.success(Unit)
+        override suspend fun deleteBackup(
+            accessToken: String,
+            backupId: String,
+        ): Result<Unit> = Result.success(Unit)
     }
 }

@@ -117,7 +117,8 @@ class SyncContentAndJournalLifecycleTest {
                         header(HttpHeaders.Authorization, auth)
                         contentType(ContentType.Application.Json)
                         setBody(
-                            """{"id":"audio-transcript","type":"AUDIO","content":null,"mediaUri":"other.m4a","createdAt":1,"lastUpdated":6}""",
+                            """{"id":"audio-transcript","type":"AUDIO","content":null,
+                              "mediaUri":"other.m4a","createdAt":1,"lastUpdated":6}""",
                         )
                     }.status,
             )
@@ -166,11 +167,13 @@ class SyncContentAndJournalLifecycleTest {
                     contentType(ContentType.Application.Json)
                     setBody(journalUploadBody(id = "conditional-mac-journal", title = "Keep my Mac journal"))
                 }
-            assertEquals(HttpStatusCode.Created, recreate.status)
+            assertEquals(HttpStatusCode.Conflict, recreate.status)
+            assertTrue(recreate.bodyAsText().contains("DELETION_CONFLICT"))
+            assertEquals(HttpStatusCode.NotFound, client.get(path) { header(HttpHeaders.Authorization, auth) }.status)
         }
 
     @Test
-    fun `conditional content creation preserves a newer edit and permits recreation after deletion`() =
+    fun `conditional content creation preserves newer edits and rejects deleted identity reuse`() =
         testApplication {
             val tokenService = configureInMemorySyncApp()
             val auth = authHeader(tokenService)
@@ -212,7 +215,9 @@ class SyncContentAndJournalLifecycleTest {
                     contentType(ContentType.Application.Json)
                     setBody(contentUploadBody(id = "conditional-mac-entry", content = "Keep my Mac edit"))
                 }
-            assertEquals(HttpStatusCode.Created, recreate.status)
+            assertEquals(HttpStatusCode.Conflict, recreate.status)
+            assertTrue(recreate.bodyAsText().contains("DELETION_CONFLICT"))
+            assertEquals(HttpStatusCode.NotFound, client.get(path) { header(HttpHeaders.Authorization, auth) }.status)
         }
 
     @Test

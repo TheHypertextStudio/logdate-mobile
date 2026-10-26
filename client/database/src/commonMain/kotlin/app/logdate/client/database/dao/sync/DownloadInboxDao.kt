@@ -18,7 +18,7 @@ interface DownloadInboxDao {
     ): DownloadInboxEntity?
 
     @Query(
-        "SELECT * FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin AND entityType = :type AND state != 'APPLIED' AND nextAttemptAt <= :now ORDER BY nextAttemptAt, version LIMIT 100",
+        "SELECT * FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin AND entityType = :type AND state IN ('WAITING', 'FAILED') AND nextAttemptAt <= :now ORDER BY nextAttemptAt, version LIMIT 100",
     )
     suspend fun pending(
         owner: String,
@@ -31,6 +31,21 @@ interface DownloadInboxDao {
     suspend fun count(
         owner: String,
         origin: String,
+    ): Int
+
+    @Query("SELECT COUNT(*) FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin AND state IN ('FAILED', 'PARKED')")
+    suspend fun countNeedingAttention(
+        owner: String,
+        origin: String,
+    ): Int
+
+    @Query(
+        "SELECT COUNT(*) FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin AND state IN ('WAITING', 'FAILED') AND nextAttemptAt <= :now",
+    )
+    suspend fun countDue(
+        owner: String,
+        origin: String,
+        now: Long,
     ): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -46,9 +61,13 @@ interface DownloadInboxDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun checkpoint(row: DownloadCheckpointEntity)
 
-    @Query("UPDATE sync_download_inbox SET nextAttemptAt = 0 WHERE ownerId = :owner AND serverOrigin = :origin AND state != 'APPLIED'")
+    @Query(
+        "UPDATE sync_download_inbox SET nextAttemptAt = 0 " +
+            "WHERE ownerId = :owner AND serverOrigin = :origin AND state IN ('WAITING', 'FAILED') AND reason IN (:reasons)",
+    )
     suspend fun release(
         owner: String,
         origin: String,
+        reasons: List<String>,
     )
 }

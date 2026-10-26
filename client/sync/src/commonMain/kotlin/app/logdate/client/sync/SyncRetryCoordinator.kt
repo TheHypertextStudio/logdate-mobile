@@ -1,7 +1,10 @@
 package app.logdate.client.sync
 
+import app.logdate.client.sync.SyncRetryPolicy.DEAD_LETTER_RETRY_INTERVAL_MS
+import app.logdate.client.sync.SyncRetryPolicy.MAX_RETRY_ATTEMPTS
+import app.logdate.client.sync.SyncRetryPolicy.MAX_UNFINISHED_ATTEMPTS
+import app.logdate.client.sync.SyncRetryPolicy.TRANSIENT_REASONS
 import app.logdate.client.sync.cloud.CloudApiException
-import app.logdate.client.sync.cloud.MediaTooLargeException
 import app.logdate.client.sync.diagnostics.DiagnosticSource
 import app.logdate.client.sync.metadata.EntityType
 import app.logdate.client.sync.metadata.PendingUpload
@@ -52,6 +55,7 @@ internal class SyncRetryCoordinator(
     ) -> Unit,
     private val diagnosticSource: () -> DiagnosticSource? = { null },
     private val diagnostics: (SyncDiagnosticEvent, DiagnosticSource?) -> Unit = { _, _ -> },
+    private val preserveDeletedEdit: suspend (EntityType, String) -> Unit = { _, _ -> error("Recovery storage unavailable") },
 ) {
     /**
      * Reconsiders transient failures when connectivity returns. A new build also reconsiders
@@ -70,6 +74,7 @@ internal class SyncRetryCoordinator(
                 if (!syncMetadataService.isCurrentOperation(entityType, pending)) continue
                 if (afterUpgrade) {
                     retryScheduleStore.clear(entityType, pending.retryKey())
+                    if (retained?.effectiveReason() == SyncDeadLetterReason.APP_CLOSED) deadLetterStore.remove(retained.id)
                     clearFailureKind(entityType, pending.retryKey())
                     continue
                 }
@@ -92,6 +97,8 @@ internal class SyncRetryCoordinator(
         entityType: EntityType,
         pending: PendingUpload,
     ): Boolean {
+        val retained = deadLetterStore.list().firstOrNull { it.entityType == entityType.name && it.matches(pending) }
+        if (retained != null && retained.effectiveReason() !in TRANSIENT_REASONS) return false
         val nextAttemptAt = retryScheduleStore.nextAttemptAt(entityType, pending.retryKey()) ?: return true
         return Clock.System.now().toEpochMilliseconds() >= nextAttemptAt
     }
@@ -173,6 +180,7 @@ internal class SyncRetryCoordinator(
         permanent: Boolean = false,
     ): Boolean {
         val attempt = endAttempt(entityType, pending.retryKey())
+        throwIfDeviceBlocked(error)
         if (!syncMetadataService.incrementRetryIfCurrent(entityType, pending)) {
             report(DiagnosticOutcome.INTERRUPTED, attempt)
             return false
@@ -297,27 +305,7 @@ internal class SyncRetryCoordinator(
         val entityId: String,
     )
 
-    /**
-     * Entities whose most recent upload attempt failed with [MissingMediaException]
-     * specifically -- as opposed to any other kind of failure (network, server, conflict, ...).
-     * Tracked generically across every [EntityType], matching every other piece of retry state in
-     * this class ([retryScheduleStore], [syncMetadataService]) -- even though [MissingMediaException]
-     * currently only ever originates from the note-upload path, hardcoding that assumption into the
-     * storage shape would make it awkward for a future entity type that grows the same kind of
-     * flaky-first-check failure to reuse this mechanism.
-     *
-     * [PendingUpload.retryCount] is a single counter shared across every failure reason for an
-     * entity, so it cannot answer "were the last two failures *both* missing-media misses" --
-     * using it directly means one unrelated hiccup (a transient server error, say) followed by
-     * the *first-ever* missing-media miss satisfies "retryCount >= 1" and dead-letters a file
-     * that may still be sitting right there on disk. This set tracks the one thing that
-     * actually matters for that decision: whether the immediately preceding failure was one too.
-     *
-     * In-memory only, not persisted: an app restart just means the next miss for that entity is
-     * treated as the first one again, which costs one extra retry rather than risking a
-     * wrongly-permanent dead-letter. Cleared alongside every [retryScheduleStore] clear so it
-     * cannot outlive the entity's own retry state.
-     */
+    /** A missing-file miss becomes permanent only after consecutive misses for the same operation. */
     private val entitiesLastFailedOnMissingMedia = mutableSetOf<PendingEntityKey>()
 
     /** Attempts [beginUpload] started in this process that have not finished yet. */
@@ -445,6 +433,11 @@ internal class SyncRetryCoordinator(
                 retryable = true,
             )
         }
+        if (error is CloudApiException && error.errorCode == "DELETION_CONFLICT") {
+            preserveDeletedEdit(entityType, pending.entityId)
+            markUploadSettled(entityType, pending, Clock.System.now(), localVersion, DiagnosticOutcome.CONFLICT)
+            return SyncError(SyncErrorType.CONFLICT_ERROR, "An edit to a deleted item was saved for review", retryable = false)
+        }
         recordConflict(
             entityType,
             pending.entityId,
@@ -487,40 +480,4 @@ internal class SyncRetryCoordinator(
             operationId == pending.operationId &&
             operation == pending.operation.name &&
             expectedServerVersion == pending.expectedServerVersion
-
-    private companion object {
-        val TRANSIENT_REASONS =
-            setOf(
-                SyncDeadLetterReason.NETWORK_UNAVAILABLE,
-                SyncDeadLetterReason.SERVER_UNAVAILABLE,
-                SyncDeadLetterReason.SIGN_IN_REQUIRED,
-            )
-        const val MAX_RETRY_ATTEMPTS = 9
-
-        /** Consecutive attempts that never finished before an entry is set aside. */
-        const val MAX_UNFINISHED_ATTEMPTS = 2
-
-        /** How long a dead-lettered entry waits before it is quietly tried again. */
-        const val DEAD_LETTER_RETRY_INTERVAL_MS = 24L * 60 * 60 * 1000
-    }
 }
-
-internal fun classifySyncFailure(error: Throwable): SyncDeadLetterReason =
-    when (error) {
-        is MissingMediaException -> SyncDeadLetterReason.MISSING_FILE
-        is InterruptedUploadException -> SyncDeadLetterReason.APP_CLOSED
-        is MediaTooLargeException -> SyncDeadLetterReason.FILE_TOO_LARGE
-        is CloudApiException ->
-            when {
-                error.statusCode == 401 -> SyncDeadLetterReason.SIGN_IN_REQUIRED
-                error.statusCode in setOf(502, 503, 504) -> SyncDeadLetterReason.SERVER_UNAVAILABLE
-                error.errorCode == "NETWORK_ERROR" -> SyncDeadLetterReason.NETWORK_UNAVAILABLE
-                else -> SyncDeadLetterReason.UNKNOWN
-            }
-        else -> SyncDeadLetterReason.UNKNOWN
-    }
-
-/** Earlier upload attempts at an entry never finished, because the app closed during each one. */
-class InterruptedUploadException(
-    unfinishedAttempts: Int,
-) : Exception("LogDate closed while uploading this entry, $unfinishedAttempts times in a row")

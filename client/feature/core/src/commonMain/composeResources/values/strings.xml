@@ -191,4 +191,22 @@
     <string name="developer_tools_description">Diagnostics and technical overrides</string>
     <string name="developer_location">Location overrides</string>
     <string name="app_updates_description">Get the latest LogDate improvements.</string>
+    <string name="sync_recovery_title">Sync issues</string>
+    <string name="sync_recovery_explanation">These items were deleted before your edits could sync. Your edits are saved here. Saving a new item keeps the original deleted.</string>
+    <string name="sync_recovery_empty">No sync issues need review.</string>
+    <string name="sync_recovery_error">Couldn’t finish. Try again.</string>
+    <string name="sync_recovery_retry">Try again</string>
+    <string name="sync_recovery_save">Save as a new item</string>
+    <string name="sync_recovery_saving">Saving…</string>
+    <string name="sync_recovery_saved">Saved as a new item</string>
+    <string name="sync_recovery_media">Media attachment</string>
+    <string name="sync_recovery_review">Review sync issues</string>
+    <string name="sync_recovery_play">Play saved recording</string>
+    <string name="sync_recovery_pause">Pause recording</string>
+    <string name="sync_issue_missing_media">A media file is unavailable on this device.</string>
+    <string name="sync_issue_failed">An item couldn’t sync.</string>
+    <string name="sync_issue_retry">Try syncing this item again</string>
+    <string name="sync_issue_too_large">An attachment is too large to sync.</string>
+    <string name="sync_issue_sign_in">Sign in again before retrying this item.</string>
+    <string name="sync_issue_connection">This item couldn’t reach LogDate Cloud.</string>
 </resources>

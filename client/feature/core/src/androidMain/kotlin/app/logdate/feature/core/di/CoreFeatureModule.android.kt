@@ -117,7 +117,7 @@ actual val coreFeatureModule: Module =
         }
         single { AndroidExportLauncher(androidContext()) }
         single<CloudArchiveStatusSource> {
-            AndroidCloudArchiveStatusSource(androidContext(), get(), get(), get())
+            AndroidCloudArchiveStatusSource(androidContext(), get(), get(), get(), get(), get())
         }
         single<ExportLauncher> { get<AndroidExportLauncher>() }
         workerOf(::ExportWorker)

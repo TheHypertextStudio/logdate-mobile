@@ -9,6 +9,7 @@ import app.logdate.client.sync.MediaHydrationResult
 import app.logdate.client.sync.SyncMediaTransfer
 import app.logdate.client.sync.SyncTransactionManager
 import app.logdate.client.sync.metadata.MediaSyncRefStore
+import app.logdate.client.sync.throwIfDeviceBlocked
 import app.logdate.shared.model.diagnostics.DiagnosticOutcome
 import app.logdate.shared.model.diagnostics.DiagnosticReason
 import app.logdate.shared.model.sync.ContentChange
@@ -55,8 +56,10 @@ internal class SyncMediaRecovery(
             started = true
             inbox.recordMediaAttempt(row, attemptId, DiagnosticOutcome.STARTED, source)
             when (val result = transfer.hydrate(accessToken, owner)) {
-                is MediaHydrationResult.Pending ->
+                is MediaHydrationResult.Pending -> {
                     inbox.failed("MEDIA_NOTE", row.entityId, result.reason.name, row.version, scope, attemptId, source)
+                }
+
                 is MediaHydrationResult.Available -> {
                     val attached = attach(scope, row, id, owner, result)
                     inbox.recordMediaAttempt(
@@ -70,7 +73,8 @@ internal class SyncMediaRecovery(
         } catch (cancelled: CancellationException) {
             if (started) inbox.recordMediaAttempt(row, attemptId, DiagnosticOutcome.INTERRUPTED, source)
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            throwIfDeviceBlocked(error)
             inbox.failed("MEDIA_NOTE", row.entityId, DiagnosticReason.LOCAL_STORAGE.name, row.version, scope, attemptId, source)
         }
     }

@@ -90,6 +90,8 @@ import app.logdate.client.repository.timeline.ActivityTimelineRepository
 import app.logdate.client.repository.transcription.TranscriptionRepository
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.repository.user.devices.UserDeviceRepository
+import app.logdate.client.sync.conflict.SyncConflictStore
+import app.logdate.client.sync.conflict.retainedMediaReferences
 import app.logdate.shared.config.configModule
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -171,6 +173,7 @@ actual val dataModule: Module =
                 syncMetadataService = get(),
                 transcriptionRepository = get(),
                 mediaReferences = get(),
+                retainedMedia = { getOrNull<SyncConflictStore>()?.retainedMediaReferences().orEmpty() },
             )
         }
         single {

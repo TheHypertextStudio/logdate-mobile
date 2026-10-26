@@ -33,6 +33,17 @@ class WearPhoneMessageHandlerTest {
         }
 
     @Test
+    fun `versioned ack forwards the transfer identifier`() =
+        runTest {
+            val noteId = Uuid.random()
+            val token = Uuid.random().toString()
+
+            handler.onMessage(WearAudioRequestPaths.noteAckPath(noteId, token))
+
+            coVerify { ackHandler.onNoteAcknowledged(noteId, token) }
+        }
+
+    @Test
     fun `ack message with an invalid note id is ignored`() =
         runTest {
             handler.onMessage("/logdate/notes/not-a-uuid/ack")

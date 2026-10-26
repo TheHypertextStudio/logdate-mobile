@@ -3,6 +3,7 @@
 package app.logdate.server.logdate
 
 import app.logdate.server.sync.InMemorySyncRepository
+import app.logdate.server.sync.StaleWriteException
 import app.logdate.shared.model.sync.DeviceId
 import app.logdate.shared.model.sync.JournalMergeRequest
 import kotlinx.coroutines.test.runTest
@@ -194,7 +195,7 @@ class JournalMergeRecoveryTest {
             assertFailsWith<IllegalStateException> { repository.merge(user, source.id, replacement) }
             assertFailsWith<IllegalStateException> { repository.merge(user, source.id, replacement) }
             backend.deleteJournal(user, secondDestination.id, 200L)
-            backend.upsertJournal(user, firstDestination)
+            assertFailsWith<StaleWriteException> { backend.upsertJournal(user, firstDestination) }
             assertFailsWith<JournalMergeConflictException> { repository.merge(user, source.id, first) }
             assertEquals(replacement.operationId, store.operations(user).single().operationId)
         }

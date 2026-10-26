@@ -1,5 +1,6 @@
 package app.logdate.client.domain.export.archive
 
+import app.logdate.client.sync.deviceBlockReason
 import io.github.aakira.napier.Napier
 import okio.Source
 import kotlin.coroutines.cancellation.CancellationException
@@ -23,6 +24,7 @@ internal suspend fun MediaSourceOpener.openOrNull(reference: String): Source? =
     } catch (cancellation: CancellationException) {
         throw cancellation
     } catch (failure: Exception) {
+        if (deviceBlockReason(failure) != null) throw failure
         Napier.w("Media file could not be opened for export", failure)
         null
     }

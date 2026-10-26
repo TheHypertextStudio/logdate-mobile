@@ -9,6 +9,7 @@ import app.logdate.client.repository.location.LocationHistoryRepository
 import app.logdate.client.repository.places.UserPlacesRepository
 import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.client.repository.user.UserStateRepository
+import app.logdate.client.sync.deviceBlockReason
 import app.logdate.client.util.platformIODispatcher
 import app.logdate.shared.model.Place
 import io.github.aakira.napier.Napier
@@ -17,9 +18,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.datetime.TimeZone
+import okio.blackholeSink
 import okio.use
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -73,10 +76,35 @@ class ExportArchiveUseCase(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Exception) {
+                if (deviceBlockReason(failure) != null) throw failure
                 Napier.e("Archive export failed", failure)
                 emit(ArchiveExportProgress.Failed(ExportError.UNKNOWN))
             }
         }.flowOn(ioDispatcher)
+
+    /** Reads and hashes current exportable content without allocating a second archive. */
+    suspend fun sourceFingerprint(options: ArchiveExportOptions = ArchiveExportOptions()): String? {
+        val discarded =
+            object : ArchiveContainer {
+                override fun entry(
+                    path: ArchivePath,
+                    compress: Boolean,
+                    write: (okio.Sink) -> Unit,
+                ) {
+                    write(blackholeSink())
+                }
+            }
+        val completed =
+            export(options, discarded).firstOrNull {
+                it is ArchiveExportProgress.Completed || it is ArchiveExportProgress.Failed
+            } as? ArchiveExportProgress.Completed ?: return null
+        if (completed.summary.scope.omitted
+                .any { it.reason == ArchiveOmissionReason.UNREADABLE }
+        ) {
+            return null
+        }
+        return completed.summary.sourceFingerprint
+    }
 
     private suspend fun FlowCollector<ArchiveExportProgress>.build(
         options: ArchiveExportOptions,
@@ -111,7 +139,7 @@ class ExportArchiveUseCase(
         if (options.includeMedia) writeMediaInventory(writer, resolution)
         writer.text(ArchiveLayout.CHECKSUMS, ChecksumFile.render(writer.ledger.entries))
 
-        return ArchiveExportSummary(builder.counts(), manifest.scope)
+        return ArchiveExportSummary(builder.counts(), manifest.scope, archiveSourceFingerprint(options, writer.ledger.entries))
     }
 
     private fun writeData(

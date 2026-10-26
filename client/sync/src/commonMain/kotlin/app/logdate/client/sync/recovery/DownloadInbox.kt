@@ -54,7 +54,7 @@ class DownloadInbox(
             for (type in listOf("NOTE", "JOURNAL")) {
                 dao.checkpoint(DownloadCheckpointEntity(selected.owner, selected.origin, type, 0))
             }
-            dao.release(selected.owner, selected.origin)
+            dao.release(selected.owner, selected.origin, DiagnosticReason.entries.map { it.name })
         }
     }
 
@@ -110,7 +110,7 @@ class DownloadInbox(
                 for (record in records) {
                     val existing = dao.get(selected.owner, selected.origin, type, record.id)
                     val reconsiderLegacy =
-                        existing?.state == "APPLIED" &&
+                        existing?.state == DownloadInboxState.APPLIED.name &&
                             existing.version == record.version &&
                             !record.deleted &&
                             (existing.payload.isEmpty() || existing.payload == record.payload) &&
@@ -177,7 +177,7 @@ class DownloadInbox(
             deleted = record.deleted,
             payload = record.payload,
             operationId = Uuid.random().toString(),
-            state = "WAITING",
+            state = DownloadInboxState.WAITING.name,
             attempts = 0,
             nextAttemptAt = 0,
             reason = DiagnosticReason.NONE.name,
@@ -247,7 +247,7 @@ class DownloadInbox(
     ): Boolean {
         if (selected != scope()) return false
         val row = dao.get(selected.owner, selected.origin, type, id) ?: return false
-        return row.version == version && row.state == "APPLIED" && !row.deleted
+        return row.version == version && row.state == DownloadInboxState.APPLIED.name && !row.deleted
     }
 
     suspend fun skipped(
@@ -276,7 +276,7 @@ class DownloadInbox(
                             row.copy(
                                 entityType = "MEDIA_NOTE",
                                 operationId = Uuid.random().toString(),
-                                state = "WAITING",
+                                state = DownloadInboxState.WAITING.name,
                                 attempts = 0,
                                 nextAttemptAt = 0,
                                 reason = DiagnosticReason.NONE.name,
@@ -294,7 +294,7 @@ class DownloadInbox(
                             row.copy(
                                 entityType = "MEDIA_DRAFT",
                                 operationId = Uuid.random().toString(),
-                                state = "WAITING",
+                                state = DownloadInboxState.WAITING.name,
                                 attempts = 0,
                                 nextAttemptAt = 0,
                                 reason = DiagnosticReason.NONE.name,
@@ -312,7 +312,14 @@ class DownloadInbox(
                 } else {
                     ""
                 }
-            dao.put(row.copy(payload = retainedPayload, state = "APPLIED", reason = DiagnosticReason.NONE.name, nextAttemptAt = 0))
+            dao.put(
+                row.copy(
+                    payload = retainedPayload,
+                    state = DownloadInboxState.APPLIED.name,
+                    reason = DiagnosticReason.NONE.name,
+                    nextAttemptAt = 0,
+                ),
+            )
         }
     }
 
@@ -328,31 +335,34 @@ class DownloadInbox(
         var retried: DownloadInboxEntity? = null
         transactions.withTransaction {
             val row = dao.get(selected.owner, selected.origin, type, id) ?: return@withTransaction
-            if (row.state == "APPLIED" || (version != null && row.version != version)) return@withTransaction
+            if (row.state == DownloadInboxState.APPLIED.name || (version != null && row.version != version)) return@withTransaction
             val attempt = (row.attempts + 1).coerceAtMost(30)
+            val classified = DiagnosticReason.entries.firstOrNull { it.name == reason } ?: DiagnosticReason.UNKNOWN
+            val parks = attempt >= MAX_ATTEMPTS
             val delay = (1000L shl attempt.coerceAtMost(12)).coerceAtMost(60 * 60 * 1000L)
             val updated =
                 row.copy(
-                    state = "FAILED",
+                    state = (if (parks) DownloadInboxState.PARKED else DownloadInboxState.FAILED).name,
                     attempts = attempt,
                     nextAttemptAt = now() + delay,
-                    reason = DiagnosticReason.entries.firstOrNull { it.name == reason }?.name ?: DiagnosticReason.UNKNOWN.name,
+                    reason = classified.name,
                 )
             dao.put(updated)
             retried = updated
         }
         retried?.let { row ->
+            val parked = row.state == DownloadInboxState.PARKED.name
             val classified = DiagnosticReason.entries.firstOrNull { it.name == row.reason } ?: DiagnosticReason.UNKNOWN
             recordDiagnostic(
                 SyncDiagnosticEvent(
                     phase = if (type.startsWith("MEDIA_")) DiagnosticPhase.MEDIA else DiagnosticPhase.APPLY,
-                    outcome = DiagnosticOutcome.RETRY_SCHEDULED,
+                    outcome = if (parked) DiagnosticOutcome.FAILED else DiagnosticOutcome.RETRY_SCHEDULED,
                     reason = classified,
                     action = actionFor(classified),
                     operationId = row.operationId,
                     attemptId = attemptId ?: Uuid.random().toString(),
                     attemptCount = row.attempts,
-                    retryable = true,
+                    retryable = !parked,
                 ),
                 source,
             )
@@ -371,8 +381,32 @@ class DownloadInbox(
         }
 
     suspend fun release() {
-        scope().let { dao.release(it.owner, it.origin) }
+        scope().let { dao.release(it.owner, it.origin, RELEASABLE_REASONS.map { reason -> reason.name }) }
     }
 
     suspend fun count(): Int = scope().let { dao.count(it.owner, it.origin) }
+
+    /** Rows that have failed at least once and are not applied: retrying, or parked for a user decision. */
+    suspend fun needingAttentionCount(): Int = scope().let { dao.countNeedingAttention(it.owner, it.origin) }
+
+    /** Rows a pass can retry now. Backed-off and parked rows are excluded. */
+    suspend fun dueCount(): Int = scope().let { dao.countDue(it.owner, it.origin, now()) }
+
+    companion object {
+        const val MAX_ATTEMPTS = 9
+
+        /** Failures a manual backup may retry. Device-wide and permanent failures wait for their own fix. */
+        private val RELEASABLE_REASONS =
+            setOf(
+                DiagnosticReason.NONE,
+                DiagnosticReason.OFFLINE,
+                DiagnosticReason.SIGN_IN_REQUIRED,
+                DiagnosticReason.SERVER_UNAVAILABLE,
+                DiagnosticReason.RATE_LIMITED,
+                DiagnosticReason.QUOTA_EXCEEDED,
+                DiagnosticReason.LOCAL_STORAGE,
+                DiagnosticReason.PERSISTENCE_FAILED,
+                DiagnosticReason.UNKNOWN,
+            )
+    }
 }

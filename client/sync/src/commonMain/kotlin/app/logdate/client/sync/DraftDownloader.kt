@@ -27,9 +27,7 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
- * The draft half of [SyncDownloader]: pages through remote draft changes and deletions, applies
- * each page in one transaction with a newer-wins heuristic, then settles every staged inbox row the
- * page touched as applied, skipped or failed.
+ * Applies draft changes and deletions in transactions, then settles their staged inbox rows.
  */
 internal class DraftDownloader(
     private val journalRepository: JournalRepository,
@@ -87,6 +85,7 @@ internal class DraftDownloader(
         } catch (e: CloudApiException) {
             mapCloudApiError(e)
         } catch (e: Exception) {
+            throwIfDeviceBlocked(e)
             if (e is CancellationException) throw e
             mapException(e, "Download drafts")
         }
@@ -268,6 +267,7 @@ internal class DraftDownloader(
 
             saveRemoteDraft(remoteDraft, existingDraft, page, downloadScope, tally)
         } catch (e: Exception) {
+            throwIfDeviceBlocked(e)
             if (e is CancellationException || isScopeChanged(downloadScope)) throw e
             page.failedIds += remoteDraft.id.toString() to remoteDraft.serverVersion
             tally.errors.add(SyncError(SyncErrorType.UNKNOWN_ERROR, "Failed to apply remote draft"))
@@ -325,20 +325,20 @@ internal class DraftDownloader(
             checkScope(downloadScope)
             val existingDraft = journalRepository.getDraft(draftId)
             val version = page.result.deletionVersions[draftId] ?: page.stagedRows[draftId.toString()]?.version ?: 0L
-            if (hasPendingLocal(draftId)) {
+            val pending = syncMetadataService.getPendingUploads(EntityType.DRAFT).firstOrNull { it.entityId == draftId.toString() }
+            if (pending != null && pending.operation != PendingOperation.DELETE) {
+                downloadEngine.preserveDeletionConflict(EntityType.DRAFT, draftId.toString())
                 tally.conflictsResolved++
-                Napier.w("Skipping draft deletion for due to local pending changes")
-                downloadEngine.recordConflict(
-                    entityType = EntityType.DRAFT,
-                    entityId = draftId.toString(),
-                    reason = "Local pending draft changes vs remote deletion",
-                    localVersion = null,
-                    remoteVersion = null,
-                    localUpdatedAt = existingDraft?.lastModifiedAt,
-                    remoteUpdatedAt = null,
+            } else if (pending != null) {
+                check(
+                    syncMetadataService.settleIfCurrent(
+                        EntityType.DRAFT,
+                        pending,
+                        kotlin.time.Clock.System
+                            .now(),
+                        version,
+                    ),
                 )
-                page.skippedIds += draftId.toString() to version
-                return
             }
 
             if (syncableDraftRepository != null) {
@@ -350,6 +350,7 @@ internal class DraftDownloader(
             tally.downloadedCount++
             page.appliedIds += draftId.toString() to version
         } catch (e: Exception) {
+            throwIfDeviceBlocked(e)
             if (e is CancellationException || isScopeChanged(downloadScope)) throw e
             page.failedIds += draftId.toString() to (page.result.deletionVersions[draftId] ?: 0L)
             tally.errors.add(SyncError(SyncErrorType.UNKNOWN_ERROR, "Failed to delete remote draft"))

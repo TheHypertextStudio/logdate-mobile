@@ -31,7 +31,8 @@ class WearPhoneMessageHandler(
                 return
             }
         try {
-            ackHandler.onNoteAcknowledged(noteId)
+            val transferId = WearAudioRequestPaths.transferIdFromAckPath(path)
+            if (transferId == null) ackHandler.onNoteAcknowledged(noteId) else ackHandler.onNoteAcknowledged(noteId, transferId)
         } catch (e: Exception) {
             Napier.w("Failed to record the phone's acknowledgement of note $noteId", e)
         }

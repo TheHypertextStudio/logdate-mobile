@@ -95,7 +95,8 @@ class AutomaticSyncSettingsTest {
                 }
             }
             onAllNodesWithText("Sync couldn't finish").assertCountEquals(1)
-            onNodeWithText("LogDate will try again automatically.").assertExists()
+            onNodeWithText("The cloud backup did not finish. Try again when you’re ready.").assertExists()
+            onNodeWithText("Retry archive backup").assertExists()
             onNodeWithText("Up to date").assertDoesNotExist()
             saveScreenshot("phone-automatic-retry", onRoot().captureToImage())
         }

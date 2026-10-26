@@ -32,7 +32,11 @@ internal fun dbUpsertAssociations(
                         (AssociationSyncTable.journalId eq key.journalId) and
                             (AssociationSyncTable.contentId eq key.contentId) and
                             (AssociationSyncTable.userId eq userId)
-                    }.singleOrNull()
+                    }.forUpdate()
+                    .singleOrNull()
+            if (existing != null && existing[AssociationSyncTable.deleted]) {
+                throw StaleWriteException("${key.journalId}/${key.contentId}", existing[AssociationSyncTable.deletedAt] ?: 0L)
+            }
             val serverVersion = nextVersion(existing?.get(AssociationSyncTable.serverVersion))
             if (existing == null) {
                 AssociationSyncTable.insert {
@@ -69,24 +73,36 @@ internal fun dbDeleteAssociations(
 ) {
     transaction {
         keys.forEach { key ->
-            val existingVersion =
+            val existing =
                 AssociationSyncTable
                     .selectAll()
                     .where {
                         (AssociationSyncTable.journalId eq key.journalId) and
-                            (AssociationSyncTable.contentId eq key.contentId) and
-                            (AssociationSyncTable.userId eq userId)
-                    }.singleOrNull()
-                    ?.get(AssociationSyncTable.serverVersion)
-            val newVersion = nextVersion(existingVersion)
-            AssociationSyncTable.update({
-                (AssociationSyncTable.journalId eq key.journalId) and
-                    (AssociationSyncTable.contentId eq key.contentId) and
-                    (AssociationSyncTable.userId eq userId)
-            }) {
-                it[AssociationSyncTable.deleted] = true
-                it[AssociationSyncTable.deletedAt] = deletedAt
-                it[AssociationSyncTable.serverVersion] = newVersion
+                            (AssociationSyncTable.contentId eq key.contentId) and (AssociationSyncTable.userId eq userId)
+                    }.forUpdate()
+                    .singleOrNull()
+            val newVersion = nextVersion(existing?.get(AssociationSyncTable.serverVersion))
+            val retainedDeletedAt = maxOf(deletedAt, existing?.get(AssociationSyncTable.deletedAt) ?: deletedAt)
+            if (existing == null) {
+                AssociationSyncTable.insert {
+                    it[journalId] = key.journalId
+                    it[contentId] = key.contentId
+                    it[AssociationSyncTable.userId] = userId
+                    it[createdAt] = retainedDeletedAt
+                    it[serverVersion] = newVersion
+                    it[deviceId] = DeviceId.UNKNOWN.value
+                    it[deleted] = true
+                    it[AssociationSyncTable.deletedAt] = retainedDeletedAt
+                }
+            } else {
+                AssociationSyncTable.update({
+                    (AssociationSyncTable.journalId eq key.journalId) and
+                        (AssociationSyncTable.contentId eq key.contentId) and (AssociationSyncTable.userId eq userId)
+                }) {
+                    it[deleted] = true
+                    it[AssociationSyncTable.deletedAt] = retainedDeletedAt
+                    it[serverVersion] = newVersion
+                }
             }
         }
     }
@@ -157,7 +173,11 @@ internal fun dbUpsertMedia(
                 .selectAll()
                 .where {
                     (MediaSyncTable.mediaId eq id) and (MediaSyncTable.userId eq userId)
-                }.singleOrNull()
+                }.forUpdate()
+                .singleOrNull()
+        if (existing != null && existing[MediaSyncTable.deleted]) {
+            throw StaleWriteException(id, existing[MediaSyncTable.deletedAt] ?: 0L)
+        }
         val serverVersion = nextVersion(existing?.get(MediaSyncTable.serverVersion))
         if (existing == null) {
             MediaSyncTable.insert {
@@ -208,7 +228,8 @@ internal fun dbGetMedia(
                 (MediaSyncTable.mediaId eq mediaId) and
                     (MediaSyncTable.userId eq userId) and
                     (MediaSyncTable.deleted eq false)
-            }.singleOrNull()
+            }.forUpdate()
+            .singleOrNull()
             ?.toMediaRecord()
     }
 
@@ -218,17 +239,36 @@ internal fun dbDeleteMedia(
     deletedAt: Long,
 ) {
     transaction {
-        val existingVersion =
+        val existing =
             MediaSyncTable
                 .selectAll()
-                .where { (MediaSyncTable.mediaId eq mediaId) and (MediaSyncTable.userId eq userId) }
+                .where {
+                    (MediaSyncTable.mediaId eq mediaId) and (MediaSyncTable.userId eq userId)
+                }.forUpdate()
                 .singleOrNull()
-                ?.get(MediaSyncTable.serverVersion)
-        val newVersion = nextVersion(existingVersion)
-        MediaSyncTable.update({ (MediaSyncTable.mediaId eq mediaId) and (MediaSyncTable.userId eq userId) }) {
-            it[deleted] = true
-            it[MediaSyncTable.deletedAt] = deletedAt
-            it[MediaSyncTable.serverVersion] = newVersion
+        val newVersion = nextVersion(existing?.get(MediaSyncTable.serverVersion))
+        val retainedDeletedAt = maxOf(deletedAt, existing?.get(MediaSyncTable.deletedAt) ?: deletedAt)
+        if (existing == null) {
+            MediaSyncTable.insert {
+                it[MediaSyncTable.mediaId] = mediaId
+                it[MediaSyncTable.userId] = userId
+                it[contentId] = ""
+                it[fileName] = ""
+                it[mimeType] = "application/octet-stream"
+                it[sizeBytes] = 0
+                it[data] = byteArrayOf()
+                it[createdAt] = retainedDeletedAt
+                it[serverVersion] = newVersion
+                it[deviceId] = DeviceId.UNKNOWN.value
+                it[deleted] = true
+                it[MediaSyncTable.deletedAt] = retainedDeletedAt
+            }
+        } else {
+            MediaSyncTable.update({ (MediaSyncTable.mediaId eq mediaId) and (MediaSyncTable.userId eq userId) }) {
+                it[deleted] = true
+                it[MediaSyncTable.deletedAt] = retainedDeletedAt
+                it[serverVersion] = newVersion
+            }
         }
     }
 }
@@ -267,7 +307,8 @@ internal fun dbGetBackupRecord(
             .selectAll()
             .where {
                 (BackupSyncTable.id eq id) and (BackupSyncTable.userId eq userId)
-            }.singleOrNull()
+            }.forUpdate()
+            .singleOrNull()
             ?.toBackupRecord()
     }
 

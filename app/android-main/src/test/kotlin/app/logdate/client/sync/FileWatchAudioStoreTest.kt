@@ -39,84 +39,104 @@ class FileWatchAudioStoreTest {
     }
 
     @Test
-    fun `written audio is readable at the audio path`() = runTest {
-        val written = store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1, 2, 3)))
+    fun `written audio is readable at the audio path`() =
+        runTest {
+            val written = store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1, 2, 3)))
 
-        assertTrue(written)
-        assertTrue(store.hasAudio(noteId))
-        assertContentEquals(byteArrayOf(1, 2, 3), File(store.audioPath(noteId)).readBytes())
-    }
-
-    @Test
-    fun `a transfer that fails part way leaves no file behind`() = runTest {
-        val written = store.writeAudio(noteId, FailingStream(byteArrayOf(1, 2, 3)))
-
-        assertFalse(written)
-        assertFalse(store.hasAudio(noteId))
-        assertTrue(audioDirectory.listFiles().orEmpty().isEmpty())
-    }
+            assertTrue(written)
+            assertTrue(store.hasAudio(noteId))
+            assertContentEquals(byteArrayOf(1, 2, 3), File(store.audioPath(noteId)).readBytes())
+        }
 
     @Test
-    fun `a failed transfer keeps the earlier complete file`() = runTest {
-        store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1, 2, 3)))
+    fun `a versioned transfer acknowledges only the expected complete bytes`() =
+        runTest {
+            val expected = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+            assertFalse(store.matchesAudioDigest(noteId, expected))
+            store.writeAudio(noteId, ByteArrayInputStream("abc".encodeToByteArray()))
 
-        val written = store.writeAudio(noteId, FailingStream(byteArrayOf(9, 9)))
-
-        assertFalse(written)
-        assertContentEquals(byteArrayOf(1, 2, 3), File(store.audioPath(noteId)).readBytes())
-    }
-
-    @Test
-    fun `an empty transfer is not stored`() = runTest {
-        val written = store.writeAudio(noteId, ByteArrayInputStream(ByteArray(0)))
-
-        assertFalse(written)
-        assertFalse(store.hasAudio(noteId))
-    }
+            assertTrue(FileWatchAudioStore(audioDirectory, incomingDirectory).matchesAudioDigest(noteId, expected))
+            assertFalse(store.matchesAudioDigest(noteId, "different"))
+        }
 
     @Test
-    fun `stashed metadata round trips`() = runTest {
-        val data = mapOf("uid" to noteId.toString(), "jsonPayload" to """{"a":"b"}""")
+    fun `a transfer that fails part way leaves no file behind`() =
+        runTest {
+            val written = store.writeAudio(noteId, FailingStream(byteArrayOf(1, 2, 3)))
 
-        store.stashMetadata(noteId, data)
-
-        assertEquals(data, store.stashedMetadata(noteId))
-    }
-
-    @Test
-    fun `missing metadata reads as null`() = runTest {
-        assertNull(store.stashedMetadata(noteId))
-    }
+            assertFalse(written)
+            assertFalse(store.hasAudio(noteId))
+            assertTrue(audioDirectory.listFiles().orEmpty().isEmpty())
+        }
 
     @Test
-    fun `corrupt metadata reads as null`() = runTest {
-        incomingDirectory.mkdirs()
-        File(incomingDirectory, "$noteId.json").writeText("not json")
+    fun `a failed transfer keeps the earlier complete file`() =
+        runTest {
+            store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1, 2, 3)))
 
-        assertNull(store.stashedMetadata(noteId))
-    }
+            val written = store.writeAudio(noteId, FailingStream(byteArrayOf(9, 9)))
 
-    @Test
-    fun `clearing metadata keeps the audio file`() = runTest {
-        store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1)))
-        store.stashMetadata(noteId, mapOf("uid" to noteId.toString()))
-
-        store.clearMetadata(noteId)
-
-        assertNull(store.stashedMetadata(noteId))
-        assertTrue(store.hasAudio(noteId))
-    }
+            assertFalse(written)
+            assertContentEquals(byteArrayOf(1, 2, 3), File(store.audioPath(noteId)).readBytes())
+        }
 
     @Test
-    fun `discard removes the audio file and the metadata`() = runTest {
-        store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1)))
-        store.stashMetadata(noteId, mapOf("uid" to noteId.toString()))
+    fun `an empty transfer is not stored`() =
+        runTest {
+            val written = store.writeAudio(noteId, ByteArrayInputStream(ByteArray(0)))
 
-        store.discard(noteId)
+            assertFalse(written)
+            assertFalse(store.hasAudio(noteId))
+        }
 
-        assertFalse(store.hasAudio(noteId))
-        assertNull(store.stashedMetadata(noteId))
-    }
+    @Test
+    fun `stashed metadata round trips`() =
+        runTest {
+            val data = mapOf("uid" to noteId.toString(), "jsonPayload" to """{"a":"b"}""")
+
+            store.stashMetadata(noteId, data)
+
+            assertEquals(data, store.stashedMetadata(noteId))
+        }
+
+    @Test
+    fun `missing metadata reads as null`() =
+        runTest {
+            assertNull(store.stashedMetadata(noteId))
+        }
+
+    @Test
+    fun `corrupt metadata reads as null`() =
+        runTest {
+            incomingDirectory.mkdirs()
+            File(incomingDirectory, "$noteId.json").writeText("not json")
+
+            assertNull(store.stashedMetadata(noteId))
+        }
+
+    @Test
+    fun `clearing metadata keeps the audio file`() =
+        runTest {
+            store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1)))
+            store.stashMetadata(noteId, mapOf("uid" to noteId.toString()))
+
+            store.clearMetadata(noteId)
+
+            assertNull(store.stashedMetadata(noteId))
+            assertTrue(store.hasAudio(noteId))
+        }
+
+    @Test
+    fun `discard removes the audio file and the metadata`() =
+        runTest {
+            store.writeAudio(noteId, ByteArrayInputStream(byteArrayOf(1)))
+            store.stashMetadata(noteId, mapOf("uid" to noteId.toString()))
+
+            store.discard(noteId)
+
+            assertFalse(store.hasAudio(noteId))
+            assertNull(store.stashedMetadata(noteId))
+        }
 
     @Test
     fun `a note is not deleted until it is marked`() =

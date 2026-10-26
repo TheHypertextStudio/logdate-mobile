@@ -53,14 +53,23 @@ internal fun SyncStatus.toPresentation(): SyncPresentation {
         return SyncPresentation.NeedsRecovery
     }
 
+    if (pausedReason == SyncPausedReason.LOCAL_STORAGE_UNAVAILABLE) {
+        return SyncPresentation.StatusUnavailable
+    }
+
     val error = lastError
     if (error != null) {
         return when (error.type) {
             SyncErrorType.AUTHENTICATION_ERROR -> SyncPresentation.AuthError
+
             SyncErrorType.STORAGE_ERROR -> SyncPresentation.StorageError(pendingCount = pendingUploads)
+
             SyncErrorType.CONFLICT_ERROR -> SyncPresentation.ConflictError(conflictCount = conflictCount.coerceAtLeast(1))
+
             SyncErrorType.NETWORK_ERROR -> SyncPresentation.NetworkError(pendingCount = pendingUploads)
+
             SyncErrorType.SERVER_ERROR -> SyncPresentation.NetworkError(pendingCount = pendingUploads)
+
             // An unclassified failure used to collapse into Pending/Hidden -- indistinguishable
             // from a perfectly healthy state, so something going genuinely wrong produced no
             // signal at all. Treat it like a transient network error: a quiet, auto-retried chip,

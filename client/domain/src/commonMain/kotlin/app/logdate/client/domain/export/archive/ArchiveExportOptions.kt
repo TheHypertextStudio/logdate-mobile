@@ -41,4 +41,6 @@ sealed class ArchiveExportProgress {
 data class ArchiveExportSummary(
     val counts: ArchiveCounts,
     val scope: ArchiveScope,
+    /** Content identity, excluding export-time metadata, for validating an unfinished backup. */
+    val sourceFingerprint: String? = null,
 )

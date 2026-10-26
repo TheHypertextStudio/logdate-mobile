@@ -35,6 +35,13 @@ import app.logdate.feature.core.sync.SyncProgressIndicator
 import app.logdate.feature.core.sync.messageResource
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.cloud_archive_checking_contents
+import logdate.client.feature.core.generated.resources.cloud_archive_encrypting
+import logdate.client.feature.core.generated.resources.cloud_archive_exporting
+import logdate.client.feature.core.generated.resources.cloud_archive_failed_detail
+import logdate.client.feature.core.generated.resources.cloud_archive_retry
+import logdate.client.feature.core.generated.resources.cloud_archive_unavailable_detail
+import logdate.client.feature.core.generated.resources.cloud_archive_uploading
 import logdate.client.feature.core.generated.resources.sync_account_mobile_data
 import logdate.client.feature.core.generated.resources.sync_heading_background
 import logdate.client.feature.core.generated.resources.sync_heading_failed
@@ -49,19 +56,27 @@ internal fun BackupStatusItem(
     syncStatus: SyncStatus?,
     cloudArchiveStatus: CloudArchiveStatus,
     onSyncUsingMobileData: () -> Unit = {},
+    onArchiveBackupNow: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val status = backupStatus(syncStatus, cloudArchiveStatus)
+    val showArchiveRetry = cloudArchiveStatus.needsManualRetry && status == AccountSyncStatus.UNKNOWN
+    val archiveProgress = cloudArchiveStatus.progress.takeIf { cloudArchiveStatus.phase == CloudArchivePhase.RUNNING }
     val title =
         when (status) {
             AccountSyncStatus.WAITING_FOR_WIFI -> Res.string.sync_heading_wifi
+
             AccountSyncStatus.OFFLINE -> Res.string.sync_heading_offline
+
             AccountSyncStatus.BACKGROUND_RESTRICTED -> Res.string.sync_heading_background
+
             AccountSyncStatus.STORAGE_FULL -> Res.string.sync_heading_storage
+
             AccountSyncStatus.UNKNOWN, AccountSyncStatus.SERVER_UNAVAILABLE, AccountSyncStatus.CONNECTION_UNAVAILABLE,
             AccountSyncStatus.DEVICE_ACCESS_REQUIRED, AccountSyncStatus.CONFLICT, AccountSyncStatus.LOCAL_DATA_UNAVAILABLE,
             AccountSyncStatus.MEDIA_TOO_LARGE,
             -> Res.string.sync_heading_failed
+
             else -> status.messageResource()
         }
     Surface(
@@ -75,8 +90,22 @@ internal fun BackupStatusItem(
                 Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
                     if (status == AccountSyncStatus.SYNCING) {
                         SyncProgressIndicator(
-                            total = if (syncStatus?.isSyncing == true) syncStatus.totalForRun else 0,
-                            completed = if (syncStatus?.isSyncing == true) syncStatus.completedInRun else 0,
+                            total =
+                                if (archiveProgress != null) {
+                                    archiveProgress.fraction?.let { 1000 }
+                                } else if (syncStatus?.isSyncing == true) {
+                                    syncStatus.totalForRun
+                                } else {
+                                    null
+                                },
+                            completed =
+                                if (archiveProgress != null) {
+                                    ((archiveProgress.fraction ?: 0f) * 1000).toInt()
+                                } else if (syncStatus?.isSyncing == true) {
+                                    syncStatus.completedInRun
+                                } else {
+                                    0
+                                },
                             modifier = Modifier.size(28.dp),
                         )
                     } else {
@@ -94,7 +123,29 @@ internal fun BackupStatusItem(
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
-                    if (title != status.messageResource()) {
+                    if (archiveProgress != null) {
+                        val stage =
+                            when (archiveProgress.stage) {
+                                CloudArchiveStage.CHECKING -> Res.string.cloud_archive_checking_contents
+                                CloudArchiveStage.EXPORTING -> Res.string.cloud_archive_exporting
+                                CloudArchiveStage.ENCRYPTING -> Res.string.cloud_archive_encrypting
+                                CloudArchiveStage.UPLOADING -> Res.string.cloud_archive_uploading
+                            }
+                        Text(stringResource(stage), style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (showArchiveRetry) {
+                        val detail =
+                            if (cloudArchiveStatus.phase == CloudArchivePhase.FAILED) {
+                                Res.string.cloud_archive_failed_detail
+                            } else {
+                                Res.string.cloud_archive_unavailable_detail
+                            }
+                        Text(
+                            stringResource(detail),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else if (title != status.messageResource()) {
                         val detail =
                             if (title ==
                                 Res.string.sync_heading_failed
@@ -117,6 +168,13 @@ internal fun BackupStatusItem(
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 ) { Text(stringResource(Res.string.sync_account_mobile_data)) }
+            }
+            if (showArchiveRetry) {
+                FilledTonalButton(
+                    onClick = onArchiveBackupNow,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) { Text(stringResource(Res.string.cloud_archive_retry)) }
             }
         }
     }

@@ -1,5 +1,6 @@
 package app.logdate.server.logdate
 
+import app.logdate.server.sync.StaleWriteException
 import app.logdate.shared.model.sync.DeviceId
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -107,11 +108,13 @@ class InMemoryLogDateMediaRepository : LogDateMediaRepository {
     private val rows = ConcurrentHashMap<UUID, ConcurrentHashMap<String, StoredLogDateMedia>>()
     private val versions = ConcurrentHashMap<UUID, AtomicLong>()
 
+    @Synchronized
     override fun upsertMedia(
         userId: UUID,
         media: LogDateMedia,
     ): LogDateMedia {
         val mediaId = media.mediaId.ifBlank { "media-${Random.nextLong().absoluteValue}" }
+        rowsForUser(userId)[mediaId]?.deletedAt?.let { throw StaleWriteException(mediaId, it) }
         val version = nextVersion(userId)
         val stored =
             media.copy(
@@ -131,16 +134,31 @@ class InMemoryLogDateMediaRepository : LogDateMediaRepository {
             ?.takeIf { it.deletedAt == null }
             ?.media
 
+    @Synchronized
     override fun deleteMedia(
         userId: UUID,
         mediaId: String,
         deletedAt: Long,
     ) {
-        val existing = rowsForUser(userId)[mediaId] ?: return
+        val existing = rowsForUser(userId)[mediaId]
+        val previous =
+            existing?.media ?: LogDateMedia(
+                mediaId,
+                "",
+                userId,
+                "",
+                "application/octet-stream",
+                0,
+                byteArrayOf(),
+                null,
+                deletedAt,
+                0,
+                DeviceId.UNKNOWN,
+            )
         rowsForUser(userId)[mediaId] =
             StoredLogDateMedia(
-                media = existing.media.copy(version = nextVersion(userId)),
-                deletedAt = deletedAt,
+                media = previous.copy(version = nextVersion(userId)),
+                deletedAt = maxOf(deletedAt, existing?.deletedAt ?: deletedAt),
             )
     }
 

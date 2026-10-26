@@ -14,10 +14,8 @@ import app.logdate.client.sync.datalayer.AssociationDataMapper
 import app.logdate.client.sync.datalayer.HealthSnapshotDataMapper
 import app.logdate.client.sync.datalayer.HealthSnapshotSyncData
 import app.logdate.client.sync.datalayer.JournalDataMapper
-import app.logdate.client.sync.metadata.AssociationPendingKey
 import app.logdate.client.sync.metadata.EntityType
 import app.logdate.client.sync.metadata.PendingOperation
-import app.logdate.client.sync.metadata.PendingUpload
 import app.logdate.client.sync.metadata.SyncDeadLetterRecord
 import app.logdate.client.sync.metadata.SyncDeadLetterStore
 import app.logdate.client.sync.metadata.SyncMetadataService
@@ -63,9 +61,24 @@ class WearDataLayerSyncManager(
     private val healthSnapshotDataMapper: HealthSnapshotDataMapper,
     private val mediaFiles: MediaFileResolver,
     private val clock: Clock = Clock.System,
+    private val deliveryStore: WearAudioDeliveryStore,
 ) : SyncManager,
     WearNoteAckHandler,
     WearNoteRemovalNotifier {
+    private val uploadTransport =
+        WearSyncUploadTransport(
+            dataLayerClient,
+            notesRepository,
+            journalRepository,
+            noteDataMapper,
+            journalDataMapper,
+            associationDataMapper,
+            mediaFiles,
+            clock,
+            deliveryStore,
+        )
+    private val retryPolicy = WearSyncRetryPolicy(syncMetadataService, retryScheduleStore, deadLetterStore, clock)
+
     @Volatile
     private var isSyncing = false
 
@@ -109,16 +122,16 @@ class WearDataLayerSyncManager(
         val errors = mutableListOf<SyncError>()
 
         for (pending in pendingNotes) {
-            if (!shouldAttempt(EntityType.NOTE, pending.entityId)) {
+            if (!retryPolicy.shouldAttempt(EntityType.NOTE, pending)) {
                 Napier.d("Skipping note ${pending.entityId} — backoff not elapsed")
                 continue
             }
             val outcome =
                 when (pending.operation) {
-                    PendingOperation.DELETE -> uploadNoteDelete(pending)
-                    PendingOperation.CREATE, PendingOperation.UPDATE -> uploadNote(pending)
+                    PendingOperation.DELETE -> uploadTransport.uploadNoteDelete(pending)
+                    PendingOperation.CREATE, PendingOperation.UPDATE -> uploadTransport.uploadNote(pending)
                 }
-            handleOutcome(outcome, pending, EntityType.NOTE, errors) { uploaded++ }
+            retryPolicy.handleOutcome(outcome, pending, EntityType.NOTE, errors) { uploaded++ }
         }
 
         val now = clock.now()
@@ -131,20 +144,39 @@ class WearDataLayerSyncManager(
         )
     }
 
-    override suspend fun notifyRemoved(noteId: Uuid) {
-        if (!dataLayerClient.putDataItem(NoteDataMapper.noteDeletePath(noteId), deleteSignal(noteId))) {
-            Napier.w("Could not tell the phone note $noteId was removed")
-        }
-    }
+    override suspend fun notifyRemoved(noteId: Uuid) = uploadTransport.notifyRemoved(noteId)
 
-    override suspend fun onNoteAcknowledged(noteId: Uuid) {
-        syncMetadataService.markAsSynced(
-            entityId = noteId.toString(),
-            entityType = EntityType.NOTE,
-            syncedAt = clock.now(),
-            version = 1,
-        )
-        retryScheduleStore.clear(EntityType.NOTE, noteId.toString())
+    override suspend fun onNoteAcknowledged(noteId: Uuid) = onNoteAcknowledged(noteId, null)
+
+    override suspend fun onNoteAcknowledged(
+        noteId: Uuid,
+        transferId: String?,
+    ) = syncLock.withLock {
+        val deliveries = deliveryStore.deliveries(noteId.toString())
+        val delivery =
+            if (transferId != null) {
+                deliveries.firstOrNull { it.token == transferId }
+            } else {
+                deliveries.singleOrNull()
+            }
+        if (delivery == null || (transferId == null && !delivery.allowsLegacy)) return@withLock
+        val pending = syncMetadataService.getPendingUploads(EntityType.NOTE).firstOrNull { it.entityId == noteId.toString() }
+        if (pending != null && delivery.matches(pending)) {
+            val note = notesRepository.getNoteById(noteId) as? JournalNote.Audio ?: return@withLock
+            if (!delivery.matchesSnapshot(uploadTransport.deliverySnapshot(note))) return@withLock
+            if (!syncMetadataService.settleIfCurrent(EntityType.NOTE, pending, clock.now(), 1L)) return@withLock
+            retryScheduleStore.clear(EntityType.NOTE, retryPolicy.retryKey(pending))
+        } else if (transferId == null) {
+            // A payload-free acknowledgement cannot identify an older operation after another edit.
+            return@withLock
+        }
+        if (pending == null || delivery.operationId != null) retryScheduleStore.clear(EntityType.NOTE, delivery.retryKey)
+        deadLetterStore
+            .list()
+            .filter {
+                it.entityType == EntityType.NOTE.name && delivery.matchesFailure(it)
+            }.forEach { deadLetterStore.remove(it.id) }
+        deliveryStore.remove(delivery.token)
     }
 
     override suspend fun downloadRemoteChanges(): SyncResult {
@@ -177,16 +209,16 @@ class WearDataLayerSyncManager(
         val errors = mutableListOf<SyncError>()
 
         for (pending in pendingJournals) {
-            if (!shouldAttempt(EntityType.JOURNAL, pending.entityId)) {
+            if (!retryPolicy.shouldAttempt(EntityType.JOURNAL, pending)) {
                 Napier.d("Skipping journal ${pending.entityId} — backoff not elapsed")
                 continue
             }
             val outcome =
                 when (pending.operation) {
-                    PendingOperation.DELETE -> uploadJournalDelete(pending)
-                    PendingOperation.CREATE, PendingOperation.UPDATE -> uploadJournal(pending)
+                    PendingOperation.DELETE -> uploadTransport.uploadJournalDelete(pending)
+                    PendingOperation.CREATE, PendingOperation.UPDATE -> uploadTransport.uploadJournal(pending)
                 }
-            handleOutcome(outcome, pending, EntityType.JOURNAL, errors) { uploaded++ }
+            retryPolicy.handleOutcome(outcome, pending, EntityType.JOURNAL, errors) { uploaded++ }
         }
 
         return SyncResult(
@@ -215,16 +247,16 @@ class WearDataLayerSyncManager(
         val errors = mutableListOf<SyncError>()
 
         for (pending in pendingAssociations) {
-            if (!shouldAttempt(EntityType.ASSOCIATION, pending.entityId)) {
+            if (!retryPolicy.shouldAttempt(EntityType.ASSOCIATION, pending)) {
                 Napier.d("Skipping association ${pending.entityId} — backoff not elapsed")
                 continue
             }
             val outcome =
                 when (pending.operation) {
-                    PendingOperation.DELETE -> uploadAssociationDelete(pending)
-                    PendingOperation.CREATE, PendingOperation.UPDATE -> uploadAssociation(pending)
+                    PendingOperation.DELETE -> uploadTransport.uploadAssociationDelete(pending)
+                    PendingOperation.CREATE, PendingOperation.UPDATE -> uploadTransport.uploadAssociation(pending)
                 }
-            handleOutcome(outcome, pending, EntityType.ASSOCIATION, errors) { uploaded++ }
+            retryPolicy.handleOutcome(outcome, pending, EntityType.ASSOCIATION, errors) { uploaded++ }
         }
 
         return SyncResult(
@@ -295,18 +327,7 @@ class WearDataLayerSyncManager(
 
     override fun observeDeadLetters(): Flow<List<SyncDeadLetterRecord>> = deadLetterStore.observe()
 
-    override suspend fun retryDeadLetter(id: String) {
-        val record = deadLetterStore.list().firstOrNull { it.id == id } ?: return
-        val entityType = runCatching { EntityType.valueOf(record.entityType) }.getOrNull()
-        val operation = runCatching { PendingOperation.valueOf(record.operation) }.getOrNull()
-        if (entityType == null || operation == null) {
-            Napier.w("Cannot retry dead-letter $id with type=${record.entityType} op=${record.operation}")
-            deadLetterStore.remove(id)
-            return
-        }
-        syncMetadataService.enqueuePending(record.entityId, entityType, operation)
-        deadLetterStore.remove(id)
-    }
+    override suspend fun retryDeadLetter(id: String) = retryPolicy.retryDeadLetter(id)
 
     override suspend fun discardDeadLetter(id: String) {
         deadLetterStore.remove(id)
@@ -374,215 +395,6 @@ class WearDataLayerSyncManager(
     }
 
     // -----------------------------------------------------------------------
-    // Note upload helpers
-    // -----------------------------------------------------------------------
-
-    private suspend fun uploadNote(pending: PendingUpload): UploadOutcome {
-        val noteId = parseUuid(pending.entityId) ?: return UploadOutcome.SKIPPED
-
-        val note = notesRepository.getNoteById(noteId)
-        if (note == null) {
-            Napier.w("Note $noteId not found in repository, skipping sync")
-            return UploadOutcome.SKIPPED
-        }
-
-        val path = NoteDataMapper.notePath(noteId)
-        val putSuccess = dataLayerClient.putDataItem(path, dataMapFor(note))
-
-        if (!putSuccess) {
-            Napier.w("Failed to put data item for note $noteId")
-            return UploadOutcome.FAILED
-        }
-
-        if (note !is JournalNote.Audio) return UploadOutcome.SUCCESS
-
-        if (!dataLayerClient.sendFile("$path/audio", mediaFiles.filePath(note.mediaRef) ?: note.mediaRef)) {
-            Napier.w("Audio file transfer failed for note $noteId")
-            return UploadOutcome.FAILED
-        }
-        return UploadOutcome.AWAITING_ACK
-    }
-
-    /**
-     * Audio notes carry the send time so a resend is a changed data item. The Data Layer drops a
-     * put that matches what it already holds, and the phone may have lost the earlier one.
-     */
-    private fun dataMapFor(note: JournalNote): Map<String, String> {
-        val dataMap = noteDataMapper.toDataMap(note)
-        if (note !is JournalNote.Audio) return dataMap
-        return dataMap + (KEY_SENT_AT to clock.now().toEpochMilliseconds().toString())
-    }
-
-    private suspend fun uploadNoteDelete(pending: PendingUpload): UploadOutcome {
-        val noteId = parseUuid(pending.entityId) ?: return UploadOutcome.SKIPPED
-
-        return if (dataLayerClient.putDataItem(NoteDataMapper.noteDeletePath(noteId), deleteSignal(noteId))) {
-            UploadOutcome.SUCCESS
-        } else {
-            UploadOutcome.FAILED
-        }
-    }
-
-    private fun deleteSignal(noteId: Uuid): Map<String, String> =
-        mapOf(
-            NoteDataMapper.KEY_UID to noteId.toString(),
-            NoteDataMapper.KEY_NOTE_TYPE to "DELETE",
-        )
-
-    // -----------------------------------------------------------------------
-    // Journal upload helpers
-    // -----------------------------------------------------------------------
-
-    private suspend fun uploadJournal(pending: PendingUpload): UploadOutcome {
-        val journalId = parseUuid(pending.entityId) ?: return UploadOutcome.SKIPPED
-
-        val journal = journalRepository.getJournalById(journalId)
-        if (journal == null) {
-            Napier.w("Journal $journalId not found in repository, skipping sync")
-            return UploadOutcome.SKIPPED
-        }
-
-        val dataMap = journalDataMapper.toDataMap(journal)
-        val path = JournalDataMapper.journalPath(journalId)
-
-        return if (dataLayerClient.putDataItem(path, dataMap)) {
-            UploadOutcome.SUCCESS
-        } else {
-            Napier.w("Failed to put data item for journal $journalId")
-            UploadOutcome.FAILED
-        }
-    }
-
-    private suspend fun uploadJournalDelete(pending: PendingUpload): UploadOutcome {
-        val journalId = parseUuid(pending.entityId) ?: return UploadOutcome.SKIPPED
-
-        val path = JournalDataMapper.journalDeletePath(journalId)
-        val deleteData = mapOf(JournalDataMapper.KEY_UID to journalId.toString())
-        return if (dataLayerClient.putDataItem(path, deleteData)) {
-            UploadOutcome.SUCCESS
-        } else {
-            UploadOutcome.FAILED
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Association upload helpers
-    // -----------------------------------------------------------------------
-
-    private suspend fun uploadAssociation(pending: PendingUpload): UploadOutcome {
-        val key = AssociationPendingKey.fromPendingId(pending.entityId)
-        if (key == null) {
-            Napier.w("Invalid association key in pending upload: ${pending.entityId}")
-            return UploadOutcome.SKIPPED
-        }
-
-        val dataMap = associationDataMapper.toDataMap(key.journalId, key.contentId)
-        val path = AssociationDataMapper.associationPath(key.journalId, key.contentId)
-
-        return if (dataLayerClient.putDataItem(path, dataMap)) {
-            UploadOutcome.SUCCESS
-        } else {
-            Napier.w("Failed to put data item for association ${pending.entityId}")
-            UploadOutcome.FAILED
-        }
-    }
-
-    private suspend fun uploadAssociationDelete(pending: PendingUpload): UploadOutcome {
-        val key = AssociationPendingKey.fromPendingId(pending.entityId)
-        if (key == null) {
-            Napier.w("Invalid association key in pending delete: ${pending.entityId}")
-            return UploadOutcome.SKIPPED
-        }
-
-        val path = AssociationDataMapper.associationDeletePath(key.journalId, key.contentId)
-        val deleteData = associationDataMapper.toDataMap(key.journalId, key.contentId)
-        return if (dataLayerClient.putDataItem(path, deleteData)) {
-            UploadOutcome.SUCCESS
-        } else {
-            UploadOutcome.FAILED
-        }
-    }
-
-    // -----------------------------------------------------------------------
-    // Retry & dead letter infrastructure
-    // -----------------------------------------------------------------------
-
-    /**
-     * Checks whether a pending item is eligible for a sync attempt.
-     *
-     * Returns false if the item has a scheduled retry time in the future
-     * (exponential backoff is still in effect).
-     */
-    private suspend fun shouldAttempt(
-        entityType: EntityType,
-        entityId: String,
-    ): Boolean {
-        val nextAttemptAt = retryScheduleStore.nextAttemptAt(entityType, entityId) ?: return true
-        return clock.now().toEpochMilliseconds() >= nextAttemptAt
-    }
-
-    /**
-     * Handles a failed sync attempt with exponential backoff and dead letter queue.
-     *
-     * After [MAX_RETRY_ATTEMPTS] failures, the item is moved to the dead letter queue
-     * and removed from the pending outbox.
-     *
-     * @return true if the item was dead-lettered (caller should not retry), false otherwise
-     */
-    private suspend fun handleSyncFailure(
-        pending: PendingUpload,
-        entityType: EntityType,
-        errorMessage: String,
-        retryDelayMs: Long? = null,
-    ): Boolean {
-        val nextRetryCount = pending.retryCount + 1
-        syncMetadataService.incrementRetryCount(pending.entityId, entityType)
-
-        if (nextRetryCount >= MAX_RETRY_ATTEMPTS) {
-            Napier.w("Dead-lettering ${entityType.name} ${pending.entityId} after $nextRetryCount failures")
-            deadLetterStore.add(
-                SyncDeadLetterRecord(
-                    id = "${entityType.name}_${pending.entityId}",
-                    entityType = entityType.name,
-                    entityId = pending.entityId,
-                    operation = pending.operation.name,
-                    retryCount = nextRetryCount,
-                    lastError = errorMessage,
-                    failedAt = clock.now().toEpochMilliseconds(),
-                ),
-            )
-            // Remove from pending queue so it stops blocking other items
-            syncMetadataService.markAsSynced(
-                entityId = pending.entityId,
-                entityType = entityType,
-                syncedAt = clock.now(),
-                version = 0L,
-            )
-            retryScheduleStore.clear(entityType, pending.entityId)
-            return true
-        }
-
-        // Schedule next attempt with exponential backoff
-        val backoffMs = retryDelayMs ?: computeBackoffMs(nextRetryCount)
-        val nextAttemptAt = clock.now().toEpochMilliseconds() + backoffMs
-        retryScheduleStore.setNextAttemptAt(entityType, pending.entityId, nextAttemptAt)
-        Napier.d(
-            "Scheduled retry #$nextRetryCount for ${entityType.name} ${pending.entityId} " +
-                "in ${backoffMs}ms",
-        )
-        return false
-    }
-
-    /**
-     * Computes exponential backoff delay: 5s * 2^(retryCount-1), capped at 5 minutes.
-     */
-    private fun computeBackoffMs(retryCount: Int): Long {
-        val exponent = (retryCount - 1).coerceAtLeast(0).coerceAtMost(6)
-        val delay = RETRY_BASE_DELAY_MS * (1L shl exponent)
-        return delay.coerceAtMost(RETRY_MAX_DELAY_MS)
-    }
-
-    // -----------------------------------------------------------------------
     // Shared helpers
     // -----------------------------------------------------------------------
 
@@ -598,71 +410,6 @@ class WearDataLayerSyncManager(
                     ),
                 ),
         )
-
-    private suspend fun handleOutcome(
-        outcome: UploadOutcome,
-        pending: PendingUpload,
-        entityType: EntityType,
-        errors: MutableList<SyncError>,
-        onSuccess: () -> Unit,
-    ) {
-        when (outcome) {
-            UploadOutcome.SUCCESS -> {
-                onSuccess()
-                syncMetadataService.markAsSynced(
-                    entityId = pending.entityId,
-                    entityType = entityType,
-                    syncedAt = clock.now(),
-                    version = 1,
-                )
-                retryScheduleStore.clear(entityType, pending.entityId)
-            }
-            UploadOutcome.SKIPPED -> {
-                syncMetadataService.markAsSynced(
-                    entityId = pending.entityId,
-                    entityType = entityType,
-                    syncedAt = clock.now(),
-                    version = 0,
-                )
-                retryScheduleStore.clear(entityType, pending.entityId)
-            }
-            UploadOutcome.AWAITING_ACK -> {
-                val errorMsg = "Phone did not confirm ${entityType.name.lowercase()} ${pending.entityId}"
-                val deadLettered = handleSyncFailure(pending, entityType, errorMsg, retryDelayMs = ACK_TIMEOUT_MS)
-                if (deadLettered) {
-                    errors.add(SyncError(type = SyncErrorType.NETWORK_ERROR, message = errorMsg, retryable = false))
-                }
-            }
-            UploadOutcome.FAILED -> {
-                val errorMsg = "Failed to sync ${entityType.name.lowercase()} ${pending.entityId}"
-                val deadLettered = handleSyncFailure(pending, entityType, errorMsg)
-                errors.add(
-                    SyncError(
-                        type = SyncErrorType.NETWORK_ERROR,
-                        message = errorMsg,
-                        retryable = !deadLettered,
-                    ),
-                )
-            }
-        }
-    }
-
-    private fun parseUuid(value: String): Uuid? =
-        try {
-            Uuid.parse(value)
-        } catch (e: IllegalArgumentException) {
-            Napier.w("Invalid UUID in pending upload: $value", e)
-            null
-        }
-
-    private enum class UploadOutcome {
-        SUCCESS,
-        SKIPPED,
-        FAILED,
-
-        /** Sent in full; the outbox entry stays until the phone confirms it. */
-        AWAITING_ACK,
-    }
 
     companion object {
         const val KEY_SENT_AT = "sentAt"

@@ -5,6 +5,7 @@ import app.logdate.shared.model.sync.DeviceId
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -219,7 +220,12 @@ class DbSyncRepositoryTest {
             val updated =
                 repository.upsertMedia(
                     userId,
-                    created.copy(fileName = "two.jpg", sizeBytes = 4, data = byteArrayOf(9, 8, 7, 6)),
+                    created.copy(
+                        fileName = "two.jpg",
+                        sizeBytes = 4,
+                        data = byteArrayOf(9, 8, 7, 6),
+                        storagePath = "users/retained/media",
+                    ),
                 )
             assertTrue(updated.serverVersion >= created.serverVersion)
 
@@ -235,6 +241,10 @@ class DbSyncRepositoryTest {
 
             val purgeSome = repository.purgeTombstones(userId, olderThan = now + 10_000)
             assertEquals(1, purgeSome.mediaPurged)
+            val retained = repository.listAllMediaForUser(userId).single()
+            assertEquals("users/retained/media", retained.storagePath)
+            assertTrue(retained.data.isEmpty())
+            assertEquals(0, repository.purgeTombstones(userId, olderThan = now + 10_000).mediaPurged)
         }
     }
 
@@ -273,7 +283,7 @@ class DbSyncRepositoryTest {
     }
 
     @Test
-    fun `global purge removes tombstones across users`() {
+    fun `global cleanup scrubs payloads and preserves deletion delivery across users`() {
         withRepository { repository ->
             val userA = UUID.randomUUID()
             val userB = UUID.randomUUID()
@@ -342,11 +352,62 @@ class DbSyncRepositoryTest {
             val purge = repository.purgeTombstonesOlderThan(olderThan = 100L)
             assertTrue(purge.contentPurged >= 1)
             assertTrue(purge.journalPurged >= 1)
-            assertTrue(purge.associationPurged >= 1)
+            assertEquals(0, purge.associationPurged)
 
-            // Newer tombstones stay until older cutoff.
+            assertTrue(repository.contentChanges(userA, 0, 10).deletions.any { it.id == "old-content" })
+            assertTrue(repository.journalChanges(userA, 0, 10).deletions.any { it.id == "old-journal" })
+            assertTrue(repository.associationChanges(userA, 0, 10).deletions.any { it.key.contentId == "old-content" })
+            assertEquals(0, repository.purgeTombstonesOlderThan(olderThan = 100L).contentPurged)
+            assertEquals(0, repository.purgeTombstonesOlderThan(olderThan = 100L).journalPurged)
+
+            // Newer tombstones and cleaned older markers both remain available.
             val userBChanges = repository.contentChanges(userB, since = 0, limit = 10)
             assertTrue(userBChanges.deletions.any { it.id == "new-content" })
+        }
+    }
+
+    @Test
+    fun `a write older than a delete is rejected and the tombstone stays`() {
+        withRepository { repository ->
+            val owner = UUID.randomUUID()
+            val note = ContentRecord("note-1", "TEXT", "original", null, null, 1, 1, 0, DeviceId("device"))
+            repository.upsertContent(owner, note)
+            repository.deleteContent(owner, "note-1", deletedAt = 10)
+
+            assertFailsWith<StaleWriteException> {
+                repository.upsertContent(owner, note.copy(content = "stale edit", lastUpdated = 5))
+            }
+            assertNull(repository.getContent(owner, "note-1"))
+        }
+    }
+
+    @Test
+    fun `a future dated write cannot resurrect a deleted record`() {
+        withRepository { repository ->
+            val owner = UUID.randomUUID()
+            val note = ContentRecord("note-1", "TEXT", "original", null, null, 1, 1, 0, DeviceId("device"))
+            repository.upsertContent(owner, note)
+            repository.deleteContent(owner, "note-1", deletedAt = 10)
+
+            assertFailsWith<StaleWriteException> {
+                repository.upsertContent(owner, note.copy(content = "newer edit", lastUpdated = Long.MAX_VALUE))
+            }
+            assertNull(repository.getContent(owner, "note-1"))
+        }
+    }
+
+    @Test
+    fun `deleting an unknown note leaves a tombstone that rejects a late write`() {
+        withRepository { repository ->
+            val owner = UUID.randomUUID()
+            repository.deleteContent(owner, "never-seen", deletedAt = 10)
+
+            assertFailsWith<StaleWriteException> {
+                repository.upsertContent(
+                    owner,
+                    ContentRecord("never-seen", "TEXT", "late", null, null, 1, 5, 0, DeviceId("device")),
+                )
+            }
         }
     }
 

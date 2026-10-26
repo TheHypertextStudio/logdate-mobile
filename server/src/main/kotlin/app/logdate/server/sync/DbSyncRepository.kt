@@ -7,8 +7,10 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.core.neq
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -58,7 +60,12 @@ class DbSyncRepository : SyncRepository {
                     .selectAll()
                     .where {
                         (ContentSyncTable.id eq record.id) and (ContentSyncTable.userId eq userId)
-                    }.singleOrNull()
+                    }.forUpdate()
+                    .singleOrNull()
+            if (existing != null && existing[ContentSyncTable.deleted]) {
+                val tombstonedAt = existing[ContentSyncTable.deletedAt] ?: 0L
+                throw StaleWriteException(record.id, tombstonedAt)
+            }
             val serverVersion = nextVersion(existing?.get(ContentSyncTable.serverVersion))
             val acceptedTranscript =
                 record.transcript ?: existing
@@ -125,18 +132,34 @@ class DbSyncRepository : SyncRepository {
         deletedAt: Long,
     ) {
         transaction {
-            val existingVersion =
+            val existing =
                 ContentSyncTable
                     .selectAll()
                     .where { (ContentSyncTable.id eq id) and (ContentSyncTable.userId eq userId) }
+                    .forUpdate()
                     .singleOrNull()
-                    ?.get(ContentSyncTable.serverVersion)
+            val existingVersion = existing?.get(ContentSyncTable.serverVersion)
+            val retainedDeletedAt = maxOf(deletedAt, existing?.get(ContentSyncTable.deletedAt) ?: deletedAt)
             val newVersion = nextVersion(existingVersion)
-            ContentSyncTable.update({ (ContentSyncTable.id eq id) and (ContentSyncTable.userId eq userId) }) {
-                it[deleted] = true
-                it[ContentSyncTable.deletedAt] = deletedAt
-                it[lastUpdated] = deletedAt
-                it[ContentSyncTable.serverVersion] = newVersion
+            if (existingVersion == null) {
+                ContentSyncTable.insert {
+                    it[ContentSyncTable.id] = id
+                    it[ContentSyncTable.userId] = userId
+                    it[type] = "TEXT"
+                    it[createdAt] = retainedDeletedAt
+                    it[lastUpdated] = retainedDeletedAt
+                    it[ContentSyncTable.serverVersion] = newVersion
+                    it[deviceId] = DeviceId.UNKNOWN.value
+                    it[deleted] = true
+                    it[ContentSyncTable.deletedAt] = retainedDeletedAt
+                }
+            } else {
+                ContentSyncTable.update({ (ContentSyncTable.id eq id) and (ContentSyncTable.userId eq userId) }) {
+                    it[deleted] = true
+                    it[ContentSyncTable.deletedAt] = retainedDeletedAt
+                    it[lastUpdated] = retainedDeletedAt
+                    it[ContentSyncTable.serverVersion] = newVersion
+                }
             }
         }
     }
@@ -193,141 +216,24 @@ class DbSyncRepository : SyncRepository {
     override fun upsertJournal(
         userId: UUID,
         record: JournalRecord,
-    ): JournalRecord =
-        transaction {
-            val existing =
-                JournalSyncTable
-                    .selectAll()
-                    .where {
-                        (JournalSyncTable.id eq record.id) and (JournalSyncTable.userId eq userId)
-                    }.singleOrNull()
-            val serverVersion = nextVersion(existing?.get(JournalSyncTable.serverVersion))
-            if (existing == null) {
-                JournalSyncTable.insert {
-                    it[id] = record.id
-                    it[JournalSyncTable.userId] = userId
-                    it[title] = record.title
-                    it[description] = record.description
-                    it[createdAt] = record.createdAt
-                    it[lastUpdated] = record.lastUpdated
-                    it[JournalSyncTable.serverVersion] = serverVersion
-                    it[deviceId] = record.deviceId.value
-                    it[deleted] = false
-                    it[deletedAt] = null
-                }
-            } else {
-                JournalSyncTable.update({ (JournalSyncTable.id eq record.id) and (JournalSyncTable.userId eq userId) }) {
-                    it[title] = record.title
-                    it[description] = record.description
-                    it[lastUpdated] = record.lastUpdated
-                    it[JournalSyncTable.serverVersion] = serverVersion
-                    it[deviceId] = record.deviceId.value
-                    it[deleted] = false
-                    it[deletedAt] = null
-                }
-            }
-            record.copy(serverVersion = serverVersion, lastUpdated = currentTimestamp())
-        }
+    ): JournalRecord = dbUpsertJournal(userId, record)
 
     override fun getJournal(
         userId: UUID,
         id: String,
-    ): JournalRecord? =
-        transaction {
-            JournalSyncTable
-                .selectAll()
-                .where {
-                    (JournalSyncTable.id eq id) and
-                        (JournalSyncTable.userId eq userId) and
-                        (JournalSyncTable.deleted eq false)
-                }.singleOrNull()
-                ?.toJournalRecord()
-        }
+    ): JournalRecord? = dbGetJournal(userId, id)
 
     override fun deleteJournal(
         userId: UUID,
         id: String,
         deletedAt: Long,
-    ) {
-        transaction {
-            val existingVersion =
-                JournalSyncTable
-                    .selectAll()
-                    .where { (JournalSyncTable.id eq id) and (JournalSyncTable.userId eq userId) }
-                    .singleOrNull()
-                    ?.get(JournalSyncTable.serverVersion)
-            val newVersion = nextVersion(existingVersion)
-            if (existingVersion == null) {
-                JournalSyncTable.insert {
-                    it[JournalSyncTable.id] = id
-                    it[JournalSyncTable.userId] = userId
-                    it[title] = ""
-                    it[description] = ""
-                    it[createdAt] = deletedAt
-                    it[lastUpdated] = deletedAt
-                    it[serverVersion] = newVersion
-                    it[deviceId] = DeviceId.UNKNOWN.value
-                    it[deleted] = true
-                    it[JournalSyncTable.deletedAt] = deletedAt
-                }
-            } else {
-                JournalSyncTable.update({ (JournalSyncTable.id eq id) and (JournalSyncTable.userId eq userId) }) {
-                    it[deleted] = true
-                    it[JournalSyncTable.deletedAt] = deletedAt
-                    it[lastUpdated] = deletedAt
-                    it[JournalSyncTable.serverVersion] = newVersion
-                }
-            }
-        }
-    }
+    ) = dbDeleteJournal(userId, id, deletedAt)
 
     override fun journalChanges(
         userId: UUID,
         since: Long,
         limit: Int,
-    ): ChangeSet<JournalRecord, JournalDeletionMarker> =
-        transaction {
-            val changeRows =
-                JournalSyncTable
-                    .selectAll()
-                    .where {
-                        (JournalSyncTable.userId eq userId) and
-                            (JournalSyncTable.deleted eq false) and
-                            (JournalSyncTable.serverVersion greater since)
-                    }.orderBy(JournalSyncTable.serverVersion to SortOrder.ASC)
-                    .limit(limit + 1)
-                    .toList()
-            val hasMoreChanges = changeRows.size > limit
-            val changes = changeRows.take(limit).map { it.toJournalRecord() }
-            val changeVersionMax = changes.maxOfOrNull { it.serverVersion }
-
-            val deletionRows =
-                JournalSyncTable
-                    .selectAll()
-                    .where {
-                        (JournalSyncTable.userId eq userId) and
-                            (JournalSyncTable.deleted eq true) and
-                            (JournalSyncTable.serverVersion greater since)
-                    }.orderBy(JournalSyncTable.serverVersion to SortOrder.ASC)
-                    .limit(limit + 1)
-                    .toList()
-            val hasMoreDeletions = deletionRows.size > limit
-            val deletions =
-                deletionRows.take(limit).map { row ->
-                    JournalDeletionMarker(
-                        row[JournalSyncTable.id],
-                        row[JournalSyncTable.deletedAt] ?: row[JournalSyncTable.lastUpdated],
-                        row[JournalSyncTable.serverVersion],
-                    )
-                }
-            val deletionVersionMax =
-                deletionRows.take(limit).maxOfOrNull { it[JournalSyncTable.serverVersion] }
-
-            val lastTimestamp =
-                listOfNotNull(changeVersionMax, deletionVersionMax).maxOrNull() ?: since
-
-            ChangeSet(changes, deletions, lastTimestamp, hasMoreChanges || hasMoreDeletions)
-        }
+    ): ChangeSet<JournalRecord, JournalDeletionMarker> = dbJournalChanges(userId, since, limit)
 
     // --- Associations ---
     override fun upsertAssociations(
@@ -388,28 +294,39 @@ class DbSyncRepository : SyncRepository {
     ): SyncPurgeResult =
         transaction {
             val contentPurged =
-                ContentSyncTable.deleteWhere {
+                ContentSyncTable.update({
                     (ContentSyncTable.userId eq userId) and
-                        (deleted eq true) and
-                        (deletedAt less olderThan)
+                        (ContentSyncTable.deleted eq true) and
+                        (ContentSyncTable.deletedAt less olderThan) and
+                        (
+                            ContentSyncTable.content.isNotNull() or ContentSyncTable.mediaUri.isNotNull() or
+                                ContentSyncTable.transcript.isNotNull() or ContentSyncTable.durationMs.isNotNull()
+                        )
+                }) {
+                    it[content] = null
+                    it[mediaUri] = null
+                    it[transcript] = null
+                    it[durationMs] = null
                 }
             val journalPurged =
-                JournalSyncTable.deleteWhere {
+                JournalSyncTable.update({
                     (JournalSyncTable.userId eq userId) and
                         (JournalSyncTable.deleted eq true) and
-                        (JournalSyncTable.deletedAt less olderThan)
+                        (JournalSyncTable.deletedAt less olderThan) and
+                        ((JournalSyncTable.title neq "") or (JournalSyncTable.description neq ""))
+                }) {
+                    it[title] = ""
+                    it[description] = ""
                 }
-            val associationPurged =
-                AssociationSyncTable.deleteWhere {
-                    (AssociationSyncTable.userId eq userId) and
-                        (AssociationSyncTable.deleted eq true) and
-                        (AssociationSyncTable.deletedAt less olderThan)
-                }
+            val associationPurged = 0
             val mediaPurged =
-                MediaSyncTable.deleteWhere {
+                MediaSyncTable.update({
                     (MediaSyncTable.userId eq userId) and
                         (MediaSyncTable.deleted eq true) and
-                        (MediaSyncTable.deletedAt less olderThan)
+                        (MediaSyncTable.deletedAt less olderThan) and
+                        (MediaSyncTable.data neq byteArrayOf())
+                }) {
+                    it[data] = byteArrayOf()
                 }
 
             SyncPurgeResult(
@@ -424,24 +341,36 @@ class DbSyncRepository : SyncRepository {
     override fun purgeTombstonesOlderThan(olderThan: Long): SyncPurgeResult =
         transaction {
             val contentPurged =
-                ContentSyncTable.deleteWhere {
-                    (deleted eq true) and
-                        (deletedAt less olderThan)
+                ContentSyncTable.update({
+                    (ContentSyncTable.deleted eq true) and
+                        (ContentSyncTable.deletedAt less olderThan) and
+                        (
+                            ContentSyncTable.content.isNotNull() or ContentSyncTable.mediaUri.isNotNull() or
+                                ContentSyncTable.transcript.isNotNull() or ContentSyncTable.durationMs.isNotNull()
+                        )
+                }) {
+                    it[content] = null
+                    it[mediaUri] = null
+                    it[transcript] = null
+                    it[durationMs] = null
                 }
             val journalPurged =
-                JournalSyncTable.deleteWhere {
-                    (deleted eq true) and
-                        (deletedAt less olderThan)
+                JournalSyncTable.update({
+                    (JournalSyncTable.deleted eq true) and
+                        (JournalSyncTable.deletedAt less olderThan) and
+                        ((JournalSyncTable.title neq "") or (JournalSyncTable.description neq ""))
+                }) {
+                    it[title] = ""
+                    it[description] = ""
                 }
-            val associationPurged =
-                AssociationSyncTable.deleteWhere {
-                    (deleted eq true) and
-                        (deletedAt less olderThan)
-                }
+            val associationPurged = 0
             val mediaPurged =
-                MediaSyncTable.deleteWhere {
-                    (deleted eq true) and
-                        (deletedAt less olderThan)
+                MediaSyncTable.update({
+                    (MediaSyncTable.deleted eq true) and
+                        (MediaSyncTable.deletedAt less olderThan) and
+                        (MediaSyncTable.data neq byteArrayOf())
+                }) {
+                    it[data] = byteArrayOf()
                 }
 
             SyncPurgeResult(

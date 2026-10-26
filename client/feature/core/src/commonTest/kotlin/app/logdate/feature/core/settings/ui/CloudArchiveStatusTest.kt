@@ -8,6 +8,38 @@ import kotlin.test.assertTrue
 
 class CloudArchiveStatusTest {
     @Test
+    fun `terminal and unconfirmed archives offer manual retry instead of claiming automatic recovery`() {
+        assertTrue(CloudArchiveStatus(CloudArchivePhase.FAILED).needsManualRetry)
+        assertTrue(CloudArchiveStatus(CloudArchivePhase.UNAVAILABLE).needsManualRetry)
+        listOf(
+            CloudArchivePhase.RUNNING,
+            CloudArchivePhase.QUEUED,
+            CloudArchivePhase.RETRYING,
+            CloudArchivePhase.COMPLETE,
+            CloudArchivePhase.NEEDS_RECOVERY,
+            CloudArchivePhase.SIGNED_OUT,
+        ).forEach {
+            assertFalse(CloudArchiveStatus(it).needsManualRetry)
+        }
+    }
+
+    @Test
+    fun `running archive exposes measured export progress without claiming remote completion`() {
+        val progress = CloudArchiveProgress(CloudArchiveStage.EXPORTING, 0.4f)
+        val status = resolveCloudArchiveStatus(true, ArchiveWorkState.RUNNING, null, false, progress)
+        assertEquals(progress, status.progress)
+        assertEquals(null, status.lastCompletedAt)
+    }
+
+    @Test
+    fun `finished workers do not retain stale progress`() {
+        val status =
+            resolveCloudArchiveStatus(true, ArchiveWorkState.SUCCEEDED, null, false, CloudArchiveProgress(CloudArchiveStage.UPLOADING))
+        assertEquals(null, status.progress)
+        assertEquals(CloudArchivePhase.NEVER_BACKED_UP, status.phase)
+    }
+
+    @Test
     fun `missing identity never reports a successful archive`() {
         val status = resolveCloudArchiveStatus(false, ArchiveWorkState.SUCCEEDED, 1234L, false)
 

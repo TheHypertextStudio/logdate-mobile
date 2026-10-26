@@ -21,13 +21,11 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SceneStrategy
-import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
@@ -57,6 +55,7 @@ import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
 import app.logdate.feature.core.settings.navigation.WatchTroubleshootingRoute
 import app.logdate.feature.core.settings.navigation.settingsEntries
 import app.logdate.feature.core.settings.navigation.watchEntries
+import app.logdate.feature.core.sync.navigation.SyncIssuesRoute
 import app.logdate.feature.core.sync.navigation.syncIssuesEntry
 import app.logdate.feature.editor.navigation.EntryEditorRoute
 import app.logdate.feature.editor.navigation.editorEntry
@@ -88,7 +87,6 @@ import app.logdate.feature.rewind.navigation.RewindDetailRoute
 import app.logdate.feature.rewind.navigation.rewindDetailEntry
 import app.logdate.feature.search.ui.SearchScreen
 import app.logdate.navigation.scenes.HomeSceneStrategy
-import app.logdate.ui.LocalNavAnimatedVisibilityScope
 import app.logdate.ui.LocalSharedTransitionScope
 import app.logdate.ui.audio.AudioPlaybackProvider
 import app.logdate.ui.navigation.taggedEntry
@@ -104,7 +102,6 @@ import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
-import kotlin.uuid.Uuid
 
 /**
  * Multiplatform Navigation 3 root for the LogDate app.
@@ -250,6 +247,7 @@ fun LogDateNavDisplay(
                                             onImportBackup = { backStack.add(ExportSettingsRoute) },
                                             onOpenMediaDetail = { backStack.add(MediaDetailRoute(it)) },
                                             onOpenSyncSettings = { backStack.add(SyncSettingsRoute) },
+                                            onOpenSyncIssues = { backStack.add(SyncIssuesRoute) },
                                             onOpenDay = { date -> backStack.add(TimelineDetailRoute(date.toString())) },
                                             onOpenStreak = { backStack.add(StreakSettingsRoute) },
                                             libraryContent = { modifier ->
@@ -424,61 +422,6 @@ fun LogDateNavDisplay(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun <T : Any> rememberNavAnimatedVisibilityScopeEntryDecorator(): NavEntryDecorator<T> =
-    remember {
-        NavEntryDecorator { entry ->
-            CompositionLocalProvider(
-                LocalNavAnimatedVisibilityScope provides LocalNavAnimatedContentScope.current,
-            ) {
-                entry.Content()
-            }
-        }
-    }
-
-/**
- * Wraps the existing `TimelineDayDetailPanel` (which lives in client/feature/timeline) so the
- * NavDisplay entry stays small. Mirrors the legacy `TimelineDetailScreen` from the
- * androidx.navigation.compose graph.
- */
-@Composable
-private fun TimelineDetailEntry(
-    date: LocalDate,
-    scrollToEntryId: String?,
-    onClose: () -> Unit,
-    onOpenLocations: () -> Unit,
-    onOpenEvent: (eventId: String) -> Unit,
-    onOpenNote: (Uuid) -> Unit,
-) {
-    val viewModel: app.logdate.feature.core.main.HomeViewModel =
-        org.koin.compose.viewmodel
-            .koinViewModel()
-    LaunchedEffect(date) { viewModel.selectDay(date) }
-    val uiState by viewModel.uiState.collectAsState()
-    val transcriptionState by viewModel.transcriptionState.collectAsState()
-    uiState.selectedDay?.let { selected ->
-        LaunchedEffect(selected) {
-            viewModel.updateVisibleAudioNoteIds(
-                selected.notes
-                    .filterIsInstance<app.logdate.ui.timeline.AudioNoteUiState>()
-                    .map { note -> note.noteId }
-                    .toSet(),
-            )
-        }
-        app.logdate.ui.audio.TranscriptionProvider(transcriptionState) {
-            app.logdate.feature.timeline.ui.details.TimelineDayDetailPanel(
-                uiState = selected,
-                scrollToEntryId = scrollToEntryId,
-                onExit = onClose,
-                onOpenEvent = onOpenEvent,
-                onAttachNoteToEvent = viewModel::attachNoteToEvent,
-                onOpenLocations = onOpenLocations,
-                onNoteClick = onOpenNote,
-            )
         }
     }
 }

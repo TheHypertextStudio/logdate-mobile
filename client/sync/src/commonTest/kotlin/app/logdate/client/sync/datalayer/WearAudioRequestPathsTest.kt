@@ -66,6 +66,17 @@ class WearAudioRequestPathsTest {
     }
 
     @Test
+    fun `versioned acknowledgement preserves note and transfer identities`() {
+        val transferId = Uuid.random().toString()
+        val path = WearAudioRequestPaths.noteAckPath(noteId, transferId)
+
+        assertTrue(WearAudioRequestPaths.isNoteAckPath(path))
+        assertEquals(noteId, WearAudioRequestPaths.noteIdFromAckPath(path))
+        assertEquals(transferId, WearAudioRequestPaths.transferIdFromAckPath(path))
+        assertFalse(WearAudioRequestPaths.isNoteAckPath("/logdate/notes/$noteId/ack/not-a-transfer"))
+    }
+
+    @Test
     fun `transfer path detection only matches audio transfer paths`() {
         assertTrue(WearAudioRequestPaths.isAudioTransferPath(WearAudioRequestPaths.audioTransferPath(noteId)))
         assertFalse(WearAudioRequestPaths.isAudioTransferPath(WearAudioRequestPaths.audioRequestPath(noteId)))

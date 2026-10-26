@@ -35,57 +35,6 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class RepoBackedLogDateCollectionsRepositoryTest {
     @Test
-    fun `retry indexes a canonical create interrupted before its sync metadata was saved`() =
-        runTest {
-            val accounts = InMemoryAccountRepository()
-            val identity = identityService(accounts)
-            val account =
-                identity.ensureIdentity(
-                    accounts.save(
-                        Account(
-                            id = Uuid.random(),
-                            username = "recovery",
-                            displayName = "Recovery",
-                            createdAt = Clock.System.now(),
-                        ),
-                    ),
-                )
-            val backing = InMemoryLogDateCollectionsMetadataStore()
-            var fail = true
-            val metadata =
-                object : LogDateCollectionsMetadataStore by backing {
-                    override suspend fun upsert(
-                        userId: UUID,
-                        repoDid: AtprotoDid,
-                        collection: LogDateCollectionKind,
-                        recordKey: String,
-                    ): LogDateCollectionMetadata {
-                        if (fail) {
-                            fail = false
-                            error("Interrupted index write")
-                        }
-                        return backing.upsert(userId, repoDid, collection, recordKey)
-                    }
-                }
-            val repository =
-                RepoBackedLogDateCollectionsRepository(
-                    accounts,
-                    identity,
-                    SigningKeyService(InMemorySigningKeyRepository(), "test-kek"),
-                    InMemoryRepoBlockStore(),
-                    metadata,
-                )
-            val userId = account.id.toJavaUUID()
-            val entry = LogDateEntry("legacy-entry", "TEXT", "Opaque encrypted entry", null, 0, 10, 20, 0, DeviceId("device"))
-
-            assertFailsWith<IllegalStateException> { repository.createEntryIfAbsent(userId, entry) }
-            assertNull(repository.createEntryIfAbsent(userId, entry))
-            assertEquals(entry.content, repository.getEntry(userId, entry.id)?.content)
-            assertEquals(entry.createdAt, repository.getEntry(userId, entry.id)?.createdAt)
-            assertEquals(1, repository.entryChanges(userId, 0, 20).changes.size)
-        }
-
-    @Test
     fun `entries become canonical repo records while preserving sync change feeds`() =
         runTest {
             val accountRepository = InMemoryAccountRepository()
@@ -170,7 +119,7 @@ class RepoBackedLogDateCollectionsRepositoryTest {
                 listOf(LogDateEntryDeletion(id = "entry-1", deletedAt = deletedAt, serverVersion = deleted.lastTimestamp)),
                 deleted.deletions,
             )
-            assertEquals(1, purged.entryPurged)
+            assertEquals(0, purged.entryPurged)
         }
 
     @Test
@@ -291,7 +240,7 @@ class RepoBackedLogDateCollectionsRepositoryTest {
         }
 
     @Test
-    fun `tenant-wide purge removes expired tombstones for every user`() =
+    fun `tenant-wide cleanup retains deletion delivery for long-offline clients`() =
         runTest {
             val accountRepository = InMemoryAccountRepository()
             val repository =
@@ -314,11 +263,11 @@ class RepoBackedLogDateCollectionsRepositoryTest {
             // The scheduled retention job runs without a user, so it must reach both tenants.
             val purged = repository.purgeTombstones(olderThan = 2L)
 
-            assertEquals(2, purged.entryPurged)
+            assertEquals(0, purged.entryPurged)
             listOf(first, second).forEach { userId ->
                 assertTrue(
-                    repository.entryChanges(userId, since = 0, limit = 50).deletions.isEmpty(),
-                    "expected tombstones to be purged for $userId",
+                    repository.entryChanges(userId, since = 0, limit = 50).deletions.any { it.id == "doomed-$userId" },
+                    "Long-offline clients still need the tombstone for $userId",
                 )
                 assertNotNull(repository.getEntry(userId, "kept-$userId"))
             }

@@ -31,6 +31,13 @@ internal suspend fun pruneAbandonedCloudArchives(context: Context) {
                 ).forEach { uniqueName ->
                     workManager.getWorkInfosForUniqueWork(uniqueName).get().forEach { work ->
                         if (!work.state.isFinished) {
+                            if (uniqueName.startsWith(CloudBackupWorker.WORK_NAME)) {
+                                names += "cloud-backup-pending.zip"
+                                names += "cloud-backup-pending.scope"
+                                names += "cloud-backup-pending.scope.part"
+                                names += "cloud-backup-pending.plain.part"
+                                names += "cloud-backup-pending.encrypted.part"
+                            }
                             names += "cloud-backup-${work.id}.zip"
                             names += "cloud-backup-${work.id}.scope"
                             names += "cloud-backup-${work.id}.scope.part"

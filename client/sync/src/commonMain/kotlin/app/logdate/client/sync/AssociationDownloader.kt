@@ -134,7 +134,8 @@ internal class AssociationDownloader(
         } catch (cancelled: CancellationException) {
             recordApply(row, attemptId, context, DiagnosticOutcome.INTERRUPTED)
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            throwIfDeviceBlocked(error)
             if (row != null && context.selected != null) {
                 downloadInbox?.failed(
                     "ASSOCIATION",
@@ -161,8 +162,22 @@ internal class AssociationDownloader(
     ): Boolean =
         transactionManager.withTransaction {
             ensureScope(selected)
-            val hasPending = syncMetadataService.hasPending(EntityType.ASSOCIATION, key)
-            if (hasPending) {
+            val pending = syncMetadataService.getPendingUploads(EntityType.ASSOCIATION).firstOrNull { it.entityId == key }
+            val hasPending = pending != null
+            val matchingDelete = deletion && pending?.operation == app.logdate.client.sync.metadata.PendingOperation.DELETE
+            if (matchingDelete) {
+                check(
+                    syncMetadataService.settleIfCurrent(
+                        EntityType.ASSOCIATION,
+                        requireNotNull(pending),
+                        kotlin.time.Clock.System
+                            .now(),
+                        0L,
+                    ),
+                )
+            } else if (hasPending && deletion) {
+                downloadEngine.preserveDeletionConflict(EntityType.ASSOCIATION, key)
+            } else if (hasPending) {
                 downloadEngine.recordConflict(
                     EntityType.ASSOCIATION,
                     key,
@@ -172,13 +187,14 @@ internal class AssociationDownloader(
                     null,
                     null,
                 )
-            } else if (deletion) {
+            }
+            if (deletion) {
                 if (syncable != null) {
                     syncable.removeContentFromJournalFromSync(association.contentId, association.journalId)
                 } else {
                     journalContentRepository.removeContentFromJournal(association.contentId, association.journalId)
                 }
-            } else {
+            } else if (!hasPending) {
                 if (syncable != null) {
                     syncable.addContentToJournalFromSync(association.contentId, association.journalId)
                 } else {
@@ -187,7 +203,7 @@ internal class AssociationDownloader(
             }
             ensureScope(selected)
             if (row != null && selected != null) downloadInbox?.applied("ASSOCIATION", key, row.version, selected)
-            hasPending
+            hasPending && !matchingDelete
         }
 
     private suspend fun recordRemoteFailures(

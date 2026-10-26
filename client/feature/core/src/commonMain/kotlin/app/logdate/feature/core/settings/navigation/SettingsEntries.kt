@@ -207,6 +207,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(
             onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
             onNavigateToSignIn = onNavigateToSignIn,
             onNavigateToRecoveryPhrase = { onNavigateTo(RecoveryPhraseRoute) },
+            onReviewSavedEdits = { onNavigateTo(app.logdate.feature.core.sync.navigation.SyncIssuesRoute) },
             onRecoverJournalMerge = { operation ->
                 onNavigateTo(JournalMergeRoute(operation.sourceId.toString(), operation.operationId.toString()))
             },

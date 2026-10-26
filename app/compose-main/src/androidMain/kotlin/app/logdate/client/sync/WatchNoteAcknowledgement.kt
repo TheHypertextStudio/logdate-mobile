@@ -18,8 +18,19 @@ fun interface WatchMessageSender {
 class MessageWatchNoteAcknowledger(
     private val sender: WatchMessageSender,
 ) : WatchNoteAcknowledger {
-    override suspend fun acknowledge(noteId: Uuid) {
-        if (!sender.send(WearAudioRequestPaths.noteAckPath(noteId))) {
+    override suspend fun acknowledge(noteId: Uuid) = acknowledge(noteId, null)
+
+    override suspend fun acknowledge(
+        noteId: Uuid,
+        transferId: String?,
+    ) {
+        val path =
+            if (transferId == null) {
+                WearAudioRequestPaths.noteAckPath(noteId)
+            } else {
+                WearAudioRequestPaths.noteAckPath(noteId, transferId)
+            }
+        if (!sender.send(path)) {
             Napier.w("Watch did not receive the acknowledgement for note $noteId; it will retry")
         }
     }

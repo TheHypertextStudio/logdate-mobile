@@ -47,24 +47,34 @@ internal class SyncMediaTransfer(
                 blocks =
                     draft.blocks.map { block ->
                         when (block) {
-                            is SerializableImageBlock ->
+                            is SerializableImageBlock -> {
                                 block.copy(
                                     uri = uploadDraftAsset(accessToken, draft.id, block.id, "image", block.uri),
                                 )
-                            is SerializableVideoBlock ->
+                            }
+
+                            is SerializableVideoBlock -> {
                                 block.copy(
                                     uri = uploadDraftAsset(accessToken, draft.id, block.id, "video", block.uri),
                                     thumbnailUri = uploadDraftAsset(accessToken, draft.id, block.id, "thumbnail", block.thumbnailUri),
                                 )
-                            is SerializableAudioBlock ->
+                            }
+
+                            is SerializableAudioBlock -> {
                                 block.copy(
                                     uri = uploadDraftAsset(accessToken, draft.id, block.id, "audio", block.uri),
                                 )
-                            is SerializableCameraBlock ->
+                            }
+
+                            is SerializableCameraBlock -> {
                                 block.copy(
                                     uri = uploadDraftAsset(accessToken, draft.id, block.id, "camera", block.uri),
                                 )
-                            else -> block
+                            }
+
+                            else -> {
+                                block
+                            }
                         }
                     },
             )
@@ -108,9 +118,11 @@ internal class SyncMediaTransfer(
         return try {
             draft.blocks.forEachIndexed { index, block ->
                 when (block) {
-                    is SerializableImageBlock ->
+                    is SerializableImageBlock -> {
                         blocks[index] =
                             block.copy(uri = hydrateDraftAsset(accessToken, draft.id, block.id, "image", block.uri, mappings))
+                    }
+
                     is SerializableVideoBlock -> {
                         val video = block.copy(uri = hydrateDraftAsset(accessToken, draft.id, block.id, "video", block.uri, mappings))
                         blocks[index] = video
@@ -127,13 +139,20 @@ internal class SyncMediaTransfer(
                                     ),
                             )
                     }
-                    is SerializableAudioBlock ->
+
+                    is SerializableAudioBlock -> {
                         blocks[index] =
                             block.copy(uri = hydrateDraftAsset(accessToken, draft.id, block.id, "audio", block.uri, mappings))
-                    is SerializableCameraBlock ->
+                    }
+
+                    is SerializableCameraBlock -> {
                         blocks[index] =
                             block.copy(uri = hydrateDraftAsset(accessToken, draft.id, block.id, "camera", block.uri, mappings))
-                    else -> Unit
+                    }
+
+                    else -> {
+                        Unit
+                    }
                 }
             }
             DraftMediaHydrationResult.Available(draft.copy(blocks = blocks), mappings)
@@ -166,6 +185,7 @@ internal class SyncMediaTransfer(
             ) {
                 throw cancelled
             } catch (error: Exception) {
+                throwIfDeviceBlocked(error)
                 throw DraftMediaFailure(
                     when {
                         error is IdentityKeyNotFoundException -> DiagnosticReason.KEY_RECOVERY_REQUIRED
@@ -182,7 +202,8 @@ internal class SyncMediaTransfer(
                 mediaManager.saveMedia(
                     MediaPayload(downloaded.fileName, downloaded.mimeType, downloaded.data.size.toLong(), downloaded.data),
                 )
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                throwIfDeviceBlocked(error)
                 throw DraftMediaFailure(DiagnosticReason.LOCAL_STORAGE)
             }
         if (isRemoteRef(localUri) || !mediaManager.exists(localUri)) throw DraftMediaFailure(DiagnosticReason.LOCAL_STORAGE)
@@ -268,7 +289,10 @@ internal class SyncMediaTransfer(
                 result.mapping?.let { mediaSyncRefStore.upsert(it) }
                 result.note
             }
-            is MediaHydrationResult.Pending -> throw MediaRecoveryException(result.reason)
+
+            is MediaHydrationResult.Pending -> {
+                throw MediaRecoveryException(result.reason)
+            }
         }
 
     suspend fun hydrate(
@@ -284,6 +308,7 @@ internal class SyncMediaTransfer(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
+                throwIfDeviceBlocked(error)
                 val reason =
                     when {
                         error is IdentityKeyNotFoundException -> DiagnosticReason.KEY_RECOVERY_REQUIRED
@@ -317,7 +342,8 @@ internal class SyncMediaTransfer(
             )
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            throwIfDeviceBlocked(error)
             MediaHydrationResult.Pending(DiagnosticReason.LOCAL_STORAGE)
         }
     }

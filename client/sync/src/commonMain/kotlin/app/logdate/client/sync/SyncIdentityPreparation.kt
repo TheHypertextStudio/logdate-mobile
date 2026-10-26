@@ -54,7 +54,11 @@ internal suspend fun DefaultSyncManager.provisionIdentityKey(accessToken: String
 
     if (client == null) {
         runCatching { manager.setupNewIdentity() }
-            .onFailure { Napier.e("Could not provision an identity key; uploads will fail") }
+            .onFailure {
+                if (it is kotlinx.coroutines.CancellationException) throw it
+                throwIfDeviceBlocked(it)
+                Napier.e("Could not provision an identity key")
+            }
         return
     }
 
@@ -66,11 +70,17 @@ internal suspend fun DefaultSyncManager.provisionIdentityKey(accessToken: String
             )
             identityRecoveryNeededStore.setNeeded(true)
         }
+
         false -> {
             runCatching { manager.setupNewIdentity() }
-                .onFailure { Napier.e("Could not provision an identity key; uploads will fail") }
+                .onFailure {
+                    if (it is kotlinx.coroutines.CancellationException) throw it
+                    throwIfDeviceBlocked(it)
+                    Napier.e("Could not provision an identity key")
+                }
             if (manager.hasIdentityKey() && accountId != null) manager.bindToAccount(accountId)
         }
+
         null -> {
             // Could not tell (offline, a server error). Leave things as they are; the next
             // sync attempt checks again rather than guessing now.
@@ -93,6 +103,8 @@ private suspend fun DefaultSyncManager.accountAlreadyHasCloudData(
             drafts.deletions.isNotEmpty() ||
             locationHistorySyncEngine?.hasRemoteRecords(accessToken) == true
     }.getOrElse {
+        if (it is kotlinx.coroutines.CancellationException) throw it
+        throwIfDeviceBlocked(it)
         Napier.w("Could not check whether the account already has cloud data")
         null
     }

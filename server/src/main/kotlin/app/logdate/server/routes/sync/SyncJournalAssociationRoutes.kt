@@ -12,6 +12,7 @@ import app.logdate.server.responses.error
 import app.logdate.server.routes.docs.SyncAssociationDocs
 import app.logdate.server.routes.docs.SyncCollectionDocs
 import app.logdate.server.routes.docs.SyncJournalMergeDocs
+import app.logdate.server.sync.StaleWriteException
 import app.logdate.server.sync.SyncMetricsRegistry
 import app.logdate.shared.model.sync.AssociationChangesResponse
 import app.logdate.shared.model.sync.AssociationDeleteRequest
@@ -120,6 +121,9 @@ internal fun Route.journalRoutes(
                         ),
                     ),
                 )
+            } catch (_: StaleWriteException) {
+                metrics.recordConflict()
+                call.respond(HttpStatusCode.Conflict, error("DELETION_CONFLICT", "This item was deleted; keep the edit for review"))
             } finally {
                 metrics.recordOperation(METRIC_JOURNAL_UPLOAD, System.currentTimeMillis() - start, success)
             }
@@ -211,6 +215,9 @@ internal fun Route.journalRoutes(
                         ),
                     ),
                 )
+            } catch (_: StaleWriteException) {
+                metrics.recordConflict()
+                call.respond(HttpStatusCode.Conflict, error("DELETION_CONFLICT", "This item was deleted; keep the edit for review"))
             } finally {
                 metrics.recordOperation(METRIC_JOURNAL_UPDATE, System.currentTimeMillis() - start, success)
             }
@@ -261,6 +268,9 @@ internal fun Route.associationRoutes(
                 )
                 call.respond(AssociationUploadResponse(req.associations.size, uploadedAt))
                 success = true
+            } catch (_: StaleWriteException) {
+                metrics.recordConflict()
+                call.respond(HttpStatusCode.Conflict, error("DELETION_CONFLICT", "This item was deleted; keep the edit for review"))
             } finally {
                 metrics.recordOperation(METRIC_ASSOCIATION_UPLOAD, System.currentTimeMillis() - start, success)
             }
@@ -314,6 +324,9 @@ internal fun Route.associationRoutes(
                 )
                 call.respond(HttpStatusCode.NoContent)
                 success = true
+            } catch (_: StaleWriteException) {
+                metrics.recordConflict()
+                call.respond(HttpStatusCode.Conflict, error("DELETION_CONFLICT", "This item was deleted; keep the edit for review"))
             } finally {
                 metrics.recordOperation(METRIC_ASSOCIATION_UPLOAD, System.currentTimeMillis() - start, success)
             }

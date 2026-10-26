@@ -223,6 +223,7 @@ data class AssociationDeletionMarker(
     val serverVersion: Long = deletedAt,
 )
 
+/** Counts payload records scrubbed; deletion identities and feed markers remain available. */
 data class SyncPurgeResult(
     val contentPurged: Int,
     val journalPurged: Int,

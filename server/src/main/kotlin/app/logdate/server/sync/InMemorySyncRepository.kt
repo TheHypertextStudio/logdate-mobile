@@ -42,10 +42,12 @@ class InMemorySyncRepository : SyncRepository {
         )
 
     // Content
+    @Synchronized
     override fun upsertContent(
         userId: UUID,
         record: ContentRecord,
     ): ContentRecord {
+        contentDeletions.forUser(userId)[record.id]?.let { throw StaleWriteException(record.id, it) }
         val versioned =
             record.copy(
                 serverVersion = nextVersion(),
@@ -66,13 +68,14 @@ class InMemorySyncRepository : SyncRepository {
         id: String,
     ): ContentRecord? = content.forUser(userId)[id]
 
+    @Synchronized
     override fun deleteContent(
         userId: UUID,
         id: String,
         deletedAt: Long,
     ) {
         content.forUser(userId).remove(id)
-        contentDeletions.forUser(userId)[id] = deletedAt
+        contentDeletions.forUser(userId).merge(id, deletedAt, ::maxOf)
         lastTimestamp.updateAndGet { previous -> maxOf(previous, deletedAt) }
     }
 
@@ -108,10 +111,12 @@ class InMemorySyncRepository : SyncRepository {
     }
 
     // Journals
+    @Synchronized
     override fun upsertJournal(
         userId: UUID,
         record: JournalRecord,
     ): JournalRecord {
+        journalDeletions.forUser(userId)[record.id]?.let { throw StaleWriteException(record.id, it) }
         val versioned = record.copy(serverVersion = nextVersion(), lastUpdated = record.lastUpdated)
         journals.forUser(userId)[record.id] = versioned
         return versioned.copy(serverVersion = versioned.serverVersion, lastUpdated = now())
@@ -122,13 +127,14 @@ class InMemorySyncRepository : SyncRepository {
         id: String,
     ): JournalRecord? = journals.forUser(userId)[id]
 
+    @Synchronized
     override fun deleteJournal(
         userId: UUID,
         id: String,
         deletedAt: Long,
     ) {
         journals.forUser(userId).remove(id)
-        journalDeletions.forUser(userId)[id] = deletedAt
+        journalDeletions.forUser(userId).merge(id, deletedAt, ::maxOf)
         lastTimestamp.updateAndGet { previous -> maxOf(previous, deletedAt) }
     }
 
@@ -164,16 +170,22 @@ class InMemorySyncRepository : SyncRepository {
     }
 
     // Associations
+    @Synchronized
     override fun upsertAssociations(
         userId: UUID,
         records: List<AssociationRecord>,
     ) {
+        records.forEach { association ->
+            val key = AssociationKey(association.journalId, association.contentId)
+            associationDeletions.forUser(userId)[key]?.let { throw StaleWriteException("${key.journalId}/${key.contentId}", it) }
+        }
         records.forEach { association ->
             associations.forUser(userId)[AssociationKey(association.journalId, association.contentId)] =
                 association.copy(serverVersion = nextVersion())
         }
     }
 
+    @Synchronized
     override fun deleteAssociations(
         userId: UUID,
         keys: List<AssociationKey>,
@@ -181,7 +193,7 @@ class InMemorySyncRepository : SyncRepository {
     ) {
         keys.forEach { key ->
             associations.forUser(userId).remove(key)
-            associationDeletions.forUser(userId)[key] = deletedAt
+            associationDeletions.forUser(userId).merge(key, deletedAt, ::maxOf)
         }
         lastTimestamp.updateAndGet { previous -> maxOf(previous, deletedAt) }
     }
@@ -218,10 +230,12 @@ class InMemorySyncRepository : SyncRepository {
     }
 
     // Media
+    @Synchronized
     override fun upsertMedia(
         userId: UUID,
         record: MediaRecord,
     ): MediaRecord {
+        mediaDeletions.forUser(userId)[record.mediaId]?.let { throw StaleWriteException(record.mediaId, it) }
         val versioned =
             record.copy(
                 mediaId = if (record.mediaId.isBlank()) "media-${Random.nextLong().absoluteValue}" else record.mediaId,
@@ -236,13 +250,14 @@ class InMemorySyncRepository : SyncRepository {
         mediaId: String,
     ): MediaRecord? = media.forUser(userId)[mediaId]
 
+    @Synchronized
     override fun deleteMedia(
         userId: UUID,
         mediaId: String,
         deletedAt: Long,
     ) {
         media.forUser(userId).remove(mediaId)
-        mediaDeletions.forUser(userId)[mediaId] = deletedAt
+        mediaDeletions.forUser(userId).merge(mediaId, deletedAt, ::maxOf)
         lastTimestamp.updateAndGet { previous -> maxOf(previous, deletedAt) }
     }
 
@@ -271,66 +286,11 @@ class InMemorySyncRepository : SyncRepository {
         backups.forUser(userId).remove(id)
     }
 
+    // Payloads were removed when deleted; the remaining markers must stay in all future feeds.
     override fun purgeTombstones(
         userId: UUID,
         olderThan: Long,
-    ): SyncPurgeResult {
-        val contentPurged =
-            contentDeletions
-                .forUser(userId)
-                .filterValues { it < olderThan }
-                .also { it.keys.forEach(contentDeletions.forUser(userId)::remove) }
-                .size
-        val journalPurged =
-            journalDeletions
-                .forUser(userId)
-                .filterValues { it < olderThan }
-                .also { it.keys.forEach(journalDeletions.forUser(userId)::remove) }
-                .size
-        val associationPurged =
-            associationDeletions
-                .forUser(userId)
-                .filterValues { it < olderThan }
-                .also { it.keys.forEach(associationDeletions.forUser(userId)::remove) }
-                .size
-        val mediaPurged = 0
+    ): SyncPurgeResult = SyncPurgeResult(0, 0, 0, 0, olderThan)
 
-        return SyncPurgeResult(
-            contentPurged = contentPurged,
-            journalPurged = journalPurged,
-            associationPurged = associationPurged,
-            mediaPurged = mediaPurged,
-            cutoff = olderThan,
-        )
-    }
-
-    override fun purgeTombstonesOlderThan(olderThan: Long): SyncPurgeResult {
-        val contentPurged = purgeAll(contentDeletions, olderThan)
-        val journalPurged = purgeAll(journalDeletions, olderThan)
-        val associationPurged = purgeAll(associationDeletions, olderThan)
-        val mediaPurged = 0
-
-        return SyncPurgeResult(
-            contentPurged = contentPurged,
-            journalPurged = journalPurged,
-            associationPurged = associationPurged,
-            mediaPurged = mediaPurged,
-            cutoff = olderThan,
-        )
-    }
-
-    private fun <K> purgeAll(
-        store: ConcurrentHashMap<UUID, ConcurrentHashMap<K, Long>>,
-        olderThan: Long,
-    ): Int {
-        var purged = 0
-        store.values.forEach { entries ->
-            val toRemove = entries.filterValues { it < olderThan }.keys
-            toRemove.forEach { key ->
-                entries.remove(key)
-                purged++
-            }
-        }
-        return purged
-    }
+    override fun purgeTombstonesOlderThan(olderThan: Long): SyncPurgeResult = SyncPurgeResult(0, 0, 0, 0, olderThan)
 }

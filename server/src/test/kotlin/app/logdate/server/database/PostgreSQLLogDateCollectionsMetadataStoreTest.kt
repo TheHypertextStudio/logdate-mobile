@@ -95,7 +95,7 @@ class PostgreSQLLogDateCollectionsMetadataStoreTest {
                 assertNotNull(deleted)
                 assertNull(liveEntry)
                 assertTrue(deletionChanges.deletions.any { it.recordKey == "entry-1" && it.deletedAt == deletedAt })
-                assertEquals(1, purged.entryPurged)
+                assertEquals(0, purged.entryPurged)
                 assertEquals(0, purged.journalPurged)
             }
         }

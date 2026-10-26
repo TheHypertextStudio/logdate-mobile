@@ -29,7 +29,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -131,7 +130,7 @@ class LegacyRepairCycleTest {
 
             val repair = manager.fullSync()
             assertEquals(1, repair.uploadedItems)
-            assertFalse(repair.success, "Recovery must remain pending until the replacement is read")
+            assertTrue(repair.success, "A waiting retained record does not make a completed transfer fail")
             assertEquals(1, inbox.count())
             assertTrue(metadata.getPendingUploads(EntityType.NOTE).isEmpty())
             assertEquals(local.content, current.decryptString(field, requireNotNull(remote.content)))

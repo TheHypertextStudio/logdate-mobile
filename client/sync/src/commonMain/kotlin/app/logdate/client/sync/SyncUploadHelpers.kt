@@ -40,3 +40,9 @@ internal fun JournalNote.withRepairVersion(version: Long?): JournalNote =
             is JournalNote.Audio -> copy(syncVersion = version)
         }
     }
+
+internal suspend fun SyncRetryCoordinator.recordDeletedNoteConflict(
+    pending: PendingUpload,
+    note: JournalNote,
+    error: Throwable,
+): SyncError = handleUploadConflict(EntityType.NOTE, pending, "note", "Deleted note", error, note.syncVersion, note.lastUpdated)

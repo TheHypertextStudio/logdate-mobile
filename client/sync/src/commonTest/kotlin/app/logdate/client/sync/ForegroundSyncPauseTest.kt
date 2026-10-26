@@ -96,12 +96,26 @@ class ForegroundSyncPauseTest {
             assertEquals(1, api.uploadContentCalls.size)
         }
 
-    private suspend fun TestScope.fixture(api: FakeCloudApiClient = FakeCloudApiClient()): PauseFixture {
+    @Test
+    fun `an empty signed in client still discovers remote changes`() =
+        runTest {
+            val fixture = fixture(empty = true, periodic = true)
+            runCurrent()
+            assertTrue(fixture.api.wasMethodCalled("getContentChanges"), "Remote discovery must not depend on local writes")
+        }
+
+    private suspend fun TestScope.fixture(
+        api: FakeCloudApiClient = FakeCloudApiClient(),
+        empty: Boolean = false,
+        periodic: Boolean = false,
+    ): PauseFixture {
         val session = fakeSessionStorage()
         val metadata = fakeSyncMetadataService(session)
-        val notes = fakeJournalNotesRepository("Retained note")
-        val note = notes.allNotesObserved.first().single()
-        metadata.enqueuePending(note.uid.toString(), EntityType.NOTE, PendingOperation.CREATE)
+        val notes = if (empty) fakeJournalNotesRepository() else fakeJournalNotesRepository("Retained note")
+        if (!empty) {
+            val note = notes.allNotesObserved.first().single()
+            metadata.enqueuePending(note.uid.toString(), EntityType.NOTE, PendingOperation.CREATE)
+        }
         val engine =
             testDefaultSyncManager(
                 cloudContentDataSource = DefaultCloudContentDataSource(api),
@@ -123,7 +137,7 @@ class ForegroundSyncPauseTest {
                     },
                 dataUsagePolicy = fakeDataUsagePolicy(),
                 // Keep the periodic scheduler out of this explicit foreground/engine concurrency test.
-                syncScope = CoroutineScope(backgroundScope.coroutineContext + Job().apply { cancel() }),
+                syncScope = if (periodic) backgroundScope else CoroutineScope(backgroundScope.coroutineContext + Job().apply { cancel() }),
             )
         return PauseFixture(engine, foreground, api)
     }

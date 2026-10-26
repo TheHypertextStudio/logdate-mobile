@@ -10,6 +10,7 @@ import app.logdate.client.repository.location.LocationHistoryRepository
 import app.logdate.client.repository.places.UserPlacesRepository
 import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.client.repository.user.UserStateRepository
+import app.logdate.client.sync.deviceBlockReason
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.Journal
 import app.logdate.shared.model.Place
@@ -119,6 +120,7 @@ internal class ArchiveSnapshotReader(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (failure: Exception) {
+            if (deviceBlockReason(failure) != null) throw failure
             null
         }
 
@@ -126,6 +128,7 @@ internal class ArchiveSnapshotReader(
         try {
             appInfoProvider.getAppInfo().versionName
         } catch (failure: Exception) {
+            if (failure is CancellationException || deviceBlockReason(failure) != null) throw failure
             "unknown"
         }
 
@@ -148,6 +151,7 @@ internal class ArchiveSnapshotReader(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (failure: Exception) {
+                if (deviceBlockReason(failure) != null) throw failure
                 Napier.w("Could not read $category for export", failure)
                 unreadable += category
                 default

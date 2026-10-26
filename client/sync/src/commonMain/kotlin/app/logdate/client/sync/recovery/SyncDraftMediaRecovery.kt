@@ -9,6 +9,7 @@ import app.logdate.client.sync.SyncMediaTransfer
 import app.logdate.client.sync.SyncTransactionManager
 import app.logdate.client.sync.diagnostics.DiagnosticSource
 import app.logdate.client.sync.metadata.MediaSyncRefStore
+import app.logdate.client.sync.throwIfDeviceBlocked
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.diagnostics.DiagnosticOutcome
 import app.logdate.shared.model.diagnostics.DiagnosticReason
@@ -58,7 +59,8 @@ internal class SyncDraftMediaRecovery(
         } catch (cancelled: CancellationException) {
             if (started) inbox.recordMediaAttempt(row, attemptId, DiagnosticOutcome.INTERRUPTED, source)
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            throwIfDeviceBlocked(error)
             inbox.failed("MEDIA_DRAFT", row.entityId, DiagnosticReason.LOCAL_STORAGE.name, row.version, scope, attemptId, source)
             return true
         }
@@ -88,8 +90,10 @@ internal class SyncDraftMediaRecovery(
             return false
         }
         when (result) {
-            is DraftMediaHydrationResult.Pending ->
+            is DraftMediaHydrationResult.Pending -> {
                 inbox.failed("MEDIA_DRAFT", row.entityId, result.reason.name, row.version, scope, attemptId, source)
+            }
+
             is DraftMediaHydrationResult.Available -> {
                 inbox.applied("MEDIA_DRAFT", row.entityId, row.version, scope)
                 inbox.recordMediaAttempt(row, attemptId, DiagnosticOutcome.SUCCEEDED, source)

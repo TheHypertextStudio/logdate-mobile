@@ -4,6 +4,7 @@ import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.journals.SyncableJournalNotesRepository
 import app.logdate.client.sync.datalayer.NoteDataMapper
+import app.logdate.client.sync.datalayer.WearAudioRequestPaths
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,11 +48,22 @@ interface WatchAudioStore {
     suspend fun markDeleted(noteId: Uuid)
 
     suspend fun isDeleted(noteId: Uuid): Boolean
+
+    /** Checks the complete accepted bytes before acknowledging a versioned transfer. */
+    suspend fun matchesAudioDigest(
+        noteId: Uuid,
+        expectedDigest: String,
+    ): Boolean = false
 }
 
 /** Tells the watch a note is stored on the phone, so the watch can stop retrying it. */
 fun interface WatchNoteAcknowledger {
     suspend fun acknowledge(noteId: Uuid)
+
+    suspend fun acknowledge(
+        noteId: Uuid,
+        transferId: String?,
+    ) = acknowledge(noteId)
 }
 
 fun interface WatchNoteNotifier {
@@ -120,7 +132,13 @@ class WatchNoteIngestor(
             return@withNoteLock
         }
         if (notesRepository.getNoteById(noteId) != null) {
-            acknowledger.acknowledge(noteId)
+            // A different edit under this ID needs review; receiving bytes cannot acknowledge it.
+            val metadata = audioStore.stashedMetadata(noteId)
+            if (metadata == null) {
+                acknowledger.acknowledge(noteId)
+            } else {
+                acknowledgeExisting(noteDataMapper.fromDataMap(metadata) as? JournalNote.Audio, metadata)
+            }
             return@withNoteLock
         }
         if (!audioStore.writeAudio(noteId, source)) {
@@ -144,12 +162,32 @@ class WatchNoteIngestor(
         data: Map<String, String>,
     ) {
         if (notesRepository.getNoteById(note.uid) != null) {
-            acknowledger.acknowledge(note.uid)
+            if (!acknowledgeExisting(note, data)) audioStore.stashMetadata(note.uid, data)
             return
         }
         audioStore.stashMetadata(note.uid, data)
         storeIfComplete(note.uid)
     }
+
+    private suspend fun acknowledgeExisting(
+        note: JournalNote.Audio?,
+        data: Map<String, String>,
+    ): Boolean {
+        if (note == null) return false
+        val existing = notesRepository.getNoteById(note.uid) as? JournalNote.Audio ?: return false
+        if (existing.copy(mediaRef = note.mediaRef, syncVersion = note.syncVersion, lastUpdated = note.lastUpdated) != note) {
+            Napier.w("An incoming watch audio edit differs from the stored note; retaining it for review")
+            return false
+        }
+        if (!matchesDigest(note.uid, data)) return false
+        acknowledger.acknowledge(note.uid, data[WearAudioRequestPaths.KEY_TRANSFER_ID])
+        return true
+    }
+
+    private suspend fun matchesDigest(
+        noteId: Uuid,
+        data: Map<String, String>,
+    ): Boolean = data[WearAudioRequestPaths.KEY_AUDIO_DIGEST]?.let { audioStore.matchesAudioDigest(noteId, it) } ?: true
 
     private suspend fun receiveNote(note: JournalNote) {
         if (notesRepository.getNoteById(note.uid) != null) {
@@ -165,10 +203,14 @@ class WatchNoteIngestor(
         val data = audioStore.stashedMetadata(noteId) ?: return
         val watchNote = noteDataMapper.fromDataMap(data) as? JournalNote.Audio ?: return
 
+        if (!matchesDigest(noteId, data)) {
+            Napier.w("Watch audio bytes do not match their metadata; waiting for the matching transfer")
+            return
+        }
         val note = watchNote.copy(mediaRef = audioStore.audioPath(noteId))
         notesRepository.create(note)
         audioStore.clearMetadata(noteId)
-        acknowledger.acknowledge(noteId)
+        acknowledger.acknowledge(noteId, data[WearAudioRequestPaths.KEY_TRANSFER_ID])
         notifier.noteReceived(note)
     }
 }

@@ -2,6 +2,7 @@ package app.logdate.server.database
 
 import app.logdate.server.logdate.LogDateMedia
 import app.logdate.server.logdate.LogDateMediaRepository
+import app.logdate.server.sync.StaleWriteException
 import app.logdate.shared.model.sync.DeviceId
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
@@ -27,7 +28,11 @@ internal class PostgreSQLLogDateMediaRepository : LogDateMediaRepository {
                     .where {
                         (LogDateMediaRecordsTable.userId eq userId) and
                             (LogDateMediaRecordsTable.mediaId eq mediaId)
-                    }.singleOrNull()
+                    }.forUpdate()
+                    .singleOrNull()
+            if (existing != null && existing[LogDateMediaRecordsTable.deleted]) {
+                throw StaleWriteException(mediaId, existing[LogDateMediaRecordsTable.deletedAt] ?: 0L)
+            }
             val version = nextLogDateMediaVersion(existing?.get(LogDateMediaRecordsTable.version))
             if (existing == null) {
                 LogDateMediaRecordsTable.insert {
@@ -87,7 +92,8 @@ internal class PostgreSQLLogDateMediaRepository : LogDateMediaRepository {
                     (LogDateMediaRecordsTable.userId eq userId) and
                         (LogDateMediaRecordsTable.mediaId eq mediaId) and
                         (LogDateMediaRecordsTable.deleted eq false)
-                }.singleOrNull()
+                }.forUpdate()
+                .singleOrNull()
                 ?.toLogDateMedia()
         }
 
@@ -103,13 +109,31 @@ internal class PostgreSQLLogDateMediaRepository : LogDateMediaRepository {
                     .where {
                         (LogDateMediaRecordsTable.userId eq userId) and
                             (LogDateMediaRecordsTable.mediaId eq mediaId)
-                    }.singleOrNull() ?: return@transaction
+                    }.forUpdate()
+                    .singleOrNull()
+            if (existing == null) {
+                LogDateMediaRecordsTable.insert {
+                    it[LogDateMediaRecordsTable.userId] = userId
+                    it[LogDateMediaRecordsTable.mediaId] = mediaId
+                    it[contentId] = ""
+                    it[fileName] = ""
+                    it[mimeType] = "application/octet-stream"
+                    it[sizeBytes] = 0
+                    it[data] = byteArrayOf()
+                    it[createdAt] = deletedAt
+                    it[version] = nextLogDateMediaVersion(null)
+                    it[deviceId] = DeviceId.UNKNOWN.value
+                    it[deleted] = true
+                    it[LogDateMediaRecordsTable.deletedAt] = deletedAt
+                }
+                return@transaction
+            }
             LogDateMediaRecordsTable.update({
                 (LogDateMediaRecordsTable.userId eq userId) and
                     (LogDateMediaRecordsTable.mediaId eq mediaId)
             }) {
                 it[deleted] = true
-                it[LogDateMediaRecordsTable.deletedAt] = deletedAt
+                it[LogDateMediaRecordsTable.deletedAt] = maxOf(deletedAt, existing[LogDateMediaRecordsTable.deletedAt] ?: deletedAt)
                 it[version] = nextLogDateMediaVersion(existing[LogDateMediaRecordsTable.version])
             }
         }

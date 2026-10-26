@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,6 +54,7 @@ import logdate.client.feature.core.generated.resources.sync_feedback_sign_in_act
 import logdate.client.feature.core.generated.resources.sync_feedback_started
 import logdate.client.feature.core.generated.resources.sync_feedback_succeeded
 import logdate.client.feature.core.generated.resources.sync_feedback_up_to_date
+import logdate.client.feature.core.generated.resources.sync_recovery_review
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -71,6 +73,7 @@ fun SyncSettingsScreen(
     onNavigateToSignIn: () -> Unit = {},
     onNavigateToRecoveryPhrase: () -> Unit = {},
     onRecoverJournalMerge: (JournalMergeOperation) -> Unit = {},
+    onReviewSavedEdits: () -> Unit = {},
     viewModel: DataSettingsViewModel = koinViewModel(),
     mergeJournals: MergeJournalsUseCase = koinInject(),
 ) {
@@ -109,13 +112,15 @@ fun SyncSettingsScreen(
                 )
             }
 
-            SyncFeedback.Started ->
+            SyncFeedback.Started -> {
                 snackbarHostState.showSnackbar(getString(Res.string.sync_feedback_started))
+            }
 
-            is SyncFeedback.Failed ->
+            is SyncFeedback.Failed -> {
                 snackbarHostState.showSnackbar(
                     getString(Res.string.sync_feedback_failed, feedback.message),
                 )
+            }
         }
         viewModel.consumeSyncFeedback()
     }
@@ -135,6 +140,7 @@ fun SyncSettingsScreen(
 
     SyncSettingsContent(
         onBack = onBack,
+        onReviewSavedEdits = onReviewSavedEdits,
         mergeIssues = mergeIssues,
         onRecoverJournalMerge = onRecoverJournalMerge,
         syncStatus = uiState.syncStatus,
@@ -170,6 +176,7 @@ fun SyncSettingsContent(
     modifier: Modifier = Modifier,
     mergeIssues: List<JournalMergeOperation> = emptyList(),
     onRecoverJournalMerge: (JournalMergeOperation) -> Unit = {},
+    onReviewSavedEdits: () -> Unit = {},
 ) {
     SettingsScaffold(
         title = stringResource(Res.string.sync_and_backup),
@@ -177,6 +184,9 @@ fun SyncSettingsContent(
         snackbarHostState = snackbarHostState,
         modifier = modifier,
     ) {
+        item {
+            TextButton(onClick = onReviewSavedEdits) { Text(stringResource(Res.string.sync_recovery_review)) }
+        }
         item {
             if (!isAuthenticated) {
                 SyncPromoContent(
@@ -189,6 +199,7 @@ fun SyncSettingsContent(
                     syncStatus = syncStatus,
                     cloudArchiveStatus = cloudArchiveStatus,
                     onSyncUsingMobileData = onSyncUsingMobileData,
+                    onArchiveBackupNow = onArchiveBackupNow,
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 )
             }

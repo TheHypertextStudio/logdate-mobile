@@ -59,6 +59,8 @@ internal class SyncStatusPublisher(
     private val identityRecoveryNeededStore: IdentityRecoveryNeededStore,
     private val unreadableCloudRecordStore: UnreadableCloudRecordStore,
     private val pendingRecoveryCount: suspend () -> Int = { 0 },
+    private val attentionRecoveryCount: suspend () -> Int = { 0 },
+    private val readinessGate: SyncReadinessGate = SyncReadinessGate(),
 ) {
     /**
      * Whether the last upload pass held a photo or video back for want of Wi-Fi.
@@ -145,6 +147,7 @@ internal class SyncStatusPublisher(
                 runCatching { syncMetadataService.getPendingCount() }
                     .onFailure { Napier.e("Could not read the pending upload count") }
             val recovery = runCatching { pendingRecoveryCount() }
+            val attention = runCatching { attentionRecoveryCount() }.getOrDefault(0)
             _syncStatusFlow.value =
                 SyncStatus(
                     isEnabled = authenticated && isEnabled(),
@@ -154,7 +157,7 @@ internal class SyncStatusPublisher(
                     pendingDownloads = recovery.getOrDefault(0),
                     backgroundWorkLimited = backgroundWorkLimited(),
                     isSyncing = syncStateFlow.value is SyncState.Syncing,
-                    hasErrors = lastErrorFlow.value != null || recovery.getOrDefault(0) > 0 || recovery.isFailure,
+                    hasErrors = lastErrorFlow.value != null || attention > 0 || recovery.isFailure,
                     lastError = lastErrorFlow.value,
                     pausedReason = currentPausedReason(authenticated),
                     totalForRun = runTotal,
@@ -165,8 +168,16 @@ internal class SyncStatusPublisher(
         }
 
     private suspend fun currentConflictCount(): Int =
-        runCatching { conflictStore.list().size }
-            .onFailure { Napier.e("Could not read the conflict count") }
+        runCatching {
+            val scope =
+                sessionStorage.getOriginBoundSession()?.let {
+                    app.logdate.client.sync.metadata.UploadScope(
+                        it.session.accountId,
+                        it.origin,
+                    )
+                }
+            conflictStore.list().count { !it.recovered && (it.scope == null || it.scope == scope) }
+        }.onFailure { Napier.e("Could not read the conflict count") }
             .getOrDefault(0)
 
     /**
@@ -236,15 +247,20 @@ internal class SyncStatusPublisher(
     suspend fun currentPausedReason(authenticated: Boolean): SyncPausedReason? {
         if (!authenticated) return SyncPausedReason.NOT_SIGNED_IN
         if (identityRecoveryNeededStore.isNeeded()) return SyncPausedReason.NEEDS_RECOVERY_PHRASE
+        readinessGate.reason.value?.let { return it }
         val restriction = runCatching { dataUsagePolicy.currentRestriction() }.getOrNull()
         return when (restriction) {
-            DataRestriction.OFFLINE -> SyncPausedReason.OFFLINE
-            DataRestriction.BACKGROUND_DATA_BLOCKED, DataRestriction.NONE, null ->
+            DataRestriction.OFFLINE -> {
+                SyncPausedReason.OFFLINE
+            }
+
+            DataRestriction.BACKGROUND_DATA_BLOCKED, DataRestriction.NONE, null -> {
                 // Only after something was actually held back - being on cellular with nothing
                 // waiting is not a pause, and saying so would train the user to ignore the line.
                 SyncPausedReason.MEDIA_WAITING_FOR_WIFI.takeIf {
                     mediaDeferredForNetwork && !dataUsagePolicy.currentMode().shouldSyncMedia()
                 }
+            }
         }
     }
 
@@ -265,9 +281,18 @@ internal class SyncStatusPublisher(
         e: Exception,
         operation: String,
     ): SyncResult {
+        if (e is kotlinx.coroutines.CancellationException) throw e
+        val deviceBlocked = readinessGate.pause(e)
         val error =
             SyncError(
-                type = SyncErrorType.UNKNOWN_ERROR,
+                type =
+                    if (deviceBlocked &&
+                        readinessGate.reason.value == SyncPausedReason.LOCAL_STORAGE_UNAVAILABLE
+                    ) {
+                        SyncErrorType.STORAGE_ERROR
+                    } else {
+                        SyncErrorType.UNKNOWN_ERROR
+                    },
                 message = "Synchronization failed",
             )
         lastErrorFlow.value = error

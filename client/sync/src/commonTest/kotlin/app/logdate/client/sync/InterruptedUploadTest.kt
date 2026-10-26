@@ -143,7 +143,10 @@ class InterruptedUploadTest {
             val apiClient =
                 InterruptingCloudApiClient(entry, times = 2) { CancellationException("The backup was stopped") }
 
-            repeat(3) { restartedApp(apiClient).fullSync() }
+            repeat(2) {
+                kotlin.test.assertFailsWith<CancellationException> { restartedApp(apiClient).fullSync() }
+            }
+            assertTrue(restartedApp(apiClient).fullSync().success)
 
             assertTrue(deadLetters.list().isEmpty(), "being stopped says nothing about the entry: ${deadLetters.list()}")
             assertTrue(!isQueued(entry), "the entry should have uploaded once the backup ran to the end")

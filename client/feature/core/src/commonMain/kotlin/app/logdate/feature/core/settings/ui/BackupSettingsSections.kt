@@ -66,6 +66,7 @@ internal fun SyncSettingsSection(
     cloudArchiveStatus: CloudArchiveStatus,
     isAuthenticated: Boolean,
     onSyncUsingMobileData: () -> Unit = {},
+    onArchiveBackupNow: () -> Unit = {},
     onNavigateToCloudAccountCreation: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -111,7 +112,12 @@ internal fun SyncSettingsSection(
             }
         } else {
             Column {
-                BackupStatusItem(syncStatus, cloudArchiveStatus, onSyncUsingMobileData = onSyncUsingMobileData)
+                BackupStatusItem(
+                    syncStatus,
+                    cloudArchiveStatus,
+                    onSyncUsingMobileData = onSyncUsingMobileData,
+                    onArchiveBackupNow = onArchiveBackupNow,
+                )
             }
         }
     }

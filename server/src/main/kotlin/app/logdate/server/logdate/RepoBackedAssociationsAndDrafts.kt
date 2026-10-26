@@ -27,6 +27,9 @@ internal suspend fun RepoBackedLogDateCollectionsRepository.repoUpsertAssociatio
 ): List<LogDateAssociation> {
     val repoDid = canonicalRepoDid(userId)
     if (associations.isEmpty()) return emptyList()
+    associations.forEach {
+        metadataStore.requireWritable(userId, LogDateCollectionKind.ASSOCIATION, associationRecordKey(it.journalId, it.entryId).toString())
+    }
     val recordIds = associations.map { associationRecordId(repoDid, it.journalId, it.entryId) }
     val previousRecords = repoEngine.getRecords(recordIds).getOrThrow()
 
@@ -61,10 +64,16 @@ internal suspend fun RepoBackedLogDateCollectionsRepository.repoUpsertAssociatio
                     val recordId = recordIds[index]
                     val writtenCid = writtenRecords[index].cid
                     val previous = previousRecords[index]
-                    if (previous == null) {
+                    val key = recordId.recordKey.toString()
+                    val fenced = metadataStore.deletionTimestamp(userId, LogDateCollectionKind.ASSOCIATION, key) != null
+                    if (previous == null || fenced) {
                         repoEngine.deleteRecord(recordId, swapRecord = writtenCid).getOrThrow()
                     } else {
-                        repoEngine.putRecord(recordId, previous.value, swapRecord = writtenCid).getOrThrow()
+                        val restored = repoEngine.putRecord(recordId, previous.value, swapRecord = writtenCid).getOrThrow()
+                        // A different server may have fenced this member during restoration.
+                        if (metadataStore.deletionTimestamp(userId, LogDateCollectionKind.ASSOCIATION, key) != null) {
+                            repoEngine.deleteRecord(recordId, swapRecord = restored.cid).getOrThrow()
+                        }
                     }
                 }.onFailure { compensationFailure ->
                     Napier.e(
@@ -88,17 +97,11 @@ internal suspend fun RepoBackedLogDateCollectionsRepository.repoDeleteAssociatio
 ) {
     val repoDid = canonicalRepoDid(userId)
     associations.forEach { association ->
-        val recordKey = associationRecordKey(association.journalId, association.entryId).toString()
-        val existing = metadataStore.metadata(userId, LogDateCollectionKind.ASSOCIATION, recordKey) ?: return@forEach
-        val deleted = repoEngine.deleteRecord(associationRecordId(repoDid, association.journalId, association.entryId)).getOrThrow()
-        if (!deleted) {
-            Napier.w("Expected canonical repo association $recordKey for user $userId before tombstoning it")
-        }
-        metadataStore.delete(
+        deleteCanonicalRecord(
             userId = userId,
             repoDid = repoDid,
             collection = LogDateCollectionKind.ASSOCIATION,
-            recordKey = existing.recordKey,
+            recordId = associationRecordId(repoDid, association.journalId, association.entryId),
             deletedAt = deletedAt,
         )
     }
@@ -147,6 +150,7 @@ internal suspend fun RepoBackedLogDateCollectionsRepository.repoUpsertDraft(
     userId: UUID,
     draft: LogDateDraft,
 ): LogDateDraft {
+    metadataStore.requireWritable(userId, LogDateCollectionKind.DRAFT, draft.id)
     val repoDid = canonicalRepoDid(userId)
     val recordId = draftRecordId(repoDid, draft.id)
     val prior = repoEngine.getRecord(recordId).getOrThrow()
@@ -175,13 +179,7 @@ internal suspend fun RepoBackedLogDateCollectionsRepository.repoUpsertDraft(
         }
         throw failure
     }
-    val metadata =
-        metadataStore.upsert(
-            userId = userId,
-            repoDid = repoDid,
-            collection = LogDateCollectionKind.DRAFT,
-            recordKey = draft.id,
-        )
+    val metadata = indexWrittenRecord(userId, repoDid, LogDateCollectionKind.DRAFT, recordId, result.getOrThrow())
     return draft.copy(version = metadata.version, lastUpdated = System.currentTimeMillis())
 }
 
@@ -203,14 +201,12 @@ internal suspend fun RepoBackedLogDateCollectionsRepository.repoDeleteDraft(
     id: String,
     deletedAt: Long,
 ) {
-    val existing = metadataStore.metadata(userId, LogDateCollectionKind.DRAFT, id) ?: return
     val repoDid = canonicalRepoDid(userId)
-    repoEngine.deleteRecord(draftRecordId(repoDid, id)).getOrThrow()
-    metadataStore.delete(
+    deleteCanonicalRecord(
         userId = userId,
         repoDid = repoDid,
         collection = LogDateCollectionKind.DRAFT,
-        recordKey = existing.recordKey,
+        recordId = draftRecordId(repoDid, id),
         deletedAt = deletedAt,
     )
 }

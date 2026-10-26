@@ -110,6 +110,7 @@ class DefaultSyncManager(
     internal val diagnostics: app.logdate.client.sync.diagnostics.SyncDiagnosticRecorder? = null,
     internal val diagnosticSource: () -> app.logdate.client.sync.diagnostics.DiagnosticSource? = { null },
     private val mediaReferences: StoredMediaReferences = StoredMediaReferences.Unchanged,
+    val readinessGate: SyncReadinessGate = SyncReadinessGate(),
 ) : SyncManager {
     // Thread-safe state management using StateFlow and Mutex
     internal val syncStateFlow = MutableStateFlow<SyncState>(SyncState.Idle)
@@ -117,6 +118,35 @@ class DefaultSyncManager(
     internal val syncMutex = Mutex()
 
     internal var isEnabled = true
+    internal val remoteRefreshSchedule = RemoteSyncRefreshSchedule()
+
+    internal fun hasRemoteRefreshDue(): Boolean {
+        if (!isEnabled || !readinessGate.canProbe()) return false
+        val bound = sessionStorage.getOriginBoundSession() ?: return false
+        return remoteRefreshSchedule.isDue(
+            app.logdate.client.sync.metadata
+                .UploadScope(bound.session.accountId, bound.origin),
+        )
+    }
+
+    val deletionRecovery =
+        app.logdate.client.sync.conflict.DeletionConflictRecovery(
+            conflictStore,
+            journalNotesRepository,
+            journalRepository,
+            journalContentRepository,
+            transactionManager,
+            {
+                sessionStorage.getOriginBoundSession()?.let {
+                    app.logdate.client.sync.metadata
+                        .UploadScope(it.session.accountId, it.origin)
+                }
+            },
+            mediaManager = mediaManager,
+            mediaRefs = mediaSyncRefStore,
+            metadata = syncMetadataService,
+            mediaFiles = mediaReferences as? app.logdate.client.media.storage.MediaFileResolver,
+        )
 
     internal val statusPublisher =
         SyncStatusPublisher(
@@ -134,6 +164,8 @@ class DefaultSyncManager(
             identityRecoveryNeededStore = identityRecoveryNeededStore,
             unreadableCloudRecordStore = unreadableCloudRecordStore,
             pendingRecoveryCount = { downloadInbox?.count() ?: 0 },
+            attentionRecoveryCount = { downloadInbox?.needingAttentionCount() ?: 0 },
+            readinessGate = readinessGate,
         )
     override val syncStatusFlow: StateFlow<SyncStatus> = statusPublisher.syncStatusFlow
 
@@ -142,6 +174,7 @@ class DefaultSyncManager(
             transactionManager = transactionManager,
             syncMetadataService = syncMetadataService,
             conflictStore = conflictStore,
+            retainDeletedEdit = deletionRecovery::retain,
             mapCloudApiError = statusPublisher::handleCloudApiError,
             mapException = statusPublisher::handleSyncException,
             unreadableCloudRecordStore = unreadableCloudRecordStore,
@@ -161,11 +194,7 @@ class DefaultSyncManager(
         if (startNow) {
             syncScope.launch {
                 releaseUploadBackoff()
-                do {
-                    val result = fullSync()
-                    if (!result.success || !result.hasMorePending) break
-                    kotlinx.coroutines.delay(1_000)
-                } while (true)
+                SyncPassLoop(runPass = { fullSync() }).runUntilSettled()
             }
         }
     }
@@ -174,7 +203,12 @@ class DefaultSyncManager(
 
     override suspend fun downloadRemoteChanges(): SyncResult = runRemoteDownload()
 
-    override suspend fun fullSync(): SyncResult = runCompleteSync()
+    override suspend fun fullSync(): SyncResult =
+        try {
+            runCompleteSync()
+        } catch (e: Exception) {
+            statusPublisher.handleSyncException(e, "Sync failed")
+        }
 
     override suspend fun <T> whilePaused(block: suspend () -> T): T = syncMutex.withLock { block() }
 
@@ -240,25 +274,34 @@ class DefaultSyncManager(
 
     suspend fun isLocationHistorySyncEnabled(): Boolean = locationHistorySyncEngine?.isEnabled() == true
 
-    internal val legacyBackfill =
-        LegacyLocalBackfill(
+    /** Work a periodic cycle would actually do now. Backed-off and parked rows do not count. */
+    suspend fun hasDueWork(): Boolean {
+        if (!readinessGate.canProbe()) return false
+        for (type in EntityType.entries) {
+            if (syncMetadataService.getPendingUploads(type).any { retryCoordinator.shouldAttempt(type, it) }) return true
+        }
+        if ((downloadInbox?.dueCount() ?: 0) > 0) return true
+        val accessToken = sessionStorage.getSession()?.accessToken ?: return false
+        return locationHistorySyncEngine?.hasPendingUploads(accessToken) == true
+    }
+
+    private val recovery by lazy {
+        SyncRecoveryCoordinator(
             downloadInbox,
             firstSyncEnqueueStore,
             journalRepository,
             journalNotesRepository,
             journalContentRepository,
             syncMetadataService,
+            identityKeyManager,
+            mediaTransfer,
+            mediaSyncRefStore,
+            transactionManager,
         )
-
-    internal suspend fun auditLegacyRecordsIfNeeded() {
-        val inbox = downloadInbox ?: return
-        if (identityKeyManager?.hasIdentityKey() != true) return
-        val selected = inbox.currentScope()
-        if (firstSyncEnqueueStore.hasAuditedLegacyScope(selected.owner, selected.origin)) return
-        inbox.rewindForLegacyAudit(selected)
-        check(selected == inbox.currentScope()) { "Download scope changed" }
-        firstSyncEnqueueStore.markAuditedLegacyScope(selected.owner, selected.origin)
     }
+    internal val legacyBackfill get() = recovery.legacyBackfill
+
+    internal suspend fun auditLegacyRecordsIfNeeded() = recovery.auditLegacyRecordsIfNeeded()
 
     override suspend fun getSyncStatus(): SyncStatus {
         statusPublisher.publish()
@@ -281,6 +324,7 @@ class DefaultSyncManager(
     /** Reconsider transient work after connectivity returns or an immediate backup is requested. */
     suspend fun releaseUploadBackoff() {
         syncMutex.withLock {
+            readinessGate.allowProbe(manual = true)
             diagnostics?.record(SyncDiagnosticEvent(DiagnosticPhase.SCHEDULING, DiagnosticOutcome.QUEUED))
             retryCoordinator.releaseBackoff()
             downloadInbox?.release()
@@ -350,30 +394,7 @@ class DefaultSyncManager(
     internal suspend fun recoverMedia(
         accessToken: String,
         entityType: EntityType,
-    ) {
-        val inbox = downloadInbox ?: return
-        when (entityType) {
-            EntityType.NOTE ->
-                app.logdate.client.sync.recovery
-                    .SyncMediaRecovery(
-                        inbox,
-                        journalNotesRepository,
-                        mediaTransfer,
-                        mediaSyncRefStore,
-                        transactionManager,
-                    ).recover(accessToken)
-            EntityType.DRAFT ->
-                app.logdate.client.sync.recovery
-                    .SyncDraftMediaRecovery(
-                        inbox,
-                        journalRepository,
-                        mediaTransfer,
-                        mediaSyncRefStore,
-                        transactionManager,
-                    ).recover(accessToken)
-            else -> Unit
-        }
-    }
+    ) = recovery.recoverMedia(accessToken, entityType)
 
     private val mediaTransfer =
         SyncMediaTransfer(
@@ -390,6 +411,7 @@ class DefaultSyncManager(
             deadLetterStore = deadLetterStore,
             backoff = backoff,
             recordConflict = downloadEngine::recordConflict,
+            preserveDeletedEdit = downloadEngine::preserveDeletionConflict,
             diagnosticSource = diagnosticSource,
             diagnostics = { event, source -> diagnostics?.record(event, source?.scope, source?.epoch) },
         )

@@ -21,13 +21,14 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlin.io.path.createTempDirectory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.io.path.createTempDirectory
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
@@ -72,6 +73,16 @@ class AudioSyncFlowTest {
         coEvery { healthSnapshotDao.getAfter(any()) } returns emptyList()
         coEvery { retryScheduleStore.nextAttemptAt(any(), any()) } returns null
         coEvery { deadLetterStore.list() } returns emptyList()
+        coEvery { syncMetadataService.incrementRetryIfCurrent(any(), any()) } coAnswers {
+            val pending = secondArg<PendingUpload>()
+            syncMetadataService.incrementRetryCount(pending.entityId, firstArg())
+            true
+        }
+        coEvery { syncMetadataService.settleIfCurrent(any(), any(), any(), any()) } coAnswers {
+            val pending = secondArg<PendingUpload>()
+            syncMetadataService.markAsSynced(pending.entityId, firstArg(), thirdArg(), arg(3))
+            true
+        }
 
         syncManager =
             WearDataLayerSyncManager(
@@ -86,6 +97,7 @@ class AudioSyncFlowTest {
                 journalDataMapper = JournalDataMapper(),
                 associationDataMapper = AssociationDataMapper(),
                 healthSnapshotDataMapper = HealthSnapshotDataMapper(),
+                deliveryStore = WearAudioDeliveryStore(),
                 mediaFiles = MediaFileResolver(AndroidMediaDirectories(createTempDirectory().toFile())),
             )
     }
@@ -309,12 +321,10 @@ class AudioSyncFlowTest {
 
             val result = syncManager.syncContent()
 
-            // Should not fail — just skip the missing note
-            assertTrue(result.success)
+            // An unavailable record remains pending instead of being reported as delivered.
+            assertFalse(result.success)
             assertEquals(0, result.uploadedItems)
-
-            // Should clear the orphaned outbox entry
-            coVerify {
+            coVerify(exactly = 0) {
                 syncMetadataService.markAsSynced(noteId.toString(), EntityType.NOTE, any(), any())
             }
 
