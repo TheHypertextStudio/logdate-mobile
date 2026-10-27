@@ -151,7 +151,10 @@ class DeletionRecoveryScreenTest {
         val pixels = bitmap.toPixelMap()
         val image = BufferedImage(bitmap.width, bitmap.height, BufferedImage.TYPE_INT_ARGB)
         for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) image.setRGB(x, y, pixels[x, y].toArgb())
-        val target = File("/Volumes/WillieDrive/CodexScratch/logdate-sync-launch-20261026-client/renders/$name.png")
+        val renderRoot =
+            System.getenv("DISK_JANITOR_ARTIFACT_ROOT")?.let { File(it, "renders") }
+                ?: File("build/reports/sync-renders")
+        val target = File(renderRoot, "$name.png")
         target.parentFile.mkdirs()
         ImageIO.write(image, "png", target)
         onNodeWithText("Save as a new item").performScrollTo().assertExists()

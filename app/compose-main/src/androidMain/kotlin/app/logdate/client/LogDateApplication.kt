@@ -79,14 +79,7 @@ class LogdateApplication :
 
         installStrictModeIfDebuggable()
 
-        // Napier's DebugAntilog derives its tag by walking the stack trace at a fixed depth. R8
-        // inlines frames away, so in a minified build that index runs off the end and every
-        // Napier call throws ArrayIndexOutOfBoundsException - crashing the app from inside its
-        // own error logging. LogcatAntilog does no stack introspection, so it is safe minified,
-        // and it keeps warnings and errors in release builds: without them a failing release
-        // install produces no on-device output at all.
-        Napier.base(LogcatAntilog(isDebuggable = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0))
-        Napier.base(CrashlyticsAntilog())
+        initializeLogging()
         initializeKoin()
         Napier.i("Application onCreate: Koin initialized", tag = APP_STARTUP_TAG)
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
@@ -141,6 +134,17 @@ class LogdateApplication :
         }.onFailure { error ->
             Napier.w("Failed to initialize dynamic shortcut scheduling", error)
         }
+    }
+
+    private fun initializeLogging() {
+        // Napier's DebugAntilog derives its tag by walking the stack trace at a fixed depth. R8
+        // inlines frames away, so in a minified build that index runs off the end and every
+        // Napier call throws ArrayIndexOutOfBoundsException - crashing the app from inside its
+        // own error logging. LogcatAntilog does no stack introspection, so it is safe minified,
+        // and it keeps warnings and errors in release builds: without them a failing release
+        // install produces no on-device output at all.
+        Napier.base(LogcatAntilog(isDebuggable = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0))
+        Napier.base(CrashlyticsAntilog())
     }
 
     /**
