@@ -1,5 +1,7 @@
 package app.logdate.integration.e2e.harness
 
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -12,6 +14,7 @@ import java.net.ServerSocket
 import java.net.URI
 import java.sql.DriverManager
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
@@ -34,6 +37,21 @@ class ServerClientHarnessLifecycleTest {
                 released.reuseAddress = true
                 released.bind(InetSocketAddress("127.0.0.1", assignedPort))
                 assertTrue(released.isBound)
+            }
+        }
+
+    @Test
+    fun `automatic allocation remains reachable when a competing listener occupies a released probe`() =
+        runBlocking {
+            ServerSocket().use { competing ->
+                competing.reuseAddress = false
+                withServerClientHarness(beforeServerStart = { port -> competing.bind(InetSocketAddress("127.0.0.1", port)) }) {
+                    val boundPort = URI(baseUrl).port
+                    assertTrue(boundPort > 0 && boundPort != competing.localPort)
+                    withTimeout(10_000) {
+                        assertEquals(HttpStatusCode.OK, httpClient.get("$baseUrl/server/info").status)
+                    }
+                }
             }
         }
 

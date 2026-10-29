@@ -38,6 +38,7 @@ data class ServerClientE2EHarness(
 suspend fun <T> withServerClientHarness(
     serverPort: Int? = null,
     beforeRequest: suspend (ApplicationCall) -> Unit = {},
+    beforeServerStart: (Int) -> Unit = {},
     block: suspend ServerClientE2EHarness.() -> T,
 ): T =
     withHarnessDatabase { databaseAvailable ->
@@ -49,6 +50,7 @@ suspend fun <T> withServerClientHarness(
             }
 
         require(serverPort == null || serverPort in 1..65535) { "serverPort must be between 1 and 65535" }
+        val port = serverPort ?: 0
         val host = "127.0.0.1"
         val engine =
             embeddedServer(Netty, host = host, port = serverPort ?: 0) {
@@ -58,15 +60,16 @@ suspend fun <T> withServerClientHarness(
 
         var harness: ServerClientE2EHarness? = null
         try {
+            beforeServerStart(port)
             engine.start(wait = false)
-            val port =
+            val boundPort =
                 engine.engine
                     .resolvedConnectors()
                     .single()
                     .port
-            waitForServerStartup(host, port)
+            waitForServerStartup(host, boundPort)
 
-            val configRepository = DefaultLogDateConfigRepository(initialBackendUrl = "http://$host:$port")
+            val configRepository = DefaultLogDateConfigRepository(initialBackendUrl = "http://$host:$boundPort")
             val baseUrl = configRepository.getCurrentApiBaseUrl()
             val httpClient =
                 HttpClient(OkHttp) {
