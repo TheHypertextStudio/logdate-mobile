@@ -407,6 +407,7 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                     },
                 oauthGrantRevoker = get<OAuthAuthorizationService>(),
                 statusEvents = getOrNull<AccountStatusEvents>(),
+                connectionCleanup = getOrNull(),
             )
         }
 

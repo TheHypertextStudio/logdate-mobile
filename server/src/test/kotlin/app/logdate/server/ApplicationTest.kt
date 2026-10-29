@@ -1,5 +1,6 @@
 package app.logdate.server
 
+import app.logdate.server.routes.serverMetaRoutes
 import app.logdate.shared.model.ServerCapability
 import app.logdate.shared.model.ServerInfoResponse
 import io.ktor.client.request.get
@@ -9,6 +10,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.server.application.Application
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -69,11 +72,7 @@ class ApplicationTest {
     fun `health omits internal details without token`() =
         testApplication {
             application {
-                module(
-                    isDatabaseAvailable = true,
-                    healthInternalToken = "shh-secret",
-                    releaseVersion = HEALTH_RELEASE,
-                )
+                healthProbe("shh-secret")
             }
 
             client.get("/health").apply {
@@ -92,11 +91,7 @@ class ApplicationTest {
     fun `health omits internal details with wrong token`() =
         testApplication {
             application {
-                module(
-                    isDatabaseAvailable = true,
-                    healthInternalToken = "shh-secret",
-                    releaseVersion = HEALTH_RELEASE,
-                )
+                healthProbe("shh-secret")
             }
 
             client
@@ -113,11 +108,7 @@ class ApplicationTest {
     fun `health omits internal details when token unconfigured`() =
         testApplication {
             application {
-                module(
-                    isDatabaseAvailable = true,
-                    healthInternalToken = "",
-                    releaseVersion = HEALTH_RELEASE,
-                )
+                healthProbe("")
             }
 
             // No token configured = even a header-bearing caller stays public.
@@ -135,11 +126,7 @@ class ApplicationTest {
     fun `health includes db connected with correct token`() =
         testApplication {
             application {
-                module(
-                    isDatabaseAvailable = true,
-                    healthInternalToken = "shh-secret",
-                    releaseVersion = HEALTH_RELEASE,
-                )
+                healthProbe("shh-secret")
             }
 
             client
@@ -295,6 +282,11 @@ class ApplicationTest {
                 )
             }
         }
+
+    private fun Application.healthProbe(token: String) {
+        installJsonSerialization()
+        routing { serverMetaRoutes(isDatabaseAvailable = true, healthInternalToken = token, releaseVersion = HEALTH_RELEASE) }
+    }
 
     companion object {
         private const val HEALTH_RELEASE = "logdate-server@0123456789abcdef0123456789abcdef01234567"
