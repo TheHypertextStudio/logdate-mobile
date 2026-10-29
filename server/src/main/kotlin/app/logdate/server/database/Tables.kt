@@ -1,5 +1,6 @@
 package app.logdate.server.database
 
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
@@ -17,7 +18,7 @@ object AccountsTable : Table("accounts") {
     val id = javaUUID("id").autoGenerate()
     val username = varchar("username", 50).uniqueIndex()
     val displayName = varchar("display_name", 100)
-    val did = varchar("did", 255).nullable().uniqueIndex()
+    val did = varchar("did", 2048).nullable().uniqueIndex()
     val handle = varchar("handle", 255).nullable().uniqueIndex()
     val signingKeyPublic = text("signing_key_public").nullable()
     val plcRecoveryDidKey = text("plc_recovery_did_key").nullable()
@@ -33,6 +34,8 @@ object AccountsTable : Table("accounts") {
 
     /** The [app.logdate.shared.model.AccountStorageMode.wireValue] of how the account's data is kept. */
     val storageMode = varchar("storage_mode", 32).default(AccountStorageMode.LEGACY.wireValue)
+
+    val identityKind = varchar("identity_kind", 32).default(AccountIdentityKind.HOSTED.wireValue)
 
     /** The [app.logdate.server.auth.AccountModeration.wireValue] when operators suspended or took down the account; null otherwise. */
     val moderation = varchar("moderation", 16).nullable()
@@ -215,7 +218,7 @@ object AccountIdentitiesTable : Table("account_identities") {
     val id = javaUUID("id").autoGenerate()
     val accountId = javaUUID("account_id").references(AccountsTable.id)
     val provider = varchar("provider", 32)
-    val providerSubject = varchar("provider_subject", 255)
+    val providerSubject = varchar("provider_subject", 2048)
     val email = varchar("email", 255).nullable()
     val emailVerified = bool("email_verified").default(false)
     val createdAt = timestamp("created_at")
