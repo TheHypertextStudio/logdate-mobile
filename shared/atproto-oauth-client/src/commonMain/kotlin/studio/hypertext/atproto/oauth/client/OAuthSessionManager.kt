@@ -43,6 +43,7 @@ internal class OAuthSessionManager(
     private val sessionLock: OAuthSessionLock,
     private val clock: Clock,
     private val strictDpopNonces: Boolean = false,
+    private val requireAuthorizationAfterPdsChange: Boolean = false,
 ) {
     suspend fun session(
         did: AtprotoDid,
@@ -77,7 +78,30 @@ internal class OAuthSessionManager(
         did: AtprotoDid,
         exception: OAuthSessionEndedException,
     ): Nothing {
-        sessionStore.delete(did)
+        val reason =
+            when (exception) {
+                is OAuthSessionExpiredException -> OAuthSessionEndReason.EXPIRED
+                is OAuthSessionRejectedException -> OAuthSessionEndReason.REJECTED
+                is OAuthSessionAuthorityChangedException -> OAuthSessionEndReason.AUTHORITY_CHANGED
+                is OAuthSessionRevokedException ->
+                    if (exception.cause is OAuthIssuerMismatchException) {
+                        OAuthSessionEndReason.AUTHORITY_CHANGED
+                    } else {
+                        OAuthSessionEndReason.REVOKED
+                    }
+            }
+        sessionStore.delete(did, reason)
+        throw exception
+    }
+
+    /** A delayed response can end only the grant it actually rejected, never a newer callback. */
+    suspend fun endAfterRejection(
+        rejected: OAuthStoredSession,
+        exception: OAuthSessionEndedException,
+    ): Nothing {
+        sessionLock.withLock(rejected.did) {
+            if (sessionStore.get(rejected.did) == rejected) end(rejected.did, exception)
+        }
         throw exception
     }
 
@@ -89,36 +113,54 @@ internal class OAuthSessionManager(
         sessionLock.withLock(did) { signOutLocked(did) }
     }
 
+    suspend fun signOutIf(
+        did: AtprotoDid,
+        beforeRevoke: suspend () -> Boolean,
+        removeLocal: suspend () -> Unit,
+    ): OAuthConditionalRevocation =
+        sessionLock.withLock(did) {
+            if (!beforeRevoke()) OAuthConditionalRevocation.SKIPPED else signOutLocked(did, removeLocal)
+        }
+
     /**
      * [signOut] for a caller that already holds the session lock for [did].
      */
-    suspend fun signOutLocked(did: AtprotoDid) {
-        val stored = sessionStore.get(did) ?: return
+    suspend fun signOutLocked(
+        did: AtprotoDid,
+        removeLocal: (suspend () -> Unit)? = null,
+    ): OAuthConditionalRevocation {
+        val complete = removeLocal ?: { sessionStore.delete(did) }
+        var present = false
         val failure =
             try {
-                agentFor(stored, resolver.authorizationServerMetadata(stored.issuer))
-                    .revoke(stored.refreshToken ?: stored.accessToken)
+                val stored = sessionStore.get(did)
+                if (stored != null) {
+                    present = true
+                    agentFor(stored, resolver.authorizationServerMetadata(stored.issuer))
+                        .revoke(stored.refreshToken ?: stored.accessToken)
+                }
                 null
             } catch (exception: CancellationException) {
-                withContext(NonCancellable) { deleteKeeping(did, exception) }
+                withContext(NonCancellable) { completeKeeping(complete, exception) }
                 throw exception
             } catch (exception: Exception) {
                 exception
             }
-        deleteKeeping(did, failure)
+        if (present || failure != null || removeLocal != null) completeKeeping(complete, failure)
         if (failure != null) throw OAuthRevocationException(did, failure)
+        return if (present) OAuthConditionalRevocation.CONFIRMED else OAuthConditionalRevocation.NO_SESSION
     }
 
     /**
      * Removes the session for [did]. If that fails, [earlier] is attached to the delete failure as
      * suppressed, so neither is lost.
      */
-    private suspend fun deleteKeeping(
-        did: AtprotoDid,
+    private suspend fun completeKeeping(
+        complete: suspend () -> Unit,
         earlier: Throwable?,
     ) {
         try {
-            sessionStore.delete(did)
+            complete()
         } catch (exception: Exception) {
             earlier?.let(exception::addSuppressed)
             throw exception
@@ -175,6 +217,14 @@ internal class OAuthSessionManager(
                 )
 
         val (pdsUrl, metadata) = resolver.resolveForDid(did)
+        if (requireAuthorizationAfterPdsChange && (pdsUrl != stored.pdsUrl || metadata.issuer != stored.issuer)) {
+            val mismatch = if (metadata.issuer != stored.issuer) OAuthIssuerMismatchException(stored.issuer, metadata.issuer) else null
+            val ended = OAuthSessionAuthorityChangedException(did, mismatch)
+            revokeQuietly(ended) {
+                agentFor(resolver.authorizationServerMetadata(stored.issuer), stored.dpopKey, clientKey).revoke(refreshToken)
+            }
+            end(did, ended)
+        }
         if (metadata.issuer != stored.issuer) {
             val mismatch = OAuthIssuerMismatchException(stored.issuer, metadata.issuer)
             val ended = OAuthSessionRevokedException(did, "the account's authorization server changed", mismatch)
@@ -196,6 +246,12 @@ internal class OAuthSessionManager(
         if (tokens.sub != did.toString()) {
             val mismatch = OAuthSubjectMismatchException(did, tokens.sub)
             val ended = OAuthSessionRevokedException(did, "the refreshed tokens belong to ${tokens.sub}", mismatch)
+            revokeQuietly(ended) { agent.revoke(tokens.refreshToken ?: tokens.accessToken) }
+            end(did, ended)
+        }
+
+        if (!scopesAreSubset(tokens.scope, stored.scope)) {
+            val ended = OAuthSessionRevokedException(did, "the authorization server expanded the granted permissions")
             revokeQuietly(ended) { agent.revoke(tokens.refreshToken ?: tokens.accessToken) }
             end(did, ended)
         }

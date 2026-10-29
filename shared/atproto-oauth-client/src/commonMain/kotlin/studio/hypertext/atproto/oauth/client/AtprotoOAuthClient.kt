@@ -58,6 +58,20 @@ public data class OAuthCallbackResult(
 )
 
 /**
+ * A verified provider identity, before any stored session is replaced.
+ *
+ * [appState] is the application binding from the pending authorization, never a callback parameter.
+ * This value carries no provider tokens. Accepting this identity does not assert that retaining a
+ * provider session will succeed afterward.
+ */
+public data class OAuthVerifiedIdentity(
+    val did: AtprotoDid,
+    val appState: String?,
+) {
+    override fun toString(): String = "OAuthVerifiedIdentity(did=$did)"
+}
+
+/**
  * A confidential AT Protocol OAuth client: it signs people in with accounts hosted anywhere in
  * the Atmosphere and makes DPoP-authenticated requests to their data servers.
  *
@@ -96,6 +110,8 @@ public data class OAuthCallbackResult(
  * @param strictDpopNonces Refuse an authorization server whose pushed authorization response has
  *   no `DPoP-Nonce` header. The AT Protocol requires servers to issue nonces, but development
  *   servers often run without them, so this is off by default, as in the reference client.
+ * @param requireAuthorizationAfterPdsChange Require authorization again after a verified PDS change,
+ *   including one that retains its issuer. Off by default to preserve automatic same-issuer migration.
  */
 public class AtprotoOAuthClient(
     public val config: OAuthClientConfig,
@@ -109,6 +125,7 @@ public class AtprotoOAuthClient(
     allowHttp: Boolean = false,
     private val stateLifetime: Duration = 1.hours,
     strictDpopNonces: Boolean = false,
+    private val requireAuthorizationAfterPdsChange: Boolean = false,
 ) : AutoCloseable {
     private val protocolClient = protocolHttpClient(httpClient)
 
@@ -130,6 +147,7 @@ public class AtprotoOAuthClient(
             sessionLock = sessionLock,
             clock = clock,
             strictDpopNonces = strictDpopNonces,
+            requireAuthorizationAfterPdsChange = requireAuthorizationAfterPdsChange,
         )
     private val dataServer = DataServerHttp(httpClient, manager, crypto, nonces, clock)
 
@@ -201,6 +219,7 @@ public class AtprotoOAuthClient(
                 expectedDid = resolved.identity?.did,
                 appState = options.appState,
                 createdAt = createdAt,
+                requestedScope = requestedScopes.joinToString(" "),
             ),
             expiresAt = createdAt + stateLifetime,
         )
@@ -252,7 +271,21 @@ public class AtprotoOAuthClient(
      * @throws OAuthClientKeyRemovedException if the client key that started the sign-in has since
      *   been removed from the configuration.
      */
-    public suspend fun callback(parameters: Map<String, String>): OAuthCallbackResult {
+    public suspend fun callback(parameters: Map<String, String>): OAuthCallbackResult = callback(parameters) { }
+
+    /**
+     * Completes a callback only after [acceptIdentity] accepts its verified identity.
+     *
+     * The hook runs after issuer, scope and subject verification, under the DID's session lock,
+     * before revoking or replacing an existing session. Throwing rejects and revokes only the new
+     * grant. Applications can reject expired app attempts here without disturbing a prior login.
+     * An accepted identity proof is independent of later provider-session persistence: the hook's
+     * own completed writes can survive a later storage failure or cancellation.
+     */
+    public suspend fun callback(
+        parameters: Map<String, String>,
+        acceptIdentity: suspend (OAuthVerifiedIdentity) -> Unit,
+    ): OAuthCallbackResult {
         val (pending, code) = takePendingRequest(parameters)
 
         val metadata = resolver.authorizationServerMetadata(pending.issuer)
@@ -263,6 +296,9 @@ public class AtprotoOAuthClient(
 
         val (did, pdsUrl) =
             try {
+                if (!scopesAreSubset(tokens.scope, pending.requestedScope ?: config.scope)) {
+                    throw OAuthInvalidTokenResponseException("the granted permissions exceed the authorization request")
+                }
                 verifySubject(tokens.sub, pending)
             } catch (exception: Exception) {
                 if (exception is CancellationException) throw exception
@@ -286,6 +322,14 @@ public class AtprotoOAuthClient(
         // Under the session lock, so a concurrent refresh of the old session cannot overwrite the new one.
         val previousFailure =
             manager.withLock(did) {
+                try {
+                    acceptIdentity(OAuthVerifiedIdentity(did, pending.appState))
+                } catch (exception: Exception) {
+                    withContext(NonCancellable) {
+                        revokeQuietlyInto(exception, agent, tokens.refreshToken ?: tokens.accessToken)
+                    }
+                    throw exception
+                }
                 val failure = revokePreviousLocked(did)
                 saveNewSession(agent, session)
                 failure
@@ -321,6 +365,13 @@ public class AtprotoOAuthClient(
     public suspend fun revoke(did: AtprotoDid) {
         manager.signOut(did)
     }
+
+    /** Conditionally ends a session under its existing lock, with caller-owned durable local completion. */
+    public suspend fun revokeIf(
+        did: AtprotoDid,
+        beforeRevoke: suspend () -> Boolean,
+        removeLocal: suspend () -> Unit,
+    ): OAuthConditionalRevocation = manager.signOutIf(did, beforeRevoke, removeLocal)
 
     /**
      * Checks the callback parameters, consumes the matching pending request, and returns it with

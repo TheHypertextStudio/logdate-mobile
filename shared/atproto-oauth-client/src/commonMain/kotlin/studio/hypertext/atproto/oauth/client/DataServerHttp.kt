@@ -72,7 +72,10 @@ internal class DataServerHttp(
                     requireDataServerOrigin(did, request, session)
                     response = sendWithNonceRetry()
                     if (response.isDpopError("invalid_token")) {
-                        manager.end(did, OAuthSessionRevokedException(did, "the data server rejected a freshly renewed access token"))
+                        manager.endAfterRejection(
+                            session,
+                            OAuthSessionRevokedException(did, "the data server rejected a freshly renewed access token"),
+                        )
                     }
                 }
                 response.call

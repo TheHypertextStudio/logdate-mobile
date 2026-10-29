@@ -36,6 +36,8 @@ internal class OAuthTestHarness(
         pendingStore: OAuthStateStore = stateStore,
         httpClient: HttpClient = atmosphere.httpClient,
         sessions: OAuthSessionStore = sessionStore,
+        requireAuthorizationAfterPdsChange: Boolean = false,
+        sessionLock: OAuthSessionLock = InProcessOAuthSessionLock(),
     ): AtprotoOAuthClient =
         AtprotoOAuthClient(
             config = configuration,
@@ -46,6 +48,8 @@ internal class OAuthTestHarness(
             sessionStore = sessions,
             clock = atmosphere.clock,
             strictDpopNonces = strictDpopNonces,
+            requireAuthorizationAfterPdsChange = requireAuthorizationAfterPdsChange,
+            sessionLock = sessionLock,
         )
 
     suspend fun signIn(
