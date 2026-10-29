@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.account.GoogleAuthError
+import app.logdate.client.repository.account.AccountCreationRequest
 import app.logdate.client.sync.SyncStatus
 import app.logdate.feature.core.settings.ui.CustomServerInfoBottomSheet
 import app.logdate.feature.core.settings.ui.ServerPreset
@@ -110,10 +111,13 @@ fun CloudAccountOnboardingScreen(
     onSignedIn: () -> Unit = onAccountCreated,
     onSkipOnboarding: () -> Unit,
     onBack: () -> Unit = {},
+    creationOverride: CloudAccountCreationOverride? = null,
+    onContinueWithBluesky: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
+    val blueskyAction = availableBlueskyAction(onContinueWithBluesky)
     val uriHandler = LocalUriHandler.current
     val showCustomServerInfo = remember { mutableStateOf(false) }
     val showRecoveryInfo = remember { mutableStateOf(false) }
@@ -226,6 +230,7 @@ fun CloudAccountOnboardingScreen(
                         isSigningIn = uiState.isSigningIn,
                         errorMessage = signInError,
                         onClearError = viewModel::clearError,
+                        onContinueWithBluesky = blueskyAction,
                         onSignInWithGoogle =
                             if (uiState.isGoogleSignInAvailable) viewModel::signInWithGoogle else null,
                         serverDisplayName = serverPresentation.displayName,
@@ -298,11 +303,25 @@ fun CloudAccountOnboardingScreen(
                     PasskeyAccountCreationFinalContent(
                         displayName = uiState.displayName,
                         username = uiState.username,
-                        onCreateAccount = viewModel::createAccount,
+                        onCreateAccount = {
+                            if (creationOverride == null) {
+                                viewModel.createAccount()
+                            } else {
+                                creationOverride.create(
+                                    AccountCreationRequest(uiState.username, uiState.displayName, uiState.bio.takeIf { it.isNotBlank() }),
+                                )
+                            }
+                        },
                         onBack = viewModel::goToPreviousStep,
-                        isCreatingAccount = uiState.isCreatingAccount,
-                        errorMessage = uiState.errorMessage?.let { stringResource(it) },
-                        onClearError = viewModel::clearError,
+                        isCreatingAccount = creationOverride?.busy ?: uiState.isCreatingAccount,
+                        errorMessage =
+                            if (creationOverride != null) {
+                                creationOverride.error?.let { stringResource(it) }
+                            } else {
+                                uiState.errorMessage?.let { stringResource(it) }
+                            },
+                        onClearError = creationOverride?.clearError ?: viewModel::clearError,
+                        detailsEditable = creationOverride?.detailsEditable ?: true,
                         isPasskeySupported = uiState.isPasskeySupported,
                         serverDisplayName = serverPresentation.displayName,
                         stepNumber = stepCount,
@@ -365,7 +384,7 @@ internal fun CloudAccountCompletionEffect(
 }
 
 @Composable
-private fun InitialSyncProgressScreen(
+internal fun InitialSyncProgressScreen(
     status: InitialSyncStatus,
     syncStatus: SyncStatus?,
     modifier: Modifier = Modifier,

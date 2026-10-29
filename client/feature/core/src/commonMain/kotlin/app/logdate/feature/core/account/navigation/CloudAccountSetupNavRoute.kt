@@ -3,6 +3,7 @@ package app.logdate.feature.core.account.navigation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import app.logdate.feature.core.account.BlueskySignInScreen
 import app.logdate.feature.core.account.CloudAccountOnboardingScreen
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
 import app.logdate.feature.core.account.OnboardingStep
@@ -28,7 +29,12 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
     onBack: () -> Unit,
     onSignedIn: () -> Unit = onAccountCreated,
     metadata: Map<String, Any> = emptyMap(),
+    onContinueWithBluesky: (() -> Unit)? = null,
+    onBlueskyAccountCreated: () -> Unit = onAccountCreated,
 ) {
+    taggedEntry<BlueskySignInRoute>(metadata = metadata) { route ->
+        BlueskySignInScreen(route.attemptId, onBlueskyAccountCreated, onBack)
+    }
     taggedEntry<CloudAccountSetupRoute>(metadata = metadata) { route ->
         val viewModel: CloudAccountOnboardingViewModel = koinViewModel()
         LaunchedEffect(route.startOnSignIn) {
@@ -42,6 +48,7 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
             onSignedIn = onSignedIn,
             onSkipOnboarding = onSkipped,
             onBack = onBack,
+            onContinueWithBluesky = onContinueWithBluesky,
         )
     }
 }

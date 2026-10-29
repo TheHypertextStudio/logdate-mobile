@@ -352,9 +352,7 @@
     <!-- Sign-in methods -->
     <string name="sign_in_methods_title">Ways to sign in</string>
     <string name="sign_in_methods_row_description">Passkeys and linked accounts</string>
-    <string
-    name="sign_in_methods_intro"
-  >Passkeys sign you in with your fingerprint, face, or screen lock. There’s no password to remember.</string>
+    <string name="sign_in_methods_intro">Passkeys sign you in with your fingerprint, face, or screen lock.</string>
     <string name="sign_in_methods_passkeys_section">Passkeys</string>
     <string name="sign_in_methods_linked_section">Linked accounts</string>
     <string name="sign_in_methods_add_passkey">Add a passkey</string>
@@ -572,13 +570,9 @@
     <string name="account_edit_username">Edit username</string>
     <string name="account_name_label">Name</string>
     <string name="account_passkey_server_line">Passkey sign-in on %1$s</string>
-    <string name="account_passkey_point_no_passwords">No password to create or remember</string>
     <string
     name="account_passkey_point_device_auth"
   >Unlocked by your device's biometrics or screen lock</string>
-    <string
-    name="account_passkey_point_phish_resistant"
-  >Can't be phished, guessed, or reused</string>
     <string
     name="account_passkey_point_multi_device"
   >Syncs to your other devices through your password manager</string>
