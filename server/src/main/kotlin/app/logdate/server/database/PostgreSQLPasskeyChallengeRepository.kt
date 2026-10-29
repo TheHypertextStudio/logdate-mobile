@@ -2,6 +2,8 @@
 
 package app.logdate.server.database
 
+import app.logdate.server.bluesky.BLUESKY_SIGN_IN_CHALLENGE_TYPE
+import app.logdate.server.bluesky.connection.ATPROTO_DISCONNECT_CHALLENGE_TYPE
 import app.logdate.server.passkeys.OAUTH_AUTHORIZATION_CHALLENGE_TYPE
 import app.logdate.server.passkeys.PasskeyChallengeRepository
 import app.logdate.shared.model.PasskeyChallenge
@@ -71,7 +73,16 @@ class PostgreSQLPasskeyChallengeRepository : PasskeyChallengeRepository {
         scope: String,
         type: String,
     ): String? {
-        if (scope == "passkey" && type == OAUTH_AUTHORIZATION_CHALLENGE_TYPE) return type
+        if (scope == "passkey" &&
+            type in
+            setOf(
+                OAUTH_AUTHORIZATION_CHALLENGE_TYPE,
+                BLUESKY_SIGN_IN_CHALLENGE_TYPE,
+                ATPROTO_DISCONNECT_CHALLENGE_TYPE,
+            )
+        ) {
+            return type
+        }
         val ceremony = if (scope == "restore") type.removePrefix("restore-") else type
         if (scope == "passkey" && type in setOf("step_up", "step_up_grant")) return type
         return ceremony.takeIf {
