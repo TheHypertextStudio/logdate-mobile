@@ -1,29 +1,39 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
     <ID>LargeClass:DbSyncRepository.kt:DbSyncRepository : SyncRepository</ID>
-    <ID>LongMethod:AuthV1Routes.kt:@OptIn(ExperimentalUuidApi::class) fun Route.authV1Routes</ID>
-    <ID>LongMethod:AuthV1Routes.kt:@OptIn(ExperimentalUuidApi::class) private suspend fun resolveGoogleAccount: GoogleResolution?</ID>
-    <ID>LongMethod:DigitalCredentialVerifier.kt:DigitalCredentialVerifier$open suspend fun verify: Result&lt;VerifiedEmailClaims></ID>
-    <ID>LongMethod:IdentityApiRoutes.kt:@OptIn(ExperimentalUuidApi::class) fun Route.identityApiRoutes</ID>
-    <ID>LongMethod:OAuthAuthorizationService.kt:OAuthAuthorizationService$suspend fun exchangeAuthorizationCode: OAuthTokenResponse</ID>
-    <ID>LongMethod:OAuthClientMetadataResolver.kt:OAuthClientMetadataResolver$private fun verifyClientAssertion: VerifiedClientAssertion</ID>
-    <ID>LongMethod:OAuthRoutes.kt:@OptIn(ExperimentalUuidApi::class) fun Route.oauthRoutes</ID>
+    <ID
+    >LongMethod:DigitalCredentialVerifier.kt:DigitalCredentialVerifier$open suspend fun verify: Result&lt;VerifiedEmailClaims></ID>
+    <ID
+    >LongMethod:IdentityApiRoutes.kt:@OptIn(ExperimentalUuidApi::class) fun Route.identityApiRoutes</ID>
+    <ID
+    >LongMethod:OAuthAuthorizationService.kt:OAuthAuthorizationService$suspend fun exchangeAuthorizationCode: OAuthTokenResponse</ID>
+    <ID
+    >LongMethod:OAuthClientMetadataResolver.kt:OAuthClientMetadataResolver$private fun verifyClientAssertion: VerifiedClientAssertion</ID>
+    <ID
+    >LongMethod:OAuthRoutes.kt:@OptIn(ExperimentalUuidApi::class) fun Route.oauthRoutes</ID>
     <ID>LongMethod:ServerModule.kt:fun serverModule</ID>
     <ID>LongMethod:SyncBackupRoutes.kt:internal fun Route.syncBackupRoutes</ID>
-    <ID>LongMethod:SyncJournalAssociationRoutes.kt:internal fun Route.associationRoutes</ID>
+    <ID
+    >LongMethod:SyncJournalAssociationRoutes.kt:internal fun Route.associationRoutes</ID>
     <ID>LongMethod:SyncCollectionRoutes.kt:private fun Route.contentRoutes</ID>
     <ID>LongMethod:SyncCollectionRoutes.kt:private fun Route.draftRoutes</ID>
-    <ID>LongMethod:SyncJournalAssociationRoutes.kt:internal fun Route.journalRoutes</ID>
-    <ID>LongMethod:SyncHelpers.kt:internal suspend fun ApplicationCall.receiveMediaMultipartUpload: ParsedMediaMultipartUpload?</ID>
-    <ID>LongMethod:SyncMaintenanceRoutes.kt:internal fun Route.syncMaintenanceRoutes</ID>
+    <ID
+    >LongMethod:SyncJournalAssociationRoutes.kt:internal fun Route.journalRoutes</ID>
+    <ID
+    >LongMethod:SyncHelpers.kt:internal suspend fun ApplicationCall.receiveMediaMultipartUpload: ParsedMediaMultipartUpload?</ID>
+    <ID
+    >LongMethod:SyncMaintenanceRoutes.kt:internal fun Route.syncMaintenanceRoutes</ID>
     <ID>LongMethod:SyncMediaRoutes.kt:internal fun Route.syncMediaRoutes</ID>
     <ID>LongMethod:SyncStatusRoutes.kt:internal fun Route.syncStatusRoutes</ID>
     <ID>LongMethod:TranscriptionRoutes.kt:fun Route.transcriptionRoutes</ID>
-    <ID>LongMethod:WebAuthnPasskeyService.kt:WebAuthnPasskeyService$private fun verifyAuthenticationStrict: AuthenticationResult</ID>
-    <ID>LongMethod:WebAuthnPasskeyService.kt:WebAuthnPasskeyService$private fun verifyRegistrationStrictOnly: VerificationOutcome</ID>
-    <ID>LongMethod:XrpcRoutes.kt:@OptIn(kotlin.uuid.ExperimentalUuidApi::class) private suspend fun io.ktor.server.application.ApplicationCall.requireAuthenticatedAccount: Account?</ID>
+    <ID
+    >LongMethod:WebAuthnPasskeyService.kt:WebAuthnPasskeyService$private fun verifyAuthenticationStrict: AuthenticationResult</ID>
+    <ID
+    >LongMethod:WebAuthnPasskeyService.kt:WebAuthnPasskeyService$private fun verifyRegistrationStrictOnly: VerificationOutcome</ID>
+    <ID
+    >LongMethod:XrpcRoutes.kt:@OptIn(kotlin.uuid.ExperimentalUuidApi::class) private suspend fun io.ktor.server.application.ApplicationCall.requireAuthenticatedAccount: Account?</ID>
     <ID>LongMethod:XrpcRoutes.kt:fun Route.xrpcRoutes</ID>
   </CurrentIssues>
 </SmellBaseline>

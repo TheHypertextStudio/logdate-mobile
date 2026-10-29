@@ -48,6 +48,11 @@ internal class PasskeyTestAuthenticator(
         username: String,
     ) {
         val options = service.generateRegistrationOptions(userId, username, username)
+        val result = service.verifyRegistration(userId, options.challenge, register(options.challenge))
+        check(result.success) { "Test passkey registration failed: ${result.error}" }
+    }
+
+    fun register(challenge: String): PasskeyRegistrationResponse {
         val data =
             AuthenticatorData<RegistrationExtensionAuthenticatorOutput>(
                 hash(rpId.toByteArray()),
@@ -60,14 +65,11 @@ internal class PasskeyTestAuthenticator(
                 ),
             )
         val attestation = AttestationObjectConverter(ObjectConverter()).convertToBytes(AttestationObject(data, NoneAttestationStatement()))
-        val response =
-            PasskeyRegistrationResponse(
-                credentialIdB64,
-                credentialIdB64,
-                AuthenticatorAttestationResponse(encode(clientData("webauthn.create", options.challenge)), encode(attestation)),
-            )
-        val result = service.verifyRegistration(userId, options.challenge, response)
-        check(result.success) { "Test passkey registration failed: ${result.error}" }
+        return PasskeyRegistrationResponse(
+            credentialIdB64,
+            credentialIdB64,
+            AuthenticatorAttestationResponse(encode(clientData("webauthn.create", challenge)), encode(attestation)),
+        )
     }
 
     /** Signs [challenge] the way `navigator.credentials.get` would on [origin]. */
