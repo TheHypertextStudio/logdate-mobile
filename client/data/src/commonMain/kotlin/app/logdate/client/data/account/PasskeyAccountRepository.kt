@@ -5,15 +5,18 @@ package app.logdate.client.data.account
 import app.logdate.client.datastore.OriginBoundSession
 import app.logdate.client.datastore.SessionStorage
 import app.logdate.client.device.PlatformAccountManager
+import app.logdate.client.device.auth.BlueskyAttemptStore
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.client.networking.PasskeyApiClientContract
 import app.logdate.client.networking.PasskeyApiErrorCodes
 import app.logdate.client.networking.PasskeyApiException
+import app.logdate.client.networking.bluesky.BlueskyApi
 import app.logdate.client.permissions.GoogleSignInManager
 import app.logdate.client.permissions.NoOpGoogleSignInManager
 import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.permissions.RestoreCredentialManager
 import app.logdate.client.repository.account.AccountCreationRequest
+import app.logdate.client.repository.account.BlueskySignInRepository
 import app.logdate.client.repository.account.LinkedSignInProvider
 import app.logdate.client.repository.account.PasskeyAccountRepository
 import app.logdate.client.repository.account.PasskeyConfirmations
@@ -293,6 +296,26 @@ class DefaultPasskeyAccountRepository(
             Result.failure(e)
         }
 
+    /** Construct once in DI so browser returns and UI actions share the same serialized flow. */
+    internal fun blueskySignInRepository(
+        attempts: BlueskyAttemptStore,
+        enrollments: BlueskyEnrollmentStore,
+        apiFactory: (String) -> BlueskyApi,
+        enabled: suspend () -> Boolean,
+        prepareAvailability: suspend () -> Boolean = enabled,
+    ): BlueskySignInRepository =
+        BlueskySignInController(
+            origin = configRepository::getCurrentBackendUrl,
+            owner = canonicalOwnerProvider::getCanonicalOwnerId,
+            enabled = { enabled() && passkeyManager.getCapabilities().isSupported },
+            prepareAvailability = { passkeyManager.getCapabilities().isSupported && prepareAvailability() },
+            attempts = attempts,
+            enrollments = enrollments,
+            api = apiFactory,
+            register = { request, ceremony -> registrationCoordinator.createAccountWithPasskey(request, ceremony) },
+            authenticate = { adopt, ceremony -> registrationCoordinator.authenticateWithPasskey(null, adopt, ceremony) },
+        )
+
     override suspend fun createAccountWithPasskey(request: AccountCreationRequest): Result<LogDateAccount> =
         registrationCoordinator.createAccountWithPasskey(request)
 
@@ -318,6 +341,9 @@ class DefaultPasskeyAccountRepository(
     override suspend fun deleteAccount(): Result<Unit> = sessionRefreshCoordinator.deleteAccount()
 
     override suspend fun refreshAuthentication(): Result<Unit> = sessionRefreshCoordinator.refreshAuthentication()
+
+    internal suspend fun refreshConnectionAuthentication(expected: OriginBoundSession): Result<Unit> =
+        sessionRefreshCoordinator.refreshAuthentication(expected)
 
     override suspend fun getAccountInfo(): Result<LogDateAccount> = sessionRefreshCoordinator.getAccountInfo()
 
