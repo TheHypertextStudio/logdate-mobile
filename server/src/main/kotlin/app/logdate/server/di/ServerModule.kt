@@ -442,6 +442,7 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                 oauthGrantRevoker = get<OAuthAuthorizationService>(),
                 statusEvents = getOrNull<AccountStatusEvents>(),
                 billing = getOrNull<CloudBillingService>(),
+                connectionCleanup = getOrNull(),
             )
         }
 

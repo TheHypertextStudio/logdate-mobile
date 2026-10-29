@@ -38,6 +38,8 @@ data class ServerDescriptorConfig(
         webAuthnRpId: String,
         webAuthnRpName: String,
         diagnosticReportsEnabled: Boolean = false,
+        blueskySignInEnabled: Boolean = false,
+        atprotoConnectionEnabled: Boolean = false,
     ): ServerDescriptor {
         val serverOrigin = identityConfig.pdsServiceEndpoint.trimEnd('/')
         val capabilities =
@@ -66,6 +68,10 @@ data class ServerDescriptorConfig(
             protocolFeatures =
                 buildList {
                     add(ServerProtocolFeature.CANONICAL_OWNER_BINDING_V1)
+                    if (blueskySignInEnabled && encryptedAccountKeysEnabled && personalSpaceEnabled) {
+                        add(ServerProtocolFeature.BLUESKY_SIGN_IN_V1)
+                        if (atprotoConnectionEnabled) add(ServerProtocolFeature.ATPROTO_CONNECTION_V1)
+                    }
                     add(ServerProtocolFeature.RICH_DRAFTS_V1)
                     add(ServerProtocolFeature.JOURNAL_MERGE_V1)
                     add(ServerProtocolFeature.DEVICE_LINKING_V1)

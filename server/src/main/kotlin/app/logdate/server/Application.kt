@@ -21,6 +21,7 @@ import app.logdate.server.logging.installServerLogging
 import app.logdate.server.oauth.installOAuthKeyRotation
 import app.logdate.server.routes.accountApiRoutes
 import app.logdate.server.routes.atprotoRoutes
+import app.logdate.server.routes.blueskyApiRoutes
 import app.logdate.server.routes.contentApiRoutes
 import app.logdate.server.routes.serverMetaRoutes
 import app.logdate.server.routes.spaceMigrationApiRoutes
@@ -113,6 +114,7 @@ fun Application.module(
         "Publication rehearsal requires a disposable local database, strict passkeys, a loopback directory, and no relays"
     }
     atprotoRoutes(appPasswords)
+    blueskyApiRoutes()
     accountApiRoutes()
     contentApiRoutes()
     spaceMigrationApiRoutes()
