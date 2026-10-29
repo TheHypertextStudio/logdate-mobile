@@ -200,3 +200,5 @@ final value class studio.hypertext.atproto.identity/AtprotoDid { // studio.hyper
 }
 
 sealed class studio.hypertext.atproto.identity/IdentityException : kotlin/IllegalStateException // studio.hypertext.atproto.identity/IdentityException|null[0]
+
+final fun (studio.hypertext.atproto.identity/DidDocument).studio.hypertext.atproto.identity/claimedHandle(): studio.hypertext.atproto.syntax/Handle? // studio.hypertext.atproto.identity/claimedHandle|claimedHandle@studio.hypertext.atproto.identity.DidDocument(){}[0]

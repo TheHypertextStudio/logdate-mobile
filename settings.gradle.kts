@@ -94,6 +94,7 @@ include(":shared:model")
 // Server-specific modules
 include(":server")
 include(":integration:server-client-e2e")
+include(":integration:atproto-oauth-fixtures")
 
 // Developer tooling (not shipped)
 include(":tools:passkey-test-provider")

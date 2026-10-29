@@ -33,6 +33,7 @@ kotlin {
         }
 
         jvmTest.dependencies {
+            implementation(projects.integration.atprotoOauthFixtures)
             implementation(libs.kotlin.test.junit)
             implementation(libs.nimbus.jose.jwt)
         }

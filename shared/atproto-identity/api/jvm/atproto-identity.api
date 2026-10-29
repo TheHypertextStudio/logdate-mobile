@@ -74,6 +74,10 @@ public final class studio/hypertext/atproto/identity/DidDocument$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class studio/hypertext/atproto/identity/DidDocumentKt {
+	public static final fun claimedHandle (Lstudio/hypertext/atproto/identity/DidDocument;)Ljava/lang/String;
+}
+
 public final class studio/hypertext/atproto/identity/DidDocumentMismatchException : studio/hypertext/atproto/identity/IdentityException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 }

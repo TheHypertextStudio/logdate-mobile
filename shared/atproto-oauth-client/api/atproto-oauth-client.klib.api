@@ -6,6 +6,18 @@
 // - Show declarations: true
 
 // Library unique name: <studio.hypertext.atproto:atproto-oauth-client>
+final enum class studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation : kotlin/Enum<studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation> { // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation|null[0]
+    enum entry CONFIRMED // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.CONFIRMED|null[0]
+    enum entry NO_SESSION // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.NO_SESSION|null[0]
+    enum entry SKIPPED // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.SKIPPED|null[0]
+
+    final val entries // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation> // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation> // studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation.values|values#static(){}[0]
+}
+
 final enum class studio.hypertext.atproto.oauth.client/OAuthRefreshMode : kotlin/Enum<studio.hypertext.atproto.oauth.client/OAuthRefreshMode> { // studio.hypertext.atproto.oauth.client/OAuthRefreshMode|null[0]
     enum entry AUTO // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.AUTO|null[0]
     enum entry FORCE // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.FORCE|null[0]
@@ -16,6 +28,19 @@ final enum class studio.hypertext.atproto.oauth.client/OAuthRefreshMode : kotlin
 
     final fun valueOf(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthRefreshMode // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.valueOf|valueOf#static(kotlin.String){}[0]
     final fun values(): kotlin/Array<studio.hypertext.atproto.oauth.client/OAuthRefreshMode> // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.values|values#static(){}[0]
+}
+
+final enum class studio.hypertext.atproto.oauth.client/OAuthSessionEndReason : kotlin/Enum<studio.hypertext.atproto.oauth.client/OAuthSessionEndReason> { // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason|null[0]
+    enum entry AUTHORITY_CHANGED // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.AUTHORITY_CHANGED|null[0]
+    enum entry EXPIRED // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.EXPIRED|null[0]
+    enum entry REJECTED // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.REJECTED|null[0]
+    enum entry REVOKED // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.REVOKED|null[0]
+
+    final val entries // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.oauth.client/OAuthSessionEndReason> // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthSessionEndReason // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<studio.hypertext.atproto.oauth.client/OAuthSessionEndReason> // studio.hypertext.atproto.oauth.client/OAuthSessionEndReason.values|values#static(){}[0]
 }
 
 abstract interface studio.hypertext.atproto.oauth.client/OAuthCrypto { // studio.hypertext.atproto.oauth.client/OAuthCrypto|null[0]
@@ -33,6 +58,7 @@ abstract interface studio.hypertext.atproto.oauth.client/OAuthSessionStore { // 
     abstract suspend fun delete(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/OAuthSessionStore.delete|delete(studio.hypertext.atproto.identity.AtprotoDid){}[0]
     abstract suspend fun get(studio.hypertext.atproto.identity/AtprotoDid): studio.hypertext.atproto.oauth.client/OAuthStoredSession? // studio.hypertext.atproto.oauth.client/OAuthSessionStore.get|get(studio.hypertext.atproto.identity.AtprotoDid){}[0]
     abstract suspend fun save(studio.hypertext.atproto.oauth.client/OAuthStoredSession) // studio.hypertext.atproto.oauth.client/OAuthSessionStore.save|save(studio.hypertext.atproto.oauth.client.OAuthStoredSession){}[0]
+    open suspend fun delete(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.oauth.client/OAuthSessionEndReason) // studio.hypertext.atproto.oauth.client/OAuthSessionStore.delete|delete(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.oauth.client.OAuthSessionEndReason){}[0]
 }
 
 abstract interface studio.hypertext.atproto.oauth.client/OAuthStateStore { // studio.hypertext.atproto.oauth.client/OAuthStateStore|null[0]
@@ -41,7 +67,7 @@ abstract interface studio.hypertext.atproto.oauth.client/OAuthStateStore { // st
 }
 
 final class studio.hypertext.atproto.oauth.client/AtprotoOAuthClient : kotlin/AutoCloseable { // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient|null[0]
-    constructor <init>(studio.hypertext.atproto.oauth.client/OAuthClientConfig, studio.hypertext.atproto.identity/IdentityResolver, io.ktor.client/HttpClient, studio.hypertext.atproto.oauth.client/OAuthCrypto, studio.hypertext.atproto.oauth.client/OAuthStateStore, studio.hypertext.atproto.oauth.client/OAuthSessionStore, studio.hypertext.atproto.oauth.client/OAuthSessionLock = ..., kotlin.time/Clock = ..., kotlin/Boolean = ..., kotlin.time/Duration = ..., kotlin/Boolean = ...) // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.<init>|<init>(studio.hypertext.atproto.oauth.client.OAuthClientConfig;studio.hypertext.atproto.identity.IdentityResolver;io.ktor.client.HttpClient;studio.hypertext.atproto.oauth.client.OAuthCrypto;studio.hypertext.atproto.oauth.client.OAuthStateStore;studio.hypertext.atproto.oauth.client.OAuthSessionStore;studio.hypertext.atproto.oauth.client.OAuthSessionLock;kotlin.time.Clock;kotlin.Boolean;kotlin.time.Duration;kotlin.Boolean){}[0]
+    constructor <init>(studio.hypertext.atproto.oauth.client/OAuthClientConfig, studio.hypertext.atproto.identity/IdentityResolver, io.ktor.client/HttpClient, studio.hypertext.atproto.oauth.client/OAuthCrypto, studio.hypertext.atproto.oauth.client/OAuthStateStore, studio.hypertext.atproto.oauth.client/OAuthSessionStore, studio.hypertext.atproto.oauth.client/OAuthSessionLock = ..., kotlin.time/Clock = ..., kotlin/Boolean = ..., kotlin.time/Duration = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.<init>|<init>(studio.hypertext.atproto.oauth.client.OAuthClientConfig;studio.hypertext.atproto.identity.IdentityResolver;io.ktor.client.HttpClient;studio.hypertext.atproto.oauth.client.OAuthCrypto;studio.hypertext.atproto.oauth.client.OAuthStateStore;studio.hypertext.atproto.oauth.client.OAuthSessionStore;studio.hypertext.atproto.oauth.client.OAuthSessionLock;kotlin.time.Clock;kotlin.Boolean;kotlin.time.Duration;kotlin.Boolean;kotlin.Boolean){}[0]
 
     final val clientMetadata // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.clientMetadata|{}clientMetadata[0]
         final fun <get-clientMetadata>(): studio.hypertext.atproto.oauth.client/OAuthClientMetadata // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.clientMetadata.<get-clientMetadata>|<get-clientMetadata>(){}[0]
@@ -56,8 +82,10 @@ final class studio.hypertext.atproto.oauth.client/AtprotoOAuthClient : kotlin/Au
     final fun close() // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.close|close(){}[0]
     final suspend fun authorize(kotlin/String, studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.authorize|authorize(kotlin.String;studio.hypertext.atproto.oauth.client.OAuthAuthorizeOptions){}[0]
     final suspend fun callback(kotlin.collections/Map<kotlin/String, kotlin/String>): studio.hypertext.atproto.oauth.client/OAuthCallbackResult // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.callback|callback(kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+    final suspend fun callback(kotlin.collections/Map<kotlin/String, kotlin/String>, kotlin.coroutines/SuspendFunction1<studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity, kotlin/Unit>): studio.hypertext.atproto.oauth.client/OAuthCallbackResult // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.callback|callback(kotlin.collections.Map<kotlin.String,kotlin.String>;kotlin.coroutines.SuspendFunction1<studio.hypertext.atproto.oauth.client.OAuthVerifiedIdentity,kotlin.Unit>){}[0]
     final suspend fun restore(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.oauth.client/OAuthRefreshMode = ...): studio.hypertext.atproto.oauth.client/OAuthSession // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.restore|restore(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.oauth.client.OAuthRefreshMode){}[0]
     final suspend fun revoke(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.revoke|revoke(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun revokeIf(studio.hypertext.atproto.identity/AtprotoDid, kotlin.coroutines/SuspendFunction0<kotlin/Boolean>, kotlin.coroutines/SuspendFunction0<kotlin/Unit>): studio.hypertext.atproto.oauth.client/OAuthConditionalRevocation // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.revokeIf|revokeIf(studio.hypertext.atproto.identity.AtprotoDid;kotlin.coroutines.SuspendFunction0<kotlin.Boolean>;kotlin.coroutines.SuspendFunction0<kotlin.Unit>){}[0]
 }
 
 final class studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore : studio.hypertext.atproto.oauth.client/OAuthSessionStore { // studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore|null[0]
@@ -265,7 +293,7 @@ final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetada
 }
 
 final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationState { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState|null[0]
-    constructor <init>(kotlin/String, kotlin/String, studio.hypertext.atproto.oauth.client/JsonWebKey, kotlin/String, kotlin/String, kotlin/String, studio.hypertext.atproto.identity/AtprotoDid?, kotlin/String?, kotlin.time/Instant) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.<init>|<init>(kotlin.String;kotlin.String;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid?;kotlin.String?;kotlin.time.Instant){}[0]
+    constructor <init>(kotlin/String, kotlin/String, studio.hypertext.atproto.oauth.client/JsonWebKey, kotlin/String, kotlin/String, kotlin/String, studio.hypertext.atproto.identity/AtprotoDid?, kotlin/String?, kotlin.time/Instant, kotlin/String? = ...) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.<init>|<init>(kotlin.String;kotlin.String;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid?;kotlin.String?;kotlin.time.Instant;kotlin.String?){}[0]
 
     final val appState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.appState|{}appState[0]
         final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.appState.<get-appState>|<get-appState>(){}[0]
@@ -283,10 +311,13 @@ final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationState { // s
         final fun <get-pkceVerifier>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.pkceVerifier.<get-pkceVerifier>|<get-pkceVerifier>(){}[0]
     final val redirectUri // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.redirectUri|{}redirectUri[0]
         final fun <get-redirectUri>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+    final val requestedScope // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.requestedScope|{}requestedScope[0]
+        final fun <get-requestedScope>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.requestedScope.<get-requestedScope>|<get-requestedScope>(){}[0]
     final val state // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.state|{}state[0]
         final fun <get-state>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.state.<get-state>|<get-state>(){}[0]
 
     final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component1|component1(){}[0]
+    final fun component10(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component10|component10(){}[0]
     final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component2|component2(){}[0]
     final fun component3(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component3|component3(){}[0]
     final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component4|component4(){}[0]
@@ -295,7 +326,7 @@ final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationState { // s
     final fun component7(): studio.hypertext.atproto.identity/AtprotoDid? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component7|component7(){}[0]
     final fun component8(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component8|component8(){}[0]
     final fun component9(): kotlin.time/Instant // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component9|component9(){}[0]
-    final fun copy(kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.oauth.client/JsonWebKey = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid? = ..., kotlin/String? = ..., kotlin.time/Instant = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.copy|copy(kotlin.String;kotlin.String;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid?;kotlin.String?;kotlin.time.Instant){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.oauth.client/JsonWebKey = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid? = ..., kotlin/String? = ..., kotlin.time/Instant = ..., kotlin/String? = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.copy|copy(kotlin.String;kotlin.String;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid?;kotlin.String?;kotlin.time.Instant;kotlin.String?){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.toString|toString(){}[0]
@@ -679,6 +710,10 @@ final class studio.hypertext.atproto.oauth.client/OAuthSession { // studio.hyper
     final suspend fun tokenInfo(studio.hypertext.atproto.oauth.client/OAuthRefreshMode = ...): studio.hypertext.atproto.oauth.client/OAuthTokenInfo // studio.hypertext.atproto.oauth.client/OAuthSession.tokenInfo|tokenInfo(studio.hypertext.atproto.oauth.client.OAuthRefreshMode){}[0]
 }
 
+final class studio.hypertext.atproto.oauth.client/OAuthSessionAuthorityChangedException : studio.hypertext.atproto.oauth.client/OAuthSessionEndedException { // studio.hypertext.atproto.oauth.client/OAuthSessionAuthorityChangedException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthSessionAuthorityChangedException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Throwable?){}[0]
+}
+
 final class studio.hypertext.atproto.oauth.client/OAuthSessionExpiredException : studio.hypertext.atproto.oauth.client/OAuthSessionEndedException { // studio.hypertext.atproto.oauth.client/OAuthSessionExpiredException|null[0]
     constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthSessionExpiredException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.Throwable?){}[0]
 }
@@ -777,6 +812,22 @@ final class studio.hypertext.atproto.oauth.client/OAuthTokenInfo { // studio.hyp
     final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity { // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String?) // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String?){}[0]
+
+    final val appState // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.appState|{}appState[0]
+        final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.appState.<get-appState>|<get-appState>(){}[0]
+    final val did // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.did.<get-did>|<get-did>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.component2|component2(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/String? = ...): studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthVerifiedIdentity.toString|toString(){}[0]
 }
 
 final class studio.hypertext.atproto.oauth.client/ResponseTooLargeException : kotlin/Exception { // studio.hypertext.atproto.oauth.client/ResponseTooLargeException|null[0]
