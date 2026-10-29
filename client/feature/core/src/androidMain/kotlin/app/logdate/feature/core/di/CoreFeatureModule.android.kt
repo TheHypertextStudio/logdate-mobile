@@ -24,6 +24,7 @@ import app.logdate.feature.core.AndroidBiometricGatekeeper
 import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
+import app.logdate.feature.core.account.di.blueskySignInFeatureModule
 import app.logdate.feature.core.export.AndroidExportLauncher
 import app.logdate.feature.core.export.AndroidMediaSourceOpener
 import app.logdate.feature.core.export.CloudArchiveCipher
@@ -63,6 +64,7 @@ import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseViewMode
 import app.logdate.feature.core.settings.account.recovery.accountRecoveryOffered
 import app.logdate.feature.core.settings.account.recovery.passkeysSupported
 import app.logdate.feature.core.settings.account.signin.SignInMethodsViewModel
+import app.logdate.feature.core.settings.account.signin.atprotoConnectionFeatureModule
 import app.logdate.feature.core.settings.ui.AdvancedSettingsViewModel
 import app.logdate.feature.core.settings.ui.AndroidCloudArchiveStatusSource
 import app.logdate.feature.core.settings.ui.AndroidDiagnosticArchiveExporter
@@ -105,6 +107,8 @@ actual val coreFeatureModule: Module =
     module {
         // Include our domain modules - note that accountModule is included separately to avoid circular deps
         includes(domainModule)
+        includes(blueskySignInFeatureModule)
+        includes(atprotoConnectionFeatureModule)
         includes(accountModule)
         includes(devicesModule)
         includes(labsSettingsModule)

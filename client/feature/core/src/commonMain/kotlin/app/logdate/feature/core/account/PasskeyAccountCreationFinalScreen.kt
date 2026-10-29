@@ -71,8 +71,6 @@ import logdate.client.feature.core.generated.resources.account_name_label
 import logdate.client.feature.core.generated.resources.account_passkey_not_supported_description
 import logdate.client.feature.core.generated.resources.account_passkey_point_device_auth
 import logdate.client.feature.core.generated.resources.account_passkey_point_multi_device
-import logdate.client.feature.core.generated.resources.account_passkey_point_no_passwords
-import logdate.client.feature.core.generated.resources.account_passkey_point_phish_resistant
 import logdate.client.feature.core.generated.resources.account_passkey_server_line
 import logdate.client.feature.core.generated.resources.passkeys_not_supported
 import logdate.client.ui.generated.resources.common_cancel
@@ -114,6 +112,7 @@ fun PasskeyAccountCreationFinalContent(
     modifier: Modifier = Modifier,
     onEditUsername: () -> Unit = onBack,
     onDisplayNameChange: (String) -> Unit = {},
+    detailsEditable: Boolean = true,
 ) {
     var editingName by remember { mutableStateOf(false) }
 
@@ -145,7 +144,7 @@ fun PasskeyAccountCreationFinalContent(
             username = username,
             onEditName = { editingName = true },
             onEditUsername = onEditUsername,
-            editEnabled = !isCreatingAccount,
+            editEnabled = !isCreatingAccount && detailsEditable,
         )
 
         if (!isPasskeySupported) {
@@ -309,9 +308,7 @@ private fun PasskeyLine(serverDisplayName: String) {
                 modifier = Modifier.padding(start = Spacing.xl, bottom = Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                PasskeyPoint(stringResource(Res.string.account_passkey_point_no_passwords))
                 PasskeyPoint(stringResource(Res.string.account_passkey_point_device_auth))
-                PasskeyPoint(stringResource(Res.string.account_passkey_point_phish_resistant))
                 PasskeyPoint(stringResource(Res.string.account_passkey_point_multi_device))
             }
         }

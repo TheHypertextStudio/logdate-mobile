@@ -1,14 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Account overview -->
     <string name="account_and_profile">Account &amp; Profile</string>
     <string name="account_created">Account Created!</string>
-    <string name="account_created_signed_in_as">Your account has been successfully created. You are now signed in as %1$s.</string>
+    <string
+    name="account_created_signed_in_as"
+  >Your account has been successfully created. You are now signed in as %1$s.</string>
     <string name="account_information">Account Information</string>
     <string name="sign_in_help_action">Trouble signing in?</string>
     <string name="sign_in_help_title">Trouble signing in?</string>
-    <string name="sign_in_help_body">Use a passkey saved to your password manager or to another device you’ve signed in on. If you linked Google, you can sign in with it instead. A lost passkey can’t be reset, but you can add a new one from any device that’s still signed in.</string>
-    <string name="account_settings_description">Sign-in, recovery, and hosting</string>
+    <string
+    name="sign_in_help_body"
+  >Use a passkey saved to your password manager or to another device you’ve signed in on. If you linked Google, you can sign in with it instead. A lost passkey can’t be reset, but you can add a new one from any device that’s still signed in.</string>
+    <string
+    name="account_settings_description"
+  >Sign-in, recovery, and hosting</string>
     <string name="authentication">Authentication</string>
     <string name="app_security">App Security</string>
 
@@ -17,17 +23,33 @@
     <string name="complete_your_profile">Complete Your Profile</string>
     <string name="create_a_cloud_account">Create a Cloud Account</string>
     <string name="create_account">Create Account</string>
-    <string name="create_account_with_passkey">Create Account with Passkey</string>
-    <string name="account_cloud_create_description">Create an account to sync your journals across devices and unlock additional features.</string>
-    <string name="create_logdate_cloud_account">Create LogDate Cloud Account</string>
+    <string
+    name="create_account_with_passkey"
+  >Create Account with Passkey</string>
+    <string
+    name="account_cloud_create_description"
+  >Create an account to sync your journals across devices and unlock additional features.</string>
+    <string
+    name="create_logdate_cloud_account"
+  >Create LogDate Cloud Account</string>
     <string name="create_new_account">Create new account</string>
-    <string name="account_passkey_create_screen_description">Create your account with a passkey for secure, password-free access to LogDate Cloud.</string>
+    <string
+    name="account_passkey_create_screen_description"
+  >Create your account with a passkey for secure, password-free access to LogDate Cloud.</string>
     <string name="creating_account">Creating account…</string>
-    <string name="creating_your_logdate_cloud_account">Creating your LogDate Cloud account...</string>
-    <string name="account_passkey_create_review_description">Review your details and create your secure passkey to complete your %1$s account.</string>
+    <string
+    name="creating_your_logdate_cloud_account"
+  >Creating your LogDate Cloud account...</string>
+    <string
+    name="account_passkey_create_review_description"
+  >Review your details and create your secure passkey to complete your %1$s account.</string>
     <string name="secure_your_account">Secure Your Account</string>
-    <string name="your_logdate_cloud_account">Your LogDate Cloud Account</string>
-    <string name="your_logdate_cloud_account_has_been_successfully_created">Your LogDate Cloud account has been successfully created. </string>
+    <string
+    name="your_logdate_cloud_account"
+  >Your LogDate Cloud Account</string>
+    <string
+    name="your_logdate_cloud_account_has_been_successfully_created"
+  >Your LogDate Cloud account has been successfully created. </string>
     <string name="welcome_to_logdate">Welcome to LogDate</string>
     <string name="welcome_to_logdate_cloud">Welcome to LogDate Cloud</string>
     <string name="welcome_back">Welcome Back</string>
@@ -35,35 +57,73 @@
 
     <!-- Account welcome benefits -->
     <string name="cloud_account_benefit_sync_title">Sync across devices</string>
-    <string name="cloud_account_benefit_sync_description">Access your journals from any device that uses the same server.</string>
-    <string name="cloud_account_benefit_passkeys_title">Secure with passkeys</string>
-    <string name="cloud_account_benefit_passkeys_description">Use your device biometrics or screen lock instead of a password.</string>
-    <string name="cloud_account_benefit_backup_title">Server-based backup</string>
-    <string name="cloud_account_benefit_backup_description">Your selected server can keep your journals available across devices.</string>
+    <string
+    name="cloud_account_benefit_sync_description"
+  >Access your journals from any device that uses the same server.</string>
+    <string
+    name="cloud_account_benefit_passkeys_title"
+  >Secure with passkeys</string>
+    <string
+    name="cloud_account_benefit_passkeys_description"
+  >Use your device biometrics or screen lock instead of a password.</string>
+    <string
+    name="cloud_account_benefit_backup_title"
+  >Server-based backup</string>
+    <string
+    name="cloud_account_benefit_backup_description"
+  >Your selected server can keep your journals available across devices.</string>
     <string name="cloud_account_benefit_privacy_title">Privacy first</string>
-    <string name="cloud_account_benefit_privacy_description">Server policies come from the server you choose.</string>
+    <string
+    name="cloud_account_benefit_privacy_description"
+  >Server policies come from the server you choose.</string>
 
     <!-- Sign in -->
     <string name="sign_in">Sign in</string>
     <string name="sign_in_required">Sign in required</string>
     <string name="sign_in_to_logdate_cloud">Sign In to LogDate Cloud</string>
-    <string name="account_sign_in_to_enable_sync">Sign in to your LogDate Cloud account to enable sync</string>
-    <string name="account_sign_in_with_passkey_description">Sign in to your LogDate Cloud account using your passkey.</string>
+    <string
+    name="account_sign_in_to_enable_sync"
+  >Sign in to your LogDate Cloud account to enable sync</string>
+    <string
+    name="account_sign_in_with_passkey_description"
+  >Sign in to your LogDate Cloud account using your passkey.</string>
     <string name="sign_in_with_passkey">Sign in with passkey</string>
     <string name="continue_with_google">Continue with Google</string>
-    <string name="google_sign_in_cancelled">Google sign-in was cancelled. Please try again.</string>
-    <string name="google_sign_in_no_account">No Google account is available on this device.</string>
-    <string name="google_sign_in_unavailable">Google sign-in isn’t available right now.</string>
-    <string name="google_sign_in_failed">Google sign-in failed. Please try again.</string>
-    <string name="google_sign_in_account_conflict">This Google account is already linked to a different LogDate account.</string>
-    <string name="google_sign_in_rate_limited">Too many attempts. Please wait a moment before trying again.</string>
-    <string name="google_sign_in_network_error">Network error. Please check your connection and try again.</string>
-    <string name="google_sign_in_server_error">LogDate Cloud couldn&apos;t complete sign-in. Please try again in a few minutes.</string>
+    <string
+    name="google_sign_in_cancelled"
+  >Google sign-in was cancelled. Please try again.</string>
+    <string
+    name="google_sign_in_no_account"
+  >No Google account is available on this device.</string>
+    <string
+    name="google_sign_in_unavailable"
+  >Google sign-in isn’t available right now.</string>
+    <string
+    name="google_sign_in_failed"
+  >Google sign-in failed. Please try again.</string>
+    <string
+    name="google_sign_in_account_conflict"
+  >This Google account is already linked to a different LogDate account.</string>
+    <string
+    name="google_sign_in_rate_limited"
+  >Too many attempts. Please wait a moment before trying again.</string>
+    <string
+    name="google_sign_in_network_error"
+  >Network error. Please check your connection and try again.</string>
+    <string
+    name="google_sign_in_server_error"
+  >LogDate Cloud couldn&apos;t complete sign-in. Please try again in a few minutes.</string>
     <string name="sign_in_without_username">Sign In without Username</string>
     <string name="signing_in">Signing In...</string>
-    <string name="sign_in_to_enable_cloud_backup">Sign in to enable cloud backup and sync.</string>
-    <string name="not_signed_in_to_logdate_cloud">Not signed in to LogDate Cloud</string>
-    <string name="sign_in_to_set_display_name">Sign in to set your display name and username, and sync your journal across devices.</string>
+    <string
+    name="sign_in_to_enable_cloud_backup"
+  >Sign in to enable cloud backup and sync.</string>
+    <string
+    name="not_signed_in_to_logdate_cloud"
+  >Not signed in to LogDate Cloud</string>
+    <string
+    name="sign_in_to_set_display_name"
+  >Sign in to set your display name and username, and sync your journal across devices.</string>
 
     <!-- Sign out -->
     <string name="account_sign_out_action">Sign out</string>
@@ -74,12 +134,18 @@
     <string name="about_passkeys">About passkeys</string>
     <string name="passkeys">Passkeys</string>
     <string name="passkeys_not_supported">Passkeys Not Supported</string>
-    <string name="passkey_not_supported_banner">Your device doesn&apos;t support passkeys. Account creation requires a device with passkey support.</string>
-    <string name="account_passkey_not_supported_description">Your device doesn&apos;t support passkeys. Please use a device with biometric authentication or a security key.</string>
+    <string
+    name="passkey_not_supported_banner"
+  >Your device doesn&apos;t support passkeys. Account creation requires a device with passkey support.</string>
+    <string
+    name="account_passkey_not_supported_description"
+  >Your device doesn&apos;t support passkeys. Please use a device with biometric authentication or a security key.</string>
 
     <!-- Account -->
     <string name="account_title">Account</string>
-    <string name="account_section_sign_in_recovery">Sign-in &amp; recovery</string>
+    <string
+    name="account_section_sign_in_recovery"
+  >Sign-in &amp; recovery</string>
     <string name="account_section_hosting">Hosting</string>
     <string name="account_sign_in_passkeys_none">No passkeys</string>
     <plurals name="account_sign_in_passkeys">
@@ -88,86 +154,166 @@
     </plurals>
     <string name="account_recovery_phrase_title">Recovery phrase</string>
     <string name="account_recovery_phrase_saved">Saved on this device</string>
-    <string name="account_recovery_phrase_finish_setup">Saved on this device. Finish setting up account recovery.</string>
-    <string name="account_recovery_phrase_checking">Checking this device…</string>
-    <string name="account_recovery_phrase_missing">Not on this device. Enter it to read your synced journal.</string>
+    <string
+    name="account_recovery_phrase_finish_setup"
+  >Saved on this device. Finish setting up account recovery.</string>
+    <string
+    name="account_recovery_phrase_checking"
+  >Checking this device…</string>
+    <string
+    name="account_recovery_phrase_missing"
+  >Not on this device. Enter it to read your synced journal.</string>
     <string name="account_email_title">Email</string>
     <string name="account_email_verified">%1$s · Verified</string>
     <string name="account_email_not_verified">%1$s · Not verified</string>
     <string name="account_email_verify">Verify an email address</string>
-    <string name="account_hosting_description">Your journal syncs to %1$s</string>
-    <string name="account_sign_out_row_description">Your journal stays on this device</string>
-    <string name="account_sign_out_confirm_message">Your journal stays on this device. New entries won’t sync to %1$s until you sign in again. Signing out removes linked watches’ access and erases their LogDate data. Bring them nearby to sync first. An offline watch is erased when it reconnects; unsent moments on it may be lost.</string>
-    <string name="account_sign_out_failed">Couldn’t sign out. Check your connection and try again.</string>
+    <string
+    name="account_hosting_description"
+  >Your journal syncs to %1$s</string>
+    <string
+    name="account_sign_out_row_description"
+  >Your journal stays on this device</string>
+    <string
+    name="account_sign_out_confirm_message"
+  >Your journal stays on this device. New entries won’t sync to %1$s until you sign in again. Signing out removes linked watches’ access and erases their LogDate data. Bring them nearby to sync first. An offline watch is erased when it reconnects; unsent moments on it may be lost.</string>
+    <string
+    name="account_sign_out_failed"
+  >Couldn’t sign out. Check your connection and try again.</string>
     <string name="account_delete_title">Delete account</string>
-    <string name="account_delete_row_description">Remove your account and everything synced to %1$s</string>
+    <string
+    name="account_delete_row_description"
+  >Remove your account and everything synced to %1$s</string>
     <string name="account_signed_out_title">You’re not signed in</string>
-    <string name="account_signed_out_body">Sign in to sync your journal between devices and keep an encrypted copy off this device.</string>
+    <string
+    name="account_signed_out_body"
+  >Sign in to sync your journal between devices and keep an encrypted copy off this device.</string>
     <string name="account_signed_out_sign_in">Sign in</string>
     <string name="account_signed_out_create">Create an account</string>
 
     <!-- Delete account -->
-    <string name="delete_account_what_account">Your account on %1$s is removed.</string>
-    <string name="delete_account_what_synced">Everything synced to it is deleted: entries, photos, and backups.</string>
-    <string name="delete_account_what_passkeys">Your passkeys for this account stop working.</string>
+    <string
+    name="delete_account_what_account"
+  >Your account on %1$s is removed.</string>
+    <string
+    name="delete_account_what_synced"
+  >Everything synced to it is deleted: entries, photos, and backups.</string>
+    <string
+    name="delete_account_what_passkeys"
+  >Your passkeys for this account stop working.</string>
     <string name="delete_account_what_permanent">This can’t be undone.</string>
     <string name="delete_account_erase_device">Also erase this device</string>
-    <string name="delete_account_erase_device_description">Removes your journal from this device too. Otherwise it stays here, signed out.</string>
+    <string
+    name="delete_account_erase_device_description"
+  >Removes your journal from this device too. Otherwise it stays here, signed out.</string>
     <string name="delete_account_action">Delete account</string>
     <string name="delete_account_confirm_title">Delete your account?</string>
-    <string name="delete_account_confirm_message">Your account and everything synced to %1$s will be deleted permanently.</string>
-    <string name="delete_account_confirm_message_erase">Your account and everything synced to %1$s will be deleted permanently, and this device will be erased.</string>
+    <string
+    name="delete_account_confirm_message"
+  >Your account and everything synced to %1$s will be deleted permanently.</string>
+    <string
+    name="delete_account_confirm_message_erase"
+  >Your account and everything synced to %1$s will be deleted permanently, and this device will be erased.</string>
     <string name="delete_account_done_title">Your account was deleted</string>
-    <string name="delete_account_done_body">Your journal is still on this device. You can keep using LogDate without an account.</string>
-    <string name="delete_account_failed_offline">Couldn’t reach %1$s. Check your connection and try again.</string>
-    <string name="delete_account_failed_unavailable">%1$s doesn’t offer account deletion. Contact whoever runs it.</string>
-    <string name="delete_account_failed_signed_out">You’re signed out, so there’s no account to delete on this device.</string>
-    <string name="delete_account_failed_server">%1$s couldn’t delete your account. Nothing was removed. Try again.</string>
+    <string
+    name="delete_account_done_body"
+  >Your journal is still on this device. You can keep using LogDate without an account.</string>
+    <string
+    name="delete_account_failed_offline"
+  >Couldn’t reach %1$s. Check your connection and try again.</string>
+    <string
+    name="delete_account_failed_unavailable"
+  >%1$s doesn’t offer account deletion. Contact whoever runs it.</string>
+    <string
+    name="delete_account_failed_signed_out"
+  >You’re signed out, so there’s no account to delete on this device.</string>
+    <string
+    name="delete_account_failed_server"
+  >%1$s couldn’t delete your account. Nothing was removed. Try again.</string>
 
     <!-- Recovery phrase -->
     <string name="recovery_phrase_title">Recovery phrase</string>
-    <string name="recovery_phrase_verify_failed">Couldn’t record that you saved a copy. Show the phrase again to retry.</string>
-    <string name="recovery_phrase_write_down">Write them down in this order, or copy them into a password manager.</string>
-    <string name="recovery_phrase_saved_action">I’ve saved my recovery phrase</string>
-    <string name="recovery_phrase_verified">You’ve saved a copy of your recovery phrase.</string>
-    <string name="recovery_phrase_intro">Save a copy of these 12 words in case you lose every device you’re signed in on. A new device can get your journal from one you already use, so you need them only if none is left. LogDate can’t see or recover them.</string>
+    <string
+    name="recovery_phrase_verify_failed"
+  >Couldn’t record that you saved a copy. Show the phrase again to retry.</string>
+    <string
+    name="recovery_phrase_write_down"
+  >Write them down in this order, or copy them into a password manager.</string>
+    <string
+    name="recovery_phrase_saved_action"
+  >I’ve saved my recovery phrase</string>
+    <string
+    name="recovery_phrase_verified"
+  >You’ve saved a copy of your recovery phrase.</string>
+    <string
+    name="recovery_phrase_intro"
+  >Save a copy of these 12 words in case you lose every device you’re signed in on. A new device can get your journal from one you already use, so you need them only if none is left. LogDate can’t see or recover them.</string>
     <string name="recovery_phrase_show">Show recovery phrase</string>
     <string name="recovery_phrase_copy">Copy</string>
     <string name="recovery_phrase_hide">Hide</string>
     <string name="recovery_phrase_prompt_title">Show recovery phrase</string>
-    <string name="recovery_phrase_prompt_subtitle">Confirm it’s you to see your recovery phrase</string>
-    <string name="recovery_phrase_missing_title">This device doesn’t have your recovery phrase</string>
-    <string name="recovery_phrase_missing_body">Enter it to read journal entries synced from your other devices.</string>
+    <string
+    name="recovery_phrase_prompt_subtitle"
+  >Confirm it’s you to see your recovery phrase</string>
+    <string
+    name="recovery_phrase_missing_title"
+  >This device doesn’t have your recovery phrase</string>
+    <string
+    name="recovery_phrase_missing_body"
+  >Enter it to read journal entries synced from your other devices.</string>
     <string name="recovery_phrase_enter">Enter recovery phrase</string>
-    <string name="recovery_phrase_not_confirmed">Your recovery phrase stays hidden until you confirm it’s you.</string>
-    <string name="recovery_phrase_unreadable">This device couldn’t read your recovery phrase. Try again.</string>
+    <string
+    name="recovery_phrase_not_confirmed"
+  >Your recovery phrase stays hidden until you confirm it’s you.</string>
+    <string
+    name="recovery_phrase_unreadable"
+  >This device couldn’t read your recovery phrase. Try again.</string>
 
     <!-- Hosting -->
     <string name="hosting_title">Hosting</string>
-    <string name="hosting_intro">Your journal syncs to this server. Entries are encrypted on this device with your recovery phrase before they’re uploaded.</string>
+    <string
+    name="hosting_intro"
+  >Your journal syncs to this server. Entries are encrypted on this device with your recovery phrase before they’re uploaded.</string>
     <string name="hosting_address">Address</string>
     <string name="hosting_status">Status</string>
     <string name="hosting_checking">Checking connection…</string>
     <string name="hosting_connected">Connected</string>
     <string name="hosting_connected_version">Connected · version %1$s</string>
-    <string name="hosting_unreachable">Can’t reach this server right now</string>
+    <string
+    name="hosting_unreachable"
+  >Can’t reach this server right now</string>
     <string name="hosting_check_again">Check again</string>
 
     <!-- Move to another server -->
     <string name="move_title">Move to another server</string>
-    <string name="move_hosting_row_description">Take your journal to a different LogDate server</string>
+    <string
+    name="move_hosting_row_description"
+  >Take your journal to a different LogDate server</string>
     <string name="move_choose_title">Where should your journal go?</string>
-    <string name="move_choose_body">Your journal moves to the new server, still encrypted with your recovery phrase. Afterwards you can delete it from %1$s.</string>
+    <string
+    name="move_choose_body"
+  >Your journal moves to the new server, still encrypted with your recovery phrase. Afterwards you can delete it from %1$s.</string>
     <string name="move_choose_address_label">Server address</string>
     <string name="move_choose_address_placeholder">journal.example.com</string>
     <string name="move_choose_logdate_cloud">Use LogDate Cloud</string>
     <string name="move_choose_continue">Continue</string>
-    <string name="move_problem_invalid_address">Enter a web address, like journal.example.com.</string>
-    <string name="move_problem_unreachable">Nothing answered at that address. Check it and try again.</string>
-    <string name="move_problem_not_logdate">That address isn’t a LogDate server.</string>
-    <string name="move_problem_out_of_date">That server needs an update before it can hold your account.</string>
-    <string name="move_problem_passkeys_unavailable">This device can’t create passkeys for that server.</string>
-    <string name="move_problem_same_server">Your journal is already on this server.</string>
+    <string
+    name="move_problem_invalid_address"
+  >Enter a web address, like journal.example.com.</string>
+    <string
+    name="move_problem_unreachable"
+  >Nothing answered at that address. Check it and try again.</string>
+    <string
+    name="move_problem_not_logdate"
+  >That address isn’t a LogDate server.</string>
+    <string
+    name="move_problem_out_of_date"
+  >That server needs an update before it can hold your account.</string>
+    <string
+    name="move_problem_passkeys_unavailable"
+  >This device can’t create passkeys for that server.</string>
+    <string
+    name="move_problem_same_server"
+  >Your journal is already on this server.</string>
     <string name="move_review_title">Move to %1$s?</string>
     <string name="move_review_what_moves">What moves</string>
     <string name="move_review_what_changes">What changes</string>
@@ -187,56 +333,104 @@
         <item quantity="one">%1$d draft</item>
         <item quantity="other">%1$d drafts</item>
     </plurals>
-    <string name="move_review_passkey">You’ll create a passkey for %1$s.</string>
-    <string name="move_review_recovery_phrase">Your recovery phrase stays the same.</string>
-    <string name="move_review_source_copy">%1$s keeps a copy until you delete it.</string>
+    <string
+    name="move_review_passkey"
+  >You’ll create a passkey for %1$s.</string>
+    <string
+    name="move_review_recovery_phrase"
+  >Your recovery phrase stays the same.</string>
+    <string
+    name="move_review_source_copy"
+  >%1$s keeps a copy until you delete it.</string>
     <plurals name="move_review_remote_only">
-        <item quantity="one">%1$d photo is only on %2$s and never downloaded to this device. It stays there, so keep that account if you want it.</item>
-        <item quantity="other">%1$d photos are only on %2$s and never downloaded to this device. They stay there, so keep that account if you want them.</item>
+        <item
+      quantity="one"
+    >%1$d photo is only on %2$s and never downloaded to this device. It stays there, so keep that account if you want it.</item>
+        <item
+      quantity="other"
+    >%1$d photos are only on %2$s and never downloaded to this device. They stay there, so keep that account if you want them.</item>
     </plurals>
     <string name="move_review_continue">Move my journal</string>
-    <string name="move_problem_switch_failed">Couldn’t switch to %1$s. You’re still on %2$s and nothing changed.</string>
+    <string
+    name="move_problem_switch_failed"
+  >Couldn’t switch to %1$s. You’re still on %2$s and nothing changed.</string>
     <string name="move_account_title">Create your account on %1$s</string>
-    <string name="move_account_body">Choose a username for %1$s. You’ll create a passkey for it next.</string>
+    <string
+    name="move_account_body"
+  >Choose a username for %1$s. You’ll create a passkey for it next.</string>
     <string name="move_account_username">Username</string>
     <string name="move_account_create">Create account</string>
     <string name="move_account_sign_in">I already have an account there</string>
-    <string name="move_problem_username_taken">That username is taken on %1$s. Try another.</string>
-    <string name="move_problem_invalid_username">Usernames can use letters, numbers, and underscores.</string>
-    <string name="move_problem_offline">Couldn’t reach %1$s. Check your connection and try again.</string>
-    <string name="move_problem_passkey">This device couldn’t create a passkey.</string>
-    <string name="move_problem_account_server">%1$s couldn’t set up the account. Try again.</string>
+    <string
+    name="move_problem_username_taken"
+  >That username is taken on %1$s. Try another.</string>
+    <string
+    name="move_problem_invalid_username"
+  >Usernames can use letters, numbers, and underscores.</string>
+    <string
+    name="move_problem_offline"
+  >Couldn’t reach %1$s. Check your connection and try again.</string>
+    <string
+    name="move_problem_passkey"
+  >This device couldn’t create a passkey.</string>
+    <string
+    name="move_problem_account_server"
+  >%1$s couldn’t set up the account. Try again.</string>
     <string name="move_uploading_title">Moving to %1$s</string>
-    <string name="move_uploading_body">Your journal is uploading. You can leave this screen; the upload keeps going.</string>
+    <string
+    name="move_uploading_body"
+  >Your journal is uploading. You can leave this screen; the upload keeps going.</string>
     <string name="move_uploading_starting">Starting the upload…</string>
     <string name="move_uploading_progress">%1$d of %2$d uploaded</string>
     <string name="move_uploading_close">Leave it running</string>
     <string name="move_done_title">Your journal is on %1$s</string>
     <string name="move_done_body">New entries sync to %1$s from now on.</string>
-    <string name="move_done_delete_body">Everything is on %1$s now. You can delete your account and journal from %2$s, or keep them there.</string>
+    <string
+    name="move_done_delete_body"
+  >Everything is on %1$s now. You can delete your account and journal from %2$s, or keep them there.</string>
     <string name="move_done_delete">Delete from %1$s</string>
     <string name="move_done_keep">Keep it</string>
     <string name="move_done_confirm_title">Delete your account on %1$s?</string>
-    <string name="move_done_confirm_message">Your account and the copy of your journal on %1$s are deleted permanently. Your journal on %2$s isn’t affected.</string>
+    <string
+    name="move_done_confirm_message"
+  >Your account and the copy of your journal on %1$s are deleted permanently. Your journal on %2$s isn’t affected.</string>
     <plurals name="move_done_blocked_media">
-        <item quantity="one">Keep your account on %2$s: %1$d photo exists only there.</item>
-        <item quantity="other">Keep your account on %2$s: %1$d photos exist only there.</item>
+        <item
+      quantity="one"
+    >Keep your account on %2$s: %1$d photo exists only there.</item>
+        <item
+      quantity="other"
+    >Keep your account on %2$s: %1$d photos exist only there.</item>
     </plurals>
-    <string name="move_done_blocked_uploads">%1$s hasn’t accepted everything yet, so your account on %2$s stays.</string>
-    <string name="move_done_needs_sign_in">Sign in to %1$s to delete your account there.</string>
+    <string
+    name="move_done_blocked_uploads"
+  >%1$s hasn’t accepted everything yet, so your account on %2$s stays.</string>
+    <string
+    name="move_done_needs_sign_in"
+  >Sign in to %1$s to delete your account there.</string>
     <string name="move_done_sign_in_and_delete">Sign in and delete</string>
-    <string name="move_done_failed_offline">Couldn’t reach %1$s. Try again.</string>
-    <string name="move_done_failed">%1$s couldn’t delete your account. Nothing was removed. Try again.</string>
+    <string
+    name="move_done_failed_offline"
+  >Couldn’t reach %1$s. Try again.</string>
+    <string
+    name="move_done_failed"
+  >%1$s couldn’t delete your account. Nothing was removed. Try again.</string>
     <string name="move_done_close">Done</string>
 
     <!-- Sign-in methods -->
     <string name="sign_in_methods_title">Ways to sign in</string>
-    <string name="sign_in_methods_row_description">Passkeys and linked accounts</string>
-    <string name="sign_in_methods_intro">Passkeys sign you in with your fingerprint, face, or screen lock. There’s no password to remember.</string>
+    <string
+    name="sign_in_methods_row_description"
+  >Passkeys and linked accounts</string>
+    <string
+    name="sign_in_methods_intro"
+  >Passkeys sign you in with your fingerprint, face, or screen lock.</string>
     <string name="sign_in_methods_passkeys_section">Passkeys</string>
     <string name="sign_in_methods_linked_section">Linked accounts</string>
     <string name="sign_in_methods_add_passkey">Add a passkey</string>
-    <string name="sign_in_methods_add_passkey_description">Sign in with this device</string>
+    <string
+    name="sign_in_methods_add_passkey_description"
+  >Sign in with this device</string>
     <string name="sign_in_methods_adding_passkey">Creating passkey…</string>
     <string name="sign_in_methods_unnamed_passkey">Passkey</string>
     <string name="sign_in_methods_added_today">Added today</string>
@@ -247,48 +441,92 @@
     <string name="sign_in_methods_used_on">Last used %1$s</string>
     <string name="sign_in_methods_detail_pair">%1$s · %2$s</string>
     <string name="sign_in_methods_only_method">Your only way to sign in</string>
-    <string name="sign_in_methods_remove_passkey_action">Remove passkey for %1$s</string>
-    <string name="sign_in_methods_remove_named_title">Remove the passkey for %1$s?</string>
+    <string
+    name="sign_in_methods_remove_passkey_action"
+  >Remove passkey for %1$s</string>
+    <string
+    name="sign_in_methods_remove_named_title"
+  >Remove the passkey for %1$s?</string>
     <string name="sign_in_methods_remove_title">Remove this passkey?</string>
-    <string name="sign_in_methods_remove_message">You won’t be able to sign in with it again. Your journal and your other ways to sign in stay as they are.</string>
+    <string
+    name="sign_in_methods_remove_message"
+  >You won’t be able to sign in with it again. Your journal and your other ways to sign in stay as they are.</string>
     <string name="sign_in_methods_google">Google</string>
     <string name="sign_in_methods_other_provider">Linked account</string>
     <string name="sign_in_methods_signed_in_today">Last signed in today</string>
-    <string name="sign_in_methods_signed_in_yesterday">Last signed in yesterday</string>
+    <string
+    name="sign_in_methods_signed_in_yesterday"
+  >Last signed in yesterday</string>
     <string name="sign_in_methods_signed_in_on">Last signed in %1$s</string>
     <string name="sign_in_methods_passkey_added">Passkey added</string>
-    <string name="sign_in_methods_passkey_added_for">Passkey added for %1$s</string>
+    <string
+    name="sign_in_methods_passkey_added_for"
+  >Passkey added for %1$s</string>
     <string name="sign_in_methods_passkey_removed">Passkey removed</string>
-    <string name="sign_in_methods_add_failed_already_here">This device already has a passkey for your account.</string>
-    <string name="sign_in_methods_add_failed_signed_out">You’re signed out. Sign in again to add a passkey.</string>
-    <string name="sign_in_methods_add_failed_offline">Couldn’t reach the server. Check your connection and try again.</string>
-    <string name="sign_in_methods_add_failed_platform">This device couldn’t create a passkey.</string>
-    <string name="sign_in_methods_add_failed_server">The server couldn’t save the passkey. Try again.</string>
-    <string name="sign_in_methods_remove_failed_last">This is your only way to sign in, so it can’t be removed.</string>
-    <string name="sign_in_methods_remove_failed_offline">Couldn’t reach the server. Check your connection and try again.</string>
-    <string name="sign_in_methods_remove_failed_server">The server couldn’t remove the passkey. Try again.</string>
-    <string name="sign_in_methods_load_failed_title">Can’t show your sign-in methods</string>
-    <string name="sign_in_methods_load_failed_signed_out">You’re signed out on this device.</string>
-    <string name="sign_in_methods_load_failed_offline">Couldn’t reach the server. Check your connection and try again.</string>
-    <string name="sign_in_methods_load_failed_server">The server didn’t send your sign-in methods. Try again in a moment.</string>
+    <string
+    name="sign_in_methods_add_failed_already_here"
+  >This device already has a passkey for your account.</string>
+    <string
+    name="sign_in_methods_add_failed_signed_out"
+  >You’re signed out. Sign in again to add a passkey.</string>
+    <string
+    name="sign_in_methods_add_failed_offline"
+  >Couldn’t reach the server. Check your connection and try again.</string>
+    <string
+    name="sign_in_methods_add_failed_platform"
+  >This device couldn’t create a passkey.</string>
+    <string
+    name="sign_in_methods_add_failed_server"
+  >The server couldn’t save the passkey. Try again.</string>
+    <string
+    name="sign_in_methods_remove_failed_last"
+  >This is your only way to sign in, so it can’t be removed.</string>
+    <string
+    name="sign_in_methods_remove_failed_offline"
+  >Couldn’t reach the server. Check your connection and try again.</string>
+    <string
+    name="sign_in_methods_remove_failed_server"
+  >The server couldn’t remove the passkey. Try again.</string>
+    <string
+    name="sign_in_methods_load_failed_title"
+  >Can’t show your sign-in methods</string>
+    <string
+    name="sign_in_methods_load_failed_signed_out"
+  >You’re signed out on this device.</string>
+    <string
+    name="sign_in_methods_load_failed_offline"
+  >Couldn’t reach the server. Check your connection and try again.</string>
+    <string
+    name="sign_in_methods_load_failed_server"
+  >The server didn’t send your sign-in methods. Try again in a moment.</string>
 
     <!-- Profile -->
     <string name="profile">Profile</string>
     <string name="profile_information">Profile Information</string>
-    <string name="profile_settings_description">Name, birthday, and photo</string>
+    <string
+    name="profile_settings_description"
+  >Name, birthday, and photo</string>
     <string name="profile_update_failed">Failed to update profile</string>
-    <string name="profile_updated_successfully">Profile updated successfully</string>
+    <string
+    name="profile_updated_successfully"
+  >Profile updated successfully</string>
     <string name="profile_photo">Profile photo</string>
     <string name="no_display_name">No display name</string>
     <string name="display_name">Display Name</string>
     <string name="your_display_name">Your Display Name</string>
-    <string name="account_display_name_description">Your display name is how you&apos;ll appear to others when sharing journal entries. You can always change this later.</string>
+    <string
+    name="account_display_name_description"
+  >Your display name is how you&apos;ll appear to others when sharing journal entries. You can always change this later.</string>
     <string name="edit_display_name">Edit display name</string>
     <string name="account_profile_edit_label">Edit profile</string>
     <string name="update_profile">Update Profile</string>
     <string name="refresh_profile">Refresh profile</string>
-    <string name="this_is_how_youll_appear_to_others_you_can_change_this_anytime">This is how you&apos;ll appear to others. You can change this anytime.</string>
-    <string name="this_is_how_your_name_will_appear_to_others">This is how your name will appear to others</string>
+    <string
+    name="this_is_how_youll_appear_to_others_you_can_change_this_anytime"
+  >This is how you&apos;ll appear to others. You can change this anytime.</string>
+    <string
+    name="this_is_how_your_name_will_appear_to_others"
+  >This is how your name will appear to others</string>
     <string name="personal_information">Personal Information</string>
     <string name="enter_your_name">Enter your name</string>
     <string name="logging_since">logging since %1$s</string>
@@ -298,7 +536,9 @@
     <string name="username_optional">Username (Optional)</string>
     <string name="username_handle">@%1$s</string>
     <string name="username_available">Username available</string>
-    <string name="account_username_requirements">Letters, numbers, and underscores. 3-30 characters. This cannot be changed later.</string>
+    <string
+    name="account_username_requirements"
+  >Letters, numbers, and underscores. 3-30 characters. This cannot be changed later.</string>
     <string name="username_is_already_taken">Username is already taken</string>
     <string name="username_is_available">Username is available</string>
     <string name="username_is_available_2">Username is available</string>
@@ -307,97 +547,175 @@
     <string name="username_tips">Username tips</string>
     <string name="account_username_choose_title">Choose a Username</string>
     <string name="account_username_choose_label">Choose a username</string>
-    <string name="account_username_choose_screen_title">Choose your username</string>
-    <string name="account_username_display_name_prompt">What should people call you?</string>
+    <string
+    name="account_username_choose_screen_title"
+  >Choose your username</string>
+    <string
+    name="account_username_display_name_prompt"
+  >What should people call you?</string>
     <string name="check_availability">Check Availability</string>
-    <string name="error_checking_availability">Error checking availability</string>
+    <string
+    name="error_checking_availability"
+  >Error checking availability</string>
     <string name="error_checking_username">Error checking username</string>
-    <string name="account_username_passkey_hint">Providing your username helps find your passkey faster</string>
-    <string name="account_username_network_address_description">Your username identifies your account.</string>
-    <string name="this_username_will_identify_you_on_logdate_cloud_you_can_change_it_later">This username will identify you on LogDate Cloud. You can change it later.</string>
-    <string name="this_will_be_your_unique_identifier_on_logdate_cloud">This will be your unique identifier on LogDate Cloud.</string>
+    <string
+    name="account_username_passkey_hint"
+  >Providing your username helps find your passkey faster</string>
+    <string
+    name="account_username_network_address_description"
+  >Your username identifies your account.</string>
+    <string
+    name="this_username_will_identify_you_on_logdate_cloud_you_can_change_it_later"
+  >This username will identify you on LogDate Cloud. You can change it later.</string>
+    <string
+    name="this_will_be_your_unique_identifier_on_logdate_cloud"
+  >This will be your unique identifier on LogDate Cloud.</string>
     <string name="your_username">your_username</string>
     <string name="your_username_2">your-username</string>
 
     <!-- Birthday -->
     <string name="birthday">Birthday</string>
-    <string name="birthday_detail_description">Your birthday marks where your story begins. LogDate uses it to anchor your timeline, celebrate with you each year, and shape memories around the moments of your life.</string>
+    <string
+    name="birthday_detail_description"
+  >Your birthday marks where your story begins. LogDate uses it to anchor your timeline, celebrate with you each year, and shape memories around the moments of your life.</string>
     <string name="birthday_not_set">Not set</string>
     <string name="birthday_updated">Birthday updated successfully</string>
     <string name="birthday_update_failed">Failed to update birthday</string>
     <string name="your_birthday">Your birthday</string>
     <string name="set_your_birthday">Set your birthday!</string>
     <string name="when_were_you_born">When were you born?</string>
-    <string name="birthday_age_less_than_one_year">You&apos;re less than a year old!</string>
+    <string
+    name="birthday_age_less_than_one_year"
+  >You&apos;re less than a year old!</string>
     <plurals name="birthday_age_just_getting_started">
-        <item quantity="one">You&apos;re %1$d year old! Just getting started!</item>
-        <item quantity="other">You&apos;re %1$d years old! Just getting started!</item>
+        <item
+      quantity="one"
+    >You&apos;re %1$d year old! Just getting started!</item>
+        <item
+      quantity="other"
+    >You&apos;re %1$d years old! Just getting started!</item>
     </plurals>
-    <string name="birthday_age_young_and_bright">You&apos;re %1$d years old! So young and bright!</string>
-    <string name="birthday_age_teenage_years">You&apos;re %1$d years old! The teenage years are amazing!</string>
-    <string name="birthday_age_young_adult">You&apos;re %1$d years old! Young adult adventures await!</string>
-    <string name="birthday_age_prime_of_life">You&apos;re %1$d years old! The prime of life!</string>
-    <string name="birthday_age_wisdom">You&apos;re %1$d years old! Wisdom and experience!</string>
-    <string name="birthday_age_very_wise">You&apos;re %1$d years old! Very wise indeed!</string>
+    <string
+    name="birthday_age_young_and_bright"
+  >You&apos;re %1$d years old! So young and bright!</string>
+    <string
+    name="birthday_age_teenage_years"
+  >You&apos;re %1$d years old! The teenage years are amazing!</string>
+    <string
+    name="birthday_age_young_adult"
+  >You&apos;re %1$d years old! Young adult adventures await!</string>
+    <string
+    name="birthday_age_prime_of_life"
+  >You&apos;re %1$d years old! The prime of life!</string>
+    <string
+    name="birthday_age_wisdom"
+  >You&apos;re %1$d years old! Wisdom and experience!</string>
+    <string
+    name="birthday_age_very_wise"
+  >You&apos;re %1$d years old! Very wise indeed!</string>
 
     <!-- Bio -->
     <string name="bio_optional">Bio (Optional)</string>
-    <string name="account_bio_community_placeholder">Share something about yourself with the LogDate community</string>
-    <string name="tell_others_about_yourself">Tell others about yourself...</string>
-    <string name="tell_others_about_yourself_2">Tell others about yourself</string>
+    <string
+    name="account_bio_community_placeholder"
+  >Share something about yourself with the LogDate community</string>
+    <string
+    name="tell_others_about_yourself"
+  >Tell others about yourself...</string>
+    <string
+    name="tell_others_about_yourself_2"
+  >Tell others about yourself</string>
 
     <!-- Biometric lock -->
     <string name="disable_biometric_lock_title">Disable biometric lock?</string>
-    <string name="disable_biometric_lock_message">Anyone with access to your device will be able to open LogDate.</string>
+    <string
+    name="disable_biometric_lock_message"
+  >Anyone with access to your device will be able to open LogDate.</string>
 
     <!-- Data reset -->
     <string name="clear">Clear</string>
     <string name="account_data_clear_action">Clear All Data</string>
     <string name="account_data_clear_dialog_title">Clear All Data?</string>
-    <string name="clear_all_your_data_while_keeping_your_account">Clear all your data while keeping your account</string>
+    <string
+    name="clear_all_your_data_while_keeping_your_account"
+  >Clear all your data while keeping your account</string>
     <string name="clear_data">Clear Data</string>
-    <string name="clear_data_warning_message">This action cannot be undone.\n\nThis will permanently delete all your journals, entries, photos, and settings.\n\nYour account will remain active.\n\nAre you absolutely sure you want to continue?</string>
-    <string name="clear_data_acknowledgement">I understand this will permanently delete all my data</string>
-    <string name="clear_data_explanation">Permanently deletes all journals, entries, and photos from this device. Your account and sign-in will not be affected.</string>
+    <string
+    name="clear_data_warning_message"
+  >This action cannot be undone.\n\nThis will permanently delete all your journals, entries, photos, and settings.\n\nYour account will remain active.\n\nAre you absolutely sure you want to continue?</string>
+    <string
+    name="clear_data_acknowledgement"
+  >I understand this will permanently delete all my data</string>
+    <string
+    name="clear_data_explanation"
+  >Permanently deletes all journals, entries, and photos from this device. Your account and sign-in will not be affected.</string>
     <string name="clear_data_success">All local data has been cleared</string>
-    <string name="clear_data_failed">Failed to clear data. Please try again.</string>
+    <string
+    name="clear_data_failed"
+  >Failed to clear data. Please try again.</string>
     <string name="yes_clear_all_data">Yes, Clear All Data</string>
     <string name="reset_device_id">Reset Device ID</string>
-    <string name="reset_device_id_confirmation">Are you sure you want to reset this device&apos;s ID? This is primarily used for privacy purposes and will generate a new unique identifier for this device. This won&apos;t affect your data but may require re-syncing with LogDate Cloud.</string>
+    <string
+    name="reset_device_id_confirmation"
+  >Are you sure you want to reset this device&apos;s ID? This is primarily used for privacy purposes and will generate a new unique identifier for this device. This won&apos;t affect your data but may require re-syncing with LogDate Cloud.</string>
 
     <!-- Email verification (Android Digital Credentials) -->
     <string name="email_verification_title">Verify your email</string>
-    <string name="email_verification_body">Adds a one-tap recovery option to your account. You can do this later in Settings.</string>
+    <string
+    name="email_verification_body"
+  >Adds a one-tap recovery option to your account. You can do this later in Settings.</string>
     <string name="email_verification_verify_button">Verify with Google</string>
     <string name="email_verification_skip_button">Skip for now</string>
     <string name="email_verification_continue_button">Continue</string>
-    <string name="email_verification_in_progress">Waiting for system picker...</string>
+    <string
+    name="email_verification_in_progress"
+  >Waiting for system picker...</string>
     <string name="email_verification_success_title">Email verified</string>
     <string name="email_verification_success_body">Verified as %1$s</string>
     <string name="email_verification_conflict_title">Already attached</string>
-    <string name="email_verification_conflict_body">This email is already attached to another LogDate account.</string>
+    <string
+    name="email_verification_conflict_body"
+  >This email is already attached to another LogDate account.</string>
     <string name="email_verification_failed_title">Verification failed</string>
-    <string name="email_verification_failed_body">Try again or skip. Reason: %1$s</string>
-    <string name="email_verification_cancelled_body">The picker was cancelled.</string>
-    <string name="email_verification_no_credential_body">No verifiable email was found on this device.</string>
+    <string
+    name="email_verification_failed_body"
+  >Try again or skip. Reason: %1$s</string>
+    <string
+    name="email_verification_cancelled_body"
+  >The picker was cancelled.</string>
+    <string
+    name="email_verification_no_credential_body"
+  >No verifiable email was found on this device.</string>
     <!-- Account confirmation step -->
     <string name="account_step_progress">Step %1$d of %2$d</string>
-    <string name="account_username_domain_hint">Usernames are unique on %1$s.</string>
+    <string
+    name="account_username_domain_hint"
+  >Usernames are unique on %1$s.</string>
     <string name="account_confirm_title">You’re almost in</string>
-    <string name="account_confirm_subtitle">Check your name and username.</string>
+    <string
+    name="account_confirm_subtitle"
+  >Check your name and username.</string>
     <string name="account_edit_name">Edit name</string>
     <string name="account_edit_username">Edit username</string>
     <string name="account_name_label">Name</string>
     <string name="account_passkey_server_line">Passkey sign-in on %1$s</string>
-    <string name="account_passkey_point_no_passwords">No password to create or remember</string>
-    <string name="account_passkey_point_device_auth">Unlocked by your device's biometrics or screen lock</string>
-    <string name="account_passkey_point_phish_resistant">Can't be phished, guessed, or reused</string>
-    <string name="account_passkey_point_multi_device">Syncs to your other devices through your password manager</string>
+    <string
+    name="account_passkey_point_device_auth"
+  >Unlocked by your device's biometrics or screen lock</string>
+    <string
+    name="account_passkey_point_multi_device"
+  >Syncs to your other devices through your password manager</string>
     <string name="account_create_cta">Create account</string>
     <!-- Second-device sign-in: adopting entries already on this device -->
-    <string name="account_adopt_local_data_title">Keep what's already here?</string>
-    <string name="account_adopt_local_data_body">This device has entries that aren't in any account yet. Signing in adds them to your account and syncs them to your other devices.</string>
-    <string name="account_adopt_local_data_confirm">Sign in and keep them</string>
+    <string
+    name="account_adopt_local_data_title"
+  >Keep what's already here?</string>
+    <string
+    name="account_adopt_local_data_body"
+  >This device has entries that aren't in any account yet. Signing in adds them to your account and syncs them to your other devices.</string>
+    <string
+    name="account_adopt_local_data_confirm"
+  >Sign in and keep them</string>
     <string name="profile_bio_label">About me</string>
     <string name="profile_bio_not_set">Add a few words about yourself</string>
     <string name="edit_bio">Edit about me</string>

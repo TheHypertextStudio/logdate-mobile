@@ -448,4 +448,56 @@
     <string
     name="sync_issue_connection"
   >This item couldn’t reach LogDate Cloud.</string>
+
+    <!-- Bluesky account sign-in -->
+    <string name="bluesky_continue">Continue with Bluesky</string>
+    <string
+    name="bluesky_intro"
+  >Use your Bluesky identity. Your journal stays private and uses a LogDate passkey.</string>
+    <string name="bluesky_handle">Bluesky handle</string>
+    <string
+    name="bluesky_handle_hint"
+  >alice.bsky.social or your own domain</string>
+    <string name="bluesky_browser_title">Continue in your browser</string>
+    <string
+    name="bluesky_browser_body"
+  >Confirm your Bluesky account, then return to LogDate to create or use your LogDate passkey.</string>
+    <string name="bluesky_restart">Start a new sign-in</string>
+    <string name="bluesky_confirm_title">Confirm your LogDate passkey</string>
+    <string
+    name="bluesky_confirm_body"
+  >Your Bluesky account is confirmed. Use your LogDate passkey to open your private journal.</string>
+    <string name="bluesky_confirm_passkey">Use LogDate passkey</string>
+    <string name="bluesky_connecting">Connecting your account</string>
+    <string
+    name="bluesky_unavailable_title"
+  >Bluesky sign-in is unavailable</string>
+    <string
+    name="bluesky_unavailable_body"
+  >Bluesky sign-in is not available on this device and server. Choose another sign-in method.</string>
+    <string
+    name="bluesky_approval_title"
+  >This device needs your journal keys</string>
+    <string
+    name="bluesky_approval_body"
+  >Approve this device from a signed-in LogDate device, then start a new sign-in.</string>
+    <string name="bluesky_consent_title">Add this device’s entries?</string>
+    <string
+    name="bluesky_consent_body"
+  >The entries on this device will become part of the LogDate account you are signing into.</string>
+    <string name="bluesky_consent_action">Add my entries and continue</string>
+    <string name="bluesky_canceled">Sign-in was canceled.</string>
+    <string
+    name="bluesky_expired"
+  >This sign-in expired. Start a new sign-in.</string>
+    <string
+    name="bluesky_context_changed"
+  >This sign-in belongs to a different server or journal. Start a new sign-in.</string>
+    <string name="bluesky_check_handle">Check your Bluesky handle.</string>
+    <string
+    name="bluesky_check_profile"
+  >Check your name and LogDate username.</string>
+    <string
+    name="bluesky_unavailable"
+  >Bluesky sign-in is unavailable right now.</string>
 </resources>

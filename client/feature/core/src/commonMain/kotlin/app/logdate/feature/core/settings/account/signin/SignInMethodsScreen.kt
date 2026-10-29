@@ -100,6 +100,7 @@ fun SignInMethodsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val connectionSection = LocalAccountConnectionProvider.current?.invoke()
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event -> snackbarHostState.showSnackbar(event.message()) }
@@ -112,6 +113,7 @@ fun SignInMethodsScreen(
         onRetry = viewModel::refresh,
         onAddPasskey = viewModel::addPasskey,
         onRemovePasskey = viewModel::removePasskey,
+        connectionSection = connectionSection,
     )
 }
 
@@ -123,6 +125,7 @@ fun SignInMethodsContent(
     onAddPasskey: () -> Unit,
     onRemovePasskey: (credentialId: String) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    connectionSection: AccountConnectionSection? = null,
 ) {
     var pendingRemoval by remember { mutableStateOf<PasskeyRow?>(null) }
 
@@ -177,6 +180,9 @@ fun SignInMethodsContent(
                             state.linkedProviders.forEach { provider -> LinkedProviderItem(provider) }
                         }
                     }
+                }
+                if (connectionSection != null) {
+                    item { connectionSection() }
                 }
             }
         }

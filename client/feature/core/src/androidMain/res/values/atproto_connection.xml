@@ -1,0 +1,67 @@
+<resources>
+    <string name="account_connection_title">Account connection</string>
+    <string name="account_connection_connected">Connected</string>
+    <string name="account_connection_expired">Connection expired</string>
+    <string name="account_connection_revoked">Connection revoked</string>
+    <string name="account_connection_required">Reconnect required</string>
+    <string name="account_connection_disconnected">Not connected</string>
+    <string name="account_connection_checking">Checking…</string>
+    <string name="account_connection_unavailable">Could not be checked</string>
+    <string name="account_connection_last_known">Last known: %1$s</string>
+    <string name="account_connection_disconnect">Disconnect…</string>
+    <string name="account_connection_retry">Retry disconnect…</string>
+    <string name="account_connection_reconnect">Reconnect</string>
+    <string name="account_connection_cancel">Cancel request</string>
+    <string name="account_connection_check">Check status</string>
+    <string
+    name="account_connection_journal_preserved"
+  >Your journal and LogDate sign-in stay available.</string>
+    <string
+    name="account_connection_disconnect_title"
+  >Disconnect this account?</string>
+    <string
+    name="account_connection_disconnect_message"
+  >LogDate will stop using your Atmosphere account’s authorization. Your journal, LogDate sign-in, and Atmosphere identity stay available. A passkey confirms this action.</string>
+    <string name="account_connection_disconnect_confirm">Disconnect</string>
+    <string name="account_connection_retry_title">Retry disconnection?</string>
+    <string
+    name="account_connection_retry_message"
+  >This retries the connection you already confirmed. Your journal and LogDate sign-in stay available.</string>
+    <string name="account_connection_retry_confirm">Retry disconnect</string>
+    <string
+    name="account_connection_browser_unavailable"
+  >The browser could not be opened. Choose Reconnect to start a new request.</string>
+    <string
+    name="account_connection_observation_failed"
+  >The connection could not be checked.</string>
+    <string
+    name="account_connection_changed"
+  >The connection changed. Review its current status.</string>
+    <string
+    name="account_connection_proof_invalid"
+  >The passkey could not confirm this action.</string>
+    <string
+    name="account_connection_proof_expired"
+  >This confirmation expired.</string>
+    <string
+    name="account_connection_last_method"
+  >Keep a usable sign-in method before disconnecting.</string>
+    <string
+    name="account_connection_ineligible"
+  >This account does not use an external connection.</string>
+    <string
+    name="account_connection_rate_limited"
+  >Too many connection requests. Try again shortly.</string>
+    <string
+    name="account_connection_newer_preserved"
+  >A newer connection is still active.</string>
+    <string
+    name="account_connection_remote_unconfirmed"
+  >Access was removed from LogDate. Removal from your account’s server could not be confirmed.</string>
+    <string
+    name="account_connection_finish_browser"
+  >Finish connecting in your browser.</string>
+    <string
+    name="account_connection_needs_passkey"
+  >A registered passkey is needed to disconnect.</string>
+</resources>
