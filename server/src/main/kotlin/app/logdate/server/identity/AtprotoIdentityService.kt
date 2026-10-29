@@ -4,6 +4,7 @@ import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.logging.IdentityNotices
 import app.logdate.server.logging.RepoEventNotices
+import app.logdate.shared.model.AccountIdentityKind
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
@@ -89,12 +90,13 @@ class AtprotoIdentityService(
      * @throws IdentityAccountMissingException when the account no longer exists.
      */
     suspend fun ensureIdentity(account: Account): Account {
-        if (hasCanonicalIdentity(account)) return account
+        var provisioned = false
         return provisioningLockFor(account.id)
             .withLock {
                 val current = accountRepository.findById(account.id) ?: throw IdentityAccountMissingException()
-                if (hasCanonicalIdentity(current)) current else ensureIdentityLocked(current)
-            }.also { notifyIdentityChanged(it) }
+                requireHostedIdentity(current)
+                if (hasCanonicalIdentity(current)) current else ensureIdentityLocked(current).also { provisioned = true }
+            }.also { if (provisioned) notifyIdentityChanged(it) }
     }
 
     private suspend fun ensureIdentityLocked(stored: Account): Account {
@@ -197,7 +199,10 @@ class AtprotoIdentityService(
     suspend fun findPublicByHandle(handle: String): Account? = findByHandle(handle)?.takeIf(::hasPublicIdentity)
 
     private fun hasPublicIdentity(account: Account): Boolean =
-        account.isActive && account.did != null && account.publicIdentityDid == account.did
+        account.identityKind == AccountIdentityKind.HOSTED &&
+            account.isActive &&
+            account.did != null &&
+            account.publicIdentityDid == account.did
 
     /** The account that owns [did], when it has a complete identity. Reads only. */
     suspend fun findByDid(did: String): Account? {
@@ -209,7 +214,10 @@ class AtprotoIdentityService(
     }
 
     private fun hasCompleteIdentity(account: Account): Boolean =
-        account.handle != null && account.did != null && account.signingKeyPublic != null
+        account.identityKind == AccountIdentityKind.HOSTED &&
+            account.handle != null &&
+            account.did != null &&
+            account.signingKeyPublic != null
 
     fun didForHandle(handle: String): AtprotoDid = AtprotoDid.require("did:web:${requireNotNull(canonicalizeHandle(handle))}")
 
@@ -514,6 +522,7 @@ class AtprotoIdentityService(
     }
 
     fun documentFor(account: Account): DidDocument {
+        requireHostedIdentity(account)
         val did = AtprotoDid.require(requireNotNull(account.did))
         val handle = requireNotNull(account.handle)
         val signingKeyPublic = requireNotNull(account.signingKeyPublic)
@@ -540,6 +549,12 @@ class AtprotoIdentityService(
                     ),
                 ),
         )
+    }
+
+    private fun requireHostedIdentity(account: Account) {
+        if (account.identityKind != AccountIdentityKind.HOSTED) {
+            throw IdentityLifecycleConflictException("This identity is not hosted by LogDate")
+        }
     }
 
     fun serverDocument(): DidDocument =

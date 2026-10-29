@@ -2,6 +2,7 @@ package app.logdate.server.database
 
 import app.logdate.server.atproto.firehose.PublicRepoCandidate
 import app.logdate.server.atproto.firehose.PublicRepoDirectory
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,6 +43,7 @@ class PostgreSQLPublicRepoDirectory(
                     ).selectAll()
                     .where {
                         (AccountsTable.isActive eq true) and
+                            (AccountsTable.identityKind eq AccountIdentityKind.HOSTED.wireValue) and
                             AccountsTable.moderation.isNull() and
                             (AccountsTable.storageMode eq AccountStorageMode.PERSONAL_SPACE_V1.wireValue) and
                             (AccountsTable.publicIdentityDid eq AccountsTable.did) and

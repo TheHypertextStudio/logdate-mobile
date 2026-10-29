@@ -3,6 +3,7 @@ package app.logdate.server.atproto.firehose
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.identity.AtprotoIdentityConfig
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import studio.hypertext.atproto.identity.AtprotoDid
 
@@ -84,7 +85,7 @@ class AccountPublicRepoGate(
      */
     fun hasPublicIdentity(account: Account): Boolean {
         val did = account.did ?: return false
-        if (account.publicIdentityDid != did) return false
+        if (account.identityKind != AccountIdentityKind.HOSTED || account.publicIdentityDid != did) return false
         return did.startsWith("did:web:") || (did.startsWith("did:plc:") && identityConfig.publishesPlcOperations)
     }
 
