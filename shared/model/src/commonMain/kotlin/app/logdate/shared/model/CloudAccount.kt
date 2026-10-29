@@ -35,6 +35,7 @@ data class CloudAccount(
      * server has reported it: a device never assumes legacy.
      */
     val storageMode: AccountStorageMode = AccountStorageMode.UNRECOGNIZED,
+    val identityKind: AccountIdentityKind = AccountIdentityKind.UNRECOGNIZED,
 )
 
 /**

@@ -28,6 +28,8 @@ data class LogDateAccount(
     /** How the server keeps this account's data; a server that predates storage modes sends nothing. */
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val storageMode: AccountStorageMode = AccountStorageMode.LEGACY,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val identityKind: AccountIdentityKind = AccountIdentityKind.HOSTED,
 )
 
 @Serializable
