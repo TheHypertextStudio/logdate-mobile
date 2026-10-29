@@ -20,25 +20,25 @@ AT Protocol version different, and the client handles all of them.
    authorization server, which may be the PDS itself or a shared "entryway" such as
    `https://bsky.social`. The client follows that chain on every sign-in.
 2. **Clients register themselves.** There is no developer console. Your `client_id` is the
-   `https://` URL of a small JSON document (the *client metadata*) that you host. Authorization
+   `https://` URL of a small JSON document (the _client metadata_) that you host. Authorization
    servers fetch it to learn your redirect URIs and public keys.
 3. **Every token is bound to a key.** Each session gets its own DPoP key. Every request (to the
    authorization server and to the data server) carries a short signed proof made with that key,
-   so a stolen token is useless without the key. Servers also hand out a rotating *nonce* that
+   so a stolen token is useless without the key. Servers also hand out a rotating _nonce_ that
    proofs must include; when a nonce changes, the server answers `use_dpop_nonce` and the client
    retries once with the new value.
 
 The full flow, end to end:
 
-| Step | What the client does | Standard |
-| --- | --- | --- |
-| Resolve | Handle → DID → DID document (handle checked in both directions) → PDS → authorization server metadata, checked against the AT Protocol profile (see below) | AT Protocol identity, RFC 9728, RFC 8414 |
-| Push the request | POSTs the request parameters to the PAR endpoint with a PKCE challenge, a DPoP proof, and a signed client assertion | RFC 9126, RFC 7636 (S256), RFC 9449, RFC 7523 |
-| Redirect | Returns `authorization_endpoint?client_id=…&request_uri=…` for you to redirect the browser to | RFC 9126 |
-| Callback | Checks `state`, then requires `iss` to match the server the request went to, even on an error response. Exchanges the code with the PKCE verifier, then confirms that `sub` is the expected DID and that the DID's PDS really uses this authorization server | RFC 9207, AT Protocol OAuth "Identity Authentication" |
-| Use | Adds `Authorization: DPoP <token>` and a proof with an `ath` hash to every data server request | RFC 9449 |
-| Refresh | Re-verifies the account's authorization server, then trades the single-use refresh token for new tokens with the same DPoP key and client key | RFC 6749, AT Protocol OAuth "Tokens" |
-| Sign out | Revokes the refresh token and deletes the stored session | RFC 7009 |
+| Step             | What the client does                                                                                                                                                                                                                                         | Standard                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Resolve          | Handle → DID → DID document (handle checked in both directions) → PDS → authorization server metadata, checked against the AT Protocol profile (see below)                                                                                                   | AT Protocol identity, RFC 9728, RFC 8414              |
+| Push the request | POSTs the request parameters to the PAR endpoint with a PKCE challenge, a DPoP proof, and a signed client assertion                                                                                                                                          | RFC 9126, RFC 7636 (S256), RFC 9449, RFC 7523         |
+| Redirect         | Returns `authorization_endpoint?client_id=…&request_uri=…` for you to redirect the browser to                                                                                                                                                                | RFC 9126                                              |
+| Callback         | Checks `state`, then requires `iss` to match the server the request went to, even on an error response. Exchanges the code with the PKCE verifier, then confirms that `sub` is the expected DID and that the DID's PDS really uses this authorization server | RFC 9207, AT Protocol OAuth "Identity Authentication" |
+| Use              | Adds `Authorization: DPoP <token>` and a proof with an `ath` hash to every data server request                                                                                                                                                               | RFC 9449                                              |
+| Refresh          | Re-verifies the account's authorization server, then trades the single-use refresh token for new tokens with the same DPoP key and client key                                                                                                                | RFC 6749, AT Protocol OAuth "Tokens"                  |
+| Sign out         | Revokes the refresh token and deletes the stored session                                                                                                                                                                                                     | RFC 7009                                              |
 
 ### Which authorization servers the client accepts
 
@@ -108,6 +108,12 @@ val oauth =
 `OAuthClientConfig` rejects settings the specification forbids, such as an `http://` client ID, a
 port in the client ID, or a scope without `atproto`.
 
+Each authorization attempt remembers its requested permissions. A token response may grant fewer
+permissions, but cannot add permissions the attempt did not request. The client revokes an expanded
+new grant before storing it, preserving any existing session. A refresh cannot expand the session's
+previously granted permissions either; the client revokes the new tokens and ends that session.
+Request additional permissions through a separate authorization that explains the new access.
+
 Create one `AtprotoOAuthClient` per process and keep it for the life of the process. It opens two
 HTTP clients on your engine (one for authorization servers, one for data servers) that every
 session shares; call `oauth.close()` on shutdown to release them. Closing it leaves your own client
@@ -127,13 +133,31 @@ val redirect = oauth.authorize(handle, OAuthAuthorizeOptions(appState = "/journa
 call.respondRedirect(redirect.url)
 
 // GET /oauth/callback?code=…&state=…&iss=…
-val parameters = call.request.queryParameters.let { p -> p.names().associateWith { p[it]!! } }
+val query = call.request.queryParameters
+require(query.names().all { query.getAll(it)?.size == 1 }) { "Duplicate callback parameters" }
+val parameters = query.names().associateWith { query[it]!! }
 val result = oauth.callback(parameters)
 val did = result.session.did // the verified account ID; store this, not the handle
 ```
 
 `authorize` also accepts a DID, or the `https://` URL of a data server or entryway for people who
 know their provider but not their handle.
+
+Handle verification follows the [AT Protocol identity rules](https://atproto.com/specs/did): only
+the first syntactically valid `at://` handle in the DID document is its claimed handle. Other URI
+aliases are ignored, and a later handle cannot replace a first handle whose link does not verify.
+`DidDocument.claimedHandle()` exposes the same selection rule for other callers.
+
+Use the `callback(parameters, acceptIdentity)` overload to validate an application's pending
+sign-in after provider identity and permissions are verified. The hook runs under the DID's
+session lock, before an existing provider session is revoked or replaced. If the hook rejects or
+is canceled, only the new grant is revoked; the existing provider session is preserved.
+
+An identity proof recorded by the hook is distinct from retaining provider access. Its writes can
+survive a later provider-session storage failure or cancellation. Such a failure can end the prior
+provider connection after acceptance, so require reauthentication for provider-dependent actions
+until a usable session is restored. Do not treat an accepted identity proof as a journal decryption
+key or as evidence that provider tokens were stored.
 
 ### 5. Call the account's data server
 
@@ -201,7 +225,10 @@ The library never decides where data lives. You provide two stores:
 - `OAuthSessionStore` holds the session for each DID: tokens, the private DPoP key, and the client
   key ID. Both stored types are `@Serializable`, so saving them as JSON is one line.
 
-Both contain secrets. Encrypt them at rest the same way you store passwords or API keys.
+Both contain secrets. Encrypt them at rest with a deployment key kept outside the store, and do not
+log their JSON. `OAuthAuthorizationState.requestedScope` is optional when reading older stored
+attempts; those use the configured client scope as their permission limit. Preserve the field in
+new attempts so narrower requests remain bounded after a restart.
 
 Because the session object holds no state of its own, any instance that shares the stores can
 `restore` and use a session, including after a restart. `InMemoryOAuthStateStore` and
@@ -226,6 +253,28 @@ detection, or when a lock's lease ran out in the middle of a refresh.
 When a renewal finds that the account's authorization server changed, or the new tokens belong to
 another account, the client revokes the tokens it can and ends the session.
 
+### Durable connection state and guarded sign-out
+
+Stores can override `delete(did, reason)` to retain a bounded termination reason in the same
+transaction as token removal. Existing stores delegate to `delete(did)` by default. Expiry,
+known revocation, ambiguous refresh rejection and changed hosting authority remain distinct.
+A delayed data-server rejection checks the rejected session under the shared lock before deletion,
+so it cannot erase a newer callback grant.
+
+`revokeIf(did, beforeRevoke, removeLocal)` evaluates the guard inside the existing session lock
+before contacting the provider. Its local completion callback also runs under that lock, including
+on provider failure or cancellation, so an application can atomically remove tokens and write its
+own disconnection receipt. The callback must actually complete local removal; it must not reacquire
+the same non-reentrant session lock. A false guard performs no revocation or removal. `NO_SESSION`
+does not confirm remote revocation, and only `CONFIRMED` records a successful provider response.
+Local completion failure is thrown, with any earlier revocation failure retained as suppressed.
+
+Applications that require fresh consent after a PDS move can set
+`requireAuthorizationAfterPdsChange = true`. A verified PDS or issuer change then ends the old
+session with `OAuthSessionAuthorityChangedException` before renewal and without forwarding tokens
+to the new host. The default preserves the client's existing same-issuer migration behavior.
+This policy changes authorization; it does not move an identity or its data.
+
 ## Errors
 
 Every failure is a subclass of `OAuthClientException`, so you can tell the person what actually
@@ -233,24 +282,25 @@ happened. The exceptions are invalid arguments (a redirect URI or scope outside 
 which throw `IllegalArgumentException`, and errors from your own stores and lock, which pass
 through unchanged.
 
-| Exception | Meaning | What to tell the person |
-| --- | --- | --- |
-| `OAuthIdentityResolutionException` | The handle or DID could not be resolved | Check the handle |
-| `OAuthHandleMismatchException` | The handle points at an account that does not claim it | The handle is misconfigured |
-| `OAuthPdsNotFoundException` | The account has no usable data server | Contact their provider |
-| `OAuthServerMetadataException` | Their server's OAuth setup is missing or non-compliant | Their provider does not support this sign-in |
-| `OAuthConsentDeniedException` | They declined on the consent screen | Nothing went wrong; offer to try again |
-| `OAuthAuthorizationErrorException` | The server returned another OAuth error | Try again later |
-| `OAuthCallbackException` | The callback did not match a pending sign-in (`reason` says why) | Start the sign-in again |
-| `OAuthIssuerMismatchException`, `OAuthSubjectMismatchException`, `OAuthInvalidTokenResponseException` | A security check failed; any tokens were revoked | Sign-in failed |
-| `OAuthServerResponseException` | An authorization server request failed (`error` holds the OAuth code) | Try again later |
-| `OAuthSessionNotFoundException` | No stored session for this DID | Sign in |
-| `OAuthSessionExpiredException` | The access token expired and the server issued no refresh token | Sign in again |
-| `OAuthSessionRejectedException` | The server refused the refresh token (`invalid_grant`): the session expired or was revoked, and the server does not say which | Sign in again |
-| `OAuthSessionRevokedException` | The session failed a security check, or its client key was removed | Sign in again |
-| `OAuthForeignOriginException` | A `session.request` was addressed to a server other than the account's data server, or a renewal found the account had moved while the request was being made | Nothing; retry the call |
-| `OAuthRevocationException` | Sign-out removed the local session but the server did not confirm | Nothing; the tokens expire on their own |
-| `OAuthClientKeyRemovedException` | A pending sign-in or session uses a client key you removed from the configuration | Start the sign-in again; keep retired keys configured longer |
+| Exception                                                                                             | Meaning                                                                                                                                                       | What to tell the person                                      |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `OAuthIdentityResolutionException`                                                                    | The handle or DID could not be resolved                                                                                                                       | Check the handle                                             |
+| `OAuthHandleMismatchException`                                                                        | The handle points at an account that does not claim it                                                                                                        | The handle is misconfigured                                  |
+| `OAuthPdsNotFoundException`                                                                           | The account has no usable data server                                                                                                                         | Contact their provider                                       |
+| `OAuthServerMetadataException`                                                                        | Their server's OAuth setup is missing or non-compliant                                                                                                        | Their provider does not support this sign-in                 |
+| `OAuthConsentDeniedException`                                                                         | They declined on the consent screen                                                                                                                           | Nothing went wrong; offer to try again                       |
+| `OAuthAuthorizationErrorException`                                                                    | The server returned another OAuth error                                                                                                                       | Try again later                                              |
+| `OAuthCallbackException`                                                                              | The callback did not match a pending sign-in (`reason` says why)                                                                                              | Start the sign-in again                                      |
+| `OAuthIssuerMismatchException`, `OAuthSubjectMismatchException`, `OAuthInvalidTokenResponseException` | A security check failed; any tokens were revoked                                                                                                              | Sign-in failed                                               |
+| `OAuthServerResponseException`                                                                        | An authorization server request failed (`error` holds the OAuth code)                                                                                         | Try again later                                              |
+| `OAuthSessionNotFoundException`                                                                       | No stored session for this DID                                                                                                                                | Sign in                                                      |
+| `OAuthSessionExpiredException`                                                                        | The access token expired and the server issued no refresh token                                                                                               | Sign in again                                                |
+| `OAuthSessionRejectedException`                                                                       | The server refused the refresh token (`invalid_grant`): the session expired or was revoked, and the server does not say which                                 | Sign in again                                                |
+| `OAuthSessionAuthorityChangedException`                                                               | The verified PDS or issuer changed under the strict hosting policy                                                                                            | Reconnect through the newly discovered authority             |
+| `OAuthSessionRevokedException`                                                                        | The session failed a security check, or its client key was removed                                                                                            | Sign in again                                                |
+| `OAuthForeignOriginException`                                                                         | A `session.request` was addressed to a server other than the account's data server, or a renewal found the account had moved while the request was being made | Nothing; retry the call                                      |
+| `OAuthRevocationException`                                                                            | Sign-out removed the local session but the server did not confirm                                                                                             | Nothing; the tokens expire on their own                      |
+| `OAuthClientKeyRemovedException`                                                                      | A pending sign-in or session uses a client key you removed from the configuration                                                                             | Start the sign-in again; keep retired keys configured longer |
 
 Sessions that end (`OAuthSessionEndedException`) are removed from the store automatically. Through
 `xrpcClient()`, session errors arrive as the `cause` of an `XrpcTransportException`.

@@ -25,6 +25,8 @@ import kotlin.time.Instant
  *   server URL.
  * @property appState Opaque application data passed to [AtprotoOAuthClient.authorize].
  * @property createdAt When the authorization request was created.
+ * @property requestedScope The permissions requested by this attempt. Null reads older stored
+ *   attempts, which use the configured client scope as their limit.
  */
 @Serializable
 public data class OAuthAuthorizationState(
@@ -37,8 +39,17 @@ public data class OAuthAuthorizationState(
     val expectedDid: AtprotoDid?,
     val appState: String?,
     val createdAt: Instant,
+    val requestedScope: String? = null,
 ) {
     override fun toString(): String = "OAuthAuthorizationState(issuer=$issuer, expectedDid=$expectedDid, createdAt=$createdAt)"
+}
+
+internal fun scopesAreSubset(
+    granted: String,
+    allowed: String,
+): Boolean {
+    val permitted = allowed.split(' ').filter(String::isNotBlank).toSet()
+    return granted.split(' ').filter(String::isNotBlank).all { it in permitted }
 }
 
 /**
@@ -119,6 +130,12 @@ public interface OAuthSessionStore {
      * Removes the session for [did], if there is one.
      */
     public suspend fun delete(did: AtprotoDid)
+
+    /** Removes the session while retaining a bounded cause, when the store supports lifecycle history. */
+    public suspend fun delete(
+        did: AtprotoDid,
+        reason: OAuthSessionEndReason,
+    ): Unit = delete(did)
 }
 
 /**

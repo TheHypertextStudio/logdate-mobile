@@ -1,9 +1,10 @@
 public final class studio/hypertext/atproto/oauth/client/AtprotoOAuthClient : java/lang/AutoCloseable {
-	public synthetic fun <init> (Lstudio/hypertext/atproto/oauth/client/OAuthClientConfig;Lstudio/hypertext/atproto/identity/IdentityResolver;Lio/ktor/client/HttpClient;Lstudio/hypertext/atproto/oauth/client/OAuthCrypto;Lstudio/hypertext/atproto/oauth/client/OAuthStateStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionLock;Lkotlin/time/Clock;ZJZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lstudio/hypertext/atproto/oauth/client/OAuthClientConfig;Lstudio/hypertext/atproto/identity/IdentityResolver;Lio/ktor/client/HttpClient;Lstudio/hypertext/atproto/oauth/client/OAuthCrypto;Lstudio/hypertext/atproto/oauth/client/OAuthStateStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionLock;Lkotlin/time/Clock;ZJZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lstudio/hypertext/atproto/oauth/client/OAuthClientConfig;Lstudio/hypertext/atproto/identity/IdentityResolver;Lio/ktor/client/HttpClient;Lstudio/hypertext/atproto/oauth/client/OAuthCrypto;Lstudio/hypertext/atproto/oauth/client/OAuthStateStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionLock;Lkotlin/time/Clock;ZJZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lstudio/hypertext/atproto/oauth/client/OAuthClientConfig;Lstudio/hypertext/atproto/identity/IdentityResolver;Lio/ktor/client/HttpClient;Lstudio/hypertext/atproto/oauth/client/OAuthCrypto;Lstudio/hypertext/atproto/oauth/client/OAuthStateStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionStore;Lstudio/hypertext/atproto/oauth/client/OAuthSessionLock;Lkotlin/time/Clock;ZJZZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun authorize (Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizeOptions;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun authorize$default (Lstudio/hypertext/atproto/oauth/client/AtprotoOAuthClient;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizeOptions;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun callback (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun callback (Ljava/util/Map;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun clientMetadataJson ()Ljava/lang/String;
 	public fun close ()V
 	public final fun getClientMetadata ()Lstudio/hypertext/atproto/oauth/client/OAuthClientMetadata;
@@ -13,11 +14,13 @@ public final class studio/hypertext/atproto/oauth/client/AtprotoOAuthClient : ja
 	public final fun restore-jUM6dN0 (Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthRefreshMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun restore-jUM6dN0$default (Lstudio/hypertext/atproto/oauth/client/AtprotoOAuthClient;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthRefreshMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun revoke-Cd_PLBI (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun revokeIf-NvPWWU4 (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class studio/hypertext/atproto/oauth/client/InMemoryOAuthSessionStore : studio/hypertext/atproto/oauth/client/OAuthSessionStore {
 	public fun <init> ()V
 	public fun delete-Cd_PLBI (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun delete-jUM6dN0 (Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun get-Cd_PLBI (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun save (Lstudio/hypertext/atproto/oauth/client/OAuthStoredSession;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
@@ -212,8 +215,10 @@ public final class studio/hypertext/atproto/oauth/client/OAuthAuthorizationServe
 
 public final class studio/hypertext/atproto/oauth/client/OAuthAuthorizationState {
 	public static final field Companion Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState$Companion;
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Lstudio/hypertext/atproto/oauth/client/JsonWebKey;
 	public final fun component4 ()Ljava/lang/String;
@@ -222,8 +227,8 @@ public final class studio/hypertext/atproto/oauth/client/OAuthAuthorizationState
 	public final fun component7-J7HwGHI ()Ljava/lang/String;
 	public final fun component8 ()Ljava/lang/String;
 	public final fun component9 ()Lkotlin/time/Instant;
-	public final fun copy-QVv7LCs (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;)Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState;
-	public static synthetic fun copy-QVv7LCs$default (Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;ILjava/lang/Object;)Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState;
+	public final fun copy-ACN0z5o (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;Ljava/lang/String;)Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState;
+	public static synthetic fun copy-ACN0z5o$default (Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/JsonWebKey;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/time/Instant;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/oauth/client/OAuthAuthorizationState;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAppState ()Ljava/lang/String;
 	public final fun getClientKeyId ()Ljava/lang/String;
@@ -233,6 +238,7 @@ public final class studio/hypertext/atproto/oauth/client/OAuthAuthorizationState
 	public final fun getIssuer ()Ljava/lang/String;
 	public final fun getPkceVerifier ()Ljava/lang/String;
 	public final fun getRedirectUri ()Ljava/lang/String;
+	public final fun getRequestedScope ()Ljava/lang/String;
 	public final fun getState ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -418,6 +424,15 @@ public final class studio/hypertext/atproto/oauth/client/OAuthClientMetadata$Com
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class studio/hypertext/atproto/oauth/client/OAuthConditionalRevocation : java/lang/Enum {
+	public static final field CONFIRMED Lstudio/hypertext/atproto/oauth/client/OAuthConditionalRevocation;
+	public static final field NO_SESSION Lstudio/hypertext/atproto/oauth/client/OAuthConditionalRevocation;
+	public static final field SKIPPED Lstudio/hypertext/atproto/oauth/client/OAuthConditionalRevocation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lstudio/hypertext/atproto/oauth/client/OAuthConditionalRevocation;
+	public static fun values ()[Lstudio/hypertext/atproto/oauth/client/OAuthConditionalRevocation;
+}
+
 public final class studio/hypertext/atproto/oauth/client/OAuthConsentDeniedException : studio/hypertext/atproto/oauth/client/OAuthAuthorizationException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun getAppState ()Ljava/lang/String;
@@ -581,6 +596,21 @@ public final class studio/hypertext/atproto/oauth/client/OAuthSession {
 	public final fun xrpcClient ()Lstudio/hypertext/atproto/xrpc/XrpcClient;
 }
 
+public final class studio/hypertext/atproto/oauth/client/OAuthSessionAuthorityChangedException : studio/hypertext/atproto/oauth/client/OAuthSessionEndedException {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class studio/hypertext/atproto/oauth/client/OAuthSessionEndReason : java/lang/Enum {
+	public static final field AUTHORITY_CHANGED Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;
+	public static final field EXPIRED Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;
+	public static final field REJECTED Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;
+	public static final field REVOKED Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;
+	public static fun values ()[Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;
+}
+
 public abstract class studio/hypertext/atproto/oauth/client/OAuthSessionEndedException : studio/hypertext/atproto/oauth/client/OAuthSessionException {
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -616,8 +646,13 @@ public final class studio/hypertext/atproto/oauth/client/OAuthSessionRevokedExce
 
 public abstract interface class studio/hypertext/atproto/oauth/client/OAuthSessionStore {
 	public abstract fun delete-Cd_PLBI (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun delete-jUM6dN0 (Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun get-Cd_PLBI (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun save (Lstudio/hypertext/atproto/oauth/client/OAuthStoredSession;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/oauth/client/OAuthSessionStore$DefaultImpls {
+	public static fun delete-jUM6dN0 (Lstudio/hypertext/atproto/oauth/client/OAuthSessionStore;Ljava/lang/String;Lstudio/hypertext/atproto/oauth/client/OAuthSessionEndReason;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class studio/hypertext/atproto/oauth/client/OAuthStateStore {
@@ -695,6 +730,19 @@ public final class studio/hypertext/atproto/oauth/client/OAuthTokenInfo {
 
 public abstract class studio/hypertext/atproto/oauth/client/OAuthVerificationException : studio/hypertext/atproto/oauth/client/OAuthClientException {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class studio/hypertext/atproto/oauth/client/OAuthVerifiedIdentity {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy-Cd_PLBI (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/oauth/client/OAuthVerifiedIdentity;
+	public static synthetic fun copy-Cd_PLBI$default (Lstudio/hypertext/atproto/oauth/client/OAuthVerifiedIdentity;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/oauth/client/OAuthVerifiedIdentity;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAppState ()Ljava/lang/String;
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class studio/hypertext/atproto/oauth/client/ResponseTooLargeException : java/lang/Exception {
