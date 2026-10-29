@@ -22,6 +22,9 @@ enum class ServerCapability {
 
 /** Additive protocol flags that old clients can safely ignore. */
 object ServerProtocolFeature {
+    /** Confidential Bluesky sign-in followed by an account-bound LogDate passkey ceremony. */
+    const val BLUESKY_SIGN_IN_V1 = "blueskySignInV1"
+    const val ATPROTO_CONNECTION_V1 = "atprotoConnectionV1"
     const val CANONICAL_OWNER_BINDING_V1 = "canonicalOwnerBindingV1"
     const val JOURNAL_MERGE_V1 = "journalMergeV1"
     const val RICH_DRAFTS_V1 = "richDraftsV1"
