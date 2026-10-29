@@ -1,6 +1,8 @@
 package app.logdate.server.auth
 
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
+import studio.hypertext.atproto.identity.AtprotoDid
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -16,7 +18,8 @@ interface AccountRepository {
      * whatever [Account.storageMode] the caller holds: only [updateStorageModeIfUnchanged] does, so a
      * save of an account read before its mode changed can't undo the change, and a mode a newer
      * server wrote is never overwritten.
-     * Updates also preserve [Account.publicIdentityDid]: a profile save cannot grant or revoke consent.
+     * Updates also preserve [Account.publicIdentityDid] and [Account.identityKind]. For external or unknown
+     * kinds they preserve all identity fields: a profile save cannot change the owning DID or grant hosted keys.
      */
     suspend fun save(account: Account): Account
 
@@ -106,6 +109,7 @@ interface AccountRepository {
         updated: Account,
     ): Account? {
         val current = findById(expected.id) ?: return null
+        if (current.identityKind != AccountIdentityKind.HOSTED || updated.identityKind != AccountIdentityKind.HOSTED) return null
         if (!current.hasSameIdentityAs(expected)) return null
         return save(current.withIdentityOf(updated))
     }
@@ -113,7 +117,8 @@ interface AccountRepository {
 
 /** True when both accounts store the same handle, DID, signing key and PLC recovery key. */
 fun Account.hasSameIdentityAs(other: Account): Boolean =
-    handle == other.handle &&
+    identityKind == other.identityKind &&
+        handle == other.handle &&
         did == other.did &&
         signingKeyPublic == other.signingKeyPublic &&
         plcRecoveryDidKey == other.plcRecoveryDidKey
@@ -140,7 +145,8 @@ class InMemoryAccountRepository : AccountRepository {
 
     override suspend fun create(account: Account): Boolean =
         synchronized(accounts) {
-            if (accounts.containsKey(account.id) || usernameIndex.containsKey(account.username)) {
+            account.requireValidNewIdentity()
+            if (hasCreationConflict(account)) {
                 false
             } else {
                 accounts[account.id] = account
@@ -152,32 +158,60 @@ class InMemoryAccountRepository : AccountRepository {
             }
         }
 
-    override suspend fun save(account: Account): Account {
-        val existingAccount = accounts[account.id]
-        val stored =
-            existingAccount?.let {
-                account.copy(storageMode = it.storageMode, moderation = it.moderation, publicIdentityDid = it.publicIdentityDid)
-            } ?: account
-        if (existingAccount != null && existingAccount.username != account.username) {
-            usernameIndex.remove(existingAccount.username)
-        }
-        if (existingAccount != null && existingAccount.email != account.email) {
-            existingAccount.email?.let { emailIndex.remove(it) }
-        }
-        if (existingAccount != null && existingAccount.did != account.did) {
-            existingAccount.did?.let { didIndex.remove(it) }
-        }
-        if (existingAccount != null && existingAccount.handle != account.handle) {
-            existingAccount.handle?.let { handleIndex.remove(it) }
-        }
+    override suspend fun save(account: Account): Account = synchronized(accounts) { saveLocked(account) }
 
-        accounts[account.id] = stored
-        usernameIndex[account.username] = account.id
-        account.email?.let { emailIndex[it] = account.id }
-        account.did?.let { didIndex[it] = account.id }
-        account.handle?.let { handleIndex[it] = account.id }
+    private fun saveLocked(account: Account): Account {
+        val existing = accounts[account.id]
+        val stored =
+            if (existing == null) {
+                account.requireValidNewIdentity()
+                account
+            } else {
+                account
+                    .copy(
+                        storageMode = existing.storageMode,
+                        moderation = existing.moderation,
+                        publicIdentityDid = existing.publicIdentityDid,
+                        identityKind = existing.identityKind,
+                    ).let { if (existing.identityKind == AccountIdentityKind.HOSTED) it else it.withIdentityOf(existing) }
+            }
+        require(usernameIndex[stored.username].let { it == null || it == stored.id }) { "Username already belongs to an account" }
+        require(stored.did?.let { didIndex[it] }.let { it == null || it == stored.id }) { "DID already belongs to an account" }
+        require(stored.handle?.let { handleIndex[it] }.let { it == null || it == stored.id }) { "Handle already belongs to an account" }
+        existing?.let {
+            usernameIndex.remove(it.username)
+            it.email?.let(emailIndex::remove)
+            it.did?.let(didIndex::remove)
+            it.handle?.let(handleIndex::remove)
+        }
+        accounts[stored.id] = stored
+        usernameIndex[stored.username] = stored.id
+        stored.email?.let { emailIndex[it] = stored.id }
+        stored.did?.let { didIndex[it] = stored.id }
+        stored.handle?.let { handleIndex[it] = stored.id }
         return stored
     }
+
+    private fun hasCreationConflict(account: Account): Boolean =
+        accounts.containsKey(account.id) ||
+            usernameIndex.containsKey(account.username) ||
+            account.did?.let(didIndex::containsKey) == true ||
+            account.handle?.let(handleIndex::containsKey) == true
+
+    override suspend fun updateIdentityIfUnchanged(
+        expected: Account,
+        updated: Account,
+    ): Account? =
+        synchronized(accounts) {
+            val current = accounts[expected.id] ?: return@synchronized null
+            if (current.identityKind != AccountIdentityKind.HOSTED ||
+                updated.identityKind != AccountIdentityKind.HOSTED ||
+                !current.hasSameIdentityAs(expected)
+            ) {
+                return@synchronized null
+            }
+            saveLocked(current.withIdentityOf(updated))
+        }
 
     override suspend fun updateStorageModeIfUnchanged(
         accountId: Uuid,
@@ -188,6 +222,12 @@ class InMemoryAccountRepository : AccountRepository {
         if (expected == AccountStorageMode.UNRECOGNIZED) return false
         return synchronized(accounts) {
             val account = accounts[accountId]?.takeIf { it.storageMode == expected } ?: return@synchronized false
+            if (account.identityKind == AccountIdentityKind.UNRECOGNIZED) return@synchronized false
+            if (account.identityKind == AccountIdentityKind.EXTERNAL &&
+                new != AccountStorageMode.PERSONAL_SPACE_V1
+            ) {
+                return@synchronized false
+            }
             accounts[accountId] = account.copy(storageMode = new)
             true
         }
@@ -208,14 +248,17 @@ class InMemoryAccountRepository : AccountRepository {
         expectedDid: String,
     ): Boolean =
         synchronized(accounts) {
-            val account = accounts[accountId]?.takeIf { it.did == expectedDid } ?: return@synchronized false
+            val account =
+                accounts[accountId]?.takeIf { it.did == expectedDid && it.identityKind == AccountIdentityKind.HOSTED }
+                    ?: return@synchronized false
             accounts[accountId] = account.copy(publicIdentityDid = expectedDid)
             true
         }
 
     override suspend fun createOnly(account: Account): Boolean =
         synchronized(accounts) {
-            if (accounts.containsKey(account.id)) {
+            account.requireValidNewIdentity()
+            if (hasCreationConflict(account)) {
                 false
             } else {
                 accounts[account.id] = account
@@ -272,7 +315,11 @@ class InMemoryAccountRepository : AccountRepository {
     override suspend fun getAllAccounts(): List<Account> = accounts.values.filter { it.isActive }
 
     override suspend fun findAccountsMissingIdentity(): List<Account> =
-        accounts.values.filter { it.isActive && (it.handle == null || it.did == null || it.signingKeyPublic == null) }
+        accounts.values.filter {
+            it.isActive &&
+                it.identityKind == AccountIdentityKind.HOSTED &&
+                (it.handle == null || it.did == null || it.signingKeyPublic == null)
+        }
 
     override suspend fun getAccountsCreatedAfter(timestamp: Instant): List<Account> =
         accounts.values.filter {
@@ -288,5 +335,19 @@ class InMemoryAccountRepository : AccountRepository {
             it.handle?.let { handle -> handleIndex.remove(handle) }
         }
         return account != null
+    }
+}
+
+/** Enrollment establishes an external DID; this validation never treats a profile claim as proof. */
+@OptIn(ExperimentalUuidApi::class)
+internal fun Account.requireValidNewIdentity() {
+    require(identityKind != AccountIdentityKind.UNRECOGNIZED) { "A new account needs a known identity kind" }
+    require(storageMode != AccountStorageMode.UNRECOGNIZED) { "A new account needs a known storage mode" }
+    if (identityKind == AccountIdentityKind.EXTERNAL) {
+        require(did != null && AtprotoDid.parse(did).isSuccess) { "An external account needs an AT Protocol DID" }
+        require(storageMode == AccountStorageMode.PERSONAL_SPACE_V1) { "An external account needs personal space storage" }
+        require(signingKeyPublic == null && plcRecoveryDidKey == null && publicIdentityDid == null) {
+            "An external identity cannot have hosted keys or hosted publication consent"
+        }
     }
 }

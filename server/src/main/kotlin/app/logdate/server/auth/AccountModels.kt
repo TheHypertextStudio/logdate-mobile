@@ -1,5 +1,6 @@
 package app.logdate.server.auth
 
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
@@ -68,6 +69,8 @@ data class Account(
      * private. Ordinary account saves preserve this value; changing identity never transfers consent.
      */
     val publicIdentityDid: String? = null,
+    /** Set by verified enrollment or adoption; profile saves cannot change identity ownership. */
+    val identityKind: AccountIdentityKind = AccountIdentityKind.HOSTED,
 )
 
 @OptIn(ExperimentalUuidApi::class)
