@@ -181,7 +181,7 @@ internal class SpaceJournalMigration(
             scope,
             SpaceRef.personal(did),
             did,
-            SealingKeys.personal(env.space.identityKey()),
+            SealingKeys.personal(env.space.identityKey(scope.ownerId)),
             env.tokens.currentRequestScope(),
         )
     }

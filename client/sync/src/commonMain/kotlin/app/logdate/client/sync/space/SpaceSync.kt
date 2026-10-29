@@ -24,7 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * endpoints.
  *
  * @param accountDid the signed-in account's DID, which names its personal space.
- * @param identityKey the account's identity key, which the space's sealing keys derive from.
+ * @param identityKey reads an existing key bound to the captured upload scope's account.
  */
 class SpaceSyncDependencies(
     val registry: SpaceRecordRegistry,
@@ -32,7 +32,7 @@ class SpaceSyncDependencies(
     val homes: SpaceDataHomes,
     val swapStore: SpaceSwapStore,
     val accountDid: suspend () -> String?,
-    val identityKey: suspend () -> ByteArray,
+    val identityKey: suspend (accountId: String) -> ByteArray,
     val validator: LexiconRecordValidator = LogDateLexicons.validator,
 )
 
@@ -167,12 +167,14 @@ internal class SpaceSync(
         val scope =
             tokenRefresher.currentUploadScope()
                 ?: return Result.failure(SpaceUnavailableException("No account is signed in"))
+        val requestScope = tokenRefresher.currentRequestScope()
         return try {
             val did =
                 dependencies.accountDid()
                     ?: return Result.failure(SpaceUnavailableException("This account has no DID, so it has no personal space"))
-            val keys = SealingKeys.personal(dependencies.identityKey())
-            Result.success(SpaceAccess(scope, SpaceRef.personal(did), did, keys, tokenRefresher.currentRequestScope()))
+            val keys = SealingKeys.personal(dependencies.identityKey(scope.ownerId))
+            if (tokenRefresher.currentUploadScope() != scope) throw SpaceScopeChangedException()
+            Result.success(SpaceAccess(scope, SpaceRef.personal(did), did, keys, requestScope))
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {

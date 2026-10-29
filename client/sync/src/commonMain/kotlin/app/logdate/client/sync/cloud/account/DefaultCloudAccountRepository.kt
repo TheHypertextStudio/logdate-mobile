@@ -12,6 +12,7 @@ import app.logdate.client.util.platformIODispatcher
 import app.logdate.shared.config.DefaultLogDateConfigRepository
 import app.logdate.shared.config.LogDateConfigRepository
 import app.logdate.shared.model.AccountCredentials
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import app.logdate.shared.model.AuthenticationResult
 import app.logdate.shared.model.BeginAccountCreationRequest
@@ -23,6 +24,7 @@ import app.logdate.shared.model.DeviceInfo
 import app.logdate.shared.model.PasskeyAuthenticatorResponse
 import app.logdate.shared.model.PasskeyCredential
 import app.logdate.shared.model.PasskeyCredentialResponse
+import app.logdate.shared.model.toCloudAccount
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -98,6 +100,7 @@ class DefaultCloudAccountRepository(
             val updatedAtString = accountMetadata.getString(cloudAccountScopedKey(CloudAccountStorageKeys.UPDATED_AT, backendUrl))
             val passkeyIdsString = accountMetadata.getString(cloudAccountScopedKey(CloudAccountStorageKeys.PASSKEY_IDS, backendUrl))
             val storageMode = accountMetadata.getString(cloudAccountScopedKey(CloudAccountStorageKeys.ACCOUNT_STORAGE_MODE, backendUrl))
+            val identityKind = accountMetadata.getString(cloudAccountScopedKey(CloudAccountStorageKeys.ACCOUNT_IDENTITY_KIND, backendUrl))
 
             if (session != null &&
                 accountId == session.session.accountId &&
@@ -125,6 +128,7 @@ class DefaultCloudAccountRepository(
                         updatedAt = updatedAt,
                         passkeyCredentialIds = parseCloudPasskeyIds(passkeyIdsString),
                         storageMode = storageMode?.let(AccountStorageMode::fromWireValue) ?: AccountStorageMode.UNRECOGNIZED,
+                        identityKind = identityKind?.let(AccountIdentityKind::fromWireValue) ?: AccountIdentityKind.UNRECOGNIZED,
                     )
 
                 sessionStorage.runIfSessionCurrent(session) {
@@ -245,24 +249,7 @@ class DefaultCloudAccountRepository(
                     val tokensDto = response.data.tokens
 
                     // Create the account and credentials
-                    val account =
-                        CloudAccount(
-                            id = accountDto.id,
-                            username = accountDto.username,
-                            displayName = accountDto.displayName,
-                            bio = accountDto.bio,
-                            originalBio = accountDto.originalBio,
-                            did = accountDto.did,
-                            handle = accountDto.handle,
-                            userId = accountDto.id,
-                            createdAt = accountDto.createdAt,
-                            updatedAt = accountDto.updatedAt,
-                            passkeyCredentialIds =
-                                accountDto.passkeyCredentialIds.mapNotNull {
-                                    runCatching { Uuid.parse(it) }.getOrNull()
-                                },
-                            storageMode = accountDto.storageMode,
-                        )
+                    val account = accountDto.toCloudAccount()
 
                     val credentials =
                         AccountCredentials(
@@ -383,6 +370,7 @@ class DefaultCloudAccountRepository(
             accountMetadata.remove(cloudAccountScopedKey(CloudAccountStorageKeys.UPDATED_AT, backendUrl))
             accountMetadata.remove(cloudAccountScopedKey(CloudAccountStorageKeys.PASSKEY_IDS, backendUrl))
             accountMetadata.remove(cloudAccountScopedKey(CloudAccountStorageKeys.ACCOUNT_STORAGE_MODE, backendUrl))
+            accountMetadata.remove(cloudAccountScopedKey(CloudAccountStorageKeys.ACCOUNT_IDENTITY_KIND, backendUrl))
 
             // Clear the current account
             accountFlow.value = null
