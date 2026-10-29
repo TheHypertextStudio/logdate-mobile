@@ -57,6 +57,7 @@ class IdentityKeyManager(
     /** Bind a locally held key to one account before provisioning an encrypted unlock envelope. */
     suspend fun bindToAccount(accountId: String): Boolean =
         identityMutex.withLock {
+            if (secureStorage.getBytes(KEY_IDENTITY_KEY)?.size != 32) return@withLock false
             val owner = secureStorage.getString(KEY_ACCOUNT_ID)
             if (owner != null && !sameOwnerId(owner, accountId)) return@withLock false
             if (owner == null) secureStorage.putString(KEY_ACCOUNT_ID, accountId)
@@ -396,6 +397,17 @@ class IdentityKeyManager(
         }
         return RecoveryPhrase(phrase)
     }
+
+    /** Reads an existing account root for personal-space sync, without provisioning or adoption. */
+    suspend fun getAccountIdentityKey(accountId: String): ByteArray =
+        identityMutex.withLock {
+            val owner = secureStorage.getString(KEY_ACCOUNT_ID)
+            check(owner != null && sameOwnerId(owner, accountId)) { "This device needs the account's encryption keys" }
+            expectedAccountOwner?.invoke()?.let {
+                check(sameOwnerId(it, accountId)) { "The encryption keys do not match the retained journal owner" }
+            }
+            getIdentityKey().also { portable.validateRoot(it, owner) }
+        }
 
     /**
      * Retrieves the identity key for encryption/decryption operations.
