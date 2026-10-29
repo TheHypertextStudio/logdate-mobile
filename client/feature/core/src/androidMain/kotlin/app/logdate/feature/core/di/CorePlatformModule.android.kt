@@ -12,6 +12,7 @@ import app.logdate.client.device.restore.AndroidNativeBackupStatusSource
 import app.logdate.client.domain.export.archive.MediaSourceOpener
 import app.logdate.feature.core.AndroidBiometricGatekeeper
 import app.logdate.feature.core.BiometricGatekeeper
+import app.logdate.feature.core.account.di.blueskySignInFeatureModule
 import app.logdate.feature.core.export.AndroidExportLauncher
 import app.logdate.feature.core.export.AndroidMediaSourceOpener
 import app.logdate.feature.core.export.CloudArchiveCipher
@@ -27,6 +28,7 @@ import app.logdate.feature.core.restore.RestoreCredentialCleanupWorker
 import app.logdate.feature.core.restore.RestoreDiagnosticEvents
 import app.logdate.feature.core.restore.RestoreLauncher
 import app.logdate.feature.core.restore.RestoreWorker
+import app.logdate.feature.core.settings.account.signin.atprotoConnectionFeatureModule
 import app.logdate.feature.core.settings.ui.AndroidCloudArchiveStatusSource
 import app.logdate.feature.core.settings.ui.AndroidDiagnosticArchiveExporter
 import app.logdate.feature.core.settings.ui.CloudArchiveStatusSource
@@ -43,6 +45,8 @@ import org.koin.dsl.module
 actual val corePlatformModule: Module =
     module {
         includes(watchSettingsModule)
+        includes(blueskySignInFeatureModule)
+        includes(atprotoConnectionFeatureModule)
 
         single { AndroidBiometricGatekeeper() }
         single<BiometricGatekeeper> { get<AndroidBiometricGatekeeper>() }

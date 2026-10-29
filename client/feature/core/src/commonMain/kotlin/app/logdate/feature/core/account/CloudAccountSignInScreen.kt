@@ -37,6 +37,7 @@ import app.logdate.ui.theme.FirstLaunchTheme
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.at
+import logdate.client.feature.core.generated.resources.bluesky_continue
 import logdate.client.feature.core.generated.resources.cloud_sign_in_own_server
 import logdate.client.feature.core.generated.resources.continue_with_google
 import logdate.client.feature.core.generated.resources.privacy_policy
@@ -66,6 +67,7 @@ fun CloudAccountSignInScreen(
     errorMessage: String? = null,
     onClearError: () -> Unit = {},
     onSignInWithGoogle: (() -> Unit)? = null,
+    onContinueWithBluesky: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var username by remember { mutableStateOf("") }
@@ -92,6 +94,7 @@ fun CloudAccountSignInScreen(
                     it()
                 }
             },
+        onContinueWithBluesky = onContinueWithBluesky,
         modifier = modifier,
     )
 }
@@ -110,6 +113,7 @@ fun CloudAccountSignInContent(
     isSigningIn: Boolean = false,
     errorMessage: String? = null,
     onSignInWithGoogle: (() -> Unit)? = null,
+    onContinueWithBluesky: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     // A name that already says where its account lives is not a name on the server shown here.
@@ -138,6 +142,15 @@ fun CloudAccountSignInContent(
                     onClick = onSignIn,
                     busy = isSigningIn,
                 )
+                if (onContinueWithBluesky != null) {
+                    FilledTonalButton(
+                        onClick = onContinueWithBluesky,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSigningIn,
+                    ) {
+                        Text(stringResource(Res.string.bluesky_continue))
+                    }
+                }
                 if (onSignInWithGoogle != null) {
                     FilledTonalButton(
                         onClick = onSignInWithGoogle,

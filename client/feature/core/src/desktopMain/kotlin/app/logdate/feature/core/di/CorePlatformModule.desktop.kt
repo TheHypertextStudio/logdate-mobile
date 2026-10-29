@@ -3,6 +3,7 @@ package app.logdate.feature.core.di
 import app.logdate.client.domain.export.archive.MediaSourceOpener
 import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.feature.core.NoOpBiometricGatekeeper
+import app.logdate.feature.core.account.di.blueskySignInFeatureModule
 import app.logdate.feature.core.export.DesktopExportLauncher
 import app.logdate.feature.core.export.DesktopMediaSourceOpener
 import app.logdate.feature.core.export.ExportLauncher
@@ -20,6 +21,7 @@ import org.koin.dsl.module
 
 actual val corePlatformModule: Module =
     module {
+        includes(blueskySignInFeatureModule)
         single<BiometricGatekeeper> { NoOpBiometricGatekeeper() }
         single<AppUpdateController> { UnsupportedAppUpdateController(get()) }
         single<MemoriesWidgetInstallController> { HiddenMemoriesWidgetInstallController() }
