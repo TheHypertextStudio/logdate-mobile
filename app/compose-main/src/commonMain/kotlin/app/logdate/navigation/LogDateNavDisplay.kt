@@ -36,8 +36,8 @@ import app.logdate.client.ui.navigation.DeepLinkBus
 import app.logdate.client.ui.navigation.LocationTimelineRoute
 import app.logdate.client.ui.navigation.SearchRoute
 import app.logdate.feature.core.GlobalAppUiLoadedState
+import app.logdate.feature.core.account.navigation.BlueskySignInRoute
 import app.logdate.feature.core.account.navigation.CloudAccountSetupRoute
-import app.logdate.feature.core.account.navigation.cloudAccountSetupEntry
 import app.logdate.feature.core.main.HomeRoute
 import app.logdate.feature.core.main.HomeScreen
 import app.logdate.feature.core.main.rememberWatchPlaybackHandoff
@@ -210,7 +210,7 @@ fun LogDateNavDisplay(
                 if (target == null || currentAppUiState.requiresUnlock || !currentAppUiState.isOnboarded) {
                     false
                 } else {
-                    if (backStack.lastOrNull() != target) backStack.add(target)
+                    applyPendingDestination(backStack, target)
                     true
                 }
             }
@@ -445,17 +445,17 @@ fun LogDateNavDisplay(
                                         },
                                         onBack = { backStack.removeLastOrNull() },
                                     )
-                                    cloudAccountSetupEntry(
-                                        onAccountCreated = { backStack.removeLastOrNull() },
+                                    accountSetupEntries(
+                                        backStack = backStack,
+                                        isOnboarded = appUiState.isOnboarded,
                                         onSignedIn = {
                                             onCloudSignIn()
                                             backStack.removeLastOrNull()
                                         },
-                                        onSkipped = { backStack.removeLastOrNull() },
-                                        onBack = { backStack.removeLastOrNull() },
                                         metadata = onboardingRouteTransitionMetadata,
                                     )
                                     onboardingEntries(
+                                        onContinueWithBluesky = { backStack.add(BlueskySignInRoute()) },
                                         onNavigateBack = { backStack.removeLastOrNull() },
                                         onWelcomeBack = {
                                             onCloudSignIn()
