@@ -20,6 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
 class AccountKeyUnlockCoordinatorTest {
@@ -217,6 +218,39 @@ class AccountKeyUnlockCoordinatorTest {
             }
             assertFalse(local.identity.hasIdentityKey())
             assertContentEquals(ByteArray(32) { 1 }, local.media.getOrCreateKey())
+        }
+
+    @Test
+    fun `local key readiness requires an exact existing account binding and creates nothing`() =
+        runTest {
+            val owner = Uuid.random().toString()
+            val local = keys()
+            val remote = EnvelopeRemote()
+            val service = coordinator(remote, local)
+            assertFalse(service.hasLocalAccountKeys(owner))
+            assertFalse(local.identity.hasIdentityKey())
+            local.identity.installAccountKey(owner, ByteArray(32) { 3 }, ByteArray(32) { 4 })
+            assertTrue(service.hasLocalAccountKeys(owner))
+            assertFalse(service.hasLocalAccountKeys(Uuid.random().toString()))
+            assertContentEquals(ByteArray(32) { 3 }, local.identity.getIdentityKey())
+            assertEquals(0, remote.writes)
+        }
+
+    @Test
+    fun `new account binding preserves its existing local root and never mints missing keys`() =
+        runTest {
+            val owner = Uuid.random().toString()
+            val local = keys()
+            val service = coordinator(EnvelopeRemote(), local)
+            assertFalse(service.bindLocalKeysForNewAccount(owner))
+            assertFalse(local.identity.hasIdentityKey())
+            local.identity.ensureIdentityKey()
+            val before = local.identity.getIdentityKey()
+            assertTrue(service.bindLocalKeysForNewAccount(owner))
+            assertContentEquals(before, local.identity.getIdentityKey())
+            assertEquals(owner, local.storage.getString("identity_account_id_v1"))
+            assertFalse(service.bindLocalKeysForNewAccount(Uuid.random().toString()))
+            assertContentEquals(before, local.identity.getIdentityKey())
         }
 
     private fun keys(backup: IdentityKeyBackupStore = NoOpIdentityKeyBackupStore): LocalKeys {

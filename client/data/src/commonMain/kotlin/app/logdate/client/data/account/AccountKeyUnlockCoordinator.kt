@@ -14,8 +14,20 @@ class AccountKeyUnlockCoordinator(
     private val cipher: AccountKeyEnvelopeCipher,
     private val identity: IdentityKeyManager,
     private val media: MediaPayloadKeyProvider,
-) {
-    suspend fun unlockOrProvision(
+) : AccountKeyAccess {
+    override suspend fun hasLocalAccountKeys(accountId: String): Boolean {
+        val existing = media.existingAccountKeys(accountId) ?: return false
+        existing.identityKey.fill(0)
+        existing.mediaKey.fill(0)
+        return true
+    }
+
+    override suspend fun bindLocalKeysForNewAccount(accountId: String): Boolean {
+        if (!identity.hasIdentityKey() || !identity.canUseForAccount(accountId) || !identity.bindToAccount(accountId)) return false
+        return hasLocalAccountKeys(accountId)
+    }
+
+    override suspend fun unlockOrProvision(
         apiBaseUrl: String,
         accountId: String,
         accessToken: String,
