@@ -196,7 +196,7 @@ val spaceSyncModule =
                 homes = get(),
                 swapStore = get(),
                 accountDid = { accounts.getCurrentAccount()?.did },
-                identityKey = { identity.getIdentityKey() },
+                identityKey = identity::getAccountIdentityKey,
             )
         }
     }
