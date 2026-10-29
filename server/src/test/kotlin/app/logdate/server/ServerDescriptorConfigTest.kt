@@ -12,6 +12,19 @@ import kotlin.test.assertTrue
 
 class ServerDescriptorConfigTest {
     @Test
+    fun `Bluesky sign in requires its runtime and both private journal protocols`() {
+        for (runtime in listOf(false, true)) {
+            for (keys in listOf(false, true)) {
+                for (space in listOf(false, true)) {
+                    val config = ServerDescriptorConfig(encryptedAccountKeysEnabled = keys, personalSpaceEnabled = space)
+                    val descriptor = config.toDescriptor(AtprotoIdentityConfig(), "logdate.app", "LogDate", blueskySignInEnabled = runtime)
+                    assertEquals(runtime && keys && space, descriptor.hasProtocolFeature(ServerProtocolFeature.BLUESKY_SIGN_IN_V1))
+                }
+            }
+        }
+    }
+
+    @Test
     fun `journal merge protocol is advertised for first party and self hosted deployments`() {
         for (kind in DeploymentKind.entries) {
             val descriptor = ServerDescriptorConfig(deploymentKind = kind).toDescriptor(AtprotoIdentityConfig(), "logdate.app", "LogDate")
