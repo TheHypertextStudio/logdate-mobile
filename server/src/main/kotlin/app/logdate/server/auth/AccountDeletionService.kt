@@ -41,6 +41,7 @@ class AccountDeletionService(
     private val oauthGrantRevoker: OAuthGrantRevoker? = null,
     private val statusEvents: AccountStatusEvents? = null,
     private val billing: CloudBillingService? = null,
+    private val connectionCleanup: AccountConnectionCleanup? = null,
 ) {
     data class Summary(
         val mediaBlobsDeleted: Int,
@@ -48,7 +49,14 @@ class AccountDeletionService(
         val accountRowDeleted: Boolean,
     )
 
-    suspend fun deleteAccount(accountId: Uuid): Summary {
+    suspend fun deleteAccount(accountId: Uuid): Summary =
+        if (connectionCleanup != null) {
+            connectionCleanup.withAccountRemoval(accountId) { deleteAccountRecords(accountId) }
+        } else {
+            deleteAccountRecords(accountId)
+        }
+
+    private suspend fun deleteAccountRecords(accountId: Uuid): Summary {
         val owner = accountId.toJavaUuid()
         // A paid plan stops being charged before the account goes. If the billing provider can't be
         // reached this throws and the account stays, rather than leaving a charge nobody can cancel.
