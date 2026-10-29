@@ -1,6 +1,7 @@
 package app.logdate.navigation
 
 import androidx.navigation3.runtime.NavKey
+import app.logdate.feature.core.account.navigation.BlueskySignInRoute
 import app.logdate.feature.core.main.HomeRoute
 import app.logdate.feature.core.navigation.BaseRoute
 import app.logdate.feature.editor.navigation.EntryEditorRoute
@@ -39,7 +40,7 @@ fun resolveNavBootstrapAction(
 ): NavBootstrapAction {
     val top = backStack.lastOrNull()
     if (!isOnboarded) {
-        return if (top is OnboardingBaseRoute || (top is EntryEditorRoute && top.firstEntry)) {
+        return if (top is OnboardingBaseRoute || top is BlueskySignInRoute || (top is EntryEditorRoute && top.firstEntry)) {
             NavBootstrapAction.None
         } else {
             NavBootstrapAction.ResetTo(OnboardingStart)

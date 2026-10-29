@@ -48,6 +48,7 @@ fun CloudAccountSetupScreen(
     onBack: () -> Unit,
     onContinue: () -> Unit,
     onSkip: () -> Unit,
+    onContinueWithBluesky: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     // Null until the person chooses; otherwise the step the account flow opens on. Creating an
@@ -65,6 +66,7 @@ fun CloudAccountSetupScreen(
 
     if (entryStep != null) {
         CloudAccountOnboardingScreen(
+            onContinueWithBluesky = onContinueWithBluesky,
             viewModel = cloudAccountViewModel,
             onAccountCreated = onContinue,
             onSkipOnboarding = onSkip,

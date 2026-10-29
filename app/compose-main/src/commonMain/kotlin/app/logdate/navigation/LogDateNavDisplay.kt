@@ -33,8 +33,8 @@ import app.logdate.client.ui.navigation.DeepLinkBus
 import app.logdate.client.ui.navigation.LocationTimelineRoute
 import app.logdate.client.ui.navigation.SearchRoute
 import app.logdate.feature.core.GlobalAppUiLoadedState
+import app.logdate.feature.core.account.navigation.BlueskySignInRoute
 import app.logdate.feature.core.account.navigation.CloudAccountSetupRoute
-import app.logdate.feature.core.account.navigation.cloudAccountSetupEntry
 import app.logdate.feature.core.main.HomeRoute
 import app.logdate.feature.core.main.HomeScreen
 import app.logdate.feature.core.main.rememberWatchPlaybackHandoff
@@ -174,11 +174,11 @@ fun LogDateNavDisplay(
 
     LaunchedEffect(pendingNavKey, placesEnabled, appUiState.isOnboarded, appUiState.requiresUnlock) {
         val target = pendingNavKey?.let { placesNavigationTarget(it, placesEnabled) } ?: return@LaunchedEffect
-        if (!appUiState.isOnboarded || appUiState.requiresUnlock) return@LaunchedEffect
-        if (target is EntryEditorRoute && target.resumeRecording) {
-            RecordingEditorDestination.open(backStack, target)
-        } else {
-            addPlacesSafeTarget(backStack, target)
+        if (!canOpenPendingDestination(target, appUiState.isOnboarded, appUiState.requiresUnlock)) return@LaunchedEffect
+        when {
+            target is EntryEditorRoute && target.resumeRecording -> RecordingEditorDestination.open(backStack, target)
+            target is BlueskySignInRoute -> applyPendingDestination(backStack, target)
+            else -> addPlacesSafeTarget(backStack, target)
         }
         onPendingNavKeyConsumed()
     }
@@ -208,7 +208,7 @@ fun LogDateNavDisplay(
                 if (target == null || currentAppUiState.requiresUnlock || !currentAppUiState.isOnboarded) {
                     false
                 } else {
-                    if (backStack.lastOrNull() != target) backStack.add(target)
+                    applyPendingDestination(backStack, target)
                     true
                 }
             }
@@ -413,12 +413,9 @@ fun LogDateNavDisplay(
                                         },
                                         onBack = { backStack.removeLastOrNull() },
                                     )
-                                    cloudAccountSetupEntry(
-                                        onAccountCreated = { backStack.removeLastOrNull() },
-                                        onSkipped = { backStack.removeLastOrNull() },
-                                        onBack = { backStack.removeLastOrNull() },
-                                    )
+                                    accountSetupEntries(backStack, appUiState.isOnboarded)
                                     onboardingEntries(
+                                        onContinueWithBluesky = { backStack.add(BlueskySignInRoute()) },
                                         onNavigateBack = { backStack.removeLastOrNull() },
                                         onWelcomeBack = {
                                             onCloudSignIn()
