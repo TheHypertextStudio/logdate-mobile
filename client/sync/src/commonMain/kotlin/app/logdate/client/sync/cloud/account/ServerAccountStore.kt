@@ -2,6 +2,7 @@ package app.logdate.client.sync.cloud.account
 
 import app.logdate.client.datastore.KeyValueStorage
 import app.logdate.client.datastore.SessionStorage
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import app.logdate.shared.model.CloudAccount
 import app.logdate.shared.model.LogDateAccount
@@ -28,6 +29,7 @@ data class ServerReportedAccount(
     val createdAt: Instant,
     val updatedAt: Instant,
     val storageMode: AccountStorageMode,
+    val identityKind: AccountIdentityKind = AccountIdentityKind.UNRECOGNIZED,
 ) {
     /** True when this describes [accountId] on [origin]. */
     fun describes(
@@ -49,6 +51,7 @@ data class ServerReportedAccount(
             updatedAt = updatedAt,
             passkeyCredentialIds = emptyList(),
             storageMode = storageMode,
+            identityKind = identityKind,
         )
     }
 
@@ -68,6 +71,7 @@ data class ServerReportedAccount(
                 createdAt = account.createdAt,
                 updatedAt = account.updatedAt,
                 storageMode = account.storageMode,
+                identityKind = account.identityKind,
             )
     }
 }

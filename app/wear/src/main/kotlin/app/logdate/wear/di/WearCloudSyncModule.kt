@@ -155,7 +155,7 @@ val wearCloudSyncModule =
                 homes = XrpcSpaceDataHomes(httpClient),
                 swapStore = RoomSpaceSwapStore(get<LogDateDatabase>().spaceRecordStateDao()),
                 accountDid = { accounts.getCurrentAccount()?.did },
-                identityKey = { identity.getIdentityKey() },
+                identityKey = identity::getAccountIdentityKey,
             )
         }
         single(WatchCloud) { watchCloudEngine() }

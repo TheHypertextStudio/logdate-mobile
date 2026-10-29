@@ -2,6 +2,7 @@ package app.logdate.client.sync.crypto
 
 import app.logdate.client.device.crypto.AccountIdentityBackup
 import app.logdate.client.device.crypto.CryptoManager
+import app.logdate.client.device.crypto.ExistingIdentityKeySnapshot
 import app.logdate.client.device.crypto.IdentityKeyManager
 import app.logdate.client.device.crypto.KeyDerivation
 import app.logdate.client.device.storage.SecureStorage
@@ -41,6 +42,12 @@ class MediaPayloadKeyProvider(
 
     suspend fun getAccountKeys(accountId: String): AccountIdentityBackup =
         identityKeyManager.snapshotAccountKeys(accountId, ::getOrCreateKeyLocked)
+
+    /** Existing approved keys only; this read never binds an offline root or creates an identity. */
+    suspend fun existingAccountKeys(accountId: String): ExistingIdentityKeySnapshot? =
+        identityKeyManager.snapshotExistingKeys(accountId) { key ->
+            keyDerivation.deriveKey(key, CONTEXT_MEDIA, MEDIA_KEY_ID)
+        }
 
     private suspend fun getOrCreateKeyLocked(identityKey: ByteArray): ByteArray {
         val existing = secureStorage.getBytes(KEY_STORAGE_KEY)
