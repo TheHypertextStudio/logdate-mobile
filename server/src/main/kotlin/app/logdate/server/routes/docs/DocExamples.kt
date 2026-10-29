@@ -62,6 +62,7 @@ internal object DocExamples {
             createdAt = ISO_NOW,
             updatedAt = ISO_NOW,
             storageMode = AccountStorageMode.LEGACY,
+            identityKind = app.logdate.shared.model.AccountIdentityKind.HOSTED,
         )
 
     val authResponse = AuthResponse(success = true, data = AuthResponseData(account = accountView, tokens = tokens))
