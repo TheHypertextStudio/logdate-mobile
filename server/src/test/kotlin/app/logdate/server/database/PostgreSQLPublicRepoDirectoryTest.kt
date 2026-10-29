@@ -9,6 +9,7 @@ import app.logdate.server.database.support.withOwnPostgresDatabase
 import app.logdate.shared.model.AccountStorageMode
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.repo.Cid
 import studio.hypertext.atproto.repo.DAG_CBOR_CODEC
@@ -75,6 +76,12 @@ class PostgreSQLPublicRepoDirectoryTest {
         seed("did:web:e.example.com", moderation = AccountModeration.TAKENDOWN)
         seed("did:web:f.example.com", head = false)
         seed("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
+        seed("did:web:external.example.com")
+        seed("did:web:future.example.com")
+        transaction {
+            exec("UPDATE accounts SET identity_kind = 'external' WHERE did = 'did:web:external.example.com'")
+            exec("UPDATE accounts SET identity_kind = 'future-kind' WHERE did = 'did:web:future.example.com'")
+        }
 
         assertEquals(listOf("did:web:a.example.com", "did:web:b.example.com"), directory.after(null, 10).map { it.did })
         assertEquals(listOf("did:web:b.example.com"), directory.after("did:web:a.example.com", 10).map { it.did })
