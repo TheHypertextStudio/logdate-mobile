@@ -9,6 +9,7 @@ import app.logdate.client.sync.metadata.IdentityRecoveryNeededStore
 import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.client.sync.recovery.DownloadInbox
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 
 /**
  * Gives [DefaultSyncManager] the identity key a sync run needs, or pauses it when it cannot.
@@ -47,10 +48,14 @@ internal class IdentityKeyProvisioner(
      * and waits for the phrase to be entered again, and when it cannot be determined (offline, a
      * server error), nothing happens this pass and the next sync attempt tries again.
      */
-    suspend fun provision(accessToken: String) {
+    suspend fun provision(
+        accessToken: String,
+        requiresBoundAccountKey: Boolean = false,
+    ) {
         val manager = identityKeyManager ?: return
         val client = cloudApiClient
         val accountId = sessionStorage.getSession()?.accountId
+        if (requiresBoundAccountKey) return checkBoundAccountKey(manager, accountId)
         if (!mintsIdentityKey) return bindLinkedIdentityKey(manager, accountId, identityRecoveryNeededStore)
         if (manager.hasIdentityKey()) {
             if (accountId != null && !manager.bindToAccount(accountId)) {
@@ -111,6 +116,23 @@ internal class IdentityKeyProvisioner(
                 // sync attempt checks again rather than guessing now.
             }
         }
+    }
+
+    /** Personal-space keys are installed by verified enrollment/recovery, never background sync. */
+    private suspend fun checkBoundAccountKey(
+        manager: IdentityKeyManager,
+        accountId: String?,
+    ) {
+        val key =
+            try {
+                accountId?.let { manager.getAccountIdentityKey(it) }
+            } catch (canceled: CancellationException) {
+                throw canceled
+            } catch (_: Exception) {
+                null
+            }
+        identityRecoveryNeededStore.setNeeded(key == null)
+        key?.fill(0)
     }
 
     /** Null when it could not be determined -- offline, a server error -- rather than assumed either way. */

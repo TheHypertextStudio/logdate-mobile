@@ -19,6 +19,7 @@ internal object CloudAccountStorageKeys {
     const val UPDATED_AT = "cloud_updated_at"
     const val PASSKEY_IDS = "cloud_passkey_ids"
     const val ACCOUNT_STORAGE_MODE = "cloud_account_storage_mode"
+    const val ACCOUNT_IDENTITY_KIND = "cloud_account_identity_kind"
 }
 
 internal suspend fun KeyValueStorage.storeCloudAccount(
@@ -44,6 +45,7 @@ internal suspend fun KeyValueStorage.storeCloudAccount(
         account.passkeyCredentialIds.joinToString(",") { it.toString() },
     )
     putString(cloudAccountScopedKey(CloudAccountStorageKeys.ACCOUNT_STORAGE_MODE, backendUrl), account.storageMode.wireValue)
+    putString(cloudAccountScopedKey(CloudAccountStorageKeys.ACCOUNT_IDENTITY_KIND, backendUrl), account.identityKind.wireValue)
 }
 
 private val legacyAccountMetadataKeys =
@@ -59,6 +61,7 @@ private val legacyAccountMetadataKeys =
         CloudAccountStorageKeys.UPDATED_AT,
         CloudAccountStorageKeys.PASSKEY_IDS,
         CloudAccountStorageKeys.ACCOUNT_STORAGE_MODE,
+        CloudAccountStorageKeys.ACCOUNT_IDENTITY_KIND,
     )
 
 internal suspend fun KeyValueStorage.migrateLegacyAccountMetadata(backendUrl: String) {

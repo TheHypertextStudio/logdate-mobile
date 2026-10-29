@@ -4,6 +4,7 @@ import app.logdate.client.sync.cloud.CloudApiException
 import app.logdate.client.sync.diagnostics.SyncRunDiagnostics
 import app.logdate.client.sync.metadata.EntityType
 import app.logdate.client.sync.metadata.UploadScope
+import app.logdate.client.sync.space.SpaceRoute
 import app.logdate.shared.model.diagnostics.DiagnosticPhase
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -48,7 +49,7 @@ internal suspend fun DefaultSyncManager.runFullSyncPhase(
 
         try {
             val accessToken = tokenRefresher.getAccessToken() ?: return authError()
-            identityProvisioner.provision(accessToken)
+            identityProvisioner.provision(accessToken, requiresBoundAccountKey = space?.route() == SpaceRoute.Space)
             if (identityRecoveryNeededStore.isNeeded() || identityKeyManager?.hasIdentityKey() == false) {
                 readinessGate.pause(
                     app.logdate.client.device.crypto
@@ -324,7 +325,7 @@ internal suspend fun DefaultSyncManager.syncEntityType(
         syncStateFlow.value = SyncState.Syncing
         try {
             val accessToken = tokenRefresher.getAccessToken() ?: return@withLock authError()
-            identityProvisioner.provision(accessToken)
+            identityProvisioner.provision(accessToken, requiresBoundAccountKey = space?.route() == SpaceRoute.Space)
             if (identityRecoveryNeededStore.isNeeded() || identityKeyManager?.hasIdentityKey() == false) {
                 readinessGate.pause(
                     app.logdate.client.device.crypto

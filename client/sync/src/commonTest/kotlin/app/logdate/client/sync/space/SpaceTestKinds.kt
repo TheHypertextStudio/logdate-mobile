@@ -350,6 +350,7 @@ internal class TestNoteRecords(
 /** One device syncing journals and notes through [home], with everything else in memory. */
 internal class SpaceDevice(
     val home: FakeDataHome,
+    identityManager: app.logdate.client.device.crypto.IdentityKeyManager? = null,
     resolver: ConflictResolver<Journal> = LastWriteWinsResolver(),
     did: String? = TEST_DID,
     val journals: JournalRepository = FakeJournalRepository(),
@@ -377,11 +378,13 @@ internal class SpaceDevice(
     /** Whether this build syncs personal spaces. */
     var spaceEnabled = true
     var identityKey: ByteArray = TEST_IDENTITY_KEY
+    var accountIdentityKey: suspend (String) -> ByteArray = { identityKey }
 
     val scope: UploadScope get() = UploadScope("test-account-id", sessions.currentOrigin)
 
     val manager =
         testDefaultSyncManager(
+            identityKeyManager = identityManager,
             journalRepository = journals,
             journalNotesRepository = notes,
             syncMetadataService = metadata,
@@ -411,7 +414,7 @@ internal class SpaceDevice(
                     homes = homes,
                     swapStore = swapStore,
                     accountDid = { did },
-                    identityKey = { identityKey },
+                    identityKey = { accountId -> accountIdentityKey(accountId) },
                 ),
         )
 
