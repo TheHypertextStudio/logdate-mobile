@@ -4,6 +4,7 @@ package app.logdate.navigation
 
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
+import app.logdate.feature.core.account.navigation.BlueskySignInRoute
 import app.logdate.feature.core.account.navigation.CloudAccountSetupRoute
 import app.logdate.feature.core.main.HomeRoute
 import app.logdate.feature.core.navigation.BaseRoute
@@ -195,6 +196,7 @@ val appNavSavedStateConfiguration: SavedStateConfiguration =
 
                     // Cloud account flow
                     subclass(CloudAccountSetupRoute::class, CloudAccountSetupRoute.serializer())
+                    subclass(BlueskySignInRoute::class, BlueskySignInRoute.serializer())
 
                     // Editor
                     subclass(EntryEditorRoute::class, EntryEditorRoute.serializer())

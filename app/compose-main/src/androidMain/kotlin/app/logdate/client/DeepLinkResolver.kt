@@ -42,6 +42,7 @@ import app.logdate.client.ui.navigation.LogdateHostClass
 import app.logdate.client.ui.navigation.SearchRoute
 import app.logdate.client.ui.navigation.classifyLogdateHost
 import app.logdate.client.ui.navigation.searchRouteFromParams
+import app.logdate.feature.core.account.navigation.blueskyReturnRoute
 import app.logdate.feature.core.notifications.NAV_SOURCE_DATA_TRANSFER
 import app.logdate.feature.core.settings.navigation.ExportSettingsRoute
 import app.logdate.feature.core.watch.continuity.WatchHandoffRoute
@@ -86,6 +87,7 @@ internal val LOGDATE_API_BASE_URL: Uri = Uri.parse(BuildConfig.LOGDATE_API_BASE_
  * etc.) and the apex marketing root.
  */
 fun resolveDeepLinkUri(uri: Uri): NavKey? {
+    blueskyReturnRoute(uri.toString())?.let { return it }
     val segments = uri.pathSegments ?: return null
     val host = uri.host ?: return null
 

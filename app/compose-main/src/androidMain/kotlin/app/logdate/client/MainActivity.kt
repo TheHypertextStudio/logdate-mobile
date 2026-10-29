@@ -42,6 +42,7 @@ import app.logdate.client.location.tracking.LocationTrackingManager
 import app.logdate.client.media.audio.AudioRecordingManager
 import app.logdate.client.media.audio.EXTRA_NAV_SOURCE
 import app.logdate.client.media.audio.NAV_SOURCE_AUDIO_RECORDING
+import app.logdate.client.repository.account.AtprotoConnectionRepository
 import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.testing.onboarding.DEBUG_SKIP_ONBOARDING_EXTRA
@@ -59,16 +60,22 @@ import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.feature.core.GlobalAppUiLoadedState
 import app.logdate.feature.core.GlobalAppUiLoadingState
 import app.logdate.feature.core.GlobalAppUiState
+import app.logdate.feature.core.account.navigation.BlueskySignInRoute
 import app.logdate.feature.core.di.ActivityProvider
 import app.logdate.feature.core.export.AndroidExportLauncher
 import app.logdate.feature.core.export.CloudBackupScheduler
 import app.logdate.feature.core.isAppUnlocked
 import app.logdate.feature.core.restore.AndroidRestoreLauncher
+import app.logdate.feature.core.settings.account.signin.AndroidAccountConnection
+import app.logdate.feature.core.settings.account.signin.LocalAccountConnectionProvider
 import app.logdate.feature.core.settings.navigation.DataSettingsRoute
+import app.logdate.feature.core.settings.navigation.SignInMethodsRoute
 import app.logdate.feature.core.settings.updates.AppUpdateCheckTrigger
 import app.logdate.feature.editor.navigation.EntryEditorRoute
 import app.logdate.feature.onboarding.flow.OnboardingDeviceStateRepository
+import app.logdate.navigation.AccountBrowserReturn
 import app.logdate.navigation.LogDateNavDisplay
+import app.logdate.navigation.resolveAccountBrowserReturn
 import app.logdate.ui.common.HomeScreenPins
 import app.logdate.ui.common.LocalEditorWindows
 import app.logdate.ui.common.LocalHomeScreenPins
@@ -119,9 +126,11 @@ class MainActivity : FragmentActivity() {
     private val onboardingDeviceStateRepository: OnboardingDeviceStateRepository by inject()
 
     private val viewModel by viewModel<AppViewModel>()
+    private val accountConnection: AtprotoConnectionRepository by inject()
 
     private var bootstrapReady = false
     private var startupPendingIntent: Intent? = null
+    private var accountReturnGeneration = 0L
     private var appUiState by mutableStateOf<GlobalAppUiState>(GlobalAppUiLoadingState)
     private var pendingNavKey by mutableStateOf<NavKey?>(null)
     private var currentNavKey by mutableStateOf<NavKey?>(null)
@@ -202,18 +211,18 @@ class MainActivity : FragmentActivity() {
         // would overwrite the Navigation 3 back stack restored across rotation.
         if (savedInstanceState == null) {
             val recordingWindowForwarded = showRecordingWindowIfAsked(intent)
-            pendingNavKey =
-                if (recordingWindowForwarded) {
-                    null
-                } else {
-                    if (retainedJournalWorkspace(this).current() != null &&
-                        postRestoreDetector.pendingContentRecoveryId() != null
-                    ) {
-                        DataSettingsRoute
-                    } else {
-                        resolveMainActivityNavKey(intent) ?: activeRecordingDestination()
-                    }
-                }
+            if (recordingWindowForwarded) {
+                pendingNavKey = null
+                routeAccountAwareIntent(intent, restoreOnly = true)
+            } else if (retainedJournalWorkspace(this).current() != null && postRestoreDetector.pendingContentRecoveryId() != null) {
+                pendingNavKey = DataSettingsRoute
+                routeAccountAwareIntent(intent, restoreOnly = true)
+            } else {
+                routeAccountAwareIntent(intent, coldStart = true)
+            }
+        } else {
+            // Resume only a persisted connection; ordinary sign-in keeps its restored Navigation 3 entry.
+            routeAccountAwareIntent(intent, restoreOnly = true)
         }
 
         setContent {
@@ -222,6 +231,7 @@ class MainActivity : FragmentActivity() {
                 CompositionLocalProvider(
                     LocalEditorWindows provides remember { editorWindows() },
                     LocalHomeScreenPins provides homeScreenPins,
+                    LocalAccountConnectionProvider provides { AndroidAccountConnection() },
                 ) {
                     MainActivityContent(
                         state = state,
@@ -331,6 +341,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        accountReturnGeneration += 1
         if (!bootstrapReady) {
             startupPendingIntent = intent
             return
@@ -339,16 +350,36 @@ class MainActivity : FragmentActivity() {
             return
         }
         if (showRecordingWindowIfAsked(intent)) return
-        val recordingReturn = intent.action == Intent.ACTION_MAIN || intent.getBooleanExtra(EXTRA_SHOW_RECORDING, false)
-        val destination =
-            if (recordingReturn) {
-                activeRecordingDestination() ?: resolveMainActivityNavKey(
-                    intent,
-                )
-            } else {
-                resolveMainActivityNavKey(intent)
+        routeAccountAwareIntent(intent)
+    }
+
+    private fun routeAccountAwareIntent(
+        intent: Intent?,
+        coldStart: Boolean = false,
+        restoreOnly: Boolean = false,
+    ) {
+        val generation = ++accountReturnGeneration
+        val target = resolveMainActivityNavKey(intent)
+        if (target !is BlueskySignInRoute || target.attemptId == null) {
+            val recordingReturn = intent?.action == Intent.ACTION_MAIN || intent?.getBooleanExtra(EXTRA_SHOW_RECORDING, false) == true
+            val destination =
+                when {
+                    coldStart -> target ?: activeRecordingDestination()
+                    recordingReturn -> activeRecordingDestination() ?: target
+                    else -> target
+                }
+            if (!restoreOnly && destination != null) pendingNavKey = destination
+            return
+        }
+        lifecycleScope.launch {
+            val resolved = resolveAccountBrowserReturn(intent?.dataString, accountConnection::resume)
+            if (generation != accountReturnGeneration || restoreOnly) return@launch
+            when (resolved) {
+                AccountBrowserReturn.CONNECTION -> if (coldStart) pendingNavKey = SignInMethodsRoute
+                AccountBrowserReturn.UNAVAILABLE -> pendingNavKey = SignInMethodsRoute
+                AccountBrowserReturn.ORDINARY_SIGN_IN, AccountBrowserReturn.NOT_A_RETURN -> pendingNavKey = target
             }
-        destination?.let { pendingNavKey = it }
+        }
     }
 
     /**

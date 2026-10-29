@@ -64,6 +64,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
     onFirstEntryReady: () -> Unit,
     onCreateFirstEntry: () -> Unit,
     onGoToItem: (route: OnboardingBaseRoute) -> Unit,
+    onContinueWithBluesky: (() -> Unit)? = null,
 ) {
     taggedEntry<OnboardingRoute> {
         // Marker entry — bounce immediately to the real start screen so legacy callers that
@@ -190,6 +191,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
         val coroutineScope = rememberCoroutineScope()
 
         CloudAccountSetupScreen(
+            onContinueWithBluesky = onContinueWithBluesky,
             onBack = onNavigateBack,
             onContinue = {
                 onGoToItem(
@@ -443,6 +445,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
         }
 
         CloudAccountOnboardingScreen(
+            onContinueWithBluesky = onContinueWithBluesky,
             viewModel = cloudAccountViewModel,
             onAccountCreated = { onGoToItem(WelcomeBack) },
             onSkipOnboarding = { onGoToItem(OnboardingStart) },
