@@ -324,6 +324,12 @@ class OpenApiContractTest {
                 "beginPasskeySignin",
                 "completePasskeySignin",
                 "signinWithGoogle",
+                "startBlueskySignin",
+                "exchangeBlueskyIdentityProof",
+                "beginBlueskyRegistration",
+                "completeBlueskyRegistration",
+                "beginBlueskyAuthentication",
+                "completeBlueskyAuthentication",
                 "beginRestoreSignin",
                 "completeRestoreSignin",
                 "refreshAccessToken",
@@ -379,6 +385,12 @@ class OpenApiContractTest {
                 "createTranscriptionSession",
                 "getAuthorizationPasskeyOptions",
                 "approveAuthorizationWithPasskey",
+                "startBlueskySignin",
+                "exchangeBlueskyIdentityProof",
+                "beginBlueskyRegistration",
+                "completeBlueskyRegistration",
+                "beginBlueskyAuthentication",
+                "completeBlueskyAuthentication",
             )
         private val QUOTA_ENFORCED = setOf("uploadMedia", "uploadBackup", "createTranscriptionSession")
     }

@@ -5,6 +5,7 @@ import app.logdate.server.auth.AccessTokenVerifier
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.bearerToken
+import app.logdate.server.auth.ensureLogDateSessionIdentity
 import app.logdate.server.identity.AtprotoIdentityService
 import app.logdate.shared.model.devices.DeviceLinkErrorCodes
 import io.ktor.http.HttpHeaders
@@ -54,7 +55,7 @@ class LogDateAccountAuth(
             accountId
                 ?.let { accountRepository.findById(it) }
                 ?.takeIf { it.isActive }
-                ?.let { identityService.ensureIdentity(it) }
+                ?.let { ensureLogDateSessionIdentity(it, identityService) }
         if (account == null) {
             call.respond(HttpStatusCode.Unauthorized, PdsErrorResponse("AuthRequired", "A LogDate access token is required"))
         }
