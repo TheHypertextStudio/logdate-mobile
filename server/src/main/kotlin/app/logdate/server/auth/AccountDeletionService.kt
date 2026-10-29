@@ -39,6 +39,7 @@ class AccountDeletionService(
     private val blobCleanup: AccountBlobCleanup? = null,
     private val oauthGrantRevoker: OAuthGrantRevoker? = null,
     private val statusEvents: AccountStatusEvents? = null,
+    private val connectionCleanup: AccountConnectionCleanup? = null,
 ) {
     data class Summary(
         val mediaBlobsDeleted: Int,
@@ -46,7 +47,14 @@ class AccountDeletionService(
         val accountRowDeleted: Boolean,
     )
 
-    suspend fun deleteAccount(accountId: Uuid): Summary {
+    suspend fun deleteAccount(accountId: Uuid): Summary =
+        if (connectionCleanup != null) {
+            connectionCleanup.withAccountRemoval(accountId) { deleteAccountRecords(accountId) }
+        } else {
+            deleteAccountRecords(accountId)
+        }
+
+    private suspend fun deleteAccountRecords(accountId: Uuid): Summary {
         val owner = accountId.toJavaUuid()
         // Apps the account approved lose access before the account itself goes.
         val did = accountRepository.findById(accountId)?.did
