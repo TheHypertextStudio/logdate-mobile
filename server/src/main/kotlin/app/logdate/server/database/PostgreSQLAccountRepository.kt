@@ -3,8 +3,10 @@ package app.logdate.server.database
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountModeration
 import app.logdate.server.auth.AccountRepository
+import app.logdate.server.auth.requireValidNewIdentity
 import app.logdate.server.billing.CloudLaunch
 import app.logdate.server.entitlements.AccountEntitlementsTable
+import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Op
@@ -36,6 +38,7 @@ class PostgreSQLAccountRepository(
 ) : AccountRepository {
     override suspend fun create(account: Account): Boolean =
         transaction {
+            account.requireValidNewIdentity()
             AccountsTable
                 .insertIgnore {
                     it[id] = account.id.toJavaUUID()
@@ -55,6 +58,7 @@ class PostgreSQLAccountRepository(
                     it[isActive] = account.isActive
                     it[preferences] = account.preferences ?: "{}"
                     it[storageMode] = account.newAccountStorageMode()
+                    it[identityKind] = account.identityKind.wireValue
                     it[publicIdentityDid] = account.publicIdentityDid
                     it[cloudBetaMember] = newAccountsJoinCloudBeta
                 }.insertedCount > 0
@@ -66,6 +70,7 @@ class PostgreSQLAccountRepository(
                 AccountsTable
                     .selectAll()
                     .where { AccountsTable.id eq account.id.toJavaUUID() }
+                    .forUpdate()
                     .singleOrNull()
 
             if (existingAccount != null) {
@@ -73,10 +78,12 @@ class PostgreSQLAccountRepository(
                 AccountsTable.update({ AccountsTable.id eq account.id.toJavaUUID() }) {
                     it[username] = account.username
                     it[displayName] = account.displayName
-                    it[did] = account.did
-                    it[handle] = account.handle
-                    it[signingKeyPublic] = account.signingKeyPublic
-                    it[plcRecoveryDidKey] = account.plcRecoveryDidKey
+                    if (existingAccount[AccountsTable.identityKind] == AccountIdentityKind.HOSTED.wireValue) {
+                        it[did] = account.did
+                        it[handle] = account.handle
+                        it[signingKeyPublic] = account.signingKeyPublic
+                        it[plcRecoveryDidKey] = account.plcRecoveryDidKey
+                    }
                     it[email] = account.email
                     it[emailVerified] = account.emailVerified
                     it[emailVerifiedAt] = account.emailVerifiedAt
@@ -86,9 +93,13 @@ class PostgreSQLAccountRepository(
                     it[isActive] = account.isActive
                     it[preferences] = account.preferences ?: "{}"
                 }
-                account.copy(publicIdentityDid = existingAccount[AccountsTable.publicIdentityDid])
+                AccountsTable
+                    .selectAll()
+                    .where { AccountsTable.id eq account.id.toJavaUUID() }
+                    .single()
+                    .toAccount()
             } else {
-                // Insert new account
+                account.requireValidNewIdentity()
                 AccountsTable.insert {
                     it[id] = account.id.toJavaUUID()
                     it[username] = account.username
@@ -107,6 +118,7 @@ class PostgreSQLAccountRepository(
                     it[isActive] = account.isActive
                     it[preferences] = account.preferences ?: "{}"
                     it[storageMode] = account.newAccountStorageMode()
+                    it[identityKind] = account.identityKind.wireValue
                     it[publicIdentityDid] = account.publicIdentityDid
                     it[cloudBetaMember] = newAccountsJoinCloudBeta
                 }
@@ -116,6 +128,7 @@ class PostgreSQLAccountRepository(
 
     override suspend fun createOnly(account: Account): Boolean =
         transaction {
+            account.requireValidNewIdentity()
             AccountsTable
                 .insertIgnore {
                     it[id] = account.id.toJavaUUID()
@@ -135,6 +148,7 @@ class PostgreSQLAccountRepository(
                     it[isActive] = account.isActive
                     it[preferences] = account.preferences ?: "{}"
                     it[storageMode] = account.newAccountStorageMode()
+                    it[identityKind] = account.identityKind.wireValue
                     it[publicIdentityDid] = account.publicIdentityDid
                     it[cloudBetaMember] = newAccountsJoinCloudBeta
                 }.insertedCount == 1
@@ -148,7 +162,17 @@ class PostgreSQLAccountRepository(
         require(new != AccountStorageMode.UNRECOGNIZED) { "An account can't be moved to a storage mode this server doesn't know" }
         if (expected == AccountStorageMode.UNRECOGNIZED) return false
         return transaction {
-            AccountsTable.update({ (AccountsTable.id eq accountId.toJavaUUID()) and (AccountsTable.storageMode eq expected.wireValue) }) {
+            val hostedKind = AccountsTable.identityKind eq AccountIdentityKind.HOSTED.wireValue
+            val kindAllowsMode =
+                if (new == AccountStorageMode.PERSONAL_SPACE_V1) {
+                    hostedKind or (AccountsTable.identityKind eq AccountIdentityKind.EXTERNAL.wireValue)
+                } else {
+                    hostedKind
+                }
+            AccountsTable.update({
+                (AccountsTable.id eq accountId.toJavaUUID()) and
+                    (AccountsTable.storageMode eq expected.wireValue) and kindAllowsMode
+            }) {
                 it[storageMode] = new.wireValue
             } == 1
         }
@@ -178,7 +202,10 @@ class PostgreSQLAccountRepository(
         expectedDid: String,
     ): Boolean =
         transaction {
-            AccountsTable.update({ (AccountsTable.id eq accountId.toJavaUUID()) and (AccountsTable.did eq expectedDid) }) {
+            AccountsTable.update({
+                (AccountsTable.id eq accountId.toJavaUUID()) and (AccountsTable.did eq expectedDid) and
+                    (AccountsTable.identityKind eq AccountIdentityKind.HOSTED.wireValue)
+            }) {
                 it[publicIdentityDid] = expectedDid
             } == 1
         }
@@ -278,6 +305,7 @@ class PostgreSQLAccountRepository(
                 .selectAll()
                 .where {
                     (AccountsTable.isActive eq true) and
+                        (AccountsTable.identityKind eq AccountIdentityKind.HOSTED.wireValue) and
                         (AccountsTable.handle.isNull() or AccountsTable.did.isNull() or AccountsTable.signingKeyPublic.isNull())
                 }.orderBy(AccountsTable.createdAt, SortOrder.DESC)
                 .map { it.toAccount() }
@@ -322,10 +350,16 @@ class PostgreSQLAccountRepository(
         updated: Account,
     ): Account? =
         transaction {
+            if (expected.identityKind != AccountIdentityKind.HOSTED ||
+                updated.identityKind != AccountIdentityKind.HOSTED
+            ) {
+                return@transaction null
+            }
             val id = expected.id.toJavaUUID()
             val changed =
                 AccountsTable.update({
                     (AccountsTable.id eq id) and
+                        (AccountsTable.identityKind eq AccountIdentityKind.HOSTED.wireValue) and
                         AccountsTable.handle.matches(expected.handle) and
                         AccountsTable.did.matches(expected.did) and
                         AccountsTable.signingKeyPublic.matches(expected.signingKeyPublic) and
@@ -375,5 +409,6 @@ class PostgreSQLAccountRepository(
             storageMode = AccountStorageMode.fromWireValue(this[AccountsTable.storageMode]),
             moderation = AccountModeration.fromWireValue(this[AccountsTable.moderation]),
             publicIdentityDid = this[AccountsTable.publicIdentityDid],
+            identityKind = AccountIdentityKind.fromWireValue(this[AccountsTable.identityKind]),
         )
 }
