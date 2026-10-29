@@ -3,6 +3,7 @@ package app.logdate.server.atproto
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.identity.SigningKeyService
 import app.logdate.server.logdate.isSyntheticRepoDid
+import app.logdate.shared.model.AccountIdentityKind
 import studio.hypertext.atproto.crypto.EcCurve
 import studio.hypertext.atproto.crypto.EcKeySupport
 import studio.hypertext.atproto.identity.AtprotoDid
@@ -39,6 +40,7 @@ class HostedRepoCommitSigner(
         val account =
             accountRepository.findByDid(commit.repo.toString())
                 ?: throw unavailable(commit.repo, "no account owns this repository")
+        if (account.identityKind != AccountIdentityKind.HOSTED) throw unavailable(commit.repo, "the identity is not hosted here")
         val activeKey =
             signingKeyService.findActiveKey(account.id)
                 ?: throw unavailable(commit.repo, "the account has no active signing key")
@@ -59,6 +61,7 @@ class HostedRepoCommitSigner(
         val account =
             accountRepository.findByDid(commit.repo.toString())
                 ?: throw unavailable(commit.repo, "no account owns this repository")
+        if (account.identityKind != AccountIdentityKind.HOSTED) throw unavailable(commit.repo, "the identity is not hosted here")
         val publicKeyMultibase =
             account.signingKeyPublic
                 ?: throw unavailable(commit.repo, "the account has no published signing key")
