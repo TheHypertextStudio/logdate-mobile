@@ -34,6 +34,12 @@ enum class FeatureFlag(
     /** Immersive entry overview and block focus, with a legacy presentation rollback. */
     IMMERSIVE_ENTRY_EDITOR(key = "immersive_entry_editor_enabled", defaultEnabled = true),
 
+    /** External identity sign-in; enable only after native journal acceptance. */
+    BLUESKY_SIGN_IN(key = "bluesky_sign_in_enabled", defaultEnabled = false),
+
+    /** Optional account authorization; enable only after connection lifecycle acceptance. */
+    ATPROTO_CONNECTION(key = "atproto_connection_enabled", defaultEnabled = false),
+
     /** Stop quiet phone recordings and preserve them as drafts. */
     QUIET_SAVE(key = "quiet_save_available", defaultEnabled = false),
 
