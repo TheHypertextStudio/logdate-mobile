@@ -23,6 +23,8 @@ import app.logdate.server.auth.InMemorySessionManager
 import app.logdate.server.auth.JwtTokenService
 import app.logdate.server.auth.RefreshTokenRevocationRepository
 import app.logdate.server.auth.SessionManager
+import app.logdate.server.bluesky.connection.AccountCredentialMutationLock
+import app.logdate.server.bluesky.connection.InProcessAccountCredentialMutationLock
 import app.logdate.server.devices.DeviceLinkService
 import app.logdate.server.devices.DeviceSessionGuard
 import app.logdate.server.entitlements.EntitlementEnforcer
@@ -134,6 +136,8 @@ fun TestApplicationBuilder.configureAuthV1TestApp(
     spaceTransferLimits: TransferLimits = TransferLimits(),
     spaceEntitlementEnforcer: EntitlementEnforcer? = null,
     spaceMigrationHolds: SpaceMigrationHolds = SpaceMigrationHolds.None,
+    additionalAccountRoutes: io.ktor.server.routing.Route.() -> Unit = {},
+    credentialMutationLock: AccountCredentialMutationLock = InProcessAccountCredentialMutationLock(),
 ): AuthV1TestEnvironment {
     val googleVerifier: GoogleIdTokenVerifier = googleIdTokenVerifier ?: FakeGoogleIdTokenVerifier(googleClaimsByToken)
     val verifier = accessTokenVerifier ?: AccessTokenVerifier(tokenService, DeviceSessionGuard.Disabled)
@@ -283,6 +287,7 @@ fun TestApplicationBuilder.configureAuthV1TestApp(
                 migrationHolds = spaceMigrationHolds,
             )
             route("/api/v1") {
+                additionalAccountRoutes()
                 authV1Routes(
                     accountRepository = accountRepository,
                     identityRepository = identityRepository,
@@ -294,6 +299,7 @@ fun TestApplicationBuilder.configureAuthV1TestApp(
                     refreshTokenRevocationRepository = refreshTokenRevocationRepository,
                     googleIdTokenVerifier = googleVerifier,
                     metrics = metrics,
+                    credentialMutationLock = credentialMutationLock,
                     entitlementService = entitlementService,
                     emailVerificationService = emailVerificationService,
                     deviceLinkService = deviceLinkService,
