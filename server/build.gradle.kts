@@ -36,6 +36,7 @@ dependencies {
     implementation(projects.shared.config)
     implementation(projects.shared.atprotoCrypto)
     implementation(projects.shared.atprotoIdentity)
+    implementation(projects.shared.atprotoOauthClient)
     implementation(projects.shared.atprotoLexicon)
     implementation(projects.shared.atprotoPds)
     implementation(projects.shared.atprotoPdsRuntime)
@@ -106,6 +107,8 @@ dependencies {
     implementation(libs.koin.logger.slf4j)
 
     // Testing
+    testImplementation(projects.client.networking)
+    testImplementation(projects.integration.atprotoOauthFixtures)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.ktor.client.websockets)
