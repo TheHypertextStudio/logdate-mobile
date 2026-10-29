@@ -115,6 +115,7 @@ actual val dataModule: Module =
         includes(datastoreModule)
         includes(databaseModule)
         includes(historyOwnerAdoptionModule)
+        includes(blueskySignInModule)
         includes(configModule)
         includes(permissionsModule)
 
