@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.identity.DidDocument
 import studio.hypertext.atproto.identity.IdentityResolver
+import studio.hypertext.atproto.identity.claimedHandle
 import studio.hypertext.atproto.syntax.Handle
 
 /**
@@ -121,7 +122,7 @@ public class OAuthServerResolver internal constructor(
                 .resolveDid(handle)
                 .getOrElse { throw OAuthIdentityResolutionException(input, "handle resolution failed", it) }
         val document = resolveDocument(input, did)
-        val claimsHandle = document.alsoKnownAs.any { it.equals("at://${handle.normalized}", ignoreCase = true) }
+        val claimsHandle = document.claimedHandle()?.normalized == handle.normalized
         if (!claimsHandle) throw OAuthHandleMismatchException(handle.normalized, did)
         return OAuthResolvedIdentity(did = did, handle = handle, pdsUrl = pdsUrl(did, document))
     }

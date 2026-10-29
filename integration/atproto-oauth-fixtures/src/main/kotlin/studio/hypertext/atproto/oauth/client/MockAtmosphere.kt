@@ -37,7 +37,7 @@ import kotlin.time.Instant
 /**
  * A clock tests can move forward.
  */
-internal class TestClock(
+class TestClock(
     var current: Instant = Instant.parse("2026-10-18T12:00:00Z"),
 ) : Clock {
     override fun now(): Instant = current
@@ -50,7 +50,7 @@ internal class TestClock(
 /**
  * An account hosted in the mock Atmosphere.
  */
-internal data class MockAccount(
+data class MockAccount(
     val did: String,
     val handle: String,
     val pdsUrl: String,
@@ -73,7 +73,7 @@ internal data class MockAccount(
  *
  * Tests can switch on misbehaviours to check that the client rejects them.
  */
-internal class MockAtmosphere(
+class MockAtmosphere(
     val clock: TestClock = TestClock(),
 ) {
     val issuer = "https://auth.example.com"
@@ -113,6 +113,7 @@ internal class MockAtmosphere(
     var beforeRequest: (suspend (HttpRequestData) -> Unit)? = null
     var authorizationServerMetadataOverride: (JsonObject) -> JsonObject = { it }
     var tokenSubjectOverride: String? = null
+    var handleAliasesOverride: List<String>? = null
     var grantedScopeOverride: String? = null
     var revocationFails: Boolean = false
     var publishProtectedResourceMetadata: Boolean = true
@@ -245,7 +246,8 @@ internal class MockAtmosphere(
                 putJsonArray("@context") { add(JsonPrimitive("https://www.w3.org/ns/did/v1")) }
                 put("id", account.did)
                 putJsonArray("alsoKnownAs") {
-                    if (account.claimsHandle) add(JsonPrimitive("at://${account.handle}"))
+                    val aliases = handleAliasesOverride ?: if (account.claimsHandle) listOf("at://${account.handle}") else emptyList()
+                    aliases.forEach { add(JsonPrimitive(it)) }
                 }
                 putJsonArray("service") {
                     add(
@@ -680,11 +682,15 @@ internal class MockAtmosphere(
     private fun strings(vararg values: String) = buildJsonArray { values.forEach { add(JsonPrimitive(it)) } }
 
     companion object {
+        private const val DPOP_NONCE_HEADER = "DPoP-Nonce"
+        private const val DPOP_HEADER = "DPoP"
+        private const val CLIENT_ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+
         /** Where the data server's `com.example.redirect` endpoint sends requests. */
         const val REDIRECT_TARGET: String = "https://collector.example.org/steal"
     }
 
-    internal data class PendingRequest(
+    data class PendingRequest(
         val clientId: String,
         val state: String,
         val codeChallenge: String,
@@ -695,13 +701,13 @@ internal class MockAtmosphere(
         val clientKid: String,
     )
 
-    internal class IssuedCode(
+    class IssuedCode(
         val request: PendingRequest,
         val did: String,
         var used: Boolean = false,
     )
 
-    internal class Grant(
+    class Grant(
         val did: String,
         val code: String,
         val jkt: String,

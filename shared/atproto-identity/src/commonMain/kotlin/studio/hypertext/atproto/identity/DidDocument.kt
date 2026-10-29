@@ -2,6 +2,7 @@ package studio.hypertext.atproto.identity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import studio.hypertext.atproto.syntax.Handle
 
 /**
  * AT Protocol DID document.
@@ -20,6 +21,12 @@ import kotlinx.serialization.Serializable
     val verificationMethod: List<VerificationMethod> = emptyList(),
     val service: List<Service> = emptyList(),
 )
+
+/** The first syntactically valid at:// handle is the document's claimed handle. */
+public fun DidDocument.claimedHandle(): Handle? =
+    alsoKnownAs.firstNotNullOfOrNull { alias ->
+        if (alias.startsWith("at://", ignoreCase = true)) Handle.parse(alias.substring(5)).getOrNull() else null
+    }
 
 /**
  * DID verification method entry.
