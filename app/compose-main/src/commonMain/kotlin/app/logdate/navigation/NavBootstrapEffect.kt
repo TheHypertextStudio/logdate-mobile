@@ -5,6 +5,7 @@ package app.logdate.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.NavKey
+import app.logdate.feature.core.account.navigation.BlueskySignInRoute
 import app.logdate.feature.core.navigation.BaseRoute
 import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
 import app.logdate.feature.editor.navigation.EntryEditorRoute
@@ -50,7 +51,7 @@ internal fun NavBootstrapEffect(
                 openedPendingTarget = true
             }
         }
-        if (pendingTarget == null || !isOnboarded || requiresUnlock) return@LaunchedEffect
+        if (pendingTarget == null || !canOpenPendingDestination(pendingTarget, isOnboarded, requiresUnlock)) return@LaunchedEffect
         if (!openedPendingTarget) openPendingTarget(backStack, pendingTarget)
         onPendingNavKeyConsumed()
     }
@@ -61,9 +62,9 @@ private fun openPendingTarget(
     target: NavKey,
 ) {
     if (target is WatchSettingsRoute && backStack.lastOrNull() == WatchSettingsRoute) return
-    if (target is EntryEditorRoute && target.resumeRecording) {
-        RecordingEditorDestination.open(backStack, target)
-    } else {
-        addPlacesSafeTarget(backStack, target)
+    when {
+        target is EntryEditorRoute && target.resumeRecording -> RecordingEditorDestination.open(backStack, target)
+        target is BlueskySignInRoute -> applyPendingDestination(backStack, target)
+        else -> addPlacesSafeTarget(backStack, target)
     }
 }
