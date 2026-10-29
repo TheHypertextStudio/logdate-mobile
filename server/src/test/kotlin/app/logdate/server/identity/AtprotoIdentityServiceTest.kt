@@ -417,7 +417,7 @@ class AtprotoIdentityServiceTest {
         }
 
     @Test
-    fun `ensureIdentity saves normalized canonical values and trims explicit handle collisions`() =
+    fun `ensureIdentity saves normalized canonical values and trims canonical handle collisions`() =
         kotlinx.coroutines.test.runTest {
             val accountRepository = InMemoryAccountRepository()
             val service =
@@ -452,7 +452,7 @@ class AtprotoIdentityServiceTest {
                         username = "collision",
                         displayName = "Collision",
                         createdAt = Clock.System.now(),
-                        handle = longHandle,
+                        handle = longHandle.uppercase(),
                         did = null,
                         signingKeyPublic = null,
                     ),
