@@ -17,6 +17,11 @@ import app.logdate.server.auth.RefreshTokenRevocationRepository
 import app.logdate.server.auth.SessionManager
 import app.logdate.server.auth.TokenService
 import app.logdate.server.auth.storageModes
+import app.logdate.server.bluesky.BlueskyAccountContinuationService
+import app.logdate.server.bluesky.BlueskyOAuthRuntime
+import app.logdate.server.bluesky.BlueskyPasskeyAccountService
+import app.logdate.server.bluesky.connection.AtprotoConnectionService
+import app.logdate.server.bluesky.connection.AtprotoReconnectService
 import app.logdate.server.devices.AccountDeviceRepository
 import app.logdate.server.devices.DeviceLinkService
 import app.logdate.server.enrollment.DeviceEnrollmentRepository
@@ -64,6 +69,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
+import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
 import studio.hypertext.atproto.pds.PdsBlobService
 import studio.hypertext.atproto.pds.PdsDiscoveryService
@@ -199,6 +205,7 @@ private fun Application.personalSpaceRoutes() {
 
 /** `/api/v1` account surface: server info, plans, auth, and identity management. */
 internal fun Application.accountApiRoutes() {
+    blueskyAccountApiRoutes()
     val accountRepository by inject<AccountRepository>()
     val accountIdentityRepository by inject<AccountIdentityRepository>()
     val sessionManager by inject<SessionManager>()
@@ -248,6 +255,7 @@ internal fun Application.accountApiRoutes() {
                 accessTokenVerifier = accessTokenVerifier,
                 oauthGrantRevoker = oauthGrantRevoker,
                 newAccountStorageMode = descriptorConfig.newAccountStorageMode,
+                credentialMutationLock = getKoin().get(),
             )
         }
     }
@@ -378,4 +386,42 @@ private fun Application.serverDescriptor() =
         webAuthnRpId = inject<WebAuthnConfig>().value.relyingPartyId,
         webAuthnRpName = inject<WebAuthnConfig>().value.relyingPartyName,
         diagnosticReportsEnabled = inject<app.logdate.server.diagnostics.DiagnosticReportAvailability>().value.enabled,
+        blueskySignInEnabled = getKoin().getOrNull<BlueskyOAuthRuntime>() != null,
+        atprotoConnectionEnabled = getKoin().getOrNull<AtprotoConnectionService>() != null,
     )
+
+internal fun Application.blueskyApiRoutes() {
+    val runtime = getKoin().getOrNull<BlueskyOAuthRuntime>() ?: return
+    routing {
+        blueskyMetadataRoutes(runtime.client)
+        blueskyCallbackRoutes(runtime.signIn)
+    }
+}
+
+internal fun Application.blueskyAccountApiRoutes() {
+    val runtime = getKoin().getOrNull<BlueskyOAuthRuntime>() ?: return
+    check(getKoin().get<ServerDescriptorConfig>().personalSpaceEnabled) { "Bluesky sign-in requires personal-space storage" }
+    val continuations = getKoin().get<BlueskyAccountContinuationService>()
+    val confirmations = getKoin().get<BlueskyPasskeyAccountService>()
+    val accounts = getKoin().get<AccountRepository>()
+    val identities = getKoin().get<AccountIdentityRepository>()
+    val passkeys = getKoin().get<WebAuthnPasskeyService>()
+    val hostedIdentities = getKoin().get<AtprotoIdentityService>()
+    val tokens = getKoin().get<TokenService>()
+    routing {
+        route("/api/v1") {
+            blueskyAccountRoutes(continuations, confirmations, runtime.signIn) { account ->
+                issueAuthResponse(account, accounts, identities, passkeys, hostedIdentities, tokens, passkeyConfirmed = true)
+            }
+            getKoin().getOrNull<AtprotoConnectionService>()?.let { connection ->
+                atprotoConnectionRoutes(
+                    accounts,
+                    tokens,
+                    connection,
+                    getKoin().get<AuthMetricsRegistry>(),
+                    getKoin().get<AtprotoReconnectService>(),
+                )
+            }
+        }
+    }
+}

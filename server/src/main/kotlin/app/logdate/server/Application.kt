@@ -17,6 +17,7 @@ import app.logdate.server.logging.installServerLogging
 import app.logdate.server.oauth.installOAuthKeyRotation
 import app.logdate.server.routes.accountApiRoutes
 import app.logdate.server.routes.atprotoRoutes
+import app.logdate.server.routes.blueskyApiRoutes
 import app.logdate.server.routes.contentApiRoutes
 import app.logdate.server.routes.serverMetaRoutes
 import app.logdate.server.routes.spaceMigrationApiRoutes
@@ -98,6 +99,7 @@ fun Application.module(
         serverMetaRoutes(isDatabaseAvailable, healthInternalToken, releaseVersion)
     }
     atprotoRoutes()
+    blueskyApiRoutes()
     accountApiRoutes()
     contentApiRoutes()
     spaceMigrationApiRoutes()
