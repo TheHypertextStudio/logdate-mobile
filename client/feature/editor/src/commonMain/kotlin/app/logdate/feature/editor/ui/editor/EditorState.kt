@@ -104,7 +104,7 @@ class EditorState(
         if (audioCaptureStartReservations.isNotEmpty()) return false
         if (draftState is DraftState.Active) return false
         val block = blocks.singleOrNull() ?: return false
-        return !block.hasContent() && block.supportsPickerReturnTransition()
+        return block.isEmptyCreationBlock() && block.supportsPickerReturnTransition()
     }
 
     /**
