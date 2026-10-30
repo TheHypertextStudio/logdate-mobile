@@ -54,12 +54,18 @@ internal fun EarlierEntryContext(
                     ) {
                         Text(
                             note.creationTimestamp.localTime,
+                            Modifier.clipEntryContentToSafeWindow(),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
                         )
                         if (note is JournalNote.Audio) {
-                            AudioPlaybackComponent(note.mediaRef, knownDurationMs = note.durationMs, contentPadding = 0.dp)
-                            if (note.caption.isNotBlank()) Text(note.caption)
+                            AudioPlaybackComponent(
+                                note.mediaRef,
+                                modifier = Modifier.clipEntryContentToSafeWindow(),
+                                knownDurationMs = note.durationMs,
+                                contentPadding = 0.dp,
+                            )
+                            if (note.caption.isNotBlank()) Text(note.caption, Modifier.clipEntryContentToSafeWindow())
                         } else {
                             val preview =
                                 when (note) {
@@ -71,6 +77,7 @@ internal fun EarlierEntryContext(
                                 }
                             Text(
                                 preview,
+                                Modifier.clipEntryContentToSafeWindow(),
                                 style = if (expanded) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
                                 maxLines = if (expanded) Int.MAX_VALUE else 3,
                                 overflow = TextOverflow.Ellipsis,
