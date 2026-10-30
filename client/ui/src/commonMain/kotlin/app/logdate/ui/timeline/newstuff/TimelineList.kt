@@ -364,7 +364,7 @@ fun TimelineList(
                 }
             }
 
-            if (!workspaceEnabled && !hasMoreOlderContent && items.isNotEmpty()) {
+            if (!hasMoreOlderContent && items.isNotEmpty()) {
                 item(
                     contentType = TimelineListContentType.END_OF_TIMELINE,
                 ) {

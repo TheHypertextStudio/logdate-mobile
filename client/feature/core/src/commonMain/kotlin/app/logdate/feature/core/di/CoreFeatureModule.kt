@@ -211,6 +211,7 @@ val coreFeatureModule: Module =
                 getJournalMembership = get(),
                 transcriptionRepository = get(),
                 preferencesDataSource = get(),
+                userStateRepository = get(),
             )
         }
         viewModel { CloudAccountOnboardingViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }

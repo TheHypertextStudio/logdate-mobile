@@ -226,6 +226,7 @@ fun HomeScreen(
                         HomeRouteDestination.Timeline -> {
                             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                             val transcriptionState by viewModel.transcriptionState.collectAsStateWithLifecycle()
+                            val birthday by viewModel.birthday.collectAsStateWithLifecycle()
                             TranscriptionProvider(transcriptionState) {
                                 Column {
                                     TimelinePane(
@@ -254,6 +255,7 @@ fun HomeScreen(
                                         onRecordVoice = onRecordVoice,
                                         onImportBackup = onImportBackup,
                                         timelineSuggestion = uiState.timelineSuggestion,
+                                        birthday = birthday,
                                     )
                                 }
                             }
@@ -408,6 +410,7 @@ fun HomeScreen(
                                     WatchRecordingStatus()
                                     WatchReadyOnPhoneCard(onClick = onOpenWatch)
                                     val transcriptionState by viewModel.transcriptionState.collectAsStateWithLifecycle()
+                                    val birthday by viewModel.birthday.collectAsStateWithLifecycle()
                                     TranscriptionProvider(transcriptionState) {
                                         TimelinePane(
                                             uiState =
@@ -435,6 +438,7 @@ fun HomeScreen(
                                             onRecordVoice = onRecordVoice,
                                             onImportBackup = onImportBackup,
                                             timelineSuggestion = uiState.timelineSuggestion,
+                                            birthday = birthday,
                                             statusActions = timelineStatusActions,
                                         )
                                     }

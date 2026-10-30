@@ -21,6 +21,7 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.transcription.TranscriptionData
 import app.logdate.client.repository.transcription.TranscriptionRepository
 import app.logdate.client.repository.transcription.TranscriptionStatus
+import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.ui.audio.TranscriptionState
 import app.logdate.ui.timeline.HomeTimelineUiState
 import app.logdate.ui.timeline.TimelineDaySelection
@@ -46,6 +47,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
@@ -67,6 +69,7 @@ class HomeViewModel(
     private val getJournalMembership: GetJournalMembershipUseCase,
     private val transcriptionRepository: TranscriptionRepository,
     private val libraryEnabledFlow: Flow<Boolean>,
+    birthdayFlow: Flow<Instant?>,
 ) : ViewModel() {
     companion object {
         private const val RECENT_TIMELINE_PAGE_SIZE = 50
@@ -82,6 +85,7 @@ class HomeViewModel(
         getJournalMembership: GetJournalMembershipUseCase,
         transcriptionRepository: TranscriptionRepository,
         preferencesDataSource: LogdatePreferencesDataSource,
+        userStateRepository: UserStateRepository,
     ) : this(
         recentTimelineFlow =
             getStreamingTimelineUseCase(
@@ -96,6 +100,10 @@ class HomeViewModel(
         getJournalMembership = getJournalMembership,
         transcriptionRepository = transcriptionRepository,
         libraryEnabledFlow = preferencesDataSource.observeLibraryEnabled(),
+        birthdayFlow =
+            userStateRepository.userData.map { data ->
+                data.birthday.takeUnless { it == Instant.DISTANT_PAST }
+            },
     )
 
     private val selectedDayFlow = MutableStateFlow<LocalDate?>(null)
@@ -143,6 +151,12 @@ class HomeViewModel(
             SharingStarted.WhileSubscribed(5_000),
             false,
         )
+
+    /** The saved birthday, or `null` when none is set; the end of the timeline celebrates it. */
+    val birthday: StateFlow<Instant?> =
+        birthdayFlow
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         viewModelScope.launch {
