@@ -3,10 +3,17 @@ package app.logdate.server.routes
 import app.logdate.server.atproto.firehose.AtprotoRepoStatus
 import app.logdate.server.atproto.firehose.PublicRepoAccess
 import app.logdate.server.atproto.firehose.RepoStanding
+import app.logdate.server.clientAddress
 import app.logdate.server.identity.AtprotoIdentityService
+import app.logdate.server.ratelimit.FixedWindowRateLimiter
+import app.logdate.server.ratelimit.RateLimitPolicy
+import app.logdate.server.transfer.TransferLimits
+import app.logdate.server.transfer.TransferSlots
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import kotlinx.serialization.Serializable
@@ -37,6 +44,7 @@ internal class PublicRepoReads(
     private val access: PublicRepoAccess,
     private val identityService: AtprotoIdentityService,
     private val blobService: PdsBlobService?,
+    private val downloads: PublicRepoDownloadLimits = PublicRepoDownloadLimits(),
 ) {
     suspend fun tryGetRecord(
         call: ApplicationCall,
@@ -86,11 +94,13 @@ internal class PublicRepoReads(
     ): Boolean {
         if (respondIfInactive(call, did)) return true
         if (access.readableHead(did) == null) return false
-        val export = access.export(did, since)
-        if (export == null) {
-            call.respond(HttpStatusCode.NotFound, PdsErrorResponse("RepoNotFound", "Unknown repo: $did"))
-        } else {
-            call.respondBytes(CarCodec.write(export), ContentType.parse(CAR_CONTENT_TYPE), HttpStatusCode.OK)
+        downloads.withDownload(call, PublicRepoDownloadLimits.Budget.REPOSITORIES) {
+            val export = access.export(did, since)
+            if (export == null) {
+                call.respond(HttpStatusCode.NotFound, PdsErrorResponse("RepoNotFound", "Unknown repo: $did"))
+            } else {
+                call.respondBytes(CarCodec.write(export), ContentType.parse(CAR_CONTENT_TYPE), HttpStatusCode.OK)
+            }
         }
         return true
     }
@@ -134,14 +144,16 @@ internal class PublicRepoReads(
         cid: Cid,
     ): Boolean {
         if (access.readableHead(did) == null) return false
-        val download: BlobDownload? =
-            if (access.referencesBlob(did, cid)) blobService?.getBlob(GetBlobRequest(did, cid))?.getOrThrow() else null
-        if (download == null) {
-            call.respond(HttpStatusCode.NotFound, PdsErrorResponse("BlobNotFound", "Blob not found"))
-            return true
+        downloads.withDownload(call, PublicRepoDownloadLimits.Budget.BLOBS) {
+            val download: BlobDownload? =
+                if (access.referencesBlob(did, cid)) blobService?.getBlob(GetBlobRequest(did, cid))?.getOrThrow() else null
+            if (download == null) {
+                call.respond(HttpStatusCode.NotFound, PdsErrorResponse("BlobNotFound", "Blob not found"))
+            } else {
+                val contentType = runCatching { ContentType.parse(download.contentType) }.getOrDefault(ContentType.Application.OctetStream)
+                call.respondBytes(download.bytes, contentType, HttpStatusCode.OK)
+            }
         }
-        val contentType = runCatching { ContentType.parse(download.contentType) }.getOrDefault(ContentType.Application.OctetStream)
-        call.respondBytes(download.bytes, contentType, HttpStatusCode.OK)
         return true
     }
 
@@ -192,6 +204,54 @@ internal class PublicRepoReads(
 
     private companion object {
         const val CAR_CONTENT_TYPE = "application/vnd.ipld.car"
+    }
+}
+
+/**
+ * Limits on the public downloads anyone may ask for: whole repositories (`com.atproto.sync.getRepo`)
+ * and blobs (`com.atproto.sync.getBlob`). Both are built in memory before they are sent, so at most
+ * [TransferLimits.downloads] of them run at once on an instance, and each network address has its
+ * own per-minute budget for each kind.
+ */
+internal class PublicRepoDownloadLimits(
+    val transfers: TransferSlots = TransferSlots(TransferLimits(downloads = 4)),
+    private val repositories: RateLimitPolicy = RateLimitPolicy(maxRequests = 60, windowSeconds = 60),
+    private val blobs: RateLimitPolicy = RateLimitPolicy(maxRequests = 600, windowSeconds = 60),
+    private val limiter: FixedWindowRateLimiter = FixedWindowRateLimiter(),
+) {
+    enum class Budget(
+        val keyPrefix: String,
+    ) {
+        REPOSITORIES("public-repo"),
+        BLOBS("public-blob"),
+    }
+
+    /**
+     * Runs [respond] with a download slot when [call]'s address has budget left. Otherwise answers
+     * `429 RateLimitExceeded`, or `503 ServerBusy` when every slot is taken, both with `Retry-After`.
+     */
+    suspend fun withDownload(
+        call: ApplicationCall,
+        budget: Budget,
+        respond: suspend () -> Unit,
+    ) {
+        val policy = if (budget == Budget.REPOSITORIES) repositories else blobs
+        val key = "${budget.keyPrefix}:${call.clientAddress()}"
+        if (!limiter.allow(key, policy)) {
+            val retryAfter = limiter.retryAfterSeconds(key).coerceAtLeast(1)
+            call.response.header(HttpHeaders.RetryAfter, retryAfter.toString())
+            call.respond(
+                HttpStatusCode.TooManyRequests,
+                PdsErrorResponse("RateLimitExceeded", "Too many downloads from this network. Try again in $retryAfter seconds."),
+            )
+            return
+        }
+        val slot = transfers.tryDownload() ?: return call.respondServerBusy(transfers.limits)
+        try {
+            respond()
+        } finally {
+            slot.release()
+        }
     }
 }
 
