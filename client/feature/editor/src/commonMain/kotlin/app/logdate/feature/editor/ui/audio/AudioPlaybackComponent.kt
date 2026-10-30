@@ -24,7 +24,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +36,7 @@ import app.logdate.client.media.audio.AudioDurationResolver
 import app.logdate.feature.editor.ui.formatMediaDuration
 import app.logdate.ui.audio.AudioContextProcessor
 import app.logdate.ui.audio.AudioWaveformComponent
+import app.logdate.ui.audio.rememberAudioContext
 import app.logdate.ui.platform.PlatformIcons
 import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.capture_state_playback_failed
@@ -110,24 +110,9 @@ private fun ResolvedAudioPlaybackComponent(
         return
     }
 
-    val waveformAmplitudes by produceState(
-        initialValue = emptyList<Float>(),
-        key1 = audioUri,
-        key2 = resolvedDuration,
-    ) {
-        runCatching {
-            audioContextProcessor
-                .processProgressively(
-                    audioUri = audioUri,
-                    durationMs = resolvedDuration.inWholeMilliseconds,
-                    createdAt = Clock.System.now(),
-                    latitude = null,
-                    longitude = null,
-                ).collect { context ->
-                    value = context.amplitudes
-                }
-        }
-    }
+    val recordedAt = remember(audioUri) { Clock.System.now() }
+    val waveformAmplitudes =
+        rememberAudioContext(audioUri, resolvedDurationMs, recordedAt, processor = audioContextProcessor)?.amplitudes.orEmpty()
 
     // Create playback state that manages playback
     val playbackState =

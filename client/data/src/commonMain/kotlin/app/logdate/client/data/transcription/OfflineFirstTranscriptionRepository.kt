@@ -7,6 +7,7 @@ import app.logdate.client.database.entities.TranscriptionEntity
 import app.logdate.client.media.audio.transcription.TranscriptionFailure
 import app.logdate.client.media.audio.transcription.TranscriptionManager
 import app.logdate.client.media.audio.transcription.TranscriptionPriority
+import app.logdate.client.media.storage.StoredMediaReferences
 import app.logdate.client.media.storage.UnavailableMediaReferences
 import app.logdate.client.repository.transcription.TranscriptDocument
 import app.logdate.client.repository.transcription.TranscriptDocumentStatus
@@ -25,8 +26,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -51,6 +54,7 @@ class OfflineFirstTranscriptionRepository(
     private val syncManagerProvider: () -> SyncManager = { NoOpSyncManager },
     private val syncScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val recoveryDeletions: TranscriptRecoveryDeletions = TranscriptRecoveryDeletions.None,
+    private val mediaReferences: StoredMediaReferences = StoredMediaReferences.Unchanged,
 ) : TranscriptionRepository {
     private val mutex = Mutex()
     private var automaticJob: Job? = null
@@ -60,47 +64,56 @@ class OfflineFirstTranscriptionRepository(
         if (automaticJob?.isActive == true) return
         automaticJob =
             scope.launch {
-                val attempted = mutableSetOf<Triple<Uuid, String, Long>>()
+                val attempted = mutableMapOf<Triple<Uuid, String, Long>, Instant>()
                 val awaitingOriginal = mutableSetOf<Uuid>()
                 var initialSnapshot = true
-                audioNoteDao
-                    .getAllNotes()
-                    .combine(transcriptionDao.observeAllTranscriptions()) { notes, transcripts ->
-                        notes to transcripts.associateBy { it.noteId }
-                    }.collect { (notes, transcripts) ->
-                        for (note in notes) {
-                            if (recoveryDeletions.contains(note.uid)) continue
-                            if (note.deletedAt != null ||
-                                note.contentUri.isBlank() ||
-                                note.contentUri.startsWith("http")
-                            ) {
-                                continue
-                            }
-                            if (UnavailableMediaReferences.isUnavailable(note.contentUri)) {
-                                awaitingOriginal.add(note.uid)
-                                continue
-                            }
-                            val recoveredOriginal = awaitingOriginal.remove(note.uid)
-                            val recovery = initialSnapshot || recoveredOriginal
-                            val existing = transcripts[note.uid]
-                            val mediaRevision = Triple(note.uid, note.contentUri, note.durationMs)
-                            val matchesMedia = existing?.matchesMedia(note) != false
-                            val final = matchesMedia && existing?.hasValidFinalDocument() == true
-                            if (final && existing.documentJson == null) {
-                                updateTranscription(note.uid, existing.text.orEmpty(), TranscriptionStatus.COMPLETED)
-                            } else if (requiresAutomaticTranscription(existing, matchesMedia, final, recovery)) {
-                                if (attempted.add(mediaRevision)) {
-                                    val priority = if (recovery) TranscriptionPriority.RECOVERY else TranscriptionPriority.FOREGROUND
-                                    requestTranscription(
-                                        note.uid,
-                                        resumeActive = recovery,
-                                        priority = priority,
-                                    )
-                                }
+                combine(
+                    audioNoteDao.getAllNotes(),
+                    transcriptionDao.observeAllTranscriptions(),
+                    recoveryTicks(),
+                ) { notes, transcripts, _ ->
+                    notes to transcripts.associateBy { it.noteId }
+                }.collect { (notes, transcripts) ->
+                    for (note in notes) {
+                        if (recoveryDeletions.contains(note.uid)) continue
+                        if (note.deletedAt != null ||
+                            note.contentUri.isBlank() ||
+                            note.contentUri.startsWith("http")
+                        ) {
+                            continue
+                        }
+                        if (UnavailableMediaReferences.isUnavailable(note.contentUri)) {
+                            awaitingOriginal.add(note.uid)
+                            continue
+                        }
+                        val recoveredOriginal = awaitingOriginal.remove(note.uid)
+                        val recovery = initialSnapshot || recoveredOriginal
+                        val existing = transcripts[note.uid]
+                        val mediaRevision = Triple(note.uid, note.contentUri, note.durationMs)
+                        val matchesMedia = existing?.matchesMedia(note) != false
+                        val final = matchesMedia && existing?.hasValidFinalDocument() == true
+                        if (final && existing.documentJson == null) {
+                            updateTranscription(note.uid, existing.text.orEmpty(), TranscriptionStatus.COMPLETED)
+                        } else if (requiresAutomaticTranscription(existing, matchesMedia, final, recovery)) {
+                            val previousAttempt = attempted[mediaRevision]
+                            if (previousAttempt == null || now() - previousAttempt >= staleAfter) {
+                                attempted[mediaRevision] = now()
+                                val isRecovery =
+                                    recovery ||
+                                        previousAttempt != null ||
+                                        matchesMedia &&
+                                        existing?.status == DbTranscriptionStatus.IN_PROGRESS
+                                val priority = if (isRecovery) TranscriptionPriority.RECOVERY else TranscriptionPriority.FOREGROUND
+                                requestTranscription(
+                                    note.uid,
+                                    resumeActive = recovery,
+                                    priority = priority,
+                                )
                             }
                         }
-                        initialSnapshot = false
                     }
+                    initialSnapshot = false
+                }
             }
     }
 
@@ -119,6 +132,14 @@ class OfflineFirstTranscriptionRepository(
                 existing.status == DbTranscriptionStatus.IN_PROGRESS &&
                     (recovery || now() - existing.lastUpdated >= staleAfter)
             )
+
+    private fun recoveryTicks(): Flow<Unit> =
+        flow {
+            while (true) {
+                emit(Unit)
+                delay(staleAfter.inWholeMilliseconds.coerceAtLeast(1))
+            }
+        }
 
     override fun observeAllTranscriptions(): Flow<List<TranscriptionData>> =
         transcriptionDao.observeAllTranscriptions().map { rows -> rows.map { it.toTranscriptionData() } }
@@ -140,7 +161,13 @@ class OfflineFirstTranscriptionRepository(
                 } else if (recoveryDeletions.contains(noteId)) {
                     return@mutate false
                 }
-                if (note.deletedAt != null || UnavailableMediaReferences.isUnavailable(note.contentUri)) return@mutate false
+                if (note.deletedAt != null ||
+                    UnavailableMediaReferences.isUnavailable(note.contentUri) ||
+                    note.contentUri.startsWith("https://", ignoreCase = true) ||
+                    note.contentUri.startsWith("http://", ignoreCase = true)
+                ) {
+                    return@mutate false
+                }
                 val existing = transcriptionDao.getTranscriptionByNoteId(noteId)
                 if (existing?.matchesMedia(note) == true && existing.hasValidFinalDocument()) return@mutate true
                 if (!resumeActive &&
@@ -186,7 +213,10 @@ class OfflineFirstTranscriptionRepository(
     ): TranscriptionWorkToken? =
         mutate {
             val note = audioNoteDao.getNoteOneOff(work.noteId)
-            if (note.deletedAt != null || note.contentUri.removePrefix("file://") != work.audioUri.removePrefix("file://")) {
+            if (note.deletedAt != null ||
+                mediaReferences.storedReference(note.contentUri).removePrefix("file://") !=
+                mediaReferences.storedReference(work.audioUri).removePrefix("file://")
+            ) {
                 return@mutate null
             }
             val row = transcriptionDao.getTranscriptionByNoteId(work.noteId)
@@ -231,13 +261,17 @@ class OfflineFirstTranscriptionRepository(
             }
             val existing = transcriptionDao.getTranscriptionByNoteId(noteId)
             if (existing?.matchesMedia(note) == true && existing.hasValidFinalDocument()) return@mutate null
-            val row = prepareWorkRow(note, existing, DbTranscriptionStatus.IN_PROGRESS)
+            val awaitingOriginal =
+                audioUri.startsWith("https://", ignoreCase = true) || audioUri.startsWith("http://", ignoreCase = true)
+            val status = if (awaitingOriginal) DbTranscriptionStatus.PENDING else DbTranscriptionStatus.IN_PROGRESS
+            val row = prepareWorkRow(note, existing, status)
             if (existing == null) {
                 transcriptionDao.insertTranscription(row)
             } else {
                 check(transcriptionDao.updateTranscription(row) > 0) { "Could not begin transcript work" }
             }
             if (row.documentJson == null && existing?.documentJson != null) transcriptionDao.deleteSegmentsByNoteId(noteId)
+            if (awaitingOriginal) return@mutate null
             TranscriptionWorkToken(noteId, audioUri, row.revision, note.durationMs, row.id, row.documentJson)
         }
 
@@ -249,29 +283,46 @@ class OfflineFirstTranscriptionRepository(
     ): Boolean =
         safely {
             mutate {
-                val note =
-                    try {
-                        audioNoteDao.getNoteOneOff(work.noteId)
-                    } catch (_: NoSuchElementException) {
-                        return@mutate true
-                    }
-                val existing = transcriptionDao.getTranscriptionByNoteId(work.noteId)
-                if (note.deletedAt != null ||
-                    note.contentUri != work.audioUri ||
-                    (
-                        work.durationMs != null &&
-                            note.durationMs != work.durationMs
-                    ) ||
-                    existing?.revision != work.transcriptRevision ||
-                    existing.id != work.transcriptionId ||
-                    existing.documentJson != work.documentJson ||
-                    existing.hasValidFinalDocument()
-                ) {
-                    return@mutate true
-                }
+                if (!ownsWork(work)) return@mutate true
                 persist(work.noteId, document, status, errorMessage, markForSync = true)
             }
         }
+
+    override suspend fun deferTranscription(work: TranscriptionWorkToken): Boolean =
+        safely {
+            mutate {
+                if (!ownsWork(work)) return@mutate true
+                persist(work.noteId, null, TranscriptionStatus.PENDING, null, markForSync = false)
+            }
+        }
+
+    override suspend fun failTranscription(
+        work: TranscriptionWorkToken,
+        errorMessage: String,
+    ): Boolean =
+        safely {
+            mutate {
+                if (!ownsWork(work)) return@mutate true
+                persist(work.noteId, null, TranscriptionStatus.FAILED, errorMessage, markForSync = false)
+            }
+        }
+
+    private suspend fun ownsWork(work: TranscriptionWorkToken): Boolean {
+        val note =
+            try {
+                audioNoteDao.getNoteOneOff(work.noteId)
+            } catch (_: NoSuchElementException) {
+                return false
+            }
+        val row = transcriptionDao.getTranscriptionByNoteId(work.noteId) ?: return false
+        return note.deletedAt == null &&
+            note.contentUri == work.audioUri &&
+            (work.durationMs == null || note.durationMs == work.durationMs) &&
+            row.revision == work.transcriptRevision &&
+            row.id == work.transcriptionId &&
+            row.documentJson == work.documentJson &&
+            !row.hasValidFinalDocument()
+    }
 
     override suspend fun getTranscription(noteId: Uuid): TranscriptionData? =
         transcriptionDao.getTranscriptionByNoteId(noteId)?.toTranscriptionData()

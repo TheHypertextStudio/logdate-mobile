@@ -16,5 +16,5 @@ actual val audioUiModule: Module =
             DesktopWaveformStorage(cacheDir)
         }
         single<AmplitudeExtractor> { DesktopAmplitudeExtractor(get()) }
-        factory { AudioContextProcessor(get(), get()) }
+        single { AudioContextProcessor(get(), get()) }
     }

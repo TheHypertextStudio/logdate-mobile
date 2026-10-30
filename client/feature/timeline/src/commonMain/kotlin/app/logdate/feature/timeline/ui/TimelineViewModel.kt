@@ -87,13 +87,14 @@ class TimelineViewModel(
                             ?.takeIf(String::isNotEmpty)
                     },
                     isTranscriptionInProgress = { noteId ->
-                        cache[noteId]?.status in setOf(TranscriptionStatus.PENDING, TranscriptionStatus.IN_PROGRESS)
+                        cache[noteId]?.status == TranscriptionStatus.IN_PROGRESS
                     },
                     getTranscriptionError = { noteId ->
                         cache[noteId]
                             ?.takeIf { it.status == TranscriptionStatus.FAILED }
                             ?.errorMessage
                     },
+                    getTranscriptionStatus = { noteId -> cache[noteId]?.status },
                 )
             }.stateIn(
                 viewModelScope,

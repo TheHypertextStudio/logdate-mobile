@@ -36,6 +36,16 @@ interface TranscriptionRepository {
         errorMessage: String? = null,
     ): Boolean = updateTranscriptDocument(work.noteId, document, status, errorMessage)
 
+    /** Relinquishes active work without creating a document, changing text or queueing a sync. */
+    suspend fun deferTranscription(work: TranscriptionWorkToken): Boolean =
+        updateTranscription(work.noteId, null, TranscriptionStatus.PENDING)
+
+    /** Records exhausted work without discarding an accepted document or changing its revision. */
+    suspend fun failTranscription(
+        work: TranscriptionWorkToken,
+        errorMessage: String,
+    ): Boolean = updateTranscription(work.noteId, null, TranscriptionStatus.FAILED, errorMessage)
+
     /** Captures a recording before its audio note is saved. */
     suspend fun captureRecordingTranscript(
         noteId: Uuid,

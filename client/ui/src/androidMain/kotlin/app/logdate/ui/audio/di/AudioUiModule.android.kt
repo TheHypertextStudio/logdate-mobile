@@ -13,5 +13,5 @@ actual val audioUiModule: Module =
     module {
         single<WaveformStorage> { AndroidWaveformStorage(androidContext()) }
         single<AmplitudeExtractor> { AndroidAmplitudeExtractor(androidContext(), get()) }
-        factory { AudioContextProcessor(get(), get()) }
+        single { AudioContextProcessor(get(), get()) }
     }

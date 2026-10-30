@@ -59,13 +59,16 @@ class TranscriptionWorker(
                     }
 
                 Napier.d("Starting transcription for note $noteId, URI: $audioUri")
-                val runner =
-                    TranscriptionWorkRunner(
-                        update = transcriptionRepository::updateTranscription,
-                        transcribe = transcriptionService::transcribeAudioFile,
-                        repository = transcriptionRepository,
+                val outcome =
+                    runAndroidTranscriptionWork(
+                        noteId,
+                        audioUri,
+                        transcriptionRepository,
+                        transcriptionService,
+                        mediaFiles,
+                        runAttemptCount,
                     )
-                when (runner.run(noteId, mediaFiles.filePath(audioUri) ?: audioUri)) {
+                when (outcome) {
                     TranscriptionWorkOutcome.Success -> Result.success()
                     TranscriptionWorkOutcome.Retry -> Result.retry()
                     TranscriptionWorkOutcome.Failure -> Result.failure()
@@ -77,4 +80,22 @@ class TranscriptionWorker(
                 Result.failure()
             }
         }
+}
+
+internal suspend fun runAndroidTranscriptionWork(
+    noteId: Uuid,
+    audioUri: String,
+    repository: TranscriptionRepository,
+    service: TranscriptionService,
+    mediaFiles: MediaFileResolver,
+    attempt: Int = 0,
+): TranscriptionWorkOutcome {
+    val runner =
+        TranscriptionWorkRunner(
+            update = repository::updateTranscription,
+            transcribe = { stored -> service.transcribeAudioFile(mediaFiles.filePath(stored) ?: stored) },
+            repository = repository,
+            retryAllowed = attempt < 2,
+        )
+    return runner.run(noteId, audioUri)
 }

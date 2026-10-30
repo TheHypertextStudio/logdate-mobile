@@ -16,6 +16,7 @@ val transcriptionModule =
                 get(),
                 get(),
                 get(),
+                mediaReferences = get(),
                 syncMetadataService = get(),
                 transactionManager = get(),
                 syncManagerProvider = { get() },
