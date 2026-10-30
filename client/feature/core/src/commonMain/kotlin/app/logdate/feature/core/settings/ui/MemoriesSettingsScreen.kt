@@ -81,6 +81,7 @@ fun MemoriesSettingsScreen(
         modifier = modifier,
         captureModeState = captureModeState,
         onCaptureModeSelected = viewModel::setDefaultCaptureMode,
+        saveFailed = uiState.saveFailed,
     )
 }
 
@@ -100,6 +101,7 @@ fun MemoriesSettingsContent(
     modifier: Modifier = Modifier,
     captureModeState: DefaultCaptureModeState = DefaultCaptureModeState.Loading,
     onCaptureModeSelected: (EntryStartMode) -> Unit = {},
+    saveFailed: Boolean = false,
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -113,6 +115,7 @@ fun MemoriesSettingsContent(
                         .padding(vertical = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
+                if (saveFailed) MemoriesSaveFailedNotice(Modifier.padding(horizontal = Spacing.lg))
                 DefaultCaptureModeSettingsSection(
                     captureModeState,
                     onCaptureModeSelected,
@@ -156,6 +159,7 @@ fun MemoriesSettingsContent(
                 onBack = onBack,
                 modifier = modifier,
             ) {
+                if (saveFailed) item { MemoriesSaveFailedNotice(Modifier.padding(horizontal = Spacing.lg)) }
                 item {
                     DefaultCaptureModeSettingsSection(
                         captureModeState,

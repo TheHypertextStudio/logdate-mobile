@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * ViewModel for the memories settings screens.
@@ -69,19 +71,29 @@ class MemoriesSettingsViewModel(
         }
     }
 
+    /**
+     * @property saveFailed The last change could not be saved; the controls show the stored values,
+     *   and the next successful save clears it.
+     */
     data class UiState(
         val settings: MemoriesSettings = MemoriesSettings(),
         val widgetInstallUiState: MemoriesWidgetInstallUiState = MemoriesWidgetInstallUiState.Hidden,
+        val saveFailed: Boolean = false,
     )
+
+    private val saveFailed = MutableStateFlow(false)
+    private val saving = Mutex()
 
     val uiState: StateFlow<UiState> =
         combine(
             settingsRepository.observeSettings(),
             widgetInstallController.uiState,
-        ) { settings, widgetInstallUiState ->
+            saveFailed,
+        ) { settings, widgetInstallUiState, saveFailed ->
             UiState(
                 settings = settings,
                 widgetInstallUiState = widgetInstallUiState,
+                saveFailed = saveFailed,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -89,127 +101,53 @@ class MemoriesSettingsViewModel(
             initialValue = UiState(),
         )
 
-    fun toggleContextualRecommendations(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setContextualRecommendationsEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle contextual recommendations", e)
-            }
-        }
-    }
+    fun toggleContextualRecommendations(enabled: Boolean) =
+        save("contextual recommendations") { settingsRepository.setContextualRecommendationsEnabled(enabled) }
 
-    fun toggleAiRecall(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setAiRecallEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle AI recall", e)
-            }
-        }
-    }
+    fun toggleAiRecall(enabled: Boolean) = save("AI recall") { settingsRepository.setAiRecallEnabled(enabled) }
 
-    fun toggleAmbientPrompts(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setAmbientPromptsEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle ambient prompts", e)
-            }
-        }
-    }
+    fun toggleAmbientPrompts(enabled: Boolean) = save("ambient prompts") { settingsRepository.setAmbientPromptsEnabled(enabled) }
 
-    fun toggleCaptureNudges(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setCaptureNudgesEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle capture nudges", e)
-            }
-        }
-    }
+    fun toggleCaptureNudges(enabled: Boolean) = save("capture nudges") { settingsRepository.setCaptureNudgesEnabled(enabled) }
 
-    fun toggleDraftRescue(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setDraftRescueEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle draft rescue", e)
-            }
-        }
-    }
+    fun toggleDraftRescue(enabled: Boolean) = save("draft rescue") { settingsRepository.setDraftRescueEnabled(enabled) }
 
-    fun toggleMemoryRecallNotifications(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setMemoryRecallNotificationsEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle memory recall notifications", e)
-            }
-        }
-    }
+    fun toggleMemoryRecallNotifications(enabled: Boolean) =
+        save("memory recall notifications") { settingsRepository.setMemoryRecallNotificationsEnabled(enabled) }
 
-    fun toggleMorningPrompt(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setMorningPromptEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle morning prompt", e)
-            }
-        }
-    }
+    fun toggleMorningPrompt(enabled: Boolean) = save("morning prompt") { settingsRepository.setMorningPromptEnabled(enabled) }
 
-    fun toggleEveningPrompt(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setEveningPromptEnabled(enabled)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle evening prompt", e)
-            }
-        }
-    }
+    fun toggleEveningPrompt(enabled: Boolean) = save("evening prompt") { settingsRepository.setEveningPromptEnabled(enabled) }
 
-    fun setMorningPromptTime(time: AmbientPromptTime) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setMorningPromptTime(time)
-            } catch (e: Exception) {
-                Napier.e("Failed to set morning prompt time", e)
-            }
-        }
-    }
+    fun setMorningPromptTime(time: AmbientPromptTime) = save("morning prompt time") { settingsRepository.setMorningPromptTime(time) }
 
-    fun setEveningPromptTime(time: AmbientPromptTime) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setEveningPromptTime(time)
-            } catch (e: Exception) {
-                Napier.e("Failed to set evening prompt time", e)
-            }
-        }
-    }
+    fun setEveningPromptTime(time: AmbientPromptTime) = save("evening prompt time") { settingsRepository.setEveningPromptTime(time) }
 
-    fun setRecallMode(mode: RecallMode) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setRecallMode(mode)
-            } catch (e: Exception) {
-                Napier.e("Failed to set recall mode", e)
-            }
-        }
-    }
+    fun setRecallMode(mode: RecallMode) = save("recall mode") { settingsRepository.setRecallMode(mode) }
 
     fun toggleWidgetContentType(
         type: WidgetContentType,
         enabled: Boolean,
+    ) = save("widget content types") {
+        val current = settingsRepository.getSettings().widgetContentTypes
+        val updated = if (enabled) current + type else (current - type).ifEmpty { setOf(type) }
+        settingsRepository.setWidgetContentTypes(updated)
+    }
+
+    /** Applies [change] after every earlier one, so a read-modify-write never loses a concurrent toggle. */
+    private fun save(
+        setting: String,
+        change: suspend () -> Unit,
     ) {
         viewModelScope.launch {
             try {
-                val current = settingsRepository.getSettings().widgetContentTypes
-                val updated = if (enabled) current + type else (current - type).ifEmpty { setOf(type) }
-                settingsRepository.setWidgetContentTypes(updated)
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle widget content type", e)
+                saving.withLock { change() }
+                saveFailed.value = false
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Napier.e("Failed to save $setting", error)
+                saveFailed.value = true
             }
         }
     }
@@ -218,6 +156,8 @@ class MemoriesSettingsViewModel(
         viewModelScope.launch {
             try {
                 widgetInstallController.requestAddToHomeScreen(kind)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 Napier.e("Failed to request widget pinning", e)
             }
