@@ -16,7 +16,7 @@ class ComposeFeaturePlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.compose")
             pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
-            val catalog = libsCatalog()
+            val catalog = libs
             listOf(
                 "compose-runtime",
                 "compose-foundation",

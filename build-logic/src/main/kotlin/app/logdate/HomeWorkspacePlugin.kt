@@ -9,7 +9,7 @@ class HomeWorkspacePlugin : Plugin<Project> {
             project.configurations.create("homeWorkspacePsiCompiler") {
                 isCanBeConsumed = false
             }
-        project.dependencies.add(parser.name, "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21")
+        project.dependencies.add(parser.name, kotlinCompilerEmbeddable(project))
         project.tasks.register("checkHomeWorkspaceContract", CheckHomeWorkspaceContract::class.java) {
             parserClasspath.from(parser)
             group = "verification"

@@ -134,6 +134,7 @@ androidxProfileInstaller = '1.4.1'
 # Tooling & Plugins
 ksp = '2.3.7'
 dokkaGradlePlugin = '2.2.0'
+binaryCompatibilityValidator = '0.18.2'
 kover = '0.9.8'
 screenshot = '0.0.1-alpha14'
 buildConfigPlugin = '6.0.9'
@@ -374,6 +375,11 @@ testcontainers-testcontainers = { group = 'org.testcontainers', name = 'testcont
 turbine = { group = 'app.cash.turbine', name = 'turbine', version.ref = 'turbine' }
 
 # Tooling & Plugins
+# Gradle plugins that build-logic compiles against
+android-gradlePlugin = { module = 'com.android.tools.build:gradle', version.ref = 'agp' }
+kotlin-gradlePlugin = { module = 'org.jetbrains.kotlin:kotlin-gradle-plugin', version.ref = 'kotlin' }
+dokka-gradlePlugin = { module = 'org.jetbrains.dokka:dokka-gradle-plugin', version.ref = 'dokkaGradlePlugin' }
+binaryCompatibilityValidator-gradlePlugin = { module = 'org.jetbrains.kotlinx:binary-compatibility-validator', version.ref = 'binaryCompatibilityValidator' }
 
 [plugins]
 # Core & Platform
