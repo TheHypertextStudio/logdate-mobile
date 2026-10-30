@@ -19,7 +19,6 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -132,7 +131,9 @@ class EditorEntrySwitchVideoTest {
                     waitForIme(scenario, true)
                     device.pressBack()
                     waitForIme(scenario, false)
-                    tap(device, compose.onNodeWithText("Text")) // Dismiss any insertion-handle popup before targeting editor back.
+                    // The focused text header has compact actions and no redundant type title.
+                    val chrome = compose.onNodeWithTag("entry_mode_focus").fetchSemanticsNode().boundsInWindow
+                    check(device.click(chrome.center.x.roundToInt(), chrome.center.y.roundToInt()))
                     val fieldId = compose.onNodeWithTag("editor_text_input").fetchSemanticsNode().id
 
                     fun focusProgress(): Float =
