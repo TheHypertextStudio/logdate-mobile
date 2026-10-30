@@ -1,5 +1,9 @@
 package app.logdate.server.ratelimit
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -57,4 +61,28 @@ class SlidingWindowRateLimiterTest {
         // The oldest request is at t=0; window is 60s; at t=30_000 we have 30s to wait.
         assertEquals(30L, limiter.retryAfterSeconds("alice", policy, nowEpochMillis = 30_000))
     }
+
+    @Test
+    fun `idle keys are swept so they don't stay in memory`() {
+        val limiter = SlidingWindowRateLimiter()
+        repeat(1_023) { assertTrue(limiter.allow("visitor-$it", policy, nowEpochMillis = 0)) }
+        assertEquals(1_023, limiter.trackedKeys())
+
+        // The 1,024th call sweeps; every earlier window has emptied by then.
+        assertTrue(limiter.allow("latest", policy, nowEpochMillis = 61_000))
+
+        assertEquals(1, limiter.trackedKeys())
+    }
+
+    @Test
+    fun `concurrent requests never pass the ceiling`() =
+        runBlocking {
+            val limiter = SlidingWindowRateLimiter()
+            val allowed =
+                (1..200)
+                    .map { async(Dispatchers.Default) { limiter.allow("shared", policy, nowEpochMillis = 5) } }
+                    .awaitAll()
+                    .count { it }
+            assertEquals(policy.maxRequests, allowed)
+        }
 }
