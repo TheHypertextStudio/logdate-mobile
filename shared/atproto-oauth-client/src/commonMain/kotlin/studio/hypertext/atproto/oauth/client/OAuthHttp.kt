@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * The largest metadata document the client reads. Real documents are a few kilobytes.
  */
-internal const val MAX_METADATA_BYTES: Long = 64L * 1024
+public const val MAX_METADATA_BYTES: Long = 64L * 1024
 
 /**
  * The largest pushed authorization, token, or revocation response the client reads.
@@ -29,8 +29,12 @@ private val PROTOCOL_REQUEST_TIMEOUT = 20.seconds
  * It shares [base]'s engine but none of its plugins, so a caller's logging, retry, or default
  * header plugins never see client assertions or tokens. It never follows redirects (a metadata
  * document or token endpoint that redirects is refused) and gives up on slow servers.
+ *
+ * An authorization server that fetches documents its clients name, such as client metadata and
+ * JWKS documents, can use it the same way: pass `JvmOAuthHttp.publicInternetClient()` as [base] on
+ * the JVM so those fetches only reach public addresses, and read bodies with [bodyAsTextCapped].
  */
-internal fun protocolHttpClient(base: HttpClient): HttpClient =
+public fun protocolHttpClient(base: HttpClient): HttpClient =
     HttpClient(base.engine) {
         followRedirects = false
         expectSuccess = false
@@ -60,14 +64,16 @@ internal fun dataServerHttpClient(
 /**
  * A response body was larger than the client is willing to read.
  */
-internal class ResponseTooLargeException(
-    val limit: Long,
+public class ResponseTooLargeException(
+    public val limit: Long,
 ) : Exception("The response is larger than $limit bytes")
 
 /**
  * Reads the body of a streaming response as UTF-8, refusing to read more than [limit] bytes.
+ *
+ * @throws ResponseTooLargeException when the declared or actual body is larger than [limit].
  */
-internal suspend fun HttpResponse.bodyAsTextCapped(limit: Long): String {
+public suspend fun HttpResponse.bodyAsTextCapped(limit: Long): String {
     contentLength()?.let { if (it > limit) throw ResponseTooLargeException(limit) }
     val bytes = bodyAsChannel().readRemaining(limit + 1).readByteArray()
     if (bytes.size > limit) throw ResponseTooLargeException(limit)
