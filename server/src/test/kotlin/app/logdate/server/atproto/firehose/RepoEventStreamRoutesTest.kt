@@ -175,6 +175,32 @@ class RepoEventStreamRoutesTest {
             }
         }
 
+    @Test
+    fun `a follower that sends a message is disconnected`() =
+        testApplication {
+            val h = FirehoseHarness().also { it.install(this) }
+
+            socketClient().webSocket(subscribe) {
+                send(Frame.Text("hello"))
+                val reason = withTimeout(10.seconds) { closeReason.await() }
+                assertEquals(CloseReason.Codes.VIOLATED_POLICY.code, reason?.code)
+            }
+            h.waitForFollowers(0)
+        }
+
+    @Test
+    fun `a follower that sends a large frame is disconnected without the server reading it`() =
+        testApplication {
+            val h = FirehoseHarness().also { it.install(this) }
+
+            socketClient().webSocket(subscribe) {
+                send(Frame.Binary(true, ByteArray(64 * 1024)))
+                val reason = withTimeout(10.seconds) { closeReason.await() }
+                assertEquals(CloseReason.Codes.TOO_BIG.code, reason?.code)
+            }
+            h.waitForFollowers(0)
+        }
+
     private suspend fun FirehoseHarness.waitForFollowers(count: Int) {
         withTimeout(10.seconds) {
             while (stream.followerCount != count) kotlinx.coroutines.delay(10)
