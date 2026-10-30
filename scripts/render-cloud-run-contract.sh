@@ -12,7 +12,7 @@ set -euo pipefail
 # pipe, which is exactly how the contract expression is fed to `terraform console` - the first
 # two production deploys died on that, at 30s and then at 120s, while the same render finished
 # instantly on a workstation with no wrapper installed. Prefer the real binary when it exists.
-TERRAFORM_BIN="$(command -v terraform-bin 2>/dev/null || command -v terraform 2>/dev/null || echo terraform)"
+TERRAFORM_BIN="$(command -v terraform-bin 2> /dev/null || command -v terraform 2> /dev/null || echo terraform)"
 readonly TERRAFORM_BIN
 
 readonly TERRAFORM_INIT_TIMEOUT_SECONDS="${LOGDATE_TERRAFORM_INIT_TIMEOUT_SECONDS:-60}"
@@ -27,66 +27,66 @@ RELEASE_SHA=""
 PRIVATE_WORK_DIR=""
 
 die() {
-    printf 'ERROR: %s\n' "$1" >&2
-    exit 1
+  printf 'ERROR: %s\n' "$1" >&2
+  exit 1
 }
 
 redact_log() {
-    # Terraform/provider diagnostics can echo variable values. Keep actionable
-    # error context while preventing secret-shaped tokens from reaching CI logs.
-    sed -E 's/[A-Z0-9_]{16,}/[redacted]/g' "$1" >&2
+  # Terraform/provider diagnostics can echo variable values. Keep actionable
+  # error context while preventing secret-shaped tokens from reaching CI logs.
+  sed -E 's/[A-Z0-9_]{16,}/[redacted]/g' "$1" >&2
 }
 
 cleanup() {
-    if [[ -n "$PRIVATE_WORK_DIR" ]]; then
-        rm -rf "$PRIVATE_WORK_DIR"
-    fi
+  if [[ -n "$PRIVATE_WORK_DIR" ]]; then
+    rm -rf "$PRIVATE_WORK_DIR"
+  fi
 }
 trap cleanup EXIT
 
 while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --environment)
-            [[ $# -ge 2 ]] || die "--environment requires a value."
-            ENVIRONMENT="$2"
-            shift 2
-            ;;
-        --release-sha)
-            [[ $# -ge 2 ]] || die "--release-sha requires a value."
-            RELEASE_SHA="$2"
-            shift 2
-            ;;
-        *)
-            die "unknown argument: $1"
-            ;;
-    esac
+  case "$1" in
+    --environment)
+      [[ $# -ge 2 ]] || die "--environment requires a value."
+      ENVIRONMENT="$2"
+      shift 2
+      ;;
+    --release-sha)
+      [[ $# -ge 2 ]] || die "--release-sha requires a value."
+      RELEASE_SHA="$2"
+      shift 2
+      ;;
+    *)
+      die "unknown argument: $1"
+      ;;
+  esac
 done
 
-[[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production" ]] ||
-    die "environment must be staging or production."
-[[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] ||
-    die "release SHA must be 40 lowercase hexadecimal characters."
+[[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production" ]] \
+  || die "environment must be staging or production."
+[[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] \
+  || die "release SHA must be 40 lowercase hexadecimal characters."
 
-command -v terraform >/dev/null 2>&1 || die "terraform is required."
-command -v jq >/dev/null 2>&1 || die "jq is required."
-command -v python3 >/dev/null 2>&1 || die "python3 is required."
-command -v git >/dev/null 2>&1 || die "git is required."
-command -v cmp >/dev/null 2>&1 || die "cmp is required."
+command -v terraform > /dev/null 2>&1 || die "terraform is required."
+command -v jq > /dev/null 2>&1 || die "jq is required."
+command -v python3 > /dev/null 2>&1 || die "python3 is required."
+command -v git > /dev/null 2>&1 || die "git is required."
+command -v cmp > /dev/null 2>&1 || die "cmp is required."
 
 while IFS= read -r environment_name; do
-    case "$environment_name" in
-        TF_* | GIT_*) unset "$environment_name" ;;
-    esac
+  case "$environment_name" in
+    TF_* | GIT_*) unset "$environment_name" ;;
+  esac
 done < <(compgen -e)
 unset TF_WORKSPACE TF_LOG TF_LOG_PATH
 export TF_INPUT=0
 
-REPO_ROOT="$(git -C "$REPO_CANDIDATE" rev-parse --show-toplevel 2>/dev/null)" ||
-    die "renderer must execute from a Git repository."
-[[ "$SCRIPT_PATH" == "$REPO_ROOT/scripts/render-cloud-run-contract.sh" ]] ||
-    die "renderer must execute from its canonical repository path."
-[[ "$(git -C "$REPO_ROOT" cat-file -t "$RELEASE_SHA" 2>/dev/null || true)" == "commit" ]] ||
-    die "release SHA must resolve to a commit."
+REPO_ROOT="$(git -C "$REPO_CANDIDATE" rev-parse --show-toplevel 2> /dev/null)" \
+  || die "renderer must execute from a Git repository."
+[[ "$SCRIPT_PATH" == "$REPO_ROOT/scripts/render-cloud-run-contract.sh" ]] \
+  || die "renderer must execute from its canonical repository path."
+[[ "$(git -C "$REPO_ROOT" cat-file -t "$RELEASE_SHA" 2> /dev/null || true)" == "commit" ]] \
+  || die "release SHA must resolve to a commit."
 
 PRIVATE_WORK_DIR="$(mktemp -d)"
 chmod 700 "$PRIVATE_WORK_DIR"
@@ -107,32 +107,32 @@ chmod 700 "$ISOLATED_TF_DATA_DIR" "$PRIVATE_CONFIG_DIR"
 
 export TF_DATA_DIR="$ISOLATED_TF_DATA_DIR"
 
-git -C "$REPO_ROOT" show "$RELEASE_SHA:scripts/render-cloud-run-contract.sh" >"$COMMITTED_RENDERER" 2>/dev/null ||
-    die "release commit does not contain the renderer."
-cmp -s "$SCRIPT_PATH" "$COMMITTED_RENDERER" ||
-    die "executed renderer does not match the release commit."
+git -C "$REPO_ROOT" show "$RELEASE_SHA:scripts/render-cloud-run-contract.sh" > "$COMMITTED_RENDERER" 2> /dev/null \
+  || die "release commit does not contain the renderer."
+cmp -s "$SCRIPT_PATH" "$COMMITTED_RENDERER" \
+  || die "executed renderer does not match the release commit."
 
 COMMITTED_TERRAFORM_PATHS="$(
-    git -C "$REPO_ROOT" ls-tree -r --name-only "$RELEASE_SHA" -- infra/terraform 2>/dev/null |
-        while IFS= read -r committed_path; do
-            if [[ "$committed_path" =~ ^infra/terraform/[^/]+\.tf$ ]]; then
-                printf '%s\n' "$committed_path"
-            fi
-        done
+  git -C "$REPO_ROOT" ls-tree -r --name-only "$RELEASE_SHA" -- infra/terraform 2> /dev/null \
+    | while IFS= read -r committed_path; do
+      if [[ "$committed_path" =~ ^infra/terraform/[^/]+\.tf$ ]]; then
+        printf '%s\n' "$committed_path"
+      fi
+    done
 )" || die "could not enumerate committed Terraform configuration."
 [[ -n "$COMMITTED_TERRAFORM_PATHS" ]] || die "release commit contains no Terraform configuration."
 while IFS= read -r committed_path; do
-    # Contract rendering only needs variable declarations and pure locals. Do not
-    # load provider-backed resources here: the deployment job renders before
-    # authentication and must not depend on a Terraform registry round trip.
-    case "${committed_path##*/}" in
-        main.tf | outputs.tf | versions.tf) continue ;;
-    esac
-    git -C "$REPO_ROOT" show "$RELEASE_SHA:$committed_path" >"$PRIVATE_CONFIG_DIR/${committed_path##*/}" 2>/dev/null ||
-        die "could not isolate committed Terraform configuration."
-done <<<"$COMMITTED_TERRAFORM_PATHS"
+  # Contract rendering only needs variable declarations and pure locals. Do not
+  # load provider-backed resources here: the deployment job renders before
+  # authentication and must not depend on a Terraform registry round trip.
+  case "${committed_path##*/}" in
+    main.tf | outputs.tf | versions.tf) continue ;;
+  esac
+  git -C "$REPO_ROOT" show "$RELEASE_SHA:$committed_path" > "$PRIVATE_CONFIG_DIR/${committed_path##*/}" 2> /dev/null \
+    || die "could not isolate committed Terraform configuration."
+done <<< "$COMMITTED_TERRAFORM_PATHS"
 
-cat >"$PRIVATE_CONFIG_DIR/contract-locals.tf" <<'EOF'
+cat > "$PRIVATE_CONFIG_DIR/contract-locals.tf" << 'EOF'
 locals {
   base_env = {
     HOST           = "0.0.0.0"
@@ -154,16 +154,16 @@ locals {
 EOF
 
 SELECTED_TFVARS="infra/terraform/${ENVIRONMENT}.tfvars"
-git -C "$REPO_ROOT" show "$RELEASE_SHA:$SELECTED_TFVARS" >"$PRIVATE_CONFIG_DIR/${ENVIRONMENT}.tfvars" 2>/dev/null ||
-    die "release commit does not contain selected Terraform variables."
+git -C "$REPO_ROOT" show "$RELEASE_SHA:$SELECTED_TFVARS" > "$PRIVATE_CONFIG_DIR/${ENVIRONMENT}.tfvars" 2> /dev/null \
+  || die "release commit does not contain selected Terraform variables."
 if [[ "${CI:-false}" == "true" ]]; then
-    # No provider plugins are needed for pure contract evaluation in CI; the
-    # lockfile would make terraform console demand uncached provider packages.
-    git -C "$REPO_ROOT" cat-file -e "$RELEASE_SHA:infra/terraform/.terraform.lock.hcl" 2>/dev/null ||
-        die "release commit does not contain the Terraform dependency lockfile."
-    # Terraform console otherwise spends time loading the full provider-era
-    # variable schema. Contract rendering needs only these provider-free values.
-    cat >"$PRIVATE_CONFIG_DIR/variables.tf" <<'EOF'
+  # No provider plugins are needed for pure contract evaluation in CI; the
+  # lockfile would make terraform console demand uncached provider packages.
+  git -C "$REPO_ROOT" cat-file -e "$RELEASE_SHA:infra/terraform/.terraform.lock.hcl" 2> /dev/null \
+    || die "release commit does not contain the Terraform dependency lockfile."
+  # Terraform console otherwise spends time loading the full provider-era
+  # variable schema. Contract rendering needs only these provider-free values.
+  cat > "$PRIVATE_CONFIG_DIR/variables.tf" << 'EOF'
 variable "project_id" { type = string }
 variable "region" { type = string }
 variable "service_name" { type = string }
@@ -302,8 +302,8 @@ variable "webauthn_rp_id" {
 }
 EOF
 else
-    git -C "$REPO_ROOT" show "$RELEASE_SHA:infra/terraform/.terraform.lock.hcl" >"$PRIVATE_CONFIG_DIR/.terraform.lock.hcl" 2>/dev/null ||
-        die "release commit does not contain the Terraform dependency lockfile."
+  git -C "$REPO_ROOT" show "$RELEASE_SHA:infra/terraform/.terraform.lock.hcl" > "$PRIVATE_CONFIG_DIR/.terraform.lock.hcl" 2> /dev/null \
+    || die "release commit does not contain the Terraform dependency lockfile."
 fi
 
 # Initialization runs everywhere, including CI. Skipping it there looked safe because this
@@ -313,22 +313,22 @@ fi
 # directory, so init cannot contact the registry either - it is offline and deterministic,
 # which is the property the CI skip was reaching for.
 set +e
-if command -v timeout >/dev/null 2>&1; then
-    timeout --foreground -k 5 "$TERRAFORM_INIT_TIMEOUT_SECONDS" "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" init -backend=false -input=false -plugin-dir="$PRIVATE_PLUGIN_DIR" >"$TERRAFORM_INIT_LOG" 2>&1
+if command -v timeout > /dev/null 2>&1; then
+  timeout --foreground -k 5 "$TERRAFORM_INIT_TIMEOUT_SECONDS" "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" init -backend=false -input=false -plugin-dir="$PRIVATE_PLUGIN_DIR" > "$TERRAFORM_INIT_LOG" 2>&1
 else
-    "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" init -backend=false -input=false -plugin-dir="$PRIVATE_PLUGIN_DIR" >"$TERRAFORM_INIT_LOG" 2>&1
+  "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" init -backend=false -input=false -plugin-dir="$PRIVATE_PLUGIN_DIR" > "$TERRAFORM_INIT_LOG" 2>&1
 fi
 TERRAFORM_INIT_STATUS=$?
 set -e
 if [[ "$TERRAFORM_INIT_STATUS" -ne 0 && "$TERRAFORM_INIT_STATUS" -ne 124 ]]; then
-    redact_log "$TERRAFORM_INIT_LOG"
-    die "Terraform backend-free initialization failed."
+  redact_log "$TERRAFORM_INIT_LOG"
+  die "Terraform backend-free initialization failed."
 fi
 if [[ "$TERRAFORM_INIT_STATUS" -eq 124 ]]; then
-    printf 'WARNING: Terraform initialization exceeded 15 seconds; continuing with provider-free console evaluation.\n' >&2
+  printf 'WARNING: Terraform initialization exceeded 15 seconds; continuing with provider-free console evaluation.\n' >&2
 fi
 
-read -r -d '' TERRAFORM_EXPRESSION <<'EOF' || true
+read -r -d '' TERRAFORM_EXPRESSION << 'EOF' || true
 jsonencode({
   project_id                    = var.project_id,
   region                        = var.region,
@@ -395,49 +395,49 @@ jsonencode({
 EOF
 
 if [[ "${CI:-false}" == "true" && "$ENVIRONMENT" == "staging" ]]; then
-    git -C "$REPO_ROOT" show "$RELEASE_SHA:infra/terraform/staging-contract-template.json" 2>/dev/null |
-        jq -c . | jq -R . \
-            >"$RAW_CONSOLE_OUTPUT" || die "CI staging contract template could not be rendered."
+  git -C "$REPO_ROOT" show "$RELEASE_SHA:infra/terraform/staging-contract-template.json" 2> /dev/null \
+    | jq -c . | jq -R . \
+    > "$RAW_CONSOLE_OUTPUT" || die "CI staging contract template could not be rendered."
 else
-    # Feed the expression from a regular file rather than a pipe. `console` reads stdin to EOF,
-    # and a pipe leaves that at the mercy of whatever wraps the binary - which is how the first
-    # production renders stalled with no output at all. A file gives a clean, immediate EOF.
-    CONSOLE_EXPRESSION_FILE="$PRIVATE_WORK_DIR/console-expression"
-    printf '%s\n' "$TERRAFORM_EXPRESSION" | tr '\n' ' ' >"$CONSOLE_EXPRESSION_FILE"
-    printf '\n' >>"$CONSOLE_EXPRESSION_FILE"
-    chmod 600 "$CONSOLE_EXPRESSION_FILE"
+  # Feed the expression from a regular file rather than a pipe. `console` reads stdin to EOF,
+  # and a pipe leaves that at the mercy of whatever wraps the binary - which is how the first
+  # production renders stalled with no output at all. A file gives a clean, immediate EOF.
+  CONSOLE_EXPRESSION_FILE="$PRIVATE_WORK_DIR/console-expression"
+  printf '%s\n' "$TERRAFORM_EXPRESSION" | tr '\n' ' ' > "$CONSOLE_EXPRESSION_FILE"
+  printf '\n' >> "$CONSOLE_EXPRESSION_FILE"
+  chmod 600 "$CONSOLE_EXPRESSION_FILE"
 
-    set +e
-    if command -v timeout >/dev/null 2>&1; then
-        timeout --foreground -k 5 "$TERRAFORM_CONSOLE_TIMEOUT_SECONDS" "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" console \
-            -state="$CONSOLE_STATE" \
-            -var-file="${ENVIRONMENT}.tfvars" \
-            <"$CONSOLE_EXPRESSION_FILE" >"$RAW_CONSOLE_OUTPUT" 2>"$TERRAFORM_CONSOLE_LOG"
-    else
-        "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" console \
-            -state="$CONSOLE_STATE" \
-            -var-file="${ENVIRONMENT}.tfvars" \
-            <"$CONSOLE_EXPRESSION_FILE" >"$RAW_CONSOLE_OUTPUT" 2>"$TERRAFORM_CONSOLE_LOG"
-    fi
-    TERRAFORM_CONSOLE_STATUS=$?
-    set -e
-    if [[ "$TERRAFORM_CONSOLE_STATUS" -ne 0 ]]; then
-        redact_log "$TERRAFORM_CONSOLE_LOG"
-        # A silent timeout tells you nothing, which is how two production deploys were lost.
-        # Surface what initialization did, since console inherits its state.
-        printf '%s\n' 'terraform init log follows:' >&2
-        redact_log "$TERRAFORM_INIT_LOG" 2>/dev/null || true
-        [[ "$TERRAFORM_CONSOLE_STATUS" -ne 124 ]] || die "Terraform console exceeded ${TERRAFORM_CONSOLE_TIMEOUT_SECONDS} seconds."
-        die "Terraform console failed."
-    fi
+  set +e
+  if command -v timeout > /dev/null 2>&1; then
+    timeout --foreground -k 5 "$TERRAFORM_CONSOLE_TIMEOUT_SECONDS" "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" console \
+      -state="$CONSOLE_STATE" \
+      -var-file="${ENVIRONMENT}.tfvars" \
+      < "$CONSOLE_EXPRESSION_FILE" > "$RAW_CONSOLE_OUTPUT" 2> "$TERRAFORM_CONSOLE_LOG"
+  else
+    "$TERRAFORM_BIN" -chdir="$PRIVATE_CONFIG_DIR" console \
+      -state="$CONSOLE_STATE" \
+      -var-file="${ENVIRONMENT}.tfvars" \
+      < "$CONSOLE_EXPRESSION_FILE" > "$RAW_CONSOLE_OUTPUT" 2> "$TERRAFORM_CONSOLE_LOG"
+  fi
+  TERRAFORM_CONSOLE_STATUS=$?
+  set -e
+  if [[ "$TERRAFORM_CONSOLE_STATUS" -ne 0 ]]; then
+    redact_log "$TERRAFORM_CONSOLE_LOG"
+    # A silent timeout tells you nothing, which is how two production deploys were lost.
+    # Surface what initialization did, since console inherits its state.
+    printf '%s\n' 'terraform init log follows:' >&2
+    redact_log "$TERRAFORM_INIT_LOG" 2> /dev/null || true
+    [[ "$TERRAFORM_CONSOLE_STATUS" -ne 124 ]] || die "Terraform console exceeded ${TERRAFORM_CONSOLE_TIMEOUT_SECONDS} seconds."
+    die "Terraform console failed."
+  fi
 fi
 
 if ! jq -er 'if type == "string" then . else error("expected one encoded JSON string") end' \
-    "$RAW_CONSOLE_OUTPUT" >"$SOURCE_JSON" 2>/dev/null; then
-    die "Terraform console did not return one concrete JSON object."
+  "$RAW_CONSOLE_OUTPUT" > "$SOURCE_JSON" 2> /dev/null; then
+  die "Terraform console did not return one concrete JSON object."
 fi
 
-if ! python3 - "$ENVIRONMENT" "$RELEASE_SHA" "$SOURCE_JSON" "$VALIDATED_JSON" <<'PY'
+if ! python3 - "$ENVIRONMENT" "$RELEASE_SHA" "$SOURCE_JSON" "$VALIDATED_JSON" << 'PY'; then
 import base64
 import json
 import pathlib
@@ -617,6 +617,7 @@ try:
         "SERVER_ENCRYPTION_ENABLED",
         "SYNC_MEDIA_SIGNED_URLS",
         "SYNC_MEDIA_SIGNED_URL_TTL_HOURS",
+        "TRUSTED_PROXY_HOPS",
         "AUTO_MIGRATE",
     }
     # Server feature flags a deployment may set; each one is off unless it says "true".
@@ -686,6 +687,11 @@ try:
         "SERVER_ENCRYPTION_ENABLED": "true",
         "SYNC_MEDIA_SIGNED_URLS": "true",
         "SYNC_MEDIA_SIGNED_URL_TTL_HOURS": "1",
+        # Which X-Forwarded-For entry is the client's address. Production serves its domain through
+        # Cloud Run domain mappings, so Cloud Run's front end appends the client's address last.
+        # Staging serves its domain through the external Application Load Balancer, which appends
+        # the client's address and then its own.
+        "TRUSTED_PROXY_HOPS": "1" if environment == "staging" else "0",
         "AUTO_MIGRATE": "false",
     }
     if environment == "production":
@@ -876,12 +882,11 @@ except Exception:
     print("ERROR: deployment contract validation failed.", file=sys.stderr)
     raise SystemExit(1)
 PY
-then
-    exit 1
+  exit 1
 fi
 
-if ! jq -S . "$VALIDATED_JSON" >"$SORTED_JSON" 2>"$JQ_SORT_LOG"; then
-    die "failed to sort the validated deployment contract."
+if ! jq -S . "$VALIDATED_JSON" > "$SORTED_JSON" 2> "$JQ_SORT_LOG"; then
+  die "failed to sort the validated deployment contract."
 fi
 
 cat "$SORTED_JSON"
