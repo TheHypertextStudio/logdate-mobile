@@ -419,6 +419,37 @@ class EventDetailViewModelTest {
             assertEquals(listOf(firstNote), state.linkedNotes)
         }
 
+    @Test
+    fun `reloading the same event keeps a single subscription`() =
+        runTest {
+            val event = sampleEvent()
+            val notesFlow = MutableStateFlow<List<Uuid>>(emptyList())
+            val viewModel = newViewModel(eventRepo = FakeEventRepository(events = listOf(event), notesForEventFlow = notesFlow))
+
+            repeat(3) {
+                viewModel.loadEvent(event.id)
+                advanceUntilIdle()
+            }
+
+            assertEquals(1, notesFlow.subscriptionCount.value)
+        }
+
+    @Test
+    fun `loading another event replaces the previous draft`() =
+        runTest {
+            val first = sampleEvent(title = "First")
+            val second = sampleEvent(title = "Second")
+            val viewModel = newViewModel(events = listOf(first, second))
+            viewModel.loadEvent(first.id)
+            advanceUntilIdle()
+            viewModel.updateTitle("Edited first")
+
+            viewModel.loadEvent(second.id)
+            advanceUntilIdle()
+
+            assertEquals("Second", (viewModel.uiState.value as EventDetailUiState.Loaded).event.title)
+        }
+
     /**
      * Helper that constructs a [EventDetailViewModel] wired to the real domain use cases over
      * the supplied fake repositories. Keeps individual tests focused on assertions.

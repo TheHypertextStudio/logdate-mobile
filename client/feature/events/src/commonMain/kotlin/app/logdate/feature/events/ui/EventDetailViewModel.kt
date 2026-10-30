@@ -14,6 +14,7 @@ import app.logdate.client.repository.journals.JournalNote
 import app.logdate.shared.model.Event
 import app.logdate.shared.model.Place
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -158,6 +159,9 @@ class EventDetailViewModel(
      */
     val uiState: StateFlow<EventDetailUiState> = _uiState.asStateFlow()
 
+    private var loadJob: Job? = null
+    private var loadedEventId: Uuid? = null
+
     /**
      * Begins observing the event with the given id along with its linked notes and the user's
      * saved places. The three reactive sources are combined at the top level so we don't
@@ -170,38 +174,43 @@ class EventDetailViewModel(
      * opens the attach sheet, scoped to the *current draft's* start time.
      */
     override fun loadEvent(eventId: Uuid) {
-        viewModelScope.launch {
-            combine(
-                getEventById(eventId),
-                observeLinkedNotesForEvent(eventId),
-                observeUserPlaces(),
-            ) { event, linked, places ->
-                Triple(event, linked, places)
-            }.collect { (event, linked, places) ->
-                _uiState.update { current ->
-                    when {
-                        event == null -> {
-                            EventDetailUiState.NotFound
-                        }
+        if (eventId == loadedEventId && loadJob?.isActive == true) return
+        loadJob?.cancel()
+        if (eventId != loadedEventId) _uiState.value = EventDetailUiState.Loading
+        loadedEventId = eventId
+        loadJob =
+            viewModelScope.launch {
+                combine(
+                    getEventById(eventId),
+                    observeLinkedNotesForEvent(eventId),
+                    observeUserPlaces(),
+                ) { event, linked, places ->
+                    Triple(event, linked, places)
+                }.collect { (event, linked, places) ->
+                    _uiState.update { current ->
+                        when {
+                            event == null -> {
+                                EventDetailUiState.NotFound
+                            }
 
-                        current is EventDetailUiState.Loaded -> {
-                            current.copy(
-                                linkedNotes = linked,
-                                availablePlaces = places,
-                            )
-                        }
+                            current is EventDetailUiState.Loaded -> {
+                                current.copy(
+                                    linkedNotes = linked,
+                                    availablePlaces = places,
+                                )
+                            }
 
-                        else -> {
-                            EventDetailUiState.Loaded(
-                                event = event,
-                                linkedNotes = linked,
-                                availablePlaces = places,
-                            )
+                            else -> {
+                                EventDetailUiState.Loaded(
+                                    event = event,
+                                    linkedNotes = linked,
+                                    availablePlaces = places,
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
     }
 
     /** Stages a new title in the in-memory draft. No-op when the screen is not [Loaded]. */
