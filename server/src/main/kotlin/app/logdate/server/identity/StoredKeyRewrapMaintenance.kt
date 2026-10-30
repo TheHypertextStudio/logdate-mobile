@@ -11,26 +11,34 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
+import kotlin.time.Duration.Companion.minutes
 
 /**
- * While [AtprotoSigningKeyKekDecryptOnly] is set, re-encrypts every stored signing key under
- * [AtprotoSigningKeyKek] once at startup, and logs the outcome as one of the [KeyCustodyNotices].
- * See server/docs/environment-variables.md for the order in which a deployment changes the two
- * secrets.
+ * How long after startup stored keys are re-encrypted. An instance of the previous release can't
+ * read the current format, so the upgrade waits until a rollout has replaced those instances.
+ */
+private val REWRAP_DELAY = 15.minutes
+
+/**
+ * Re-encrypts every stored signing key under [AtprotoSigningKeyKek] in the current format once,
+ * [REWRAP_DELAY] after startup, reading keys still encrypted with [AtprotoSigningKeyKekDecryptOnly]
+ * while it is set, and logs the outcome as one of the [KeyCustodyNotices]. See
+ * server/docs/environment-variables.md for the order in which a deployment changes the two secrets.
  */
 internal fun Application.installStoredKeyRewrap() {
-    val decryptOnlySeed = AtprotoSigningKeyKekDecryptOnly.resolve() ?: return
     val signingKeys by inject<SigningKeyRepository>()
     val oauthSigningKeys by inject<OAuthSigningKeyRepository>()
     val rewrap =
         StoredKeyRewrap(
-            stores = mapOf("signing_keys" to signingKeys, "oauth_signing_keys" to oauthSigningKeys),
-            cipher = AtRestKeyCipher(AtprotoSigningKeyKek.resolve(), listOf(decryptOnlySeed)),
+            stores = mapOf(AtRestKeyContext.SIGNING_KEYS to signingKeys, AtRestKeyContext.OAUTH_SIGNING_KEYS to oauthSigningKeys),
+            cipher = AtRestKeyCipher(AtprotoSigningKeyKek.resolve(), listOfNotNull(AtprotoSigningKeyKekDecryptOnly.resolve())),
         )
     val job =
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            delay(REWRAP_DELAY)
             try {
                 val report = rewrap.run()
                 when {

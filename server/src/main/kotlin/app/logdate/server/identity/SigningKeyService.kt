@@ -37,7 +37,8 @@ class SigningKeyService(
      * Seals a key from [prepareKey] into an opaque token the client returns to finish a two-step
      * change, so the server stores nothing in between. The token is encrypted with the key-encryption
      * key, names its account, the operation it was prepared on and a digest of the operation it
-     * prepared, and expires after [PREPARED_KEY_LIFETIME].
+     * prepared, and expires after [PREPARED_KEY_LIFETIME]. The token is bound to its account, and it
+     * keeps the key's ID, which its encrypted private key is bound to.
      */
     fun sealPreparedKey(
         key: StoredSigningKey,
@@ -50,6 +51,7 @@ class SigningKeyService(
                     SealedPreparedKey.serializer(),
                     SealedPreparedKey(
                         accountId = key.accountId.toString(),
+                        keyId = key.id.toString(),
                         algorithm = key.algorithm,
                         publicKeyMultibase = key.publicKeyMultibase,
                         privateKeyEncrypted = key.privateKeyEncrypted,
@@ -58,6 +60,7 @@ class SigningKeyService(
                         sealedAtEpochSeconds = clock.now().epochSeconds,
                     ),
                 ).encodeToByteArray(),
+            AtRestKeyContext.preparedKey(key.accountId),
         )
 
     /**
@@ -70,7 +73,10 @@ class SigningKeyService(
     ): OpenedPreparedKey {
         val sealed =
             try {
-                sealJson.decodeFromString(SealedPreparedKey.serializer(), atRestCipher.decrypt(token).decodeToString())
+                sealJson.decodeFromString(
+                    SealedPreparedKey.serializer(),
+                    atRestCipher.decrypt(token, AtRestKeyContext.preparedKey(accountId)).decodeToString(),
+                )
             } catch (exception: Exception) {
                 throw IdentityLifecycleValidationException("The prepared key is not valid", exception, code = PREPARED_KEY_INVALID)
             }
@@ -84,7 +90,8 @@ class SigningKeyService(
         return OpenedPreparedKey(
             key =
                 StoredSigningKey(
-                    id = Uuid.random(),
+                    // Tokens sealed before keys were bound to their ID carry none; their keys aren't bound.
+                    id = sealed.keyId?.let(Uuid::parse) ?: Uuid.random(),
                     accountId = accountId,
                     algorithm = sealed.algorithm,
                     publicKeyMultibase = sealed.publicKeyMultibase,
@@ -155,7 +162,7 @@ class SigningKeyService(
     }
 
     fun decryptPrivateKey(record: StoredSigningKey): PrivateKey =
-        EcKeySupport.decodePrivateKey(atRestCipher.decrypt(record.privateKeyEncrypted))
+        EcKeySupport.decodePrivateKey(atRestCipher.decrypt(record.privateKeyEncrypted, AtRestKeyContext.signingKey(record.id)))
 
     fun decryptExportedKey(
         exportedKey: ExportedSigningKey,
@@ -228,17 +235,17 @@ class SigningKeyService(
         algorithm: String,
         publicKeyMultibase: String,
         privateKeyPkcs8: ByteArray,
-    ): StoredSigningKey =
-        StoredSigningKey(
-            id = Uuid.random(),
+    ): StoredSigningKey {
+        val id = Uuid.random()
+        return StoredSigningKey(
+            id = id,
             accountId = accountId,
             algorithm = algorithm,
             publicKeyMultibase = publicKeyMultibase,
-            privateKeyEncrypted = encryptPrivateKey(privateKeyPkcs8),
+            privateKeyEncrypted = atRestCipher.encrypt(privateKeyPkcs8, AtRestKeyContext.signingKey(id)),
             createdAt = Clock.System.now(),
         )
-
-    private fun encryptPrivateKey(privateKeyPkcs8: ByteArray): String = atRestCipher.encrypt(privateKeyPkcs8)
+    }
 
     private fun exportAesKey(
         passphrase: String,
@@ -278,6 +285,7 @@ class SigningKeyService(
     @Serializable
     private data class SealedPreparedKey(
         val accountId: String,
+        val keyId: String? = null,
         val algorithm: String,
         val publicKeyMultibase: String,
         val privateKeyEncrypted: String,
