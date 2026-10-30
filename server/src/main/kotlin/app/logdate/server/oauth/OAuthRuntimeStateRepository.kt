@@ -68,6 +68,13 @@ interface OAuthRuntimeStateRepository {
         subjectDid: String,
         revokedAt: Instant,
     ): Int
+
+    /**
+     * Deletes the authorization requests, authorization codes and refresh tokens that expired
+     * before [now], revoked or not, and returns how many it deleted. None of them can be used once
+     * expired, so this only frees space.
+     */
+    suspend fun purgeExpired(now: Instant): Int
 }
 
 data class StoredAuthorizationRequest(
@@ -121,6 +128,15 @@ class InMemoryOAuthRuntimeStateRepository : OAuthRuntimeStateRepository {
     private val authorizationCodes = linkedMapOf<String, StoredAuthorizationCode>()
     private val refreshTokens = linkedMapOf<String, StoredRefreshToken>()
     private val subjectRevocations = mutableMapOf<String, Instant>()
+
+    override suspend fun purgeExpired(now: Instant): Int =
+        synchronized(lock) {
+            val before = requestUris.size + authorizationCodes.size + refreshTokens.size
+            requestUris.values.removeAll { it.expiresAt < now }
+            authorizationCodes.values.removeAll { it.expiresAt < now }
+            refreshTokens.values.removeAll { it.expiresAt < now }
+            before - (requestUris.size + authorizationCodes.size + refreshTokens.size)
+        }
 
     override suspend fun saveAuthorizationRequest(request: StoredAuthorizationRequest): StoredAuthorizationRequest =
         synchronized(lock) {

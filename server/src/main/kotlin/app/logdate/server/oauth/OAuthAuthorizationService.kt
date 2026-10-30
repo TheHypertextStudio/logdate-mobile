@@ -14,10 +14,13 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 /**
  * Stores PAR requests, authorization codes, and refresh tokens for the server OAuth flow.
@@ -106,6 +109,7 @@ class OAuthAuthorizationService(
                 expiresAt = clock.now() + REQUEST_URI_TTL,
             ),
         )
+        purgeExpiredStateIfDue()
         return PushedAuthorizationResponse(
             requestUri = requestUri,
             expiresInSeconds = REQUEST_URI_TTL.inWholeSeconds,
@@ -505,6 +509,25 @@ class OAuthAuthorizationService(
         return rotatedRefreshToken
     }
 
+    /**
+     * Deletes expired requests, codes and refresh tokens at most once per
+     * [RUNTIME_STATE_PURGE_INTERVAL]. New requests are what fill the store, so they also empty it.
+     * A failed purge is logged and retried at the next interval; it never fails the request.
+     */
+    private suspend fun purgeExpiredStateIfDue() {
+        val now = clock.now()
+        val due = nextPurgeAt.get()
+        if (now < due || !nextPurgeAt.compareAndSet(due, now + RUNTIME_STATE_PURGE_INTERVAL)) return
+        try {
+            val removed = runtimeStateRepository.purgeExpired(now)
+            if (removed > 0) Napier.i("Removed $removed expired OAuth authorization requests, codes and refresh tokens")
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Napier.w("Could not remove expired OAuth authorization state", error)
+        }
+    }
+
     private fun refreshTokenLifetime(clientId: String) =
         if (clientId in trustedClientIds) TRUSTED_REFRESH_TOKEN_TTL else UNTRUSTED_REFRESH_TOKEN_TTL
 
@@ -514,7 +537,10 @@ class OAuthAuthorizationService(
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 
+    private val nextPurgeAt = AtomicReference(Instant.DISTANT_PAST)
+
     private companion object {
+        private val RUNTIME_STATE_PURGE_INTERVAL = 10.minutes
         private val REQUEST_URI_TTL = 5.minutes
         private val AUTHORIZATION_CODE_TTL = 1.minutes
         private val TRUSTED_REFRESH_TOKEN_TTL = 30.days

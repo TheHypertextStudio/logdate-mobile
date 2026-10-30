@@ -114,4 +114,86 @@ class PostgreSQLOAuthRuntimeStateRepositoryTest {
                 }
             }
         }
+
+    @Test
+    fun `expired requests codes and refresh tokens are purged and live ones stay`() =
+        runTest {
+            withH2Database(
+                OAuthAuthorizationRequestsTable,
+                OAuthAuthorizationCodesTable,
+                OAuthRefreshTokensTable,
+            ) {
+                val repository = PostgreSQLOAuthRuntimeStateRepository()
+                val now = Clock.System.now()
+
+                fun request(
+                    uri: String,
+                    expiresAt: kotlin.time.Instant,
+                ) = StoredAuthorizationRequest(
+                    requestUri = uri,
+                    clientId = "https://client.example/metadata.json",
+                    clientName = "Client",
+                    redirectUri = "https://client.example/callback",
+                    scope = "atproto",
+                    state = null,
+                    loginHint = null,
+                    codeChallenge = "challenge-$uri",
+                    dpopKeyThumbprint = "thumbprint",
+                    clientAuthKeyId = null,
+                    clientAuthKeyThumbprint = null,
+                    expiresAt = expiresAt,
+                )
+
+                fun code(
+                    value: String,
+                    expiresAt: kotlin.time.Instant,
+                ) = StoredAuthorizationCode(
+                    code = value,
+                    clientId = "https://client.example/metadata.json",
+                    redirectUri = "https://client.example/callback",
+                    subjectDid = "did:plc:alice123",
+                    subjectHandle = "alice.example.com",
+                    scope = "atproto",
+                    codeChallenge = "challenge",
+                    dpopKeyThumbprint = "thumbprint",
+                    clientAuthKeyId = null,
+                    clientAuthKeyThumbprint = null,
+                    expiresAt = expiresAt,
+                    grantedAt = now,
+                )
+
+                fun refresh(
+                    token: String,
+                    expiresAt: kotlin.time.Instant,
+                ) = StoredRefreshToken(
+                    token = token,
+                    clientId = "https://client.example/metadata.json",
+                    subjectDid = "did:plc:alice123",
+                    scope = "atproto",
+                    dpopKeyThumbprint = "thumbprint",
+                    clientAuthKeyId = null,
+                    clientAuthKeyThumbprint = null,
+                    expiresAt = expiresAt,
+                    grantedAt = now,
+                )
+
+                kotlinx.coroutines.runBlocking {
+                    repository.saveAuthorizationRequest(request("urn:expired", now - 1.minutes))
+                    repository.saveAuthorizationRequest(request("urn:live", now + 5.minutes))
+                    repository.saveAuthorizationCode(code("code-expired", now - 1.minutes))
+                    repository.saveAuthorizationCode(code("code-live", now + 1.minutes))
+                    repository.saveRefreshToken(refresh("refresh-expired", now - 1.minutes))
+                    repository.saveRefreshToken(refresh("refresh-live", now + 5.minutes))
+
+                    assertEquals(3, repository.purgeExpired(now))
+
+                    assertNull(repository.findAuthorizationRequest("urn:expired"))
+                    assertNotNull(repository.findAuthorizationRequest("urn:live"))
+                    assertNull(repository.takeAuthorizationCode("code-expired"))
+                    assertNotNull(repository.takeAuthorizationCode("code-live"))
+                    assertNull(repository.findRefreshToken("refresh-expired"))
+                    assertNotNull(repository.findRefreshToken("refresh-live"))
+                }
+            }
+        }
 }
