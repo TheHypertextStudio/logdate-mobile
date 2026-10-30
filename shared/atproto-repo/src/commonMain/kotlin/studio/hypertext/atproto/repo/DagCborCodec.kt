@@ -26,6 +26,10 @@ public object DagCborCodec {
 
     /**
      * Decodes [bytes] produced by this codec back into a JSON element.
+     *
+     * The input may come from anyone, so it is checked as it is read: a length or count larger than
+     * the input, an integer outside 64 signed bits, a map key that isn't text, or values nested more
+     * than 128 levels deep fail with an [IllegalArgumentException] or [IllegalStateException].
      */
     public fun decode(bytes: ByteArray): JsonElement = Decoder(bytes).decodeElement()
 
@@ -161,6 +165,13 @@ public object DagCborCodec {
         return output
     }
 
+    /**
+     * Reads DAG-CBOR from bytes it doesn't trust. Every declared length and count is checked
+     * against the bytes that remain before anything is allocated, integers must fit a signed
+     * 64-bit value, and values nest at most [MAX_NESTING_DEPTH] deep, so malformed input fails with
+     * an [IllegalArgumentException] or [IllegalStateException] instead of exhausting memory or the
+     * stack.
+     */
     private class Decoder(
         private val bytes: ByteArray,
     ) {
@@ -168,27 +179,32 @@ public object DagCborCodec {
 
         fun hasMore(): Boolean = cursor < bytes.size
 
-        fun decodeElement(): JsonElement {
+        private fun remaining(): Int = bytes.size - cursor
+
+        fun decodeElement(depth: Int = 0): JsonElement {
+            require(depth < MAX_NESTING_DEPTH) { "DAG-CBOR values nest deeper than $MAX_NESTING_DEPTH levels" }
             val header = readByte().toInt() and 0xff
             val majorType = header shr MAJOR_TYPE_SHIFT
             val info = header and INFO_MASK
             return when (majorType) {
-                MAJOR_TYPE_UNSIGNED_INT -> JsonPrimitive(readLength(info))
-                MAJOR_TYPE_NEGATIVE_INT -> JsonPrimitive(-(readLength(info) + 1))
-                MAJOR_TYPE_BYTE_STRING -> bytes(readBytes(readLength(info).toInt()))
-                MAJOR_TYPE_TEXT -> JsonPrimitive(readText(readLength(info).toInt()))
+                MAJOR_TYPE_UNSIGNED_INT -> JsonPrimitive(readInteger(info))
+                MAJOR_TYPE_NEGATIVE_INT -> JsonPrimitive(-1L - readInteger(info))
+                MAJOR_TYPE_BYTE_STRING -> bytes(readBytes(readSize(info)))
+                MAJOR_TYPE_TEXT -> JsonPrimitive(readText(readSize(info)))
                 MAJOR_TYPE_ARRAY -> {
-                    val size = readLength(info).toInt()
-                    JsonArray(List(size) { decodeElement() })
+                    val size = readCount(info, bytesPerItem = 1)
+                    JsonArray(List(size) { decodeElement(depth + 1) })
                 }
 
                 MAJOR_TYPE_MAP -> {
-                    val size = readLength(info).toInt()
+                    val size = readCount(info, bytesPerItem = 2)
                     val entries =
                         buildMap(size) {
                             repeat(size) {
-                                val key = decodeElement() as JsonPrimitive
-                                put(key.content, decodeElement())
+                                val key =
+                                    (decodeElement(depth + 1) as? JsonPrimitive)?.takeIf(JsonPrimitive::isString)
+                                        ?: error("DAG-CBOR map keys must be text strings")
+                                put(key.content, decodeElement(depth + 1))
                             }
                         }
                     JsonObject(entries)
@@ -198,7 +214,7 @@ public object DagCborCodec {
                     val tag = readLength(info)
                     when (tag) {
                         CID_LINK_TAG -> {
-                            val tagged = decodeElement()
+                            val tagged = decodeElement(depth + 1)
                             val encodedCid = bytesOrNull(tagged) ?: error("CID link tag must wrap a byte string")
                             require(encodedCid.isNotEmpty() && encodedCid.first() == CID_LINK_LEAD_BYTE) {
                                 "CID link payload must begin with 0x00"
@@ -220,6 +236,30 @@ public object DagCborCodec {
 
                 else -> error("Unsupported DAG-CBOR major type $majorType")
             }
+        }
+
+        /** An integer's magnitude, which must fit a signed 64-bit value. */
+        private fun readInteger(info: Int): Long {
+            val value = readLength(info)
+            require(value >= 0L) { "DAG-CBOR integers must fit in 64 signed bits" }
+            return value
+        }
+
+        /** A byte or text string's length, which the remaining input must hold. */
+        private fun readSize(info: Int): Int {
+            val length = readLength(info)
+            require(length >= 0L && length <= remaining()) { "Unexpected end of DAG-CBOR input" }
+            return length.toInt()
+        }
+
+        /** An array's or map's item count. Each item takes at least [bytesPerItem] of the remaining input. */
+        private fun readCount(
+            info: Int,
+            bytesPerItem: Int,
+        ): Int {
+            val count = readLength(info)
+            require(count >= 0L && count <= remaining() / bytesPerItem) { "Unexpected end of DAG-CBOR input" }
+            return count.toInt()
         }
 
         private fun readLength(info: Int): Long =
@@ -284,6 +324,7 @@ private const val UBYTE_MAX: Long = 0xff
 private const val USHORT_MAX: Long = 0xffff
 private const val UINT_MAX: Long = 0xffff_ffff
 private const val CID_LINK_TAG: Long = 42L
+private const val MAX_NESTING_DEPTH: Int = 128
 private const val CID_LINK_LEAD_BYTE: Byte = 0x00
 private const val LINK_KEY: String = "\$link"
 private const val BYTES_KEY: String = "\$bytes"

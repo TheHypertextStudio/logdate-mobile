@@ -1,10 +1,13 @@
 package studio.hypertext.atproto.repo
 
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -91,15 +94,22 @@ public object CarCodec {
 
     /**
      * Reads a CAR v1 archive.
+     *
+     * The archive may come from anyone, so every section, CID and varint length is checked against
+     * the bytes that remain before it is used. Malformed input fails with an
+     * [IllegalArgumentException] or [IllegalStateException].
      */
     public fun readCar(bytes: ByteArray): CarArchive {
         var cursor = 0
         val headerSection = readSection(bytes, cursor)
         cursor = headerSection.nextOffset
-        val header = DagCborCodec.decode(headerSection.sectionBytes).jsonObject
-        require(header.getValue("version").jsonPrimitive.int == 1) { "Unsupported CAR version" }
+        val header =
+            DagCborCodec.decode(headerSection.sectionBytes) as? JsonObject
+                ?: throw IllegalArgumentException("CAR header must be a map")
+        require((header["version"] as? JsonPrimitive)?.intOrNull == 1) { "Unsupported CAR version" }
+        val encodedRoots = header["roots"] as? JsonArray ?: throw IllegalArgumentException("CAR header must list its roots")
         val roots =
-            header.getValue("roots").jsonArray.map { encodedRoot ->
+            encodedRoots.map { encodedRoot ->
                 requireNotNull(DagCborCodec.linkOrNull(encodedRoot)) { "CAR roots must be CID links" }
             }
 
@@ -155,8 +165,8 @@ public object CarCodec {
     ): CarSection {
         val (sectionLength, lengthBytes) = decodeVarintLong(bytes, offset)
         val start = offset + lengthBytes
+        require(sectionLength <= bytes.size - start) { "Unexpected end of CAR input" }
         val end = start + sectionLength.toInt()
-        require(end <= bytes.size) { "Unexpected end of CAR input" }
         return CarSection(
             sectionBytes = bytes.copyOfRange(start, end),
             nextOffset = end,
@@ -169,8 +179,9 @@ public object CarCodec {
         val digestCodeOffset = versionLength + codecLength
         val (_, digestCodeLength) = decodeVarintLong(sectionBytes, digestCodeOffset)
         val (digestSize, digestSizeLength) = decodeVarintLong(sectionBytes, digestCodeOffset + digestCodeLength)
-        val cidLength = digestCodeOffset + digestCodeLength + digestSizeLength + digestSize.toInt()
-        require(cidLength <= sectionBytes.size) { "Invalid CID length inside CAR block" }
+        val digestOffset = digestCodeOffset + digestCodeLength + digestSizeLength
+        require(digestSize <= sectionBytes.size - digestOffset) { "Invalid CID length inside CAR block" }
+        val cidLength = digestOffset + digestSize.toInt()
         return DecodedCid(
             cid = Cid.fromBytes(sectionBytes.copyOfRange(0, cidLength)),
             blockBytes = sectionBytes.copyOfRange(cidLength, sectionBytes.size),
@@ -230,6 +241,8 @@ private fun decodeVarintLong(
     var shift = 0
     var index = offset
     while (index < bytes.size) {
+        // Nine 7-bit groups hold any length a CAR can describe and keep the value non-negative.
+        require(shift <= MAX_VARINT_SHIFT) { "CAR varint is longer than nine bytes" }
         val next = bytes[index].toInt() and 0xff
         value = value or ((next and 0x7f).toLong() shl shift)
         index += 1
@@ -240,3 +253,5 @@ private fun decodeVarintLong(
     }
     error("Unexpected end of varint input")
 }
+
+private const val MAX_VARINT_SHIFT = 56
