@@ -204,6 +204,27 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `birthday follows the saved birthday so the timeline can celebrate it`() =
+        runTest {
+            val saved = MutableStateFlow<Instant?>(null)
+            val viewModel =
+                createViewModel(
+                    notesRepository = FakeJournalNotesRepository(emptyList()),
+                    birthdayFlow = saved,
+                )
+            val collection = launch { viewModel.birthday.collect() }
+            advanceUntilIdle()
+            assertEquals(null, viewModel.birthday.value)
+
+            val birthday = Instant.parse("1995-06-16T00:00:00Z")
+            saved.value = birthday
+            advanceUntilIdle()
+
+            assertEquals(birthday, viewModel.birthday.value)
+            collection.cancel()
+        }
+
+    @Test
     fun `loadMoreOlder appends older days and reaches end of history`() =
         runTest {
             val notesRepository = FakeJournalNotesRepository(notes = generateSequentialDayNotes(dayCount = 55))
@@ -393,6 +414,7 @@ class HomeViewModelTest {
         journalContentRepository: JournalContentRepository = FakeJournalContentRepository(),
         transcriptionRepository: TranscriptionRepository = FakeTranscriptionRepository(),
         recentFlowOverride: Flow<Timeline>? = null,
+        birthdayFlow: Flow<Instant?> = flowOf(null),
     ): HomeViewModel {
         val dayBoundarySettingsRepository = FakeDayBoundarySettingsRepository()
         val pageUseCase =
@@ -459,6 +481,7 @@ class HomeViewModelTest {
             getJournalMembership = GetJournalMembershipUseCase(journalContentRepository),
             transcriptionRepository = transcriptionRepository,
             libraryEnabledFlow = flowOf(false),
+            birthdayFlow = birthdayFlow,
         )
     }
 
