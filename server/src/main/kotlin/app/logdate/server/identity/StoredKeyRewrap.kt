@@ -29,13 +29,15 @@ interface EncryptedPrivateKeyStore {
 }
 
 /**
- * Re-encrypts every stored private key under the current key-encryption key, so the previous one
- * can be retired.
+ * Re-encrypts every stored private key under the current key-encryption key in the current format,
+ * so the previous key-encryption key can be retired and values from before keys were bound to where
+ * they are stored are upgraded. Each value's context is its store's name and its ID, as
+ * [AtRestKeyContext] builds it, so [stores] are keyed by those names.
  *
- * It's safe to run on every instance at once and to run repeatedly: keys the current
- * key-encryption key already encrypted are left alone, and each replacement only applies if no
- * other instance changed the key first. A key no known key-encryption key can read is reported and
- * never overwritten.
+ * It's safe to run on every instance at once and to run repeatedly: keys already in the current
+ * format under the current key-encryption key are left alone, and each replacement only applies if
+ * no other instance changed the key first. A key no known key-encryption key can read is reported
+ * and never overwritten.
  */
 class StoredKeyRewrap(
     private val stores: Map<String, EncryptedPrivateKeyStore>,
@@ -49,7 +51,7 @@ class StoredKeyRewrap(
             for (key in store.encryptedPrivateKeys()) {
                 val replacement =
                     try {
-                        cipher.rewrap(key.privateKeyEncrypted)
+                        cipher.rewrap(key.privateKeyEncrypted, AtRestKeyContext.of(storeName, key.id))
                     } catch (_: GeneralSecurityException) {
                         unreadable += "$storeName/${key.id}"
                         continue
