@@ -27,13 +27,11 @@ fun JournalListPanel(
     journals: List<JournalListItemUiState>,
     layoutMode: JournalLayoutMode,
     sortOption: JournalSortOption,
-    activeFilters: Set<JournalFilter>,
     onOpenJournal: JournalClickCallback,
     onBrowseJournals: () -> Unit,
     onCreateJournal: () -> Unit,
     onToggleLayoutMode: () -> Unit,
     onSortOptionSelected: (JournalSortOption) -> Unit,
-    onToggleFilter: (JournalFilter) -> Unit,
     modifier: Modifier = Modifier,
     showLoading: Boolean = false,
 ) {
@@ -52,13 +50,11 @@ fun JournalListPanel(
                         journals = journals,
                         layoutMode = layoutMode,
                         sortOption = sortOption,
-                        activeFilters = activeFilters,
                         onOpenJournal = onOpenJournal,
                         onBrowseJournals = onBrowseJournals,
                         onCreateJournal = onCreateJournal,
                         onToggleLayoutMode = onToggleLayoutMode,
                         onSortOptionSelected = onSortOptionSelected,
-                        onToggleFilter = onToggleFilter,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -75,13 +71,11 @@ private fun JournalListContent(
     journals: List<JournalListItemUiState>,
     layoutMode: JournalLayoutMode,
     sortOption: JournalSortOption,
-    activeFilters: Set<JournalFilter>,
     onOpenJournal: JournalClickCallback,
     onBrowseJournals: () -> Unit,
     onCreateJournal: () -> Unit,
     onToggleLayoutMode: () -> Unit,
     onSortOptionSelected: (JournalSortOption) -> Unit,
-    onToggleFilter: (JournalFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyGridState()
@@ -98,10 +92,8 @@ private fun JournalListContent(
         JournalFilterBar(
             layoutMode = layoutMode,
             sortOption = sortOption,
-            activeFilters = activeFilters,
             onToggleLayoutMode = onToggleLayoutMode,
             onSortOptionSelected = onSortOptionSelected,
-            onToggleFilter = onToggleFilter,
             isScrolled = isScrolled,
             modifier = Modifier.fillMaxWidth(),
         )

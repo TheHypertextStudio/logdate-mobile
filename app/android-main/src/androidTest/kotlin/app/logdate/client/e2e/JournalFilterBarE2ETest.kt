@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.logdate.feature.journals.ui.JournalFilter
 import app.logdate.feature.journals.ui.JournalFilterBar
 import app.logdate.feature.journals.ui.JournalLayoutMode
 import app.logdate.feature.journals.ui.JournalSortOption
@@ -22,8 +21,8 @@ import org.junit.runner.RunWith
  * Instrumented UI tests for the [JournalFilterBar] component.
  *
  * These tests validate the interactive elements of the journal gallery header,
- * ensuring that layout toggles, sort selection menus, and multi-select filter
- * chips correctly update the UI state and trigger their respective callbacks.
+ * ensuring that layout toggles and sort selection menus correctly update the UI
+ * state and trigger their respective callbacks.
  */
 @RunWith(AndroidJUnit4::class)
 class JournalFilterBarE2ETest {
@@ -38,10 +37,8 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
 
@@ -56,10 +53,8 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = { toggled = true },
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
 
@@ -75,7 +70,6 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = mode,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {
                     mode =
                         when (mode) {
@@ -84,7 +78,6 @@ class JournalFilterBarE2ETest {
                         }
                 },
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
 
@@ -110,10 +103,8 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
 
@@ -126,10 +117,8 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
 
@@ -150,10 +139,8 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {},
                 onSortOptionSelected = { selectedOption = it },
-                onToggleFilter = {},
             )
         }
 
@@ -178,13 +165,11 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = sort,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {
                     sort = it
                     selectedSort = it
                 },
-                onToggleFilter = {},
             )
         }
 
@@ -202,143 +187,6 @@ class JournalFilterBarE2ETest {
 
     // endregion
 
-    // region Filter Chips
-
-    @Test
-    fun `filter chips displayed with correct labels`() {
-        composeRule.setContent {
-            JournalFilterBar(
-                layoutMode = JournalLayoutMode.CAROUSEL,
-                sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
-                onToggleLayoutMode = {},
-                onSortOptionSelected = {},
-                onToggleFilter = {},
-            )
-        }
-
-        composeRule.onNodeWithText("Owned by me").assertIsDisplayed()
-        composeRule.onNodeWithText("Shared").assertIsDisplayed()
-    }
-
-    @Test
-    fun `filter chip owned by me click invokes callback`() {
-        var toggledFilter: JournalFilter? = null
-
-        composeRule.setContent {
-            JournalFilterBar(
-                layoutMode = JournalLayoutMode.CAROUSEL,
-                sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
-                onToggleLayoutMode = {},
-                onSortOptionSelected = {},
-                onToggleFilter = { toggledFilter = it },
-            )
-        }
-
-        composeRule.onNodeWithTag("FilterChip_OWNED_BY_ME").performClick()
-
-        assert(toggledFilter == JournalFilter.OWNED_BY_ME) {
-            "Expected OWNED_BY_ME but got $toggledFilter"
-        }
-    }
-
-    @Test
-    fun `filter chip shared click invokes callback`() {
-        var toggledFilter: JournalFilter? = null
-
-        composeRule.setContent {
-            JournalFilterBar(
-                layoutMode = JournalLayoutMode.CAROUSEL,
-                sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
-                onToggleLayoutMode = {},
-                onSortOptionSelected = {},
-                onToggleFilter = { toggledFilter = it },
-            )
-        }
-
-        composeRule.onNodeWithTag("FilterChip_SHARED").performClick()
-
-        assert(toggledFilter == JournalFilter.SHARED) {
-            "Expected SHARED but got $toggledFilter"
-        }
-    }
-
-    @Test
-    fun `filter chip toggle on and off`() {
-        var selectedFilters by mutableStateOf<Set<JournalFilter>>(emptySet())
-
-        composeRule.setContent {
-            JournalFilterBar(
-                layoutMode = JournalLayoutMode.CAROUSEL,
-                sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = selectedFilters,
-                onToggleLayoutMode = {},
-                onSortOptionSelected = {},
-                onToggleFilter = { filter ->
-                    val updatedFilters =
-                        if (filter in selectedFilters) {
-                            selectedFilters - filter
-                        } else {
-                            selectedFilters + filter
-                        }
-                    selectedFilters = updatedFilters
-                },
-            )
-        }
-
-        // Select "Owned by me"
-        composeRule.onNodeWithTag("FilterChip_OWNED_BY_ME").performClick()
-        composeRule.waitForIdle()
-        assert(JournalFilter.OWNED_BY_ME in selectedFilters) {
-            "Expected OWNED_BY_ME to be active but got $selectedFilters"
-        }
-
-        // Deselect "Owned by me"
-        composeRule.onNodeWithTag("FilterChip_OWNED_BY_ME").performClick()
-        composeRule.waitForIdle()
-        assert(JournalFilter.OWNED_BY_ME !in selectedFilters) {
-            "Expected OWNED_BY_ME to be removed but got $selectedFilters"
-        }
-    }
-
-    @Test
-    fun `filter chips multiple can be active`() {
-        var selectedFilters by mutableStateOf<Set<JournalFilter>>(emptySet())
-
-        composeRule.setContent {
-            JournalFilterBar(
-                layoutMode = JournalLayoutMode.CAROUSEL,
-                sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = selectedFilters,
-                onToggleLayoutMode = {},
-                onSortOptionSelected = {},
-                onToggleFilter = { filter ->
-                    val updatedFilters =
-                        if (filter in selectedFilters) {
-                            selectedFilters - filter
-                        } else {
-                            selectedFilters + filter
-                        }
-                    selectedFilters = updatedFilters
-                },
-            )
-        }
-
-        // Select both filters
-        composeRule.onNodeWithTag("FilterChip_OWNED_BY_ME").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("FilterChip_SHARED").performClick()
-        composeRule.waitForIdle()
-
-        assert(selectedFilters == setOf(JournalFilter.OWNED_BY_ME, JournalFilter.SHARED)) {
-            "Expected both filters to be active but got $selectedFilters"
-        }
-    }
-
-    // endregion
-
     // region All Controls Together
 
     @Test
@@ -347,18 +195,14 @@ class JournalFilterBarE2ETest {
             JournalFilterBar(
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
 
         composeRule.onNodeWithTag("JournalFilterBar").assertIsDisplayed()
         composeRule.onNodeWithTag("LayoutModeToggle").assertIsDisplayed()
         composeRule.onNodeWithTag("SortDropdownChip").assertIsDisplayed()
-        composeRule.onNodeWithTag("FilterChip_OWNED_BY_ME").assertIsDisplayed()
-        composeRule.onNodeWithTag("FilterChip_SHARED").assertIsDisplayed()
     }
 
     // endregion

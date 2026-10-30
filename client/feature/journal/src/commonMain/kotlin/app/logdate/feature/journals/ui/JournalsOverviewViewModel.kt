@@ -23,15 +23,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.uuid.Uuid
 
 /**
  * ViewModel for the journals overview screen.
  *
- * Combines journals from the repository with user-selected layout mode, sort order, and
- * filters. Layout mode is persisted via DataStore; sort and filter are session-scoped.
+ * Combines journals from the repository with the user-selected layout mode and sort order.
+ * Layout mode is persisted via DataStore; sort order is session-scoped.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class JournalsOverviewViewModel(
@@ -56,7 +55,6 @@ class JournalsOverviewViewModel(
 
     private val entrySearchDebounceMs = 150L
     private val sortOptionState = MutableStateFlow(JournalSortOption.LAST_UPDATED)
-    private val activeFiltersState = MutableStateFlow<Set<JournalFilter>>(emptySet())
     private val searchQueryState = MutableStateFlow(SearchQuery.Empty)
 
     private val layoutModeFlow =
@@ -104,9 +102,8 @@ class JournalsOverviewViewModel(
             repository.allJournalsObserved,
             layoutModeFlow,
             sortOptionState,
-            activeFiltersState,
             searchQueryState,
-        ) { journals, layoutMode, sortOption, filters, searchQuery ->
+        ) { journals, layoutMode, sortOption, searchQuery ->
             val filtered = searchJournalsUseCase.filterJournals(journals, searchQuery)
             val sorted = applySorting(filtered, sortOption)
             val items =
@@ -118,7 +115,6 @@ class JournalsOverviewViewModel(
                 journals = items,
                 layoutMode = layoutMode,
                 sortOption = sortOption,
-                activeFilters = filters,
                 searchQuery = searchQuery,
             )
         }.combine(latestEntrySearchState) { snapshot, latestEntrySearch ->
@@ -126,7 +122,6 @@ class JournalsOverviewViewModel(
                 journals = snapshot.journals,
                 layoutMode = snapshot.layoutMode,
                 sortOption = snapshot.sortOption,
-                activeFilters = snapshot.activeFilters,
                 searchQuery = snapshot.searchQuery.text,
                 isEntrySearchInProgress =
                     snapshot.searchQuery.text.isNotBlank() &&
@@ -152,12 +147,6 @@ class JournalsOverviewViewModel(
 
     fun setSortOption(option: JournalSortOption) {
         sortOptionState.value = option
-    }
-
-    fun toggleFilter(filter: JournalFilter) {
-        activeFiltersState.update { current ->
-            if (filter in current) current - filter else current + filter
-        }
     }
 
     fun removeJournal(journalId: Uuid) {
@@ -186,6 +175,5 @@ private data class JournalsOverviewSnapshot(
     val journals: List<JournalListItemUiState>,
     val layoutMode: JournalLayoutMode,
     val sortOption: JournalSortOption,
-    val activeFilters: Set<JournalFilter>,
     val searchQuery: SearchQuery,
 )

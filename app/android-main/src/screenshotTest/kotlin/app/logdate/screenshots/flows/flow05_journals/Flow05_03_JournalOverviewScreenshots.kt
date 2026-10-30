@@ -30,13 +30,11 @@ fun S15_JournalSurfaceCarousel() {
             journals = sampleJournalItems,
             layoutMode = JournalLayoutMode.CAROUSEL,
             sortOption = JournalSortOption.LAST_UPDATED,
-            activeFilters = emptySet(),
             onOpenJournal = {},
             onBrowseJournals = {},
             onCreateJournal = {},
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -54,13 +52,11 @@ fun S16_JournalSurfaceGrid() {
             journals = sampleJournalItems,
             layoutMode = JournalLayoutMode.GRID,
             sortOption = JournalSortOption.LAST_UPDATED,
-            activeFilters = emptySet(),
             onOpenJournal = {},
             onBrowseJournals = {},
             onCreateJournal = {},
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -78,13 +74,11 @@ fun S17_JournalSurfaceCarouselLargeScreen() {
             journals = sampleJournalItems,
             layoutMode = JournalLayoutMode.CAROUSEL,
             sortOption = JournalSortOption.LAST_UPDATED,
-            activeFilters = emptySet(),
             onOpenJournal = {},
             onBrowseJournals = {},
             onCreateJournal = {},
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -102,13 +96,11 @@ fun S18_JournalSurfaceGridLargeScreen() {
             journals = sampleJournalItems,
             layoutMode = JournalLayoutMode.GRID,
             sortOption = JournalSortOption.LAST_UPDATED,
-            activeFilters = emptySet(),
             onOpenJournal = {},
             onBrowseJournals = {},
             onCreateJournal = {},
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
             modifier = Modifier.fillMaxSize(),
         )
     }

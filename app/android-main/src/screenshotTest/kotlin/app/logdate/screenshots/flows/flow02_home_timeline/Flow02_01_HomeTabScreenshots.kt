@@ -418,13 +418,11 @@ fun S07_JournalsEmpty() {
                 journals = emptyList(),
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onOpenJournal = {},
                 onBrowseJournals = {},
                 onCreateJournal = {},
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
     }
@@ -440,13 +438,11 @@ fun S08_JournalsPopulated() {
                 journals = ScreenshotTestData.sampleJournals.map(JournalListItemUiState::ExistingJournal),
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 onOpenJournal = {},
                 onBrowseJournals = {},
                 onCreateJournal = {},
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
     }

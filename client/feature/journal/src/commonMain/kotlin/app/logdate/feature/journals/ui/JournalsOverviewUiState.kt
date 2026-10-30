@@ -7,13 +7,12 @@ import kotlin.uuid.Uuid
  * UI state for the journals overview screen.
  *
  * Layout mode preference is persisted via DataStore so it survives app restarts.
- * Sort and filter state is session-scoped and resets when the user leaves the screen.
+ * Sort state is session-scoped and resets when the user leaves the screen.
  */
 data class JournalsOverviewUiState(
     val journals: List<JournalListItemUiState> = emptyList(),
     val layoutMode: JournalLayoutMode = JournalLayoutMode.CAROUSEL,
     val sortOption: JournalSortOption = JournalSortOption.LAST_UPDATED,
-    val activeFilters: Set<JournalFilter> = emptySet(),
     val searchQuery: String = "",
     val isEntrySearchInProgress: Boolean = false,
 )
@@ -33,17 +32,6 @@ enum class JournalSortOption {
     LAST_UPDATED,
     CREATED,
     TITLE,
-}
-
-/**
- * Filter options shown as chips in the journal filter bar.
- *
- * These are currently UI-only toggles — [OWNED_BY_ME] and [SHARED] don't filter
- * until the Journal model gains ownership/sharing fields.
- */
-enum class JournalFilter {
-    OWNED_BY_ME,
-    SHARED,
 }
 
 /**
