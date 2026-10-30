@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.uiautomator.UiDevice
@@ -110,18 +111,59 @@ internal class ManagedEditorWindowCaptures(
             compose.onNodeWithTag("entry_journal_chooser").assertIsDisplayed()
             compose.onNodeWithTag("entry_add_memory").assertIsDisplayed()
         }) {
-            val memory =
-                compose
-                    .onAllNodes(
-                        SemanticsMatcher("retained memory surface") {
-                            it.config.getOrElse(SemanticsProperties.TestTag) { "" }.startsWith("memory_block_")
-                        },
-                    ).fetchSemanticsNodes()
-                    .single()
-                    .boundsInWindow
+            val memories =
+                compose.onAllNodes(
+                    SemanticsMatcher("retained memory surface") {
+                        it.config.getOrElse(SemanticsProperties.TestTag) { "" }.startsWith("memory_block_")
+                    },
+                )
+            val original = memories.fetchSemanticsNodes().single()
+            val initialDock = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInWindow
+            var density = 1f
+            var screenX = 0
+            var screenY = 0
+            scenario.onActivity {
+                density = it.resources.displayMetrics.density
+                val screen = IntArray(2)
+                val window = IntArray(2)
+                it.window.decorView.getLocationOnScreen(screen)
+                it.window.decorView.getLocationInWindow(window)
+                screenX = screen[0] - window[0]
+                screenY = screen[1] - window[1]
+            }
+            val initial = File(output, "${device.displayWidth}x${device.displayHeight}-overview-before-reveal.png")
+            check(device.takeScreenshot(initial))
+            val bitmap = checkNotNull(BitmapFactory.decodeFile(initial.path))
+            try {
+                for (edge in listOf(initialDock.top - 8 * density, initialDock.bottom + 8 * density)) {
+                    val y = edge.toInt() + screenY
+                    val canvas = bitmap.getPixel(2 + screenX, y)
+                    for (x in initialDock.left.toInt() + screenX until initialDock.right.toInt() + screenX) {
+                        val pixel = bitmap.getPixel(x, y)
+                        assertTrue(
+                            abs(Color.red(canvas) - Color.red(pixel)) <= 3 &&
+                                abs(Color.green(canvas) - Color.green(pixel)) <= 3 &&
+                                abs(Color.blue(canvas) - Color.blue(pixel)) <= 3,
+                            "Scrolling photo paint must leave the dock clearance and lower canvas continuous at $x,$y",
+                        )
+                    }
+                }
+            } finally {
+                bitmap.recycle()
+            }
+            check(device.click(initialDock.center.x.toInt() + screenX, (initialDock.top - 8 * density).toInt() + screenY))
+            compose.onNodeWithTag("entry_journal_chooser").assertIsDisplayed()
+            assertEquals(original.id, memories.fetchSemanticsNodes().single().id, "The clear gap cannot focus or replace the photo")
+            // A fitted photo may be taller than a resized window. Reveal its real lower edge,
+            // rather than requiring the entire original image to shrink into that window.
+            compose.onNodeWithTag("entry_page_creation").performScrollTo()
+            compose.waitForIdle()
+            val revealed = memories.fetchSemanticsNodes().single()
+            assertEquals(original.id, revealed.id, "Revealing the lower edge retains the same photo surface")
+            compose.onNodeWithTag("entry_journal_chooser").assertIsDisplayed()
+            val memory = revealed.boundsInWindow
             val dock = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInWindow
             scenario.onActivity {
-                val density = it.resources.displayMetrics.density
                 assertEquals(memory.left, dock.left, 1f, "Memory and Add share the content rail")
                 assertEquals(memory.right, dock.right, 1f, "Memory and Add share the content rail")
                 assertTrue(memory.bottom + 16 * density <= dock.top + 1f, "Memory and Add retain the same 16dp design clearance")
