@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,19 +74,7 @@ fun MomentAudioCard(
     // Remembered: an un-remembered now() would change on every recomposition and keep
     // re-triggering waveform work and re-rendering the expanded state's timestamp.
     val recordedAt = remember(audio.uri, audio.recordedAt) { audio.recordedAt ?: Clock.System.now() }
-    val audioContext by produceState<AudioContext?>(null, audio.uri, audio.durationMs, audioContextProcessor) {
-        val processor = audioContextProcessor ?: return@produceState
-        runCatching {
-            processor
-                .processProgressively(
-                    audioUri = audio.uri,
-                    durationMs = audio.durationMs,
-                    createdAt = recordedAt,
-                    latitude = null,
-                    longitude = null,
-                ).collect { context -> value = context }
-        }
-    }
+    val audioContext = rememberAudioContext(audio.uri, audio.durationMs, recordedAt, processor = audioContextProcessor)
 
     val transcript =
         audio.transcript?.trim()?.takeIf(String::isNotEmpty)
@@ -97,6 +84,8 @@ fun MomentAudioCard(
                 ?.takeIf(String::isNotEmpty)
     val excerpt = remember(transcript) { transcript?.let(::buildTranscriptExcerpt)?.text }
     val isTranscribing = audio.noteId?.let(transcriptionState.isTranscriptionInProgress) ?: false
+    val transcriptStatus = audio.noteId?.let(transcriptionState.getTranscriptionStatus)
+    val retryTranscription: (() -> Unit)? = audio.noteId?.let { noteId -> { transcriptionState.requestTranscription(noteId) } }
 
     // What the mini player and lock screen show. The transcript's opening sentence identifies a
     // recording far better than the generic title this used to carry.
@@ -152,6 +141,8 @@ fun MomentAudioCard(
                     segments = audioContext?.segments.orEmpty(),
                     transcript = transcript,
                     isTranscribing = isTranscribing,
+                    transcriptionStatus = transcriptStatus,
+                    onRetryTranscription = retryTranscription,
                     onPlayPause = togglePlayback,
                     onSeek = { position -> if (isCurrent) playbackState.seekTo(position) },
                     playbackActions = playbackActions,
@@ -168,6 +159,8 @@ fun MomentAudioCard(
                     durationMs = audio.durationMs,
                     transcriptExcerpt = excerpt,
                     isTranscribing = isTranscribing,
+                    transcriptionStatus = transcriptStatus,
+                    onRetryTranscription = retryTranscription,
                     onPlayPause = togglePlayback,
                     playbackActions = playbackActions,
                     modifier = cardModifier,

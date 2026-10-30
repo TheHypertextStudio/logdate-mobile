@@ -2,20 +2,27 @@ package app.logdate.ui.audio
 
 import app.logdate.client.awareness.daylight.DaylightClassifier
 import app.logdate.client.awareness.daylight.DaylightPeriod
-import app.logdate.ui.audio.WaveformStorage
 import app.logdate.ui.audio.analysis.SegmentDetector
 import app.logdate.ui.audio.color.PaletteGenerator
 import app.logdate.ui.audio.extraction.AmplitudeExtractor
 import app.logdate.ui.audio.model.AudioPalette
 import app.logdate.ui.audio.model.AudioSegment
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Instant
+
+internal fun waveformStorageKey(
+    audioUri: String,
+    durationMs: Long,
+): String = "waveform-v2:${audioUri.length}:$audioUri:$durationMs"
 
 /**
  * Processed audio context containing all derived data for visualization.
@@ -52,6 +59,90 @@ class AudioContextProcessor(
     private val paletteGenerator: PaletteGenerator = PaletteGenerator(),
     private val coroutineContext: CoroutineContext = Dispatchers.Default,
 ) {
+    private data class MediaKey(
+        val uri: String,
+        val durationMs: Long,
+    )
+
+    private val completed = MutableStateFlow<Map<MediaKey, List<Float>>>(emptyMap())
+
+    /** Last complete samples for a mounted recording, available before asynchronous cache IO. */
+    fun cachedAmplitudes(
+        audioUri: String,
+        durationMs: Long,
+    ): List<Float>? = completed.value[MediaKey(audioUri, durationMs)]
+
+    private fun retain(
+        audioUri: String,
+        durationMs: Long,
+        amplitudes: List<Float>,
+    ) {
+        if (amplitudes.isEmpty()) return
+        val key = MediaKey(audioUri, durationMs)
+        completed.update { previous ->
+            val recent =
+                previous
+                    .filterKeys { it != key }
+                    .entries
+                    .toList()
+                    .takeLast(63)
+                    .associate { it.toPair() }
+            recent + (key to amplitudes.toList())
+        }
+    }
+
+    private suspend fun cacheAmplitudes(
+        audioUri: String,
+        durationMs: Long,
+        amplitudes: List<Float>,
+    ) {
+        retain(audioUri, durationMs, amplitudes)
+        try {
+            waveformStorage.save(waveformStorageKey(audioUri, durationMs), amplitudes)
+            Napier.d { "Cached waveform for $audioUri" }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Napier.w(error) { "Failed to cache waveform for $audioUri" }
+        }
+    }
+
+    private suspend fun loadCached(
+        audioUri: String,
+        durationMs: Long,
+    ): List<Float>? =
+        try {
+            val key = waveformStorageKey(audioUri, durationMs)
+            val cached =
+                waveformStorage
+                    .load(key)
+                    ?.takeIf { it.isNotEmpty() && it.all { level -> level.isFinite() && level in 0f..1f } }
+            if (cached != null) {
+                cached
+            } else {
+                val legacy =
+                    waveformStorage
+                        .load(audioUri)
+                        ?.takeIf { it.isNotEmpty() && it.all { level -> level.isFinite() && level in 0f..1f } }
+                if (legacy != null) {
+                    try {
+                        waveformStorage.save(key, legacy)
+                        waveformStorage.delete(audioUri)
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Exception) {
+                        Napier.w(error) { "Keeping readable waveform samples despite cache migration failure" }
+                    }
+                }
+                legacy
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Napier.w(error) { "Ignoring a damaged waveform cache; original audio is unchanged" }
+            null
+        }
+
     /**
      * Processes an audio file and returns its context for visualization.
      *
@@ -76,7 +167,7 @@ class AudioContextProcessor(
         withContext(coroutineContext) {
             Napier.d { "Processing audio context for $audioUri" }
 
-            val amplitudes = loadOrExtractAmplitudes(audioUri)
+            val amplitudes = loadOrExtractAmplitudes(audioUri, durationMs)
             val segments =
                 if (amplitudes.isNotEmpty() && durationMs > 0) {
                     segmentDetector.detectSegments(amplitudes, durationMs)
@@ -119,8 +210,9 @@ class AudioContextProcessor(
             val daylightPeriod = classifyDaylightPeriod(createdAt, latitude, longitude)
             val palette = paletteGenerator.generate(daylightPeriod)
 
-            val cached = waveformStorage.load(audioUri)
+            val cached = cachedAmplitudes(audioUri, durationMs) ?: loadCached(audioUri, durationMs)
             if (cached != null) {
+                retain(audioUri, durationMs, cached)
                 Napier.d { "Loaded cached waveform for $audioUri" }
                 emit(
                     AudioContext(
@@ -149,6 +241,7 @@ class AudioContextProcessor(
                 ),
             )
 
+            if (isRemoteAudio(audioUri)) return@flow
             var lastSnapshot: List<Float> = emptyList()
             amplitudeExtractor
                 .extractAmplitudesProgressively(audioUri)
@@ -170,34 +263,29 @@ class AudioContextProcessor(
                 }
 
             if (lastSnapshot.isNotEmpty()) {
-                try {
-                    waveformStorage.save(audioUri, lastSnapshot)
-                    Napier.d { "Cached waveform for $audioUri" }
-                } catch (e: Exception) {
-                    Napier.w(e) { "Failed to cache waveform for $audioUri" }
-                }
+                cacheAmplitudes(audioUri, durationMs, lastSnapshot)
             }
         }.flowOn(coroutineContext)
 
     /**
      * Loads cached amplitudes or extracts them from the audio file.
      */
-    private suspend fun loadOrExtractAmplitudes(audioUri: String): List<Float> {
-        waveformStorage.load(audioUri)?.let { cached ->
+    private suspend fun loadOrExtractAmplitudes(
+        audioUri: String,
+        durationMs: Long,
+    ): List<Float> {
+        (cachedAmplitudes(audioUri, durationMs) ?: loadCached(audioUri, durationMs))?.let { cached ->
+            retain(audioUri, durationMs, cached)
             Napier.d { "Loaded cached waveform for $audioUri" }
             return cached
         }
 
+        if (isRemoteAudio(audioUri)) return emptyList()
         Napier.d { "Extracting amplitudes from $audioUri" }
         val amplitudes = amplitudeExtractor.extractAmplitudes(audioUri)
 
         if (amplitudes.isNotEmpty()) {
-            try {
-                waveformStorage.save(audioUri, amplitudes)
-                Napier.d { "Cached waveform for $audioUri" }
-            } catch (e: Exception) {
-                Napier.w(e) { "Failed to cache waveform for $audioUri" }
-            }
+            cacheAmplitudes(audioUri, durationMs, amplitudes)
         }
 
         return amplitudes
@@ -224,6 +312,9 @@ class AudioContextProcessor(
         )
     }
 
+    private fun isRemoteAudio(uri: String): Boolean =
+        uri.startsWith("https://", ignoreCase = true) || uri.startsWith("http://", ignoreCase = true)
+
     private fun classifyDaylightPeriod(
         createdAt: Instant,
         latitude: Double?,
@@ -241,8 +332,11 @@ class AudioContextProcessor(
      * Call this when the audio file is deleted.
      */
     suspend fun clearCache(audioUri: String) {
+        val knownKeys = completed.value.keys.filter { it.uri == audioUri }
+        completed.update { rows -> rows.filterKeys { it.uri != audioUri } }
         try {
             waveformStorage.delete(audioUri)
+            knownKeys.forEach { waveformStorage.delete(waveformStorageKey(it.uri, it.durationMs)) }
             Napier.d { "Cleared waveform cache for $audioUri" }
         } catch (e: Exception) {
             Napier.w(e) { "Failed to clear waveform cache for $audioUri" }

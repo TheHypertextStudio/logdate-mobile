@@ -10,10 +10,12 @@ import app.logdate.client.media.storage.androidMediaFileResolver
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlin.math.sqrt
+import java.nio.ByteOrder
 
 private const val PROGRESS_EMIT_INTERVAL = 32
 
@@ -55,7 +57,9 @@ class AndroidAmplitudeExtractor(
         targetSampleCount: Int,
         onProgress: (suspend (List<Float>) -> Unit)?,
     ): List<Float>? {
+        if (targetSampleCount <= 0) return emptyList()
         val extractor = MediaExtractor()
+        var decoder: MediaCodec? = null
         return try {
             val path = mediaFiles.filePath(uri)
             if (path != null) {
@@ -84,29 +88,29 @@ class AndroidAmplitudeExtractor(
                     -1L
                 }
 
-            val decoder = MediaCodec.createDecoderByType(mimeType)
-            decoder.configure(format, null, null, 0)
-            decoder.start()
+            val activeDecoder = MediaCodec.createDecoderByType(mimeType)
+            decoder = activeDecoder
+            activeDecoder.configure(format, null, null, 0)
+            activeDecoder.start()
 
             val amplitudes =
                 decodeAndExtractAmplitudes(
                     extractor = extractor,
-                    decoder = decoder,
+                    decoder = activeDecoder,
                     durationUs = durationUs,
                     targetSampleCount = targetSampleCount,
                     onProgress = onProgress,
                 )
 
-            decoder.stop()
-            decoder.release()
-
-            normalizeAmplitudes(amplitudes)
+            amplitudes
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Napier.e(e) { "Error extracting amplitudes from $uri" }
             emptyList()
         } finally {
+            runCatching { decoder?.stop() }
+            runCatching { decoder?.release() }
             extractor.release()
         }
     }
@@ -146,12 +150,12 @@ class AndroidAmplitudeExtractor(
         var sawOutputEOS = false
 
         // Accumulate RMS per bucket — fixed size, no per-sample boxing
-        val sumSquares = DoubleArray(targetSampleCount)
-        val counts = IntArray(targetSampleCount)
+        val buckets = WaveformAmplitudeBuckets(targetSampleCount)
         var framesProcessed = 0L
         var buffersSinceEmit = 0
 
         while (!sawOutputEOS) {
+            currentCoroutineContext().ensureActive()
             if (!sawInputEOS) {
                 val inputBufferIndex = decoder.dequeueInputBuffer(10000)
                 if (inputBufferIndex >= 0) {
@@ -195,7 +199,9 @@ class AndroidAmplitudeExtractor(
                             (framesProcessed % targetSampleCount).toInt()
                         }
 
-                    outputBuffer.position(0)
+                    outputBuffer.order(ByteOrder.nativeOrder())
+                    outputBuffer.position(bufferInfo.offset)
+                    outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
                     val shortBuffer = outputBuffer.asShortBuffer()
                     val frameCount = bufferInfo.size / 2
                     var bufferSumSquares = 0.0
@@ -203,35 +209,19 @@ class AndroidAmplitudeExtractor(
                         val sample = shortBuffer.get().toDouble()
                         bufferSumSquares += sample * sample
                     }
-                    sumSquares[bucketIndex] += bufferSumSquares
-                    counts[bucketIndex] += frameCount
+                    buckets.add(bucketIndex, bufferSumSquares, frameCount)
                     framesProcessed++
                     buffersSinceEmit++
 
-                    if (onProgress != null && buffersSinceEmit >= PROGRESS_EMIT_INTERVAL) {
+                    if (onProgress != null && durationUs > 0 && buffersSinceEmit >= PROGRESS_EMIT_INTERVAL) {
                         buffersSinceEmit = 0
-                        onProgress(
-                            normalizeAmplitudes(
-                                (0 until targetSampleCount).map { i ->
-                                    if (counts[i] > 0) sqrt(sumSquares[i] / counts[i]).toFloat() else 0f
-                                },
-                            ),
-                        )
+                        onProgress(buckets.snapshot())
                     }
                 }
                 decoder.releaseOutputBuffer(outputBufferIndex, false)
             }
         }
 
-        return (0 until targetSampleCount).map { i ->
-            if (counts[i] > 0) sqrt(sumSquares[i] / counts[i]).toFloat() else 0f
-        }
-    }
-
-    private fun normalizeAmplitudes(amplitudes: List<Float>): List<Float> {
-        if (amplitudes.isEmpty()) return emptyList()
-        val max = amplitudes.maxOrNull() ?: 1f
-        if (max == 0f) return amplitudes.map { 0f }
-        return amplitudes.map { (it / max).coerceIn(0f, 1f) }
+        return buckets.snapshot(final = true)
     }
 }

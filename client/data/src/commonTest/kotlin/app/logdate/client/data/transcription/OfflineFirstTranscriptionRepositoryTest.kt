@@ -8,10 +8,13 @@ import app.logdate.client.database.entities.TranscriptionSegmentEntity
 import app.logdate.client.database.entities.TranscriptionStatus
 import app.logdate.client.media.audio.transcription.TranscriptionManager
 import app.logdate.client.media.audio.transcription.TranscriptionPriority
+import app.logdate.client.media.storage.StoredMediaReferences
 import app.logdate.client.repository.transcription.TranscriptDocument
+import app.logdate.client.repository.transcription.TranscriptDocumentStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -21,10 +24,137 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import app.logdate.client.repository.transcription.TranscriptionStatus as WorkStatus
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OfflineFirstTranscriptionRepositoryTest {
     private val now = Instant.parse("2026-09-01T12:00:00Z")
+
+    @Test
+    fun `remote work persisted before upgrade cannot start recognition`() =
+        runTest {
+            val id = Uuid.random()
+            val uri = "https://example.test/original.m4a"
+            val notes = FakeAudioNoteDao().apply { addNote(audioNote(id).copy(contentUri = uri)) }
+            val rows = FakeTranscriptionDao()
+            val repository = OfflineFirstTranscriptionRepository(rows, notes, FakeTranscriptionManager(true), now = { now })
+            repository.updateTranscription(id, null, WorkStatus.IN_PROGRESS)
+            assertEquals(null, repository.beginTranscription(id, uri))
+            assertEquals(TranscriptionStatus.PENDING, rows.getTranscriptionByNoteId(id)?.status)
+        }
+
+    @Test
+    fun `lost work is recovered after its lease without another database emission`() =
+        runTest {
+            var clock = now
+            val id = Uuid.random()
+            val notes = FakeAudioNoteDao().apply { addNote(audioNote(id)) }
+            val rows = FakeTranscriptionDao()
+            val manager = FakeTranscriptionManager(true)
+            val repository = OfflineFirstTranscriptionRepository(rows, notes, manager, now = { clock })
+            repository.startAutomaticTranscriptions(backgroundScope)
+            runCurrent()
+            repository.beginTranscription(id, audioNote(id).contentUri)
+            runCurrent()
+            assertEquals(1, manager.enqueueCount)
+            clock += 11.minutes
+            advanceTimeBy(10.minutes.inWholeMilliseconds + 1)
+            runCurrent()
+            assertEquals(2, manager.enqueueCount)
+            assertEquals(TranscriptionStatus.PENDING, rows.getTranscriptionByNoteId(id)?.status)
+            assertEquals(TranscriptionPriority.RECOVERY, manager.priorities.last())
+        }
+
+    @Test
+    fun `periodic recovery does not repeatedly restart terminal failures`() =
+        runTest {
+            var clock = now
+            val id = Uuid.random()
+            val notes = FakeAudioNoteDao().apply { addNote(audioNote(id)) }
+            val manager = FakeTranscriptionManager(false)
+            val repository = OfflineFirstTranscriptionRepository(FakeTranscriptionDao(), notes, manager, now = { clock })
+            repository.startAutomaticTranscriptions(backgroundScope)
+            runCurrent()
+            assertEquals(1, manager.enqueueCount)
+            clock += 31.minutes
+            advanceTimeBy(30.minutes.inWholeMilliseconds + 1)
+            runCurrent()
+            assertEquals(1, manager.enqueueCount)
+        }
+
+    @Test
+    fun `live words attach when the recording path becomes an owned media reference`() =
+        runTest {
+            val id = Uuid.random()
+            val notes = FakeAudioNoteDao()
+            val references =
+                StoredMediaReferences {
+                    it.removePrefix("file://").replace("/install/audio_notes/", "logdate-media://recordings/")
+                }
+            val repository =
+                OfflineFirstTranscriptionRepository(
+                    FakeTranscriptionDao(),
+                    notes,
+                    FakeTranscriptionManager(true),
+                    now = { now },
+                    mediaReferences = references,
+                )
+            val work = repository.captureRecordingTranscript(id, "/install/audio_notes/live.m4a")
+            notes.addNote(audioNote(id).copy(contentUri = "logdate-media://recordings/live.m4a"))
+            val document = TranscriptDocument.fromPlainText("Live words", TranscriptDocumentStatus.LISTENING)
+            val saved =
+                repository.persistRecordingTranscript(
+                    work,
+                    document,
+                    WorkStatus.IN_PROGRESS,
+                )
+            assertTrue(saved != null)
+            assertEquals("Live words", repository.getTranscription(id)?.text)
+        }
+
+    @Test
+    fun `visible remote audio waits for the original instead of downloading it for recognition`() =
+        runTest {
+            val id = Uuid.random()
+            val notes = FakeAudioNoteDao().apply { addNote(audioNote(id).copy(contentUri = "https://example.test/original.m4a")) }
+            val rows = FakeTranscriptionDao()
+            val manager = FakeTranscriptionManager(true)
+            val repository = OfflineFirstTranscriptionRepository(rows, notes, manager, now = { now })
+            assertFalse(repository.requestTranscription(id))
+            assertEquals(0, manager.enqueueCount)
+            assertEquals(null, rows.getTranscriptionByNoteId(id))
+        }
+
+    @Test
+    fun `deferring interrupted work preserves the document and revision`() =
+        runTest {
+            val id = Uuid.random()
+            val notes = FakeAudioNoteDao().apply { addNote(audioNote(id)) }
+            val rows = FakeTranscriptionDao()
+            val repository = OfflineFirstTranscriptionRepository(rows, notes, FakeTranscriptionManager(true), now = { now })
+            repository.updateTranscription(id, "Accepted partial words", WorkStatus.IN_PROGRESS)
+            val work = repository.beginTranscription(id, audioNote(id).contentUri)!!
+            val previous = rows.getTranscriptionByNoteId(id)!!
+            assertTrue(repository.deferTranscription(work))
+            assertEquals(previous.copy(status = TranscriptionStatus.PENDING), rows.getTranscriptionByNoteId(id))
+        }
+
+    @Test
+    fun `stale cancellation cannot requeue a newer completed transcript`() =
+        runTest {
+            val id = Uuid.random()
+            val notes = FakeAudioNoteDao().apply { addNote(audioNote(id)) }
+            val rows = FakeTranscriptionDao()
+            val repository = OfflineFirstTranscriptionRepository(rows, notes, FakeTranscriptionManager(true), now = { now })
+            repository.requestTranscription(id)
+            val work = repository.beginTranscription(id, audioNote(id).contentUri)!!
+            repository.acceptSyncedTranscript(id, TranscriptDocument.fromPlainText("New accepted words").copy(revision = 8))
+            val newer = rows.getTranscriptionByNoteId(id)
+            assertTrue(repository.deferTranscription(work))
+            assertEquals(newer, rows.getTranscriptionByNoteId(id))
+            assertTrue(repository.failTranscription(work, "PersistenceError"))
+            assertEquals(newer, rows.getTranscriptionByNoteId(id))
+        }
 
     @Test
     fun `startup recovery yields to newly saved and explicitly requested audio`() =
