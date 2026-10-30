@@ -29,7 +29,6 @@ internal fun buildOnboardingViewModel(
     watchSetup: WatchSetupCoordinator = NoWatchSetupCoordinator,
 ): OnboardingViewModel =
     OnboardingViewModel(
-        journalNotesRepository = notesRepository,
         userStateRepository = userStateRepository,
         memoriesSettingsRepository = memoriesSettingsRepository,
         locationTrackingSettingsRepository = locationSettingsRepository,

@@ -193,5 +193,4 @@
 
     <!-- Shared -->
     <string name="onboarding_privacy_title">Private by default</string>
-    <string name="onboarding_audio_preview_playing">Playing</string>
 </resources>
