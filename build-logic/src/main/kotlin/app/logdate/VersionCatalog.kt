@@ -11,6 +11,8 @@ internal val Project.libs: VersionCatalog
 internal fun VersionCatalog.version(alias: String): String =
     findVersion(alias).orElseThrow { IllegalStateException("gradle/libs.versions.toml has no version named $alias") }.requiredVersion
 
+internal fun VersionCatalog.intVersion(alias: String): Int = version(alias).toInt()
+
 /**
  * The Kotlin compiler at the catalog's Kotlin version, for checks that parse sources with its PSI, so
  * they read Kotlin the way the build compiles it.

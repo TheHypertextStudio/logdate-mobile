@@ -19,8 +19,27 @@ dependencies {
     compileOnly(libs.kotlin.gradlePlugin)
 }
 
+// TestKit builds that apply build-logic's convention plugins need the plugins those conventions
+// configure, which the real build puts on the classpath from its root project.
+val testPluginClasspath by configurations.creating
+dependencies {
+    testPluginClasspath(libs.android.gradlePlugin)
+    testPluginClasspath(libs.kotlin.gradlePlugin)
+}
+tasks.pluginUnderTestMetadata {
+    pluginClasspath.from(testPluginClasspath)
+}
+
 tasks.test {
     useJUnitPlatform()
+    // Keeps TestKit's Gradle home, with its instrumented plugin jars, in this build's output.
+    systemProperty(
+        "logdate.testKitDir",
+        layout.buildDirectory
+            .dir("test-kit")
+            .get()
+            .asFile.absolutePath,
+    )
 }
 
 gradlePlugin {
@@ -56,6 +75,10 @@ gradlePlugin {
         register("testDatabaseEnvironment") {
             id = "app.logdate.test-database-environment"
             implementationClass = "app.logdate.TestDatabaseEnvironmentPlugin"
+        }
+        register("kmpLibrary") {
+            id = "app.logdate.kmp-library"
+            implementationClass = "app.logdate.KmpLibraryConventionPlugin"
         }
         register("androidRelease") {
             id = "app.logdate.android-release"

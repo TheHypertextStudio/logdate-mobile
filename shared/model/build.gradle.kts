@@ -3,15 +3,12 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
+    id("app.logdate.kmp-library")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.dokka)
 }
 
 kotlin {
-    iosArm64()
-    iosSimulatorArm64()
-
     jvm()
 
     wasmJs {
@@ -19,10 +16,6 @@ kotlin {
     }
 
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }

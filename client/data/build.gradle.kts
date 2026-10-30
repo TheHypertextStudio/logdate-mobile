@@ -1,10 +1,5 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
+    id("app.logdate.kmp-library")
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.dokka)
@@ -13,22 +8,8 @@ plugins {
 kotlin {
     android {
         namespace = "app.logdate.client.data"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
         withHostTestBuilder {}
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
 
     jvm("desktop")
 
@@ -36,10 +17,6 @@ kotlin {
         val desktopTest by getting { dependencies { implementation(libs.sqlite.bundled) } }
         val desktopMain by getting
 
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             // Project dependencies
             implementation(projects.shared.model)

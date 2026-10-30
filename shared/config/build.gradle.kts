@@ -1,11 +1,9 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class, ExperimentalWasmDsl::class)
+@file:OptIn(ExperimentalWasmDsl::class)
 
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-//    alias(libs.plugins.android.library)
+    id("app.logdate.kmp-library")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.dokka)
     alias(libs.plugins.buildConfig)
@@ -34,16 +32,6 @@ buildConfig {
 }
 
 kotlin {
-//    androidTarget {
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_17)
-//        }
-//    }
-
-    iosArm64()
-    iosSimulatorArm64()
-
     jvm()
 
     wasmJs {
@@ -51,10 +39,6 @@ kotlin {
     }
 
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.core)
@@ -65,23 +49,3 @@ kotlin {
         }
     }
 }
-
-// android {
-//    namespace = "app.logdate.client"
-//    compileSdk = libs.versions.android.compileSdk.get().toInt()
-//
-//    packaging {
-//        resources {
-//            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-//        }
-//    }
-//    buildTypes {
-//        getByName("release") {
-//            isMinifyEnabled = false
-//        }
-//    }
-//    compileOptions {
-//        sourceCompatibility = JavaVersion.VERSION_17
-//        targetCompatibility = JavaVersion.VERSION_17
-//    }
-// }
