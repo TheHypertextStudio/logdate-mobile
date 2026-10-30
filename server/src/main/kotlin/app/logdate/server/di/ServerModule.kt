@@ -39,6 +39,7 @@ import app.logdate.server.auth.TokenService
 import app.logdate.server.config.AtprotoSessionSecret
 import app.logdate.server.config.AtprotoSigningKeyKek
 import app.logdate.server.config.AtprotoSigningKeyKekDecryptOnly
+import app.logdate.server.config.RuntimeProfile
 import app.logdate.server.database.PostgreSQLAccountIdentityRepository
 import app.logdate.server.database.PostgreSQLAccountKeyEnvelopeRepository
 import app.logdate.server.database.PostgreSQLAccountRepository
@@ -130,6 +131,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import studio.hypertext.atproto.oauth.client.JvmOAuthHttp
 import studio.hypertext.atproto.pds.DescribeServerResponse
 import studio.hypertext.atproto.pds.PdsBlobService
 import studio.hypertext.atproto.pds.PdsDiscoveryService
@@ -259,7 +261,14 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                 InMemoryOAuthRuntimeStateRepository()
             }
         }
-        single { OAuthClientMetadataResolver(httpClient = get(), usedClientAssertions = get()) }
+        single {
+            val production = RuntimeProfile.fromEnvironment().isProduction
+            OAuthClientMetadataResolver(
+                httpClient = if (production) JvmOAuthHttp.publicInternetClient() else get(),
+                usedClientAssertions = get(),
+                allowLoopbackClients = !production,
+            )
+        }
         single { OAuthAccessTokenService(config = get(), keyService = get()) }
         single {
             val config: OAuthConfig = get()
