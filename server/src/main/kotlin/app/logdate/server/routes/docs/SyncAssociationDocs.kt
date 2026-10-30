@@ -1,6 +1,7 @@
 package app.logdate.server.routes.docs
 
 import app.logdate.server.openapi.ApiTags
+import app.logdate.server.routes.ErrorCase
 import app.logdate.server.routes.bearerOperation
 import app.logdate.server.routes.jsonBody
 import app.logdate.server.routes.noContent
@@ -8,6 +9,7 @@ import app.logdate.server.routes.ok
 import app.logdate.server.routes.sinceAndLimit
 import app.logdate.server.routes.sync.AssociationLinkUpsertRequest
 import app.logdate.server.routes.sync.DEFAULT_SYNC_PAGE_SIZE
+import app.logdate.server.routes.sync.MAX_ASSOCIATION_BATCH
 import app.logdate.server.routes.sync.MAX_SYNC_PAGE_SIZE
 import app.logdate.server.routes.syncError
 import app.logdate.shared.model.sync.Association
@@ -23,6 +25,14 @@ import io.ktor.http.HttpStatusCode
 
 /** Documentation for the entry-to-journal link endpoints in `SyncCollectionRoutes.kt`. */
 internal object SyncAssociationDocs {
+    private val batchTooLarge =
+        ErrorCase(
+            "BATCH_TOO_LARGE",
+            "The request carries more than $MAX_ASSOCIATION_BATCH links, or its body is larger than a full batch could " +
+                "be. Split it into smaller requests.",
+            "Send at most $MAX_ASSOCIATION_BATCH links per request",
+        )
+
     val uploadAssociations: RouteConfig.() -> Unit = {
         bearerOperation(
             "uploadAssociations",
@@ -64,6 +74,7 @@ internal object SyncAssociationDocs {
                 "All links were saved.",
                 AssociationUploadResponse(uploadedCount = 1, uploadedAt = SyncExamples.SERVER_VERSION),
             )
+            syncError(HttpStatusCode.PayloadTooLarge, batchTooLarge)
             syncUnauthorized()
             syncStorageModeMismatch()
             syncMigrationHold()
@@ -186,6 +197,7 @@ internal object SyncAssociationDocs {
         }
         response {
             noContent("The links are gone.")
+            syncError(HttpStatusCode.PayloadTooLarge, batchTooLarge)
             syncUnauthorized()
             syncStorageModeMismatch()
             syncMigrationHold()
