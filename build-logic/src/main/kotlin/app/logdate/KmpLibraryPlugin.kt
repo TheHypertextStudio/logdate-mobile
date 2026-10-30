@@ -4,8 +4,6 @@ import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.VersionCatalog
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.plugins.ExtensionAware
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -20,7 +18,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 class KmpLibraryPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
-            val catalog = libsCatalog()
+            val catalog = libs
             pluginManager.apply("org.jetbrains.kotlin.multiplatform")
             pluginManager.apply("com.android.kotlin.multiplatform.library")
             pluginManager.apply("org.jetbrains.kotlin.plugin.serialization")
@@ -29,8 +27,8 @@ class KmpLibraryPlugin : Plugin<Project> {
                 (this as ExtensionAware).extensions.configure(
                     "android",
                     Action<KotlinMultiplatformAndroidLibraryTarget> {
-                        compileSdk = catalog.version("android-compileSdk")
-                        minSdk = catalog.version("android-minSdk")
+                        compileSdk = catalog.intVersion("android-compileSdk")
+                        minSdk = catalog.intVersion("android-minSdk")
                         withHostTestBuilder {}
                         compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
                     },
@@ -48,15 +46,3 @@ class KmpLibraryPlugin : Plugin<Project> {
         }
     }
 }
-
-/** Returns the root project's `libs` version catalog. */
-internal fun Project.libsCatalog(): VersionCatalog =
-    rootProject.extensions
-        .getByType(VersionCatalogsExtension::class.java)
-        .named("libs")
-
-/** Reads an integer version entry such as `android-compileSdk` from the catalog. */
-internal fun VersionCatalog.version(alias: String): Int = findVersion(alias).get().toString().toInt()
-
-/** Resolves a library provider from the catalog by its alias. */
-internal fun VersionCatalog.library(alias: String) = findLibrary(alias).get()
