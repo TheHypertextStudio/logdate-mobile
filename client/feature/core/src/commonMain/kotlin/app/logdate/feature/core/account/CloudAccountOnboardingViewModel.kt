@@ -307,11 +307,7 @@ class CloudAccountOnboardingViewModel(
             return
         }
 
-        _uiState.value =
-            currentState.copy(
-                isCreatingAccount = true,
-                errorMessage = null,
-            )
+        _uiState.update { it.copy(isCreatingAccount = true, errorMessage = null) }
 
         viewModelScope.launch {
             val result =
@@ -337,11 +333,12 @@ class CloudAccountOnboardingViewModel(
                 }
 
                 is CreatePasskeyAccountUseCase.Result.Error -> {
-                    _uiState.value =
-                        currentState.copy(
+                    _uiState.update {
+                        it.copy(
                             isCreatingAccount = false,
                             errorMessage = accountCreationFailureMessage(result.error),
                         )
+                    }
                 }
             }
         }
@@ -682,45 +679,25 @@ class CloudAccountOnboardingViewModel(
 
     private fun validateInputs(): Boolean {
         val currentState = _uiState.value
-        var isValid = true
+        val displayName = currentState.displayName
+        val username = currentState.username
+        val displayNameError =
+            when {
+                displayName.isBlank() -> Res.string.account_validation_display_name_required
+                displayName.length > 100 -> Res.string.account_validation_display_name_too_long
+                else -> null
+            }
+        val usernameError =
+            when {
+                username.isBlank() || username.length < 3 -> Res.string.account_validation_username_too_short
+                !username.matches(Regex("^[a-zA-Z0-9_]+$")) -> Res.string.account_validation_username_characters
+                currentState.usernameAvailability == UsernameAvailability.Taken -> Res.string.username_is_already_taken
+                else -> null
+            }
+        if (displayNameError == null && usernameError == null) return true
 
-        // Display name validation
-        if (currentState.displayName.isBlank()) {
-            _uiState.value =
-                currentState.copy(
-                    displayNameError = Res.string.account_validation_display_name_required,
-                )
-            isValid = false
-        } else if (currentState.displayName.length > 100) {
-            _uiState.value =
-                currentState.copy(
-                    displayNameError = Res.string.account_validation_display_name_too_long,
-                )
-            isValid = false
-        }
-
-        // Username validation
-        if (currentState.username.isBlank() || currentState.username.length < 3) {
-            _uiState.value =
-                currentState.copy(
-                    usernameError = Res.string.account_validation_username_too_short,
-                )
-            isValid = false
-        } else if (!currentState.username.matches(Regex("^[a-zA-Z0-9_]+$"))) {
-            _uiState.value =
-                currentState.copy(
-                    usernameError = Res.string.account_validation_username_characters,
-                )
-            isValid = false
-        } else if (currentState.usernameAvailability == UsernameAvailability.Taken) {
-            _uiState.value =
-                currentState.copy(
-                    usernameError = Res.string.username_is_already_taken,
-                )
-            isValid = false
-        }
-
-        return isValid
+        _uiState.update { it.copy(displayNameError = displayNameError, usernameError = usernameError) }
+        return false
     }
 
     private suspend fun syncDisplayNameToLocalProfile(displayName: String) {
