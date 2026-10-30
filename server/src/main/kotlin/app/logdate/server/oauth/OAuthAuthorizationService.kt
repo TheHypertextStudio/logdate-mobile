@@ -66,6 +66,9 @@ class OAuthAuthorizationService(
             throw OAuthInvalidRequestException("scope must include atproto")
         }
 
+        // The proof is checked before the client's metadata is fetched, so a request that cannot
+        // prove possession of a key never makes the server fetch anything.
+        val proof = dpopVerifier.verify(dpopProof, method = "POST", htu = htu).getOrElse { throw it }
         val authenticatedClient =
             clientMetadataResolver
                 .authenticateClient(
@@ -83,7 +86,6 @@ class OAuthAuthorizationService(
             throw OAuthInvalidClientException("Requested scopes exceed the client metadata document scope")
         }
 
-        val proof = dpopVerifier.verify(dpopProof, method = "POST", htu = htu).getOrElse { throw it }
         if (!usedCodeChallenges.firstUse("pkce:${codeChallenge.trim()}", CODE_CHALLENGE_MEMORY)) {
             throw OAuthInvalidRequestException("code_challenge has already been used; generate a new PKCE verifier")
         }
