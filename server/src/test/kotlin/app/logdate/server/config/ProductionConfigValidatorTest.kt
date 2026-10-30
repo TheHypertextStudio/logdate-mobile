@@ -276,6 +276,41 @@ class ProductionConfigValidatorTest {
     }
 
     @Test
+    fun `production requires TRUSTED_PROXY_HOPS while forwarded headers are trusted`() {
+        val failure =
+            assertFailsWith<InsecureProductionConfigException> {
+                ProductionConfigValidator.validate(
+                    profile = RuntimeProfile.PRODUCTION,
+                    readEnv = productionEnvWithout("TRUSTED_PROXY_HOPS"),
+                )
+            }
+        assertTrue(failure.message!!.contains("TRUSTED_PROXY_HOPS is required"))
+    }
+
+    @Test
+    fun `production rejects a TRUSTED_PROXY_HOPS that is not a small whole number`() {
+        listOf("-1", "two", "5").forEach { value ->
+            val failure =
+                assertFailsWith<InsecureProductionConfigException>(value) {
+                    ProductionConfigValidator.validate(
+                        profile = RuntimeProfile.PRODUCTION,
+                        readEnv = productionEnv("TRUSTED_PROXY_HOPS" to value),
+                    )
+                }
+            assertTrue(failure.message!!.contains("TRUSTED_PROXY_HOPS must be a whole number"), value)
+        }
+    }
+
+    @Test
+    fun `production accepts each explicit TRUSTED_PROXY_HOPS and needs none without forwarded headers`() {
+        listOf("0", "1").forEach { value ->
+            ProductionConfigValidator.validate(profile = RuntimeProfile.PRODUCTION, readEnv = productionEnv("TRUSTED_PROXY_HOPS" to value))
+        }
+        val direct = VALID_PRODUCTION_ENV - "TRUSTED_PROXY_HOPS" + ("TRUST_FORWARDED_HEADERS" to "false")
+        ProductionConfigValidator.validate(profile = RuntimeProfile.PRODUCTION, readEnv = { direct[it] })
+    }
+
+    @Test
     fun `reports every failure at once rather than bailing on first`() {
         val failure =
             assertFailsWith<InsecureProductionConfigException> {
@@ -609,6 +644,7 @@ class ProductionConfigValidatorTest {
                 "ATPROTO_PDS_SERVICE_URL" to "https://cloud.logdate.app",
                 "BILLING_PROVIDER" to "stripe",
                 "HEALTH_INTERNAL_TOKEN" to "health-token",
+                "TRUSTED_PROXY_HOPS" to "0",
                 "RELEASE_VERSION" to VALID_RELEASE,
                 "SERVER_ENCRYPTION_ENABLED" to "true",
                 "SERVER_ENCRYPTION_KEY" to VALID_ENCRYPTION_KEY,
