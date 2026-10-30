@@ -2,7 +2,6 @@ package app.logdate.feature.onboarding.ui
 
 import app.logdate.client.device.crypto.IdentityKeyManager
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
-import app.logdate.client.repository.journals.JournalNote
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.v2.NoWatchSetupCoordinator
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupCoordinator
@@ -26,8 +25,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -144,8 +141,7 @@ class OnboardingViewModelTest {
     @Test
     fun `set recommendations enabled true delegates to repository`() =
         runTest {
-            viewModel.setRecommendationsEnabled(true)
-            advanceUntilIdle()
+            viewModel.persistRecommendationsEnabled(true)
 
             assertTrue(fakeMemoriesSettingsRepository.contextualRecommendationsEnabled)
         }
@@ -153,8 +149,7 @@ class OnboardingViewModelTest {
     @Test
     fun `set recommendations enabled false delegates to repository`() =
         runTest {
-            viewModel.setRecommendationsEnabled(false)
-            advanceUntilIdle()
+            viewModel.persistRecommendationsEnabled(false)
 
             assertEquals(false, fakeMemoriesSettingsRepository.contextualRecommendationsEnabled)
         }
@@ -162,8 +157,7 @@ class OnboardingViewModelTest {
     @Test
     fun `enable location tracking delegates to repository`() =
         runTest {
-            viewModel.enableLocationTracking()
-            advanceUntilIdle()
+            viewModel.persistLocationTrackingEnabled()
 
             assertTrue(fakeLocationSettingsRepository.backgroundTrackingEnabled)
         }
@@ -173,8 +167,7 @@ class OnboardingViewModelTest {
         runTest {
             fakeDayBoundarySettingsRepository.setSleepBasedBoundariesEnabled(false)
 
-            viewModel.enableSleepBasedDayBoundaries()
-            advanceUntilIdle()
+            viewModel.persistSleepBasedDayBoundariesEnabled(enabled = true)
 
             assertTrue(fakeDayBoundarySettingsRepository.sleepBasedBoundariesEnabled)
         }
@@ -182,8 +175,7 @@ class OnboardingViewModelTest {
     @Test
     fun `disable sleep based day boundaries delegates to repository`() =
         runTest {
-            viewModel.disableSleepBasedDayBoundaries()
-            advanceUntilIdle()
+            viewModel.persistSleepBasedDayBoundariesEnabled(enabled = false)
 
             assertEquals(false, fakeDayBoundarySettingsRepository.sleepBasedBoundariesEnabled)
         }
@@ -217,8 +209,7 @@ class OnboardingViewModelTest {
             fakeOnboardingDeviceStateRepository.markNotificationsHandled()
             advanceUntilIdle()
 
-            viewModel.completeOnboarding()
-            advanceUntilIdle()
+            viewModel.completeOnboardingIfEligible()
 
             assertTrue(fakeUserStateRepository.isOnboardingComplete)
         }
@@ -324,16 +315,6 @@ class OnboardingViewModelTest {
             assertTrue(viewModel.progressSnapshot.value.recommendationsHandledOnThisDevice)
             assertTrue(viewModel.progressSnapshot.value.dayBoundariesHandledOnThisDevice)
             assertTrue(viewModel.progressSnapshot.value.locationHandledOnThisDevice)
-        }
-
-    @Test
-    fun `an entry added during onboarding records the time zone it was written in`() =
-        runTest {
-            viewModel.addEntry(NewEntryData(timestamp = Instant.fromEpochMilliseconds(1_710_000_000_000), textContent = "Hello"))
-            advanceUntilIdle()
-
-            val note = assertIs<JournalNote.Text>(fakeNotesRepository.created.single())
-            assertNotNull(note.timeZoneId)
         }
 
     @Test

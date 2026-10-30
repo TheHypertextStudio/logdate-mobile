@@ -11,9 +11,6 @@ import app.logdate.client.domain.identity.ObserveUserIdentityUseCase
 import app.logdate.client.domain.recommendation.MemoriesSettingsRepository
 import app.logdate.client.domain.streak.RefreshStreakUseCase
 import app.logdate.client.location.settings.LocationTrackingSettingsRepository
-import app.logdate.client.repository.journals.JournalNote
-import app.logdate.client.repository.journals.JournalNotesRepository
-import app.logdate.client.repository.journals.SystemCaptureTimeZone
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.v2.NoWatchSetupCoordinator
@@ -31,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -44,7 +42,6 @@ import kotlin.time.Instant
  * A view model for the onboarding flow.
  */
 class OnboardingViewModel(
-    private val journalNotesRepository: JournalNotesRepository,
     private val userStateRepository: UserStateRepository,
     private val memoriesSettingsRepository: MemoriesSettingsRepository,
     private val locationTrackingSettingsRepository: LocationTrackingSettingsRepository,
@@ -61,8 +58,7 @@ class OnboardingViewModel(
     private val _healthConnectStatus = MutableStateFlow(HealthConnectStatus.CHECKING)
     private var healthStatusJob: Job? = null
 
-    val uiState: StateFlow<OnboardingUiState> =
-        _uiState.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), OnboardingUiState())
+    val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
     val healthConnectStatus: StateFlow<HealthConnectStatus> = _healthConnectStatus
 
@@ -178,44 +174,6 @@ class OnboardingViewModel(
         provisionIdentityKey()
     }
 
-    /**
-     * Creates a new journal entry.
-     */
-    fun addEntry(newEntryData: NewEntryData) {
-        viewModelScope.launch {
-            // TODO: Support non-text entry types
-            journalNotesRepository.create(
-                JournalNote.Text(
-                    content = newEntryData.textContent,
-                    creationTimestamp = newEntryData.timestamp,
-                    lastUpdated = newEntryData.timestamp,
-                    timeZoneId = SystemCaptureTimeZone.currentTimeZoneId(),
-                ),
-            )
-            _uiState.update {
-                it.copy(entrySubmitted = true)
-            }
-            Napier.d(
-                tag = "OnboardingViewModel",
-                message = "Successfully added entry: $newEntryData",
-            )
-        }
-    }
-
-    /**
-     * Sends a test notification to the user.
-     *
-     * This should be used to confirm how users will be notified for journaling reminders.
-     */
-    fun sendTestNotification() {
-        viewModelScope.launch {
-//            notifier.sendNotification(SystemNotification(
-//                label = "",
-//                bodyContent = "It's time to write.",
-//            ))
-        }
-    }
-
     fun updateBirthday(birthday: Instant) {
         viewModelScope.launch {
             persistBirthday(birthday)
@@ -227,45 +185,15 @@ class OnboardingViewModel(
             userStateRepository.setBirthday(birthday)
         }
 
-    /**
-     * Enables or disables contextual recommendations.
-     */
-    fun setRecommendationsEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            persistRecommendationsEnabled(enabled)
-        }
-    }
-
     suspend fun persistRecommendationsEnabled(enabled: Boolean): Result<Unit> =
         runCatching {
             memoriesSettingsRepository.setContextualRecommendationsEnabled(enabled)
         }
 
-    /**
-     * Enables background location tracking after the user opts in.
-     */
-    fun enableLocationTracking() {
-        viewModelScope.launch {
-            persistLocationTrackingEnabled()
-        }
-    }
-
     suspend fun persistLocationTrackingEnabled(): Result<Unit> =
         runCatching {
             locationTrackingSettingsRepository.setBackgroundTrackingEnabled(true)
         }
-
-    fun enableSleepBasedDayBoundaries() {
-        viewModelScope.launch {
-            persistSleepBasedDayBoundariesEnabled(enabled = true)
-        }
-    }
-
-    fun disableSleepBasedDayBoundaries() {
-        viewModelScope.launch {
-            persistSleepBasedDayBoundariesEnabled(enabled = false)
-        }
-    }
 
     suspend fun persistSleepBasedDayBoundariesEnabled(enabled: Boolean): Result<Unit> =
         runCatching {
@@ -305,18 +233,6 @@ class OnboardingViewModel(
     fun selectPlan(option: LogDateBackupPlanOption) {
         _uiState.update {
             it.copy(planOption = option)
-        }
-    }
-
-    fun capturePhoto() {
-    }
-
-    /**
-     * Marks the onboarding flow as complete.
-     */
-    fun completeOnboarding() {
-        viewModelScope.launch {
-            completeOnboardingIfEligible()
         }
     }
 
