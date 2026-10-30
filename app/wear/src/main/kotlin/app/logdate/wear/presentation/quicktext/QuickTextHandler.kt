@@ -103,7 +103,7 @@ internal suspend fun saveQuickTextAndComplete(
                 capturedDuring = captureActivity.now(),
             )
         notesRepository.create(note)
-        Napier.d("Quick text note saved: ${spokenText.take(30)}...")
+        Napier.d("Quick text note saved (${spokenText.length} characters)")
     } catch (e: Exception) {
         Napier.e("Failed to save quick text note", e)
     } finally {

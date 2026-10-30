@@ -161,11 +161,7 @@ fun NoteEditorScreen(
             try {
                 // Handle initial text content if explicitly provided
                 if (!initialTextContent.isNullOrBlank()) {
-                    Napier.d(
-                        "NoteEditorScreen: Setting initial text content: '${initialTextContent.take(
-                            20,
-                        )}${if (initialTextContent.length > 20) "..." else ""}'",
-                    )
+                    Napier.d("NoteEditorScreen: Setting ${initialTextContent.length} characters of initial text")
                     viewModel.setInitialTextContent(initialTextContent)
                 }
 
