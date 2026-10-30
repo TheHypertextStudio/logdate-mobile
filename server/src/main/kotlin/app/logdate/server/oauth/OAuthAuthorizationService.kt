@@ -153,7 +153,7 @@ class OAuthAuthorizationService(
         val code = randomToken()
         runtimeStateRepository.saveAuthorizationCode(
             StoredAuthorizationCode(
-                code = code,
+                code = storageKey(code),
                 clientId = stored.clientId,
                 redirectUri = stored.redirectUri,
                 subjectDid = subjectDid,
@@ -215,7 +215,7 @@ class OAuthAuthorizationService(
     ): OAuthTokenResponse {
         val stored =
             runtimeStateRepository
-                .takeAuthorizationCode(code)
+                .takeAuthorizationCode(storageKey(code))
                 ?.takeIf { clock.now() < it.expiresAt }
                 ?: throw OAuthInvalidGrantException("Authorization code is invalid or expired")
         if (stored.clientId != clientId || stored.redirectUri != redirectUri) {
@@ -261,7 +261,7 @@ class OAuthAuthorizationService(
         val saved =
             runtimeStateRepository.saveGrantedRefreshToken(
                 StoredRefreshToken(
-                    token = refreshToken,
+                    token = storageKey(refreshToken),
                     clientId = stored.clientId,
                     subjectDid = stored.subjectDid,
                     scope = stored.scope,
@@ -296,7 +296,7 @@ class OAuthAuthorizationService(
     ): OAuthTokenResponse {
         val stored =
             runtimeStateRepository
-                .findRefreshToken(refreshToken)
+                .findRefreshToken(storageKey(refreshToken))
                 ?.takeIf { it.revokedAt == null && clock.now() < it.expiresAt }
                 ?: throw OAuthInvalidGrantException("Refresh token is invalid or expired")
         if (stored.clientId != clientId) {
@@ -357,7 +357,7 @@ class OAuthAuthorizationService(
         dpopProof: String,
         htu: String,
     ) {
-        val stored = runtimeStateRepository.findRefreshToken(refreshToken) ?: return
+        val stored = runtimeStateRepository.findRefreshToken(storageKey(refreshToken)) ?: return
         if (stored.clientId != clientId) {
             throw OAuthInvalidGrantException("Refresh token does not belong to this client")
         }
@@ -387,7 +387,7 @@ class OAuthAuthorizationService(
             throw OAuthInvalidGrantException("Refresh token DPoP key did not match the original grant")
         }
 
-        runtimeStateRepository.revokeRefreshToken(refreshToken, clock.now())
+        runtimeStateRepository.revokeRefreshToken(storageKey(refreshToken), clock.now())
     }
 
     /**
@@ -496,10 +496,10 @@ class OAuthAuthorizationService(
         val rotatedRefreshToken = randomToken()
         val rotated =
             runtimeStateRepository.rotateRefreshToken(
-                oldToken = refreshToken,
+                oldToken = storageKey(refreshToken),
                 replacement =
                     stored.copy(
-                        token = rotatedRefreshToken,
+                        token = storageKey(rotatedRefreshToken),
                         expiresAt = clock.now() + refreshTokenLifetime(stored.clientId),
                         revokedAt = null,
                     ),
@@ -530,6 +530,17 @@ class OAuthAuthorizationService(
 
     private fun refreshTokenLifetime(clientId: String) =
         if (clientId in trustedClientIds) TRUSTED_REFRESH_TOKEN_TTL else UNTRUSTED_REFRESH_TOKEN_TTL
+
+    /**
+     * The key a code or refresh token is stored under: its SHA-256, base64url-encoded. The value
+     * itself is only ever given to the client, so a copy of the database holds nothing that can be
+     * redeemed.
+     */
+    private fun storageKey(secret: String): String =
+        Base64
+            .getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(secret.toByteArray(StandardCharsets.UTF_8)))
 
     private fun randomToken(): String {
         val bytes = ByteArray(TOKEN_BYTES)
