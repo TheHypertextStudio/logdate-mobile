@@ -5,12 +5,16 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.journals.NoteCoordinates
 import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.wear.location.WearLocationCaptureCoordinator
+import io.github.aakira.napier.Antilog
+import io.github.aakira.napier.LogLevel
+import io.github.aakira.napier.Napier
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
@@ -118,4 +122,39 @@ class QuickTextHandlerTest {
 
             assertEquals(listOf("location", "create", "onDone"), callOrder)
         }
+
+    @Test
+    fun `save never writes the spoken words to the log`() =
+        runTest {
+            coEvery { notesRepository.create(any()) } returns Uuid.random()
+            coEvery { locationCoordinator.captureForJournalEntry() } returns null
+            val log = CapturingAntilog()
+            Napier.base(log)
+            try {
+                saveQuickTextAndComplete(
+                    notesRepository = notesRepository,
+                    locationCaptureCoordinator = locationCoordinator,
+                    spokenText = "call the pharmacy about refills",
+                    onDone = {},
+                )
+            } finally {
+                Napier.takeLogarithm(log)
+            }
+
+            assertTrue(log.messages.isNotEmpty())
+            assertFalse(log.messages.any { "pharmacy" in it })
+        }
+
+    private class CapturingAntilog : Antilog() {
+        val messages = mutableListOf<String>()
+
+        override fun performLog(
+            priority: LogLevel,
+            tag: String?,
+            throwable: Throwable?,
+            message: String?,
+        ) {
+            if (message != null) messages += message
+        }
+    }
 }
