@@ -77,7 +77,6 @@ fun JournalsOverviewScreen(
         journals = state.journals,
         layoutMode = state.layoutMode,
         sortOption = state.sortOption,
-        activeFilters = state.activeFilters,
         searchQuery = state.searchQuery,
         isEntrySearchInProgress = state.isEntrySearchInProgress,
         entryResults = entryResults,
@@ -90,7 +89,6 @@ fun JournalsOverviewScreen(
         onQueryChange = viewModel::updateSearchQuery,
         onToggleLayoutMode = viewModel::toggleLayoutMode,
         onSortOptionSelected = viewModel::setSortOption,
-        onToggleFilter = viewModel::toggleFilter,
         modifier = modifier,
     )
 }
@@ -107,7 +105,6 @@ fun JournalsOverviewScreenContent(
     journals: List<JournalListItemUiState>,
     layoutMode: JournalLayoutMode,
     sortOption: JournalSortOption,
-    activeFilters: Set<JournalFilter>,
     searchQuery: String,
     isEntrySearchInProgress: Boolean = false,
     entryResults: List<SearchResult>,
@@ -119,7 +116,6 @@ fun JournalsOverviewScreenContent(
     onQueryChange: (String) -> Unit,
     onToggleLayoutMode: () -> Unit,
     onSortOptionSelected: (JournalSortOption) -> Unit,
-    onToggleFilter: (JournalFilter) -> Unit,
     onNavigationClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -134,13 +130,11 @@ fun JournalsOverviewScreenContent(
                     journals,
                     layoutMode,
                     sortOption,
-                    activeFilters,
                     onOpenJournal,
                     onBrowseJournals,
                     onCreateJournal,
                     onToggleLayoutMode,
                     onSortOptionSelected,
-                    onToggleFilter,
                     Modifier.weight(1f).fillMaxWidth(),
                 )
             }
@@ -176,13 +170,11 @@ fun JournalsOverviewScreenContent(
                 journals = journals,
                 layoutMode = layoutMode,
                 sortOption = sortOption,
-                activeFilters = activeFilters,
                 onOpenJournal = onOpenJournal,
                 onBrowseJournals = onBrowseJournals,
                 onCreateJournal = onCreateJournal,
                 onToggleLayoutMode = onToggleLayoutMode,
                 onSortOptionSelected = onSortOptionSelected,
-                onToggleFilter = onToggleFilter,
                 showLoading = false,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -223,13 +215,11 @@ fun JournalsOverviewScreenContent(
                         journals = journals,
                         layoutMode = layoutMode,
                         sortOption = sortOption,
-                        activeFilters = activeFilters,
                         onOpenJournal = onOpenJournal,
                         onBrowseJournals = onBrowseJournals,
                         onCreateJournal = onCreateJournal,
                         onToggleLayoutMode = onToggleLayoutMode,
                         onSortOptionSelected = onSortOptionSelected,
-                        onToggleFilter = onToggleFilter,
                         showLoading = false,
                         modifier = Modifier.fillMaxSize().weight(1f),
                     )

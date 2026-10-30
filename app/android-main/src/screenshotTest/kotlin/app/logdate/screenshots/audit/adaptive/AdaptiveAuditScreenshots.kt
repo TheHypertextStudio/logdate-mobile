@@ -340,7 +340,6 @@ fun A06_JournalsOverview() {
             journals = auditJournals,
             layoutMode = JournalLayoutMode.CAROUSEL,
             sortOption = JournalSortOption.LAST_UPDATED,
-            activeFilters = emptySet(),
             searchQuery = "audit",
             entryResults = auditSearchResults,
             onOpenJournal = {},
@@ -351,7 +350,6 @@ fun A06_JournalsOverview() {
             onQueryChange = {},
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
         )
     }
 }
@@ -403,7 +401,6 @@ fun A40_JournalsOverviewBookPosture() {
                 journals = auditJournals,
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 searchQuery = "audit",
                 entryResults = auditSearchResults,
                 onOpenJournal = {},
@@ -414,7 +411,6 @@ fun A40_JournalsOverviewBookPosture() {
                 onQueryChange = {},
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
     }
@@ -444,7 +440,6 @@ fun A42_EmptyJournalsBookPosture() {
                 journals = emptyList(),
                 layoutMode = JournalLayoutMode.CAROUSEL,
                 sortOption = JournalSortOption.LAST_UPDATED,
-                activeFilters = emptySet(),
                 searchQuery = "",
                 entryResults = emptyList(),
                 onOpenJournal = {},
@@ -455,7 +450,6 @@ fun A42_EmptyJournalsBookPosture() {
                 onQueryChange = {},
                 onToggleLayoutMode = {},
                 onSortOptionSelected = {},
-                onToggleFilter = {},
             )
         }
     }
@@ -470,7 +464,6 @@ fun A43_EmptyJournalsResponsiveStates() {
             journals = emptyList(),
             layoutMode = JournalLayoutMode.CAROUSEL,
             sortOption = JournalSortOption.LAST_UPDATED,
-            activeFilters = emptySet(),
             searchQuery = "",
             entryResults = emptyList(),
             onOpenJournal = {},
@@ -481,7 +474,6 @@ fun A43_EmptyJournalsResponsiveStates() {
             onQueryChange = {},
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
         )
     }
 }

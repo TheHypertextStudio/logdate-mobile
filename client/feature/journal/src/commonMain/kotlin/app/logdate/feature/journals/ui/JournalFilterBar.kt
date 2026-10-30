@@ -21,8 +21,6 @@ import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,8 +42,6 @@ import app.logdate.ui.workspace.workspaceControlBackdrop
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.cd_switch_to_carousel
 import logdate.client.feature.journal.generated.resources.cd_switch_to_grid
-import logdate.client.feature.journal.generated.resources.filter_owned_by_me
-import logdate.client.feature.journal.generated.resources.filter_shared
 import logdate.client.feature.journal.generated.resources.label_sorting_by
 import logdate.client.feature.journal.generated.resources.sort_created
 import logdate.client.feature.journal.generated.resources.sort_last_updated
@@ -58,7 +54,7 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * Pinned action bar above the journal list content.
  *
- * Horizontally scrollable row containing a layout mode toggle, sort dropdown, and filter chips.
+ * Horizontally scrollable row containing a layout mode toggle and a sort dropdown.
  * The toggle button shows the *opposite* mode's icon as an affordance (e.g. grid icon when
  * in carousel mode). The background animates to `surfaceContainerHigh` when content scrolls
  * underneath, providing a visual separation cue. Only grid mode triggers this — carousel
@@ -68,10 +64,8 @@ import org.jetbrains.compose.resources.stringResource
 fun JournalFilterBar(
     layoutMode: JournalLayoutMode,
     sortOption: JournalSortOption,
-    activeFilters: Set<JournalFilter>,
     onToggleLayoutMode: () -> Unit,
     onSortOptionSelected: (JournalSortOption) -> Unit,
-    onToggleFilter: (JournalFilter) -> Unit,
     modifier: Modifier = Modifier,
     isScrolled: Boolean = false,
 ) {
@@ -121,30 +115,6 @@ fun JournalFilterBar(
         SortDropdownChip(
             sortOption = sortOption,
             onSortOptionSelected = onSortOptionSelected,
-        )
-
-        FilterChip(
-            selected = JournalFilter.OWNED_BY_ME in activeFilters,
-            onClick = { onToggleFilter(JournalFilter.OWNED_BY_ME) },
-            label = { Text(stringResource(Res.string.filter_owned_by_me)) },
-            modifier = Modifier.testTag("FilterChip_OWNED_BY_ME"),
-            colors =
-                FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-        )
-
-        FilterChip(
-            selected = JournalFilter.SHARED in activeFilters,
-            onClick = { onToggleFilter(JournalFilter.SHARED) },
-            label = { Text(stringResource(Res.string.filter_shared)) },
-            modifier = Modifier.testTag("FilterChip_SHARED"),
-            colors =
-                FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
         )
     }
 }

@@ -200,7 +200,6 @@ private fun WorkspaceSceneContent(
         journals = ScreenshotTestData.sampleJournals.map(JournalListItemUiState::ExistingJournal),
         layoutMode = JournalLayoutMode.GRID,
         sortOption = JournalSortOption.LAST_UPDATED,
-        activeFilters = emptySet(),
         searchQuery = "",
         entryResults = emptyList(),
         onOpenJournal = {},
@@ -210,7 +209,6 @@ private fun WorkspaceSceneContent(
         onQueryChange = {},
         onToggleLayoutMode = {},
         onSortOptionSelected = {},
-        onToggleFilter = {},
     )
 
 @Composable internal fun LibraryFixture() =

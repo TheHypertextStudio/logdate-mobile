@@ -110,7 +110,6 @@ class JournalsCollectionSearchTest {
             journals = search.filterJournals(journals, SearchQuery(query)).map { JournalListItemUiState.ExistingJournal(it) },
             layoutMode = JournalLayoutMode.GRID,
             sortOption = JournalSortOption.TITLE,
-            activeFilters = emptySet(),
             searchQuery = query,
             entryResults = emptyList(),
             onOpenJournal = {},
@@ -120,7 +119,6 @@ class JournalsCollectionSearchTest {
             onQueryChange = onQuery,
             onToggleLayoutMode = {},
             onSortOptionSelected = {},
-            onToggleFilter = {},
             modifier = modifier.testTag("journals_collection"),
         )
     }
