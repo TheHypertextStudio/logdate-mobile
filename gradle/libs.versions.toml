@@ -19,6 +19,8 @@ kover = "0.9.8"
 screenshot = "0.0.1-alpha14"
 benManesVersions = "0.53.0"
 ktlint = "13.1.0"
+# The ktlint engine the ktlint Gradle plugin runs
+ktlintEngine = "1.5.0"
 detekt = "2.0.0-alpha.3"
 
 # Android Build Versions
@@ -372,7 +374,6 @@ firebase-perf = { group = "com.google.firebase", name = "firebase-perf" }
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
 firebase-perf-plugin = { group = "com.google.firebase", name = "perf-plugin", version.ref = "firebase-perf-plugin" }
 
-
 ## Google Play Services
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
@@ -408,6 +409,12 @@ androidx-credentials = { group = "androidx.credentials", name = "credentials", v
 androidx-credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "androidxCredentials" }
 
 versioning-plugin = { module = "org.jetbrains.dokka:versioning-plugin", version.ref = "versioningPlugin" }
+
+# Gradle plugins that build-logic compiles against
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokkaGradlePlugin" }
+
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 mlkit-subject-segmentation = { group = "com.google.android.gms", name = "play-services-mlkit-subject-segmentation", version.ref = "mlkit-subject-segmentation" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }

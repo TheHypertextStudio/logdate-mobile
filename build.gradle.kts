@@ -83,6 +83,8 @@ tasks.register("test") {
     dependsOn(gradle.includedBuild("build-logic").task(":test"))
 }
 
+val ktlintEngineVersion = libs.versions.ktlintEngine
+
 subprojects {
     apply {
         // TODO: Migrate to version catalog
@@ -91,7 +93,7 @@ subprojects {
     }
 
     configure<KtlintExtension> {
-        version.set("1.5.0")
+        version.set(ktlintEngineVersion)
         filter {
             exclude { it.file.path.contains("/build/") }
         }
