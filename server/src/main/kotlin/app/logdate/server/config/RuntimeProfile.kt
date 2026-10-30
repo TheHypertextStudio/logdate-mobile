@@ -6,6 +6,9 @@ package app.logdate.server.config
  * Production mode enables strict startup validation — see [ProductionConfigValidator] — which refuses
  * to boot if required secrets are missing or obviously insecure. Development and test profiles keep
  * the permissive defaults that local iteration and the test suite rely on.
+ *
+ * An unset `LOGDATE_ENV` is a local run and selects [DEVELOPMENT]. Any other value that isn't one of
+ * the names below stops the server, so a mistyped production setting can't fall back to development.
  */
 enum class RuntimeProfile {
     PRODUCTION,
@@ -24,7 +27,11 @@ enum class RuntimeProfile {
                 "production", "prod" -> PRODUCTION
                 "test" -> TEST
                 "", "development", "dev", "local" -> DEVELOPMENT
-                else -> DEVELOPMENT
+                else ->
+                    error(
+                        "$ENV_VAR is '$raw', which is not a known profile. Set it to 'production' for a deployment, " +
+                            "or 'development' or 'test' for a local run.",
+                    )
             }
         }
     }
