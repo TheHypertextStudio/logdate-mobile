@@ -36,7 +36,9 @@ import io.github.smiley4.ktoropenapi.post
 import io.github.smiley4.ktoropenapi.put
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
+import io.ktor.server.request.contentLength
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -239,6 +241,29 @@ internal fun Route.journalRoutes(
     }
 }
 
+/** The most links one association upload or delete may carry. */
+internal const val MAX_ASSOCIATION_BATCH = 10_000
+
+/** The largest association request body read: a full batch of links with room to spare. */
+private const val MAX_ASSOCIATION_BODY_BYTES = 8L * 1024 * 1024
+
+/**
+ * Answers `413 BATCH_TOO_LARGE` and returns true when the request declares a body larger than any
+ * full batch of links, before the body is read.
+ */
+private suspend fun ApplicationCall.refuseOversizedAssociationBody(): Boolean {
+    val declared = request.contentLength() ?: return false
+    if (declared <= MAX_ASSOCIATION_BODY_BYTES) return false
+    respondTooManyAssociations()
+    return true
+}
+
+private suspend fun ApplicationCall.respondTooManyAssociations() =
+    respond(
+        HttpStatusCode.PayloadTooLarge,
+        error("BATCH_TOO_LARGE", "Send at most $MAX_ASSOCIATION_BATCH links per request"),
+    )
+
 internal fun Route.associationRoutes(
     accessTokenVerifier: AccessTokenVerifier?,
     storageModes: AccountStorageModes?,
@@ -252,7 +277,9 @@ internal fun Route.associationRoutes(
             var success = false
             try {
                 val userId = extractSyncUserId(call, accessTokenVerifier, storageModes) ?: return@post
+                if (call.refuseOversizedAssociationBody()) return@post
                 val req = call.receive<AssociationUploadRequest>()
+                if (req.associations.size > MAX_ASSOCIATION_BATCH) return@post call.respondTooManyAssociations()
                 val uploadedAt = System.currentTimeMillis()
                 val associations =
                     req.associations.map {
@@ -371,7 +398,9 @@ internal fun Route.associationRoutes(
             var success = false
             try {
                 val userId = extractSyncUserId(call, accessTokenVerifier, storageModes) ?: return@delete
+                if (call.refuseOversizedAssociationBody()) return@delete
                 val req = call.receive<AssociationDeleteRequest>()
+                if (req.associations.size > MAX_ASSOCIATION_BATCH) return@delete call.respondTooManyAssociations()
                 collectionsRepository.deleteAssociations(
                     userId,
                     req.associations.map { LogDateAssociationRef(it.journalId, it.contentId) },
