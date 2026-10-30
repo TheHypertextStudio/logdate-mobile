@@ -16,7 +16,6 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import studio.hypertext.atproto.repo.RepoErrorMessage
@@ -31,6 +30,12 @@ private const val MAX_LIST_LIMIT = 1000
 
 /** A follower that takes longer than this to accept one frame is too slow to keep. */
 private val SEND_TIMEOUT = 30.seconds
+
+/**
+ * The largest frame a follower may send. Followers only read; any message from one closes the
+ * connection, and this keeps the server from buffering a large frame before it can do so.
+ */
+private const val FOLLOWER_MAX_FRAME_BYTES = 1_024L
 
 /**
  * `com.atproto.sync.subscribeRepos` and `com.atproto.sync.listRepos`, the two methods a relay uses
@@ -73,6 +78,7 @@ internal fun Route.repoEventStreamRoutes(
 }
 
 private suspend fun DefaultWebSocketServerSession.follow(stream: RepoEventStream) {
+    maxFrameSize = FOLLOWER_MAX_FRAME_BYTES
     val cursorText = call.request.queryParameters["cursor"]
     val cursor = cursorText?.toLongOrNull()?.takeIf { it >= 0 }
     if (cursorText != null && cursor == null) {
@@ -102,7 +108,10 @@ private suspend fun DefaultWebSocketServerSession.follow(stream: RepoEventStream
                 }
             }
         try {
-            incoming.consumeEach { }
+            // Pings and the closing handshake don't arrive here, so anything that does is a message.
+            if (incoming.receiveCatching().isSuccess) {
+                close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "This stream does not accept messages"))
+            }
         } finally {
             sender.cancel()
         }
