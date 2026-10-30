@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -105,6 +106,9 @@ class LoadedDraftRevealTest {
             waitForIdle()
             assertEquals(0, page.scroll.value, "Consumed reveal must not fight later scrolling or input updates")
             assertEquals(1, consumes)
+            onAllNodesWithTag("editor_text_input").assertCountEquals(0)
+            runOnIdle { runBlocking { page.scroll.scrollTo(revealed) } }
+            waitForIdle()
             assertEquals(inputIdentity, onAllNodesWithTag("editor_text_input").onFirst().fetchSemanticsNode().id)
         }
 

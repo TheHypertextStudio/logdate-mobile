@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -18,8 +19,17 @@ class EntryPageSurfaceMotionTest {
     @Test
     fun `paper grows from the block without recoloring the workspace`() =
         runDesktopComposeUiTest(width = 360, height = 800) {
-            setContent { EntryPageStudy() }
+            val page = EntryPageOverviewState(false)
+            setContent { EntryPageStudy(overviewStateOverride = page) }
             waitForIdle()
+            val previewTop = onNodeWithTag("handwriting_preview").getUnclippedBoundsInRoot().top.value
+            runOnIdle {
+                kotlinx.coroutines.runBlocking {
+                    page.scroll.scrollTo(
+                        (page.scroll.value + previewTop - 160).toInt().coerceAtLeast(0),
+                    )
+                }
+            }
 
             fun corner(): Color = onRoot().captureToImage().toPixelMap()[359, 0]
 

@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
@@ -43,7 +44,7 @@ class CameraCreationClearanceTest(
     private val review: Boolean,
 ) {
     @Test
-    fun cameraControlsStayAboveChoicesWhilePreviewPaintsBehindSystemUi() =
+    fun cameraControlsOwnLowerAreaWithoutCreationChoicesWhilePreviewPaintsBehindSystemUi() =
         runDesktopComposeUiTest(width = width, height = height) {
             val block = CameraBlockUiState()
             var taps = 0
@@ -82,8 +83,8 @@ class CameraCreationClearanceTest(
             }
             val target = onNodeWithTag("camera_probe")
             val bounds = target.fetchSemanticsNode().boundsInRoot
-            val chooser = onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInRoot
-            assertTrue(bounds.bottom <= chooser.top, "Camera action must be above the separate mode chooser: $bounds vs $chooser")
+            onNodeWithTag("entry_creation_actions").assertIsNotDisplayed()
+            assertTrue(bounds.bottom <= height - 20, "Camera action must clear system navigation: $bounds")
             assertTrue(bounds.width >= 48f && bounds.height >= 48f)
             target.performTouchInput { click() }
             assertEquals(1, taps, "The physical camera action must not be intercepted by creation choices")
