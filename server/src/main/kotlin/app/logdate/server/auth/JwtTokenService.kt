@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Mac
@@ -27,7 +28,7 @@ import kotlin.uuid.Uuid
  */
 @OptIn(ExperimentalUuidApi::class)
 class JwtTokenService(
-    private val secret: String = generateSecret(),
+    secret: String = generateSecret(),
     private val issuer: String = "logdate.app",
     private val audience: String = "logdate-api",
 ) : TokenService {
@@ -46,6 +47,16 @@ class JwtTokenService(
             SecureRandom().nextBytes(bytes)
             return Base64.getEncoder().encodeToString(bytes)
         }
+    }
+
+    private val signingKey = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), ALGORITHM)
+
+    // A Mac is not thread-safe, so each thread keeps one initialised with the key. The first is made
+    // here so a key the provider refuses stops startup instead of failing every request.
+    private val macs: ThreadLocal<Mac> = ThreadLocal.withInitial { Mac.getInstance(ALGORITHM).apply { init(signingKey) } }
+
+    init {
+        macs.get()
     }
 
     @Serializable
@@ -186,7 +197,12 @@ class JwtTokenService(
             val message = "$encodedHeader.$encodedPayload"
             val expectedSignature = createSignature(message)
 
-            if (providedSignature != expectedSignature) {
+            val signatureMatches =
+                MessageDigest.isEqual(
+                    expectedSignature.toByteArray(StandardCharsets.US_ASCII),
+                    providedSignature.toByteArray(StandardCharsets.US_ASCII),
+                )
+            if (!signatureMatches) {
                 Napier.w("JWT signature verification failed")
                 return null
             }
@@ -221,13 +237,7 @@ class JwtTokenService(
         }
     }
 
-    private fun createSignature(message: String): String {
-        val mac = Mac.getInstance(ALGORITHM)
-        val secretKey = SecretKeySpec(secret.toByteArray(StandardCharsets.UTF_8), ALGORITHM)
-        mac.init(secretKey)
-        val signature = mac.doFinal(message.toByteArray(StandardCharsets.UTF_8))
-        return base64UrlEncode(signature)
-    }
+    private fun createSignature(message: String): String = base64UrlEncode(macs.get().doFinal(message.toByteArray(StandardCharsets.UTF_8)))
 
     private fun base64UrlEncode(data: String): String = base64UrlEncode(data.toByteArray(StandardCharsets.UTF_8))
 
