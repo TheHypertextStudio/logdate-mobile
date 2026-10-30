@@ -71,12 +71,16 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.account_validation_display_name_required
+import logdate.client.feature.core.generated.resources.account_validation_username_too_short
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -249,6 +253,25 @@ class CloudAccountOnboardingViewModelTest {
 
             assertEquals("A polished description", passkeyRepo.lastCreationRequest?.bio)
             assertEquals("I keep a journal every morning", passkeyRepo.lastCreationRequest?.originalBio)
+        }
+
+    @Test
+    fun `createAccount reports every invalid field at once`() =
+        runTest {
+            val passkeyRepo = FakePasskeyAccountRepository()
+            val viewModel = buildViewModel(isEmailVerificationAvailable = false, passkeyRepo = passkeyRepo)
+            advanceUntilIdle()
+            viewModel.updateDisplayName("")
+            viewModel.updateUsername("ab")
+
+            viewModel.createAccount()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(Res.string.account_validation_display_name_required, state.displayNameError)
+            assertEquals(Res.string.account_validation_username_too_short, state.usernameError)
+            assertFalse(state.isCreatingAccount)
+            assertNull(passkeyRepo.lastCreationRequest)
         }
 
     // --- helpers -----------------------------------------------------------
