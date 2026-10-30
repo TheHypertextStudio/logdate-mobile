@@ -22,6 +22,7 @@ import app.logdate.server.logging.DownloadUrlSigningNotices
 import app.logdate.server.ratelimit.RateLimitPolicy
 import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.responses.error
+import app.logdate.server.routes.MAX_SPACE_BLOB_BYTES
 import app.logdate.server.sync.MediaAccessPolicy
 import app.logdate.server.sync.SyncMetricsSnapshot
 import app.logdate.shared.model.AccountStorageMode
@@ -37,6 +38,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.request.contentLength
 import io.ktor.server.request.header
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.receiveMultipart
@@ -113,6 +115,9 @@ internal data class ParsedMediaMultipartUpload(
     val deviceId: String,
 )
 
+private suspend fun ApplicationCall.respondMediaTooLarge(maxDataBytes: Long) =
+    respond(HttpStatusCode.PayloadTooLarge, error("MEDIA_TOO_LARGE", "Media files can be at most $maxDataBytes bytes"))
+
 internal suspend fun ApplicationCall.respondMissingMultipartField(field: String) {
     respond(
         HttpStatusCode.BadRequest,
@@ -120,7 +125,20 @@ internal suspend fun ApplicationCall.respondMissingMultipartField(field: String)
     )
 }
 
-internal suspend fun ApplicationCall.receiveMediaMultipartUpload(): ParsedMediaMultipartUpload? {
+/** Room for the form fields and part boundaries that travel with a media file. */
+private const val MEDIA_MULTIPART_FIELDS_BYTES = 64L * 1024
+
+/**
+ * Reads a media upload, refusing a file larger than [maxDataBytes] with `413 MEDIA_TOO_LARGE`. A
+ * request whose `Content-Length` already says so is refused before anything is read, and the
+ * file part is never read past the limit.
+ */
+internal suspend fun ApplicationCall.receiveMediaMultipartUpload(maxDataBytes: Long = MAX_SPACE_BLOB_BYTES): ParsedMediaMultipartUpload? {
+    val declaredLength = request.contentLength()
+    if (declaredLength != null && declaredLength > maxDataBytes + MEDIA_MULTIPART_FIELDS_BYTES) {
+        respondMediaTooLarge(maxDataBytes)
+        return null
+    }
     val multipart =
         runCatching { receiveMultipart() }.getOrElse {
             respond(
@@ -136,6 +154,7 @@ internal suspend fun ApplicationCall.receiveMediaMultipartUpload(): ParsedMediaM
     var sizeBytes: Long? = null
     var deviceId: String? = null
     var data: ByteArray? = null
+    var dataTooLarge = false
 
     multipart.forEachPart { part ->
         when (part) {
@@ -151,7 +170,8 @@ internal suspend fun ApplicationCall.receiveMediaMultipartUpload(): ParsedMediaM
 
             is PartData.FileItem -> {
                 if (part.name == "data") {
-                    data = part.provider().readRemaining().readByteArray()
+                    val bytes = part.provider().readRemaining(maxDataBytes + 1).readByteArray()
+                    if (bytes.size > maxDataBytes) dataTooLarge = true else data = bytes
                 }
             }
 
@@ -160,6 +180,10 @@ internal suspend fun ApplicationCall.receiveMediaMultipartUpload(): ParsedMediaM
         part.dispose()
     }
 
+    if (dataTooLarge) {
+        respondMediaTooLarge(maxDataBytes)
+        return null
+    }
     val requiredContentId =
         contentId?.takeIf { it.isNotBlank() } ?: run {
             respondMissingMultipartField("contentId")
