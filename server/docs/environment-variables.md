@@ -25,16 +25,19 @@
 ## Runtime Profile
 
 ### `LOGDATE_ENV`
+
 - **Description**: Deployment profile. Selects whether the server enforces production-grade secret validation at startup.
-- **Type**: String: `production` | `development` | `test`
-- **Default**: `development`
+- **Type**: String: `production` (or `prod`) | `development` (or `dev`, `local`) | `test`
+- **Default**: `development` when unset or blank
 - **Example**: `LOGDATE_ENV=production`
 - **Required**: No (but must be `production` for real deployments)
 - **Notes**:
+  - Any other value stops the server at startup. A mistyped `production` would otherwise select the development profile and its relaxed checks.
   - When set to `production`, the server refuses to start if durable storage, database, public identity, encryption, signed-media, health, release, JWT, AT Protocol signing-key, or WebAuthn configuration is incomplete or unsafe.
   - Development and test profiles skip this validation so local runs and the test suite work without extra setup.
 
 ### `LOGDATE_EXPECT_FIRST_PARTY`
+
 - **Description**: Asserts that this production deployment is LogDate Cloud rather than a self-hosted server.
 - **Type**: Boolean
 - **Default**: `false`
@@ -47,6 +50,7 @@
 ## Network Edge
 
 ### `ALLOWED_ORIGINS`
+
 - **Description**: Comma-separated list of origins trusted by CORS (e.g. a web UI that calls the API).
 - **Type**: String (CSV of `scheme://host[:port]`)
 - **Default**: None (CORS plugin not installed → browsers enforce same-origin only)
@@ -57,6 +61,7 @@
   - The plugin reflects the request's origin back in `Access-Control-Allow-Origin` only for entries on the allowlist.
 
 ### `REQUIRE_HTTPS`
+
 - **Description**: When `true`, installs Ktor's `HttpsRedirect` plugin so HTTP requests are 301'd to HTTPS.
 - **Type**: Boolean
 - **Default**: **`true` when `LOGDATE_ENV=production`**, `false` otherwise.
@@ -67,6 +72,7 @@
   - Set to `false` only when you're deliberately serving HTTP (rare — usually a local dev proxy or a dev container).
 
 ### `TRUST_FORWARDED_HEADERS`
+
 - **Description**: Installs Ktor's `XForwardedHeaders` so `request.scheme` / `remoteHost` reflect the `X-Forwarded-Proto` / `X-Forwarded-For` headers the load balancer sets, instead of the LB's backend socket.
 - **Type**: Boolean
 - **Default**: **`true` when `LOGDATE_ENV=production`**, `false` otherwise.
@@ -78,6 +84,7 @@
   - The client address is read from the **last** `X-Forwarded-For` entry, the one Cloud Run's front end appends. Earlier entries come from the client and can be invented, so they are ignored. Rate limits on sign-in, the OAuth authorization page and device linking are keyed on this address.
 
 ### `TRUSTED_PROXY_HOPS`
+
 - **Description**: How many trusted proxies append to `X-Forwarded-For` after the one that saw the client. With Cloud Run alone this is `0`, and the last entry is the client. If a load balancer you control sits in front of Cloud Run and appends its own entry, set it to `1`.
 - **Type**: Integer, `0` or more
 - **Default**: `0`
@@ -90,6 +97,7 @@
 ## Server Configuration
 
 ### `PORT`
+
 - **Description**: Server HTTP port
 - **Type**: Integer
 - **Default**: `8765` (`SERVER_PORT`, defined in `shared/config`)
@@ -100,6 +108,7 @@
 - **Required**: No
 
 ### `HOST`
+
 - **Description**: Server bind address
 - **Type**: String
 - **Default**: `0.0.0.0` (all interfaces)
@@ -107,6 +116,7 @@
 - **Required**: No
 
 ### `LOGDATE_PUBLIC_ORIGIN`
+
 - **Description**: Canonical public HTTPS origin for the server.
 - **Type**: HTTPS URL
 - **Example**: `LOGDATE_PUBLIC_ORIGIN=https://cloud.logdate.app`
@@ -114,6 +124,7 @@
 - **Notes**: Must match `ATPROTO_PDS_SERVICE_URL` exactly after an optional trailing slash is removed.
 
 ### `RELEASE_VERSION`
+
 - **Description**: Immutable deployment identity returned by `/health`.
 - **Type**: String, `logdate-server@<40-hex-sha>`
 - **Example**: `RELEASE_VERSION=logdate-server@0123456789abcdef0123456789abcdef01234567`
@@ -121,6 +132,7 @@
 - **Notes**: This is a deployment release identifier, not the API contract `version` field.
 
 ### `HEALTH_INTERNAL_TOKEN`
+
 - **Description**: Secret that unlocks `db_connected` in the internal `/health` response.
 - **Type**: Secret string
 - **Default**: None
@@ -136,6 +148,7 @@ The server supports two sets of database environment variables for flexibility:
 ### Primary Database Variables
 
 ### `DATABASE_URL`
+
 - **Description**: Full PostgreSQL connection URL
 - **Type**: String (JDBC URL)
 - **Default**: None
@@ -143,6 +156,7 @@ The server supports two sets of database environment variables for flexibility:
 - **Required**: Yes in production, unless both `INSTANCE_CONNECTION_NAME` and `DB_NAME` are present for the platform connector contract.
 
 ### `DATABASE_USER`
+
 - **Description**: PostgreSQL username
 - **Type**: String
 - **Default**: None
@@ -150,6 +164,7 @@ The server supports two sets of database environment variables for flexibility:
 - **Required**: Yes for both `DATABASE_URL` and `INSTANCE_CONNECTION_NAME` connections, unless the URL embeds it.
 
 ### `DATABASE_PASSWORD`
+
 - **Description**: PostgreSQL password.
 - **Type**: String
 - **Default**: None — previous releases fell back to the literal string `logdate`; that fallback has been removed.
@@ -158,10 +173,12 @@ The server supports two sets of database environment variables for flexibility:
 - **Security**: Store in a secret manager; never commit.
 
 ### `CLOUD_SQL_INSTANCE_CONNECTION_NAME` (removed)
+
 - **Status**: No longer supported under this legacy name.
 - **Migration**: Use `INSTANCE_CONNECTION_NAME` for the authenticated Cloud SQL Java connector, or set `DATABASE_URL` for Neon, Supabase, self-hosted PostgreSQL, or a separately managed proxy. Credentials come from `DATABASE_USER` and `DATABASE_PASSWORD` unless they are embedded in `DATABASE_URL`.
 
 ### `INSTANCE_CONNECTION_NAME`
+
 - **Description**: Cloud SQL instance connection name used with `DB_NAME` as the managed connector contract.
 - **Type**: String
 - **Example**: `INSTANCE_CONNECTION_NAME=logdate-prod:us-central1:logdate`
@@ -173,6 +190,7 @@ The server supports two sets of database environment variables for flexibility:
 These development/test-only variables provide the local PostgreSQL fallback when neither `DATABASE_URL` nor `INSTANCE_CONNECTION_NAME` is set. Production rejects this fallback.
 
 ### `DB_HOST`
+
 - **Description**: PostgreSQL host address
 - **Type**: String
 - **Default**: `localhost`
@@ -180,6 +198,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: No
 
 ### `DB_PORT`
+
 - **Description**: PostgreSQL port
 - **Type**: Integer
 - **Default**: `5432`
@@ -187,6 +206,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: No
 
 ### `DB_NAME`
+
 - **Description**: PostgreSQL database name
 - **Type**: String
 - **Default**: `logdate`
@@ -194,6 +214,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: No
 
 ### `DB_USER`
+
 - **Description**: PostgreSQL username (alternative to `DATABASE_USER`)
 - **Type**: String
 - **Default**: None
@@ -201,6 +222,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: No
 
 ### `DB_PASSWORD`
+
 - **Description**: PostgreSQL password (alternative to `DATABASE_PASSWORD`)
 - **Type**: String
 - **Default**: None
@@ -213,6 +235,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 ## Authentication & Security
 
 ### `JWT_SECRET`
+
 - **Description**: Secret key for JWT token signing.
 - **Type**: String (minimum 32 characters required in production)
 - **Default**: None (when unset in development, the server generates a random per-process secret; tokens invalidate on restart)
@@ -225,7 +248,8 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Rotate periodically. Hosted AT Protocol signing keys are encrypted with `ATPROTO_SIGNING_KEY_KEK`, and AT Protocol session tokens are signed with `ATPROTO_SESSION_SECRET`, so rotating this secret affects neither.
 
 ### `ATPROTO_SIGNING_KEY_KEK`
-- **Description**: The secret that encrypts the server's stored private keys at rest (a *key-encryption key*): each account's hosted AT Protocol signing key, and the key that signs OAuth access tokens for third-party AT Protocol apps. The server derives an AES-256 key from it to wrap the private keys stored in the database, and unwraps them whenever it signs a repository commit, a PLC operation, a key export or an OAuth access token.
+
+- **Description**: The secret that encrypts the server's stored private keys at rest (a _key-encryption key_): each account's hosted AT Protocol signing key, and the key that signs OAuth access tokens for third-party AT Protocol apps. The server derives an AES-256 key from it to wrap the private keys stored in the database, and unwraps them whenever it signs a repository commit, a PLC operation, a key export or an OAuth access token.
 - **Type**: String (minimum 32 characters in production). The value is used byte for byte, including any trailing newline.
 - **Default**: None in production. Development and test fall back to a fixed value published in the source code, which only ever protects keys on a developer's machine.
 - **Example**: `ATPROTO_SIGNING_KEY_KEK=$(openssl rand -base64 48)`
@@ -237,6 +261,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Store in a secret manager; never commit.
 
 ### `ATPROTO_SIGNING_KEY_KEK_DECRYPT_ONLY`
+
 - **Description**: A second key-encryption key the server can decrypt stored private keys with, but never encrypts with. It exists only while a deployment moves from one `ATPROTO_SIGNING_KEY_KEK` to another. While it's set, every instance re-encrypts the stored keys under `ATPROTO_SIGNING_KEY_KEK` once at startup and logs the outcome: `SERVER_SIGNING_KEYS_REWRAPPED`, `SERVER_SIGNING_KEYS_CURRENT` when nothing needed re-encrypting, or the errors `SERVER_SIGNING_KEYS_UNREADABLE` (keys neither value can read, which are left untouched) and `SERVER_SIGNING_KEYS_REWRAP_FAILED`.
 - **Type**: String (minimum 32 characters in production, and different from `ATPROTO_SIGNING_KEY_KEK`).
 - **Default**: Unset.
@@ -249,6 +274,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Security**: Store in a secret manager; never commit.
 
 ### `OAUTH_SIGNING_KEY_MAX_AGE_DAYS`
+
 - **Description**: How many days a key signs OAuth access tokens for third-party AT Protocol apps before the server replaces it. Rotation never signs anyone out. Every five minutes each instance checks whether a step is due:
   1. When the active key reaches this age, a new key is staged. It's published in the OAuth JWKS and accepted for verification, but nothing signs with it yet.
   2. An hour later, once every instance has picked it up, the new key starts signing. The previous key keeps verifying the tokens it signed for another 65 minutes, longer than an access token lives.
@@ -260,6 +286,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Rotating early**: to replace the key now, for example after a suspected leak, set a value lower than the key's current age. The rotation completes within about an hour. Restore the usual value afterwards.
 
 ### `ATPROTO_SESSION_SECRET`
+
 - **Description**: The secret that signs the access and refresh tokens the server issues to AT Protocol clients through `com.atproto.server.createSession` and `refreshSession`. The LogDate apps sign in with their own tokens and do not use these.
 - **Type**: String (minimum 32 characters in production).
 - **Default**: None in production. Development and test fall back to a fixed value published in the source code.
@@ -271,6 +298,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Store in a secret manager; never commit.
 
 ### `GOOGLE_OIDC_CLIENT_IDS`
+
 - **Description**: Comma-separated Google OAuth client IDs accepted for ID token verification
 - **Type**: String (CSV)
 - **Default**: None
@@ -284,6 +312,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - When this is unset, Google auth routes are treated as not configured and return `GOOGLE_AUTH_NOT_CONFIGURED`
 
 ### `WEBAUTHN_RP_ID`
+
 - **Description**: WebAuthn relying party ID used for passkey ceremonies
 - **Type**: String
 - **Default**: `logdate.app`
@@ -291,6 +320,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: Yes (for production passkeys)
 
 ### `WEBAUTHN_RP_NAME`
+
 - **Description**: Display name presented as relying party name in passkey prompts
 - **Type**: String
 - **Default**: `LogDate`
@@ -298,6 +328,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: No
 
 ### `WEBAUTHN_ORIGIN`
+
 - **Description**: Expected WebAuthn origin for registration/authentication responses
 - **Type**: String (HTTPS origin)
 - **Default**: `https://app.logdate.com`
@@ -307,6 +338,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - If unset, the server derives the value from the configured public server origin when available
 
 ### `WEBAUTHN_ALLOWED_ORIGINS`
+
 - **Description**: Additional client origins accepted during passkey ceremonies, on top of `WEBAUTHN_ORIGIN`. This is how native apps are allowed: an Android Credential Manager ceremony presents `clientDataJSON.origin` as `android:apk-key-hash:<base64url-SHA256(signing-cert)>` rather than an `https://` URL, so without the matching entry here every on-device passkey signup and sign-in is rejected.
 - **Type**: String (comma-separated list of `https://` URLs and/or `android:apk-key-hash:<hash>` origins)
 - **Default**: empty (only `WEBAUTHN_ORIGIN` is accepted — web only)
@@ -322,6 +354,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Malformed entries are logged and skipped so one typo cannot break passkey verification for everyone.
 
 ### `WEBAUTHN_STRICT_VERIFICATION`
+
 - **Description**: Enables strict WebAuthn4J cryptographic verification for passkeys and restore credentials.
 - **Type**: Boolean
 - **Default**: **`true` when `LOGDATE_ENV=production`**, `false` otherwise. Set explicitly to override either way.
@@ -336,6 +369,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 ## Blob Storage
 
 ### `LOGDATE_BLOB_STORAGE_DIR`
+
 - **Description**: Absolute or relative path to a directory that the server uses as on-disk blob storage for media and backups when GCS is not configured.
 - **Type**: String (filesystem path)
 - **Default**: None. When both this and `GCS_*` are unset, media and backup uploads are rejected with `503 Service Unavailable`.
@@ -352,6 +386,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 ## Encryption
 
 ### `SERVER_ENCRYPTION_KEY`
+
 - **Description**: Base64-encoded AES encryption key for server-side encryption
 - **Type**: String (Base64)
 - **Default**: None
@@ -365,6 +400,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: If not set, encryption service uses NoOpKeyring (test mode)
 
 ### `SERVER_ENCRYPTION_KEY_ID`
+
 - **Description**: Identifier for the active encryption key (enables key rotation)
 - **Type**: String
 - **Default**: `default`
@@ -373,6 +409,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: Change this when rotating keys to track which key encrypted each payload
 
 ### `ENCRYPTION_MODE`
+
 - **Description**: Server encryption policy mode
 - **Type**: Enum
 - **Values**:
@@ -383,6 +420,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: No
 
 ### `SERVER_ENCRYPTION_ENABLED`
+
 - **Description**: Enable/disable server-side encryption
 - **Type**: Boolean
 - **Default**: `true` (if `SERVER_ENCRYPTION_KEY` is set)
@@ -391,6 +429,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: Setting to `false` disables encryption even if key is configured
 
 ### `ALLOW_PASSTHROUGH_CLIENT_CIPHERTEXT`
+
 - **Description**: Allow client-encrypted payloads to pass through without server re-encryption
 - **Type**: Boolean
 - **Default**: `true`
@@ -403,6 +442,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 ## Media Storage
 
 ### `GCS_PROJECT_ID`
+
 - **Description**: Google Cloud Storage project ID
 - **Type**: String
 - **Default**: None
@@ -410,6 +450,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: Yes (if using GCS)
 
 ### `GCS_BUCKET_NAME`
+
 - **Description**: GCS bucket name for media storage
 - **Type**: String
 - **Default**: None
@@ -418,6 +459,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: Production requires this or a durable `LOGDATE_BLOB_STORAGE_DIR`; a container-local temporary directory is not durable storage.
 
 ### `SYNC_MEDIA_SIGNED_URLS`
+
 - **Description**: Return signed, time-limited media download URLs.
 - **Type**: Boolean
 - **Default**: `false`
@@ -425,6 +467,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Required**: Yes in production.
 
 ### `GCS_MEDIA_KMS_KEY`
+
 - **Description**: GCS KMS key for media encryption at rest (Google-managed)
 - **Type**: String (KMS key resource name)
 - **Default**: None
@@ -433,6 +476,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: Separate from `SERVER_ENCRYPTION_KEY` - this is for GCS-level encryption
 
 ### `SYNC_MEDIA_SIGNED_URL_TTL_HOURS`
+
 - **Description**: TTL for GCS signed URLs (hours)
 - **Type**: Integer
 - **Default**: `1`
@@ -445,6 +489,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 ## Sync & Maintenance
 
 ### `SYNC_TOMBSTONE_PURGE_ENABLED`
+
 - **Description**: Enable automatic purging of old deletion markers (tombstones)
 - **Type**: Boolean
 - **Default**: `true`
@@ -453,6 +498,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: Disable for debugging or to manually control purge operations
 
 ### `AUTO_MIGRATE`
+
 - **Description**: Controls whether startup applies Flyway migrations and schema reconciliation.
 - **Type**: Boolean
 - **Default**: **`false` when `LOGDATE_ENV=production`**, `true` otherwise. Set explicitly to override.
@@ -463,6 +509,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - When `false`, startup still connects to the database but skips schema mutation.
 
 ### `LOGDATE_ALLOW_INMEMORY_FALLBACK`
+
 - **Description**: Allows the server to start on in-memory repositories when the database is unreachable.
 - **Type**: Boolean
 - **Default**: `false`
@@ -475,6 +522,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Also readable as a system property (`-DLOGDATE_ALLOW_INMEMORY_FALLBACK=true`), matching how `PORT` and `HOST` are resolved.
 
 ### `SYNC_TOMBSTONE_RETENTION_DAYS`
+
 - **Description**: How many days to keep deletion markers before purging
 - **Type**: Integer
 - **Default**: `30`
@@ -484,6 +532,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: Longer retention = more storage, but better sync reliability for offline devices
 
 ### `SYNC_TOMBSTONE_PURGE_INTERVAL_HOURS`
+
 - **Description**: How often to run the tombstone purge job (hours)
 - **Type**: Integer
 - **Default**: `24`
@@ -493,6 +542,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**: More frequent purges = lower storage, but higher database load
 
 ### `LOGDATE_PERSONAL_SPACE_ENABLED`
+
 - **Description**: Turns on personal spaces: the `app.logdate.space.putRecord`, `deleteRecord`, `getRecord`, `listRepoOps`, `uploadBlob` and `getBlob` methods, where a LogDate device stores its owner's end-to-end encrypted records and files.
 - **Type**: Boolean (only the exact value `true` enables it)
 - **Default**: `false`
@@ -509,6 +559,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - An upload must send a `Content-Length` header, or it answers `411 LengthRequired`. The server streams the body to object storage as it arrives, hashing it on the way, and only records the file once storage holds exactly the bytes it hashed, so nothing is written to the instance's disk or memory beyond a 2 MiB write buffer and a 64 KiB chunk for each upload. Each instance runs up to 8 uploads and 16 downloads at once, sized for the 512 MiB instances LogDate Cloud uses: with a heap of about 384 MiB, those 24 transfers take about 50 MiB. Further transfers answer `503 ServerBusy` with a `Retry-After` header and cost the account none of its request budget. A transfer whose client sends or accepts nothing for 20 seconds is ended (`408 UploadStalled` for uploads) and its place freed. Room held for an upload that never finishes is released 2 minutes after it was taken, which is the request timeout plus a margin.
 
 ### `LOGDATE_PERSONAL_SPACE_MIGRATION_ENABLED`
+
 - **Description**: Lets existing accounts move their journals from legacy storage into their personal spaces through the `/api/v1/space-migration` calls, which a LogDate device makes once it has synced everything.
 - **Type**: Boolean (only the exact value `true` enables it)
 - **Default**: `false`
@@ -521,6 +572,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - The [journal moves runbook](../../docs/runbook/journal-moves.md) describes rehearsing moves in staging and operating them.
 
 ### `LOGDATE_PERSONAL_SPACE_OLD_DATA_PURGE_ENABLED`
+
 - **Description**: Whether the maintenance loop deletes the legacy copy of each journal that moved into its personal space, 30 days after its switch. Turning it off pauses only that deletion, so switching back keeps working for those accounts while it is paused.
 - **Type**: Boolean
 - **Default**: `true`
@@ -532,6 +584,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - A copy whose 30 days passed while the deletion was paused is deleted on the first maintenance run after it is turned back on. The window for switching back is still 30 days, so pausing the deletion doesn't extend it.
 
 ### `LOGDATE_SPACE_MIGRATION_HOLD_GRACE_SECONDS`
+
 - **Description**: How long a hold on an account's legacy writes must stand before a device may switch the account into its personal space, so that every write that started before the hold has finished.
 - **Type**: Integer seconds, zero or more
 - **Default**: `120`
@@ -542,6 +595,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - The server-client end-to-end tests set it to `0` so a move doesn't wait two minutes; never set `0` on a deployed server, because a write that passed its storage check just before the hold could then land after the device checked legacy storage.
 
 ### `LOGDATE_OAUTH_PASSKEY_SIGN_IN_ENABLED`
+
 - **Description**: Turns on the browser authorization page. When another AT Protocol app sends a person to `/oauth/authorize`, they see which app is asking and approve it by signing in with their LogDate passkey. Without it, only the LogDate apps can approve OAuth requests, so accounts without a password can't use their identity in other apps.
 - **Type**: Boolean (only the exact value `true` enables it)
 - **Default**: `false`
@@ -555,6 +609,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Design: `docs/superpowers/specs/2026-10-19-passkey-atproto-sign-in-design.md`.
 
 ### `LOGDATE_OAUTH_TRUSTED_CLIENT_IDS`
+
 - **Description**: OAuth client IDs (the URLs of their client metadata documents) that LogDate trusts. The authorization page names a trusted app by its own `client_name`; every other app is named by its full client ID URL, because a self-reported name can claim to be anything. Refresh tokens issued to trusted apps last 30 days instead of 14.
 - **Type**: Comma-separated list of URLs
 - **Default**: empty (no app is trusted)
@@ -569,6 +624,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
 ## Redis (Optional)
 
 ### `REDIS_URL`
+
 - **Description**: Redis connection URL for caching/session storage
 - **Type**: String (Redis URL)
 - **Default**: None
@@ -590,6 +646,7 @@ The secrets that sign AT Protocol session tokens and protect stored signing keys
 with the change that makes them required.
 
 ### `ATPROTO_PDS_SERVICE_URL`
+
 - **Description**: Public HTTPS URL of this server as an AT Protocol data server (PDS). It is
   written into each account's DID document, so other AT Protocol services know where the
   account's data lives.
@@ -603,6 +660,7 @@ with the change that makes them required.
   still read when this variable is unset.
 
 ### `ATPROTO_HANDLE_DOMAIN`
+
 - **Description**: Domain under which accounts get their handles. An account with username
   `alice` gets the handle `alice.<domain>`.
 - **Type**: Domain name
@@ -613,6 +671,7 @@ with the change that makes them required.
   their own domain so handles don't claim `logdate.app`.
 
 ### `ATPROTO_HOSTED_DID_METHOD`
+
 - **Description**: Which kind of DID new hosted accounts get. `plc` creates a `did:plc` registered
   in the PLC directory. `web` creates a hostname-level `did:web` such as
   `did:web:alice.logdate.app`, which the server serves itself.
@@ -624,6 +683,7 @@ with the change that makes them required.
   only.
 
 ### `ATPROTO_PLC_PUBLISH_ENABLED`
+
 - **Description**: Whether the server sends `did:plc` operations to the PLC directory. Until an
   account's operations are published, nobody outside LogDate can resolve its DID.
 - **Type**: Boolean (`true` to enable)
@@ -641,6 +701,7 @@ with the change that makes them required.
   production deployment contract may set it to `true`.
 
 ### `ATPROTO_RECOVERY_KEYS_ENABLED`
+
 - **Description**: Whether people can register their own recovery key on their hosted `did:plc`
   identity and use it to replace the server's key. The recovery key is listed ahead of the
   server's key, so it can overrule it.
@@ -658,6 +719,7 @@ with the change that makes them required.
   renderer accepts only `true` or `false`.
 
 ### `ATPROTO_FIREHOSE_ENABLED`
+
 - **Description**: Whether the server announces public repositories to the rest of the AT Protocol
   network. When it is on, the server serves the repository event stream
   (`com.atproto.sync.subscribeRepos`) and `com.atproto.sync.listRepos`, and anyone can read public
@@ -691,6 +753,7 @@ with the change that makes them required.
     are published.
 
 ### `ATPROTO_RELAY_HOSTS`
+
 - **Description**: The relays the server asks to follow its event stream, by sending each one
   `com.atproto.sync.requestCrawl` when the server starts and when an account is first announced. The
   request names the host from `ATPROTO_PDS_SERVICE_URL`.
@@ -708,6 +771,7 @@ with the change that makes them required.
     `ATPROTO_FIREHOSE_ENABLED` set to `true`, and only as distinct lowercase hostnames.
 
 ### `ATPROTO_PLC_DIRECTORY_URL`
+
 - **Description**: The PLC directory to publish to and resolve `did:plc` identities from.
 - **Type**: HTTPS URL
 - **Default**: `https://plc.directory`
@@ -719,6 +783,7 @@ with the change that makes them required.
   staging server at the public directory with publishing on.
 
 ### `ATPROTO_OAUTH_ISSUER`
+
 - **Description**: Issuer URL of the server's OAuth authorization server for third-party AT
   Protocol apps. It appears in the OAuth discovery documents and in issued tokens.
 - **Type**: HTTPS URL
@@ -727,6 +792,7 @@ with the change that makes them required.
 - **Required**: No
 
 ### `ATPROTO_OAUTH_RESOURCE`
+
 - **Description**: The protected resource URL that OAuth access tokens are issued for, published
   in the protected-resource discovery document.
 - **Type**: HTTPS URL
@@ -856,23 +922,28 @@ ALLOW_PASSTHROUGH_CLIENT_CIPHERTEXT=true
 ### Common Issues
 
 **"SERVER_ENCRYPTION_KEY not configured"**
+
 - Set `SERVER_ENCRYPTION_KEY` environment variable
 - Or disable encryption with `SERVER_ENCRYPTION_ENABLED=false` (not recommended for production)
 
 **"SERVER_ENCRYPTION_KEY must be base64-encoded"**
+
 - Ensure key is valid base64
 - Generate new key: `openssl rand -base64 32`
 
 **"SERVER_ENCRYPTION_KEY must decode to 16, 24, or 32 bytes"**
+
 - Key must be exactly 128, 192, or 256 bits
 - Use AES-256 (32 bytes): `openssl rand -base64 32`
 
 **Database connection fails**
+
 - Verify `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` are correct
 - Check database server is running and accessible
 - Verify firewall rules allow connection
 
 **GCS access denied**
+
 - Verify service account has Storage Object Admin role
 - Check `GCS_PROJECT_ID` and `GCS_BUCKET_NAME` are correct
 - Ensure Application Default Credentials are configured
