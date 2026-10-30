@@ -16,7 +16,7 @@ class DesktopWaveformStorage(
         get() = File(cacheDir, "waveforms").also { it.mkdirs() }
 
     private fun getWaveformFile(audioUri: String): File {
-        val hash = audioUri.hashCode().toString(16)
+        val hash = waveformCacheKey(audioUri)
         return File(waveformDir, "$hash.waveform")
     }
 

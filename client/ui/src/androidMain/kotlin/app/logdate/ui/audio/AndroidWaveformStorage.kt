@@ -11,7 +11,7 @@ import java.nio.ByteOrder
  * Android implementation of WaveformStorage using file-based persistence.
  *
  * Waveform files are stored in the app's cache directory under `waveforms/`.
- * Each file is named using a hash of the audio URI and contains packed floats.
+ * Each file is named by the SHA-256 of the audio URI and contains packed floats.
  */
 class AndroidWaveformStorage(
     private val context: Context,
@@ -20,7 +20,7 @@ class AndroidWaveformStorage(
         get() = File(context.cacheDir, "waveforms").also { it.mkdirs() }
 
     private fun getWaveformFile(audioUri: String): File {
-        val hash = audioUri.hashCode().toString(16)
+        val hash = waveformCacheKey(audioUri)
         return File(waveformDir, "$hash.waveform")
     }
 

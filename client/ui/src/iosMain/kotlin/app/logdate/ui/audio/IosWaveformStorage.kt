@@ -56,7 +56,7 @@ class IosWaveformStorage(
         }
 
     private fun waveformFilePath(audioUri: String): String {
-        val hash = audioUri.hashCode().toString(16)
+        val hash = waveformCacheKey(audioUri)
         return "$cacheRootPath/$hash.waveform"
     }
 
