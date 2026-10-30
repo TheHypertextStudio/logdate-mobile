@@ -221,6 +221,7 @@ internal object OAuthDocs {
                 }
             }
             oauthError(HttpStatusCode.BadRequest, invalidRequest, invalidClient, invalidDpop, useDpopNonce, headers = dpopNonceHeader)
+            oauthError(HttpStatusCode.TooManyRequests, tooManyAuthorizationRequests, headers = retryAfter)
             oauthError(HttpStatusCode.InternalServerError, serverError)
             oauthError(HttpStatusCode.NotImplemented, notConfigured)
         }
@@ -347,6 +348,12 @@ internal object OAuthDocs {
             "temporarily_unavailable",
             "Too many passkey attempts came from this client address in the last minute. Wait for `Retry-After` seconds.",
             "Too many sign-in attempts from this network. Wait a minute and try again.",
+        )
+    private val tooManyAuthorizationRequests =
+        ErrorCase(
+            "temporarily_unavailable",
+            "Too many authorization requests came from this client address in the last minute. Wait for `Retry-After` seconds.",
+            "Too many authorization requests from this network. Wait a minute and try again.",
         )
     private val retryAfter: io.github.smiley4.ktoropenapi.config.ResponseConfig.() -> Unit = {
         header<String>("Retry-After") { description = "Seconds to wait before the next attempt." }
