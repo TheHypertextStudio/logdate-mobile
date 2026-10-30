@@ -111,6 +111,7 @@ fun RecommendationSettingsScreen(
         onSetEveningPromptTime = viewModel::setEveningPromptTime,
         onToggleSmartRecall = viewModel::toggleAiRecall,
         modifier = modifier,
+        saveFailed = uiState.saveFailed,
     )
 }
 
@@ -135,6 +136,7 @@ fun RecommendationSettingsContent(
     onSetEveningPromptTime: (AmbientPromptTime) -> Unit,
     onToggleSmartRecall: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    saveFailed: Boolean = false,
 ) {
     var editingPromptTime by remember { mutableStateOf<PromptTimeSelection?>(null) }
 
@@ -150,6 +152,7 @@ fun RecommendationSettingsContent(
                         .padding(vertical = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             ) {
+                if (saveFailed) MemoriesSaveFailedNotice(Modifier.padding(horizontal = Spacing.lg))
                 RecommendationOverviewSection(
                     settings = settings,
                     onToggleContextualRecommendations = onToggleContextualRecommendations,
@@ -183,6 +186,7 @@ fun RecommendationSettingsContent(
                 onBack = onBack,
                 modifier = modifier,
             ) {
+                if (saveFailed) item { MemoriesSaveFailedNotice(Modifier.padding(horizontal = Spacing.lg)) }
                 item {
                     RecommendationOverviewSection(
                         settings = settings,

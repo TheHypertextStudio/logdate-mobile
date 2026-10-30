@@ -10,6 +10,7 @@ import app.logdate.client.domain.recommendation.RecallMode
 import app.logdate.client.domain.recommendation.WidgetContentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for [MemoriesSettingsViewModel].
@@ -109,20 +112,69 @@ class MemoriesSettingsViewModelTest {
             assertEquals(setOf(WidgetContentType.TEXT), settingsRepository.settings.value.widgetContentTypes)
         }
 
+    @Test
+    fun `a failed save is shown until the next change saves`() =
+        runTest {
+            val settingsRepository = FakeMemoriesSettingsRepository()
+            val viewModel = memoriesViewModel(settingsRepository)
+            backgroundScope.launch { viewModel.uiState.collect { } }
+
+            settingsRepository.failWrites = true
+            viewModel.toggleAiRecall(true)
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.saveFailed)
+
+            settingsRepository.failWrites = false
+            viewModel.toggleAiRecall(true)
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.saveFailed)
+            assertTrue(settingsRepository.settings.value.aiRecallEnabled)
+        }
+
+    @Test
+    fun `toggling widget content types quickly keeps every change`() =
+        runTest {
+            val settingsRepository =
+                FakeMemoriesSettingsRepository(
+                    initialSettings = MemoriesSettings(widgetContentTypes = setOf(WidgetContentType.TEXT)),
+                    readDelayMillis = 10,
+                )
+            val viewModel = memoriesViewModel(settingsRepository)
+
+            viewModel.toggleWidgetContentType(WidgetContentType.PHOTOS, enabled = true)
+            viewModel.toggleWidgetContentType(WidgetContentType.AUDIO, enabled = true)
+            advanceUntilIdle()
+
+            assertEquals(WidgetContentType.ALL, settingsRepository.settings.value.widgetContentTypes)
+        }
+
+    private fun memoriesViewModel(settingsRepository: FakeMemoriesSettingsRepository) =
+        MemoriesSettingsViewModel(
+            preferences = LogdatePreferencesDataSource(CapturePreferenceStore()),
+            settingsRepository = settingsRepository,
+            widgetInstallController = FakeMemoriesWidgetInstallController(),
+        )
+
     private class FakeMemoriesSettingsRepository(
         initialSettings: MemoriesSettings =
             MemoriesSettings(
                 recallMode = RecallMode.ON_THIS_DAY,
                 widgetContentTypes = WidgetContentType.ALL,
             ),
+        private val readDelayMillis: Long = 0,
     ) : MemoriesSettingsRepository {
         val settings = MutableStateFlow(initialSettings)
+        var failWrites = false
 
-        override suspend fun getSettings(): MemoriesSettings = settings.value
+        override suspend fun getSettings(): MemoriesSettings {
+            delay(readDelayMillis)
+            return settings.value
+        }
 
         override fun observeSettings(): Flow<MemoriesSettings> = settings
 
         override suspend fun updateSettings(settings: MemoriesSettings) {
+            if (failWrites) throw IllegalStateException("settings store unavailable")
             this.settings.value = settings
         }
     }
