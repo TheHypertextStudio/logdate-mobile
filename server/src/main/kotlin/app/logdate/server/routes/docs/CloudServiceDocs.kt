@@ -284,6 +284,12 @@ internal object CloudServiceDocs {
                 ),
             )
             code(HttpStatusCode.NotFound) { description = "No resource has that ID, or its owner has no handle. The body is empty." }
+            code(HttpStatusCode.TooManyRequests) {
+                description =
+                    "This network address has looked up too many IDs the server had to search for in the last minute. " +
+                    "Wait for `Retry-After` seconds. The body is empty."
+                header<String>("Retry-After") { description = "Seconds to wait before the next lookup." }
+            }
         }
     }
 }

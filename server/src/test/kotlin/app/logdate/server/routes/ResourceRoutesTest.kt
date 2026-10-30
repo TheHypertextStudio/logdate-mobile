@@ -13,6 +13,7 @@ import app.logdate.server.sync.InMemorySyncRepository
 import app.logdate.shared.model.sync.DeviceId
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
@@ -23,6 +24,7 @@ import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -279,6 +281,34 @@ class ResourceRoutesTest {
             handle = handle,
             createdAt = Clock.System.now(),
         )
+
+    @Test
+    fun `lookups that search every account are budgeted per address and registered ones are not`() =
+        testApplication {
+            val accounts = InMemoryAccountRepository()
+            val collections = InMemorySyncRepository().asLogDateCollectionsRepository()
+            val resourceRoutes = InMemoryResourceRouteRepository()
+            accounts.save(testAccount())
+            resourceRoutes.upsert(ResourceRoute("registered-journal", ownerId.toJavaUUID(), ResourceKind.JOURNAL))
+            installRoutes(accounts, collections, resourceRoutes)
+
+            repeat(30) { assertEquals(HttpStatusCode.NotFound, client.get("/api/v1/resources/missing-$it").status) }
+            val limited = client.get("/api/v1/resources/missing-31")
+
+            assertEquals(HttpStatusCode.TooManyRequests, limited.status)
+            assertNotNull(limited.headers[HttpHeaders.RetryAfter])
+            assertEquals(HttpStatusCode.OK, client.get("/api/v1/resources/registered-journal").status)
+        }
+
+    @Test
+    fun `an overlong resource id is not looked up`() =
+        testApplication {
+            val accounts = InMemoryAccountRepository()
+            accounts.save(testAccount())
+            installRoutes(accounts, InMemorySyncRepository().asLogDateCollectionsRepository(), InMemoryResourceRouteRepository())
+
+            assertEquals(HttpStatusCode.NotFound, client.get("/api/v1/resources/${"a".repeat(129)}").status)
+        }
 
     private fun io.ktor.server.testing.ApplicationTestBuilder.installRoutes(
         accounts: InMemoryAccountRepository,
