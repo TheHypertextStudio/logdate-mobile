@@ -43,37 +43,14 @@
     <string name="transcript">Transcript:</string>
     <string name="transcription_failed">Transcription failed</string>
 
-    <!-- Period labels -->
-    <string name="period_last_week">Last Week</string>
-    <string name="period_this_week">This Week</string>
-    <string name="period_years_ago">%1$s years ago</string>
-
     <!-- Timeline list -->
-    <string name="timeline_today">Today</string>
-    <string name="timeline_yesterday">Yesterday</string>
-    <string name="no_notes_from_today">No notes from today yet!</string>
-    <string name="tap_to_view_content">Tap to view %1$s content</string>
     <string name="timeline_details_empty_placeholder">Select something on your timeline to see more.</string>
     <string name="cd_back_to_your_days">Back to your days</string>
 
     <!-- Special sections -->
     <string name="rewind">Rewind</string>
     <string name="special_section_default_action_text">Take a peek</string>
-    <string name="timeline_origin_day_birthday_message">Happy actual birthday!</string>
 
-    <!-- Plurals -->
-    <plurals name="period_weeks_ago">
-        <item quantity="one">%1$s week ago</item>
-        <item quantity="other">%1$s weeks ago</item>
-    </plurals>
-    <plurals name="period_months_ago">
-        <item quantity="one">%1$s month ago</item>
-        <item quantity="other">%1$s months ago</item>
-    </plurals>
-    <plurals name="timeline_origin_day_counter">
-        <item quantity="one">It&apos;s been a day.</item>
-        <item quantity="other">It&apos;s been %1$s days.</item>
-    </plurals>
     <string name="mark_context_label">%1$s · %2$s</string>
     <string name="mark_watch_label">Marked on your watch</string>
     <string name="mark_caption_prompt">What was happening?</string>
