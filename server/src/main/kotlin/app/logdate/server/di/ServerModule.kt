@@ -129,6 +129,7 @@ import app.logdate.server.sync.SyncRepository
 import app.logdate.server.transfer.TransferSlots
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import studio.hypertext.atproto.oauth.client.JvmOAuthHttp
@@ -145,6 +146,9 @@ import studio.hypertext.atproto.pds.runtime.StaticPdsDiscoveryService
 import studio.hypertext.atproto.plc.KtorPlcDirectoryClient
 import studio.hypertext.atproto.repo.RepoEngine
 import studio.hypertext.atproto.repo.RepoRecordStore
+
+private const val OUTBOUND_CONNECT_TIMEOUT_MILLIS = 10_000L
+private const val OUTBOUND_REQUEST_TIMEOUT_MILLIS = 30_000L
 
 /**
  * Creates server Koin module based on database availability.
@@ -237,7 +241,16 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                     trustedClientIds = OAuthConfig.trustedClientIdsFromEnvironment(),
                 )
         }
-        single { HttpClient(OkHttp) }
+        // Calls to the PLC directory, relays and transcription give up instead of holding a request.
+        single {
+            HttpClient(OkHttp) {
+                install(HttpTimeout) {
+                    connectTimeoutMillis = OUTBOUND_CONNECT_TIMEOUT_MILLIS
+                    requestTimeoutMillis = OUTBOUND_REQUEST_TIMEOUT_MILLIS
+                    socketTimeoutMillis = OUTBOUND_REQUEST_TIMEOUT_MILLIS
+                }
+            }
+        }
         single<OAuthSigningKeyRepository> {
             if (isDatabaseAvailable) PostgreSQLOAuthSigningKeyRepository() else InMemoryOAuthSigningKeyRepository()
         }
