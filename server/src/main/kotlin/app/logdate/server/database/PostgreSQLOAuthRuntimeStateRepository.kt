@@ -18,6 +18,14 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 
 internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateRepository {
+    // The database clock, as for revocations, so every instance agrees on what has expired.
+    override suspend fun purgeExpired(now: kotlin.time.Instant): Int =
+        transaction {
+            OAuthAuthorizationRequestsTable.deleteWhere { OAuthAuthorizationRequestsTable.expiresAt less CurrentTimestamp } +
+                OAuthAuthorizationCodesTable.deleteWhere { OAuthAuthorizationCodesTable.expiresAt less CurrentTimestamp } +
+                OAuthRefreshTokensTable.deleteWhere { OAuthRefreshTokensTable.expiresAt less CurrentTimestamp }
+        }
+
     override suspend fun saveAuthorizationRequest(request: StoredAuthorizationRequest): StoredAuthorizationRequest =
         transaction {
             val existing =
