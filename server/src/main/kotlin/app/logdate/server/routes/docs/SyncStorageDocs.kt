@@ -157,6 +157,15 @@ internal object SyncStorageDocs {
                     "Missing required multipart field: sizeBytes",
                 ),
             )
+            syncError(
+                HttpStatusCode.PayloadTooLarge,
+                ErrorCase(
+                    "MEDIA_TOO_LARGE",
+                    "`data` is larger than the largest media file the server stores, 100 MiB. A request whose " +
+                        "`Content-Length` already exceeds it is refused before it is read.",
+                    "Media files can be at most 104857600 bytes",
+                ),
+            )
             syncUnauthorized()
             syncStorageModeMismatch()
             syncMigrationHold()
