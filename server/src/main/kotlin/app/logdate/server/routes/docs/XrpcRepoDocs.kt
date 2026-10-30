@@ -65,6 +65,25 @@ internal object XrpcRepoDocs {
             "Apps signed in through OAuth cannot upload files yet, because no collection open to apps refers to files",
         )
 
+    private val publicDownloadsLimited =
+        ErrorCase(
+            "RateLimitExceeded",
+            "A download from a public repository, made with no sign-in, went past this network address's budget for " +
+                "the last minute. Repository exports and blobs are counted separately. Wait the number of seconds in " +
+                "the `Retry-After` header, then retry.",
+            "Too many downloads from this network. Try again in 12 seconds.",
+        )
+    private val publicDownloadsBusy =
+        ErrorCase(
+            "ServerBusy",
+            "This server instance is already sending as many public downloads as it can hold. Wait the number of " +
+                "seconds in the `Retry-After` header, then retry.",
+            "The server is busy with other file transfers. Try again in 5 seconds.",
+        )
+    private val retryAfterHeader: io.github.smiley4.ktoropenapi.config.ResponseConfig.() -> Unit = {
+        header<String>("Retry-After") { description = "Seconds to wait before the next attempt." }
+    }
+
     val getRepo: RouteConfig.() -> Unit = {
         bearerOrDpopOperation(
             "getRepo",
@@ -100,6 +119,8 @@ internal object XrpcRepoDocs {
             authRequired()
             pdsError(HttpStatusCode.Forbidden, closedToOAuthApps)
             pdsError(HttpStatusCode.NotFound, repoNotFound)
+            pdsError(HttpStatusCode.TooManyRequests, publicDownloadsLimited, headers = retryAfterHeader)
+            pdsError(HttpStatusCode.ServiceUnavailable, publicDownloadsBusy, headers = retryAfterHeader)
             notConfigured()
         }
     }
@@ -502,6 +523,8 @@ internal object XrpcRepoDocs {
                     "Blob not found",
                 ),
             )
+            pdsError(HttpStatusCode.TooManyRequests, publicDownloadsLimited, headers = retryAfterHeader)
+            pdsError(HttpStatusCode.ServiceUnavailable, publicDownloadsBusy, headers = retryAfterHeader)
             notConfigured()
         }
     }
