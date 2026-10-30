@@ -25,6 +25,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.logdate.client.media.AndroidManagedMediaDiscarder
 import app.logdate.client.media.AndroidManagedMediaImportSource
 import app.logdate.client.media.ManagedMediaImporter
@@ -73,7 +75,8 @@ actual fun ImagePickerContent(
 
     var hasRequestedPermission by rememberSaveable { mutableStateOf(false) }
     var reloadTrigger by remember { mutableIntStateOf(0) }
-    var libraryState by remember { mutableStateOf<ImagePickerLibraryState>(ImagePickerLibraryState.Loading) }
+    val library = viewModel { RecentImageLibraryViewModel(mediaManager) }
+    val libraryState by library.state.collectAsStateWithLifecycle()
 
     fun importSelection(sourceUri: String) {
         coroutineScope.launch {
@@ -130,42 +133,17 @@ actual fun ImagePickerContent(
         return ImagePickerLibraryState.PermissionRequired(permanentlyDenied = permanentlyDenied)
     }
 
-    // Long-lived collection: emits the initial snapshot and then re-emits a
-    // fresh list every time MediaStore reports a change, so a photo captured
-    // in the system camera appears in this grid without a manual refresh.
+    // The library collects in its ViewModel: a fresh list arrives whenever MediaStore changes, so a
+    // photo captured in the system camera appears without a manual refresh, and a reload after
+    // resuming restarts collection there instead of interrupting it here.
     LaunchedEffect(imagePermissions, reloadTrigger) {
         if (!hasAnyImagePermission()) {
-            libraryState = permissionRequiredState()
+            library.requirePermission(permissionRequiredState())
             return@LaunchedEffect
         }
-        libraryState = ImagePickerLibraryState.Loading
-        try {
-            // When the user grants partial access on Android 14+, MediaStore
-            // transparently filters its results to the selected items — no
-            // extra work needed here.
-            // Ask for ~4x the preview cap so the cursor still returns enough
-            // images after the videos-only filter strips out clips.
-            mediaManager.getRecentMedia(limit = RECENT_IMAGE_PREVIEW_LIMIT * 4).collect { mediaList ->
-                val images = recentImagePreviews(mediaList)
-                libraryState =
-                    when {
-                        images.isEmpty() -> ImagePickerLibraryState.Empty
-
-                        // On Android 14+, "Select photos" grants the user-selected
-                        // permission but denies READ_MEDIA_IMAGES; surface a
-                        // distinct state so the picker can show the Manage pill.
-                        !hasFullImageAccess() -> ImagePickerLibraryState.PartialAccess(images)
-
-                        else -> ImagePickerLibraryState.Loaded(images)
-                    }
-            }
-        } catch (error: SecurityException) {
-            Napier.w("Recent image access requires permission", error)
-            libraryState = permissionRequiredState()
-        } catch (error: Exception) {
-            Napier.e("Failed to load recent Android images", error)
-            libraryState = ImagePickerLibraryState.Error
-        }
+        // On Android 14+, "Select photos" grants the user-selected permission but denies
+        // READ_MEDIA_IMAGES; MediaStore already filters results to the selected items.
+        library.load(hasFullAccess = hasFullImageAccess(), permissionRevoked = permissionRequiredState())
     }
 
     // On returning from system settings, re-check permission status — the
