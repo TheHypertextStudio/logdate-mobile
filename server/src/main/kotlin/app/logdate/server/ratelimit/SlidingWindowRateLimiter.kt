@@ -1,41 +1,59 @@
 package app.logdate.server.ratelimit
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Clock
+
+/** How many [SlidingWindowRateLimiter.allow] calls pass between sweeps of idle keys. */
+private const val SLIDING_SWEEP_EVERY_CALLS = 1_024
 
 /**
  * Per-key sliding-window rate limiter.
  *
- * Hands out request quotas that refill continuously over [policy.windowSeconds]. Each [allow]
- * call records the current timestamp under [key] (usually a user ID or an IP-hash), evicts
- * timestamps older than the window, and rejects when the remaining count exceeds
- * [policy.maxRequests].
+ * Hands out request quotas that refill continuously over [RateLimitPolicy.windowSeconds]. Each
+ * [allow] call records the current timestamp under its key (usually a user ID or an IP hash), drops
+ * timestamps older than the window, and rejects when the window already holds
+ * [RateLimitPolicy.maxRequests]. Keys whose window has emptied are swept away every
+ * [SLIDING_SWEEP_EVERY_CALLS] calls, so memory follows the number of recently active keys.
  *
- * In-memory: good enough for a single-instance deploy. Multi-instance deployments should back
- * this with Redis — the [allow] signature is deliberately simple so a Redis-backed variant can
- * implement the same interface. For now, this is the shared base used by the sync endpoints and
- * (via its own private copy) the auth endpoints.
+ * Counts live in this instance's memory, which is enough for the per-instance limits it serves.
  */
 class SlidingWindowRateLimiter {
-    private val requestsByKey = ConcurrentHashMap<String, ArrayDeque<Long>>()
+    private class Window(
+        var windowMillis: Long,
+    ) {
+        val timestamps = ArrayDeque<Long>()
+
+        fun trim(nowEpochMillis: Long) {
+            val windowStart = nowEpochMillis - windowMillis
+            while (timestamps.isNotEmpty() && timestamps.first() < windowStart) {
+                timestamps.removeFirst()
+            }
+        }
+    }
+
+    private val requestsByKey = ConcurrentHashMap<String, Window>()
+    private val calls = AtomicInteger()
 
     fun allow(
         key: String,
         policy: RateLimitPolicy,
         nowEpochMillis: Long = Clock.System.now().toEpochMilliseconds(),
     ): Boolean {
-        val windowStart = nowEpochMillis - (policy.windowSeconds * 1000L)
-        val bucket = requestsByKey.computeIfAbsent(key) { ArrayDeque() }
-        synchronized(bucket) {
-            while (bucket.isNotEmpty() && bucket.first() < windowStart) {
-                bucket.removeFirst()
+        val windowMillis = policy.windowSeconds * 1000L
+        var allowed = false
+        requestsByKey.compute(key) { _, current ->
+            val window = current ?: Window(windowMillis)
+            window.windowMillis = windowMillis
+            window.trim(nowEpochMillis)
+            if (window.timestamps.size < policy.maxRequests) {
+                window.timestamps.addLast(nowEpochMillis)
+                allowed = true
             }
-            if (bucket.size >= policy.maxRequests) {
-                return false
-            }
-            bucket.addLast(nowEpochMillis)
-            return true
+            window
         }
+        if (calls.incrementAndGet() % SLIDING_SWEEP_EVERY_CALLS == 0) sweep(nowEpochMillis)
+        return allowed
     }
 
     /**
@@ -48,11 +66,26 @@ class SlidingWindowRateLimiter {
         policy: RateLimitPolicy,
         nowEpochMillis: Long = Clock.System.now().toEpochMilliseconds(),
     ): Long {
-        val bucket = requestsByKey[key] ?: return 0
-        val oldest = synchronized(bucket) { bucket.firstOrNull() } ?: return 0
-        val windowEnd = oldest + policy.windowSeconds * 1000L
+        var oldest: Long? = null
+        requestsByKey.computeIfPresent(key) { _, window ->
+            oldest = window.timestamps.firstOrNull()
+            window
+        }
+        val windowEnd = (oldest ?: return 0) + policy.windowSeconds * 1000L
         val waitMs = (windowEnd - nowEpochMillis).coerceAtLeast(0)
         return (waitMs + 999) / 1000
+    }
+
+    /** How many keys have requests in memory. */
+    internal fun trackedKeys(): Int = requestsByKey.size
+
+    private fun sweep(nowEpochMillis: Long) {
+        requestsByKey.keys.forEach { key ->
+            requestsByKey.computeIfPresent(key) { _, window ->
+                window.trim(nowEpochMillis)
+                window.takeIf { it.timestamps.isNotEmpty() }
+            }
+        }
     }
 }
 
