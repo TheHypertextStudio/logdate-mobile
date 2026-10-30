@@ -93,6 +93,7 @@ data class StoredAuthorizationRequest(
 )
 
 data class StoredAuthorizationCode(
+    /** The SHA-256 of the code, base64url-encoded; the code itself is only given to the app. */
     val code: String,
     val clientId: String,
     val redirectUri: String,
@@ -109,6 +110,7 @@ data class StoredAuthorizationCode(
 )
 
 data class StoredRefreshToken(
+    /** The SHA-256 of the token, base64url-encoded; the token itself is only given to the app. */
     val token: String,
     val clientId: String,
     val subjectDid: String,
