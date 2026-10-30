@@ -74,7 +74,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun DevicesScreen(
     onBackClick: () -> Unit,
-    viewModel: DevicesViewModel = koinInject(),
+    viewModel: DevicesViewModel = koinViewModel(),
     onNavigateToWatch: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
