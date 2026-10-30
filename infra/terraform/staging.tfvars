@@ -46,6 +46,7 @@ cloud_run_env = {
   SERVER_ENCRYPTION_ENABLED                = "true"
   SYNC_MEDIA_SIGNED_URLS                   = "true"
   SYNC_MEDIA_SIGNED_URL_TTL_HOURS          = "1"
+  TRUSTED_PROXY_HOPS                       = "1"
   AUTO_MIGRATE                             = "false"
   LOGDATE_ENCRYPTED_ACCOUNT_KEYS_ENABLED   = "true"
   LOGDATE_PERSONAL_SPACE_ENABLED           = "true"

@@ -86,11 +86,11 @@
 ### `TRUSTED_PROXY_HOPS`
 
 - **Description**: How many trusted proxies append to `X-Forwarded-For` after the one that saw the client. With Cloud Run alone this is `0`, and the last entry is the client. If a load balancer you control sits in front of Cloud Run and appends its own entry, set it to `1`.
-- **Type**: Integer, `0` or more
-- **Default**: `0`
+- **Type**: Integer, `0` to `4`
+- **Default**: `0` outside production
 - **Example**: `TRUSTED_PROXY_HOPS=1`
-- **Required**: No.
-- **Notes**: Only used when `TRUST_FORWARDED_HEADERS` is on. Setting it too high lets a client choose its own address; setting it too low makes every visitor share one rate limit.
+- **Required**: **Yes, in production while `TRUST_FORWARDED_HEADERS` is on.** `LOGDATE_ENV=production` refuses to start without it, because the right value depends on what sits in front of the deployment and a wrong default fails silently.
+- **Notes**: Only used when `TRUST_FORWARDED_HEADERS` is on. Setting it too high lets a client choose its own address; setting it too low makes every visitor share one rate limit. The first-party deployments set it in their Cloud Run environment: production serves through Cloud Run domain mappings alone (`0`), and staging serves its domain through a Google external Application Load Balancer, which appends both the client's address and its own (`1`).
 
 ---
 
