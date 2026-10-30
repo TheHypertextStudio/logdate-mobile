@@ -375,6 +375,7 @@ actual val dataModule: Module =
                 get(), // transcriptionDao
                 get(), // voiceNoteDao
                 get(), // transcriptionManager
+                mediaReferences = get(),
                 syncMetadataService = get(),
                 transactionManager = get(),
                 syncManagerProvider = { get() },

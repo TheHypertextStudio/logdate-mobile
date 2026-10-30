@@ -80,7 +80,6 @@ class HomeViewModel(
     companion object {
         private const val RECENT_TIMELINE_PAGE_SIZE = 50
         private const val APPEND_ERROR_MESSAGE = "Couldn't load older entries."
-        private val IN_PROGRESS_STATUSES = setOf(TranscriptionStatus.PENDING, TranscriptionStatus.IN_PROGRESS)
     }
 
     constructor(
@@ -139,12 +138,15 @@ class HomeViewModel(
                         ?.trim()
                         ?.takeIf(String::isNotEmpty)
                 },
-                isTranscriptionInProgress = { noteId -> transcriptionSnapshot[noteId]?.status in IN_PROGRESS_STATUSES },
+                isTranscriptionInProgress = { noteId ->
+                    transcriptionSnapshot[noteId]?.status == TranscriptionStatus.IN_PROGRESS
+                },
                 getTranscriptionError = { noteId ->
                     transcriptionSnapshot[noteId]
                         ?.takeIf { it.status == TranscriptionStatus.FAILED }
                         ?.errorMessage
                 },
+                getTranscriptionStatus = { noteId -> transcriptionSnapshot[noteId]?.status },
             ),
         ).asStateFlow()
 

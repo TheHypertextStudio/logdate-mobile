@@ -90,21 +90,25 @@ internal class SherpaOnnxTranscriptProcessor(
 
     suspend fun transcribeAudioFile(audioUri: String): TranscriptionResult =
         withContext(Dispatchers.Default) {
-            val samples =
-                AudioDecoder(context).decodeToMono16kHz(audioUri)
-                    ?: return@withContext TranscriptionResult.Error(TranscriptionFailure.AudioError)
-            if (samples.isEmpty()) {
-                return@withContext TranscriptionResult.Error(TranscriptionFailure.NoSpeechDetected)
-            }
-
             val fileVad = SherpaOnnxVadProvider(context)
             try {
                 fileVad.ensureInitialized()
-                samples.asSequenceChunks(BUFFER_SIZE_SHORTS).forEach(fileVad::acceptWaveform)
+                val hasSamples =
+                    try {
+                        feedFileTranscriptionAudio(AudioDecoder(context).decodeMono16kHz(audioUri), fileVad::acceptWaveform)
+                    } catch (error: CancellationException) {
+                        throw error
+                    } catch (error: Exception) {
+                        Napier.e("Could not decode recorded audio", error)
+                        return@withContext TranscriptionResult.Error(TranscriptionFailure.AudioError)
+                    }
+                if (!hasSamples) return@withContext TranscriptionResult.Error(TranscriptionFailure.NoSpeechDetected)
+                currentCoroutineContext().ensureActive()
                 fileVad.flush()
                 val utterances =
                     buildList {
                         while (!fileVad.isEmpty()) {
+                            currentCoroutineContext().ensureActive()
                             add(fileVad.front().samples.copyOf())
                             fileVad.pop()
                         }
@@ -115,10 +119,15 @@ internal class SherpaOnnxTranscriptProcessor(
 
                 val text =
                     if (offlineRecognizerProvider.ensureInitialized()) {
-                        utterances.mapNotNull { offlineRecognizerProvider.transcribe(it)?.text?.trim() }
+                        utterances.mapNotNull {
+                            currentCoroutineContext().ensureActive()
+                            val result = offlineRecognizerProvider.transcribe(it)?.text?.trim()
+                            currentCoroutineContext().ensureActive()
+                            result
+                        }
                     } else {
                         recognizerProvider.ensureInitialized()
-                        utterances.mapNotNull(::transcribeStreamingUtterance)
+                        utterances.mapNotNull { transcribeStreamingUtterance(it) }
                     }.filter(String::isNotBlank)
                         .joinToString(" ")
 
@@ -127,6 +136,8 @@ internal class SherpaOnnxTranscriptProcessor(
                 } else {
                     TranscriptionResult.Success(text = text, isFinal = true)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Napier.e("On-device file transcription failed", e)
                 TranscriptionResult.Error(TranscriptionFailure.Unknown)
@@ -135,15 +146,17 @@ internal class SherpaOnnxTranscriptProcessor(
             }
         }
 
-    private fun transcribeStreamingUtterance(samples: FloatArray): String? {
+    private suspend fun transcribeStreamingUtterance(samples: FloatArray): String? {
         if (samples.isEmpty()) return null
         val localStream = recognizerProvider.createStream()
         return try {
             localStream.acceptWaveform(samples, SherpaOnnxRecognizerProvider.SAMPLE_RATE)
             localStream.inputFinished()
             while (recognizerProvider.isReady(localStream)) {
+                currentCoroutineContext().ensureActive()
                 recognizerProvider.decode(localStream)
             }
+            currentCoroutineContext().ensureActive()
             recognizerProvider
                 .getResult(localStream)
                 .text
@@ -154,18 +167,7 @@ internal class SherpaOnnxTranscriptProcessor(
         }
     }
 
-    private fun FloatArray.asSequenceChunks(chunkSize: Int): Sequence<FloatArray> =
-        sequence {
-            var offset = 0
-            while (offset < size) {
-                val end = (offset + chunkSize).coerceAtMost(size)
-                yield(copyOfRange(offset, end))
-                offset = end
-            }
-        }
-
     private companion object {
-        const val BUFFER_SIZE_SHORTS = 2048
         const val REFINEMENT_TIMEOUT_MS = 5 * 60_000L
     }
 }

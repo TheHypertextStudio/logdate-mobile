@@ -25,13 +25,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.logdate.client.repository.transcription.TranscriptionStatus
+import app.logdate.ui.audio.AudioTranscriptStatus
 import app.logdate.ui.audio.formatAudioDuration
 import app.logdate.ui.audio.model.AudioPalette
 import app.logdate.ui.audio.waveform.BezierAudioWaveform
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
 import logdate.client.ui.generated.resources.Res
-import logdate.client.ui.generated.resources.audio_transcribing
 import logdate.client.ui.generated.resources.search_type_label_voice_note
 import org.jetbrains.compose.resources.stringResource
 
@@ -65,6 +66,8 @@ fun CollapsedAudioCard(
     transcriptExcerpt: String? = null,
     isTranscribing: Boolean = false,
     onPlayPause: () -> Unit = {},
+    transcriptionStatus: TranscriptionStatus? = null,
+    onRetryTranscription: (() -> Unit)? = null,
     playbackActions: @Composable () -> Unit = {},
 ) {
     val accentColor = remember(palette) { Color(palette.accentColor) }
@@ -95,13 +98,7 @@ fun CollapsedAudioCard(
                     )
                 }
             }
-            if (transcriptExcerpt == null && isTranscribing) {
-                Text(
-                    text = stringResource(Res.string.audio_transcribing),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            AudioTranscriptStatus(transcriptionStatus, transcriptExcerpt != null, isTranscribing, onRetryTranscription)
 
             playbackActions()
 

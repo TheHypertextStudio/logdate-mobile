@@ -50,7 +50,7 @@ class AndroidTranscriptionWorkTest {
 
             assertEquals(TranscriptionWorkOutcome.Retry, outcome)
             assertEquals(
-                listOf(TranscriptionStatus.IN_PROGRESS, TranscriptionStatus.COMPLETED),
+                listOf(TranscriptionStatus.IN_PROGRESS, TranscriptionStatus.COMPLETED, TranscriptionStatus.PENDING),
                 statuses,
             )
         }

@@ -5,6 +5,7 @@ package app.logdate.ui.audio
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import app.logdate.client.repository.transcription.TranscriptionStatus
 import kotlin.uuid.Uuid
 
 /**
@@ -15,6 +16,7 @@ data class TranscriptionState(
     val getTranscriptionText: (noteId: Uuid) -> String? = { _ -> null },
     val isTranscriptionInProgress: (noteId: Uuid) -> Boolean = { _ -> false },
     val getTranscriptionError: (noteId: Uuid) -> String? = { _ -> null },
+    val getTranscriptionStatus: (noteId: Uuid) -> TranscriptionStatus? = { _ -> null },
 )
 
 /**

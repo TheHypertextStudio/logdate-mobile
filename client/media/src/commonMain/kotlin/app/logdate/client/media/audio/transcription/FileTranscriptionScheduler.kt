@@ -90,8 +90,17 @@ internal class FileTranscriptionScheduler(
             try {
                 ready.await()
                 val store = repository()
-                val runner = TranscriptionWorkRunner(store::updateTranscription, service::transcribeAudioFile, store)
-                TranscriptionPersistenceRetrier().persist { runner.run(noteId, audioUri) != TranscriptionWorkOutcome.Retry }
+                var attempts = 0
+                TranscriptionPersistenceRetrier().persist {
+                    val runner =
+                        TranscriptionWorkRunner(
+                            store::updateTranscription,
+                            service::transcribeAudioFile,
+                            store,
+                            retryAllowed = ++attempts < 10,
+                        )
+                    runner.run(noteId, audioUri) != TranscriptionWorkOutcome.Retry
+                }
             } finally {
                 val owner = coroutineContext[Job]
                 withContext(NonCancellable) {

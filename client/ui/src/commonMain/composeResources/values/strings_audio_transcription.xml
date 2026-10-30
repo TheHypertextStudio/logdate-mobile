@@ -1,0 +1,8 @@
+<resources>
+    <string name="audio_transcription_queued">Transcription queued</string>
+    <string
+    name="audio_transcription_failed"
+  >Transcription failed. Audio kept.</string>
+    <string name="audio_transcription_retry">Retry transcription</string>
+    <string name="audio_transcription_no_speech">No speech detected</string>
+</resources>

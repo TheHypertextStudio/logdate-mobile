@@ -12,5 +12,5 @@ actual val audioUiModule: Module =
     module {
         single<WaveformStorage> { IosWaveformStorage() }
         single<AmplitudeExtractor> { IosAmplitudeExtractor(get()) }
-        factory { AudioContextProcessor(get(), get()) }
+        single { AudioContextProcessor(get(), get()) }
     }

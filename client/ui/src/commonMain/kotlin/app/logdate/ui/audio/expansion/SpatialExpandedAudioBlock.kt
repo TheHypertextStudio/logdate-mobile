@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.logdate.client.repository.transcription.TranscriptionStatus
+import app.logdate.ui.audio.AudioTranscriptStatus
 import app.logdate.ui.audio.formatAudioDuration
 import app.logdate.ui.audio.model.AudioPalette
 import app.logdate.ui.audio.model.AudioSegment
@@ -30,7 +32,6 @@ import app.logdate.ui.theme.Spacing
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.ui.generated.resources.Res
-import logdate.client.ui.generated.resources.audio_transcribing
 import logdate.client.ui.generated.resources.playback_pause
 import logdate.client.ui.generated.resources.playback_play
 import logdate.client.ui.generated.resources.search_type_label_voice_note
@@ -60,6 +61,8 @@ fun SpatialExpandedAudioBlock(
     isTranscribing: Boolean = false,
     onPlayPause: () -> Unit = {},
     onSeek: (Float) -> Unit = {},
+    transcriptionStatus: TranscriptionStatus? = null,
+    onRetryTranscription: (() -> Unit)? = null,
     playbackActions: @Composable () -> Unit = {},
 ) {
     Surface(
@@ -76,13 +79,7 @@ fun SpatialExpandedAudioBlock(
                     text = transcript ?: stringResource(Res.string.search_type_label_voice_note),
                     style = MaterialTheme.typography.bodyLarge,
                 )
-                if (transcript == null && isTranscribing) {
-                    Text(
-                        text = stringResource(Res.string.audio_transcribing),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                AudioTranscriptStatus(transcriptionStatus, transcript != null, isTranscribing, onRetryTranscription)
 
                 // Waveform
                 BezierAudioWaveform(
