@@ -129,8 +129,19 @@ class EditorCameraCreationControlsTest {
                     }
                     val shutter = compose.onNodeWithContentDescription("Take Photo").assertIsDisplayed().assertIsEnabled()
                     val shutterBounds = shutter.fetchSemanticsNode().boundsInRoot
-                    val chooser = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInRoot
-                    assertTrue(shutterBounds.bottom <= chooser.top, "Shutter must remain above the separate creation surface")
+                    compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
+                    compose.onNodeWithContentDescription("Write").assertIsNotDisplayed()
+                    scenario.onActivity {
+                        val view = it.window.decorView
+                        val insets =
+                            WindowInsetsCompat
+                                .toWindowInsetsCompat(view.rootWindowInsets)
+                                .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+                        assertTrue(
+                            shutterBounds.bottom <= view.height - insets.bottom,
+                            "Camera owns the lower controls and clears system UI",
+                        )
+                    }
                     check(device.takeScreenshot(File(output, "mobile-camera-shutter.png")))
                     val windowSizes =
                         ManagedEditorWindowCaptures(device, compose, scenario, output) {
@@ -177,8 +188,29 @@ class EditorCameraCreationControlsTest {
                     ) { compose.onAllNodesWithContentDescription("Captured photo").fetchSemanticsNodes().isNotEmpty() }
                     compose.onNodeWithTag(focused).assertIsDisplayed()
                     compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
-                    tap(device, scenario, compose.onNodeWithContentDescription("Return to entry"))
+                    val back = ManagedEditorBackGesture(device)
+                    back.perform(cancel = true) {
+                        compose.onNodeWithTag(focused).assertIsDisplayed()
+                        compose.onNodeWithContentDescription("Captured photo").assertIsDisplayed()
+                        compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
+                        check(device.takeScreenshot(File(output, "accepted-photo-back-partial.png")))
+                    }
+                    compose.onNodeWithTag(focused).assertIsDisplayed()
+                    device.pressBack()
+                    compose.waitUntil(10_000) {
+                        compose.onAllNodesWithTag("entry_journal_chooser").fetchSemanticsNodes().isNotEmpty()
+                    }
                     compose.onNodeWithTag("entry_add_memory").assertIsDisplayed()
+                    compose.onNodeWithContentDescription("Image").assertIsDisplayed()
+                    tap(device, scenario, compose.onNodeWithContentDescription("Image"))
+                    compose.waitUntil(10_000) { compose.onAllNodesWithTag(focused).fetchSemanticsNodes().isNotEmpty() }
+                    device.pressBack()
+                    compose.waitUntil(10_000) {
+                        compose.onAllNodesWithTag("entry_journal_chooser").fetchSemanticsNodes().isNotEmpty()
+                    }
+                    compose.onNodeWithContentDescription("Image").assertIsDisplayed()
+                    check(device.takeScreenshot(File(output, "normal-mobile-accepted-photo-overview.png")))
+                    windowSizes.captureOverviewSizes()
                     ManagedSystemBarCaptures(device, compose, scenario, output).captureGestureAndThreeButtonBars()
                 } finally {
                     device.takeScreenshot(File(output, "camera-terminal.png"))
