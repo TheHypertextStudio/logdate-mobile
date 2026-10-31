@@ -14,7 +14,10 @@ plugins {
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.screenshot)
     id("app.logdate.android-release")
+    id("app.logdate.managed-devices")
 }
+
+managedDeviceMatrix { phone() }
 
 val baselineProfileRequested =
     gradle.startParameter.taskNames.any { taskName ->

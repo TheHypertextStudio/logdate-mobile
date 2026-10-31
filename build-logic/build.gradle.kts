@@ -88,6 +88,10 @@ gradlePlugin {
             id = "app.logdate.benchmark"
             implementationClass = "app.logdate.BenchmarkConventionPlugin"
         }
+        register("managedDevices") {
+            id = "app.logdate.managed-devices"
+            implementationClass = "app.logdate.ManagedDevicesPlugin"
+        }
         register("androidRelease") {
             id = "app.logdate.android-release"
             implementationClass = "app.logdate.LogDateReleasePlugin"

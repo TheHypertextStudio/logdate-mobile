@@ -11,7 +11,10 @@ plugins {
     alias(libs.plugins.screenshot)
     alias(libs.plugins.gradlePlayPublisher)
     id("app.logdate.android-release")
+    id("app.logdate.managed-devices")
 }
+
+managedDeviceMatrix { wear() }
 
 /**
  * The watch ships on the phone's Play listing, as a Wear OS form factor, under the phone's package
