@@ -25,6 +25,7 @@ import app.logdate.feature.editor.ui.editor.VideoBlockUiState
 import app.logdate.feature.editor.ui.layout.ImmersiveEditorLayout
 import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.feature.timeline.ui.details.TimelineDayDetailPanel
+import app.logdate.screenshots.common.PostureRouteFrame
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.ui.foldable.FoldableHingeBounds
@@ -312,16 +313,14 @@ fun A64_AudioTranscriptBookPosture() {
 @Preview(name = "Timeline day detail book posture", showBackground = true, device = BOOK_FOLDABLE)
 @Composable
 fun A65_TimelineDayDetailBookPosture() {
-    provideFoldableLayoutInfo(bookPostureLayoutInfo) {
-        ScreenshotTheme {
-            TimelineDayDetailPanel(
-                uiState = auditTimelineDayState,
-                onExit = {},
-                onOpenEvent = {},
-                onOpenLocations = {},
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+    PostureRouteFrame(bookPostureLayoutInfo) {
+        TimelineDayDetailPanel(
+            uiState = auditTimelineDayState,
+            onExit = {},
+            onOpenEvent = {},
+            onOpenLocations = {},
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
@@ -329,16 +328,14 @@ fun A65_TimelineDayDetailBookPosture() {
 @Preview(name = "Timeline day detail tabletop posture", showBackground = true, device = TABLETOP_FOLDABLE)
 @Composable
 fun A66_TimelineDayDetailTabletopPosture() {
-    provideFoldableLayoutInfo(tabletopPostureLayoutInfo) {
-        ScreenshotTheme {
-            TimelineDayDetailPanel(
-                uiState = auditTimelineDayState,
-                onExit = {},
-                onOpenEvent = {},
-                onOpenLocations = {},
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+    PostureRouteFrame(tabletopPostureLayoutInfo) {
+        TimelineDayDetailPanel(
+            uiState = auditTimelineDayState,
+            onExit = {},
+            onOpenEvent = {},
+            onOpenLocations = {},
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
