@@ -18,6 +18,7 @@ pluginManagement {
         maven {
             // Get latest version from https://androidx.dev/snapshots/builds/
             url = uri("https://androidx.dev/snapshots/builds/13551459/artifacts/repository")
+            mavenContent { snapshotsOnly() }
         }
     }
 }
@@ -25,28 +26,8 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-dependencyResolutionManagement {
-    repositories {
-        google {
-            mavenContent {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
-        }
-        mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        }
-        maven {
-            url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
-        }
-        maven {
-            // Get latest version from https://androidx.dev/snapshots/builds/
-            url = uri("https://androidx.dev/snapshots/builds/13551459/artifacts/repository")
-        }
-    }
-}
+// The full build and the server's container build resolve from the same repositories.
+apply(from = "build-logic/repositories.settings.gradle.kts")
 
 // End build targets
 include(":app:compose-main")
