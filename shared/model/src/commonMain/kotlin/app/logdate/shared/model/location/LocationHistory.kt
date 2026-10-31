@@ -45,6 +45,15 @@ data class ActivityObservation(
     val timeZoneId: String? = null,
 )
 
+/**
+ * A named place a visit is matched to.
+ *
+ * @property name The place's own name, such as "Blue Bottle Coffee" or "Market Street", without
+ *   wording about how close the person was. Records written before [nameQualifier] existed may
+ *   still hold a localized "Near …" phrase here.
+ * @property nameQualifier How the visit relates to [name], so each device can word it in its own
+ *   language. Null for places recorded before the qualifier existed.
+ */
 @Serializable
 data class SemanticPlace(
     val id: String,
@@ -54,7 +63,18 @@ data class SemanticPlace(
     val locality: String? = null,
     val externalId: String? = null,
     val userConfirmed: Boolean = false,
+    val nameQualifier: PlaceNameQualifier? = null,
 )
+
+/** How a visit relates to the name of the [SemanticPlace] it is matched to. */
+@Serializable
+enum class PlaceNameQualifier {
+    /** The person was at the named place. */
+    AT,
+
+    /** The person was near the named place, which is the closest named landmark or street. */
+    NEAR,
+}
 
 sealed interface LocationDayItem {
     val id: String
