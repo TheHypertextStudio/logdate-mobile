@@ -66,7 +66,6 @@
 
     <!-- Profile -->
     <string name="profile_error_load">Failed to load profile: %1$s</string>
-    <string name="profile_error_refresh">Failed to refresh profile: %1$s</string>
     <string name="profile_error_unexpected">Unexpected error: %1$s</string>
     <string name="profile_error_display_name_empty">Display name cannot be empty</string>
     <string name="profile_error_save_locally">Failed to save locally: %1$s</string>

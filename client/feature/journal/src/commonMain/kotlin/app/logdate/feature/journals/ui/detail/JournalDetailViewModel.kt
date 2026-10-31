@@ -8,7 +8,6 @@ import app.logdate.client.domain.timeline.GetJournalMembershipUseCase
 import app.logdate.client.repository.journals.JournalContentRepository
 import app.logdate.client.repository.journals.JournalRepository
 import app.logdate.client.repository.search.SearchResult
-import app.logdate.client.sharing.SharingLauncher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,7 +29,6 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalCoroutinesApi::class)
 class JournalDetailViewModel(
     private val repository: JournalRepository,
-    private val sharingLauncher: SharingLauncher,
     private val journalContentRepository: JournalContentRepository,
     private val getJournalMembership: GetJournalMembershipUseCase,
     private val searchInJournal: SearchInJournalUseCase,
@@ -159,17 +157,6 @@ class JournalDetailViewModel(
      */
     fun setSelectedJournalId(id: Uuid) {
         journalIdState.value = id
-    }
-
-    /**
-     * Shares the current journal.
-     */
-    fun shareCurrentJournal() {
-        viewModelScope.launch {
-            journalIdState.value?.let { journalId ->
-                sharingLauncher.shareJournalToInstagram(journalId)
-            }
-        }
     }
 
     /**

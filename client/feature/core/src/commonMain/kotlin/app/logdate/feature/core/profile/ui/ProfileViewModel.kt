@@ -9,11 +9,9 @@ import app.logdate.client.repository.account.AccountRepository
 import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.text.toUiText
-import app.logdate.feature.core.profile.ui.ProfileDisplayModel
 import app.logdate.feature.core.profile.ui.ProfileEditState
 import app.logdate.feature.core.profile.ui.ProfileUiState
 import app.logdate.feature.core.profile.ui.ProfileUpdateState
-import app.logdate.feature.core.profile.ui.createProfileDisplayModel
 import app.logdate.shared.model.profile.LogDateProfile
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +25,6 @@ import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.profile_error_bio_cloud_update
 import logdate.client.feature.core.generated.resources.profile_error_display_name_empty
 import logdate.client.feature.core.generated.resources.profile_error_load
-import logdate.client.feature.core.generated.resources.profile_error_refresh
 import logdate.client.feature.core.generated.resources.profile_error_save_bio
 import logdate.client.feature.core.generated.resources.profile_error_save_birthday
 import logdate.client.feature.core.generated.resources.profile_error_save_locally
@@ -244,38 +241,6 @@ class ProfileViewModel(
     }
 
     /**
-     * Refresh profile data from the server.
-     */
-    fun refreshProfile() {
-        viewModelScope.launch {
-            try {
-                _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
-                val result = accountRepository.refreshAccount()
-                if (result.isFailure) {
-                    val exception = result.exceptionOrNull()
-                    Napier.e("Failed to refresh profile", exception)
-                    _uiState.value =
-                        _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = Res.string.profile_error_refresh.toUiText(exception?.message.toString()),
-                        )
-                } else {
-                    // Data will be updated through the flow collection
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                }
-            } catch (e: Exception) {
-                Napier.e("Unexpected error refreshing profile", e)
-                _uiState.value =
-                    _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = Res.string.profile_error_unexpected.toUiText(e.message.toString()),
-                    )
-            }
-        }
-    }
-
-    /**
      * Clear error messages.
      */
     fun clearError() {
@@ -288,15 +253,4 @@ class ProfileViewModel(
     fun clearUpdateState() {
         _uiState.value = _uiState.value.copy(updateState = ProfileUpdateState.Idle)
     }
-
-    /**
-     * Get the current profile display model for UI rendering using local-first approach.
-     */
-    val profileDisplayModel: ProfileDisplayModel
-        get() =
-            createProfileDisplayModel(
-                localProfile = _uiState.value.localProfile,
-                account = _uiState.value.account,
-                userData = _uiState.value.userData,
-            )
 }

@@ -746,10 +746,6 @@ class CloudAccountOnboardingViewModel(
                 isSkipped = true,
             )
     }
-
-    fun dismissEmailVerificationOutcome() {
-        _uiState.value = _uiState.value.copy(emailVerificationOutcome = null)
-    }
 }
 
 data class CloudAccountOnboardingUiState(
@@ -807,13 +803,6 @@ data class CloudAccountOnboardingUiState(
             username.isNotBlank() &&
                 usernameError == null &&
                 usernameAvailability == UsernameAvailability.Available
-
-    val canCreateAccount: Boolean
-        get() =
-            canContinueFromDisplayName &&
-                canContinueFromUsername &&
-                isPasskeySupported &&
-                !isCreatingAccount
 }
 
 enum class OnboardingStep {

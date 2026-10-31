@@ -51,7 +51,6 @@ import app.logdate.client.repository.journals.JournalContentRepository
 import app.logdate.client.repository.journals.JournalMergeScope
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.search.SearchRepository
-import app.logdate.client.sharing.SharingLauncher
 import app.logdate.client.sync.NoOpSyncManager
 import app.logdate.client.sync.RoomSyncTransactionManager
 import app.logdate.client.sync.metadata.SyncMetadataService
@@ -199,7 +198,6 @@ class JournalMergeE2ETest {
                     ownedViewModel(journal.id.toString()) {
                         JournalDetailViewModel(
                             repository,
-                            unexpected<SharingLauncher>(),
                             memberships,
                             GetJournalMembershipUseCase(memberships),
                             SearchInJournalUseCase(unexpected<SearchRepository>()),

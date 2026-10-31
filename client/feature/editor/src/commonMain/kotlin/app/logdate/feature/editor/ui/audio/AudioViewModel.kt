@@ -86,16 +86,6 @@ class AudioViewModel(
         observeEnhancedModelDownloads()
     }
 
-    /**
-     * User tap on the "Download enhanced models" CTA. Both services dedupe
-     * concurrent triggers internally, so kicking both unconditionally is safe
-     * and keeps the call site simple.
-     */
-    fun downloadEnhancedAudioModels() {
-        transcriptionService.startOfflineModelDownload()
-        audioTaggingService.startModelDownload()
-    }
-
     /** Rebinds this block to a recording that survived its previous UI owner. */
     fun attachToRecording(
         blockId: Uuid,

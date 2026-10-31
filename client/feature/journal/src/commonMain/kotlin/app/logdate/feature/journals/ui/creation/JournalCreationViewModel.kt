@@ -72,12 +72,6 @@ class JournalCreationViewModel(
         }
     }
 
-    fun removeMediaUri(uri: String) {
-        backingUiState.update { state ->
-            state.copy(selectedMediaUris = state.selectedMediaUris - uri)
-        }
-    }
-
     fun toggleNoteSelection(noteId: Uuid) {
         backingUiState.update { state ->
             val current = state.selectedNoteIds
