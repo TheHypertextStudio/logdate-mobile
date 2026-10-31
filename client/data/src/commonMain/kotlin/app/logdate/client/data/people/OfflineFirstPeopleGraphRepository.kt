@@ -10,6 +10,7 @@ import app.logdate.client.database.dao.people.PersonLinkDao
 import app.logdate.client.database.dao.people.PersonResolutionDecisionDao
 import app.logdate.client.database.entities.people.InferredPersonClusterEntity
 import app.logdate.client.database.entities.people.InferredPersonEvidenceEntity
+import app.logdate.client.database.entities.people.PersonEntity
 import app.logdate.client.database.entities.people.PersonLinkEntity
 import app.logdate.client.database.entities.people.PersonResolutionDecisionEntity
 import app.logdate.client.repository.events.EventRepository
@@ -38,6 +39,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -62,6 +65,11 @@ class OfflineFirstPeopleGraphRepository(
 ) : InferredPeopleRepository,
     PersonLinkRepository,
     PeopleProfileRepository {
+    private val refreshMutex = Mutex()
+    private val refreshRequestLock = Mutex()
+    private var refreshRequests = 0L
+    private var completedRefreshCovers = 0L
+
     override fun observeOpenClusters(): Flow<List<InferredPersonCluster>> =
         inferredPersonClusterDao.observeByStatus(InferredPersonClusterStatus.OPEN.name).map { clusters ->
             clusters.map(InferredPersonClusterEntity::toModel)
@@ -106,70 +114,94 @@ class OfflineFirstPeopleGraphRepository(
                 )
             }
 
+    /**
+     * Recomputes inferred people from every entry, transcript and event. Several screens ask for a
+     * refresh as they open; a call made while another refresh runs waits for it and reuses its
+     * result when that refresh started after the call was made.
+     */
     override suspend fun refresh() {
-        withContext(dispatcher) {
-            val canonicalPeople = personDao.getAll()
-            val suppressedNames =
-                personResolutionDecisionDao
-                    .getAll()
-                    .filter { it.action == ACTION_SUPPRESS }
-                    .map(PersonResolutionDecisionEntity::normalizedName)
-                    .toSet()
+        val requested = refreshRequestLock.withLock { ++refreshRequests }
+        refreshMutex.withLock {
+            if (completedRefreshCovers >= requested) return
+            val covers = refreshRequestLock.withLock { refreshRequests }
+            withContext(dispatcher) { recomputeInference() }
+            completedRefreshCovers = covers
+        }
+    }
 
-            clearOpenInference()
-
-            val artifacts = loadPeopleInferenceArtifacts(textNoteDao, transcriptionDao, eventDao)
-            val canonicalEvidence = mutableMapOf<Uuid, MutableList<CandidateEvidence>>()
-            val inferredEvidence = mutableMapOf<String, MutableList<CandidateEvidence>>()
-
-            artifacts.forEach { artifact ->
-                val canonicalMatches = findCanonicalMatches(artifact.text, canonicalPeople)
-                canonicalMatches.forEach { person ->
-                    canonicalEvidence
-                        .getOrPut(person.id) { mutableListOf() }
-                        .add(
-                            CandidateEvidence(
-                                displayName = person.name,
-                                normalizedName = normalizePersonKey(person.name),
-                                sourceType = artifact.sourceType,
-                                sourceId = artifact.sourceId,
-                                createdAt = artifact.createdAt,
-                                label = previewEvidenceLabel(artifact.text),
-                                confidence = CANONICAL_EVIDENCE_CONFIDENCE,
-                            ),
-                        )
-                }
-
-                val extractedNames = extractPotentialPersonNames(artifact.text)
-                extractedNames.forEach { candidateName ->
-                    val normalizedName = normalizePersonKey(candidateName)
-                    if (normalizedName.isBlank()) {
-                        return@forEach
-                    }
-                    if (suppressedNames.contains(normalizedName)) {
-                        return@forEach
-                    }
-                    if (matchesCanonicalName(normalizedName, canonicalPeople)) {
-                        return@forEach
-                    }
-                    inferredEvidence
-                        .getOrPut(normalizedName) { mutableListOf() }
-                        .add(
-                            CandidateEvidence(
-                                displayName = candidateName,
-                                normalizedName = normalizedName,
-                                sourceType = artifact.sourceType,
-                                sourceId = artifact.sourceId,
-                                createdAt = artifact.createdAt,
-                                label = previewEvidenceLabel(artifact.text),
-                                confidence = CLUSTER_EVIDENCE_CONFIDENCE,
-                            ),
-                        )
-                }
+    private suspend fun recomputeInference() {
+        val canonicalPeople = personDao.getAll()
+        val suppressedNames =
+            personResolutionDecisionDao
+                .getAll()
+                .filter { it.action == ACTION_SUPPRESS }
+                .map(PersonResolutionDecisionEntity::normalizedName)
+                .toSet()
+        val canonicalKeys =
+            canonicalPeople.flatMapTo(mutableSetOf()) { person ->
+                (listOf(person.name) + person.aliases).map(::normalizePersonKey)
             }
+        val excludedNames = suppressedNames + canonicalKeys
+        val canonicalMatchers = canonicalPeople.map(::CanonicalPersonMatcher)
+        val canonicalEvidence = mutableMapOf<Uuid, MutableList<CandidateEvidence>>()
+        val inferredEvidence = mutableMapOf<String, MutableList<CandidateEvidence>>()
 
-            persistCanonicalLinks(canonicalEvidence)
-            persistInferredCandidates(inferredEvidence)
+        loadPeopleInferenceArtifacts(textNoteDao, transcriptionDao, eventDao).forEach { artifact ->
+            collectEvidence(artifact, canonicalMatchers, excludedNames, canonicalEvidence, inferredEvidence)
+        }
+
+        val plan = InferencePlan()
+        planCanonicalLinks(canonicalEvidence, plan)
+        planInferredCandidates(inferredEvidence, plan)
+        inferredPersonClusterDao.replaceOpenInference(
+            openStatus = InferredPersonClusterStatus.OPEN.name,
+            inferredProvenance = PersonLinkProvenance.INFERRED.name,
+            people = plan.people,
+            links = plan.links,
+            clusters = plan.clusters,
+            evidence = plan.evidence,
+        )
+    }
+
+    /**
+     * Records which known people [artifact] mentions, and which other capitalised names in it could
+     * be people, skipping names that are suppressed or already belong to someone known.
+     */
+    private fun collectEvidence(
+        artifact: InferenceArtifact,
+        canonicalMatchers: List<CanonicalPersonMatcher>,
+        excludedNames: Set<String>,
+        canonicalEvidence: MutableMap<Uuid, MutableList<CandidateEvidence>>,
+        inferredEvidence: MutableMap<String, MutableList<CandidateEvidence>>,
+    ) {
+        val normalizedText = artifact.text.lowercase()
+        val label = previewEvidenceLabel(artifact.text)
+        canonicalMatchers.filter { it.matches(normalizedText) }.forEach { matcher ->
+            val person = matcher.person
+            canonicalEvidence.getOrPut(person.id) { mutableListOf() } +=
+                CandidateEvidence(
+                    displayName = person.name,
+                    normalizedName = normalizePersonKey(person.name),
+                    sourceType = artifact.sourceType,
+                    sourceId = artifact.sourceId,
+                    createdAt = artifact.createdAt,
+                    label = label,
+                    confidence = CANONICAL_EVIDENCE_CONFIDENCE,
+                )
+        }
+        extractPotentialPersonNames(artifact.text).forEach { candidateName ->
+            val normalizedName = normalizePersonKey(candidateName)
+            if (normalizedName.isBlank() || normalizedName in excludedNames) return@forEach
+            inferredEvidence.getOrPut(normalizedName) { mutableListOf() } +=
+                CandidateEvidence(
+                    displayName = candidateName,
+                    normalizedName = normalizedName,
+                    sourceType = artifact.sourceType,
+                    sourceId = artifact.sourceId,
+                    createdAt = artifact.createdAt,
+                    label = label,
+                    confidence = CLUSTER_EVIDENCE_CONFIDENCE,
+                )
         }
     }
 
@@ -239,51 +271,25 @@ class OfflineFirstPeopleGraphRepository(
         }
     }
 
-    private suspend fun clearOpenInference() {
-        val openClusters = inferredPersonClusterDao.getByStatus(InferredPersonClusterStatus.OPEN.name)
-        if (openClusters.isNotEmpty()) {
-            inferredPersonEvidenceDao.deleteForClusters(openClusters.map(InferredPersonClusterEntity::id))
-        }
-        inferredPersonClusterDao.deleteByStatus(InferredPersonClusterStatus.OPEN.name)
-        personLinkDao.deleteByProvenance(PersonLinkProvenance.INFERRED.name)
-    }
-
-    private fun findCanonicalMatches(
-        text: String,
-        canonicalPeople: List<app.logdate.client.database.entities.people.PersonEntity>,
-    ): List<app.logdate.client.database.entities.people.PersonEntity> {
-        val normalizedText = text.lowercase()
-        return canonicalPeople.filter { person ->
-            val terms = listOf(person.name) + person.aliases
-            terms.any { term -> containsWholeTerm(normalizedText, normalizePersonKey(term)) }
-        }
-    }
-
-    private fun matchesCanonicalName(
-        normalizedName: String,
-        canonicalPeople: List<app.logdate.client.database.entities.people.PersonEntity>,
-    ): Boolean =
-        canonicalPeople.any { person ->
-            normalizePersonKey(person.name) == normalizedName ||
-                person.aliases.any { alias -> normalizePersonKey(alias) == normalizedName }
-        }
-
-    private suspend fun persistCanonicalLinks(evidenceByPersonId: Map<Uuid, List<CandidateEvidence>>) {
+    private fun planCanonicalLinks(
+        evidenceByPersonId: Map<Uuid, List<CandidateEvidence>>,
+        plan: InferencePlan,
+    ) {
         evidenceByPersonId.forEach { (personId, evidence) ->
             val distinctArtifacts = evidence.distinctBy { it.sourceId }
             if (distinctArtifacts.size < MIN_CANONICAL_LINK_ARTIFACTS) {
                 return@forEach
             }
-            distinctArtifacts
-                .mapNotNull { candidate ->
-                    candidate.toPersonLink(personId, confidence = CANONICAL_LINK_CONFIDENCE)
-                }.forEach { link ->
-                    personLinkDao.insert(link)
-                }
+            distinctArtifacts.mapNotNullTo(plan.links) { candidate ->
+                candidate.toPersonLink(personId, confidence = CANONICAL_LINK_CONFIDENCE)
+            }
         }
     }
 
-    private suspend fun persistInferredCandidates(candidates: Map<String, List<CandidateEvidence>>) {
+    private fun planInferredCandidates(
+        candidates: Map<String, List<CandidateEvidence>>,
+        plan: InferencePlan,
+    ) {
         candidates.forEach { (_, evidence) ->
             val distinctArtifacts = evidence.distinctBy { it.sourceId }
             if (distinctArtifacts.isEmpty()) {
@@ -303,25 +309,21 @@ class OfflineFirstPeopleGraphRepository(
             if (distinctArtifacts.size >= AUTO_PROMOTE_MIN_ARTIFACTS && distinctDays.size >= AUTO_PROMOTE_MIN_DAYS) {
                 val now = Clock.System.now()
                 val personId = Uuid.random()
-                personDao.insert(
+                plan.people +=
                     Person(
                         uid = personId,
                         name = nameHint,
                         origin = PersonOrigin.INFERRED,
-                    ).toEntity(createdAt = now),
-                )
-                distinctArtifacts
-                    .mapNotNull { candidate ->
-                        candidate.toPersonLink(personId, confidence = AUTO_PROMOTE_LINK_CONFIDENCE)
-                    }.forEach { link ->
-                        personLinkDao.insert(link)
-                    }
+                    ).toEntity(createdAt = now)
+                distinctArtifacts.mapNotNullTo(plan.links) { candidate ->
+                    candidate.toPersonLink(personId, confidence = AUTO_PROMOTE_LINK_CONFIDENCE)
+                }
                 return@forEach
             }
 
             val now = Clock.System.now()
             val clusterId = Uuid.random()
-            inferredPersonClusterDao.insert(
+            plan.clusters +=
                 InferredPersonClusterEntity(
                     id = clusterId,
                     displayNameHint = nameHint,
@@ -329,9 +331,8 @@ class OfflineFirstPeopleGraphRepository(
                     status = InferredPersonClusterStatus.OPEN.name,
                     created = now,
                     lastUpdated = now,
-                ),
-            )
-            inferredPersonEvidenceDao.insertAll(
+                )
+            plan.evidence +=
                 evidence.map { candidate ->
                     InferredPersonEvidenceEntity(
                         id = Uuid.random(),
@@ -342,8 +343,7 @@ class OfflineFirstPeopleGraphRepository(
                         confidence = candidate.confidence,
                         created = candidate.createdAt,
                     )
-                },
-            )
+                }
         }
     }
 
@@ -423,6 +423,14 @@ class OfflineFirstPeopleGraphRepository(
             created = now,
             lastUpdated = now,
         )
+    }
+
+    /** Everything one refresh writes, applied together by [InferredPersonClusterDao.replaceOpenInference]. */
+    private class InferencePlan {
+        val people = mutableListOf<PersonEntity>()
+        val links = mutableListOf<PersonLinkEntity>()
+        val clusters = mutableListOf<InferredPersonClusterEntity>()
+        val evidence = mutableListOf<InferredPersonEvidenceEntity>()
     }
 
     private data class CandidateEvidence(
