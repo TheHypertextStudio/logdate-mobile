@@ -75,9 +75,6 @@ dependencies {
     // JWT (Kotlin Multiplatform)
     implementation(libs.jwtKt)
 
-    // App Store Server Notifications V2 (signed JWS payload verification)
-    implementation(libs.appStoreServerLibrary)
-
     // Logging
     implementation(libs.napier)
 
