@@ -4,10 +4,10 @@ run-name: CI for ${{ github.ref_name }} by ${{ github.actor }}
 on:
   push:
     branches: [main, develop]
-    paths-ignore: ['**/*.md', 'docs/**']
+    paths-ignore: ["**/*.md", "docs/**"]
   pull_request:
     branches: [main, develop]
-    paths-ignore: ['**/*.md', 'docs/**']
+    paths-ignore: ["**/*.md", "docs/**"]
 
 permissions:
   contents: read
@@ -41,8 +41,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v6.0.1
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6.4.0
@@ -68,8 +68,9 @@ jobs:
         # Wasm test targets run in the multiplatform job. Compiling them here grew the
         # Gradle daemon from 5 to 9 GB and left under 1 GB of the runner's 16 GB free;
         # a runner that runs out of memory is shut down with no error from Gradle.
+        # The server's coverage floor is checked here, where its database tests run.
         run: |
-          ./gradlew test allTests --continue \
+          ./gradlew test allTests :server:jacocoTestCoverageVerification --continue \
             -x :integration:server-client-e2e:test \
             -x iosSimulatorArm64Test -x wasmJsTest -x wasmJsBrowserTest
         env:
@@ -88,24 +89,25 @@ jobs:
             **/build/test-results/**
             **/build/reports/tests
 
-      - name: Generate coverage report
-        run: ./gradlew koverXmlReport
-        continue-on-error: true
+      - name: Verify merged coverage
+        # The root report merges every module that applies Kover, and koverVerify holds it to
+        # the floor in app.logdate.coverage-reports.
+        run: ./gradlew :koverXmlReport :koverVerify
 
       - name: Prepare Codecov upload
         id: coverage
-        # Each module with the Kover plugin writes build/reports/kover/report.xml. The root
-        # report (build/reports/kover/coverage.xml) merges no modules, so it has no classes.
+        if: ${{ always() }}
         # Codecov accepts uploads without a token only from forks' pull requests.
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           FORK_PULL_REQUEST: ${{ github.event.pull_request.head.repo.full_name != '' && github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
-          files="$(find . -path '*/build/reports/kover/report.xml' | sort | paste -sd, -)"
-          if [[ -z "$files" ]]; then
-            echo "::warning title=No coverage uploaded::koverXmlReport wrote no module reports, so there is nothing to upload."
+          files=""
+          if [[ -f build/reports/kover/coverage.xml ]]; then
+            files=build/reports/kover/coverage.xml
+            echo "Coverage report: $files"
           else
-            echo "Coverage reports: $files"
+            echo "::warning title=No coverage uploaded::koverXmlReport wrote no merged report, so there is nothing to upload."
           fi
           echo "files=$files" >> "$GITHUB_OUTPUT"
           if [[ -z "$CODECOV_TOKEN" && "$FORK_PULL_REQUEST" != "true" ]]; then
@@ -143,8 +145,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v6.0.1
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6.4.0
@@ -187,7 +189,7 @@ jobs:
         uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6.4.0
         with:
@@ -228,8 +230,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v6.0.1
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6.4.0
@@ -291,8 +293,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v6.0.1
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6.4.0
@@ -327,8 +329,8 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v6.0.1
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6.4.0
