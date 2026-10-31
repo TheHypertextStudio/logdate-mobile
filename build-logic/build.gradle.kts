@@ -80,6 +80,10 @@ gradlePlugin {
             id = "app.logdate.kmp-library"
             implementationClass = "app.logdate.KmpLibraryConventionPlugin"
         }
+        register("jvmService") {
+            id = "app.logdate.jvm-service"
+            implementationClass = "app.logdate.JvmServiceConventionPlugin"
+        }
         register("androidRelease") {
             id = "app.logdate.android-release"
             implementationClass = "app.logdate.LogDateReleasePlugin"

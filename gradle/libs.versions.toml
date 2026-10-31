@@ -22,6 +22,7 @@ ktlint = "13.1.0"
 # The ktlint engine the ktlint Gradle plugin runs
 ktlintEngine = "1.5.0"
 detekt = "2.0.0-alpha.3"
+jacoco = "0.8.12"
 
 # Android Build Versions
 android-compileSdk = "37"
