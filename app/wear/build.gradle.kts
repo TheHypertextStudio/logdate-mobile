@@ -22,7 +22,6 @@ managedDeviceMatrix { wear() }
  * identity, versioning and signing come from the same plugin the phone's values are defined by.
  */
 val release = the<LogDateReleaseExtension>()
-release.requireSigningForReleaseTasks()
 
 val baselineProfileRequested =
     gradle.startParameter.taskNames.any { taskName ->
@@ -48,19 +47,6 @@ extensions.configure<ApplicationExtension> {
         testInstrumentationRunner = "app.logdate.wear.e2e.WearEmulatorTestRunner"
     }
 
-    release.signing?.let { key ->
-        signingConfigs {
-            create("release") {
-                storeFile = file(key.storeFile)
-                storePassword = key.storePassword
-                keyAlias = key.keyAlias
-                keyPassword = key.keyPassword
-                enableV1Signing = true
-                enableV2Signing = true
-            }
-        }
-    }
-
     buildTypes {
         debug {
             // Installs beside a release build, and matches the phone's debug package so a debug phone
@@ -70,12 +56,6 @@ extensions.configure<ApplicationExtension> {
         }
         release {
             isMinifyEnabled = false
-            signingConfig =
-                if (release.signsWithDebugKey) {
-                    signingConfigs.getByName("debug")
-                } else {
-                    signingConfigs.getByName("release")
-                }
             if (baselineProfileRequested) {
                 isProfileable = true
             }
@@ -87,7 +67,6 @@ extensions.configure<ApplicationExtension> {
         create("benchmark") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
-            signingConfig = signingConfigs.getByName("debug")
             isProfileable = true
         }
     }
