@@ -27,7 +27,6 @@ import app.logdate.ui.foldable.FoldablePosture
 import app.logdate.ui.foldable.LocalFoldableLayoutInfoOverride
 import app.logdate.ui.theme.LogDateTheme
 import app.logdate.ui.workspace.AdaptiveWorkspaceLayout
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.PanelConstraints
 import app.logdate.ui.workspace.WorkspaceSearchScope
 import java.awt.image.BufferedImage
@@ -81,7 +80,6 @@ class ActivityRouteFrameTest {
         setContent {
             LogDateTheme {
                 CompositionLocalProvider(
-                    LocalWorkspaceEnabled provides true,
                     LocalFoldableLayoutInfoOverride provides foldable,
                     LocalLayoutDirection provides direction,
                 ) {
@@ -127,9 +125,7 @@ class ActivityRouteFrameTest {
         runDesktopComposeUiTest(width = 1600, height = 1000) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        ActivityRouteFrame { Box(Modifier.fillMaxSize().testTag("reading")) }
-                    }
+                    ActivityRouteFrame { Box(Modifier.fillMaxSize().testTag("reading")) }
                 }
             }
             val bounds = onNodeWithTag("reading").fetchSemanticsNode().boundsInRoot

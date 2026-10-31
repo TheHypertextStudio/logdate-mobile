@@ -31,7 +31,7 @@ class WorkspaceRtlTest {
         runDesktopComposeUiTest(width = 1280, height = 800) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl, LocalWorkspaceEnabled provides true) {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                         layout(
                             { Box(Modifier.fillMaxSize().testTag("visual_focus")) },
                             { Box(Modifier.fillMaxSize().testTag("supporting_content")) },

@@ -33,7 +33,6 @@ private val LocalPanelFramed = staticCompositionLocalOf { false }
 enum class PanelContainment { Working, Collection }
 
 val LocalWorkspaceHosted = staticCompositionLocalOf { false }
-val LocalWorkspaceEnabled = staticCompositionLocalOf { false }
 val LocalPanelLayoutInfo = staticCompositionLocalOf<PanelLayoutInfo?> { null }
 
 /** Contained controls inherit the canvas; only an overlapping sticky bar needs a backdrop. */
@@ -59,21 +58,6 @@ fun WorkspacePanel(
     containment: PanelContainment = PanelContainment.Working,
     content: @Composable (PanelLayoutInfo) -> Unit,
 ) {
-    if (!LocalWorkspaceEnabled.current) {
-        BoxWithConstraints(modifier) {
-            Surface(
-                Modifier.fillMaxSize(),
-                shape =
-                    app.logdate.ui.common
-                        .adaptivePanelShape(maxWidth, maxHeight),
-                color = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ) {
-                content(PanelLayoutInfo(role, placement, maxWidth, maxHeight))
-            }
-        }
-        return
-    }
     if (LocalPanelFramed.current) {
         BoxWithConstraints(modifier.fillMaxSize()) {
             content(PanelLayoutInfo(role, placement, maxWidth, maxHeight))

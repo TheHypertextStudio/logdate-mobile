@@ -30,7 +30,7 @@ fun WorkspaceRouteFrame(
     focusConstraints: PanelConstraints = PanelConstraints.Reading,
     content: @Composable () -> Unit,
 ) {
-    if (!LocalWorkspaceEnabled.current || LocalWorkspaceHosted.current) {
+    if (LocalWorkspaceHosted.current) {
         content()
         return
     }

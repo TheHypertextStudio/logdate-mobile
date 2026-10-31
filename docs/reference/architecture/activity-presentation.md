@@ -78,8 +78,8 @@ workspace already provides it, and it is also a pass-through while the workspace
 - A scene strategy chooses from declared presentation, current selection and measured bounds. It must
   not decide that two entries are related because one follows the other.
 - Hinge, inset and spacing primitives are shared and independent of Home. Using `WorkspacePanel` or
-  the measurement helpers does not enrol a route in Home. `HOME_WORKSPACE_V2` changes how Home is
-  presented and does not decide which activity owns a route.
+  the measurement helpers does not enrol a route in Home, and the Home workspace does not decide
+  which activity owns a route.
 - Test a new presentation with `ActivityPresentationTest` for the metadata, the scene strategies for
   selection, and an end-to-end navigation test for Back, resize and restoration.
 

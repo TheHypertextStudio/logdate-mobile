@@ -1,6 +1,6 @@
 # Adaptive Home workspace
 
-`HOME_WORKSPACE_V2` defaults to true and remains a presentation rollback switch. The flag changes presentation only. Data, recording preferences, route keys, and ViewModel ownership remain unchanged.
+The shared workspace is the only Home presentation; no flag or composition local selects an alternative. Presentation never changes data, recording preferences, route keys, or ViewModel ownership.
 
 Home destinations compose independently responsive panels. Feature code supplies content, actions, and selection; `client/ui/workspace` owns the viewport, navigation, surfaces, insets, gutters, fold regions, and panel placement. Direct links and nested details use `WorkspaceRouteFrame`; a hosted panel passes through without acquiring a second shell.
 
@@ -30,11 +30,11 @@ Journal grids scale their minimum cover width with local panel width, within 132
 
 Rewind's individuality comes from each story's artwork, accent, title, quote, dates, and available metadata. Separation is subtle: ordinary covers use 1–2dp elevation, with static separation under reduced motion. Do not add simulated page stacks, perspective, or cover scaling. Photo-free covers use a flowing typographic layout instead of leaving their title at the foot of a large empty colour field. Keep the next-story affordance between covers and preserve intrinsic height for large text.
 
-Run `checkHomeWorkspaceContract` after changing a migrated adapter/root. The Kotlin PSI scope lives in `config/workspace/home-roots.txt`; narrow exceptions name one function, one rule, and a reviewed reason in `home-allowlist.txt`. Extend shared primitives for new visual behavior. Existing immersive Rewind media clipping is an explicit exception.
+Run `checkHomeWorkspaceContract` after changing a Home adapter or root. The Kotlin PSI scope lives in `config/workspace/home-roots.txt`; narrow exceptions name one function, one rule, and a reviewed reason in `home-allowlist.txt`. Extend shared primitives for new visual behavior. Existing immersive Rewind media clipping is an explicit exception.
 
 The populated screenshot catalog in `screenshots/audit/workspace/` (`HomeWorkspaceScreenshots.kt` for destinations, `HomeWorkspaceDetailScreenshots.kt` for immediate details, and `HomeWorkspaceLayoutScreenshots.kt` for postures, desktop windows and other layouts) renders all destinations and immediate details through the shared shell at matching sizes. Inspect phone, compact, landscape, tablet portrait/landscape, book, tabletop, dark, 200% text, RTL, and reduced-motion scenes. Preview map geometry proves layout only. Use Gradle Managed Devices for real Maps and interaction acceptance; never use connected-test tasks or physical devices by default.
 
-Do not enable the flag until the native-map and complete runtime/visual acceptance matrix passes. A missing key or skipped native test is an acceptance gap, not successful map verification.
+Native-map and complete runtime/visual acceptance follow this matrix. A missing key or skipped native test is an acceptance gap, not successful map verification.
 
 Workspace search uses `WorkspaceAppBar` and `WorkspaceSearchBar` outside the panels. Search aligns with the leading content edge on phones and wider workspaces; the account action stays at the trailing edge. Navigation and the accessible pane title identify the destination without a competing header label. The default action opens unified search. `WorkspaceSearchScope` lets Your places use that same header field for its existing bounded place-name filter; disposal releases the scope and returning restores the saved query. Collection filters remain panel content; never add another destination search bar inside a collection or viewer. Omit redundant headings such as “Your days,” “Your latest story,” and “Previous stories”; retain meaningful dates and individual story titles.
 

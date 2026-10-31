@@ -25,18 +25,3 @@ fun centeredListPadding(
         top = vertical + extraVertical,
         bottom = vertical + extraVertical,
     )
-
-/**
- * Creates PaddingValues for grids that ensures content doesn't run against screen edges
- * and provides proper spacing for first/last items.
- *
- * @param minHorizontal Minimum horizontal padding
- */
-@Composable
-fun centeredGridPadding(minHorizontal: Dp = Spacing.xl): PaddingValues =
-    PaddingValues(
-        start = minHorizontal,
-        end = minHorizontal,
-        top = Spacing.lg + Spacing.xl,
-        bottom = Spacing.lg + Spacing.xl,
-    )

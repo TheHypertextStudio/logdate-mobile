@@ -45,18 +45,16 @@ class WorkspaceStateTest {
         runDesktopComposeUiTest(width = 411, height = 700) {
             setContent {
                 LogDateTheme {
-                    androidx.compose.runtime.CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        WorkspaceRouteFrame {
-                            Text(
-                                if (LocalWorkspaceHosted.current &&
-                                    LocalPanelLayoutInfo.current != null
-                                ) {
-                                    "Hosted detail"
-                                } else {
-                                    "Unframed detail"
-                                },
-                            )
-                        }
+                    WorkspaceRouteFrame {
+                        Text(
+                            if (LocalWorkspaceHosted.current &&
+                                LocalPanelLayoutInfo.current != null
+                            ) {
+                                "Hosted detail"
+                            } else {
+                                "Unframed detail"
+                            },
+                        )
                     }
                 }
             }

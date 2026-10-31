@@ -30,7 +30,6 @@ import app.logdate.ui.foldable.rememberFoldableLayoutInfo
 import app.logdate.ui.foldable.rememberWindowOrigin
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.workspace.AdaptiveWorkspaceLayout
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import app.logdate.ui.workspace.LocalWorkspaceSearchController
 import app.logdate.ui.workspace.PanelConstraints
@@ -51,7 +50,7 @@ fun ActivityRouteFrame(
     composePanels: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    if (LocalActivityHosted.current || LocalWorkspaceHosted.current || !LocalWorkspaceEnabled.current) {
+    if (LocalActivityHosted.current || LocalWorkspaceHosted.current) {
         content()
         return
     }
