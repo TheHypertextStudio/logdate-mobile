@@ -66,6 +66,33 @@ class AndroidCanonicalMediaStoreTest {
         }
 
     @Test
+    fun `publication moves the synced staging file into place instead of copying it`() =
+        withStore { store, root ->
+            val bytes = "write the photo once".encodeToByteArray()
+            var stagedInode: Any? = null
+            val input =
+                object : java.io.ByteArrayInputStream(bytes) {
+                    override fun read(
+                        buffer: ByteArray,
+                        offset: Int,
+                        length: Int,
+                    ): Int =
+                        super.read(buffer, offset, length).also { read ->
+                            if (read < 0 && stagedInode == null) {
+                                val staged = checkNotNull(File(root, "media/staging").listFiles()).single { it.extension == "tmp" }
+                                stagedInode = Files.getAttribute(staged.toPath(), "unix:ino")
+                            }
+                        }
+                }
+
+            val published = File(java.net.URI(store.store(input, "image/jpeg", bytes.size.toLong())))
+
+            assertEquals(checkNotNull(stagedInode), Files.getAttribute(published.toPath(), "unix:ino"))
+            assertContentEquals(bytes, published.readBytes())
+            assertTrue(File(root, "media/staging").walkTopDown().none { it.extension == "tmp" })
+        }
+
+    @Test
     fun `identical bytes deduplicate to an app-private MIME-derived object`() =
         withStore { store, root ->
             val bytes = "a private journal photo".encodeToByteArray()
