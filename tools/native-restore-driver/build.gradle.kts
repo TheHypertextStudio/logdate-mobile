@@ -2,7 +2,10 @@ import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
+    id("app.logdate.managed-devices")
 }
+
+managedDeviceMatrix { nativeRestore() }
 
 // A separate test package keeps GMD's instrumentation alive when BackupManager
 // kills and restarts the application being restored. This module is never shipped.
