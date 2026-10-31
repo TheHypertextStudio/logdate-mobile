@@ -9,9 +9,6 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +34,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -62,13 +58,13 @@ import app.logdate.feature.editor.ui.editor.consumeDraftReveal
 import app.logdate.feature.editor.ui.editor.delegate.DefaultAudioBlockFinalizer
 import app.logdate.feature.editor.ui.editor.dismissOwnedEditorFocus
 import app.logdate.feature.editor.ui.editor.rememberEditorAutoSave
+import app.logdate.feature.editor.ui.handwriting.EntryPageChrome
 import app.logdate.feature.editor.ui.handwriting.EntryPageOverview
 import app.logdate.feature.editor.ui.handwriting.StoryCaptureMode
 import app.logdate.feature.editor.ui.handwriting.blockType
 import app.logdate.feature.editor.ui.handwriting.rememberEntryPageState
 import app.logdate.feature.editor.ui.handwriting.rememberHandwritingBlockPresentations
 import app.logdate.feature.editor.ui.layout.EditorFocus
-import app.logdate.feature.editor.ui.layout.LocalEditorContextControlsVisible
 import app.logdate.feature.editor.ui.layout.editorFocus
 import app.logdate.feature.editor.ui.state.rememberBlocksUiState
 import app.logdate.feature.editor.ui.text.LocalEditorTextInputSession
@@ -94,7 +90,6 @@ fun EntryEditorContent(
     modifier: Modifier = Modifier,
     viewModel: EntryEditorViewModel = koinViewModel(),
     handwritingEnabled: Boolean = false,
-    blockFocusEnabled: Boolean = false,
 ) {
     val editorState by viewModel.editorState.collectAsState()
     val renderedInputTokens = editorState.creationInputTokens
@@ -107,7 +102,6 @@ fun EntryEditorContent(
     val page = rememberEntryPageState()
     val snackbarHostState = remember { SnackbarHostState() }
     val shouldReturnToPickerOnBack = editorState.shouldReturnToPickerOnBack()
-    var journalSelectorExpanded by remember { mutableStateOf(false) }
     val haptics = rememberLogDateHaptics()
 
     var handwritingProgress by remember { mutableStateOf(0f) }
@@ -127,8 +121,8 @@ fun EntryEditorContent(
             updateBlock,
             handwritingProgress,
             contextAvailable,
-            adaptToTheme = blockFocusEnabled,
-            keepInkBelowControls = blockFocusEnabled,
+            adaptToTheme = true,
+            keepInkBelowControls = true,
         )
     val activeHandwriting = focus is EditorFocus.Drawing
     LaunchedEffect(activeHandwriting) {
@@ -143,14 +137,8 @@ fun EntryEditorContent(
             onUpdateBlock = updateBlock,
             blockPresentations = handwritingPresentations,
             allowHandwritingCreation = handwritingEnabled,
-            onFocusBlock = { id ->
-                journalSelectorExpanded = false
-                viewModel.setExpandedBlockId(id)
-            },
-            onCreateBlock = { type, id ->
-                journalSelectorExpanded = false
-                viewModel.createNewBlock(type, id)
-            },
+            onFocusBlock = { id -> viewModel.setExpandedBlockId(id) },
+            onCreateBlock = { type, id -> viewModel.createNewBlock(type, id) },
             onConsumeDraftReveal = { viewModel.consumeDraftReveal(it) },
             onCancelDraftReveal = { viewModel.cancelDraftReveal() },
             onDeleteBlock = viewModel::removeBlock,
@@ -161,25 +149,8 @@ fun EntryEditorContent(
 
     // Only live camera capture takes over the entry chrome.
     val activeCamera = focus is EditorFocus.Camera
-    val handwritingMotion = activeHandwriting || handwritingTarget
     val isImmersiveBlockActive = activeCamera || handwritingTarget
-    LaunchedEffect(editorState.isRecordingAudio) {
-        if (editorState.isRecordingAudio) journalSelectorExpanded = false
-    }
-
-    // Single float that drives all immersive chrome interpolation (0 = fully immersive, 1 = normal).
-    // During a predictive back gesture it's scrubbed in real-time via snapTo; on non-gesture
-    // transitions (capture completed, hardware back) it animates with tween(300).
     val scope = rememberCoroutineScope()
-    val chromeProgress = remember { Animatable(if (isImmersiveBlockActive) 0f else 1f) }
-
-    LaunchedEffect(isImmersiveBlockActive) {
-        if (isImmersiveBlockActive) {
-            chromeProgress.snapTo(0f)
-        } else {
-            chromeProgress.animateTo(1f, tween(300, easing = FastOutSlowInEasing))
-        }
-    }
 
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showDraftsDialog by remember { mutableStateOf(false) }
@@ -192,7 +163,7 @@ fun EntryEditorContent(
                     Unit
                 }
 
-                activeCamera || activeHandwriting || (blockFocusEnabled && editorState.expandedBlockId != null) -> {
+                activeCamera || activeHandwriting || editorState.expandedBlockId != null -> {
                     viewModel.dismissExpandedBlockOrClearSingleEmpty()
                     Unit
                 }
@@ -218,7 +189,7 @@ fun EntryEditorContent(
             enabled =
                 !activeCamera &&
                     !activeHandwriting &&
-                    !(blockFocusEnabled && editorState.expandedBlockId != null) &&
+                    editorState.expandedBlockId == null &&
                     !page.earlierExpanded,
             onCommit = handleEditorBack,
         )
@@ -351,12 +322,10 @@ fun EntryEditorContent(
             LocalEditorTextInputSession provides editorTextInputSession(viewModel, editorState.contentRevision),
         ) {
             EntryKeyboardContentReceiver(onMediaImported = onMediaImport) {
-                EntryEditorFrame(
-                    state = editorState,
-                    page = page,
+                EntryPageChrome(
+                    editor = editorState,
+                    overview = page,
                     defaultMode = defaultStartMode,
-                    blockFocusEnabled = blockFocusEnabled,
-                    focusProgress = handwritingProgress,
                     onReturn = { returnToEntry() },
                     onExit = handleEditorBack,
                     onCapture = chooseCapture,
@@ -379,34 +348,11 @@ fun EntryEditorContent(
                             ).entryEditorShortcuts(canSave, handleEditorBack) {
                                 viewModel.saveEntry(viewModel.editorState.value)
                             },
-                    isImmersiveBlockActive = isImmersiveBlockActive,
-                    isAudioRecordingActive = editorState.isRecordingAudio,
-                    focusState =
-                        if (handwritingTarget) {
-                            focus
-                        } else if (activeHandwriting) {
-                            EditorFocus.Entry
-                        } else {
-                            focus
-                        },
-                    animateContextControls = !handwritingMotion && !blockFocusEnabled,
-                    drawingBackdrop = if (blockFocusEnabled) MaterialTheme.colorScheme.surfaceDim else Color.White,
-                    bottomContentTopPadding = if (blockFocusEnabled) 0.dp else 24.dp,
-                    hasJournalSelection = uiState.availableJournals.any { it.id in uiState.selectedJournalIds },
-                    entryLocked = editorState.isLoading || editorState.isSaving || editorState.shouldExit || editorState.isEditingLocked,
-                    immersiveExitProgress =
-                        if (handwritingMotion) {
-                            if (handwritingTarget) 0f else 1f
-                        } else {
-                            chromeProgress.value
-                        },
-                    topBarContent = {
+                    header = {
                         EntryEditorTopBar(
                             editorState,
-                            blockFocusEnabled,
-                            if (blockFocusEnabled) editorState.expandedBlockId != null else isImmersiveBlockActive,
+                            editorState.expandedBlockId != null,
                             autoSaveState.status,
-                            floating = blockFocusEnabled,
                             onBack = handleEditorBack,
                             onReturnToEntry = { returnToEntry() },
                             onShowDrafts = { showDraftsDialog = true },
@@ -417,88 +363,46 @@ fun EntryEditorContent(
                             onJournalSelection = viewModel::setSelectedJournals,
                         )
                     },
-                    editorContent = {
-                        Column(Modifier.fillMaxSize()) {
-                            if (!isImmersiveBlockActive) {
-                                editorState.markId?.let {
-                                    MarkContextBanner(it, editorState.errorMessage, viewModel::continueWithoutMarkedMoment)
-                                }
-                                editorState.visitContext?.let { VisitMemoryContextBanner(it) }
-                                if (showsWatchProvenance(editorState.capturedOnWatch)) {
-                                    CapturedOnWatchBanner()
-                                }
+                    focusProgress = handwritingProgress,
+                ) {
+                    Column(Modifier.fillMaxSize()) {
+                        if (!isImmersiveBlockActive) {
+                            editorState.markId?.let {
+                                MarkContextBanner(it, editorState.errorMessage, viewModel::continueWithoutMarkedMoment)
                             }
-                            CompositionLocalProvider(LocalEditorContextControlsVisible provides !blockFocusEnabled) {
-                                MainEditorContent(
-                                    floatingChrome = blockFocusEnabled,
-                                    overviewContent =
-                                        if (blockFocusEnabled) {
-                                            (
-                                                { blocks ->
-                                                    EntryPageOverview(
-                                                        blocks,
-                                                        editorState.todayNotes,
-                                                        page,
-                                                        defaultStartMode,
-                                                        onAudioResolverReady = bindAudioResolver,
-                                                    )
-                                                }
-                                            )
-                                        } else {
-                                            null
-                                        },
-                                    expandAnySelectedBlock = blockFocusEnabled,
-                                    defaultStartMode = defaultStartMode,
-                                    todayNotes = editorState.todayNotes,
-                                    entryContext = entryDayContext(editorState, blockFocusEnabled),
-                                    onOpenEntry = { viewModel.loadExistingEntry(it) },
-                                    modifier = Modifier.weight(1f),
-                                    uiState = uiState,
-                                    focusState = focus,
-                                    shouldReturnToPickerOnBack = shouldReturnToPickerOnBack,
-                                    onDismissExpanded = { returnToEntry() },
-                                    onDismissFocusedInput = returnToEntry,
-                                    onBlockFocusTransitionProgress = { handwritingProgress = it },
-                                    onBlockFocusTargetChanged = { expanded -> handwritingTarget = expanded && activeHandwriting },
-                                    onBackProgress = { p ->
-                                        if (isImmersiveBlockActive) scope.launch { chromeProgress.snapTo(p) }
-                                    },
-                                    onBackCommit = {
-                                        if (isImmersiveBlockActive) {
-                                            scope.launch {
-                                                chromeProgress.animateTo(
-                                                    1f,
-                                                    tween(300, easing = FastOutSlowInEasing),
-                                                )
-                                            }
-                                        }
-                                    },
-                                    onBackCancel = {
-                                        if (isImmersiveBlockActive) {
-                                            scope.launch {
-                                                chromeProgress.animateTo(
-                                                    0f,
-                                                    tween(300, easing = FastOutSlowInEasing),
-                                                )
-                                            }
-                                        }
-                                    },
-                                    onAudioResolverReady = bindAudioResolver,
-                                )
+                            editorState.visitContext?.let { VisitMemoryContextBanner(it) }
+                            if (showsWatchProvenance(editorState.capturedOnWatch)) {
+                                CapturedOnWatchBanner()
                             }
                         }
-                    },
-                    bottomContent = {
-                        EntryEditorCaptureControls(
-                            editorState,
-                            blockFocusEnabled,
-                            journalSelectorExpanded,
-                            onExpandedChange = { journalSelectorExpanded = it },
-                            onCaptureMode = chooseCapture,
-                            onJournalSelection = viewModel::setSelectedJournals,
+                        MainEditorContent(
+                            floatingChrome = true,
+                            overviewContent = { blocks ->
+                                EntryPageOverview(
+                                    blocks,
+                                    editorState.todayNotes,
+                                    page,
+                                    defaultStartMode,
+                                    onAudioResolverReady = bindAudioResolver,
+                                )
+                            },
+                            expandAnySelectedBlock = true,
+                            defaultStartMode = defaultStartMode,
+                            todayNotes = editorState.todayNotes,
+                            entryContext = entryDayContext(editorState),
+                            onOpenEntry = { viewModel.loadExistingEntry(it) },
+                            modifier = Modifier.weight(1f),
+                            uiState = uiState,
+                            focusState = focus,
+                            shouldReturnToPickerOnBack = shouldReturnToPickerOnBack,
+                            onDismissExpanded = { returnToEntry() },
+                            onDismissFocusedInput = returnToEntry,
+                            onBlockFocusTransitionProgress = { handwritingProgress = it },
+                            onBlockFocusTargetChanged = { expanded -> handwritingTarget = expanded && activeHandwriting },
+                            onAudioResolverReady = bindAudioResolver,
                         )
-                    },
-                )
+                    }
+                }
             }
         }
     }

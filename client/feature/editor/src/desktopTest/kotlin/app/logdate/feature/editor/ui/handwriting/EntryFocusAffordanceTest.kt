@@ -26,7 +26,6 @@ class EntryFocusAffordanceTest {
                 LogDateTheme(dynamicColor = false) {
                     EntryEditorTopBar(
                         state = state,
-                        blockFocusEnabled = true,
                         immersive = true,
                         autoSaveStatus = AutoSaveStatus.IDLE,
                         onBack = {},
@@ -35,7 +34,6 @@ class EntryFocusAffordanceTest {
                         onSave = { saves++ },
                         onCaptureMode = {},
                         onJournalSelection = {},
-                        floating = true,
                     )
                 }
             }

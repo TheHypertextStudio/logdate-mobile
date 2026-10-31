@@ -46,7 +46,7 @@ class LabsSettingsViewModelTest {
             listOf(
                 FeatureFlag.LIBRARY,
                 FeatureFlag.EVENTS,
-                FeatureFlag.CAMPFIRE_STREAKS,
+                FeatureFlag.JOURNAL_MERGE,
                 FeatureFlag.WATCH_EXPERIENCE_V2,
             )
 

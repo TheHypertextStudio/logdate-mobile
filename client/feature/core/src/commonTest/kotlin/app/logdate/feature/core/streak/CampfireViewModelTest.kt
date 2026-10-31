@@ -22,7 +22,6 @@ import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CampfireViewModelTest {
-    private val flagEnabled = MutableStateFlow(true)
     private val campfire = MutableStateFlow<CampfireState?>(null)
 
     private val burningState =
@@ -46,32 +45,7 @@ class CampfireViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = CampfireViewModel(campfireFlow = campfire, campfireEnabledFlow = flagEnabled)
-
-    @Test
-    fun `the campfire is hidden while its flag is off`() =
-        runTest {
-            flagEnabled.value = false
-            campfire.value = burningState
-            val viewModel = createViewModel()
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.presentation.collect {} }
-
-            assertNull(viewModel.presentation.value)
-        }
-
-    @Test
-    fun `the flag state is exposed for surfaces that show the campfire without a fire`() =
-        runTest {
-            flagEnabled.value = false
-            val viewModel = createViewModel()
-            assertNull(viewModel.isCampfireEnabled.value)
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.isCampfireEnabled.collect {} }
-            assertEquals(false, viewModel.isCampfireEnabled.value)
-
-            flagEnabled.value = true
-
-            assertEquals(true, viewModel.isCampfireEnabled.value)
-        }
+    private fun createViewModel() = CampfireViewModel(campfireFlow = campfire)
 
     @Test
     fun `the campfire is hidden when there is no fire to show`() =

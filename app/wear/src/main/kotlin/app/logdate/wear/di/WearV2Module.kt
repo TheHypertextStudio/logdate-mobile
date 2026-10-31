@@ -224,7 +224,7 @@ val wearV2Module =
         single {
             ObserveCampfireUseCase(
                 notesRepository = get(),
-                streakSettingsRepository = WatchStreakSettings(get()),
+                streakSettingsRepository = WatchStreakSettings(),
                 dayBoundaryPreferences = WatchDayBoundaryPreferences(phoneDayStartHour = get<WindowProtocol>()::dayStartHour),
             )
         }

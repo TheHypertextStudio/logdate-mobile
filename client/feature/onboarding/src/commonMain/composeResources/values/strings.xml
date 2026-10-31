@@ -155,16 +155,13 @@
     <string name="onboarding_overview_card_recaps_description">Every week, revisit moments from the entries you saved.</string>
 
     <!-- Completion screen -->
-    <string name="onboarding_completion_streak_begins">Your streak begins today</string>
     <string name="first_entry_saved_title">Your first entry is saved</string>
     <string name="first_entry_import_description">It&apos;s on your Home screen. You can bring in photos and videos from your library now, or start exploring.</string>
     <string name="first_entry_continue_home">Go to Home</string>
     <string name="first_entry_import_photos">Choose photos and videos</string>
-    <string name="onboarding_completion_streak_encouragement">Write, photograph, or record something every day to keep it up.</string>
     <string name="onboarding_completion_fire_lit">Your fire is lit</string>
     <string name="onboarding_completion_fire_encouragement">Each day you add an entry, the fire grows. Miss a day and it burns down to embers. Miss two and it goes out.</string>
     <string name="onboarding_completion_happy_logging">Happy logging!</string>
-    <string name="onboarding_completion_streak_day_label">day</string>
 
     <!-- Error messages -->
     <string name="onboarding_error_save_birthday">Your birthday couldn&apos;t be saved. Try again.</string>

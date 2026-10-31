@@ -1,10 +1,6 @@
 package app.logdate.feature.editor.ui.content
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -17,13 +13,14 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import app.logdate.client.datastore.EntryStartMode
 import app.logdate.client.repository.journals.JournalNote
-import app.logdate.feature.editor.ui.EntryEditorCaptureControls
 import app.logdate.feature.editor.ui.EntryEditorTopBar
 import app.logdate.feature.editor.ui.MainEditorContent
 import app.logdate.feature.editor.ui.editor.AutoSaveStatus
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.HandwritingBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
+import app.logdate.feature.editor.ui.handwriting.EntryFocusPrototypeTools
+import app.logdate.feature.editor.ui.handwriting.captureModeForBlock
 import app.logdate.feature.editor.ui.handwriting.rememberHandwritingBlockPresentations
 import app.logdate.feature.editor.ui.handwriting.sampleInk
 import app.logdate.feature.editor.ui.layout.EditorFocus
@@ -108,7 +105,6 @@ class EntryStartScenesTest(
                     LocalEditorContextControlsVisible provides false,
                 ) {
                     LogDateTheme(darkTheme = name.contains("dark"), dynamicColor = false) {
-                        var journalExpanded by remember { mutableStateOf(false) }
                         val presentations =
                             rememberHandwritingBlockPresentations(
                                 state,
@@ -140,7 +136,6 @@ class EntryStartScenesTest(
                             topBarContent = {
                                 EntryEditorTopBar(
                                     state,
-                                    true,
                                     immersive,
                                     AutoSaveStatus.IDLE,
                                     onBack = {},
@@ -159,11 +154,14 @@ class EntryStartScenesTest(
                                     expandAnySelectedBlock = true,
                                     todayNotes = state.todayNotes,
                                     defaultStartMode = defaultMode,
-                                    entryContext = entryDayContext(state, true),
+                                    entryContext = entryDayContext(state),
                                 )
                             },
                             bottomContent = {
-                                EntryEditorCaptureControls(state, true, journalExpanded, { journalExpanded = it }, {}, {})
+                                if (state.blocks.isNotEmpty() && !state.isRecordingAudio) {
+                                    val mode = captureModeForBlock(state.blocks.firstOrNull { it.id == state.expandedBlockId })
+                                    EntryFocusPrototypeTools(mode, {})
+                                }
                             },
                         )
                     }

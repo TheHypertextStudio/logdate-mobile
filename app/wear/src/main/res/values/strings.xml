@@ -35,8 +35,6 @@
 
     <!-- Streak Complication -->
     <string name="wear_complication_streak_label">Streak</string>
-    <string name="wear_complication_streak_description">Your journaling streak</string>
-    <string name="wear_complication_streak_short">%1$dd</string>
     <string name="wear_complication_campfire_embers">Embers · %1$d-day fire</string>
     <string name="wear_complication_campfire_out">Fire went out</string>
     <string name="wear_complication_campfire_unlit">Light your fire</string>
@@ -208,10 +206,6 @@
     <plurals name="wear_complication_entry_count_full">
         <item quantity="one">%d journal entry today</item>
         <item quantity="other">%d journal entries today</item>
-    </plurals>
-    <plurals name="wear_complication_streak_full">
-        <item quantity="one">%d day streak</item>
-        <item quantity="other">%d day streak</item>
     </plurals>
     <plurals name="wear_complication_campfire_burning">
         <item quantity="one">%d-day fire</item>

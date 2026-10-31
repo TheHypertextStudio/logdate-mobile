@@ -47,7 +47,6 @@ class EntryPageProductionTest {
                             header = {
                                 EntryEditorTopBar(
                                     state,
-                                    true,
                                     false,
                                     AutoSaveStatus.IDLE,
                                     {},
@@ -56,7 +55,6 @@ class EntryPageProductionTest {
                                     { saves++ },
                                     {},
                                     {},
-                                    floating = true,
                                 )
                             },
                         ) {}

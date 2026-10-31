@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -40,7 +39,6 @@ import logdate.client.feature.core.generated.resources.campfire_badge
 import logdate.client.feature.core.generated.resources.create_account
 import logdate.client.feature.core.generated.resources.logging_since
 import logdate.client.feature.core.generated.resources.sign_in
-import logdate.client.feature.core.generated.resources.streak_day_count
 import logdate.client.feature.core.generated.resources.sync_devices_subtitle
 import logdate.client.feature.core.generated.resources.sync_promotion_title
 import org.jetbrains.compose.resources.stringResource
@@ -90,7 +88,6 @@ internal fun SettingsIdentityCard(
     userProfile: UserProfile,
     onboardedDate: Instant,
     onEditProfile: () -> Unit,
-    streakCount: Int? = null,
     campfire: CampfirePresentation? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -152,31 +149,7 @@ internal fun SettingsIdentityCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                     )
                 }
-                if (campfire != null) {
-                    if (campfire.runDays > 0) CampfireBadge(campfire = campfire)
-                } else if (streakCount != null && streakCount > 0) {
-                    Row(
-                        modifier =
-                            Modifier
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
-                                .padding(horizontal = Spacing.md, vertical = Spacing.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalFireDepartment,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                        Text(
-                            text = stringResource(Res.string.streak_day_count, streakCount),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                }
+                if (campfire != null && campfire.runDays > 0) CampfireBadge(campfire = campfire)
             }
         }
 

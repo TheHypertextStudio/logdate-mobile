@@ -25,7 +25,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,11 +32,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.feature.onboarding.flow.OnboardingCompletionCoordinator
 import app.logdate.feature.onboarding.flow.OnboardingFinishResult
 import app.logdate.feature.onboarding.flow.OnboardingStep
@@ -55,7 +52,6 @@ import logdate.client.feature.onboarding.generated.resources.*
 import logdate.client.feature.onboarding.generated.resources.Res
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 
 const val ONBOARDING_COMPLETION_ROOT_TAG = "onboarding_complete_root"
 const val ONBOARDING_COMPLETION_CONTINUE_TAG = "onboarding_complete_continue"
@@ -97,22 +93,19 @@ fun FirstEntryImportOfferScreen(
 /**
  * The last screen of the onboarding flow.
  *
- * This displays a message to the user about their streak and the completion of the onboarding flow.
+ * This shows the user their freshly lit campfire and the completion of the onboarding flow.
  */
 @Composable
 fun OnboardingCompletionScreen(
     onFinish: () -> Unit,
     onRequirementsIncomplete: (OnboardingStep) -> Unit = {},
     finishImmediately: Boolean = false,
-    campfireViewModel: CampfireViewModel = koinViewModel(),
     completionCoordinator: OnboardingCompletionCoordinator = koinInject(),
     modifier: Modifier = Modifier,
 ) {
     var shouldShowFinish by remember { mutableStateOf(false) }
     var saveFailed by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsState()
-    val showCampfire = isCampfireEnabled
 
     val finishOnboarding: () -> Unit = {
         coroutineScope.launch {
@@ -139,14 +132,13 @@ fun OnboardingCompletionScreen(
         return
     }
 
-    if (finishImmediately || showCampfire == null) {
+    if (finishImmediately) {
         GenericLoadingScreen(modifier = modifier.testTag(ONBOARDING_COMPLETION_LOADING_TAG))
         return
     }
 
     OnboardingCompletionContent(
         shouldShowFinish = shouldShowFinish,
-        showCampfire = showCampfire,
         onContinue = { shouldShowFinish = true },
         onFinish = finishOnboarding,
         modifier = modifier,
@@ -159,7 +151,6 @@ fun OnboardingCompletionContent(
     onContinue: () -> Unit,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
-    showCampfire: Boolean = false,
 ) {
     var finalContentVisible by remember { mutableStateOf(true) }
     val haptics = rememberLogDateHaptics()
@@ -191,7 +182,7 @@ fun OnboardingCompletionContent(
                 CompletionFinalContent()
             }
         } else {
-            CompletionStreakContent(onContinue = onContinue, showCampfire = showCampfire)
+            CompletionStreakContent(onContinue = onContinue)
         }
     }
 }
@@ -199,19 +190,9 @@ fun OnboardingCompletionContent(
 private const val ONBOARDING_COMPLETION_EXIT_FADE_MILLIS = 400
 
 @Composable
-private fun CompletionStreakContent(
-    onContinue: () -> Unit,
-    showCampfire: Boolean,
-) {
-    val title: String
-    val encouragement: String
-    if (showCampfire) {
-        title = stringResource(Res.string.onboarding_completion_fire_lit)
-        encouragement = stringResource(Res.string.onboarding_completion_fire_encouragement)
-    } else {
-        title = stringResource(Res.string.onboarding_completion_streak_begins)
-        encouragement = stringResource(Res.string.onboarding_completion_streak_encouragement)
-    }
+private fun CompletionStreakContent(onContinue: () -> Unit) {
+    val title = stringResource(Res.string.onboarding_completion_fire_lit)
+    val encouragement = stringResource(Res.string.onboarding_completion_fire_encouragement)
 
     StepScaffold(
         title = title,
@@ -220,16 +201,12 @@ private fun CompletionStreakContent(
         headerAlignment = Alignment.CenterHorizontally,
         hero = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                if (showCampfire) {
-                    Campfire(
-                        phase = CampfirePhase.BURNING,
-                        size = CampfireSize.SPARK,
-                        contentDescription = title,
-                        modifier = Modifier.size(128.dp),
-                    )
-                } else {
-                    StreakCounter(count = 1)
-                }
+                Campfire(
+                    phase = CampfirePhase.BURNING,
+                    size = CampfireSize.SPARK,
+                    contentDescription = title,
+                    modifier = Modifier.size(128.dp),
+                )
                 Spacer(modifier = Modifier.height(Spacing.xl))
                 Text(
                     text = stringResource(Res.string.one_more_thing),
@@ -247,30 +224,6 @@ private fun CompletionStreakContent(
             }
         },
     )
-}
-
-@Composable
-private fun StreakCounter(count: Int) {
-    Column(
-        modifier =
-            Modifier
-                .size(112.dp)
-                .clip(MaterialTheme.shapes.extraLarge)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = count.toString(),
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
-        Text(
-            text = stringResource(Res.string.onboarding_completion_streak_day_label),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
-    }
 }
 
 @Composable
@@ -297,7 +250,7 @@ private fun CompletionFinalContent() {
 @Composable
 private fun PreviewCompletionStreakContent() {
     LogDateTheme {
-        CompletionStreakContent(onContinue = {}, showCampfire = false)
+        CompletionStreakContent(onContinue = {})
     }
 }
 

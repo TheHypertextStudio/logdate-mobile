@@ -30,11 +30,8 @@ import logdate.client.feature.editor.generated.resources.memory_photo
 import logdate.client.feature.editor.generated.resources.memory_video
 import org.jetbrains.compose.resources.stringResource
 
-internal fun entryDayContext(
-    state: EditorState,
-    enabled: Boolean,
-): (@Composable () -> Unit)? =
-    if (!enabled || state.blocks.isEmpty() || state.todayNotes.isEmpty()) null else ({ EarlierEntryContext(state.todayNotes) })
+internal fun entryDayContext(state: EditorState): (@Composable () -> Unit)? =
+    if (state.blocks.isEmpty() || state.todayNotes.isEmpty()) null else ({ EarlierEntryContext(state.todayNotes) })
 
 @Composable
 internal fun EarlierEntryContext(

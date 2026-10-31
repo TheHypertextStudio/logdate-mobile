@@ -7,7 +7,6 @@
     <string name="action_reset_app">Reset</string>
     <string name="action_reset_app_long">Reset App</string>
     <string name="action_write_in_journal">Write in journal</string>
-    <string name="create_new_entry">Create new entry</string>
 
     <!-- App updates -->
     <string name="app_updates">App Updates</string>

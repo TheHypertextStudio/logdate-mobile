@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.logdate.client.domain.streak.StreakData
 import app.logdate.client.text.resolve
 import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.shared.model.profile.LogDateProfile
@@ -68,9 +67,7 @@ fun ProfileScreen(
     campfireViewModel: CampfireViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val streakData by viewModel.streakData.collectAsState()
     val campfire by campfireViewModel.presentation.collectAsState()
-    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val profileUpdatedMessage = stringResource(Res.string.profile_updated_successfully)
 
@@ -93,8 +90,6 @@ fun ProfileScreen(
 
     ProfileScreenContent(
         uiState = uiState,
-        // The old streak stat only shows once the campfire flag is known to be off.
-        streakData = if (isCampfireEnabled == false) streakData else streakData.copy(isEnabled = false),
         campfire = campfire,
         onBack = onBack,
         onNavigateToBirthday = onNavigateToBirthday,
@@ -111,7 +106,6 @@ fun ProfileScreen(
 @Composable
 fun ProfileScreenContent(
     uiState: ProfileUiState,
-    streakData: StreakData = StreakData(),
     campfire: CampfirePresentation? = null,
     onBack: () -> Unit,
     onNavigateToBirthday: () -> Unit,
@@ -180,7 +174,6 @@ fun ProfileScreenContent(
             ProfileAdaptiveContent(
                 profile = profile,
                 editState = uiState.editState,
-                streakData = streakData,
                 campfire = campfire,
                 contentPadding = paddingValues,
                 onNavigateToBirthday = onNavigateToBirthday,
@@ -197,7 +190,6 @@ fun ProfileScreenContent(
 private fun ProfileAdaptiveContent(
     profile: ProfileDisplayModel,
     editState: ProfileEditState,
-    streakData: StreakData,
     campfire: CampfirePresentation?,
     contentPadding: PaddingValues,
     onNavigateToBirthday: () -> Unit,
@@ -214,7 +206,6 @@ private fun ProfileAdaptiveContent(
             ProfileContentList(
                 profile = profile,
                 editState = editState,
-                streakData = streakData,
                 campfire = campfire,
                 contentPadding = contentPadding,
                 onNavigateToBirthday = onNavigateToBirthday,
@@ -229,7 +220,6 @@ private fun ProfileAdaptiveContent(
             ProfileContentList(
                 profile = profile,
                 editState = editState,
-                streakData = streakData,
                 campfire = campfire,
                 contentPadding = contentPadding,
                 onNavigateToBirthday = onNavigateToBirthday,
@@ -245,7 +235,6 @@ private fun ProfileAdaptiveContent(
                 ProfileContentList(
                     profile = profile,
                     editState = editState,
-                    streakData = streakData,
                     campfire = campfire,
                     contentPadding = contentPadding,
                     onNavigateToBirthday = onNavigateToBirthday,
@@ -263,7 +252,6 @@ private fun ProfileAdaptiveContent(
 private fun ProfileContentList(
     profile: ProfileDisplayModel,
     editState: ProfileEditState,
-    streakData: StreakData,
     campfire: CampfirePresentation?,
     contentPadding: PaddingValues,
     onNavigateToBirthday: () -> Unit,
@@ -307,10 +295,6 @@ private fun ProfileContentList(
             if (campfire != null) {
                 item {
                     ProfileCampfireSection(campfire = campfire)
-                }
-            } else if (streakData.isEnabled) {
-                item {
-                    ProfileJournalingStatsSection(streakData = streakData)
                 }
             }
 

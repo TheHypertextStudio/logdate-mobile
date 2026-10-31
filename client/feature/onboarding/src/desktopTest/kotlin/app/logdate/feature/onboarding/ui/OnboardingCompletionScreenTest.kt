@@ -4,19 +4,12 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.runComposeUiTest
 import app.logdate.client.device.crypto.IdentityKeyManager
-import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.feature.onboarding.flow.OnboardingCompletionCoordinator
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-/**
- * The last onboarding screen used to return with nothing rendered while it waited on the
- * campfire feature flag's first emission (`val showCampfire = isCampfireEnabled ?: return`),
- * showing a blank frame instead of a loading state.
- */
+/** The last onboarding screen shows its campfire as soon as it is composed, without a loading state. */
 @OptIn(ExperimentalTestApi::class)
 class OnboardingCompletionScreenTest {
     private lateinit var completionCoordinator: OnboardingCompletionCoordinator
@@ -45,37 +38,12 @@ class OnboardingCompletionScreenTest {
     }
 
     @Test
-    fun `shows a loading state instead of a blank frame while the campfire flag is unresolved`() =
+    fun `shows the campfire content straight away`() =
         runComposeUiTest {
-            // Never emits, so isCampfireEnabled stays at its initial null value.
-            val campfireViewModel = CampfireViewModel(campfireFlow = MutableSharedFlow(), campfireEnabledFlow = MutableSharedFlow())
-
             setContent {
                 OnboardingCompletionScreen(
                     onFinish = {},
                     completionCoordinator = completionCoordinator,
-                    campfireViewModel = campfireViewModel,
-                )
-            }
-
-            onNodeWithTag(ONBOARDING_COMPLETION_LOADING_TAG).assertExists()
-            onNodeWithTag(ONBOARDING_COMPLETION_ROOT_TAG).assertDoesNotExist()
-        }
-
-    @Test
-    fun `shows content once the campfire flag resolves`() =
-        runComposeUiTest {
-            val campfireViewModel =
-                CampfireViewModel(
-                    campfireFlow = MutableSharedFlow(),
-                    campfireEnabledFlow = MutableStateFlow(false),
-                )
-
-            setContent {
-                OnboardingCompletionScreen(
-                    onFinish = {},
-                    completionCoordinator = completionCoordinator,
-                    campfireViewModel = campfireViewModel,
                 )
             }
 

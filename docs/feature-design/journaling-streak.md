@@ -9,10 +9,9 @@ ever goes down.
 The aim is that a streak feels like something being built rather than something that can be lost.
 People return to a journal after gaps, so the app never greets a gap with what was lost.
 
-The campfire is controlled by the `CAMPFIRE_STREAKS` feature flag (key `campfire_streaks_enabled`),
-which is on by default. With the flag off, each surface falls back to the older counter of
-consecutive calendar days. Whether streaks are tracked at all is a separate setting on the streak
-screen. When tracking is off there is no fire to show.
+The campfire is the only streak presentation, on the phone, in onboarding and on the watch. Whether
+streaks are tracked at all is a setting on the streak screen. When tracking is off there is no fire
+to show.
 
 ## How a day is counted
 
@@ -81,8 +80,7 @@ seconds.
 ## Where it appears
 
 `CampfireViewModel` turns the domain state into a `CampfirePresentation`, a UI-only copy that
-`client/ui` draws without depending on the domain layer. It publishes nothing while the flag is
-still being read, so a screen never flashes the older counter before switching.
+`client/ui` draws without depending on the domain layer.
 
 - **Timeline.** A small campfire with the day count sits in the timeline's top-bar status actions.
   Tapping it opens the streak screen. In the Home workspace, "Journaling streak" is also an item in
@@ -94,7 +92,7 @@ still being read, so a screen never flashes the older counter before switching.
 - **Settings overview.** The streak badge shows the day count of the current fire while there is one.
 - **Onboarding completion.** The final screen shows a small lit campfire.
 - **Wear OS.** The watch computes its own fire from the notes it holds and shows it on Today and in
-  the streak complication, following only the flag because the tracking setting belongs to the
+  the streak complication. The watch always shows it, because the tracking setting belongs to the
   phone. [The watch companion page](../explanation/wear-companion.md) covers how its day start and
   note window differ from the phone's.
 

@@ -259,13 +259,10 @@ destination. The pull gesture at the start of the timeline previews the New entr
 cancels, and releasing past the arm point creates exactly one editor visit through
 `tryLaunchHomeEditor`. Nothing is created during the preview.
 
-### Presentation flags
+### One presentation
 
-`IMMERSIVE_ENTRY_EDITOR` selects the overview and focus presentation; turning it off returns to the
-earlier single-list presentation. `HANDWRITING_ENTRIES` controls whether handwriting blocks can be
-created. `NoteEditorScreen` offers handwriting creation when either flag is on, and only the
-creation controls consult it, so existing handwriting blocks are not hidden by it. Both flags default
-on.
+The overview and focus presentation is the only entry editor, on every platform, and it always
+offers handwriting creation. No flag selects another presentation.
 
 ## Handwriting
 
@@ -302,9 +299,8 @@ How ink is kept:
   cannot read.
 - **Export and restore.** Both archive formats carry structured ink.
 
-In the overview and focus presentation the paper uses the theme's `surfaceContainerLow` surface in
-both states and the ink adapts to it, so a block does not recolor as it expands. The earlier
-presentation draws focused handwriting on white paper.
+The paper uses the theme's `surfaceContainerLow` surface in both the overview and focus, and the ink
+adapts to it, so a block does not recolor as it expands.
 
 Taking a handwriting block into focus uses the shared-element transition for every block type
 (`editorBlockFocusElement`): the paper and original ink are the shared element, while floating tools
@@ -346,6 +342,4 @@ scenes for design work. Install a debug build on an emulator (never a physical p
 with a boolean extra: `entry_start` for the overview and focus study, `entry_stories` for the capture
 bar study, or `real_editor` for the real editor, optionally with `resume_draft` or `resume_saved` to
 reopen the latest draft or the newest saved handwriting note. With no extra it opens the standalone
-canvas. The standalone scenes keep local state and do not touch journal data. A debug build of
-`EditorActivity` also accepts the boolean extra `entry_focus` to turn on the overview and focus
-presentation regardless of the flag.
+canvas. The standalone scenes keep local state and do not touch journal data.

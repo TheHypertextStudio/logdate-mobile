@@ -49,6 +49,8 @@ import app.logdate.feature.core.settings.ui.UserProfile
 import app.logdate.feature.core.settings.ui.VoiceNotesSettingsContent
 import app.logdate.feature.core.settings.ui.VoiceNotesSettingsViewModel
 import app.logdate.ui.platform.LocalReduceMotionOverride
+import app.logdate.ui.streak.CampfireSize
+import app.logdate.ui.streak.LocalCampfireAnimationEnabled
 import kotlinx.datetime.LocalDate
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.data_settings_quota_category_photos
@@ -58,32 +60,34 @@ import kotlin.time.Instant
 internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
     listOf(
         sharedScene(SharedScreenshotSceneId.SettingsOverview, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
-            SettingsOverviewContent(
-                onBack = {},
-                onNavigateToProfile = {},
-                onNavigateToAccount = {},
-                onNavigateToDevices = {},
-                onNavigateToWatch = {},
-                onNavigateToReset = {},
-                onNavigateToLocation = {},
-                onNavigateToPrivacy = {},
-                onNavigateToMemories = {},
-                onNavigateToVoiceNotes = {},
-                onNavigateToNotifications = {},
-                onNavigateToStreaks = {},
-                onNavigateToRewindSettings = {},
-                onNavigateToEventsSettings = {},
-                onNavigateToPeopleSettings = {},
-                onNavigateToTimeline = {},
-                onNavigateToSync = {},
-                onNavigateToExport = {},
-                onNavigateToCloudAccountCreation = {},
-                onNavigateToSignIn = {},
-                onNavigateToLibrarySettings = {},
-                userProfile = UserProfile(name = "Alex Rivera", username = "alex", isAuthenticated = true),
-                onboardedDate = Instant.DISTANT_PAST,
-                streakCount = 12,
-            )
+            CompositionLocalProvider(LocalCampfireAnimationEnabled provides false) {
+                SettingsOverviewContent(
+                    onBack = {},
+                    onNavigateToProfile = {},
+                    onNavigateToAccount = {},
+                    onNavigateToDevices = {},
+                    onNavigateToWatch = {},
+                    onNavigateToReset = {},
+                    onNavigateToLocation = {},
+                    onNavigateToPrivacy = {},
+                    onNavigateToMemories = {},
+                    onNavigateToVoiceNotes = {},
+                    onNavigateToNotifications = {},
+                    onNavigateToStreaks = {},
+                    onNavigateToRewindSettings = {},
+                    onNavigateToEventsSettings = {},
+                    onNavigateToPeopleSettings = {},
+                    onNavigateToTimeline = {},
+                    onNavigateToSync = {},
+                    onNavigateToExport = {},
+                    onNavigateToCloudAccountCreation = {},
+                    onNavigateToSignIn = {},
+                    onNavigateToLibrarySettings = {},
+                    userProfile = UserProfile(name = "Alex Rivera", username = "alex", isAuthenticated = true),
+                    onboardedDate = Instant.DISTANT_PAST,
+                    campfire = campfireSamples.first { it.size == CampfireSize.CAMPFIRE && it.loggedToday },
+                )
+            }
         },
         sharedScene(SharedScreenshotSceneId.AccountSettings, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
             AccountContent(
