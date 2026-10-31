@@ -14,7 +14,6 @@ import app.logdate.screenshots.common.ScreenshotPreviewMatrix
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.shared.model.Journal
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import com.android.tools.screenshot.PreviewTest
 import kotlin.time.Duration.Companion.days
@@ -90,7 +89,7 @@ fun S20_JournalMergeReview() {
 @Composable
 fun S21_JournalMergeWorkspace() {
     ScreenshotTheme {
-        CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalWorkspaceSearchAction provides {}) {
+        CompositionLocalProvider(LocalWorkspaceSearchAction provides {}) {
             JournalMergeScreenContent(mergePicker)
         }
     }

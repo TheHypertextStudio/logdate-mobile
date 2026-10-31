@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +22,6 @@ import app.logdate.feature.location.timeline.ui.history.HumanLocationHistoryStat
 import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.SupportingExtent
 import app.logdate.ui.workspace.WorkspaceDestination
 import app.logdate.ui.workspace.WorkspaceScaffold
@@ -61,52 +59,49 @@ internal fun PlacesSheetFixture(
             ),
         ) + (1..12).map { HistoryPlaceUi("place-$it", "Synthetic place $it", listOf(UiText.Raw("Example visit"))) }
     LogDateTheme(dynamicColor = false, darkTheme = false) {
-        CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-            Column(Modifier.fillMaxSize()) {
-                Box(Modifier.weight(1f)) {
-                    WorkspaceScaffold(
-                        HomeRouteDestination.entries.map {
-                            WorkspaceDestination(
-                                it.name,
-                                if (it ==
-                                    HomeRouteDestination.LocationHistory
-                                ) {
-                                    "Places"
-                                } else {
-                                    it.name
-                                },
-                                it.selectedIcon,
-                                it.unselectedIcon,
-                            )
-                        },
-                        HomeRouteDestination.LocationHistory.name,
-                        {},
-                        onSearch = {},
-                    ) {
-                        HumanLocationHistoryContent(
-                            HumanLocationHistoryState(
-                                UiText.Raw("18 Jun 2026"),
-                                tab = HistoryTab.Places,
-                                places = places,
-                                placesQuery = query,
-                                placesFilterLabel = UiText.Raw("30 days"),
-                            ),
-                            HumanLocationHistoryActions(onPlacesQuery = { query = it }, onOpenPlace = onOpenPlace),
-                            showTitle = false,
-                            initialSupportingExtent = SupportingExtent.Browsing,
-                            mapAvailable = mapReady,
-                            mapContent = {
-                                if (nativeMap) {
-                                    HumanHistoryMap(visits, null, {}, it, {}, "synthetic-fixture", showStatus = false, onReadyChanged = {
-                                        mapReady =
-                                            it
-                                    })
-                                } else {
-                                    Box(it) { Text("Synthetic map viewport") }
-                                }
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) {
+                WorkspaceScaffold(
+                    HomeRouteDestination.entries.map {
+                        WorkspaceDestination(
+                            it.name,
+                            if (it ==
+                                HomeRouteDestination.LocationHistory
+                            ) {
+                                "Places"
+                            } else {
+                                it.name
                             },
+                            it.selectedIcon,
+                            it.unselectedIcon,
                         )
-                    }
+                    },
+                    HomeRouteDestination.LocationHistory.name,
+                    {},
+                    onSearch = {},
+                ) {
+                    HumanLocationHistoryContent(
+                        HumanLocationHistoryState(
+                            UiText.Raw("18 Jun 2026"),
+                            tab = HistoryTab.Places,
+                            places = places,
+                            placesQuery = query,
+                            placesFilterLabel = UiText.Raw("30 days"),
+                        ),
+                        HumanLocationHistoryActions(onPlacesQuery = { query = it }, onOpenPlace = onOpenPlace),
+                        initialSupportingExtent = SupportingExtent.Browsing,
+                        mapAvailable = mapReady,
+                        mapContent = {
+                            if (nativeMap) {
+                                HumanHistoryMap(visits, null, {}, it, {}, "synthetic-fixture", showStatus = false, onReadyChanged = {
+                                    mapReady =
+                                        it
+                                })
+                            } else {
+                                Box(it) { Text("Synthetic map viewport") }
+                            }
+                        },
+                    )
                 }
             }
         }

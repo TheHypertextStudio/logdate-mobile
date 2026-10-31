@@ -19,7 +19,6 @@ import app.logdate.navigation.scenes.RelatedContentSceneStrategy
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
 import app.logdate.ui.workspace.LocalPanelLayoutInfo
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import kotlin.test.Test
@@ -28,55 +27,47 @@ import kotlin.test.assertEquals
 @OptIn(ExperimentalTestApi::class)
 class WorkspaceRouteDecoratorTest {
     @Test
-    fun playbackBypassesHomeFramingWhenTheWorkspaceIsEnabled() = verifyPlayback(true)
+    fun playbackBypassesHomeFraming() = verifyPlayback()
 
     @Test
-    fun playbackBypassesHomeFramingWhenTheWorkspaceIsDisabled() = verifyPlayback(false)
+    fun playbackReplacesTheHomeSceneInsteadOfBecomingAnotherPanel() = verifyPlayback(HomeRoute)
 
-    @Test
-    fun playbackReplacesTheHomeSceneInsteadOfBecomingAnotherPanel() = verifyPlayback(true, HomeRoute)
-
-    private fun verifyPlayback(
-        enabled: Boolean,
-        source: NavKey? = null,
-    ) = runDesktopComposeUiTest(width = 1280, height = 800) {
-        setContent {
-            LogDateTheme {
-                CompositionLocalProvider(
-                    LocalWorkspaceEnabled provides enabled,
-                    LocalWorkspaceSearchAction provides {},
-                ) {
-                    NavDisplay(
-                        backStack = listOfNotNull(source, RewindDetailRoute("00000000-0000-0000-0000-000000000001")),
-                        sceneStrategies = listOf(RelatedContentSceneStrategy<NavKey>(supportsDualPane = { true })),
-                        onBack = {},
-                        entryDecorators = listOf(rememberWorkspaceRouteDecorator()),
-                        entryProvider =
-                            entryProvider {
-                                taggedEntry<HomeRoute> { Box(Modifier.fillMaxSize().testTag("home")) }
-                                taggedEntry<RewindDetailRoute> {
-                                    Box(
-                                        Modifier.fillMaxSize().testTag(
-                                            if (LocalWorkspaceHosted.current ||
-                                                LocalPanelLayoutInfo.current != null
-                                            ) {
-                                                "hosted"
-                                            } else {
-                                                "playback"
-                                            },
-                                        ),
-                                    )
-                                }
-                            },
-                    )
+    private fun verifyPlayback(source: NavKey? = null) =
+        runDesktopComposeUiTest(width = 1280, height = 800) {
+            setContent {
+                LogDateTheme {
+                    CompositionLocalProvider(LocalWorkspaceSearchAction provides {}) {
+                        NavDisplay(
+                            backStack = listOfNotNull(source, RewindDetailRoute("00000000-0000-0000-0000-000000000001")),
+                            sceneStrategies = listOf(RelatedContentSceneStrategy<NavKey>(supportsDualPane = { true })),
+                            onBack = {},
+                            entryDecorators = listOf(rememberWorkspaceRouteDecorator()),
+                            entryProvider =
+                                entryProvider {
+                                    taggedEntry<HomeRoute> { Box(Modifier.fillMaxSize().testTag("home")) }
+                                    taggedEntry<RewindDetailRoute> {
+                                        Box(
+                                            Modifier.fillMaxSize().testTag(
+                                                if (LocalWorkspaceHosted.current ||
+                                                    LocalPanelLayoutInfo.current != null
+                                                ) {
+                                                    "hosted"
+                                                } else {
+                                                    "playback"
+                                                },
+                                            ),
+                                        )
+                                    }
+                                },
+                        )
+                    }
                 }
             }
+            onAllNodesWithTag("home").assertCountEquals(0)
+            onAllNodesWithTag("workspace_search").assertCountEquals(0)
+            onAllNodesWithTag("hosted").assertCountEquals(0)
+            val playback = onNodeWithTag("playback").fetchSemanticsNode().boundsInRoot
+            assertEquals(1280f, playback.width)
+            assertEquals(800f, playback.height)
         }
-        onAllNodesWithTag("home").assertCountEquals(0)
-        onAllNodesWithTag("workspace_search").assertCountEquals(0)
-        onAllNodesWithTag("hosted").assertCountEquals(0)
-        val playback = onNodeWithTag("playback").fetchSemanticsNode().boundsInRoot
-        assertEquals(1280f, playback.width)
-        assertEquals(800f, playback.height)
-    }
 }

@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -201,25 +200,15 @@ private fun WorkspaceSceneContent(
         layoutMode = JournalLayoutMode.GRID,
         sortOption = JournalSortOption.LAST_UPDATED,
         searchQuery = "",
-        entryResults = emptyList(),
         onOpenJournal = {},
         onBrowseJournals = {},
         onCreateJournal = {},
-        onNavigateToDay = {},
         onQueryChange = {},
         onToggleLayoutMode = {},
         onSortOptionSelected = {},
     )
 
-@Composable internal fun LibraryFixture() =
-    BoxWithConstraints {
-        LibraryScreenContent(
-            LibraryScreenshotData.gridContent,
-            (maxWidth / 140.dp).toInt().coerceAtLeast(2),
-            {},
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
+@Composable internal fun LibraryFixture() = LibraryScreenContent(LibraryScreenshotData.gridContent, {}, modifier = Modifier.fillMaxSize())
 
 @Composable private fun RewindFixture() {
     CompositionLocalProvider(app.logdate.ui.platform.LocalReduceMotionOverride provides true) {
@@ -245,7 +234,7 @@ fun WorkspaceTimeline() = WorkspaceScene("timeline") { TimelineFixture() }
 @PreviewTest @WorkspacePreviewMatrix @Composable
 fun WorkspaceLocations() =
     WorkspaceScene("locations") {
-        HumanLocationHistoryContent(historyDay, HumanLocationHistoryActions(), showTitle = false, toolbarActions = {
+        HumanLocationHistoryContent(historyDay, HumanLocationHistoryActions(), toolbarActions = {
             PlacesOptionsFixture()
         }, mapContent = { HistoryMapFixture(it) })
     }

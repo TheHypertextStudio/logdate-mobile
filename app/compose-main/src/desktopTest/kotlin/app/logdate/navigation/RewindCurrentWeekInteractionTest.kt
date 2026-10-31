@@ -21,7 +21,6 @@ import app.logdate.feature.rewind.ui.overview.RewindOverviewPeriod
 import app.logdate.feature.rewind.ui.overview.RewindOverviewScreenUiState
 import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlinx.datetime.LocalDate
 import java.awt.image.BufferedImage
 import java.io.File
@@ -113,7 +112,6 @@ class RewindCurrentWeekInteractionTest {
             CompositionLocalProvider(
                 LocalDensity provides Density(1f, fontScale),
                 LocalLayoutDirection provides if (rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,
-                LocalWorkspaceEnabled provides true,
             ) {
                 LogDateTheme(darkTheme = dark) {
                     RewindScreenContent(

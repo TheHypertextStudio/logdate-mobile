@@ -75,7 +75,7 @@ fun S13_OnboardingNotifications() = SharedOnboardingMainScene(SharedScreenshotSc
 @PreviewTest
 @ScreenshotPreviewMatrix
 @Composable
-fun S14_OnboardingCompletionStreak() = SharedOnboardingMainScene(SharedScreenshotSceneId.OnboardingCompletionStreak)
+fun S14_OnboardingCompletionStreak() = SharedOnboardingMainScene(SharedScreenshotSceneId.OnboardingCompletionCampfire)
 
 @PreviewTest
 @ScreenshotPreviewMatrix

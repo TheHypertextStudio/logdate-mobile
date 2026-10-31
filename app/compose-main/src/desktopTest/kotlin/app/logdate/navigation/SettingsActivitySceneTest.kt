@@ -2,7 +2,6 @@ package app.logdate.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -28,7 +27,6 @@ import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -36,13 +34,10 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class SettingsActivitySceneTest {
     @Test
-    fun wideSettingsComposesCategoriesBesideDetailWithoutHomeOrOverviewDuplication() = verifyLayout(1280, true, false)
+    fun wideSettingsComposesCategoriesBesideDetailWithoutHomeOrOverviewDuplication() = verifyLayout(1280, false)
 
     @Test
-    fun directLinkedDetailHasCategoriesWithoutSyntheticRoot() = verifyLayout(1280, true, true)
-
-    @Test
-    fun settingsActivityDoesNotDependOnHomeWorkspaceFeatureFlag() = verifyLayout(1280, false, false)
+    fun directLinkedDetailHasCategoriesWithoutSyntheticRoot() = verifyLayout(1280, true)
 
     @Test
     fun compactSettingsKeepsDetailFullscreenAndBackReturnsToRoot() =
@@ -84,29 +79,26 @@ class SettingsActivitySceneTest {
 
     private fun verifyLayout(
         width: Int,
-        workspaceEnabled: Boolean,
         directLink: Boolean,
     ) = runDesktopComposeUiTest(width = width, height = 800) {
         val stack = if (directLink) listOf(AccountSettingsRoute) else listOf(HomeRoute, SettingsRoute(), AccountSettingsRoute)
         setContent {
             LogDateTheme {
-                CompositionLocalProvider(LocalWorkspaceEnabled provides workspaceEnabled) {
-                    NavDisplay(
-                        backStack = stack,
-                        onBack = {},
-                        sceneStrategies = listOf(SettingsActivitySceneStrategy<NavKey>({ true })),
-                        entryProvider =
-                            entryProvider {
-                                taggedEntry<HomeRoute> { Box(Modifier.testTag("home")) }
-                                taggedEntry<SettingsRoute>(ActivityPresentation.SettingsRoot.asMetadata()) {
-                                    Box(Modifier.testTag("overview"))
-                                }
-                                taggedEntry<AccountSettingsRoute>(detailMetadata()) {
-                                    Box(Modifier.fillMaxSize().testTag("detail"))
-                                }
-                            },
-                    )
-                }
+                NavDisplay(
+                    backStack = stack,
+                    onBack = {},
+                    sceneStrategies = listOf(SettingsActivitySceneStrategy<NavKey>({ true })),
+                    entryProvider =
+                        entryProvider {
+                            taggedEntry<HomeRoute> { Box(Modifier.testTag("home")) }
+                            taggedEntry<SettingsRoute>(ActivityPresentation.SettingsRoot.asMetadata()) {
+                                Box(Modifier.testTag("overview"))
+                            }
+                            taggedEntry<AccountSettingsRoute>(detailMetadata()) {
+                                Box(Modifier.fillMaxSize().testTag("detail"))
+                            }
+                        },
+                )
             }
         }
         onNodeWithTag("categories").assertExists()

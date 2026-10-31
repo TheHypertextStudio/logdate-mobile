@@ -56,7 +56,6 @@ class EditorGeometryAcceptanceTest {
                 device.executeShellCommand("settings put system font_scale $scale")
                 val intent =
                     Intent(instrumentation.targetContext, EditorActivity::class.java)
-                        .putExtra("entry_focus", true)
                         .putExtra("initial_text", "A quiet walk by the water.")
                 ActivityScenario.launch<EditorActivity>(intent).use { scenario ->
                     compose.waitUntil(20_000) { compose.onAllNodesWithTag("editor_text_input").fetchSemanticsNodes().isNotEmpty() }

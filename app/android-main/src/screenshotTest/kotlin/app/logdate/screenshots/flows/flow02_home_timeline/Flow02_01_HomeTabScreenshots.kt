@@ -142,8 +142,6 @@ fun S01_TimelineSuggestionCompleteYourDraft() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 timelineSuggestion =
                     TimelineSuggestionBlock.CompleteDraft(
                         draftId = "draft-1",
@@ -164,8 +162,6 @@ fun S02_TimelineEmpty() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
             )
         }
     }
@@ -195,8 +191,6 @@ fun S03_TimelineScrollToTopVisible() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 listState = LazyListState(firstVisibleItemIndex = 2, firstVisibleItemScrollOffset = 0),
             )
         }
@@ -214,8 +208,6 @@ fun S03a_TimelineSuggestionEmptyDayWithLocation() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 timelineSuggestion =
                     TimelineSuggestionBlock.EmptyDay(
                         locationName = "Blue Bottle Coffee".toUiText(),
@@ -236,8 +228,6 @@ fun S03c_TimelineSuggestionAfterWalk() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 timelineSuggestion = TimelineSuggestionBlock.AfterActivity(minutes = 40, trip = false),
             )
         }
@@ -255,8 +245,6 @@ fun S03d_TimelineSuggestionMorningStart() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 timelineSuggestion = TimelineSuggestionBlock.MorningStart,
             )
         }
@@ -299,8 +287,6 @@ fun S03e_TimelineMomentsCapturedWhileMoving() {
                     onNewEntry = {},
                     onShareMemory = { _ -> },
                     onOpenDay = {},
-                    onSearchClick = {},
-                    onProfileClick = {},
                 )
             }
         }
@@ -318,8 +304,6 @@ fun S03b_TimelineSuggestionOnThisDayMemoryRecall() {
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 timelineSuggestion =
                     TimelineSuggestionBlock.MemoryRecall(
                         memoryDate = LocalDate(2024, 2, 20),
@@ -343,8 +327,6 @@ fun S04_TimelineDetailEmptyState() {
                     onNewEntry = {},
                     onShareMemory = { _ -> },
                     onOpenDay = {},
-                    onSearchClick = {},
-                    onProfileClick = {},
                 )
             },
             detailContent = { TimelineDetailsEmptyPlaceholder() },
@@ -365,8 +347,6 @@ fun S05_TimelineDetailPopulated() {
                     onNewEntry = {},
                     onShareMemory = { _ -> },
                     onOpenDay = {},
-                    onSearchClick = {},
-                    onProfileClick = {},
                 )
             },
             detailContent = {
@@ -393,8 +373,6 @@ fun S06_TimelineDetailNoPeople() {
                     onNewEntry = {},
                     onShareMemory = { _ -> },
                     onOpenDay = {},
-                    onSearchClick = {},
-                    onProfileClick = {},
                 )
             },
             detailContent = {

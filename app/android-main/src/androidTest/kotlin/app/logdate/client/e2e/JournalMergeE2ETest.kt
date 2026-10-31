@@ -75,7 +75,6 @@ import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import kotlinx.coroutines.flow.combine
@@ -208,7 +207,7 @@ class JournalMergeE2ETest {
         }
         composeRule.setContent {
             LogDateTheme {
-                CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalWorkspaceSearchAction provides {}) {
+                CompositionLocalProvider(LocalWorkspaceSearchAction provides {}) {
                     NavDisplay(
                         backStack = stack,
                         onBack = { if (stack.size > 1) stack.removeAt(stack.lastIndex) },

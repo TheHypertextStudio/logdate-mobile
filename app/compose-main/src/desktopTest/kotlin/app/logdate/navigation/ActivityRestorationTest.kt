@@ -73,7 +73,6 @@ import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.hasViewModelsPerVisit
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.WorkspaceDestination
 import app.logdate.ui.workspace.WorkspaceScaffold
 import java.awt.image.BufferedImage
@@ -109,7 +108,7 @@ class ActivityRestorationTest {
             var browsing = BrowsingState("timeline", 0, 0)
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, LocalWorkspaceEnabled provides true) {
+                    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
                         NavDisplay(
                             backStack = stack,
                             onBack = { stack.removeLastOrNull() },
@@ -178,7 +177,7 @@ class ActivityRestorationTest {
             )
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, LocalWorkspaceEnabled provides true) {
+                    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
                         Box(Modifier.fillMaxSize()) {
                             NavDisplay(
                                 modifier = Modifier.width(width.dp),
@@ -330,7 +329,7 @@ class ActivityRestorationTest {
                 )
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, LocalWorkspaceEnabled provides true) {
+                    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
                         NavDisplay(
                             backStack = listOf(HomeRoute, journalRoute, noteRoute),
                             onBack = {},

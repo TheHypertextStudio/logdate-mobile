@@ -23,7 +23,6 @@ import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import kotlin.test.Test
@@ -86,18 +85,11 @@ class ActivityOwnershipTest {
         }
 
     @Test
-    fun journalReadingReplacesUnrelatedHomeContent() = verifyJournalReplacement(true)
-
-    @Test
-    fun journalReadingReplacesUnrelatedHomeContentWithLegacyPresentation() = verifyJournalReplacement(false)
-
-    @Test
     fun mergeOwnsTheWindowWithoutAHomeHost() =
         runDesktopComposeUiTest(width = 1280, height = 800) {
             setContent {
                 LogDateTheme {
                     CompositionLocalProvider(
-                        LocalWorkspaceEnabled provides true,
                         LocalWorkspaceSearchAction provides {},
                     ) {
                         NavDisplay(
@@ -124,22 +116,21 @@ class ActivityOwnershipTest {
             assertEquals(800f, bounds.height)
         }
 
-    private fun verifyJournalReplacement(enabled: Boolean) =
+    @Test
+    fun journalReadingReplacesUnrelatedHomeContent() =
         runDesktopComposeUiTest(width = 1280, height = 800) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides enabled) {
-                        NavDisplay(
-                            backStack = listOf(HomeRoute, JournalDetailsRoute(Uuid.random())),
-                            onBack = {},
-                            sceneStrategies = listOf(RelatedContentSceneStrategy<NavKey>(supportsDualPane = { true })),
-                            entryProvider =
-                                entryProvider {
-                                    taggedEntry<HomeRoute> { Box(Modifier.fillMaxSize().testTag("home")) }
-                                    taggedEntry<JournalDetailsRoute> { Box(Modifier.fillMaxSize().testTag("journal")) }
-                                },
-                        )
-                    }
+                    NavDisplay(
+                        backStack = listOf(HomeRoute, JournalDetailsRoute(Uuid.random())),
+                        onBack = {},
+                        sceneStrategies = listOf(RelatedContentSceneStrategy<NavKey>(supportsDualPane = { true })),
+                        entryProvider =
+                            entryProvider {
+                                taggedEntry<HomeRoute> { Box(Modifier.fillMaxSize().testTag("home")) }
+                                taggedEntry<JournalDetailsRoute> { Box(Modifier.fillMaxSize().testTag("journal")) }
+                            },
+                    )
                 }
             }
             onAllNodesWithTag("home").assertCountEquals(0)

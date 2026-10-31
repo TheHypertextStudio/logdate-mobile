@@ -172,8 +172,6 @@ private fun RootPreviewFrame(
                 onNewEntry = {},
                 onShareMemory = { _ -> },
                 onOpenDay = {},
-                onSearchClick = {},
-                onProfileClick = {},
                 timelineSuggestion =
                     TimelineSuggestionBlock.CompleteDraft(
                         draftId = "draft-1",

@@ -298,8 +298,6 @@ fun S04_TimelineLocationQuickPeek() {
                     onNewEntry = {},
                     onShareMemory = { _ -> },
                     onOpenDay = {},
-                    onSearchClick = {},
-                    onProfileClick = {},
                 )
             }
 

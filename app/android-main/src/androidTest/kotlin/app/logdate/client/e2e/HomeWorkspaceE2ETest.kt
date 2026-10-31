@@ -230,7 +230,6 @@ class HomeWorkspaceE2ETest {
                                 ),
                                 app.logdate.feature.location.timeline.ui.history
                                     .HumanLocationHistoryActions(onRecover = { resumed = true }),
-                                showTitle = false,
                                 mapContent = {
                                     androidx.compose.foundation.layout
                                         .Box(it)
