@@ -9,7 +9,7 @@ This document defines the systematic approach for organizing and running end-to-
 Android e2e coverage in this repo should default to Gradle Managed Devices. Use direct `adb` targeting only for the supplemental shell workflows that verify behavior Gradle instrumentation cannot cover:
 
 ```bash
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 ```
 
 Use managed-device Gradle tasks for Android instrumented tests and reserve `adb -s emulator-...` for supplemental shell/logcat workflows only.
@@ -19,18 +19,21 @@ Use managed-device Gradle tasks for Android instrumented tests and reserve `adb 
 **Definition**: Tests that verify backend API logic without device interaction.
 
 **Characteristics**:
+
 - Use Ktor's `testApplication {}` framework
 - Run in-process on the JVM
 - No device/emulator required
 - Pure gradle execution
 
 **Examples**:
+
 - `journeys/auth/AuthOnboardingAndSigninJourneyE2ETest` - Passkey signup and sign-in flows
 - `journeys/auth/AuthRestoreCredentialJourneyE2ETest` - Restore-credential registration and redemption
 - `journeys/sync/BackupAndSyncJourneyE2ETest` - Backup/sync server behavior
 - `smoke/PlatformSanityE2ETest` - Endpoint smoke coverage
 
 **How to Run**:
+
 ```bash
 # Run all server e2e tests
 ./gradlew :server:test --tests "app.logdate.server.e2e.*"
@@ -51,12 +54,14 @@ Use managed-device Gradle tasks for Android instrumented tests and reserve `adb 
 **Definition**: Android instrumented tests that run on Gradle Managed Devices using the gradle testing framework.
 
 **Characteristics**:
+
 - Use AndroidJUnit4, Espresso, ActivityScenario
 - Run on managed virtual devices (requires Android SDK system images)
 - Test Android framework behavior, UI interactions
 - Gradle manages test execution and reporting
 
 **Examples**:
+
 - `MultiWindowEditorE2ETest` - Multi-window intent flags, activity lifecycle
 - `IncomingShareE2ETest` - Share intents into LogDate drafts
 - `ShareReceiverE2ETest` - Share chooser actions
@@ -64,15 +69,16 @@ Use managed-device Gradle tasks for Android instrumented tests and reserve `adb 
 - Future tests: Navigation flows, permission handling, database integration
 
 **How to Run**:
+
 ```bash
 # Run all client e2e tests
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 
 # Run specific test class
-./gradlew managedAndroidMultiWindowDebugAndroidTest
+./run test:android:multiwindow
 
 # Run with verbose output
-./gradlew managedAndroidMultiWindowDebugAndroidTest --info
+./run test:android:multiwindow --info
 ```
 
 **When to Create Shell Script**: **Only if** the test needs to verify actual device behavior via adb shell commands that gradle cannot test.
@@ -92,6 +98,7 @@ The Android share UX suite uses the same managed-device flow as the rest of the 
 **Definition**: Tests that verify actual device/UI behavior using adb shell commands directly.
 
 **Characteristics**:
+
 - Execute raw adb shell commands (e.g., `adb shell am start`, `adb shell dumpsys`)
 - Test actual window management, task recents, activity lifecycle behavior
 - Cannot be tested by gradle instrumented tests
@@ -99,9 +106,11 @@ The Android share UX suite uses the same managed-device flow as the rest of the 
 - Run in shell scripts with color output and summary reporting
 
 **Examples**:
+
 - `tests/e2e/test-multi-window-editor.sh` - Supplemental adb verification for actual window creation, task isolation, and recents behavior
 
 **How to Run**:
+
 ```bash
 # Run the shell script directly
 ./tests/e2e/test-multi-window-editor.sh
@@ -118,6 +127,7 @@ The Android share UX suite uses the same managed-device flow as the rest of the 
 ## Shell Script Organization
 
 ### Directory Structure
+
 ```
 tests/e2e/
 ├── test-multi-window-editor.sh          # Supplemental adb-based window behavior checks
@@ -128,6 +138,7 @@ tests/e2e/
 ```
 
 ### Naming Convention
+
 ```
 tests/e2e/test-<feature-name>.sh
 
@@ -139,6 +150,7 @@ Examples:
 ```
 
 **Guidelines**:
+
 - Use lowercase with hyphens
 - Be specific: `test-<feature-name>.sh` not `test-generic.sh`
 - One script per major feature/component being tested
@@ -217,13 +229,17 @@ main "$@"
 The `docs/testing/e2e-test-index.md` should document:
 
 ### For Server Tests:
-```markdown
+
+````markdown
 **Commands**:
+
 ```bash
 # Run via gradle (no shell script needed)
 ./gradlew :server:test --tests "app.logdate.server.e2e.TestClassName"
 ```
-```
+````
+
+````
 
 ### For Gradle Instrumented Tests:
 ```markdown
@@ -234,8 +250,9 @@ The `docs/testing/e2e-test-index.md` should document:
 
 # For actual device behavior verification, see adb shell tests:
 # ./tests/e2e/test-<feature>.sh
-```
-```
+````
+
+````
 
 ### For ADB Shell Tests:
 ```markdown
@@ -247,10 +264,12 @@ For actual device behavior testing, use the dedicated shell script:
 ./tests/e2e/test-<feature>.sh
 ./tests/e2e/test-<feature>.sh --verbose
 ./tests/e2e/test-<feature>.sh --help
-```
+````
 
 See: `tests/e2e/test-<feature>.sh` for full details
+
 ```
+
 ```
 
 ---
@@ -340,7 +359,9 @@ adb logcat | grep "YourTag"
 ## Testing Different Scenarios
 
 ### Quick Smoke Tests
+
 Create fast validation:
+
 ```bash
 # Option: --smoke
 # Runs only essential happy-path tests
@@ -348,7 +369,9 @@ Create fast validation:
 ```
 
 ### Full Test Suite
+
 Comprehensive coverage:
+
 ```bash
 # No options
 # Runs all tests
@@ -356,7 +379,9 @@ Comprehensive coverage:
 ```
 
 ### Debug/Verbose Mode
+
 For troubleshooting:
+
 ```bash
 # Option: --verbose
 # Shows all adb commands being executed
@@ -377,6 +402,7 @@ tests/e2e/
 ```
 
 Or consolidate by platform:
+
 ```
 tests/e2e/
 ├── android/

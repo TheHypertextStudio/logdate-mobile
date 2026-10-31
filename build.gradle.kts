@@ -257,39 +257,6 @@ tasks.register("managedAndroidSmoke") {
     dependsOn(":app:android-main:smokeDevicesGroupDebugAndroidTest")
 }
 
-tasks.register<Exec>("managedAndroidE2EDebugAndroidTest") {
-    group = "verification"
-    description = "Run app/android-main end-to-end instrumentation tests on the managed Android smoke lane."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:smokeDevicesGroupDebugAndroidTest",
-        "-Plogdate.androidTestPackage=app.logdate.client.e2e",
-    )
-}
-
-tasks.register<Exec>("managedAndroidMultiWindowDebugAndroidTest") {
-    group = "verification"
-    description = "Run the multi-window Android e2e suite on the managed Android matrix."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:deviceMatrixGroupDebugAndroidTest",
-        "-Plogdate.androidTestClass=app.logdate.client.e2e.MultiWindowEditorE2ETest",
-    )
-}
-
-tasks.register<Exec>("managedAndroidShareDebugAndroidTest") {
-    group = "verification"
-    description = "Run the Android share e2e suite on the managed Android smoke lane."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:smokeDevicesGroupDebugAndroidTest",
-        "-Plogdate.androidTestClass=app.logdate.client.e2e.IncomingShareE2ETest,app.logdate.client.e2e.ShareReceiverE2ETest,app.logdate.client.e2e.SharingEntryPointsE2ETest",
-    )
-}
-
 tasks.register("managedAndroidMatrix") {
     group = "verification"
     description = "Run the managed Android phone and tablet matrix for app/android-main."
@@ -300,18 +267,6 @@ tasks.register("managedTabletDebugAndroidTest") {
     group = "verification"
     description = "Run app/android-main instrumented tests on the managed tablet device."
     dependsOn(":app:android-main:tabletDevicesGroupDebugAndroidTest")
-}
-
-tasks.register<Exec>("managedTabletMediaCoverageAndroidTest") {
-    group = "verification"
-    description = "Run AndroidMediaManager instrumentation coverage on the managed tablet device."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:createManagedDeviceDebugAndroidTestCoverageReport",
-        "-Plogdate.managedDeviceProfile=tabletOnly",
-        "-Plogdate.androidTestClass=app.logdate.client.media.AndroidMediaManagerTest",
-    )
 }
 
 tasks.register("managedWearDebugAndroidTest") {
@@ -543,7 +498,9 @@ tasks.register<JacocoReport>("featureCoverageReport") {
 
 tasks.register<JacocoReport>("mediaAndroidTestCoverageReport") {
     group = "verification"
-    description = "Generate Android instrumentation coverage for AndroidMediaManager."
+    description =
+        "Generate Android instrumentation coverage for AndroidMediaManager. Run it as " +
+        "./run test:coverage:media, which selects the managed tablet and the test class."
 
     val appProject = project(":app:android-main")
     val mediaProject = project(":client:media")
@@ -557,7 +514,7 @@ tasks.register<JacocoReport>("mediaAndroidTestCoverageReport") {
             ),
         )
 
-    dependsOn("managedTabletMediaCoverageAndroidTest")
+    dependsOn(":app:android-main:createManagedDeviceDebugAndroidTestCoverageReport")
 
     executionData.setFrom(
         managedDeviceCoverageFiles,

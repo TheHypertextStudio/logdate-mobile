@@ -50,8 +50,12 @@ run|run:wear|Install and run on connected Wear device|./gradlew :app:wear:instal
 
 test|test|Run all unit tests|./gradlew test allTests
 test|test:android|Run Android unit tests|./gradlew :app:android-main:testDebugUnitTest
+test|test:android:e2e|Run the Android end-to-end suite on the managed phone and tablet|./gradlew :app:android-main:smokeDevicesGroupDebugAndroidTest -Plogdate.androidTestPackage=app.logdate.client.e2e
+test|test:android:multiwindow|Run the multi-window editor suite on the managed device matrix|./gradlew :app:android-main:deviceMatrixGroupDebugAndroidTest -Plogdate.androidTestClass=app.logdate.client.e2e.MultiWindowEditorE2ETest
+test|test:android:share|Run the Android share suites on the managed phone and tablet|./gradlew :app:android-main:smokeDevicesGroupDebugAndroidTest -Plogdate.androidTestClass=app.logdate.client.e2e.IncomingShareE2ETest,app.logdate.client.e2e.ShareReceiverE2ETest,app.logdate.client.e2e.SharingEntryPointsE2ETest
 test|test:server|Run server tests|./gradlew :server:test
 test|test:coverage|Generate test coverage report|./gradlew koverHtmlReport
+test|test:coverage:media|Measure AndroidMediaManager instrumentation coverage on the managed tablet|./gradlew mediaAndroidTestCoverageReport -Plogdate.managedDeviceProfile=tabletOnly -Plogdate.androidTestClass=app.logdate.client.media.AndroidMediaManagerTest
 test|test:verify|Verify coverage meets threshold|./gradlew koverVerify
 test|test:bench:phone|Run managed phone macrobenchmarks|./gradlew managedPhoneBenchmark
 test|test:bench:wear|Run managed Wear OS macrobenchmarks|./gradlew managedWearBenchmark
