@@ -26,7 +26,6 @@ import app.logdate.client.domain.events.ObserveUpcomingEventsUseCase
 import app.logdate.client.domain.events.ObserveUserPlacesUseCase
 import app.logdate.client.domain.events.UnlinkNoteFromEventUseCase
 import app.logdate.client.domain.events.UpdateEventUseCase
-import app.logdate.client.domain.export.ExportUserDataUseCase
 import app.logdate.client.domain.export.GetExportCountsUseCase
 import app.logdate.client.domain.export.archive.ExportArchiveUseCase
 import app.logdate.client.domain.identity.ObserveUserIdentityUseCase
@@ -135,7 +134,6 @@ val domainModule: Module =
         // App info
 
         // Export
-        factory { ExportUserDataUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
         factory { ExportArchiveUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
         factory { GetExportCountsUseCase(get(), get()) }
         factory { RestoreUserDataUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
