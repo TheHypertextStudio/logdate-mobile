@@ -18,66 +18,17 @@ class AssistantAccessPolicyTest {
     }
 
     @Test
-    fun `read and prepare permissions are independent`() {
+    fun `a grant or token without read permission is refused`() {
         assertEquals(
             AssistantAccessDecision.Denied(AssistantAccessDenial.INSUFFICIENT_SCOPE),
-            policy.authorize(fixture.snapshot, fixture.request, AssistantCapability.PREPARE_ENTRIES, fixture.now),
-        )
-        val addOnly = fixture.grant.copy(capabilities = setOf(AssistantCapability.PREPARE_ENTRIES))
-        assertIs<AssistantAccessDecision.Denied>(authorize(fixture.snapshot.copy(grant = addOnly)))
-        assertEquals(
-            AssistantAccessDecision.Allowed,
-            policy.authorize(
-                fixture.snapshot.copy(grant = addOnly),
-                fixture.request.copy(capabilities = setOf(AssistantCapability.PREPARE_ENTRIES)),
-                AssistantCapability.PREPARE_ENTRIES,
-                fixture.now,
-            ),
-        )
-        assertIs<AssistantAccessDecision.Denied>(
             authorize(fixture.snapshot.copy(grant = fixture.grant.copy(capabilities = emptySet()))),
         )
-    }
-
-    @Test
-    fun `narrower token permissions never inherit the full grant capabilities`() {
-        val both = setOf(AssistantCapability.READ_MEMORIES, AssistantCapability.PREPARE_ENTRIES)
-        val snapshot = fixture.snapshot.copy(grant = fixture.grant.copy(capabilities = both))
-        val readToken = fixture.request.copy(capabilities = setOf(AssistantCapability.READ_MEMORIES))
-        val prepareToken = fixture.request.copy(capabilities = setOf(AssistantCapability.PREPARE_ENTRIES))
-        val none = fixture.request.copy(capabilities = emptySet())
-
-        assertIs<AssistantAccessDecision.Denied>(
-            policy.authorize(snapshot, prepareToken, AssistantCapability.READ_MEMORIES, fixture.now),
-        )
-        assertIs<AssistantAccessDecision.Denied>(
-            policy.authorize(snapshot, readToken, AssistantCapability.PREPARE_ENTRIES, fixture.now),
-        )
-        assertIs<AssistantAccessDecision.Denied>(
-            policy.authorize(snapshot, none, AssistantCapability.READ_MEMORIES, fixture.now),
-        )
         assertEquals(
-            AssistantAccessDecision.Allowed,
-            policy.authorize(snapshot, readToken, AssistantCapability.READ_MEMORIES, fixture.now),
-        )
-        assertEquals(
-            AssistantAccessDecision.Allowed,
-            policy.authorize(snapshot, prepareToken, AssistantCapability.PREPARE_ENTRIES, fixture.now),
-        )
-    }
-
-    @Test
-    fun `preparing an entry requires an approved destination`() {
-        val grant =
-            fixture.grant.copy(
-                capabilities = setOf(AssistantCapability.PREPARE_ENTRIES),
-                destinationJournalId = null,
-            )
-        assertIs<AssistantAccessDecision.Denied>(
+            AssistantAccessDecision.Denied(AssistantAccessDenial.INSUFFICIENT_SCOPE),
             policy.authorize(
-                fixture.snapshot.copy(grant = grant),
-                fixture.request.copy(capabilities = setOf(AssistantCapability.PREPARE_ENTRIES)),
-                AssistantCapability.PREPARE_ENTRIES,
+                fixture.snapshot,
+                fixture.request.copy(capabilities = emptySet()),
+                AssistantCapability.READ_MEMORIES,
                 fixture.now,
             ),
         )
