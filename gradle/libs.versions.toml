@@ -383,6 +383,7 @@ android-gradlePlugin = { module = 'com.android.tools.build:gradle', version.ref 
 kotlin-gradlePlugin = { module = 'org.jetbrains.kotlin:kotlin-gradle-plugin', version.ref = 'kotlin' }
 kotlin-serialization-gradlePlugin = { module = 'org.jetbrains.kotlin:kotlin-serialization', version.ref = 'kotlin' }
 dokka-gradlePlugin = { module = 'org.jetbrains.dokka:dokka-gradle-plugin', version.ref = 'dokkaGradlePlugin' }
+kover-gradlePlugin = { module = 'org.jetbrains.kotlinx:kover-gradle-plugin', version.ref = 'kover' }
 binaryCompatibilityValidator-gradlePlugin = { module = 'org.jetbrains.kotlinx:binary-compatibility-validator', version.ref = 'binaryCompatibilityValidator' }
 
 [plugins]
