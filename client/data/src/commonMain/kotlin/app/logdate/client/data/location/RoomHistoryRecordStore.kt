@@ -1,5 +1,6 @@
 package app.logdate.client.data.location
 
+import app.logdate.client.data.LenientJson
 import app.logdate.client.database.dao.HistoryRecordDao
 import app.logdate.client.database.entities.HistoryRecordEntity
 import app.logdate.client.repository.location.HistoryRecord
@@ -7,7 +8,6 @@ import app.logdate.client.repository.location.HistoryRecordStore
 import app.logdate.shared.model.location.HistoryPayload
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
 
 class RoomHistoryRecordStore(
     private val dao: HistoryRecordDao,
@@ -145,7 +145,7 @@ private fun HistoryRecord.toEntity(
 
 private fun HistoryRecord.observationTime(): Long? =
     payload?.let {
-        when (val value = runCatching { Json { ignoreUnknownKeys = true }.decodeFromString(HistoryPayload.serializer(), it) }.getOrNull()) {
+        when (val value = runCatching { LenientJson.decodeFromString(HistoryPayload.serializer(), it) }.getOrNull()) {
             is HistoryPayload.Observation -> value.value.timestamp.toEpochMilliseconds()
             is HistoryPayload.Activity -> value.value.timestamp.toEpochMilliseconds()
             else -> null

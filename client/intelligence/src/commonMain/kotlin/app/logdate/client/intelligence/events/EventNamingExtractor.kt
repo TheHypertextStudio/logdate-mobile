@@ -1,6 +1,7 @@
 package app.logdate.client.intelligence.events
 
 import app.logdate.client.intelligence.AIResult
+import app.logdate.client.intelligence.LenientJson
 import app.logdate.client.intelligence.cache.GenerativeAICache
 import app.logdate.client.intelligence.cache.GenerativeAICacheContentType
 import app.logdate.client.intelligence.generativeai.GenerativeAIChatClient
@@ -12,7 +13,6 @@ import app.logdate.client.networking.NetworkAvailabilityMonitor
 import app.logdate.client.util.platformIODispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 /**
  * Suggests a short, human-friendly name and description for an inferred event cluster.
@@ -97,7 +97,7 @@ Guidelines:
 }
 """
 
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
     }
 }
 

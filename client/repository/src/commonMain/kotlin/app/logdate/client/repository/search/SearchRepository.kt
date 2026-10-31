@@ -15,7 +15,7 @@ interface SearchRepository {
      * Searches all indexed content using full-text search.
      *
      * @param query The search query (FTS5 syntax supported)
-     * @return Flow of search results ordered by relevance and date
+     * @return Flow of the best few hundred search results, ordered by relevance and date
      */
     fun search(query: String): Flow<List<SearchResult>>
 
@@ -28,7 +28,7 @@ interface SearchRepository {
     ): Flow<List<SearchResult>>
 
     /**
-     * Searches with highlighted snippets (FTS5 snippet markers).
+     * Searches with highlighted snippets (FTS5 snippet markers), returning the best few hundred results.
      */
     fun searchWithSnippets(query: String): Flow<List<SearchResult>>
 

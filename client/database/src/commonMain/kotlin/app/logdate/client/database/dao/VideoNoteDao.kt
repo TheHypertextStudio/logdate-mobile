@@ -91,16 +91,6 @@ interface VideoNoteDao {
     suspend fun updateForRestore(note: VideoNoteEntity): Int
 
     /**
-     * Counts how many notes still point at [contentUri].
-     *
-     * Media is stored content-addressed, so two notes holding the same bytes share one file on
-     * disk. Deleting a note may therefore not mean deleting its media: the file may only be
-     * removed once nothing references it.
-     */
-    @Query("SELECT COUNT(*) FROM video_notes WHERE contentUri = :contentUri")
-    suspend fun countByContentUri(contentUri: String): Int
-
-    /**
      * Returns the subset of [contentUris] that at least one video note still references.
      *
      * Indexed lookup used to check whether a handful of candidate paths are still owned

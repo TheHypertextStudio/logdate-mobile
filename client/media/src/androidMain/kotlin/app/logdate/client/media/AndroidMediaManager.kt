@@ -27,8 +27,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.io.asSource
 import java.io.File
@@ -51,7 +49,7 @@ class AndroidMediaManager(
 ) : MediaManager,
     ConditionalMediaSaver {
     private val filesDir = context.filesDir
-    private val legacyBackfillMutex = Mutex()
+    private val legacyBackfill = OncePerProcess { withContext(ioDispatcher) { backfillLegacyManagedMedia() } }
     private val recoveryGateway: MediaRecoveryGateway =
         ContentResolverMediaRecoveryGateway(contentResolver, context)
 
@@ -630,47 +628,48 @@ class AndroidMediaManager(
         }
     }
 
-    private suspend fun ensureLegacyManagedMediaBackfilled() =
-        legacyBackfillMutex.withLock {
-            val directory = legacyMediaDirectory()
-            if (!directory.exists()) {
-                return@withLock
+    /** Legacy files only exist from older versions, so one pass per process finds every one of them. */
+    private suspend fun ensureLegacyManagedMediaBackfilled() = legacyBackfill.run()
+
+    private suspend fun backfillLegacyManagedMedia() {
+        val directory = legacyMediaDirectory()
+        if (!directory.exists()) {
+            return
+        }
+
+        val files = directory.listFiles()?.filter { it.isFile }.orEmpty()
+        for (file in files) {
+            val inferredMimeType = resolveMimeTypeFromFileName(file.name) ?: continue
+            if (!isPublishableMimeType(inferredMimeType)) {
+                continue
             }
 
-            directory
-                .listFiles()
-                ?.asSequence()
-                ?.filter { it.isFile }
-                ?.forEach { file ->
-                    val inferredMimeType = resolveMimeTypeFromFileName(file.name) ?: return@forEach
-                    if (!isPublishableMimeType(inferredMimeType)) {
-                        return@forEach
-                    }
+            if (
+                legacyMediaAlreadyPublished(
+                    file = file,
+                    mimeType = inferredMimeType,
+                )
+            ) {
+                Napier.d("Legacy media file already published in MediaStore: ${file.absolutePath}")
+                continue
+            }
 
-                    if (
-                        legacyMediaAlreadyPublished(
-                            file = file,
-                            mimeType = inferredMimeType,
-                        )
-                    ) {
-                        Napier.d("Legacy media file already published in MediaStore: ${file.absolutePath}")
-                        return@forEach
-                    }
-
-                    runCatching {
-                        publishFileToMediaStore(
-                            sourceFile = file,
-                            fileName = file.name,
-                            mimeType = inferredMimeType,
-                            timestamp = fileTimestamp(file),
-                        )
-                    }.onSuccess { publishedUri ->
-                        Napier.d("Backfilled legacy media file into MediaStore: $publishedUri")
-                    }.onFailure { error ->
-                        Napier.e("Failed to backfill legacy media file: ${file.absolutePath}", error)
-                    }
-                }
+            try {
+                val publishedUri =
+                    publishFileToMediaStore(
+                        sourceFile = file,
+                        fileName = file.name,
+                        mimeType = inferredMimeType,
+                        timestamp = fileTimestamp(file),
+                    )
+                Napier.d("Backfilled legacy media file into MediaStore: $publishedUri")
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
+                Napier.e("Failed to backfill legacy media file: ${file.absolutePath}", error)
+            }
         }
+    }
 
     private fun legacyMediaDirectory(): File = File(filesDir, "user_media")
 

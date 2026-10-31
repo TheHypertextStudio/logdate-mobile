@@ -11,9 +11,12 @@ import app.logdate.shared.model.location.PlaceVisit
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 /**
  * Turns location history into the places someone stopped at, newest first.
@@ -28,6 +31,7 @@ class ObserveLocationStopsUseCase(
 ) {
     fun currentDevice(deviceId: String): Flow<LocationStopSnapshot> =
         observeLocationHistoryUseCase()
+            .conflate()
             .map { history ->
                 val local =
                     history.filter {
@@ -39,8 +43,23 @@ class ObserveLocationStopsUseCase(
                 LocationStopSnapshot(aggregateStops(local), local.maxByOrNull { it.timestamp })
             }.flowOn(dispatcher)
 
-    /** Reconstruction is heavy over long history, so it never runs on the collector's (often main) thread. */
-    operator fun invoke(): Flow<List<LocationStop>> = observeLocationHistoryUseCase().map(::aggregateStops).flowOn(dispatcher)
+    /**
+     * Reconstruction is heavy over long history, so it never runs on the collector's (often main)
+     * thread, and fixes that arrive while it runs are folded into one more pass.
+     */
+    operator fun invoke(): Flow<List<LocationStop>> = observeLocationHistoryUseCase().conflate().map(::aggregateStops).flowOn(dispatcher)
+
+    /**
+     * Stops that end at or after [since], reconstructed from only the recent history. Samples from
+     * a day before [since] are read too, so a stay that began earlier keeps its real start time
+     * instead of appearing to begin at the cutoff.
+     */
+    fun since(since: Instant): Flow<List<LocationStop>> =
+        observeLocationHistoryUseCase
+            .between(since - RECONSTRUCTION_LEAD_IN, Instant.DISTANT_FUTURE)
+            .conflate()
+            .map { history -> aggregateStops(history).filter { it.endTime >= since } }
+            .flowOn(dispatcher)
 
     internal fun aggregateStops(history: List<LocationHistoryItem>): List<LocationStop> {
         val samples = history.filter { item -> item.countsTowardActivityStops() }
@@ -98,6 +117,7 @@ class ObserveLocationStopsUseCase(
 
     private companion object {
         const val LEGACY_OWNER = "default_user"
+        val RECONSTRUCTION_LEAD_IN = 1.days
     }
 }
 

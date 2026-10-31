@@ -3,6 +3,7 @@ package app.logdate.client.intelligence.entity.people
 import app.logdate.client.intelligence.AIError
 import app.logdate.client.intelligence.AIResult
 import app.logdate.client.intelligence.AIUnavailableReason
+import app.logdate.client.intelligence.LenientJson
 import app.logdate.client.intelligence.MAX_AI_INPUT_CHARACTERS
 import app.logdate.client.intelligence.cache.AICachePolicy
 import app.logdate.client.intelligence.cache.GenerativeAICache
@@ -23,7 +24,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
@@ -67,7 +67,7 @@ If no names are present, return an empty array.
 }
 """
 
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
     }
 
     /**

@@ -13,6 +13,8 @@ import okio.buffer
  *
  * Archives are written using the stored method so they can be created
  * consistently across Android, desktop, and iOS without a platform ZIP API.
+ * Entries, offsets and entry counts beyond the classic ZIP limits use ZIP64
+ * records, so a journal with many gigabytes of media still exports whole.
  */
 class ZipArchiveWriter(
     private val fileSystem: FileSystem,
@@ -56,9 +58,9 @@ class ZipArchiveWriter(
                             writeStreamedContents(sink, entry.writeTo, checksum)
                         }
                     }
-                requireZip32Limit(sizeBytes, "Entry size exceeds ZIP32 limit: $normalizedPath")
-                sink.writeDataDescriptor(checksum.value, sizeBytes)
-                offset += sizeBytes + DATA_DESCRIPTOR_SIZE
+                val zip64Descriptor = sizeBytes >= ZIP64_MARKER
+                sink.writeDataDescriptor(checksum.value, sizeBytes, zip64Descriptor)
+                offset += sizeBytes + if (zip64Descriptor) ZIP64_DATA_DESCRIPTOR_SIZE else DATA_DESCRIPTOR_SIZE
 
                 centralDirectoryEntries +=
                     CentralDirectoryEntry(
@@ -71,20 +73,21 @@ class ZipArchiveWriter(
 
             val centralDirectoryOffset = offset
             centralDirectoryEntries.forEach { entry ->
-                requireZip32Limit(entry.localHeaderOffset, "Archive offset exceeds ZIP32 limit: ${entry.name}")
-                writeCentralDirectoryHeader(sink, entry)
-                offset += CENTRAL_DIRECTORY_HEADER_SIZE + entry.nameBytes.size
+                offset += writeCentralDirectoryHeader(sink, entry)
             }
 
             val centralDirectorySize = offset - centralDirectoryOffset
-            require(centralDirectoryEntries.size <= MAX_SHORT_VALUE) {
-                "ZIP entry count exceeds ZIP32 limit: ${centralDirectoryEntries.size}"
+            val entryCount = centralDirectoryEntries.size.toLong()
+            if (entryCount >= MAX_SHORT_VALUE || centralDirectorySize >= ZIP64_MARKER || centralDirectoryOffset >= ZIP64_MARKER) {
+                sink.writeZip64EndOfCentralDirectory(
+                    entryCount = entryCount,
+                    centralDirectorySize = centralDirectorySize,
+                    centralDirectoryOffset = centralDirectoryOffset,
+                    recordOffset = offset,
+                )
             }
-            requireZip32Limit(centralDirectoryOffset, "Central directory offset exceeds ZIP32 limit")
-            requireZip32Limit(centralDirectorySize, "Central directory size exceeds ZIP32 limit")
-
             sink.writeEndOfCentralDirectory(
-                entryCount = centralDirectoryEntries.size,
+                entryCount = entryCount,
                 centralDirectorySize = centralDirectorySize,
                 centralDirectoryOffset = centralDirectoryOffset,
             )
@@ -161,52 +164,100 @@ class ZipArchiveWriter(
         sink.write(nameBytes)
     }
 
+    /**
+     * Writes the entry's central directory record and returns its length. Sizes and offsets that do
+     * not fit 32 bits are written as 0xFFFFFFFF with the real values in a ZIP64 extra field.
+     */
     private fun writeCentralDirectoryHeader(
         sink: BufferedSink,
         entry: CentralDirectoryEntry,
-    ) {
+    ): Long {
+        val zip64Size = entry.sizeBytes >= ZIP64_MARKER
+        val zip64Offset = entry.localHeaderOffset >= ZIP64_MARKER
+        val zip64FieldsSize = (if (zip64Size) 16 else 0) + (if (zip64Offset) 8 else 0)
+        val extraSize = if (zip64FieldsSize > 0) ZIP64_EXTRA_HEADER_SIZE + zip64FieldsSize else 0
+        val version = if (extraSize > 0) VERSION_ZIP64 else VERSION_NEEDED
         sink.writeIntLe(CENTRAL_DIRECTORY_SIGNATURE)
-        sink.writeShortLe(VERSION_MADE_BY)
-        sink.writeShortLe(VERSION_NEEDED)
+        sink.writeShortLe(if (extraSize > 0) VERSION_ZIP64 else VERSION_MADE_BY)
+        sink.writeShortLe(version)
         sink.writeShortLe(GENERAL_PURPOSE_FLAGS)
         sink.writeShortLe(COMPRESSION_METHOD_STORED)
         sink.writeShortLe(0)
         sink.writeShortLe(0)
         sink.writeIntLe(entry.crc32)
-        sink.writeIntLe(entry.sizeBytes)
-        sink.writeIntLe(entry.sizeBytes)
+        sink.writeIntLe(if (zip64Size) ZIP64_MARKER else entry.sizeBytes)
+        sink.writeIntLe(if (zip64Size) ZIP64_MARKER else entry.sizeBytes)
         sink.writeShortLe(entry.nameBytes.size)
-        sink.writeShortLe(0)
+        sink.writeShortLe(extraSize)
         sink.writeShortLe(0)
         sink.writeShortLe(0)
         sink.writeShortLe(0)
         sink.writeIntLe(0)
-        sink.writeIntLe(entry.localHeaderOffset)
+        sink.writeIntLe(if (zip64Offset) ZIP64_MARKER else entry.localHeaderOffset)
         sink.write(entry.nameBytes)
+        if (extraSize > 0) {
+            sink.writeShortLe(ZIP64_EXTRA_FIELD_ID)
+            sink.writeShortLe(zip64FieldsSize)
+            if (zip64Size) {
+                sink.writeLongLe(entry.sizeBytes)
+                sink.writeLongLe(entry.sizeBytes)
+            }
+            if (zip64Offset) sink.writeLongLe(entry.localHeaderOffset)
+        }
+        return CENTRAL_DIRECTORY_HEADER_SIZE + entry.nameBytes.size + extraSize
     }
 
     private fun BufferedSink.writeDataDescriptor(
         crc32: Long,
         sizeBytes: Long,
+        zip64: Boolean,
     ) {
         writeIntLe(DATA_DESCRIPTOR_SIGNATURE)
         writeIntLe(crc32)
-        writeIntLe(sizeBytes)
-        writeIntLe(sizeBytes)
+        if (zip64) {
+            writeLongLe(sizeBytes)
+            writeLongLe(sizeBytes)
+        } else {
+            writeIntLe(sizeBytes)
+            writeIntLe(sizeBytes)
+        }
+    }
+
+    private fun BufferedSink.writeZip64EndOfCentralDirectory(
+        entryCount: Long,
+        centralDirectorySize: Long,
+        centralDirectoryOffset: Long,
+        recordOffset: Long,
+    ) {
+        writeIntLe(ZIP64_END_OF_CENTRAL_DIRECTORY_SIGNATURE)
+        writeLongLe(ZIP64_END_OF_CENTRAL_DIRECTORY_REMAINING_SIZE)
+        writeShortLe(VERSION_ZIP64)
+        writeShortLe(VERSION_ZIP64)
+        writeIntLe(0)
+        writeIntLe(0)
+        writeLongLe(entryCount)
+        writeLongLe(entryCount)
+        writeLongLe(centralDirectorySize)
+        writeLongLe(centralDirectoryOffset)
+        writeIntLe(ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIGNATURE)
+        writeIntLe(0)
+        writeLongLe(recordOffset)
+        writeIntLe(1)
     }
 
     private fun BufferedSink.writeEndOfCentralDirectory(
-        entryCount: Int,
+        entryCount: Long,
         centralDirectorySize: Long,
         centralDirectoryOffset: Long,
     ) {
+        val shortCount = if (entryCount >= MAX_SHORT_VALUE) MAX_SHORT_VALUE else entryCount.toInt()
         writeIntLe(END_OF_CENTRAL_DIRECTORY_SIGNATURE)
         writeShortLe(0)
         writeShortLe(0)
-        writeShortLe(entryCount)
-        writeShortLe(entryCount)
-        writeIntLe(centralDirectorySize)
-        writeIntLe(centralDirectoryOffset)
+        writeShortLe(shortCount)
+        writeShortLe(shortCount)
+        writeIntLe(centralDirectorySize.coerceAtMost(ZIP64_MARKER))
+        writeIntLe(centralDirectoryOffset.coerceAtMost(ZIP64_MARKER))
         writeShortLe(0)
     }
 
@@ -222,38 +273,42 @@ class ZipArchiveWriter(
         writeByte((value ushr 24 and 0xff).toInt())
     }
 
-    private fun requireZip32Limit(
-        value: Long,
-        message: String,
-    ) {
-        require(value in 0..MAX_INT_VALUE.toLong()) { message }
+    private fun BufferedSink.writeLongLe(value: Long) {
+        writeIntLe(value and 0xffffffffL)
+        writeIntLe(value ushr 32)
     }
 
-    private data class CentralDirectoryEntry(
+    private class CentralDirectoryEntry(
         val nameBytes: ByteArray,
         val crc32: Long,
         val sizeBytes: Long,
         val localHeaderOffset: Long,
-    ) {
-        val name: String
-            get() = nameBytes.decodeToString()
-    }
+    )
 
     companion object {
         private const val CHUNK_SIZE = 8_192L
         private const val LOCAL_FILE_HEADER_SIZE = 30L
         private const val CENTRAL_DIRECTORY_HEADER_SIZE = 46L
         private const val DATA_DESCRIPTOR_SIZE = 16L
+        private const val ZIP64_DATA_DESCRIPTOR_SIZE = 24L
+        private const val ZIP64_EXTRA_HEADER_SIZE = 4
+        private const val ZIP64_EXTRA_FIELD_ID = 0x0001
+        private const val ZIP64_END_OF_CENTRAL_DIRECTORY_REMAINING_SIZE = 44L
         private const val LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50L
         private const val CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50L
         private const val DATA_DESCRIPTOR_SIGNATURE = 0x08074b50L
         private const val END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50L
+        private const val ZIP64_END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06064b50L
+        private const val ZIP64_END_OF_CENTRAL_DIRECTORY_LOCATOR_SIGNATURE = 0x07064b50L
         private const val VERSION_MADE_BY = 20
         private const val VERSION_NEEDED = 20
+        private const val VERSION_ZIP64 = 45
         private const val GENERAL_PURPOSE_FLAGS = 0x08
         private const val COMPRESSION_METHOD_STORED = 0
         private const val MAX_SHORT_VALUE = 0xffff
-        private const val MAX_INT_VALUE = Int.MAX_VALUE
+
+        /** Values at or above this do not fit a classic ZIP field, which reserves it as the ZIP64 marker. */
+        private const val ZIP64_MARKER = 0xffffffffL
     }
 }
 

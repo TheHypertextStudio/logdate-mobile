@@ -1,6 +1,7 @@
 package app.logdate.client.domain.activity
 
 import app.logdate.client.datastore.KeyValueStorage
+import app.logdate.client.domain.LenientJson
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -8,7 +9,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -81,7 +81,7 @@ class SuggestionOutcomes(
     companion object {
         const val KEY = "activity.suggestions"
         private val RETENTION = 30.days
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
         private val serializer = ListSerializer(SuggestionOutcome.serializer())
     }
 }

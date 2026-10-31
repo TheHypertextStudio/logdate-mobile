@@ -7,6 +7,7 @@ import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
 /**
@@ -33,10 +35,12 @@ class OfflineFirstSearchRepository(
 ) : SearchRepository {
     private val correctionCache = mutableMapOf<String, String?>()
     private val correctionCacheMutex = Mutex()
+    private val indexCheckMutex = Mutex()
+    private var indexChecked = false
 
     override fun search(query: String): Flow<List<SearchResult>> =
         observedFtsFlow(query) { preparedQuery ->
-            searchDao.search(preparedQuery.query).map { it.toSearchResult() }
+            searchDao.search(preparedQuery.query, MAX_SEARCH_RESULTS).map { it.toSearchResult() }
         }
 
     override fun searchWithLimit(
@@ -49,7 +53,7 @@ class OfflineFirstSearchRepository(
 
     override fun searchWithSnippets(query: String): Flow<List<SearchResult>> =
         observedFtsFlow(query) { preparedQuery ->
-            searchDao.searchWithSnippets(preparedQuery.query).map { it.toSearchResult() }
+            searchDao.searchWithSnippets(preparedQuery.query, MAX_SEARCH_RESULTS).map { it.toSearchResult() }
         }
 
     override fun searchRanked(
@@ -98,7 +102,8 @@ class OfflineFirstSearchRepository(
         }
 
     /**
-     * Re-runs the same prepared query whenever the search index schema version changes.
+     * Re-runs the same prepared query when the search index changes. A burst of changes, such as
+     * a sync applying many records, re-runs it once after the changes settle.
      */
     private fun observedFtsFlow(
         query: String,
@@ -110,15 +115,32 @@ class OfflineFirstSearchRepository(
             searchDao
                 .observeGeneration()
                 .distinctUntilChanged()
+                .debounceAfterFirst(INDEX_CHANGE_SETTLE_TIME)
                 .mapLatest {
+                    ensureIndexCurrent()
                     executePreparedQuery(prepared, block)
                 }.catch { error ->
-                    Napier.e("Search query failed for \"$query\": ${error.message}", error)
+                    Napier.e("Search query failed", error)
                     emit(emptyList())
                 }
 
         return combine(ftsResults, observePeopleResults(query)) { fts, people ->
             mergeSearchResults(fts = fts, people = people)
+        }
+    }
+
+    /** Fills the index from existing content once per process, before the first search reads it. */
+    private suspend fun ensureIndexCurrent() {
+        indexCheckMutex.withLock {
+            if (indexChecked) return
+            try {
+                if (searchDao.rebuildIfNeeded()) Napier.i("Rebuilt the search index from existing content")
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Napier.e("Search index rebuild failed; results may be incomplete", error)
+            }
+            indexChecked = true
         }
     }
 
@@ -238,6 +260,9 @@ class OfflineFirstSearchRepository(
     ): List<SearchResult> = (people + fts).distinctBy { "${it.contentType.ftsValue}_${it.uid}" }
 
     private companion object {
+        /** Bounds the queries that callers do not limit, so a common term cannot read the whole index. */
+        const val MAX_SEARCH_RESULTS = 200
+        val INDEX_CHANGE_SETTLE_TIME = 300.milliseconds
         const val LONG_FUZZY_TOKEN_LENGTH = 7
         const val MAX_FUZZY_CANDIDATES = 64
         const val MIN_FUZZY_TOKEN_LENGTH = 4

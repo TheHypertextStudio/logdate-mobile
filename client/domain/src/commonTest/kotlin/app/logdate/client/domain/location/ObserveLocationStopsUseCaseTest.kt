@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -58,6 +60,20 @@ class ObserveLocationStopsUseCaseTest {
                     .first()
             assertEquals(null, snapshot.latest)
             assertTrue(snapshot.stops.isEmpty())
+        }
+
+    @Test
+    fun `recent stops reconstruct only the window and keep a stay's real start`() =
+        runTest {
+            val cutoff = Instant.parse("2026-10-12T12:00:00Z")
+            val oldStay = listOf(0, 5, 10).map { minute -> historyItem(cutoff - 3.days + minute.minutes, 40.0, -120.0) }
+            val straddling = listOf(-20, -10, 5, 15).map { minute -> historyItem(cutoff + minute.minutes, 37.0, -122.0) }
+            val repository = FakeLocationHistoryRepository(oldStay + straddling)
+
+            val stops = ObserveLocationStopsUseCase(ObserveLocationHistoryUseCase(repository)).since(cutoff).first()
+
+            assertEquals(0, repository.fullHistoryObservations, "recent stops read the whole history")
+            assertEquals(listOf(cutoff - 20.minutes), stops.map { it.startTime })
         }
 
     @Test
@@ -239,7 +255,18 @@ class ObserveLocationStopsUseCaseTest {
 
         override suspend fun getAllLocationHistory(): List<LocationHistoryItem> = state.value
 
-        override fun observeLocationHistory(): Flow<List<LocationHistoryItem>> = state
+        var fullHistoryObservations = 0
+            private set
+
+        override fun observeLocationHistory(): Flow<List<LocationHistoryItem>> {
+            fullHistoryObservations++
+            return state
+        }
+
+        override fun observeLocationHistoryBetween(
+            startTime: Instant,
+            endTime: Instant,
+        ): Flow<List<LocationHistoryItem>> = state.map { items -> items.filter { it.timestamp >= startTime && it.timestamp < endTime } }
 
         override suspend fun getRecentLocationHistory(limit: Int): List<LocationHistoryItem> = state.value.take(limit)
 

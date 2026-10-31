@@ -119,12 +119,6 @@ class FakeTextNoteDao : TextNoteDao {
         updateFlow()
     }
 
-    override suspend fun getTextNotesByContent(content: String): List<TextNoteEntity> =
-        notes.values
-            .filter {
-                it.content == content
-            }.sortedByDescending { it.created }
-
     /**
      * Clears all notes in the fake database.
      * This method is specific to the fake implementation for testing.

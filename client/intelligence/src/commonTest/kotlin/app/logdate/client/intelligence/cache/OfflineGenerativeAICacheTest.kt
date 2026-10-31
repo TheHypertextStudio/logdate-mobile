@@ -89,6 +89,33 @@ class OfflineGenerativeAICacheTest {
             assertEquals("second-content", remaining.first().content)
         }
 
+    @Test
+    fun `storing many answers lists the persistent cache once`() =
+        runTest {
+            val clock = TestClock(Instant.parse("2024-01-01T00:00:00Z"))
+            val dataSource = TestLocalDataSource()
+            val cache =
+                OfflineGenerativeAICache(
+                    dataSource = dataSource,
+                    clock = clock,
+                    config =
+                        AICacheConfig(
+                            memoryMaxEntries = 10,
+                            memoryMaxBytes = 10_000,
+                            persistentMaxEntries = 5,
+                            persistentMaxBytes = 10_000,
+                        ),
+                )
+
+            repeat(20) { index ->
+                cache.putEntry(requestFor("Entry $index", ttlSeconds = 60), "content-$index")
+                clock.advance(seconds = 1)
+            }
+
+            assertEquals(1, dataSource.listings)
+            assertEquals((15 until 20).map { "content-$it" }, dataSource.entries().map { it.content }.sorted())
+        }
+
     private fun requestFor(
         inputText: String,
         ttlSeconds: Long,
@@ -136,7 +163,13 @@ class OfflineGenerativeAICacheTest {
             store.remove(key)
         }
 
-        override fun entries(): List<GenerativeAICacheEntry> = store.values.toList()
+        var listings = 0
+            private set
+
+        override fun entries(): List<GenerativeAICacheEntry> {
+            listings++
+            return store.values.toList()
+        }
 
         override fun clear() {
             store.clear()

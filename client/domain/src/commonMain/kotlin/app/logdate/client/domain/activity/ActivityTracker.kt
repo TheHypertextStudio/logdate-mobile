@@ -1,6 +1,7 @@
 package app.logdate.client.domain.activity
 
 import app.logdate.client.datastore.KeyValueStorage
+import app.logdate.client.domain.LenientJson
 import app.logdate.client.sync.peer.state.ActivitySnapshot
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 
@@ -54,7 +54,7 @@ class KeyValueActivityLogStore(
     override suspend fun write(log: ActivityLog) = storage.putString(key, json.encodeToString(ActivityLog.serializer(), log))
 
     private companion object {
-        val json = Json { ignoreUnknownKeys = true }
+        val json = LenientJson
     }
 }
 
