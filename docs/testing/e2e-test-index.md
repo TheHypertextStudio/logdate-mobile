@@ -16,7 +16,7 @@ See [E2E Test Organization Standard](./e2e-test-organization.md) for the complet
 
 ```bash
 # Run all Android app e2e tests
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 
 # Run all server-side e2e tests
 ./gradlew :server:test --tests "app.logdate.server.e2e.*"
@@ -28,13 +28,13 @@ See [E2E Test Organization Standard](./e2e-test-organization.md) for the complet
 ./gradlew :app:android-main:smokeDevicesGroupDebugAndroidTest -Plogdate.androidTestClass=app.logdate.client.e2e.TestClassName
 
 # Run with verbose output
-./gradlew managedAndroidE2EDebugAndroidTest --info
+./run test:android:e2e --info
 
 # Run the Android share UX suite
 ./tests/e2e/test-share-functionality.sh
 
 # List available e2e tests without running
-./gradlew --dry-run managedAndroidE2EDebugAndroidTest
+./run test:android:e2e --dry-run
 ```
 
 ## Client-Side E2E Tests (Android/Compose)
@@ -71,13 +71,13 @@ Client-side tests verify complete user workflows on the Android app using Espres
 
 ```bash
 # Run all multi-window editor tests
-./gradlew managedAndroidMultiWindowDebugAndroidTest
+./run test:android:multiwindow
 
 # Run specific test
-./gradlew managedAndroidMultiWindowDebugAndroidTest
+./run test:android:multiwindow
 
 # Run with debugging enabled
-./gradlew managedAndroidMultiWindowDebugAndroidTest --info
+./run test:android:multiwindow --info
 ```
 
 **ADB Shell Testing**:
@@ -270,15 +270,15 @@ See [Server-Client E2E README](../../integration/server-client-e2e/README.md) fo
 
 ## Test Organization Summary
 
-| Test Name                             | Type                     | Location                            | Shell Script                                   |
-| ------------------------------------- | ------------------------ | ----------------------------------- | ---------------------------------------------- |
-| MultiWindowEditorE2ETest              | Client Gradle            | `app/.../e2e/`                      | ✅ `managedAndroidMultiWindowDebugAndroidTest` |
-| Share UX Suite                        | Client Instrumented      | `app/.../e2e/`                      | ✅ `managedAndroidShareDebugAndroidTest`       |
-| AuthOnboardingAndSigninJourneyE2ETest | Pure Server              | `server/.../e2e/journeys/auth/`     | ✅ `test-accounts-e2e.sh`                      |
-| AuthRestoreCredentialJourneyE2ETest   | Pure Server              | `server/.../e2e/journeys/auth/`     | ✅ `run-e2e-tests.sh auth`                     |
-| BackupAndSyncJourneyE2ETest           | Pure Server              | `server/.../e2e/journeys/sync/`     | ✅ `test-sync-e2e.sh`                          |
-| PlatformSanityE2ETest                 | Pure Server              | `server/.../e2e/smoke/`             | ❌ None                                        |
-| server-client-e2e                     | Pure Server + Client API | `integration/server-client-e2e/...` | ❌ None                                        |
+| Test Name                             | Type                     | Location                            | Shell Script                        |
+| ------------------------------------- | ------------------------ | ----------------------------------- | ----------------------------------- |
+| MultiWindowEditorE2ETest              | Client Gradle            | `app/.../e2e/`                      | ✅ `./run test:android:multiwindow` |
+| Share UX Suite                        | Client Instrumented      | `app/.../e2e/`                      | ✅ `./run test:android:share`       |
+| AuthOnboardingAndSigninJourneyE2ETest | Pure Server              | `server/.../e2e/journeys/auth/`     | ✅ `test-accounts-e2e.sh`           |
+| AuthRestoreCredentialJourneyE2ETest   | Pure Server              | `server/.../e2e/journeys/auth/`     | ✅ `run-e2e-tests.sh auth`          |
+| BackupAndSyncJourneyE2ETest           | Pure Server              | `server/.../e2e/journeys/sync/`     | ✅ `test-sync-e2e.sh`               |
+| PlatformSanityE2ETest                 | Pure Server              | `server/.../e2e/smoke/`             | ❌ None                             |
+| server-client-e2e                     | Pure Server + Client API | `integration/server-client-e2e/...` | ❌ None                             |
 
 **Legend**:
 
@@ -294,10 +294,10 @@ See [Server-Client E2E README](../../integration/server-client-e2e/README.md) fo
 
 ```bash
 # All e2e tests (client + server)
-./gradlew managedAndroidE2EDebugAndroidTest :server:test --tests "app.logdate.server.e2e.*"
+./run test:android:e2e && ./gradlew :server:test --tests "app.logdate.server.e2e.*"
 
 # Client only
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 
 # Server only
 ./gradlew :server:test --tests "app.logdate.server.e2e.*"
@@ -307,7 +307,7 @@ See [Server-Client E2E README](../../integration/server-client-e2e/README.md) fo
 
 ```bash
 # All multi-window tests
-./gradlew managedAndroidMultiWindowDebugAndroidTest
+./run test:android:multiwindow
 
 # All account tests
 ./gradlew :server:test --tests "app.logdate.server.e2e.journeys.auth.*"
@@ -320,10 +320,10 @@ See [Server-Client E2E README](../../integration/server-client-e2e/README.md) fo
 
 ```bash
 # Generate test report
-./gradlew managedAndroidE2EDebugAndroidTest --info
+./run test:android:e2e --info
 
 # Generate HTML report
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 
 # View report (after build)
 # HTML report location: build/reports/tests/
@@ -343,7 +343,7 @@ Two of its jobs cover the suites on this page:
   Postgres service container.
 
 **No Android instrumented test runs in CI.** Every Gradle Managed Device task —
-`managedAndroidE2EDebugAndroidTest` and every lane beneath it — is local-only. Breakage in the
+`./run test:android:e2e` and every lane beneath it — is local-only. Breakage in the
 `app/android-main` androidTest suite will not fail a pull request, so run those lanes by hand
 before trusting them.
 
@@ -355,7 +355,7 @@ before trusting them.
 ./gradlew :integration:server-client-e2e:test
 
 # The client e2e lane CI does not run
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 ```
 
 ---
@@ -366,7 +366,7 @@ before trusting them.
 
 ```bash
 # Run with napier debug logging
-./gradlew managedAndroidMultiWindowDebugAndroidTest --info
+./run test:android:multiwindow --info
 
 # Inspect managed-device logs under build outputs when needed
 find app/android-main/build/outputs/androidTest-results/managedDevice -type f | sort
@@ -385,7 +385,7 @@ find app/android-main/build/reports/androidTests/managedDevice -type f | sort
 ### Stop on First Failure
 
 ```bash
-./gradlew managedAndroidMultiWindowDebugAndroidTest --fail-fast
+./run test:android:multiwindow --fail-fast
 ```
 
 ---
@@ -403,7 +403,7 @@ Before running E2E tests, verify:
 
 ```bash
 # Run the managed Android e2e lane
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 ```
 
 ---
@@ -413,7 +413,7 @@ Before running E2E tests, verify:
 ### Managed Device Provisioning Fails
 
 ```bash
-./gradlew managedAndroidE2EDebugAndroidTest --info
+./run test:android:e2e --info
 sdkmanager --list | rg "system-images;android"
 ```
 
@@ -424,7 +424,7 @@ sdkmanager --list | rg "system-images;android"
 android.testInstrumentationRunnerArguments.timeout=60000
 
 # Or run with extended timeout
-./gradlew managedAndroidE2EDebugAndroidTest \
+./run test:android:e2e \
   -Pandroid.testInstrumentationRunnerArguments.timeout=120000
 ```
 

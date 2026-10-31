@@ -9,7 +9,7 @@ This document defines how end-to-end tests are organized and run in LogDate, inc
 Android e2e coverage in this repo should default to Gradle Managed Devices. Use direct `adb` targeting only for the supplemental shell workflows that verify behavior Gradle instrumentation cannot cover:
 
 ```bash
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 ```
 
 Use managed-device Gradle tasks for Android instrumented tests and reserve `adb -s emulator-...` for supplemental shell/logcat workflows only.
@@ -71,13 +71,13 @@ Use managed-device Gradle tasks for Android instrumented tests and reserve `adb 
 
 ```bash
 # Run all client e2e tests
-./gradlew managedAndroidE2EDebugAndroidTest
+./run test:android:e2e
 
 # Run specific test class
-./gradlew managedAndroidMultiWindowDebugAndroidTest
+./run test:android:multiwindow
 
 # Run with verbose output
-./gradlew managedAndroidMultiWindowDebugAndroidTest --info
+./run test:android:multiwindow --info
 ```
 
 **When to Create Shell Script**: **Only if** the test needs to verify actual device behavior via adb shell commands that gradle cannot test.
