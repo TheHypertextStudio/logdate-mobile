@@ -13,6 +13,7 @@ import app.logdate.shared.model.SerializableAudioBlock
 import app.logdate.shared.model.SerializableCameraBlock
 import app.logdate.shared.model.SerializableImageBlock
 import app.logdate.shared.model.SerializableVideoBlock
+import kotlin.uuid.Uuid
 
 /** Removes destination-ambiguous provider identities before restored content becomes visible. */
 class NativeMediaQuarantine(
@@ -31,24 +32,23 @@ class NativeMediaQuarantine(
                 quarantined(reference) { availabilityChecksComplete = false }
             }
             check(isCurrent()) { "Native media delivery changed" }
+            // File checks run before the transaction, so restored storage I/O never holds the
+            // database writer. Each update only applies if the reference is still the one checked.
+            val images = database.imageNoteDao().getAll().mapNotNull { replacement(it.uid, it.contentUri, quarantine) }
+            val audio = database.audioNoteDao().getAll().mapNotNull { replacement(it.uid, it.contentUri, quarantine) }
+            val videos = database.videoNoteDao().getAll().mapNotNull { replacement(it.uid, it.contentUri, quarantine) }
+            val covers =
+                database.journalDao().getAll().mapNotNull { journal ->
+                    journal.coverImageUri?.let { replacement(journal.id, it, quarantine) }
+                }
             transactions.withTransaction {
-                database.imageNoteDao().getAll().forEach { note ->
-                    quarantine(note.contentUri)?.let { database.imageNoteDao().updateContentUriIfUnchanged(note.uid, note.contentUri, it) }
+                images.forEach { (uid, previous, next) -> database.imageNoteDao().updateContentUriIfUnchanged(uid, previous, next) }
+                audio.forEach { (uid, previous, next) ->
+                    database.audioNoteDao().updateContentUriIfUnchanged(uid, previous, next)
+                    transcriptions.rebindMediaReference(uid, previous, next)
                 }
-                database.audioNoteDao().getAll().forEach { note ->
-                    quarantine(note.contentUri)?.let {
-                        database.audioNoteDao().updateContentUriIfUnchanged(note.uid, note.contentUri, it)
-                        transcriptions.rebindMediaReference(note.uid, note.contentUri, it)
-                    }
-                }
-                database.videoNoteDao().getAll().forEach { note ->
-                    quarantine(note.contentUri)?.let { database.videoNoteDao().updateContentUriIfUnchanged(note.uid, note.contentUri, it) }
-                }
-                database.journalDao().getAll().forEach { journal ->
-                    journal.coverImageUri?.let { previous ->
-                        quarantine(previous)?.let { database.journalDao().updateCoverImageUriIfUnchanged(journal.id, previous, it) }
-                    }
-                }
+                videos.forEach { (uid, previous, next) -> database.videoNoteDao().updateContentUriIfUnchanged(uid, previous, next) }
+                covers.forEach { (id, previous, next) -> database.journalDao().updateCoverImageUriIfUnchanged(id, previous, next) }
                 check(isCurrent()) { "Native media delivery changed" }
             }
             drafts.run(isCurrent, quarantine)
@@ -56,6 +56,18 @@ class NativeMediaQuarantine(
             check(isCurrent()) { "Native media delivery changed" }
             availabilityChecksComplete && currentDraftsComplete
         }
+
+    private suspend fun replacement(
+        id: Uuid,
+        reference: String,
+        quarantine: suspend (String) -> String?,
+    ): ReferenceReplacement? = quarantine(reference)?.let { ReferenceReplacement(id, reference, it) }
+
+    private data class ReferenceReplacement(
+        val id: Uuid,
+        val previous: String,
+        val next: String,
+    )
 
     private suspend fun quarantined(
         reference: String,

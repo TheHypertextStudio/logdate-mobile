@@ -12,6 +12,7 @@ import app.logdate.client.device.restore.NativeRestoreDeliveryGate
 import app.logdate.client.media.storage.UnavailableMediaReferences
 import app.logdate.client.repository.transcription.TranscriptionRepository
 import app.logdate.client.sync.RoomSyncTransactionManager
+import app.logdate.client.sync.SyncTransactionManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -161,6 +162,73 @@ class NativeMediaQuarantineTest {
                 Files.deleteIfExists(file)
             }
         }
+
+    @Test
+    fun `restored file checks run before the database writer is taken`() =
+        runTest {
+            val file = Files.createTempFile("native-quarantine", ".db")
+            val database = getRoomDatabase(Room.databaseBuilder<LogDateDatabase>(file.toString()))
+            try {
+                val timestamp = Instant.fromEpochMilliseconds(1)
+                val missing =
+                    ImageNoteEntity(
+                        contentUri = "file:///data/user/0/studio.hypertext.logdate/files/media/objects/missing.jpg",
+                        created = timestamp,
+                        lastUpdated = timestamp,
+                    )
+                val present = missing.copy(uid = Uuid.random(), contentUri = "logdate-media://library/present.jpg")
+                database.imageNoteDao().addNote(missing)
+                database.imageNoteDao().addNote(present)
+                val room = RoomSyncTransactionManager(database)
+                var insideTransaction = false
+                val transactions =
+                    object : SyncTransactionManager {
+                        override suspend fun <T> withTransaction(block: suspend () -> T): T =
+                            room.withTransaction {
+                                insideTransaction = true
+                                try {
+                                    block()
+                                } finally {
+                                    insideTransaction = false
+                                }
+                            }
+                    }
+                val checksInsideTransaction = mutableListOf<String>()
+                val transcripts =
+                    Proxy.newProxyInstance(
+                        TranscriptionRepository::class.java.classLoader,
+                        arrayOf(TranscriptionRepository::class.java),
+                    ) { _, _, _ -> error("No audio expected") } as TranscriptionRepository
+                val repair =
+                    NativeMediaQuarantine(
+                        database,
+                        NativeDraftMediaQuarantine(InMemoryPreferences(), Json),
+                        transactions,
+                        transcripts,
+                    ) { reference ->
+                        if (insideTransaction) checksInsideTransaction += reference
+                        reference != missing.contentUri
+                    }
+
+                assertTrue(repair.run { true })
+
+                assertEquals(emptyList(), checksInsideTransaction)
+                assertEquals(
+                    UnavailableMediaReferences.nativeRestore(missing.contentUri),
+                    database.imageNoteDao().getNoteOneOff(missing.uid).contentUri,
+                )
+                assertEquals(present, database.imageNoteDao().getNoteOneOff(present.uid))
+            } finally {
+                database.close()
+                Files.deleteIfExists(file)
+            }
+        }
+
+    private class InMemoryPreferences : DataStore<Preferences> {
+        override val data = MutableStateFlow(emptyPreferences())
+
+        override suspend fun updateData(transform: suspend (Preferences) -> Preferences) = transform(data.value).also { data.value = it }
+    }
 
     @Test
     fun `restored provider IDs are quarantined while private originals and timestamps survive`() =
