@@ -4,9 +4,11 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -15,6 +17,7 @@ import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import javax.inject.Inject
 
+@CacheableTask
 abstract class CheckHomeWorkspaceContract
     @Inject
     constructor(
@@ -34,11 +37,15 @@ abstract class CheckHomeWorkspaceContract
         @get:PathSensitive(PathSensitivity.RELATIVE)
         abstract val allowlist: RegularFileProperty
 
+        /** Written once every root passes, so a build whose inputs are unchanged skips the check. */
+        @get:OutputFile abstract val result: RegularFileProperty
+
         @TaskAction fun check() {
             workers.classLoaderIsolation { classpath.from(parserClasspath) }.submit(HomeWorkspaceContractWork::class.java) {
                 sources.from(this@CheckHomeWorkspaceContract.sources)
                 scopeManifest.set(this@CheckHomeWorkspaceContract.scopeManifest)
                 allowlist.set(this@CheckHomeWorkspaceContract.allowlist)
+                result.set(this@CheckHomeWorkspaceContract.result)
             }
         }
     }
@@ -47,6 +54,7 @@ interface HomeWorkspaceContractParameters : WorkParameters {
     val sources: ConfigurableFileCollection
     val scopeManifest: RegularFileProperty
     val allowlist: RegularFileProperty
+    val result: RegularFileProperty
 }
 
 abstract class HomeWorkspaceContractWork : WorkAction<HomeWorkspaceContractParameters> {
@@ -92,5 +100,9 @@ abstract class HomeWorkspaceContractWork : WorkAction<HomeWorkspaceContractParam
                 }
             }
         if (failures.isNotEmpty()) throw GradleException("Home workspace contract failed:\n${failures.joinToString("\n")}")
+        parameters.result
+            .get()
+            .asFile
+            .writeText("${sources.files.size} Home roots follow the workspace contract.\n")
     }
 }

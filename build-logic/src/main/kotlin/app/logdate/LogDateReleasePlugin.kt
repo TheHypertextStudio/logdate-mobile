@@ -87,6 +87,7 @@ abstract class VerifyReleaseSigning : DefaultTask() {
 private fun configureAdvertisingIdVerification(project: Project) {
     val bundle = project.layout.buildDirectory.file("outputs/bundle/release/${project.name}-release.aab")
     val manifests = project.layout.buildDirectory.dir("intermediates/merged_manifest/release")
+    val verified = project.layout.buildDirectory.file("verifications/advertising-id-release.txt")
     val script =
         project.rootProject.layout.projectDirectory
             .file("scripts/verify-android-advertising-id.py")
@@ -98,6 +99,7 @@ private fun configureAdvertisingIdVerification(project: Project) {
             inputs.file(bundle)
             inputs.dir(manifests)
             inputs.file(script)
+            outputs.file(verified)
             commandLine(
                 "python3",
                 script.asFile.absolutePath,
@@ -107,6 +109,7 @@ private fun configureAdvertisingIdVerification(project: Project) {
                 manifests.get().asFile.absolutePath,
             )
             if (project.name == "android-main") args("--require-firebase")
+            doLast { verified.get().asFile.writeText("Advertising ID is disabled in this release bundle.\n") }
         }
     project.tasks.matching { it.name == "publishReleaseBundle" }.configureEach {
         dependsOn(verification)
