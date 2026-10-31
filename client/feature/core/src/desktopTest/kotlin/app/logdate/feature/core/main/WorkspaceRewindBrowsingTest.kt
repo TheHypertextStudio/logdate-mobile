@@ -12,7 +12,6 @@ import app.logdate.feature.rewind.ui.overview.RewindOverviewScreenUiState
 import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
 import app.logdate.ui.platform.LocalReduceMotionOverride
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -42,7 +41,7 @@ class WorkspaceRewindBrowsingTest {
                 )
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalReduceMotionOverride provides true) {
+                    CompositionLocalProvider(LocalReduceMotionOverride provides true) {
                         RewindScreenContent(state, { opened = it })
                     }
                 }

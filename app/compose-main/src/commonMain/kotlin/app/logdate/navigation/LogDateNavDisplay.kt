@@ -113,7 +113,6 @@ import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.provenance.LocalActivityContextVisible
 import app.logdate.ui.provenance.LocalWatchProvenanceVisible
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
@@ -139,8 +138,6 @@ fun LogDateNavDisplay(
 ) {
     val creationLauncher = remember { EntryCreationLauncher() }
     val workspaceFlags: FeatureFlagStore = koinInject()
-    val workspaceEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.HOME_WORKSPACE_V2) }
-        .collectAsState(initial = FeatureFlag.HOME_WORKSPACE_V2.defaultEnabled)
     val watchExperienceEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }
         .collectAsState(initial = FeatureFlag.WATCH_EXPERIENCE_V2.defaultEnabled)
     val activityAwarenessEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.ACTIVITY_AWARENESS) }
@@ -225,7 +222,6 @@ fun LogDateNavDisplay(
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this,
                 LocalEntryCreationLauncher provides creationLauncher,
-                LocalWorkspaceEnabled provides workspaceEnabled,
                 LocalWatchProvenanceVisible provides watchExperienceEnabled,
                 LocalActivityContextVisible provides activityAwarenessEnabled,
                 app.logdate.ui.workspace.LocalWorkspaceSearchAction provides { backStack.add(SearchRoute()) },
