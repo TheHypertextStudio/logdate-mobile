@@ -40,7 +40,4 @@ interface PlaceDao {
         id: Uuid,
         deletedAt: Long,
     )
-
-    @Query("DELETE FROM places WHERE id = :id")
-    suspend fun hardDelete(id: Uuid)
 }

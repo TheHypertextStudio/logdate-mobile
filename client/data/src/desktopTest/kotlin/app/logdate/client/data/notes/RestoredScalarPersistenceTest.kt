@@ -1,6 +1,8 @@
 package app.logdate.client.data.notes
 
 import androidx.room.Room
+import androidx.room.execSQL
+import androidx.room.useWriterConnection
 import app.logdate.client.data.fakes.FakeJournalRepository
 import app.logdate.client.data.fakes.FakeSyncMetadataService
 import app.logdate.client.database.LogDateDatabase
@@ -183,7 +185,7 @@ class RestoredScalarPersistenceTest {
                     ?.place
                     ?.name,
             )
-            database.placeDao().hardDelete(placeId)
+            database.useWriterConnection { it.execSQL("DELETE FROM places WHERE id = '$placeId'") }
             assertEquals(note.location, repository.getNoteById(note.uid)?.location)
             assertEquals(originalMetadata, database.audioNoteDao().findNoteOneOff(note.uid)!!.locationMetadata)
         }
@@ -203,7 +205,7 @@ class RestoredScalarPersistenceTest {
             repository.create(note)
             assertEquals(placeId, database.textNoteDao().findNoteOneOff(note.uid)!!.placeId)
             val originalMetadata = database.textNoteDao().findNoteOneOff(note.uid)!!.locationMetadata
-            database.placeDao().hardDelete(placeId)
+            database.useWriterConnection { it.execSQL("DELETE FROM places WHERE id = '$placeId'") }
             reopen()
             assertEquals(note, repository.getNoteById(note.uid))
             assertEquals(originalMetadata, database.textNoteDao().findNoteOneOff(note.uid)!!.locationMetadata)
