@@ -1,6 +1,11 @@
 package app.logdate.client.domain.export
 
 import app.logdate.client.device.AppInfo
+import app.logdate.client.domain.export.archive.ArchiveExportOptions
+import app.logdate.client.domain.export.archive.ArchiveExportProgress
+import app.logdate.client.domain.export.archive.ExportArchiveUseCase
+import app.logdate.client.domain.export.archive.MediaSourceOpener
+import app.logdate.client.domain.export.archive.support.InMemoryArchiveContainer
 import app.logdate.client.domain.export.support.RoundTripJournalContentRepository
 import app.logdate.client.domain.export.support.RoundTripJournalNotesRepository
 import app.logdate.client.domain.export.support.RoundTripJournalRepository
@@ -8,10 +13,10 @@ import app.logdate.client.domain.export.support.RoundTripLocationHistoryReposito
 import app.logdate.client.domain.export.support.RoundTripProfileRepository
 import app.logdate.client.domain.export.support.RoundTripUserPlacesRepository
 import app.logdate.client.domain.export.support.StubAppInfoProvider
-import app.logdate.client.domain.export.support.StubDeviceIdProvider
 import app.logdate.client.domain.export.support.StubUserStateRepository
 import app.logdate.client.domain.restore.MediaImporter
-import app.logdate.client.domain.restore.RestoreBundle
+import app.logdate.client.domain.restore.RestoreArchiveBundle
+import app.logdate.client.domain.restore.RestoreArchiveReader
 import app.logdate.client.domain.restore.RestoreOptions
 import app.logdate.client.domain.restore.RestoreStrategy
 import app.logdate.client.domain.restore.RestoreTestDeviceIdProvider
@@ -38,10 +43,14 @@ import app.logdate.shared.model.SerializableImageBlock
 import app.logdate.shared.model.SerializableTextBlock
 import app.logdate.shared.model.SerializableVideoBlock
 import app.logdate.shared.model.profile.LogDateProfile
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import okio.Buffer
+import okio.Source
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -52,9 +61,9 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
- * End-to-end round-trip test: export data → JSON → import into fresh repositories → verify.
+ * End-to-end round-trip test: export an archive → read it back → import into fresh repositories → verify.
  *
- * Uses realistic payloads covering every note type, locations, captions, media references,
+ * Uses realistic payloads covering every note type, locations, captions, media files,
  * drafts, and journal-note relations to prove the pipeline is lossless.
  */
 class ExportImportRoundTripTest {
@@ -73,8 +82,9 @@ class ExportImportRoundTripTest {
     private lateinit var destPlacesRepo: RoundTripUserPlacesRepository
     private lateinit var destLocationHistoryRepo: RoundTripLocationHistoryRepository
 
-    private lateinit var exportUseCase: ExportUserDataUseCase
+    private lateinit var exportUseCase: ExportArchiveUseCase
     private lateinit var importUseCase: RestoreUserDataUseCase
+    private var archive = InMemoryArchiveContainer()
 
     private val now = Clock.System.now()
 
@@ -89,6 +99,27 @@ class ExportImportRoundTripTest {
     private val noteTextWithLocation = Uuid.random()
 
     private val draftId = Uuid.random()
+
+    private val sunsetJpeg = jpeg("sunset")
+    private val wavesMp4 = mp4("waves")
+    private val voiceMemoM4a = m4a("voice memo")
+    private val sourceMedia =
+        mapOf(
+            "file:///storage/photos/sunset.jpg" to sunsetJpeg,
+            "file:///storage/videos/waves.mp4" to wavesMp4,
+            "file:///storage/audio/voice_memo.m4a" to voiceMemoM4a,
+            "file:///storage/photos/draft_photo.jpg" to jpeg("draft photo"),
+            "file:///storage/photos/draft_image.jpg" to jpeg("draft image"),
+            "file:///storage/videos/draft_video.mp4" to mp4("draft video"),
+            "file:///storage/videos/draft_video_thumb.jpg" to jpeg("draft video thumbnail"),
+            "file:///storage/audio/draft_audio.m4a" to m4a("draft audio"),
+        )
+
+    /** Restores each archived file to a path named after it, as the app's importer copies it into storage. */
+    private val restoredMedia =
+        object : MediaImporter {
+            override suspend fun importMedia(exportPath: String): String? = if (archive.has(exportPath)) "$RESTORED$exportPath" else null
+        }
 
     @BeforeTest
     fun setUp() {
@@ -105,7 +136,6 @@ class ExportImportRoundTripTest {
         destPlacesRepo = RoundTripUserPlacesRepository()
         destLocationHistoryRepo = RoundTripLocationHistoryRepository()
 
-        val deviceIdProvider = StubDeviceIdProvider(Uuid.random())
         val appInfoProvider =
             StubAppInfoProvider(
                 AppInfo(
@@ -116,15 +146,16 @@ class ExportImportRoundTripTest {
             )
 
         exportUseCase =
-            ExportUserDataUseCase(
+            ExportArchiveUseCase(
                 journalRepository = sourceJournalRepo,
                 journalNotesRepository = sourceNotesRepo,
                 profileRepository = sourceProfileRepo,
                 userPlacesRepository = sourcePlacesRepo,
                 locationHistoryRepository = sourceLocationHistoryRepo,
                 userStateRepository = StubUserStateRepository(),
-                deviceIdProvider = deviceIdProvider,
                 appInfoProvider = appInfoProvider,
+                mediaSourceOpener = MediaSourceOpener { reference -> sourceMedia[reference]?.let { Buffer().write(it) as Source } },
+                ioDispatcher = Dispatchers.Unconfined,
             )
 
         importUseCase =
@@ -179,7 +210,7 @@ class ExportImportRoundTripTest {
 
             val image = destNotesRepo.getNoteById(noteImage)
             assertTrue(image is JournalNote.Image, "Should be image note")
-            assertEquals("file:///storage/photos/sunset.jpg", image.mediaRef)
+            assertContentEquals(sunsetJpeg, archivedBytes(image.mediaRef))
             assertEquals("Golden hour at Ocean Beach", image.caption)
         }
 
@@ -191,7 +222,7 @@ class ExportImportRoundTripTest {
 
             val video = destNotesRepo.getNoteById(noteVideo)
             assertTrue(video is JournalNote.Video, "Should be video note")
-            assertEquals("file:///storage/videos/waves.mp4", video.mediaRef)
+            assertContentEquals(wavesMp4, archivedBytes(video.mediaRef))
             assertEquals("Waves crashing on the shore", video.caption)
         }
 
@@ -203,7 +234,7 @@ class ExportImportRoundTripTest {
 
             val audio = destNotesRepo.getNoteById(noteAudio)
             assertTrue(audio is JournalNote.Audio, "Should be audio note")
-            assertEquals("file:///storage/audio/voice_memo.m4a", audio.mediaRef)
+            assertContentEquals(voiceMemoM4a, archivedBytes(audio.mediaRef))
             assertEquals("A walk by the water", audio.caption)
             assertEquals(TranscriptDocument.fromPlainText("Spoken walk by the water").copy(revision = 12), audio.transcript)
             assertEquals(CaptureDevice.WATCH, audio.capturedOn)
@@ -261,18 +292,18 @@ class ExportImportRoundTripTest {
         }
 
     @Test
-    fun `full round-trip preserves note sync versions`() =
+    fun `full round-trip restores notes as not yet synced on this device`() =
         runTest {
             seedSourceData()
             exportThenImport()
 
             val text = destNotesRepo.getNoteById(noteText)
             assertTrue(text is JournalNote.Text)
-            assertEquals(7, text.syncVersion)
+            assertEquals(0, text.syncVersion, "an archive does not carry the source device's sync versions")
 
             val image = destNotesRepo.getNoteById(noteImage)
             assertTrue(image is JournalNote.Image)
-            assertEquals(11, image.syncVersion)
+            assertEquals(0, image.syncVersion)
         }
 
     @Test
@@ -303,7 +334,12 @@ class ExportImportRoundTripTest {
             assertEquals(1, destPlacesRepo.places.size)
             assertEquals("Home Base", (destPlacesRepo.places.first() as Place.UserDefined).displayName)
             assertEquals(1, destLocationHistoryRepo.entries.size)
-            assertEquals("sample-1", destLocationHistoryRepo.entries.first().sampleId)
+            val sample = destLocationHistoryRepo.entries.single()
+            val source = sourceLocationHistoryRepo.entries.single()
+            assertEquals(source.timestamp, sample.timestamp)
+            assertEquals(source.location.latitude, sample.location.latitude)
+            assertEquals(source.location.longitude, sample.location.longitude)
+            assertEquals(source.accuracyMeters, sample.accuracyMeters)
         }
 
     @Test
@@ -311,23 +347,22 @@ class ExportImportRoundTripTest {
         runTest {
             seedSourceData()
 
+            val bundle = export()
             val mediaImporter =
                 object : MediaImporter {
                     override suspend fun importMedia(exportPath: String): String? =
-                        if (exportPath == "media/$noteImage.jpg") {
+                        if (archive.has(exportPath) && archive.bytes(exportPath).contentEquals(sunsetJpeg)) {
                             "content://media/imported/sunset_new.jpg"
                         } else {
                             null
                         }
                 }
 
-            val exported = export()
-            val bundle = exportResultToBundle(exported)
             val result = importUseCase.restore(bundle, mediaImporter = mediaImporter)
 
             val image = destNotesRepo.getNoteById(noteImage)
             assertTrue(image is JournalNote.Image)
-            // Media importer matched the stable ID-based export path.
+            // The importer received the archive path that holds the photo's bytes.
             assertEquals("content://media/imported/sunset_new.jpg", image.mediaRef)
             assertTrue(result.mediaImported > 0)
         }
@@ -336,8 +371,7 @@ class ExportImportRoundTripTest {
     fun `round-trip with REPLACE_EXISTING overwrites pre-existing data`() =
         runTest {
             seedSourceData()
-            val exported = export()
-            val bundle = exportResultToBundle(exported)
+            val bundle = export()
 
             // Pre-populate destination with stale data
             destJournalRepo.create(
@@ -353,6 +387,7 @@ class ExportImportRoundTripTest {
                 importUseCase.restore(
                     bundle,
                     options = RestoreOptions(strategy = RestoreStrategy.REPLACE_EXISTING),
+                    mediaImporter = restoredMedia,
                 )
 
             assertEquals(2, result.journalsImported)
@@ -364,8 +399,7 @@ class ExportImportRoundTripTest {
     fun `round-trip with MERGE_KEEP_NEWEST keeps newer local data`() =
         runTest {
             seedSourceData()
-            val exported = export()
-            val bundle = exportResultToBundle(exported)
+            val bundle = export()
 
             // Pre-populate destination with NEWER data
             destJournalRepo.create(
@@ -381,6 +415,7 @@ class ExportImportRoundTripTest {
                 importUseCase.restore(
                     bundle,
                     options = RestoreOptions(strategy = RestoreStrategy.MERGE_KEEP_NEWEST),
+                    mediaImporter = restoredMedia,
                 )
 
             val local = destJournalRepo.getJournalById(journalDaily)
@@ -672,31 +707,30 @@ class ExportImportRoundTripTest {
         sourceJournalRepo.testDrafts = listOf(draft)
     }
 
-    private suspend fun export(): ExportResult {
-        val emissions = exportUseCase.exportUserData().toList()
-        val last = emissions.last()
-        assertTrue(last is ExportProgress.Completed, "Export should complete, got: $last")
-        return last.result
+    private suspend fun export(): RestoreArchiveBundle {
+        archive = InMemoryArchiveContainer()
+        val last = exportUseCase.export(ArchiveExportOptions(), archive).toList().last()
+        assertTrue(last is ArchiveExportProgress.Completed, "Export should complete, got: $last")
+        return RestoreArchiveReader.read(archive.paths) { path -> if (archive.has(path)) archive.text(path) else null }
     }
 
-    private fun exportResultToBundle(result: ExportResult): RestoreBundle =
-        RestoreBundle(
-            metadataJson = result.serializeMetadata(),
-            journalsJson = result.serializeJournals(),
-            notesJson = result.serializeNotes(),
-            journalNotesJson = result.serializeJournalNotes(),
-            draftsJson = result.serializeDrafts(),
-            profileJson = result.serializeProfile(),
-            placesJson = result.serializePlaces(),
-            locationHistoryJson = result.serializeLocationHistory(),
-            mediaManifestJson = result.serializeMediaManifest(),
-        )
+    private suspend fun exportThenImport(): app.logdate.client.domain.restore.RestoreResult =
+        importUseCase.restore(export(), mediaImporter = restoredMedia)
 
-    private suspend fun exportThenImport(): app.logdate.client.domain.restore.RestoreResult {
-        val exported = export()
-        val bundle = exportResultToBundle(exported)
-        return importUseCase.restore(bundle)
+    private fun archivedBytes(restoredReference: String): ByteArray {
+        assertTrue(restoredReference.startsWith(RESTORED), "Media was not restored from the archive: $restoredReference")
+        return archive.bytes(restoredReference.removePrefix(RESTORED))
     }
+
+    private fun jpeg(label: String) = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte()) + label.encodeToByteArray()
+
+    private fun mp4(label: String) = byteArrayOf(0, 0, 0, 0x18) + "ftypisom".encodeToByteArray() + ByteArray(12) + label.encodeToByteArray()
+
+    private fun m4a(label: String) = byteArrayOf(0, 0, 0, 0x18) + "ftypM4A ".encodeToByteArray() + ByteArray(12) + label.encodeToByteArray()
 
     // endregion
+
+    private companion object {
+        const val RESTORED = "file:///restored/"
+    }
 }

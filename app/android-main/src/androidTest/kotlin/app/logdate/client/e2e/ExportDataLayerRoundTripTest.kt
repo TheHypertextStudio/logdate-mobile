@@ -46,7 +46,7 @@ import kotlin.uuid.Uuid
 
 /**
  * Instrumented tests verifying that the Room data layer preserves every field
- * [ExportUserDataUseCase] reads when it serializes data for export.
+ * [ExportArchiveUseCase][app.logdate.client.domain.export.archive.ExportArchiveUseCase] reads when it writes an archive.
  *
  * These tests sit below the export/restore use cases: they write directly through
  * the real [OfflineFirstJournalRepository] and [OfflineFirstJournalNotesRepository]

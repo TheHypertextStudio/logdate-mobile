@@ -26,17 +26,14 @@ import app.logdate.client.device.AppInfo
 import app.logdate.client.device.AppInfoProvider
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.client.device.identity.DeviceIdProvider
-import app.logdate.client.domain.export.ExportFileStructure
-import app.logdate.client.domain.export.ExportProgress
 import app.logdate.client.domain.export.ExportSchemaVersion
-import app.logdate.client.domain.export.ExportUserDataUseCase
 import app.logdate.client.domain.export.archive.ArchiveExportOptions
 import app.logdate.client.domain.export.archive.ArchiveExportProgress
 import app.logdate.client.domain.export.archive.ExportArchiveUseCase
 import app.logdate.client.domain.export.archive.MediaSourceOpener
+import app.logdate.client.domain.restore.MediaImporter
 import app.logdate.client.domain.restore.RestoreArchiveBundle
 import app.logdate.client.domain.restore.RestoreArchiveReader
-import app.logdate.client.domain.restore.RestoreBundle
 import app.logdate.client.domain.restore.RestoreOptions
 import app.logdate.client.domain.restore.RestoreUserDataUseCase
 import app.logdate.client.media.AndroidMediaManager
@@ -70,6 +67,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.test.runTest
+import okio.Buffer
 import okio.Source
 import org.junit.After
 import org.junit.Before
@@ -120,7 +118,9 @@ class ArchiveRoundTripTest {
     private lateinit var sourceJournalRepo: OfflineFirstJournalRepository
     private lateinit var sourceNotesRepo: OfflineFirstJournalNotesRepository
     private lateinit var sourceContentRepo: OfflineFirstJournalContentRepository
-    private lateinit var exportUseCase: ExportUserDataUseCase
+    private lateinit var exportUseCase: ExportArchiveUseCase
+    private val sourceMedia = mutableMapOf<String, ByteArray>()
+    private val restoredMedia = mutableMapOf<String, ByteArray>()
 
     private lateinit var destJournalRepo: OfflineFirstJournalRepository
     private lateinit var destNotesRepo: OfflineFirstJournalNotesRepository
@@ -180,15 +180,15 @@ class ArchiveRoundTripTest {
             )
 
         exportUseCase =
-            ExportUserDataUseCase(
+            ExportArchiveUseCase(
                 journalRepository = sourceJournalRepo,
                 journalNotesRepository = sourceNotesRepo,
                 profileRepository = StoredProfileRepository(),
                 userPlacesRepository = InMemoryUserPlacesRepository(),
                 locationHistoryRepository = InMemoryLocationHistoryRepository(),
                 userStateRepository = InMemoryUserStateRepository(),
-                deviceIdProvider = FixedDeviceIdProvider(),
                 appInfoProvider = FixedAppInfoProvider(),
+                mediaSourceOpener = MediaSourceOpener { reference -> sourceMedia[reference]?.let { Buffer().write(it) as Source } },
             )
 
         val destSyncMeta = InMemorySyncMetadataService()
@@ -255,71 +255,37 @@ class ArchiveRoundTripTest {
     /**
      * Exports from the source database to a real ZIP archive on disk, then reads
      * that archive back and restores into the destination database — the exact path
-     * [ExportWorker] and [RestoreWorker] take in production.
+     * [ExportWorker] and [RestoreWorker] take in production. Restored media is recorded
+     * under the reference the restore assigned it.
      */
     private suspend fun archiveRoundTrip(options: RestoreOptions = RestoreOptions()) {
-        // includeMedia=false: test media refs are bare content URIs without file
-        // extensions; ExportUserDataUseCase throws on extensionless URIs when building
-        // the media manifest. The round-trip test proves JSON serialization fidelity,
-        // not media file copying.
-        val progress = exportUseCase.exportUserData(includeMedia = false).last()
-        check(progress is ExportProgress.Completed) { "Export did not complete: $progress" }
-        val export = progress.result
-
         val archiveFile = File.createTempFile("roundtrip_test", ".zip", context.cacheDir)
         try {
-            // Write — same logic as AndroidExportArchiveWriter.writeExportToZip
-            ZipOutputStream(FileOutputStream(archiveFile)).use { zip ->
-                fun entry(
-                    name: String,
-                    content: String,
-                ) {
-                    zip.putNextEntry(ZipEntry(name))
-                    zip.write(content.toByteArray(Charsets.UTF_8))
-                    zip.closeEntry()
-                }
-                entry(ExportFileStructure.METADATA_FILE, export.serializeMetadata())
-                entry(ExportFileStructure.JOURNALS_FILE, export.serializeJournals())
-                entry(ExportFileStructure.NOTES_FILE, export.serializeNotes())
-                entry(ExportFileStructure.JOURNAL_NOTES_FILE, export.serializeJournalNotes())
-                entry(ExportFileStructure.DRAFTS_FILE, export.serializeDrafts())
-                export.serializeProfile()?.let { entry(ExportFileStructure.PROFILE_FILE, it) }
-                export.serializePlaces()?.let { entry(ExportFileStructure.PLACES_FILE, it) }
-                export.serializeLocationHistory()?.let { entry(ExportFileStructure.LOCATION_HISTORY_FILE, it) }
-                export.serializeMediaManifest()?.let { entry(ExportFileStructure.MEDIA_MANIFEST_FILE, it) }
+            ZipOutputStream(FileOutputStream(archiveFile)).use { zip -> writeArchive(zip) }
+            ZipFile(archiveFile).use { zip ->
+                val bundle =
+                    RestoreArchiveReader.read(zip.entries().toList().map { it.name }) { name ->
+                        zip.getEntry(name)?.let { zip.getInputStream(it).bufferedReader().use { reader -> reader.readText() } }
+                    }
+                val importer =
+                    object : MediaImporter {
+                        override suspend fun importMedia(exportPath: String): String? {
+                            val entry = zip.getEntry(exportPath) ?: return null
+                            val reference = "file:///restored/$exportPath"
+                            restoredMedia[reference] = zip.getInputStream(entry).use { it.readBytes() }
+                            return reference
+                        }
+                    }
+                restoreUseCase.restore(bundle, options, mediaImporter = importer)
             }
-
-            // Read — same logic as RestoreWorker.readRequiredEntry / readOptionalEntry
-            val bundle =
-                ZipFile(archiveFile).use { zip ->
-                    fun required(name: String): String {
-                        val e =
-                            zip.getEntry(name)
-                                ?: error("Required archive entry missing: $name")
-                        return zip.getInputStream(e).bufferedReader(Charsets.UTF_8).readText()
-                    }
-
-                    fun optional(name: String): String? {
-                        val e = zip.getEntry(name) ?: return null
-                        return zip.getInputStream(e).bufferedReader(Charsets.UTF_8).readText()
-                    }
-                    RestoreBundle(
-                        metadataJson = required(ExportFileStructure.METADATA_FILE),
-                        journalsJson = required(ExportFileStructure.JOURNALS_FILE),
-                        notesJson = required(ExportFileStructure.NOTES_FILE),
-                        journalNotesJson = required(ExportFileStructure.JOURNAL_NOTES_FILE),
-                        draftsJson = required(ExportFileStructure.DRAFTS_FILE),
-                        profileJson = optional(ExportFileStructure.PROFILE_FILE),
-                        placesJson = optional(ExportFileStructure.PLACES_FILE),
-                        locationHistoryJson = optional(ExportFileStructure.LOCATION_HISTORY_FILE),
-                        mediaManifestJson = optional(ExportFileStructure.MEDIA_MANIFEST_FILE),
-                    )
-                }
-
-            restoreUseCase.restore(bundle, options)
         } finally {
             archiveFile.delete()
         }
+    }
+
+    private suspend fun writeArchive(zip: ZipOutputStream) {
+        val progress = exportUseCase.export(ArchiveExportOptions(), ZipStreamArchiveContainer(zip)).last()
+        check(progress is ArchiveExportProgress.Completed) { "Export did not complete: $progress" }
     }
 
     private fun writeStoredPadding(
@@ -540,6 +506,12 @@ class ArchiveRoundTripTest {
             sourceNotesRepo.create(audioNote, journal2.id)
             sourceNotesRepo.create(videoNote, journal2.id)
             sourceNotesRepo.create(geoNote, journal1.id)
+            val imageBytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte()) + "jpeg".encodeToByteArray()
+            val audioBytes = byteArrayOf(0, 0, 0, 0x18) + "ftypM4A ".encodeToByteArray() + ByteArray(12)
+            val videoBytes = byteArrayOf(0, 0, 0, 0x18) + "ftypisom".encodeToByteArray() + ByteArray(12)
+            sourceMedia[imageNote.mediaRef] = imageBytes
+            sourceMedia[audioNote.mediaRef] = audioBytes
+            sourceMedia[videoNote.mediaRef] = videoBytes
 
             archiveRoundTrip()
 
@@ -554,17 +526,17 @@ class ArchiveRoundTripTest {
 
             val ri = destNotesRepo.getNoteById(imageNote.uid) as? JournalNote.Image
             assertNotNull(ri, "image note missing")
-            assertEquals(imageNote.mediaRef, ri.mediaRef)
+            assertContentEquals(imageBytes, restoredMedia[ri.mediaRef])
             assertEquals(imageNote.caption, ri.caption)
 
             val ra = destNotesRepo.getNoteById(audioNote.uid) as? JournalNote.Audio
             assertNotNull(ra, "audio note missing")
-            assertEquals(audioNote.mediaRef, ra.mediaRef)
+            assertContentEquals(audioBytes, restoredMedia[ra.mediaRef])
             assertEquals(audioNote.durationMs, ra.durationMs)
 
             val rv = destNotesRepo.getNoteById(videoNote.uid) as? JournalNote.Video
             assertNotNull(rv, "video note missing")
-            assertEquals(videoNote.mediaRef, rv.mediaRef)
+            assertContentEquals(videoBytes, restoredMedia[rv.mediaRef])
             assertEquals(videoNote.caption, rv.caption)
 
             val rg = destNotesRepo.getNoteById(geoNote.uid) as? JournalNote.Text
@@ -602,8 +574,6 @@ class ArchiveRoundTripTest {
                 )
             sourceNotesRepo.create(imageNote, journal.id)
 
-            val exportProgress = exportUseCase.exportUserData(includeMedia = false).last()
-            val export = assertIs<ExportProgress.Completed>(exportProgress).result
             val pngBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
             val imageBytes =
                 ByteArrayOutputStream().use { output ->
@@ -621,27 +591,9 @@ class ArchiveRoundTripTest {
             val mediaManager = AndroidMediaManager(context.contentResolver, context, Dispatchers.IO)
             val restoreLauncher = mockk<RestoreLauncher>(relaxed = true)
             try {
+                sourceMedia[originalUri] = imageBytes
                 ZipOutputStream(FileOutputStream(archiveFile)).use { zip ->
-                    fun entry(
-                        name: String,
-                        content: ByteArray,
-                    ) {
-                        zip.putNextEntry(ZipEntry(name))
-                        zip.write(content)
-                        zip.closeEntry()
-                    }
-
-                    entry(ExportFileStructure.METADATA_FILE, export.serializeMetadata().encodeToByteArray())
-                    entry(ExportFileStructure.JOURNALS_FILE, export.serializeJournals().encodeToByteArray())
-                    entry(ExportFileStructure.NOTES_FILE, export.serializeNotes().encodeToByteArray())
-                    entry(ExportFileStructure.JOURNAL_NOTES_FILE, export.serializeJournalNotes().encodeToByteArray())
-                    entry(ExportFileStructure.DRAFTS_FILE, export.serializeDrafts().encodeToByteArray())
-                    entry(
-                        ExportFileStructure.MEDIA_MANIFEST_FILE,
-                        """{"files":[{"exportPath":"media/offline/photo.png","sourceUri":"$originalUri"}]}"""
-                            .encodeToByteArray(),
-                    )
-                    entry("media/offline/photo.png", imageBytes)
+                    writeArchive(zip)
                     writeStoredPadding(zip, paddingSize)
                 }
                 assertTrue(archiveFile.length() >= paddingSize, "fixture must be at least 1 GiB on disk")

@@ -15,10 +15,12 @@ import app.logdate.client.device.AppInfo
 import app.logdate.client.device.AppInfoProvider
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.client.device.identity.DeviceIdProvider
-import app.logdate.client.domain.export.ExportProgress
-import app.logdate.client.domain.export.ExportResult
-import app.logdate.client.domain.export.ExportUserDataUseCase
-import app.logdate.client.domain.restore.RestoreBundle
+import app.logdate.client.domain.export.archive.ArchiveExportOptions
+import app.logdate.client.domain.export.archive.ArchiveExportProgress
+import app.logdate.client.domain.export.archive.ExportArchiveUseCase
+import app.logdate.client.domain.export.archive.MediaSourceOpener
+import app.logdate.client.domain.restore.MediaImporter
+import app.logdate.client.domain.restore.RestoreArchiveReader
 import app.logdate.client.domain.restore.RestoreOptions
 import app.logdate.client.domain.restore.RestoreUserDataUseCase
 import app.logdate.client.repository.journals.DraftRepository
@@ -32,6 +34,7 @@ import app.logdate.client.sync.metadata.PendingOperation
 import app.logdate.client.sync.metadata.PendingUpload
 import app.logdate.client.sync.metadata.QueuedUpload
 import app.logdate.client.sync.metadata.SyncMetadataService
+import app.logdate.feature.core.export.ZipStreamArchiveContainer
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.Journal
 import app.logdate.shared.model.SerializableTextBlock
@@ -45,10 +48,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.test.runTest
+import okio.Buffer
+import okio.Source
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import java.io.FileOutputStream
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -62,8 +72,8 @@ import kotlin.uuid.Uuid
  *
  * Unlike the archive-level tests, this suite focuses on the high-level data
  * transformation logic, using in-memory databases to ensure that journals,
- * notes, locations, and drafts are correctly serialized and re-materialized
- * across the entire repository stack.
+ * notes, locations, drafts and media are correctly written to an archive and
+ * re-materialized across the entire repository stack.
  */
 @RunWith(AndroidJUnit4::class)
 class ExportImportE2ETest {
@@ -73,7 +83,10 @@ class ExportImportE2ETest {
     private lateinit var sourceJournalRepo: OfflineFirstJournalRepository
     private lateinit var sourceNotesRepo: OfflineFirstJournalNotesRepository
     private lateinit var sourceContentRepo: OfflineFirstJournalContentRepository
-    private lateinit var exportUseCase: ExportUserDataUseCase
+    private lateinit var exportUseCase: ExportArchiveUseCase
+    private lateinit var context: Context
+    private val sourceMedia = mutableMapOf<String, ByteArray>()
+    private val restoredMedia = mutableMapOf<String, ByteArray>()
 
     private lateinit var destJournalRepo: OfflineFirstJournalRepository
     private lateinit var destNotesRepo: OfflineFirstJournalNotesRepository
@@ -82,7 +95,7 @@ class ExportImportE2ETest {
 
     @Before
     fun setup() {
-        val context: Context = ApplicationProvider.getApplicationContext()
+        context = ApplicationProvider.getApplicationContext()
         val dispatcher = Dispatchers.Unconfined
 
         sourceDb =
@@ -136,15 +149,15 @@ class ExportImportE2ETest {
             )
 
         exportUseCase =
-            ExportUserDataUseCase(
+            ExportArchiveUseCase(
                 journalRepository = sourceJournalRepo,
                 journalNotesRepository = sourceNotesRepo,
                 profileRepository = StoredProfileRepository(),
                 userPlacesRepository = InMemoryUserPlacesRepository(),
                 locationHistoryRepository = InMemoryLocationHistoryRepository(),
                 userStateRepository = InMemoryUserStateRepository(),
-                deviceIdProvider = FixedDeviceIdProvider(),
                 appInfoProvider = FixedAppInfoProvider(),
+                mediaSourceOpener = MediaSourceOpener { reference -> sourceMedia[reference]?.let { Buffer().write(it) as Source } },
             )
 
         // Destination-side wiring
@@ -211,23 +224,53 @@ class ExportImportE2ETest {
 
     private fun now(): Instant = Clock.System.now().truncateToMillis()
 
-    private suspend fun exportAndRestore(options: RestoreOptions = RestoreOptions()): ExportResult {
-        val result = exportUseCase.exportUserData().last()
-        check(result is ExportProgress.Completed) { "Export should complete successfully but was $result" }
-        val export = result.result
-
-        val bundle =
-            RestoreBundle(
-                metadataJson = export.serializeMetadata(),
-                journalsJson = export.serializeJournals(),
-                notesJson = export.serializeNotes(),
-                journalNotesJson = export.serializeJournalNotes(),
-                draftsJson = export.serializeDrafts(),
-                mediaManifestJson = export.serializeMediaManifest(),
-            )
-        restoreUseCase.restore(bundle, options)
-        return export
+    /**
+     * Exports the source database to a ZIP archive on disk, reads it back and restores it into the
+     * destination database, the path [app.logdate.feature.core.export.ExportWorker] and the restore
+     * worker take. Restored media is recorded under the reference the restore assigned it.
+     */
+    private suspend fun exportAndRestore(options: RestoreOptions = RestoreOptions()): Map<String, String> {
+        val file = File.createTempFile("export-import-", ".zip", context.cacheDir)
+        try {
+            ZipOutputStream(FileOutputStream(file)).use { zip ->
+                val progress = exportUseCase.export(ArchiveExportOptions(), ZipStreamArchiveContainer(zip)).last()
+                check(progress is ArchiveExportProgress.Completed) { "Export should complete successfully but was $progress" }
+            }
+            return ZipFile(file).use { zip ->
+                val text = { name: String ->
+                    zip.getEntry(name)?.let {
+                        zip.getInputStream(it).bufferedReader().use { reader ->
+                            reader.readText()
+                        }
+                    }
+                }
+                val bundle = RestoreArchiveReader.read(zip.entries().toList().map { it.name }, text)
+                val importer =
+                    object : MediaImporter {
+                        override suspend fun importMedia(exportPath: String): String? {
+                            val entry = zip.getEntry(exportPath) ?: return null
+                            val reference = "$RESTORED$exportPath"
+                            restoredMedia[reference] = zip.getInputStream(entry).use { it.readBytes() }
+                            return reference
+                        }
+                    }
+                restoreUseCase.restore(bundle, options, mediaImporter = importer)
+                zip
+                    .entries()
+                    .toList()
+                    .filter { it.name.endsWith(".json") }
+                    .associate { it.name to checkNotNull(text(it.name)) }
+            }
+        } finally {
+            file.delete()
+        }
     }
+
+    private fun jpeg() = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte()) + "jpeg".encodeToByteArray()
+
+    private fun mp4() = byteArrayOf(0, 0, 0, 0x18) + "ftypisom".encodeToByteArray() + ByteArray(12)
+
+    private fun m4a() = byteArrayOf(0, 0, 0, 0x18) + "ftypM4A ".encodeToByteArray() + ByteArray(12)
 
     // ── Tests ───────────────────────────────────────────────────────────
 
@@ -297,12 +340,14 @@ class ExportImportE2ETest {
                     caption = "Sunset at the beach",
                 )
             sourceNotesRepo.create(note, journal.id)
+            val bytes = jpeg()
+            sourceMedia[note.mediaRef] = bytes
 
             exportAndRestore()
 
             val restored = destNotesRepo.getNoteById(note.uid) as? JournalNote.Image
             assertNotNull(restored, "Image note should exist in destination")
-            assertEquals(note.mediaRef, restored.mediaRef)
+            assertContentEquals(bytes, restoredMedia[restored.mediaRef], "restored media must be the archived original")
             assertEquals(note.caption, restored.caption)
         }
 
@@ -322,12 +367,14 @@ class ExportImportE2ETest {
                     caption = "Dog playing fetch",
                 )
             sourceNotesRepo.create(note, journal.id)
+            val bytes = mp4()
+            sourceMedia[note.mediaRef] = bytes
 
             exportAndRestore()
 
             val restored = destNotesRepo.getNoteById(note.uid) as? JournalNote.Video
             assertNotNull(restored, "Video note should exist in destination")
-            assertEquals(note.mediaRef, restored.mediaRef)
+            assertContentEquals(bytes, restoredMedia[restored.mediaRef], "restored media must be the archived original")
             assertEquals(note.caption, restored.caption)
         }
 
@@ -347,12 +394,14 @@ class ExportImportE2ETest {
                     durationMs = 15000,
                 )
             sourceNotesRepo.create(note, journal.id)
+            val bytes = m4a()
+            sourceMedia[note.mediaRef] = bytes
 
             exportAndRestore()
 
             val restored = destNotesRepo.getNoteById(note.uid) as? JournalNote.Audio
             assertNotNull(restored, "Audio note should exist in destination")
-            assertEquals(note.mediaRef, restored.mediaRef)
+            assertContentEquals(bytes, restoredMedia[restored.mediaRef], "restored media must be the archived original")
             assertEquals(note.durationMs, restored.durationMs)
         }
 
@@ -529,19 +578,20 @@ class ExportImportE2ETest {
         }
 
     @Test
-    fun `round trip metadata contains device and app info`() =
+    fun `round trip manifest names the app version that wrote it`() =
         runTest {
             val now = now()
             val journal = Journal(id = Uuid.random(), title = "Meta", created = now, lastUpdated = now)
             sourceJournalRepo.create(journal)
 
-            val result = exportUseCase.exportUserData().last()
-            check(result is ExportProgress.Completed) { "Export should complete but was $result" }
+            val manifest = checkNotNull(exportAndRestore().entries.single { it.key.endsWith("manifest.json") }.value)
 
-            val metadata = result.result.serializeMetadata()
-            assertTrue(metadata.contains("00000000-0000-0000-0000-000000000001"), "Metadata should contain device ID")
-            assertTrue(metadata.contains("1.0.0-test"), "Metadata should contain app version")
+            assertTrue(manifest.contains("1.0.0-test"), "Manifest should contain app version")
         }
+
+    private companion object {
+        const val RESTORED = "file:///restored/"
+    }
 
     // ── Inline Fakes ────────────────────────────────────────────────────
 
