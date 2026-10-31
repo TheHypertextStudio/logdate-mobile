@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.WorkspacePanel
 
 @Composable
@@ -86,9 +84,7 @@ private fun JournalListContent(
         }
     }
 
-    // Handles bottom nav bar inset on phones. The parent shell layout handles
-    // side insets for tablets and landscape.
-    Column(modifier = if (LocalWorkspaceEnabled.current) modifier else modifier.navigationBarsPadding()) {
+    Column(modifier = modifier) {
         JournalFilterBar(
             layoutMode = layoutMode,
             sortOption = sortOption,

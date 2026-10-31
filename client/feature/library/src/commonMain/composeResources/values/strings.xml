@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="search_library">Search library</string>
-    <string name="cd_search">Search</string>
     <string name="cd_library_photo">Photo from %1$s</string>
     <string name="cd_library_video">Video from %1$s</string>
     <string name="cd_library_audio">Audio recording from %1$s</string>

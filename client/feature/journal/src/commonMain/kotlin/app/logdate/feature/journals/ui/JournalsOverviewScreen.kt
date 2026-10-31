@@ -4,35 +4,25 @@ package app.logdate.feature.journals.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.journals.JournalSuggestion
-import app.logdate.client.repository.search.SearchResult
-import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import app.logdate.ui.workspace.WorkspacePanel
 import app.logdate.ui.workspace.WorkspaceSearchScope
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.journal_suggestion_month_april
@@ -64,13 +54,10 @@ fun JournalsOverviewScreen(
     onOpenJournal: JournalClickCallback,
     onBrowseJournals: () -> Unit,
     onCreateJournal: () -> Unit,
-    onNavigateToDay: (LocalDate) -> Unit = {},
-    onNavigationClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: JournalsOverviewViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val entryResults by viewModel.entrySearchResults.collectAsStateWithLifecycle()
     val suggestions by viewModel.suggestions.collectAsStateWithLifecycle()
 
     JournalsOverviewScreenContent(
@@ -78,14 +65,10 @@ fun JournalsOverviewScreen(
         layoutMode = state.layoutMode,
         sortOption = state.sortOption,
         searchQuery = state.searchQuery,
-        isEntrySearchInProgress = state.isEntrySearchInProgress,
-        entryResults = entryResults,
         suggestions = suggestions,
         onOpenJournal = onOpenJournal,
         onBrowseJournals = onBrowseJournals,
         onCreateJournal = onCreateJournal,
-        onNavigateToDay = onNavigateToDay,
-        onNavigationClick = onNavigationClick,
         onQueryChange = viewModel::updateSearchQuery,
         onToggleLayoutMode = viewModel::toggleLayoutMode,
         onSortOptionSelected = viewModel::setSortOption,
@@ -96,137 +79,42 @@ fun JournalsOverviewScreen(
 /**
  * Stateless journals overview layout.
  *
- * Uses a transparent Scaffold so the shell's `surfaceContainer` background shows through
- * between the search toolbar and the [JournalListPanel] surface below.
+ * Contributes its search query to the shared workspace header and lists the journals in a panel.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalsOverviewScreenContent(
     journals: List<JournalListItemUiState>,
     layoutMode: JournalLayoutMode,
     sortOption: JournalSortOption,
     searchQuery: String,
-    isEntrySearchInProgress: Boolean = false,
-    entryResults: List<SearchResult>,
     suggestions: List<JournalSuggestion> = emptyList(),
     onOpenJournal: JournalClickCallback,
     onBrowseJournals: () -> Unit,
     onCreateJournal: () -> Unit,
-    onNavigateToDay: (LocalDate) -> Unit,
     onQueryChange: (String) -> Unit,
     onToggleLayoutMode: () -> Unit,
     onSortOptionSelected: (JournalSortOption) -> Unit,
-    onNavigationClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    if (LocalWorkspaceEnabled.current) {
-        if (!LocalWorkspaceHosted.current) {
-            WorkspaceSearchScope(searchQuery, stringResource(Res.string.search_journals), onQueryChange)
-        }
-        WorkspacePanel(modifier) {
-            Column(Modifier.fillMaxSize()) {
-                if (suggestions.isNotEmpty()) SuggestionRow(suggestions, onCreateJournal)
-                JournalListPanel(
-                    journals,
-                    layoutMode,
-                    sortOption,
-                    onOpenJournal,
-                    onBrowseJournals,
-                    onCreateJournal,
-                    onToggleLayoutMode,
-                    onSortOptionSelected,
-                    Modifier.weight(1f).fillMaxWidth(),
-                )
-            }
-        }
-        return
+    if (!LocalWorkspaceHosted.current) {
+        WorkspaceSearchScope(searchQuery, stringResource(Res.string.search_journals), onQueryChange)
     }
-    FoldableBookLayout(
-        modifier = modifier,
-        minPaneWidth = 320.dp,
-        startPane = {
-            Column(modifier = Modifier.fillMaxSize()) {
-                JournalSearchToolbar(
-                    searchQuery = searchQuery,
-                    isEntrySearchInProgress = isEntrySearchInProgress,
-                    filteredJournals = journals,
-                    entryResults = entryResults,
-                    onQueryChange = onQueryChange,
-                    onOpenJournal = onOpenJournal,
-                    onNavigateToDay = onNavigateToDay,
-                    modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-                )
-
-                if (suggestions.isNotEmpty()) {
-                    SuggestionRow(
-                        suggestions = suggestions,
-                        onCreateJournal = onCreateJournal,
-                    )
-                }
-            }
-        },
-        endPane = {
+    WorkspacePanel(modifier) {
+        Column(Modifier.fillMaxSize()) {
+            if (suggestions.isNotEmpty()) SuggestionRow(suggestions, onCreateJournal)
             JournalListPanel(
-                journals = journals,
-                layoutMode = layoutMode,
-                sortOption = sortOption,
-                onOpenJournal = onOpenJournal,
-                onBrowseJournals = onBrowseJournals,
-                onCreateJournal = onCreateJournal,
-                onToggleLayoutMode = onToggleLayoutMode,
-                onSortOptionSelected = onSortOptionSelected,
-                showLoading = false,
-                modifier = Modifier.fillMaxSize(),
+                journals,
+                layoutMode,
+                sortOption,
+                onOpenJournal,
+                onBrowseJournals,
+                onCreateJournal,
+                onToggleLayoutMode,
+                onSortOptionSelected,
+                Modifier.weight(1f).fillMaxWidth(),
             )
-        },
-        standardContent = {
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                containerColor = Color.Transparent,
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                topBar = {
-                    JournalSearchToolbar(
-                        searchQuery = searchQuery,
-                        isEntrySearchInProgress = isEntrySearchInProgress,
-                        filteredJournals = journals,
-                        entryResults = entryResults,
-                        onQueryChange = onQueryChange,
-                        onOpenJournal = onOpenJournal,
-                        onNavigateToDay = onNavigateToDay,
-                        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-                    )
-                },
-            ) { paddingValues ->
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
-                            .padding(top = Spacing.sm),
-                ) {
-                    if (suggestions.isNotEmpty()) {
-                        SuggestionRow(
-                            suggestions = suggestions,
-                            onCreateJournal = onCreateJournal,
-                        )
-                    }
-
-                    JournalListPanel(
-                        journals = journals,
-                        layoutMode = layoutMode,
-                        sortOption = sortOption,
-                        onOpenJournal = onOpenJournal,
-                        onBrowseJournals = onBrowseJournals,
-                        onCreateJournal = onCreateJournal,
-                        onToggleLayoutMode = onToggleLayoutMode,
-                        onSortOptionSelected = onSortOptionSelected,
-                        showLoading = false,
-                        modifier = Modifier.fillMaxSize().weight(1f),
-                    )
-                }
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable

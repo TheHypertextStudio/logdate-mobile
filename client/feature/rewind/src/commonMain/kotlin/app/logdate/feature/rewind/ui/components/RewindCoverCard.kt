@@ -3,7 +3,6 @@
 package app.logdate.feature.rewind.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -31,7 +30,6 @@ import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
 import app.logdate.shared.model.ActivityType
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.util.formatDateLocalized
 import app.logdate.util.toReadableDateShort
 import logdate.client.feature.rewind.generated.resources.*
@@ -62,30 +60,18 @@ fun RewindCoverCard(
     val isNew = rewind.rewindAvailable && !rewind.isViewed
     val onBackground = if (rewind.rewindAvailable) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
 
-    if (LocalWorkspaceEnabled.current) {
-        val typographicCover = rewind.rewindAvailable && rewind.heroImageUri == null
-        Column(modifier, verticalArrangement = if (typographicCover) Arrangement.spacedBy(Spacing.xl) else Arrangement.SpaceBetween) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                RewindCoverDates(rewind, onBackground)
-                if (rewind.milestone != null) {
-                    MilestoneBadge(summary = rewind.milestone.summary)
-                } else if (isNew) {
-                    NewRewindBadge()
-                }
-            }
-            if (typographicCover) Spacer(Modifier.height(Spacing.xxxl))
-            RewindCoverStory(rewind, onBackground)
-        }
-    } else {
-        Box(modifier) {
-            RewindCoverDates(rewind, onBackground, Modifier.align(Alignment.TopStart))
+    val typographicCover = rewind.rewindAvailable && rewind.heroImageUri == null
+    Column(modifier, verticalArrangement = if (typographicCover) Arrangement.spacedBy(Spacing.xl) else Arrangement.SpaceBetween) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            RewindCoverDates(rewind, onBackground)
             if (rewind.milestone != null) {
-                MilestoneBadge(summary = rewind.milestone.summary, modifier = Modifier.align(Alignment.TopEnd))
+                MilestoneBadge(summary = rewind.milestone.summary)
             } else if (isNew) {
-                NewRewindBadge(Modifier.align(Alignment.TopEnd))
+                NewRewindBadge()
             }
-            RewindCoverStory(rewind, onBackground, Modifier.align(Alignment.BottomStart))
         }
+        if (typographicCover) Spacer(Modifier.height(Spacing.xxxl))
+        RewindCoverStory(rewind, onBackground)
     }
 }
 
@@ -110,24 +96,11 @@ private fun RewindCoverDates(
                 modifier = Modifier.size(18.dp),
             )
         }
-        if (LocalWorkspaceEnabled.current) {
-            Text(
-                text = "${rewind.start.toReadableDateShort()} – ${formatDateLocalized(rewind.end)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = dateColor,
-            )
-        } else {
-            Text(
-                text = rewind.start.toReadableDateShort(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = dateColor,
-            )
-            Text(
-                text = formatDateLocalized(rewind.end),
-                style = MaterialTheme.typography.bodyMedium,
-                color = dateColor,
-            )
-        }
+        Text(
+            text = "${rewind.start.toReadableDateShort()} – ${formatDateLocalized(rewind.end)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = dateColor,
+        )
     }
 }
 

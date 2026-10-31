@@ -8,18 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,17 +21,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.logdate.ui.adaptive.FoldableBookLayout
-import app.logdate.ui.adaptive.FoldableTabletopLayout
 import app.logdate.ui.common.scrollToTop
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.profiles.PersonUiState
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.timeline.TimelineDayUiState
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.PanelHeader
 import app.logdate.ui.workspace.WorkspacePanel
 import app.logdate.util.toReadableDateShort
@@ -45,14 +35,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.timeline.generated.resources.Res
 import logdate.client.feature.timeline.generated.resources.cd_back_to_your_days
-import logdate.client.feature.timeline.generated.resources.close
 import logdate.client.feature.timeline.generated.resources.decorate
 import logdate.client.feature.timeline.generated.resources.rewind
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineDayDetailPanel(
     uiState: TimelineDayUiState,
@@ -106,176 +94,29 @@ fun TimelineDayDetailPanel(
         initialTargetConsumed = true
     }
 
-    if (LocalWorkspaceEnabled.current) {
-        WorkspacePanel(modifier) {
-            Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
-                Column(Modifier.widthIn(max = 720.dp).fillMaxSize()) {
-                    PanelHeader(timestamp.toReadableDateShort(), actions = {
-                        IconButton(onClick = onExit) { Icon(PlatformIcons.back(), stringResource(Res.string.cd_back_to_your_days)) }
-                        onDecorate?.let { IconButton(onClick = it) { Icon(PlatformIcons.brush(), stringResource(Res.string.decorate)) } }
-                        onOpenRewind?.let { IconButton(onClick = it) { Icon(PlatformIcons.history(), stringResource(Res.string.rewind)) } }
-                    })
-                    TimelineDayDetailList(
-                        uiState,
-                        people,
-                        resolvedVisitedLocations,
-                        onOpenEvent,
-                        onAttachNoteToEvent,
-                        onOpenLocations,
-                        onJournalClick,
-                        onNoteClick,
-                        scrollState,
-                        PaddingValues(Spacing.lg),
-                    )
-                }
+    WorkspacePanel(modifier) {
+        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
+            Column(Modifier.widthIn(max = 720.dp).fillMaxSize()) {
+                PanelHeader(timestamp.toReadableDateShort(), actions = {
+                    IconButton(onClick = onExit) { Icon(PlatformIcons.back(), stringResource(Res.string.cd_back_to_your_days)) }
+                    onDecorate?.let { IconButton(onClick = it) { Icon(PlatformIcons.brush(), stringResource(Res.string.decorate)) } }
+                    onOpenRewind?.let { IconButton(onClick = it) { Icon(PlatformIcons.history(), stringResource(Res.string.rewind)) } }
+                })
+                TimelineDayDetailList(
+                    uiState,
+                    people,
+                    resolvedVisitedLocations,
+                    onOpenEvent,
+                    onAttachNoteToEvent,
+                    onOpenLocations,
+                    onJournalClick,
+                    onNoteClick,
+                    scrollState,
+                    PaddingValues(Spacing.lg),
+                )
             }
         }
-        return
     }
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(timestamp.toReadableDateShort()) },
-                navigationIcon = {
-                    IconButton(onClick = onExit) {
-                        Icon(painter = PlatformIcons.back(), contentDescription = stringResource(Res.string.close))
-                    }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors().copy(
-                        containerColor = Color.Transparent,
-                    ),
-                actions = {
-                    if (onDecorate != null) {
-                        IconButton(onClick = onDecorate) {
-                            Icon(painter = PlatformIcons.brush(), contentDescription = stringResource(Res.string.decorate))
-                        }
-                    }
-                    if (onOpenRewind != null) {
-                        IconButton(onClick = onOpenRewind) {
-                            Icon(painter = PlatformIcons.history(), contentDescription = stringResource(Res.string.rewind))
-                        }
-                    }
-                },
-            )
-        },
-        containerColor = Color.Transparent,
-    ) { contentPadding ->
-        TimelineDayDetailAdaptiveContent(
-            uiState = uiState,
-            people = people,
-            resolvedVisitedLocations = resolvedVisitedLocations,
-            onOpenEvent = onOpenEvent,
-            onAttachNoteToEvent = onAttachNoteToEvent,
-            onOpenLocations = onOpenLocations,
-            onJournalClick = onJournalClick,
-            onNoteClick = onNoteClick,
-            scrollState = scrollState,
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-        )
-    }
-}
-
-@Composable
-private fun TimelineDayDetailAdaptiveContent(
-    uiState: TimelineDayUiState,
-    people: List<PersonUiState>,
-    resolvedVisitedLocations: List<DayLocation>,
-    onOpenEvent: (eventId: String) -> Unit,
-    onAttachNoteToEvent: (noteId: String, eventId: String) -> Unit,
-    onOpenLocations: (() -> Unit)?,
-    onJournalClick: (Uuid) -> Unit,
-    onNoteClick: (Uuid) -> Unit,
-    scrollState: LazyListState,
-    modifier: Modifier = Modifier,
-) {
-    val listContentPadding = PaddingValues(vertical = Spacing.lg)
-
-    FoldableTabletopLayout(
-        modifier = modifier,
-        minPaneHeight = 260.dp,
-        topPane = {
-            TimelineDayDetailList(
-                uiState = uiState,
-                people = people,
-                resolvedVisitedLocations = resolvedVisitedLocations,
-                onOpenEvent = onOpenEvent,
-                onAttachNoteToEvent = onAttachNoteToEvent,
-                onOpenLocations = onOpenLocations,
-                onJournalClick = onJournalClick,
-                onNoteClick = onNoteClick,
-                contentPadding = listContentPadding,
-                includeNotesAndEvents = false,
-            )
-        },
-        bottomPane = {
-            TimelineDayDetailList(
-                uiState = uiState,
-                people = people,
-                resolvedVisitedLocations = resolvedVisitedLocations,
-                onOpenEvent = onOpenEvent,
-                onAttachNoteToEvent = onAttachNoteToEvent,
-                onOpenLocations = onOpenLocations,
-                onJournalClick = onJournalClick,
-                onNoteClick = onNoteClick,
-                contentPadding = listContentPadding,
-                includeSummaryContext = false,
-                includeLocations = false,
-            )
-        },
-        standardContent = {
-            FoldableBookLayout(
-                minPaneWidth = 320.dp,
-                startPane = {
-                    TimelineDayDetailList(
-                        uiState = uiState,
-                        people = people,
-                        resolvedVisitedLocations = resolvedVisitedLocations,
-                        onOpenEvent = onOpenEvent,
-                        onAttachNoteToEvent = onAttachNoteToEvent,
-                        onOpenLocations = onOpenLocations,
-                        onJournalClick = onJournalClick,
-                        onNoteClick = onNoteClick,
-                        contentPadding = listContentPadding,
-                        includeNotesAndEvents = false,
-                    )
-                },
-                endPane = {
-                    TimelineDayDetailList(
-                        uiState = uiState,
-                        people = people,
-                        resolvedVisitedLocations = resolvedVisitedLocations,
-                        onOpenEvent = onOpenEvent,
-                        onAttachNoteToEvent = onAttachNoteToEvent,
-                        onOpenLocations = onOpenLocations,
-                        onJournalClick = onJournalClick,
-                        onNoteClick = onNoteClick,
-                        contentPadding = listContentPadding,
-                        includeSummaryContext = false,
-                        includeLocations = false,
-                    )
-                },
-                standardContent = {
-                    TimelineDayDetailList(
-                        uiState = uiState,
-                        people = people,
-                        resolvedVisitedLocations = resolvedVisitedLocations,
-                        onOpenEvent = onOpenEvent,
-                        onAttachNoteToEvent = onAttachNoteToEvent,
-                        onOpenLocations = onOpenLocations,
-                        onJournalClick = onJournalClick,
-                        onNoteClick = onNoteClick,
-                        scrollState = scrollState,
-                        contentPadding = listContentPadding,
-                    )
-                },
-            )
-        },
-    )
 }
 
 @Composable
@@ -290,9 +131,6 @@ private fun TimelineDayDetailList(
     onNoteClick: (Uuid) -> Unit,
     scrollState: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues,
-    includeSummaryContext: Boolean = true,
-    includeNotesAndEvents: Boolean = true,
-    includeLocations: Boolean = true,
 ) {
     val summaryNotice = uiState.summaryNotice?.let { notice -> stringResource(notice) }
     val summary = uiState.summary.ifEmpty { summaryNotice.orEmpty() }
@@ -303,14 +141,14 @@ private fun TimelineDayDetailList(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
     ) {
-        if (includeSummaryContext && summary.isNotBlank()) {
+        if (summary.isNotBlank()) {
             item(
                 contentType = "tldr",
             ) {
                 TldrSection(summary)
             }
         }
-        if (includeSummaryContext && people.isNotEmpty()) {
+        if (people.isNotEmpty()) {
             item(
                 contentType = "people",
             ) {
@@ -319,7 +157,7 @@ private fun TimelineDayDetailList(
                 )
             }
         }
-        if (includeNotesAndEvents && uiState.notes.isNotEmpty()) {
+        if (uiState.notes.isNotEmpty()) {
             item(
                 contentType = "notes",
             ) {
@@ -330,7 +168,7 @@ private fun TimelineDayDetailList(
                 )
             }
         }
-        if (includeNotesAndEvents && uiState.events.isNotEmpty()) {
+        if (uiState.events.isNotEmpty()) {
             item(contentType = "events") {
                 EventsSection(
                     events = uiState.events,
@@ -339,7 +177,7 @@ private fun TimelineDayDetailList(
                 )
             }
         }
-        if (includeLocations && resolvedVisitedLocations.isNotEmpty()) {
+        if (resolvedVisitedLocations.isNotEmpty()) {
             item(
                 contentType = "locations",
             ) {

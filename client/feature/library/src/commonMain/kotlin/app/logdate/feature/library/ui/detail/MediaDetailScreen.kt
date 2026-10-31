@@ -12,7 +12,6 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -91,12 +90,9 @@ import app.logdate.client.media.device.MediaDeviceKind
 import app.logdate.client.media.device.MediaDeviceSelectionUiState
 import app.logdate.client.media.device.systemControlledSelection
 import app.logdate.feature.editor.ui.video.VideoPlayerContent
-import app.logdate.ui.adaptive.FoldableBookLayout
-import app.logdate.ui.adaptive.FoldableTabletopLayout
 import app.logdate.ui.media.MediaDeviceSelector
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.PanelHeader
 import app.logdate.ui.workspace.WorkspacePanel
 import app.logdate.ui.workspace.WorkspaceSupportingSheet
@@ -129,7 +125,6 @@ import logdate.client.feature.library.generated.resources.library_metadata_type_
 import logdate.client.feature.library.generated.resources.library_recording_playback_title
 import logdate.client.feature.library.generated.resources.library_stop_presenting
 import logdate.client.ui.generated.resources.common_back
-import logdate.client.ui.generated.resources.common_go_back
 import logdate.client.ui.generated.resources.common_share
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -186,42 +181,37 @@ fun MediaDetailScreen(
         }
     }
 
-    BoxWithConstraints(modifier) {
-        val isExpanded = maxWidth >= 840.dp
-
-        MediaDetailContent(
-            state = uiState,
-            viewerState = viewerState,
-            presenterState = presenterState,
-            outputSelection = outputSelection,
-            onOutputDeviceSelected = audioRouteRepository::selectOutputDevice,
-            isExpanded = isExpanded,
-            onBack = {
-                viewModel.stopPresenting()
-                onBack()
-            },
-            onSelectMedia = viewModel::selectMedia,
-            onNavigateToJournal = onNavigateToJournal,
-            onShare = onShare,
-            onStartPresenting = viewModel::startPresenting,
-            onStopPresenting = viewModel::stopPresenting,
-            onPresentItem = viewModel::presentItem,
-            audioProgress = audioProgress,
-            isAudioPlaying = { it == playingAudioUri },
-            onToggleAudio = ::toggleAudio,
-            onSeekAudio = { uri, position, duration ->
-                if (playingAudioUri == uri && duration > 0L) audioPlaybackManager.seekTo(position)
-            },
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
+    MediaDetailContent(
+        state = uiState,
+        viewerState = viewerState,
+        presenterState = presenterState,
+        outputSelection = outputSelection,
+        onOutputDeviceSelected = audioRouteRepository::selectOutputDevice,
+        onBack = {
+            viewModel.stopPresenting()
+            onBack()
+        },
+        onSelectMedia = viewModel::selectMedia,
+        onNavigateToJournal = onNavigateToJournal,
+        onShare = onShare,
+        onStartPresenting = viewModel::startPresenting,
+        onStopPresenting = viewModel::stopPresenting,
+        onPresentItem = viewModel::presentItem,
+        audioProgress = audioProgress,
+        isAudioPlaying = { it == playingAudioUri },
+        onToggleAudio = ::toggleAudio,
+        onSeekAudio = { uri, position, duration ->
+            if (playingAudioUri == uri && duration > 0L) audioPlaybackManager.seekTo(position)
+        },
+        modifier = modifier.fillMaxSize(),
+    )
 }
 
 /**
  * Stateless media detail layout.
  *
- * On compact screens, the image fills the screen and metadata is in a bottom sheet.
- * On expanded screens, image and metadata sit side-by-side.
+ * Photos and videos open in a supporting sheet beside or over the viewer; loading, error, and
+ * audio states fill a single panel.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -231,7 +221,6 @@ fun MediaDetailContent(
     presenterState: PresenterState = PresenterState(),
     outputSelection: MediaDeviceSelectionUiState = defaultLibraryOutputSelection(),
     onOutputDeviceSelected: (String) -> Unit = {},
-    isExpanded: Boolean,
     onBack: () -> Unit,
     onSelectMedia: (Int) -> Unit = {},
     onNavigateToJournal: (Uuid) -> Unit = {},
@@ -245,126 +234,80 @@ fun MediaDetailContent(
     onSeekAudio: (String, Float, Long) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
-    if (LocalWorkspaceEnabled.current && state !is MediaDetailUiState.ImageContent && state !is MediaDetailUiState.VideoContent) {
-        WorkspacePanel(modifier) {
-            Column(Modifier.fillMaxSize()) {
-                PanelHeader(
-                    stringResource(Res.string.library_memory_title),
-                    actions = {
-                        IconButton(onClick = onBack) { Icon(PlatformIcons.back(), stringResource(Res.string.cd_back_to_library)) }
-                    },
-                )
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    when (state) {
-                        MediaDetailUiState.Loading -> {
-                            CircularProgressIndicator()
-                        }
+    if (state is MediaDetailUiState.ImageContent) {
+        MediaDetailLayout(
+            mediaRef = state.mediaRef,
+            isVideo = false,
+            createdAt = state.createdAt,
+            locationDisplayName = state.locationDisplayName,
+            journals = state.journals,
+            exif = state.exif,
+            viewerState = viewerState,
+            onBack = onBack,
+            onSelectMedia = onSelectMedia,
+            onNavigateToJournal = onNavigateToJournal,
+            onShare = { onShare(state.mediaRef) },
+            presenterState = presenterState,
+            outputSelection = outputSelection,
+            onOutputDeviceSelected = onOutputDeviceSelected,
+            onStartPresenting = onStartPresenting,
+            onStopPresenting = onStopPresenting,
+            onPresentItem = onPresentItem,
+            modifier = modifier,
+        )
+        return
+    }
+    if (state is MediaDetailUiState.VideoContent) {
+        MediaDetailLayout(
+            mediaRef = state.mediaRef,
+            isVideo = true,
+            createdAt = state.createdAt,
+            locationDisplayName = state.locationDisplayName,
+            journals = state.journals,
+            viewerState = viewerState,
+            onBack = onBack,
+            onSelectMedia = onSelectMedia,
+            onNavigateToJournal = onNavigateToJournal,
+            onShare = { onShare(state.mediaRef) },
+            presenterState = presenterState,
+            outputSelection = outputSelection,
+            onOutputDeviceSelected = onOutputDeviceSelected,
+            onStartPresenting = onStartPresenting,
+            onStopPresenting = onStopPresenting,
+            onPresentItem = onPresentItem,
+            modifier = modifier,
+        )
+        return
+    }
+    WorkspacePanel(modifier) {
+        Column(Modifier.fillMaxSize()) {
+            PanelHeader(
+                stringResource(Res.string.library_memory_title),
+                actions = {
+                    IconButton(onClick = onBack) { Icon(PlatformIcons.back(), stringResource(Res.string.cd_back_to_library)) }
+                },
+            )
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                when (state) {
+                    MediaDetailUiState.Loading -> {
+                        CircularProgressIndicator()
+                    }
 
-                        is MediaDetailUiState.Error -> {
-                            Text(stringResource(state.message), Modifier.padding(Spacing.lg))
-                        }
+                    is MediaDetailUiState.Error -> {
+                        Text(stringResource(state.message), Modifier.padding(Spacing.lg))
+                    }
 
-                        is MediaDetailUiState.AudioContent -> {
-                            AudioMediaDetailContent(
-                                state,
-                                audioProgress,
-                                isAudioPlaying(state.mediaRef),
-                                { onToggleAudio(state.mediaRef, state.durationMs, state.mediaId) },
-                                { onSeekAudio(state.mediaRef, it, state.durationMs) },
-                                onBack,
-                            )
-                        }
+                    is MediaDetailUiState.AudioContent -> {
+                        AudioMediaDetailContent(
+                            state,
+                            audioProgress,
+                            isAudioPlaying(state.mediaRef),
+                            { onToggleAudio(state.mediaRef, state.durationMs, state.mediaId) },
+                            { onSeekAudio(state.mediaRef, it, state.durationMs) },
+                        )
                     }
                 }
             }
-        }
-        return
-    }
-    when (state) {
-        is MediaDetailUiState.Loading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
-        is MediaDetailUiState.Error -> {
-            Column(
-                modifier = modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = stringResource(state.message),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(Spacing.md))
-                TextButton(onClick = onBack) {
-                    Text(stringResource(UiRes.string.common_go_back))
-                }
-            }
-        }
-
-        is MediaDetailUiState.ImageContent -> {
-            MediaDetailLayout(
-                mediaRef = state.mediaRef,
-                isVideo = false,
-                createdAt = state.createdAt,
-                locationDisplayName = state.locationDisplayName,
-                journals = state.journals,
-                exif = state.exif,
-                viewerState = viewerState,
-                isExpanded = isExpanded,
-                onBack = onBack,
-                onSelectMedia = onSelectMedia,
-                onNavigateToJournal = onNavigateToJournal,
-                onShare = { onShare(state.mediaRef) },
-                presenterState = presenterState,
-                outputSelection = outputSelection,
-                onOutputDeviceSelected = onOutputDeviceSelected,
-                onStartPresenting = onStartPresenting,
-                onStopPresenting = onStopPresenting,
-                onPresentItem = onPresentItem,
-                modifier = modifier,
-            )
-        }
-
-        is MediaDetailUiState.VideoContent -> {
-            MediaDetailLayout(
-                mediaRef = state.mediaRef,
-                isVideo = true,
-                createdAt = state.createdAt,
-                locationDisplayName = state.locationDisplayName,
-                journals = state.journals,
-                viewerState = viewerState,
-                isExpanded = isExpanded,
-                onBack = onBack,
-                onSelectMedia = onSelectMedia,
-                onNavigateToJournal = onNavigateToJournal,
-                onShare = { onShare(state.mediaRef) },
-                presenterState = presenterState,
-                outputSelection = outputSelection,
-                onOutputDeviceSelected = onOutputDeviceSelected,
-                onStartPresenting = onStartPresenting,
-                onStopPresenting = onStopPresenting,
-                onPresentItem = onPresentItem,
-                modifier = modifier,
-            )
-        }
-
-        is MediaDetailUiState.AudioContent -> {
-            AudioMediaDetailContent(
-                state = state,
-                progress = audioProgress,
-                isPlaying = isAudioPlaying(state.mediaRef),
-                onToggle = { onToggleAudio(state.mediaRef, state.durationMs, state.mediaId) },
-                onSeek = { onSeekAudio(state.mediaRef, it, state.durationMs) },
-                onBack = onBack,
-                modifier = modifier,
-            )
         }
     }
 }
@@ -376,31 +319,13 @@ private fun AudioMediaDetailContent(
     isPlaying: Boolean,
     onToggle: () -> Unit,
     onSeek: (Float) -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier =
-            modifier.fillMaxSize().then(
-                if (LocalWorkspaceEnabled.current) {
-                    Modifier.verticalScroll(
-                        rememberScrollState(),
-                    )
-                } else {
-                    Modifier.background(MaterialTheme.colorScheme.surface)
-                },
-            ),
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        if (!LocalWorkspaceEnabled.current) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.Start).padding(Spacing.md),
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(UiRes.string.common_back))
-            }
-        }
         Icon(
             painter = PlatformIcons.audioFile(),
             contentDescription = stringResource(Res.string.library_audio_recording),
@@ -460,7 +385,6 @@ private fun MediaDetailLayout(
     journals: List<JournalReference>,
     exif: ExifDisplayData? = null,
     viewerState: MediaViewerState = MediaViewerState(),
-    isExpanded: Boolean,
     onBack: () -> Unit,
     onSelectMedia: (Int) -> Unit = {},
     onNavigateToJournal: (Uuid) -> Unit = {},
@@ -473,221 +397,79 @@ private fun MediaDetailLayout(
     onPresentItem: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    if (LocalWorkspaceEnabled.current) {
-        var immersive by rememberSaveable { mutableStateOf(false) }
-        val stateHolder =
-            androidx.compose.runtime.saveable
-                .rememberSaveableStateHolder()
-        if (immersive) {
-            stateHolder.SaveableStateProvider("immersive") {
-                CompactMediaDetailViewer(
-                    mediaRef,
-                    isVideo,
-                    createdAt,
-                    locationDisplayName,
-                    journals,
-                    exif,
-                    viewerState,
-                    presenterState,
-                    outputSelection,
-                    onOutputDeviceSelected,
-                    onBack = { immersive = false },
-                    onSelectMedia = onSelectMedia,
-                    onNavigateToJournal = onNavigateToJournal,
-                    onShare = onShare,
-                    onStartPresenting = onStartPresenting,
-                    onStopPresenting = onStopPresenting,
-                    onPresentItem = onPresentItem,
-                    modifier = modifier,
-                )
-            }
-            return
-        }
-        stateHolder.SaveableStateProvider("workspace") {
-            WorkspaceSupportingSheet(
-                stringResource(Res.string.library_memory_details),
-                modifier,
-                focus = {
-                    Column(Modifier.fillMaxSize()) {
-                        PanelHeader(stringResource(Res.string.library_memory_title), actions = {
-                            IconButton(onClick = onBack) { Icon(PlatformIcons.back(), stringResource(Res.string.cd_back_to_library)) }
-                            IconButton(onClick = onShare) { Icon(PlatformIcons.share(), stringResource(Res.string.cd_share_memory)) }
-                            IconButton(onClick = { immersive = true }) {
-                                Icon(Icons.Default.Fullscreen, stringResource(Res.string.cd_view_full_screen))
-                            }
-                        })
-                        WorkspaceMediaViewer(
-                            mediaRef,
-                            isVideo,
-                            viewerState,
-                            onSelectMedia,
-                            onBack,
-                            { immersive = true },
-                            Modifier.weight(1f).fillMaxWidth(),
-                        )
-                    }
-                },
-                supporting = {
-                    MediaDetailTabletopControls(
-                        createdAt = createdAt,
-                        locationDisplayName = locationDisplayName,
-                        isVideo = isVideo,
-                        journals = journals,
-                        exif = exif,
-                        presenterState = presenterState,
-                        outputSelection = outputSelection,
-                        onBack = onBack,
-                        onShare = onShare,
-                        onNavigateToJournal = onNavigateToJournal,
-                        onOutputDeviceSelected = onOutputDeviceSelected,
-                        onStartPresenting = onStartPresenting,
-                        onStopPresenting = onStopPresenting,
-                        modifier = Modifier.fillMaxSize().padding(Spacing.lg),
-                    )
-                },
+    var immersive by rememberSaveable { mutableStateOf(false) }
+    val stateHolder =
+        androidx.compose.runtime.saveable
+            .rememberSaveableStateHolder()
+    if (immersive) {
+        stateHolder.SaveableStateProvider("immersive") {
+            CompactMediaDetailViewer(
+                mediaRef,
+                isVideo,
+                createdAt,
+                locationDisplayName,
+                journals,
+                exif,
+                viewerState,
+                presenterState,
+                outputSelection,
+                onOutputDeviceSelected,
+                onBack = { immersive = false },
+                onSelectMedia = onSelectMedia,
+                onNavigateToJournal = onNavigateToJournal,
+                onShare = onShare,
+                onStartPresenting = onStartPresenting,
+                onStopPresenting = onStopPresenting,
+                onPresentItem = onPresentItem,
+                modifier = modifier,
             )
         }
         return
     }
-    FoldableTabletopLayout(
-        modifier = modifier,
-        minPaneHeight = 240.dp,
-        topPane = {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Black),
-                contentAlignment = Alignment.Center,
-            ) {
-                MediaContent(
-                    mediaRef = mediaRef,
-                    isVideo = isVideo,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        },
-        bottomPane = {
-            MediaDetailTabletopControls(
-                createdAt = createdAt,
-                locationDisplayName = locationDisplayName,
-                isVideo = isVideo,
-                journals = journals,
-                exif = exif,
-                presenterState = presenterState,
-                outputSelection = outputSelection,
-                onBack = onBack,
-                onShare = onShare,
-                onNavigateToJournal = onNavigateToJournal,
-                onOutputDeviceSelected = onOutputDeviceSelected,
-                onStartPresenting = onStartPresenting,
-                onStopPresenting = onStopPresenting,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(Spacing.lg),
-            )
-        },
-        standardContent = {
-            FoldableBookLayout(
-                modifier = Modifier.fillMaxSize(),
-                minPaneWidth = 320.dp,
-                startPane = {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(Color.Black),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        MediaContent(
-                            mediaRef = mediaRef,
-                            isVideo = isVideo,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                },
-                endPane = {
-                    MediaDetailTabletopControls(
-                        createdAt = createdAt,
-                        locationDisplayName = locationDisplayName,
-                        isVideo = isVideo,
-                        journals = journals,
-                        exif = exif,
-                        presenterState = presenterState,
-                        outputSelection = outputSelection,
-                        onBack = onBack,
-                        onShare = onShare,
-                        onNavigateToJournal = onNavigateToJournal,
-                        onOutputDeviceSelected = onOutputDeviceSelected,
-                        onStartPresenting = onStartPresenting,
-                        onStopPresenting = onStopPresenting,
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(Spacing.lg),
-                    )
-                },
-                standardContent = {
-                    if (isExpanded) {
-                        Row(modifier = Modifier.fillMaxSize()) {
-                            Box(
-                                modifier = Modifier.weight(2f).fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                MediaContent(mediaRef = mediaRef, isVideo = isVideo)
-                            }
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .fillMaxSize()
-                                        .padding(Spacing.lg),
-                            ) {
-                                MediaDetailTabletopControls(
-                                    createdAt = createdAt,
-                                    locationDisplayName = locationDisplayName,
-                                    isVideo = isVideo,
-                                    journals = journals,
-                                    exif = exif,
-                                    presenterState = presenterState,
-                                    outputSelection = outputSelection,
-                                    onBack = onBack,
-                                    onShare = onShare,
-                                    onNavigateToJournal = onNavigateToJournal,
-                                    onOutputDeviceSelected = onOutputDeviceSelected,
-                                    onStartPresenting = onStartPresenting,
-                                    onStopPresenting = onStopPresenting,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            }
+    stateHolder.SaveableStateProvider("workspace") {
+        WorkspaceSupportingSheet(
+            stringResource(Res.string.library_memory_details),
+            modifier,
+            focus = {
+                Column(Modifier.fillMaxSize()) {
+                    PanelHeader(stringResource(Res.string.library_memory_title), actions = {
+                        IconButton(onClick = onBack) { Icon(PlatformIcons.back(), stringResource(Res.string.cd_back_to_library)) }
+                        IconButton(onClick = onShare) { Icon(PlatformIcons.share(), stringResource(Res.string.cd_share_memory)) }
+                        IconButton(onClick = { immersive = true }) {
+                            Icon(Icons.Default.Fullscreen, stringResource(Res.string.cd_view_full_screen))
                         }
-                    } else {
-                        CompactMediaDetailViewer(
-                            currentMediaRef = mediaRef,
-                            currentIsVideo = isVideo,
-                            createdAt = createdAt,
-                            locationDisplayName = locationDisplayName,
-                            journals = journals,
-                            exif = exif,
-                            viewerState = viewerState,
-                            presenterState = presenterState,
-                            outputSelection = outputSelection,
-                            onOutputDeviceSelected = onOutputDeviceSelected,
-                            onBack = onBack,
-                            onSelectMedia = onSelectMedia,
-                            onNavigateToJournal = onNavigateToJournal,
-                            onShare = onShare,
-                            onStartPresenting = onStartPresenting,
-                            onStopPresenting = onStopPresenting,
-                            onPresentItem = onPresentItem,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                },
-            )
-        },
-    )
+                    })
+                    WorkspaceMediaViewer(
+                        mediaRef,
+                        isVideo,
+                        viewerState,
+                        onSelectMedia,
+                        onBack,
+                        { immersive = true },
+                        Modifier.weight(1f).fillMaxWidth(),
+                    )
+                }
+            },
+            supporting = {
+                MediaDetailTabletopControls(
+                    createdAt = createdAt,
+                    locationDisplayName = locationDisplayName,
+                    isVideo = isVideo,
+                    journals = journals,
+                    exif = exif,
+                    presenterState = presenterState,
+                    outputSelection = outputSelection,
+                    onBack = onBack,
+                    onShare = onShare,
+                    onNavigateToJournal = onNavigateToJournal,
+                    onOutputDeviceSelected = onOutputDeviceSelected,
+                    onStartPresenting = onStartPresenting,
+                    onStopPresenting = onStopPresenting,
+                    modifier = Modifier.fillMaxSize().padding(Spacing.lg),
+                )
+            },
+        )
+    }
 }
 
 @Composable

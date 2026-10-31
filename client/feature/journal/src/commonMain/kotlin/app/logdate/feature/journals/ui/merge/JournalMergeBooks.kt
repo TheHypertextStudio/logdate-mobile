@@ -123,6 +123,5 @@ private fun MergeBook(
         modifier.testTag(coverTag).graphicsLayer { rotationZ = rotation },
         elevation = 4.dp,
         showLastUpdated = false,
-        fitContent = true,
     )
 }

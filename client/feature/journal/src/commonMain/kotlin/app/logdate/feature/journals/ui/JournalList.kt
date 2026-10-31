@@ -13,13 +13,10 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.logdate.shared.model.Journal
 import app.logdate.ui.common.ContextMenuItem
 import app.logdate.ui.common.LocalEditorWindows
-import app.logdate.ui.common.centeredGridPadding
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.journal_menu_new_entry_window
 import logdate.client.feature.journal.generated.resources.journal_menu_open
@@ -28,10 +25,10 @@ import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 /**
- * Grid layout for journals using adaptive columns (min 172dp each).
+ * Grid layout for journals using adaptive columns sized to the panel width.
  *
  * The [gridState] is hoisted so the parent can observe scroll position — used by the
- * [JournalFilterBar] to change its background when content scrolls underneath.
+ * [JournalFilterBar] to raise its backdrop when content scrolls underneath.
  */
 @Composable
 fun JournalList(
@@ -44,10 +41,10 @@ fun JournalList(
     BoxWithConstraints(modifier) {
         LazyVerticalGrid(
             state = gridState,
-            columns = GridCells.Adaptive(minSize = if (LocalWorkspaceEnabled.current) journalGridMinimumCoverWidth(maxWidth) else 172.dp),
+            columns = GridCells.Adaptive(minSize = journalGridMinimumCoverWidth(maxWidth)),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
-            contentPadding = if (LocalWorkspaceEnabled.current) PaddingValues(Spacing.lg) else centeredGridPadding(),
+            contentPadding = PaddingValues(Spacing.lg),
         ) {
             items(journals) { item ->
                 when (item) {

@@ -3,7 +3,6 @@
     <!-- Entry actions -->
     <string name="add_new_entry">Add new entry</string>
     <string name="are_you_sure_you_want_to_delete_this_entry">Are you sure you want to delete this entry?</string>
-    <string name="close">Close</string>
     <string name="convert_to_text">Convert to Text</string>
     <string name="converting_to_text">Converting to text...</string>
     <string name="decorate">Decorate</string>

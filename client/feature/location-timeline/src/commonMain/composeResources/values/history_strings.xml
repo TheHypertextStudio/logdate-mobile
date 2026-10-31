@@ -18,7 +18,6 @@
     <string name="history_empty_day">Nothing recorded for this day</string>
     <string name="history_empty_day_body">Places you visit and memories you make will appear here. You can also add a visit yourself.</string>
     <string name="history_empty_places">No places yet</string>
-    <string name="history_recover">Review settings</string>
     <string name="history_change_place">Change place</string>
     <string name="history_change_activity">Change activity</string>
     <string name="history_change_time">Change time</string>
@@ -41,11 +40,8 @@
     <string name="history_empty_places_body">Places from your recorded visits will appear here.</string>
     <string name="history_no_matching_places">No places match your search</string>
     <string name="history_no_matching_places_body">Try another name or change the date filter.</string>
-    <string name="history_hide_replay">Hide replay</string>
     <string name="history_confirm_delete">Delete</string>
     <string name="history_preview_unavailable">Preview unavailable</string>
-    <string name="history_expand_map">Expand map</string>
-    <string name="history_collapse_map">Collapse map</string>
     <string name="history_visit_settings">Visit details</string>
     <string name="history_arrived_time_label">Arrived (24-hour time)</string>
     <string name="history_arrived_time_placeholder">10:15</string>
@@ -62,8 +58,6 @@
     <string name="history_place_picker_android_only">Choose a saved place below. Map selection is available on Android.</string>
     <string name="history_map_overview_description">Map overview of recorded places and paths</string>
     <string name="history_map_empty">No locations to show on the map</string>
-    <string name="history_visits_and_journeys">Visits and journeys</string>
-    <string name="history_your_route">Your route</string>
     <string name="history_recording_settings">Recording settings</string>
     <string name="history_review_changes">Review changes</string>
     <string name="history_show_day">Show day</string>

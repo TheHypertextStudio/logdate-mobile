@@ -113,7 +113,6 @@
     <string
     name="rewind_detail_load_failed"
   >This Rewind couldn&apos;t be loaded. Try again later.</string>
-    <string name="rewind_title">Rewind</string>
     <string
     name="rewind_current_week_generating"
   >Putting your week together...</string>

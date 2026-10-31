@@ -49,7 +49,6 @@ import app.logdate.ui.common.MarkdownText
 import app.logdate.ui.common.transitions.TransitionKeys
 import app.logdate.ui.handwriting.HandwritingPreview
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.util.toReadableDateTimeShort
 import coil3.compose.AsyncImage
 import logdate.client.feature.journal.generated.resources.Res
@@ -236,7 +235,7 @@ fun TextNoteViewerContent(
                 Column(
                     modifier =
                         Modifier
-                            .widthIn(max = if (LocalWorkspaceEnabled.current) 720.dp else 840.dp)
+                            .widthIn(max = 720.dp)
                             .fillMaxWidth()
                             .padding(Spacing.xl),
                     verticalArrangement = Arrangement.SpaceBetween,

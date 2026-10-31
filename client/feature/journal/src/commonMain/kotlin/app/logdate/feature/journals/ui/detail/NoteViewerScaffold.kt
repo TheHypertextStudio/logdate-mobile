@@ -2,7 +2,6 @@
 
 package app.logdate.feature.journals.ui.detail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,15 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.journals.NoteLocation
-import app.logdate.feature.editor.ui.layout.ImmersiveEditorLayout
 import app.logdate.feature.journals.ui.deriveCoverColor
-import app.logdate.ui.adaptive.FoldableBookLayout
-import app.logdate.ui.adaptive.FoldableTabletopLayout
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.WorkspacePanel
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.add_to_journal
@@ -83,123 +76,14 @@ fun NoteViewerScaffoldContent(
             remember(it.journalId) { deriveCoverColor(it.journalId) }
         }
 
-    if (LocalWorkspaceEnabled.current) {
-        WorkspacePanel(modifier) {
-            Column(Modifier.fillMaxSize()) {
-                NoteViewerToolbar(onGoBack, journalContext, accentColor, onNavigateToNote, onShowAddToJournal, onShare, onEdit)
-                Box(Modifier.weight(1f).fillMaxWidth()) {
-                    NoteViewerContent(shared, onOpenLocationTimeline, noteContent = noteContent)
-                }
+    WorkspacePanel(modifier) {
+        Column(Modifier.fillMaxSize()) {
+            NoteViewerToolbar(onGoBack, journalContext, accentColor, onNavigateToNote, onShowAddToJournal, onShare, onEdit)
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                NoteViewerContent(shared, onOpenLocationTimeline, noteContent = noteContent)
             }
         }
-        return
     }
-    FoldableTabletopLayout(
-        modifier = modifier,
-        minPaneHeight = 220.dp,
-        topPane = {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceDim),
-            ) {
-                NoteViewerContent(
-                    shared = shared,
-                    onOpenLocationTimeline = onOpenLocationTimeline,
-                    noteContent = noteContent,
-                )
-            }
-        },
-        bottomPane = {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceDim)
-                        .navigationBarsPadding()
-                        .padding(horizontal = Spacing.sm, vertical = Spacing.md),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                NoteViewerToolbar(
-                    onGoBack = onGoBack,
-                    journalContext = journalContext,
-                    accentColor = accentColor,
-                    onNavigateToNote = onNavigateToNote,
-                    onShowAddToJournal = onShowAddToJournal,
-                    onShare = onShare,
-                    onEdit = onEdit,
-                )
-            }
-        },
-        standardContent = {
-            FoldableBookLayout(
-                modifier = Modifier.fillMaxSize(),
-                minPaneWidth = 320.dp,
-                startPane = {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceDim),
-                    ) {
-                        NoteViewerContent(
-                            shared = shared,
-                            onOpenLocationTimeline = onOpenLocationTimeline,
-                            noteContent = noteContent,
-                        )
-                    }
-                },
-                endPane = {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceDim)
-                                .navigationBarsPadding()
-                                .padding(horizontal = Spacing.sm, vertical = Spacing.md),
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        NoteViewerToolbar(
-                            onGoBack = onGoBack,
-                            journalContext = journalContext,
-                            accentColor = accentColor,
-                            onNavigateToNote = onNavigateToNote,
-                            onShowAddToJournal = onShowAddToJournal,
-                            onShare = onShare,
-                            onEdit = onEdit,
-                        )
-                    }
-                },
-                standardContent = {
-                    ImmersiveEditorLayout(
-                        topBarContent = {
-                            NoteViewerToolbar(
-                                onGoBack = onGoBack,
-                                journalContext = journalContext,
-                                accentColor = accentColor,
-                                onNavigateToNote = onNavigateToNote,
-                                onShowAddToJournal = onShowAddToJournal,
-                                onShare = onShare,
-                                onEdit = onEdit,
-                            )
-                        },
-                        editorContent = {
-                            NoteViewerContent(
-                                shared = shared,
-                                onOpenLocationTimeline = onOpenLocationTimeline,
-                                noteContent = noteContent,
-                            )
-                        },
-                        bottomContent = {
-                            Spacer(modifier = Modifier.fillMaxWidth())
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                },
-            )
-        },
-    )
 }
 
 /**

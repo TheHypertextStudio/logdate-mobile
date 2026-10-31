@@ -47,7 +47,6 @@ import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.FoldablePosture
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -65,7 +64,7 @@ class JournalMergeActivityTest {
         runDesktopComposeUiTest(width = 1280, height = 800) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalWorkspaceHosted provides true) {
+                    CompositionLocalProvider(LocalWorkspaceHosted provides true) {
                         JournalMergeScreenContent(
                             JournalMergeUiState(
                                 sourceTitle = source.title,

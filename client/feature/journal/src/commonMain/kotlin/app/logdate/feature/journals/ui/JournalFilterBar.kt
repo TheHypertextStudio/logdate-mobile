@@ -2,9 +2,6 @@
 
 package app.logdate.feature.journals.ui
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +19,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,7 +33,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.workspaceControlBackdrop
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.cd_switch_to_carousel
@@ -56,9 +51,9 @@ import org.jetbrains.compose.resources.stringResource
  *
  * Horizontally scrollable row containing a layout mode toggle and a sort dropdown.
  * The toggle button shows the *opposite* mode's icon as an affordance (e.g. grid icon when
- * in carousel mode). The background animates to `surfaceContainerHigh` when content scrolls
- * underneath, providing a visual separation cue. Only grid mode triggers this — carousel
- * content scrolls horizontally and never underlaps the bar.
+ * in carousel mode). The bar takes a raised backdrop only while content scrolls underneath,
+ * providing a visual separation cue. Only grid mode triggers this — carousel content scrolls
+ * horizontally and never underlaps the bar.
  */
 @Composable
 fun JournalFilterBar(
@@ -69,20 +64,10 @@ fun JournalFilterBar(
     modifier: Modifier = Modifier,
     isScrolled: Boolean = false,
 ) {
-    val backgroundColor by animateColorAsState(
-        targetValue =
-            if (isScrolled) {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
-        animationSpec = tween(200),
-        label = "FilterBarBackground",
-    )
-
     Row(
         modifier =
-            (if (LocalWorkspaceEnabled.current) modifier.workspaceControlBackdrop(isScrolled) else modifier.background(backgroundColor))
+            modifier
+                .workspaceControlBackdrop(isScrolled)
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = Spacing.lg, vertical = Spacing.sm)
                 .testTag("JournalFilterBar"),

@@ -55,7 +55,7 @@ class JournalMergeScreenTest {
                 }
             }
             onNodeWithText("Merge into…").assertDoesNotExist()
-            onNodeWithContentDescription("Journal settings").performClick()
+            onNodeWithContentDescription("Journal options").performClick()
             onNodeWithText("Merge into…").performClick()
             assertEquals(source.id, opened)
         }

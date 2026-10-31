@@ -127,14 +127,6 @@
     <string name="cd_switch_to_grid">Switch to grid view</string>
     <string name="cd_switch_to_carousel">Switch to carousel view</string>
     <string name="search_journals">Search journals</string>
-    <string name="search_entries_loading">Searching entries...</string>
-    <string name="cd_clear_search">Clear search</string>
-    <string name="cd_close_search">Close search</string>
-    <string name="search_no_results">No results for \"%1$s\"</string>
-    <string name="search_section_journals">Journals</string>
-    <string name="search_section_entries">Entries</string>
-    <string name="search_result_type_text_note">Text note</string>
-    <string name="search_result_type_voice_note">Voice note</string>
     <string name="cd_search">Search</string>
     <string name="search_see_all_results">See all results</string>
     <string name="journal_menu_open">Open journal</string>
@@ -152,8 +144,6 @@
     <string name="journal_change_order">Change order</string>
     <string name="cd_edit_entry">Edit entry</string>
     <string name="cd_back_to_journal">Back to journal</string>
-    <string name="cd_search_existing_content">Search existing content</string>
-    <string name="search_result_type_note">Note</string>
     <plurals name="journal_detail_item_count">
         <item quantity="one">%1$d item</item>
         <item quantity="other">%1$d items</item>
@@ -164,12 +154,6 @@
     <string name="journal_also_in">Also in</string>
     <string name="journal_header_title">Journal</string>
     <string name="cd_journal_options">Journal options</string>
-    <string
-    name="cd_sorted_newest_first"
-  >Sorted: Newest first (click to show oldest first)</string>
-    <string
-    name="cd_sorted_oldest_first"
-  >Sorted: Oldest first (click to show newest first)</string>
     <string name="untitled_journal">Untitled Journal</string>
     <string
     name="journal_delete_permanent_description"
