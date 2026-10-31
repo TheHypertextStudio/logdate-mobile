@@ -1,11 +1,11 @@
 package app.logdate.client.data.search
 
+import app.logdate.client.data.LenientJson
 import app.logdate.client.datastore.KeyValueStorage
 import app.logdate.client.repository.search.RecentSearchesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 /**
  * [RecentSearchesRepository] implementation backed by [KeyValueStorage].
@@ -16,7 +16,7 @@ import kotlinx.serialization.json.Json
 class DataStoreRecentSearchesRepository(
     private val storage: KeyValueStorage,
 ) : RecentSearchesRepository {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = LenientJson
 
     override fun observeRecentSearches(): Flow<List<String>> =
         storage.observeString(KEY).map { raw ->

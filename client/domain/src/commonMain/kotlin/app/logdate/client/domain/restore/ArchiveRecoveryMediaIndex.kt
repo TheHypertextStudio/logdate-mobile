@@ -1,8 +1,8 @@
 package app.logdate.client.domain.restore
 
+import app.logdate.client.domain.LenientJson
 import app.logdate.client.domain.export.ExportMediaManifest
 import app.logdate.client.domain.export.archive.ArchiveMediaFile
-import kotlinx.serialization.json.Json
 
 /** Finds originals by entry/block identity when the user supplies a more complete archive. */
 class ArchiveRecoveryMediaIndex(
@@ -15,7 +15,7 @@ class ArchiveRecoveryMediaIndex(
             ?.bundle
             ?.mediaInventoryJson
             ?.let {
-                Json { ignoreUnknownKeys = true }.decodeFromString<ArchiveMediaFile>(it).files.associate { item ->
+                LenientJson.decodeFromString<ArchiveMediaFile>(it).files.associate { item ->
                     item.path.value to
                         item.sha256
                 }
@@ -27,7 +27,7 @@ class ArchiveRecoveryMediaIndex(
                 is RestoreArchiveBundle.V1 -> archive.bundle
                 is RestoreArchiveBundle.V2 -> archive.bundle.adaptForRestore("", "").legacy
             }
-        val json = Json { ignoreUnknownKeys = true }
+        val json = LenientJson
         val manifest = bundle.mediaManifestJson?.let { json.decodeFromString<ExportMediaManifest>(it) }
         val media = manifest?.files?.associate { it.sourceUri to it.exportPath }
 

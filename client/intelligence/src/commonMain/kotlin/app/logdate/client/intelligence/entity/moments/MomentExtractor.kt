@@ -1,6 +1,7 @@
 package app.logdate.client.intelligence.entity.moments
 
 import app.logdate.client.intelligence.AIResult
+import app.logdate.client.intelligence.LenientJson
 import app.logdate.client.intelligence.cache.GenerativeAICache
 import app.logdate.client.intelligence.cache.GenerativeAICacheContentType
 import app.logdate.client.intelligence.generativeai.GenerativeAIChatClient
@@ -14,7 +15,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 /**
  * Extracts semantically coherent moments from a day's journal entries.
@@ -152,7 +152,7 @@ Guidelines:
 }
 """
 
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
     }
 }
 

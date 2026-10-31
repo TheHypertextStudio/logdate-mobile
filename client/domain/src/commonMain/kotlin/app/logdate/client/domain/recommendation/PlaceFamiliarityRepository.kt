@@ -1,11 +1,11 @@
 package app.logdate.client.domain.recommendation
 
 import app.logdate.client.datastore.KeyValueStorage
+import app.logdate.client.domain.LenientJson
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -75,7 +75,7 @@ class DefaultPlaceFamiliarityRepository(
 
     companion object {
         private const val KEY_PLACE_FAMILIARITY = "ambient_place_familiarity"
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
         private val REVISIT_COLLAPSE_WINDOW = 12.hours
     }
 }
