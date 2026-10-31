@@ -93,7 +93,7 @@ Core Feature Module
 - `:client:ui` - Shared UI components
 - `:client:repository` - Data access
 - `:client:permissions` - Permission handling
-- `:client:logdate-datastore` - Preferences storage
+- `:client:datastore` - Preferences storage
 - **Compose Multiplatform**: UI framework
 - **Material 3 Adaptive**: Responsive design components
 
@@ -150,11 +150,11 @@ AccountScreen(
 actual val coreFeatureModule: Module = module {
     includes(domainModule)
     includes(devicesModule)
-    
+
     single<BiometricGatekeeper> { AndroidBiometricGatekeeper() }
     single<ExportLauncher> { AndroidExportLauncher(androidContext()) }
     single<RestoreLauncher> { AndroidRestoreLauncher(androidContext()) }
-    
+
     viewModel { AppViewModel(get(), get(), get()) }
     viewModel { SettingsOverviewViewModel(get(), get(), get()) }
     viewModel { PrivacySettingsViewModel(get(), get(), get(), get(), get()) }
@@ -169,6 +169,7 @@ actual val coreFeatureModule: Module = module {
 ## TODOs
 
 ### Core Features
+
 - [ ] Add comprehensive documentation for all components
 - [ ] Implement deep linking support
 - [ ] Add comprehensive accessibility features
@@ -176,6 +177,7 @@ actual val coreFeatureModule: Module = module {
 - [ ] Add support for theme customization
 
 ### Account Features
+
 - [ ] Enhance passkey management
 - [ ] Implement account recovery options
 - [ ] Add multi-account support
@@ -183,6 +185,7 @@ actual val coreFeatureModule: Module = module {
 - [ ] Add account security audit features
 
 ### Settings Improvements
+
 - [ ] Add preference migration utilities
 - [ ] Implement backup/restore for settings
 - [ ] Add more granular privacy controls
@@ -190,6 +193,7 @@ actual val coreFeatureModule: Module = module {
 - [ ] Add import functionality
 
 ### User Experience
+
 - [ ] Improve onboarding flow
 - [ ] Add contextual help throughout the app
 - [ ] Implement user feedback collection

@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("app.logdate.jvm-service")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ktor)
     jacoco
@@ -17,17 +17,6 @@ application {
     mainClass.set("app.logdate.server.ApplicationKt")
     applicationDefaultJvmArgs =
         listOf("-Dio.ktor.development=${extra["io.ktor.development"] ?: "false"}")
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -131,7 +120,7 @@ tasks.test {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    toolVersion = libs.versions.jacoco.get()
 }
 
 tasks.jacocoTestReport {

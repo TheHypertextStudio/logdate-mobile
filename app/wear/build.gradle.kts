@@ -11,7 +11,10 @@ plugins {
     alias(libs.plugins.screenshot)
     alias(libs.plugins.gradlePlayPublisher)
     id("app.logdate.android-release")
+    id("app.logdate.managed-devices")
 }
+
+managedDeviceMatrix { wear() }
 
 /**
  * The watch ships on the phone's Play listing, as a Wear OS form factor, under the phone's package
@@ -19,7 +22,6 @@ plugins {
  * identity, versioning and signing come from the same plugin the phone's values are defined by.
  */
 val release = the<LogDateReleaseExtension>()
-release.requireSigningForReleaseTasks()
 
 val baselineProfileRequested =
     gradle.startParameter.taskNames.any { taskName ->
@@ -45,19 +47,6 @@ extensions.configure<ApplicationExtension> {
         testInstrumentationRunner = "app.logdate.wear.e2e.WearEmulatorTestRunner"
     }
 
-    release.signing?.let { key ->
-        signingConfigs {
-            create("release") {
-                storeFile = file(key.storeFile)
-                storePassword = key.storePassword
-                keyAlias = key.keyAlias
-                keyPassword = key.keyPassword
-                enableV1Signing = true
-                enableV2Signing = true
-            }
-        }
-    }
-
     buildTypes {
         debug {
             // Installs beside a release build, and matches the phone's debug package so a debug phone
@@ -67,12 +56,6 @@ extensions.configure<ApplicationExtension> {
         }
         release {
             isMinifyEnabled = false
-            signingConfig =
-                if (release.signsWithDebugKey) {
-                    signingConfigs.getByName("debug")
-                } else {
-                    signingConfigs.getByName("release")
-                }
             if (baselineProfileRequested) {
                 isProfileable = true
             }
@@ -84,7 +67,6 @@ extensions.configure<ApplicationExtension> {
         create("benchmark") {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
-            signingConfig = signingConfigs.getByName("debug")
             isProfileable = true
         }
     }
@@ -92,8 +74,8 @@ extensions.configure<ApplicationExtension> {
         compose = true
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         // Enable core library desugaring for health-connect
         isCoreLibraryDesugaringEnabled = true
     }
@@ -102,7 +84,7 @@ extensions.configure<ApplicationExtension> {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget.set(JvmTarget.JVM_17)
         freeCompilerArgs.add("-opt-in=kotlin.uuid.ExperimentalUuidApi")
     }
 }
@@ -144,7 +126,7 @@ dependencies {
     implementation(projects.client.database)
     implementation(projects.client.device)
     implementation(projects.client.location)
-    implementation(projects.client.logdateDatastore)
+    implementation(projects.client.datastore)
     implementation(libs.androidx.datastore.preferences)
     implementation(projects.client.networking)
     implementation(projects.client.sensor)

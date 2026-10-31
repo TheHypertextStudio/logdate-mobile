@@ -1,17 +1,6 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("app.logdate.jvm-service")
     id("app.logdate.test-database-environment")
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -23,7 +12,7 @@ dependencies {
     testImplementation(projects.client.device)
     testImplementation(projects.client.media)
     testImplementation(projects.client.repository)
-    testImplementation(projects.client.logdateDatastore)
+    testImplementation(projects.client.datastore)
     testImplementation(libs.sqlite.bundled)
     testImplementation(libs.exposed.jdbc)
     testImplementation(projects.shared.config)

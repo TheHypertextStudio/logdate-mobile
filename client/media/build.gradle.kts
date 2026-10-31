@@ -1,10 +1,7 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
+    id("app.logdate.kmp-library")
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.dokka)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
 }
@@ -12,14 +9,6 @@ plugins {
 kotlin {
     android {
         namespace = "app.logdate.client.media"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
         withHostTestBuilder {}
         androidResources {
             enable = true
@@ -30,23 +19,13 @@ kotlin {
                 file("proguard-rules.pro")
             }
         }
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
 
     jvm("desktop")
 
     sourceSets {
         val desktopMain by getting
 
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
@@ -76,7 +55,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(projects.client.device)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.shared.model)
             implementation(libs.koin.android)
             // Live Update builder methods (setRequestPromotedOngoing) need core 1.17 or later.

@@ -18,15 +18,10 @@ class DynamicFeaturePlugin : Plugin<Project> {
             pluginManager.apply("com.android.dynamic-feature")
 
             extensions.configure(DynamicFeatureExtension::class.java) {
-                val catalog =
-                    project.rootProject.extensions
-                        .getByType(org.gradle.api.artifacts.VersionCatalogsExtension::class.java)
-                        .named("libs")
-
-                compileSdk = catalog.findVersion("android-compileSdk").get().toString().toInt()
+                compileSdk = libs.intVersion("android-compileSdk")
 
                 defaultConfig {
-                    minSdk = catalog.findVersion("android-minSdk").get().toString().toInt()
+                    minSdk = libs.intVersion("android-minSdk")
                 }
 
                 buildTypes {

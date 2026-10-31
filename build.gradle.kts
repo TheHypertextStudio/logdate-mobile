@@ -1,13 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.android.build.api.dsl.ApplicationExtension
-import com.android.build.api.dsl.ManagedVirtualDevice
 import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.extensions.DetektExtension
-import org.gradle.api.Project
-import org.gradle.api.tasks.testing.Test
-import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
-import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
@@ -16,6 +10,7 @@ import org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask
 plugins {
     id("app.logdate.home-workspace")
     id("app.logdate.screenshot-coverage")
+    id("app.logdate.coverage-reports")
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
     alias(libs.plugins.kotlin.jvm) apply false
@@ -30,12 +25,11 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.gradlePlayPublisher) apply false
-    alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.dokka)
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
-    alias(libs.plugins.kover)
+    alias(libs.plugins.kover) apply false
     alias(libs.plugins.benManesVersions)
-    jacoco
 }
 
 // Pins the npm `ws` package pulled in transitively by the wasmJs() browser() targets
@@ -83,15 +77,15 @@ tasks.register("test") {
     dependsOn(gradle.includedBuild("build-logic").task(":test"))
 }
 
+val ktlintEngineVersion = libs.versions.ktlintEngine
+
 subprojects {
     apply {
-        // TODO: Migrate to version catalog
-        plugin("org.jetbrains.dokka")
         plugin("org.jlleitschuh.gradle.ktlint")
     }
 
     configure<KtlintExtension> {
-        version.set("1.5.0")
+        version.set(ktlintEngineVersion)
         filter {
             exclude { it.file.path.contains("/build/") }
         }
@@ -135,19 +129,6 @@ subprojects {
         baseline.set(file("detekt-baseline.xml"))
     }
 
-    val dokkaPlugin by configurations
-    dependencies {
-        // TODO: Figure out how to migrate to version catalog in build configuration
-        //noinspection UseTomlInstead
-        dokkaPlugin("org.jetbrains.dokka:versioning-plugin:2.2.0")
-    }
-
-    pluginManager.withPlugin("com.android.application") {
-        extensions.configure<ApplicationExtension> {
-            configureManagedDevices(project)
-        }
-    }
-
     dependencies {
         components {
             listOf(
@@ -162,37 +143,6 @@ subprojects {
                     }
                 }
             }
-        }
-    }
-}
-
-private val featureCoverageModules =
-    setOf(
-        ":app:android-main",
-        ":app:wear",
-    )
-
-subprojects {
-    tasks.withType<Test>().matching { it.name == "desktopTest" }.configureEach {
-        systemProperty("java.awt.headless", "true")
-    }
-    if (path in featureCoverageModules) {
-        apply(plugin = "jacoco")
-
-        tasks.withType<Test>().configureEach {
-            extensions.configure(JacocoTaskExtension::class) {
-                isIncludeNoLocationClasses = true
-                excludes = listOf("jdk.internal.*")
-            }
-        }
-    }
-}
-
-// Compose desktop tests render offscreen; do not register a foreground Java app on macOS.
-subprojects {
-    tasks.withType<Test>().configureEach {
-        if (name == "desktopTest") {
-            systemProperty("java.awt.headless", "true")
         }
     }
 }
@@ -255,10 +205,16 @@ fun existingTaskPaths(
         findProject(path)?.tasks?.findByName(taskName)?.path
     }
 
+// The API reference merges every published AT Protocol module into one site at build/dokka/html.
+dependencies {
+    atprotoModulePaths.forEach { dokka(project(it)) }
+}
+
 tasks.register("generateAtprotoDokka") {
     group = "documentation"
-    description = "Generate Dokka HTML publications for every ATProto module."
+    description = "Generate Dokka HTML publications for every ATProto module, and the merged site."
     dependsOn(atprotoModulePaths.map { "$it:dokkaGeneratePublicationHtml" })
+    dependsOn(":dokkaGeneratePublicationHtml")
 }
 
 tasks.register("publishAtprotoToMavenLocal") {
@@ -279,39 +235,6 @@ tasks.register("managedAndroidSmoke") {
     dependsOn(":app:android-main:smokeDevicesGroupDebugAndroidTest")
 }
 
-tasks.register<Exec>("managedAndroidE2EDebugAndroidTest") {
-    group = "verification"
-    description = "Run app/android-main end-to-end instrumentation tests on the managed Android smoke lane."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:smokeDevicesGroupDebugAndroidTest",
-        "-Plogdate.androidTestPackage=app.logdate.client.e2e",
-    )
-}
-
-tasks.register<Exec>("managedAndroidMultiWindowDebugAndroidTest") {
-    group = "verification"
-    description = "Run the multi-window Android e2e suite on the managed Android matrix."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:deviceMatrixGroupDebugAndroidTest",
-        "-Plogdate.androidTestClass=app.logdate.client.e2e.MultiWindowEditorE2ETest",
-    )
-}
-
-tasks.register<Exec>("managedAndroidShareDebugAndroidTest") {
-    group = "verification"
-    description = "Run the Android share e2e suite on the managed Android smoke lane."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:smokeDevicesGroupDebugAndroidTest",
-        "-Plogdate.androidTestClass=app.logdate.client.e2e.IncomingShareE2ETest,app.logdate.client.e2e.ShareReceiverE2ETest,app.logdate.client.e2e.SharingEntryPointsE2ETest",
-    )
-}
-
 tasks.register("managedAndroidMatrix") {
     group = "verification"
     description = "Run the managed Android phone and tablet matrix for app/android-main."
@@ -322,18 +245,6 @@ tasks.register("managedTabletDebugAndroidTest") {
     group = "verification"
     description = "Run app/android-main instrumented tests on the managed tablet device."
     dependsOn(":app:android-main:tabletDevicesGroupDebugAndroidTest")
-}
-
-tasks.register<Exec>("managedTabletMediaCoverageAndroidTest") {
-    group = "verification"
-    description = "Run AndroidMediaManager instrumentation coverage on the managed tablet device."
-    workingDir = rootDir
-    commandLine(
-        rootDir.resolve("gradlew").absolutePath,
-        ":app:android-main:createManagedDeviceDebugAndroidTestCoverageReport",
-        "-Plogdate.managedDeviceProfile=tabletOnly",
-        "-Plogdate.androidTestClass=app.logdate.client.media.AndroidMediaManagerTest",
-    )
 }
 
 tasks.register("managedWearDebugAndroidTest") {
@@ -473,497 +384,4 @@ tasks.register("managedDeviceDebugAndroidTest") {
         ":app:android-main:deviceMatrixGroupDebugAndroidTest",
         "managedWearDebugAndroidTest",
     )
-}
-
-tasks.register<JacocoReport>("featureCoverageReport") {
-    group = "verification"
-    description = "Generate coverage for the Wear synced-audio playback feature."
-
-    val wearProject = project(":app:wear")
-    val phoneProject = project(":app:android-main")
-    val composeProject = project(":app:compose-main")
-    val mediaProject = project(":client:media")
-
-    dependsOn(
-        ":app:wear:testDebugUnitTest",
-        ":app:android-main:testDebugUnitTest",
-    )
-
-    executionData.setFrom(
-        files(
-            wearProject.layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
-            phoneProject.layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
-        ),
-    )
-
-    classDirectories.setFrom(
-        files(
-            wearProject.fileTree(
-                wearProject.layout.buildDirectory
-                    .dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes")
-                    .get()
-                    .asFile,
-            ) {
-                include(
-                    "app/logdate/wear/playback/PhoneSyncedAudioResolver*.class",
-                    "app/logdate/wear/presentation/timeline/WearTimelineViewModel*.class",
-                    "app/logdate/wear/sync/GoogleWearDataLayerClient*.class",
-                )
-            },
-            composeProject.fileTree(
-                composeProject.layout.buildDirectory
-                    .dir("classes/kotlin/android/main")
-                    .get()
-                    .asFile,
-            ) {
-                include(
-                    "app/logdate/client/sync/PhoneDataLayerListenerService*.class",
-                    "app/logdate/client/sync/DefaultPhoneWearSyncBridge*.class",
-                    "app/logdate/client/sync/GooglePhoneWearTransport*.class",
-                    "app/logdate/client/sync/AndroidPhoneAudioStreamOpener*.class",
-                )
-            },
-            mediaProject.fileTree(
-                mediaProject.layout.buildDirectory
-                    .dir("classes/kotlin/android/main")
-                    .get()
-                    .asFile,
-            ) {
-                include("app/logdate/client/media/audio/AndroidAudioPlaybackManager*.class")
-            },
-        ),
-    )
-
-    sourceDirectories.setFrom(
-        files(
-            wearProject.layout.projectDirectory.dir("src/main/kotlin"),
-            composeProject.layout.projectDirectory.dir("src/androidMain/kotlin"),
-            mediaProject.layout.projectDirectory.dir("src/androidMain/kotlin"),
-        ),
-    )
-    additionalSourceDirs.setFrom(sourceDirectories)
-
-    reports {
-        xml.required.set(true)
-        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/featureCoverageReport/featureCoverageReport.xml"))
-        html.required.set(true)
-        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/featureCoverageReport/html"))
-        csv.required.set(false)
-    }
-
-    doFirst {
-        val missingExecFiles =
-            executionData.files.filterNot { it.exists() }
-        if (missingExecFiles.isNotEmpty()) {
-            throw GradleException(
-                "Missing JaCoCo execution data for feature coverage: " +
-                    missingExecFiles.joinToString { it.absolutePath },
-            )
-        }
-    }
-}
-
-tasks.register<JacocoReport>("mediaAndroidTestCoverageReport") {
-    group = "verification"
-    description = "Generate Android instrumentation coverage for AndroidMediaManager."
-
-    val appProject = project(":app:android-main")
-    val mediaProject = project(":client:media")
-    val managedDeviceCoverageFiles =
-        files(
-            appProject.layout.buildDirectory.file(
-                "outputs/managed_device_code_coverage/debug/largeScreenTabletApi35/coverage.ec",
-            ),
-            appProject.layout.buildDirectory.file(
-                "intermediates/managed_device_code_coverage/debugAndroidTest/largeScreenTabletApi35DebugAndroidTest/coverage.ec",
-            ),
-        )
-
-    dependsOn("managedTabletMediaCoverageAndroidTest")
-
-    executionData.setFrom(
-        managedDeviceCoverageFiles,
-    )
-
-    classDirectories.setFrom(
-        files(
-            mediaProject.fileTree(
-                mediaProject.layout.buildDirectory
-                    .dir("classes/kotlin/android/main")
-                    .get()
-                    .asFile,
-            ) {
-                include("app/logdate/client/media/AndroidMediaManager*.class")
-            },
-        ),
-    )
-
-    sourceDirectories.setFrom(
-        files(
-            mediaProject.layout.projectDirectory.dir("src/androidMain/kotlin"),
-        ),
-    )
-    additionalSourceDirs.setFrom(sourceDirectories)
-
-    reports {
-        xml.required.set(true)
-        xml.outputLocation.set(
-            layout.buildDirectory.file("reports/jacoco/mediaAndroidTestCoverageReport/mediaAndroidTestCoverageReport.xml"),
-        )
-        html.required.set(true)
-        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/mediaAndroidTestCoverageReport/html"))
-        csv.required.set(false)
-    }
-
-    doFirst {
-        val coverageFiles =
-            executionData.files.filter { it.exists() }
-        if (coverageFiles.isEmpty()) {
-            throw GradleException(
-                "Missing managed-device Android instrumentation coverage data for media coverage under " +
-                    managedDeviceCoverageFiles.files.joinToString { it.absolutePath },
-            )
-        }
-    }
-}
-
-// Kover configuration for test coverage
-kover {
-    reports {
-        total {
-            html {
-                onCheck = true
-                htmlDir = layout.buildDirectory.dir("reports/kover/html")
-            }
-            xml {
-                onCheck = true
-                xmlFile = layout.buildDirectory.file("reports/kover/coverage.xml")
-            }
-            verify {
-                rule {
-                    minBound(70) // 70% minimum coverage threshold
-                }
-            }
-        }
-        filters {
-            excludes {
-                // Exclude generated code and build configuration
-                classes(
-                    "*.BuildConfig*",
-                    "*.*Test*",
-                    "*.test.*",
-                    "*.*_Impl*", // Room generated DAOs
-                    "*.*_Factory*", // Koin generated factories
-                    "*.di.*Module*", // DI modules
-                    "*ComposableSingletons*", // Compose generated code
-                    "*.*\$WhenMappings*", // Kotlin when expression mappings
-                )
-                packages(
-                    "*.di", // All DI packages
-                    "*.test", // Test packages
-                    "*.generated", // Generated code packages
-                )
-                annotatedBy(
-                    "androidx.compose.runtime.Composable", // Exclude Composable functions
-                    "org.koin.core.annotation.Module", // Exclude Koin modules
-                )
-            }
-        }
-    }
-}
-
-private data class ManagedVirtualDeviceConfig(
-    val deviceName: String,
-    val hardwareProfile: String,
-    val apiLevel: Int,
-    val systemImageSource: String,
-    val minorApiLevel: Int = 0,
-    val pageAlignment: ManagedVirtualDevice.PageAlignment =
-        ManagedVirtualDevice.PageAlignment.FORCE_16KB_PAGES,
-)
-
-private data class ManagedDeviceGroupConfig(
-    val groupName: String,
-    val targetDeviceNames: List<String>,
-)
-
-private data class ManagedDeviceProjectConfig(
-    val localDevices: List<ManagedVirtualDeviceConfig>,
-    val groups: List<ManagedDeviceGroupConfig>,
-)
-
-private val managedDeviceProfile =
-    providers.gradleProperty("logdate.managedDeviceProfile").orNull
-
-private fun managedDeviceConfigFor(projectPath: String): ManagedDeviceProjectConfig? =
-    when (projectPath) {
-        ":app:android-main" ->
-            if (managedDeviceProfile == "tabletOnly") {
-                ManagedDeviceProjectConfig(
-                    localDevices =
-                        listOf(
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "largeScreenTabletApi35",
-                                hardwareProfile = "Pixel Tablet",
-                                apiLevel = 35,
-                                systemImageSource = "google",
-                            ),
-                        ),
-                    groups =
-                        listOf(
-                            ManagedDeviceGroupConfig(
-                                groupName = "smokeDevices",
-                                targetDeviceNames = listOf("largeScreenTabletApi35"),
-                            ),
-                            ManagedDeviceGroupConfig(
-                                groupName = "tabletDevices",
-                                targetDeviceNames = listOf("largeScreenTabletApi35"),
-                            ),
-                            ManagedDeviceGroupConfig(
-                                groupName = "deviceMatrix",
-                                targetDeviceNames = listOf("largeScreenTabletApi35"),
-                            ),
-                        ),
-                )
-            } else if (managedDeviceProfile == "recoveryAcceptance") {
-                ManagedDeviceProjectConfig(
-                    localDevices =
-                        listOf(
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "recoveryAcceptanceDeviceAApi35",
-                                hardwareProfile = "Pixel Tablet",
-                                apiLevel = 35,
-                                systemImageSource = "google",
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "recoveryAcceptanceTabletApi35",
-                                hardwareProfile = "Pixel Tablet",
-                                apiLevel = 35,
-                                systemImageSource = "google",
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "recoveryAcceptanceRestartApi35",
-                                hardwareProfile = "Pixel Tablet",
-                                apiLevel = 35,
-                                systemImageSource = "google",
-                            ),
-                        ),
-                    groups =
-                        listOf(
-                            ManagedDeviceGroupConfig(
-                                groupName = "recoveryAcceptanceDevices",
-                                targetDeviceNames =
-                                    listOf(
-                                        "recoveryAcceptanceDeviceAApi35",
-                                        "recoveryAcceptanceTabletApi35",
-                                        "recoveryAcceptanceRestartApi35",
-                                    ),
-                            ),
-                        ),
-                )
-            } else {
-                // The Studio device testing standard's role matrix (product-standards
-                // docs/device-testing.md): oldest supported and target-SDK phones, foldable,
-                // tablet, desktop, and one phone per API level where LogDate's code branches on
-                // platform behavior (Android 12, 13, and 14).
-                ManagedDeviceProjectConfig(
-                    localDevices =
-                        listOf(
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "oldestSupportedPhoneApi30",
-                                hardwareProfile = "Pixel 2",
-                                apiLevel = 30,
-                                systemImageSource = "google",
-                                pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "phoneApi31",
-                                hardwareProfile = "Pixel 9 Pro",
-                                apiLevel = 31,
-                                systemImageSource = "google",
-                                pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "phoneApi33",
-                                hardwareProfile = "Pixel 9 Pro",
-                                apiLevel = 33,
-                                systemImageSource = "google",
-                                pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "phoneApi34",
-                                hardwareProfile = "Pixel 9 Pro",
-                                apiLevel = 34,
-                                systemImageSource = "google",
-                                pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                            ),
-                            // Android 17: also used by the OS integration captures (./run screenshots:os).
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "flagshipPhoneApi37",
-                                hardwareProfile = "Pixel 9 Pro",
-                                apiLevel = 37,
-                                systemImageSource = "google",
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "foldableApi37",
-                                hardwareProfile = "Pixel 9 Pro Fold",
-                                apiLevel = 37,
-                                systemImageSource = "google",
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "largeScreenTabletApi37",
-                                hardwareProfile = "Pixel Tablet",
-                                apiLevel = 37,
-                                systemImageSource = "google",
-                            ),
-                            ManagedVirtualDeviceConfig(
-                                deviceName = "desktopApi34",
-                                hardwareProfile = "Medium Desktop",
-                                apiLevel = 34,
-                                systemImageSource = "android-desktop",
-                                pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                            ),
-                        ),
-                    groups =
-                        listOf(
-                            ManagedDeviceGroupConfig(
-                                groupName = "smokeDevices",
-                                targetDeviceNames = listOf("flagshipPhoneApi37", "largeScreenTabletApi37"),
-                            ),
-                            ManagedDeviceGroupConfig(
-                                groupName = "phoneDevices",
-                                targetDeviceNames = listOf("oldestSupportedPhoneApi30", "flagshipPhoneApi37"),
-                            ),
-                            ManagedDeviceGroupConfig(
-                                groupName = "tabletDevices",
-                                targetDeviceNames = listOf("largeScreenTabletApi37"),
-                            ),
-                            ManagedDeviceGroupConfig(
-                                groupName = "deviceMatrix",
-                                targetDeviceNames =
-                                    listOf(
-                                        "oldestSupportedPhoneApi30",
-                                        "flagshipPhoneApi37",
-                                        "foldableApi37",
-                                        "largeScreenTabletApi37",
-                                        "desktopApi34",
-                                    ),
-                            ),
-                            ManagedDeviceGroupConfig(
-                                groupName = "apiMatrix",
-                                targetDeviceNames =
-                                    listOf(
-                                        "oldestSupportedPhoneApi30",
-                                        "phoneApi31",
-                                        "phoneApi33",
-                                        "phoneApi34",
-                                        "flagshipPhoneApi37",
-                                    ),
-                            ),
-                        ),
-                )
-            }
-
-        ":tools:native-restore-driver" ->
-            ManagedDeviceProjectConfig(
-                localDevices =
-                    listOf(
-                        ManagedVirtualDeviceConfig(
-                            deviceName = "restorePairApi34",
-                            hardwareProfile = "Pixel 9 Pro",
-                            apiLevel = 34,
-                            systemImageSource = "google",
-                            pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                        ),
-                        ManagedVirtualDeviceConfig(
-                            deviceName = "d2dPairApi34",
-                            hardwareProfile = "Pixel 9 Pro",
-                            apiLevel = 34,
-                            systemImageSource = "google_apis_playstore",
-                            pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                        ),
-                        ManagedVirtualDeviceConfig(
-                            deviceName = "restoreCallbackApi36_1",
-                            hardwareProfile = "Pixel 9 Pro",
-                            apiLevel = 36,
-                            minorApiLevel = 1,
-                            systemImageSource = "google_apis_playstore",
-                            pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                        ),
-                    ),
-                groups =
-                    listOf(
-                        ManagedDeviceGroupConfig(
-                            groupName = "nativeRestorePair",
-                            targetDeviceNames = listOf("restorePairApi34"),
-                        ),
-                        ManagedDeviceGroupConfig(
-                            groupName = "nativeD2dPair",
-                            targetDeviceNames = listOf("d2dPairApi34"),
-                        ),
-                    ),
-            )
-
-        ":app:wear" ->
-            ManagedDeviceProjectConfig(
-                localDevices =
-                    listOf(
-                        ManagedVirtualDeviceConfig(
-                            deviceName = "wearSmallRoundApi34",
-                            hardwareProfile = "Wear OS Small Round",
-                            apiLevel = 34,
-                            systemImageSource = "android-wear",
-                            pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_4KB_PAGES,
-                        ),
-                    ),
-                groups =
-                    listOf(
-                        ManagedDeviceGroupConfig(
-                            groupName = "wearDevices",
-                            targetDeviceNames = listOf("wearSmallRoundApi34"),
-                        ),
-                    ),
-            )
-
-        else -> null
-    }
-
-private fun ApplicationExtension.configureManagedDevices(project: Project) {
-    if (!project.file("src/androidTest").exists()) return
-
-    val config = managedDeviceConfigFor(project.path) ?: return
-    testOptions {
-        managedDevices {
-            val managedDevicesByName =
-                config.localDevices.associate { deviceConfig ->
-                    val managedDevice =
-                        localDevices.findByName(deviceConfig.deviceName)
-                            ?: localDevices.maybeCreate(deviceConfig.deviceName).apply {
-                                device = deviceConfig.hardwareProfile
-                                apiLevel = deviceConfig.apiLevel
-                                if (deviceConfig.minorApiLevel != 0) {
-                                    // AGP 9.3.2 consumes this task input but does not expose it in
-                                    // the public device interface. Fail on incompatible upgrades
-                                    // rather than silently exercising Android 36 instead of 36.1.
-                                    (this as com.android.build.gradle.internal.dsl.ManagedVirtualDevice).sdkMinorVersion =
-                                        deviceConfig.minorApiLevel
-                                }
-                                systemImageSource = deviceConfig.systemImageSource
-                                pageAlignment = deviceConfig.pageAlignment
-                            }
-                    deviceConfig.deviceName to managedDevice
-                }
-            groups {
-                config.groups.forEach { groupConfig ->
-                    if (findByName(groupConfig.groupName) == null) {
-                        create(groupConfig.groupName) {
-                            groupConfig.targetDeviceNames.forEach { deviceName ->
-                                targetDevices.add(checkNotNull(managedDevicesByName[deviceName]))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

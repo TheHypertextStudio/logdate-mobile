@@ -21,7 +21,7 @@ hanging on a spinner, or showing a chronological photo dump. That's the bar.
 
 - [x] `RewindContent.Image.significanceScore` is populated for every image panel
       a curated Rewind ships with. Asserted by `RewindMediaCuratorTest` for a small fixture and
-      again at 240 photos. Sampling a *real* account is still worth doing once — the tests use a
+      again at 240 photos. Sampling a _real_ account is still worth doing once — the tests use a
       seeded signal extractor, not a device's photo library.
 - [x] Screenshots, document scans, and burst duplicates are filtered out. `PhotoHardFilterTest`
       and `RewindMediaCuratorTest` cover the rules and the mixed fixture, and the pipeline is
@@ -33,11 +33,7 @@ hanging on a spinner, or showing a chronological photo dump. That's the bar.
       (≥200 photos for a single week). `RewindMediaCuratorTest` runs 240 photos across a week with
       story beats and asserts both caps, plus the documented cited-item allowance.
 
-      Note for anyone extending these: a default `MediaSignals` has no dimensions, so the hard
-      filter drops it below `minResolutionPx` and the fixture curates to nothing — an assertion
-      that iterates the result then passes without checking anything. And with no narrative there
-      are no beats, so everything becomes a free agent, which by design is not counted against the
-      total cap.
+      Note for anyone extending these: a default `MediaSignals` has no dimensions, so the hard filter drops it below `minResolutionPx` and the fixture curates to nothing — an assertion that iterates the result then passes without checking anything. And with no narrative there are no beats, so everything becomes a free agent, which by design is not counted against the total cap.
 
 ## Tier coverage
 
@@ -102,7 +98,7 @@ does not reach them at all.
 
 ```bash
 ./gradlew :client:intelligence:allTests :client:domain:allTests :client:repository:allTests \
-          :client:feature:rewind:allTests :client:database:allTests :client:logdate-datastore:allTests
+          :client:feature:rewind:allTests :client:database:allTests :client:datastore:allTests
 ./gradlew ktlintCheck
 ./gradlew :app:android-main:assembleDebug :app:android-main:smokeDevicesGroupDebugAndroidTest
 ./gradlew :app:compose-main:packageDmg
@@ -117,6 +113,7 @@ No `connectedDebugAndroidTest`, no `adb install` against a physical device.
 ## End-to-end manual verification
 
 Seed an emulator with:
+
 - one week of journal entries (mix of short / long, person names, emotion words)
 - one screenshot, one document scan, one 5-photo burst
 - 30 normal photos with realistic timestamps

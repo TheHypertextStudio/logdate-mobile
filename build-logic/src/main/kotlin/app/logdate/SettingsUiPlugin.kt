@@ -6,12 +6,13 @@ import org.gradle.api.Project
 class SettingsUiPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val parser = project.configurations.create("settingsUiPsiCompiler") { isCanBeConsumed = false }
-        project.dependencies.add(parser.name, "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.2.21")
+        project.dependencies.add(parser.name, kotlinCompilerEmbeddable(project))
         val check =
             project.tasks.register("checkSettingsUiContract", CheckSettingsUiContract::class.java) {
                 group = "verification"
                 description = "Checks shared settings rows and archive option sheets."
                 parserClasspath.from(parser)
+                result.set(project.layout.buildDirectory.file("verifications/settings-ui-contract.txt"))
                 sources.from(
                     project.rootProject.fileTree("client") {
                         include("**/src/commonMain/**/*.kt")

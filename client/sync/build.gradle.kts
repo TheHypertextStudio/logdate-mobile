@@ -1,16 +1,11 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
 import app.logdate.GenerateConformanceFixtures
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.testing.Test
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
+    id("app.logdate.kmp-library")
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.dokka)
 }
 
 // The conversion tests check the number rules against the same known answers the Mac and Linux apps
@@ -30,38 +25,19 @@ val generateConversionVectors =
 kotlin {
     android {
         namespace = "app.logdate.client.sync"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
         withHostTestBuilder {}
         // The backup worker's foreground notification needs strings, and the module has to own
         // them: it is the module Android holds responsible for the service.
         androidResources {
             enable = true
         }
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
 
     jvm("desktop")
 
     sourceSets {
         val desktopMain by getting
 
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             // Project dependencies
             implementation(projects.shared.model)
@@ -69,7 +45,7 @@ kotlin {
             implementation(projects.client.networking)
             implementation(projects.client.repository)
             implementation(projects.client.database)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.device)
             implementation(projects.client.media)
             implementation(projects.client.text)
@@ -104,7 +80,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.ktor.client.mock)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.util)
             implementation(libs.okio)
         }

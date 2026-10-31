@@ -120,7 +120,7 @@ publishing {
                     uri(
                         providers.gradleProperty("ossrh.publish.url").orNull
                             ?: providers.environmentVariable("OSSRH_PUBLISH_URL").orNull
-                            ?: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/",
+                            ?: app.logdate.CENTRAL_PORTAL_STAGING_URL,
                     )
                 credentials {
                     username = ossrhUser

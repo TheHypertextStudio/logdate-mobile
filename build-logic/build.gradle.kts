@@ -12,18 +12,35 @@ dependencies {
     compileOnly(kotlin("compiler-embeddable"))
     testImplementation(kotlin("compiler-embeddable"))
     testImplementation(kotlin("test"))
-    implementation("de.undercouch:gradle-download-task:5.7.0")
-    implementation("org.apache.commons:commons-compress:1.28.0")
-    implementation("org.jetbrains.dokka:dokka-gradle-plugin:2.2.0")
-    compileOnly("com.android.tools.build:gradle:9.1.1")
-    // The Kotlin Gradle plugin is on the classpath of every module that applies lexicon-models.
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.21")
+    implementation(libs.commons.compress)
+    implementation(libs.dokka.gradlePlugin)
+    // The root build puts these on every module's classpath, at the versions the catalog names.
+    compileOnly(libs.android.gradlePlugin)
+    compileOnly(libs.kotlin.gradlePlugin)
+    compileOnly(libs.kover.gradlePlugin)
+}
 
-    testImplementation(kotlin("test"))
+// TestKit builds that apply build-logic's convention plugins need the plugins those conventions
+// configure, which the real build puts on the classpath from its root project.
+val testPluginClasspath by configurations.creating
+dependencies {
+    testPluginClasspath(libs.android.gradlePlugin)
+    testPluginClasspath(libs.kotlin.gradlePlugin)
+}
+tasks.pluginUnderTestMetadata {
+    pluginClasspath.from(testPluginClasspath)
 }
 
 tasks.test {
     useJUnitPlatform()
+    // Keeps TestKit's Gradle home, with its instrumented plugin jars, in this build's output.
+    systemProperty(
+        "logdate.testKitDir",
+        layout.buildDirectory
+            .dir("test-kit")
+            .get()
+            .asFile.absolutePath,
+    )
 }
 
 gradlePlugin {
@@ -59,6 +76,26 @@ gradlePlugin {
         register("testDatabaseEnvironment") {
             id = "app.logdate.test-database-environment"
             implementationClass = "app.logdate.TestDatabaseEnvironmentPlugin"
+        }
+        register("kmpLibrary") {
+            id = "app.logdate.kmp-library"
+            implementationClass = "app.logdate.KmpLibraryConventionPlugin"
+        }
+        register("jvmService") {
+            id = "app.logdate.jvm-service"
+            implementationClass = "app.logdate.JvmServiceConventionPlugin"
+        }
+        register("benchmark") {
+            id = "app.logdate.benchmark"
+            implementationClass = "app.logdate.BenchmarkConventionPlugin"
+        }
+        register("managedDevices") {
+            id = "app.logdate.managed-devices"
+            implementationClass = "app.logdate.ManagedDevicesPlugin"
+        }
+        register("coverageReports") {
+            id = "app.logdate.coverage-reports"
+            implementationClass = "app.logdate.CoverageReportsPlugin"
         }
         register("androidRelease") {
             id = "app.logdate.android-release"
