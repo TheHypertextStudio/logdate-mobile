@@ -5,7 +5,6 @@ import app.logdate.client.domain.account.GetCurrentEntitlementUseCase
 import app.logdate.client.domain.activity.ActivityPresenter
 import app.logdate.client.domain.activity.ActivityUiState
 import app.logdate.client.domain.activity.CaptureActivitySource
-import app.logdate.client.domain.app.GetAppInfoUseCase
 import app.logdate.client.domain.dayboundary.DatastoreDayBoundaryPreferences
 import app.logdate.client.domain.dayboundary.DayBoundarySettingsRepository
 import app.logdate.client.domain.dayboundary.DefaultDayBoundarySettingsRepository
@@ -20,12 +19,9 @@ import app.logdate.client.domain.events.GetEventByIdUseCase
 import app.logdate.client.domain.events.ImportDeviceCalendarEventsUseCase
 import app.logdate.client.domain.events.InferEventsUseCase
 import app.logdate.client.domain.events.LinkNoteToEventUseCase
-import app.logdate.client.domain.events.ObserveEventsForDateRangeUseCase
 import app.logdate.client.domain.events.ObserveEventsForMonthUseCase
-import app.logdate.client.domain.events.ObserveEventsForNoteUseCase
 import app.logdate.client.domain.events.ObserveImportedEventsUseCase
 import app.logdate.client.domain.events.ObserveLinkedNotesForEventUseCase
-import app.logdate.client.domain.events.ObserveNotesForEventUseCase
 import app.logdate.client.domain.events.ObserveUpcomingEventsUseCase
 import app.logdate.client.domain.events.ObserveUserPlacesUseCase
 import app.logdate.client.domain.events.UnlinkNoteFromEventUseCase
@@ -48,7 +44,6 @@ import app.logdate.client.domain.notes.AddNoteUseCase
 import app.logdate.client.domain.notes.FetchEntryUseCase
 import app.logdate.client.domain.notes.FetchNotesForDayUseCase
 import app.logdate.client.domain.notes.FetchTodayNotesUseCase
-import app.logdate.client.domain.notes.GetAllAudioNotesUseCase
 import app.logdate.client.domain.notes.HasNotesForTodayUseCase
 import app.logdate.client.domain.notes.RemoveNoteUseCase
 import app.logdate.client.domain.notes.drafts.CleanupExpiredDraftsUseCase
@@ -58,7 +53,6 @@ import app.logdate.client.domain.notes.drafts.DeleteEntryDraftUseCase
 import app.logdate.client.domain.notes.drafts.FetchEntryDraftUseCase
 import app.logdate.client.domain.notes.drafts.FetchMostRecentDraftUseCase
 import app.logdate.client.domain.notes.drafts.GetAllDraftsUseCase
-import app.logdate.client.domain.notes.drafts.SetEntryDraftPendingMediaUseCase
 import app.logdate.client.domain.notes.drafts.UpdateEntryDraftUseCase
 import app.logdate.client.domain.onboarding.ProcessPersonalIntroductionUseCase
 import app.logdate.client.domain.places.PlaceResolutionCache
@@ -139,7 +133,6 @@ val domainModule: Module =
         factory { GetPeopleUseCase(get()) }
 
         // App info
-        factory { GetAppInfoUseCase(get()) }
 
         // Export
         factory { ExportUserDataUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
@@ -165,7 +158,6 @@ val domainModule: Module =
         factory { FetchNotesForDayUseCase(get()) }
         factory { HasNotesForTodayUseCase(get()) }
         factory { RemoveNoteUseCase(get()) }
-        factory { GetAllAudioNotesUseCase(get()) }
 
         // Drafts
         factory { CleanupExpiredDraftsUseCase(get()) }
@@ -185,7 +177,6 @@ val domainModule: Module =
         factory { FetchMostRecentDraftUseCase(get()) }
         factory { GetAllDraftsUseCase(get()) }
         factory { UpdateEntryDraftUseCase(get()) }
-        factory { SetEntryDraftPendingMediaUseCase(get()) }
 
         // Editor
         factory { ObserveEditorDataUseCase(get(), get(), get(), get()) }
@@ -281,13 +272,10 @@ val domainModule: Module =
         factory { DeleteJournalUseCase(get()) }
 
         // Events
-        factory { ObserveEventsForDateRangeUseCase(get()) }
         factory { ObserveEventsForMonthUseCase(get()) }
         factory { GetEventByIdUseCase(get()) }
         factory { UpdateEventUseCase(get()) }
         factory { DeleteEventUseCase(get()) }
-        factory { ObserveEventsForNoteUseCase(get()) }
-        factory { ObserveNotesForEventUseCase(get()) }
         factory { LinkNoteToEventUseCase(get()) }
         factory { UnlinkNoteFromEventUseCase(get()) }
         factory { ObserveLinkedNotesForEventUseCase(get(), get()) }
