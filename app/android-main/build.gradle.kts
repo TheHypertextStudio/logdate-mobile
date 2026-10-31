@@ -59,7 +59,8 @@ val resolvedGoogleMapsApiKey =
  * the package matches, so -Plogdate.applicationId rebuilds the current source under the old
  * identity until those installs are migrated.
  */
-val baseApplicationId: String = the<LogDateReleaseExtension>().applicationId
+val release = the<LogDateReleaseExtension>()
+val baseApplicationId: String = release.applicationId
 
 /**
  * Debug installs under their own identity so they can sit beside a dogfood build rather than
@@ -72,117 +73,7 @@ val baseApplicationId: String = the<LogDateReleaseExtension>().applicationId
  * Digital Asset Links for passkey sign-in, which binds package and certificate together. Debug
  * cannot do passkey sign-in under any identity, so it gives up nothing here.
  */
-val debugApplicationIdSuffix: String = the<LogDateReleaseExtension>().debugApplicationIdSuffix
-
-/**
- * Production release versionCode comes from CI. Priority order:
- *
- *  1. `LOGDATE_VERSION_CODE` env var (CI sets this from the commit graph plus a
- *     small commit-hash-derived provenance fragment).
- *  2. `logdate.versionCode` Gradle property (for ad-hoc local release builds).
- *  3. Fallback `1` — the historical hard-coded value, kept so `assembleDebug` still works
- *     without extra configuration.
- *
- * Play Store requires monotonically-increasing versionCodes per upload, so keeping this in CI
- * rather than hard-coding prevents collisions while keeping release provenance tied to a commit.
- */
-val resolvedVersionCode: Int =
-    (
-        System.getenv("LOGDATE_VERSION_CODE")
-            ?: providers.gradleProperty("logdate.versionCode").orNull
-    )?.toIntOrNull() ?: 1
-
-val resolvedVersionName: String =
-    System.getenv("LOGDATE_VERSION_NAME")
-        ?: providers.gradleProperty("logdate.versionName").orNull
-        ?: "0.1.0"
-val resolvedPlayTrack: String =
-    System.getenv("LOGDATE_PLAY_TRACK")
-        ?: providers.gradleProperty("logdate.play.track").orNull
-        ?: "internal"
-
-/**
- * Release signing material. Resolved in order:
- *
- *  1. Env vars (CI/secrets): `LOGDATE_RELEASE_STORE_FILE`, `LOGDATE_RELEASE_STORE_PASSWORD`,
- *     `LOGDATE_RELEASE_KEY_ALIAS`, `LOGDATE_RELEASE_KEY_PASSWORD`
- *  2. `~/.gradle/gradle.properties` (`logdate.release.*`)
- *  3. The env file `scripts/create-signing-keystore.sh` already writes next to the keystore it
- *     creates -- `$LOGDATE_SIGNING_DIR/production-upload.env` (default
- *     `~/.logdate-signing/production-upload.env`) -- read automatically so a machine that has
- *     already run that script needs no further setup at all.
- *
- * A normal release build fails closed when none of these resolve. Local benchmark and
- * baseline-profile work may explicitly opt into debug signing with
- * `-Plogdate.allowDebugReleaseSigning=true`; that override must never be used for publishing.
- */
-val releaseEnvironmentVariables =
-    mapOf(
-        "storeFile" to "LOGDATE_RELEASE_STORE_FILE",
-        "storePassword" to "LOGDATE_RELEASE_STORE_PASSWORD",
-        "keyAlias" to "LOGDATE_RELEASE_KEY_ALIAS",
-        "keyPassword" to "LOGDATE_RELEASE_KEY_PASSWORD",
-    )
-
-val signingEnvFile: Map<String, String> by lazy {
-    val signingDir = System.getenv("LOGDATE_SIGNING_DIR") ?: "${System.getProperty("user.home")}/.logdate-signing"
-    val envFile = file("$signingDir/production-upload.env")
-    if (!envFile.isFile) {
-        emptyMap()
-    } else {
-        envFile
-            .readLines()
-            .mapNotNull { line ->
-                val trimmed = line.trim()
-                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                    null
-                } else {
-                    val (key, value) = trimmed.split("=", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
-                    key.trim() to value.trim().trim('"', '\'')
-                }
-            }.toMap()
-    }
-}
-
-fun resolveRelease(prop: String): String? {
-    val envVarName = requireNotNull(releaseEnvironmentVariables[prop])
-    return System.getenv(envVarName)
-        ?: providers.gradleProperty("logdate.release.$prop").orNull
-        ?: signingEnvFile[envVarName]
-}
-
-val releaseStoreFile: String? = resolveRelease("storeFile")
-val releaseStorePassword: String? = resolveRelease("storePassword")
-val releaseKeyAlias: String? = resolveRelease("keyAlias")
-val releaseKeyPassword: String? = resolveRelease("keyPassword")
-val hasReleaseSigningConfig: Boolean =
-    !releaseStoreFile.isNullOrBlank() &&
-        !releaseStorePassword.isNullOrBlank() &&
-        !releaseKeyAlias.isNullOrBlank() &&
-        !releaseKeyPassword.isNullOrBlank()
-val allowDebugReleaseSigning: Boolean =
-    providers.gradleProperty("logdate.allowDebugReleaseSigning").orNull?.toBoolean() == true
-val playPublishRequested: Boolean =
-    gradle.startParameter.taskNames.any { taskName ->
-        taskName.contains("publish", ignoreCase = true) || taskName.contains("promote", ignoreCase = true)
-    }
-val releaseTaskRequested: Boolean =
-    gradle.startParameter.taskNames.any { taskName ->
-        !taskName.contains("promote", ignoreCase = true) &&
-            (
-                taskName.contains("Release", ignoreCase = true) ||
-                    taskName.contains("Play", ignoreCase = true)
-            )
-    }
-
-if (releaseTaskRequested && !hasReleaseSigningConfig && !baselineProfileRequested && !allowDebugReleaseSigning) {
-    error(
-        "Release signing is not configured. Set LOGDATE_RELEASE_STORE_FILE, " +
-            "LOGDATE_RELEASE_STORE_PASSWORD, LOGDATE_RELEASE_KEY_ALIAS, and " +
-            "LOGDATE_RELEASE_KEY_PASSWORD, or explicitly pass " +
-            "-Plogdate.allowDebugReleaseSigning=true for a local non-publishing build.",
-    )
-}
+val debugApplicationIdSuffix: String = release.debugApplicationIdSuffix
 
 if (baselineProfileRequested) {
     apply(
@@ -233,8 +124,8 @@ extensions.configure<ApplicationExtension> {
             libs.versions.android.targetSdk
                 .get()
                 .toInt()
-        versionCode = resolvedVersionCode
-        versionName = resolvedVersionName
+        versionCode = release.versionCode
+        versionName = release.versionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         if (androidTestClassOverride != null) {
             testInstrumentationRunnerArguments["class"] = androidTestClassOverride
@@ -247,20 +138,6 @@ extensions.configure<ApplicationExtension> {
         }
         if (recoveryAcceptanceMode != null) {
             testInstrumentationRunnerArguments["logdate.recoveryAcceptanceMode"] = recoveryAcceptanceMode
-        }
-    }
-
-    if (hasReleaseSigningConfig) {
-        signingConfigs {
-            create("release") {
-                storeFile = file(releaseStoreFile!!)
-                storePassword = releaseStorePassword
-                keyAlias = releaseKeyAlias
-                keyPassword = releaseKeyPassword
-                // enable both V1 and V2 signatures so Play accepts the upload
-                enableV1Signing = true
-                enableV2Signing = true
-            }
         }
     }
 
@@ -286,17 +163,8 @@ extensions.configure<ApplicationExtension> {
             // Debug-signed release builds (CI's R8 check) never ship, so their
             // mapping files must not reach Crashlytics.
             configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
-                mappingFileUploadEnabled = !allowDebugReleaseSigning
+                mappingFileUploadEnabled = !release.allowDebugReleaseSigning
             }
-            signingConfig =
-                if (!releaseTaskRequested ||
-                    baselineProfileRequested ||
-                    (allowDebugReleaseSigning && !hasReleaseSigningConfig)
-                ) {
-                    signingConfigs.getByName("debug")
-                } else {
-                    signingConfigs.getByName("release")
-                }
             if (baselineProfileRequested) {
                 isProfileable = true
             }
@@ -309,7 +177,6 @@ extensions.configure<ApplicationExtension> {
             isMinifyEnabled = false
             // Inherited from release; resource shrinking requires code shrinking to be on.
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("debug")
             isProfileable = true
         }
         create("dogfood") {
@@ -320,18 +187,10 @@ extensions.configure<ApplicationExtension> {
             // error. Reset both to preserve the production identity.
             applicationIdSuffix = null
             versionNameSuffix = null
-            // Signed with the upload key (already trusted for logdate.app's Digital Asset
-            // Links) instead of the per-machine debug keystore, so passkey sign-in against
-            // production works on a locally-built, fully debuggable install. Falls back to
-            // debug signing only when the upload keystore isn't configured on this machine --
-            // everything else about the build is unaffected, but passkey sign-in won't work
-            // until it is.
-            signingConfig =
-                if (hasReleaseSigningConfig) {
-                    signingConfigs.getByName("release")
-                } else {
-                    signingConfigs.getByName("debug")
-                }
+            // The release plugin signs dogfood with the upload key, already trusted for
+            // logdate.app's Digital Asset Links, so passkey sign-in against production works on
+            // a locally built, fully debuggable install. Without the upload key on this machine
+            // it falls back to the debug key, and passkey sign-in won't work until it is set up.
         }
     }
 
@@ -445,7 +304,7 @@ tasks.configureEach {
 }
 
 play {
-    track.set(resolvedPlayTrack)
+    track.set(release.playTrack)
     defaultToAppBundles.set(true)
     // Keyless: CI signs in with Workload Identity Federation as the Play service
     // account. A service-account JSON in ANDROID_PUBLISHER_CREDENTIALS still wins.
@@ -455,7 +314,7 @@ play {
     // release build, so it is limited to publishing; plain builds keep their
     // local versionCode and need no Play credentials.
     resolutionStrategy.set(
-        if (playPublishRequested) {
+        if (release.playPublishRequested) {
             com.github.triplet.gradle.androidpublisher.ResolutionStrategy.AUTO
         } else {
             com.github.triplet.gradle.androidpublisher.ResolutionStrategy.FAIL

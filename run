@@ -40,7 +40,7 @@ build|build:wear|Build Wear OS debug APK|./gradlew :app:wear:assembleDebug
 build|build:wear:release|Build the Wear OS release bundle|./gradlew :app:wear:bundleRelease
 build|build:server|Build server JAR|./gradlew :server:build
 build|build:server:docker|Build server Docker image locally|docker build --target production -t logdate-server:local .
-build|build:all|Build all modules|./gradlew build --continue
+build|build:all|Build all modules, signing release builds with the debug key|./gradlew build --continue -Plogdate.allowDebugReleaseSigning=true
 
 run|run:android|Install and run on connected Android device|./gradlew :app:android-main:installDebug && adb shell am start -n studio.hypertext.logdate.debug/app.logdate.client.MainActivity
 run|run:android:dogfood|Install and run the passkey-capable dogfood build|./gradlew :app:android-main:installDogfood && adb shell am start -n studio.hypertext.logdate/app.logdate.client.MainActivity
