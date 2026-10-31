@@ -27,6 +27,7 @@
     "SERVER_ENCRYPTION_ENABLED": "true",
     "SYNC_MEDIA_SIGNED_URLS": "true",
     "SYNC_MEDIA_SIGNED_URL_TTL_HOURS": "1",
+    "TRUSTED_PROXY_HOPS": "1",
     "WEBAUTHN_ORIGIN": "https://app.staging.logdate.app",
     "WEBAUTHN_RP_ID": "staging.logdate.app"
   },
@@ -35,25 +36,61 @@
   "runtime": {
     "allow_unauthenticated": true,
     "ingress": "INGRESS_TRAFFIC_ALL",
-    "liveness_probe": {"failure_threshold": 3, "initial_delay_seconds": 15, "path": "/health", "period_seconds": 30, "port": 8080, "timeout_seconds": 5},
+    "liveness_probe": {
+      "failure_threshold": 3,
+      "initial_delay_seconds": 15,
+      "path": "/health",
+      "period_seconds": 30,
+      "port": 8080,
+      "timeout_seconds": 5
+    },
     "port": 8080,
     "request_concurrency": 16,
-    "resources": {"cpu": "1", "cpu_idle": true, "memory": "512Mi", "startup_cpu_boost": true},
-    "scaling": {"max_instances": 10, "min_instances": 0},
-    "startup_probe": {"failure_threshold": 12, "path": "/health", "period_seconds": 5, "port": 8080, "timeout_seconds": 5},
+    "resources": {
+      "cpu": "1",
+      "cpu_idle": true,
+      "memory": "512Mi",
+      "startup_cpu_boost": true
+    },
+    "scaling": { "max_instances": 10, "min_instances": 0 },
+    "startup_probe": {
+      "failure_threshold": 12,
+      "path": "/health",
+      "period_seconds": 5,
+      "port": 8080,
+      "timeout_seconds": 5
+    },
     "timeout_seconds": 60
   },
   "secret_env": {
-    "ATPROTO_SESSION_SECRET": {"secret_id": "logdate-atproto-session-secret", "version": "1"},
-    "ATPROTO_SIGNING_KEY_KEK": {"secret_id": "logdate-atproto-signing-key-kek", "version": "2"},
-    "DATABASE_PASSWORD": {"secret_id": "logdate-db-password", "version": "1"},
-    "DATABASE_URL": {"secret_id": "logdate-db-url", "version": "1"},
-    "DATABASE_USER": {"secret_id": "logdate-db-user", "version": "1"},
-    "GOOGLE_OIDC_CLIENT_IDS": {"secret_id": "logdate-google-oidc-client-ids", "version": "1"},
-    "HEALTH_INTERNAL_TOKEN": {"secret_id": "logdate-health-internal-token", "version": "1"},
-    "JWT_SECRET": {"secret_id": "logdate-jwt-secret", "version": "1"},
-    "SERVER_ENCRYPTION_KEY": {"secret_id": "logdate-server-encryption-key", "version": "1"},
-    "SERVER_ENCRYPTION_KEY_ID": {"secret_id": "logdate-server-encryption-key-id", "version": "1"}
+    "ATPROTO_SESSION_SECRET": {
+      "secret_id": "logdate-atproto-session-secret",
+      "version": "1"
+    },
+    "ATPROTO_SIGNING_KEY_KEK": {
+      "secret_id": "logdate-atproto-signing-key-kek",
+      "version": "2"
+    },
+    "DATABASE_PASSWORD": { "secret_id": "logdate-db-password", "version": "1" },
+    "DATABASE_URL": { "secret_id": "logdate-db-url", "version": "1" },
+    "DATABASE_USER": { "secret_id": "logdate-db-user", "version": "1" },
+    "GOOGLE_OIDC_CLIENT_IDS": {
+      "secret_id": "logdate-google-oidc-client-ids",
+      "version": "1"
+    },
+    "HEALTH_INTERNAL_TOKEN": {
+      "secret_id": "logdate-health-internal-token",
+      "version": "1"
+    },
+    "JWT_SECRET": { "secret_id": "logdate-jwt-secret", "version": "1" },
+    "SERVER_ENCRYPTION_KEY": {
+      "secret_id": "logdate-server-encryption-key",
+      "version": "1"
+    },
+    "SERVER_ENCRYPTION_KEY_ID": {
+      "secret_id": "logdate-server-encryption-key-id",
+      "version": "1"
+    }
   },
   "service_name": "logdate-server-staging",
   "android_signing_certificates": {

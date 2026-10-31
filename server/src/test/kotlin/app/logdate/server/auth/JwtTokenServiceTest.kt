@@ -3,10 +3,12 @@ package app.logdate.server.auth
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -224,17 +226,45 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    fun `generate token wraps cryptographic failures`() {
+    fun `a signing key the provider refuses stops the service from being created`() {
+        mockkStatic(Mac::class)
+        try {
+            every { Mac.getInstance(any<String>()) } throws IllegalStateException("mac-failure")
+            assertFailsWith<IllegalStateException> {
+                JwtTokenService(secret = hmacKey, issuer = issuer, audience = audience)
+            }
+        } finally {
+            unmockkStatic(Mac::class)
+        }
+    }
+
+    @Test
+    fun `tokens are signed and checked without building a new Mac for each one`() {
         val service = JwtTokenService(secret = hmacKey, issuer = issuer, audience = audience)
 
         mockkStatic(Mac::class)
         try {
             every { Mac.getInstance(any<String>()) } throws IllegalStateException("mac-failure")
-            assertFailsWith<IllegalStateException> {
-                service.generateAccessToken("acc-err")
-            }
+            val token = service.generateAccessToken("acc-reused")
+            assertEquals("acc-reused", service.validateAccessToken(token))
         } finally {
             unmockkStatic(Mac::class)
+        }
+    }
+
+    @Test
+    fun `signatures are compared in constant time`() {
+        val service = JwtTokenService(secret = hmacKey, issuer = issuer, audience = audience)
+        val token = service.generateAccessToken("acc-constant-time")
+        val forged = token.substringBeforeLast('.') + "." + "A".repeat(token.substringAfterLast('.').length)
+
+        mockkStatic(MessageDigest::class)
+        try {
+            assertEquals("acc-constant-time", service.validateAccessToken(token))
+            assertNull(service.validateAccessToken(forged))
+            verify(exactly = 2) { MessageDigest.isEqual(any(), any()) }
+        } finally {
+            unmockkStatic(MessageDigest::class)
         }
     }
 
@@ -243,20 +273,6 @@ class JwtTokenServiceTest {
         val service = JwtTokenService(secret = hmacKey, issuer = issuer, audience = audience)
         val tokenWithInvalidPayload = "a.b@d.c"
         assertNull(service.validateAccessToken(tokenWithInvalidPayload))
-    }
-
-    @Test
-    fun `validation catches cryptographic exceptions and returns null`() {
-        val service = JwtTokenService(secret = hmacKey, issuer = issuer, audience = audience)
-        val token = service.generateAccessToken("acc-validate-catch")
-
-        mockkStatic(Mac::class)
-        try {
-            every { Mac.getInstance(any<String>()) } throws IllegalStateException("mac-validate-failure")
-            assertNull(service.validateAccessToken(token))
-        } finally {
-            unmockkStatic(Mac::class)
-        }
     }
 
     @Test

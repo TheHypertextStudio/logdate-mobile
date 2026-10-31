@@ -14,6 +14,7 @@ import java.util.Base64
 object ProductionConfigValidator {
     private const val MIN_JWT_SECRET_LENGTH = 32
     private const val MIN_DEDICATED_SECRET_LENGTH = 32
+    private const val MAX_TRUSTED_PROXY_HOPS = 4
 
     private const val ANDROID_ORIGIN_PREFIX = "android:apk-key-hash:"
 
@@ -72,6 +73,7 @@ object ProductionConfigValidator {
         val publicOrigin = validatePublicOrigin(readEnv, failures)
         validateAtprotoServiceUrl(readEnv, publicOrigin, failures)
         validateHealthToken(readEnv, failures)
+        validateForwardedClientAddress(readEnv, failures)
         validateReleaseVersion(readEnv, failures)
         validateServerEncryption(readEnv, failures)
         validateSignedMediaUrls(readEnv, failures)
@@ -207,6 +209,37 @@ object ProductionConfigValidator {
     ) {
         if (readEnv("HEALTH_INTERNAL_TOKEN")?.trim().isNullOrEmpty()) {
             failures += "HEALTH_INTERNAL_TOKEN is required in production."
+        }
+    }
+
+    /**
+     * While forwarded headers are trusted, `TRUSTED_PROXY_HOPS` decides which `X-Forwarded-For` entry
+     * is the client's address, and rate limits key on it. The right value depends on what sits in
+     * front of the deployment, so production must state it rather than inherit a default.
+     */
+    private fun validateForwardedClientAddress(
+        readEnv: (String) -> String?,
+        failures: MutableList<String>,
+    ) {
+        val trustForwarded =
+            profileAwareBoolEnv(
+                name = "TRUST_FORWARDED_HEADERS",
+                productionDefault = true,
+                devDefault = true,
+                readEnv = readEnv,
+                profile = RuntimeProfile.PRODUCTION,
+            )
+        if (!trustForwarded) return
+        val raw = readEnv("TRUSTED_PROXY_HOPS")?.trim().orEmpty()
+        if (raw.isEmpty()) {
+            failures +=
+                "TRUSTED_PROXY_HOPS is required in production while TRUST_FORWARDED_HEADERS is on: 0 for Cloud Run alone, " +
+                "1 behind a load balancer that appends its own X-Forwarded-For entry."
+            return
+        }
+        val hops = raw.toIntOrNull()
+        if (hops == null || hops !in 0..MAX_TRUSTED_PROXY_HOPS) {
+            failures += "TRUSTED_PROXY_HOPS must be a whole number from 0 to $MAX_TRUSTED_PROXY_HOPS."
         }
     }
 

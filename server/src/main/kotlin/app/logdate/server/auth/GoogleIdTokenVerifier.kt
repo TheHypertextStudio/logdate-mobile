@@ -1,6 +1,7 @@
 package app.logdate.server.auth
 
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.future.await
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -11,6 +12,8 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.time.Duration
+import kotlin.coroutines.cancellation.CancellationException
 
 @Serializable
 data class GoogleIdTokenClaims(
@@ -34,10 +37,18 @@ interface GoogleIdTokenVerifier {
     ): GoogleIdTokenClaims?
 }
 
+/**
+ * Verifies Google ID tokens with Google's `tokeninfo` endpoint.
+ *
+ * The call to Google is asynchronous and bounded by [requestTimeout], so a slow response never holds
+ * a request thread. When the caller expects a nonce, the token must carry that same nonce; a token
+ * without one is refused, so an ID token issued for another sign-in can't be replayed.
+ */
 class HttpGoogleIdTokenVerifier(
     private val allowedClientIds: Set<String>,
     private val acceptedIssuers: Set<String> = setOf("https://accounts.google.com", "accounts.google.com"),
-    private val httpClient: HttpClient = HttpClient.newHttpClient(),
+    private val httpClient: HttpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build(),
+    private val requestTimeout: Duration = REQUEST_TIMEOUT,
 ) : GoogleIdTokenVerifier {
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -61,17 +72,20 @@ class HttpGoogleIdTokenVerifier(
             HttpRequest
                 .newBuilder()
                 .uri(URI.create("https://oauth2.googleapis.com/tokeninfo?id_token=$encodedToken"))
+                .timeout(requestTimeout)
                 .GET()
                 .build()
 
         return try {
-            val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
+            val response = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).await()
             if (response.statusCode() !in 200..299) {
                 Napier.w("Google tokeninfo returned ${response.statusCode()}")
                 null
             } else {
                 parseAndValidate(response.body(), nonce)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Failed to verify Google ID token", e)
             null
@@ -109,8 +123,8 @@ class HttpGoogleIdTokenVerifier(
             return null
         }
 
-        if (nonce != null && tokenNonce != null && nonce != tokenNonce) {
-            Napier.w("Google ID token nonce mismatch")
+        if (nonce != null && nonce != tokenNonce) {
+            Napier.w("Google ID token nonce is missing or does not match")
             return null
         }
 
@@ -127,3 +141,6 @@ class HttpGoogleIdTokenVerifier(
         )
     }
 }
+
+private val CONNECT_TIMEOUT: Duration = Duration.ofSeconds(5)
+private val REQUEST_TIMEOUT: Duration = Duration.ofSeconds(10)

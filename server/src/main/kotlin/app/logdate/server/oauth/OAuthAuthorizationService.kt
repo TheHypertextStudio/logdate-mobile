@@ -14,10 +14,13 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 /**
  * Stores PAR requests, authorization codes, and refresh tokens for the server OAuth flow.
@@ -66,6 +69,9 @@ class OAuthAuthorizationService(
             throw OAuthInvalidRequestException("scope must include atproto")
         }
 
+        // The proof is checked before the client's metadata is fetched, so a request that cannot
+        // prove possession of a key never makes the server fetch anything.
+        val proof = dpopVerifier.verify(dpopProof, method = "POST", htu = htu).getOrElse { throw it }
         val authenticatedClient =
             clientMetadataResolver
                 .authenticateClient(
@@ -83,7 +89,6 @@ class OAuthAuthorizationService(
             throw OAuthInvalidClientException("Requested scopes exceed the client metadata document scope")
         }
 
-        val proof = dpopVerifier.verify(dpopProof, method = "POST", htu = htu).getOrElse { throw it }
         if (!usedCodeChallenges.firstUse("pkce:${codeChallenge.trim()}", CODE_CHALLENGE_MEMORY)) {
             throw OAuthInvalidRequestException("code_challenge has already been used; generate a new PKCE verifier")
         }
@@ -104,6 +109,7 @@ class OAuthAuthorizationService(
                 expiresAt = clock.now() + REQUEST_URI_TTL,
             ),
         )
+        purgeExpiredStateIfDue()
         return PushedAuthorizationResponse(
             requestUri = requestUri,
             expiresInSeconds = REQUEST_URI_TTL.inWholeSeconds,
@@ -147,7 +153,7 @@ class OAuthAuthorizationService(
         val code = randomToken()
         runtimeStateRepository.saveAuthorizationCode(
             StoredAuthorizationCode(
-                code = code,
+                code = storageKey(code),
                 clientId = stored.clientId,
                 redirectUri = stored.redirectUri,
                 subjectDid = subjectDid,
@@ -209,7 +215,7 @@ class OAuthAuthorizationService(
     ): OAuthTokenResponse {
         val stored =
             runtimeStateRepository
-                .takeAuthorizationCode(code)
+                .takeAuthorizationCode(storageKey(code))
                 ?.takeIf { clock.now() < it.expiresAt }
                 ?: throw OAuthInvalidGrantException("Authorization code is invalid or expired")
         if (stored.clientId != clientId || stored.redirectUri != redirectUri) {
@@ -255,7 +261,7 @@ class OAuthAuthorizationService(
         val saved =
             runtimeStateRepository.saveGrantedRefreshToken(
                 StoredRefreshToken(
-                    token = refreshToken,
+                    token = storageKey(refreshToken),
                     clientId = stored.clientId,
                     subjectDid = stored.subjectDid,
                     scope = stored.scope,
@@ -290,7 +296,7 @@ class OAuthAuthorizationService(
     ): OAuthTokenResponse {
         val stored =
             runtimeStateRepository
-                .findRefreshToken(refreshToken)
+                .findRefreshToken(storageKey(refreshToken))
                 ?.takeIf { it.revokedAt == null && clock.now() < it.expiresAt }
                 ?: throw OAuthInvalidGrantException("Refresh token is invalid or expired")
         if (stored.clientId != clientId) {
@@ -351,7 +357,7 @@ class OAuthAuthorizationService(
         dpopProof: String,
         htu: String,
     ) {
-        val stored = runtimeStateRepository.findRefreshToken(refreshToken) ?: return
+        val stored = runtimeStateRepository.findRefreshToken(storageKey(refreshToken)) ?: return
         if (stored.clientId != clientId) {
             throw OAuthInvalidGrantException("Refresh token does not belong to this client")
         }
@@ -381,7 +387,7 @@ class OAuthAuthorizationService(
             throw OAuthInvalidGrantException("Refresh token DPoP key did not match the original grant")
         }
 
-        runtimeStateRepository.revokeRefreshToken(refreshToken, clock.now())
+        runtimeStateRepository.revokeRefreshToken(storageKey(refreshToken), clock.now())
     }
 
     /**
@@ -490,10 +496,10 @@ class OAuthAuthorizationService(
         val rotatedRefreshToken = randomToken()
         val rotated =
             runtimeStateRepository.rotateRefreshToken(
-                oldToken = refreshToken,
+                oldToken = storageKey(refreshToken),
                 replacement =
                     stored.copy(
-                        token = rotatedRefreshToken,
+                        token = storageKey(rotatedRefreshToken),
                         expiresAt = clock.now() + refreshTokenLifetime(stored.clientId),
                         revokedAt = null,
                     ),
@@ -503,8 +509,38 @@ class OAuthAuthorizationService(
         return rotatedRefreshToken
     }
 
+    /**
+     * Deletes expired requests, codes and refresh tokens at most once per
+     * [RUNTIME_STATE_PURGE_INTERVAL]. New requests are what fill the store, so they also empty it.
+     * A failed purge is logged and retried at the next interval; it never fails the request.
+     */
+    private suspend fun purgeExpiredStateIfDue() {
+        val now = clock.now()
+        val due = nextPurgeAt.get()
+        if (now < due || !nextPurgeAt.compareAndSet(due, now + RUNTIME_STATE_PURGE_INTERVAL)) return
+        try {
+            val removed = runtimeStateRepository.purgeExpired(now)
+            if (removed > 0) Napier.i("Removed $removed expired OAuth authorization requests, codes and refresh tokens")
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Napier.w("Could not remove expired OAuth authorization state", error)
+        }
+    }
+
     private fun refreshTokenLifetime(clientId: String) =
         if (clientId in trustedClientIds) TRUSTED_REFRESH_TOKEN_TTL else UNTRUSTED_REFRESH_TOKEN_TTL
+
+    /**
+     * The key a code or refresh token is stored under: its SHA-256, base64url-encoded. The value
+     * itself is only ever given to the client, so a copy of the database holds nothing that can be
+     * redeemed.
+     */
+    private fun storageKey(secret: String): String =
+        Base64
+            .getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(secret.toByteArray(StandardCharsets.UTF_8)))
 
     private fun randomToken(): String {
         val bytes = ByteArray(TOKEN_BYTES)
@@ -512,7 +548,10 @@ class OAuthAuthorizationService(
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 
+    private val nextPurgeAt = AtomicReference(Instant.DISTANT_PAST)
+
     private companion object {
+        private val RUNTIME_STATE_PURGE_INTERVAL = 10.minutes
         private val REQUEST_URI_TTL = 5.minutes
         private val AUTHORIZATION_CODE_TTL = 1.minutes
         private val TRUSTED_REFRESH_TOKEN_TTL = 30.days

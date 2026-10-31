@@ -140,6 +140,55 @@ class GoogleIdTokenVerifierTest {
     }
 
     @Test
+    fun `a token without a nonce is refused when the sign-in expects one`() {
+        val now = System.currentTimeMillis() / 1000
+        val bodyWithoutNonce =
+            """
+            {
+              "sub":"sub-3",
+              "email":"user@example.com",
+              "email_verified":"true",
+              "iss":"https://accounts.google.com",
+              "aud":"client-1",
+              "exp":"${now + 3600}",
+              "iat":"${now - 60}"
+            }
+            """.trimIndent()
+        val verifier =
+            HttpGoogleIdTokenVerifier(
+                allowedClientIds = setOf("client-1"),
+                httpClient = StubHttpClient { SimpleStringResponse(200, bodyWithoutNonce) },
+            )
+
+        assertNull(runSuspend { verifier.verify("token", "expected-nonce") })
+        assertNotNull(runSuspend { verifier.verify("token", null) })
+    }
+
+    @Test
+    fun `the tokeninfo call is asynchronous and bounded by a timeout`() {
+        val now = System.currentTimeMillis() / 1000
+        val body =
+            """
+            {"sub":"sub-4","email":"user@example.com","email_verified":"true","iss":"https://accounts.google.com",
+             "aud":"client-1","exp":"${now + 3600}","iat":"${now - 60}"}
+            """.trimIndent()
+        var seen: HttpRequest? = null
+        val verifier =
+            HttpGoogleIdTokenVerifier(
+                allowedClientIds = setOf("client-1"),
+                httpClient =
+                    StubHttpClient(blockingSendAllowed = false) { request ->
+                        seen = request
+                        SimpleStringResponse(200, body)
+                    },
+                requestTimeout = Duration.ofSeconds(3),
+            )
+
+        assertNotNull(runSuspend { verifier.verify("token", null) })
+        assertEquals(Optional.of(Duration.ofSeconds(3)), seen?.timeout())
+    }
+
+    @Test
     fun `fake verifier returns mapped token claims`() {
         val claim =
             GoogleIdTokenClaims(
@@ -169,6 +218,7 @@ class GoogleIdTokenVerifierTest {
     private fun <T> runSuspend(block: suspend () -> T): T = kotlinx.coroutines.runBlocking { block() }
 
     private class StubHttpClient(
+        private val blockingSendAllowed: Boolean = true,
         private val handler: (HttpRequest) -> HttpResponse<String>,
     ) : HttpClient() {
         override fun cookieHandler(): Optional<CookieHandler> = Optional.empty()
@@ -193,23 +243,28 @@ class GoogleIdTokenVerifierTest {
             request: HttpRequest,
             responseBodyHandler: HttpResponse.BodyHandler<T>,
         ): HttpResponse<T> {
-            // The stub only ever supplies HttpResponse<String>; the cast is necessary
-            // because HttpClient.send is generic at the call-site but our handler is
-            // String-specialized. Verifier callers always request String bodies.
-            @Suppress("UNCHECKED_CAST")
-            return handler(request) as HttpResponse<T>
+            check(blockingSendAllowed) { "The verifier must not block a thread on HttpClient.send" }
+            return respond(request)
         }
+
+        // The stub only ever supplies HttpResponse<String>; the cast is necessary because
+        // HttpClient.send is generic at the call-site but our handler is String-specialized.
+        // Verifier callers always request String bodies.
+        @Suppress("UNCHECKED_CAST")
+        private fun <T : Any?> respond(request: HttpRequest): HttpResponse<T> = handler(request) as HttpResponse<T>
 
         override fun <T : Any?> sendAsync(
             request: HttpRequest,
             responseBodyHandler: HttpResponse.BodyHandler<T>,
-        ): CompletableFuture<HttpResponse<T>> = CompletableFuture.completedFuture(send(request, responseBodyHandler))
+        ): CompletableFuture<HttpResponse<T>> =
+            runCatching { respond<T>(request) }
+                .fold({ CompletableFuture.completedFuture(it) }, { CompletableFuture.failedFuture(it) })
 
         override fun <T : Any?> sendAsync(
             request: HttpRequest,
             responseBodyHandler: HttpResponse.BodyHandler<T>,
             pushPromiseHandler: HttpResponse.PushPromiseHandler<T>?,
-        ): CompletableFuture<HttpResponse<T>> = CompletableFuture.completedFuture(send(request, responseBodyHandler))
+        ): CompletableFuture<HttpResponse<T>> = sendAsync(request, responseBodyHandler)
     }
 
     private class SimpleStringResponse(

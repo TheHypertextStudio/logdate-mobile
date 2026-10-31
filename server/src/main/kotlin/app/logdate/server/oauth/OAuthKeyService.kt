@@ -3,6 +3,7 @@ package app.logdate.server.oauth
 import app.logdate.server.config.AtprotoSigningKeyKek
 import app.logdate.server.config.AtprotoSigningKeyKekDecryptOnly
 import app.logdate.server.identity.AtRestKeyCipher
+import app.logdate.server.identity.AtRestKeyContext
 import kotlinx.serialization.Serializable
 import java.math.BigInteger
 import java.security.GeneralSecurityException
@@ -162,7 +163,7 @@ class OAuthKeyService(
     private fun loadActiveKey(stored: StoredOAuthSigningKey): ActiveKey {
         val privateKeyBytes =
             try {
-                cipher.decrypt(stored.privateKeyEncrypted)
+                cipher.decrypt(stored.privateKeyEncrypted, AtRestKeyContext.oauthSigningKey(stored.keyId))
             } catch (e: GeneralSecurityException) {
                 throw IllegalStateException(
                     "The stored OAuth signing key can't be decrypted. ${AtprotoSigningKeyKek.envVar} or " +
@@ -187,9 +188,10 @@ class OAuthKeyService(
                 generateKeyPair()
             }
         val publicKey = generated.public as ECPublicKey
+        val keyId = buildJwk(publicKey).kid
         return StoredOAuthSigningKey(
-            keyId = buildJwk(publicKey).kid,
-            privateKeyEncrypted = cipher.encrypt(generated.private.encoded),
+            keyId = keyId,
+            privateKeyEncrypted = cipher.encrypt(generated.private.encoded, AtRestKeyContext.oauthSigningKey(keyId)),
             publicKeySpki = Base64.encode(publicKey.encoded),
             createdAt = clock.now(),
         )

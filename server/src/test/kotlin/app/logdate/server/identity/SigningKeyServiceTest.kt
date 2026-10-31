@@ -136,4 +136,42 @@ class SigningKeyServiceTest {
         assertTrue(p256.publicKeyMultibase.startsWith("z"))
         assertTrue(k256.publicKeyMultibase.startsWith("z"))
     }
+
+    @Test
+    fun `a sealed prepared key reopens with its id and stays bound to its account`() =
+        kotlinx.coroutines.test.runTest {
+            val service = SigningKeyService(InMemorySigningKeyRepository(), "test-kek")
+            val accountId = Uuid.random()
+            val prepared = service.prepareKey(accountId)
+
+            val token = service.sealPreparedKey(prepared, prevCid = "bafyprev", operationDigest = "digest")
+            val opened = service.openPreparedKey(accountId, token)
+
+            assertEquals(prepared.id, opened.key.id)
+            assertEquals(prepared.privateKeyEncrypted, opened.key.privateKeyEncrypted)
+            service.decryptPrivateKey(opened.key)
+            assertFailsWith<IdentityLifecycleValidationException> { service.openPreparedKey(Uuid.random(), token) }
+        }
+
+    @Test
+    fun `a stored private key is bound to its own row`() =
+        kotlinx.coroutines.test.runTest {
+            val service = SigningKeyService(InMemorySigningKeyRepository(), "test-kek")
+            val key = service.ensureActiveKey(Uuid.random())
+
+            assertTrue(key.privateKeyEncrypted.startsWith("v2:"))
+            assertFailsWith<javax.crypto.AEADBadTagException> { service.decryptPrivateKey(key.copy(id = Uuid.random())) }
+        }
+
+    @Test
+    fun `a private key stored in the earlier format is still read`() =
+        kotlinx.coroutines.test.runTest {
+            val service = SigningKeyService(InMemorySigningKeyRepository(), "test-kek")
+            val current = service.ensureActiveKey(Uuid.random())
+            val pkcs8 = service.decryptPrivateKey(current).encoded
+
+            val legacy = current.copy(privateKeyEncrypted = LegacyAtRestFormat.encrypt("test-kek", pkcs8))
+
+            assertTrue(service.decryptPrivateKey(legacy).encoded.contentEquals(pkcs8))
+        }
 }

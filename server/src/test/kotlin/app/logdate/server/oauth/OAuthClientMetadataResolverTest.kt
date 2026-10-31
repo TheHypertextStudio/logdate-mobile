@@ -255,7 +255,7 @@ class OAuthClientMetadataResolverTest {
                             )
                     }
                 }
-            val resolver = OAuthClientMetadataResolver(httpClient = HttpClient(engine))
+            val resolver = OAuthClientMetadataResolver(httpClient = HttpClient(engine), allowLoopbackClients = true)
 
             val loopback = resolver.resolve("http://localhost:3000/client.json").getOrThrow()
             val missingRedirects = resolver.resolve("https://viewer.example.com/client.json").exceptionOrNull()

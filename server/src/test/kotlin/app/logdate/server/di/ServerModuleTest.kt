@@ -37,6 +37,9 @@ import app.logdate.server.passkeys.WebAuthnPasskeyService
 import app.logdate.server.sync.DbSyncRepository
 import app.logdate.server.sync.InMemorySyncRepository
 import app.logdate.server.sync.SyncRepository
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.pluginOrNull
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -55,6 +58,7 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -116,6 +120,17 @@ class ServerModuleTest {
         assertFailsWith<IllegalStateException> {
             initializeDatabase(readEnv = productionAllowingFallback)
         }
+    }
+
+    @Test
+    fun `the shared outbound http client times out`() {
+        val koin =
+            koinApplication {
+                logger(EmptyLogger())
+                modules(serverModule(isDatabaseAvailable = false))
+            }.koin
+
+        assertNotNull(koin.get<HttpClient>().pluginOrNull(HttpTimeout))
     }
 
     @Test

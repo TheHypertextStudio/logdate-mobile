@@ -16,6 +16,7 @@ import app.logdate.server.oauth.OAuthPasskeyOptionsRequest
 import app.logdate.server.oauth.OAuthPasskeyPage
 import app.logdate.server.oauth.OAuthPasskeySignInService
 import app.logdate.server.oauth.OAuthUseDpopNonceException
+import app.logdate.server.ratelimit.RateLimitPolicy
 import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.routes.docs.OAuthDocs
 import io.github.aakira.napier.Napier
@@ -63,6 +64,7 @@ fun Route.oauthRoutes(
     identityService: AtprotoIdentityService? = null,
     passkeySignIn: OAuthPasskeySignInService? = null,
     passkeyRateLimiter: SlidingWindowRateLimiter = SlidingWindowRateLimiter(),
+    pushedAuthorizationRateLimiter: SlidingWindowRateLimiter = SlidingWindowRateLimiter(),
 ) {
     get("/.well-known/oauth-authorization-server", OAuthDocs.getAuthorizationServerMetadata) {
         call.respond(HttpStatusCode.OK, discoveryService?.authorizationServerMetadata() ?: config.authorizationServerMetadata())
@@ -82,6 +84,9 @@ fun Route.oauthRoutes(
                 HttpStatusCode.NotImplemented,
                 OAuthErrorResponse("server_error", "OAuth PAR is not configured"),
             )
+        if (!call.allowOAuthRequest(pushedAuthorizationRateLimiter, "par", PUSHED_AUTHORIZATION_RATE_LIMIT, PAR_RATE_LIMITED)) {
+            return@post
+        }
         val parameters = call.receiveParameters()
         val dpopProof =
             call.request
@@ -449,6 +454,11 @@ private suspend fun ApplicationCall.respondBrowserDecision(
         }
 }
 
+/** Pushed authorization requests one network address may start per minute. */
+private val PUSHED_AUTHORIZATION_RATE_LIMIT = RateLimitPolicy(maxRequests = 30, windowSeconds = 60)
+
+private const val PAR_RATE_LIMITED = "Too many authorization requests from this network. Wait a minute and try again."
+
 /**
  * Applies the passkey sign-in limit per client address, like the app sign-in endpoints, and
  * answers `429` with `Retry-After` once it is spent.
@@ -456,14 +466,28 @@ private suspend fun ApplicationCall.respondBrowserDecision(
 private suspend fun ApplicationCall.allowPasskeyAttempt(
     limiter: SlidingWindowRateLimiter,
     operation: String,
-): Boolean {
-    val key = "oauth.passkey.$operation:${clientAddress().ifBlank { "unknown" }.sha256Hex()}"
-    if (limiter.allow(key, SIGNIN_RATE_LIMIT)) return true
-    response.header(HttpHeaders.RetryAfter, limiter.retryAfterSeconds(key, SIGNIN_RATE_LIMIT).toString())
-    respond(
-        HttpStatusCode.TooManyRequests,
-        OAuthErrorResponse("temporarily_unavailable", "Too many sign-in attempts from this network. Wait a minute and try again."),
+): Boolean =
+    allowOAuthRequest(
+        limiter = limiter,
+        operation = "passkey.$operation",
+        policy = SIGNIN_RATE_LIMIT,
+        refusal = "Too many sign-in attempts from this network. Wait a minute and try again.",
     )
+
+/**
+ * Counts this request against [policy] for the caller's network address, and answers it with 429
+ * and `Retry-After` when the address is over budget.
+ */
+private suspend fun ApplicationCall.allowOAuthRequest(
+    limiter: SlidingWindowRateLimiter,
+    operation: String,
+    policy: RateLimitPolicy,
+    refusal: String,
+): Boolean {
+    val key = "oauth.$operation:${clientAddress().ifBlank { "unknown" }.sha256Hex()}"
+    if (limiter.allow(key, policy)) return true
+    response.header(HttpHeaders.RetryAfter, limiter.retryAfterSeconds(key, policy).toString())
+    respond(HttpStatusCode.TooManyRequests, OAuthErrorResponse("temporarily_unavailable", refusal))
     return false
 }
 

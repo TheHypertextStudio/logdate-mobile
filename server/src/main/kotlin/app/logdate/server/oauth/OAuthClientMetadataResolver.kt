@@ -3,12 +3,16 @@ package app.logdate.server.oauth
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import studio.hypertext.atproto.crypto.EcCurve
 import studio.hypertext.atproto.crypto.EcKeySupport
+import studio.hypertext.atproto.oauth.client.MAX_METADATA_BYTES
+import studio.hypertext.atproto.oauth.client.ResponseTooLargeException
+import studio.hypertext.atproto.oauth.client.bodyAsTextCapped
+import studio.hypertext.atproto.oauth.client.protocolHttpClient
+import java.io.IOException
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -21,15 +25,28 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Resolves and validates OAuth client metadata documents from `client_id` URLs.
+ *
+ * The documents are fetched from URLs that any caller can name, so every fetch goes through
+ * [protocolHttpClient]: no redirects, a timeout, and a body of at most [MAX_METADATA_BYTES]. In
+ * production [httpClient] is a public-internet client that refuses private, loopback and link-local
+ * addresses after DNS resolution, and `http://localhost` client IDs are accepted only when
+ * [allowLoopbackClients] is set for local development. At most [maxCachedClients] documents are
+ * cached; expired entries are dropped first when the cache is full.
  */
 class OAuthClientMetadataResolver(
-    private val httpClient: HttpClient,
+    httpClient: HttpClient,
     private val json: Json = Json { ignoreUnknownKeys = true },
     private val clock: Clock = Clock.System,
     private val cacheTtl: Duration = 10.minutes,
     private val usedClientAssertions: OAuthReplayStore = InMemoryOAuthReplayStore(clock),
+    private val allowLoopbackClients: Boolean = false,
+    private val maxCachedClients: Int = DEFAULT_MAX_CACHED_CLIENTS,
 ) {
+    private val documentClient = protocolHttpClient(httpClient)
     private val cache = ConcurrentHashMap<String, CachedClientMetadata>()
+
+    /** How many client metadata documents are cached right now. */
+    internal fun cachedClientCount(): Int = cache.size
 
     /**
      * Resolves and validates the metadata document at [clientId].
@@ -42,12 +59,8 @@ class OAuthClientMetadataResolver(
                 return@runCatching cached.metadata
             }
 
-            val response = httpClient.get(normalizedClientId)
-            if (response.status != HttpStatusCode.OK) {
-                throw OAuthInvalidClientException("Client metadata document returned HTTP ${response.status.value}")
-            }
-
-            val decoded = decodeClientDocument<OAuthClientMetadata>(response.bodyAsText(), "Client metadata document", normalizedClientId)
+            val document = fetchClientDocument(normalizedClientId, "Client metadata document")
+            val decoded = decodeClientDocument<OAuthClientMetadata>(document, "Client metadata document", normalizedClientId)
             val resolvedJwks =
                 when {
                     decoded.jwks != null -> decoded.jwks
@@ -58,9 +71,24 @@ class OAuthClientMetadataResolver(
                 decoded
                     .copy(jwks = resolvedJwks)
                     .validated(expectedClientId = normalizedClientId)
-            cache[normalizedClientId] = CachedClientMetadata(metadata = metadata, expiresAt = clock.now() + cacheTtl)
+            remember(normalizedClientId, metadata)
             metadata
         }
+
+    private fun remember(
+        clientId: String,
+        metadata: OAuthClientMetadata,
+    ) {
+        if (cache.size >= maxCachedClients && !cache.containsKey(clientId)) {
+            val now = clock.now()
+            cache.entries.removeIf { now >= it.value.expiresAt }
+            while (cache.size >= maxCachedClients) {
+                val oldest = cache.entries.minByOrNull { it.value.expiresAt } ?: break
+                cache.remove(oldest.key, oldest.value)
+            }
+        }
+        cache[clientId] = CachedClientMetadata(metadata = metadata, expiresAt = clock.now() + cacheTtl)
+    }
 
     /**
      * Authenticates the client described by [clientId] for the current request.
@@ -104,11 +132,29 @@ class OAuthClientMetadataResolver(
 
     private suspend fun fetchJwks(jwksUri: String): OAuthClientJwkSet {
         val normalizedUri = normalizeHttpsUrl(jwksUri, "jwks_uri")
-        val response = httpClient.get(normalizedUri)
-        if (response.status != HttpStatusCode.OK) {
-            throw OAuthInvalidClientException("Client JWKS document returned HTTP ${response.status.value}")
+        return decodeClientDocument(fetchClientDocument(normalizedUri, "Client JWKS document"), "Client JWKS document", jwksUri)
+    }
+
+    /**
+     * Fetches a document the client named. A document that cannot be reached, redirects, or is too
+     * large is the client's problem, answered as `invalid_client`.
+     */
+    private suspend fun fetchClientDocument(
+        url: String,
+        what: String,
+    ): String {
+        try {
+            val response = documentClient.get(url)
+            if (response.status != HttpStatusCode.OK) {
+                throw OAuthInvalidClientException("$what returned HTTP ${response.status.value}")
+            }
+            return response.bodyAsTextCapped(MAX_METADATA_BYTES)
+        } catch (_: ResponseTooLargeException) {
+            throw OAuthInvalidClientException("$what is larger than $MAX_METADATA_BYTES bytes")
+        } catch (error: IOException) {
+            Napier.w("$what from $url could not be fetched: ${error.message}")
+            throw OAuthInvalidClientException("$what could not be fetched")
         }
-        return decodeClientDocument(response.bodyAsText(), "Client JWKS document", jwksUri)
     }
 
     /**
@@ -135,9 +181,9 @@ class OAuthClientMetadataResolver(
                 ?: throw OAuthInvalidClientException("client_id must be a valid URL")
         val scheme = uri.scheme?.lowercase()
         val host = uri.host?.lowercase()
-        val isLoopbackHttp = scheme == "http" && host == "localhost"
+        val isLoopbackHttp = allowLoopbackClients && scheme == "http" && host == "localhost"
         if (scheme != "https" && !isLoopbackHttp) {
-            throw OAuthInvalidClientException("client_id must use https or a localhost http URL")
+            throw OAuthInvalidClientException("client_id must use https")
         }
         return trimmed
     }
@@ -310,6 +356,7 @@ class OAuthClientMetadataResolver(
         private const val JWT_SEGMENT_COUNT = 3
         private const val CLIENT_ASSERTION_MAX_FUTURE_SKEW_SECONDS = 60L
         private const val SHA_256_ALGORITHM = "SHA-256"
+        private const val DEFAULT_MAX_CACHED_CLIENTS = 1_024
     }
 }
 
