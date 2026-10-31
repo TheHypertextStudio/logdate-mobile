@@ -3554,21 +3554,6 @@
       "reason": "Legal text, frozen observation, exact dependency/registration list, or opaque document data; preserve its consumer representation."
     },
     {
-      "include": ["server/src/main/resources/apple-root-certs/AppleIncRootCertificate.cer"],
-      "kind": "binary",
-      "reason": "Binary media, font, signing, or tool archive; no text formatter applies."
-    },
-    {
-      "include": ["server/src/main/resources/apple-root-certs/AppleRootCA-G2.cer"],
-      "kind": "binary",
-      "reason": "Binary media, font, signing, or tool archive; no text formatter applies."
-    },
-    {
-      "include": ["server/src/main/resources/apple-root-certs/AppleRootCA-G3.cer"],
-      "kind": "binary",
-      "reason": "Binary media, font, signing, or tool archive; no text formatter applies."
-    },
-    {
       "include": ["server/src/main/resources/db/migration/V10__Add_logdate_atproto_blob_table.sql"],
       "kind": "non-formattable",
       "reason": "Already-published migration checksum contract; create a new migration instead of changing historical bytes."

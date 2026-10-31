@@ -3,7 +3,6 @@ package app.logdate.server.atproto.firehose
 import app.logdate.server.atproto.LogDatePdsBlobStore
 import app.logdate.server.atproto.LogDateRepoStore
 import app.logdate.server.auth.Account
-import app.logdate.server.auth.AccountModerationService
 import app.logdate.server.auth.InMemoryAccountRepository
 import app.logdate.server.auth.JwtTokenService
 import app.logdate.server.identity.AtprotoIdentityConfig
@@ -104,7 +103,6 @@ internal class FirehoseHarness(
             serverHostname = "logdate.app",
         )
     val announcer = PublicRepoAnnouncer(accounts, sequencer, crawler)
-    val moderation = AccountModerationService(accounts, announcer)
     private val collections =
         RepoBackedLogDateCollectionsRepository(
             accountRepository = accounts,
