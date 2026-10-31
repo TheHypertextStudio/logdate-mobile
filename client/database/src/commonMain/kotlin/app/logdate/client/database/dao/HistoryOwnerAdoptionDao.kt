@@ -14,21 +14,21 @@ abstract class HistoryOwnerAdoptionDao {
         origin: String,
     ): List<HistoryRecordEntity>
 
-    @Query("SELECT COUNT(*) FROM history_records WHERE ownerId = :owner AND origin = :origin AND id = :id")
+    @Query("SELECT COUNT(*) FROM history_records WHERE ownerId = :owner AND origin = :origin AND id IN (:ids)")
     abstract suspend fun historyIdCount(
         owner: String,
         origin: String,
-        id: String,
+        ids: List<String>,
     ): Int
 
     @Insert
-    abstract suspend fun insertHistory(record: HistoryRecordEntity)
+    abstract suspend fun insertHistory(records: List<HistoryRecordEntity>)
 
-    @Query("DELETE FROM history_records WHERE ownerId = :owner AND origin = :origin AND id = :id")
+    @Query("DELETE FROM history_records WHERE ownerId = :owner AND origin = :origin AND id IN (:ids)")
     abstract suspend fun removeHistory(
         owner: String,
         origin: String,
-        id: String,
+        ids: List<String>,
     )
 
     @Query("UPDATE location_logs SET user_id = :newOwner WHERE user_id = :oldOwner AND device_id = :device")
@@ -154,13 +154,16 @@ abstract class HistoryOwnerAdoptionDao {
         while (true) {
             val page = historyPage(oldOwner, origin)
             if (page.isEmpty()) break
-            page.forEach { source ->
-                check(historyIdCount(newOwner, origin, source.id) == 0) { "History owner adoption has a conflicting record" }
-                val rewritten = transform(source)
-                check(rewritten.id == source.id && rewritten.recordType == source.recordType && rewritten.deleted == source.deleted)
-                insertHistory(rewritten.copy(ownerId = newOwner, origin = origin, serverVersion = 0, dirty = true))
-                removeHistory(oldOwner, origin, source.id)
-            }
+            val ids = page.map { it.id }
+            check(historyIdCount(newOwner, origin, ids) == 0) { "History owner adoption has a conflicting record" }
+            val adopted =
+                page.map { source ->
+                    val rewritten = transform(source)
+                    check(rewritten.id == source.id && rewritten.recordType == source.recordType && rewritten.deleted == source.deleted)
+                    rewritten.copy(ownerId = newOwner, origin = origin, serverVersion = 0, dirty = true)
+                }
+            insertHistory(adopted)
+            removeHistory(oldOwner, origin, ids)
         }
         moveJournalMerges(oldOwner, newOwner, origin)
         moveJournalMergeUploads(oldOwner, newOwner, origin)
