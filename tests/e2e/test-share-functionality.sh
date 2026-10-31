@@ -24,19 +24,19 @@ NC='\033[0m'
 VERBOSE=false
 
 print_info() {
-    echo -e "${BLUE}INFO${NC} $1"
+  echo -e "${BLUE}INFO${NC} $1"
 }
 
 print_success() {
-    echo -e "${GREEN}PASS${NC} $1"
+  echo -e "${GREEN}PASS${NC} $1"
 }
 
 print_fail() {
-    echo -e "${RED}FAIL${NC} $1"
+  echo -e "${RED}FAIL${NC} $1"
 }
 
 usage() {
-    cat <<EOF
+  cat << EOF
 Usage: ./tests/e2e/test-share-functionality.sh [options]
 
 Options:
@@ -46,29 +46,29 @@ EOF
 }
 
 while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --verbose)
-            VERBOSE=true
-            shift
-            ;;
-        --help)
-            usage
-            exit 0
-            ;;
-        *)
-            print_fail "Unknown option: $1"
-            usage
-            exit 1
-            ;;
-    esac
+  case "$1" in
+    --verbose)
+      VERBOSE=true
+      shift
+      ;;
+    --help)
+      usage
+      exit 0
+      ;;
+    *)
+      print_fail "Unknown option: $1"
+      usage
+      exit 1
+      ;;
+  esac
 done
 
 print_info "Running Android share UX e2e tests on Gradle Managed Devices"
 
-CMD=(./gradlew managedAndroidShareDebugAndroidTest)
+CMD=(./run test:android:share)
 if [ "$VERBOSE" = true ]; then
-    CMD+=(--info)
-    echo -e "${GRAY}$ ${CMD[*]}${NC}"
+  CMD+=(--info)
+  echo -e "${GRAY}$ ${CMD[*]}${NC}"
 fi
 
 "${CMD[@]}"
