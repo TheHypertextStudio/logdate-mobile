@@ -142,7 +142,8 @@ class GenerateAmbientPromptCandidatesUseCase(
         currentTime: Instant,
     ): AmbientPromptCandidate? {
         val candidateStop =
-            observeLocationStops()
+            observeLocationStops
+                .since(currentTime - NOVEL_PLACE_LOOKBACK)
                 .first()
                 .firstOrNull { stop ->
                     stop.hasReliableDuration &&

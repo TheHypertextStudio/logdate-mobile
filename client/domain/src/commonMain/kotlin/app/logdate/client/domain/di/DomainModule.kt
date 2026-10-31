@@ -299,7 +299,7 @@ val domainModule: Module =
             val placeResolutionCache: PlaceResolutionCache = get()
             val namingExtractor: EventNamingExtractor = get()
             InferEventsUseCase(
-                observeLocationStops = observeStops::invoke,
+                observeLocationStops = observeStops::since,
                 indexedMediaRepository = get(),
                 notesRepository = get(),
                 placeFamiliarity = get(),
