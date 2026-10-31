@@ -1823,7 +1823,7 @@ private suspend fun issueAuthResponse(
  * before registering a recovery key.
  */
 @OptIn(ExperimentalUuidApi::class)
-private fun issueStepUpGrant(
+private suspend fun issueStepUpGrant(
     webAuthnService: WebAuthnPasskeyService,
     accountId: Uuid,
 ): String? =

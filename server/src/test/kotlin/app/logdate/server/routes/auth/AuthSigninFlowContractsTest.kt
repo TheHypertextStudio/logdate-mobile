@@ -16,7 +16,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -41,14 +40,14 @@ class AuthSigninFlowContractsTest {
         testApplication {
             val accountId = Uuid.random()
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.generateAuthenticationOptions(any(), any()) } throws IllegalStateException("begin-boom")
-            every { passkeyService.verifyAuthentication(any(), any()) } returns
+            coEvery { passkeyService.generateAuthenticationOptions(any(), any()) } throws IllegalStateException("begin-boom")
+            coEvery { passkeyService.verifyAuthentication(any(), any()) } returns
                 WebAuthnPasskeyService.AuthenticationResult(
                     success = true,
                     userId = accountId,
                     credentialId = null,
                 )
-            every { passkeyService.getPasskeysForUser(any()) } returns
+            coEvery { passkeyService.getPasskeysForUser(any()) } returns
                 listOf(
                     PasskeyInfo(
                         id = Uuid.random(),
@@ -82,7 +81,7 @@ class AuthSigninFlowContractsTest {
                 }
             assertEquals(HttpStatusCode.InternalServerError, begin.status)
 
-            every { passkeyService.generateAuthenticationOptions(any(), any()) } returns
+            coEvery { passkeyService.generateAuthenticationOptions(any(), any()) } returns
                 PasskeyAuthenticationOptions(challenge = "challenge-ok", rpId = "logdate.app")
             val complete =
                 client.post("/api/v1/auth/signin/passkey/complete") {
@@ -111,7 +110,7 @@ class AuthSigninFlowContractsTest {
             coEvery { accountRepository.updateLastSignIn(accountId) } throws IllegalStateException("update-signin-boom")
 
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyAuthentication(any(), any()) } returns
+            coEvery { passkeyService.verifyAuthentication(any(), any()) } returns
                 WebAuthnPasskeyService.AuthenticationResult(
                     success = true,
                     userId = accountId,

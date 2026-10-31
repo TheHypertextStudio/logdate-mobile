@@ -167,7 +167,7 @@ class AuthSignupFlowContractsTest {
                 accountCreationSession(sessionToken, accountId)
 
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyRegistration(any(), any(), any()) } returns
+            coEvery { passkeyService.verifyRegistration(any(), any(), any()) } returns
                 WebAuthnPasskeyService.RegistrationResult(success = false, error = "verification-nope")
 
             configureAuthV1TestApp(
@@ -203,7 +203,7 @@ class AuthSignupFlowContractsTest {
             coEvery { sessionManager.validateSession(eq(sessionToken), eq(SessionType.ACCOUNT_CREATION)) } returns
                 accountCreationSession(sessionToken, ownerId)
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
+            coEvery { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
                 VerificationOutcome.Success(verifiedRegistration("cred-owner-collision"))
 
             val env =
@@ -238,10 +238,10 @@ class AuthSignupFlowContractsTest {
                 accountCreationSession(sessionToken, accountId)
 
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
+            coEvery { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
                 VerificationOutcome.Success(verifiedRegistration("cred-catch"))
-            every { passkeyService.storeVerifiedPasskey(any(), any()) } returns true
-            every { passkeyService.getPasskeysForUser(any()) } returns emptyList()
+            coEvery { passkeyService.storeVerifiedPasskey(any(), any()) } returns true
+            coEvery { passkeyService.getPasskeysForUser(any()) } returns emptyList()
             configureAuthV1TestApp(
                 sessionManager = sessionManager,
                 webAuthnPasskeyService = passkeyService,
@@ -295,10 +295,10 @@ class AuthSignupFlowContractsTest {
             coEvery { sessionManager.markSessionUsed(sessionToken) } returns true
 
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
+            coEvery { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
                 VerificationOutcome.Success(verifiedRegistration("cred-request-fallback"))
-            every { passkeyService.storeVerifiedPasskey(any(), any()) } returns true
-            every { passkeyService.getPasskeysForUser(any()) } returns emptyList()
+            coEvery { passkeyService.storeVerifiedPasskey(any(), any()) } returns true
+            coEvery { passkeyService.getPasskeysForUser(any()) } returns emptyList()
 
             val env =
                 configureAuthV1TestApp(
@@ -393,7 +393,7 @@ class AuthSignupFlowContractsTest {
                 accountCreationSession(sessionToken, accountId)
 
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
+            coEvery { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
                 VerificationOutcome.Failure("attestation rejected")
 
             val env =
@@ -428,9 +428,9 @@ class AuthSignupFlowContractsTest {
                 accountCreationSession(sessionToken, accountId)
 
             val passkeyService = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
+            coEvery { passkeyService.verifyRegistrationOnly(any(), any(), any()) } returns
                 VerificationOutcome.Success(verifiedRegistration("cred-store-fail"))
-            every { passkeyService.storeVerifiedPasskey(any(), any()) } returns false
+            coEvery { passkeyService.storeVerifiedPasskey(any(), any()) } returns false
 
             val env =
                 configureAuthV1TestApp(

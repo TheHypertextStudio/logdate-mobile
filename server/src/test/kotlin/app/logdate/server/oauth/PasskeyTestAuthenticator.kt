@@ -42,7 +42,7 @@ internal class PasskeyTestAuthenticator(
 
     /** Registers this authenticator's passkey to [userId] through the real registration ceremony. */
     @OptIn(ExperimentalUuidApi::class)
-    fun registerWith(
+    suspend fun registerWith(
         service: WebAuthnPasskeyService,
         userId: Uuid,
         username: String,

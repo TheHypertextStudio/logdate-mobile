@@ -15,6 +15,7 @@ import com.webauthn4j.data.attestation.authenticator.EC2COSEKey
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement
 import com.webauthn4j.data.extension.authenticator.RegistrationExtensionAuthenticatorOutput
+import kotlinx.coroutines.runBlocking
 import java.nio.ByteBuffer
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
@@ -30,55 +31,59 @@ import kotlin.uuid.Uuid
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 class PassiveRestoreCredentialTest {
     @Test
-    fun `strict restore accepts fresh assertions and rejects exact challenge replay`() {
-        val (service, authenticator) = registeredRestore()
-        val challenge = service.generateAuthOptions().challenge
-        assertTrue(service.verifyAuthentication(challenge, authenticator.assertion(challenge)).success)
-        val nextChallenge = service.generateAuthOptions().challenge
-        assertTrue(service.verifyAuthentication(nextChallenge, authenticator.assertion(nextChallenge)).success)
-        assertFalse(service.verifyAuthentication(challenge, authenticator.assertion(challenge)).success)
-    }
-
-    @Test
-    fun `positive counters must advance on fresh challenges`() {
-        val (service, authenticator) = registeredRestore()
-        val first = service.generateAuthOptions().challenge
-        assertTrue(service.verifyAuthentication(first, authenticator.assertion(first, signCount = 1)).success)
-        val stale = service.generateAuthOptions().challenge
-        assertFalse(service.verifyAuthentication(stale, authenticator.assertion(stale, signCount = 1)).success)
-        val next = service.generateAuthOptions().challenge
-        assertTrue(service.verifyAuthentication(next, authenticator.assertion(next, signCount = 2)).success)
-    }
-
-    @Test
-    fun `passive restore still rejects a modified signature`() {
-        val (service, authenticator) = registeredRestore()
-        val challenge = service.generateAuthOptions().challenge
-        val assertion = authenticator.assertion(challenge)
-        assertFalse(
-            service
-                .verifyAuthentication(
-                    challenge,
-                    assertion.copy(response = assertion.response.copy(signature = encode(byteArrayOf(1, 2, 3)))),
-                ).success,
-        )
-    }
-
-    @Test
-    fun `passive restore still checks origin and challenge binding`() {
-        for (wrongOrigin in listOf(false, true)) {
+    fun `strict restore accepts fresh assertions and rejects exact challenge replay`() =
+        runBlocking<Unit> {
             val (service, authenticator) = registeredRestore()
             val challenge = service.generateAuthOptions().challenge
-            val assertion =
-                authenticator.assertion(
-                    if (wrongOrigin) challenge else encode(byteArrayOf(42)),
-                    if (wrongOrigin) "https://other.example" else ORIGIN,
-                )
-            assertFalse(service.verifyAuthentication(challenge, assertion).success)
+            assertTrue(service.verifyAuthentication(challenge, authenticator.assertion(challenge)).success)
+            val nextChallenge = service.generateAuthOptions().challenge
+            assertTrue(service.verifyAuthentication(nextChallenge, authenticator.assertion(nextChallenge)).success)
+            assertFalse(service.verifyAuthentication(challenge, authenticator.assertion(challenge)).success)
         }
-    }
 
-    private fun registeredRestore(): Pair<RestoreCredentialService, PassiveRestoreAuthenticator> {
+    @Test
+    fun `positive counters must advance on fresh challenges`() =
+        runBlocking<Unit> {
+            val (service, authenticator) = registeredRestore()
+            val first = service.generateAuthOptions().challenge
+            assertTrue(service.verifyAuthentication(first, authenticator.assertion(first, signCount = 1)).success)
+            val stale = service.generateAuthOptions().challenge
+            assertFalse(service.verifyAuthentication(stale, authenticator.assertion(stale, signCount = 1)).success)
+            val next = service.generateAuthOptions().challenge
+            assertTrue(service.verifyAuthentication(next, authenticator.assertion(next, signCount = 2)).success)
+        }
+
+    @Test
+    fun `passive restore still rejects a modified signature`() =
+        runBlocking<Unit> {
+            val (service, authenticator) = registeredRestore()
+            val challenge = service.generateAuthOptions().challenge
+            val assertion = authenticator.assertion(challenge)
+            assertFalse(
+                service
+                    .verifyAuthentication(
+                        challenge,
+                        assertion.copy(response = assertion.response.copy(signature = encode(byteArrayOf(1, 2, 3)))),
+                    ).success,
+            )
+        }
+
+    @Test
+    fun `passive restore still checks origin and challenge binding`() =
+        runBlocking<Unit> {
+            for (wrongOrigin in listOf(false, true)) {
+                val (service, authenticator) = registeredRestore()
+                val challenge = service.generateAuthOptions().challenge
+                val assertion =
+                    authenticator.assertion(
+                        if (wrongOrigin) challenge else encode(byteArrayOf(42)),
+                        if (wrongOrigin) "https://other.example" else ORIGIN,
+                    )
+                assertFalse(service.verifyAuthentication(challenge, assertion).success)
+            }
+        }
+
+    private suspend fun registeredRestore(): Pair<RestoreCredentialService, PassiveRestoreAuthenticator> {
         val service =
             RestoreCredentialService(
                 InMemoryRestoreCredentialRepository(),

@@ -3,7 +3,6 @@
 package app.logdate.server.passkeys
 
 import app.logdate.shared.model.PasskeyChallenge
-import kotlinx.coroutines.runBlocking
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
@@ -19,7 +18,7 @@ internal class PasskeyChallenges(
 ) {
     private val random = SecureRandom()
 
-    fun issue(
+    suspend fun issue(
         userId: Uuid,
         type: String,
     ): String {
@@ -28,7 +27,7 @@ internal class PasskeyChallenges(
         val now = Clock.System.now()
         val data = PasskeyChallenge(challenge, userId, type, (now + 5.minutes).toString())
         if (repository != null) {
-            runBlocking { repository.save(scope, data) }
+            repository.save(scope, data)
         } else {
             local.entries.removeIf { Instant.parse(it.value.expiresAt) <= now }
             local[challenge] = data
@@ -36,14 +35,14 @@ internal class PasskeyChallenges(
         return challenge
     }
 
-    fun consume(
+    suspend fun consume(
         challenge: String,
         expectedType: String,
         expectedUserId: Uuid?,
     ): PasskeyChallenge? {
         val now = Clock.System.now()
         if (repository != null) {
-            return runBlocking { repository.consume(scope, challenge, expectedType, expectedUserId, now) }
+            return repository.consume(scope, challenge, expectedType, expectedUserId, now)
         }
         var consumed: PasskeyChallenge? = null
         local.computeIfPresent(challenge) { _, data ->

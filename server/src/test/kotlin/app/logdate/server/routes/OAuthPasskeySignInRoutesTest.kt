@@ -676,7 +676,7 @@ class OAuthPasskeySignInRoutesTest {
             env.base.atprotoIdentityService.ensureIdentity(saved)
         }
 
-    private fun PasskeyTestAuthenticator.registerWithoutOriginCheck(
+    private suspend fun PasskeyTestAuthenticator.registerWithoutOriginCheck(
         env: PasskeyEnv,
         account: Account,
     ) {

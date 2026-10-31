@@ -66,7 +66,7 @@ class AuthProfileAndMetricsRouteContractsTest {
             every { tokenService.validateRefreshToken(any()) } throws IllegalStateException("refresh-boom")
             every { tokenService.decodeAccessToken(any()) } returns null
             every { tokenService.decodeRefreshToken(any()) } returns null
-            every { webAuthn.getPasskeysForUser(any()) } returns emptyList()
+            coEvery { webAuthn.getPasskeysForUser(any()) } returns emptyList()
             coEvery { accountRepository.usernameExists("taken_username") } returns true
 
             configureAuthV1TestApp(
@@ -223,8 +223,8 @@ class AuthProfileAndMetricsRouteContractsTest {
             every { tokenService.decodeRefreshToken(any()) } returns null
 
             val webAuthn = mockk<WebAuthnPasskeyService>(relaxed = true)
-            every { webAuthn.getPasskeysForUser(any()) } returns emptyList()
-            every { webAuthn.credentialBelongsToUser(any(), any()) } throws IllegalStateException("delete-passkey-boom")
+            coEvery { webAuthn.getPasskeysForUser(any()) } returns emptyList()
+            coEvery { webAuthn.credentialBelongsToUser(any(), any()) } throws IllegalStateException("delete-passkey-boom")
 
             configureAuthV1TestApp(
                 accountRepository = accountRepository,
