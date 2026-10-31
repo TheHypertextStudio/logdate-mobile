@@ -86,6 +86,14 @@ interface LocationHistoryRepository {
     ): Result<Unit>
 
     /**
+     * Logs several samples in order. Stores that can write them in one statement override this.
+     */
+    suspend fun logLocations(records: List<LocationLogRecord>): Result<Unit> {
+        records.forEach { record -> logLocation(record).onFailure { return Result.failure(it) } }
+        return Result.success(Unit)
+    }
+
+    /**
      * Logs a rich location sample with capture metadata.
      */
     suspend fun logLocation(record: LocationLogRecord): Result<Unit> =

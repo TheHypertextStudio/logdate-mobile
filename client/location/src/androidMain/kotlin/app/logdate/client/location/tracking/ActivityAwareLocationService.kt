@@ -13,6 +13,8 @@ import android.os.Looper
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import app.logdate.client.location.R
+import app.logdate.client.location.history.LocationReading
+import app.logdate.client.location.history.LocationReadingRecorder
 import app.logdate.client.location.history.LocationTracker
 import app.logdate.client.location.settings.LocationTrackingSettingsRepository
 import app.logdate.client.notifications.LogDateNotificationChannelKey
@@ -39,7 +41,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
@@ -133,6 +134,7 @@ class ActivityAwareLocationService :
     private val settings: LocationTrackingSettingsRepository by inject()
     private val locationTracker: LocationTracker by inject()
     private val permissionManager: PermissionManager by inject()
+    private val readingRecorder by lazy { LocationReadingRecorder(serviceScope, settings, locationTracker) }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var activityRecognitionClient: ActivityRecognitionClient
@@ -284,9 +286,9 @@ class ActivityAwareLocationService :
         val callback =
             object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
-                    result.locations.forEach { androidLocation ->
-                        persistLocation(androidLocation)
-                    }
+                    if (result.locations.isEmpty()) return
+                    lastFixAt = clock.now()
+                    readingRecorder.record(result.locations.map(::toReading))
                 }
             }
 
@@ -330,8 +332,7 @@ class ActivityAwareLocationService :
         }
     }
 
-    private fun persistLocation(androidLocation: AndroidLocation) {
-        lastFixAt = clock.now()
+    private fun toReading(androidLocation: AndroidLocation): LocationReading {
         val location =
             Location(
                 latitude = androidLocation.latitude,
@@ -351,15 +352,7 @@ class ActivityAwareLocationService :
                 LocationCaptureSource.FOREGROUND_STREAM,
                 currentActivityType.takeIf { currentActivitySince?.let { it <= androidLocation.observedAt(recordedAt) } == true },
             )
-        serviceScope.launch {
-            if (!settings.getSettings().backgroundTrackingEnabled) return@launch
-            locationTracker
-                .logLocation(
-                    location = location,
-                    timestamp = androidLocation.observedAt(recordedAt),
-                    metadata = metadata,
-                ).onFailure { error -> Napier.w("Failed to persist location", error) }
-        }
+        return LocationReading(location, androidLocation.observedAt(recordedAt), metadata)
     }
 
     @Suppress("MissingPermission")

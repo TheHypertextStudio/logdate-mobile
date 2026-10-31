@@ -68,6 +68,9 @@ interface LocationHistoryDao {
     @Insert
     suspend fun addLocationLog(locationLog: LocationLogEntity)
 
+    @Insert
+    suspend fun addLocationLogs(locationLogs: List<LocationLogEntity>)
+
     @Query("DELETE FROM location_logs WHERE user_id = :userId AND device_id = :deviceId AND timestamp = :timestamp")
     suspend fun deleteLocationById(
         userId: String,
