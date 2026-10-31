@@ -21,7 +21,7 @@ kotlin {
 
         commonMain.dependencies {
             implementation(projects.client.billing)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.domain)
             implementation(projects.client.feature.core)
             implementation(projects.client.feature.timeline)
@@ -30,7 +30,7 @@ kotlin {
             implementation(projects.client.feature.rewind)
             implementation(projects.client.feature.search)
             implementation(projects.client.location)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.media)
             implementation(projects.client.repository)
             implementation(projects.client.sync)

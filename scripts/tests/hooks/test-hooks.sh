@@ -13,38 +13,38 @@ COMMON="$REPO_ROOT/scripts/validation/hook-common.sh"
 pass_count=0
 
 assert_equals() {
-    local expected="$1"
-    local actual="$2"
-    if [[ "$expected" != "$actual" ]]; then
-        echo "FAIL: expected '$expected', got '$actual'"
-        exit 1
-    fi
-    pass_count=$((pass_count + 1))
+  local expected="$1"
+  local actual="$2"
+  if [[ "$expected" != "$actual" ]]; then
+    echo "FAIL: expected '$expected', got '$actual'"
+    exit 1
+  fi
+  pass_count=$((pass_count + 1))
 }
 
 assert_exit() {
-    local expected="$1"
-    shift
-    set +e
-    "$@" >/dev/null 2>&1
-    local status=$?
-    set -e
-    if [[ $status -ne $expected ]]; then
-        echo "FAIL: expected exit $expected, got $status for command: $*"
-        exit 1
-    fi
-    pass_count=$((pass_count + 1))
+  local expected="$1"
+  shift
+  set +e
+  "$@" > /dev/null 2>&1
+  local status=$?
+  set -e
+  if [[ $status -ne $expected ]]; then
+    echo "FAIL: expected exit $expected, got $status for command: $*"
+    exit 1
+  fi
+  pass_count=$((pass_count + 1))
 }
 
 assert_contains() {
-    local needle="$1"
-    local text="$2"
-    if ! echo "$text" | grep -q "$needle"; then
-        echo "FAIL: expected output to contain '$needle'"
-        echo "$text"
-        exit 1
-    fi
-    pass_count=$((pass_count + 1))
+  local needle="$1"
+  local text="$2"
+  if ! echo "$text" | grep -q "$needle"; then
+    echo "FAIL: expected output to contain '$needle'"
+    echo "$text"
+    exit 1
+  fi
+  pass_count=$((pass_count + 1))
 }
 
 # validate-commit-message hard checks
@@ -61,16 +61,16 @@ warning_output="$("$VALIDATOR" --message "feat(editor): Added playback controls"
 warning_status=$?
 set -e
 if [[ $warning_status -ne 0 ]]; then
-    echo "FAIL: expected warning-only message to pass"
-    echo "$warning_output"
-    exit 1
+  echo "FAIL: expected warning-only message to pass"
+  echo "$warning_output"
+  exit 1
 fi
 assert_contains "WARNING: Use imperative mood in commit title." "$warning_output"
 
 # format-commit-message auto-wrap behavior
 tmp_msg_file="$(mktemp "${TMPDIR:-/tmp}/commit-msg-test.XXXXXX")"
 trap 'rm -f "$tmp_msg_file"' EXIT
-cat <<'EOF' > "$tmp_msg_file"
+cat << 'EOF' > "$tmp_msg_file"
 fix(editor): wrap commit body
 
 This body line is intentionally made very long so it exceeds seventy two characters and should be wrapped automatically by the formatter script.
@@ -86,10 +86,10 @@ source "$COMMON"
 # A real task list can exceed the pipe buffer; early matches must still pass under pipefail.
 large_task_listing=$'jvmTest - Runs JVM tests.\n'"$(printf '%200000s' '')"
 large_task_list_has_jvm_tests() {
-    module_has_task "$large_task_listing" "jvmTest"
+  module_has_task "$large_task_listing" "jvmTest"
 }
 large_task_list_has_no_partial_match() {
-    module_has_task "$large_task_listing" "jvmTestExtra"
+  module_has_task "$large_task_listing" "jvmTestExtra"
 }
 assert_exit 0 large_task_list_has_jvm_tests
 assert_exit 1 large_task_list_has_no_partial_match
@@ -97,45 +97,45 @@ assert_exit 1 large_task_list_has_no_partial_match
 resolved="$(modules_from_files $'client/feature/timeline/src/main/kotlin/Foo.kt\nclient/feature/timeline/src/main/kotlin/Bar.kt\nclient/repository/src/commonMain/kotlin/Baz.kt\nclient/datastore/src/commonMain/kotlin/Qux.kt')"
 assert_contains "^:client:feature:timeline$" "$resolved"
 assert_contains "^:client:repository$" "$resolved"
-assert_contains "^:client:logdate-datastore$" "$resolved"
+assert_contains "^:client:datastore$" "$resolved"
 
 fetch_calls_total=0
 fetch_module_tasks() {
-    local module="$1"
-    fetch_calls_total=$((fetch_calls_total + 1))
+  local module="$1"
+  fetch_calls_total=$((fetch_calls_total + 1))
 
-    case "$module" in
-        :app:android-main)
-            cat <<'EOF'
+  case "$module" in
+    :app:android-main)
+      cat << 'EOF'
 Verification tasks
 ------------------
 test - Runs the tests.
 testDebugUnitTest - Runs debug unit tests.
 EOF
-            ;;
-        :client:permissions)
-            cat <<'EOF'
+      ;;
+    :client:permissions)
+      cat << 'EOF'
 Verification tasks
 ------------------
 jvmTest - Runs JVM tests.
 allTests - Runs tests for all targets.
 EOF
-            ;;
-        :client:feature:timeline)
-            cat <<'EOF'
+      ;;
+    :client:feature:timeline)
+      cat << 'EOF'
 Verification tasks
 ------------------
 allTests - Runs tests for all targets.
 EOF
-            ;;
-        *)
-            cat <<'EOF'
+      ;;
+    *)
+      cat << 'EOF'
 Verification tasks
 ------------------
 check - Runs all checks.
 EOF
-            ;;
-    esac
+      ;;
+  esac
 }
 
 MODULE_TASKS_CACHE_KEYS=()
@@ -155,18 +155,18 @@ resolved_test_task="$(resolve_test_task_for_module ":client:permissions" "balanc
 assert_equals ":client:permissions:jvmTest" "$resolved_test_task"
 assert_equals "$fetch_calls_before_cached_lookup" "$fetch_calls_total"
 
-if resolve_test_task_for_module ":unknown:module" "balanced" >/dev/null 2>&1; then
-    echo "FAIL: expected unknown module to fail test task resolution"
-    exit 1
+if resolve_test_task_for_module ":unknown:module" "balanced" > /dev/null 2>&1; then
+  echo "FAIL: expected unknown module to fail test task resolution"
+  exit 1
 fi
 pass_count=$((pass_count + 1))
 
 MODULE_TASKS_CACHE_KEYS=()
 MODULE_TASKS_CACHE_VALUES=()
 resolve_test_tasks_for_modules "balanced" \
-    ":app:android-main" \
-    ":client:permissions" \
-    ":unknown:module"
+  ":app:android-main" \
+  ":client:permissions" \
+  ":unknown:module"
 resolved_list="$(printf '%s\n' "${RESOLVED_TEST_TASKS[@]}")"
 unresolved_list="$(printf '%s\n' "${UNRESOLVED_TEST_MODULES[@]}")"
 assert_contains "^:app:android-main:test$" "$resolved_list"

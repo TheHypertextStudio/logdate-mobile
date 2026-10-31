@@ -42,7 +42,7 @@ kotlin {
             implementation(projects.client.awareness)
             implementation(projects.client.ui)
             implementation(projects.client.domain)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.repository)
             implementation(projects.client.util)
             implementation(projects.client.media)

@@ -27,7 +27,7 @@ kotlin {
             implementation(projects.shared.model)
             implementation(projects.shared.config)
             implementation(projects.shared.atprotoCrypto)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)

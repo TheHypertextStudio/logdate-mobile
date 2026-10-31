@@ -56,7 +56,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(projects.client.device)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.shared.model)
             implementation(libs.koin.android)
             // Live Update builder methods (setRequestPromotedOngoing) need core 1.17 or later.

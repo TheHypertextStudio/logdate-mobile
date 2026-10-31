@@ -46,7 +46,7 @@ kotlin {
             implementation(projects.client.networking)
             implementation(projects.client.repository)
             implementation(projects.client.database)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.device)
             implementation(projects.client.media)
             implementation(projects.client.text)
@@ -81,7 +81,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.ktor.client.mock)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.util)
             implementation(libs.okio)
         }

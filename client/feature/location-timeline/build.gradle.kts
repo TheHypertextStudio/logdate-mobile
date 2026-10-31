@@ -27,7 +27,7 @@ kotlin {
             implementation(projects.shared.model)
             implementation(projects.shared.config)
             implementation(projects.client.device)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.domain)
             implementation(projects.client.ui)
             implementation(projects.client.awareness)

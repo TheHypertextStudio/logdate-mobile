@@ -27,7 +27,7 @@ kotlin {
             implementation(projects.client.ui)
             implementation(projects.client.repository)
             implementation(projects.client.domain)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.intelligence)
             implementation(projects.client.sharing)
             implementation(projects.client.util)

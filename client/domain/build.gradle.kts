@@ -46,7 +46,7 @@ kotlin {
             implementation(projects.client.intelligence)
             implementation(projects.client.networking)
             implementation(projects.client.device)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.healthConnect)
             implementation(projects.client.calendarSync)
             implementation(projects.client.text)
