@@ -1,37 +1,16 @@
 import com.android.build.api.dsl.ManagedVirtualDevice
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.android.test)
+    id("app.logdate.benchmark")
     alias(libs.plugins.androidx.baselineprofile)
 }
 
 android {
     namespace = "app.logdate.benchmark.wear.baselineprofile"
-    compileSdk =
-        libs.versions.android.compileSdk
-            .get()
-            .toInt()
     targetProjectPath = ":app:wear"
 
     defaultConfig {
         minSdk = 34
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
-    }
-
-    experimentalProperties["android.experimental.self-instrumenting"] = true
-
-    buildTypes {
-        create("benchmark") {
-            isDebuggable = false
-            signingConfig = getByName("debug").signingConfig
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 
     testOptions {
@@ -47,12 +26,6 @@ android {
                     }
             }
         }
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
