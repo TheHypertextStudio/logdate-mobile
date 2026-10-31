@@ -14,20 +14,19 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 
 internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateRepository {
     // The database clock, as for revocations, so every instance agrees on what has expired.
     override suspend fun purgeExpired(now: kotlin.time.Instant): Int =
-        transaction {
+        dbQuery {
             OAuthAuthorizationRequestsTable.deleteWhere { OAuthAuthorizationRequestsTable.expiresAt less CurrentTimestamp } +
                 OAuthAuthorizationCodesTable.deleteWhere { OAuthAuthorizationCodesTable.expiresAt less CurrentTimestamp } +
                 OAuthRefreshTokensTable.deleteWhere { OAuthRefreshTokensTable.expiresAt less CurrentTimestamp }
         }
 
     override suspend fun saveAuthorizationRequest(request: StoredAuthorizationRequest): StoredAuthorizationRequest =
-        transaction {
+        dbQuery {
             val existing =
                 OAuthAuthorizationRequestsTable
                     .selectAll()
@@ -68,7 +67,7 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         }
 
     override suspend fun findAuthorizationRequest(requestUri: String): StoredAuthorizationRequest? =
-        transaction {
+        dbQuery {
             OAuthAuthorizationRequestsTable
                 .selectAll()
                 .where { OAuthAuthorizationRequestsTable.requestUri eq requestUri }
@@ -77,12 +76,12 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         }
 
     override suspend fun deleteAuthorizationRequest(requestUri: String): Boolean =
-        transaction {
+        dbQuery {
             OAuthAuthorizationRequestsTable.deleteWhere { OAuthAuthorizationRequestsTable.requestUri eq requestUri } > 0
         }
 
     override suspend fun saveAuthorizationCode(code: StoredAuthorizationCode): StoredAuthorizationCode =
-        transaction {
+        dbQuery {
             val existing =
                 OAuthAuthorizationCodesTable
                     .selectAll()
@@ -125,7 +124,7 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         }
 
     override suspend fun takeAuthorizationCode(code: String): StoredAuthorizationCode? =
-        transaction {
+        dbQuery {
             // The row lock makes a concurrent exchange wait, then find the code gone.
             val existing =
                 OAuthAuthorizationCodesTable
@@ -134,13 +133,13 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
                     .forUpdate()
                     .singleOrNull()
                     ?.toAuthorizationCodeState()
-                    ?: return@transaction null
+                    ?: return@dbQuery null
             val removed = OAuthAuthorizationCodesTable.deleteWhere { OAuthAuthorizationCodesTable.code eq code }
             existing.takeIf { removed == 1 }
         }
 
     override suspend fun saveRefreshToken(token: StoredRefreshToken): StoredRefreshToken =
-        transaction {
+        dbQuery {
             val existing =
                 OAuthRefreshTokensTable
                     .selectAll()
@@ -177,8 +176,8 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         }
 
     override suspend fun saveGrantedRefreshToken(token: StoredRefreshToken): Boolean =
-        transaction {
-            if (revokedSince(token.subjectDid, token.grantedAt)) return@transaction false
+        dbQuery {
+            if (revokedSince(token.subjectDid, token.grantedAt)) return@dbQuery false
             insertRefreshToken(token)
             true
         }
@@ -188,7 +187,7 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         replacement: StoredRefreshToken,
         now: kotlin.time.Instant,
     ): Boolean =
-        transaction {
+        dbQuery {
             // The row lock serializes refreshes of one token: the second waits, then finds it gone.
             val old =
                 OAuthRefreshTokensTable
@@ -197,20 +196,20 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
                     .forUpdate()
                     .singleOrNull()
                     ?.toRefreshTokenState()
-                    ?: return@transaction false
-            if (old.revokedAt != null || old.expiresAt <= now) return@transaction false
-            if (revokedSince(old.subjectDid, old.grantedAt)) return@transaction false
+                    ?: return@dbQuery false
+            if (old.revokedAt != null || old.expiresAt <= now) return@dbQuery false
+            if (revokedSince(old.subjectDid, old.grantedAt)) return@dbQuery false
             val removed =
                 OAuthRefreshTokensTable.deleteWhere {
                     (OAuthRefreshTokensTable.token eq oldToken) and OAuthRefreshTokensTable.revokedAt.isNull()
                 }
-            if (removed != 1) return@transaction false
+            if (removed != 1) return@dbQuery false
             insertRefreshToken(replacement)
             true
         }
 
     override suspend fun findRefreshToken(token: String): StoredRefreshToken? =
-        transaction {
+        dbQuery {
             OAuthRefreshTokensTable
                 .selectAll()
                 .where { OAuthRefreshTokensTable.token eq token }
@@ -222,14 +221,14 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         token: String,
         revokedAt: kotlin.time.Instant,
     ): Boolean =
-        transaction {
+        dbQuery {
             OAuthRefreshTokensTable.update({ OAuthRefreshTokensTable.token eq token }) {
                 it[OAuthRefreshTokensTable.revokedAt] = revokedAt
             } > 0
         }
 
     override suspend fun deleteRefreshToken(token: String): Boolean =
-        transaction {
+        dbQuery {
             OAuthRefreshTokensTable.deleteWhere { OAuthRefreshTokensTable.token eq token } > 0
         }
 
@@ -237,7 +236,7 @@ internal class PostgreSQLOAuthRuntimeStateRepository : OAuthRuntimeStateReposito
         subjectDid: String,
         revokedAt: kotlin.time.Instant,
     ): Int =
-        transaction {
+        dbQuery {
             val previous =
                 OAuthSubjectRevocationsTable
                     .selectAll()

@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -17,7 +16,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class PostgreSQLAtprotoPasswordCredentialRepository : AtprotoPasswordCredentialRepository {
     override suspend fun save(credential: AtprotoPasswordCredential): AtprotoPasswordCredential =
-        transaction {
+        dbQuery {
             val existing =
                 AtprotoPasswordCredentialsTable
                     .selectAll()
@@ -52,7 +51,7 @@ class PostgreSQLAtprotoPasswordCredentialRepository : AtprotoPasswordCredentialR
         }
 
     override suspend fun findByAccountId(accountId: Uuid): AtprotoPasswordCredential? =
-        transaction {
+        dbQuery {
             AtprotoPasswordCredentialsTable
                 .selectAll()
                 .where { AtprotoPasswordCredentialsTable.accountId eq accountId.toJavaUUID() }
@@ -64,7 +63,7 @@ class PostgreSQLAtprotoPasswordCredentialRepository : AtprotoPasswordCredentialR
 @OptIn(ExperimentalUuidApi::class)
 class PostgreSQLAtprotoSessionRepository : AtprotoSessionRepository {
     override suspend fun save(session: AtprotoSession): AtprotoSession =
-        transaction {
+        dbQuery {
             val existing =
                 AtprotoSessionsTable
                     .selectAll()
@@ -102,7 +101,7 @@ class PostgreSQLAtprotoSessionRepository : AtprotoSessionRepository {
         }
 
     override suspend fun findById(sessionId: String): AtprotoSession? =
-        transaction {
+        dbQuery {
             AtprotoSessionsTable
                 .selectAll()
                 .where { AtprotoSessionsTable.id eq sessionId }
@@ -111,7 +110,7 @@ class PostgreSQLAtprotoSessionRepository : AtprotoSessionRepository {
         }
 
     override suspend fun revoke(sessionId: String): Boolean =
-        transaction {
+        dbQuery {
             val updatedRows =
                 AtprotoSessionsTable.update({ AtprotoSessionsTable.id eq sessionId }) {
                     it[revokedAt] =

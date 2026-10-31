@@ -10,7 +10,6 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.Base64
 import kotlin.time.Clock
@@ -27,7 +26,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         info: PasskeyInfo,
     ): Boolean =
         try {
-            transaction {
+            dbQuery {
                 PasskeysTable.insert {
                     it[id] = info.id.toJavaUUID()
                     it[accountId] = userId.toJavaUUID()
@@ -48,7 +47,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     override suspend fun getPasskeyByCredentialId(credentialId: String): Pair<Uuid, StoredPasskeyData>? =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { (PasskeysTable.credentialId eq credentialId) and (PasskeysTable.isActive eq true) }
@@ -68,7 +67,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     override suspend fun getPasskeysForUser(userId: Uuid): List<PasskeyInfo> =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { (PasskeysTable.accountId eq userId.toJavaUUID()) and (PasskeysTable.isActive eq true) }
@@ -80,7 +79,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         credentialId: String,
         newSignCount: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             val updatedRows =
                 PasskeysTable.update({ PasskeysTable.credentialId eq credentialId }) {
                     it[signCount] = newSignCount
@@ -93,7 +92,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         credentialId: String,
         userId: Uuid,
     ): Boolean =
-        transaction {
+        dbQuery {
             val updatedRows =
                 PasskeysTable.update({
                     (PasskeysTable.credentialId eq credentialId) and (PasskeysTable.accountId eq userId.toJavaUUID())
@@ -107,7 +106,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         credentialId: String,
         userId: Uuid,
     ): Boolean =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where {
@@ -116,7 +115,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     override suspend fun getCredentialIdsForUser(userId: Uuid): List<String> =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { (PasskeysTable.accountId eq userId.toJavaUUID()) and (PasskeysTable.isActive eq true) }
@@ -124,7 +123,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     override suspend fun credentialExists(credentialId: String): Boolean =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { PasskeysTable.credentialId eq credentialId }
@@ -133,7 +132,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
 
     // Additional utility methods for internal use
     suspend fun findById(passkeyId: Uuid): PasskeyInfo? =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { PasskeysTable.id eq passkeyId.toJavaUUID() }
@@ -142,7 +141,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     suspend fun findByCredentialId(credentialId: String): PasskeyInfo? =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { PasskeysTable.credentialId eq credentialId }
@@ -151,7 +150,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     suspend fun findByAccountId(accountId: Uuid): List<PasskeyInfo> =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { PasskeysTable.accountId eq accountId.toJavaUUID() }
@@ -162,7 +161,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
     suspend fun findActiveByAccountId(accountId: Uuid): List<PasskeyInfo> = getPasskeysForUser(accountId)
 
     suspend fun updateLastUsed(credentialId: String): Boolean =
-        transaction {
+        dbQuery {
             val updatedRows =
                 PasskeysTable.update({ PasskeysTable.credentialId eq credentialId }) {
                     it[lastUsedAt] = Clock.System.now()
@@ -171,7 +170,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         }
 
     suspend fun deletePasskey(passkeyId: Uuid): Boolean =
-        transaction {
+        dbQuery {
             val deletedRows = PasskeysTable.deleteWhere { id eq passkeyId.toJavaUUID() }
             deletedRows > 0
         }
@@ -189,7 +188,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
         signCount: Long,
         webauthnData: String = "{}",
     ): PasskeyInfo =
-        transaction {
+        dbQuery {
             PasskeysTable.insert {
                 it[id] = passkey.id.toJavaUUID()
                 it[this.accountId] = accountId.toJavaUUID()
@@ -210,7 +209,7 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
      * Get the stored public key and sign count for a credential
      */
     suspend fun getWebAuthnData(credentialId: String): Triple<String, Long, String>? =
-        transaction {
+        dbQuery {
             PasskeysTable
                 .selectAll()
                 .where { PasskeysTable.credentialId eq credentialId }

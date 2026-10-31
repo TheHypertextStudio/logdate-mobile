@@ -1,5 +1,6 @@
 package app.logdate.server.entitlements
 
+import app.logdate.server.database.dbQuery
 import app.logdate.shared.model.EntitlementTierWire
 import app.logdate.shared.model.PlanOption
 import io.github.aakira.napier.Napier
@@ -9,7 +10,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 /**
  * Supplies the set of plans this deployment offers.
@@ -40,7 +40,7 @@ class StoredPlanCatalogService(
     private val database: Database,
 ) : PlanCatalogService {
     override suspend fun plans(): List<PlanOption> =
-        transaction(database) {
+        dbQuery(database) {
             PlansTable
                 .selectAll()
                 .where { PlansTable.active eq true }

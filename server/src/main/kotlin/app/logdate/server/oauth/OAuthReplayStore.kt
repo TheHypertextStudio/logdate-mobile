@@ -12,12 +12,12 @@ import kotlin.time.Instant
  * A server with a database uses the PostgreSQL store, which every server instance shares. A replay
  * sent to a different instance from the first use is therefore still caught.
  */
-fun interface OAuthReplayStore {
+interface OAuthReplayStore {
     /**
      * Records [key] for [ttl] and returns `true`. Returns `false` when [key] was already recorded
      * and has not expired, which means this is a replay.
      */
-    fun firstUse(
+    suspend fun firstUse(
         key: String,
         ttl: Duration,
     ): Boolean
@@ -40,22 +40,22 @@ class InMemoryOAuthReplayStore(
 ) : OAuthReplayStore {
     private val seen = HashMap<String, Instant>()
 
-    @Synchronized
-    override fun firstUse(
+    override suspend fun firstUse(
         key: String,
         ttl: Duration,
-    ): Boolean {
-        val now = clock.now()
-        // Values of different kinds have different lifetimes, so expiry is checked per entry.
-        seen.values.removeIf { expiresAt -> expiresAt <= now }
-        val hash = replayKeyHash(key)
-        if (seen.containsKey(hash)) return false
-        if (seen.size >= maxEntries) {
-            seen.minByOrNull { it.value }?.let { soonest -> seen.remove(soonest.key) }
+    ): Boolean =
+        synchronized(seen) {
+            val now = clock.now()
+            // Values of different kinds have different lifetimes, so expiry is checked per entry.
+            seen.values.removeIf { expiresAt -> expiresAt <= now }
+            val hash = replayKeyHash(key)
+            if (seen.containsKey(hash)) return false
+            if (seen.size >= maxEntries) {
+                seen.minByOrNull { it.value }?.let { soonest -> seen.remove(soonest.key) }
+            }
+            seen[hash] = now + ttl
+            true
         }
-        seen[hash] = now + ttl
-        return true
-    }
 
     private companion object {
         const val DEFAULT_MAX_ENTRIES = 100_000

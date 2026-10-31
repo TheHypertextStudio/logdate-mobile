@@ -19,7 +19,6 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
 
@@ -28,11 +27,11 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         code: DeviceLinkCode,
         limits: DeviceSessionLimits,
     ): LinkCodeCreation =
-        transaction {
+        dbQuery {
             val windowStart = code.createdAt - LINK_CODE_RATE_WINDOW_MS
             DeviceLinkCodesTable.deleteWhere { expiresAt less windowStart }
             if (activeSessionCount(code.accountId, code.createdAt) >= limits.maxActiveSessions) {
-                return@transaction LinkCodeCreation.DEVICE_LIMIT_REACHED
+                return@dbQuery LinkCodeCreation.DEVICE_LIMIT_REACHED
             }
             val recent =
                 DeviceLinkCodesTable
@@ -40,7 +39,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
                     .where { (DeviceLinkCodesTable.accountId eq code.accountId) and (DeviceLinkCodesTable.createdAt greater windowStart) }
                     .count()
                     .toInt()
-            if (recent >= limits.maxCodesPerHour) return@transaction LinkCodeCreation.RATE_LIMITED
+            if (recent >= limits.maxCodesPerHour) return@dbQuery LinkCodeCreation.RATE_LIMITED
             DeviceLinkCodesTable.insert {
                 it[DeviceLinkCodesTable.codeHash] = code.codeHash
                 it[DeviceLinkCodesTable.accountId] = code.accountId
@@ -55,7 +54,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         session: NewDeviceSession,
         limits: DeviceSessionLimits,
     ): LinkCodeRedemption =
-        transaction {
+        dbQuery {
             val now = session.createdAt
             val accountId =
                 DeviceLinkCodesTable
@@ -63,9 +62,9 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
                     .where { spendable(codeHash, now) }
                     .singleOrNull()
                     ?.get(DeviceLinkCodesTable.accountId)
-                    ?: return@transaction LinkCodeRedemption.Invalid
+                    ?: return@dbQuery LinkCodeRedemption.Invalid
             if (activeSessionCount(accountId, now) >= limits.maxActiveSessions) {
-                return@transaction LinkCodeRedemption.DeviceLimitReached
+                return@dbQuery LinkCodeRedemption.DeviceLimitReached
             }
             // The guarded update is what makes a code single use: a concurrent redeemer re-reads
             // redeemed_at after this transaction commits and updates no row.
@@ -74,7 +73,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
                     it[DeviceLinkCodesTable.redeemedAt] = now
                     it[DeviceLinkCodesTable.sessionId] = session.id
                 }
-            if (spent != 1) return@transaction LinkCodeRedemption.Invalid
+            if (spent != 1) return@dbQuery LinkCodeRedemption.Invalid
             DeviceSessionsTable.insert {
                 it[DeviceSessionsTable.id] = session.id
                 it[DeviceSessionsTable.accountId] = accountId
@@ -98,7 +97,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         }
 
     override suspend fun find(sessionId: UUID): DeviceSession? =
-        transaction {
+        dbQuery {
             DeviceSessionsTable
                 .selectAll()
                 .where { DeviceSessionsTable.id eq sessionId }
@@ -110,7 +109,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         accountId: UUID,
         now: Long,
     ): List<DeviceSession> =
-        transaction {
+        dbQuery {
             DeviceSessionsTable
                 .selectAll()
                 .where { active(accountId, now) }
@@ -123,7 +122,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         sessionId: UUID,
         now: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             DeviceSessionsTable.update({ owned(accountId, sessionId) and DeviceSessionsTable.revokedAt.isNull() }) {
                 it[DeviceSessionsTable.revokedAt] = now
             }
@@ -135,7 +134,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         expiresAt: Long,
         now: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             DeviceSessionsTable.update({ (DeviceSessionsTable.id eq sessionId) and DeviceSessionsTable.revokedAt.isNull() }) {
                 it[DeviceSessionsTable.expiresAt] = expiresAt
                 it[DeviceSessionsTable.lastRefreshedAt] = now

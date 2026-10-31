@@ -17,7 +17,6 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.uuid.Uuid
 
@@ -56,7 +55,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
         report: StoredDiagnosticReport,
         matchesFingerprint: (ByteArray) -> Boolean,
     ): DiagnosticSaveResult =
-        transaction {
+        dbQuery {
             val account = owner.toJavaUUID()
             AccountsTable
                 .selectAll()
@@ -76,7 +75,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
                     }.singleOrNull()
             if (existing != null) {
                 val fingerprint = existing[DiagnosticReportUploadsTable.encryptedFingerprint]
-                return@transaction if (fingerprint != null && matchesFingerprint(fingerprint)) {
+                return@dbQuery if (fingerprint != null && matchesFingerprint(fingerprint)) {
                     DiagnosticSaveResult.EXISTING
                 } else {
                     DiagnosticSaveResult.CONFLICT
@@ -89,7 +88,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
                         (DiagnosticReportUploadsTable.accountId eq account) and
                             (DiagnosticReportUploadsTable.createdAtMs greater report.createdAt - DiagnosticReportService.DAY_MS)
                     }.count()
-            if (used >= DiagnosticReportService.DAILY_LIMIT) return@transaction DiagnosticSaveResult.DAILY_LIMIT
+            if (used >= DiagnosticReportService.DAILY_LIMIT) return@dbQuery DiagnosticSaveResult.DAILY_LIMIT
 
             DiagnosticReportsTable.insert {
                 it[accountId] = account
@@ -122,7 +121,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
         owner: Uuid,
         now: Long,
     ): List<StoredDiagnosticReport> =
-        transaction {
+        dbQuery {
             DiagnosticReportsTable
                 .selectAll()
                 .where {
@@ -144,7 +143,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
         reportId: Uuid,
         now: Long,
     ): StoredDiagnosticReport? =
-        transaction {
+        dbQuery {
             DiagnosticReportsTable
                 .selectAll()
                 .where {
@@ -166,7 +165,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
         owner: Uuid,
         reportId: Uuid,
     ): Boolean =
-        transaction {
+        dbQuery {
             val account = owner.toJavaUUID()
             AccountsTable
                 .selectAll()
@@ -194,7 +193,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
         }
 
     override suspend fun deleteAll(owner: Uuid): Int =
-        transaction {
+        dbQuery {
             val account = owner.toJavaUUID()
             AccountsTable
                 .selectAll()
@@ -208,7 +207,7 @@ class PostgreSQLDiagnosticReportStore : DiagnosticReportStore {
         }
 
     override suspend fun purgeExpired(before: Long): Int =
-        transaction {
+        dbQuery {
             val deleted = DiagnosticReportsTable.deleteWhere { createdAtMs lessEq before }
             DiagnosticReportUploadsTable.deleteWhere { createdAtMs lessEq before }
             deleted

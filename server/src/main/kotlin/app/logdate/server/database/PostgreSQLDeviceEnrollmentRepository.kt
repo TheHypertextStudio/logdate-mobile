@@ -14,13 +14,12 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
 
 class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
     override suspend fun create(enrollment: DeviceEnrollment): DeviceEnrollment? =
-        transaction {
+        dbQuery {
             DeviceEnrollmentTable.deleteWhere { expiresAt lessEq System.currentTimeMillis() }
             DeviceEnrollmentTable.insertIgnore {
                 it[id] = enrollment.id
@@ -48,7 +47,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         id: UUID,
         now: Long,
     ): DeviceEnrollment? =
-        transaction {
+        dbQuery {
             DeviceEnrollmentTable
                 .selectAll()
                 .where {
@@ -66,7 +65,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         encryptedEnvelope: String,
         now: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             val updated =
                 DeviceEnrollmentTable.update({
                     (DeviceEnrollmentTable.id eq id) and
@@ -78,7 +77,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
                     it[status] = EnrollmentStatus.APPROVED.name
                     it[DeviceEnrollmentTable.encryptedEnvelope] = encryptedEnvelope
                 }
-            if (updated == 1) return@transaction true
+            if (updated == 1) return@dbQuery true
             DeviceEnrollmentTable
                 .selectAll()
                 .where {
@@ -96,7 +95,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         id: UUID,
         now: Long,
     ): String? =
-        transaction {
+        dbQuery {
             val updated =
                 DeviceEnrollmentTable.update({
                     (DeviceEnrollmentTable.id eq id) and
@@ -104,7 +103,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
                         (DeviceEnrollmentTable.expiresAt greater now) and
                         (DeviceEnrollmentTable.status eq EnrollmentStatus.APPROVED.name)
                 }) { it[status] = "CONSUMED" }
-            if (updated != 1) return@transaction null
+            if (updated != 1) return@dbQuery null
             val envelope =
                 DeviceEnrollmentTable
                     .selectAll()
@@ -118,7 +117,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         accountId: UUID,
         id: UUID,
     ): Boolean =
-        transaction {
+        dbQuery {
             DeviceEnrollmentTable.deleteWhere {
                 (DeviceEnrollmentTable.id eq id) and (DeviceEnrollmentTable.accountId eq accountId)
             } == 1
@@ -129,7 +128,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         id: UUID,
         now: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             DeviceEnrollmentTable.update({
                 (DeviceEnrollmentTable.id eq id) and
                     (DeviceEnrollmentTable.accountId eq accountId) and
@@ -142,7 +141,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         claimHash: String,
         now: Long,
     ): DeviceEnrollment? =
-        transaction {
+        dbQuery {
             DeviceEnrollmentTable
                 .selectAll()
                 .where { (DeviceEnrollmentTable.claimHash eq claimHash) and (DeviceEnrollmentTable.expiresAt greater now) }
@@ -155,7 +154,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
         id: UUID,
         now: Long,
     ): SessionIssueResult =
-        transaction {
+        dbQuery {
             val updated =
                 DeviceEnrollmentTable.update({
                     (DeviceEnrollmentTable.id eq id) and
@@ -164,7 +163,7 @@ class PostgreSQLDeviceEnrollmentRepository : DeviceEnrollmentRepository {
                         (DeviceEnrollmentTable.status eq EnrollmentStatus.PENDING.name) and
                         (DeviceEnrollmentTable.sessionIssued eq false)
                 }) { it[sessionIssued] = true }
-            if (updated == 1) return@transaction SessionIssueResult.ISSUED
+            if (updated == 1) return@dbQuery SessionIssueResult.ISSUED
             val existing =
                 DeviceEnrollmentTable
                     .selectAll()

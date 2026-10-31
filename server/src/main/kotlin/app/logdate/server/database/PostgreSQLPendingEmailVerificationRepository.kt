@@ -7,7 +7,6 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -15,7 +14,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class PostgreSQLPendingEmailVerificationRepository : PendingEmailVerificationRepository {
     override suspend fun create(challenge: PendingEmailVerification): PendingEmailVerification =
-        transaction {
+        dbQuery {
             PendingEmailVerificationsTable.insert {
                 it[transactionId] = challenge.transactionId.toJavaUUID()
                 it[accountId] = challenge.accountId.toJavaUUID()
@@ -27,13 +26,13 @@ class PostgreSQLPendingEmailVerificationRepository : PendingEmailVerificationRep
         }
 
     override suspend fun consume(transactionId: Uuid): PendingEmailVerification? =
-        transaction {
+        dbQuery {
             val row =
                 PendingEmailVerificationsTable
                     .selectAll()
                     .where { PendingEmailVerificationsTable.transactionId eq transactionId.toJavaUUID() }
                     .singleOrNull()
-                    ?: return@transaction null
+                    ?: return@dbQuery null
             val pending =
                 PendingEmailVerification(
                     transactionId = row[PendingEmailVerificationsTable.transactionId].toKotlinUuid(),
@@ -49,7 +48,7 @@ class PostgreSQLPendingEmailVerificationRepository : PendingEmailVerificationRep
         }
 
     override suspend fun deleteExpired(now: Instant): Int =
-        transaction {
+        dbQuery {
             PendingEmailVerificationsTable.deleteWhere {
                 expiresAt lessEq now
             }
