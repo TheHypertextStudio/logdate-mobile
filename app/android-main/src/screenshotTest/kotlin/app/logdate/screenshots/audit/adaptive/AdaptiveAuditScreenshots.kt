@@ -54,6 +54,7 @@ import app.logdate.feature.onboarding.ui.PersonalIntroUiState
 import app.logdate.feature.search.ui.SearchScreenContent
 import app.logdate.feature.search.ui.SearchScreenState
 import app.logdate.screenshots.common.LargeScreenAuditPreviewMatrix
+import app.logdate.screenshots.common.PostureRouteFrame
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.screenshots.components.library.LibraryScreenshotData
@@ -699,14 +700,12 @@ private fun FoldableNoteViewerScene(
     foldableLayoutInfo: FoldableLayoutInfo,
     noteContent: @Composable () -> Unit,
 ) {
-    provideFoldableLayoutInfo(foldableLayoutInfo) {
-        ScreenshotTheme {
-            NoteViewerScaffoldContent(
-                shared = auditNoteShared,
-                onGoBack = {},
-                noteContent = noteContent,
-            )
-        }
+    PostureRouteFrame(foldableLayoutInfo) {
+        NoteViewerScaffoldContent(
+            shared = auditNoteShared,
+            onGoBack = {},
+            noteContent = noteContent,
+        )
     }
 }
 

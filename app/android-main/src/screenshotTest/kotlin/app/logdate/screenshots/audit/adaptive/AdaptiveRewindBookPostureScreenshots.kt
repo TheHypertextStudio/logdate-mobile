@@ -3,6 +3,7 @@ package app.logdate.screenshots.audit.adaptive
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.logdate.screenshots.common.PostureRouteFrame
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.screenshots.shared.SharedScreenshotScene
 import app.logdate.screenshots.shared.SharedScreenshotSceneId
@@ -67,7 +68,9 @@ private val tabletopPostureLayoutInfo =
 @Preview(name = "Rewind overview book posture", showBackground = true, device = BOOK_FOLDABLE)
 @Composable
 fun A34_RewindOverviewBookPosture() {
-    BookPostureRewindScene(SharedScreenshotSceneId.RewindOverviewCanonical)
+    PostureRouteFrame(bookPostureLayoutInfo) {
+        SharedScreenshotScene(SharedScreenshotSceneId.RewindOverviewCanonical)
+    }
 }
 
 @PreviewTest
