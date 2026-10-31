@@ -2,9 +2,6 @@
 
 import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.extensions.DetektExtension
-import org.gradle.api.tasks.testing.Test
-import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
-import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
@@ -13,6 +10,7 @@ import org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask
 plugins {
     id("app.logdate.home-workspace")
     id("app.logdate.screenshot-coverage")
+    id("app.logdate.coverage-reports")
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
     alias(libs.plugins.kotlin.jvm) apply false
@@ -30,9 +28,8 @@ plugins {
     alias(libs.plugins.dokka)
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
-    alias(libs.plugins.kover)
+    alias(libs.plugins.kover) apply false
     alias(libs.plugins.benManesVersions)
-    jacoco
 }
 
 // Pins the npm `ws` package pulled in transitively by the wasmJs() browser() targets
@@ -145,25 +142,6 @@ subprojects {
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-private val featureCoverageModules =
-    setOf(
-        ":app:android-main",
-        ":app:wear",
-    )
-
-subprojects {
-    if (path in featureCoverageModules) {
-        apply(plugin = "jacoco")
-
-        tasks.withType<Test>().configureEach {
-            extensions.configure(JacocoTaskExtension::class) {
-                isIncludeNoLocationClasses = true
-                excludes = listOf("jdk.internal.*")
             }
         }
     }
@@ -406,203 +384,4 @@ tasks.register("managedDeviceDebugAndroidTest") {
         ":app:android-main:deviceMatrixGroupDebugAndroidTest",
         "managedWearDebugAndroidTest",
     )
-}
-
-tasks.register<JacocoReport>("featureCoverageReport") {
-    group = "verification"
-    description = "Generate coverage for the Wear synced-audio playback feature."
-
-    val wearProject = project(":app:wear")
-    val phoneProject = project(":app:android-main")
-    val composeProject = project(":app:compose-main")
-    val mediaProject = project(":client:media")
-
-    dependsOn(
-        ":app:wear:testDebugUnitTest",
-        ":app:android-main:testDebugUnitTest",
-    )
-
-    executionData.setFrom(
-        files(
-            wearProject.layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
-            phoneProject.layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
-        ),
-    )
-
-    classDirectories.setFrom(
-        files(
-            wearProject.fileTree(
-                wearProject.layout.buildDirectory
-                    .dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes")
-                    .get()
-                    .asFile,
-            ) {
-                include(
-                    "app/logdate/wear/playback/PhoneSyncedAudioResolver*.class",
-                    "app/logdate/wear/presentation/timeline/WearTimelineViewModel*.class",
-                    "app/logdate/wear/sync/GoogleWearDataLayerClient*.class",
-                )
-            },
-            composeProject.fileTree(
-                composeProject.layout.buildDirectory
-                    .dir("classes/kotlin/android/main")
-                    .get()
-                    .asFile,
-            ) {
-                include(
-                    "app/logdate/client/sync/PhoneDataLayerListenerService*.class",
-                    "app/logdate/client/sync/DefaultPhoneWearSyncBridge*.class",
-                    "app/logdate/client/sync/GooglePhoneWearTransport*.class",
-                    "app/logdate/client/sync/AndroidPhoneAudioStreamOpener*.class",
-                )
-            },
-            mediaProject.fileTree(
-                mediaProject.layout.buildDirectory
-                    .dir("classes/kotlin/android/main")
-                    .get()
-                    .asFile,
-            ) {
-                include("app/logdate/client/media/audio/AndroidAudioPlaybackManager*.class")
-            },
-        ),
-    )
-
-    sourceDirectories.setFrom(
-        files(
-            wearProject.layout.projectDirectory.dir("src/main/kotlin"),
-            composeProject.layout.projectDirectory.dir("src/androidMain/kotlin"),
-            mediaProject.layout.projectDirectory.dir("src/androidMain/kotlin"),
-        ),
-    )
-    additionalSourceDirs.setFrom(sourceDirectories)
-
-    reports {
-        xml.required.set(true)
-        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/featureCoverageReport/featureCoverageReport.xml"))
-        html.required.set(true)
-        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/featureCoverageReport/html"))
-        csv.required.set(false)
-    }
-
-    doFirst {
-        val missingExecFiles =
-            executionData.files.filterNot { it.exists() }
-        if (missingExecFiles.isNotEmpty()) {
-            throw GradleException(
-                "Missing JaCoCo execution data for feature coverage: " +
-                    missingExecFiles.joinToString { it.absolutePath },
-            )
-        }
-    }
-}
-
-tasks.register<JacocoReport>("mediaAndroidTestCoverageReport") {
-    group = "verification"
-    description =
-        "Generate Android instrumentation coverage for AndroidMediaManager. Run it as " +
-        "./run test:coverage:media, which selects the managed tablet and the test class."
-
-    val appProject = project(":app:android-main")
-    val mediaProject = project(":client:media")
-    val managedDeviceCoverageFiles =
-        files(
-            appProject.layout.buildDirectory.file(
-                "outputs/managed_device_code_coverage/debug/largeScreenTabletApi35/coverage.ec",
-            ),
-            appProject.layout.buildDirectory.file(
-                "intermediates/managed_device_code_coverage/debugAndroidTest/largeScreenTabletApi35DebugAndroidTest/coverage.ec",
-            ),
-        )
-
-    dependsOn(":app:android-main:createManagedDeviceDebugAndroidTestCoverageReport")
-
-    executionData.setFrom(
-        managedDeviceCoverageFiles,
-    )
-
-    classDirectories.setFrom(
-        files(
-            mediaProject.fileTree(
-                mediaProject.layout.buildDirectory
-                    .dir("classes/kotlin/android/main")
-                    .get()
-                    .asFile,
-            ) {
-                include("app/logdate/client/media/AndroidMediaManager*.class")
-            },
-        ),
-    )
-
-    sourceDirectories.setFrom(
-        files(
-            mediaProject.layout.projectDirectory.dir("src/androidMain/kotlin"),
-        ),
-    )
-    additionalSourceDirs.setFrom(sourceDirectories)
-
-    reports {
-        xml.required.set(true)
-        xml.outputLocation.set(
-            layout.buildDirectory.file("reports/jacoco/mediaAndroidTestCoverageReport/mediaAndroidTestCoverageReport.xml"),
-        )
-        html.required.set(true)
-        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/mediaAndroidTestCoverageReport/html"))
-        csv.required.set(false)
-    }
-
-    doFirst {
-        val coverageFiles =
-            executionData.files.filter { it.exists() }
-        if (coverageFiles.isEmpty()) {
-            throw GradleException(
-                "Missing managed-device Android instrumentation coverage data for media coverage under " +
-                    managedDeviceCoverageFiles.files.joinToString { it.absolutePath },
-            )
-        }
-    }
-}
-
-// Kover configuration for test coverage
-kover {
-    reports {
-        total {
-            html {
-                onCheck = true
-                htmlDir = layout.buildDirectory.dir("reports/kover/html")
-            }
-            xml {
-                onCheck = true
-                xmlFile = layout.buildDirectory.file("reports/kover/coverage.xml")
-            }
-            verify {
-                rule {
-                    minBound(70) // 70% minimum coverage threshold
-                }
-            }
-        }
-        filters {
-            excludes {
-                // Exclude generated code and build configuration
-                classes(
-                    "*.BuildConfig*",
-                    "*.*Test*",
-                    "*.test.*",
-                    "*.*_Impl*", // Room generated DAOs
-                    "*.*_Factory*", // Koin generated factories
-                    "*.di.*Module*", // DI modules
-                    "*ComposableSingletons*", // Compose generated code
-                    "*.*\$WhenMappings*", // Kotlin when expression mappings
-                )
-                packages(
-                    "*.di", // All DI packages
-                    "*.test", // Test packages
-                    "*.generated", // Generated code packages
-                )
-                annotatedBy(
-                    "androidx.compose.runtime.Composable", // Exclude Composable functions
-                    "org.koin.core.annotation.Module", // Exclude Koin modules
-                )
-            }
-        }
-    }
 }

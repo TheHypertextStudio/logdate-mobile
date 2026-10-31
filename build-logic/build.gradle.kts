@@ -17,6 +17,7 @@ dependencies {
     // The root build puts these on every module's classpath, at the versions the catalog names.
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
+    compileOnly(libs.kover.gradlePlugin)
 }
 
 // TestKit builds that apply build-logic's convention plugins need the plugins those conventions
@@ -91,6 +92,10 @@ gradlePlugin {
         register("managedDevices") {
             id = "app.logdate.managed-devices"
             implementationClass = "app.logdate.ManagedDevicesPlugin"
+        }
+        register("coverageReports") {
+            id = "app.logdate.coverage-reports"
+            implementationClass = "app.logdate.CoverageReportsPlugin"
         }
         register("androidRelease") {
             id = "app.logdate.android-release"
