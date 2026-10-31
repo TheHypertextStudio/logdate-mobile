@@ -77,17 +77,6 @@ private class FakePlaceDao : PlaceDao {
 
     override suspend fun getAll(): List<PlaceEntity> = emptyList()
 
-    override suspend fun searchByName(query: String): List<PlaceEntity> = emptyList()
-
-    override suspend fun findInBounds(
-        minLat: Double,
-        maxLat: Double,
-        minLng: Double,
-        maxLng: Double,
-    ): List<PlaceEntity> = emptyList()
-
-    override suspend fun getByApUri(uri: String): PlaceEntity? = null
-
     override suspend fun softDelete(
         id: Uuid,
         deletedAt: Long,
