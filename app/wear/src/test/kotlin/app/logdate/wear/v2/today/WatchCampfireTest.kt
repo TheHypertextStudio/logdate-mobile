@@ -1,8 +1,6 @@
 package app.logdate.wear.v2.today
 
 import app.cash.turbine.test
-import app.logdate.client.datastore.featureflags.FeatureFlag
-import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.domain.streak.FirePhase
 import app.logdate.client.domain.streak.ObserveCampfireUseCase
 import app.logdate.client.repository.journals.JournalNotesRepository
@@ -20,26 +18,23 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
- * Runs the shared campfire use case with the watch's adapters: the campfire flag as the streak
- * switch, and the phone's day-start hour, or 4 AM when the phone has not shared one.
+ * Runs the shared campfire use case with the watch's adapters: an always-on streak switch, and the
+ * phone's day-start hour, or 4 AM when the phone has not shared one.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WatchCampfireTest {
     private val zone = TimeZone.of("Europe/Berlin")
     private val noon = at(hour = 12)
-    private val flags = mockk<FeatureFlagStore>()
     private val notes = mockk<JournalNotesRepository>()
 
     @Test
     fun `something saved today lights the fire`() =
         runTest {
-            campfireOn(true)
             every { notes.observeEntryTimestamps() } returns flowOf(listOf(at(hour = 10)))
 
             campfire().invoke().test {
@@ -51,21 +46,8 @@ class WatchCampfireTest {
         }
 
     @Test
-    fun `no fire is shown while campfire streaks are off`() =
-        runTest {
-            campfireOn(false)
-            every { notes.observeEntryTimestamps() } returns flowOf(listOf(at(hour = 10)))
-
-            campfire().invoke().test {
-                assertNull(awaitItem())
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
     fun `without a day start from the phone, 3 AM counts toward yesterday`() =
         runTest {
-            campfireOn(true)
             every { notes.observeEntryTimestamps() } returns flowOf(listOf(at(hour = 3)))
 
             campfire(phoneDayStartHour = null).invoke().test {
@@ -77,7 +59,6 @@ class WatchCampfireTest {
     @Test
     fun `the phone's day start moves the boundary`() =
         runTest {
-            campfireOn(true)
             every { notes.observeEntryTimestamps() } returns flowOf(listOf(at(hour = 3)))
 
             campfire(phoneDayStartHour = 2).invoke().test {
@@ -89,17 +70,13 @@ class WatchCampfireTest {
     @Test
     fun `the watch never changes the streak setting`() =
         runTest {
-            assertFailsWith<UnsupportedOperationException> { WatchStreakSettings(flags).setStreakEnabled(false) }
+            assertFailsWith<UnsupportedOperationException> { WatchStreakSettings().setStreakEnabled(false) }
         }
-
-    private fun campfireOn(enabled: Boolean) {
-        every { flags.observe(FeatureFlag.CAMPFIRE_STREAKS) } returns flowOf(enabled)
-    }
 
     private fun TestScope.campfire(phoneDayStartHour: Int? = null) =
         ObserveCampfireUseCase(
             notesRepository = notes,
-            streakSettingsRepository = WatchStreakSettings(flags),
+            streakSettingsRepository = WatchStreakSettings(),
             dayBoundaryPreferences = WatchDayBoundaryPreferences { phoneDayStartHour },
             clock = FixedClock(noon),
             timeZone = { zone },

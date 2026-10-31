@@ -305,11 +305,9 @@ class EntryEditorViewModel(
 
     fun clearSingleEmptyBlock(): Boolean = clearSingleEmptyBlockImpl()
 
-    fun dismissExpandedBlock(): Boolean = dismissExpandedBlockImpl()
-
     fun dismissExpandedBlockOrClearSingleEmpty(): Boolean = dismissExpandedBlockOrClearSingleEmptyImpl()
 
-    fun resumeFirstEntryDraft(openPreferredIfEmpty: Boolean = false) = resumeFirstEntryDraftImpl(openPreferredIfEmpty)
+    fun resumeFirstEntryDraft() = resumeFirstEntryDraftImpl()
 
     fun loadDraft(draftId: Uuid) = loadDraftImpl(draftId)
 

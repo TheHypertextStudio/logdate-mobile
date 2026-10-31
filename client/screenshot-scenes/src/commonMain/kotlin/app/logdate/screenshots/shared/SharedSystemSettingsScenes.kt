@@ -10,7 +10,6 @@ import app.logdate.client.domain.dayboundary.HealthConnectGateState
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
 import app.logdate.client.domain.recommendation.AmbientPromptTime
 import app.logdate.client.domain.recommendation.MemoriesSettings
-import app.logdate.client.domain.streak.StreakData
 import app.logdate.client.sync.SyncStatus
 import app.logdate.client.text.toUiText
 import app.logdate.feature.core.settings.ui.AdvancedSettingsContent
@@ -27,7 +26,6 @@ import app.logdate.feature.core.settings.ui.LocationSettingsContent
 import app.logdate.feature.core.settings.ui.LocationTrackingOptionsContent
 import app.logdate.feature.core.settings.ui.RecommendationSettingsContent
 import app.logdate.feature.core.settings.ui.StorageQuotaUi
-import app.logdate.feature.core.settings.ui.StreakSettingsContent
 import app.logdate.feature.core.settings.ui.SyncSettingsContent
 import app.logdate.feature.core.settings.ui.TimelineSettingsContent
 import app.logdate.feature.core.settings.ui.devices.DeviceInfoUiState
@@ -211,13 +209,6 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                                 ),
                             ),
                     ),
-            )
-        },
-        sharedScene(SharedScreenshotSceneId.StreakSettings, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
-            StreakSettingsContent(
-                streakData = StreakData(currentStreak = 12, isEnabled = true),
-                onBack = {},
-                onToggleStreakTracking = {},
             )
         },
         sharedScene(SharedScreenshotSceneId.CampfireStates, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {

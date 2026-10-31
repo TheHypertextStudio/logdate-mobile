@@ -146,14 +146,7 @@ internal val catalogOnboardingMainScenes: List<SharedScreenshotSceneSpec> =
                 hasDecision = false,
             )
         },
-        sharedScene(SharedScreenshotSceneId.OnboardingCompletionStreak, ScreenshotSceneGroup.ONBOARDING, onboardingStepVariants) {
-            OnboardingCompletionContent(
-                shouldShowFinish = false,
-                onContinue = {},
-                onFinish = {},
-            )
-        },
-        sharedScene(SharedScreenshotSceneId.OnboardingCompletionCampfire, ScreenshotSceneGroup.ONBOARDING, standardMatrixVariants) {
+        sharedScene(SharedScreenshotSceneId.OnboardingCompletionCampfire, ScreenshotSceneGroup.ONBOARDING, onboardingStepVariants) {
             OnboardingCompletionCampfireScene()
         },
         sharedScene(SharedScreenshotSceneId.OnboardingCompletionFinal, ScreenshotSceneGroup.ONBOARDING, standardMatrixVariants) {

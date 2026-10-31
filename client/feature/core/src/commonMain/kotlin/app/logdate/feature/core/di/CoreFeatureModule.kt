@@ -233,7 +233,7 @@ val coreFeatureModule: Module =
                 cloudArchiveStatusSource = getOrNull(),
             )
         }
-        viewModel { CampfireViewModel(observeCampfire = get(), featureFlagStore = get()) }
+        viewModel { CampfireViewModel(observeCampfire = get()) }
         viewModel { PlacesBetaSettingsViewModel(get()) }
         viewModel { AutomaticDiagnosticReportingViewModel(get<DiagnosticReportingController>()) }
     }

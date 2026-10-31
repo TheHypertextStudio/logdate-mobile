@@ -294,7 +294,7 @@
       />
         </service>
 
-        <!-- Streak complication: the campfire (also as a ranged value), or the journaling streak -->
+        <!-- Streak complication: the campfire, as text or a ranged value -->
         <service
       android:name=".complication.StreakComplicationService"
       android:exported="true"

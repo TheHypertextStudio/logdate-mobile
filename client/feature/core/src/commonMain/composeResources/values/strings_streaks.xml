@@ -3,11 +3,7 @@
     <!-- Streaks -->
     <string name="streaks">Streaks</string>
     <string name="streaks_description">Track your daily journaling streak</string>
-    <string name="streaks_detail_description">Track how many consecutive days you&apos;ve journaled. Your streak resets if you miss a day.</string>
     <string name="track_journaling_streak">Track journaling streak</string>
-    <string name="current_streak">Current streak</string>
-    <string name="streak_day_count">%1$d day streak</string>
-    <string name="streak_keep_it_up">Write, photograph, or record something every day to keep your streak alive.</string>
 
     <!-- Campfire -->
     <string name="campfire_profile_summary">This fire: %1$d · Days journaled: %2$d</string>

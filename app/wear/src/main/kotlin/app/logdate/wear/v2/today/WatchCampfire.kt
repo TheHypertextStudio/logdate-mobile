@@ -1,23 +1,20 @@
 package app.logdate.wear.v2.today
 
-import app.logdate.client.datastore.featureflags.FeatureFlag
-import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.health.util.LogdatePreferencesDataSource
 import app.logdate.client.health.util.UserPreferences
 import app.logdate.client.repository.streak.StreakSettingsRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /**
- * The streak switch the shared campfire reads, on the watch. The watch shows the campfire while
- * [FeatureFlag.CAMPFIRE_STREAKS] is on. The streak setting itself belongs to the phone, so the
- * watch never writes it and stores no cached streak.
+ * The streak switch the shared campfire reads, on the watch. The watch always shows the campfire.
+ * The streak setting itself belongs to the phone, so the watch never writes it and stores no
+ * cached streak.
  */
-class WatchStreakSettings(
-    private val featureFlags: FeatureFlagStore,
-) : StreakSettingsRepository {
-    override fun observeStreakEnabled(): Flow<Boolean> = featureFlags.observe(FeatureFlag.CAMPFIRE_STREAKS)
+class WatchStreakSettings : StreakSettingsRepository {
+    override fun observeStreakEnabled(): Flow<Boolean> = flowOf(true)
 
-    override suspend fun isStreakEnabled(): Boolean = featureFlags.isEnabled(FeatureFlag.CAMPFIRE_STREAKS)
+    override suspend fun isStreakEnabled(): Boolean = true
 
     override suspend fun setStreakEnabled(enabled: Boolean): Unit = throw UnsupportedOperationException(PHONE_OWNED)
 

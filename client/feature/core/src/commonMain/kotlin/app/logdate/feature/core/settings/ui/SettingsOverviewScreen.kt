@@ -79,9 +79,7 @@ fun SettingsOverviewScreen(
             null
         }
     val identity by viewModel.resolvedIdentity.collectAsStateWithLifecycle()
-    val streakData by viewModel.streakData.collectAsStateWithLifecycle()
     val campfire by campfireViewModel.presentation.collectAsStateWithLifecycle()
-    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsStateWithLifecycle()
 
     SettingsOverviewContent(
         onBack = onBack,
@@ -113,8 +111,6 @@ fun SettingsOverviewScreen(
                 isAuthenticated = identity.isAuthenticated,
             ),
         onboardedDate = identity.onboardedDate ?: Instant.DISTANT_PAST,
-        // The old streak badge only shows once the campfire flag is known to be off.
-        streakCount = if (isCampfireEnabled == false && streakData.isEnabled) streakData.currentStreak else null,
         campfire = campfire,
         modifier = modifier,
         deviceCards = deviceCards,
@@ -149,7 +145,6 @@ fun SettingsOverviewContent(
     onNavigateToLibrarySettings: () -> Unit = {},
     userProfile: UserProfile,
     onboardedDate: Instant = Instant.DISTANT_PAST,
-    streakCount: Int? = null,
     campfire: CampfirePresentation? = null,
     modifier: Modifier = Modifier,
     deviceCards: (@Composable () -> Unit)? = null,
@@ -164,7 +159,6 @@ fun SettingsOverviewContent(
                 SettingsIdentityCard(
                     userProfile = userProfile,
                     onboardedDate = onboardedDate,
-                    streakCount = streakCount,
                     campfire = campfire,
                     onEditProfile = onNavigateToProfile,
                     modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -219,7 +213,6 @@ fun SettingsOverviewContent(
                     SettingsIdentityCard(
                         userProfile = userProfile,
                         onboardedDate = onboardedDate,
-                        streakCount = streakCount,
                         campfire = campfire,
                         onEditProfile = onNavigateToProfile,
                         modifier = Modifier.padding(horizontal = Spacing.lg),

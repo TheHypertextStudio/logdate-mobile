@@ -9,15 +9,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.logdate.client.datastore.EntryStartMode
-import app.logdate.client.datastore.featureflags.FeatureFlag
-import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.media.audio.AudioRecordingManager
 import app.logdate.client.repository.moments.MarkedMomentRepository
 import app.logdate.feature.editor.navigation.EditorLaunchMode
@@ -76,7 +72,6 @@ fun NoteEditorScreen(
     viewModel: EntryEditorViewModel = koinViewModel(),
     visitContext: VisitMemoryContext? = null,
     markId: Uuid? = null,
-    blockFocusEnabled: Boolean? = null,
 ) {
     val recorder: AudioRecordingManager = koinInject()
     // Capture once per visit. A later stop must not turn a resumed draft into a new entry.
@@ -121,10 +116,6 @@ fun NoteEditorScreen(
         }
     }
 
-    val flags = koinInject<FeatureFlagStore>()
-    val pageEnabled by flags.observe(FeatureFlag.IMMERSIVE_ENTRY_EDITOR).collectAsState(FeatureFlag.IMMERSIVE_ENTRY_EDITOR.defaultEnabled)
-    val focusEnabled = blockFocusEnabled ?: pageEnabled
-    val handwritingEnabled by flags.observe(FeatureFlag.HANDWRITING_ENTRIES).collectAsState(false)
     // Load an existing draft or journal entry when provided
     LaunchedEffect(entryId, resolvedDraftId, firstEntry, visitContext) {
         if (resolvedDraftId != null) {
@@ -147,7 +138,7 @@ fun NoteEditorScreen(
                 Napier.e("Failed to load existing entry: $entryId", e)
             }
         } else if (firstEntry) {
-            viewModel.resumeFirstEntryDraft(openPreferredIfEmpty = focusEnabled)
+            viewModel.resumeFirstEntryDraft()
         } else {
             viewModel.initializeVisitContext(visitContext)
             if (journalIds.isNotEmpty()) viewModel.initializeSelectedJournals(journalIds)
@@ -181,7 +172,6 @@ fun NoteEditorScreen(
         promptPhotoUri,
         entryId,
         resolvedDraftId,
-        focusEnabled,
         firstEntry,
         initialTextContent,
         attachments,
@@ -190,8 +180,7 @@ fun NoteEditorScreen(
         if (entryId != null || resolvedDraftId != null) return@LaunchedEffect
         if (promptPhotoUri != null) {
             viewModel.initializePhotoPrompt(promptPhotoUri, record = launchMode == EditorLaunchMode.Voice)
-        } else if (focusEnabled &&
-            !firstEntry &&
+        } else if (!firstEntry &&
             initialTextContent.isNullOrBlank() &&
             attachments.isEmpty() &&
             markId == null &&
@@ -210,7 +199,6 @@ fun NoteEditorScreen(
         onEntrySaved = onEntrySaved,
         modifier = modifier,
         viewModel = viewModel,
-        handwritingEnabled = handwritingEnabled || focusEnabled,
-        blockFocusEnabled = focusEnabled,
+        handwritingEnabled = true,
     )
 }

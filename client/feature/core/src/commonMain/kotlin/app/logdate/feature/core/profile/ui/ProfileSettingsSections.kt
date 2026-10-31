@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import app.logdate.client.domain.streak.StreakData
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsSection
@@ -48,7 +46,6 @@ import logdate.client.feature.core.generated.resources.authentication
 import logdate.client.feature.core.generated.resources.birthday
 import logdate.client.feature.core.generated.resources.birthday_not_set
 import logdate.client.feature.core.generated.resources.campfire_profile_summary
-import logdate.client.feature.core.generated.resources.current_streak
 import logdate.client.feature.core.generated.resources.edit_bio
 import logdate.client.feature.core.generated.resources.journaling_stats
 import logdate.client.feature.core.generated.resources.personal_information
@@ -58,7 +55,6 @@ import logdate.client.feature.core.generated.resources.profile_bio_label
 import logdate.client.feature.core.generated.resources.profile_bio_not_set
 import logdate.client.feature.core.generated.resources.profile_member_since
 import logdate.client.feature.core.generated.resources.profile_not_authenticated
-import logdate.client.feature.core.generated.resources.streak_day_count
 import logdate.client.feature.core.generated.resources.username
 import logdate.client.ui.generated.resources.common_cancel
 import logdate.client.ui.generated.resources.common_save
@@ -125,20 +121,6 @@ internal fun ProfilePersonalInformationSection(
                 modifier = Modifier.clickable { editingBio = true },
             )
         }
-    }
-}
-
-@Composable
-internal fun ProfileJournalingStatsSection(streakData: StreakData) {
-    SettingsSection(
-        title = stringResource(Res.string.journaling_stats),
-        modifier = Modifier.padding(horizontal = Spacing.lg),
-    ) {
-        ProfileInfoItem(
-            icon = Icons.Default.LocalFireDepartment,
-            label = stringResource(Res.string.current_streak),
-            value = stringResource(Res.string.streak_day_count, streakData.currentStreak),
-        )
     }
 }
 

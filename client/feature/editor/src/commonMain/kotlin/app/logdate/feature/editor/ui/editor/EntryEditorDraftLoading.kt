@@ -115,7 +115,7 @@ internal fun EntryEditorViewModel.dismissExpandedBlockOrClearSingleEmptyImpl(own
 /**
  * Loads a draft into the editor.
  */
-internal fun EntryEditorViewModel.resumeFirstEntryDraftImpl(openPreferredIfEmpty: Boolean = false) {
+internal fun EntryEditorViewModel.resumeFirstEntryDraftImpl() {
     viewModelScope.launch {
         val drafts = editorState.first { !it.isLoading }.availableDrafts
         val latest =
@@ -126,7 +126,7 @@ internal fun EntryEditorViewModel.resumeFirstEntryDraftImpl(openPreferredIfEmpty
                 )?.value
         if (latest != null) {
             loadDraft(latest.id)
-        } else if (openPreferredIfEmpty) {
+        } else {
             initializePreferredEntryMode()
         }
     }

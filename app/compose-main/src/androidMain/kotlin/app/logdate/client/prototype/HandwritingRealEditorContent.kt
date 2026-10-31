@@ -49,6 +49,5 @@ internal fun HandwritingRealEditorContent(
         onEntrySaved = onExit,
         viewModel = editor,
         handwritingEnabled = true,
-        blockFocusEnabled = true,
     )
 }

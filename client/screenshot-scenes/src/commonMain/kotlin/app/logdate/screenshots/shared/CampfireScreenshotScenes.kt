@@ -174,7 +174,6 @@ internal fun OnboardingCompletionCampfireScene() {
             shouldShowFinish = false,
             onContinue = {},
             onFinish = {},
-            showCampfire = true,
         )
     }
 }

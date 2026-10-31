@@ -3,7 +3,6 @@ package app.logdate.wear.e2e
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
@@ -11,24 +10,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.wear.watchface.complications.data.ComplicationText
 import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.data.LongTextComplicationData
-import androidx.wear.watchface.complications.data.NoDataComplicationData
 import androidx.wear.watchface.complications.data.RangedValueComplicationData
 import androidx.wear.watchface.complications.data.ShortTextComplicationData
-import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import app.logdate.client.datastore.featureflags.FeatureFlag
-import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.domain.streak.FirePhase
 import app.logdate.wear.R
 import app.logdate.wear.complication.CampfireComplicationContent
 import app.logdate.wear.complication.StreakComplicationService
 import app.logdate.wear.complication.campfireComplicationData
-import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.java.KoinJavaComponent
 import java.time.Instant
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /** Builds the campfire complication's data on a Wear OS emulator, where complication text can be read back. */
 @RunWith(AndroidJUnit4::class)
@@ -80,29 +72,6 @@ class CampfireComplicationDataTest {
 
         assertEquals("SHORT_TEXT,LONG_TEXT,RANGED_VALUE", info.metaData.getString("android.support.wearable.complications.SUPPORTED_TYPES"))
     }
-
-    @Test
-    fun a_ranged_slot_has_no_data_when_campfire_streaks_are_off() =
-        runBlocking {
-            val flags = KoinJavaComponent.getKoin().get<FeatureFlagStore>()
-            val previous = flags.isEnabled(FeatureFlag.CAMPFIRE_STREAKS)
-            try {
-                flags.setEnabled(FeatureFlag.CAMPFIRE_STREAKS, false)
-                val request = ComplicationRequest(1, ComplicationType.RANGED_VALUE, false)
-                assertTrue(attachedService().onComplicationRequest(request) is NoDataComplicationData)
-            } finally {
-                flags.setEnabled(FeatureFlag.CAMPFIRE_STREAKS, previous)
-            }
-        }
-
-    /** A service with the app as its base context, as the system binds it, so startup checks can reach the app. */
-    private fun attachedService(): StreakComplicationService =
-        StreakComplicationService().also { service ->
-            ContextWrapper::class.java
-                .getDeclaredMethod("attachBaseContext", Context::class.java)
-                .apply { isAccessible = true }
-                .invoke(service, context)
-        }
 
     private fun ComplicationText.read(): String = getTextAt(context.resources, Instant.now()).toString()
 }

@@ -5,7 +5,6 @@ import android.app.HandoffActivityData
 import android.app.HandoffActivityDataRequestInfo
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyboardShortcutGroup
@@ -88,15 +87,6 @@ class EditorActivity : FragmentActivity() {
         // with the entry ID to load and edit that specific entry.
         val entryId = intent.getStringExtra(EXTRA_ENTRY_ID)?.let { Uuid.parse(it) }
         val journalId = intent.getStringExtra(EXTRA_JOURNAL_ID)?.let { Uuid.parse(it) }
-        val blockFocusEnabled: Boolean? =
-            if (
-                applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0 &&
-                intent.getBooleanExtra(EXTRA_ENTRY_FOCUS, false)
-            ) {
-                true
-            } else {
-                null
-            }
 
         // Extract initial content if provided (for new entries).
         // This is used when creating a brand new entry (e.g., from Share intent or new entry button).
@@ -138,7 +128,6 @@ class EditorActivity : FragmentActivity() {
                         initialTextContent = initialText,
                         attachments = attachmentUris,
                         viewModel = viewModel,
-                        blockFocusEnabled = blockFocusEnabled,
                     )
                 }
                 if (handoffDraftId != null) {
@@ -262,7 +251,6 @@ class EditorActivity : FragmentActivity() {
     }
 
     companion object {
-        private const val EXTRA_ENTRY_FOCUS = "entry_focus"
         private const val EXTRA_INSTANCE_ID = "editor_instance_id"
         private const val EXTRA_ENTRY_ID = "entry_id"
         private const val EXTRA_JOURNAL_ID = "journal_id"
