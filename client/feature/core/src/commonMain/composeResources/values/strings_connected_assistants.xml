@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <!-- What an assistant can see and do -->
+    <string name="assistant_capability_entries">Entries</string>
+    <string
+    name="assistant_capability_entries_description"
+  >Text and transcripts from journals you choose</string>
+    <string name="assistant_capability_places">Places</string>
+    <string
+    name="assistant_capability_places_description"
+  >Where you’ve been and when</string>
+    <string name="assistant_capability_people">People</string>
+    <string
+    name="assistant_capability_people_description"
+  >Who comes up in your entries</string>
+    <string
+    name="assistant_capability_capture"
+  >Start a voice note or entry</string>
+    <string
+    name="assistant_capability_capture_description"
+  >You record or write it yourself</string>
+    <string name="assistant_unfiled">Entries outside journals</string>
+    <string name="assistant_journals_more">%1$s and %2$d more</string>
+
+    <!-- Connect sheet -->
+    <string name="assistant_connect_title">%1$s wants to use LogDate</string>
+    <string
+    name="assistant_connect_subtitle"
+  >Choose what it can see and do.</string>
+    <string
+    name="assistant_connect_check"
+  >Only allow this if you just connected LogDate in %1$s.</string>
+    <string name="assistant_connect_see">See</string>
+    <string name="assistant_connect_do">Do</string>
+    <string
+    name="assistant_connect_never_writes"
+  >Can’t write or change your entries</string>
+    <string
+    name="assistant_connect_activity"
+  >Everything it does shows up in Settings</string>
+    <string
+    name="assistant_connect_retention"
+  >May keep what it sees after you disconnect</string>
+    <string
+    name="assistant_connect_device_only"
+  >Works while %1$s is awake and unlocked</string>
+    <string
+    name="assistant_connect_anytime"
+  >Works anytime for backed-up journals</string>
+    <string
+    name="assistant_connect_choose"
+  >Turn on something it can see or do</string>
+    <string
+    name="assistant_connect_journal_gone"
+  >A journal you chose is no longer available</string>
+    <string name="assistant_connect_remove_journal">Remove it</string>
+    <string name="assistant_connect_allow">Allow</string>
+    <string name="assistant_connect_allowing">Allowing…</string>
+    <string name="assistant_connect_deny">Don’t allow</string>
+
+    <!-- Settings › Assistants -->
+    <string name="assistants_title">Assistants</string>
+    <string name="assistants_hero_title">Ask about your life</string>
+    <string
+    name="assistants_hero_body"
+  >Connect an assistant to ask where you’ve been, what you write about and who you see.</string>
+    <string name="assistants_copy_link">Copy connector link</string>
+    <string
+    name="assistants_hero_hint"
+  >Add it as a connector in your assistant’s settings.</string>
+    <string name="assistants_connected">Connected</string>
+    <string name="assistants_used">Used %1$s</string>
+    <string name="assistants_not_used">Not used yet</string>
+    <string name="assistants_anytime_title">Answer while %1$s is off</string>
+    <string
+    name="assistants_anytime_description"
+  >A protected LogDate server answers instead</string>
+    <string name="assistants_anytime_updating">Updating…</string>
+    <string name="assistants_anytime_how">How it works</string>
+    <string
+    name="assistants_anytime_explanation"
+  >A LogDate server gets a key to the backed-up journals you share and answers for your Mac. Your devices hand over the key only after confirming that the server runs approved LogDate software that doesn’t let LogDate staff see your entries. Turning this off deletes the key.</string>
+    <string
+    name="assistants_device_only"
+  >Assistants reach LogDate through %1$s while it’s awake and unlocked</string>
+
+    <!-- One assistant -->
+    <string name="assistant_connected_on">Connected %1$s</string>
+    <string name="assistant_recent_activity">Recent activity</string>
+    <string
+    name="assistant_no_activity"
+  >Nothing yet. Requests show up here as they happen.</string>
+    <string name="assistant_can_see_and_do">Can see and do</string>
+    <string name="assistant_disconnect">Disconnect</string>
+    <string name="assistant_disconnecting">Disconnecting…</string>
+    <string
+    name="assistant_disconnect_note"
+  >%1$s may keep what it already saw.</string>
+</resources>
