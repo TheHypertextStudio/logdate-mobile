@@ -24,7 +24,7 @@ actual val mediaModule: Module =
             app.logdate.client.media.ManagedMediaImporter(
                 manager,
                 app.logdate.client.media
-                    .BufferedManagedMediaImportSource(manager, System.getProperty("java.io.tmpdir")),
+                    .StreamingManagedMediaImportSource(manager, System.getProperty("java.io.tmpdir")),
             )
         }
         // Include the audio module only

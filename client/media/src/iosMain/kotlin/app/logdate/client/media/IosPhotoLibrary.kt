@@ -5,14 +5,17 @@ package app.logdate.client.media
 import app.logdate.client.media.storage.MediaFileResolver
 import app.logdate.client.media.storage.importFileIntoLibrary
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteArray
 import platform.Foundation.NSCachesDirectory
-import platform.Foundation.NSData
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.timeIntervalSince1970
-import platform.Foundation.writeToFile
 import platform.Photos.PHAccessLevelReadWrite
 import platform.Photos.PHAsset
 import platform.Photos.PHAssetMediaTypeAudio
@@ -34,6 +37,14 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
+
+/** A photo-library original copied to a private cache file. */
+internal data class PhotoLibraryExport(
+    val path: String,
+    val fileName: String,
+    val mimeType: String,
+)
 
 /** PhotoKit lookup, rendering and library import, separate from durable file publication. */
 internal class IosPhotoLibrary(
@@ -148,18 +159,23 @@ internal class IosPhotoLibrary(
     }
 
     suspend fun readPhotoLibraryPayload(localIdentifier: String?): MediaPayload {
+        val exported = exportPhotoLibraryAsset(localIdentifier)
+        val data = SystemFileSystem.source(Path(exported.path)).buffered().use { it.readByteArray() }
+        return MediaPayload(
+            fileName = exported.fileName,
+            mimeType = exported.mimeType,
+            sizeBytes = data.size.toLong(),
+            data = data,
+        )
+    }
+
+    /** Copies the asset's original into the private cache once, so callers can stream it from disk. */
+    suspend fun exportPhotoLibraryAsset(localIdentifier: String?): PhotoLibraryExport {
         val asset = fetchPhotoLibraryAsset(localIdentifier) ?: error("Photo-library asset not found: $localIdentifier")
         val resource = preferredAssetResource(asset) ?: error("Photo-library asset is missing a readable resource")
-        val data = readAssetResource(resource)
+        val path = exportResourceToCacheFile(asset, resource)?.path ?: error("Photo-library asset could not be copied")
         val fileName = resource.originalFilename.takeIf { it.isNotBlank() } ?: defaultPhotoLibraryFileName(asset)
-        val mimeType = resource.uniformTypeIdentifier.toMimeType()
-
-        return MediaPayload(
-            fileName = fileName,
-            mimeType = mimeType,
-            sizeBytes = data.length.toLong(),
-            data = data.toByteArray(),
-        )
+        return PhotoLibraryExport(path, fileName, resource.uniformTypeIdentifier.toMimeType())
     }
 
     private suspend fun resolveRenderableUri(asset: PHAsset): String? =
@@ -178,43 +194,62 @@ internal class IosPhotoLibrary(
             return NSURL.fileURLWithPath(path)
         }
 
-        val data = readAssetResource(resource)
-        if (!data.writeToFile(path, true)) {
-            Napier.e("Failed to write renderable photo-library cache file to $path")
-            return null
+        return try {
+            writeAssetResource(resource, path)
+            NSURL.fileURLWithPath(path)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            Napier.e("Failed to write renderable photo-library cache file to $path", failure)
+            null
         }
-        return NSURL.fileURLWithPath(path)
     }
 
-    private suspend fun readAssetResource(resource: PHAssetResource): NSData =
-        suspendCancellableCoroutine { continuation ->
-            val chunks = mutableListOf<ByteArray>()
-            val options =
-                PHAssetResourceRequestOptions().apply {
-                    networkAccessAllowed = true
-                }
-
-            PHAssetResourceManager
-                .defaultManager()
-                .requestDataForAssetResource(
-                    resource = resource,
-                    options = options,
-                    dataReceivedHandler = { chunk ->
-                        chunk?.let { chunks += it.toByteArray() }
-                    },
-                    completionHandler = { error ->
-                        if (error != null) {
-                            if (continuation.isActive) {
-                                continuation.resumeWithException(
-                                    IllegalStateException(error.localizedDescription),
-                                )
+    /**
+     * Writes each chunk PhotoKit delivers straight to disk and publishes [path] only once the
+     * resource is complete. Cancelling the caller cancels the PhotoKit request.
+     */
+    private suspend fun writeAssetResource(
+        resource: PHAssetResource,
+        path: String,
+    ) {
+        val partial = Path("$path.${Uuid.random()}.partial")
+        val sink = SystemFileSystem.sink(partial).buffered()
+        val manager = PHAssetResourceManager.defaultManager()
+        val options = PHAssetResourceRequestOptions().apply { networkAccessAllowed = true }
+        try {
+            suspendCancellableCoroutine { continuation ->
+                // PhotoKit calls both handlers of one request on the same serial queue.
+                var writeFailure: Throwable? = null
+                val requestId =
+                    manager.requestDataForAssetResource(
+                        resource = resource,
+                        options = options,
+                        dataReceivedHandler = { chunk ->
+                            if (chunk != null && writeFailure == null) {
+                                try {
+                                    sink.write(chunk.toByteArray())
+                                } catch (failure: Exception) {
+                                    writeFailure = failure
+                                }
                             }
-                        } else if (continuation.isActive) {
-                            continuation.resume(chunks.flattenToNSData())
-                        }
-                    },
-                )
+                        },
+                        completionHandler = { error ->
+                            val closeFailure = runCatching { sink.close() }.exceptionOrNull()
+                            val failure = writeFailure ?: error?.let { IllegalStateException(it.localizedDescription) } ?: closeFailure
+                            if (continuation.isActive) {
+                                if (failure == null) continuation.resume(Unit) else continuation.resumeWithException(failure)
+                            }
+                        },
+                    )
+                continuation.invokeOnCancellation { manager.cancelDataRequest(requestId) }
+            }
+            SystemFileSystem.atomicMove(partial, Path(path))
+        } catch (failure: Throwable) {
+            SystemFileSystem.delete(partial, mustExist = false)
+            throw failure
         }
+    }
 
     private fun preferredAssetResource(asset: PHAsset): PHAssetResource? {
         val resources =

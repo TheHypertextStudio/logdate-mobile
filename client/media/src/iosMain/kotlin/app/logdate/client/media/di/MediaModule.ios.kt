@@ -27,7 +27,7 @@ actual val mediaModule: Module =
             app.logdate.client.media.ManagedMediaImporter(
                 manager,
                 app.logdate.client.media
-                    .BufferedManagedMediaImportSource(manager, platform.Foundation.NSTemporaryDirectory()),
+                    .StreamingManagedMediaImportSource(manager, platform.Foundation.NSTemporaryDirectory()),
             )
         }
         // Include the audio module only
