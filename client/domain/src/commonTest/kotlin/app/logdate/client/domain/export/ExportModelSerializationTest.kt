@@ -12,7 +12,7 @@ import kotlin.time.Instant
  * cycle without field loss, type coercion, or precision degradation.
  *
  * These tests sit below the use-case layer: they exercise only the serialization
- * contracts that [ExportUserDataUseCase] and [RestoreUserDataUseCase] implicitly
+ * contracts that archive restores through [RestoreUserDataUseCase] implicitly
  * rely on. If a field annotation is wrong, a default is misapplied, or a custom
  * serializer loses precision, these tests fail before any database or ZIP is involved.
  */
