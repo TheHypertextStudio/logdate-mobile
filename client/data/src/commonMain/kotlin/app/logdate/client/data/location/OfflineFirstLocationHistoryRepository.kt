@@ -112,33 +112,35 @@ class OfflineFirstLocationHistoryRepository(
         )
 
     override suspend fun logLocation(record: LocationLogRecord): Result<Unit> =
-        runCatchingUnlessCancelled {
-            val entity =
-                LocationLogEntity(
-                    sampleId = record.sampleId,
-                    userId = record.userId,
-                    deviceId = record.deviceId,
-                    timestamp = record.timestamp,
-                    loggedAt = record.loggedAt,
-                    location =
-                        Coordinates(
-                            latitude = record.location.latitude,
-                            longitude = record.location.longitude,
-                            altitude = record.location.altitude.value,
-                        ),
-                    confidence = record.confidence,
-                    isGenuine = record.isGenuine,
-                    capturePipeline = record.capturePipeline.name,
-                    captureSource = record.captureSource.name,
-                    accuracyMeters = record.accuracyMeters,
-                    speedMetersPerSecond = record.speedMetersPerSecond,
-                    bearingDegrees = record.bearingDegrees,
-                    isMock = record.isMock,
-                    activityType = record.activityType,
-                    timeZoneId = record.timeZoneId,
-                )
-            locationHistoryDao.addLocationLog(entity)
-        }
+        runCatchingUnlessCancelled { locationHistoryDao.addLocationLog(record.toEntity()) }
+
+    override suspend fun logLocations(records: List<LocationLogRecord>): Result<Unit> =
+        runCatchingUnlessCancelled { locationHistoryDao.addLocationLogs(records.map { it.toEntity() }) }
+
+    private fun LocationLogRecord.toEntity() =
+        LocationLogEntity(
+            sampleId = sampleId,
+            userId = userId,
+            deviceId = deviceId,
+            timestamp = timestamp,
+            loggedAt = loggedAt,
+            location =
+                Coordinates(
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    altitude = location.altitude.value,
+                ),
+            confidence = confidence,
+            isGenuine = isGenuine,
+            capturePipeline = capturePipeline.name,
+            captureSource = captureSource.name,
+            accuracyMeters = accuracyMeters,
+            speedMetersPerSecond = speedMetersPerSecond,
+            bearingDegrees = bearingDegrees,
+            isMock = isMock,
+            activityType = activityType,
+            timeZoneId = timeZoneId,
+        )
 
     override suspend fun restoreLocationForArchive(
         record: LocationLogRecord,

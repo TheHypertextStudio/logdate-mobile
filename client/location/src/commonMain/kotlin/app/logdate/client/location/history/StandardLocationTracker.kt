@@ -74,37 +74,7 @@ class StandardLocationTracker(
         metadata: Map<String, Any>,
     ): Result<LocationHistoryItem> =
         try {
-            val ownerId = canonicalOwnerProvider?.getCanonicalOwnerId() ?: userId
-            val confidence = metadata["confidence"] as? Float ?: 1.0f
-            val isGenuine = metadata["isGenuine"] as? Boolean ?: true
-            val capturePipeline = metadata["capturePipeline"] as? LocationCapturePipeline ?: LocationCapturePipeline.LEGACY
-            val captureSource = metadata["captureSource"] as? LocationCaptureSource ?: LocationCaptureSource.MANUAL
-            val accuracyMeters = metadata["accuracyMeters"] as? Float
-            val speedMetersPerSecond = metadata["speedMetersPerSecond"] as? Float
-            val bearingDegrees = metadata["bearingDegrees"] as? Float
-            val activityType = metadata["activityType"] as? String
-            val timeZoneId = metadata["timeZoneId"] as? String
-            val isMock = metadata["isMock"] as? Boolean ?: false
-            val loggedAt = metadata["loggedAt"] as? Instant ?: Clock.System.now()
-            val record =
-                LocationLogRecord(
-                    userId = ownerId,
-                    deviceId = deviceId,
-                    timestamp = timestamp,
-                    loggedAt = loggedAt,
-                    location = location,
-                    confidence = confidence,
-                    isGenuine = isGenuine,
-                    capturePipeline = capturePipeline,
-                    captureSource = captureSource,
-                    accuracyMeters = accuracyMeters,
-                    speedMetersPerSecond = speedMetersPerSecond,
-                    bearingDegrees = bearingDegrees,
-                    isMock = isMock,
-                    activityType = activityType,
-                    timeZoneId = timeZoneId,
-                )
-
+            val record = logRecord(location, timestamp, metadata, ownerId())
             val result = locationHistoryRepository.logLocation(record)
 
             if (result.isSuccess) {
@@ -118,6 +88,55 @@ class StandardLocationTracker(
             Napier.e("Failed to log location", e)
             Result.failure(e)
         }
+
+    override suspend fun logLocations(readings: List<LocationReading>): Result<Unit> =
+        try {
+            val ownerId = ownerId()
+            locationHistoryRepository.logLocations(readings.map { logRecord(it.location, it.timestamp, it.metadata, ownerId) })
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (e: Exception) {
+            Napier.e("Failed to log ${readings.size} locations", e)
+            Result.failure(e)
+        }
+
+    private suspend fun ownerId(): String = canonicalOwnerProvider?.getCanonicalOwnerId() ?: userId
+
+    private fun logRecord(
+        location: Location,
+        timestamp: Instant,
+        metadata: Map<String, Any>,
+        ownerId: String,
+    ): LocationLogRecord {
+        val confidence = metadata["confidence"] as? Float ?: 1.0f
+        val isGenuine = metadata["isGenuine"] as? Boolean ?: true
+        val capturePipeline = metadata["capturePipeline"] as? LocationCapturePipeline ?: LocationCapturePipeline.LEGACY
+        val captureSource = metadata["captureSource"] as? LocationCaptureSource ?: LocationCaptureSource.MANUAL
+        val accuracyMeters = metadata["accuracyMeters"] as? Float
+        val speedMetersPerSecond = metadata["speedMetersPerSecond"] as? Float
+        val bearingDegrees = metadata["bearingDegrees"] as? Float
+        val activityType = metadata["activityType"] as? String
+        val timeZoneId = metadata["timeZoneId"] as? String
+        val isMock = metadata["isMock"] as? Boolean ?: false
+        val loggedAt = metadata["loggedAt"] as? Instant ?: Clock.System.now()
+        return LocationLogRecord(
+            userId = ownerId,
+            deviceId = deviceId,
+            timestamp = timestamp,
+            loggedAt = loggedAt,
+            location = location,
+            confidence = confidence,
+            isGenuine = isGenuine,
+            capturePipeline = capturePipeline,
+            captureSource = captureSource,
+            accuracyMeters = accuracyMeters,
+            speedMetersPerSecond = speedMetersPerSecond,
+            bearingDegrees = bearingDegrees,
+            isMock = isMock,
+            activityType = activityType,
+            timeZoneId = timeZoneId,
+        )
+    }
 
     override suspend fun deleteLocationEntry(historyItem: LocationHistoryItem): Result<Unit> =
         locationHistoryRepository.deleteLocationEntry(

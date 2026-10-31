@@ -7,6 +7,13 @@ import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 import kotlin.time.Instant
 
+/** One location reading to store, with the capture details [LocationTracker.logLocation] accepts. */
+data class LocationReading(
+    val location: Location,
+    val timestamp: Instant,
+    val metadata: Map<String, Any> = emptyMap(),
+)
+
 /**
  * Interface for user location tracking and history management.
  *
@@ -50,6 +57,16 @@ interface LocationTracker {
         timestamp: Instant = Clock.System.now(),
         metadata: Map<String, Any> = emptyMap(),
     ): Result<LocationHistoryItem>
+
+    /**
+     * Logs several readings in arrival order. Trackers that can store them in one write override this.
+     */
+    suspend fun logLocations(readings: List<LocationReading>): Result<Unit> {
+        readings.forEach { reading ->
+            logLocation(reading.location, reading.timestamp, reading.metadata).onFailure { return Result.failure(it) }
+        }
+        return Result.success(Unit)
+    }
 
     /**
      * Deletes a specific location history entry.

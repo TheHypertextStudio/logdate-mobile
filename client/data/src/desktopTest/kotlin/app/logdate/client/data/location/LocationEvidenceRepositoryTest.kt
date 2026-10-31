@@ -72,6 +72,46 @@ class LocationEvidenceRepositoryTest {
         }
 
     @Test
+    fun batchedSamplesAreStoredTogetherWithTheirEvidence() =
+        runTest {
+            val file = Files.createTempFile("location-batch", ".db")
+            val database = getRoomDatabase(Room.databaseBuilder<LogDateDatabase>(file.toString()))
+            try {
+                val samples = OfflineFirstLocationHistoryRepository(database.locationHistoryDao())
+                val records =
+                    (1..3).map { index ->
+                        LocationLogRecord(
+                            sampleId = "sample-$index",
+                            userId = "owner",
+                            deviceId = "device",
+                            timestamp = Instant.fromEpochMilliseconds(index * 1000L),
+                            loggedAt = Instant.fromEpochMilliseconds(index * 1000L + 5),
+                            location = Location(36.0 + index, -115.0, LocationAltitude(0.0, AltitudeUnit.METERS)),
+                            confidence = 0.7f,
+                            isGenuine = true,
+                            accuracyMeters = index.toFloat(),
+                            activityType = "WALKING",
+                        )
+                    }
+
+                samples.logLocations(records).getOrThrow()
+
+                val stored =
+                    samples
+                        .observeLocationHistoryBetween(
+                            Instant.fromEpochMilliseconds(0),
+                            Instant.fromEpochMilliseconds(10_000),
+                        ).first()
+                assertEquals(records.map { it.sampleId }, stored.sortedBy { it.timestamp }.map { it.sampleId })
+                assertEquals(listOf(1f, 2f, 3f), stored.sortedBy { it.timestamp }.map { it.accuracyMeters })
+                assertEquals(setOf("WALKING"), stored.map { it.activityType }.toSet())
+            } finally {
+                database.close()
+                Files.deleteIfExists(file)
+            }
+        }
+
+    @Test
     fun exportPagesAreOwnerAndDeviceScopedAndContinueThroughTimestampTies() =
         runTest {
             val file = Files.createTempFile("location-pages", ".db")
