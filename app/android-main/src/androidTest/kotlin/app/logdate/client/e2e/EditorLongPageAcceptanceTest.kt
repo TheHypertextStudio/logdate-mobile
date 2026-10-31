@@ -68,9 +68,7 @@ class EditorLongPageAcceptanceTest {
                     "landscape" to ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
                 )) {
                     val text = (1..24).joinToString("\n\n") { "Retained detail $it from a quiet walk by the water." }
-                    val intent =
-                        Intent(instrumentation.targetContext, EditorActivity::class.java)
-                            .putExtra("entry_focus", true)
+                    val intent = Intent(instrumentation.targetContext, EditorActivity::class.java)
                     ActivityScenario.launch<EditorActivity>(intent).use { scenario ->
                         scenario.onActivity { it.requestedOrientation = orientation }
                         compose.waitUntil(20_000) {

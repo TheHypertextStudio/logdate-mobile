@@ -35,7 +35,6 @@ fun WorkspaceVisitDetail() =
         HumanLocationHistoryContent(
             historyDay.copy(detailVisible = true),
             HumanLocationHistoryActions(),
-            showTitle = false,
             toolbarActions = { PlacesOptionsFixture() },
             mapContent = { HistoryMapFixture(it) },
         )
@@ -70,7 +69,7 @@ fun WorkspaceJournalDetail() =
 @PreviewTest @WorkspacePreviewMatrix @Composable
 fun WorkspaceMediaDetail() =
     WorkspaceScene("library", detail = {
-        MediaDetailContent(LibraryScreenshotData.imageDetail, isExpanded = true, onBack = {})
+        MediaDetailContent(LibraryScreenshotData.imageDetail, onBack = {})
     }) { LibraryFixture() }
 
 @PreviewTest @WorkspacePreviewMatrix @Composable

@@ -40,7 +40,6 @@ import app.logdate.ui.foldable.FoldableLayoutInfo
 import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -175,14 +174,11 @@ class RewindPlaybackInteractionTest {
             onNodeWithText("Second moment").assertIsDisplayed()
         }
 
-    @Test fun foldingAndChangingTheHomeFlagKeepTheCurrentMoment() =
+    @Test fun foldingKeepsTheCurrentMoment() =
         runDesktopComposeUiTest(width = 1200, height = 800) {
             val fold = mutableStateOf(FoldableLayoutInfo())
-            val enabled = mutableStateOf(true)
             setContent {
-                CompositionLocalProvider(LocalWorkspaceEnabled provides enabled.value) {
-                    provideFoldableLayoutInfo(fold.value) { Story() }
-                }
+                provideFoldableLayoutInfo(fold.value) { Story() }
             }
             onNodeWithTag("moment").performTouchInput { click(Offset(width * 0.75f, height * 0.5f)) }
             onNodeWithText("Second moment").assertIsDisplayed()
@@ -199,7 +195,6 @@ class RewindPlaybackInteractionTest {
                                 true,
                             ),
                     )
-                enabled.value = false
             }
             onNodeWithText("Second moment").assertIsDisplayed()
             val momentBounds = onNodeWithTag("moment").fetchSemanticsNode().boundsInRoot

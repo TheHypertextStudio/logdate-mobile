@@ -46,10 +46,7 @@ class LibraryMediaDetailVideoE2ETest {
     fun `compact video detail shows presenter output route controls`() {
         assumeTrue(isCompactManagedDevice())
         var stopPresentingCount = 0
-        setVideoDetailContent(
-            isExpanded = false,
-            onStopPresenting = { stopPresentingCount += 1 },
-        )
+        setVideoDetailContent(onStopPresenting = { stopPresentingCount += 1 })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(VideoPlayerTags.ROOT).assertIsDisplayed()
@@ -76,10 +73,7 @@ class LibraryMediaDetailVideoE2ETest {
     fun `expanded video detail shows presenter output route controls beside metadata`() {
         assumeTrue(isLargeScreenManagedDevice())
         var stopPresentingCount = 0
-        setVideoDetailContent(
-            isExpanded = true,
-            onStopPresenting = { stopPresentingCount += 1 },
-        )
+        setVideoDetailContent(onStopPresenting = { stopPresentingCount += 1 })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(VideoPlayerTags.ROOT).assertIsDisplayed()
@@ -102,10 +96,7 @@ class LibraryMediaDetailVideoE2ETest {
         assertEquals(1, stopPresentingCount)
     }
 
-    private fun setVideoDetailContent(
-        isExpanded: Boolean,
-        onStopPresenting: () -> Unit,
-    ) {
+    private fun setVideoDetailContent(onStopPresenting: () -> Unit) {
         val videoUri = emptyVideoFileUri()
         val mediaItem =
             MediaViewerItem(
@@ -134,7 +125,6 @@ class LibraryMediaDetailVideoE2ETest {
                                 mediaItems = listOf(mediaItem),
                             ),
                         outputSelection = externalDisplayOutputSelection(),
-                        isExpanded = isExpanded,
                         onBack = {},
                         onStopPresenting = onStopPresenting,
                     )

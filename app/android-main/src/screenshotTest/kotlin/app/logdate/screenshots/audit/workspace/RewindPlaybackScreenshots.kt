@@ -37,7 +37,6 @@ import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.platform.LocalReduceMotionOverride
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import coil3.asImage
 import coil3.compose.AsyncImagePreviewHandler
@@ -150,7 +149,6 @@ internal fun ImmersiveRewindScreenshot(
         val handler = remember(image) { AsyncImagePreviewHandler { image } }
         val previewPainters = remember(bitmap) { mapOf(PHOTO_URI to BitmapPainter(bitmap.asImageBitmap())) }
         CompositionLocalProvider(
-            LocalWorkspaceEnabled provides true,
             LocalWorkspaceSearchAction provides {},
             LocalReduceMotionOverride provides reducedMotion,
             LocalAsyncImagePreviewHandler provides handler,

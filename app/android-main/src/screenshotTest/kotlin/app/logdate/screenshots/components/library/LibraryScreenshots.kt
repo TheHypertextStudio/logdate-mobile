@@ -19,7 +19,6 @@ fun LibraryGrid_Empty() {
     ScreenshotTheme {
         LibraryPanel(
             state = LibraryUiState.Empty,
-            columnCount = 3,
             onItemClick = {},
         )
     }
@@ -32,7 +31,6 @@ fun LibraryGrid_PermissionRequired() {
     ScreenshotTheme {
         LibraryPanel(
             state = LibraryUiState.PermissionRequired,
-            columnCount = 3,
             onItemClick = {},
         )
     }
@@ -45,7 +43,6 @@ fun LibraryGrid_Content() {
     ScreenshotTheme {
         LibraryScreenContent(
             state = LibraryScreenshotData.gridContent,
-            columnCount = 3,
             onItemClick = {},
             onOpenPostcards = {},
         )
@@ -59,7 +56,6 @@ fun LibraryGrid_Content_Tablet() {
     ScreenshotTheme {
         LibraryScreenContent(
             state = LibraryScreenshotData.gridContent,
-            columnCount = 5,
             onItemClick = {},
             onOpenPostcards = {},
         )
@@ -73,7 +69,6 @@ fun LibraryGrid_Audio() {
     ScreenshotTheme {
         LibraryScreenContent(
             state = LibraryScreenshotData.audioGridContent,
-            columnCount = 3,
             onItemClick = {},
         )
     }
@@ -86,7 +81,6 @@ fun MediaDetail_Compact() {
     ScreenshotTheme {
         MediaDetailContent(
             state = LibraryScreenshotData.imageDetail,
-            isExpanded = false,
             onBack = {},
         )
     }
@@ -99,7 +93,6 @@ fun MediaDetail_Expanded() {
     ScreenshotTheme {
         MediaDetailContent(
             state = LibraryScreenshotData.imageDetail,
-            isExpanded = true,
             onBack = {},
         )
     }
@@ -112,7 +105,6 @@ fun MediaDetail_Landscape() {
     ScreenshotTheme {
         MediaDetailContent(
             state = LibraryScreenshotData.imageDetail,
-            isExpanded = true,
             onBack = {},
         )
     }
@@ -126,7 +118,6 @@ fun MediaDetail_Presenting() {
         MediaDetailContent(
             state = LibraryScreenshotData.imageDetail,
             presenterState = LibraryScreenshotData.presenterActive,
-            isExpanded = false,
             onBack = {},
         )
     }
@@ -140,7 +131,6 @@ fun MediaDetail_VideoPresenting_Expanded() {
         MediaDetailContent(
             state = LibraryScreenshotData.videoDetail,
             presenterState = LibraryScreenshotData.presenterActive,
-            isExpanded = true,
             onBack = {},
         )
     }
@@ -153,7 +143,6 @@ fun MediaDetail_Audio() {
     ScreenshotTheme {
         MediaDetailContent(
             state = LibraryScreenshotData.audioDetail,
-            isExpanded = false,
             onBack = {},
         )
     }

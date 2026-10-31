@@ -34,7 +34,6 @@ import app.logdate.feature.journals.ui.merge.JournalMergeStage
 import app.logdate.feature.journals.ui.merge.JournalMergeUiState
 import app.logdate.shared.model.Journal
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -117,7 +116,6 @@ class JournalMergeVisualAcceptanceTest {
                         }
                         val density = LocalDensity.current
                         CompositionLocalProvider(
-                            LocalWorkspaceEnabled provides true,
                             LocalWorkspaceSearchAction provides {},
                             LocalDensity provides Density(density.density, scene.value.fontScale),
                         ) {

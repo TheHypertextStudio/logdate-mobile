@@ -14,7 +14,6 @@ import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -63,7 +62,6 @@ import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.WorkspaceAccountAction
 import app.logdate.ui.workspace.WorkspaceAccountIndicator
 import app.logdate.ui.workspace.WorkspaceDestination
@@ -97,68 +95,66 @@ class ActivityOwnershipE2ETest {
         compose.runOnUiThread { compose.activity.enableEdgeToEdge() }
         compose.setContent {
             LogDateTheme {
-                CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                    NavDisplay(
-                        backStack = stack,
-                        onBack = back,
-                        sceneStrategies =
-                            listOf(
-                                SettingsActivitySceneStrategy<NavKey>({ true }),
-                                RelatedContentSceneStrategy<NavKey>({ true }),
-                            ),
-                        entryDecorators =
-                            listOf(
-                                rememberSaveableStateHolderNavEntryDecorator(),
-                                rememberWorkspaceRouteDecorator(),
-                            ),
-                        entryProvider =
-                            entryProvider {
-                                taggedEntry<HomeRoute>(ActivityPresentation.Home.asMetadata()) {
-                                    RetainedHome { stack.add(SettingsRoute()) }
+                NavDisplay(
+                    backStack = stack,
+                    onBack = back,
+                    sceneStrategies =
+                        listOf(
+                            SettingsActivitySceneStrategy<NavKey>({ true }),
+                            RelatedContentSceneStrategy<NavKey>({ true }),
+                        ),
+                    entryDecorators =
+                        listOf(
+                            rememberSaveableStateHolderNavEntryDecorator(),
+                            rememberWorkspaceRouteDecorator(),
+                        ),
+                    entryProvider =
+                        entryProvider {
+                            taggedEntry<HomeRoute>(ActivityPresentation.Home.asMetadata()) {
+                                RetainedHome { stack.add(SettingsRoute()) }
+                            }
+                            taggedEntry<SettingsRoute>(ActivityPresentation.SettingsRoot.asMetadata()) {
+                                Box(Modifier.fillMaxSize().testTag("settings_overview")) {
+                                    SettingsOverviewContent(
+                                        onBack = back,
+                                        onNavigateToProfile = {},
+                                        onNavigateToAccount = {},
+                                        onNavigateToDevices = {},
+                                        onNavigateToReset = {},
+                                        onNavigateToLocation = { stack.navigateToSettingsCategory(LocationSettingsRoute) },
+                                        onNavigateToPrivacy = { stack.navigateToSettingsCategory(PrivacySettingsRoute) },
+                                        onNavigateToMemories = {},
+                                        onNavigateToSync = {},
+                                        onNavigateToExport = {},
+                                        userProfile = UserProfile("Willie", "willie", isAuthenticated = true),
+                                    )
                                 }
-                                taggedEntry<SettingsRoute>(ActivityPresentation.SettingsRoot.asMetadata()) {
-                                    Box(Modifier.fillMaxSize().testTag("settings_overview")) {
-                                        SettingsOverviewContent(
-                                            onBack = back,
-                                            onNavigateToProfile = {},
-                                            onNavigateToAccount = {},
-                                            onNavigateToDevices = {},
-                                            onNavigateToReset = {},
-                                            onNavigateToLocation = { stack.navigateToSettingsCategory(LocationSettingsRoute) },
-                                            onNavigateToPrivacy = { stack.navigateToSettingsCategory(PrivacySettingsRoute) },
-                                            onNavigateToMemories = {},
-                                            onNavigateToSync = {},
-                                            onNavigateToExport = {},
-                                            userProfile = UserProfile("Willie", "willie", isAuthenticated = true),
-                                        )
-                                    }
+                            }
+                            taggedEntry<PrivacySettingsRoute>(settingsDetailMetadata(SettingsCategory.Privacy, categories)) {
+                                Box(Modifier.fillMaxSize().testTag("privacy_detail")) {
+                                    PrivacySettingsContent(
+                                        onBack = back,
+                                        onSetBiometricsEnabled = {},
+                                        isBiometricsEnabled = true,
+                                        onNavigateToLocationSettings = { stack.add(LocationSettingsRoute) },
+                                    )
                                 }
-                                taggedEntry<PrivacySettingsRoute>(settingsDetailMetadata(SettingsCategory.Privacy, categories)) {
-                                    Box(Modifier.fillMaxSize().testTag("privacy_detail")) {
-                                        PrivacySettingsContent(
-                                            onBack = back,
-                                            onSetBiometricsEnabled = {},
-                                            isBiometricsEnabled = true,
-                                            onNavigateToLocationSettings = { stack.add(LocationSettingsRoute) },
-                                        )
-                                    }
+                            }
+                            taggedEntry<LocationSettingsRoute>(settingsDetailMetadata(SettingsCategory.Location, categories)) {
+                                Box(Modifier.fillMaxSize().testTag("location_detail")) {
+                                    LocationSettingsContent(
+                                        settings = LocationTrackingSettings(),
+                                        onBack = back,
+                                        onToggleBackgroundTracking = {},
+                                        onSetCaptureMode = {},
+                                        onShowLocationTimeline = {},
+                                        onNavigateToTrackingOptions = {},
+                                        onNavigateToInterval = {},
+                                    )
                                 }
-                                taggedEntry<LocationSettingsRoute>(settingsDetailMetadata(SettingsCategory.Location, categories)) {
-                                    Box(Modifier.fillMaxSize().testTag("location_detail")) {
-                                        LocationSettingsContent(
-                                            settings = LocationTrackingSettings(),
-                                            onBack = back,
-                                            onToggleBackgroundTracking = {},
-                                            onSetCaptureMode = {},
-                                            onShowLocationTimeline = {},
-                                            onNavigateToTrackingOptions = {},
-                                            onNavigateToInterval = {},
-                                        )
-                                    }
-                                }
-                            },
-                    )
-                }
+                            }
+                        },
+                )
             }
         }
         compose.onNodeWithTag("workspace_account").assertIsDisplayed()

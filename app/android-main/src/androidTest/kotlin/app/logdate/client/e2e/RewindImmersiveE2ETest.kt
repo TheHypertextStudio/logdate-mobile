@@ -54,7 +54,6 @@ import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.navigation.taggedEntry
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import app.logdate.ui.workspace.WorkspaceDestination
 import app.logdate.ui.workspace.WorkspaceScaffold
@@ -69,7 +68,6 @@ import java.io.File
 class RewindImmersiveE2ETest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
-    private val workspaceEnabled = mutableStateOf(true)
     private val folded = mutableStateOf(false)
     private val externallyPaused = mutableStateOf(true)
 
@@ -78,20 +76,17 @@ class RewindImmersiveE2ETest {
         compose.setContent { PlaybackNavigation() }
     }
 
-    @Test fun playbackOccupiesTheWindowAndReturnsToHomeInBothFlagStates() {
-        for (enabled in listOf(true, false)) {
-            compose.runOnUiThread { workspaceEnabled.value = enabled }
-            compose.onNodeWithText("Open rewind").performClick()
-            compose.onNodeWithText("First moment").assertIsDisplayed()
-            compose.onAllNodesWithTag("workspace_search").assertCountEquals(0)
-            val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
-            val playback = compose.onNodeWithTag("rewind_fullscreen").fetchSemanticsNode().boundsInRoot
-            assertEquals(root, playback)
-            capture("rewind-immersive-$enabled")
-            compose.onNodeWithContentDescription("Close rewind").performClick()
-            compose.onNodeWithText("Open rewind").assertIsDisplayed()
-            compose.onAllNodesWithTag("workspace_search").assertCountEquals(1)
-        }
+    @Test fun playbackOccupiesTheWindowAndReturnsToHome() {
+        compose.onNodeWithText("Open rewind").performClick()
+        compose.onNodeWithText("First moment").assertIsDisplayed()
+        compose.onAllNodesWithTag("workspace_search").assertCountEquals(0)
+        val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        val playback = compose.onNodeWithTag("rewind_fullscreen").fetchSemanticsNode().boundsInRoot
+        assertEquals(root, playback)
+        capture("rewind-immersive")
+        compose.onNodeWithContentDescription("Close rewind").performClick()
+        compose.onNodeWithText("Open rewind").assertIsDisplayed()
+        compose.onAllNodesWithTag("workspace_search").assertCountEquals(1)
     }
 
     @Test fun foldingPreservesTheMomentAndKeepsCloseWithTheStory() {
@@ -177,10 +172,7 @@ class RewindImmersiveE2ETest {
                 }
             }
         LogDateTheme {
-            CompositionLocalProvider(
-                LocalWorkspaceEnabled provides workspaceEnabled.value,
-                LocalWorkspaceSearchAction provides {},
-            ) {
+            CompositionLocalProvider(LocalWorkspaceSearchAction provides {}) {
                 provideFoldableLayoutInfo(fold) {
                     NavDisplay(
                         backStack = backStack,

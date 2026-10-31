@@ -102,7 +102,6 @@ class SharingEntryPointsE2ETest {
                                 createdAt = Clock.System.now(),
                                 location = null,
                             ),
-                        isExpanded = false,
                         onBack = {},
                         onShare = { sharedMediaRef = it },
                     )

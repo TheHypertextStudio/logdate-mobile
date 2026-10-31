@@ -114,7 +114,7 @@ fun A19_WatchTroubleshootingBookPosture() {
 @Preview(name = "Streak settings book posture", showBackground = true, device = BOOK_FOLDABLE)
 @Composable
 fun A20_StreakSettingsBookPosture() {
-    BookPostureSettingsScene(SharedScreenshotSceneId.StreakSettings)
+    BookPostureSettingsScene(SharedScreenshotSceneId.CampfireStreakBurning)
 }
 
 @PreviewTest

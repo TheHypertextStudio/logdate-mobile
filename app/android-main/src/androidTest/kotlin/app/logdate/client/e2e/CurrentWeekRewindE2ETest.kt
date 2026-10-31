@@ -3,7 +3,6 @@ package app.logdate.client.e2e
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -23,7 +22,6 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.rewind.RewindRepository
 import app.logdate.feature.rewind.ui.RewindOverviewScreen
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -111,13 +109,11 @@ class CurrentWeekRewindE2ETest {
                     }
                 }
                 compose.setContent {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        LogDateTheme {
-                            RewindOverviewScreen(
-                                onOpenRewind = { opened = it },
-                                modifier = Modifier.safeDrawingPadding(),
-                            )
-                        }
+                    LogDateTheme {
+                        RewindOverviewScreen(
+                            onOpenRewind = { opened = it },
+                            modifier = Modifier.safeDrawingPadding(),
+                        )
                     }
                 }
                 compose.waitUntil(

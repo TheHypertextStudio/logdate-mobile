@@ -14,7 +14,6 @@ import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
 import app.logdate.screenshots.common.OsIntegrationPreviewMatrix
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.ui.common.formatting.LocalToday
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import coil3.asImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
@@ -35,7 +34,6 @@ fun S01_CurrentWeekRewindReady() {
             }
         val handler = remember(image) { AsyncImagePreviewHandler { image } }
         CompositionLocalProvider(
-            LocalWorkspaceEnabled provides true,
             LocalAsyncImagePreviewHandler provides handler,
             LocalToday provides LocalDate(2026, 10, 28),
         ) {
@@ -73,7 +71,6 @@ fun S01_CurrentWeekRewindReady() {
 fun S02_CurrentWeekRewindEmpty() {
     ScreenshotTheme {
         CompositionLocalProvider(
-            LocalWorkspaceEnabled provides true,
             LocalToday provides LocalDate(2026, 10, 28),
         ) {
             RewindScreenContent(

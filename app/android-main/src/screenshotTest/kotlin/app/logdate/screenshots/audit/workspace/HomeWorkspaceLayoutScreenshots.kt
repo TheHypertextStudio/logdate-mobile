@@ -70,7 +70,6 @@ fun WorkspaceTabletop() {
                 HumanLocationHistoryContent(
                     historyDay,
                     HumanLocationHistoryActions(),
-                    showTitle = false,
                     toolbarActions = { PlacesOptionsFixture() },
                     mapContent = { HistoryMapFixture(it) },
                 )
@@ -85,7 +84,6 @@ fun WorkspacePlaces() =
         HumanLocationHistoryContent(
             historyDay.copy(tab = app.logdate.feature.location.timeline.ui.history.HistoryTab.Places),
             HumanLocationHistoryActions(),
-            showTitle = false,
             toolbarActions = { PlacesOptionsFixture() },
             initialSupportingExtent = app.logdate.ui.workspace.SupportingExtent.Browsing,
             mapContent = {
@@ -103,7 +101,6 @@ fun WorkspaceLocationsBrowsing() =
         HumanLocationHistoryContent(
             historyDay,
             HumanLocationHistoryActions(),
-            showTitle = false,
             initialSupportingExtent = app.logdate.ui.workspace.SupportingExtent.Browsing,
             toolbarActions = { PlacesOptionsFixture() },
             mapContent = { HistoryMapFixture(it) },
@@ -119,7 +116,6 @@ fun WorkspaceReducedMotion() {
             HumanLocationHistoryContent(
                 historyDay,
                 HumanLocationHistoryActions(),
-                showTitle = false,
                 toolbarActions = { PlacesOptionsFixture() },
                 mapContent = { HistoryMapFixture(it) },
             )
@@ -144,7 +140,6 @@ fun WorkspaceNavigationScrolledToBottom() =
             HumanLocationHistoryContent(
                 historyDay,
                 HumanLocationHistoryActions(),
-                showTitle = false,
                 toolbarActions = { PlacesOptionsFixture() },
                 mapContent = { HistoryMapFixture(it) },
             )
@@ -171,7 +166,6 @@ fun WorkspaceSyncRecovery() =
                     recoveryActionLabel = "Resume recording".toUiText(),
                 ),
                 HumanLocationHistoryActions(),
-                showTitle = false,
                 toolbarActions = { PlacesOptionsFixture() },
                 mapContent = {
                     HistoryMapFixture(it)
@@ -186,7 +180,7 @@ fun WorkspaceTimelineInDesktopWindow() = WorkspaceScene("timeline", inDesktopWin
 @PreviewTest @DesktopWindowPreviewMatrix @Composable
 fun WorkspaceLocationsInDesktopWindow() =
     WorkspaceScene("locations", inDesktopWindow = true) {
-        HumanLocationHistoryContent(historyDay, HumanLocationHistoryActions(), showTitle = false, toolbarActions = {
+        HumanLocationHistoryContent(historyDay, HumanLocationHistoryActions(), toolbarActions = {
             PlacesOptionsFixture()
         }, mapContent = { HistoryMapFixture(it) })
     }

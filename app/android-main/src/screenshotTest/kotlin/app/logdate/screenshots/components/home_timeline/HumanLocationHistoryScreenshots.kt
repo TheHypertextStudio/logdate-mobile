@@ -146,7 +146,7 @@ fun HumanLocationHistoryDayScreenshot() = HistoryScene(historyDay)
 @PreviewTest
 @Preview(name = "History Standalone", device = PHONE, showBackground = true)
 @Composable
-fun HumanLocationHistoryStandaloneScreenshot() = HistoryScene(historyDay, showTitle = true)
+fun HumanLocationHistoryStandaloneScreenshot() = HistoryScene(historyDay)
 
 @PreviewTest
 @Preview(name = "History Large Text", device = PHONE, fontScale = 1.8f, showBackground = true)
@@ -178,17 +178,13 @@ fun HumanLocationHistoryDetailScreenshot() = HistoryDetailScene("cafe-morning")
 fun HumanLocationHistoryAudioScreenshot() = HistoryDetailScene("library")
 
 @Composable
-private fun HistoryScene(
-    state: HumanLocationHistoryState,
-    showTitle: Boolean = false,
-) {
+private fun HistoryScene(state: HumanLocationHistoryState) {
     ScreenshotTheme {
         HumanLocationHistoryContent(
             state,
             HumanLocationHistoryActions(),
             mapContent = { modifier -> HistoryMapFixture(modifier) },
             toolbarActions = { IconButton(onClick = {}) { Icon(Icons.Default.MoreVert, "More location options") } },
-            showTitle = showTitle,
         )
     }
 }
