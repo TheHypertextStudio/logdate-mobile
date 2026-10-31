@@ -88,8 +88,6 @@ fun TestApplicationBuilder.configureSyncTestApp(
     val backupRepository = InMemoryLogDateBackupRepository()
     val json =
         Json {
-            prettyPrint = true
-            isLenient = true
             ignoreUnknownKeys = true
             serializersModule =
                 SerializersModule {
