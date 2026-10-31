@@ -37,44 +37,28 @@ class AssistantProtocolTest {
     }
 
     @Test
-    fun `prepare decodes exact literal content without granting approval`() {
-        val result =
-            AssistantProtocol.decodePrepareEntry(
-                """{"text":"Keep this exact thought.\nIncluding this line.","idempotencyKey":"thought-1"}""",
-            )
-        val request = assertIs<AssistantDecodeResult.Decoded<AssistantPrepareEntryRequest>>(result).value
-        assertEquals("Keep this exact thought.\nIncluding this line.", request.text)
-        assertEquals("thought-1", request.idempotencyKey)
-        assertEquals(null, request.eventTime)
-        assertEquals(null, request.sourceUrl)
-    }
-
-    @Test
-    fun `unknown approval destination credentials and extra fields are rejected`() {
+    fun `unknown grant credentials and extra fields are rejected`() {
         listOf(
-            "\"approved\":true",
-            "\"destinationJournalId\":\"private\"",
+            "\"grantId\":\"other\"",
             "\"credentials\":\"secret\"",
             "\"unexpected\":{}",
         ).forEach { extra ->
-            assertIs<AssistantDecodeResult.Invalid>(
-                AssistantProtocol.decodePrepareEntry("""{"text":"thought","idempotencyKey":"key",$extra}"""),
-            )
+            assertIs<AssistantDecodeResult.Invalid>(AssistantProtocol.decodeSearch("""{"query":"garden",$extra}"""))
         }
     }
 
     @Test
     fun `strict decoder rejects malformed types missing fields and lenient syntax`() {
         listOf(
-            """{"text":123,"idempotencyKey":"key"}""",
-            """{"text":"thought"}""",
-            """{text:"thought",idempotencyKey:"key"}""",
-            """{"text":"thought","idempotencyKey":"key",}""",
-        ).forEach { assertIs<AssistantDecodeResult.Invalid>(AssistantProtocol.decodePrepareEntry(it)) }
+            """{"query":123}""",
+            """{"limit":10}""",
+            """{query:"garden"}""",
+            """{"query":"garden",}""",
+        ).forEach { assertIs<AssistantDecodeResult.Invalid>(AssistantProtocol.decodeSearch(it)) }
     }
 
     @Test
-    fun `read and status requests use their own strict contracts`() {
+    fun `search and source requests use their own strict contracts`() {
         val id = "00000000-0000-0000-0000-000000000001"
         val search = AssistantProtocol.decodeSearch("""{"query":"garden","limit":10,"fromDate":"2026-01-01"}""")
         assertEquals("garden", assertIs<AssistantDecodeResult.Decoded<AssistantSearchRequest>>(search).value.query)
@@ -82,49 +66,37 @@ class AssistantProtocolTest {
         assertEquals(Uuid.parse(id), assertIs<AssistantDecodeResult.Decoded<AssistantSourceReadRequest>>(source).value.sourceId)
         assertIs<AssistantDecodeResult.Invalid>(AssistantProtocol.decodeSourceRead("""{"sourceId":"invalid"}"""))
         assertIs<AssistantDecodeResult.Invalid>(AssistantProtocol.decodeSearch("""{"query":"garden","grantId":"other"}"""))
-        assertIs<AssistantDecodeResult.Decoded<AssistantOperationStatusRequest>>(
-            AssistantProtocol.decodeOperationStatus("""{"operationId":"own-operation"}"""),
-        )
     }
 
     @Test
     fun `capabilities serialize only to the approved scope strings`() {
-        assertEquals("\"memories:read\"", AssistantProtocol.encodeCapability(AssistantCapability.READ_MEMORIES))
-        assertEquals("\"entries:add\"", AssistantProtocol.encodeCapability(AssistantCapability.PREPARE_ENTRIES))
+        assertEquals(
+            mapOf(
+                AssistantCapability.READ_MEMORIES to "\"memories:read\"",
+                AssistantCapability.READ_PLACES to "\"places:read\"",
+                AssistantCapability.READ_PEOPLE to "\"people:read\"",
+                AssistantCapability.START_CAPTURE to "\"capture:start\"",
+            ),
+            AssistantCapability.entries.associateWith(AssistantProtocol::encodeCapability),
+        )
     }
 
     @Test
-    fun `pending and saved have distinct serialized states and saved identity`() {
-        val id = Uuid.parse("00000000-0000-0000-0000-000000000001")
-        val pending = AssistantProtocol.encodeEntryOperation(AssistantEntryOperation.Pending("operation", "logdate://review/operation"))
-        val saved = AssistantProtocol.encodeEntryOperation(AssistantEntryOperation.Saved("operation", id, "logdate://entry/$id"))
-        assertEquals(true, pending.contains("\"status\":\"pending\""))
-        assertFalse(pending.contains("sourceId"))
-        assertEquals(true, saved.contains("\"status\":\"saved\""))
-        assertEquals(true, saved.contains(id.toString()))
-        listOf(AssistantEntryOperation.Rejected("operation"), AssistantEntryOperation.Expired("operation")).forEach {
-            assertFalse(AssistantProtocol.encodeEntryOperation(it).contains("\"status\":\"saved\""))
-        }
-    }
-
-    @Test
-    fun `default diagnostic strings omit query source and draft payloads`() {
+    fun `default diagnostic strings omit query and source payloads`() {
         val id = Uuid.parse("00000000-0000-0000-0000-000000000001")
         val sensitive = "do not log this private body"
         val values =
             listOf(
                 AssistantSearchRequest(sensitive, cursor = "private-cursor"),
-                AssistantPrepareEntryRequest(sensitive, "private-retry-key", sourceUrl = "https://secret.example"),
                 AssistantSearchHit(id, sensitive, sensitive, "logdate://entry/$id"),
                 AssistantSourcePage(id, sensitive, "logdate://entry/$id", AssistantCoverage()),
-                AssistantDecodeResult.Decoded(AssistantPrepareEntryRequest(sensitive, "private-retry-key")),
+                AssistantDecodeResult.Decoded(AssistantSearchRequest(sensitive)),
             )
         values.forEach {
             assertFalse(it.toString().contains(sensitive))
             assertFalse(it.toString().contains("private-"))
-            assertFalse(it.toString().contains("secret.example"))
         }
-        val invalid = AssistantProtocol.decodePrepareEntry("""{"text":"$sensitive","approved":true}""")
+        val invalid = AssistantProtocol.decodeSearch("""{"query":"$sensitive","approved":true}""")
         assertIs<AssistantDecodeResult.Invalid>(invalid)
         assertFalse(invalid.toString().contains(sensitive))
     }

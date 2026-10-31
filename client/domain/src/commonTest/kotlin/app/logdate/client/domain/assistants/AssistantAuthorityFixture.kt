@@ -28,7 +28,6 @@ internal object AssistantAuthorityFixture {
             resource = "https://device.logdate.test/mcp",
             capabilities = setOf(AssistantCapability.READ_MEMORIES),
             contentScope = AssistantContentScope(setOf(journalId)),
-            destinationJournalId = journalId,
             approvedAt = now - 1.days,
             expiresAt = now + 29.days,
         )

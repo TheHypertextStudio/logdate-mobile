@@ -5,8 +5,6 @@ object AssistantProtocolLimits {
     const val QUERY_CODE_POINTS = 256
     const val EXCERPT_CODE_POINTS = 280
     const val SOURCE_CODE_POINTS = 4000
-    const val DRAFT_CODE_POINTS = 20_000
-    const val OPAQUE_ID_LENGTH = 128
     const val CURSOR_LENGTH = 512
     const val TITLE_CODE_POINTS = 280
     const val URL_CODE_POINTS = 2048

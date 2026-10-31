@@ -55,10 +55,7 @@ class AssistantAccessPolicy {
             return denied(AssistantAccessDenial.INVALID_AUTHORITY)
         }
         if (now >= grant.expiresAt || now >= request.expiresAt) return denied(AssistantAccessDenial.EXPIRED)
-        if (capability !in grant.capabilities ||
-            capability !in request.capabilities ||
-            (capability == AssistantCapability.PREPARE_ENTRIES && grant.destinationJournalId == null)
-        ) {
+        if (capability !in grant.capabilities || capability !in request.capabilities) {
             return denied(AssistantAccessDenial.INSUFFICIENT_SCOPE)
         }
         if (!freshAccount(device, now)) return denied(AssistantAccessDenial.FRESHNESS_UNAVAILABLE)
