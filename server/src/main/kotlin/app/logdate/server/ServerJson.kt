@@ -10,12 +10,13 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-/** The JSON configuration every route uses for request and response bodies. */
+/**
+ * The JSON configuration every route uses for request and response bodies: compact, since
+ * indentation only adds bytes to every response, and strict, since every client sends standard JSON.
+ */
 @OptIn(ExperimentalUuidApi::class)
 internal val serverJson: Json =
     Json {
-        prettyPrint = true
-        isLenient = true
         ignoreUnknownKeys = true
         serializersModule =
             SerializersModule {

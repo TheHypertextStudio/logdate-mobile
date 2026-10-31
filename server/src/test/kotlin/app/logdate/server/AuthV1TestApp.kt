@@ -232,8 +232,6 @@ fun TestApplicationBuilder.configureAuthV1TestApp(
 
     val json =
         Json {
-            prettyPrint = true
-            isLenient = true
             ignoreUnknownKeys = true
             serializersModule =
                 SerializersModule {
