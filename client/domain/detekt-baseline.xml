@@ -1,15 +1,21 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LongMethod:AndroidHealthConnectRepository.kt:AndroidHealthConnectRepository$override suspend fun getDayBoundsForDate: DayBounds</ID>
-    <ID>LongMethod:DefaultMemoriesSettingsRepository.kt:DefaultMemoriesSettingsRepository$override fun observeSettings: Flow&lt;MemoriesSettings></ID>
-    <ID>LongMethod:ExportUserDataUseCase.kt:ExportUserDataUseCase$fun exportUserData: Flow&lt;ExportProgress></ID>
-    <ID>LongMethod:GenerateAmbientPromptCandidatesUseCase.kt:GenerateAmbientPromptCandidatesUseCase$suspend operator fun invoke: List&lt;AmbientPromptCandidate></ID>
-    <ID>LongMethod:GenerateAnnualRewindUseCase.kt:GenerateAnnualRewindUseCase$suspend operator fun invoke: GenerateBasicRewindResult</ID>
-    <ID>LongMethod:GenerateBasicRewindUseCase.kt:GenerateBasicRewindUseCase$suspend operator fun invoke: GenerateBasicRewindResult</ID>
-    <ID>LongMethod:InferEventsUseCase.kt:InferEventsUseCase$suspend operator fun invoke: Result&lt;Int></ID>
-    <ID>LongMethod:RestoreUserDataUseCase.kt:RestoreUserDataUseCase$suspend fun restore: RestoreResult</ID>
+    <ID
+    >LongMethod:DefaultMemoriesSettingsRepository.kt:DefaultMemoriesSettingsRepository$override fun observeSettings: Flow&lt;MemoriesSettings></ID>
+    <ID
+    >LongMethod:ExportUserDataUseCase.kt:ExportUserDataUseCase$fun exportUserData: Flow&lt;ExportProgress></ID>
+    <ID
+    >LongMethod:GenerateAmbientPromptCandidatesUseCase.kt:GenerateAmbientPromptCandidatesUseCase$suspend operator fun invoke: List&lt;AmbientPromptCandidate></ID>
+    <ID
+    >LongMethod:GenerateAnnualRewindUseCase.kt:GenerateAnnualRewindUseCase$suspend operator fun invoke: GenerateBasicRewindResult</ID>
+    <ID
+    >LongMethod:GenerateBasicRewindUseCase.kt:GenerateBasicRewindUseCase$suspend operator fun invoke: GenerateBasicRewindResult</ID>
+    <ID
+    >LongMethod:InferEventsUseCase.kt:InferEventsUseCase$suspend operator fun invoke: Result&lt;Int></ID>
+    <ID
+    >LongMethod:RestoreUserDataUseCase.kt:RestoreUserDataUseCase$suspend fun restore: RestoreResult</ID>
     <ID>LongMethod:ZipArchiveWriter.kt:ZipArchiveWriter$fun write</ID>
   </CurrentIssues>
 </SmellBaseline>
