@@ -26,7 +26,6 @@ val journalsFeatureModule: Module =
         viewModel {
             JournalDetailViewModel(
                 repository = get(),
-                sharingLauncher = get(),
                 journalContentRepository = get(),
                 getJournalMembership = get(),
                 searchInJournal = get(),
