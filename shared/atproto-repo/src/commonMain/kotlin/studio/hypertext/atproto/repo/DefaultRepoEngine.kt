@@ -7,6 +7,7 @@ import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.syntax.Nsid
 import studio.hypertext.atproto.syntax.RecordKey
 import studio.hypertext.atproto.syntax.Tid
+import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 
 /**
@@ -24,6 +25,14 @@ public class DefaultRepoEngine(
     private val signer: RepoCommitSigner = DigestRepoCommitSigner,
     private val onClockSkew: ((repo: AtprotoDid, aheadMicros: Long) -> Unit)? = null,
 ) : RepoEngine {
+    /**
+     * The trees of recently used repositories, by repository. An entry is used only while the
+     * stored head still points at its root, so a stale or lost entry costs a re-read, never a
+     * wrong answer. Replaced whole on each update, so concurrent writers at worst drop an entry.
+     */
+    @Volatile
+    private var recentTrees: Map<AtprotoDid, MerkleSearchTree> = emptyMap()
+
     override suspend fun getRecord(recordId: RepoRecordId): Result<RepoRecord?> =
         runCatching {
             val snapshot = loadSnapshot(recordId.repo)
@@ -68,28 +77,12 @@ public class DefaultRepoEngine(
     ): Result<RepoListPage> =
         runCatching {
             val snapshot = loadSnapshot(repo)
-            val safeLimit = limit.coerceIn(1, MAX_PAGE_SIZE)
-            val sortedEntries =
-                snapshot.tree
-                    .entries(collection)
-                    .filter { entry ->
-                        cursor == null ||
-                            if (reverse) {
-                                entry.recordKey.toString() < cursor
-                            } else {
-                                entry.recordKey.toString() > cursor
-                            }
-                    }.let { entries ->
-                        if (reverse) {
-                            entries.sortedByDescending { it.recordKey.toString() }
-                        } else {
-                            entries.sortedBy { it.recordKey.toString() }
-                        }
-                    }
-            val pageEntries = sortedEntries.take(safeLimit)
+            val (pageEntries, hasMore) = snapshot.tree.page(collection, cursor, reverse, limit.coerceIn(1, MAX_PAGE_SIZE))
+            val blocks = blockStore.readBlocks(pageEntries.map(MerkleSearchTreeEntry::cid)).getOrThrow()
+            check(blocks.size == pageEntries.size) { "Block store returned an incomplete batch" }
             RepoListPage(
                 records =
-                    pageEntries.map { entry ->
+                    pageEntries.zip(blocks) { entry, block ->
                         RepoRecord(
                             uri =
                                 RepoRecordId(
@@ -98,7 +91,7 @@ public class DefaultRepoEngine(
                                     recordKey = entry.recordKey,
                                 ).uri,
                             cid = entry.cid.toString(),
-                            value = DagCborCodec.decode(requireNotNull(blockStore.readBlock(entry.cid).getOrThrow()).bytes).jsonObject,
+                            value = DagCborCodec.decode(requireNotNull(block) { "Missing record block ${entry.cid}" }.bytes).jsonObject,
                         )
                     },
                 cursor =
@@ -106,7 +99,7 @@ public class DefaultRepoEngine(
                         .lastOrNull()
                         ?.recordKey
                         ?.toString()
-                        ?.takeIf { sortedEntries.size > pageEntries.size },
+                        ?.takeIf { hasMore },
             )
         }
 
@@ -171,7 +164,7 @@ public class DefaultRepoEngine(
             blockStore.writeBlock(recordId.repo, RepoBlock(recordCid, recordBytes)).getOrThrow()
 
             val updatedTree = snapshot.tree.put(recordId.collection, recordId.recordKey, recordCid)
-            persistSnapshot(recordId.repo, updatedTree, snapshot.head, snapshot.tree)
+            persistSnapshot(recordId.repo, updatedTree, snapshot.head)
             RepoWriteResult(
                 uri = recordId.uri,
                 cid = recordCid.toString(),
@@ -198,7 +191,7 @@ public class DefaultRepoEngine(
         // The tree is read once and persisted once, however many records are in the batch; the
         // per-record work is a block write and a tree put.
         val snapshot = loadSnapshot(repo)
-        var tree = snapshot.tree
+        val tree = snapshot.tree
 
         // Check every swapRecord precondition against the snapshot this batch is building on
         // before writing anything. A batch is one atomic commit, so a CAS mismatch on record N
@@ -213,11 +206,12 @@ public class DefaultRepoEngine(
         }
 
         val results = mutableListOf<RepoWriteResult>()
+        val entries = mutableListOf<MerkleSearchTreeEntry>()
         for (record in records) {
             val recordBytes = DagCborCodec.encode(record.value)
             val recordCid = Cid.sha256(DAG_CBOR_CODEC, recordBytes)
             blockStore.writeBlock(repo, RepoBlock(recordCid, recordBytes)).getOrThrow()
-            tree = tree.put(record.recordId.collection, record.recordId.recordKey, recordCid)
+            entries += MerkleSearchTreeEntry(record.recordId.collection, record.recordId.recordKey, recordCid)
             results +=
                 RepoWriteResult(
                     uri = record.recordId.uri,
@@ -226,7 +220,7 @@ public class DefaultRepoEngine(
                 )
         }
 
-        persistSnapshot(repo, tree, snapshot.head, snapshot.tree)
+        persistSnapshot(repo, tree.putAll(entries), snapshot.head)
         return results
     }
 
@@ -251,7 +245,7 @@ public class DefaultRepoEngine(
                 throw InvalidSwapException(expectedCid = previousCid, providedCid = swapRecord)
             }
             val updatedTree = snapshot.tree.remove(recordId.collection, recordId.recordKey)
-            persistSnapshot(recordId.repo, updatedTree, snapshot.head, snapshot.tree)
+            persistSnapshot(recordId.repo, updatedTree, snapshot.head)
             true
         }
 
@@ -282,8 +276,8 @@ public class DefaultRepoEngine(
         limit: Int,
     ): Result<List<SignedRepoCommit>> =
         blockStore
-            .listCommits(repo)
-            .mapCatching { commits -> commits.takeLast(limit.coerceAtLeast(1)).reversed() }
+            .listRecentCommits(repo, limit.coerceAtLeast(1))
+            .mapCatching { commits -> commits.reversed() }
 
     override suspend fun export(
         repo: AtprotoDid,
@@ -400,42 +394,48 @@ public class DefaultRepoEngine(
         runCatching {
             retryingOnHeadConflict {
                 val snapshot = loadSnapshot(repo)
-                snapshot.head?.let { head -> persistSnapshot(repo, snapshot.tree, head, snapshot.tree) }
+                snapshot.head?.let { head -> persistSnapshot(repo, snapshot.tree, head) }
             }
         }
 
     private suspend fun loadSnapshot(repo: AtprotoDid): RepoSnapshot {
         val head = blockStore.readHead(repo).getOrThrow() ?: return RepoSnapshot(head = null, tree = MerkleSearchTree.empty())
+        recentTrees[repo]?.takeIf { it.rootCid() == head.root }?.let { return RepoSnapshot(head = head, tree = it) }
         // Only MST nodes reachable from the current head are needed here. listBlocks loads every
         // historic record, tree, and commit block for the repo into memory on every read/write;
         // that grows without bound as backups accumulate and can exhaust the server container.
-        val tree = MerkleSearchTree.fromBlocks(head.root) { cid -> blockStore.readBlock(cid).getOrThrow() }
+        val tree = MerkleSearchTree.fromBlocks(head.root, trusted = true) { cid -> blockStore.readBlock(cid).getOrThrow() }
+        remember(repo, tree)
         return RepoSnapshot(head = head, tree = tree)
+    }
+
+    private fun remember(
+        repo: AtprotoDid,
+        tree: MerkleSearchTree,
+    ) {
+        val updated = LinkedHashMap(recentTrees)
+        updated.remove(repo)
+        updated[repo] = tree
+        var cachedLeaves = updated.values.sumOf { it.size }
+        val iterator = updated.entries.iterator()
+        while (cachedLeaves > MAX_CACHED_LEAVES && updated.size > 1) {
+            cachedLeaves -= iterator.next().value.size
+            iterator.remove()
+        }
+        recentTrees = updated
     }
 
     private suspend fun persistSnapshot(
         repo: AtprotoDid,
         tree: MerkleSearchTree,
         previousHead: RepoHead?,
-        previousTree: MerkleSearchTree?,
     ): RepoHead {
-        val graph = tree.toBlockGraph()
-        // Node blocks are content addressed, so a node the write did not touch serialises to the
-        // exact bytes already stored. Writing the whole tree every time made a single record cost
-        // a round trip per node -- work proportional to the size of the journal, on every save.
-        // Only the nodes on the changed path are actually new.
-        val alreadyStored =
-            previousTree
-                ?.toBlockGraph()
-                ?.blocks
-                ?.mapTo(mutableSetOf()) { it.cid }
-                ?: emptySet()
-        graph.blocks.forEach { block ->
-            if (block.cid !in alreadyStored) {
-                blockStore.writeBlock(repo, block).getOrThrow()
-            }
-        }
-        val rootCid = graph.root
+        // Node blocks are content addressed, so a node the write did not touch encodes to the
+        // exact bytes already stored. Only the nodes on the changed paths are encoded and written;
+        // re-encoding the whole tree made every save cost work proportional to the journal's size.
+        val changes = tree.encodeChanges()
+        changes.blocks.forEach { block -> blockStore.writeBlock(repo, block).getOrThrow() }
+        val rootCid = changes.root
 
         val commit =
             RepoCommit(
@@ -444,7 +444,7 @@ public class DefaultRepoEngine(
                 prev = previousHead?.commitCid,
                 revision = nextRevision(repo, previousHead?.revision),
                 createdAtEpochMillis = clock.now().toEpochMilliseconds(),
-                recordCount = tree.entries().size,
+                recordCount = tree.size,
             )
         val unsignedCommitBytes = encodeCommitPayload(commit)
         val signature = signer.sign(commit, unsignedCommitBytes)
@@ -467,6 +467,7 @@ public class DefaultRepoEngine(
         // race for the head. Exports read the head's commit block directly, so a failure here
         // leaves the repository readable and exportable.
         blockStore.appendCommit(repo, SignedRepoCommit(cid = commitCid, commit = commit, signature = signature)).getOrThrow()
+        remember(repo, changes.tree)
         return head
     }
 
@@ -517,6 +518,9 @@ public class DefaultRepoEngine(
 
     private companion object {
         private const val MAX_PAGE_SIZE: Int = 100
+
+        /** Enough for a few large journals, or many small ones, without holding an instance's memory. */
+        private const val MAX_CACHED_LEAVES: Int = 200_000
         private const val MICROS_PER_SECOND: Long = 1_000_000L
 
         /** Ordinary clock drift between servers stays well under this. */
