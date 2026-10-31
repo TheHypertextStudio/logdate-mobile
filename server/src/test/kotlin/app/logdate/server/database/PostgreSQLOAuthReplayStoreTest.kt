@@ -54,7 +54,7 @@ class PostgreSQLOAuthReplayStoreTest {
         }
 
     @Test
-    fun `an expired value can be used again and expired rows are cleaned up`() =
+    fun `an expired value can be used again and the sweep removes the other expired rows`() =
         withH2Database(OAuthUsedValuesTable) {
             runBlocking {
                 val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
@@ -65,6 +65,9 @@ class PostgreSQLOAuthReplayStoreTest {
                 clock.nowValue = clock.nowValue + 2.minutes
 
                 assertTrue(store.firstUse("pkce:old", 1.minutes))
+                assertEquals(2, transaction { OAuthUsedValuesTable.selectAll().count() }, "a check leaves other expired rows alone")
+
+                assertEquals(1, store.purgeExpired(clock.now()))
                 assertEquals(1, transaction { OAuthUsedValuesTable.selectAll().count() }, "only the new record is left")
             }
         }

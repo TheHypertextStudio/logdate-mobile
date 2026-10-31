@@ -21,6 +21,12 @@ interface OAuthReplayStore {
         key: String,
         ttl: Duration,
     ): Boolean
+
+    /**
+     * Forgets every value that expired at or before [now] and returns how many. A store that
+     * cleans up as it goes needs no separate sweep.
+     */
+    suspend fun purgeExpired(now: Instant): Int = 0
 }
 
 /** The value a replay store keeps for [key]: its SHA-256, so stored rows never contain the value itself. */
