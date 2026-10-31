@@ -34,6 +34,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import app.logdate.client.database.dao.rewind.RewindContent as StoredRewindContent
 
 /**
  * A [RewindRepository] that uses a local database as the single source of truth.
@@ -57,9 +58,7 @@ class OfflineFirstRewindRepository(
     override fun getAllRewinds(): Flow<List<Rewind>> =
         cachedRewindDao
             .getAllRewinds()
-            .map { rewindEntities ->
-                rewindEntities.map { it.toDomainModel() }
-            }
+            .map { it.toDomainModels() }
 
     /**
      * Retrieves a rewind by its unique identifier.
@@ -179,9 +178,7 @@ class OfflineFirstRewindRepository(
     ): Flow<List<Rewind>> =
         cachedRewindDao
             .getRewindsContainedIn(start, end)
-            .map { entities ->
-                entities.map { it.toDomainModel() }
-            }
+            .map { it.toDomainModels() }
 
     override suspend fun markAsViewed(uid: Uuid): Unit =
         withContext(ioDispatcher) {
@@ -230,8 +227,16 @@ class OfflineFirstRewindRepository(
     /**
      * Converts a RewindEntity to a domain Rewind model.
      */
-    private suspend fun RewindEntity.toDomainModel(): Rewind {
-        val dbContent = cachedRewindDao.getContentForRewind(uid)
+    private suspend fun List<RewindEntity>.toDomainModels(): List<Rewind> {
+        val contentByRewind = cachedRewindDao.getContentForRewinds(map { it.uid })
+        return map { entity ->
+            entity.toDomainModel(contentByRewind[entity.uid] ?: StoredRewindContent(emptyList(), emptyList(), emptyList()))
+        }
+    }
+
+    private suspend fun RewindEntity.toDomainModel(): Rewind = toDomainModel(cachedRewindDao.getContentForRewind(uid))
+
+    private fun RewindEntity.toDomainModel(dbContent: StoredRewindContent): Rewind {
         val content = mutableListOf<RewindContent>()
 
         // Convert text content

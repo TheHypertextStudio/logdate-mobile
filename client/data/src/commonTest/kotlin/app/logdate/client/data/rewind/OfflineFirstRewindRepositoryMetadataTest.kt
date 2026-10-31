@@ -68,6 +68,43 @@ class OfflineFirstRewindRepositoryMetadataTest {
         }
 
     @Test
+    fun `listing rewinds reads their panels with one query per content table`() =
+        runTest {
+            val dao = FakeCachedRewindDao()
+            val repository = OfflineFirstRewindRepository(dao, UnconfinedTestDispatcher(testScheduler))
+            val weeks =
+                (0 until 6).map { week ->
+                    val start = Instant.fromEpochMilliseconds(1_700_000_000_000L + week * 604_800_000L)
+                    Rewind(
+                        uid = Uuid.random(),
+                        startDate = start,
+                        endDate = start,
+                        generationDate = start,
+                        label = "2025#$week",
+                        title = "Week $week",
+                        content =
+                            listOf(
+                                RewindContent.TextNote(
+                                    timestamp = start,
+                                    sourceId = Uuid.random(),
+                                    content = "Entry for week $week",
+                                ),
+                            ),
+                    )
+                }
+            weeks.forEach { repository.saveRewind(it) }
+            val before = dao.contentQueries
+
+            val listed = repository.getAllRewinds().first()
+
+            assertEquals(3, dao.contentQueries - before, "Each rewind read its own panels")
+            assertEquals(
+                weeks.associate { it.uid to it.content.single().sourceId },
+                listed.associate { it.uid to it.content.single().sourceId },
+            )
+        }
+
+    @Test
     fun `metadata round-trips through save and retrieve`() =
         runTest {
             val dao = FakeCachedRewindDao()
@@ -450,14 +487,38 @@ private class FakeCachedRewindDao(
         videoContent.removeAll { it.rewindId == uid }
     }
 
-    override suspend fun getTextContentForRewind(rewindId: Uuid): List<RewindTextContentEntity> =
-        textContent.filter { it.rewindId == rewindId }
+    var contentQueries = 0
+        private set
 
-    override suspend fun getImageContentForRewind(rewindId: Uuid): List<RewindImageContentEntity> =
-        imageContent.filter { it.rewindId == rewindId }
+    override suspend fun getTextContentForRewind(rewindId: Uuid): List<RewindTextContentEntity> {
+        contentQueries++
+        return textContent.filter { it.rewindId == rewindId }
+    }
 
-    override suspend fun getVideoContentForRewind(rewindId: Uuid): List<RewindVideoContentEntity> =
-        videoContent.filter { it.rewindId == rewindId }
+    override suspend fun getImageContentForRewind(rewindId: Uuid): List<RewindImageContentEntity> {
+        contentQueries++
+        return imageContent.filter { it.rewindId == rewindId }
+    }
+
+    override suspend fun getVideoContentForRewind(rewindId: Uuid): List<RewindVideoContentEntity> {
+        contentQueries++
+        return videoContent.filter { it.rewindId == rewindId }
+    }
+
+    override suspend fun getTextContentForRewinds(rewindIds: List<Uuid>): List<RewindTextContentEntity> {
+        contentQueries++
+        return textContent.filter { it.rewindId in rewindIds }
+    }
+
+    override suspend fun getImageContentForRewinds(rewindIds: List<Uuid>): List<RewindImageContentEntity> {
+        contentQueries++
+        return imageContent.filter { it.rewindId in rewindIds }
+    }
+
+    override suspend fun getVideoContentForRewinds(rewindIds: List<Uuid>): List<RewindVideoContentEntity> {
+        contentQueries++
+        return videoContent.filter { it.rewindId in rewindIds }
+    }
 
     override suspend fun insertTextContent(content: List<RewindTextContentEntity>) {
         textContent.addAll(content)
