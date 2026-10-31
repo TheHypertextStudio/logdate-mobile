@@ -12,6 +12,7 @@ class SettingsUiPlugin : Plugin<Project> {
                 group = "verification"
                 description = "Checks shared settings rows and archive option sheets."
                 parserClasspath.from(parser)
+                result.set(project.layout.buildDirectory.file("verifications/settings-ui-contract.txt"))
                 sources.from(
                     project.rootProject.fileTree("client") {
                         include("**/src/commonMain/**/*.kt")

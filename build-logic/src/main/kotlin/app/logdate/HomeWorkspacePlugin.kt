@@ -16,6 +16,7 @@ class HomeWorkspacePlugin : Plugin<Project> {
             description = "Checks migrated Home roots against shared framing ownership."
             scopeManifest.set(project.layout.projectDirectory.file("config/workspace/home-roots.txt"))
             allowlist.set(project.layout.projectDirectory.file("config/workspace/home-allowlist.txt"))
+            result.set(project.layout.buildDirectory.file("verifications/home-workspace-contract.txt"))
             sources.from(
                 project
                     .file("config/workspace/home-roots.txt")
