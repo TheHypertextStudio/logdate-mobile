@@ -11,10 +11,7 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.PhotoLibrary
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
-import app.logdate.ui.platform.PlatformIcons
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.home_destination_journals
 import logdate.client.feature.core.generated.resources.home_destination_library
@@ -76,18 +73,3 @@ enum class HomeRouteDestination(
         val ALL = entries.toTypedArray()
     }
 }
-
-/**
- * Resolves the SF Symbol painter shown for a home tab on Apple platforms. iOS tab bars
- * conventionally use a single glyph per tab with the system tint indicating selection, so
- * we don't switch between filled/outlined variants here — the tint color handles it.
- */
-@Composable
-internal fun HomeRouteDestination.iosTabBarIcon(): Painter =
-    when (this) {
-        HomeRouteDestination.Timeline -> PlatformIcons.timeline()
-        HomeRouteDestination.LocationHistory -> PlatformIcons.location()
-        HomeRouteDestination.Journals -> PlatformIcons.journal()
-        HomeRouteDestination.Library -> PlatformIcons.library()
-        HomeRouteDestination.Rewind -> PlatformIcons.rewind()
-    }
