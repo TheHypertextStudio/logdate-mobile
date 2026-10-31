@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_EXPANDED_LOWER_BOUND
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
-import app.logdate.client.database.entities.PostcardEntity
+import app.logdate.client.repository.postcards.Postcard
 import app.logdate.feature.postcards.model.CanvasElement
 import app.logdate.feature.postcards.model.PostcardDocument
 import app.logdate.ui.adaptive.FoldableBookLayout
@@ -203,7 +203,7 @@ private val thumbnailJson = PostcardDocument.json
 
 @Composable
 private fun PostcardsGridPane(
-    postcards: List<PostcardEntity>,
+    postcards: List<Postcard>,
     columnCount: Int,
     isSelected: (String) -> Boolean,
     hasSelection: Boolean,
@@ -258,7 +258,7 @@ private fun PostcardsGridPane(
 
 @Composable
 private fun PostcardCard(
-    postcard: PostcardEntity,
+    postcard: Postcard,
     onClick: () -> Unit,
     isSelected: Boolean = false,
 ) {

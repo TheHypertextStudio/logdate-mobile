@@ -3,15 +3,15 @@ package app.logdate.feature.postcards.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.logdate.client.database.dao.PostcardDao
-import app.logdate.client.database.entities.PostcardEntity
 import app.logdate.client.repository.media.IndexedMedia
 import app.logdate.client.repository.media.IndexedMediaRepository
+import app.logdate.client.repository.postcards.Postcard
+import app.logdate.client.repository.postcards.PostcardRepository
+import app.logdate.client.repository.stickers.StickerRepository
 import app.logdate.feature.postcards.model.CanvasBackground
 import app.logdate.feature.postcards.model.CanvasElement
 import app.logdate.feature.postcards.model.ElementTransform
 import app.logdate.feature.postcards.model.PostcardDocument
-import app.logdate.feature.stickers.ui.StickerRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -93,7 +93,7 @@ data class StickerShelfItem(
  */
 class CanvasEditorViewModel(
     savedStateHandle: SavedStateHandle,
-    private val postcardDao: PostcardDao,
+    private val postcardRepository: PostcardRepository,
     private val stickerRepository: StickerRepository,
     private val indexedMediaRepository: IndexedMediaRepository,
 ) : ViewModel() {
@@ -125,17 +125,17 @@ class CanvasEditorViewModel(
 
     private fun loadStickers() {
         stickerRepository
-            .getAllStickers()
-            .onEach { entities ->
+            .observeAllStickers()
+            .onEach { stickers ->
                 val items =
-                    entities.map { entity ->
+                    stickers.map { sticker ->
                         StickerShelfItem(
-                            id = entity.id,
-                            imageUri = entity.imageUri,
-                            label = entity.label,
+                            id = sticker.id,
+                            imageUri = sticker.imageUri,
+                            label = sticker.label,
                         )
                     }
-                val uriMap = entities.associate { it.id to it.imageUri }
+                val uriMap = stickers.associate { it.id to it.imageUri }
                 _state.update { it.copy(shelfStickers = items, stickerUriMap = uriMap) }
             }.launchIn(viewModelScope)
     }
@@ -182,12 +182,12 @@ class CanvasEditorViewModel(
 
     private fun loadExistingPostcard(id: Uuid) {
         viewModelScope.launch {
-            val entity = postcardDao.getPostcardOneShot(id) ?: return@launch
+            val postcard = postcardRepository.getPostcard(id) ?: return@launch
             try {
                 val document =
                     json.decodeFromString(
                         PostcardDocument.serializer(),
-                        entity.documentJson,
+                        postcard.documentJson,
                     )
                 _state.update { it.copy(document = document, isNewPostcard = false) }
             } catch (e: Exception) {
@@ -228,16 +228,16 @@ class CanvasEditorViewModel(
     }
 
     /**
-     * Pushes undo state once at the start of a drag gesture.
-     * Call this before the first [moveElement] in a drag sequence.
+     * Records one undo entry at the start of a drag, pinch or rotate gesture.
+     * Call this once before the first [moveElement] or [transformElement] of the gesture.
      */
-    fun beginDrag() {
+    fun beginGesture() {
         pushUndo()
     }
 
     /**
      * Moves an element by the given delta.
-     * Does not push undo — call [beginDrag] once at the start of the gesture.
+     * Does not push undo — call [beginGesture] once at the start of the gesture.
      */
     fun moveElement(
         elementId: Uuid,
@@ -264,20 +264,14 @@ class CanvasEditorViewModel(
     }
 
     /**
-     * Signals the end of a drag gesture. Undo was already pushed in [beginDrag].
-     */
-    fun endDrag() {
-    }
-
-    /**
-     * Scales and rotates the selected element.
+     * Scales and rotates an element by the given deltas.
+     * Does not push undo — call [beginGesture] once at the start of the gesture.
      */
     fun transformElement(
         elementId: Uuid,
         scaleDelta: Float,
         rotationDelta: Float,
     ) {
-        pushUndo()
         updateDocument { doc ->
             doc.copy(
                 elements =
@@ -418,7 +412,7 @@ class CanvasEditorViewModel(
     /**
      * Adds a text element at the given position.
      */
-    fun addTextElement(
+    private fun addTextElement(
         content: String,
         fontFamily: String,
         color: String,
@@ -443,7 +437,7 @@ class CanvasEditorViewModel(
     /**
      * Updates an existing text element's content and styling.
      */
-    fun updateTextElement(
+    private fun updateTextElement(
         elementId: Uuid,
         content: String,
         fontFamily: String,
@@ -503,20 +497,6 @@ class CanvasEditorViewModel(
         _state.update { it.copy(shelfMode = mode) }
     }
 
-    /**
-     * Loads photos from a moment onto the shelf.
-     */
-    fun loadShelfPhotos(photos: List<ShelfPhoto>) {
-        _state.update { it.copy(shelfPhotos = photos) }
-    }
-
-    // --- Background ---
-
-    fun setBackground(background: CanvasBackground) {
-        pushUndo()
-        updateDocument { doc -> doc.copy(background = background) }
-    }
-
     // --- Undo / Redo ---
 
     val canUndo: Boolean get() = undoStack.isNotEmpty()
@@ -556,8 +536,8 @@ class CanvasEditorViewModel(
                     _state.value.document.copy(
                         modifiedAt = Clock.System.now(),
                     )
-                val entity =
-                    PostcardEntity(
+                val postcard =
+                    Postcard(
                         id = doc.id,
                         title = doc.title.ifEmpty { getString(Res.string.postcards_untitled) },
                         createdAt = doc.createdAt,
@@ -566,9 +546,9 @@ class CanvasEditorViewModel(
                         documentJson = json.encodeToString(PostcardDocument.serializer(), doc),
                     )
                 if (_state.value.isNewPostcard) {
-                    postcardDao.insert(entity)
+                    postcardRepository.createPostcard(postcard)
                 } else {
-                    postcardDao.update(entity)
+                    postcardRepository.updatePostcard(postcard)
                 }
                 _state.update { it.copy(document = doc, isSaving = false, isNewPostcard = false) }
             } catch (e: Exception) {

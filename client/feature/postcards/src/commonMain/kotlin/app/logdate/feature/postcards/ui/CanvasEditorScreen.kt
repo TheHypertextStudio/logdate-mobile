@@ -413,8 +413,7 @@ private fun CanvasArea(
                 document = state.document,
                 selectedElementId = state.selectedElementId,
                 stickerUriMap = state.stickerUriMap,
-                viewportOffsetX = viewportState.offset.x,
-                viewportOffsetY = viewportState.offset.y,
+                viewportOffset = { viewportState.offset },
                 onElementTap = { elementId ->
                     val element = state.document.elements.find { it.id == elementId }
                     if (element is CanvasElement.Text) {
@@ -439,9 +438,8 @@ private fun CanvasArea(
                         SelectionOverlay(
                             selectedElementId = selectedId,
                             viewportScale = viewportState.scale,
-                            onBeginDrag = viewModel::beginDrag,
+                            onBeginGesture = viewModel::beginGesture,
                             onMoveElement = viewModel::moveElement,
-                            onEndDrag = viewModel::endDrag,
                             onTransformElement = viewModel::transformElement,
                             onDeselect = { viewModel.selectElement(null) },
                         )

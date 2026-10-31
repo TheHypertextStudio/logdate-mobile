@@ -18,7 +18,6 @@ kotlin {
             implementation(projects.client.ui)
             implementation(projects.client.domain)
             implementation(projects.client.repository)
-            implementation(projects.client.database)
             implementation(projects.client.media)
             implementation(projects.client.util)
             // Compose
