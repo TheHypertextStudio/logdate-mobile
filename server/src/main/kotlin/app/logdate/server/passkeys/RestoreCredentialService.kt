@@ -20,9 +20,9 @@ import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.server.ServerProperty
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.runBlocking
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -73,14 +73,14 @@ class RestoreCredentialService(
         val error: String? = null,
     )
 
-    fun generateRegistrationOptions(
+    suspend fun generateRegistrationOptions(
         userId: Uuid,
         username: String,
         displayName: String,
     ): PasskeyRegistrationOptions {
         val challenge = challengeStore.issue(userId, CHALLENGE_TYPE_REGISTRATION)
 
-        val excludeCredentials = runBlocking { restoreCredentialRepository.getCredentialIdsForUser(userId) }
+        val excludeCredentials = restoreCredentialRepository.getCredentialIdsForUser(userId)
 
         return PasskeyRegistrationOptions(
             challenge = challenge,
@@ -104,7 +104,7 @@ class RestoreCredentialService(
         )
     }
 
-    fun verifyRegistration(
+    suspend fun verifyRegistration(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -115,7 +115,7 @@ class RestoreCredentialService(
             verifyRegistrationSimplified(userId, challenge, registrationResponse)
         }
 
-    fun generateAuthOptions(): PasskeyAuthenticationOptions {
+    suspend fun generateAuthOptions(): PasskeyAuthenticationOptions {
         val challenge = challengeStore.issue(Uuid.random(), CHALLENGE_TYPE_AUTHENTICATION)
 
         return PasskeyAuthenticationOptions(
@@ -126,7 +126,7 @@ class RestoreCredentialService(
         )
     }
 
-    fun verifyAuthentication(
+    suspend fun verifyAuthentication(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
     ): AuthenticationResult =
@@ -136,7 +136,7 @@ class RestoreCredentialService(
             verifyAuthenticationSimplified(challenge, authenticationResponse)
         }
 
-    private fun verifyRegistrationSimplified(
+    private suspend fun verifyRegistrationSimplified(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -148,23 +148,23 @@ class RestoreCredentialService(
             val credentialId = normalizeCredentialId(registrationResponse.id) ?: registrationResponse.id
 
             val stored =
-                runBlocking {
-                    restoreCredentialRepository.store(
-                        userId = userId,
-                        credentialId = credentialId,
-                        publicKey = registrationResponse.response.attestationObject.toByteArray(),
-                        signCount = 0L,
-                    )
-                }
+                restoreCredentialRepository.store(
+                    userId = userId,
+                    credentialId = credentialId,
+                    publicKey = registrationResponse.response.attestationObject.toByteArray(),
+                    signCount = 0L,
+                )
 
             if (!stored) return RegistrationResult(success = false, error = "Restore credential could not be stored")
             RegistrationResult(success = true, credentialId = credentialId)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Restore registration verification failed", e)
             RegistrationResult(success = false, error = "Registration verification failed: ${e.message}")
         }
 
-    private fun verifyRegistrationStrict(
+    private suspend fun verifyRegistrationStrict(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -206,25 +206,25 @@ class RestoreCredentialService(
             val publicKeyBytes = attestedCredentialDataConverter.convert(attestedCredentialData)
 
             val stored =
-                runBlocking {
-                    restoreCredentialRepository.store(
-                        userId = userId,
-                        credentialId = canonicalCredentialId,
-                        publicKey = publicKeyBytes,
-                        signCount = registrationData.attestationObject?.authenticatorData?.signCount ?: 0L,
-                    )
-                }
+                restoreCredentialRepository.store(
+                    userId = userId,
+                    credentialId = canonicalCredentialId,
+                    publicKey = publicKeyBytes,
+                    signCount = registrationData.attestationObject?.authenticatorData?.signCount ?: 0L,
+                )
 
             if (!stored) return RegistrationResult(success = false, error = "Restore credential could not be stored")
             RegistrationResult(success = true, credentialId = canonicalCredentialId)
         } catch (e: DataConversionException) {
             RegistrationResult(success = false, error = "Registration data conversion failed")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Restore registration strict verification failed", e)
             RegistrationResult(success = false, error = "Registration verification failed: ${e.message}")
         }
 
-    private fun verifyAuthenticationSimplified(
+    private suspend fun verifyAuthenticationSimplified(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
     ): AuthenticationResult =
@@ -233,24 +233,25 @@ class RestoreCredentialService(
                 ?: return AuthenticationResult(success = false, error = "Invalid or expired challenge")
 
             val stored =
-                runBlocking {
-                    restoreCredentialRepository.findByCredentialId(authenticationResponse.id)
-                        ?: normalizeCredentialId(authenticationResponse.id)?.let {
-                            restoreCredentialRepository.findByCredentialId(it)
-                        }
-                } ?: return AuthenticationResult(success = false, error = "Restore credential not found")
+                restoreCredentialRepository.findByCredentialId(authenticationResponse.id)
+                    ?: normalizeCredentialId(authenticationResponse.id)?.let {
+                        restoreCredentialRepository.findByCredentialId(it)
+                    }
+                    ?: return AuthenticationResult(success = false, error = "Restore credential not found")
 
-            if (!runBlocking { restoreCredentialRepository.recordAuthentication(stored, stored.signCount) }) {
+            if (!restoreCredentialRepository.recordAuthentication(stored, stored.signCount)) {
                 return AuthenticationResult(success = false, error = "Restore credential is no longer available")
             }
 
             AuthenticationResult(success = true, userId = stored.userId, credentialId = stored.credentialId)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Restore authentication simplified verification failed", e)
             AuthenticationResult(success = false, error = "Authentication verification failed: ${e.message}")
         }
 
-    private fun verifyAuthenticationStrict(
+    private suspend fun verifyAuthenticationStrict(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
     ): AuthenticationResult =
@@ -264,10 +265,9 @@ class RestoreCredentialService(
             val canonicalCredentialId = encodeBase64Url(credentialIdBytes)
 
             val stored =
-                runBlocking {
-                    restoreCredentialRepository.findByCredentialId(canonicalCredentialId)
-                        ?: restoreCredentialRepository.findByCredentialId(authenticationResponse.id)
-                } ?: return AuthenticationResult(success = false, error = "Restore credential not found")
+                restoreCredentialRepository.findByCredentialId(canonicalCredentialId)
+                    ?: restoreCredentialRepository.findByCredentialId(authenticationResponse.id)
+                    ?: return AuthenticationResult(success = false, error = "Restore credential not found")
 
             val attestedCredentialData = attestedCredentialDataConverter.convert(stored.publicKey)
             val authenticator = credentialRecord(attestedCredentialData, stored.signCount)
@@ -310,13 +310,15 @@ class RestoreCredentialService(
                 )
 
             val newSignCount = authenticationData.authenticatorData?.signCount ?: stored.signCount
-            if (!runBlocking { restoreCredentialRepository.recordAuthentication(stored, newSignCount) }) {
+            if (!restoreCredentialRepository.recordAuthentication(stored, newSignCount)) {
                 return AuthenticationResult(success = false, error = "Restore credential is no longer available")
             }
 
             AuthenticationResult(success = true, userId = stored.userId, credentialId = canonicalCredentialId)
         } catch (e: DataConversionException) {
             AuthenticationResult(success = false, error = "Authentication data conversion failed")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.e("Restore authentication strict verification failed", e)
             AuthenticationResult(success = false, error = "Authentication verification failed: ${e.message}")

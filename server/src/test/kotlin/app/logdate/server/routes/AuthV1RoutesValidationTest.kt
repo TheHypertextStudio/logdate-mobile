@@ -25,7 +25,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
-import io.mockk.every
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -272,7 +272,7 @@ class AuthV1RoutesValidationTest {
     fun `signin passkey complete handles auth failure and missing account`() =
         testApplication {
             val webAuthnService = mockk<WebAuthnPasskeyService>()
-            every { webAuthnService.verifyAuthentication(any(), any()) } returns
+            coEvery { webAuthnService.verifyAuthentication(any(), any()) } returns
                 WebAuthnPasskeyService.AuthenticationResult(success = false, error = "bad assertion")
 
             configureAuthV1TestApp(webAuthnPasskeyService = webAuthnService)
@@ -284,7 +284,7 @@ class AuthV1RoutesValidationTest {
                 }
             assertEquals(HttpStatusCode.Unauthorized, failed.status)
 
-            every { webAuthnService.verifyAuthentication(any(), any()) } returns
+            coEvery { webAuthnService.verifyAuthentication(any(), any()) } returns
                 WebAuthnPasskeyService.AuthenticationResult(success = true, userId = Uuid.random(), credentialId = "cred")
 
             val missingAccount =

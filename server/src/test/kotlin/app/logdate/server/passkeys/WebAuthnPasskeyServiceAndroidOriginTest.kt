@@ -12,6 +12,7 @@ import com.webauthn4j.data.attestation.authenticator.EC2COSEKey
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement
 import com.webauthn4j.data.extension.authenticator.RegistrationExtensionAuthenticatorOutput
+import kotlinx.coroutines.runBlocking
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -41,62 +42,65 @@ class WebAuthnPasskeyServiceAndroidOriginTest {
     private val rpId = "cloud-staging.logdate.app"
 
     @Test
-    fun `strict mode accepts the native Apple RP origin without accepting unrelated subdomains`() {
-        val config =
-            WebAuthnConfig.fromEnvironment(
-                relyingPartyId = "logdate.app",
-                relyingPartyName = "LogDate",
-                origin = "https://cloud.logdate.app",
-                allowedOrigins = androidOrigin,
-                serverOrigin = null,
-            )
-        val service =
-            WebAuthnPasskeyService(
-                passkeyRepository = InMemoryPasskeyRepository(),
-                relyingPartyId = config.relyingPartyId,
-                origins = config.origins,
-                strictVerificationEnabled = true,
-            )
-        assertTrue(service.registerWithOrigin("https://logdate.app").success)
-        assertFalse(service.registerWithOrigin("https://untrusted.logdate.app").success)
-    }
+    fun `strict mode accepts the native Apple RP origin without accepting unrelated subdomains`() =
+        runBlocking<Unit> {
+            val config =
+                WebAuthnConfig.fromEnvironment(
+                    relyingPartyId = "logdate.app",
+                    relyingPartyName = "LogDate",
+                    origin = "https://cloud.logdate.app",
+                    allowedOrigins = androidOrigin,
+                    serverOrigin = null,
+                )
+            val service =
+                WebAuthnPasskeyService(
+                    passkeyRepository = InMemoryPasskeyRepository(),
+                    relyingPartyId = config.relyingPartyId,
+                    origins = config.origins,
+                    strictVerificationEnabled = true,
+                )
+            assertTrue(service.registerWithOrigin("https://logdate.app").success)
+            assertFalse(service.registerWithOrigin("https://untrusted.logdate.app").success)
+        }
 
     @Test
-    fun `strict mode accepts a passkey whose origin is an allowlisted android apk-key-hash`() {
-        val service =
-            WebAuthnPasskeyService(
-                passkeyRepository = InMemoryPasskeyRepository(),
-                relyingPartyId = rpId,
-                origins = setOf(webOrigin, androidOrigin),
-                strictVerificationEnabled = true,
-            )
+    fun `strict mode accepts a passkey whose origin is an allowlisted android apk-key-hash`() =
+        runBlocking<Unit> {
+            val service =
+                WebAuthnPasskeyService(
+                    passkeyRepository = InMemoryPasskeyRepository(),
+                    relyingPartyId = rpId,
+                    origins = setOf(webOrigin, androidOrigin),
+                    strictVerificationEnabled = true,
+                )
 
-        val result = service.registerWithOrigin(origin = androidOrigin)
+            val result = service.registerWithOrigin(origin = androidOrigin)
 
-        assertTrue(result.success, "expected android-origin passkey to verify; error=${result.error}")
-    }
+            assertTrue(result.success, "expected android-origin passkey to verify; error=${result.error}")
+        }
 
     @Test
-    fun `strict mode rejects an android origin that is not allowlisted`() {
-        val service =
-            WebAuthnPasskeyService(
-                passkeyRepository = InMemoryPasskeyRepository(),
-                relyingPartyId = rpId,
-                // Only the web origin is allowed; the on-device android origin must be refused.
-                origins = setOf(webOrigin),
-                strictVerificationEnabled = true,
-            )
+    fun `strict mode rejects an android origin that is not allowlisted`() =
+        runBlocking<Unit> {
+            val service =
+                WebAuthnPasskeyService(
+                    passkeyRepository = InMemoryPasskeyRepository(),
+                    relyingPartyId = rpId,
+                    // Only the web origin is allowed; the on-device android origin must be refused.
+                    origins = setOf(webOrigin),
+                    strictVerificationEnabled = true,
+                )
 
-        val result = service.registerWithOrigin(origin = androidOrigin)
+            val result = service.registerWithOrigin(origin = androidOrigin)
 
-        assertFalse(result.success, "expected non-allowlisted android origin to be rejected")
-    }
+            assertFalse(result.success, "expected non-allowlisted android origin to be rejected")
+        }
 
     /**
      * Drives a full strict-mode registration against [service], producing a real EC P-256
      * attestation whose `clientDataJSON.origin` is [origin].
      */
-    private fun WebAuthnPasskeyService.registerWithOrigin(origin: String): WebAuthnPasskeyService.RegistrationResult {
+    private suspend fun WebAuthnPasskeyService.registerWithOrigin(origin: String): WebAuthnPasskeyService.RegistrationResult {
         val userId = Uuid.random()
         val options = generateRegistrationOptions(userId, "android_user", "Android User")
 

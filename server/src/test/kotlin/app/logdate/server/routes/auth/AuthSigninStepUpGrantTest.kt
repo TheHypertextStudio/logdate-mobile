@@ -13,9 +13,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
-import io.mockk.every
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -38,7 +38,7 @@ class AuthSigninStepUpGrantTest {
         testApplication {
             val accountId = Uuid.random()
             val passkeys = signedInPasskeys(accountId)
-            every { passkeys.issueStepUpGrant(accountId) } returns "grant-for-account"
+            coEvery { passkeys.issueStepUpGrant(accountId) } returns "grant-for-account"
             val env = configureAuthV1TestApp(webAuthnPasskeyService = passkeys, atprotoIdentityConfig = identityConfig(recoveryKeys = true))
             runBlocking { env.accountRepository.save(account(accountId)) }
 
@@ -46,7 +46,7 @@ class AuthSigninStepUpGrantTest {
 
             assertEquals(HttpStatusCode.OK, complete.first)
             assertEquals("grant-for-account", complete.second)
-            verify(exactly = 1) { passkeys.issueStepUpGrant(accountId) }
+            coVerify(exactly = 1) { passkeys.issueStepUpGrant(accountId) }
         }
 
     @Test
@@ -54,7 +54,7 @@ class AuthSigninStepUpGrantTest {
         testApplication {
             val accountId = Uuid.random()
             val passkeys = signedInPasskeys(accountId)
-            every { passkeys.issueStepUpGrant(accountId) } throws IllegalStateException("challenge store unavailable")
+            coEvery { passkeys.issueStepUpGrant(accountId) } throws IllegalStateException("challenge store unavailable")
             val env = configureAuthV1TestApp(webAuthnPasskeyService = passkeys, atprotoIdentityConfig = identityConfig(recoveryKeys = true))
             runBlocking { env.accountRepository.save(account(accountId)) }
 
@@ -77,7 +77,7 @@ class AuthSigninStepUpGrantTest {
 
             assertEquals(HttpStatusCode.OK, complete.first)
             assertNull(complete.second)
-            verify(exactly = 0) { passkeys.issueStepUpGrant(any()) }
+            coVerify(exactly = 0) { passkeys.issueStepUpGrant(any()) }
         }
 
     private suspend fun io.ktor.server.testing.ApplicationTestBuilder.signIn(): Pair<HttpStatusCode, String?> {
@@ -96,9 +96,9 @@ class AuthSigninStepUpGrantTest {
 
     private fun signedInPasskeys(accountId: Uuid): WebAuthnPasskeyService =
         mockk<WebAuthnPasskeyService>(relaxed = true).also { passkeys ->
-            every { passkeys.verifyAuthentication(any(), any()) } returns
+            coEvery { passkeys.verifyAuthentication(any(), any()) } returns
                 WebAuthnPasskeyService.AuthenticationResult(success = true, userId = accountId, credentialId = "cred-signin")
-            every { passkeys.getPasskeysForUser(any()) } returns emptyList()
+            coEvery { passkeys.getPasskeysForUser(any()) } returns emptyList()
         }
 
     private fun identityConfig(recoveryKeys: Boolean) =

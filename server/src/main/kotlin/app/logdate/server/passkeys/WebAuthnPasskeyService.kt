@@ -21,9 +21,9 @@ import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.server.ServerProperty
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.runBlocking
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -123,7 +123,7 @@ class WebAuthnPasskeyService(
         val error: String? = null,
     )
 
-    fun generateRegistrationOptions(
+    suspend fun generateRegistrationOptions(
         userId: Uuid,
         username: String,
         displayName: String,
@@ -153,7 +153,7 @@ class WebAuthnPasskeyService(
         )
     }
 
-    fun generateAuthenticationOptions(
+    suspend fun generateAuthenticationOptions(
         userId: Uuid? = null,
         allowedCredentials: List<String> = emptyList(),
     ): PasskeyAuthenticationOptions {
@@ -180,7 +180,7 @@ class WebAuthnPasskeyService(
      * should prefer [verifyRegistrationOnly] + [storeVerifiedPasskey] so they can create the
      * account row before inserting the passkey (which carries an FK to `accounts`).
      */
-    fun verifyRegistration(
+    suspend fun verifyRegistration(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -221,7 +221,7 @@ class WebAuthnPasskeyService(
      * account row exists. Marking the challenge consumed is part of verification, so a failed
      * verify will not leave the challenge re-usable.
      */
-    fun verifyRegistrationOnly(
+    suspend fun verifyRegistrationOnly(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -233,19 +233,17 @@ class WebAuthnPasskeyService(
         }
 
     /** Persists a previously-verified passkey. Returns true on success. */
-    fun storeVerifiedPasskey(
+    suspend fun storeVerifiedPasskey(
         userId: Uuid,
         verified: VerifiedRegistration,
     ): Boolean =
-        runBlocking {
-            passkeyRepository.storePasskey(
-                userId = userId,
-                credentialId = verified.credentialId,
-                publicKey = verified.publicKey,
-                signCount = verified.signCount,
-                info = verified.passkey,
-            )
-        }
+        passkeyRepository.storePasskey(
+            userId = userId,
+            credentialId = verified.credentialId,
+            publicKey = verified.publicKey,
+            signCount = verified.signCount,
+            info = verified.passkey,
+        )
 
     /** Result of [verifyRegistrationOnly] — either verified data or a structured error. */
     sealed interface VerificationOutcome {
@@ -258,7 +256,7 @@ class WebAuthnPasskeyService(
         ) : VerificationOutcome
     }
 
-    fun verifyAuthentication(
+    suspend fun verifyAuthentication(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
     ): AuthenticationResult = verifyAuthentication(challenge, authenticationResponse, AUTHENTICATION_TYPE, expectedBinding = null)
@@ -268,7 +266,7 @@ class WebAuthnPasskeyService(
      * [binding] accepts, so it cannot be spent on any other sign-in. It lists no credentials, so
      * the browser offers any discoverable passkey and nothing about an account is revealed.
      */
-    fun generateBoundAuthenticationOptions(
+    suspend fun generateBoundAuthenticationOptions(
         purpose: String,
         binding: Uuid,
     ): PasskeyAuthenticationOptions {
@@ -282,7 +280,7 @@ class WebAuthnPasskeyService(
     }
 
     /** Verifies an assertion over a challenge from [generateBoundAuthenticationOptions] with the same [purpose] and [binding]. */
-    fun verifyBoundAuthentication(
+    suspend fun verifyBoundAuthentication(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
         purpose: String,
@@ -294,7 +292,7 @@ class WebAuthnPasskeyService(
      * answer, for an action that a signed-in session alone must not be able to take. It is bound to
      * the account and its own purpose, so it cannot be spent as a sign-in challenge or the reverse.
      */
-    fun generateStepUpOptions(userId: Uuid): PasskeyAuthenticationOptions =
+    suspend fun generateStepUpOptions(userId: Uuid): PasskeyAuthenticationOptions =
         generateBoundAuthenticationOptions(STEP_UP_PURPOSE, userId)
             .copy(allowCredentials = getUserCredentials(userId))
 
@@ -304,10 +302,10 @@ class WebAuthnPasskeyService(
      * step-up only where a route accepts one, so a passkey sign-in can register the account's first
      * recovery key without a second prompt.
      */
-    fun issueStepUpGrant(userId: Uuid): String = challengeStore.issue(userId, STEP_UP_GRANT_PURPOSE)
+    suspend fun issueStepUpGrant(userId: Uuid): String = challengeStore.issue(userId, STEP_UP_GRANT_PURPOSE)
 
     /** Spends [grant] if it was issued to [userId] by [issueStepUpGrant] and is unused and unexpired. */
-    fun redeemStepUpGrant(
+    suspend fun redeemStepUpGrant(
         userId: Uuid,
         grant: String,
     ): Boolean = challengeStore.consume(challenge = grant, expectedType = STEP_UP_GRANT_PURPOSE, expectedUserId = userId) != null
@@ -317,7 +315,7 @@ class WebAuthnPasskeyService(
      * [userId], be unused and unexpired, and the assertion must come from one of [userId]'s passkeys.
      * The challenge is spent whether or not the assertion verifies.
      */
-    fun verifyStepUp(
+    suspend fun verifyStepUp(
         userId: Uuid,
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
@@ -329,7 +327,7 @@ class WebAuthnPasskeyService(
         return result
     }
 
-    private fun verifyAuthentication(
+    private suspend fun verifyAuthentication(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
         expectedType: String,
@@ -341,21 +339,21 @@ class WebAuthnPasskeyService(
             verifyAuthenticationSimplified(challenge, authenticationResponse, expectedType, expectedBinding)
         }
 
-    fun getPasskeysForUser(userId: Uuid): List<PasskeyInfo> = runBlocking { passkeyRepository.getPasskeysForUser(userId) }
+    suspend fun getPasskeysForUser(userId: Uuid): List<PasskeyInfo> = passkeyRepository.getPasskeysForUser(userId)
 
-    fun deletePasskey(
+    suspend fun deletePasskey(
         credentialId: String,
         userId: Uuid,
-    ): Boolean = runBlocking { passkeyRepository.deactivatePasskey(credentialId, userId) }
+    ): Boolean = passkeyRepository.deactivatePasskey(credentialId, userId)
 
-    fun credentialBelongsToUser(
+    suspend fun credentialBelongsToUser(
         credentialId: String,
         userId: Uuid,
-    ): Boolean = runBlocking { passkeyRepository.credentialBelongsToUser(credentialId, userId) }
+    ): Boolean = passkeyRepository.credentialBelongsToUser(credentialId, userId)
 
-    fun getUserCredentials(userId: Uuid): List<String> = runBlocking { passkeyRepository.getCredentialIdsForUser(userId) }
+    suspend fun getUserCredentials(userId: Uuid): List<String> = passkeyRepository.getCredentialIdsForUser(userId)
 
-    private fun verifyRegistrationSimplifiedOnly(
+    private suspend fun verifyRegistrationSimplifiedOnly(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -385,12 +383,14 @@ class WebAuthnPasskeyService(
                         ),
                 ),
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             VerificationOutcome.Failure("Registration verification failed: ${e.message}")
         }
     }
 
-    private fun verifyRegistrationStrictOnly(
+    private suspend fun verifyRegistrationStrictOnly(
         userId: Uuid,
         challenge: String,
         registrationResponse: PasskeyRegistrationResponse,
@@ -458,6 +458,8 @@ class WebAuthnPasskeyService(
             )
         } catch (e: DataConversionException) {
             VerificationOutcome.Failure("Registration data conversion failed")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // The origin failure webauthn4j reports names the origin the client presented but not
             // the set it was checked against, which is the half an operator actually needs.
@@ -466,7 +468,7 @@ class WebAuthnPasskeyService(
         }
     }
 
-    private fun verifyAuthenticationSimplified(
+    private suspend fun verifyAuthenticationSimplified(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
         expectedType: String,
@@ -483,17 +485,17 @@ class WebAuthnPasskeyService(
                 findStoredPasskey(authenticationResponse.id)
                     ?: return AuthenticationResult(success = false, error = "Credential not found")
 
-            runBlocking {
-                passkeyRepository.updateSignCount(storedData.credentialId, storedData.signCount + 1L)
-            }
+            passkeyRepository.updateSignCount(storedData.credentialId, storedData.signCount + 1L)
 
             AuthenticationResult(success = true, userId = userId, credentialId = storedData.credentialId)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             AuthenticationResult(success = false, error = "Authentication verification failed: ${e.message}")
         }
     }
 
-    private fun verifyAuthenticationStrict(
+    private suspend fun verifyAuthenticationStrict(
         challenge: String,
         authenticationResponse: PasskeyAuthenticationResponse,
         expectedType: String,
@@ -568,24 +570,22 @@ class WebAuthnPasskeyService(
 
             val authenticationData = webAuthnManager.verify(authenticationRequest, authenticationParameters)
             val newSignCount = authenticationData.authenticatorData?.signCount ?: storedData.signCount
-            runBlocking {
-                passkeyRepository.updateSignCount(canonicalCredentialId, newSignCount)
-            }
+            passkeyRepository.updateSignCount(canonicalCredentialId, newSignCount)
 
             AuthenticationResult(success = true, userId = userId, credentialId = canonicalCredentialId)
         } catch (e: DataConversionException) {
             AuthenticationResult(success = false, error = "Authentication data conversion failed")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             AuthenticationResult(success = false, error = "Authentication verification failed: ${e.message}")
         }
     }
 
-    private fun findStoredPasskey(credentialId: String): Pair<Uuid, StoredPasskeyData>? {
+    private suspend fun findStoredPasskey(credentialId: String): Pair<Uuid, StoredPasskeyData>? {
         val normalized = normalizeCredentialId(credentialId)
-        return runBlocking {
-            passkeyRepository.getPasskeyByCredentialId(credentialId)
-                ?: (normalized?.takeIf { it != credentialId }?.let { passkeyRepository.getPasskeyByCredentialId(it) })
-        }
+        return passkeyRepository.getPasskeyByCredentialId(credentialId)
+            ?: (normalized?.takeIf { it != credentialId }?.let { passkeyRepository.getPasskeyByCredentialId(it) })
     }
 
     private fun decodeBase64Url(value: String): ByteArray? = runCatching { Base64.getUrlDecoder().decode(value) }.getOrNull()

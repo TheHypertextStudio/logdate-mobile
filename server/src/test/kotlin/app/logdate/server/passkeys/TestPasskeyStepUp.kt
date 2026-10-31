@@ -15,30 +15,30 @@ import kotlin.uuid.Uuid
 class TestPasskeyStepUp : PasskeyStepUp {
     private val issued = mutableMapOf<String, Uuid>()
 
-    override fun credentialsFor(accountId: Uuid): List<String> = listOf(CREDENTIAL_ID)
+    override suspend fun credentialsFor(accountId: Uuid): List<String> = listOf(CREDENTIAL_ID)
 
-    override fun begin(accountId: Uuid): PasskeyAuthenticationOptions {
+    override suspend fun begin(accountId: Uuid): PasskeyAuthenticationOptions {
         val challenge = "step-up-${issued.size + 1}"
         issued[challenge] = accountId
         return PasskeyAuthenticationOptions(challenge = challenge, rpId = "logdate.app", allowCredentials = listOf(CREDENTIAL_ID))
     }
 
-    override fun verify(
+    override suspend fun verify(
         accountId: Uuid,
         proof: PasskeyStepUpProof,
     ): Boolean = issued.remove(proof.challenge) == accountId
 
     private val grants = mutableMapOf<String, Uuid>()
 
-    override fun grant(accountId: Uuid): String = "grant-${grants.size + 1}".also { grants[it] = accountId }
+    override suspend fun grant(accountId: Uuid): String = "grant-${grants.size + 1}".also { grants[it] = accountId }
 
-    override fun redeem(
+    override suspend fun redeem(
         accountId: Uuid,
         grant: String,
     ): Boolean = grants.remove(grant) == accountId
 
     /** Begins a step-up for [accountId] and answers it, as a device with the account's passkey would. */
-    fun proofFor(accountId: Uuid): PasskeyStepUpProof =
+    suspend fun proofFor(accountId: Uuid): PasskeyStepUpProof =
         PasskeyStepUpProof(
             challenge = begin(accountId).challenge,
             credential =

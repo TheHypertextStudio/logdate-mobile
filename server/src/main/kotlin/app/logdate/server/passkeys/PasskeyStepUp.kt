@@ -16,13 +16,13 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 interface PasskeyStepUp {
     /** The account's passkey credential ids; a step-up needs at least one. */
-    fun credentialsFor(accountId: Uuid): List<String>
+    suspend fun credentialsFor(accountId: Uuid): List<String>
 
     /** Issues a single-use challenge that only [accountId]'s passkeys can answer, valid for five minutes. */
-    fun begin(accountId: Uuid): PasskeyAuthenticationOptions
+    suspend fun begin(accountId: Uuid): PasskeyAuthenticationOptions
 
     /** Whether [proof] answers a challenge from [begin] for [accountId]. The challenge is spent either way. */
-    fun verify(
+    suspend fun verify(
         accountId: Uuid,
         proof: PasskeyStepUpProof,
     ): Boolean
@@ -32,10 +32,10 @@ interface PasskeyStepUp {
      * passkey. A sign-in or sign-up hands it to the app so the account's first recovery key can be
      * registered without asking for the passkey again.
      */
-    fun grant(accountId: Uuid): String
+    suspend fun grant(accountId: Uuid): String
 
     /** Whether [grant] came from [grant] for [accountId] and is unused and unexpired. It is spent either way. */
-    fun redeem(
+    suspend fun redeem(
         accountId: Uuid,
         grant: String,
     ): Boolean
@@ -53,11 +53,11 @@ data class PasskeyStepUpProof(
 class WebAuthnPasskeyStepUp(
     private val webAuthnService: WebAuthnPasskeyService,
 ) : PasskeyStepUp {
-    override fun credentialsFor(accountId: Uuid): List<String> = webAuthnService.getUserCredentials(accountId)
+    override suspend fun credentialsFor(accountId: Uuid): List<String> = webAuthnService.getUserCredentials(accountId)
 
-    override fun begin(accountId: Uuid): PasskeyAuthenticationOptions = webAuthnService.generateStepUpOptions(accountId)
+    override suspend fun begin(accountId: Uuid): PasskeyAuthenticationOptions = webAuthnService.generateStepUpOptions(accountId)
 
-    override fun verify(
+    override suspend fun verify(
         accountId: Uuid,
         proof: PasskeyStepUpProof,
     ): Boolean =
@@ -80,9 +80,9 @@ class WebAuthnPasskeyStepUp(
                     ),
             ).success
 
-    override fun grant(accountId: Uuid): String = webAuthnService.issueStepUpGrant(accountId)
+    override suspend fun grant(accountId: Uuid): String = webAuthnService.issueStepUpGrant(accountId)
 
-    override fun redeem(
+    override suspend fun redeem(
         accountId: Uuid,
         grant: String,
     ): Boolean = webAuthnService.redeemStepUpGrant(accountId, grant)

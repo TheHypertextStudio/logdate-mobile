@@ -14,49 +14,57 @@ import kotlin.uuid.Uuid
 @OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 class RestoreCredentialConsumptionTest {
     @Test
-    fun `two distinct signed zero-counter challenges both authenticate`() {
-        val backing = InMemoryRestoreCredentialRepository()
-        val barrier = CyclicBarrier(2)
-        val repository =
-            object : RestoreCredentialRepository by backing {
-                override suspend fun findByCredentialId(credentialId: String): StoredRestoreCredentialData? {
-                    val stored = backing.findByCredentialId(credentialId)
-                    barrier.await(5, TimeUnit.SECONDS)
-                    return stored
+    fun `two distinct signed zero-counter challenges both authenticate`() =
+        runBlocking<Unit> {
+            val backing = InMemoryRestoreCredentialRepository()
+            val barrier = CyclicBarrier(2)
+            val repository =
+                object : RestoreCredentialRepository by backing {
+                    override suspend fun findByCredentialId(credentialId: String): StoredRestoreCredentialData? {
+                        val stored = backing.findByCredentialId(credentialId)
+                        barrier.await(5, TimeUnit.SECONDS)
+                        return stored
+                    }
                 }
+            val fixture = registered(repository)
+            val challenges = List(2) { fixture.service.generateAuthOptions().challenge }
+            val executor = Executors.newFixedThreadPool(2)
+            try {
+                val results =
+                    challenges
+                        .map { challenge ->
+                            executor.submit<Boolean> {
+                                runBlocking {
+                                    fixture.service
+                                        .verifyAuthentication(
+                                            challenge,
+                                            fixture.authenticator.assertion(challenge),
+                                        ).success
+                                }
+                            }
+                        }.map { it.get(10, TimeUnit.SECONDS) }
+                assertEquals(2, results.count { it })
+            } finally {
+                executor.shutdownNow()
             }
-        val fixture = registered(repository)
-        val challenges = List(2) { fixture.service.generateAuthOptions().challenge }
-        val executor = Executors.newFixedThreadPool(2)
-        try {
-            val results =
-                challenges
-                    .map { challenge ->
-                        executor.submit<Boolean> {
-                            fixture.service.verifyAuthentication(challenge, fixture.authenticator.assertion(challenge)).success
-                        }
-                    }.map { it.get(10, TimeUnit.SECONDS) }
-            assertEquals(2, results.count { it })
-        } finally {
-            executor.shutdownNow()
         }
-    }
 
     @Test
-    fun `revocation after lookup prevents a valid signed assertion from authenticating`() {
-        val backing = InMemoryRestoreCredentialRepository()
-        val repository =
-            object : RestoreCredentialRepository by backing {
-                override suspend fun findByCredentialId(credentialId: String): StoredRestoreCredentialData? {
-                    val stored = backing.findByCredentialId(credentialId)
-                    if (stored != null) backing.deactivateAllForUser(stored.userId)
-                    return stored
+    fun `revocation after lookup prevents a valid signed assertion from authenticating`() =
+        runBlocking<Unit> {
+            val backing = InMemoryRestoreCredentialRepository()
+            val repository =
+                object : RestoreCredentialRepository by backing {
+                    override suspend fun findByCredentialId(credentialId: String): StoredRestoreCredentialData? {
+                        val stored = backing.findByCredentialId(credentialId)
+                        if (stored != null) backing.deactivateAllForUser(stored.userId)
+                        return stored
+                    }
                 }
-            }
-        val fixture = registered(repository)
-        val challenge = fixture.service.generateAuthOptions().challenge
-        assertFalse(fixture.service.verifyAuthentication(challenge, fixture.authenticator.assertion(challenge)).success)
-    }
+            val fixture = registered(repository)
+            val challenge = fixture.service.generateAuthOptions().challenge
+            assertFalse(fixture.service.verifyAuthentication(challenge, fixture.authenticator.assertion(challenge)).success)
+        }
 
     @Test
     fun `legacy padded ID retains the actual verified stored record`() =
@@ -75,16 +83,17 @@ class RestoreCredentialConsumptionTest {
         }
 
     @Test
-    fun `fresh challenge recovers after lost response and server restart`() {
-        val repository = InMemoryRestoreCredentialRepository()
-        val fixture = registered(repository)
-        val first = fixture.service.generateAuthOptions().challenge
-        assertTrue(fixture.service.verifyAuthentication(first, fixture.authenticator.assertion(first)).success)
-        val restarted = RestoreCredentialService(repository, origins = setOf("https://logdate.app"), strictVerificationEnabled = true)
-        val retry = restarted.generateAuthOptions().challenge
-        assertTrue(restarted.verifyAuthentication(retry, fixture.authenticator.assertion(retry)).success)
-        assertFalse(restarted.verifyAuthentication(retry, fixture.authenticator.assertion(retry)).success)
-    }
+    fun `fresh challenge recovers after lost response and server restart`() =
+        runBlocking<Unit> {
+            val repository = InMemoryRestoreCredentialRepository()
+            val fixture = registered(repository)
+            val first = fixture.service.generateAuthOptions().challenge
+            assertTrue(fixture.service.verifyAuthentication(first, fixture.authenticator.assertion(first)).success)
+            val restarted = RestoreCredentialService(repository, origins = setOf("https://logdate.app"), strictVerificationEnabled = true)
+            val retry = restarted.generateAuthOptions().challenge
+            assertTrue(restarted.verifyAuthentication(retry, fixture.authenticator.assertion(retry)).success)
+            assertFalse(restarted.verifyAuthentication(retry, fixture.authenticator.assertion(retry)).success)
+        }
 
     @Test
     fun `registration on another installation preserves existing recovery key`() =
@@ -114,7 +123,7 @@ class RestoreCredentialConsumptionTest {
             Unit
         }
 
-    private fun registered(repository: RestoreCredentialRepository): Fixture {
+    private suspend fun registered(repository: RestoreCredentialRepository): Fixture {
         val service = RestoreCredentialService(repository, origins = setOf("https://logdate.app"), strictVerificationEnabled = true)
         val authenticator = PassiveRestoreAuthenticator()
         val owner = Uuid.random()
