@@ -42,6 +42,7 @@ import app.logdate.client.data.people.AndroidDeviceContactsReader
 import app.logdate.client.data.people.OfflineFirstPeopleGraphRepository
 import app.logdate.client.data.people.OfflineFirstPeopleRepository
 import app.logdate.client.data.places.OfflineFirstUserPlacesRepository
+import app.logdate.client.data.postcards.OfflineFirstPostcardRepository
 import app.logdate.client.data.profile.OfflineFirstProfileRepository
 import app.logdate.client.data.quota.AndroidRemoteQuotaDataSource
 import app.logdate.client.data.restore.AndroidMediaOwnerCensus
@@ -52,6 +53,7 @@ import app.logdate.client.data.search.AndroidPlatformSearchIndexManager
 import app.logdate.client.data.search.AndroidPlatformSearchRepository
 import app.logdate.client.data.search.DataStoreRecentSearchesRepository
 import app.logdate.client.data.search.OfflineFirstSearchRepository
+import app.logdate.client.data.stickers.OfflineFirstStickerRepository
 import app.logdate.client.data.streak.DefaultStreakSettingsRepository
 import app.logdate.client.data.timeline.OfflineFirstActivityTimelineRepository
 import app.logdate.client.data.transcription.OfflineFirstTranscriptionRepository
@@ -105,6 +107,7 @@ import app.logdate.client.repository.location.LocationHistoryRepository
 import app.logdate.client.repository.media.IndexedMediaRepository
 import app.logdate.client.repository.moments.MarkedMomentRepository
 import app.logdate.client.repository.places.UserPlacesRepository
+import app.logdate.client.repository.postcards.PostcardRepository
 import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.client.repository.quota.RemoteQuotaDataSource
 import app.logdate.client.repository.rewind.ReflectionPromptResponseRepository
@@ -112,6 +115,7 @@ import app.logdate.client.repository.rewind.RewindGenerationManager
 import app.logdate.client.repository.rewind.RewindRepository
 import app.logdate.client.repository.search.RecentSearchesRepository
 import app.logdate.client.repository.search.SearchRepository
+import app.logdate.client.repository.stickers.StickerRepository
 import app.logdate.client.repository.streak.StreakSettingsRepository
 import app.logdate.client.repository.timeline.ActivityTimelineRepository
 import app.logdate.client.repository.transcription.TranscriptionRepository
@@ -280,6 +284,10 @@ actual val dataModule: Module =
 
         // Media
         single<IndexedMediaRepository> { OfflineIndexedMediaRepository(get(), get(), get()) }
+
+        // Postcards and stickers
+        single<PostcardRepository> { OfflineFirstPostcardRepository(get()) }
+        single<StickerRepository> { OfflineFirstStickerRepository(get(), mediaClaimFence = get()) }
 
         // Timeline
         single<ActivityTimelineRepository> { OfflineFirstActivityTimelineRepository() }

@@ -87,7 +87,7 @@ class FeatureFlagStoreTest {
             assertTrue(store.isEnabled(FeatureFlag.LIBRARY))
             assertFalse(store.isEnabled(FeatureFlag.EVENTS))
             assertFalse(store.isEnabled(FeatureFlag.PEOPLE))
-            assertTrue(store.isEnabled(FeatureFlag.CAMPFIRE_STREAKS))
+            assertTrue(store.isEnabled(FeatureFlag.JOURNAL_MERGE))
         }
 
     @Test
@@ -157,12 +157,12 @@ class FeatureFlagStoreTest {
     fun `setting a flag to a value other than its default stores that value`() =
         runTest {
             store.setEnabled(FeatureFlag.WATCH_EXPERIENCE_V2, enabled = true)
-            store.setEnabled(FeatureFlag.CAMPFIRE_STREAKS, enabled = false)
+            store.setEnabled(FeatureFlag.JOURNAL_MERGE, enabled = false)
 
             val stored = preferences.data.first()
 
             assertEquals(true, stored[booleanPreferencesKey("watch_experience_v2_enabled")])
-            assertEquals(false, stored[booleanPreferencesKey("campfire_streaks_enabled")])
+            assertEquals(false, stored[booleanPreferencesKey("journal_merge_enabled")])
         }
 
     /**
@@ -185,13 +185,13 @@ class FeatureFlagStoreTest {
     @Test
     fun `setting a flag that is on by default back to on clears the stored value`() =
         runTest {
-            store.setEnabled(FeatureFlag.CAMPFIRE_STREAKS, enabled = false)
-            store.setEnabled(FeatureFlag.CAMPFIRE_STREAKS, enabled = true)
+            store.setEnabled(FeatureFlag.JOURNAL_MERGE, enabled = false)
+            store.setEnabled(FeatureFlag.JOURNAL_MERGE, enabled = true)
 
-            val stored = preferences.data.first()[booleanPreferencesKey("campfire_streaks_enabled")]
+            val stored = preferences.data.first()[booleanPreferencesKey("journal_merge_enabled")]
 
             assertNull(stored)
-            assertTrue(store.isEnabled(FeatureFlag.CAMPFIRE_STREAKS))
+            assertTrue(store.isEnabled(FeatureFlag.JOURNAL_MERGE))
         }
 
     @Test

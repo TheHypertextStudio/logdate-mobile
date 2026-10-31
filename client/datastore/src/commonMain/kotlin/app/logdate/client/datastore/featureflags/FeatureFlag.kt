@@ -37,9 +37,6 @@ enum class FeatureFlag(
     /** Stop quiet phone recordings and preserve them as drafts. */
     QUIET_SAVE(key = "quiet_save_available", defaultEnabled = false),
 
-    /** Original ink blocks, retained through drafts, saved entries, archives and sync. */
-    HANDWRITING_ENTRIES(key = "handwriting_entries_enabled", defaultEnabled = true),
-
     /**
      * Automatic event detection and the Events surface.
      *
@@ -53,14 +50,6 @@ enum class FeatureFlag(
      * Deferred from the first public Android release, including for previously enabled devices.
      */
     PEOPLE(key = "people_enabled", defaultEnabled = false, availableForLaunch = false),
-
-    /**
-     * The forgiving campfire streak that replaces the consecutive-day counter.
-     *
-     * On by default: every surface that shows a streak renders the campfire. The flag stays as a
-     * switch back to the old counter until that counter's code is deleted, and both go together.
-     */
-    CAMPFIRE_STREAKS(key = "campfire_streaks_enabled", defaultEnabled = true),
 
     /** Combine journal membership while retaining notes and media. */
     JOURNAL_MERGE(key = "journal_merge_enabled", defaultEnabled = true),
