@@ -7,14 +7,12 @@ import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-/** Parses Kotlin, including import aliases. Preserved flag-off branches are outside the v2 contract. */
+/** Parses Kotlin, including import aliases, and inspects every statement of each scoped Home root. */
 object HomeWorkspaceContract {
     fun inspect(
         source: String,
@@ -39,33 +37,10 @@ object HomeWorkspaceContract {
             val missing = roots.filter { root -> functions.none { it.name == root } }.map { "$it|missing-root|1" }
             return missing +
                 functions.flatMap { function ->
-                    val branches =
-                        PsiTreeUtil
-                            .findChildrenOfType(function, KtIfExpression::class.java)
-                            .filter {
-                                it.condition?.text?.let { condition ->
-                                    condition.contains("LocalWorkspaceEnabled") ||
-                                        condition == "workspaceEnabled"
-                                } ==
-                                    true
-                            }
-                    val firstBranch = branches.minOfOrNull { it.textOffset }
-                    val sharedSetup =
-                        (function.bodyExpression as? KtBlockExpression)
-                            ?.statements
-                            ?.takeWhile { firstBranch != null && it.textOffset < firstBranch }
-                            .orEmpty()
-                    val scopes =
-                        if (branches.isEmpty()) {
-                            listOfNotNull(function.bodyExpression)
-                        } else {
-                            sharedSetup +
-                                branches.mapNotNull { it.then }
-                        }
+                    val scopes = listOfNotNull(function.bodyExpression)
                     scopes
                         .flatMap { scope ->
                             PsiTreeUtil.findChildrenOfType(scope, KtCallExpression::class.java).mapNotNull { call ->
-                                if (insideLegacyBranch(call)) return@mapNotNull null
                                 val name = call.calleeExpression?.text?.substringAfterLast('.') ?: return@mapNotNull null
                                 val resolved = aliases[name] ?: name
                                 val rule =
@@ -95,7 +70,6 @@ object HomeWorkspaceContract {
                                 rule?.let { "${function.name}|$it|${source.take(call.textOffset).count { char -> char == '\n' } + 1}" }
                             } +
                                 PsiTreeUtil.findChildrenOfType(scope, KtNameReferenceExpression::class.java).mapNotNull { reference ->
-                                    if (insideLegacyBranch(reference)) return@mapNotNull null
                                     val name = aliases[reference.getReferencedName()] ?: reference.getReferencedName()
                                     if (name in setOf("LocalWindowInfo", "LocalConfiguration")) {
                                         "${function.name}|global-layout|${source.take(reference.textOffset).count { it == '\n' } + 1}"
@@ -108,20 +82,6 @@ object HomeWorkspaceContract {
         } finally {
             Disposer.dispose(disposable)
         }
-    }
-
-    private fun insideLegacyBranch(call: PsiElement): Boolean {
-        var parent = call.parent
-        while (parent != null) {
-            if (parent is KtIfExpression &&
-                parent.condition?.text?.let { it.contains("LocalWorkspaceEnabled") || it == "workspaceEnabled" } == true &&
-                parent.`else`?.let { PsiTreeUtil.isAncestor(it, call, false) } == true
-            ) {
-                return true
-            }
-            parent = parent.parent
-        }
-        return false
     }
 
     private fun withinContentComponent(

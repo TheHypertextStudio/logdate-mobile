@@ -30,7 +30,7 @@ class WorkspaceRouteFrameTest {
     ) = runDesktopComposeUiTest(width = 1280, height = 800) {
         setContent {
             LogDateTheme {
-                CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalWorkspaceSearchAction provides {}) {
+                CompositionLocalProvider(LocalWorkspaceSearchAction provides {}) {
                     WorkspaceRouteFrame(focusConstraints = constraints) {
                         WorkspacePanel(Modifier.testTag("panel")) {
                             Text("Reading content", Modifier.padding(16.dp).testTag("content"))

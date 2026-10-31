@@ -13,7 +13,7 @@ class HomeWorkspacePlugin : Plugin<Project> {
         project.tasks.register("checkHomeWorkspaceContract", CheckHomeWorkspaceContract::class.java) {
             parserClasspath.from(parser)
             group = "verification"
-            description = "Checks migrated Home roots against shared framing ownership."
+            description = "Checks Home roots against shared framing ownership."
             scopeManifest.set(project.layout.projectDirectory.file("config/workspace/home-roots.txt"))
             allowlist.set(project.layout.projectDirectory.file("config/workspace/home-allowlist.txt"))
             sources.from(

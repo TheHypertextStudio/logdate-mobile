@@ -25,7 +25,6 @@ import app.logdate.ui.timeline.TimelineDayUiState
 import app.logdate.ui.timeline.TimelineLoadingState
 import app.logdate.ui.timeline.TimelinePane
 import app.logdate.ui.timeline.TimelineUiState
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.WorkspaceDestination
 import app.logdate.ui.workspace.WorkspaceScaffold
 import kotlinx.datetime.LocalDate
@@ -64,7 +63,6 @@ class TimelineLoadingRendersTest {
                     CompositionLocalProvider(
                         LocalDensity provides Density(1f, scale),
                         LocalLayoutDirection provides direction,
-                        LocalWorkspaceEnabled provides true,
                         LocalReduceMotionOverride provides true,
                         LocalToday provides LocalDate(2026, 10, 28),
                     ) {

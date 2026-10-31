@@ -9,9 +9,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -19,11 +16,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -31,15 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.text.toUiText
-import app.logdate.ui.platform.currentPlatform
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.timeline.newstuff.EndOfTimelineUiState
 import app.logdate.ui.timeline.newstuff.TimelineList
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.WorkspacePanel
 import app.logdate.util.now
 import kotlinx.coroutines.launch
@@ -60,7 +50,6 @@ data class TimelineUiState(
     val appendError: String? = null,
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelinePane(
     uiState: TimelineUiState,
@@ -70,8 +59,6 @@ fun TimelinePane(
     onLoadMoreOlder: () -> Unit = {},
     timelineSuggestion: TimelineSuggestionBlock? = null,
     listState: LazyListState = rememberLazyListState(),
-    onSearchClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {},
     onStartWriting: () -> Unit = onNewEntry,
     onOpenDraft: (draftId: String) -> Unit = {},
     onShareMemory: (TimelineSuggestionBlockUiState) -> Unit = {},
@@ -80,18 +67,10 @@ fun TimelinePane(
     onUseSuggestion: () -> Unit = {},
     onRecordVoice: () -> Unit = onStartWriting,
     birthday: Instant? = null,
-    statusActions: @Composable RowScope.() -> Unit = {},
-    banner: @Composable () -> Unit = {},
     modifier: Modifier = Modifier,
     pendingMomentContent: @Composable (app.logdate.client.repository.moments.MarkedMoment) -> Unit = {},
     onOpenTextNote: (Uuid) -> Unit = {},
 ) {
-    val scrollBehavior =
-        if (currentPlatform.isApple) {
-            TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-        } else {
-            TopAppBarDefaults.enterAlwaysScrollBehavior()
-        }
     val endOfTimelineState by remember(birthday) {
         derivedStateOf {
             if (birthday != null && birthday != Instant.DISTANT_PAST) {
@@ -104,72 +83,14 @@ fun TimelinePane(
         }
     }
 
-    if (LocalWorkspaceEnabled.current) {
-        WorkspacePanel(modifier) {
-            Column {
-                Box(Modifier.fillMaxWidth().weight(1f)) {
-                    TimelineList(
-                        uiState.items,
-                        endOfTimelineState,
-                        onOpenDay,
-                        Modifier,
-                        uiState.loadingState,
-                        uiState.isLoadingMore,
-                        uiState.hasMoreOlderContent,
-                        uiState.appendError,
-                        onLoadMoreOlder,
-                        timelineSuggestion,
-                        onStartWriting,
-                        onOpenDraft,
-                        onOpenDay,
-                        onShareMemory,
-                        onVisibleAudioNoteIdsChanged,
-                        onImportBackup,
-                        listState,
-                        pendingMomentContent,
-                        onOpenTextNote,
-                        onDismissSuggestion = onDismissSuggestion,
-                        onUseSuggestion = onUseSuggestion,
-                        onRecordVoice = onRecordVoice,
-                    )
-                    ScrollToTopButton(listState, Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.lg))
-                }
-            }
-        }
-        return
-    }
-    Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            TimelineTopAppBar(
-                scrollBehavior = scrollBehavior,
-                onSearchClick = onSearchClick,
-                onSettingsClick = onProfileClick,
-                // On iPhone and iPad the floating create button is hidden, so the new-entry
-                // affordance moves into the top bar as a trailing action. Other hosts keep
-                // the FAB and don't need the duplicate.
-                onNewEntry = onNewEntry.takeIf { currentPlatform.isApple },
-                statusActions = statusActions,
-            )
-        },
-    ) { paddingValues ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(paddingValues),
-        ) {
-            // Banners sit *inside* the Scaffold body, below the TopAppBar, so they inherit content
-            // insets and never collide with the system status bar.
-            banner()
-            Box(modifier = Modifier.fillMaxWidth()) {
+    WorkspacePanel(modifier) {
+        Column {
+            Box(Modifier.fillMaxWidth().weight(1f)) {
                 TimelineList(
                     uiState.items,
                     endOfTimelineState,
                     onOpenDay,
-                    Modifier.consumeWindowInsets(paddingValues),
+                    Modifier,
                     uiState.loadingState,
                     uiState.isLoadingMore,
                     uiState.hasMoreOlderContent,
@@ -189,14 +110,7 @@ fun TimelinePane(
                     onUseSuggestion = onUseSuggestion,
                     onRecordVoice = onRecordVoice,
                 )
-
-                ScrollToTopButton(
-                    listState = listState,
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = Spacing.lg),
-                )
+                ScrollToTopButton(listState, Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.lg))
             }
         }
     }

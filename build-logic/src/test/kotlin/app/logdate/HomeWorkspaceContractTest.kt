@@ -7,19 +7,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class HomeWorkspaceContractTest {
-    @Test fun rejectsDestinationSearchInsidePanelsButPreservesLegacySearch() {
+    @Test fun rejectsDestinationSearchInsidePanels() {
         val source =
             """
             fun PanelRoot() {
-                if (LocalWorkspaceEnabled.current) {
-                    WorkspacePanel {
-                        JournalSearchToolbar()
-                        LibraryTopBar()
-                        SearchBar()
-                    }
-                    return
+                WorkspacePanel {
+                    JournalSearchToolbar()
+                    LibraryTopBar()
+                    SearchBar()
                 }
-                JournalSearchToolbar()
             }
             """.trimIndent()
         assertEquals(3, HomeWorkspaceContract.inspect(source, setOf("PanelRoot")).size)
@@ -54,12 +50,11 @@ class HomeWorkspaceContractTest {
         assertEquals(1, HomeWorkspaceContract.inspect(source, setOf("PanelRoot")).size)
     }
 
-    @Test fun ignoresStringsCommentsAndPreservedLegacyBranch() {
+    @Test fun ignoresStringsAndComments() {
         val source =
             """
             fun PanelRoot() {
-                if (LocalWorkspaceEnabled.current) { WorkspacePanel { Text("Surface()") }; return }
-                Scaffold { /* currentWindowAdaptiveInfoV2() */ Text("old") }
+                WorkspacePanel { /* currentWindowAdaptiveInfoV2() */ Text("Surface()") }
             }
             """.trimIndent()
         assertTrue(HomeWorkspaceContract.inspect(source, setOf("PanelRoot")).isEmpty())
@@ -70,16 +65,16 @@ class HomeWorkspaceContractTest {
         assertEquals(2, HomeWorkspaceContract.inspect(source, setOf("PanelRoot")).size)
     }
 
-    @Test fun rejectsGlobalQueriesBeforeTheFlaggedBranch() {
+    @Test fun inspectsEveryBranchOfARoot() {
         val source =
             """
             fun PanelRoot() {
                 val window = currentWindowAdaptiveInfoV2()
-                if (LocalWorkspaceEnabled.current) { WorkspacePanel { Text(window) }; return }
+                if (workspaceEnabled) { WorkspacePanel { Text(window) }; return }
                 Scaffold {}
             }
             """.trimIndent()
-        assertEquals(1, HomeWorkspaceContract.inspect(source, setOf("PanelRoot")).size)
+        assertEquals(2, HomeWorkspaceContract.inspect(source, setOf("PanelRoot")).size)
     }
 
     @Test fun missingScopedRootFailsInsteadOfSilentlyPassing() {

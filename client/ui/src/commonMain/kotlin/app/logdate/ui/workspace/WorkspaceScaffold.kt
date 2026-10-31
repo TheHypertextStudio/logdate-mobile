@@ -258,7 +258,7 @@ fun WorkspaceScaffold(
                             status()
                             Box(Modifier.fillMaxWidth().weight(1f).nestedScroll(edge.connection)) {
                                 val viewport: @Composable () -> Unit = {
-                                    CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalWorkspaceHosted provides true) {
+                                    CompositionLocalProvider(LocalWorkspaceHosted provides true) {
                                         holder.SaveableStateProvider(selected.key) { content() }
                                     }
                                 }

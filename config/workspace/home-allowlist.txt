@@ -1,4 +1,3 @@
 # path|function|rule|reviewed reason; exceptions must name a single function and rule.
-# Flag-off legacy branches are excluded by PSI scope, not by an unrestricted file allowlist.
 client/feature/journal/src/commonMain/kotlin/app/logdate/feature/journals/ui/merge/JournalMergeScreen.kt|JournalMergeScreenContent|outer-frame|Reviewed activity ownership design: merge replaces Home and owns its canvas and safe insets; its state-driven picker and review components supply no outer frame, search host, or navigation shell.
-client/feature/rewind/src/commonMain/kotlin/app/logdate/feature/rewind/ui/detail/RewindStoryView.kt|RewindStoryView|raw-frame-style|Reviewed immersive exception: animated story media clipping and the full-window black backdrop with overlay controls in one hinge-safe region. Playback bypasses Home framing in both flag states.
+client/feature/rewind/src/commonMain/kotlin/app/logdate/feature/rewind/ui/detail/RewindStoryView.kt|RewindStoryView|raw-frame-style|Reviewed immersive exception: animated story media clipping and the full-window black backdrop with overlay controls in one hinge-safe region. Playback bypasses Home framing.

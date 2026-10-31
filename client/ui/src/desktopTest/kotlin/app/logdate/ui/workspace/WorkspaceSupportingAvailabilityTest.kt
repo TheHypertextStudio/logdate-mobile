@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,17 +94,15 @@ class WorkspaceSupportingAvailabilityTest {
             var mapClicks = 0
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        WorkspacePanel(Modifier.fillMaxSize()) {
-                            WorkspaceSupportingSheet(
-                                "Places",
-                                focusAvailable = false,
-                                supportingContainment = PanelContainment.Collection,
-                                header = { Text("Your places") },
-                                focus = { Box(Modifier.fillMaxSize().clickable { mapClicks++ }) },
-                                supporting = { Box(Modifier.width(720.dp).fillMaxHeight()) { Text("Saved place") } },
-                            )
-                        }
+                    WorkspacePanel(Modifier.fillMaxSize()) {
+                        WorkspaceSupportingSheet(
+                            "Places",
+                            focusAvailable = false,
+                            supportingContainment = PanelContainment.Collection,
+                            header = { Text("Your places") },
+                            focus = { Box(Modifier.fillMaxSize().clickable { mapClicks++ }) },
+                            supporting = { Box(Modifier.width(720.dp).fillMaxHeight()) { Text("Saved place") } },
+                        )
                     }
                 }
             }

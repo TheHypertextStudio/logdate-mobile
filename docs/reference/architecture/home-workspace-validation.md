@@ -1,6 +1,6 @@
 # Home workspace validation
 
-Validated October 2, 2026. `HOME_WORKSPACE_V2` is enabled for the requested internal-testing delivery; native-map acceptance remains unresolved. This is a presentation migration; it introduces no server or storage migration.
+Validated October 2, 2026. The workspace is the only Home presentation and no flag switches it off; native-map acceptance remains unresolved. This is a presentation migration; it introduces no server or storage migration.
 
 ## Automated checks
 

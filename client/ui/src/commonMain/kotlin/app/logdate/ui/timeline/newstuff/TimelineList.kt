@@ -41,7 +41,6 @@ import app.logdate.ui.timeline.TimelineSuggestionBlock
 import app.logdate.ui.timeline.TimelineSuggestionBlockType
 import app.logdate.ui.timeline.TimelineSuggestionBlockUiState
 import app.logdate.ui.timeline.collectLazyTimelineAudioNoteIds
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.datetime.LocalDate
@@ -120,7 +119,6 @@ fun TimelineList(
     onRecordVoice: () -> Unit = onStartWriting,
 ) {
     val isPostCloudRestore = LocalIsPostCloudRestore.current
-    val workspaceEnabled = LocalWorkspaceEnabled.current
     val draftMessage = stringResource(Res.string.suggestion_draft_fallback)
     val emptyDayMessage = stringResource(Res.string.suggestion_empty_day_prompt)
     val emptyDayLocation = (timelineSuggestion as? TimelineSuggestionBlock.EmptyDay)?.locationName?.asString()
