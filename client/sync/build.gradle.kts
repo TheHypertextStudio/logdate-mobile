@@ -6,7 +6,6 @@ plugins {
     id("app.logdate.kmp-library")
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.dokka)
 }
 
 // The conversion tests check the number rules against the same known answers the Mac and Linux apps

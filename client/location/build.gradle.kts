@@ -2,7 +2,6 @@ plugins {
     id("app.logdate.kmp-library")
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.dokka)
     alias(libs.plugins.kover)
 }
 

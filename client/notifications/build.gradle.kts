@@ -1,7 +1,6 @@
 plugins {
     id("app.logdate.kmp-library")
     alias(libs.plugins.android.kmp.library)
-    alias(libs.plugins.dokka)
 }
 
 kotlin {

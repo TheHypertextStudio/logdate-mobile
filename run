@@ -10,8 +10,16 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Source environment
-[[ -f "docs/environment/.env.example" ]] && { set -a; source "docs/environment/.env.example"; set +a; }
-[[ -f ".env" ]] && { set -a; source ".env"; set +a; }
+[[ -f "docs/environment/.env.example" ]] && {
+  set -a
+  source "docs/environment/.env.example"
+  set +a
+}
+[[ -f ".env" ]] && {
+  set -a
+  source ".env"
+  set +a
+}
 
 # ============================================================================
 # Command Registry (single source of truth)
@@ -70,8 +78,8 @@ quality|check|Run all checks (tests + lint)|./gradlew check
 quality|perf:baseline:phone|Generate phone baseline profile|./gradlew generatePhoneBaselineProfile
 quality|perf:baseline:wear|Generate Wear baseline profile|./gradlew generateWearBaselineProfile
 
-docs|docs|Generate API documentation|./gradlew dokkaHtmlMultiModule
-docs|docs:open|Open generated documentation|open build/dokka/htmlMultiModule/index.html 2>/dev/null || xdg-open build/dokka/htmlMultiModule/index.html 2>/dev/null || echo "Open build/dokka/htmlMultiModule/index.html"
+docs|docs|Generate the AT Protocol API documentation|./gradlew generateAtprotoDokka
+docs|docs:open|Open generated documentation|open build/dokka/html/index.html 2>/dev/null || xdg-open build/dokka/html/index.html 2>/dev/null || echo "Open build/dokka/html/index.html"
 docs|docs:performance|Open performance documentation index|open docs/performance/README.md 2>/dev/null || xdg-open docs/performance/README.md 2>/dev/null || echo "Open docs/performance/README.md"
 
 deploy|deploy:setup|One-time GCP infrastructure setup|./scripts/setup-gcp-deploy.sh
@@ -128,23 +136,23 @@ BOLD='\033[1m' DIM='\033[2m' NC='\033[0m'
 # ============================================================================
 
 get_command() {
-    echo "$COMMANDS" | grep "^[^|]*|$1|" | cut -d'|' -f4 || true
+  echo "$COMMANDS" | grep "^[^|]*|$1|" | cut -d'|' -f4 || true
 }
 
 get_description() {
-    echo "$COMMANDS" | grep "^[^|]*|$1|" | cut -d'|' -f3 || true
+  echo "$COMMANDS" | grep "^[^|]*|$1|" | cut -d'|' -f3 || true
 }
 
 get_category_name() {
-    echo "$CATEGORY_NAMES" | grep "^$1|" | cut -d'|' -f2 || true
+  echo "$CATEGORY_NAMES" | grep "^$1|" | cut -d'|' -f2 || true
 }
 
 get_commands_in_category() {
-    echo "$COMMANDS" | grep "^$1|" | cut -d'|' -f2 || true
+  echo "$COMMANDS" | grep "^$1|" | cut -d'|' -f2 || true
 }
 
 resolve_shortcut() {
-    echo "$SHORTCUTS" | grep "^$1|" | cut -d'|' -f2 || true
+  echo "$SHORTCUTS" | grep "^$1|" | cut -d'|' -f2 || true
 }
 
 # ============================================================================
@@ -152,122 +160,128 @@ resolve_shortcut() {
 # ============================================================================
 
 header() {
-    echo ""
-    echo -e "${BOLD}${B}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BOLD}${B}║${NC}              ${BOLD}LogDate Development Console${NC}                   ${BOLD}${B}║${NC}"
-    echo -e "${BOLD}${B}╚══════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
+  echo ""
+  echo -e "${BOLD}${B}╔══════════════════════════════════════════════════════════════╗${NC}"
+  echo -e "${BOLD}${B}║${NC}              ${BOLD}LogDate Development Console${NC}                   ${BOLD}${B}║${NC}"
+  echo -e "${BOLD}${B}╚══════════════════════════════════════════════════════════════╝${NC}"
+  echo ""
 }
 
 run_cmd() {
-    local cmd="$1"
-    shift
-    local shell_cmd desc
+  local cmd="$1"
+  shift
+  local shell_cmd desc
 
-    shell_cmd="$(get_command "$cmd")"
-    if [[ -z "$shell_cmd" ]]; then
-        echo -e "${R}Unknown command: $cmd${NC}"
-        echo "Run './run help' to see available commands."
-        exit 1
-    fi
+  shell_cmd="$(get_command "$cmd")"
+  if [[ -z "$shell_cmd" ]]; then
+    echo -e "${R}Unknown command: $cmd${NC}"
+    echo "Run './run help' to see available commands."
+    exit 1
+  fi
 
-    desc="$(get_description "$cmd")"
-    echo -e "${C}▶ ${desc}${NC}"
-    echo -e "${DIM}  ${shell_cmd} $*${NC}"
-    echo ""
-    if [[ $# -gt 0 ]]; then
-        eval "$shell_cmd"' "$@"'
-    else
-        eval "$shell_cmd"
-    fi
+  desc="$(get_description "$cmd")"
+  echo -e "${C}▶ ${desc}${NC}"
+  echo -e "${DIM}  ${shell_cmd} $*${NC}"
+  echo ""
+  if [[ $# -gt 0 ]]; then
+    eval "$shell_cmd"' "$@"'
+  else
+    eval "$shell_cmd"
+  fi
 }
 
 print_help() {
-    echo -e "${BOLD}Usage:${NC}  ./run [command]"
-    echo ""
-    echo -e "${BOLD}Shortcuts:${NC}"
-    echo "$SHORTCUTS" | while IFS='|' read -r shortcut actual; do
-        [[ -z "$shortcut" ]] && continue
-        printf "  ./run %-10s → %s\n" "$shortcut" "$actual"
-    done
-    echo ""
-    echo -e "${BOLD}Commands:${NC}"
+  echo -e "${BOLD}Usage:${NC}  ./run [command]"
+  echo ""
+  echo -e "${BOLD}Shortcuts:${NC}"
+  echo "$SHORTCUTS" | while IFS='|' read -r shortcut actual; do
+    [[ -z "$shortcut" ]] && continue
+    printf "  ./run %-10s → %s\n" "$shortcut" "$actual"
+  done
+  echo ""
+  echo -e "${BOLD}Commands:${NC}"
 
-    for cat in $CATEGORY_ORDER; do
-        local cat_name
-        cat_name="$(get_category_name "$cat")"
-        [[ -z "$cat_name" ]] && continue
+  for cat in $CATEGORY_ORDER; do
+    local cat_name
+    cat_name="$(get_category_name "$cat")"
+    [[ -z "$cat_name" ]] && continue
 
-        echo ""
-        echo -e "${C}${cat_name}${NC}"
-        get_commands_in_category "$cat" | while read -r cmd; do
-            [[ -z "$cmd" ]] && continue
-            printf "  ${G}%-22s${NC} %s\n" "$cmd" "$(get_description "$cmd")"
-        done
-    done
     echo ""
+    echo -e "${C}${cat_name}${NC}"
+    get_commands_in_category "$cat" | while read -r cmd; do
+      [[ -z "$cmd" ]] && continue
+      printf "  ${G}%-22s${NC} %s\n" "$cmd" "$(get_description "$cmd")"
+    done
+  done
+  echo ""
 }
 
 category_menu() {
-    local cat="$1"
-    local cat_name
-    cat_name="$(get_category_name "$cat")"
+  local cat="$1"
+  local cat_name
+  cat_name="$(get_category_name "$cat")"
 
-    echo -e "${BOLD}${cat_name}${NC}"
+  echo -e "${BOLD}${cat_name}${NC}"
+  echo ""
+
+  local i=1
+  local cmds=()
+  while read -r cmd; do
+    [[ -z "$cmd" ]] && continue
+    cmds+=("$cmd")
+    printf "  ${G}%d)${NC} %-20s ${DIM}%s${NC}\n" "$i" "$cmd" "$(get_description "$cmd")"
+    ((i++))
+  done < <(get_commands_in_category "$cat")
+
+  echo ""
+  printf '  %b0)%b ← Back\n' "$Y" "$NC"
+  echo ""
+
+  read -r -p "Select: " choice
+  [[ "$choice" == "0" || -z "$choice" ]] && return
+
+  if [[ "$choice" =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#cmds[@]})); then
     echo ""
-
-    local i=1
-    local cmds=()
-    while read -r cmd; do
-        [[ -z "$cmd" ]] && continue
-        cmds+=("$cmd")
-        printf "  ${G}%d)${NC} %-20s ${DIM}%s${NC}\n" "$i" "$cmd" "$(get_description "$cmd")"
-        ((i++))
-    done < <(get_commands_in_category "$cat")
-
-    echo ""
-    printf '  %b0)%b ← Back\n' "$Y" "$NC"
-    echo ""
-
-    read -r -p "Select: " choice
-    [[ "$choice" == "0" || -z "$choice" ]] && return
-
-    if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice >= 1 && choice <= ${#cmds[@]} )); then
-        echo ""
-        run_cmd "${cmds[$((choice-1))]}"
-    else
-        echo -e "${R}Invalid selection${NC}"
-    fi
+    run_cmd "${cmds[$((choice - 1))]}"
+  else
+    echo -e "${R}Invalid selection${NC}"
+  fi
 }
 
 main_menu() {
-    header
-    echo -e "${BOLD}What would you like to do?${NC}"
-    echo ""
+  header
+  echo -e "${BOLD}What would you like to do?${NC}"
+  echo ""
 
-    local cats
-    read -r -a cats <<< "$CATEGORY_ORDER"
-    local i=1
-    for cat in "${cats[@]}"; do
-        printf "  ${G}%d)${NC} %s\n" "$i" "$(get_category_name "$cat")"
-        ((i++))
-    done
+  local cats
+  read -r -a cats <<< "$CATEGORY_ORDER"
+  local i=1
+  for cat in "${cats[@]}"; do
+    printf "  ${G}%d)${NC} %s\n" "$i" "$(get_category_name "$cat")"
+    ((i++))
+  done
 
-    echo ""
-    echo -e "  ${Y}h)${NC} Help    ${Y}q)${NC} Quit"
-    echo ""
+  echo ""
+  echo -e "  ${Y}h)${NC} Help    ${Y}q)${NC} Quit"
+  echo ""
 
-    read -r -p "Select: " choice
+  read -r -p "Select: " choice
 
-    case "$choice" in
-        [1-9])
-            echo ""
-            category_menu "${cats[$((choice-1))]}"
-            ;;
-        q|Q) echo "Bye!"; exit 0 ;;
-        h|H) echo ""; print_help ;;
-        *)   echo -e "${R}Invalid selection${NC}" ;;
-    esac
+  case "$choice" in
+    [1-9])
+      echo ""
+      category_menu "${cats[$((choice - 1))]}"
+      ;;
+    q | Q)
+      echo "Bye!"
+      exit 0
+      ;;
+    h | H)
+      echo ""
+      print_help
+      ;;
+    *) echo -e "${R}Invalid selection${NC}" ;;
+  esac
 }
 
 # ============================================================================
@@ -276,23 +290,26 @@ main_menu() {
 
 # Handle shortcuts
 if [[ $# -gt 0 ]]; then
-    resolved="$(resolve_shortcut "$1")"
-    [[ -n "$resolved" ]] && { run_cmd "$resolved" "${@:2}"; exit 0; }
+  resolved="$(resolve_shortcut "$1")"
+  [[ -n "$resolved" ]] && {
+    run_cmd "$resolved" "${@:2}"
+    exit 0
+  }
 fi
 
 case "${1:-}" in
-    "")
-        while true; do
-            main_menu
-            echo ""
-            read -r -p "Press Enter to continue..."
-        done
-        ;;
-    help|--help|-h)
-        header
-        print_help
-        ;;
-    *)
-        run_cmd "$@"
-        ;;
+  "")
+    while true; do
+      main_menu
+      echo ""
+      read -r -p "Press Enter to continue..."
+    done
+    ;;
+  help | --help | -h)
+    header
+    print_help
+    ;;
+  *)
+    run_cmd "$@"
+    ;;
 esac

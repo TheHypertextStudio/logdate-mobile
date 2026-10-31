@@ -1,7 +1,6 @@
 plugins {
     id("app.logdate.kmp-library")
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.dokka)
 }
 
 kotlin {
