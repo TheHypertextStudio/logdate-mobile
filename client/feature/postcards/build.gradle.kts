@@ -21,10 +21,8 @@ kotlin {
             implementation(projects.client.ui)
             implementation(projects.client.domain)
             implementation(projects.client.repository)
-            implementation(projects.client.database)
             implementation(projects.client.media)
             implementation(projects.client.util)
-            implementation(projects.client.feature.stickers)
             // Compose
             implementation(libs.nav3.runtime)
             implementation(libs.compose.material.icons.extended)

@@ -4,19 +4,17 @@ import app.logdate.feature.postcards.model.CanvasElement
 import app.logdate.feature.postcards.model.ElementTransform
 import app.logdate.feature.postcards.model.InkPoint
 import app.logdate.feature.postcards.model.InkTool
-import app.logdate.feature.postcards.model.PostcardDocument
 import app.logdate.feature.postcards.model.ShapeKind
 import app.logdate.feature.postcards.ui.elementSizeDp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 /**
- * Tests for element selection, transform operations, and undo batching
- * during drag gestures.
+ * Tests for element selection and transform operations. Gesture undo batching is covered by
+ * [CanvasEditorGestureUndoTest].
  */
 class SelectionTransformTest {
     @Test
@@ -84,31 +82,6 @@ class SelectionTransformTest {
 
         val clamped = (original.scaleX * scaleDelta).coerceIn(0.1f, 10f)
         assertEquals(10f, clamped)
-    }
-
-    @Test
-    fun `undo batching drag produces single undo entry`() {
-        // Simulate a drag operation that should produce exactly one undo entry
-        val undoStack = ArrayDeque<PostcardDocument>()
-        val doc =
-            PostcardDocument(
-                id = Uuid.random(),
-                title = "Test",
-                createdAt = Clock.System.now(),
-                modifiedAt = Clock.System.now(),
-            )
-
-        // beginDrag pushes once
-        undoStack.addLast(doc)
-
-        // Multiple moveElement calls during drag — no additional undo pushes
-        val dragFrames = 30
-        repeat(dragFrames) {
-            // moveElement only updates the document, doesn't push undo
-        }
-
-        // After the entire drag, only one undo entry exists
-        assertEquals(1, undoStack.size)
     }
 
     @Test

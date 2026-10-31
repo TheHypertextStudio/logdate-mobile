@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -27,10 +29,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.logdate.feature.postcards.model.CanvasBackground
 import app.logdate.feature.postcards.model.CanvasElement
+import app.logdate.feature.postcards.model.ElementTransform
 import app.logdate.feature.postcards.model.InkTool
 import app.logdate.feature.postcards.model.PostcardDocument
 import app.logdate.feature.postcards.model.ShapeKind
@@ -51,6 +56,7 @@ import kotlin.uuid.Uuid
  * @param document The Postcard document to render.
  * @param modifier Modifier for the renderer container.
  * @param selectedElementId The ID of the currently selected element, or null.
+ * @param viewportOffset The viewport pan offset driving photo parallax, read when layers draw.
  * @param onElementTap Callback when an element is tapped (for selection).
  * @param onPhotoTap Callback when a photo element is tapped (for intertextuality navigation).
  */
@@ -60,8 +66,7 @@ fun CanvasRenderer(
     modifier: Modifier = Modifier,
     selectedElementId: Uuid? = null,
     stickerUriMap: Map<Uuid, String> = emptyMap(),
-    viewportOffsetX: Float = 0f,
-    viewportOffsetY: Float = 0f,
+    viewportOffset: () -> Offset = { Offset.Zero },
     onElementTap: ((Uuid) -> Unit)? = null,
     onPhotoTap: ((CanvasElement.Photo) -> Unit)? = null,
 ) {
@@ -70,37 +75,34 @@ fun CanvasRenderer(
         CanvasBackgroundLayer(document.background)
 
         // Elements sorted by z-index
-        val sortedElements = document.elements.sortedBy { it.zIndex }
+        val sortedElements = remember(document.elements) { document.elements.sortedBy { it.zIndex } }
         for (element in sortedElements) {
-            val isSelected = element.id == selectedElementId
-            ElementWrapper(
-                element = element,
-                isSelected = isSelected,
-                onTap = { onElementTap?.invoke(element.id) },
-            ) {
-                when (element) {
-                    is CanvasElement.Photo -> {
-                        PhotoElementRenderer(
-                            element,
-                            viewportOffsetX,
-                            viewportOffsetY,
-                        )
-                    }
+            key(element.id) {
+                ElementWrapper(
+                    element = element,
+                    isSelected = element.id == selectedElementId,
+                    onTap = { onElementTap?.invoke(element.id) },
+                ) {
+                    when (element) {
+                        is CanvasElement.Photo -> {
+                            PhotoElementRenderer(element, viewportOffset)
+                        }
 
-                    is CanvasElement.Text -> {
-                        TextElementRenderer(element)
-                    }
+                        is CanvasElement.Text -> {
+                            TextElementRenderer(element)
+                        }
 
-                    is CanvasElement.Ink -> {
-                        InkElementRenderer(element)
-                    }
+                        is CanvasElement.Ink -> {
+                            InkElementRenderer(element)
+                        }
 
-                    is CanvasElement.Shape -> {
-                        ShapeElementRenderer(element)
-                    }
+                        is CanvasElement.Shape -> {
+                            ShapeElementRenderer(element)
+                        }
 
-                    is CanvasElement.Sticker -> {
-                        StickerElementRenderer(element, stickerUriMap)
+                        is CanvasElement.Sticker -> {
+                            StickerElementRenderer(element, stickerUriMap)
+                        }
                     }
                 }
             }
@@ -143,7 +145,7 @@ private fun SelectionChrome(element: CanvasElement) {
     Box(
         modifier =
             Modifier
-                .offset(x = transform.x.dp, y = transform.y.dp)
+                .offset { canvasOffset(transform) }
                 .graphicsLayer {
                     rotationZ = transform.rotation
                     scaleX = transform.scaleX
@@ -288,8 +290,7 @@ private fun CanvasBackgroundLayer(background: CanvasBackground) {
 @Composable
 private fun PhotoElementRenderer(
     element: CanvasElement.Photo,
-    viewportOffsetX: Float = 0f,
-    viewportOffsetY: Float = 0f,
+    viewportOffset: () -> Offset,
 ) {
     val transform = element.transform
     val depth = element.parallaxDepth
@@ -299,13 +300,14 @@ private fun PhotoElementRenderer(
         contentScale = ContentScale.Crop,
         modifier =
             Modifier
-                .offset(x = transform.x.dp, y = transform.y.dp)
+                .offset { canvasOffset(transform) }
                 .graphicsLayer {
                     rotationZ = transform.rotation
                     scaleX = transform.scaleX
                     scaleY = transform.scaleY
-                    translationX = viewportOffsetX * depth
-                    translationY = viewportOffsetY * depth
+                    val parallax = viewportOffset()
+                    translationX = parallax.x * depth
+                    translationY = parallax.y * depth
                 }.size(PHOTO_RENDER_SIZE.dp, PHOTO_RENDER_SIZE.dp),
     )
 }
@@ -323,7 +325,7 @@ private fun TextElementRenderer(element: CanvasElement.Text) {
             ),
         modifier =
             Modifier
-                .offset(x = transform.x.dp, y = transform.y.dp)
+                .offset { canvasOffset(transform) }
                 .graphicsLayer {
                     rotationZ = transform.rotation
                     scaleX = transform.scaleX
@@ -342,7 +344,7 @@ private fun InkElementRenderer(element: CanvasElement.Ink) {
         modifier =
             Modifier
                 .fillMaxSize()
-                .offset(x = transform.x.dp, y = transform.y.dp)
+                .offset { canvasOffset(transform) }
                 .graphicsLayer {
                     rotationZ = transform.rotation
                     scaleX = transform.scaleX
@@ -377,7 +379,7 @@ private fun ShapeElementRenderer(element: CanvasElement.Shape) {
     Canvas(
         modifier =
             Modifier
-                .offset(x = transform.x.dp, y = transform.y.dp)
+                .offset { canvasOffset(transform) }
                 .size(element.width.dp, element.height.dp)
                 .graphicsLayer {
                     rotationZ = transform.rotation
@@ -459,7 +461,7 @@ private fun StickerElementRenderer(
             contentScale = ContentScale.Fit,
             modifier =
                 Modifier
-                    .offset(x = transform.x.dp, y = transform.y.dp)
+                    .offset { canvasOffset(transform) }
                     .size(STICKER_RENDER_SIZE.dp)
                     .graphicsLayer {
                         rotationZ = transform.rotation
@@ -471,7 +473,7 @@ private fun StickerElementRenderer(
         Box(
             modifier =
                 Modifier
-                    .offset(x = transform.x.dp, y = transform.y.dp)
+                    .offset { canvasOffset(transform) }
                     .size(STICKER_RENDER_SIZE.dp)
                     .graphicsLayer {
                         rotationZ = transform.rotation
@@ -481,6 +483,11 @@ private fun StickerElementRenderer(
         )
     }
 }
+
+/**
+ * Converts a transform's canvas position, given in dp, to the pixel offset that places the element.
+ */
+private fun Density.canvasOffset(transform: ElementTransform): IntOffset = IntOffset(transform.x.dp.roundToPx(), transform.y.dp.roundToPx())
 
 /**
  * Parses a hex color string (e.g., "#FF6B6B") into a Compose [Color].

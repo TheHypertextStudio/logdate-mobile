@@ -2,8 +2,8 @@ package app.logdate.feature.postcards.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.logdate.client.database.dao.PostcardDao
-import app.logdate.client.database.entities.PostcardEntity
+import app.logdate.client.repository.postcards.Postcard
+import app.logdate.client.repository.postcards.PostcardRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -14,11 +14,11 @@ import kotlinx.coroutines.flow.stateIn
  * Provides an observable list of all saved Postcards, sorted by most recently modified.
  */
 class PostcardsCollectionViewModel(
-    postcardDao: PostcardDao,
+    postcardRepository: PostcardRepository,
 ) : ViewModel() {
-    val postcards: StateFlow<List<PostcardEntity>> =
-        postcardDao
-            .getAllPostcards()
+    val postcards: StateFlow<List<Postcard>> =
+        postcardRepository
+            .observeAllPostcards()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
