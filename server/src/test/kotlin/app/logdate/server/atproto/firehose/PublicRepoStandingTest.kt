@@ -94,7 +94,7 @@ class PublicRepoStandingTest {
         testApplication {
             val h = FirehoseHarness().also { it.install(this) }
             val alice = published(h)
-            h.moderation.moderate(alice.id, AccountModeration.SUSPENDED)
+            h.accounts.setModeration(alice.id, AccountModeration.SUSPENDED)
 
             val body = status(alice).parsed()
 
@@ -107,7 +107,7 @@ class PublicRepoStandingTest {
         testApplication {
             val h = FirehoseHarness().also { it.install(this) }
             val alice = published(h)
-            h.moderation.moderate(alice.id, AccountModeration.TAKENDOWN)
+            h.accounts.setModeration(alice.id, AccountModeration.TAKENDOWN)
 
             val body = status(alice).parsed()
 
@@ -128,28 +128,6 @@ class PublicRepoStandingTest {
             assertEquals("false", body.getValue("active").jsonPrimitive.content)
             assertEquals("deleted", body.getValue("status").jsonPrimitive.content)
             assertTrue("rev" !in body)
-        }
-
-    @Test
-    fun `a takedown more than a week after the announcement still reaches followers`() =
-        testApplication {
-            val h = FirehoseHarness().also { it.install(this) }
-            val alice = published(h)
-            h.announcer.identityChanged(alice)
-            h.eventStore.deleteBefore(Clock.System.now() + 1.hours)
-            val before = h.eventStore.read(0, 100).size
-
-            h.moderation.moderate(alice.id, AccountModeration.TAKENDOWN)
-
-            val event =
-                assertIs<RepoAccountEvent>(
-                    h.eventStore
-                        .read(0, 100)
-                        .drop(before)
-                        .single()
-                        .decode(),
-                )
-            assertEquals("takendown", event.status)
         }
 
     @Test
@@ -236,7 +214,7 @@ class PublicRepoStandingTest {
                     RepoRecordId(h.did(alice), Nsid.require("studio.hypertext.logdate.content"), RecordKey.require("entry-1")),
                     buildJsonObject { put("content", "diary") },
                 ).getOrThrow()
-            h.moderation.moderate(alice.id, AccountModeration.SUSPENDED)
+            h.accounts.setModeration(alice.id, AccountModeration.SUSPENDED)
 
             val body = status(alice).parsed()
 
@@ -249,8 +227,8 @@ class PublicRepoStandingTest {
         testApplication {
             val h = FirehoseHarness().also { it.install(this) }
             val alice = published(h)
-            h.moderation.moderate(alice.id, AccountModeration.TAKENDOWN)
-            h.moderation.moderate(alice.id, null)
+            h.accounts.setModeration(alice.id, AccountModeration.TAKENDOWN)
+            h.accounts.setModeration(alice.id, null)
 
             val body = status(alice).parsed()
 
@@ -284,8 +262,8 @@ class PublicRepoStandingTest {
             val takenDown = h.createAccount("takendown").also { h.put(client, it, profile, "self", profileRecord()) }
             val deleted = h.createAccount("deleted").also { h.put(client, it, profile, "self", profileRecord()) }
             h.accounts.deactivateAccount(deactivated.id)
-            h.moderation.moderate(suspended.id, AccountModeration.SUSPENDED)
-            h.moderation.moderate(takenDown.id, AccountModeration.TAKENDOWN)
+            h.accounts.setModeration(suspended.id, AccountModeration.SUSPENDED)
+            h.accounts.setModeration(takenDown.id, AccountModeration.TAKENDOWN)
             h.announcer.identityChanged(deleted)
             h.accounts.deleteAccount(deleted.id)
 
@@ -317,7 +295,7 @@ class PublicRepoStandingTest {
         testApplication {
             val h = FirehoseHarness().also { it.install(this) }
             val alice = published(h)
-            h.moderation.moderate(alice.id, AccountModeration.TAKENDOWN)
+            h.accounts.setModeration(alice.id, AccountModeration.TAKENDOWN)
 
             val record = client.get("/xrpc/com.atproto.repo.getRecord?repo=${alice.did}&collection=$profile&rkey=self")
             val list = client.get("/xrpc/com.atproto.repo.listRecords?repo=${alice.did}&collection=$profile")
@@ -334,43 +312,11 @@ class PublicRepoStandingTest {
         }
 
     @Test
-    fun `followers are told when an account is moderated restored or deleted`() =
-        testApplication {
-            val h = FirehoseHarness().also { it.install(this) }
-            val alice = published(h)
-            h.announcer.identityChanged(alice)
-            val before = h.eventStore.read(0, 100).size
-
-            h.moderation.moderate(alice.id, AccountModeration.SUSPENDED)
-            h.moderation.moderate(alice.id, null)
-            h.moderation.moderate(alice.id, AccountModeration.TAKENDOWN)
-            AccountDeletionService(
-                accountRepository = h.accounts,
-                mediaBlobRepository =
-                    CompositeLogDateMediaBlobRepository(
-                        InMemoryLogDateMediaRepository(),
-                        InMemoryLogDateAtprotoBlobRepository(),
-                    ),
-                backupRepository = InMemoryLogDateBackupRepository(),
-                blobStorage = h.blobStorage,
-                statusEvents = h.announcer,
-            ).deleteAccount(alice.id)
-
-            val events =
-                h.eventStore
-                    .read(0, 100)
-                    .drop(before)
-                    .map { assertIs<RepoAccountEvent>(it.decode()) }
-            assertEquals(listOf(false, true, false, false), events.map { it.active })
-            assertEquals(listOf("suspended", null, "takendown", "deleted"), events.map { it.status })
-        }
-
-    @Test
     fun `a moderated account announces nothing more while it is moderated`() =
         testApplication {
             val h = FirehoseHarness().also { it.install(this) }
             val alice = published(h)
-            h.moderation.moderate(alice.id, AccountModeration.SUSPENDED)
+            h.accounts.setModeration(alice.id, AccountModeration.SUSPENDED)
             val before = h.eventStore.read(0, 100).size
 
             h.put(client, alice, profile, "self", profileRecord())
@@ -385,7 +331,7 @@ class PublicRepoStandingTest {
         testApplication {
             val h = FirehoseHarness().also { it.install(this) }
             val alice = published(h)
-            h.moderation.moderate(alice.id, AccountModeration.TAKENDOWN)
+            h.accounts.setModeration(alice.id, AccountModeration.TAKENDOWN)
 
             h.accounts.save(alice.copy(displayName = "Alice again"))
 

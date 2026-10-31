@@ -15,7 +15,6 @@ import app.logdate.server.atproto.firehose.RepoEventSequencer
 import app.logdate.server.atproto.firehose.RepoEventStore
 import app.logdate.server.atproto.firehose.RepoEventStream
 import app.logdate.server.atproto.firehose.SequencingRepoBlockStore
-import app.logdate.server.auth.AccountModerationService
 import app.logdate.server.auth.AccountStatusEvents
 import app.logdate.server.database.PostgreSQLPublicRepoDirectory
 import app.logdate.server.database.PostgreSQLRepoBlockStore
@@ -48,7 +47,6 @@ internal fun Module.firehoseDefinitions(isDatabaseAvailable: Boolean) {
         val plain = get<UndecoratedRepoBlocks>().store
         if (firehose.enabled) SequencingRepoBlockStore(plain, lazy { get<RepoEventSequencer>() }) else plain
     }
-    single { AccountModerationService(accounts = get(), statusEvents = getOrNull<AccountStatusEvents>()) }
     if (!firehose.enabled) return
 
     single<RepoEventStore> { if (isDatabaseAvailable) PostgreSQLRepoEventStore() else InMemoryRepoEventStore() }
