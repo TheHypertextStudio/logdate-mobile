@@ -68,6 +68,15 @@ public interface RepoBlockStore {
      * Lists commits for [repo] in oldest-to-newest order.
      */
     public suspend fun listCommits(repo: AtprotoDid): Result<List<SignedRepoCommit>>
+
+    /**
+     * Returns the newest [limit] commits of [repo], oldest first. A store that can limit the query
+     * should override this, so a page of history does not read all of it.
+     */
+    public suspend fun listRecentCommits(
+        repo: AtprotoDid,
+        limit: Int,
+    ): Result<List<SignedRepoCommit>> = listCommits(repo).map { it.takeLast(limit) }
 }
 
 /**
