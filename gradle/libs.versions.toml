@@ -145,6 +145,7 @@ benManesVersions = '0.53.0'
 ktlint = '14.2.0'
 ktlintEngine = '1.8.0'
 detekt = '2.0.0-alpha.3'
+jacoco = '0.8.12'
 
 [libraries]
 # Core & Platform

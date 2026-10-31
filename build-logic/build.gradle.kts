@@ -86,6 +86,10 @@ gradlePlugin {
             id = "app.logdate.compose-feature"
             implementationClass = "app.logdate.ComposeFeaturePlugin"
         }
+        register("jvmService") {
+            id = "app.logdate.jvm-service"
+            implementationClass = "app.logdate.JvmServiceConventionPlugin"
+        }
         register("androidRelease") {
             id = "app.logdate.android-release"
             implementationClass = "app.logdate.LogDateReleasePlugin"
