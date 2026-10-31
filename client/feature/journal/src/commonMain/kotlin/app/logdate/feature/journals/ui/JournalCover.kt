@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -48,7 +47,6 @@ import app.logdate.ui.common.focusRing
 import app.logdate.ui.common.transitions.TransitionKeys
 import app.logdate.ui.theme.LogDateTheme
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.util.toReadableDateShort
 import coil3.compose.AsyncImage
 import logdate.client.feature.journal.generated.resources.Res
@@ -89,23 +87,17 @@ fun JournalCover(
     enabled: Boolean = true,
     elevation: Dp = 0.dp,
     showLastUpdated: Boolean = true,
-    fitContent: Boolean = false,
 ) {
-    if (LocalWorkspaceEnabled.current || fitContent) {
-        BoxWithConstraints(modifier) {
-            JournalCoverFace(
-                journal,
-                Modifier.heightIn(min = maxWidth / AspectRatios.JOURNAL_COVER),
-                onClick,
-                contextMenuItems,
-                enabled,
-                elevation,
-                responsive = true,
-                showLastUpdated = showLastUpdated,
-            )
-        }
-    } else {
-        JournalCoverFace(journal, modifier, onClick, contextMenuItems, enabled, elevation, showLastUpdated = showLastUpdated)
+    BoxWithConstraints(modifier) {
+        JournalCoverFace(
+            journal,
+            Modifier.heightIn(min = maxWidth / AspectRatios.JOURNAL_COVER),
+            onClick,
+            contextMenuItems,
+            enabled,
+            elevation,
+            showLastUpdated = showLastUpdated,
+        )
     }
 }
 
@@ -117,7 +109,6 @@ private fun JournalCoverFace(
     contextMenuItems: List<ContextMenuItem>,
     enabled: Boolean,
     elevation: Dp,
-    responsive: Boolean = false,
     showLastUpdated: Boolean = true,
 ) {
     val callerTransition = LocalJournalCoverTransition.current
@@ -128,7 +119,6 @@ private fun JournalCoverFace(
 
     val baseModifier =
         modifier
-            .let { if (responsive) it else it.aspectRatio(AspectRatios.JOURNAL_COVER) }
             .shadow(
                 elevation = elevation,
                 shape = JournalShape,

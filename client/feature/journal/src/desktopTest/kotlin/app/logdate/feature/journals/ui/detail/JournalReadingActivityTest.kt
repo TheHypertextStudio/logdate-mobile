@@ -12,19 +12,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -37,10 +33,8 @@ import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.FoldablePosture
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -48,43 +42,33 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalTestApi::class)
 class JournalReadingActivityTest {
     @Test
-    fun wideJournalShowsContextBesideItsOwnContentsWithEitherFraming() {
-        listOf(false, true).forEach { workspace ->
-            runDesktopComposeUiTest(width = 960, height = 800) {
-                setContent {
-                    LogDateTheme {
-                        CompositionLocalProvider(LocalWorkspaceEnabled provides workspace) {
-                            JournalDetailScreenContent(state, onGoBack = {})
-                        }
-                    }
+    fun wideJournalShowsContextBesideItsOwnContents() =
+        runDesktopComposeUiTest(width = 960, height = 800) {
+            setContent {
+                LogDateTheme {
+                    JournalDetailScreenContent(state, onGoBack = {})
                 }
-                onNodeWithText("3 items").assertIsDisplayed()
-                val context = onNodeWithTag("journal_reading_context").fetchSemanticsNode().boundsInRoot
-                val contents = onNodeWithTag("journal_reading_contents").fetchSemanticsNode().boundsInRoot
-                assertTrue(context.right <= contents.left, "Context and contents must occupy distinct useful panes")
-                assertTrue(context.width >= 288f && contents.width >= 480f, "Both panes must retain useful reading widths")
-                onNodeWithText("We followed the trail past the old lookout.").assertIsDisplayed()
             }
+            onNodeWithText("3 items").assertIsDisplayed()
+            val context = onNodeWithTag("journal_reading_context").fetchSemanticsNode().boundsInRoot
+            val contents = onNodeWithTag("journal_reading_contents").fetchSemanticsNode().boundsInRoot
+            assertTrue(context.right <= contents.left, "Context and contents must occupy distinct useful panes")
+            assertTrue(context.width >= 288f && contents.width >= 480f, "Both panes must retain useful reading widths")
+            onNodeWithText("We followed the trail past the old lookout.").assertIsDisplayed()
         }
-    }
 
     @Test
-    fun wideIdentityAppearsOnceAndBackRemainsAtTheLeadingEdge() {
-        listOf(false, true).forEach { workspace ->
-            runDesktopComposeUiTest(width = 960, height = 800) {
-                setContent {
-                    LogDateTheme {
-                        CompositionLocalProvider(LocalWorkspaceEnabled provides workspace) {
-                            JournalDetailScreenContent(state, onGoBack = {})
-                        }
-                    }
+    fun wideIdentityAppearsOnceAndBackRemainsAtTheLeadingEdge() =
+        runDesktopComposeUiTest(width = 960, height = 800) {
+            setContent {
+                LogDateTheme {
+                    JournalDetailScreenContent(state, onGoBack = {})
                 }
-                onAllNodesWithText(state.title).assertCountEquals(1)
-                val back = onNodeWithContentDescription(if (workspace) "Back to journals" else "Back").fetchSemanticsNode().boundsInRoot
-                assertTrue(back.left < 60f, "Back belongs at the leading edge of the reading activity")
             }
+            onAllNodesWithText(state.title).assertCountEquals(1)
+            val back = onNodeWithContentDescription("Back to journals").fetchSemanticsNode().boundsInRoot
+            assertTrue(back.left < 60f, "Back belongs at the leading edge of the reading activity")
         }
-    }
 
     @Test
     fun narrowRelatedPaneDoesNotAddAnotherContextColumn() =
@@ -92,9 +76,7 @@ class JournalReadingActivityTest {
             var opened: Uuid? = null
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        JournalDetailScreenContent(state, onGoBack = {}, onNavigateToNoteDetail = { opened = it })
-                    }
+                    JournalDetailScreenContent(state, onGoBack = {}, onNavigateToNoteDetail = { opened = it })
                 }
             }
             onNodeWithTag("journal_reading_context").assertDoesNotExist()
@@ -112,11 +94,9 @@ class JournalReadingActivityTest {
             var opened: Uuid? = null
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        Box(Modifier.fillMaxSize()) {
-                            Box(Modifier.width(width).fillMaxHeight()) {
-                                JournalDetailScreenContent(state, onGoBack = {}, onNavigateToNoteDetail = { opened = it })
-                            }
+                    Box(Modifier.fillMaxSize()) {
+                        Box(Modifier.width(width).fillMaxHeight()) {
+                            JournalDetailScreenContent(state, onGoBack = {}, onNavigateToNoteDetail = { opened = it })
                         }
                     }
                 }
@@ -134,7 +114,7 @@ class JournalReadingActivityTest {
         runDesktopComposeUiTest(width = 960, height = 800) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalDensity provides Density(1f, 2f)) {
+                    CompositionLocalProvider(LocalDensity provides Density(1f, 2f)) {
                         JournalDetailScreenContent(state, onGoBack = {})
                     }
                 }
@@ -144,29 +124,6 @@ class JournalReadingActivityTest {
             onNodeWithContentDescription("Journal options").assertIsDisplayed()
             onNodeWithTag("journal_reading_context").assertDoesNotExist()
             onNodeWithText("We followed the trail past the old lookout.").assertIsDisplayed()
-        }
-
-    @Test
-    fun legacyLargeTextKeepsTheCompleteIdentityVisibleAboveReadableContents() =
-        runDesktopComposeUiTest(width = 411, height = 891) {
-            setContent {
-                LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides false, LocalDensity provides Density(1f, 2f)) {
-                        JournalDetailScreenContent(state, onGoBack = {})
-                    }
-                }
-            }
-            val title = onNodeWithText(state.title)
-            val results = mutableListOf<TextLayoutResult>()
-            title.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { action -> action(results) }
-            assertTrue(results.isNotEmpty())
-            assertFalse(results.any { it.hasVisualOverflow }, "Large text must not truncate the journal identity")
-            val full = title.getUnclippedBoundsInRoot()
-            val visible = title.fetchSemanticsNode().boundsInRoot
-            assertEquals((full.bottom - full.top).value, visible.height, 1f, "The app bar must not clip the wrapping title")
-            val contents = onNodeWithTag("journal_reading_contents").fetchSemanticsNode().boundsInRoot
-            assertTrue(full.bottom.value <= contents.top, "The complete title belongs above the contents")
-            assertTrue(contents.height >= 300f, "Large text must leave meaningful space for reading")
         }
 
     @Test
@@ -204,7 +161,7 @@ class JournalReadingActivityTest {
         runDesktopComposeUiTest(width = 960, height = 800) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true, LocalLayoutDirection provides LayoutDirection.Rtl) {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                         provideFoldableLayoutInfo(
                             FoldableLayoutInfo(
                                 true,

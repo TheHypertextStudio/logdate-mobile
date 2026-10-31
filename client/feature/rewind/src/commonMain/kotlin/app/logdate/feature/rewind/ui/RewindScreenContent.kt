@@ -29,15 +29,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -52,7 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
@@ -60,21 +55,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import app.logdate.feature.rewind.ui.components.CollapsingRewindAppBar
 import app.logdate.feature.rewind.ui.components.RewindCoverCard
 import app.logdate.feature.rewind.ui.detail.rewindAccentColor
 import app.logdate.feature.rewind.ui.overview.RewindHistoryUiState
 import app.logdate.feature.rewind.ui.overview.RewindOverviewPeriod
 import app.logdate.feature.rewind.ui.overview.RewindOverviewScreenUiState
 import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
-import app.logdate.ui.adaptive.FoldableBookLayout
-import app.logdate.ui.common.AspectRatios
 import app.logdate.ui.common.formatting.LocalToday
 import app.logdate.ui.content.ImageScrimOverlay
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.PanelContainment
 import app.logdate.ui.workspace.WorkspacePanel
 import app.logdate.ui.workspace.WorkspaceSectionSwitch
@@ -87,7 +78,6 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.rewind.generated.resources.*
 import logdate.client.feature.rewind.generated.resources.Res
@@ -121,7 +111,7 @@ import kotlin.uuid.Uuid
  * @param onOpenRewind Callback invoked when user taps on an available rewind card
  * @param modifier Modifier for customizing the appearance and behavior
  */
-@OptIn(ExperimentalUuidApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun RewindScreenContent(
     state: RewindOverviewScreenUiState,
@@ -233,9 +223,6 @@ fun RewindScreenContent(
             }
         }
 
-    // Create a scroll behavior for the collapsing app bar
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-
     // Check if a completed calendar year has enough weekly rewinds to offer a Year in Review.
     val pastRewinds =
         when (state) {
@@ -259,61 +246,24 @@ fun RewindScreenContent(
             if (hasWeeklyInPreviousYear && !annualAlreadyExists) previousYear else null
         }
 
-    if (LocalWorkspaceEnabled.current) {
-        val reduceMotion by rememberSystemReduceMotion()
-        WorkspacePanel(modifier, containment = PanelContainment.Collection) {
-            Column(Modifier.fillMaxSize()) {
-                PeriodControls(state, selectedPeriod, onSelectPeriod, onRefreshCurrentWeek)
-                RewindCardScrollPane(
-                    rewinds = uniqueRewindPreviews(rewindItems),
-                    onOpenRewind = onOpenRewind,
-                    annualRewindYear = annualRewindYear,
-                    onGenerateAnnualRewind = onGenerateAnnualRewind,
-                    animateCards = !reduceMotion,
-                    modifier = Modifier.weight(1f),
-                )
-                if (state is RewindOverviewScreenUiState.NotReady && !state.isGeneratingRewind && preparationAction != null) {
-                    Button(onClick = preparationAction, modifier = Modifier.padding(Spacing.lg)) {
-                        Text(preparationLabel)
-                    }
-                }
-            }
-        }
-        return
-    }
-    Scaffold(
-        topBar = {
-            Column {
-                CollapsingRewindAppBar(title = stringResource(Res.string.rewind_title), scrollBehavior = scrollBehavior)
-                PeriodControls(state, selectedPeriod, onSelectPeriod, onRefreshCurrentWeek)
-            }
-        },
-        containerColor = Color.Transparent,
-        modifier = modifier,
-        bottomBar = {
+    val reduceMotion by rememberSystemReduceMotion()
+    WorkspacePanel(modifier, containment = PanelContainment.Collection) {
+        Column(Modifier.fillMaxSize()) {
+            PeriodControls(state, selectedPeriod, onSelectPeriod, onRefreshCurrentWeek)
+            RewindCardScrollPane(
+                rewinds = uniqueRewindPreviews(rewindItems),
+                onOpenRewind = onOpenRewind,
+                annualRewindYear = annualRewindYear,
+                onGenerateAnnualRewind = onGenerateAnnualRewind,
+                animateCards = !reduceMotion,
+                modifier = Modifier.weight(1f),
+            )
             if (state is RewindOverviewScreenUiState.NotReady && !state.isGeneratingRewind && preparationAction != null) {
-                Button(
-                    onClick = preparationAction,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
-                ) {
+                Button(onClick = preparationAction, modifier = Modifier.padding(Spacing.lg)) {
                     Text(preparationLabel)
                 }
             }
-        },
-    ) { paddingValues ->
-        // Connect the scroll behavior to the list
-        FloatingRewindCardList(
-            rewinds = rewindItems,
-            onOpenRewind = onOpenRewind,
-            scrollBehavior = scrollBehavior,
-            annualRewindYear = annualRewindYear,
-            onGenerateAnnualRewind = onGenerateAnnualRewind,
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-        )
+        }
     }
 }
 
@@ -355,103 +305,25 @@ private fun PeriodControls(
     }
 }
 
-/**
- * A simple vertically scrollable list of floating rewind cards with snap-to-center behavior.
- *
- * This composable implements a clean scrolling experience with Material 3 design principles:
- * - Cards maintain consistent size and appearance
- * - Snap behavior centers the focused card on scroll
- * - Visual depth created through gradient background
- * - Simple layout with consistent spacing and dimensions
- *
- * ## Layout Structure:
- * - **Background Gradient**: Creates visual depth from surface to surfaceContainer
- * - **Snap Scrolling**: Uses Compose's built-in snap fling behavior
- * - **Fixed Dimensions**: 360dp width cards with 3:2 aspect ratio
- * - **Simple Spacing**: 32dp between cards, 200dp top padding for centering
- * - **Card Constraints**: 24dp edge padding, fixed max width
- *
- * @param rewinds List of rewind data to display as cards
- * @param onOpenRewind Callback for card interactions
- * @param modifier Modifier for customizing the list container
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FloatingRewindCardList(
-    rewinds: List<RewindPreviewUiState>,
-    onOpenRewind: RewindOpenCallback,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
-    annualRewindYear: Int? = null,
-    onGenerateAnnualRewind: ((year: Int) -> Unit)? = null,
-    modifier: Modifier = Modifier,
-) {
-    val featuredRewinds = rewinds.take(1).ifEmpty { rewinds }
-    val historyRewinds = rewinds.drop(1)
-
-    FoldableBookLayout(
-        modifier = modifier,
-        minPaneWidth = 360.dp,
-        startPane = {
-            RewindCardScrollPane(
-                rewinds = featuredRewinds,
-                onOpenRewind = onOpenRewind,
-                scrollBehavior = scrollBehavior,
-                showEndOfListSurprise = false,
-                showNextCardIndicator = false,
-                animateCards = false,
-            )
-        },
-        endPane = {
-            RewindHistoryBookPane(
-                rewinds = historyRewinds,
-                onOpenRewind = onOpenRewind,
-                annualRewindYear = annualRewindYear,
-                onGenerateAnnualRewind = onGenerateAnnualRewind,
-            )
-        },
-        standardContent = {
-            RewindCardScrollPane(
-                rewinds = rewinds,
-                onOpenRewind = onOpenRewind,
-                scrollBehavior = scrollBehavior,
-                annualRewindYear = annualRewindYear,
-                onGenerateAnnualRewind = onGenerateAnnualRewind,
-            )
-        },
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RewindCardScrollPane(
     rewinds: List<RewindPreviewUiState>,
     onOpenRewind: RewindOpenCallback,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
     annualRewindYear: Int? = null,
     onGenerateAnnualRewind: ((year: Int) -> Unit)? = null,
-    showEndOfListSurprise: Boolean = true,
-    showNextCardIndicator: Boolean = true,
     animateCards: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
-    val workspace = LocalWorkspaceEnabled.current
     val animateEntrance = animateCards && !LocalInspectionMode.current
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val coverLayout = rewindCoverLayout(maxWidth, maxHeight)
-        val cardWidth = if (workspace) coverLayout.width else 360.dp
-        val cardHeight = if (workspace) coverLayout.height else cardWidth * AspectRatios.RATIO_3_2
-        val framing = if (workspace) coverLayout.framing else 200.dp
-        val indicatorBottom = if (workspace) (framing - Spacing.xxxl).coerceAtLeast(Spacing.lg) else Spacing.lg
-        if (!workspace) {
-            Box(
-                Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceContainer)),
-                ),
-            )
-        }
+        val cardWidth = coverLayout.width
+        val cardHeight = coverLayout.height
+        val framing = coverLayout.framing
+        val indicatorBottom = (framing - Spacing.xxxl).coerceAtLeast(Spacing.lg)
 
         // Track which card indices have already played their entrance animation,
         // so scrolling away and back doesn't replay it. This intentionally does
@@ -465,9 +337,9 @@ private fun RewindCardScrollPane(
             contentPadding =
                 PaddingValues(
                     top = framing,
-                    bottom = if (workspace) framing else 300.dp,
+                    bottom = framing,
                 ),
-            verticalArrangement = Arrangement.spacedBy(if (workspace) Spacing.xxxl else Spacing.xxl),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xxxl),
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize(),
         ) {
@@ -494,12 +366,7 @@ private fun RewindCardScrollPane(
                         listState = listState,
                         index = index,
                         cardHeight = cardHeight,
-                        modifier =
-                            if (workspace) {
-                                Modifier.widthIn(max = cardWidth).fillMaxWidth()
-                            } else {
-                                Modifier.fillMaxWidth().padding(horizontal = 24.dp).widthIn(max = cardWidth)
-                            },
+                        modifier = Modifier.widthIn(max = cardWidth).fillMaxWidth(),
                     )
                 }
             }
@@ -542,152 +409,24 @@ private fun RewindCardScrollPane(
             }
 
             // Surprise ending item
-            if (showEndOfListSurprise) {
-                item {
-                    EndOfListSurprise(
-                        listState = listState,
-                        itemCount = rewinds.size,
-                        cardHeight = cardHeight,
-                        modifier =
-                            if (workspace) {
-                                Modifier.widthIn(max = cardWidth).fillMaxWidth()
-                            } else {
-                                Modifier.fillMaxWidth().padding(horizontal = 24.dp).widthIn(max = cardWidth)
-                            },
-                    )
-                }
-            }
-        }
-
-        // Next card indicator
-        if (showNextCardIndicator) {
-            NextCardIndicator(
-                listState = listState,
-                itemCount = rewinds.size,
-                modifier =
-                    Modifier
-                        .align(if (workspace) Alignment.BottomCenter else Alignment.BottomEnd)
-                        .padding(start = Spacing.lg, end = Spacing.lg, bottom = indicatorBottom, top = Spacing.lg),
-            )
-        }
-    }
-}
-
-@Composable
-private fun RewindHistoryBookPane(
-    rewinds: List<RewindPreviewUiState>,
-    onOpenRewind: RewindOpenCallback,
-    annualRewindYear: Int? = null,
-    onGenerateAnnualRewind: ((year: Int) -> Unit)? = null,
-    modifier: Modifier = Modifier,
-) {
-    val listState = rememberLazyListState()
-    val cardWidth = 360.dp
-    val cardHeight = cardWidth * AspectRatios.RATIO_3_2
-
-    Box(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.surface,
-                                    MaterialTheme.colorScheme.surfaceContainer,
-                                ),
-                        ),
-                    ),
-        )
-
-        LazyColumn(
-            state = listState,
-            contentPadding =
-                PaddingValues(
-                    horizontal = 24.dp,
-                    vertical = 32.dp,
-                ),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize(),
-        ) {
             item {
-                Text(
-                    text = stringResource(Res.string.past_rewind),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .widthIn(max = cardWidth),
+                EndOfListSurprise(
+                    listState = listState,
+                    itemCount = rewinds.size,
+                    cardHeight = cardHeight,
+                    modifier = Modifier.widthIn(max = cardWidth).fillMaxWidth(),
                 )
             }
-
-            if (rewinds.isEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(Res.string.past_rewinds_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = cardWidth),
-                    )
-                }
-            } else {
-                itemsIndexed(rewinds) { index, rewind ->
-                    FloatingRewindCard(
-                        rewind = rewind,
-                        onOpenRewind = onOpenRewind,
-                        listState = listState,
-                        index = index,
-                        cardHeight = cardHeight,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = cardWidth),
-                    )
-                }
-            }
-
-            if (annualRewindYear != null && onGenerateAnnualRewind != null) {
-                item {
-                    Card(
-                        onClick = { onGenerateAnnualRewind(annualRewindYear) },
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .widthIn(max = cardWidth)
-                                .height(120.dp),
-                        colors =
-                            CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            ),
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(Spacing.lg),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Text(
-                                text =
-                                    stringResource(
-                                        Res.string.annual_rewind_generate,
-                                        annualRewindYear,
-                                    ),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-            }
         }
+
+        NextCardIndicator(
+            listState = listState,
+            itemCount = rewinds.size,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(start = Spacing.lg, end = Spacing.lg, bottom = indicatorBottom, top = Spacing.lg),
+        )
     }
 }
 
@@ -725,22 +464,18 @@ fun FloatingRewindCard(
     cardHeight: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
-    if (LocalWorkspaceEnabled.current) {
-        val reduceMotion by rememberSystemReduceMotion()
-        val elevation by remember(listState, index, reduceMotion) {
-            derivedStateOf {
-                val layout = listState.layoutInfo
-                val item = layout.visibleItemsInfo.firstOrNull { it.index == index }
-                val viewportCenter = (layout.viewportStartOffset + layout.viewportEndOffset) / 2f
-                val viewportHalfHeight = (layout.viewportEndOffset - layout.viewportStartOffset) / 2f
-                val distance = item?.let { (it.offset + it.size / 2f - viewportCenter) / viewportHalfHeight.coerceAtLeast(1f) } ?: 1f
-                rewindCoverElevation(distance, reduceMotion)
-            }
+    val reduceMotion by rememberSystemReduceMotion()
+    val elevation by remember(listState, index, reduceMotion) {
+        derivedStateOf {
+            val layout = listState.layoutInfo
+            val item = layout.visibleItemsInfo.firstOrNull { it.index == index }
+            val viewportCenter = (layout.viewportStartOffset + layout.viewportEndOffset) / 2f
+            val viewportHalfHeight = (layout.viewportEndOffset - layout.viewportStartOffset) / 2f
+            val distance = item?.let { (it.offset + it.size / 2f - viewportCenter) / viewportHalfHeight.coerceAtLeast(1f) } ?: 1f
+            rewindCoverElevation(distance, reduceMotion)
         }
-        RewindCoverContent(rewind, onOpenRewind, cardHeight, elevation, modifier)
-    } else {
-        RewindCoverContent(rewind, onOpenRewind, cardHeight, 0.dp, modifier)
     }
+    RewindCoverContent(rewind, onOpenRewind, cardHeight, elevation, modifier)
 }
 
 @Composable
@@ -762,7 +497,7 @@ private fun RewindCoverContent(
         },
         modifier =
             modifier
-                .then(if (LocalWorkspaceEnabled.current) Modifier.heightIn(min = cardHeight) else Modifier.height(cardHeight))
+                .heightIn(min = cardHeight)
                 .then(
                     // Milestone weeks get a visibly different frame — the "special pull"
                     // of the set, not just a small badge bolted onto an ordinary card.
@@ -794,10 +529,10 @@ private fun RewindCoverContent(
             ),
         elevation =
             CardDefaults.cardElevation(
-                defaultElevation = if (isMilestone) elevation + (if (LocalWorkspaceEnabled.current) 2.dp else 8.dp) else elevation,
+                defaultElevation = if (isMilestone) elevation + 2.dp else elevation,
             ),
     ) {
-        Box(modifier = if (LocalWorkspaceEnabled.current) Modifier.fillMaxWidth().heightIn(min = cardHeight) else Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().heightIn(min = cardHeight)) {
             // Every available card is built from that week's real content — a real
             // photo first, falling back to a per-rewind accent gradient (never flat
             // decorative color as the primary treatment). Pending cards stay neutral.
@@ -810,7 +545,7 @@ private fun RewindCoverContent(
                         contentScale = ContentScale.Crop,
                     )
                     ImageScrimOverlay(
-                        topAlpha = if (LocalWorkspaceEnabled.current) 0.5f else 0.15f,
+                        topAlpha = 0.5f,
                         bottomAlpha = 0.8f,
                         modifier = Modifier.matchParentSize(),
                     )
@@ -834,24 +569,12 @@ private fun RewindCoverContent(
                                     ),
                                 ),
                     )
-                    if (LocalWorkspaceEnabled.current) {
-                        ImageScrimOverlay(topAlpha = 0.55f, bottomAlpha = 0.25f, modifier = Modifier.matchParentSize())
-                    }
+                    ImageScrimOverlay(topAlpha = 0.55f, bottomAlpha = 0.25f, modifier = Modifier.matchParentSize())
                 }
             }
             RewindCoverCard(
                 rewind = rewind,
-                modifier =
-                    Modifier
-                        .then(
-                            if (LocalWorkspaceEnabled.current) {
-                                Modifier.fillMaxWidth().heightIn(
-                                    min = cardHeight,
-                                )
-                            } else {
-                                Modifier.fillMaxSize()
-                            },
-                        ).padding(Spacing.lg),
+                modifier = Modifier.fillMaxWidth().heightIn(min = cardHeight).padding(Spacing.lg),
             )
         }
     }
@@ -1098,7 +821,7 @@ private fun selectedWeekBounds(
     return if (period == RewindOverviewPeriod.ThisWeek) startOfThisWeek to today else startOfLastWeek to endOfLastWeek
 }
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 @Preview
 private fun RewindScreenPreview() {
@@ -1146,11 +869,10 @@ private fun RewindScreenPreview() {
     )
 }
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 @Preview
 private fun FloatingCardListPreview() {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val rewinds =
         listOf(
             RewindPreviewUiState(
@@ -1192,12 +914,12 @@ private fun FloatingCardListPreview() {
             ),
         )
 
-    FloatingRewindCardList(
-        rewinds = rewinds,
-        onOpenRewind = {},
-        scrollBehavior = scrollBehavior,
-        modifier = Modifier.fillMaxSize(),
-    )
+    WorkspacePanel(Modifier.fillMaxSize(), containment = PanelContainment.Collection) {
+        RewindCardScrollPane(
+            rewinds = rewinds,
+            onOpenRewind = {},
+        )
+    }
 }
 
 /**

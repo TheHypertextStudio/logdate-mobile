@@ -187,7 +187,7 @@ internal fun JournalMergeDestinationPicker(
                                     Modifier.widthIn(max = coverWidth).fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                                 ) {
-                                    JournalCover(candidate.journal, Modifier.fillMaxWidth(), onClick = onChoose, fitContent = true)
+                                    JournalCover(candidate.journal, Modifier.fillMaxWidth(), onClick = onChoose)
                                     Text(
                                         pluralStringResource(
                                             Res.plurals.journal_merge_item_count,

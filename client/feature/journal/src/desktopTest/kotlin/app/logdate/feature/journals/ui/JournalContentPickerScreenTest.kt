@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -20,6 +22,7 @@ import app.logdate.feature.journals.ui.picker.JournalContentPickerItemKind
 import app.logdate.feature.journals.ui.picker.JournalContentPickerScreenContent
 import app.logdate.feature.journals.ui.picker.JournalContentPickerUiState
 import app.logdate.feature.journals.ui.picker.contentPickerGridColumnCount
+import app.logdate.ui.adaptive.ActivityRouteFrame
 import app.logdate.ui.theme.LogDateTheme
 import app.logdate.util.formatDateLocalized
 import kotlinx.datetime.LocalDate
@@ -87,14 +90,16 @@ class JournalContentPickerScreenTest {
         runDesktopComposeUiTest(width = 411, height = 891) {
             setContent {
                 LogDateTheme {
-                    JournalContentPickerScreenContent(
-                        state = JournalContentPickerUiState(),
-                    )
+                    ActivityRouteFrame {
+                        JournalContentPickerScreenContent(
+                            state = JournalContentPickerUiState(),
+                        )
+                    }
                 }
             }
 
-            onNodeWithContentDescription("Search existing content").assertIsDisplayed()
             onNodeWithTag("workspace_search").assertIsDisplayed()
+            onAllNodes(hasSetTextAction()).assertCountEquals(1)
         }
 
     @Test

@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.EditLocationAlt
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,7 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.logdate.client.text.asString
 import app.logdate.ui.common.AlertDialog
-import app.logdate.ui.common.ModalBottomSheet
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.workspace.PanelGroup
 import logdate.client.feature.location.timeline.generated.resources.Res
@@ -60,21 +58,13 @@ import logdate.client.feature.location.timeline.generated.resources.history_link
 import logdate.client.feature.location.timeline.generated.resources.history_visit_settings
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HistoryDetail(
     item: HistoryItemUi,
     actions: HumanLocationHistoryActions,
-    embedded: Boolean = false,
 ) {
     var confirmDelete by remember(item.id) { mutableStateOf(false) }
-    if (embedded) {
-        HumanLocationHistoryDetailContent(item, actions, onRequestDelete = { confirmDelete = true })
-    } else {
-        ModalBottomSheet(onDismissRequest = actions.onCloseDetail) {
-            HumanLocationHistoryDetailContent(item, actions, onRequestDelete = { confirmDelete = true })
-        }
-    }
+    HumanLocationHistoryDetailContent(item, actions, onRequestDelete = { confirmDelete = true })
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },

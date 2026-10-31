@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import app.logdate.shared.model.location.JourneyLeg
 import app.logdate.shared.model.location.LocationDayItem
 import app.logdate.shared.model.location.PlaceVisit
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_map_empty
 import logdate.client.feature.location.timeline.generated.resources.history_map_overview_description
@@ -138,7 +137,7 @@ fun HumanHistoryMap(
     showStatus: Boolean = true,
     onReadyChanged: (Boolean) -> Unit = {},
 ) {
-    if (LocalWorkspaceEnabled.current && !LocalInspectionMode.current) {
+    if (!LocalInspectionMode.current) {
         NativeHistoryMap(items, selectedId, onSelect, modifier, onInteraction, historyKey, showStatus, onReadyChanged)
         return
     }

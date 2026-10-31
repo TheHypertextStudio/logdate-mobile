@@ -24,7 +24,6 @@ import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.FoldablePosture
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -37,8 +36,6 @@ class JournalReadingRenderTest {
         render("phone", 411, 891)
         render("tablet", 960, 800)
         render("related-pane", 480, 800)
-        render("flag-off-tablet", 960, 800, workspaceEnabled = false)
-        render("flag-off-large-text", 411, 891, fontScale = 2f, workspaceEnabled = false)
     }
 
     @Test
@@ -59,13 +56,11 @@ class JournalReadingRenderTest {
         dark: Boolean = false,
         rtl: Boolean = false,
         fontScale: Float = 1f,
-        workspaceEnabled: Boolean = true,
         foldable: FoldableLayoutInfo = FoldableLayoutInfo(),
     ) = runDesktopComposeUiTest(width = width, height = height) {
         setContent {
             LogDateTheme(darkTheme = dark) {
                 CompositionLocalProvider(
-                    LocalWorkspaceEnabled provides workspaceEnabled,
                     LocalDensity provides Density(1f, fontScale),
                     LocalLayoutDirection provides if (rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,
                 ) {
@@ -75,7 +70,7 @@ class JournalReadingRenderTest {
                 }
             }
         }
-        onNodeWithContentDescription(if (workspaceEnabled) "Back to journals" else "Back").assertIsDisplayed()
+        onNodeWithContentDescription("Back to journals").assertIsDisplayed()
         onNodeWithContentDescription("Add to journal").assertIsDisplayed()
         save(name, onRoot().captureToImage())
     }

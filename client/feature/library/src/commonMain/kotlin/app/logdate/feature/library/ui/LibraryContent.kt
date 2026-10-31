@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -27,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.library.ui.components.MediaThumbnailGrid
 import app.logdate.ui.platform.PlatformIcons
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.PanelContainment
 import app.logdate.ui.workspace.WorkspacePanel
 import logdate.client.feature.library.generated.resources.Res
@@ -52,7 +50,6 @@ import logdate.client.ui.generated.resources.Res as UiRes
 @Composable
 fun LibraryPanel(
     state: LibraryUiState,
-    columnCount: Int,
     onItemClick: (Uuid) -> Unit,
     onRetry: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -66,14 +63,7 @@ fun LibraryPanel(
                 enter = fadeIn(animationSpec = tween(200)),
                 exit = fadeOut(animationSpec = tween(200)),
             ) {
-                Column(
-                    modifier =
-                        if (LocalWorkspaceEnabled.current) {
-                            Modifier.fillMaxSize()
-                        } else {
-                            Modifier.fillMaxSize().navigationBarsPadding()
-                        },
-                ) {
+                Column(Modifier.fillMaxSize()) {
                     when (state) {
                         is LibraryUiState.Loading -> {
                             // Handled by placeholder above
@@ -104,7 +94,6 @@ fun LibraryPanel(
                         is LibraryUiState.Content -> {
                             MediaThumbnailGrid(
                                 groups = state.groups,
-                                columnCount = columnCount,
                                 onItemClick = onItemClick,
                                 modifier = Modifier.fillMaxSize(),
                             )

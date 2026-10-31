@@ -11,6 +11,7 @@ The Rewind feature provides users with a beautiful, engaging way to view and int
 **Instagram Story-like Navigation**: Vertical scrolling with snap-to-center behavior creates an immersive, focused viewing experience where each card gets full attention.
 
 **Progressive Disclosure**: Visual affordances guide users through the content:
+
 - Next card indicator shows when more content is available
 - Cards fade and scale based on distance from center
 - Hidden surprise message rewards users who scroll to the end
@@ -30,37 +31,43 @@ The Rewind feature provides users with a beautiful, engaging way to view and int
 
 ```
 RewindScreenContent
-├── Scaffold (with TopAppBar)
-└── FloatingRewindCardList
-    ├── LazyColumn (with snap behavior)
-    │   ├── FloatingRewindCard (multiple)
-    │   └── EndOfListSurprise
-    └── NextCardIndicator
+└── WorkspacePanel
+    ├── PeriodControls
+    └── RewindCardScrollPane
+        ├── LazyColumn (with snap behavior)
+        │   ├── FloatingRewindCard (multiple)
+        │   └── EndOfListSurprise
+        └── NextCardIndicator
 ```
 
 ### Key Components
 
 #### `RewindScreenContent`
+
 - **Purpose**: Main entry point and state management
 - **Responsibilities**: Combines current/past rewinds, handles different UI states
 - **UX Impact**: Ensures consistent experience across Loading/NotReady/Ready states
 
-#### `FloatingRewindCardList`
+#### `RewindCardScrollPane`
+
 - **Purpose**: Implements the core scrolling experience
 - **Responsibilities**: Snap behavior, visual depth, progressive disclosure
 - **UX Impact**: Creates the signature floating card experience
 
 #### `FloatingRewindCard`
+
 - **Purpose**: Individual card with dynamic visual effects
 - **Responsibilities**: Scale/fade animations, state-aware styling, content display
 - **UX Impact**: Provides focus and hierarchy through scroll-based animations
 
 #### `NextCardIndicator`
+
 - **Purpose**: Affordance for discovering more content
 - **Responsibilities**: Show/hide based on scroll position, clear directional cue
 - **UX Impact**: Solves "mystery meat navigation" in snap-scrolling interfaces
 
 #### `EndOfListSurprise`
+
 - **Purpose**: Delightful completion moment
 - **Responsibilities**: Hidden reveal when user reaches end of content
 - **UX Impact**: Rewards engagement with positive reinforcement
@@ -70,7 +77,7 @@ RewindScreenContent
 ### Layout Constraints
 
 - **Card Width**: Fills screen width with 24dp minimum edge padding
-- **Maximum Width**: 360dp for optimal readability on large screens  
+- **Maximum Width**: 360dp for optimal readability on large screens
 - **Card Height**: Fills available view height with maximum 9:16 aspect ratio constraint
 - **Spacing**: 32dp between cards for comfortable scrolling
 
@@ -86,12 +93,14 @@ RewindScreenContent
 ### Card States
 
 #### Available Rewind
+
 - **Surface**: Material 3 `primaryContainer` color for visual prominence
 - **Typography**: Bold title, primary color label
 - **Interaction**: Fully clickable with ripple effects
 - **Indicator**: No status indicator needed
 
 #### Pending Rewind
+
 - **Surface**: Material 3 `surfaceVariant` color (muted)
 - **Typography**: Medium weight title, outline color label
 - **Interaction**: Non-interactive (taps ignored)
@@ -161,7 +170,7 @@ sealed interface RewindOverviewScreenUiState {
 fun RewindScreen() {
     val viewModel: RewindOverviewViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
-    
+
     RewindScreenContent(
         state = uiState,
         onOpenRewind = { rewindId ->

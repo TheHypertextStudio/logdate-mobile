@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +24,6 @@ import app.logdate.client.text.asString
 import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.ui.common.AlertDialog
-import app.logdate.ui.common.ModalBottomSheet
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.workspace.PanelHeader
@@ -45,7 +43,6 @@ import logdate.client.ui.generated.resources.common_done
 import org.jetbrains.compose.resources.stringResource
 import logdate.client.ui.generated.resources.Res as UiRes
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HumanPlaceDetail(
     placeId: String,
@@ -54,7 +51,6 @@ internal fun HumanPlaceDetail(
     onMemory: (String) -> Unit,
     onMerge: (String, SemanticPlace) -> Unit,
     onDismiss: () -> Unit,
-    embedded: Boolean = false,
 ) {
     val row = snapshot.placeRows().firstOrNull { placeId in it.sourceIds }
     val visits =
@@ -94,7 +90,7 @@ internal fun HumanPlaceDetail(
             }
         }
     }
-    if (embedded) detail() else ModalBottomSheet(onDismissRequest = onDismiss) { detail() }
+    detail()
     target?.let { place ->
         AlertDialog(
             onDismissRequest = { target = null },

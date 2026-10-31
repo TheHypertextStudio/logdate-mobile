@@ -32,7 +32,6 @@ import app.logdate.ui.foldable.FoldableOcclusionType
 import app.logdate.ui.foldable.FoldablePosture
 import app.logdate.ui.foldable.provideFoldableLayoutInfo
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceSearchAction
 import java.awt.image.BufferedImage
 import java.io.File
@@ -82,12 +81,6 @@ class JournalMergeRenderTest {
     }
 
     @Test
-    fun activityRemainsIndependentOfWorkspaceFlag() {
-        render("flag-off-tablet-picker", 1280, 800, false, workspaceEnabled = false)
-        render("flag-off-tablet-review", 1280, 800, true, workspaceEnabled = false)
-    }
-
-    @Test
     fun sourcePickerShowsTheDestinationAndKeepsTheSourceChoicesSearchable() =
         runDesktopComposeUiTest(width = 411, height = 891) {
             setContent {
@@ -117,12 +110,10 @@ class JournalMergeRenderTest {
         rtl: Boolean = false,
         fontScale: Float = 1f,
         foldable: FoldableLayoutInfo? = null,
-        workspaceEnabled: Boolean = true,
     ) = runDesktopComposeUiTest(width = width, height = height) {
         setContent {
             LogDateTheme(darkTheme = dark) {
                 CompositionLocalProvider(
-                    LocalWorkspaceEnabled provides workspaceEnabled,
                     LocalWorkspaceSearchAction provides {},
                     LocalDensity provides Density(1f, fontScale),
                     LocalLayoutDirection provides if (rtl) LayoutDirection.Rtl else LayoutDirection.Ltr,

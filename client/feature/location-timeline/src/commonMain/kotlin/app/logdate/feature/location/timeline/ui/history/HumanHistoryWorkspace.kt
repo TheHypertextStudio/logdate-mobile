@@ -103,7 +103,7 @@ internal fun HumanHistoryWorkspace(
         supporting = {
             when {
                 supportingDetail != null -> supportingDetail()
-                state.detailVisible && state.selectedItem != null -> HistoryDetail(state.selectedItem!!, actions, embedded = true)
+                state.detailVisible && state.selectedItem != null -> HistoryDetail(state.selectedItem!!, actions)
                 state.tab == HistoryTab.Places ->
                     HistoryPlacesList(
                         state,

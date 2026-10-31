@@ -1,5 +1,4 @@
 @file:Suppress("ktlint:standard:function-naming")
-@file:OptIn(ExperimentalMaterial3Api::class)
 
 package app.logdate.feature.journals.ui.picker
 
@@ -33,15 +32,12 @@ import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,17 +56,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.theme.Spacing
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.PanelHeader
 import app.logdate.ui.workspace.WorkspacePanel
-import app.logdate.ui.workspace.WorkspaceSearchField
 import app.logdate.ui.workspace.WorkspaceSearchScope
 import app.logdate.util.formatDateLocalized
 import coil3.compose.AsyncImage
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.cd_back_to_journal
 import logdate.client.feature.journal.generated.resources.cd_content_picker_remove_selection
-import logdate.client.feature.journal.generated.resources.cd_search_existing_content
 import logdate.client.feature.journal.generated.resources.content_picker_add_count
 import logdate.client.feature.journal.generated.resources.content_picker_adding
 import logdate.client.feature.journal.generated.resources.content_picker_empty
@@ -130,85 +123,46 @@ fun JournalContentPickerScreenContent(
     previewMedia: Map<Uuid, Painter> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
-    val workspaceEnabled = LocalWorkspaceEnabled.current
     val pickerTitle =
         if (state.journalTitle.isBlank()) {
             stringResource(Res.string.content_picker_title)
         } else {
             stringResource(Res.string.content_picker_title_for_journal, state.journalTitle)
         }
-    if (workspaceEnabled) {
-        WorkspaceSearchScope(
-            query = state.query,
-            hint = stringResource(Res.string.content_picker_search_hint),
-            onQuery = onQueryChange,
-        )
-    }
+    WorkspaceSearchScope(
+        query = state.query,
+        hint = stringResource(Res.string.content_picker_search_hint),
+        onQuery = onQueryChange,
+    )
 
-    val body: @Composable (PaddingValues) -> Unit = { padding ->
-        WorkspacePanel(
-            modifier = modifier.padding(padding),
-        ) {
-            Column(Modifier.fillMaxSize()) {
-                if (workspaceEnabled) {
-                    PanelHeader(
-                        title = pickerTitle,
-                        subtitle = stringResource(Res.string.content_picker_subtitle),
-                        actions = {
-                            IconButton(onClick = onBack) {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = stringResource(Res.string.cd_back_to_journal),
-                                )
-                            }
-                        },
-                    )
-                }
-                if (!workspaceEnabled) {
-                    val searchDescription = stringResource(Res.string.cd_search_existing_content)
-                    Box(Modifier.fillMaxWidth().padding(horizontal = Spacing.lg)) {
-                        WorkspaceSearchField(
-                            query = state.query,
-                            hint = stringResource(Res.string.content_picker_search_hint),
-                            onQueryChange = onQueryChange,
-                            modifier = Modifier.semantics { contentDescription = searchDescription },
+    WorkspacePanel(modifier = modifier) {
+        Column(Modifier.fillMaxSize()) {
+            PanelHeader(
+                title = pickerTitle,
+                subtitle = stringResource(Res.string.content_picker_subtitle),
+                actions = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(Res.string.cd_back_to_journal),
                         )
                     }
-                }
-                PickerGallery(
-                    state = state,
-                    onToggleSelection = onToggleSelection,
-                    previewMedia = previewMedia,
-                    modifier = Modifier.weight(1f),
-                )
-                SelectionReview(
-                    selectedItems = state.selectedItems,
-                    isAdding = state.isAdding,
-                    error = state.addError,
-                    onRemoveSelection = onRemoveSelection,
-                    onAddSelected = onAddSelected,
-                )
-            }
+                },
+            )
+            PickerGallery(
+                state = state,
+                onToggleSelection = onToggleSelection,
+                previewMedia = previewMedia,
+                modifier = Modifier.weight(1f),
+            )
+            SelectionReview(
+                selectedItems = state.selectedItems,
+                isAdding = state.isAdding,
+                error = state.addError,
+                onRemoveSelection = onRemoveSelection,
+                onAddSelected = onAddSelected,
+            )
         }
-    }
-
-    if (workspaceEnabled) {
-        body(PaddingValues())
-    } else {
-        Scaffold(
-            modifier = modifier,
-            topBar = {
-                TopAppBar(
-                    title = { Text(pickerTitle) },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.cd_back_to_journal))
-                        }
-                    },
-                )
-            },
-            content = body,
-        )
     }
 }
 

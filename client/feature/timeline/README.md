@@ -46,7 +46,6 @@ the voice card and the rules to keep when changing them.
 - `TimelineDayDetailPanel.kt` - Daily detail view
 - `NotesListSection.kt` - Notes display section
 - `PeopleEncounteredSection.kt` - People tracking
-- `CollapsingTimelineAppBar.kt` - Collapsing header
 
 ### Navigation
 

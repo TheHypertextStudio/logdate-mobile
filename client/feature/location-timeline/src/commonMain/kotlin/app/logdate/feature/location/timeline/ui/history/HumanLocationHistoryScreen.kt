@@ -36,7 +36,6 @@ import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.DatePickerDialog
 import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.common.PlatformBackHandler
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
@@ -79,7 +78,6 @@ fun HumanLocationHistoryScreen(
     onOpenNote: (Uuid) -> Unit,
     onAddMemory: (VisitMemoryContext) -> Unit,
     modifier: Modifier = Modifier,
-    showTitle: Boolean = true,
     viewModel: HumanLocationHistoryViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -101,7 +99,6 @@ fun HumanLocationHistoryScreen(
     var linkingVisit by remember { mutableStateOf<String?>(null) }
     var moreMenu by remember { mutableStateOf(false) }
     Column(modifier) {
-        val workspace = LocalWorkspaceEnabled.current
         val placeDetail: (@Composable () -> Unit)? =
             openedPlace?.let { placeId ->
                 snapshot?.let { data ->
@@ -117,13 +114,12 @@ fun HumanLocationHistoryScreen(
                             onMemory = { Uuid.parseOrNull(it)?.let(onOpenNote) },
                             onMerge = viewModel::mergePlace,
                             onDismiss = { openedPlace = null },
-                            embedded = true,
                         )
                     }
                 }
             }
         app.logdate.ui.common
-            .PlatformBackHandler(enabled = workspace && openedPlace != null) { openedPlace = null }
+            .PlatformBackHandler(enabled = openedPlace != null) { openedPlace = null }
         HumanLocationHistoryContent(
             when {
                 state.canRetry -> {
@@ -192,8 +188,7 @@ fun HumanLocationHistoryScreen(
                 },
             ),
             modifier = Modifier.weight(1f),
-            showTitle = showTitle,
-            supportingDetail = placeDetail.takeIf { workspace },
+            supportingDetail = placeDetail,
             toolbarActions = {
                 IconButton(onClick = { moreMenu = true }) {
                     Icon(Icons.Default.MoreVert, stringResource(Res.string.history_more_place_options), Modifier.size(20.dp))
@@ -226,7 +221,7 @@ fun HumanLocationHistoryScreen(
                     }
                 }
             },
-            mapAvailable = !workspace || state.tab != HistoryTab.Places || mapReady,
+            mapAvailable = state.tab != HistoryTab.Places || mapReady,
             mapContent = { mapModifier ->
                 val mapItems =
                     if (state.tab == HistoryTab.Places) {
@@ -260,7 +255,7 @@ fun HumanLocationHistoryScreen(
                     mapModifier,
                     viewModel::pauseReplay,
                     historyKey = mapSnapshot?.first,
-                    showStatus = !workspace || state.tab != HistoryTab.Places,
+                    showStatus = state.tab != HistoryTab.Places,
                     onReadyChanged = { mapReady = it },
                 )
             },
@@ -357,24 +352,6 @@ fun HumanLocationHistoryScreen(
             viewModel,
             onDismiss = { edit = null },
         )
-    }
-    if (!LocalWorkspaceEnabled.current) {
-        openedPlace?.let { placeId ->
-            snapshot?.let { data ->
-                HumanPlaceDetail(
-                    placeId,
-                    data,
-                    onVisit = { visit ->
-                        viewModel.setDate(visit.start.toLocalDateTime(TimeZone.currentSystemDefault()).date)
-                        viewModel.select(visit.id, true)
-                        openedPlace = null
-                    },
-                    onMemory = { Uuid.parseOrNull(it)?.let(onOpenNote) },
-                    onMerge = viewModel::mergePlace,
-                    onDismiss = { openedPlace = null },
-                )
-            }
-        }
     }
     if (reviewingChanges) {
         AlertDialog(

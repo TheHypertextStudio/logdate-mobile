@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +30,6 @@ import app.logdate.feature.journals.ui.detail.FakeDetailJournalRepository
 import app.logdate.shared.model.Journal
 import app.logdate.ui.adaptive.ActivityRouteFrame
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.workspace.LocalWorkspaceEnabled
 import app.logdate.ui.workspace.LocalWorkspaceHosted
 import app.logdate.ui.workspace.WorkspaceDestination
 import app.logdate.ui.workspace.WorkspaceScaffold
@@ -71,17 +69,15 @@ class JournalsCollectionSearchTest {
         runDesktopComposeUiTest(width = 1280, height = 900) {
             setContent {
                 LogDateTheme {
-                    CompositionLocalProvider(LocalWorkspaceEnabled provides true) {
-                        var query by remember { mutableStateOf("") }
-                        ActivityRouteFrame(composePanels = !related) {
-                            if (related) {
-                                Row(Modifier.fillMaxSize()) {
-                                    Overview(query, { query = it }, Modifier.weight(1f))
-                                    Text("Opened journal", Modifier.weight(1f))
-                                }
-                            } else {
-                                Overview(query, { query = it })
+                    var query by remember { mutableStateOf("") }
+                    ActivityRouteFrame(composePanels = !related) {
+                        if (related) {
+                            Row(Modifier.fillMaxSize()) {
+                                Overview(query, { query = it }, Modifier.weight(1f))
+                                Text("Opened journal", Modifier.weight(1f))
                             }
+                        } else {
+                            Overview(query, { query = it })
                         }
                     }
                 }
@@ -111,11 +107,9 @@ class JournalsCollectionSearchTest {
             layoutMode = JournalLayoutMode.GRID,
             sortOption = JournalSortOption.TITLE,
             searchQuery = query,
-            entryResults = emptyList(),
             onOpenJournal = {},
             onBrowseJournals = {},
             onCreateJournal = {},
-            onNavigateToDay = {},
             onQueryChange = onQuery,
             onToggleLayoutMode = {},
             onSortOptionSelected = {},

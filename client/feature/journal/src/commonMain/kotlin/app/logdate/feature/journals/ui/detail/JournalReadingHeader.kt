@@ -30,9 +30,9 @@ import org.jetbrains.compose.resources.stringResource
 internal fun JournalReadingHeader(
     title: String,
     onGoBack: () -> Unit,
-    backDescription: String = stringResource(Res.string.journal_detail_back_to_journals),
     actions: @Composable RowScope.() -> Unit,
 ) {
+    val backDescription = stringResource(Res.string.journal_detail_back_to_journals)
     BoxWithConstraints(Modifier.padding(Spacing.lg)) {
         val stacked = maxWidth < 360.dp || LocalDensity.current.fontScale >= 1.5f
         val navigation: @Composable () -> Unit = {
