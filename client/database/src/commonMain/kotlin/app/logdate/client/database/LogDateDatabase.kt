@@ -161,6 +161,7 @@ import app.logdate.client.database.migrations.MIGRATION_58_59
 import app.logdate.client.database.migrations.MIGRATION_59_60
 import app.logdate.client.database.migrations.MIGRATION_5_6
 import app.logdate.client.database.migrations.MIGRATION_60_61
+import app.logdate.client.database.migrations.MIGRATION_61_62
 import app.logdate.client.database.migrations.MIGRATION_6_7
 import app.logdate.client.database.migrations.MIGRATION_7_8
 import app.logdate.client.database.migrations.MIGRATION_8_9
@@ -341,7 +342,7 @@ abstract class LogDateDatabase : RoomDatabase() {
  * The name of the [LogDateDatabase] file.
  */
 internal const val DATABASE_NAME = "logdate"
-internal const val DATABASE_VERSION = 61
+internal const val DATABASE_VERSION = 62
 
 internal expect val roomDatabaseDispatcher: CoroutineDispatcher
 
@@ -459,4 +460,5 @@ private val DATABASE_MIGRATIONS =
         MIGRATION_58_59,
         MIGRATION_59_60,
         MIGRATION_60_61,
+        MIGRATION_61_62,
     )

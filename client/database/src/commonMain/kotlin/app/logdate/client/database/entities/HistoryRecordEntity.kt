@@ -9,6 +9,7 @@ import androidx.room.Index
     indices = [
         Index(value = ["ownerId", "origin", "observedAt"]),
         Index(value = ["ownerId", "origin", "recordType", "deviceId", "observedAt", "id"]),
+        Index(value = ["ownerId", "origin", "dirty", "id"]),
     ],
 )
 data class HistoryRecordEntity(

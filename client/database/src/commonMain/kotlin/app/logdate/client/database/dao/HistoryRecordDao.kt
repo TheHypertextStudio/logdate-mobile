@@ -1,6 +1,8 @@
 package app.logdate.client.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -90,35 +92,78 @@ abstract class HistoryRecordDao {
     @Upsert
     abstract suspend fun upsert(record: HistoryRecordEntity)
 
+    @Query("SELECT * FROM history_records WHERE ownerId = :owner AND origin = :origin AND id IN (:ids)")
+    protected abstract suspend fun recordsWithIds(
+        owner: String,
+        origin: String,
+        ids: List<String>,
+    ): List<HistoryRecordEntity>
+
+    /** Every row is written whole, so replacing a conflicting row is the same as updating it. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    protected abstract suspend fun writeAll(records: List<HistoryRecordEntity>)
+
     @Transaction
     open suspend fun putPreservingTombstone(incoming: HistoryRecordEntity) {
-        val existing = record(incoming.ownerId, incoming.origin, incoming.id)
-        if (existing?.deleted == true && !incoming.deleted) return
-        // A deletion removes the payload, so it keeps the time the record had to stay findable by its hour.
-        upsert(if (incoming.deleted && incoming.observedAt == null) incoming.copy(observedAt = existing?.observedAt) else incoming)
-        purgeDeletedObservation(incoming)
+        putBatchPreservingTombstones(listOf(incoming))
     }
 
     @Transaction
     open suspend fun putBatchPreservingTombstones(records: List<HistoryRecordEntity>) {
-        records.forEach { putPreservingTombstone(it) }
+        records.groupBy { it.ownerId to it.origin }.forEach { (scope, scoped) ->
+            val current = recordsById(scope.first, scope.second, scoped)
+            val written = LinkedHashMap<String, HistoryRecordEntity>()
+            val purged = mutableListOf<HistoryRecordEntity>()
+            scoped.forEach { incoming ->
+                val existing = current[incoming.id]
+                if (existing?.deleted == true && !incoming.deleted) return@forEach
+                val stored = incoming.keepingTimeOf(existing)
+                current[incoming.id] = stored
+                written[incoming.id] = stored
+                if (incoming.isDeletedObservation()) purged += incoming
+            }
+            writeAll(written.values.toList())
+            purgeDeletedObservations(purged)
+        }
     }
 
     @Query(
-        "DELETE FROM location_logs WHERE sample_id = :sampleId AND device_id = :deviceId " +
-            "AND (user_id = :owner OR user_id = 'default_user')",
+        "DELETE FROM location_logs WHERE device_id = :deviceId AND (user_id = :owner OR user_id = 'default_user') " +
+            "AND sample_id IN (:sampleIds)",
     )
-    protected abstract suspend fun deleteRawObservation(
+    protected abstract suspend fun deleteRawObservations(
         owner: String,
         deviceId: String,
-        sampleId: String,
+        sampleIds: List<String>,
     )
 
-    private suspend fun purgeDeletedObservation(record: HistoryRecordEntity) {
-        if (record.deleted && record.recordType == "observation" && record.id.startsWith("observation:")) {
-            deleteRawObservation(record.ownerId, record.deviceId, record.id.removePrefix("observation:"))
+    private suspend fun recordsById(
+        owner: String,
+        origin: String,
+        records: List<HistoryRecordEntity>,
+    ): MutableMap<String, HistoryRecordEntity> =
+        records
+            .map { it.id }
+            .distinct()
+            .chunked(MAX_BOUND_IDS)
+            .flatMap { recordsWithIds(owner, origin, it) }
+            .associateByTo(HashMap()) { it.id }
+
+    private suspend fun purgeDeletedObservations(records: List<HistoryRecordEntity>) {
+        records.groupBy { it.ownerId to it.deviceId }.forEach { (source, observations) ->
+            observations
+                .map { it.id.removePrefix("observation:") }
+                .distinct()
+                .chunked(MAX_BOUND_IDS)
+                .forEach { deleteRawObservations(source.first, source.second, it) }
         }
     }
+
+    private fun HistoryRecordEntity.isDeletedObservation() = deleted && recordType == "observation" && id.startsWith("observation:")
+
+    /** A deletion removes the payload, so it keeps the time the record had to stay findable by its hour. */
+    private fun HistoryRecordEntity.keepingTimeOf(existing: HistoryRecordEntity?) =
+        if (deleted && observedAt == null) copy(observedAt = existing?.observedAt) else this
 
     @Upsert
     abstract suspend fun upsertCursor(cursor: HistoryCursorEntity)
@@ -157,19 +202,30 @@ abstract class HistoryRecordDao {
         records: List<HistoryRecordEntity>,
         cursor: Long,
     ) {
+        val current = recordsById(owner, origin, records)
+        val written = LinkedHashMap<String, HistoryRecordEntity>()
+        val purged = mutableListOf<HistoryRecordEntity>()
         records.forEach { incoming ->
-            val local = record(owner, origin, incoming.id)
+            val local = current[incoming.id]
             if (incoming.serverVersion >= (local?.serverVersion ?: 0)) {
-                if (local?.deleted == true) {
-                    upsert(local.copy(serverVersion = incoming.serverVersion, dirty = !incoming.deleted))
-                } else if (incoming.deleted || local?.dirty != true) {
-                    upsert(if (incoming.deleted && incoming.observedAt == null) incoming.copy(observedAt = local?.observedAt) else incoming)
-                } else {
-                    upsert(local.copy(serverVersion = incoming.serverVersion))
-                }
+                val stored =
+                    when {
+                        local?.deleted == true -> local.copy(serverVersion = incoming.serverVersion, dirty = !incoming.deleted)
+                        incoming.deleted || local?.dirty != true -> incoming.keepingTimeOf(local)
+                        else -> local.copy(serverVersion = incoming.serverVersion)
+                    }
+                current[incoming.id] = stored
+                written[incoming.id] = stored
             }
-            record(owner, origin, incoming.id)?.let { purgeDeletedObservation(it) }
+            current[incoming.id]?.takeIf { it.isDeletedObservation() }?.let { purged += it }
         }
+        writeAll(written.values.toList())
+        purgeDeletedObservations(purged)
         upsertCursor(HistoryCursorEntity(owner, origin, maxOf(cursor(owner, origin) ?: 0, cursor)))
+    }
+
+    private companion object {
+        /** Stays well under SQLite's bound-variable limit on every platform driver. */
+        const val MAX_BOUND_IDS = 500
     }
 }
