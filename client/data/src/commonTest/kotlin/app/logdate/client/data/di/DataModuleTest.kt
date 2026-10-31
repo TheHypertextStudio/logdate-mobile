@@ -81,6 +81,4 @@ private class FakePlaceDao : PlaceDao {
         id: Uuid,
         deletedAt: Long,
     ) = Unit
-
-    override suspend fun hardDelete(id: Uuid) = Unit
 }
