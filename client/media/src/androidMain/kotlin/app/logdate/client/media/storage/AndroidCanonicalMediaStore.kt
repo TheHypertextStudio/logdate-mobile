@@ -17,7 +17,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.net.URI
-import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -146,7 +145,7 @@ class AndroidCanonicalMediaStore(
                 continue
             }
             try {
-                publishIntoPlace(stagingFile, destination, copiedBytes)
+                moveIntoPlace(stagingFile, destination, copiedBytes)
             } catch (_: FileAlreadyExistsException) {
                 // Another process claimed this path. Recheck it under the lock.
                 continue
@@ -231,30 +230,17 @@ class AndroidCanonicalMediaStore(
         }
     }
 
-    private suspend fun publishIntoPlace(
+    private fun moveIntoPlace(
         stagingFile: File,
         destination: File,
         expectedSizeBytes: Long,
     ) {
-        // Android denies hard links to app-private files. Exclusive creation claims this path
-        // without replacing existing bytes, including a dangling symlink or another process's
-        // incomplete publication. A failed copy leaves its claim for a later retained variant.
-        FileChannel.open(destination.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE).use { output ->
-            FileInputStream(stagingFile).use { input ->
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                var copied = 0L
-                while (true) {
-                    currentCoroutineContext().ensureActive()
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    val bytes = ByteBuffer.wrap(buffer, 0, read)
-                    while (bytes.hasRemaining()) output.write(bytes)
-                    copied += read
-                }
-                check(copied == expectedSizeBytes) { "Private media staging file changed before publication" }
-            }
-            output.force(true)
-        }
+        check(stagingFile.length() == expectedSizeBytes) { "Private media staging file changed before publication" }
+        // Android denies hard links to app-private files, so the already-synced staging file is
+        // renamed into place: the path holds the complete object or nothing. Without a replace
+        // option the move refuses any existing path, including a dangling symlink, and every
+        // publisher checks that path under the same cross-process lock.
+        Files.move(stagingFile.toPath(), destination.toPath())
     }
 
     private fun ensurePrivateDirectory(directory: File) {
