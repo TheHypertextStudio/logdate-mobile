@@ -20,6 +20,13 @@ private const val SCM_DEVELOPER_CONNECTION = "scm:git:ssh://git@github.com/Willi
 private const val ORG_URL = "https://thehypertext.studio"
 
 /**
+ * Sonatype retired OSSRH, including s01.oss.sonatype.org, in June 2025. The Central Portal accepts
+ * the same Maven staging uploads here, and lists them once the namespace's manual upload request is
+ * sent after publishing.
+ */
+const val CENTRAL_PORTAL_STAGING_URL = "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
+
+/**
  * Convention plugin for publishable `shared/atproto-*` modules.
  *
  * This plugin exists to keep the standalone ATProto library artifacts consistent across modules.
@@ -98,13 +105,14 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
      */
     private fun Project.embedLicensingInJars() {
         val licensingDir = rootProject.layout.projectDirectory.dir("shared/atproto-licensing")
-        tasks
-            .withType(Jar::class.java)
-            .matching { it.archiveClassifier.getOrElse("").isEmpty() }
-            .configureEach {
-                from(licensingDir.file("LICENSE")) { into("META-INF") }
-                from(licensingDir.file("NOTICE")) { into("META-INF") }
-            }
+        tasks.withType(Jar::class.java).configureEach {
+            // Read when the jar is built, after every plugin has set its classifier.
+            val licensing =
+                archiveClassifier.map { classifier ->
+                    if (classifier.isEmpty()) listOf(licensingDir.file("LICENSE"), licensingDir.file("NOTICE")) else emptyList()
+                }
+            from(licensing) { into("META-INF") }
+        }
     }
 
     /**
@@ -123,9 +131,7 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
         registerNamedRepository(
             publishing = publishing,
             name = "atprotoMavenCentral",
-            url =
-                propertyOrEnv("ossrh.publish.url", "OSSRH_PUBLISH_URL")
-                    ?: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/",
+            url = propertyOrEnv("ossrh.publish.url", "OSSRH_PUBLISH_URL") ?: CENTRAL_PORTAL_STAGING_URL,
             username = propertyOrEnv("ossrh.username", "OSSRH_USERNAME"),
             password = propertyOrEnv("ossrh.password", "OSSRH_PASSWORD"),
             requireCredentials = true,
