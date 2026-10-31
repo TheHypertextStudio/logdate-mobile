@@ -1,0 +1,3791 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 61,
+    "identityHash": "1200401bc7855e2faf599f873c7d1e03",
+    "entities": [
+      {
+        "tableName": "text_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`content` TEXT NOT NULL, `uid` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, `created` INTEGER NOT NULL, `syncVersion` INTEGER NOT NULL, `lastSynced` INTEGER, `deletedAt` INTEGER, `latitude` REAL, `longitude` REAL, `altitude` REAL, `location_accuracy` REAL, `place_id` TEXT, `time_zone_id` TEXT, `captured_on` TEXT, `captured_during` TEXT, `location_metadata` TEXT, `content_format` TEXT NOT NULL DEFAULT 'text', PRIMARY KEY(`uid`), FOREIGN KEY(`place_id`) REFERENCES `places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "lastSynced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "altitude",
+            "columnName": "altitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationAccuracy",
+            "columnName": "location_accuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "placeId",
+            "columnName": "place_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "time_zone_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedOn",
+            "columnName": "captured_on",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedDuring",
+            "columnName": "captured_during",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "locationMetadata",
+            "columnName": "location_metadata",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contentFormat",
+            "columnName": "content_format",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'text'"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_text_notes_place_id",
+            "unique": false,
+            "columnNames": ["place_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_text_notes_place_id` ON `${TABLE_NAME}` (`place_id`)"
+          },
+          {
+            "name": "index_text_notes_latitude_longitude",
+            "unique": false,
+            "columnNames": ["latitude", "longitude"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_text_notes_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          },
+          {
+            "name": "index_text_notes_created",
+            "unique": false,
+            "columnNames": ["created"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_text_notes_created` ON `${TABLE_NAME}` (`created`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["place_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "image_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contentUri` TEXT NOT NULL, `uid` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, `created` INTEGER NOT NULL, `syncVersion` INTEGER NOT NULL, `lastSynced` INTEGER, `deletedAt` INTEGER, `latitude` REAL, `longitude` REAL, `altitude` REAL, `location_accuracy` REAL, `place_id` TEXT, `time_zone_id` TEXT, `presentation` TEXT NOT NULL DEFAULT 'EdgeToEdge', `captured_on` TEXT, `captured_during` TEXT, `location_metadata` TEXT, PRIMARY KEY(`uid`), FOREIGN KEY(`place_id`) REFERENCES `places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "contentUri",
+            "columnName": "contentUri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "lastSynced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "altitude",
+            "columnName": "altitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationAccuracy",
+            "columnName": "location_accuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "placeId",
+            "columnName": "place_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "time_zone_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "presentation",
+            "columnName": "presentation",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'EdgeToEdge'"
+          },
+          {
+            "fieldPath": "capturedOn",
+            "columnName": "captured_on",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedDuring",
+            "columnName": "captured_during",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "locationMetadata",
+            "columnName": "location_metadata",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_image_notes_place_id",
+            "unique": false,
+            "columnNames": ["place_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_image_notes_place_id` ON `${TABLE_NAME}` (`place_id`)"
+          },
+          {
+            "name": "index_image_notes_latitude_longitude",
+            "unique": false,
+            "columnNames": ["latitude", "longitude"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_image_notes_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          },
+          {
+            "name": "index_image_notes_created",
+            "unique": false,
+            "columnNames": ["created"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_image_notes_created` ON `${TABLE_NAME}` (`created`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["place_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "video_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contentUri` TEXT NOT NULL, `durationMs` INTEGER, `uid` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, `created` INTEGER NOT NULL, `syncVersion` INTEGER NOT NULL, `lastSynced` INTEGER, `deletedAt` INTEGER, `latitude` REAL, `longitude` REAL, `altitude` REAL, `location_accuracy` REAL, `place_id` TEXT, `time_zone_id` TEXT, `captured_on` TEXT, `captured_during` TEXT, `location_metadata` TEXT, PRIMARY KEY(`uid`), FOREIGN KEY(`place_id`) REFERENCES `places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "contentUri",
+            "columnName": "contentUri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "lastSynced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "altitude",
+            "columnName": "altitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationAccuracy",
+            "columnName": "location_accuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "placeId",
+            "columnName": "place_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "time_zone_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedOn",
+            "columnName": "captured_on",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedDuring",
+            "columnName": "captured_during",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "locationMetadata",
+            "columnName": "location_metadata",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_video_notes_place_id",
+            "unique": false,
+            "columnNames": ["place_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_video_notes_place_id` ON `${TABLE_NAME}` (`place_id`)"
+          },
+          {
+            "name": "index_video_notes_latitude_longitude",
+            "unique": false,
+            "columnNames": ["latitude", "longitude"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_video_notes_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          },
+          {
+            "name": "index_video_notes_created",
+            "unique": false,
+            "columnNames": ["created"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_video_notes_created` ON `${TABLE_NAME}` (`created`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["place_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "audio_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contentUri` TEXT NOT NULL, `durationMs` INTEGER NOT NULL, `uid` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, `created` INTEGER NOT NULL, `syncVersion` INTEGER NOT NULL, `lastSynced` INTEGER, `deletedAt` INTEGER, `latitude` REAL, `longitude` REAL, `altitude` REAL, `location_accuracy` REAL, `place_id` TEXT, `time_zone_id` TEXT, `captured_on` TEXT, `captured_during` TEXT, `location_metadata` TEXT, `transcription` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`uid`), FOREIGN KEY(`place_id`) REFERENCES `places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "contentUri",
+            "columnName": "contentUri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "lastSynced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "altitude",
+            "columnName": "altitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationAccuracy",
+            "columnName": "location_accuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "placeId",
+            "columnName": "place_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "time_zone_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedOn",
+            "columnName": "captured_on",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capturedDuring",
+            "columnName": "captured_during",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "locationMetadata",
+            "columnName": "location_metadata",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "transcription",
+            "columnName": "transcription",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_audio_notes_place_id",
+            "unique": false,
+            "columnNames": ["place_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_notes_place_id` ON `${TABLE_NAME}` (`place_id`)"
+          },
+          {
+            "name": "index_audio_notes_latitude_longitude",
+            "unique": false,
+            "columnNames": ["latitude", "longitude"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_notes_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          },
+          {
+            "name": "index_audio_notes_created",
+            "unique": false,
+            "columnNames": ["created"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_notes_created` ON `${TABLE_NAME}` (`created`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["place_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "journals",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `created` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, `syncVersion` INTEGER NOT NULL, `lastSynced` INTEGER, `deletedAt` INTEGER, `coverImageUri` TEXT, `isFavorited` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "lastSynced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "coverImageUri",
+            "columnName": "coverImageUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isFavorited",
+            "columnName": "isFavorited",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        }
+      },
+      {
+        "tableName": "journal_notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `uid` TEXT NOT NULL, PRIMARY KEY(`id`, `uid`))",
+        "fields": [
+          {
+            "fieldPath": "journalId",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noteId",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id", "uid"]
+        },
+        "indices": [
+          {
+            "name": "index_journal_notes_id",
+            "unique": false,
+            "columnNames": ["id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journal_notes_id` ON `${TABLE_NAME}` (`id`)"
+          },
+          {
+            "name": "index_journal_notes_uid",
+            "unique": false,
+            "columnNames": ["uid"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journal_notes_uid` ON `${TABLE_NAME}` (`uid`)"
+          }
+        ]
+      },
+      {
+        "tableName": "location_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`sample_id` TEXT NOT NULL, `user_id` TEXT NOT NULL, `device_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `logged_at` INTEGER NOT NULL, `confidence` REAL NOT NULL, `is_genuine` INTEGER NOT NULL, `capture_pipeline` TEXT NOT NULL, `capture_source` TEXT NOT NULL, `accuracy_meters` REAL, `speed_meters_per_second` REAL, `bearing_degrees` REAL, `is_mock` INTEGER NOT NULL, `activity_type` TEXT, `time_zone_id` TEXT, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `altitude` REAL NOT NULL, PRIMARY KEY(`sample_id`))",
+        "fields": [
+          {
+            "fieldPath": "sampleId",
+            "columnName": "sample_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceId",
+            "columnName": "device_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loggedAt",
+            "columnName": "logged_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isGenuine",
+            "columnName": "is_genuine",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturePipeline",
+            "columnName": "capture_pipeline",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "captureSource",
+            "columnName": "capture_source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accuracyMeters",
+            "columnName": "accuracy_meters",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "speedMetersPerSecond",
+            "columnName": "speed_meters_per_second",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "bearingDegrees",
+            "columnName": "bearing_degrees",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "isMock",
+            "columnName": "is_mock",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityType",
+            "columnName": "activity_type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "time_zone_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "location.latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "location.longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "location.altitude",
+            "columnName": "altitude",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["sample_id"]
+        },
+        "indices": [
+          {
+            "name": "index_location_logs_user_id_device_id_timestamp_sample_id",
+            "unique": false,
+            "columnNames": ["user_id", "device_id", "timestamp", "sample_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_location_logs_user_id_device_id_timestamp_sample_id` ON `${TABLE_NAME}` (`user_id`, `device_id`, `timestamp`, `sample_id`)"
+          },
+          {
+            "name": "index_location_logs_timestamp",
+            "unique": false,
+            "columnNames": ["timestamp"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_location_logs_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_location_logs_user_id_device_id_logged_at_sample_id",
+            "unique": false,
+            "columnNames": ["user_id", "device_id", "logged_at", "sample_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_location_logs_user_id_device_id_logged_at_sample_id` ON `${TABLE_NAME}` (`user_id`, `device_id`, `logged_at`, `sample_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "history_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `origin` TEXT NOT NULL, `id` TEXT NOT NULL, `recordType` TEXT NOT NULL, `payload` TEXT, `deviceId` TEXT NOT NULL, `deviceVersion` INTEGER NOT NULL, `serverVersion` INTEGER NOT NULL, `deleted` INTEGER NOT NULL, `dirty` INTEGER NOT NULL, `observedAt` INTEGER, PRIMARY KEY(`ownerId`, `origin`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origin",
+            "columnName": "origin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordType",
+            "columnName": "recordType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payload",
+            "columnName": "payload",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "deviceId",
+            "columnName": "deviceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceVersion",
+            "columnName": "deviceVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverVersion",
+            "columnName": "serverVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleted",
+            "columnName": "deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dirty",
+            "columnName": "dirty",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedAt",
+            "columnName": "observedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "origin", "id"]
+        },
+        "indices": [
+          {
+            "name": "index_history_records_ownerId_origin_observedAt",
+            "unique": false,
+            "columnNames": ["ownerId", "origin", "observedAt"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_history_records_ownerId_origin_observedAt` ON `${TABLE_NAME}` (`ownerId`, `origin`, `observedAt`)"
+          },
+          {
+            "name": "index_history_records_ownerId_origin_recordType_deviceId_observedAt_id",
+            "unique": false,
+            "columnNames": [
+              "ownerId",
+              "origin",
+              "recordType",
+              "deviceId",
+              "observedAt",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_history_records_ownerId_origin_recordType_deviceId_observedAt_id` ON `${TABLE_NAME}` (`ownerId`, `origin`, `recordType`, `deviceId`, `observedAt`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "history_cursors",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `origin` TEXT NOT NULL, `cursor` INTEGER NOT NULL, PRIMARY KEY(`ownerId`, `origin`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origin",
+            "columnName": "origin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursor",
+            "columnName": "cursor",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "origin"]
+        }
+      },
+      {
+        "tableName": "location_activity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `user_id` TEXT NOT NULL, `device_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `recorded_at` INTEGER NOT NULL, `activity_type` TEXT NOT NULL, `transition_type` TEXT NOT NULL, `time_zone_id` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceId",
+            "columnName": "device_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordedAt",
+            "columnName": "recorded_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityType",
+            "columnName": "activity_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transitionType",
+            "columnName": "transition_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "time_zone_id",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_location_activity_timestamp",
+            "unique": false,
+            "columnNames": ["timestamp"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_location_activity_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_location_activity_user_id_device_id_recorded_at_id",
+            "unique": false,
+            "columnNames": ["user_id", "device_id", "recorded_at", "id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_location_activity_user_id_device_id_recorded_at_id` ON `${TABLE_NAME}` (`user_id`, `device_id`, `recorded_at`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "storage_metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`contentId` TEXT NOT NULL, `contentType` TEXT NOT NULL, `sizeBytes` INTEGER NOT NULL, `contentUri` TEXT NOT NULL, `recordedAt` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, `excludeFromQuota` INTEGER NOT NULL, PRIMARY KEY(`contentId`))",
+        "fields": [
+          {
+            "fieldPath": "contentId",
+            "columnName": "contentId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentType",
+            "columnName": "contentType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "sizeBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentUri",
+            "columnName": "contentUri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordedAt",
+            "columnName": "recordedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "excludeFromQuota",
+            "columnName": "excludeFromQuota",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["contentId"]
+        }
+      },
+      {
+        "tableName": "user_devices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` TEXT NOT NULL, `user_id` TEXT NOT NULL, `label` TEXT NOT NULL, `operating_system` TEXT NOT NULL, `version` TEXT NOT NULL, `model` TEXT NOT NULL, `type` TEXT NOT NULL, `added` INTEGER NOT NULL, PRIMARY KEY(`uid`))",
+        "fields": [
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operatingSystem",
+            "columnName": "operating_system",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "model",
+            "columnName": "model",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "added",
+            "columnName": "added",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        }
+      },
+      {
+        "tableName": "media_images",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uri` TEXT NOT NULL, `addedTimestamp` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addedTimestamp",
+            "columnName": "addedTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": ["id"]
+        }
+      },
+      {
+        "tableName": "journal_content_links",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`journal_id` TEXT NOT NULL, `content_id` TEXT NOT NULL, `syncVersion` INTEGER NOT NULL, `lastSynced` INTEGER, `deletedAt` INTEGER, PRIMARY KEY(`journal_id`, `content_id`), FOREIGN KEY(`journal_id`) REFERENCES `journals`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "journalId",
+            "columnName": "journal_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentId",
+            "columnName": "content_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "lastSynced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["journal_id", "content_id"]
+        },
+        "indices": [
+          {
+            "name": "index_journal_content_links_journal_id",
+            "unique": false,
+            "columnNames": ["journal_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journal_content_links_journal_id` ON `${TABLE_NAME}` (`journal_id`)"
+          },
+          {
+            "name": "index_journal_content_links_content_id",
+            "unique": false,
+            "columnNames": ["content_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_journal_content_links_content_id` ON `${TABLE_NAME}` (`content_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "journals",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["journal_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "journal_merges",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `serverOrigin` TEXT NOT NULL, `sourceId` TEXT NOT NULL, `destinationId` TEXT NOT NULL, `operationId` TEXT NOT NULL, `contentIds` TEXT NOT NULL, `sourceTitle` TEXT NOT NULL, `sourceJournal` TEXT NOT NULL, `destinationTitle` TEXT NOT NULL, `pending` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `requestedDestinationId` TEXT NOT NULL, `needsDestination` INTEGER NOT NULL, `previousOperationIds` TEXT NOT NULL, `recoveryContentIds` TEXT NOT NULL, PRIMARY KEY(`ownerId`, `serverOrigin`, `sourceId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverOrigin",
+            "columnName": "serverOrigin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinationId",
+            "columnName": "destinationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operationId",
+            "columnName": "operationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentIds",
+            "columnName": "contentIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceTitle",
+            "columnName": "sourceTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceJournal",
+            "columnName": "sourceJournal",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinationTitle",
+            "columnName": "destinationTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pending",
+            "columnName": "pending",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestedDestinationId",
+            "columnName": "requestedDestinationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsDestination",
+            "columnName": "needsDestination",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousOperationIds",
+            "columnName": "previousOperationIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recoveryContentIds",
+            "columnName": "recoveryContentIds",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "serverOrigin", "sourceId"]
+        }
+      },
+      {
+        "tableName": "rewinds",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` TEXT NOT NULL, `startDate` INTEGER NOT NULL, `endDate` INTEGER NOT NULL, `generationDate` INTEGER NOT NULL, `label` TEXT NOT NULL, `title` TEXT NOT NULL, `metadata` TEXT DEFAULT NULL, `is_viewed` INTEGER NOT NULL DEFAULT 0, `first_viewed_at` INTEGER DEFAULT NULL, `view_count` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`uid`))",
+        "fields": [
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "startDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endDate",
+            "columnName": "endDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generationDate",
+            "columnName": "generationDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metadata",
+            "columnName": "metadata",
+            "affinity": "TEXT",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "isViewed",
+            "columnName": "is_viewed",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "firstViewedAt",
+            "columnName": "first_viewed_at",
+            "affinity": "INTEGER",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "viewCount",
+            "columnName": "view_count",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_rewinds_startDate_endDate",
+            "unique": true,
+            "columnNames": ["startDate", "endDate"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_rewinds_startDate_endDate` ON `${TABLE_NAME}` (`startDate`, `endDate`)"
+          }
+        ]
+      },
+      {
+        "tableName": "rewind_text_content",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `rewindId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`rewindId`) REFERENCES `rewinds`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rewindId",
+            "columnName": "rewindId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_rewind_text_content_rewindId",
+            "unique": false,
+            "columnNames": ["rewindId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_text_content_rewindId` ON `${TABLE_NAME}` (`rewindId`)"
+          },
+          {
+            "name": "index_rewind_text_content_sourceId",
+            "unique": false,
+            "columnNames": ["sourceId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_text_content_sourceId` ON `${TABLE_NAME}` (`sourceId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rewinds",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["rewindId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "rewind_image_content",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `rewindId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `uri` TEXT NOT NULL, `caption` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`rewindId`) REFERENCES `rewinds`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rewindId",
+            "columnName": "rewindId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caption",
+            "columnName": "caption",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_rewind_image_content_rewindId",
+            "unique": false,
+            "columnNames": ["rewindId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_image_content_rewindId` ON `${TABLE_NAME}` (`rewindId`)"
+          },
+          {
+            "name": "index_rewind_image_content_sourceId",
+            "unique": false,
+            "columnNames": ["sourceId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_image_content_sourceId` ON `${TABLE_NAME}` (`sourceId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rewinds",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["rewindId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "rewind_video_content",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `rewindId` TEXT NOT NULL, `sourceId` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `uri` TEXT NOT NULL, `caption` TEXT, `duration` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`rewindId`) REFERENCES `rewinds`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rewindId",
+            "columnName": "rewindId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caption",
+            "columnName": "caption",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "duration",
+            "columnName": "duration",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_rewind_video_content_rewindId",
+            "unique": false,
+            "columnNames": ["rewindId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_video_content_rewindId` ON `${TABLE_NAME}` (`rewindId`)"
+          },
+          {
+            "name": "index_rewind_video_content_sourceId",
+            "unique": false,
+            "columnNames": ["sourceId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_video_content_sourceId` ON `${TABLE_NAME}` (`sourceId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rewinds",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["rewindId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "rewind_generation_requests",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `startTime` INTEGER NOT NULL, `endTime` INTEGER NOT NULL, `requestTime` INTEGER NOT NULL, `status` TEXT NOT NULL, `details` TEXT, `rewindId` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`rewindId`) REFERENCES `rewinds`(`uid`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "startTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "endTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestTime",
+            "columnName": "requestTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "details",
+            "columnName": "details",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rewindId",
+            "columnName": "rewindId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_rewind_generation_requests_startTime_endTime",
+            "unique": true,
+            "columnNames": ["startTime", "endTime"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_rewind_generation_requests_startTime_endTime` ON `${TABLE_NAME}` (`startTime`, `endTime`)"
+          },
+          {
+            "name": "index_rewind_generation_requests_rewindId",
+            "unique": false,
+            "columnNames": ["rewindId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_generation_requests_rewindId` ON `${TABLE_NAME}` (`rewindId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rewinds",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["rewindId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "indexed_media_images",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` TEXT NOT NULL, `uri` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `fileSize` INTEGER NOT NULL, `dimensions_width` INTEGER NOT NULL, `dimensions_height` INTEGER NOT NULL, `location_latitude` REAL, `location_longitude` REAL, PRIMARY KEY(`uid`))",
+        "fields": [
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mimeType",
+            "columnName": "mimeType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "fileSize",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dimensions.width",
+            "columnName": "dimensions_width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dimensions.height",
+            "columnName": "dimensions_height",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "location.latitude",
+            "columnName": "location_latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "location.longitude",
+            "columnName": "location_longitude",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_indexed_media_images_uri",
+            "unique": true,
+            "columnNames": ["uri"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_indexed_media_images_uri` ON `${TABLE_NAME}` (`uri`)"
+          },
+          {
+            "name": "index_indexed_media_images_timestamp",
+            "unique": false,
+            "columnNames": ["timestamp"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_indexed_media_images_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          }
+        ]
+      },
+      {
+        "tableName": "indexed_media_videos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` TEXT NOT NULL, `uri` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `indexedAt` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `fileSize` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `dimensions_width` INTEGER NOT NULL, `dimensions_height` INTEGER NOT NULL, `location_latitude` REAL, `location_longitude` REAL, PRIMARY KEY(`uid`))",
+        "fields": [
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedAt",
+            "columnName": "indexedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mimeType",
+            "columnName": "mimeType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "fileSize",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duration",
+            "columnName": "duration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dimensions.width",
+            "columnName": "dimensions_width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dimensions.height",
+            "columnName": "dimensions_height",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "location.latitude",
+            "columnName": "location_latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "location.longitude",
+            "columnName": "location_longitude",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["uid"]
+        },
+        "indices": [
+          {
+            "name": "index_indexed_media_videos_uri",
+            "unique": true,
+            "columnNames": ["uri"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_indexed_media_videos_uri` ON `${TABLE_NAME}` (`uri`)"
+          },
+          {
+            "name": "index_indexed_media_videos_timestamp",
+            "unique": false,
+            "columnNames": ["timestamp"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_indexed_media_videos_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sync_cursors",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL DEFAULT '', `serverOrigin` TEXT NOT NULL, `entityType` TEXT NOT NULL, `lastSyncTimestamp` INTEGER NOT NULL, PRIMARY KEY(`ownerId`, `serverOrigin`, `entityType`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "serverOrigin",
+            "columnName": "serverOrigin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncTimestamp",
+            "columnName": "lastSyncTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "serverOrigin", "entityType"]
+        }
+      },
+      {
+        "tableName": "pending_uploads",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL DEFAULT '', `serverOrigin` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `operation` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `retryCount` INTEGER NOT NULL, `expectedServerVersion` INTEGER, `operationId` TEXT NOT NULL DEFAULT '', `nextAttemptAt` INTEGER DEFAULT NULL, `unfinishedAttempts` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`ownerId`, `serverOrigin`, `entityType`, `entityId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "serverOrigin",
+            "columnName": "serverOrigin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operation",
+            "columnName": "operation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "retryCount",
+            "columnName": "retryCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedServerVersion",
+            "columnName": "expectedServerVersion",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "operationId",
+            "columnName": "operationId",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "nextAttemptAt",
+            "columnName": "nextAttemptAt",
+            "affinity": "INTEGER",
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "unfinishedAttempts",
+            "columnName": "unfinishedAttempts",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "serverOrigin", "entityType", "entityId"]
+        }
+      },
+      {
+        "tableName": "sync_download_inbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `serverOrigin` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `version` INTEGER NOT NULL, `deleted` INTEGER NOT NULL, `payload` TEXT NOT NULL, `operationId` TEXT NOT NULL, `state` TEXT NOT NULL, `attempts` INTEGER NOT NULL, `nextAttemptAt` INTEGER NOT NULL, `reason` TEXT NOT NULL, `appliedAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`ownerId`, `serverOrigin`, `entityType`, `entityId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverOrigin",
+            "columnName": "serverOrigin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleted",
+            "columnName": "deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payload",
+            "columnName": "payload",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "operationId",
+            "columnName": "operationId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextAttemptAt",
+            "columnName": "nextAttemptAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appliedAt",
+            "columnName": "appliedAt",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "serverOrigin", "entityType", "entityId"]
+        },
+        "indices": [
+          {
+            "name": "index_sync_download_inbox_ownerId_serverOrigin_state_nextAttemptAt",
+            "unique": false,
+            "columnNames": [
+              "ownerId",
+              "serverOrigin",
+              "state",
+              "nextAttemptAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sync_download_inbox_ownerId_serverOrigin_state_nextAttemptAt` ON `${TABLE_NAME}` (`ownerId`, `serverOrigin`, `state`, `nextAttemptAt`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sync_download_checkpoints",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `serverOrigin` TEXT NOT NULL, `entityType` TEXT NOT NULL, `cursor` INTEGER NOT NULL, `fetchFailure` TEXT NOT NULL, PRIMARY KEY(`ownerId`, `serverOrigin`, `entityType`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverOrigin",
+            "columnName": "serverOrigin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursor",
+            "columnName": "cursor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchFailure",
+            "columnName": "fetchFailure",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "serverOrigin", "entityType"]
+        }
+      },
+      {
+        "tableName": "peer_delivery",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`peerScope` TEXT NOT NULL, `direction` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `contentVersion` INTEGER NOT NULL, `state` TEXT NOT NULL, `attempts` INTEGER NOT NULL, `lastAttemptAt` INTEGER, `nextAttemptAt` INTEGER, `lastCloudAttemptVersion` INTEGER, `stateChangedAt` INTEGER NOT NULL, `holdReason` TEXT, PRIMARY KEY(`peerScope`, `direction`, `entityType`, `entityId`))",
+        "fields": [
+          {
+            "fieldPath": "peerScope",
+            "columnName": "peerScope",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "direction",
+            "columnName": "direction",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityType",
+            "columnName": "entityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entityId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contentVersion",
+            "columnName": "contentVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attempts",
+            "columnName": "attempts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAttemptAt",
+            "columnName": "lastAttemptAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "nextAttemptAt",
+            "columnName": "nextAttemptAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastCloudAttemptVersion",
+            "columnName": "lastCloudAttemptVersion",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "stateChangedAt",
+            "columnName": "stateChangedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holdReason",
+            "columnName": "holdReason",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["peerScope", "direction", "entityType", "entityId"]
+        }
+      },
+      {
+        "tableName": "sync_space_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerId` TEXT NOT NULL, `serverOrigin` TEXT NOT NULL, `collection` TEXT NOT NULL, `innerRkey` TEXT NOT NULL, `sealedRkey` TEXT NOT NULL, `cid` TEXT NOT NULL, `seq` INTEGER NOT NULL, PRIMARY KEY(`ownerId`, `serverOrigin`, `collection`, `innerRkey`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverOrigin",
+            "columnName": "serverOrigin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collection",
+            "columnName": "collection",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "innerRkey",
+            "columnName": "innerRkey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sealedRkey",
+            "columnName": "sealedRkey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cid",
+            "columnName": "cid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seq",
+            "columnName": "seq",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["ownerId", "serverOrigin", "collection", "innerRkey"]
+        },
+        "indices": [
+          {
+            "name": "index_sync_space_records_ownerId_serverOrigin_sealedRkey",
+            "unique": true,
+            "columnNames": ["ownerId", "serverOrigin", "sealedRkey"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_space_records_ownerId_serverOrigin_sealedRkey` ON `${TABLE_NAME}` (`ownerId`, `serverOrigin`, `sealedRkey`)"
+          }
+        ]
+      },
+      {
+        "tableName": "transcriptions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `text` TEXT, `documentJson` TEXT, `language` TEXT, `source` TEXT, `modelId` TEXT, `revision` INTEGER NOT NULL, `mediaUri` TEXT, `mediaDurationMs` INTEGER, `isCloudEnhanced` INTEGER NOT NULL, `speakerCount` INTEGER NOT NULL, `status` TEXT NOT NULL, `errorMessage` TEXT, `created` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, `id` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`noteId`) REFERENCES `audio_notes`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "documentJson",
+            "columnName": "documentJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modelId",
+            "columnName": "modelId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaUri",
+            "columnName": "mediaUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mediaDurationMs",
+            "columnName": "mediaDurationMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isCloudEnhanced",
+            "columnName": "isCloudEnhanced",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speakerCount",
+            "columnName": "speakerCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "errorMessage",
+            "columnName": "errorMessage",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_transcriptions_noteId",
+            "unique": true,
+            "columnNames": ["noteId"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_transcriptions_noteId` ON `${TABLE_NAME}` (`noteId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "audio_notes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["noteId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "transcription_segments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `segmentId` TEXT NOT NULL, `text` TEXT NOT NULL, `startMs` INTEGER NOT NULL, `endMs` INTEGER NOT NULL, `speakerId` TEXT, `confidence` REAL, `source` TEXT NOT NULL, `isFinal` INTEGER NOT NULL, `revision` INTEGER NOT NULL, PRIMARY KEY(`noteId`, `segmentId`), FOREIGN KEY(`noteId`) REFERENCES `audio_notes`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "segmentId",
+            "columnName": "segmentId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startMs",
+            "columnName": "startMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endMs",
+            "columnName": "endMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speakerId",
+            "columnName": "speakerId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFinal",
+            "columnName": "isFinal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revision",
+            "columnName": "revision",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["noteId", "segmentId"]
+        },
+        "indices": [
+          {
+            "name": "index_transcription_segments_noteId",
+            "unique": false,
+            "columnNames": ["noteId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transcription_segments_noteId` ON `${TABLE_NAME}` (`noteId`)"
+          },
+          {
+            "name": "index_transcription_segments_noteId_startMs",
+            "unique": false,
+            "columnNames": ["noteId", "startMs"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transcription_segments_noteId_startMs` ON `${TABLE_NAME}` (`noteId`, `startMs`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "audio_notes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["noteId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "places",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `altitude` REAL, `accuracy` REAL, `radius` REAL NOT NULL, `units` TEXT NOT NULL, `description` TEXT, `ap_uri` TEXT, `created` INTEGER NOT NULL, `last_updated` INTEGER NOT NULL, `sync_version` INTEGER NOT NULL, `last_synced` INTEGER, `deleted_at` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "altitude",
+            "columnName": "altitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "accuracy",
+            "columnName": "accuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "radius",
+            "columnName": "radius",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "units",
+            "columnName": "units",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "apUri",
+            "columnName": "ap_uri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "last_updated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "sync_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "last_synced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deleted_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_places_latitude_longitude",
+            "unique": false,
+            "columnNames": ["latitude", "longitude"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_places_latitude_longitude` ON `${TABLE_NAME}` (`latitude`, `longitude`)"
+          },
+          {
+            "name": "index_places_ap_uri",
+            "unique": false,
+            "columnNames": ["ap_uri"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_places_ap_uri` ON `${TABLE_NAME}` (`ap_uri`)"
+          }
+        ]
+      },
+      {
+        "tableName": "user_places",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `radius_meters` REAL NOT NULL, `description` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "radiusMeters",
+            "columnName": "radius_meters",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        }
+      },
+      {
+        "tableName": "media_captions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `caption` TEXT NOT NULL, PRIMARY KEY(`noteId`))",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caption",
+            "columnName": "caption",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["noteId"]
+        }
+      },
+      {
+        "tableName": "media_exif_metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mediaUid` TEXT NOT NULL, `cameraMake` TEXT, `cameraModel` TEXT, `aperture` REAL, `iso` INTEGER, `focalLength` REAL, `shutterSpeed` TEXT, `whiteBalance` TEXT, `flashFired` INTEGER, `orientation` INTEGER, `extractedAt` INTEGER NOT NULL, PRIMARY KEY(`mediaUid`))",
+        "fields": [
+          {
+            "fieldPath": "mediaUid",
+            "columnName": "mediaUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraMake",
+            "columnName": "cameraMake",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cameraModel",
+            "columnName": "cameraModel",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aperture",
+            "columnName": "aperture",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "iso",
+            "columnName": "iso",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "focalLength",
+            "columnName": "focalLength",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "shutterSpeed",
+            "columnName": "shutterSpeed",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "whiteBalance",
+            "columnName": "whiteBalance",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "flashFired",
+            "columnName": "flashFired",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "orientation",
+            "columnName": "orientation",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "extractedAt",
+            "columnName": "extractedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["mediaUid"]
+        }
+      },
+      {
+        "tableName": "health_snapshots",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `note_id` TEXT, `heart_rate_bpm` INTEGER, `heart_rate_variability_ms` REAL, `step_count` INTEGER, `stress_level` REAL, `cumulative_calories` REAL, `timestamp` INTEGER NOT NULL, `source` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noteId",
+            "columnName": "note_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "heartRateBpm",
+            "columnName": "heart_rate_bpm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "heartRateVariabilityMs",
+            "columnName": "heart_rate_variability_ms",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "stepCount",
+            "columnName": "step_count",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "stressLevel",
+            "columnName": "stress_level",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "cumulativeCalories",
+            "columnName": "cumulative_calories",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_health_snapshots_note_id",
+            "unique": false,
+            "columnNames": ["note_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_snapshots_note_id` ON `${TABLE_NAME}` (`note_id`)"
+          },
+          {
+            "name": "index_health_snapshots_timestamp",
+            "unique": false,
+            "columnNames": ["timestamp"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_snapshots_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          }
+        ]
+      },
+      {
+        "tableName": "postcards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `modified_at` INTEGER NOT NULL, `source_moment_ref` TEXT, `document_json` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAt",
+            "columnName": "modified_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceMomentRef",
+            "columnName": "source_moment_ref",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "documentJson",
+            "columnName": "document_json",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_postcards_modified_at",
+            "unique": false,
+            "columnNames": ["modified_at"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postcards_modified_at` ON `${TABLE_NAME}` (`modified_at`)"
+          },
+          {
+            "name": "index_postcards_source_moment_ref",
+            "unique": false,
+            "columnNames": ["source_moment_ref"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_postcards_source_moment_ref` ON `${TABLE_NAME}` (`source_moment_ref`)"
+          }
+        ]
+      },
+      {
+        "tableName": "stickers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `source_photo_uri` TEXT NOT NULL, `source_moment_ref` TEXT, `image_uri` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `label` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourcePhotoUri",
+            "columnName": "source_photo_uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceMomentRef",
+            "columnName": "source_moment_ref",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "imageUri",
+            "columnName": "image_uri",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_stickers_created_at",
+            "unique": false,
+            "columnNames": ["created_at"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_stickers_created_at` ON `${TABLE_NAME}` (`created_at`)"
+          },
+          {
+            "name": "index_stickers_source_moment_ref",
+            "unique": false,
+            "columnNames": ["source_moment_ref"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_stickers_source_moment_ref` ON `${TABLE_NAME}` (`source_moment_ref`)"
+          }
+        ]
+      },
+      {
+        "tableName": "search_index_metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `schemaVersion` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `lastRebuiltAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schemaVersion",
+            "columnName": "schemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generation",
+            "columnName": "generation",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRebuiltAt",
+            "columnName": "lastRebuiltAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        }
+      },
+      {
+        "tableName": "events",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `start_time` INTEGER NOT NULL, `end_time` INTEGER, `is_all_day` INTEGER NOT NULL, `place_id` TEXT, `cover_image_uri` TEXT, `external_calendar_id` TEXT, `external_calendar_source` TEXT, `created` INTEGER NOT NULL, `last_updated` INTEGER NOT NULL, `sync_version` INTEGER NOT NULL, `last_synced` INTEGER, `deleted_at` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`place_id`) REFERENCES `places`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "start_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "end_time",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isAllDay",
+            "columnName": "is_all_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "placeId",
+            "columnName": "place_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "coverImageUri",
+            "columnName": "cover_image_uri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "externalCalendarId",
+            "columnName": "external_calendar_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "externalCalendarSource",
+            "columnName": "external_calendar_source",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "last_updated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "sync_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "last_synced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deleted_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_events_start_time",
+            "unique": false,
+            "columnNames": ["start_time"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_events_start_time` ON `${TABLE_NAME}` (`start_time`)"
+          },
+          {
+            "name": "index_events_place_id",
+            "unique": false,
+            "columnNames": ["place_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_events_place_id` ON `${TABLE_NAME}` (`place_id`)"
+          },
+          {
+            "name": "index_events_external_calendar_id",
+            "unique": false,
+            "columnNames": ["external_calendar_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_events_external_calendar_id` ON `${TABLE_NAME}` (`external_calendar_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "places",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["place_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "event_note_links",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`event_id` TEXT NOT NULL, `note_id` TEXT NOT NULL, `sync_version` INTEGER NOT NULL, `last_synced` INTEGER, `deleted_at` INTEGER, PRIMARY KEY(`event_id`, `note_id`), FOREIGN KEY(`event_id`) REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "eventId",
+            "columnName": "event_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noteId",
+            "columnName": "note_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "sync_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSynced",
+            "columnName": "last_synced",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deleted_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["event_id", "note_id"]
+        },
+        "indices": [
+          {
+            "name": "index_event_note_links_event_id",
+            "unique": false,
+            "columnNames": ["event_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_event_note_links_event_id` ON `${TABLE_NAME}` (`event_id`)"
+          },
+          {
+            "name": "index_event_note_links_note_id",
+            "unique": false,
+            "columnNames": ["note_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_event_note_links_note_id` ON `${TABLE_NAME}` (`note_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "events",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["event_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "audio_tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `soundName` TEXT NOT NULL, `confidence` REAL NOT NULL, `startMs` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, `created` INTEGER NOT NULL, `id` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`noteId`) REFERENCES `audio_notes`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "soundName",
+            "columnName": "soundName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startMs",
+            "columnName": "startMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_audio_tags_noteId",
+            "unique": false,
+            "columnNames": ["noteId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_tags_noteId` ON `${TABLE_NAME}` (`noteId`)"
+          },
+          {
+            "name": "index_audio_tags_soundName",
+            "unique": false,
+            "columnNames": ["soundName"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_audio_tags_soundName` ON `${TABLE_NAME}` (`soundName`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "audio_notes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["noteId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "rewind_prompt_responses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rewindId` TEXT NOT NULL, `promptKey` TEXT NOT NULL, `observation` TEXT NOT NULL, `invitation` TEXT NOT NULL, `responseText` TEXT NOT NULL, `created` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`rewindId`, `promptKey`), FOREIGN KEY(`rewindId`) REFERENCES `rewinds`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "rewindId",
+            "columnName": "rewindId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "promptKey",
+            "columnName": "promptKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observation",
+            "columnName": "observation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "invitation",
+            "columnName": "invitation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "responseText",
+            "columnName": "responseText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["rewindId", "promptKey"]
+        },
+        "indices": [
+          {
+            "name": "index_rewind_prompt_responses_rewindId",
+            "unique": false,
+            "columnNames": ["rewindId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rewind_prompt_responses_rewindId` ON `${TABLE_NAME}` (`rewindId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "rewinds",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["rewindId"],
+            "referencedColumns": ["uid"]
+          }
+        ]
+      },
+      {
+        "tableName": "people",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `photo_uri` TEXT, `aliases` TEXT NOT NULL, `relationship_label` TEXT, `notes` TEXT, `origin` TEXT NOT NULL, `contact_lookup_key` TEXT, `created` INTEGER NOT NULL, `last_updated` INTEGER NOT NULL, `deleted_at` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoUri",
+            "columnName": "photo_uri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "aliases",
+            "columnName": "aliases",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relationshipLabel",
+            "columnName": "relationship_label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "origin",
+            "columnName": "origin",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactLookupKey",
+            "columnName": "contact_lookup_key",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "last_updated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deleted_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_people_name",
+            "unique": false,
+            "columnNames": ["name"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_people_name` ON `${TABLE_NAME}` (`name`)"
+          },
+          {
+            "name": "index_people_contact_lookup_key",
+            "unique": true,
+            "columnNames": ["contact_lookup_key"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_people_contact_lookup_key` ON `${TABLE_NAME}` (`contact_lookup_key`)"
+          },
+          {
+            "name": "index_people_origin",
+            "unique": false,
+            "columnNames": ["origin"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_people_origin` ON `${TABLE_NAME}` (`origin`)"
+          }
+        ]
+      },
+      {
+        "tableName": "inferred_person_clusters",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `display_name_hint` TEXT NOT NULL, `normalized_name` TEXT NOT NULL, `status` TEXT NOT NULL, `linked_person_id` TEXT, `created` INTEGER NOT NULL, `last_updated` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`linked_person_id`) REFERENCES `people`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayNameHint",
+            "columnName": "display_name_hint",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "normalizedName",
+            "columnName": "normalized_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedPersonId",
+            "columnName": "linked_person_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "last_updated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_inferred_person_clusters_status",
+            "unique": false,
+            "columnNames": ["status"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_inferred_person_clusters_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_inferred_person_clusters_linked_person_id",
+            "unique": false,
+            "columnNames": ["linked_person_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_inferred_person_clusters_linked_person_id` ON `${TABLE_NAME}` (`linked_person_id`)"
+          },
+          {
+            "name": "index_inferred_person_clusters_normalized_name",
+            "unique": false,
+            "columnNames": ["normalized_name"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_inferred_person_clusters_normalized_name` ON `${TABLE_NAME}` (`normalized_name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "people",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["linked_person_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "inferred_person_evidence",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `cluster_id` TEXT NOT NULL, `source_type` TEXT NOT NULL, `source_id` TEXT NOT NULL, `label` TEXT, `confidence` REAL NOT NULL, `created` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`cluster_id`) REFERENCES `inferred_person_clusters`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clusterId",
+            "columnName": "cluster_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "source_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "source_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_inferred_person_evidence_cluster_id",
+            "unique": false,
+            "columnNames": ["cluster_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_inferred_person_evidence_cluster_id` ON `${TABLE_NAME}` (`cluster_id`)"
+          },
+          {
+            "name": "index_inferred_person_evidence_source_type_source_id",
+            "unique": false,
+            "columnNames": ["source_type", "source_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_inferred_person_evidence_source_type_source_id` ON `${TABLE_NAME}` (`source_type`, `source_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "inferred_person_clusters",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["cluster_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "person_links",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `person_id` TEXT NOT NULL, `target_type` TEXT NOT NULL, `target_id` TEXT NOT NULL, `provenance` TEXT NOT NULL, `confidence` REAL NOT NULL, `status` TEXT NOT NULL, `created` INTEGER NOT NULL, `last_updated` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`person_id`) REFERENCES `people`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personId",
+            "columnName": "person_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetType",
+            "columnName": "target_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetId",
+            "columnName": "target_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "provenance",
+            "columnName": "provenance",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confidence",
+            "columnName": "confidence",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "last_updated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_person_links_person_id",
+            "unique": false,
+            "columnNames": ["person_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_person_links_person_id` ON `${TABLE_NAME}` (`person_id`)"
+          },
+          {
+            "name": "index_person_links_target_type_target_id",
+            "unique": false,
+            "columnNames": ["target_type", "target_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_person_links_target_type_target_id` ON `${TABLE_NAME}` (`target_type`, `target_id`)"
+          },
+          {
+            "name": "index_person_links_status",
+            "unique": false,
+            "columnNames": ["status"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_person_links_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_person_links_provenance",
+            "unique": false,
+            "columnNames": ["provenance"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_person_links_provenance` ON `${TABLE_NAME}` (`provenance`)"
+          },
+          {
+            "name": "index_person_links_person_id_target_type_target_id",
+            "unique": true,
+            "columnNames": ["person_id", "target_type", "target_id"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_person_links_person_id_target_type_target_id` ON `${TABLE_NAME}` (`person_id`, `target_type`, `target_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "people",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": ["person_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "person_resolution_decisions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `normalized_name` TEXT NOT NULL, `action` TEXT NOT NULL, `person_id` TEXT, `created` INTEGER NOT NULL, `last_updated` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`person_id`) REFERENCES `people`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "normalizedName",
+            "columnName": "normalized_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "action",
+            "columnName": "action",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personId",
+            "columnName": "person_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "created",
+            "columnName": "created",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "last_updated",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_person_resolution_decisions_normalized_name",
+            "unique": true,
+            "columnNames": ["normalized_name"],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_person_resolution_decisions_normalized_name` ON `${TABLE_NAME}` (`normalized_name`)"
+          },
+          {
+            "name": "index_person_resolution_decisions_person_id",
+            "unique": false,
+            "columnNames": ["person_id"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_person_resolution_decisions_person_id` ON `${TABLE_NAME}` (`person_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "people",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": ["person_id"],
+            "referencedColumns": ["id"]
+          }
+        ]
+      },
+      {
+        "tableName": "marked_moments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, `timeZoneId` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `locationAccuracy` REAL, `heartRateBpm` INTEGER, `state` TEXT NOT NULL, `caption` TEXT NOT NULL, `resolvedNoteIds` TEXT NOT NULL, `originDeviceId` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, `syncVersion` INTEGER NOT NULL, `deletedAt` INTEGER, `capturedDuring` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "timeZoneId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationAccuracy",
+            "columnName": "locationAccuracy",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "heartRateBpm",
+            "columnName": "heartRateBpm",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caption",
+            "columnName": "caption",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resolvedNoteIds",
+            "columnName": "resolvedNoteIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originDeviceId",
+            "columnName": "originDeviceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncVersion",
+            "columnName": "syncVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "capturedDuring",
+            "columnName": "capturedDuring",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1200401bc7855e2faf599f873c7d1e03')"
+    ]
+  }
+}
