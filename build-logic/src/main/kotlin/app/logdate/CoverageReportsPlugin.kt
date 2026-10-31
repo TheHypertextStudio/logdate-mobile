@@ -11,7 +11,8 @@ import org.gradle.testing.jacoco.tasks.JacocoReport
 /**
  * Repository-wide coverage, applied to the root project as `id("app.logdate.coverage-reports")`.
  *
- * Configures Kover's total report, which `koverVerify` holds to [MINIMUM_LINE_COVERAGE]. Two JaCoCo
+ * Kover's total report merges every module that applies Kover, and `koverVerify` holds that merged
+ * line coverage to [MINIMUM_LINE_COVERAGE]. Two JaCoCo
  * reports cover code that Kover cannot measure: the Wear synced-audio feature, exercised by the
  * phone and watch unit tests, and the Android media manager, exercised by instrumentation on the
  * managed tablet.
@@ -20,6 +21,7 @@ class CoverageReportsPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.pluginManager.apply("org.jetbrains.kotlinx.kover")
         project.pluginManager.apply("jacoco")
+        mergeKoverModules(project)
         configureKover(project)
         configureFeatureCoverageModules(project)
         registerFeatureCoverageReport(project)
@@ -29,6 +31,16 @@ class CoverageReportsPlugin : Plugin<Project> {
     companion object {
         /** The merged line coverage `koverVerify` requires, in percent. */
         const val MINIMUM_LINE_COVERAGE = 70
+    }
+}
+
+/** Adds each module that applies Kover to the root's merged report as it applies the plugin. */
+private fun mergeKoverModules(project: Project) {
+    project.subprojects {
+        val module = this
+        pluginManager.withPlugin("org.jetbrains.kotlinx.kover") {
+            project.dependencies.add("kover", module)
+        }
     }
 }
 
