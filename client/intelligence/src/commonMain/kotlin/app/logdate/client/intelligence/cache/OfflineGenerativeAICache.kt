@@ -4,12 +4,18 @@ import app.logdate.client.intelligence.MAX_AI_INPUT_CHARACTERS
 import app.logdate.client.util.platformIODispatcher
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * A generative AI cache that stores entries using the device's local persistent storage.
+ *
+ * The size of each stored entry is kept in memory after the first write, so enforcing the
+ * persistent limits never lists and decodes the whole cache again.
  */
 class OfflineGenerativeAICache(
     private val dataSource: AICacheLocalDataSource,
@@ -23,6 +29,9 @@ class OfflineGenerativeAICache(
         ),
     private val ioDispatcher: CoroutineDispatcher = platformIODispatcher,
 ) : GenerativeAICache {
+    private val indexMutex = Mutex()
+    private var persistentIndex: MutableMap<String, StoredEntrySize>? = null
+
     override suspend fun getEntry(request: GenerativeAICacheRequest): GenerativeAICacheEntry? {
         return withContext(ioDispatcher) {
             if (request.inputText.length > MAX_AI_INPUT_CHARACTERS) return@withContext null
@@ -43,7 +52,7 @@ class OfflineGenerativeAICache(
                 return@withContext null
             }
             if (!isEntryValid(entry, cacheKey, request)) {
-                removeEntry(cacheKey.value)
+                indexMutex.withLock { removeEntry(cacheKey.value) }
                 return@withContext null
             }
             memoryStore.put(cacheKey.value, entry)
@@ -81,11 +90,16 @@ class OfflineGenerativeAICache(
                 metadata = metadata,
             )
         memoryStore.put(cacheKey.value, entry)
-        runCatching { dataSource.set(cacheKey.value, entry) }
-            .onFailure { error ->
-                Napier.w(message = "Failed to write AI cache entry ${cacheKey.value}", throwable = error)
-            }
-        enforcePersistentLimits()
+        val stored =
+            runCatching { dataSource.set(cacheKey.value, entry) }
+                .onFailure { error ->
+                    Napier.w(message = "Failed to write AI cache entry ${cacheKey.value}", throwable = error)
+                }.isSuccess
+        indexMutex.withLock {
+            val index = loadIndex()
+            if (stored) index[cacheKey.value] = StoredEntrySize(entry.lastUpdated, metadata.expiresAt, metadata.contentBytes)
+            enforcePersistentLimits(index)
+        }
     }
 
     override suspend fun purge() =
@@ -95,6 +109,7 @@ class OfflineGenerativeAICache(
                 .onFailure { error ->
                     Napier.w(message = "Failed to purge AI cache", throwable = error)
                 }
+            indexMutex.withLock { persistentIndex = null }
             Unit
         }
 
@@ -130,47 +145,57 @@ class OfflineGenerativeAICache(
         return true
     }
 
+    /** Call with [indexMutex] held. */
     private fun removeEntry(key: String) {
         memoryStore.remove(key)
         runCatching { dataSource.remove(key) }
             .onFailure { error ->
                 Napier.w(message = "Failed to remove AI cache entry $key", throwable = error)
             }
+        persistentIndex?.remove(key)
     }
 
-    private fun enforcePersistentLimits() {
-        val entries =
+    /** Call with [indexMutex] held. Lists the stored entries only the first time. */
+    private fun loadIndex(): MutableMap<String, StoredEntrySize> {
+        persistentIndex?.let { return it }
+        val stored =
             runCatching { dataSource.entries() }
                 .onFailure { error ->
                     Napier.w(message = "Failed to list AI cache entries", throwable = error)
                 }.getOrDefault(emptyList())
-        if (entries.isEmpty()) {
-            return
-        }
+        val index =
+            stored.associateTo(mutableMapOf()) { entry ->
+                entry.key to StoredEntrySize(entry.lastUpdated, entry.metadata.expiresAt, entry.metadata.contentBytes)
+            }
+        persistentIndex = index
+        return index
+    }
 
+    /** Call with [indexMutex] held. Removes expired entries, then the oldest until the limits hold. */
+    private fun enforcePersistentLimits(index: MutableMap<String, StoredEntrySize>) {
         val now = clock.now()
-        val mutableEntries = entries.toMutableList()
-        val expired = mutableEntries.filter { it.metadata.expiresAt <= now }
-        if (expired.isNotEmpty()) {
-            expired.forEach { removeEntry(it.key) }
-            mutableEntries.removeAll(expired.toSet())
-        }
+        val expired = index.filterValues { it.expiresAt <= now }.keys
+        expired.forEach(::removeEntry)
 
-        var totalBytes = mutableEntries.sumOf { it.metadata.contentBytes }
-        if (mutableEntries.size <= config.persistentMaxEntries && totalBytes <= config.persistentMaxBytes) {
+        var totalBytes = index.values.sumOf { it.contentBytes }
+        if (index.size <= config.persistentMaxEntries && totalBytes <= config.persistentMaxBytes) {
             return
         }
-
-        val sortedByAge = mutableEntries.sortedBy { it.lastUpdated }
-        for (entry in sortedByAge) {
-            if (mutableEntries.size <= config.persistentMaxEntries && totalBytes <= config.persistentMaxBytes) {
+        val oldestFirst = index.entries.sortedBy { it.value.lastUpdated }.map { it.key to it.value.contentBytes }
+        for ((key, bytes) in oldestFirst) {
+            if (index.size <= config.persistentMaxEntries && totalBytes <= config.persistentMaxBytes) {
                 break
             }
-            removeEntry(entry.key)
-            mutableEntries.remove(entry)
-            totalBytes -= entry.metadata.contentBytes
+            removeEntry(key)
+            totalBytes -= bytes
         }
     }
+
+    private data class StoredEntrySize(
+        val lastUpdated: Instant,
+        val expiresAt: Instant,
+        val contentBytes: Long,
+    )
 
     private fun GenerativeAICacheRequest.toKeyInput(): AICacheKeyInput =
         AICacheKeyInput(
