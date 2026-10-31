@@ -113,23 +113,23 @@ class IosMediaManager(
     override suspend fun addToDefaultCollection(uri: String) =
         withContext(Dispatchers.Default) {
             if (uri.isPhotoLibraryUri()) {
-                val payload =
-                    runCatching { photoLibrary.readPhotoLibraryPayload(uri.photoLibraryLocalIdentifier()) }
-                        .getOrElse { error ->
-                            Napier.e("Failed to copy photo-library media into app storage", error)
-                            return@withContext
-                        }
+                val exported =
+                    try {
+                        photoLibrary.exportPhotoLibraryAsset(uri.photoLibraryLocalIdentifier())
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (error: Exception) {
+                        Napier.e("Failed to copy photo-library media into app storage", error)
+                        return@withContext
+                    }
 
                 ensureMediaDir()
                 val targetName =
                     "${uri.photoLibraryLocalIdentifier()?.sanitizeForPath() ?: Uuid.random()}-" +
-                        payload.fileName.sanitizeForPath()
+                        exported.fileName.sanitizeForPath()
                 val destination = buildMediaPath(targetName)
-                if (!fileManager.fileExistsAtPath(destination)) {
-                    val data = payload.data.toNSData()
-                    if (!data.writeToFile(destination, true)) {
-                        Napier.e("Failed to write copied photo-library media to $destination")
-                    }
+                if (!fileManager.fileExistsAtPath(destination) && !fileManager.copyItemAtPath(exported.path, destination, error = null)) {
+                    Napier.e("Failed to write copied photo-library media to $destination")
                 }
                 return@withContext
             }
@@ -163,11 +163,14 @@ class IosMediaManager(
             )
         }
 
-    override suspend fun openMedia(uri: String): MediaFileSource {
-        // Photo library assets are only reachable through PhotoKit, which hands back whole
-        // payloads rather than a file to stream.
-        if (uri.isPhotoLibraryUri()) return super.openMedia(uri)
-        return withContext(Dispatchers.Default) {
+    override suspend fun openMedia(uri: String): MediaFileSource =
+        withContext(Dispatchers.Default) {
+            if (uri.isPhotoLibraryUri()) {
+                val exported = photoLibrary.exportPhotoLibraryAsset(uri.photoLibraryLocalIdentifier())
+                val path = Path(exported.path)
+                val sizeBytes = SystemFileSystem.metadataOrNull(path)?.size ?: error("Unable to read media at $uri")
+                return@withContext MediaFileSource(exported.fileName, exported.mimeType, sizeBytes) { SystemFileSystem.source(path) }
+            }
             val path = Path(resolvePath(uri) ?: error("Invalid media URI: $uri"))
             val sizeBytes = SystemFileSystem.metadataOrNull(path)?.size ?: error("Unable to read media at $uri")
             MediaFileSource(
@@ -176,7 +179,6 @@ class IosMediaManager(
                 sizeBytes = sizeBytes,
             ) { SystemFileSystem.source(path) }
         }
-    }
 
     override suspend fun saveMedia(payload: MediaPayload): String =
         withContext(Dispatchers.Default) {

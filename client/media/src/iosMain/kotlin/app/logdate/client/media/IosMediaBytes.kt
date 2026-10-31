@@ -13,21 +13,6 @@ internal fun ByteArray.toNSData(): NSData =
         NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
     }
 
-internal fun List<ByteArray>.flattenToNSData(): NSData {
-    if (isEmpty()) {
-        return ByteArray(0).toNSData()
-    }
-
-    val totalSize = sumOf { it.size }
-    val flattened = ByteArray(totalSize)
-    var offset = 0
-    for (chunk in this) {
-        chunk.copyInto(flattened, destinationOffset = offset)
-        offset += chunk.size
-    }
-    return flattened.toNSData()
-}
-
 internal fun NSData.toByteArray(): ByteArray {
     val length = this.length.toInt()
     if (length == 0) {
