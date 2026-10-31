@@ -6,6 +6,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import java.security.KeyPair
 import java.security.MessageDigest
@@ -106,41 +107,44 @@ class OAuthGrantLimitsTest {
         }
 
     @Test
-    fun `a DPoP proof cannot be used twice`() {
-        val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
-        val verifier = OAuthDpopVerifier(clock = clock)
-        val proof = createDpopProof(generateP256KeyPair(), "POST", HTU_TOKEN, iat = clock.now().epochSeconds)
+    fun `a DPoP proof cannot be used twice`() =
+        runBlocking<Unit> {
+            val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
+            val verifier = OAuthDpopVerifier(clock = clock)
+            val proof = createDpopProof(generateP256KeyPair(), "POST", HTU_TOKEN, iat = clock.now().epochSeconds)
 
-        verifier.verify(proof, "POST", HTU_TOKEN).getOrThrow()
-        val replay = verifier.verify(proof, "POST", HTU_TOKEN).exceptionOrNull()
+            verifier.verify(proof, "POST", HTU_TOKEN).getOrThrow()
+            val replay = verifier.verify(proof, "POST", HTU_TOKEN).exceptionOrNull()
 
-        assertEquals("DPoP proof has already been used", replay?.message)
-    }
-
-    @Test
-    fun `the in-memory replay store expires each value on its own lifetime`() {
-        val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
-        val store = InMemoryOAuthReplayStore(clock)
-        assertTrue(store.firstUse("pkce:long", 60.minutes))
-        assertTrue(store.firstUse("dpop:short", 1.minutes))
-
-        clock.nowValue = clock.nowValue + 2.minutes
-
-        assertTrue(store.firstUse("dpop:short", 1.minutes), "the short-lived value expired")
-        assertFalse(store.firstUse("pkce:long", 60.minutes), "the long-lived value is still remembered")
-    }
+            assertEquals("DPoP proof has already been used", replay?.message)
+        }
 
     @Test
-    fun `a full in-memory replay store forgets the value that expires soonest`() {
-        val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
-        val store = InMemoryOAuthReplayStore(clock, maxEntries = 2)
-        store.firstUse("pkce:long", 60.minutes)
-        store.firstUse("dpop:short", 1.minutes)
+    fun `the in-memory replay store expires each value on its own lifetime`() =
+        runBlocking<Unit> {
+            val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
+            val store = InMemoryOAuthReplayStore(clock)
+            assertTrue(store.firstUse("pkce:long", 60.minutes))
+            assertTrue(store.firstUse("dpop:short", 1.minutes))
 
-        store.firstUse("dpop:another", 1.minutes)
+            clock.nowValue = clock.nowValue + 2.minutes
 
-        assertFalse(store.firstUse("pkce:long", 60.minutes))
-    }
+            assertTrue(store.firstUse("dpop:short", 1.minutes), "the short-lived value expired")
+            assertFalse(store.firstUse("pkce:long", 60.minutes), "the long-lived value is still remembered")
+        }
+
+    @Test
+    fun `a full in-memory replay store forgets the value that expires soonest`() =
+        runBlocking<Unit> {
+            val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
+            val store = InMemoryOAuthReplayStore(clock, maxEntries = 2)
+            store.firstUse("pkce:long", 60.minutes)
+            store.firstUse("dpop:short", 1.minutes)
+
+            store.firstUse("dpop:another", 1.minutes)
+
+            assertFalse(store.firstUse("pkce:long", 60.minutes))
+        }
 
     @Test
     fun `a client assertion used through one server instance is refused by another`() =

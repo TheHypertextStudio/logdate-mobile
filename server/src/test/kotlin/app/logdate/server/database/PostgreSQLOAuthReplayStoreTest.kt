@@ -30,37 +30,43 @@ class PostgreSQLOAuthReplayStoreTest {
     @Test
     fun `a value used through one store is refused through another sharing the database`() =
         withH2Database(OAuthUsedValuesTable) {
-            val firstInstance = PostgreSQLOAuthReplayStore()
-            val secondInstance = PostgreSQLOAuthReplayStore()
+            runBlocking {
+                val firstInstance = PostgreSQLOAuthReplayStore()
+                val secondInstance = PostgreSQLOAuthReplayStore()
 
-            assertTrue(firstInstance.firstUse("dpop:key:proof-1", 10.minutes))
-            assertFalse(secondInstance.firstUse("dpop:key:proof-1", 10.minutes))
-            assertTrue(secondInstance.firstUse("dpop:key:proof-2", 10.minutes))
+                assertTrue(firstInstance.firstUse("dpop:key:proof-1", 10.minutes))
+                assertFalse(secondInstance.firstUse("dpop:key:proof-1", 10.minutes))
+                assertTrue(secondInstance.firstUse("dpop:key:proof-2", 10.minutes))
+            }
         }
 
     @Test
     fun `only a hash of the value is stored`() =
         withH2Database(OAuthUsedValuesTable) {
-            PostgreSQLOAuthReplayStore().firstUse("pkce:example-challenge", 10.minutes)
+            runBlocking {
+                PostgreSQLOAuthReplayStore().firstUse("pkce:example-challenge", 10.minutes)
 
-            val stored = transaction { OAuthUsedValuesTable.selectAll().single()[OAuthUsedValuesTable.valueHash] }
+                val stored = transaction { OAuthUsedValuesTable.selectAll().single()[OAuthUsedValuesTable.valueHash] }
 
-            assertEquals(64, stored.length)
-            assertFalse("example-challenge" in stored)
+                assertEquals(64, stored.length)
+                assertFalse("example-challenge" in stored)
+            }
         }
 
     @Test
     fun `an expired value can be used again and expired rows are cleaned up`() =
         withH2Database(OAuthUsedValuesTable) {
-            val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
-            val store = PostgreSQLOAuthReplayStore(clock)
-            store.firstUse("pkce:old", 1.minutes)
-            store.firstUse("pkce:other-old", 1.minutes)
+            runBlocking {
+                val clock = MutableClock(Instant.parse("2026-10-19T00:00:00Z"))
+                val store = PostgreSQLOAuthReplayStore(clock)
+                store.firstUse("pkce:old", 1.minutes)
+                store.firstUse("pkce:other-old", 1.minutes)
 
-            clock.nowValue = clock.nowValue + 2.minutes
+                clock.nowValue = clock.nowValue + 2.minutes
 
-            assertTrue(store.firstUse("pkce:old", 1.minutes))
-            assertEquals(1, transaction { OAuthUsedValuesTable.selectAll().count() }, "only the new record is left")
+                assertTrue(store.firstUse("pkce:old", 1.minutes))
+                assertEquals(1, transaction { OAuthUsedValuesTable.selectAll().count() }, "only the new record is left")
+            }
         }
 
     /**
@@ -82,7 +88,7 @@ class PostgreSQLOAuthReplayStoreTest {
                 }
 
             assertEquals(1, accepted.count { it }, "exactly one instance accepts the value")
-            assertFalse(PostgreSQLOAuthReplayStore().firstUse(key, 10.minutes))
+            assertFalse(runBlocking { PostgreSQLOAuthReplayStore().firstUse(key, 10.minutes) })
         } finally {
             transaction { OAuthUsedValuesTable.deleteWhere { valueHash eq replayKeyHash(key) } }
             TransactionManager.defaultDatabase = previous

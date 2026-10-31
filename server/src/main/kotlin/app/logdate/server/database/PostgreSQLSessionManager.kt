@@ -4,8 +4,6 @@ import app.logdate.server.auth.DeviceInfo
 import app.logdate.server.auth.SessionManager
 import app.logdate.server.auth.SessionType
 import app.logdate.server.auth.TemporarySession
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
@@ -13,7 +11,6 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.security.SecureRandom
 import kotlin.time.Clock
@@ -30,35 +27,33 @@ class PostgreSQLSessionManager : SessionManager {
     }
 
     override suspend fun storeSession(session: TemporarySession): String {
-        withContext(Dispatchers.IO) {
-            transaction {
-                SessionsTable.insert {
-                    it[id] = session.id
-                    it[temporaryUserId] = session.temporaryUserId.toJavaUUID()
-                    it[challenge] = session.challenge
-                    it[sessionType] = session.sessionType.name
-                    it[username] = session.username
-                    it[displayName] = session.displayName
-                    it[bio] = session.bio
-                    it[originalBio] = session.originalBio
-                    it[deviceInfo] = session.deviceInfo?.toString()
-                    it[createdAt] = session.createdAt
-                    it[expiresAt] = session.expiresAt
-                    it[isUsed] = session.isUsed
-                }
+        dbQuery {
+            SessionsTable.insert {
+                it[id] = session.id
+                it[temporaryUserId] = session.temporaryUserId.toJavaUUID()
+                it[challenge] = session.challenge
+                it[sessionType] = session.sessionType.name
+                it[username] = session.username
+                it[displayName] = session.displayName
+                it[bio] = session.bio
+                it[originalBio] = session.originalBio
+                it[deviceInfo] = session.deviceInfo?.toString()
+                it[createdAt] = session.createdAt
+                it[expiresAt] = session.expiresAt
+                it[isUsed] = session.isUsed
             }
         }
         return session.id
     }
 
     override suspend fun getSession(sessionId: String): TemporarySession? {
-        return transaction {
+        return dbQuery {
             val sessionRow =
                 SessionsTable
                     .selectAll()
                     .where { SessionsTable.id eq sessionId }
                     .singleOrNull()
-                    ?: return@transaction null
+                    ?: return@dbQuery null
 
             val session = sessionRow.toTemporarySession()
 
@@ -66,7 +61,7 @@ class PostgreSQLSessionManager : SessionManager {
             if (Clock.System.now() > session.expiresAt) {
                 // Remove expired session
                 SessionsTable.deleteWhere { id eq sessionId }
-                return@transaction null
+                return@dbQuery null
             }
 
             session
@@ -74,37 +69,31 @@ class PostgreSQLSessionManager : SessionManager {
     }
 
     override suspend fun markSessionUsed(sessionId: String): Boolean =
-        withContext(Dispatchers.IO) {
-            transaction {
-                val updatedRows =
-                    SessionsTable.update({ SessionsTable.id eq sessionId }) {
-                        it[isUsed] = true
-                    }
-                updatedRows > 0
-            }
+        dbQuery {
+            val updatedRows =
+                SessionsTable.update({ SessionsTable.id eq sessionId }) {
+                    it[isUsed] = true
+                }
+            updatedRows > 0
         }
 
     override suspend fun removeSession(sessionId: String): Boolean =
-        withContext(Dispatchers.IO) {
-            transaction {
-                val deletedRows = SessionsTable.deleteWhere { id eq sessionId }
-                deletedRows > 0
-            }
+        dbQuery {
+            val deletedRows = SessionsTable.deleteWhere { id eq sessionId }
+            deletedRows > 0
         }
 
     override suspend fun cleanupExpiredSessions(): Int =
-        withContext(Dispatchers.IO) {
-            transaction {
-                val now = Clock.System.now()
+        dbQuery {
+            val now = Clock.System.now()
 
-                // Delete expired or used sessions
-                val deletedRows =
-                    SessionsTable.deleteWhere {
-                        (expiresAt less now) or (isUsed eq true)
-                    }
+            // Delete expired or used sessions
+            val deletedRows =
+                SessionsTable.deleteWhere {
+                    (expiresAt less now) or (isUsed eq true)
+                }
 
-                deletedRows
-            }
+            deletedRows
         }
 
     override suspend fun createAccountCreationSession(

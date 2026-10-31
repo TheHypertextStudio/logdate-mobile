@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
@@ -18,7 +17,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class PostgreSQLAccountIdentityRepository : AccountIdentityRepository {
     override suspend fun save(identity: AccountIdentity): AccountIdentity =
-        transaction {
+        dbQuery {
             val existing =
                 AccountIdentitiesTable
                     .selectAll()
@@ -57,7 +56,7 @@ class PostgreSQLAccountIdentityRepository : AccountIdentityRepository {
         provider: IdentityProvider,
         providerSubject: String,
     ): AccountIdentity? =
-        transaction {
+        dbQuery {
             AccountIdentitiesTable
                 .selectAll()
                 .where {
@@ -68,7 +67,7 @@ class PostgreSQLAccountIdentityRepository : AccountIdentityRepository {
         }
 
     override suspend fun findByAccountId(accountId: Uuid): List<AccountIdentity> =
-        transaction {
+        dbQuery {
             AccountIdentitiesTable
                 .selectAll()
                 .where { AccountIdentitiesTable.accountId eq accountId.toJavaUUID() }
@@ -76,7 +75,7 @@ class PostgreSQLAccountIdentityRepository : AccountIdentityRepository {
         }
 
     override suspend fun findByVerifiedEmail(email: String): List<AccountIdentity> =
-        transaction {
+        dbQuery {
             AccountIdentitiesTable
                 .selectAll()
                 .where {
@@ -86,14 +85,14 @@ class PostgreSQLAccountIdentityRepository : AccountIdentityRepository {
         }
 
     override suspend fun touchLastSignIn(identityId: Uuid): Boolean =
-        transaction {
+        dbQuery {
             AccountIdentitiesTable.update({ AccountIdentitiesTable.id eq identityId.toJavaUUID() }) {
                 it[lastSignInAt] = Clock.System.now()
             } > 0
         }
 
     override suspend fun saveLinkEvent(event: AccountLinkEvent): AccountLinkEvent =
-        transaction {
+        dbQuery {
             AccountLinkEventsTable.insert {
                 it[id] = event.id.toJavaUUID()
                 it[accountId] = event.accountId.toJavaUUID()

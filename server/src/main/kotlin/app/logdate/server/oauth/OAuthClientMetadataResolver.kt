@@ -205,7 +205,7 @@ class OAuthClientMetadataResolver(
         return trimmed
     }
 
-    private fun verifyClientAssertion(
+    private suspend fun verifyClientAssertion(
         clientAssertion: String,
         metadata: OAuthClientMetadata,
         authorizationServerIssuer: String,
@@ -224,24 +224,7 @@ class OAuthClientMetadataResolver(
                 EcCurve.K256.jwsAlgorithm -> EcCurve.K256
                 else -> throw OAuthInvalidClientException("Only ES256 and ES256K client assertions are supported")
             }
-        if (claims.iss != metadata.client_id || claims.sub != metadata.client_id) {
-            throw OAuthInvalidClientException("Client assertion iss and sub must both equal client_id")
-        }
-        if (claims.aud != authorizationServerIssuer) {
-            throw OAuthInvalidClientException("Client assertion aud must equal the authorization server issuer")
-        }
-        if (claims.iat > clock.now().epochSeconds + CLIENT_ASSERTION_MAX_FUTURE_SKEW_SECONDS) {
-            throw OAuthInvalidClientException("Client assertion iat is too far in the future")
-        }
-        if (claims.exp <= clock.now().epochSeconds) {
-            throw OAuthInvalidClientException("Client assertion has expired")
-        }
-        if (claims.exp <= claims.iat) {
-            throw OAuthInvalidClientException("Client assertion exp must be after iat")
-        }
-        if (claims.jti.isBlank()) {
-            throw OAuthInvalidClientException("Client assertion must include jti")
-        }
+        claims.requireValid(clientId = metadata.client_id, authorizationServerIssuer = authorizationServerIssuer)
 
         val jwk = metadata.resolveAssertionKey(header.kid)
         val jwkCurve =
@@ -277,8 +260,33 @@ class OAuthClientMetadataResolver(
         )
     }
 
+    private fun OAuthClientAssertionClaims.requireValid(
+        clientId: String,
+        authorizationServerIssuer: String,
+    ) {
+        if (iss != clientId || sub != clientId) {
+            throw OAuthInvalidClientException("Client assertion iss and sub must both equal client_id")
+        }
+        if (aud != authorizationServerIssuer) {
+            throw OAuthInvalidClientException("Client assertion aud must equal the authorization server issuer")
+        }
+        val now = clock.now().epochSeconds
+        if (iat > now + CLIENT_ASSERTION_MAX_FUTURE_SKEW_SECONDS) {
+            throw OAuthInvalidClientException("Client assertion iat is too far in the future")
+        }
+        if (exp <= now) {
+            throw OAuthInvalidClientException("Client assertion has expired")
+        }
+        if (exp <= iat) {
+            throw OAuthInvalidClientException("Client assertion exp must be after iat")
+        }
+        if (jti.isBlank()) {
+            throw OAuthInvalidClientException("Client assertion must include jti")
+        }
+    }
+
     /** Records the assertion's `jti` until the assertion expires, in the store every server instance shares. */
-    private fun markClientAssertionUsed(
+    private suspend fun markClientAssertionUsed(
         clientId: String,
         jti: String,
         expiresAtEpochSeconds: Long,

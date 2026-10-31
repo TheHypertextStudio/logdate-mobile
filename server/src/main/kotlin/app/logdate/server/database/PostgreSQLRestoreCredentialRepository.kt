@@ -6,7 +6,6 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.Base64
 import kotlin.time.Clock
@@ -22,7 +21,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         signCount: Long,
     ): Boolean =
         try {
-            transaction {
+            dbQuery {
                 RestoreCredentialsTable.insert {
                     it[accountId] = userId.toJavaUUID()
                     it[RestoreCredentialsTable.credentialId] = credentialId
@@ -39,7 +38,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         }
 
     override suspend fun findByCredentialId(credentialId: String): StoredRestoreCredentialData? =
-        transaction {
+        dbQuery {
             RestoreCredentialsTable
                 .selectAll()
                 .where {
@@ -57,7 +56,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         }
 
     override suspend fun getCredentialIdsForUser(userId: Uuid): List<String> =
-        transaction {
+        dbQuery {
             RestoreCredentialsTable
                 .selectAll()
                 .where {
@@ -70,7 +69,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         credentialId: String,
         newSignCount: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             RestoreCredentialsTable.update({ RestoreCredentialsTable.credentialId eq credentialId }) {
                 it[signCount] = newSignCount
                 it[lastUsedAt] = Clock.System.now()
@@ -78,7 +77,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         }
 
     override suspend fun deactivate(credentialId: String): Boolean =
-        transaction {
+        dbQuery {
             RestoreCredentialsTable.update({ RestoreCredentialsTable.credentialId eq credentialId }) {
                 it[isActive] = false
                 it[lastUsedAt] = Clock.System.now()
@@ -89,7 +88,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         expected: StoredRestoreCredentialData,
         newSignCount: Long,
     ): Boolean =
-        transaction {
+        dbQuery {
             RestoreCredentialsTable.update({
                 (RestoreCredentialsTable.credentialId eq expected.credentialId) and
                     (RestoreCredentialsTable.isActive eq true) and
@@ -103,7 +102,7 @@ class PostgreSQLRestoreCredentialRepository : RestoreCredentialRepository {
         }
 
     override suspend fun deactivateAllForUser(userId: Uuid): Boolean =
-        transaction {
+        dbQuery {
             RestoreCredentialsTable.update({ RestoreCredentialsTable.accountId eq userId.toJavaUUID() }) {
                 it[isActive] = false
             } > 0

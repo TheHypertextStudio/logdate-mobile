@@ -9,7 +9,6 @@ import org.jetbrains.exposed.v1.core.lessEq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Clock
 import kotlin.time.Duration
 
@@ -21,11 +20,11 @@ import kotlin.time.Duration
 internal class PostgreSQLOAuthReplayStore(
     private val clock: Clock = Clock.System,
 ) : OAuthReplayStore {
-    override fun firstUse(
+    override suspend fun firstUse(
         key: String,
         ttl: Duration,
     ): Boolean =
-        transaction {
+        dbQuery {
             val now = clock.now()
             val hash = replayKeyHash(key)
             removeExpired(now)

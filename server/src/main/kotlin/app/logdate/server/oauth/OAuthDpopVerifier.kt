@@ -29,7 +29,7 @@ class OAuthDpopVerifier(
      * A proof that fails a check is a failed [Result]. A failure to reach the replay store is not
      * about the proof, so it is thrown for the caller to report as a server error.
      */
-    fun verify(
+    suspend fun verify(
         proof: String,
         method: String,
         htu: String,

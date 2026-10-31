@@ -1,5 +1,6 @@
 package app.logdate.server.entitlements
 
+import app.logdate.server.database.dbQuery
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.MapSerializer
@@ -13,7 +14,6 @@ import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 import kotlin.time.Instant
 
@@ -33,7 +33,7 @@ class StoredEntitlementService(
     private val database: Database,
 ) : EntitlementService {
     override suspend fun resolve(accountId: UUID): Entitlement =
-        transaction(database) {
+        dbQuery(database) {
             val row = findAccountEntitlement(accountId)
             val planId = row?.get(AccountEntitlementsTable.planId) ?: FREE_PLAN_ID
             val statusRaw = row?.get(AccountEntitlementsTable.status)
@@ -44,7 +44,7 @@ class StoredEntitlementService(
                     .singleOrNull()
                     ?: run {
                         Napier.w("Entitlement lookup: plan '$planId' missing or inactive; denying by default")
-                        return@transaction Entitlement(
+                        return@dbQuery Entitlement(
                             planId = planId,
                             tier = EntitlementTier.FREE,
                             status = EntitlementStatus.CANCELLED,

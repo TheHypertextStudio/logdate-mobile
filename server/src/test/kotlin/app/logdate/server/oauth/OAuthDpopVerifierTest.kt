@@ -1,5 +1,6 @@
 package app.logdate.server.oauth
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import studio.hypertext.atproto.crypto.EcCurve
@@ -25,149 +26,165 @@ import kotlin.time.Instant
  */
 class OAuthDpopVerifierTest {
     @Test
-    fun `verifier accepts valid proofs and computes token hashes`() {
-        val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
-        val verifier = OAuthDpopVerifier(clock = clock)
-        val keyPair = generateP256KeyPair()
-        val ath = verifier.accessTokenHash("access-token")
-        val proof =
-            createDpopProof(
-                keyPair = keyPair,
-                method = "POST",
-                htu = "https://logdate.app/oauth/token",
-                nonce = "nonce-1",
-                ath = ath,
-                iat = clock.now().epochSeconds,
-            )
-
-        val verified =
-            verifier
-                .verify(
-                    proof = proof,
+    fun `verifier accepts valid proofs and computes token hashes`() =
+        runBlocking<Unit> {
+            val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
+            val verifier = OAuthDpopVerifier(clock = clock)
+            val keyPair = generateP256KeyPair()
+            val ath = verifier.accessTokenHash("access-token")
+            val proof =
+                createDpopProof(
+                    keyPair = keyPair,
                     method = "POST",
                     htu = "https://logdate.app/oauth/token",
-                    expectedNonce = "nonce-1",
-                    expectedAth = ath,
-                ).getOrThrow()
+                    nonce = "nonce-1",
+                    ath = ath,
+                    iat = clock.now().epochSeconds,
+                )
 
-        assertTrue(verified.keyThumbprint.isNotBlank())
-        assertEquals(verified.keyThumbprint, verifier.jwkThumbprint(publicJwk(keyPair)))
-        assertTrue(verified.jwtId.startsWith("proof-"))
-        assertEquals("nonce-1", verified.nonce)
-        assertEquals(verified, verified.copy())
-    }
+            val verified =
+                verifier
+                    .verify(
+                        proof = proof,
+                        method = "POST",
+                        htu = "https://logdate.app/oauth/token",
+                        expectedNonce = "nonce-1",
+                        expectedAth = ath,
+                    ).getOrThrow()
+
+            assertTrue(verified.keyThumbprint.isNotBlank())
+            assertEquals(verified.keyThumbprint, verifier.jwkThumbprint(publicJwk(keyPair)))
+            assertTrue(verified.jwtId.startsWith("proof-"))
+            assertEquals("nonce-1", verified.nonce)
+            assertEquals(verified, verified.copy())
+        }
 
     @Test
-    fun `verifier accepts ES256K proofs`() {
-        val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
-        val verifier = OAuthDpopVerifier(clock = clock)
-        val keyPair = generateK256KeyPair()
-        val proof =
-            createDpopProof(
-                keyPair = keyPair,
-                method = "POST",
-                htu = "https://logdate.app/oauth/token",
-                iat = clock.now().epochSeconds,
-                alg = "ES256K",
-                jwk = publicJwk(keyPair, EcCurve.K256),
-                curve = EcCurve.K256,
+    fun `verifier accepts ES256K proofs`() =
+        runBlocking<Unit> {
+            val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
+            val verifier = OAuthDpopVerifier(clock = clock)
+            val keyPair = generateK256KeyPair()
+            val proof =
+                createDpopProof(
+                    keyPair = keyPair,
+                    method = "POST",
+                    htu = "https://logdate.app/oauth/token",
+                    iat = clock.now().epochSeconds,
+                    alg = "ES256K",
+                    jwk = publicJwk(keyPair, EcCurve.K256),
+                    curve = EcCurve.K256,
+                )
+
+            val verified = verifier.verify(proof, "POST", "https://logdate.app/oauth/token").getOrThrow()
+
+            assertEquals(
+                verifier.jwkThumbprint(publicJwk(keyPair, EcCurve.K256)),
+                verified.keyThumbprint,
             )
-
-        val verified = verifier.verify(proof, "POST", "https://logdate.app/oauth/token").getOrThrow()
-
-        assertEquals(
-            verifier.jwkThumbprint(publicJwk(keyPair, EcCurve.K256)),
-            verified.keyThumbprint,
-        )
-    }
+        }
 
     @Test
-    fun `verifier rejects malformed or mismatched proofs`() {
-        val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
-        val verifier = OAuthDpopVerifier(clock = clock)
-        val keyPair = generateP256KeyPair()
-        val validProof = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds)
-        val wrongMethod = createDpopProof(keyPair, "GET", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds)
-        val wrongUrl = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/revoke", iat = clock.now().epochSeconds)
-        val wrongType = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds, typ = "JWT")
-        val wrongAlg = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds, alg = "HS256")
-        val staleProof = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds - 600)
-        val missingSegments = "not-a-jwt"
-        val tamperedSignature = validProof.substringBeforeLast('.') + ".AAAA"
-        val wrongNonce =
-            createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", nonce = "nonce-2", iat = clock.now().epochSeconds)
-        val wrongAth = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", ath = "bad", iat = clock.now().epochSeconds)
+    fun `verifier rejects malformed or mismatched proofs`() =
+        runBlocking<Unit> {
+            val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
+            val verifier = OAuthDpopVerifier(clock = clock)
+            val keyPair = generateP256KeyPair()
+            val validProof = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds)
+            val wrongMethod = createDpopProof(keyPair, "GET", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds)
+            val wrongUrl = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/revoke", iat = clock.now().epochSeconds)
+            val wrongType = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds, typ = "JWT")
+            val wrongAlg =
+                createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds, alg = "HS256")
+            val staleProof = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", iat = clock.now().epochSeconds - 600)
+            val missingSegments = "not-a-jwt"
+            val tamperedSignature = validProof.substringBeforeLast('.') + ".AAAA"
+            val wrongNonce =
+                createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", nonce = "nonce-2", iat = clock.now().epochSeconds)
+            val wrongAth = createDpopProof(keyPair, "POST", "https://logdate.app/oauth/token", ath = "bad", iat = clock.now().epochSeconds)
 
-        assertIs<OAuthInvalidDpopProofException>(
-            verifier.verify(missingSegments, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
-        )
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(wrongType, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(wrongAlg, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(wrongMethod, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(wrongUrl, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(staleProof, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(
-            verifier.verify(tamperedSignature, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
-        )
-        assertIs<OAuthUseDpopNonceException>(
-            verifier.verify(wrongNonce, "POST", "https://logdate.app/oauth/token", expectedNonce = "nonce-1").exceptionOrNull(),
-        )
-        assertIs<OAuthInvalidDpopProofException>(
-            verifier.verify(wrongAth, "POST", "https://logdate.app/oauth/token", expectedAth = "expected").exceptionOrNull(),
-        )
-    }
-
-    @Test
-    fun `verifier rejects invalid key material and relative urls`() {
-        val verifier = OAuthDpopVerifier()
-        val keyPair = generateP256KeyPair()
-        val relativeUrlProof = createDpopProof(keyPair, "POST", "/oauth/token")
-        val invalidKeyHeader =
-            createDpopProof(
-                keyPair = keyPair,
-                method = "POST",
-                htu = "https://logdate.app/oauth/token",
-                jwk =
-                    DpopPublicJwk(
-                        kty = "RSA",
-                        crv = "P-256",
-                        x = publicJwk(keyPair).x,
-                        y = publicJwk(keyPair).y,
-                    ),
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(missingSegments, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
             )
-
-        assertIs<OAuthInvalidDpopProofException>(
-            verifier.verify(relativeUrlProof, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
-        )
-        assertIs<OAuthInvalidDpopProofException>(
-            verifier.verify(invalidKeyHeader, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
-        )
-    }
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(wrongType, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertIs<OAuthInvalidDpopProofException>(verifier.verify(wrongAlg, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(wrongMethod, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertIs<OAuthInvalidDpopProofException>(verifier.verify(wrongUrl, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(staleProof, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(tamperedSignature, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertIs<OAuthUseDpopNonceException>(
+                verifier.verify(wrongNonce, "POST", "https://logdate.app/oauth/token", expectedNonce = "nonce-1").exceptionOrNull(),
+            )
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(wrongAth, "POST", "https://logdate.app/oauth/token", expectedAth = "expected").exceptionOrNull(),
+            )
+        }
 
     @Test
-    fun `verifier rejects blank jti malformed htu and supports serialized jwks`() {
-        val verifier = OAuthDpopVerifier()
-        val keyPair = generateP256KeyPair()
-        val blankJti =
-            createDpopProof(
-                keyPair = keyPair,
-                method = "POST",
-                htu = "https://logdate.app/oauth/token",
-                jti = "",
-            )
-        val malformedHtu = createDpopProof(keyPair, "POST", ":::")
-        val missingHost = createDpopProof(keyPair, "POST", "https:///oauth/token")
-        val customPort = createDpopProof(keyPair, "POST", "https://logdate.app:444/oauth/token")
-        val jwk = publicJwk(keyPair)
-        val encoded = Json.encodeToString(DpopPublicJwk.serializer(), jwk)
-        val decoded = Json.decodeFromString(DpopPublicJwk.serializer(), encoded)
+    fun `verifier rejects invalid key material and relative urls`() =
+        runBlocking<Unit> {
+            val verifier = OAuthDpopVerifier()
+            val keyPair = generateP256KeyPair()
+            val relativeUrlProof = createDpopProof(keyPair, "POST", "/oauth/token")
+            val invalidKeyHeader =
+                createDpopProof(
+                    keyPair = keyPair,
+                    method = "POST",
+                    htu = "https://logdate.app/oauth/token",
+                    jwk =
+                        DpopPublicJwk(
+                            kty = "RSA",
+                            crv = "P-256",
+                            x = publicJwk(keyPair).x,
+                            y = publicJwk(keyPair).y,
+                        ),
+                )
 
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(blankJti, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(malformedHtu, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertIs<OAuthInvalidDpopProofException>(verifier.verify(missingHost, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
-        assertTrue(verifier.verify(customPort, "POST", "https://logdate.app:444/oauth/token").isSuccess)
-        assertEquals(jwk, decoded)
-    }
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(relativeUrlProof, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(invalidKeyHeader, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+        }
+
+    @Test
+    fun `verifier rejects blank jti malformed htu and supports serialized jwks`() =
+        runBlocking<Unit> {
+            val verifier = OAuthDpopVerifier()
+            val keyPair = generateP256KeyPair()
+            val blankJti =
+                createDpopProof(
+                    keyPair = keyPair,
+                    method = "POST",
+                    htu = "https://logdate.app/oauth/token",
+                    jti = "",
+                )
+            val malformedHtu = createDpopProof(keyPair, "POST", ":::")
+            val missingHost = createDpopProof(keyPair, "POST", "https:///oauth/token")
+            val customPort = createDpopProof(keyPair, "POST", "https://logdate.app:444/oauth/token")
+            val jwk = publicJwk(keyPair)
+            val encoded = Json.encodeToString(DpopPublicJwk.serializer(), jwk)
+            val decoded = Json.decodeFromString(DpopPublicJwk.serializer(), encoded)
+
+            assertIs<OAuthInvalidDpopProofException>(verifier.verify(blankJti, "POST", "https://logdate.app/oauth/token").exceptionOrNull())
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(malformedHtu, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertIs<OAuthInvalidDpopProofException>(
+                verifier.verify(missingHost, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
+            )
+            assertTrue(verifier.verify(customPort, "POST", "https://logdate.app:444/oauth/token").isSuccess)
+            assertEquals(jwk, decoded)
+        }
 
     @Test
     fun `dpop private header and claims models expose getters`() {

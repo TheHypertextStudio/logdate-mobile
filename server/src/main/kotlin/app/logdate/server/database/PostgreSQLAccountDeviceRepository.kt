@@ -11,13 +11,12 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import kotlin.uuid.Uuid
 
 class PostgreSQLAccountDeviceRepository : AccountDeviceRepository {
     override suspend fun list(accountId: Uuid): List<RegisteredDevice> =
-        transaction {
+        dbQuery {
             AccountDevicesTable
                 .selectAll()
                 .where { AccountDevicesTable.accountId eq accountId.toJavaUUID() }
@@ -31,7 +30,7 @@ class PostgreSQLAccountDeviceRepository : AccountDeviceRepository {
         request: RegisterDeviceRequest,
         now: Long,
     ): RegisteredDevice =
-        transaction {
+        dbQuery {
             val owner = accountId.toJavaUUID()
             val id = deviceId.toJavaUUID()
             AccountDevicesTable.insertIgnore {

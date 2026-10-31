@@ -39,6 +39,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
 
 /**
  * A database failure is the server's problem: it is answered as a server error with a stable
@@ -104,7 +105,13 @@ class OAuthServerFailureTest {
             val keyService = OAuthKeyService()
             val tokens = OAuthAccessTokenService(OAuthConfig(issuer = "https://logdate.app"), keyService)
             val nonces = OAuthNonceService()
-            val failingStore = OAuthReplayStore { _, _ -> throw failure }
+            val failingStore =
+                object : OAuthReplayStore {
+                    override suspend fun firstUse(
+                        key: String,
+                        ttl: Duration,
+                    ): Boolean = throw failure
+                }
             val verifier = OAuthDpopVerifier(usedProofs = failingStore)
             application {
                 install(ContentNegotiation) { json() }

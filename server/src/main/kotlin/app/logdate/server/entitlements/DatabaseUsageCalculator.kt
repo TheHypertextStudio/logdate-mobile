@@ -3,11 +3,11 @@ package app.logdate.server.entitlements
 import app.logdate.server.database.AccountStorageUsageTable
 import app.logdate.server.database.LogDateBackupsTable
 import app.logdate.server.database.StorageTotals
+import app.logdate.server.database.dbQuery
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 
 /**
@@ -28,7 +28,7 @@ class DatabaseUsageCalculator(
     override suspend fun storageBytesOutsideSpaces(accountId: UUID): Long = totals(accountId).let { it.mediaBytes + it.backupBytes }
 
     override suspend fun backupCount(accountId: UUID): Int =
-        transaction(database) {
+        dbQuery(database) {
             LogDateBackupsTable
                 .selectAll()
                 .where { LogDateBackupsTable.userId eq accountId }
@@ -36,8 +36,8 @@ class DatabaseUsageCalculator(
                 .toInt()
         }
 
-    private fun totals(accountId: UUID): StorageTotals =
-        transaction(database) {
+    private suspend fun totals(accountId: UUID): StorageTotals =
+        dbQuery(database) {
             AccountStorageUsageTable
                 .select(AccountStorageUsageTable.spaceBytes, AccountStorageUsageTable.mediaBytes, AccountStorageUsageTable.backupBytes)
                 .where { AccountStorageUsageTable.accountId eq accountId }
