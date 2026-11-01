@@ -464,11 +464,17 @@ internal class SyncRetryCoordinator(
 
     /** Legacy global issues cannot be attached to new scoped operations by entity ID. */
     suspend fun retryDeadLetter(id: String) {
-        val record = deadLetterStore.list().firstOrNull { it.id == id } ?: return
-        val type = EntityType.entries.firstOrNull { it.name == record.entityType } ?: return
-        val pending = syncMetadataService.getPendingUploads(type).firstOrNull { record.matches(it) } ?: return
+        retryDeadLetterIfCurrent(id)
+    }
+
+    /** True only when this exact retained operation was made eligible for a retry. */
+    suspend fun retryDeadLetterIfCurrent(id: String): Boolean {
+        val record = deadLetterStore.list().firstOrNull { it.id == id } ?: return false
+        val type = EntityType.entries.firstOrNull { it.name == record.entityType } ?: return false
+        val pending = syncMetadataService.getPendingUploads(type).firstOrNull { record.matches(it) } ?: return false
         retryScheduleStore.clear(type, pending.retryKey())
         deadLetterStore.remove(id)
+        return true
     }
 
     suspend fun discardDeadLetter(id: String) {

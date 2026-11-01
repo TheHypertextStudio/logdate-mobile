@@ -34,6 +34,7 @@ data class QueuedUpload(
     val retryCount: Int,
     val scope: UploadScope? = null,
     val operationId: String? = null,
+    val expectedServerVersion: Long? = null,
 )
 
 /**

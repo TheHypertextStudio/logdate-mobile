@@ -1,0 +1,23 @@
+<resources>
+    <plurals name="sync_review_earlier">
+        <item quantity="one">1 earlier sync issue</item>
+        <item quantity="other">%1$d earlier sync issues</item>
+    </plurals>
+    <string
+    name="sync_review_earlier_explanation"
+  >These earlier records remain saved. They don’t contain enough information for this screen to offer a safe resolution.</string>
+    <string
+    name="sync_issue_interrupted"
+  >The upload was interrupted when LogDate closed.</string>
+    <string name="sync_review_item">Sync item</string>
+    <string name="sync_review_entry">Entry</string>
+    <string name="sync_review_journal">Journal</string>
+    <string name="sync_review_attachment">Attachment</string>
+    <string name="sync_review_draft">Draft</string>
+    <string name="sync_review_context">%1$s · %2$s · %3$s</string>
+    <string name="sync_review_versions">Saved versions of an entry</string>
+    <string name="sync_review_show_versions">Show saved writing</string>
+    <string name="sync_review_hide_versions">Hide saved writing</string>
+    <string name="sync_review_local">Saved local version</string>
+    <string name="sync_review_remote">Downloaded version</string>
+</resources>

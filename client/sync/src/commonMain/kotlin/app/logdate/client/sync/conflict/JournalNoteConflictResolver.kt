@@ -3,11 +3,9 @@ package app.logdate.client.sync.conflict
 import app.logdate.client.repository.journals.CaptureActivity
 import app.logdate.client.repository.journals.CaptureDevice
 import app.logdate.client.repository.journals.JournalNote
-import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.client.repository.journals.withCapturedDuring
 import app.logdate.client.repository.journals.withCapturedOn
 import app.logdate.client.repository.journals.withTimeZoneId
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
@@ -30,8 +28,7 @@ class JournalNoteConflictResolver : ConflictResolver<JournalNote> {
                 capturedOn = local.capturedOn ?: remote.capturedOn,
                 capturedDuring = local.capturedDuring ?: remote.capturedDuring,
             )
-        val localFacts = CaptureFacts(timeZoneId = local.timeZoneId, capturedOn = local.capturedOn, capturedDuring = local.capturedDuring)
-        val resolution = resolveContent(local, remote.withCaptureFactsIfMissing(localFacts), localTimestamp, remoteTimestamp)
+        val resolution = resolveContent(local, remote)
         return resolution.withCaptureFactsFallback(either)
     }
 
@@ -67,8 +64,6 @@ class JournalNoteConflictResolver : ConflictResolver<JournalNote> {
     private fun resolveContent(
         local: JournalNote,
         remote: JournalNote,
-        localTimestamp: Instant,
-        remoteTimestamp: Instant,
     ): ConflictResolution<JournalNote> {
         if (local == remote) {
             return ConflictResolution.KeepRemote(remote)
@@ -94,7 +89,7 @@ class JournalNoteConflictResolver : ConflictResolver<JournalNote> {
                     ConflictResolution.RequiresManualResolution(local, remote, "Handwriting differs between local and remote versions.")
                 }
             }
-            is JournalNote.Text -> resolveText(local, remote as JournalNote.Text, localTimestamp, remoteTimestamp)
+            is JournalNote.Text -> resolveText(local, remote as JournalNote.Text)
             is JournalNote.Image -> resolveMedia(local, remote as JournalNote.Image, "Image")
             is JournalNote.Video -> resolveMedia(local, remote as JournalNote.Video, "Video")
             is JournalNote.Audio -> resolveMedia(local, remote as JournalNote.Audio, "Audio")
@@ -104,43 +99,16 @@ class JournalNoteConflictResolver : ConflictResolver<JournalNote> {
     private fun resolveText(
         local: JournalNote.Text,
         remote: JournalNote.Text,
-        localTimestamp: Instant,
-        remoteTimestamp: Instant,
     ): ConflictResolution<JournalNote> {
         if (local.content == remote.content && local.location == remote.location) {
             return ConflictResolution.KeepRemote(remote)
         }
 
-        if (local.content.contains(remote.content)) {
-            return ConflictResolution.KeepLocal(local)
-        }
-
-        if (remote.content.contains(local.content)) {
-            return ConflictResolution.KeepRemote(remote)
-        }
-
-        val mergedContent =
-            buildString {
-                append(local.content.trimEnd())
-                append("\n\n")
-                append("---\n")
-                append("Merged conflict\n")
-                append("Local: ").append(localTimestamp).append('\n')
-                append("Remote: ").append(remoteTimestamp).append('\n')
-                append("---\n\n")
-                append(remote.content.trimStart())
-            }
-
-        val merged =
-            local.copy(
-                content = mergedContent,
-                lastUpdated = maxOf(local.lastUpdated, remote.lastUpdated, Clock.System.now()),
-                syncVersion = maxOf(local.syncVersion, remote.syncVersion),
-                location = mergeLocation(local.location, remote.location),
-                creationTimestamp = minOf(local.creationTimestamp, remote.creationTimestamp),
-            )
-
-        return ConflictResolution.Merge(merged)
+        return ConflictResolution.RequiresManualResolution(
+            local,
+            remote,
+            "Text differs between local and remote versions.",
+        )
     }
 
     private fun resolveMedia(
@@ -193,21 +161,5 @@ class JournalNoteConflictResolver : ConflictResolver<JournalNote> {
             remote,
             "$label note media reference differs between local and remote versions.",
         )
-    }
-
-    private fun mergeLocation(
-        local: NoteLocation?,
-        remote: NoteLocation?,
-    ): NoteLocation? {
-        if (local == null) return remote
-        if (remote == null) return local
-        if (local == remote) return local
-
-        return when {
-            remote.place != null -> remote
-            local.place != null -> local
-            remote.coordinates != null -> remote
-            else -> local
-        }
     }
 }

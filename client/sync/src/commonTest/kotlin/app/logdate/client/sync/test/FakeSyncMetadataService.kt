@@ -222,6 +222,7 @@ class FakeSyncMetadataService(
                                 null
                             },
                         operationId = operationIds[type to id],
+                        expectedServerVersion = repairVersions[type to id],
                     )
                 }
             }

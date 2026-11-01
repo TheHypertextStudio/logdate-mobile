@@ -17,7 +17,8 @@ internal fun SyncDeadLetterStore.observeQueued(metadata: SyncMetadataService): F
                     issue.entityId == queued.entityId &&
                     issue.scope == queued.scope &&
                     issue.operationId == queued.operationId &&
-                    issue.operation == queued.operation.name
+                    issue.operation == queued.operation.name &&
+                    issue.expectedServerVersion == queued.expectedServerVersion
             }
         }
     }

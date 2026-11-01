@@ -42,29 +42,37 @@ class JournalNoteCaptureDeviceConflictTest {
     }
 
     @Test
-    fun `a remote copy without a device keeps the local device when the remote content wins`() {
-        val resolution = resolve(text("Walk", CaptureDevice.WATCH), text("Walk by the river", null))
-
-        val resolved = assertIs<ConflictResolution.KeepRemote<JournalNote>>(resolution)
-        assertEquals("Walk by the river", (resolved.value as JournalNote.Text).content)
-        assertEquals(CaptureDevice.WATCH, resolved.value.capturedOn)
+    fun `divergent text keeps the local device without filling the remote original`() {
+        val local = text("Walk", CaptureDevice.WATCH)
+        val remote = text("Walk by the river", null)
+        val review = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(resolve(local, remote))
+        assertEquals(local, review.local)
+        assertEquals(remote, review.remote)
+        assertEquals(CaptureDevice.WATCH, review.local.capturedOn)
+        assertEquals(null, review.remote.capturedOn)
     }
 
     @Test
-    fun `a local copy without a device takes the remote device when the local content wins`() {
-        val resolution = resolve(text("Walk by the river", null), text("Walk", CaptureDevice.WATCH))
-
-        val resolved = assertIs<ConflictResolution.KeepLocal<JournalNote>>(resolution)
-        assertEquals(CaptureDevice.WATCH, resolved.value.capturedOn)
+    fun `divergent text keeps the remote device without filling the local original`() {
+        val local = text("Walk by the river", null)
+        val remote = text("Walk", CaptureDevice.WATCH)
+        val review = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(resolve(local, remote))
+        assertEquals(local, review.local)
+        assertEquals(remote, review.remote)
+        assertEquals(null, review.local.capturedOn)
+        assertEquals(CaptureDevice.WATCH, review.remote.capturedOn)
     }
 
     @Test
-    fun `a merge keeps a device from either copy`() {
+    fun `both divergent originals retain their own capture device`() {
         val withLocal = resolve(text("Morning", CaptureDevice.WATCH), text("Evening", null))
         val withRemote = resolve(text("Morning", null), text("Evening", CaptureDevice.WATCH))
-
-        assertEquals(CaptureDevice.WATCH, assertIs<ConflictResolution.Merge<JournalNote>>(withLocal).merged.capturedOn)
-        assertEquals(CaptureDevice.WATCH, assertIs<ConflictResolution.Merge<JournalNote>>(withRemote).merged.capturedOn)
+        val localReview = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(withLocal)
+        val remoteReview = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(withRemote)
+        assertEquals(CaptureDevice.WATCH, localReview.local.capturedOn)
+        assertEquals(null, localReview.remote.capturedOn)
+        assertEquals(null, remoteReview.local.capturedOn)
+        assertEquals(CaptureDevice.WATCH, remoteReview.remote.capturedOn)
     }
 
     @Test

@@ -169,6 +169,8 @@ data class SyncStatus(
     val backgroundWorkLimited: Boolean = false,
     /** Records and attachments not yet recovered, independent of upload progress. */
     val pendingDownloads: Int = 0,
+    /** Retained metadata issues without saved candidates; never described as divergent writing. */
+    val earlierConflictCount: Int = 0,
 )
 
 enum class BackupRequestState {

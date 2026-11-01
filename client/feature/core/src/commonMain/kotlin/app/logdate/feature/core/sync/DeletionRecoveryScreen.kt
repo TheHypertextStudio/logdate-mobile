@@ -33,8 +33,6 @@ import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.sync.DefaultSyncManager
 import app.logdate.client.sync.SyncManager
 import app.logdate.client.sync.conflict.SyncConflictRecord
-import app.logdate.client.sync.metadata.SyncDeadLetterReason
-import app.logdate.client.sync.metadata.effectiveReason
 import app.logdate.feature.journals.ui.detail.VideoNoteViewerContent
 import app.logdate.shared.model.textContent
 import app.logdate.ui.audio.LocalAudioPlaybackState
@@ -46,12 +44,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.sync_issue_connection
-import logdate.client.feature.core.generated.resources.sync_issue_failed
-import logdate.client.feature.core.generated.resources.sync_issue_missing_media
-import logdate.client.feature.core.generated.resources.sync_issue_retry
-import logdate.client.feature.core.generated.resources.sync_issue_sign_in
-import logdate.client.feature.core.generated.resources.sync_issue_too_large
 import logdate.client.feature.core.generated.resources.sync_recovery_empty
 import logdate.client.feature.core.generated.resources.sync_recovery_error
 import logdate.client.feature.core.generated.resources.sync_recovery_explanation
@@ -75,6 +67,7 @@ fun DeletionRecoveryScreen(
     sessions: SessionStorage = koinInject(),
 ) {
     var records by remember { mutableStateOf<List<SyncConflictRecord>>(emptyList()) }
+    var earlierIssues by remember { mutableStateOf(0) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf(false) }
     var savingId by remember { mutableStateOf<String?>(null) }
@@ -85,9 +78,12 @@ fun DeletionRecoveryScreen(
     LaunchedEffect(sessions, refresh) {
         sessions.getSessionFlow().collect {
             records = emptyList()
+            earlierIssues = 0
             loading = true
             try {
-                records = manager.deletionRecovery.list()
+                val review = manager.deletionRecovery.review()
+                records = review.edits
+                earlierIssues = review.earlierIssues
                 error = false
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -118,11 +114,10 @@ fun DeletionRecoveryScreen(
                 }
             }
         }
-    }, { refresh++ }, issues = issues, feedback = feedback, onRetryIssue = { id ->
+    }, { refresh++ }, issues = issues, earlierIssues = earlierIssues, feedback = feedback, onRetryIssue = { id ->
         scope.launch {
             try {
-                syncManager.retryDeadLetter(id)
-                syncManager.sync(startNow = true)
+                if (manager.retryDeadLetterIfCurrent(id)) syncManager.sync(startNow = true)
                 refresh++
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -146,9 +141,11 @@ fun DeletionRecoveryContent(
     issues: List<app.logdate.client.sync.metadata.SyncDeadLetterRecord> = emptyList(),
     onRetryIssue: (String) -> Unit = {},
     feedback: SnackbarHostState? = null,
+    earlierIssues: Int = 0,
 ) {
     SettingsScaffold(title = stringResource(Res.string.sync_recovery_title), onBack = onBack, snackbarHostState = feedback) {
-        if (records.isNotEmpty()) {
+        if (earlierIssues > 0) item { EarlierSyncIssues(earlierIssues) }
+        if (records.any { it.deletedEdit != null }) {
             item {
                 Text(
                     stringResource(Res.string.sync_recovery_explanation),
@@ -166,12 +163,17 @@ fun DeletionRecoveryContent(
                 }
             }
         }
-        if (!loading && !error && records.isEmpty() && issues.isEmpty()) {
+        if (!loading && !error && records.isEmpty() && issues.isEmpty() && earlierIssues == 0) {
             item { Text(stringResource(Res.string.sync_recovery_empty), modifier = Modifier.padding(horizontal = Spacing.lg)) }
         }
-        records.forEach { record ->
+        records.forEachIndexed { index, record ->
+            val pair = record.textVersions
+            if (pair != null) {
+                item(key = "${record.id}:$index:versions") { SavedWritingVersions(pair) }
+                return@forEachIndexed
+            }
             val edit = record.deletedEdit
-            item(key = "${record.id}:summary") {
+            item(key = "${record.id}:$index:summary") {
                 Column(modifier = Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     edit?.journal?.let {
                         Text(it.title, style = MaterialTheme.typography.titleLarge)
@@ -255,37 +257,11 @@ fun DeletionRecoveryContent(
                             }
                         }
                     }
-            items(preview, key = { "${record.id}:${it.uid}" }) { RecoveryNotePreview(it) }
-            item(key = "${record.id}:end") { HorizontalDivider() }
+            items(preview, key = { "${record.id}:$index:${it.uid}" }) { RecoveryNotePreview(it) }
+            item(key = "${record.id}:$index:end") { HorizontalDivider() }
         }
         items(issues, key = { "issue:${it.id}" }) { issue ->
-            Column(modifier = Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                val message =
-                    when (issue.effectiveReason()) {
-                        SyncDeadLetterReason.MISSING_FILE -> {
-                            Res.string.sync_issue_missing_media
-                        }
-
-                        SyncDeadLetterReason.FILE_TOO_LARGE -> {
-                            Res.string.sync_issue_too_large
-                        }
-
-                        SyncDeadLetterReason.SIGN_IN_REQUIRED -> {
-                            Res.string.sync_issue_sign_in
-                        }
-
-                        SyncDeadLetterReason.NETWORK_UNAVAILABLE, SyncDeadLetterReason.SERVER_UNAVAILABLE -> {
-                            Res.string.sync_issue_connection
-                        }
-
-                        else -> {
-                            Res.string.sync_issue_failed
-                        }
-                    }
-                Text(stringResource(message), style = MaterialTheme.typography.bodyLarge)
-                TextButton(onClick = { onRetryIssue(issue.id) }) { Text(stringResource(Res.string.sync_issue_retry)) }
-                HorizontalDivider()
-            }
+            SyncRetryIssueRow(issue, onRetryIssue)
         }
     }
 }

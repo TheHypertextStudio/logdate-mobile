@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Cloud sync -->
     <string name="cloud_sync">Your journal</string>
@@ -6,20 +6,34 @@
     <string name="entry_sync_now">Sync entries</string>
     <string name="cloud_archive_title">Encrypted Cloud archive</string>
     <string name="cloud_archive_checking">Checking archive backup…</string>
-    <string name="cloud_archive_signed_out">Sign in to use Cloud archive backup.</string>
-    <string name="cloud_archive_needs_recovery">Enter your recovery phrase on this device so Cloud archive backup can run.</string>
-    <string name="cloud_archive_never">No encrypted Cloud archive has been saved to this account.</string>
-    <string name="cloud_archive_queued">Archive backup is waiting to start.</string>
+    <string
+    name="cloud_archive_signed_out"
+  >Sign in to use Cloud archive backup.</string>
+    <string
+    name="cloud_archive_needs_recovery"
+  >Enter your recovery phrase on this device so Cloud archive backup can run.</string>
+    <string
+    name="cloud_archive_never"
+  >No encrypted Cloud archive has been saved to this account.</string>
+    <string
+    name="cloud_archive_queued"
+  >Archive backup is waiting to start.</string>
     <string name="cloud_archive_running">Uploading encrypted archive…</string>
-    <string name="cloud_archive_retrying">Archive backup failed and will retry automatically.</string>
+    <string
+    name="cloud_archive_retrying"
+  >Archive backup failed and will retry automatically.</string>
     <string name="cloud_archive_failed">The last archive backup failed.</string>
     <string name="cloud_archive_complete">Last encrypted archive: %1$s</string>
-    <string name="cloud_archive_unavailable">Couldn’t check the Cloud archive. Try again when connected.</string>
+    <string
+    name="cloud_archive_unavailable"
+  >Couldn’t check the Cloud archive. Try again when connected.</string>
     <string name="cloud_archive_start">Back up now</string>
     <string name="cloud_archive_retry">Retry archive backup</string>
     <string name="cloud_archive_previous">Previous archive: %1$s</string>
     <string name="sync_and_backup">Backup</string>
-    <string name="sync_and_backup_description">Back up your entries and keep them available on your devices</string>
+    <string
+    name="sync_and_backup_description"
+  >Back up your entries and keep them available on your devices</string>
     <string name="sync_now">Back up now</string>
     <string name="syncing">Backing up…</string>
     <string name="syncing_remaining">Backing up · %1$d to go</string>
@@ -30,7 +44,9 @@
 
     <!-- Backup status, shared by the timeline's status button, the sync banner, and Sync issues -->
     <string name="sync_status_open">Open backup status</string>
-    <string name="sync_status_progress_percent">Backing up · %1$d percent done</string>
+    <string
+    name="sync_status_progress_percent"
+  >Backing up · %1$d percent done</string>
     <plurals name="sync_status_waiting">
         <item quantity="one">%1$d item waiting to back up</item>
         <item quantity="other">%1$d items waiting to back up</item>
@@ -55,10 +71,16 @@
         <item quantity="one">%1$d item needs attention</item>
         <item quantity="other">%1$d items need attention</item>
     </plurals>
-    <string name="sync_status_failed_items_detail">These changes remain on this device. LogDate keeps trying automatically.</string>
+    <string
+    name="sync_status_failed_items_detail"
+  >These changes remain on this device. LogDate keeps trying automatically.</string>
     <plurals name="sync_status_unreadable_cloud_items">
-        <item quantity="one">%1$d item from another setup can’t be read here</item>
-        <item quantity="other">%1$d items from another setup can’t be read here</item>
+        <item
+      quantity="one"
+    >%1$d item from another setup can’t be read here</item>
+        <item
+      quantity="other"
+    >%1$d items from another setup can’t be read here</item>
     </plurals>
     <!-- Backup status sheet: which items of a group, by title or snippet -->
     <string name="sync_status_item_text_fallback">Entry</string>
@@ -68,21 +90,43 @@
     <string name="sync_status_journal_fallback">Journal</string>
     <string name="sync_status_draft_fallback">Draft</string>
     <string name="sync_status_showing_three_of_items">Showing 3 of %1$d</string>
-    <string name="sync_status_last_attempt_failed">The last attempt didn't finish. LogDate will try again on its own.</string>
-    <string name="sync_status_could_not_start">Couldn't start a backup. Try again, or check Backup settings.</string>
-    <string name="sync_status_queue_unavailable">Couldn't read the list of waiting items. Backup status may be incomplete.</string>
-    <string name="sync_status_unavailable">Can't check backup status right now</string>
-    <string name="sync_status_queued">Backup requested · waiting to start</string>
-    <string name="sync_status_retry_scheduled">Backup will retry automatically</string>
-    <string name="sync_background_limited">Android may delay automatic backup on mobile data. Back up now while LogDate is open, or connect to Wi-Fi.</string>
+    <string
+    name="sync_status_last_attempt_failed"
+  >The last attempt didn't finish. LogDate will try again on its own.</string>
+    <string
+    name="sync_status_could_not_start"
+  >Couldn't start a backup. Try again, or check Backup settings.</string>
+    <string
+    name="sync_status_queue_unavailable"
+  >Couldn't read the list of waiting items. Backup status may be incomplete.</string>
+    <string
+    name="sync_status_unavailable"
+  >Can't check backup status right now</string>
+    <string
+    name="sync_status_queued"
+  >Backup requested · waiting to start</string>
+    <string
+    name="sync_status_retry_scheduled"
+  >Backup will retry automatically</string>
+    <string
+    name="sync_background_limited"
+  >Android may delay automatic backup on mobile data. Back up now while LogDate is open, or connect to Wi-Fi.</string>
     <string name="sync_status_open_settings">Backup settings</string>
 
     <!-- Sync banner: states the user has to act on -->
-    <string name="sync_banner_session_expired">Your session expired. Sign in again to keep your data backed up.</string>
-    <string name="sync_banner_storage_full">Cloud storage is full. Manage your plan to keep syncing.</string>
+    <string
+    name="sync_banner_session_expired"
+  >Your session expired. Sign in again to keep your data backed up.</string>
+    <string
+    name="sync_banner_storage_full"
+  >Cloud storage is full. Manage your plan to keep syncing.</string>
     <plurals name="sync_banner_storage_full_items">
-        <item quantity="one">Cloud storage is full. %1$d item can't upload.</item>
-        <item quantity="other">Cloud storage is full. %1$d items can't upload.</item>
+        <item
+      quantity="one"
+    >Cloud storage is full. %1$d item can't upload.</item>
+        <item
+      quantity="other"
+    >Cloud storage is full. %1$d items can't upload.</item>
     </plurals>
     <plurals name="sync_banner_conflicts">
         <item quantity="one">An edit conflict needs your review.</item>
@@ -90,25 +134,45 @@
     </plurals>
     <string name="sync_banner_review">Review</string>
     <string name="sync_banner_manage">Manage</string>
-    <string name="sync_banner_needs_recovery">Backing up is paused. Enter your recovery phrase to continue.</string>
+    <string
+    name="sync_banner_needs_recovery"
+  >Backing up is paused. Enter your recovery phrase to continue.</string>
     <string name="sync_banner_enter_recovery_phrase">Enter phrase</string>
 
     <!-- Manual sync outcome -->
-    <string name="sync_feedback_needs_account">Sign in to start backing up</string>
+    <string
+    name="sync_feedback_needs_account"
+  >Sign in to start backing up</string>
     <string name="sync_feedback_sign_in_action">Sign in</string>
     <string name="sync_feedback_up_to_date">Everything is backed up</string>
-    <string name="sync_feedback_succeeded">Backed up %1$d · received %2$d</string>
+    <string
+    name="sync_feedback_succeeded"
+  >Backed up %1$d · received %2$d</string>
     <string name="sync_feedback_failed">Couldn't back up: %1$s</string>
-    <string name="sync_feedback_started">Backup requested. Waiting to start.</string>
+    <string
+    name="sync_feedback_started"
+  >Backup requested. Waiting to start.</string>
 
     <!-- Sync promotion -->
     <string name="sync_promotion_title">Keep your journal safe</string>
-    <string name="sync_promotion_description">Sign in to back up your entries and sync them with your other devices</string>
-    <string name="sync_feature_backup">Your signed-in devices stay in sync</string>
-    <string name="sync_feature_access">Access your journals from any device</string>
-    <string name="sync_feature_sync">Changes back up automatically when you’re connected</string>
-    <string name="account_cloud_sync_promotion_description">Connect your account to sync your journals and access them from any signed-in device.</string>
-    <string name="sync_devices_subtitle">Keep your journals, notes, and memories in sync across all your devices.</string>
+    <string
+    name="sync_promotion_description"
+  >Sign in to back up your entries and sync them with your other devices</string>
+    <string
+    name="sync_feature_backup"
+  >Your signed-in devices stay in sync</string>
+    <string
+    name="sync_feature_access"
+  >Access your journals from any device</string>
+    <string
+    name="sync_feature_sync"
+  >Changes back up automatically when you’re connected</string>
+    <string
+    name="account_cloud_sync_promotion_description"
+  >Connect your account to sync your journals and access them from any signed-in device.</string>
+    <string
+    name="sync_devices_subtitle"
+  >Keep your journals, notes, and memories in sync across all your devices.</string>
 
     <!-- Conflicts -->
     <string name="sync_conflicts">Sync Conflicts</string>
@@ -117,52 +181,96 @@
     <string name="conflicts_need_review">%1$d conflict%2$s need review</string>
     <string name="no_conflicts_waiting">No conflicts waiting for review</string>
     <string name="loading_conflicts">Loading conflicts...</string>
-    <string name="showing_three_of_conflicts">Showing 3 of %1$d conflicts</string>
+    <string
+    name="showing_three_of_conflicts"
+  >Showing 3 of %1$d conflicts</string>
 
     <!-- Device management -->
     <string name="device_name">Device Name</string>
     <string name="devices">Devices</string>
     <string name="devices_connected">Connected devices</string>
-    <string name="devices_settings_description">Manage your connected devices</string>
+    <string
+    name="devices_settings_description"
+  >Manage your connected devices</string>
     <string name="connect_device_title">Connect a device</string>
-    <string name="connect_device_description">Scan the code shown on your other device.</string>
+    <string
+    name="connect_device_description"
+  >Scan the code shown on your other device.</string>
     <string name="connect_device_confirmation_title">Connect %1$s?</string>
-    <string name="connect_device_confirmation_help">Check that this code matches the one shown on the other device.</string>
+    <string
+    name="connect_device_confirmation_help"
+  >Check that this code matches the one shown on the other device.</string>
     <string name="connect_device_account">Account: %1$s</string>
     <string name="connect_device_code">Code: %1$s</string>
     <string name="connect_device_confirm">Connect</string>
     <string name="connect_device_reject">Reject</string>
-    <string name="connect_device_scanner_title">Scan the code on your other device</string>
+    <string
+    name="connect_device_scanner_title"
+  >Scan the code on your other device</string>
     <string name="connect_device_scanner_cancel">Cancel</string>
     <string name="connect_device_looking_up">Checking the code…</string>
     <string name="connect_device_connecting">Connecting %1$s…</string>
     <string name="connect_device_success_title">Connection approved</string>
-    <string name="connect_device_success_body">Sync will start automatically on your other device.</string>
+    <string
+    name="connect_device_success_body"
+  >Sync will start automatically on your other device.</string>
     <string name="connect_device_rejected_title">Request rejected</string>
-    <string name="connect_device_rejected_body">Your account and journal were not shared with this device.</string>
+    <string
+    name="connect_device_rejected_body"
+  >Your account and journal were not shared with this device.</string>
     <string name="connect_device_failed_title">Couldn't connect</string>
     <string name="connect_device_done">Done</string>
     <string name="connect_device_scan_again">Scan again</string>
-    <string name="connect_device_rejecting">Rejecting the request from %1$s…</string>
-    <string name="connect_device_error_not_a_code">This QR code isn't a LogDate connection code.</string>
-    <string name="connect_device_error_scan_failed">The code couldn't be scanned. Try again.</string>
-    <string name="connect_device_error_camera_denied">Camera access is off. Allow camera access for LogDate in Settings, then scan the code again.</string>
-    <string name="connect_device_error_signed_out">Sign in on this phone, then scan the code again.</string>
-    <string name="connect_device_error_account_mismatch">This phone's sign-in doesn't match its account. Sign out and sign in again, then scan the code.</string>
-    <string name="connect_device_error_wrong_account_or_expired">This phone is signed in to a different account than the new device, or the request expired. Check the account, then start again on the new device.</string>
-    <string name="connect_device_error_expired">This connection request expired. Start again on the new device.</string>
-    <string name="connect_device_error_already_used">This connection code was already used. Start again on the new device.</string>
-    <string name="connect_device_error_keys_missing">This phone doesn't have your encryption keys yet. Finish setting up sync on this phone, then try again.</string>
-    <string name="connect_device_error_connection_failed">The LogDate server couldn't be reached. Check your connection and try again.</string>
-    <string name="connect_device_error_server">The LogDate server couldn't finish this request. Try again in a moment.</string>
+    <string
+    name="connect_device_rejecting"
+  >Rejecting the request from %1$s…</string>
+    <string
+    name="connect_device_error_not_a_code"
+  >This QR code isn't a LogDate connection code.</string>
+    <string
+    name="connect_device_error_scan_failed"
+  >The code couldn't be scanned. Try again.</string>
+    <string
+    name="connect_device_error_camera_denied"
+  >Camera access is off. Allow camera access for LogDate in Settings, then scan the code again.</string>
+    <string
+    name="connect_device_error_signed_out"
+  >Sign in on this phone, then scan the code again.</string>
+    <string
+    name="connect_device_error_account_mismatch"
+  >This phone's sign-in doesn't match its account. Sign out and sign in again, then scan the code.</string>
+    <string
+    name="connect_device_error_wrong_account_or_expired"
+  >This phone is signed in to a different account than the new device, or the request expired. Check the account, then start again on the new device.</string>
+    <string
+    name="connect_device_error_expired"
+  >This connection request expired. Start again on the new device.</string>
+    <string
+    name="connect_device_error_already_used"
+  >This connection code was already used. Start again on the new device.</string>
+    <string
+    name="connect_device_error_keys_missing"
+  >This phone doesn't have your encryption keys yet. Finish setting up sync on this phone, then try again.</string>
+    <string
+    name="connect_device_error_connection_failed"
+  >The LogDate server couldn't be reached. Check your connection and try again.</string>
+    <string
+    name="connect_device_error_server"
+  >The LogDate server couldn't finish this request. Try again in a moment.</string>
     <string name="this_device">This device</string>
     <string name="loading_devices">Loading devices...</string>
     <string name="last_active_label">Last active: %1$s</string>
-    <string name="enter_a_new_name_for_this_device">Enter a new name for this device:</string>
+    <string
+    name="enter_a_new_name_for_this_device"
+  >Enter a new name for this device:</string>
     <string name="sync_device_remove_label">Remove device</string>
     <string name="sync_device_remove_title">Remove Device</string>
-    <string name="remove_linked_watch_confirmation">Remove &quot;%1$s&quot; from your account? It stops syncing and erases its LogDate data, including any moments it hasn’t sent yet.</string>
-    <string name="remove_device_confirmation">Are you sure you want to remove &quot;%1$s&quot; from your account? This device will no longer receive notifications or sync data.</string>
+    <string
+    name="remove_linked_watch_confirmation"
+  >Remove &quot;%1$s&quot; from your account? It stops syncing and erases its LogDate data, including any moments it hasn’t sent yet.</string>
+    <string
+    name="remove_device_confirmation"
+  >Are you sure you want to remove &quot;%1$s&quot; from your account? This device will no longer receive notifications or sync data.</string>
     <string name="sync_device_rename_label">Rename device</string>
     <string name="sync_device_options_label">Device options</string>
     <string name="sync_device_rename_title">Rename Device</string>
@@ -171,29 +279,69 @@
     <string name="linked_devices_loading">Loading linked devices…</string>
     <string name="linked_device_times">Linked %1$s · Last seen %2$s</string>
     <string name="linked_device_removing">Removing…</string>
-    <string name="linked_devices_error_unreachable">The LogDate server couldn’t be reached to list linked devices. Check your connection.</string>
-    <string name="linked_devices_error_sign_in">Sign in again on this phone to see the devices linked to your account.</string>
-    <string name="linked_devices_error_refused">The LogDate server couldn’t list linked devices (HTTP %1$d).</string>
-    <string name="linked_devices_error_unreadable">The LogDate server’s list of linked devices couldn’t be read.</string>
-    <string name="linked_devices_error_account_changed">The account on this phone changed while linked devices were loading.</string>
-    <string name="linked_devices_error_unexpected">Linked devices couldn’t be loaded.</string>
-    <string name="linked_device_remove_unreachable">The LogDate server couldn’t be reached to remove %1$s. Check your connection.</string>
-    <string name="linked_device_remove_sign_in">Sign in again on this phone to remove %1$s.</string>
-    <string name="linked_device_remove_refused">The LogDate server couldn’t remove %1$s (HTTP %2$d).</string>
-    <string name="linked_device_remove_unreadable">The LogDate server’s answer about removing %1$s couldn’t be read.</string>
-    <string name="linked_device_remove_account_changed">The account on this phone changed while %1$s was being removed.</string>
-    <string name="linked_device_remove_unexpected">%1$s couldn’t be removed.</string>
-    <string name="linked_device_remove_watch_sync">%1$s still has moments to send. Bring it near your phone and try again.</string>
-    <string name="linked_device_remove_watch_revoke">%1$s couldn’t be removed from your account.</string>
-    <string name="linked_device_remove_watch_erase">%1$s was removed from your account, but it couldn’t be asked to erase its LogDate data.</string>
-    <string name="linked_device_remove_watch_forget">%1$s was removed from your account, but this phone couldn’t finish forgetting it.</string>
-    <string name="linked_device_remove_watch_changed">The link with %1$s changed while it was being removed.</string>
-    <string name="linked_device_remove_watch_unfinished">Removing %1$s didn’t finish.</string>
-    <string name="linked_device_erases_on_next_connect">%1$s was removed. It erases its LogDate data the next time it connects to this phone.</string>
+    <string
+    name="linked_devices_error_unreachable"
+  >The LogDate server couldn’t be reached to list linked devices. Check your connection.</string>
+    <string
+    name="linked_devices_error_sign_in"
+  >Sign in again on this phone to see the devices linked to your account.</string>
+    <string
+    name="linked_devices_error_refused"
+  >The LogDate server couldn’t list linked devices (HTTP %1$d).</string>
+    <string
+    name="linked_devices_error_unreadable"
+  >The LogDate server’s list of linked devices couldn’t be read.</string>
+    <string
+    name="linked_devices_error_account_changed"
+  >The account on this phone changed while linked devices were loading.</string>
+    <string
+    name="linked_devices_error_unexpected"
+  >Linked devices couldn’t be loaded.</string>
+    <string
+    name="linked_device_remove_unreachable"
+  >The LogDate server couldn’t be reached to remove %1$s. Check your connection.</string>
+    <string
+    name="linked_device_remove_sign_in"
+  >Sign in again on this phone to remove %1$s.</string>
+    <string
+    name="linked_device_remove_refused"
+  >The LogDate server couldn’t remove %1$s (HTTP %2$d).</string>
+    <string
+    name="linked_device_remove_unreadable"
+  >The LogDate server’s answer about removing %1$s couldn’t be read.</string>
+    <string
+    name="linked_device_remove_account_changed"
+  >The account on this phone changed while %1$s was being removed.</string>
+    <string
+    name="linked_device_remove_unexpected"
+  >%1$s couldn’t be removed.</string>
+    <string
+    name="linked_device_remove_watch_sync"
+  >%1$s still has moments to send. Bring it near your phone and try again.</string>
+    <string
+    name="linked_device_remove_watch_revoke"
+  >%1$s couldn’t be removed from your account.</string>
+    <string
+    name="linked_device_remove_watch_erase"
+  >%1$s was removed from your account, but it couldn’t be asked to erase its LogDate data.</string>
+    <string
+    name="linked_device_remove_watch_forget"
+  >%1$s was removed from your account, but this phone couldn’t finish forgetting it.</string>
+    <string
+    name="linked_device_remove_watch_changed"
+  >The link with %1$s changed while it was being removed.</string>
+    <string
+    name="linked_device_remove_watch_unfinished"
+  >Removing %1$s didn’t finish.</string>
+    <string
+    name="linked_device_erases_on_next_connect"
+  >%1$s was removed. It erases its LogDate data the next time it connects to this phone.</string>
 
     <!-- Debug / developer -->
     <string name="app_version_label">App version: %1$s</string>
-    <string name="app_version_with_build_label">App version: %1$s (%2$d)</string>
+    <string
+    name="app_version_with_build_label"
+  >App version: %1$s (%2$d)</string>
     <string name="detected_timestamp">Detected %1$s</string>
     <string name="platform_label">Platform: %1$s</string>
     <string name="total_usage">Total Usage</string>
@@ -206,42 +354,82 @@
 
 
 
-    <string name="sync_paused_background_data_off">Automatic backup may wait on mobile data</string>
-    <string name="sync_paused_background_data_off_fix">You can still back up while LogDate is open, or connect to Wi-Fi.</string>
-    <string name="sync_paused_offline">Paused — waiting for a connection</string>
+    <string
+    name="sync_paused_background_data_off"
+  >Automatic backup may wait on mobile data</string>
+    <string
+    name="sync_paused_background_data_off_fix"
+  >You can still back up while LogDate is open, or connect to Wi-Fi.</string>
+    <string
+    name="sync_paused_offline"
+  >Paused — waiting for a connection</string>
     <string name="sync_paused_signed_out">Sign in to start backing up</string>
-    <string name="sync_paused_media_waiting_for_wifi">Photos and videos are waiting for Wi-Fi</string>
-    <string name="sync_paused_needs_recovery_phrase">Paused — this device needs your recovery phrase</string>
-    <string name="sync_paused_needs_recovery_phrase_fix">Enter your recovery phrase to keep backing up.</string>
+    <string
+    name="sync_paused_media_waiting_for_wifi"
+  >Photos and videos are waiting for Wi-Fi</string>
+    <string
+    name="sync_paused_needs_recovery_phrase"
+  >Paused — this device needs your recovery phrase</string>
+    <string
+    name="sync_paused_needs_recovery_phrase_fix"
+  >Enter your recovery phrase to keep backing up.</string>
 
     <!-- Recovery phrase entry from Settings -->
     <string name="recovery_phrase_entry_settings_title">Recovery phrase</string>
-    <string name="recovery_phrase_entry_settings_description">Enter the 12-word recovery phrase for your journal to keep backing up on this device.</string>
+    <string
+    name="recovery_phrase_entry_settings_description"
+  >Enter the 12-word recovery phrase for your journal to keep backing up on this device.</string>
     <string name="recovery_phrase_entry_settings_submit">Continue</string>
-    <string name="recovery_phrase_entry_settings_error">Those words aren’t a valid recovery phrase. Check their spelling and order.</string>
-    <string name="recovery_phrase_entry_settings_mismatch_error">This phrase doesn’t unlock this account’s current journal. Check the words or use another signed-in device.</string>
-    <string name="recovery_phrase_entry_settings_unavailable_error">LogDate can’t verify the phrase now. Check your connection and that LogDate is up to date, then retry.</string>
-    <string name="recovery_phrase_entry_settings_no_proof_error">LogDate can’t confirm this phrase for your account. Restore a retained backup or transfer from another signed-in device.</string>
-    <string name="recovery_phrase_entry_settings_retry_error">Couldn’t finish restoring access. Try again; your journal remains protected.</string>
-    <string name="recovery_phrase_entry_settings_word_count_error">Enter all 12 words.</string>
+    <string
+    name="recovery_phrase_entry_settings_error"
+  >Those words aren’t a valid recovery phrase. Check their spelling and order.</string>
+    <string
+    name="recovery_phrase_entry_settings_mismatch_error"
+  >This phrase doesn’t unlock this account’s current journal. Check the words or use another signed-in device.</string>
+    <string
+    name="recovery_phrase_entry_settings_unavailable_error"
+  >LogDate can’t verify the phrase now. Check your connection and that LogDate is up to date, then retry.</string>
+    <string
+    name="recovery_phrase_entry_settings_no_proof_error"
+  >LogDate can’t confirm this phrase for your account. Restore a retained backup or transfer from another signed-in device.</string>
+    <string
+    name="recovery_phrase_entry_settings_retry_error"
+  >Couldn’t finish restoring access. Try again; your journal remains protected.</string>
+    <string
+    name="recovery_phrase_entry_settings_word_count_error"
+  >Enter all 12 words.</string>
     <string name="recovery_phrase_entry_word_number">Word %1$d</string>
     <string name="backing_up_progress">Backing up %1$d of %2$d</string>
     <!-- First sync -->
     <string name="first_sync_running">Backing up your memories…</string>
     <string name="first_sync_progress">Backing up %1$d of %2$d</string>
     <string name="first_sync_success">Everything is backed up</string>
-    <string name="first_sync_partial">Signed in. Some entries are still going up.</string>
-    <string name="first_sync_timed_out">Signed in. Backup hasn't finished yet. Check Backup status for progress.</string>
-    <string name="first_sync_timed_out_progress">Signed in. %1$d of %2$d backed up so far. Check Backup status for the rest.</string>
-    <string name="first_sync_failed">Signed in, but the first backup didn't finish. LogDate will try again.</string>
+    <string
+    name="first_sync_partial"
+  >Signed in. Some entries are still going up.</string>
+    <string
+    name="first_sync_timed_out"
+  >Signed in. Backup hasn't finished yet. Check Backup status for progress.</string>
+    <string
+    name="first_sync_timed_out_progress"
+  >Signed in. %1$d of %2$d backed up so far. Check Backup status for the rest.</string>
+    <string
+    name="first_sync_failed"
+  >Signed in, but the first backup didn't finish. LogDate will try again.</string>
     <plurals name="sync_recovery_waiting">
         <item quantity="one">%1$d item still needs to download</item>
         <item quantity="other">%1$d items still need to download</item>
     </plurals>
-    <string name="sync_recovery_waiting_description">Available entries are ready to read. Recovery is not complete until the remaining entries and attachments are saved on this device.</string>
-    <string name="sync_recovery_unavailable">Recovery status is unavailable. Retry to check what still needs to download.</string>
+    <string
+    name="sync_recovery_waiting_description"
+  >Available entries are ready to read. Recovery is not complete until the remaining entries and attachments are saved on this device.</string>
+    <string
+    name="sync_recovery_unavailable"
+  >Recovery status is unavailable. Retry to check what still needs to download.</string>
     <string name="sync_diagnostic_history_title">Recent sync history</string>
-    <string name="sync_diagnostic_last_success">Last completed step: %1$s</string>
+    <string
+    name="sync_diagnostic_last_success"
+  >Last completed step: %1$s</string>
     <string name="sync_diagnostic_blocker">Last interruption: %1$s</string>
     <string name="sync_diagnostic_next_action">Next step: %1$s</string>
     <string name="sync_diagnostic_unknown">Not established</string>
@@ -251,48 +439,100 @@
     <string name="sync_diagnostic_phase_upload">Uploading entries</string>
     <string name="sync_diagnostic_phase_fetch">Checking for updates</string>
     <string name="sync_diagnostic_phase_persist">Saving updates</string>
-    <string name="sync_diagnostic_phase_apply">Adding updates to your journal</string>
+    <string
+    name="sync_diagnostic_phase_apply"
+  >Adding updates to your journal</string>
     <string name="sync_diagnostic_phase_media">Saving attachments</string>
     <string name="sync_diagnostic_phase_archive">Creating backup</string>
     <string name="sync_diagnostic_phase_restore">Restoring backup</string>
     <string name="sync_diagnostic_phase_recovery">Finishing recovery</string>
     <string name="sync_diagnostic_action_retry">Try syncing again</string>
-    <string name="sync_diagnostic_action_connect">Connect to the internet</string>
+    <string
+    name="sync_diagnostic_action_connect"
+  >Connect to the internet</string>
     <string name="sync_diagnostic_action_sign_in">Sign in again</string>
-    <string name="sync_diagnostic_action_free_space">Free space on this device</string>
-    <string name="sync_diagnostic_action_recover_key">Enter your recovery phrase</string>
-    <string name="sync_diagnostic_action_update_server">Ask your server administrator to update the server</string>
+    <string
+    name="sync_diagnostic_action_free_space"
+  >Free space on this device</string>
+    <string
+    name="sync_diagnostic_action_recover_key"
+  >Enter your recovery phrase</string>
+    <string
+    name="sync_diagnostic_action_update_server"
+  >Ask your server administrator to update the server</string>
     <string name="sync_diagnostic_action_update_app">Update LogDate</string>
-    <string name="sync_diagnostic_action_review_conflict">Review the affected entry</string>
-    <string name="sync_diagnostic_action_contact_support">Contact support</string>
-    <string name="sync_account_retrying">Sync is retrying automatically.</string>
+    <string
+    name="sync_diagnostic_action_review_conflict"
+  >Review the affected entry</string>
+    <string
+    name="sync_diagnostic_action_contact_support"
+  >Contact support</string>
+    <string
+    name="sync_account_retrying"
+  >Sync is retrying automatically.</string>
     <string name="sync_account_mobile_data">Sync using mobile data</string>
     <string name="sync_account_checking">Preparing to sync…</string>
     <string name="sync_account_recovering">Finishing journal recovery…</string>
     <string name="sync_account_waiting">Sync is scheduled.</string>
-    <string name="sync_account_offline">Sync paused: this device is offline. It resumes automatically when connected.</string>
-    <string name="sync_account_server_unavailable">Sync paused: LogDate’s cloud service is unavailable. Retrying automatically.</string>
-    <string name="sync_account_connection_unavailable">Sync paused: unable to connect to LogDate. Retrying automatically.</string>
-    <string name="sync_account_signed_out">Sync paused: sign-in has expired.</string>
-    <string name="sync_account_storage_full">Sync paused: your cloud storage is full.</string>
-    <string name="sync_account_recovery_required">This device needs your recovery phrase to keep syncing.</string>
-    <string name="sync_account_wifi">Photos and recordings will sync when this device is on Wi-Fi.</string>
-    <string name="sync_account_background">Sync paused: background network access is restricted on this device.</string>
-    <string name="sync_account_device_access">Some cloud entries could not be opened on this device. Check another signed-in device for a readable copy.</string>
-    <string name="sync_account_device_link">Sync paused: set up this device from your phone.</string>
-    <string name="sync_account_conflict">Sync could not merge an entry edited on another device. Both copies are saved.</string>
-    <string name="sync_account_local_unavailable">Some local data is unavailable. Your readable journal remains here. If you saved an archive, import it from Settings &gt; Data &amp; Storage.</string>
-    <string name="sync_account_storage_unsupported">Sync paused: your journal is stored in a way this version of LogDate can’t sync. Update LogDate to keep syncing.</string>
+    <string
+    name="sync_account_offline"
+  >Sync paused: this device is offline. It resumes automatically when connected.</string>
+    <string
+    name="sync_account_server_unavailable"
+  >Sync paused: LogDate’s cloud service is unavailable. Retrying automatically.</string>
+    <string
+    name="sync_account_connection_unavailable"
+  >Sync paused: unable to connect to LogDate. Retrying automatically.</string>
+    <string
+    name="sync_account_signed_out"
+  >Sync paused: sign-in has expired.</string>
+    <string
+    name="sync_account_storage_full"
+  >Sync paused: your cloud storage is full.</string>
+    <string
+    name="sync_account_recovery_required"
+  >This device needs your recovery phrase to keep syncing.</string>
+    <string
+    name="sync_account_wifi"
+  >Photos and recordings will sync when this device is on Wi-Fi.</string>
+    <string
+    name="sync_account_background"
+  >Sync paused: background network access is restricted on this device.</string>
+    <string
+    name="sync_account_device_access"
+  >Some cloud entries could not be opened on this device. Check another signed-in device for a readable copy.</string>
+    <string
+    name="sync_account_device_link"
+  >Sync paused: set up this device from your phone.</string>
+    <string
+    name="sync_account_conflict"
+  >An entry has changes that need review before they can sync.</string>
+    <string
+    name="sync_account_local_unavailable"
+  >Some local data is unavailable. Your readable journal remains here. If you saved an archive, import it from Settings &gt; Data &amp; Storage.</string>
+    <string
+    name="sync_account_storage_unsupported"
+  >Sync paused: your journal is stored in a way this version of LogDate can’t sync. Update LogDate to keep syncing.</string>
     <string name="sync_account_update_app">Update LogDate</string>
-    <string name="sync_account_media_too_large">Sync is incomplete: an attachment exceeds the current upload limit.</string>
-    <string name="sync_account_unknown">Sync could not finish. LogDate will try again automatically.</string>
+    <string
+    name="sync_account_media_too_large"
+  >Sync is incomplete: an attachment exceeds the current upload limit.</string>
+    <string
+    name="sync_account_unknown"
+  >Sync could not finish. LogDate will try again automatically.</string>
     <string name="sync_account_disabled">Sync is turned off.</string>
     <string name="sync_heading_wifi">Waiting for Wi-Fi</string>
     <string name="sync_heading_offline">Waiting for a connection</string>
-    <string name="sync_heading_background">Background data is restricted</string>
+    <string
+    name="sync_heading_background"
+  >Background data is restricted</string>
     <string name="sync_heading_storage">Cloud storage is full</string>
     <string name="sync_heading_update">Update LogDate to keep syncing</string>
-    <string name="sync_account_storage_unsupported_detail">Your journal is stored in a way this version can’t sync. Everything on this device stays here and syncs after the update.</string>
+    <string
+    name="sync_account_storage_unsupported_detail"
+  >Your journal is stored in a way this version can’t sync. Everything on this device stays here and syncs after the update.</string>
     <string name="sync_heading_failed">Sync couldn't finish</string>
-    <string name="sync_retry_automatic_detail">LogDate will try again automatically.</string>
+    <string
+    name="sync_retry_automatic_detail"
+  >LogDate will try again automatically.</string>
 </resources>

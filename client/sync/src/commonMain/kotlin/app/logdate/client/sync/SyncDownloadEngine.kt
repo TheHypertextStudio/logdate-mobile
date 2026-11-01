@@ -12,11 +12,11 @@ import app.logdate.client.sync.metadata.PendingOperation
 import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.client.sync.metadata.UnreadableCloudRecordStore
 import app.logdate.client.sync.recovery.DownloadInbox
+import app.logdate.client.sync.recovery.DownloadScope
 import app.logdate.shared.model.diagnostics.DiagnosticReason
 import app.logdate.shared.model.diagnostics.SyncDiagnosticEvent
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -232,6 +232,8 @@ internal class SyncDownloadEngine(
                                                     remoteVersion = strategy.syncVersionOf(item),
                                                     localUpdatedAt = strategy.lastUpdatedOf(existing),
                                                     remoteUpdatedAt = strategy.lastUpdatedOf(item),
+                                                    textVersions = retainedTextVersions(existing, item, downloadScope),
+                                                    selectedScope = downloadScope,
                                                 )
                                                 return@record
                                             }
@@ -303,6 +305,8 @@ internal class SyncDownloadEngine(
                                                         remoteVersion = strategy.syncVersionOf(item),
                                                         localUpdatedAt = strategy.lastUpdatedOf(existing),
                                                         remoteUpdatedAt = strategy.lastUpdatedOf(item),
+                                                        textVersions = retainedTextVersions(existing, item, downloadScope),
+                                                        selectedScope = downloadScope,
                                                     )
                                                 }
                                             }
@@ -474,32 +478,11 @@ internal class SyncDownloadEngine(
         entityId: String,
     ) = deletionApplier.preserveConflict(entityType, entityId)
 
-    /**
-     * Also called directly by [DefaultSyncManager]'s `downloadDrafts`/`downloadAssociations` --
-     * their conflict shape (additions/deletions, or a newer-wins heuristic) doesn't fit
-     * [DownloadStrategy], but recording a conflict once it's detected is identical either way.
-     */
-    suspend fun recordConflict(
-        entityType: EntityType,
-        entityId: String,
-        reason: String,
-        localVersion: Long?,
-        remoteVersion: Long?,
-        localUpdatedAt: Instant?,
-        remoteUpdatedAt: Instant?,
+    internal suspend fun retainConflict(
+        record: SyncConflictRecord,
+        selectedScope: DownloadScope?,
     ) {
-        conflictStore.add(
-            SyncConflictRecord(
-                id = "${entityType.name}:$entityId",
-                entityType = entityType.name,
-                entityId = entityId,
-                localVersion = localVersion,
-                remoteVersion = remoteVersion,
-                localUpdatedAt = localUpdatedAt?.toEpochMilliseconds(),
-                remoteUpdatedAt = remoteUpdatedAt?.toEpochMilliseconds(),
-                reason = reason,
-                detectedAt = Clock.System.now().toEpochMilliseconds(),
-            ),
-        )
+        ensureScope(selectedScope)
+        conflictStore.add(record)
     }
 }

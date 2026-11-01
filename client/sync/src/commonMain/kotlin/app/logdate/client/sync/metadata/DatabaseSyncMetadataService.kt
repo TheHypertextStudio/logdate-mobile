@@ -356,6 +356,7 @@ class DatabaseSyncMetadataService(
                                 retryCount = row.retryCount,
                                 scope = UploadScope(row.ownerId, row.serverOrigin),
                                 operationId = row.operationId,
+                                expectedServerVersion = row.expectedServerVersion,
                             )
                         }
                     },

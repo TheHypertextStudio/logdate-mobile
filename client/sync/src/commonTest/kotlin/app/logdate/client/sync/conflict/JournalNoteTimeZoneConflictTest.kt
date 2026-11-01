@@ -42,29 +42,33 @@ class JournalNoteTimeZoneConflictTest {
     }
 
     @Test
-    fun aRemoteCopyWithoutAZoneKeepsTheLocalZoneWhenTheRemoteContentWins() {
+    fun differentTextRemainsSeparateWhenTheRemoteCopyHasNoZone() {
         val resolution = resolve(text("Walk", "America/Denver"), text("Walk by the river", null))
 
-        val kept = assertIs<ConflictResolution.KeepRemote<JournalNote>>(resolution)
-        assertEquals("Walk by the river", (kept.value as JournalNote.Text).content)
-        assertEquals("America/Denver", kept.value.timeZoneId)
+        val review = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(resolution)
+        assertEquals("Walk", (review.local as JournalNote.Text).content)
+        assertEquals("Walk by the river", (review.remote as JournalNote.Text).content)
+        assertEquals("America/Denver", review.local.timeZoneId)
+        assertEquals(null, review.remote.timeZoneId)
     }
 
     @Test
-    fun aLocalCopyWithoutAZoneTakesTheRemoteZoneWhenTheLocalContentWins() {
+    fun differentTextRemainsSeparateWhenTheLocalCopyHasNoZone() {
         val resolution = resolve(text("Walk by the river", null), text("Walk", "Europe/Paris"))
 
-        val kept = assertIs<ConflictResolution.KeepLocal<JournalNote>>(resolution)
-        assertEquals("Europe/Paris", kept.value.timeZoneId)
+        val review = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(resolution)
+        assertEquals("Walk by the river", (review.local as JournalNote.Text).content)
+        assertEquals(null, review.local.timeZoneId)
+        assertEquals("Europe/Paris", review.remote.timeZoneId)
     }
 
     @Test
-    fun aMergeKeepsTheLocalZoneAndFallsBackToTheRemoteOne() {
+    fun divergentCopiesKeepTheirOwnCaptureZonesForReview() {
         val withLocalZone = resolve(text("Morning", "America/Denver"), text("Evening", null))
         val withRemoteZone = resolve(text("Morning", null), text("Evening", "Asia/Kolkata"))
 
-        assertEquals("America/Denver", assertIs<ConflictResolution.Merge<JournalNote>>(withLocalZone).merged.timeZoneId)
-        assertEquals("Asia/Kolkata", assertIs<ConflictResolution.Merge<JournalNote>>(withRemoteZone).merged.timeZoneId)
+        assertEquals("America/Denver", assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(withLocalZone).local.timeZoneId)
+        assertEquals("Asia/Kolkata", assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(withRemoteZone).remote.timeZoneId)
     }
 
     @Test

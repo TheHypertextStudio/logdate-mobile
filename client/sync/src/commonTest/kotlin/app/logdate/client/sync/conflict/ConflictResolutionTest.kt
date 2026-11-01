@@ -1,6 +1,8 @@
 package app.logdate.client.sync.conflict
 
 import app.logdate.client.repository.journals.JournalNote
+import app.logdate.client.repository.journals.NoteCoordinates
+import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.shared.model.Journal
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -164,7 +166,45 @@ class ConflictResolutionTest {
     }
 
     @Test
-    fun `note resolver merges divergent text content`() {
+    fun `the identical complete version never demands review`() {
+        val instant = Instant.fromEpochMilliseconds(1000)
+        val note = JournalNote.Text(Uuid.random(), instant, instant, "Unchanged writing", syncVersion = 5)
+        val result = noteResolver.resolve(note, note.copy(), instant, instant)
+        assertTrue(result is ConflictResolution.KeepRemote)
+        assertEquals(note, result.value)
+    }
+
+    @Test
+    fun `identical writing with a later acknowledged revision needs no manual merge`() {
+        val instant = Instant.fromEpochMilliseconds(1000)
+        val local = JournalNote.Text(Uuid.random(), instant, instant, "Unchanged writing", syncVersion = 5)
+        val remote = local.copy(lastUpdated = Instant.fromEpochMilliseconds(2000), syncVersion = 6)
+        val result = noteResolver.resolve(local, remote, local.lastUpdated, remote.lastUpdated)
+        assertTrue(result is ConflictResolution.KeepRemote)
+        assertEquals(remote, result.value)
+        assertEquals(local.content, (result.value as JournalNote.Text).content)
+    }
+
+    @Test
+    fun `identical prose does not erase a genuinely different location`() {
+        val instant = Instant.fromEpochMilliseconds(1000)
+        val local =
+            JournalNote.Text(
+                Uuid.random(),
+                instant,
+                instant,
+                "Same prose",
+                location = NoteLocation(coordinates = NoteCoordinates(1.0, 2.0)),
+            )
+        val remote = local.copy(location = NoteLocation(coordinates = NoteCoordinates(3.0, 4.0)))
+        val result = noteResolver.resolve(local, remote, instant, instant)
+        assertTrue(result is ConflictResolution.RequiresManualResolution)
+        assertEquals(local, result.local)
+        assertEquals(remote, result.remote)
+    }
+
+    @Test
+    fun `divergent text requires review without changing either body`() {
         val created = Instant.fromEpochMilliseconds(1000)
         val local =
             JournalNote.Text(
@@ -182,11 +222,45 @@ class ConflictResolutionTest {
 
         val result = noteResolver.resolve(local, remote, local.lastUpdated, remote.lastUpdated)
 
-        assertTrue(result is ConflictResolution.Merge)
-        val merged = result.merged as JournalNote.Text
-        assertTrue(merged.content.contains("Local content"))
-        assertTrue(merged.content.contains("Remote content"))
-        assertEquals(2, merged.syncVersion)
+        assertTrue(result is ConflictResolution.RequiresManualResolution)
+        assertEquals(local, result.local)
+        assertEquals(remote, result.remote)
+        assertEquals("Local content", (result.local as JournalNote.Text).content)
+        assertEquals("Remote content", (result.remote as JournalNote.Text).content)
+    }
+
+    @Test
+    fun `substring overlap does not establish a common edit base`() {
+        val instant = Instant.fromEpochMilliseconds(1000)
+        val local =
+            JournalNote.Text(
+                uid = Uuid.random(),
+                creationTimestamp = instant,
+                lastUpdated = instant,
+                content = "A quiet walk beside the river",
+            )
+        val remote = local.copy(content = "A quiet walk", syncVersion = 2)
+        for ((first, second) in listOf(local to remote, remote to local)) {
+            val result = noteResolver.resolve(first, second, first.lastUpdated, second.lastUpdated)
+            assertTrue(result is ConflictResolution.RequiresManualResolution)
+            assertEquals(first, result.local)
+            assertEquals(second, result.remote)
+        }
+    }
+
+    @Test
+    fun `authored conflict headings and separators are never stripped`() {
+        val instant = Instant.fromEpochMilliseconds(1000)
+        val authored = "---\nMerged conflict\nLocal: a fictional narrator\nRemote: another narrator\n---\nA story."
+        val local = JournalNote.Text(uid = Uuid.random(), creationTimestamp = instant, lastUpdated = instant, content = authored)
+        val equal = noteResolver.resolve(local, local.copy(syncVersion = 2), instant, instant)
+        assertTrue(equal is ConflictResolution.KeepRemote)
+        assertEquals(authored, (equal.value as JournalNote.Text).content)
+        val remote = local.copy(content = "A different ending. \uD83C\uDF0A", syncVersion = 2)
+        val changed = noteResolver.resolve(local, remote, instant, instant)
+        assertTrue(changed is ConflictResolution.RequiresManualResolution)
+        assertEquals(authored, (changed.local as JournalNote.Text).content)
+        assertEquals(remote.content, (changed.remote as JournalNote.Text).content)
     }
 
     @Test

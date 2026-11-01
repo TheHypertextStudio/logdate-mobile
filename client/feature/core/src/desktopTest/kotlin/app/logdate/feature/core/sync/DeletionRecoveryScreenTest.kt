@@ -1,6 +1,7 @@
 package app.logdate.feature.core.sync
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
@@ -147,16 +148,7 @@ class DeletionRecoveryScreenTest {
             waitUntil(timeoutMillis = 5_000) { onAllNodesWithTag("saved-edit-image-ready").fetchSemanticsNodes().isNotEmpty() }
         }
         waitForIdle()
-        val bitmap = onRoot().captureToImage()
-        val pixels = bitmap.toPixelMap()
-        val image = BufferedImage(bitmap.width, bitmap.height, BufferedImage.TYPE_INT_ARGB)
-        for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) image.setRGB(x, y, pixels[x, y].toArgb())
-        val renderRoot =
-            System.getenv("DISK_JANITOR_ARTIFACT_ROOT")?.let { File(it, "renders") }
-                ?: File("build/reports/sync-renders")
-        val target = File(renderRoot, "$name.png")
-        target.parentFile.mkdirs()
-        ImageIO.write(image, "png", target)
+        saveRender(onRoot().captureToImage(), name)
         onNodeWithText("Save as a new item").performScrollTo().assertExists()
     }
 
@@ -194,5 +186,103 @@ class DeletionRecoveryScreenTest {
             onNodeWithText("Try syncing this item again").performClick()
             assertEquals("failure", retried)
             onNodeWithText("No edits to deleted items need review.").assertDoesNotExist()
+        }
+
+    @Test
+    fun `earlier metadata is separate from an empty current edit list`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            setContent {
+                LogDateTheme {
+                    DeletionRecoveryContent(emptyList(), null, false, false, {}, {}, {}, earlierIssues = 1268)
+                }
+            }
+            onNodeWithText("1268 earlier sync issues").assertExists()
+            onNodeWithText("No sync issues need review.").assertDoesNotExist()
+            onNodeWithText("Save as a new item").assertDoesNotExist()
+            saveRender(onRoot().captureToImage(), "earlier-issues-summary")
+        }
+
+    @Test
+    fun `interrupted retries include the item kind and a truthful cause`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val issue =
+                app.logdate.client.sync.metadata.SyncDeadLetterRecord(
+                    "failure",
+                    "NOTE",
+                    "synthetic-entry",
+                    "UPDATE",
+                    6,
+                    "APP_CLOSED",
+                    1793383200000,
+                    reason = app.logdate.client.sync.metadata.SyncDeadLetterReason.APP_CLOSED,
+                )
+            setContent {
+                LogDateTheme {
+                    DeletionRecoveryContent(emptyList(), null, false, false, {}, {}, {}, issues = listOf(issue))
+                }
+            }
+            onNodeWithText("The upload was interrupted when LogDate closed.").assertExists()
+            onNodeWithText("An item couldn’t sync.").assertDoesNotExist()
+            onNodeWithText("Entry", substring = true).assertExists()
+            saveRender(onRoot().captureToImage(), "interrupted-retry-context")
+        }
+
+    private fun saveRender(
+        bitmap: ImageBitmap,
+        name: String,
+    ) {
+        val pixels = bitmap.toPixelMap()
+        val image = BufferedImage(bitmap.width, bitmap.height, BufferedImage.TYPE_INT_ARGB)
+        for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) image.setRGB(x, y, pixels[x, y].toArgb())
+        val renderRoot =
+            System.getenv("DISK_JANITOR_ARTIFACT_ROOT")?.let { File(it, "renders") }
+                ?: File("build/reports/sync-renders")
+        val target = File(renderRoot, "$name.png")
+        target.parentFile.mkdirs()
+        ImageIO.write(image, "png", target)
+    }
+
+    @Test
+    fun `saved writing versions expand only on request without changing either original`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val local =
+                JournalNote.Text(
+                    creationTimestamp = Instant.fromEpochMilliseconds(1),
+                    lastUpdated = Instant.fromEpochMilliseconds(1),
+                    content = "Local: a user-authored heading and original writing.",
+                )
+            val remote = local.copy(content = "A different downloaded original.")
+            val pair =
+                app.logdate.client.sync
+                    .TextConflictVersions(local, remote, "local", "remote")
+            val record =
+                SyncConflictRecord(
+                    "pair",
+                    "NOTE",
+                    local.uid.toString(),
+                    1,
+                    2,
+                    1,
+                    2,
+                    "conflict",
+                    3,
+                    scope = UploadScope("owner", "origin"),
+                    textVersions = pair,
+                )
+            var writes = 0
+            setContent {
+                LogDateTheme {
+                    DeletionRecoveryContent(listOf(record), null, false, false, {}, { writes++ }, {})
+                }
+            }
+            onNodeWithText(local.content).assertDoesNotExist()
+            onNodeWithText("Show saved writing").performClick()
+            onNodeWithText(local.content).assertExists()
+            onNodeWithText(remote.content).assertExists()
+            assertEquals(pair, record.textVersions)
+            assertEquals(0, writes)
+            saveRender(onRoot().captureToImage(), "saved-writing-versions")
+            onNodeWithText("Hide saved writing").performClick()
+            onNodeWithText(local.content).assertDoesNotExist()
         }
 }
