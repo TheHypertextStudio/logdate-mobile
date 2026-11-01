@@ -115,7 +115,10 @@
         "scripts/setup/environments/staging.conf",
         "*.sh",
         "*.bash",
-        "*.zsh"
+        "*.zsh",
+        ".hypertext/git-product/pre-commit",
+        ".hypertext/git-product/commit-msg",
+        ".hypertext/git-product/pre-push"
       ],
       "argv": [
         "node",

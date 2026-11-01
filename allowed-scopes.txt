@@ -1,5 +1,7 @@
 # LogDate Commit Scopes
-# Authoritative machine-readable list. Human docs: docs/reference/standards/commit-scopes.md
+# Historical legacy-validator list; preserve published scope interpretations.
+# Current domain authority after reviewed adoption: .hypertext/commits.json.
+# Existing legacy hooks still read this list until canonical activation.
 # Lines starting with # and blank lines are ignored.
 # Format: scope  # description
 

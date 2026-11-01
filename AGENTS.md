@@ -17,8 +17,8 @@ Every change follows this process. No exceptions.
 
 Before writing any code, determine:
 
-- **What type of change is this?** Feature (`feat`), bug fix (`fix`), refactor (`refactor`), or
-  maintenance (`chore`)? This determines the commit type.
+- **What type of change is this?** Feature (`feat`), bug fix (`fix`), or maintenance (`chore`, including refactoring
+  and documentation)? This determines the commit type.
 - **What user-facing behavior does this serve?** LogDate is a multiplatform product (app + server) —
   changes are always in service of the user. A feature may span `client/*`, `shared/*`, and
   `server/` modules, and that's expected. Think in terms of the feature, not the module boundary.
@@ -86,8 +86,9 @@ correct, and adjust if needed.
 
 ### 7. Commit
 
-Each commit should read like a changelog entry — a single, distinct change that a user of the app
-would recognize. Scope to the primary feature module, even if the commit touches supporting modules.
+Each feat/fix commit describes one complete user-visible outcome and forms a product changelog entry.
+Maintenance uses chore with an informative body. Scope the complete change to its registered product
+domain, even when it touches multiple supporting modules.
 
 Because every commit lands on `main`, every commit must leave the app in a shippable state. If the
 feature isn't ready for users, it must be behind a feature flag. A commit that breaks `main` is
@@ -106,6 +107,13 @@ branch or opening a pull request.
 
 The full flow, including conflict handling under the hooks, is in
 [Branch and Pull Request Workflow](./docs/reference/standards/git-guidelines.md#branch-and-pull-request-workflow).
+
+## Commit policy authority
+
+Use the reviewed `.hypertext/commits.json` domain boundaries and the current Commit Message Standards.
+All commits require a registered scope and exactly `feat`, `fix`, or `chore`; old module/activity
+examples are historical. Preserve existing hooks until supported canonical composition is activated.
+A registry file or independent review alone does not authorize hook activation or protected CI changes.
 
 ## Non-Negotiable Principles
 
@@ -131,7 +139,7 @@ as the source of truth for commit message structure and detail. Follow that guid
 commit messages.
 
 - `feat` and `fix` are reserved for changes that affect end-user behavior. If the user wouldn't
-  notice the difference, use `refactor`, `chore`, or `docs` instead.
+  notice the difference, use `chore` instead, with an informative body.
 - Write `feat` commits as if consumed by the general public. The test: "Can I do something different
   because of this?"
 - Focus on behavior, not implementation. Capitalize proper nouns (API, Kotlin, Android, Compose,
@@ -185,11 +193,11 @@ repository.
   `:app:android-main:connectedDebugAndroidTest`.
 - Before any Android command that could talk to a device, verify the target is safe. A safe target
   is:
-    - a Gradle Managed Device started by Gradle for the current task.
+  - a Gradle Managed Device started by Gradle for the current task.
 - If any connected target is a physical device, do not use it. Stop immediately and either:
-    - run the task on an emulator,
-    - run the task on a Gradle Managed Device, or
-    - ask the developer to disconnect the physical device before proceeding.
+  - run the task on an emulator,
+  - run the task on a Gradle Managed Device, or
+  - ask the developer to disconnect the physical device before proceeding.
 - Convenience is irrelevant here. If there is any uncertainty about the target device type, treat it
   as unsafe and do not run the command.
 - A user must explicitly override this in the current conversation before any physical-device
@@ -197,14 +205,14 @@ repository.
 
 ## Key References
 
-| Topic                     | Location                                                                                                                                    |
-|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| Build commands            | [`./run help`](./run)                                                                                                                       |
-| Architecture & module map | [`README.md`](./README.md) and module `README.md` files                                                                                     |
-| Commit message format     | [`docs/reference/standards/commit-messages.md`](./docs/reference/standards/commit-messages.md)                                              |
-| Valid commit scopes       | [`allowed-scopes.txt`](./allowed-scopes.txt) and [`docs/reference/standards/commit-scopes.md`](./docs/reference/standards/commit-scopes.md) |
-| Git workflow & safety     | [`docs/reference/standards/git-guidelines.md`](./docs/reference/standards/git-guidelines.md)                                                |
-| Entrypoint structure & size limits | [`docs/reference/standards/entrypoint-structure.md`](./docs/reference/standards/entrypoint-structure.md) |
+| Topic                              | Location                                                                                                                                              |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build commands                     | [`./run help`](./run)                                                                                                                                 |
+| Architecture & module map          | [`README.md`](./README.md) and module `README.md` files                                                                                               |
+| Commit message format              | [`docs/reference/standards/commit-messages.md`](./docs/reference/standards/commit-messages.md)                                                        |
+| Valid commit scopes                | [`.hypertext/commits.json`](./.hypertext/commits.json) and [`docs/reference/standards/commit-scopes.md`](./docs/reference/standards/commit-scopes.md) |
+| Git workflow & safety              | [`docs/reference/standards/git-guidelines.md`](./docs/reference/standards/git-guidelines.md)                                                          |
+| Entrypoint structure & size limits | [`docs/reference/standards/entrypoint-structure.md`](./docs/reference/standards/entrypoint-structure.md)                                              |
 
 ## Code Conventions
 
@@ -224,13 +232,13 @@ Home destinations and their immediate details compose independently responsive p
 `WorkspaceSupportingSheet`, and `WorkspacePlaybackLayout` from `client/ui/.../workspace`.
 Surface tokens belong to `client/theme/WorkspaceTokens.kt`.
 
-| Meaning | Token |
-| --- | --- |
-| Workspace canvas/navigation | surfaceContainer |
-| Working panel | surface/onSurface |
-| Subordinate meaningful group | surfaceContainerLow |
-| Raised control/transient surface | surfaceContainerHigh |
-| Selected item | secondaryContainer/onSecondaryContainer |
+| Meaning                          | Token                                   |
+| -------------------------------- | --------------------------------------- |
+| Workspace canvas/navigation      | surfaceContainer                        |
+| Working panel                    | surface/onSurface                       |
+| Subordinate meaningful group     | surfaceContainerLow                     |
+| Raised control/transient surface | surfaceContainerHigh                    |
+| Selected item                    | secondaryContainer/onSecondaryContainer |
 
 The shell owns destination identity, navigation, global status, system insets, and contextual creation.
 Composition owns fit, ordering, hinges translated into content coordinates, and panel placement.

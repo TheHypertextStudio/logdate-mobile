@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# pre-push hook - Final quality gate before code leaves the machine
+#
+# Checks:
+# 1. Commit message re-validation (catches --no-verify bypasses)
+# 2. Full compile check
+# 3. Tests for affected modules
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+source "$REPO_ROOT/scripts/validation/hook-common.sh"
+
+# Task discovery remains in the foreground as well.
+fetch_module_tasks() {
+  ./gradlew --no-daemon "${1}:tasks" --all --quiet 2> /dev/null || true
+}
+
+errors=()
+local_shas=""
+
+# Read stdin for push info (local_ref local_sha remote_ref remote_sha)
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Skip delete pushes
+  if [[ "$local_sha" == "$ZERO_SHA" ]]; then
+    continue
+  fi
+
+  local_shas="${local_shas}${local_sha}"$'\n'
+done
+
+if [[ -z "$local_shas" ]]; then
+  exit 0
+fi
+
+commits="$(collect_unpushed_commits "$local_shas")"
+
+if [[ -z "$commits" ]]; then
+  exit 0
+fi
+
+# ============================================================================
+# 1. Re-validate commit messages
+# ============================================================================
+
+# Canonical shared pre-push validates the complete transaction before this gate.
+
+# ============================================================================
+# 2. Full compile check
+# ============================================================================
+
+echo "Running compile check..."
+if ! ./gradlew --no-daemon :app:android-main:assembleDebug --quiet 2>&1; then
+  errors+=("COMPILE: Android app failed to compile. Fix build errors before pushing.")
+fi
+
+# ============================================================================
+# 3. Screenshot coverage
+# ============================================================================
+
+echo "Checking OS integration screenshot coverage..."
+if ! ./gradlew --no-daemon checkOsIntegrationScreenshotCoverage --quiet 2>&1; then
+  errors+=("SCREENSHOTS: A registered screenshot is missing or a reference is stale. Run './run screenshots:check' for details.")
+fi
+
+# ============================================================================
+# 4. Tests for affected modules
+# ============================================================================
+
+changed_files="$(collect_changed_files_from_commits "$commits")"
+kt_files="$(echo "$changed_files" | grep -E '\.(kt|kts)$' || true)"
+
+if [[ -n "$kt_files" ]]; then
+  resolved_modules="$(modules_from_files "$kt_files")"
+  modules=()
+  while IFS= read -r module; do
+    [[ -n "$module" ]] && modules+=("$module")
+  done <<< "$resolved_modules"
+
+  if [[ ${#modules[@]} -gt 0 ]]; then
+    resolve_test_tasks_for_modules "balanced" "${modules[@]}"
+
+    if [[ ${#UNRESOLVED_TEST_MODULES[@]} -gt 0 ]]; then
+      errors+=("TESTS: Unable to resolve test task for affected modules.")
+      for mod in "${UNRESOLVED_TEST_MODULES[@]}"; do
+        errors+=("  ${mod} (run './gradlew --no-daemon ${mod}:tasks --all' and add task mapping in hook-common.sh)")
+      done
+    elif [[ ${#RESOLVED_TEST_TASKS[@]} -gt 0 ]]; then
+      echo "Running tests for affected modules: ${modules[*]}"
+      echo "Resolved test tasks:"
+      for mod in "${RESOLVED_TEST_TASKS[@]}"; do
+        echo "  $mod"
+      done
+
+      if ! ./gradlew --no-daemon "${RESOLVED_TEST_TASKS[@]}" --quiet 2>&1; then
+        errors+=("TESTS: Tests failed for affected modules. Fix test failures before pushing.")
+      fi
+    fi
+  fi
+fi
+
+if [[ ${#errors[@]} -gt 0 ]]; then
+  print_error_report "PRE-PUSH VALIDATION FAILED" "Fix these issues before pushing."
+  exit 1
+fi
+
+echo "Pre-push checks passed."
+exit 0

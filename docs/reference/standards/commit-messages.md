@@ -1,5 +1,35 @@
 # Commit Message Standards
 
+## Current commit types
+
+Current commits use exactly `feat`, `fix`, or `chore`, with a mandatory domain registered in [`.hypertext/commits.json`](../../../.hypertext/commits.json). The [scope reference](./commit-scopes.md) explains the registry boundaries.
+
+- `feat` introduces a capability; `fix` corrects user-observable behavior. Their titles and bodies describe the delivered user outcome. They form the product changelog after landing on main.
+- `chore` covers maintenance, tests, documentation, dependencies and refactoring, using the product domain the work supports. It needs an informative body; implementation details are appropriate for maintenance.
+- Keep implementation, relevant tests and necessary usage/migration documentation together. Several coherent commits are useful; do not split documentation or tests merely by activity.
+- Use a useful title, a blank line before the body, and terminal metadata trailers. Breaking changes require an explicit `BREAKING CHANGE:` explanation even when the title uses `!`.
+- Every contributing agent receives its documented `Co-authored-by` trailer. Set `HYPERTEXT_AGENT_COAUTHOR` on the ordinary commit command. Do not invent identities or attribute work to a human.
+- The effective committer uses the approved Studio email. Identity changes need their actual authorization; no automatic non-Studio exception, global identity rewrite or history rewrite.
+- Stage explicit reviewed paths and use a message file with ordinary Git hooks. Canonical hooks retain the product's secret scans, exact staged formatting and pre-push compile/coverage/affected-module tests.
+
+```text
+fix(sync): Keep routine checks out of live backup updates
+
+Routine checks with nothing to upload stay ordinary. Live backup
+updates continue to show real upload progress when enabled.
+
+Co-authored-by: Codex <noreply@openai.com>
+```
+
+The reviewed registry must be in the committed baseline before canonical activation. Adding its file does not activate hooks, authorize a policy digest, configure protected CI, or establish delivery. Preserve all existing gates until supported reconciliation completes. Scope additions and technical applicability require a maintainer other than their author; protected CI approval remains separate.
+
+<details>
+<summary>Superseded historical message guidance</summary>
+
+The following text is retained only to interpret older commits. Its extra types, examples and older scope rules are not current instructions.
+
+# Commit Message Standards
+
 > **Authoritative reference for writing clear, maintainable commit messages in the LogDate codebase**
 
 Commit messages are the permanent record of why code exists. When someone reads `git log` or runs `git blame` months or years later, the commit message is the only context they have. The diff shows the mechanics; the message explains everything else.
@@ -17,6 +47,7 @@ Footer annotations if needed.
 ```
 
 **Constraints**:
+
 - Title: Under 72 characters (displays in `git log --oneline`)
 - Mood: Imperative ("Add feature", not "Added feature")
 - Specificity: "Fix authentication token expiry" not "Fix bug"
@@ -29,9 +60,10 @@ Footer annotations if needed.
 
 **Format**: `type(scope): description`
 
-The first line is the **only required part** and must follow Conventional Commits format. It forces conciseness about *what* changed, reserving detailed explanation for the body.
+The first line is the **only required part** and must follow Conventional Commits format. It forces conciseness about _what_ changed, reserving detailed explanation for the body.
 
 **Why 72 characters?**
+
 - Displays completely in `git log --oneline`
 - Email clients wrap at 72 characters
 - GitHub shows truncated titles in UI
@@ -39,11 +71,12 @@ The first line is the **only required part** and must follow Conventional Commit
 
 ### Body (Optional for Trivial Changes, Required for Meaningful Changes)
 
-Separated from title by blank line, wrapped at 72 characters. This is where context lives: *why* changes were necessary, what alternatives were considered, what trade-offs were made, what impact results.
+Separated from title by blank line, wrapped at 72 characters. This is where context lives: _why_ changes were necessary, what alternatives were considered, what trade-offs were made, what impact results.
 
 The diff shows how code changed; the body explains why.
 
 **When to include a body:**
+
 - ✅ Any commit that changes behavior (features, bug fixes, refactors)
 - ✅ Architectural decisions or significant structural changes
 - ✅ Trade-offs or alternatives considered and rejected
@@ -53,6 +86,7 @@ The diff shows how code changed; the body explains why.
 ### Footer (Optional)
 
 Special annotations tools parse, placed after body text on separate lines:
+
 - `BREAKING CHANGE: description` — Mark backwards-incompatible changes
 - `Fixes #123` or `Closes #456` — Close issues when merged
 - `Related to #789` — Reference issues without closing
@@ -62,16 +96,16 @@ Special annotations tools parse, placed after body text on separate lines:
 
 ## Commit Types
 
-| Type | Purpose | Body Should Include |
-|------|---------|-------------------|
-| **feat** | New functionality added (capability that didn't exist before) | What users can now do, why it matters, how it feels — written like a changelog entry, not a code review |
-| **fix** | Behavior corrected (something wasn't working, now it is) | What was broken, why it was broken, how fix addresses root cause |
-| **refactor** | Code restructured without behavior change | Why restructuring was needed (bugs? clarity? enabling future work?) |
-| **docs** | Documentation-only changes (README, comments, API docs) | Usually self-explanatory; explain if non-obvious |
-| **style** | Code style changes that don't affect behavior (formatting, whitespace) | Usually no body needed; change is mechanical |
-| **test** | Tests added or modified | What scenarios now covered, why needed, testing gaps addressed |
-| **chore** | Maintenance tasks (dependencies, build tools, CI/CD) | Breaking changes and migration steps if updating dependencies |
-| **perf** | Performance improvements | Before/after metrics when possible, bottleneck identified, approach taken |
+| Type         | Purpose                                                                | Body Should Include                                                                                     |
+| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **feat**     | New functionality added (capability that didn't exist before)          | What users can now do, why it matters, how it feels — written like a changelog entry, not a code review |
+| **fix**      | Behavior corrected (something wasn't working, now it is)               | What was broken, why it was broken, how fix addresses root cause                                        |
+| **refactor** | Code restructured without behavior change                              | Why restructuring was needed (bugs? clarity? enabling future work?)                                     |
+| **docs**     | Documentation-only changes (README, comments, API docs)                | Usually self-explanatory; explain if non-obvious                                                        |
+| **style**    | Code style changes that don't affect behavior (formatting, whitespace) | Usually no body needed; change is mechanical                                                            |
+| **test**     | Tests added or modified                                                | What scenarios now covered, why needed, testing gaps addressed                                          |
+| **chore**    | Maintenance tasks (dependencies, build tools, CI/CD)                   | Breaking changes and migration steps if updating dependencies                                           |
+| **perf**     | Performance improvements                                               | Before/after metrics when possible, bottleneck identified, approach taken                               |
 
 ---
 
@@ -186,6 +220,7 @@ Feature commits should read like news articles—**don't bury the lede**:
 3. **Issue references go last** — Place "Resolves #XXX" at the very end (least salient position).
 
 **Structure (most → least important):**
+
 1. **Title** — The headline: what capability was added
 2. **Lede paragraph** — The key impact in 1-2 sentences
 3. **Context** — Problem being solved, user pain points addressed
@@ -197,6 +232,7 @@ Feature commits should read like news articles—**don't bury the lede**:
 The body should read like documentation, not a todo list.
 
 **Title vs. body style:**
+
 - **Title**: Imperative mood is acceptable ("add filtering to dashboard")
 - **Body**: Full clauses with subjects ("The dashboard now supports filtering" or "Users can now filter by project")
 
@@ -319,7 +355,7 @@ automatically.
 
 #### Reframed Technical Detail
 
-A subtler variant: the message avoids class names but still describes implementation mechanics dressed up in user-facing language. The sentence is *about* the code, not about the experience.
+A subtler variant: the message avoids class names but still describes implementation mechanics dressed up in user-facing language. The sentence is _about_ the code, not about the experience.
 
 ```
 ❌ REFRAMED — Technical detail wearing a user costume:
@@ -343,7 +379,7 @@ uses — like turning off smart recall while keeping other suggestions
 active.
 ```
 
-**The rule for `feat` and `fix` commits is absolute**: the body must contain *zero* implementation detail — no component names, no architectural decisions, no refactoring rationale. If the change also includes refactoring or structural cleanup, those details belong in a separate `refactor` or `chore` commit, not buried in a `feat` body. Only `refactor`, `chore`, `perf`, and `docs` commits may reference internal structure.
+**The rule for `feat` and `fix` commits is absolute**: the body must contain _zero_ implementation detail — no component names, no architectural decisions, no refactoring rationale. If the change also includes refactoring or structural cleanup, those details belong in a separate `refactor` or `chore` commit, not buried in a `feat` body. Only `refactor`, `chore`, `perf`, and `docs` commits may reference internal structure.
 
 ### For Bug Fixes
 
@@ -407,6 +443,7 @@ instead of accessToken.
 ### Issue References
 
 Connect to project management:
+
 - `Fixes #123` or `Closes #456` — Closes issue when merged
 - `Related to #789` — References without closing
 - List multiple on separate lines if relevant
@@ -463,6 +500,7 @@ interruption issues reported in support tickets.
 The guidance about capturing context applies to meaningful changes. For genuinely small, straightforward changes, brevity is appropriate.
 
 **When minimal commit messages are OK:**
+
 - Link path updates (documentation references, import paths)
 - Simple configuration value changes
 - Adding a single file with obvious purpose
@@ -482,6 +520,7 @@ The guidance about capturing context applies to meaningful changes. For genuinel
 ```
 
 **The Distinction:**
+
 - **Meaningful changes** (new features, architectural decisions, bug fixes, refactors with reasoning): Include context, explain reasoning, document full scope
 - **Trivial changes** (obvious link updates, simple additions, clear fixes): Brief title is sufficient, the diff explains everything
 
@@ -498,6 +537,7 @@ This is a common failure mode: Claude implements all four items correctly, but t
 **Pattern**: User says "Please: 1) Add validation to UserForm, 2) Create validation utility, 3) Add tests, 4) Update types"
 
 Claude must:
+
 1. Parse all four items explicitly
 2. Implement all four (which will be correct)
 3. **Write a commit message that references all four items** and explains how they work together
@@ -535,6 +575,7 @@ Addresses #789 where form validation wasn't consistent between pages.
 ```
 
 This explains:
+
 - The problem (inconsistent validation across pages)
 - Specific technical details (ValidationRule, ValidationError, FormState types; validateEmail, validatePassword functions)
 - The reasoning (reusability, consistency, separation of concerns, centralized updates)
@@ -554,3 +595,5 @@ Balance is key: include specific names and symbols (ValidationError, validateEma
 ---
 
 **Remember:** Commit messages are documentation that persists longer than the code. Write them for someone reading git history years from now with no other context.
+
+</details>
