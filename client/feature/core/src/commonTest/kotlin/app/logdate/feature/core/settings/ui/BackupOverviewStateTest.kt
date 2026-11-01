@@ -81,4 +81,11 @@ class BackupOverviewStateTest {
         assertFalse(state.needsReview)
         assertEquals(2, state.pendingChanges)
     }
+
+    @Test
+    fun `earlier metadata stays discoverable without blocking a current backup`() {
+        val state = backupOverviewState(idle.copy(earlierConflictCount = 1268), CloudArchiveStatus(CloudArchivePhase.NEVER_BACKED_UP))
+        assertTrue(state.needsReview)
+        assertTrue(state.canBackUpNow)
+    }
 }

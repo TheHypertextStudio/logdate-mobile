@@ -17,7 +17,7 @@ internal fun backupOverviewState(
     archive: CloudArchiveStatus,
     reviewableIssueCount: Int = 0,
 ): BackupOverviewState {
-    val needsReview = reviewableIssueCount > 0 || (sync?.conflictCount ?: 0) > 0
+    val needsReview = reviewableIssueCount > 0 || (sync?.conflictCount ?: 0) > 0 || (sync?.earlierConflictCount ?: 0) > 0
     val blocked =
         sync?.lastError?.type in
             setOf(
@@ -39,7 +39,7 @@ internal fun backupOverviewState(
                 !sync.isSyncing &&
                 sync.conflictCount == 0 &&
                 !blocked &&
-                !needsReview,
+                reviewableIssueCount == 0,
         needsReview = needsReview,
     )
 }

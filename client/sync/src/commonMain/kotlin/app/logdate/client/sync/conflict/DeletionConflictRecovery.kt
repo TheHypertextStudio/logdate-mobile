@@ -46,6 +46,8 @@ class DeletionConflictRecovery(
         return store.list().filter { it.scope == scope && it.deletedEdit != null }
     }
 
+    suspend fun review(): SyncReviewInventory = syncReviewInventory(store.list(), currentScope())
+
     suspend fun retain(
         type: EntityType,
         id: String,

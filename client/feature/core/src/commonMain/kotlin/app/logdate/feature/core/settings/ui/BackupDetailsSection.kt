@@ -24,7 +24,7 @@ import logdate.client.feature.core.generated.resources.backup_overview_conflicts
 import logdate.client.feature.core.generated.resources.backup_overview_date_time
 import logdate.client.feature.core.generated.resources.backup_overview_last_saved
 import logdate.client.feature.core.generated.resources.backup_overview_pending
-import logdate.client.feature.core.generated.resources.backup_overview_review
+import logdate.client.feature.core.generated.resources.sync_review_earlier
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
@@ -52,16 +52,16 @@ internal fun BackupDetailsSection(
                     Text(state.pendingChanges.toString(), style = MaterialTheme.typography.titleMedium)
                 }
             }
-            if (state.needsReview) {
+            val currentIssues = (syncStatus?.conflictCount ?: 0) + reviewableIssueCount
+            if (currentIssues > 0) {
                 TextButton(onClick = onReviewIssues) {
-                    val count = syncStatus?.conflictCount ?: 0
-                    Text(
-                        if (count > 0) {
-                            pluralStringResource(Res.plurals.backup_overview_conflicts, count, count)
-                        } else {
-                            stringResource(Res.string.backup_overview_review)
-                        },
-                    )
+                    Text(pluralStringResource(Res.plurals.backup_overview_conflicts, currentIssues, currentIssues))
+                }
+            }
+            val earlierIssues = syncStatus?.earlierConflictCount ?: 0
+            if (earlierIssues > 0) {
+                TextButton(onClick = onReviewIssues) {
+                    Text(pluralStringResource(Res.plurals.sync_review_earlier, earlierIssues, earlierIssues))
                 }
             }
         }

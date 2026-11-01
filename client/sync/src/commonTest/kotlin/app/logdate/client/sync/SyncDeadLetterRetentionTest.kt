@@ -199,4 +199,24 @@ class SyncDeadLetterRetentionTest {
             assertTrue(deadLetterStore.list().isEmpty())
             assertFalse(metadataService.getPendingUploads(EntityType.NOTE).any { it.entityId == entityId })
         }
+
+    @Test
+    fun `a settled issue does not request another sync`() =
+        runTest {
+            exhaustRetries()
+            val id = deadLetterStore.list().single().id
+            metadataService.clearPending()
+            assertFalse(coordinator.retryDeadLetterIfCurrent(id))
+            assertEquals(1, deadLetterStore.list().size)
+        }
+
+    @Test
+    fun `only an exact pending issue reports that retry was released`() =
+        runTest {
+            exhaustRetries()
+            val issue = deadLetterStore.list().single()
+            assertTrue(coordinator.retryDeadLetterIfCurrent(issue.id))
+            assertFalse(coordinator.retryDeadLetterIfCurrent(issue.id))
+            assertEquals(1, metadataService.getPendingUploads(EntityType.NOTE).size)
+        }
 }

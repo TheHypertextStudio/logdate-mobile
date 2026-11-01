@@ -160,37 +160,36 @@ internal class SyncStatusPublisher(
                     .onFailure { Napier.e("Could not read the pending upload count: ${it::class.simpleName}") }
             val recovery = runCatchingUnlessCancelled { pendingRecoveryCount() }
             val attention = runCatchingUnlessCancelled { attentionRecoveryCount() }.getOrDefault(0)
+            val review = runCatchingUnlessCancelled { currentConflictReview() }
             _syncStatusFlow.value =
                 SyncStatus(
                     isEnabled = authenticated && isEnabled(),
                     lastSyncTime = latestSyncTime(),
                     pendingUploads = pendingCountResult.getOrDefault(0),
-                    queueReadable = pendingCountResult.isSuccess && recovery.isSuccess && !queueObservationFailed.value,
+                    queueReadable = pendingCountResult.isSuccess && recovery.isSuccess && review.isSuccess && !queueObservationFailed.value,
                     pendingDownloads = recovery.getOrDefault(0),
                     backgroundWorkLimited = backgroundWorkLimited(),
                     isSyncing = syncStateFlow.value is SyncState.Syncing,
-                    hasErrors = lastErrorFlow.value != null || attention > 0 || recovery.isFailure,
+                    hasErrors = lastErrorFlow.value != null || attention > 0 || recovery.isFailure || review.isFailure,
                     lastError = lastErrorFlow.value,
                     pausedReason = currentPausedReason(authenticated),
                     totalForRun = runTotal,
                     completedInRun = runCompleted,
-                    conflictCount = currentConflictCount(),
+                    conflictCount = review.getOrNull()?.edits?.size ?: 0,
+                    earlierConflictCount = review.getOrNull()?.earlierIssues ?: 0,
                     unreadableCloudCount = runCatchingUnlessCancelled { unreadableCloudRecordStore.count() }.getOrDefault(0),
                 )
         }
 
-    private suspend fun currentConflictCount(): Int =
-        runCatchingUnlessCancelled {
-            val scope =
-                sessionStorage.getOriginBoundSession()?.let {
-                    app.logdate.client.sync.metadata.UploadScope(
-                        it.session.accountId,
-                        it.origin,
-                    )
-                }
-            conflictStore.list().count { !it.recovered && (it.scope == null || it.scope == scope) }
-        }.onFailure { Napier.e("Could not read the conflict count") }
-            .getOrDefault(0)
+    private suspend fun currentConflictReview(): app.logdate.client.sync.conflict.SyncReviewInventory {
+        val scope =
+            sessionStorage.getOriginBoundSession()?.let {
+                app.logdate.client.sync.metadata
+                    .UploadScope(it.session.accountId, it.origin)
+            }
+        return app.logdate.client.sync.conflict
+            .syncReviewInventory(conflictStore.list(), scope)
+    }
 
     /**
      * Starts a new top-level upload run: forgets whatever the previous run's counters said and

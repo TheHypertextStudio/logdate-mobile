@@ -76,9 +76,23 @@ class BackupOverviewRenderTest {
                     }
                 }
             }
-            onNodeWithText("1 edit needs review").performScrollTo().performClick()
+            onNodeWithText("1 current sync issue").performScrollTo().performClick()
             assertEquals(1, reviews)
             save(onRoot().captureToImage(), "backup-review-rtl-large")
+        }
+
+    @Test
+    fun `earlier records remain visible without being called edits or blocking backup`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            setContent {
+                LogDateTheme {
+                    backupPage(idle.copy(earlierConflictCount = 1268), CloudArchiveStatus(CloudArchivePhase.NEVER_BACKED_UP))
+                }
+            }
+            onNodeWithText("1268 earlier sync issues").performScrollTo().assertExists()
+            onNodeWithText("1268 edits need review").assertDoesNotExist()
+            onNodeWithText("Back up now").performScrollTo().assertExists()
+            save(onRoot().captureToImage(), "backup-earlier-records")
         }
 
     @Composable

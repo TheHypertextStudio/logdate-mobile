@@ -3,6 +3,7 @@ package app.logdate.client.sync.conflict
 import app.logdate.client.datastore.KeyValueStorage
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.mediaRefOrNull
+import app.logdate.client.sync.TextConflictVersions
 import app.logdate.client.sync.metadata.UploadScope
 import app.logdate.shared.model.Journal
 import kotlinx.coroutines.sync.Mutex
@@ -28,6 +29,7 @@ data class SyncConflictRecord(
     val recoveryId: String? = null,
     val recovered: Boolean = false,
     val recoveryNoteIds: Map<String, String> = emptyMap(),
+    val textVersions: TextConflictVersions? = null,
 )
 
 @Serializable
@@ -59,7 +61,19 @@ class KeyValueSyncConflictStore(
 
     override suspend fun add(record: SyncConflictRecord) =
         mutex.withLock {
-            val updated = readAll().filterNot { it.id == record.id } + record
+            val current = readAll()
+            if (
+                record.textVersions != null &&
+                current.any {
+                    it.entityType == record.entityType &&
+                        it.entityId == record.entityId &&
+                        it.scope == record.scope &&
+                        it.textVersions == record.textVersions
+                }
+            ) {
+                return@withLock
+            }
+            val updated = current.filterNot { it.id == record.id } + record
             persist(updated)
         }
 
@@ -73,7 +87,7 @@ class KeyValueSyncConflictStore(
     private suspend fun persist(records: List<SyncConflictRecord>) {
         val encoded = json.encodeToString(records)
         try {
-            storage.putString(CONFLICT_KEY, encoded)
+            storage.putStringOrThrow(CONFLICT_KEY, encoded)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (error: Exception) {
@@ -83,7 +97,7 @@ class KeyValueSyncConflictStore(
     }
 
     private suspend fun readAll(): List<SyncConflictRecord> {
-        val raw = storage.getString(CONFLICT_KEY) ?: return emptyList()
+        val raw = storage.getStringOrThrow(CONFLICT_KEY) ?: return emptyList()
         // An undecodable store may contain the only surviving edit. Never overwrite it.
         return json.decodeFromString<List<SyncConflictRecord>>(raw)
     }

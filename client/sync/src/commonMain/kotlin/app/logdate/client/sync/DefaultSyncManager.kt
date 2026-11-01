@@ -417,6 +417,8 @@ class DefaultSyncManager(
 
     override suspend fun retryDeadLetter(id: String) = retryCoordinator.retryDeadLetter(id)
 
+    suspend fun retryDeadLetterIfCurrent(id: String): Boolean = retryCoordinator.retryDeadLetterIfCurrent(id)
+
     override suspend fun discardDeadLetter(id: String) = retryCoordinator.discardDeadLetter(id)
 
     /**

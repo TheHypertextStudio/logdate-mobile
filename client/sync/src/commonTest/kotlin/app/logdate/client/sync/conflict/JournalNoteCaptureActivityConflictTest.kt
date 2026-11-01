@@ -43,29 +43,37 @@ class JournalNoteCaptureActivityConflictTest {
     }
 
     @Test
-    fun `a remote copy without an activity keeps the local activity when the remote content wins`() {
-        val resolution = resolve(text("Walk", CaptureActivity.IN_VEHICLE), text("Walk by the river", null))
-
-        val resolved = assertIs<ConflictResolution.KeepRemote<JournalNote>>(resolution)
-        assertEquals("Walk by the river", (resolved.value as JournalNote.Text).content)
-        assertEquals(CaptureActivity.IN_VEHICLE, resolved.value.capturedDuring)
+    fun `divergent text keeps the local activity without filling the remote original`() {
+        val local = text("Walk", CaptureActivity.IN_VEHICLE)
+        val remote = text("Walk by the river", null)
+        val review = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(resolve(local, remote))
+        assertEquals(local, review.local)
+        assertEquals(remote, review.remote)
+        assertEquals(CaptureActivity.IN_VEHICLE, review.local.capturedDuring)
+        assertEquals(null, review.remote.capturedDuring)
     }
 
     @Test
-    fun `a local copy without an activity takes the remote activity when the local content wins`() {
-        val resolution = resolve(text("Walk by the river", null), text("Walk", CaptureActivity.IN_VEHICLE))
-
-        val resolved = assertIs<ConflictResolution.KeepLocal<JournalNote>>(resolution)
-        assertEquals(CaptureActivity.IN_VEHICLE, resolved.value.capturedDuring)
+    fun `divergent text keeps the remote activity without filling the local original`() {
+        val local = text("Walk by the river", null)
+        val remote = text("Walk", CaptureActivity.IN_VEHICLE)
+        val review = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(resolve(local, remote))
+        assertEquals(local, review.local)
+        assertEquals(remote, review.remote)
+        assertEquals(null, review.local.capturedDuring)
+        assertEquals(CaptureActivity.IN_VEHICLE, review.remote.capturedDuring)
     }
 
     @Test
-    fun `a merge keeps an activity from either copy`() {
+    fun `both divergent originals retain their own capture activity`() {
         val withLocal = resolve(text("Morning", CaptureActivity.IN_VEHICLE), text("Evening", null))
         val withRemote = resolve(text("Morning", null), text("Evening", CaptureActivity.IN_VEHICLE))
-
-        assertEquals(CaptureActivity.IN_VEHICLE, assertIs<ConflictResolution.Merge<JournalNote>>(withLocal).merged.capturedDuring)
-        assertEquals(CaptureActivity.IN_VEHICLE, assertIs<ConflictResolution.Merge<JournalNote>>(withRemote).merged.capturedDuring)
+        val localReview = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(withLocal)
+        val remoteReview = assertIs<ConflictResolution.RequiresManualResolution<JournalNote>>(withRemote)
+        assertEquals(CaptureActivity.IN_VEHICLE, localReview.local.capturedDuring)
+        assertEquals(null, localReview.remote.capturedDuring)
+        assertEquals(null, remoteReview.local.capturedDuring)
+        assertEquals(CaptureActivity.IN_VEHICLE, remoteReview.remote.capturedDuring)
     }
 
     @Test
