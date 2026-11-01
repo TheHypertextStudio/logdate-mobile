@@ -382,6 +382,8 @@ extensions.configure<ApplicationExtension> {
         }
         unitTests.all {
             it.maxHeapSize = "4g"
+            // Robolectric's Android 16 runtime uses Java's file-descriptor bridge.
+            it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
         }
     }
 }
