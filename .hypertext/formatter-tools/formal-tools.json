@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "tlc": {
+    "cache_path": "tlaplus/1.8.0/tla2tools.jar",
+    "bytes": 4502259,
+    "sha256": "d15655eeaff4b3f7b3d65c46b838bc0f35d131b2ef4b1e473689b62c98d4726f"
+  },
+  "jdk": {
+    "version": "21.0.10",
+    "implementor": "JetBrains s.r.o.",
+    "implementor_version": "JBRSDK-21.0.10+7-1163.108-nomod"
+  },
+  "kotlin_modules": [
+    {
+      "module": "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.21",
+      "cache_path": "org.jetbrains.kotlin/kotlin-compiler-embeddable/2.3.21/c4b47f8e33cdbeedd8c1415ab9f9ade870388162/kotlin-compiler-embeddable-2.3.21.jar",
+      "bytes": 59720376,
+      "sha256": "d3e70fb011675e77ef00f1a68918d3cd91eed26058977d1e3ea2a37a293233af"
+    },
+    {
+      "module": "org.jetbrains.kotlin:kotlin-stdlib:2.3.21",
+      "cache_path": "org.jetbrains.kotlin/kotlin-stdlib/2.3.21/a2ee2c4e220fee522f0451b723bab2a43f3481a7/kotlin-stdlib-2.3.21.jar",
+      "bytes": 1804721,
+      "sha256": "6f64eac736db9434dd6925b4a518b9d1d17177652320c37916cf9ba3ce7d7d7a"
+    },
+    {
+      "module": "org.jetbrains.kotlin:kotlin-script-runtime:2.3.21",
+      "cache_path": "org.jetbrains.kotlin/kotlin-script-runtime/2.3.21/8dafd7f0eb5efef35a446683a2774fef61c68aeb/kotlin-script-runtime-2.3.21.jar",
+      "bytes": 44972,
+      "sha256": "ec61bf1229c837fa9f4255f34ca69816138b73158e7ae9b8d964cf92ca6dfd2e"
+    },
+    {
+      "module": "org.jetbrains.kotlin:kotlin-reflect:1.6.10",
+      "cache_path": "org.jetbrains.kotlin/kotlin-reflect/1.6.10/1cbe9c92c12a94eea200d23c2bbaedaf3daf5132/kotlin-reflect-1.6.10.jar",
+      "bytes": 3038560,
+      "sha256": "3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203"
+    },
+    {
+      "module": "org.jetbrains.kotlin:kotlin-daemon-embeddable:2.3.21",
+      "cache_path": "org.jetbrains.kotlin/kotlin-daemon-embeddable/2.3.21/384c12222b10aaa06fdd2163435709efdade5a02/kotlin-daemon-embeddable-2.3.21.jar",
+      "bytes": 368344,
+      "sha256": "222fc10a3c22e74d30369bf8a0ca6c4f9372eac7d4a0081e290c256fa4d30fb2"
+    },
+    {
+      "module": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
+      "cache_path": "org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.8.0/ac1dc37a30a93150b704022f8d895ee1bd3a36b3/kotlinx-coroutines-core-jvm-1.8.0.jar",
+      "bytes": 1548360,
+      "sha256": "9860906a1937490bf5f3b06d2f0e10ef451e65b95b269f22daf68a3d1f5065c5"
+    },
+    {
+      "module": "org.jetbrains:annotations:13.0",
+      "cache_path": "org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar",
+      "bytes": 17536,
+      "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478"
+    }
+  ],
+  "verifier": {
+    "source": "TlcConfigVerifier.kt",
+    "source_sha256": "f514d968bb8bdf2b62d1b0edfea5065562d4e4cc26020f9f3e58e76626b86456",
+    "artifacts": {
+      "TlcConfigVerifier.class": "0f456916ab8d5e05ae473c3a5c85ccacc489542ab8c457a9ef2359af712f003e",
+      "TlcConfigVerifier$Entry.class": "82f91d3b8228c871aa9f86ffbfe1341efc8876d87693108c5eead9241ff83574",
+      "TlcConfigVerifier$Lexeme.class": "705d000b5c8c1075251e9041e156fcfd365968565613f888f9b51f05d7e121ac",
+      "META-INF/main.kotlin_module": "e871d64c498617a57844801a5921b0eb078931ca7429f57b863de02b58cbb2a0"
+    }
+  }
+}
