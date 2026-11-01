@@ -35,7 +35,12 @@
     ],
     ["python3", "{repo}/.hypertext/formatter-tools/dsl.py", "setup-docker"],
     ["python3", "{repo}/.hypertext/formatter-tools/dsl.py", "setup-awk"],
-    ["python3", ".hypertext/formatter-tools/native.py", "--setup"]
+    ["python3", ".hypertext/formatter-tools/native.py", "--setup"],
+    [
+      "python3",
+      "{repo}/.hypertext/formatter-tools/formal_formats.py",
+      "prepare"
+    ]
   ],
   "sql_dialect": "postgresql"
 }

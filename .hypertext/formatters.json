@@ -236,6 +236,32 @@
         "{path}",
         "html"
       ]
+    },
+    {
+      "include": ["docs/verification/backup-sync/BackupSync.tla"],
+      "argv": [
+        "python3",
+        ".hypertext/formatter-tools/formal_formats.py",
+        "tla",
+        "{path}"
+      ],
+      "timeout_seconds": 120
+    },
+    {
+      "include": [
+        "docs/verification/backup-sync/BackupSync.cfg",
+        "docs/verification/backup-sync/BuggyEcho.cfg",
+        "docs/verification/backup-sync/BuggyLostAck.cfg",
+        "docs/verification/backup-sync/BuggyNotice.cfg",
+        "docs/verification/backup-sync/Cellular.cfg"
+      ],
+      "argv": [
+        "python3",
+        ".hypertext/formatter-tools/formal_formats.py",
+        "cfg",
+        "{path}"
+      ],
+      "timeout_seconds": 120
     }
   ],
   "exclude": [
@@ -17053,6 +17079,2228 @@
       "include": ["tools/lexicon-check/pnpm-lock.yaml"],
       "kind": "generated",
       "reason": "Tool-owned dependency lock, credential/value file, or exact line protocol; preserve its semantic bytes."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/audit/workspace/HomeWorkspaceLayoutScreenshotsKt/WorkspaceNavigationScrolledToBottom_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/audit/workspace/HomeWorkspaceLayoutScreenshotsKt/WorkspaceNavigationScrolledToBottom_Large text_cc1c1046_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/audit/workspace/HomeWorkspaceLayoutScreenshotsKt/WorkspaceNavigationScrolledToBottom_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_Confirmed_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_Confirmed_Phone Dark_67e6f6ed_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_Confirmed_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_Confirmed_Tablet_341ed7fd_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_FinishSetup_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_FinishSetup_Phone Dark_67e6f6ed_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_FinishSetup_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_FinishSetup_Tablet_341ed7fd_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_FinishingSetup_7ea6b8b9_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_RecoveryCheckFailed_7ea6b8b9_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/components/settings_account/AccountRecoveryScreenshotsKt/RecoveryPhrase_SetupUnreachable_7ea6b8b9_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S03_ExportConfiguring_Compact Phone_677a6e6d_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S03_ExportConfiguring_Phone, 150% text_e86ab7e2_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S03_ExportConfiguring_Phone, 200% text_696ac055_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S07_ImportConfirming_Phone, 200% text_696ac055_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S11_ImportPartialLongFilename_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S11_ImportPartialLongFilename_Phone Dark_67e6f6ed_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S11_ImportPartialLongFilename_Phone, 200% text_696ac055_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S11_ImportPartialLongFilename_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S11_ImportPartialLongFilename_Tablet_341ed7fd_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S12_ImportPaused_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S12_ImportPaused_Phone Dark_67e6f6ed_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S12_ImportPaused_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S12_ImportPaused_Tablet_341ed7fd_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S13_ImportRecoveringMedia_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S13_ImportRecoveringMedia_Phone Dark_67e6f6ed_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S13_ImportRecoveringMedia_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S13_ImportRecoveringMedia_Tablet_341ed7fd_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S14_ImportPreview_Landscape_7391e7ba_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S14_ImportPreview_Phone Dark_67e6f6ed_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S14_ImportPreview_Phone, 200% text_696ac055_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S14_ImportPreview_Phone_2dd8a156_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow08_export_import/Flow08_01_ExportImportFlowScreenshotsKt/S14_ImportPreview_Tablet_341ed7fd_0.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-confirmed--phone-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-confirmed--phone-landscape.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-confirmed--phone-large-text.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-confirmed--phone-rtl.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-confirmed--phone.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-confirmed--tablet.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-finish-setup--phone-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-finish-setup--phone-landscape.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-finish-setup--phone.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "app/compose-main/src/desktopTest/reference/recovery-phrase-finish-setup--tablet.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/android-empty.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/android-entry.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/android-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/phone-comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/phone-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/phone-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/phone-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/tablet-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/tablet-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/day-context/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/01-blank-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/02-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/03-handwriting-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/04-entry-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/04-save-draft-dialog.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/05-draft-list.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/05-reopened-draft.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/06-reopened-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/07-reopened-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/08-reopened-saved-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/09-saved-entry-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/10-saved-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/phone/draft-journey.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/01-blank-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/02-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/03-handwriting-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/04-entry-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/04-save-draft-dialog.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/05-draft-list.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/05-reopened-draft.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/06-reopened-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/07-reopened-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/08-reopened-saved-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/09-saved-entry-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/10-saved-text-keyboard.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/android-runtime/tablet/draft-journey.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/book-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/book-text.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/compact-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/landscape-text.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/medium-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-blocks.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-dark-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-dark-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-dark-text.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-ink-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-large-text-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-overview-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-photo-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-photo.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-recorder-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-recorder.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-rtl-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-text-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-text.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/phone-walkthrough.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-dark-text.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-ink-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-overview-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-photo-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-photo.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-recorder-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-recorder.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-text-transition.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tablet-walkthrough.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-focus/current/tabletop-recorder.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-book-earlier-day.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-closed-handwriting.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-closed-writing.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-earlier-day.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-returned-draft.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/foldable-writing-and-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/tablet-earlier-day.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/tablet-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/tablet-returned-draft.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-adaptive/tablet-writing-and-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/book-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/book-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-handwriting-scroll-create-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-ink-default-pull-to-create.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-pull-to-create.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-pull-to-memories.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/phone-text-scroll-create-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-compose/tabletop-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-immersive/earlier-day.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-immersive/overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-immersive/phone-handwriting-scroll-create-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-immersive/phone-text-scroll-create-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-immersive/text-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/book-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/foldable-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/foldable-returned-draft.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/foldable-writing-and-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/ink-frame-audit.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/ink-frame-audit.txt"
+      ],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/ink-interrupted-half-speed.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/ink-interrupted.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/phone-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/tablet-overview.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/tablet-returned-draft.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/tablet-writing-and-earlier.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/text-frame-audit.txt"
+      ],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/text-interrupted-half-speed.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/entry-page-motion-refined/text-interrupted.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/phone-comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/phone-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/phone-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/phone-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/tablet-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/tablet-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/equal-blocks/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/phone-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/phone-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/phone-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/tablet-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/tablet-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/expressive-tonal/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/figma-references/block-stack.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/figma-references/continuing-day.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/figma-references/day-and-blocks.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/motion-review.jpg"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/phone-comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/phone-dark.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/phone-empty.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/phone-entry.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/phone-focused.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/phone-comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/phone-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/phone-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/phone-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/tablet-empty.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/tablet-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/restored-editor/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/canvas-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/modes-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/phone-comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/phone-earlier.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/phone-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/phone-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/phone-written.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/expressive/tablet-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/phone-comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/phone-earlier.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/phone-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/phone-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/phone-written.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/tablet-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/light-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-dark-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-dark-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-dark-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-earlier.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/phone-written.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/swipe-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/themed-swipes/tablet-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-dark-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-dark-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-dark-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-earlier.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/phone-written.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/swipe-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/vertical-context/tablet-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/light-dark.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-dark-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-dark-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-dark-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-earlier.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-focus.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/phone-written.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/swipe-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/tablet-ink.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/entry-start/stories/visible-context/tablet-write.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/tablet-empty.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/tablet-entry.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/entry-start/tablet-focused.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/android-phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/android-phone-reopened.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/android-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/android-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/android-reopened.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/android-returned.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/entry-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/phone-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/phone-landscape-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/phone-landscape-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/tablet-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/tablet-dark-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/tablet-dark-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/tablet-dark-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compact/tablet-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/screenshots/prototypes/handwriting/comparison.png"],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-phone-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-phone-landscape-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-phone-landscape-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-tablet-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-tablet-dark-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-tablet-dark-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-tablet-dark-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/compose-tablet-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/phone-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/phone-landscape-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/phone-landscape-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/tablet-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/tablet-dark-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/tablet-dark-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/tablet-dark-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/tablet-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/expressive/toolbar-shapes.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/android-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/android-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/comparison.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/phone-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/phone-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/phone-landscape-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/phone-landscape-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/tablet-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/tablet-dark-context.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/tablet-dark-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/tablet-dark-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/tablet-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/in-editor/tablet-inline.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/integrated/draft-reopened.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/integrated/entry-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/integrated/saved-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/integrated/saved-reopened.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/integrated/saved-returned.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/motion/android-back-gesture-mid.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/motion/android-entry.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/motion/android-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/motion/android-returned.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/motion/entry-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/shared-element/draft-focused.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/shared-element/draft-returned.png"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": [
+        "docs/screenshots/prototypes/handwriting/shared-element/entry-focus-return.mp4"
+      ],
+      "kind": "binary",
+      "reason": "Frozen image/video reference or capture evidence; preserve encoded pixels/frames and reference integrity."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/BackupSync.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/BuggyEcho.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/BuggyLostAck.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/BuggyNotice.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/Cellular.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
     }
   ]
 }

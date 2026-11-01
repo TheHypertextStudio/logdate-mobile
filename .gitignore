@@ -72,3 +72,8 @@ node_modules/
 /.hypertext/formatter-tools/runtime.json
 /.hypertext/formatter-tools/bin/
 /.hypertext/formatter-tools/__pycache__/
+
+# Exact local rollback copies created by supported Git hook activation.
+/.hypertext/git-hook-backups/pre-commit.2a67f01ba7d29767cbedf7ae87770e498cfdfbb4720fd5aaa3cc7ee69e5fee0c
+/.hypertext/git-hook-backups/commit-msg.e18ae58f60290e21127c497ac908887c6726f1b888fc2c6eea31c027ddab0d3c
+/.hypertext/git-hook-backups/pre-push.46df1a9689bca20fbb1d0c7e6906022da1db3ad6c8b2127fbf69b39a1a813c40
