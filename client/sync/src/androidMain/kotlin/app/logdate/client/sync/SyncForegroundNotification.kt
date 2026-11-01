@@ -63,7 +63,9 @@ object SyncForegroundNotification {
                 builder.setProgress(0, 0, true)
                 null
             }
-        builder.applyTransferLiveUpdate(transferLiveUpdate(currentLiveUpdatesSwitch().enabled, percent), percent)
+        if (syncNotificationPhase(total) == SyncNotificationPhase.BACKING_UP) {
+            builder.applyTransferLiveUpdate(transferLiveUpdate(currentLiveUpdatesSwitch().enabled, percent), percent)
+        }
 
         return ForegroundInfo(
             notificationId,
