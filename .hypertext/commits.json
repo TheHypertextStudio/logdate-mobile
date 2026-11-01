@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "scopes": {
+    "auth": {
+      "description": "Accounts and sign-in",
+      "includes": [
+        "account creation",
+        "sign-in and passkeys",
+        "account recovery"
+      ],
+      "excludes": ["profile presentation", "subscription entitlements"],
+      "technical": false
+    },
+    "billing": {
+      "description": "Subscriptions and purchases",
+      "includes": ["purchase flows", "subscription entitlements"],
+      "excludes": [
+        "account authentication",
+        "payment-independent backup behavior"
+      ],
+      "technical": false
+    },
+    "editor": {
+      "description": "Writing journal entries",
+      "includes": ["text editing", "entry media and voice composition"],
+      "excludes": ["browsing saved entries", "standalone media library"],
+      "technical": false
+    },
+    "export": {
+      "description": "Exporting journal data",
+      "includes": ["export archive creation", "export progress and results"],
+      "excludes": ["importing archives", "automatic cloud backups"],
+      "technical": false
+    },
+    "restore": {
+      "description": "Restoring journal data",
+      "includes": [
+        "importing backup archives",
+        "authenticated cloud-archive download and restore handoff",
+        "archive restore validation and recovery"
+      ],
+      "excludes": ["creating exports", "sync-queue conflict recovery"],
+      "technical": false
+    },
+    "profile": {
+      "description": "Personal profiles",
+      "includes": ["profile details", "avatar selection"],
+      "excludes": ["authentication", "device registration"],
+      "technical": false
+    },
+    "settings": {
+      "description": "App preferences and local data controls",
+      "includes": [
+        "settings navigation",
+        "general preference controls",
+        "user-confirmed local-data erasure"
+      ],
+      "excludes": [
+        "domain-specific preference behavior",
+        "cloud account authentication and deletion"
+      ],
+      "technical": false
+    },
+    "journal": {
+      "description": "Journal collections",
+      "includes": ["journal list and details", "journal organization"],
+      "excludes": ["individual entry editing", "cross-journal search"],
+      "technical": false
+    },
+    "library": {
+      "description": "Media library",
+      "includes": ["saved media browsing", "media details and metadata"],
+      "excludes": ["entry composition", "capture and playback services"],
+      "technical": false
+    },
+    "location-timeline": {
+      "description": "Places and location history",
+      "includes": ["place browsing", "location-history maps and visits"],
+      "excludes": ["location capture consent", "Rewind memory highlights"],
+      "technical": false
+    },
+    "onboarding": {
+      "description": "Getting started",
+      "includes": ["first-run introduction", "initial setup flow"],
+      "excludes": ["ongoing account sign-in", "later preference changes"],
+      "technical": false
+    },
+    "rewind": {
+      "description": "Revisiting memories",
+      "includes": ["memory highlights", "year-in-review experiences"],
+      "excludes": ["general timeline browsing", "location collection"],
+      "technical": false
+    },
+    "search": {
+      "description": "Finding entries and memories",
+      "includes": ["query and result behavior", "search filters"],
+      "excludes": ["general timeline presentation", "entry editing"],
+      "technical": false
+    },
+    "timeline": {
+      "description": "Entry timeline",
+      "includes": ["chronological entry browsing", "day and entry navigation"],
+      "excludes": ["journal collection management", "location-history maps"],
+      "technical": false
+    },
+    "events": {
+      "description": "Events and linked memories",
+      "includes": ["event creation and details", "calendar and linked entries"],
+      "excludes": [
+        "automatic location capture",
+        "general journal organization"
+      ],
+      "technical": false
+    },
+    "postcards": {
+      "description": "Postcards",
+      "includes": ["postcard composition", "postcard collection and viewing"],
+      "excludes": ["standalone sticker collection", "generic content sharing"],
+      "technical": false
+    },
+    "stickers": {
+      "description": "Personal stickers",
+      "includes": ["sticker extraction", "sticker collection"],
+      "excludes": ["postcard layout", "general media browsing"],
+      "technical": false
+    },
+    "android-widget": {
+      "description": "Home-screen memories",
+      "includes": ["home-screen widgets", "On This Day and widget memories"],
+      "excludes": ["in-app timeline", "Wear companion interactions"],
+      "technical": false
+    },
+    "streaks": {
+      "description": "Journaling streaks",
+      "includes": ["journaling streak tracking", "campfire presentation"],
+      "excludes": ["reminder delivery", "general usage diagnostics"],
+      "technical": false
+    },
+    "reminders": {
+      "description": "Journaling reminders",
+      "includes": [
+        "moment-aware reminder triggers",
+        "reminder limits and choices"
+      ],
+      "excludes": [
+        "generic notification-channel behavior",
+        "backup progress indicators"
+      ],
+      "technical": false
+    },
+    "wear": {
+      "description": "Watch journaling",
+      "includes": [
+        "Wear companion interactions",
+        "watch-specific entry capture"
+      ],
+      "excludes": ["phone entry editor", "shared reminder decision rules"],
+      "technical": false
+    },
+    "health-connect": {
+      "description": "Health context",
+      "includes": [
+        "Health Connect integration",
+        "health-context consent and access"
+      ],
+      "excludes": ["general device permissions", "location collection"],
+      "technical": false
+    },
+    "intelligence": {
+      "description": "Suggestions and insights",
+      "includes": [
+        "entry summarization and entity extraction",
+        "intelligent journal assistance"
+      ],
+      "excludes": ["search matching", "routine cloud backups"],
+      "technical": false
+    },
+    "location": {
+      "description": "Location capture",
+      "includes": [
+        "location tracking and geofencing",
+        "location consent and permission behavior"
+      ],
+      "excludes": ["Places browsing", "memory map presentation"],
+      "technical": false
+    },
+    "media": {
+      "description": "Capturing and playing media",
+      "includes": [
+        "photo video and audio capture",
+        "media playback and processing"
+      ],
+      "excludes": ["media library browsing", "entry text editing"],
+      "technical": false
+    },
+    "sharing": {
+      "description": "Sharing journal content",
+      "includes": [
+        "user-directed content sharing",
+        "federated sharing experiences"
+      ],
+      "excludes": ["standalone protocol libraries", "backup synchronization"],
+      "technical": false
+    },
+    "sync": {
+      "description": "Cloud backups and synchronization",
+      "includes": [
+        "automatic backup scheduling and eligibility",
+        "backup progress and foreground indicators",
+        "sync queues and conflict recovery"
+      ],
+      "excludes": [
+        "archive export download and restoration",
+        "recording consent",
+        "generic notification channel delivery"
+      ],
+      "technical": false
+    },
+    "notifications": {
+      "description": "Notification delivery",
+      "includes": [
+        "notification channels and delivery controls",
+        "notification permission and platform delivery behavior"
+      ],
+      "excludes": [
+        "backup progress content and eligibility",
+        "reminder trigger decisions",
+        "recording progress content"
+      ],
+      "technical": false
+    },
+    "activitypub": {
+      "description": "ActivityPub integration library",
+      "includes": [
+        "reusable ActivityPub protocol support",
+        "ActivityPub client contracts"
+      ],
+      "excludes": ["LogDate sharing presentation", "AT Protocol libraries"],
+      "technical": true
+    },
+    "atproto": {
+      "description": "AT Protocol libraries",
+      "includes": [
+        "reusable AT Protocol libraries",
+        "identity repository and transport contracts"
+      ],
+      "excludes": ["LogDate account presentation", "ActivityPub libraries"],
+      "technical": true
+    }
+  }
+}

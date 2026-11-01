@@ -2,6 +2,8 @@
 
 **CRITICAL: Follow these guidelines to prevent repository damage and maintain clean history.**
 
+Current scope/type authority is the reviewed `.hypertext/commits.json` and current Commit Message Standards; historical examples never override those rules.
+
 This document covers **git workflow, commit sequencing, and change organization**. For commit message composition, see **[Commit Message Standards](./commit-messages.md)**.
 
 ---
@@ -14,12 +16,12 @@ Each commit should represent **one complete, coherent change**. A reader should 
 
 **What constitutes "one logical change":**
 
-| Good (Single Commit) | Bad (Should Be Split) |
-|---------------------|----------------------|
-| Add user authentication endpoint + its tests | Add auth endpoint + refactor unrelated database code |
-| Fix bug in payment processing | Fix payment bug + add new reporting feature |
-| Refactor Button component to use new design tokens | Refactor Button + fix unrelated form validation |
-| Update all lint configs for new rule | Update lint + fix lint errors in unrelated files |
+| Good (Single Commit)                               | Bad (Should Be Split)                                |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| Add user authentication endpoint + its tests       | Add auth endpoint + refactor unrelated database code |
+| Fix bug in payment processing                      | Fix payment bug + add new reporting feature          |
+| Refactor Button component to use new design tokens | Refactor Button + fix unrelated form validation      |
+| Update all lint configs for new rule               | Update lint + fix lint errors in unrelated files     |
 
 **The test**: If you removed this commit, would exactly one feature/fix disappear? If removing it would break multiple unrelated things, it's too big.
 
@@ -31,27 +33,17 @@ When implementing a feature that requires multiple commits, order them by **depe
 1. Infrastructure/types first     → Types, interfaces, shared utilities
 2. Core implementation second     → Main feature logic
 3. Integration third              → Wiring into existing code
-4. Tests alongside or after       → Can be with implementation or separate
-5. Documentation last             → README updates, API docs
+4. Relevant tests and documentation accompany their implementation
+   → Each retained commit is complete and independently understandable
 ```
 
 **Example sequence for "Add workspace sharing":**
 
-```bash
-# Commit 1: Types and interfaces
-feat(shared-model): add WorkspaceShare types and permissions model
+```text
+feat(sharing): Share journal entries with selected recipients
 
-# Commit 2: Core logic
-feat(domain): implement workspace sharing use cases
-
-# Commit 3: API integration
-feat(server): add workspace sharing endpoints
-
-# Commit 4: UI (if applicable)
-feat(feature-core): add workspace sharing UI components
-
-# Commit 5: Documentation
-docs: add workspace sharing API documentation
+Include the complete behavior, relevant tests and usage guidance together.
+A separate independently useful improvement can be another sharing commit.
 ```
 
 > **Note**: These examples show only the title line. For message format (type, scope, body structure), see **[Commit Message Standards](./commit-messages.md)**. For valid scopes, see **[Commit Scopes Reference](./commit-scopes.md)**.
@@ -79,25 +71,27 @@ When combining multiple related changes, write a commit body that explains how t
 **CRITICAL: Never mix refactoring with feature changes.**
 
 Refactoring commits should:
+
 - Change code structure without changing behavior
 - Be independently reviewable and revertible
 - Come **before** the feature that benefits from them
 
 ```bash
 # ✅ CORRECT: Refactor first, then feature
-refactor(auth): extract token validation to shared utility
-feat(auth): add refresh token rotation using shared validator
+chore(auth): extract token validation to shared utility
+feat(auth): stay signed in securely across sessions
 
 # ❌ WRONG: Mixed refactor and feature
 feat(auth): add refresh tokens and refactor validation
 ```
 
 **Why this matters:**
+
 - If the feature has bugs, you can revert it without losing the refactor
 - Reviewers can verify the refactor doesn't change behavior
 - Git bisect can identify exactly which commit introduced issues
 
-> **Commit type guidance**: Use `refactor` for structural changes without behavior change, `feat` for new functionality. See **[Commit Types](./commit-messages.md#commit-types)** for the complete list.
+> **Commit type guidance**: Use `chore` with an informative body for structural changes without behavior change, `feat` for new functionality. See **[Current Commit Types](./commit-messages.md#current-commit-types)** for the complete list.
 
 ---
 
@@ -133,24 +127,20 @@ git add *
 **For multi-agent safety and clean commits, use this atomic pattern:**
 
 ```bash
-git restore --staged . && git add file1.kt file2.kt && git commit -m "type(scope): title
-
-Body explaining what changed and why.
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+git restore --staged . && git add file1.kt file2.kt && HYPERTEXT_AGENT_COAUTHOR="Codex <noreply@openai.com>" git commit -F /tmp/reviewed-commit-message.txt
 ```
 
 > **Message format**: The example above shows the basic structure. For complete formatting rules (72-char limit, body style, footer annotations), see **[Message Anatomy](./commit-messages.md#message-anatomy)**.
 
 **Why this pattern:**
 
-| Benefit | Explanation |
-|---------|-------------|
-| **Multi-agent safety** | Prevents Agent A's files from being included in Agent B's commit |
-| **Atomic operation** | All steps succeed or fail together using `&&` |
-| **Clean slate** | `git restore --staged .` clears stale staging from other processes |
-| **Explicit staging** | No surprises from lingering staged files |
-| **Race condition prevention** | Prevents interleaving from concurrent agents |
+| Benefit                       | Explanation                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| **Multi-agent safety**        | Prevents Agent A's files from being included in Agent B's commit   |
+| **Atomic operation**          | All steps succeed or fail together using `&&`                      |
+| **Clean slate**               | `git restore --staged .` clears stale staging from other processes |
+| **Explicit staging**          | No surprises from lingering staged files                           |
+| **Race condition prevention** | Prevents interleaving from concurrent agents                       |
 
 ### Workflow Checklist
 
@@ -171,10 +161,8 @@ commits and nobody pushes directly to `main`.
 ```
 main
   └── sync-retry-backoff        (short-lived branch, one change)
-        ├── commit 1: types
-        ├── commit 2: implementation
-        ├── commit 3: tests
-        └── commit 4: docs
+        ├── complete behavior + relevant tests/documentation
+        └── another independently useful change, if needed
               → pull request → Rebase and merge → each commit lands on main as-is
 ```
 
@@ -250,17 +238,17 @@ keep. Merge commits are disabled for this repository, and GitHub deletes the bra
 
 **🚨 THESE ACTIONS ARE FIREABLE OFFENSES:**
 
-| Forbidden | Why |
-|-----------|-----|
-| `git add -A` / `git add .` / `git add *` | Stages everything indiscriminately |
-| `git reset --hard` | Permanently destroys uncommitted work |
-| `git push --force` | Destroys commit history on remote |
-| Pushing directly to `main` | Skips the pull request, its CI, and its review |
-| Merge commits (`git merge`, **Create a merge commit**) | Breaks the linear history on `main` |
-| `git commit -a` | Commits without proper review |
-| `git commit --no-verify` | Bypasses critical quality enforcement |
-| Dropping failing files after hooks fail | Hides problems instead of fixing them |
-| Commit titles mentioning phases | See **[Forbidden Patterns](./commit-messages.md#forbidden-patterns)** |
+| Forbidden                                              | Why                                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `git add -A` / `git add .` / `git add *`               | Stages everything indiscriminately                                    |
+| `git reset --hard`                                     | Permanently destroys uncommitted work                                 |
+| `git push --force`                                     | Destroys commit history on remote                                     |
+| Pushing directly to `main`                             | Skips the pull request, its CI, and its review                        |
+| Merge commits (`git merge`, **Create a merge commit**) | Breaks the linear history on `main`                                   |
+| `git commit -a`                                        | Commits without proper review                                         |
+| `git commit --no-verify`                               | Bypasses critical quality enforcement                                 |
+| Dropping failing files after hooks fail                | Hides problems instead of fixing them                                 |
+| Commit titles mentioning phases                        | See **[Forbidden Patterns](./commit-messages.md#forbidden-patterns)** |
 
 ---
 
@@ -274,13 +262,13 @@ keep. Merge commits are disabled for this repository, and GitHub deletes the bra
 
 ### Safe Alternatives
 
-| Goal | Safe Command |
-|------|--------------|
-| Undo last commit, keep changes staged | `git reset --soft HEAD~1` |
-| Unstage everything | `git reset HEAD` or `git reset --mixed HEAD` |
-| Discard changes in specific file | `git restore --source=HEAD -- path/to/file` |
-| Create backup before risky operation | `git branch backup-branch` |
-| Undo a pushed commit | `git revert <commit-hash>` (creates new commit) |
+| Goal                                  | Safe Command                                    |
+| ------------------------------------- | ----------------------------------------------- |
+| Undo last commit, keep changes staged | `git reset --soft HEAD~1`                       |
+| Unstage everything                    | `git reset HEAD` or `git reset --mixed HEAD`    |
+| Discard changes in specific file      | `git restore --source=HEAD -- path/to/file`     |
+| Create backup before risky operation  | `git branch backup-branch`                      |
+| Undo a pushed commit                  | `git revert <commit-hash>` (creates new commit) |
 
 **Never force push** without explicit user permission, and **never to main/master**.
 
