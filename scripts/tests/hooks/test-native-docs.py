@@ -82,8 +82,10 @@ class SecretDocumentationTests(unittest.TestCase):
             )
             document.write_text(content)
             stage(document)
+            # Test the real repository-specific stage, not a workstation-bound
+            # canonical dispatcher. Real repository commits still run both.
             return subprocess.run(
-                ["bash", str(ROOT / ".githooks/pre-commit")],
+                ["bash", str(ROOT / ".hypertext/git-product/pre-commit")],
                 cwd=root,
                 capture_output=True,
                 text=True,
