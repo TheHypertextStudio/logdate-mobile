@@ -14,6 +14,6 @@ fun syncReviewInventory(
 ): SyncReviewInventory {
     if (scope == null) return SyncReviewInventory()
     val unresolved = records.distinct().filter { !it.recovered && (it.scope == scope || it.scope == null) }
-    val edits = unresolved.filter { it.scope == scope && (it.deletedEdit != null || it.textVersions != null) }
+    val edits = unresolved.filter { it.scope == scope && (it.deletedEdit != null || it.textVersions != null || it.audioVersions != null) }
     return SyncReviewInventory(edits, unresolved.size - edits.size)
 }

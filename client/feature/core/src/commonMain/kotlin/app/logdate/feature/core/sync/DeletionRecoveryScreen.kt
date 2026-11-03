@@ -167,6 +167,11 @@ fun DeletionRecoveryContent(
             item { Text(stringResource(Res.string.sync_recovery_empty), modifier = Modifier.padding(horizontal = Spacing.lg)) }
         }
         records.forEachIndexed { index, record ->
+            val audioPair = record.audioVersions
+            if (audioPair != null) {
+                item(key = "${record.id}:$index:audio-versions") { SavedWritingVersions(audioPair) }
+                return@forEachIndexed
+            }
             val pair = record.textVersions
             if (pair != null) {
                 item(key = "${record.id}:$index:versions") { SavedWritingVersions(pair) }

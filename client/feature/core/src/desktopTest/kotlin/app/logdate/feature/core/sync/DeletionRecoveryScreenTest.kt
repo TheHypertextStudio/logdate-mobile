@@ -17,6 +17,8 @@ import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import app.logdate.client.repository.journals.JournalNote
+import app.logdate.client.repository.transcription.TranscriptDocument
+import app.logdate.client.sync.AudioConflictVersions
 import app.logdate.client.sync.conflict.DeletedEdit
 import app.logdate.client.sync.conflict.SyncConflictRecord
 import app.logdate.client.sync.metadata.UploadScope
@@ -31,6 +33,57 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
 class DeletionRecoveryScreenTest {
+    @Test
+    fun `saved audio writing shows both captions and transcripts without a destructive action`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val local =
+                JournalNote.Audio(
+                    mediaRef = "file:///synthetic/recording.m4a",
+                    durationMs = 4000,
+                    creationTimestamp = Instant.fromEpochMilliseconds(1),
+                    lastUpdated = Instant.fromEpochMilliseconds(2),
+                    caption = "Local audio caption",
+                    transcript = TranscriptDocument.fromPlainText("Local spoken words").copy(revision = 2),
+                    transcription = "Unfinished working words",
+                )
+            val remote =
+                local.copy(
+                    caption = "Remote audio caption",
+                    transcript = TranscriptDocument.fromPlainText("Remote spoken words").copy(revision = 3),
+                    transcription = "",
+                )
+            val record =
+                SyncConflictRecord(
+                    "audio",
+                    "NOTE",
+                    local.uid.toString(),
+                    0,
+                    42,
+                    2,
+                    99,
+                    "pending",
+                    100,
+                    scope = UploadScope("synthetic-owner", "https://sync.example"),
+                    audioVersions = AudioConflictVersions(local, remote, "local", "remote"),
+                )
+            setContent {
+                LogDateTheme {
+                    DeletionRecoveryContent(listOf(record), null, false, false, {}, {}, {})
+                }
+            }
+            onNodeWithText("Local audio caption").assertDoesNotExist()
+            onNodeWithText("Show saved writing").performClick()
+            onNodeWithText("Local audio caption").assertExists()
+            onNodeWithText("Remote audio caption").assertExists()
+            onNodeWithText("Local spoken words").assertExists()
+            onNodeWithText("Remote spoken words").assertExists()
+            onNodeWithText("Unfinished working words").assertExists()
+            onNodeWithText("Save as a new item").assertDoesNotExist()
+            saveRender(onRoot().captureToImage(), "audio-writing-versions-offscreen")
+            onNodeWithText("Hide saved writing").performClick()
+            onNodeWithText("Local audio caption").assertDoesNotExist()
+        }
+
     @Test
     fun `saving an offline edit requires a deliberate action`() =
         runDesktopComposeUiTest(width = 411, height = 891) {

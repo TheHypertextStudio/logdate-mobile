@@ -16,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import app.logdate.client.repository.journals.JournalNote
+import app.logdate.client.sync.AudioConflictVersions
 import app.logdate.client.sync.TextConflictVersions
 import app.logdate.client.sync.metadata.SyncDeadLetterReason
 import app.logdate.client.sync.metadata.SyncDeadLetterRecord
@@ -34,6 +36,7 @@ import logdate.client.feature.core.generated.resources.sync_issue_retry
 import logdate.client.feature.core.generated.resources.sync_issue_sign_in
 import logdate.client.feature.core.generated.resources.sync_issue_too_large
 import logdate.client.feature.core.generated.resources.sync_review_attachment
+import logdate.client.feature.core.generated.resources.sync_review_caption
 import logdate.client.feature.core.generated.resources.sync_review_context
 import logdate.client.feature.core.generated.resources.sync_review_draft
 import logdate.client.feature.core.generated.resources.sync_review_earlier
@@ -45,7 +48,9 @@ import logdate.client.feature.core.generated.resources.sync_review_journal
 import logdate.client.feature.core.generated.resources.sync_review_local
 import logdate.client.feature.core.generated.resources.sync_review_remote
 import logdate.client.feature.core.generated.resources.sync_review_show_versions
+import logdate.client.feature.core.generated.resources.sync_review_transcript
 import logdate.client.feature.core.generated.resources.sync_review_versions
+import logdate.client.feature.core.generated.resources.sync_review_working_text
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
@@ -60,6 +65,36 @@ internal fun EarlierSyncIssues(count: Int) {
 
 @Composable
 internal fun SavedWritingVersions(versions: TextConflictVersions) {
+    SavedWritingVersionsLayout(versions, { Text(versions.local.content) }, { Text(versions.remote.content) })
+}
+
+@Composable
+internal fun SavedWritingVersions(versions: AudioConflictVersions) {
+    SavedWritingVersionsLayout(versions, { AudioWritingCandidate(versions.local) }, { AudioWritingCandidate(versions.remote) })
+}
+
+@Composable
+private fun AudioWritingCandidate(note: JournalNote.Audio) {
+    if (note.caption.isNotBlank()) {
+        Text(stringResource(Res.string.sync_review_caption), style = MaterialTheme.typography.labelMedium)
+        Text(note.caption)
+    }
+    note.transcript?.plainText?.takeIf { it.isNotBlank() }?.let {
+        Text(stringResource(Res.string.sync_review_transcript), style = MaterialTheme.typography.labelMedium)
+        Text(it)
+    }
+    if (note.transcription.isNotBlank() && note.transcription != note.transcript?.plainText) {
+        Text(stringResource(Res.string.sync_review_working_text), style = MaterialTheme.typography.labelMedium)
+        Text(note.transcription)
+    }
+}
+
+@Composable
+private fun SavedWritingVersionsLayout(
+    versions: Any,
+    local: @Composable () -> Unit,
+    remote: @Composable () -> Unit,
+) {
     var expanded by remember(versions) { mutableStateOf(false) }
     Column(Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         Text(stringResource(Res.string.sync_review_versions), style = MaterialTheme.typography.titleMedium)
@@ -70,9 +105,9 @@ internal fun SavedWritingVersions(versions: TextConflictVersions) {
             SelectionContainer {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Text(stringResource(Res.string.sync_review_local), style = MaterialTheme.typography.labelLarge)
-                    Text(versions.local.content)
+                    local()
                     Text(stringResource(Res.string.sync_review_remote), style = MaterialTheme.typography.labelLarge)
-                    Text(versions.remote.content)
+                    remote()
                 }
             }
         }

@@ -3,6 +3,7 @@ package app.logdate.client.sync.conflict
 import app.logdate.client.datastore.KeyValueStorage
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.mediaRefOrNull
+import app.logdate.client.sync.AudioConflictVersions
 import app.logdate.client.sync.TextConflictVersions
 import app.logdate.client.sync.metadata.UploadScope
 import app.logdate.shared.model.Journal
@@ -30,6 +31,7 @@ data class SyncConflictRecord(
     val recovered: Boolean = false,
     val recoveryNoteIds: Map<String, String> = emptyMap(),
     val textVersions: TextConflictVersions? = null,
+    val audioVersions: AudioConflictVersions? = null,
 )
 
 @Serializable
@@ -63,12 +65,13 @@ class KeyValueSyncConflictStore(
         mutex.withLock {
             val current = readAll()
             if (
-                record.textVersions != null &&
+                (record.textVersions != null || record.audioVersions != null) &&
                 current.any {
                     it.entityType == record.entityType &&
                         it.entityId == record.entityId &&
                         it.scope == record.scope &&
-                        it.textVersions == record.textVersions
+                        it.textVersions == record.textVersions &&
+                        it.audioVersions == record.audioVersions
                 }
             ) {
                 return@withLock
@@ -111,8 +114,9 @@ class KeyValueSyncConflictStore(
 suspend fun SyncConflictStore.retainedMediaReferences(): Set<String> =
     list()
         .flatMap { record ->
-            val edit = record.deletedEdit ?: return@flatMap emptyList()
-            listOfNotNull(edit.note?.let { it.mediaRefOrNull() }, edit.journal?.coverImageUri) +
+            val audioReferences = listOfNotNull(record.audioVersions?.local?.mediaRef, record.audioVersions?.remote?.mediaRef)
+            val edit = record.deletedEdit ?: return@flatMap audioReferences
+            audioReferences + listOfNotNull(edit.note?.let { it.mediaRefOrNull() }, edit.journal?.coverImageUri) +
                 edit.notes.mapNotNull { it.mediaRefOrNull() } +
                 edit.draft?.blocks.orEmpty().flatMap { block ->
                     when (block) {

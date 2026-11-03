@@ -7,12 +7,19 @@ import app.logdate.client.sync.cloud.CloudApiException
 import app.logdate.client.sync.cloud.DefaultCloudContentDataSource
 import app.logdate.client.sync.cloud.DefaultCloudMediaDataSource
 import app.logdate.client.sync.cloud.MediaDownloadResponse
+import app.logdate.client.sync.conflict.KeyValueSyncConflictStore
 import app.logdate.client.sync.metadata.EntityType
 import app.logdate.client.sync.metadata.PendingOperation
 import app.logdate.client.sync.metadata.PendingUpload
 import app.logdate.client.sync.metadata.SyncMetadataService
+import app.logdate.client.sync.metadata.UploadScope
+import app.logdate.client.sync.recovery.DownloadInbox
+import app.logdate.client.sync.recovery.DownloadInboxTest
+import app.logdate.client.sync.recovery.DownloadScope
+import app.logdate.client.sync.recovery.WireDownload
 import app.logdate.client.sync.test.FakeCloudApiClient
 import app.logdate.client.sync.test.FakeJournalNotesRepository
+import app.logdate.client.sync.test.FakeSessionStorage
 import app.logdate.client.sync.test.FakeSyncMetadataService
 import app.logdate.client.sync.test.testDefaultSyncManager
 import app.logdate.shared.model.sync.ContentChange
@@ -24,11 +31,16 @@ import app.logdate.shared.model.sync.ContentUploadResponse
 import app.logdate.shared.model.sync.VersionConstraint
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -210,71 +222,119 @@ class TranscriptCreateRecoveryTest {
         }
 
     @Test
-    fun `lost create reconciliation retains real caption and newer remote transcript conflicts`() =
-        runTest {
-            for (differentCaption in listOf(true, false)) {
-                val original = audio()
-                val latest = original.copy(transcript = TranscriptDocument.fromPlainText("Local speech").copy(revision = 2))
-                val notes = FakeJournalNotesRepository().apply { create(latest) }
-                val metadata = identityMetadata()
-                metadata.enqueuePending(original.uid.toString(), EntityType.NOTE, PendingOperation.CREATE)
-                val api =
-                    FakeCloudApiClient().apply {
-                        downloadMediaResponse =
-                            Result.success(
-                                MediaDownloadResponse(
-                                    original.uid.toString(),
-                                    "audio.m4a",
-                                    "audio/mp4",
-                                    1,
-                                    byteArrayOf(1),
-                                    original.mediaRef,
-                                ),
-                            )
-                        getContentChangesResponse =
-                            Result.success(
-                                ContentChangesResponse(
-                                    listOf(
-                                        ContentChange(
-                                            original.uid.toString(),
-                                            "AUDIO",
-                                            mediaUri = original.mediaRef,
-                                            durationMs = original.durationMs,
-                                            caption = if (differentCaption) "Remote edit" else original.caption,
-                                            createdAt = 1,
-                                            lastUpdated = 99,
-                                            serverVersion = 42,
-                                            transcript =
-                                                if (differentCaption) {
-                                                    null
-                                                } else {
-                                                    Json.encodeToString(
-                                                        TranscriptDocument.fromPlainText("Remote speech").copy(revision = 3),
-                                                    )
-                                                },
-                                        ),
-                                    ),
-                                    emptyList(),
-                                    42,
-                                ),
-                            )
-                    }
-                val manager =
-                    testDefaultSyncManager(
-                        cloudContentDataSource = DefaultCloudContentDataSource(api),
-                        cloudMediaDataSource = DefaultCloudMediaDataSource(api),
-                        journalNotesRepository = notes,
-                        syncMetadataService = metadata,
-                        syncScope = backgroundScope,
+    fun `lost create reconciliation retains a real caption conflict`() = runTest { assertRetainedConflict(true) }
+
+    @Test
+    fun `lost create reconciliation retains a newer remote transcript conflict`() = runTest { assertRetainedConflict(false) }
+
+    private suspend fun TestScope.assertRetainedConflict(differentCaption: Boolean) {
+        val original = audio()
+        val latest = original.copy(transcript = TranscriptDocument.fromPlainText("Local speech").copy(revision = 2))
+        val notes = FakeJournalNotesRepository().apply { create(latest) }
+        val metadata = identityMetadata()
+        val storage = InMemoryKeyValueStorage()
+        val conflicts = KeyValueSyncConflictStore(storage)
+        val sessions = FakeSessionStorage()
+        val session = requireNotNull(sessions.getOriginBoundSession())
+        val selected = DownloadScope(session.session.accountId, session.origin)
+        val database = DownloadInboxTest.Database()
+        val inbox = DownloadInbox(database, database, { selected }, { 1L })
+        metadata.enqueuePending(original.uid.toString(), EntityType.NOTE, PendingOperation.CREATE)
+        val api =
+            FakeCloudApiClient().apply {
+                downloadMediaResponse =
+                    Result.success(
+                        MediaDownloadResponse(
+                            original.uid.toString(),
+                            "audio.m4a",
+                            "audio/mp4",
+                            1,
+                            byteArrayOf(1),
+                            original.mediaRef,
+                        ),
                     )
-
-                assertTrue(manager.downloadRemoteChanges().success)
-
-                assertEquals(PendingOperation.CREATE, metadata.getPendingUploads(EntityType.NOTE).single().operation)
-                assertEquals(latest.transcript, (notes.getNoteById(original.uid) as JournalNote.Audio).transcript)
-                assertEquals(1, manager.getSyncStatus().conflictCount)
+                getContentChangesResponse =
+                    Result.success(
+                        ContentChangesResponse(
+                            listOf(
+                                ContentChange(
+                                    original.uid.toString(),
+                                    "AUDIO",
+                                    mediaUri = original.mediaRef,
+                                    durationMs = original.durationMs,
+                                    caption = if (differentCaption) "Remote edit" else original.caption,
+                                    createdAt = 1,
+                                    lastUpdated = 99,
+                                    serverVersion = 42,
+                                    transcript =
+                                        if (differentCaption) {
+                                            null
+                                        } else {
+                                            Json.encodeToString(
+                                                TranscriptDocument.fromPlainText("Remote speech").copy(revision = 3),
+                                            )
+                                        },
+                                ),
+                            ),
+                            emptyList(),
+                            42,
+                        ),
+                    )
             }
-        }
+        val manager =
+            testDefaultSyncManager(
+                cloudContentDataSource = DefaultCloudContentDataSource(api),
+                cloudMediaDataSource = DefaultCloudMediaDataSource(api),
+                journalNotesRepository = notes,
+                syncMetadataService = metadata,
+                syncScope = backgroundScope,
+                conflictStore = conflicts,
+                sessionStorage = sessions,
+                downloadInbox = inbox,
+            )
+
+        val wire =
+            api.getContentChangesResponse
+                .getOrThrow()
+                .changes
+                .single()
+        inbox.stage("NOTE", 42, listOf(WireDownload(original.uid.toString(), 42, false, Json.encodeToString(wire))), selected)
+        val pendingBefore = metadata.getPendingUploads(EntityType.NOTE).single()
+
+        assertTrue(manager.downloadRemoteChanges().success)
+
+        assertEquals(PendingOperation.CREATE, metadata.getPendingUploads(EntityType.NOTE).single().operation)
+        assertEquals(latest.transcript, (notes.getNoteById(original.uid) as JournalNote.Audio).transcript)
+        val records = KeyValueSyncConflictStore(storage).list()
+        val record = records.single()
+        assertEquals(UploadScope(selected.owner, selected.origin), record.scope)
+        // Assert the serialized originals, independently of the presentation count.
+        val pair =
+            assertNotNull(
+                Json
+                    .parseToJsonElement(storage.values.values.single())
+                    .jsonArray
+                    .single()
+                    .jsonObject["audioVersions"],
+            ).jsonObject
+        assertEquals(Json.encodeToJsonElement(latest), pair["local"])
+        val remoteTranscript = if (differentCaption) null else Json.decodeFromString<TranscriptDocument>(requireNotNull(wire.transcript))
+        val expectedRemote =
+            original.copy(
+                lastUpdated = Instant.fromEpochMilliseconds(99),
+                caption = if (differentCaption) "Remote edit" else original.caption,
+                transcript = remoteTranscript,
+                syncVersion = 42,
+            )
+        assertEquals(Json.encodeToJsonElement(expectedRemote), pair["remote"])
+        assertEquals(pendingBefore, metadata.getPendingUploads(EntityType.NOTE).single())
+        assertEquals(listOf(record), KeyValueSyncConflictStore(storage).list())
+        assertTrue(inbox.isAppliedVersion("NOTE", original.uid.toString(), 42, selected))
+        assertEquals(1, manager.getSyncStatus().conflictCount)
+        assertEquals(0, manager.getSyncStatus().earlierConflictCount)
+        assertTrue(manager.downloadRemoteChanges().success)
+        assertEquals(records, KeyValueSyncConflictStore(storage).list())
+    }
 
     @Test
     fun `transcript committed during a rebased patch advances its surviving expected version`() =

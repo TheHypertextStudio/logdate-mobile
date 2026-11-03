@@ -233,6 +233,7 @@ internal class SyncDownloadEngine(
                                                     localUpdatedAt = strategy.lastUpdatedOf(existing),
                                                     remoteUpdatedAt = strategy.lastUpdatedOf(item),
                                                     textVersions = retainedTextVersions(existing, item, downloadScope),
+                                                    audioVersions = retainedAudioVersions(existing, remoteItem, downloadScope),
                                                     selectedScope = downloadScope,
                                                 )
                                                 return@record
@@ -306,6 +307,7 @@ internal class SyncDownloadEngine(
                                                         localUpdatedAt = strategy.lastUpdatedOf(existing),
                                                         remoteUpdatedAt = strategy.lastUpdatedOf(item),
                                                         textVersions = retainedTextVersions(existing, item, downloadScope),
+                                                        audioVersions = retainedAudioVersions(existing, remoteItem, downloadScope),
                                                         selectedScope = downloadScope,
                                                     )
                                                 }

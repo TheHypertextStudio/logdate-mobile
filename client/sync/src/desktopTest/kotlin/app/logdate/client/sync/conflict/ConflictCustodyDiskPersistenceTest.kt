@@ -4,6 +4,8 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import app.logdate.client.datastore.DataStoreKeyValueStorage
 import app.logdate.client.repository.journals.JournalNote
+import app.logdate.client.repository.transcription.TranscriptDocument
+import app.logdate.client.sync.AudioConflictVersions
 import app.logdate.client.sync.ChangesPage
 import app.logdate.client.sync.DownloadStrategy
 import app.logdate.client.sync.SyncDownloadEngine
@@ -35,6 +37,72 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 class ConflictCustodyDiskPersistenceTest {
+    @Test
+    fun `real file retains complete audio candidates and exact replay after reopening`() =
+        runTest {
+            withFixture(pending = true) { fixture ->
+                val local =
+                    JournalNote.Audio(
+                        mediaRef = "file:///synthetic/original.m4a",
+                        durationMs = 4000,
+                        creationTimestamp = Instant.fromEpochMilliseconds(1),
+                        lastUpdated = Instant.fromEpochMilliseconds(2),
+                        caption = "Local caption",
+                        transcript = TranscriptDocument.fromPlainText("Local transcript").copy(revision = 2),
+                        transcription = "  Local working words.\nKeep spacing.  ",
+                    )
+                val remote =
+                    local.copy(
+                        mediaRef = "https://sync.example/original",
+                        caption = "Remote caption",
+                        transcript = TranscriptDocument.fromPlainText("Remote transcript").copy(revision = 3),
+                        transcription = "",
+                        syncVersion = 42,
+                        lastUpdated = Instant.fromEpochMilliseconds(99),
+                    )
+                val pair = AudioConflictVersions(local, remote, "local comparison time", "remote comparison time")
+                val first =
+                    SyncConflictRecord(
+                        "audio-pair",
+                        "NOTE",
+                        local.uid.toString(),
+                        0,
+                        42,
+                        2,
+                        99,
+                        "pending",
+                        100,
+                        scope = UploadScope("synthetic-owner", "https://sync.example"),
+                        audioVersions = pair,
+                    )
+                fixture.store.add(first)
+                fixture.close()
+                fixture.open()
+                assertEquals(first, fixture.store.list().single())
+                assertEquals(
+                    pair,
+                    assertNotNull(
+                        fixture.store
+                            .list()
+                            .single()
+                            .audioVersions,
+                    ),
+                )
+                fixture.store.add(first.copy(id = Uuid.random().toString()))
+                assertEquals(listOf(first), fixture.store.list())
+                val newer =
+                    first.copy(
+                        id = Uuid.random().toString(),
+                        audioVersions = pair.copy(remote = remote.copy(caption = "A later caption")),
+                    )
+                fixture.store.add(newer)
+                fixture.close()
+                fixture.open()
+                assertEquals(listOf(first, newer), fixture.store.list())
+                assertEquals(setOf(local.mediaRef, remote.mediaRef), fixture.store.retainedMediaReferences())
+            }
+        }
+
     @Test
     fun `real file retains exact versions scope timestamps and dedup after recreation`() =
         runTest {
