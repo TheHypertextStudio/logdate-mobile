@@ -23,7 +23,6 @@ class AssistantDiagnosticsTest {
                 resource = "https://device.example/mcp",
                 capabilities = setOf(AssistantCapability.READ_MEMORIES),
                 contentScope = scope,
-                destinationJournalId = journalId,
                 approvedAt = Instant.parse("2026-10-20T00:00:00Z"),
                 expiresAt = Instant.parse("2026-10-21T00:00:00Z"),
             )

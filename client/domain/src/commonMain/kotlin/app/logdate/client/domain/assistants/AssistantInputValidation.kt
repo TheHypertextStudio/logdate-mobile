@@ -1,13 +1,8 @@
-@file:Suppress("DEPRECATION")
-
 package app.logdate.client.domain.assistants
 
-import app.logdate.client.repository.assistants.AssistantOperationStatusRequest
-import app.logdate.client.repository.assistants.AssistantPrepareEntryRequest
 import app.logdate.client.repository.assistants.AssistantProtocolLimits
 import app.logdate.client.repository.assistants.AssistantSearchRequest
 import app.logdate.client.repository.assistants.AssistantSourceReadRequest
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
 enum class AssistantInputError {
@@ -15,10 +10,6 @@ enum class AssistantInputError {
     INVALID_LIMIT,
     INVALID_DATE,
     INVALID_CURSOR,
-    INVALID_TEXT,
-    INVALID_IDEMPOTENCY_KEY,
-    INVALID_SOURCE_URL,
-    INVALID_OPERATION_ID,
 }
 
 sealed interface AssistantInputDecision {
@@ -51,27 +42,6 @@ class AssistantInputValidation {
         return AssistantInputDecision.Valid
     }
 
-    fun prepareEntry(request: AssistantPrepareEntryRequest): AssistantInputDecision {
-        if (!validText(request.text, AssistantProtocolLimits.DRAFT_CODE_POINTS)) return invalid(AssistantInputError.INVALID_TEXT)
-        if (!validText(request.idempotencyKey, AssistantProtocolLimits.OPAQUE_ID_LENGTH) ||
-            request.idempotencyKey.any { it.code < 32 || it.code == 127 }
-        ) {
-            return invalid(AssistantInputError.INVALID_IDEMPOTENCY_KEY)
-        }
-        val sourceUrl = request.sourceUrl
-        val eventTime = request.eventTime
-        if (sourceUrl != null && !AssistantSourceUrlValidation.allows(sourceUrl)) return invalid(AssistantInputError.INVALID_SOURCE_URL)
-        if (eventTime != null && !validInstant(eventTime)) return invalid(AssistantInputError.INVALID_DATE)
-        return AssistantInputDecision.Valid
-    }
-
-    fun operationStatus(request: AssistantOperationStatusRequest): AssistantInputDecision =
-        if (validOpaqueId(request.operationId, AssistantProtocolLimits.OPAQUE_ID_LENGTH)) {
-            AssistantInputDecision.Valid
-        } else {
-            invalid(AssistantInputError.INVALID_OPERATION_ID)
-        }
-
     private fun validCursor(value: String?): Boolean = value == null || validOpaqueId(value, AssistantProtocolLimits.CURSOR_LENGTH)
 
     private fun validOpaqueId(
@@ -84,13 +54,6 @@ class AssistantInputValidation {
             if (value.length in 1..32) LocalDate.parse(value) else null
         } catch (_: IllegalArgumentException) {
             null
-        }
-
-    private fun validInstant(value: String): Boolean =
-        try {
-            value.length in 1..64 && Instant.parse(value).let { true }
-        } catch (_: IllegalArgumentException) {
-            false
         }
 
     private fun validText(

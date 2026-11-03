@@ -1,6 +1,5 @@
 package app.logdate.client.domain.assistants
 
-import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.client.repository.assistants.AssistantSourceKind
 import app.logdate.client.repository.assistants.AssistantSourceMetadata
 import kotlin.test.Test
@@ -52,7 +51,7 @@ class AssistantSourceEligibilityTest {
 
     @Test
     fun `knowing a source identifier never substitutes for read permission`() {
-        val addOnly = fixture.grant.copy(capabilities = setOf(AssistantCapability.PREPARE_ENTRIES))
-        assertFalse(eligibility.allows(addOnly, source))
+        val withoutRead = fixture.grant.copy(capabilities = emptySet())
+        assertFalse(eligibility.allows(withoutRead, source))
     }
 }

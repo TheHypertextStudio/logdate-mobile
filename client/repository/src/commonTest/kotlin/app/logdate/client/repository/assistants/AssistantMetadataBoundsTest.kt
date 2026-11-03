@@ -34,18 +34,6 @@ class AssistantMetadataBoundsTest {
         assertFailsWith<IllegalArgumentException> { AssistantProtocol.encodeSourcePage(page.copy(sourceUrl = "a".repeat(2049))) }
     }
 
-    @Test
-    fun `operation identifiers and source or review links are also bounded`() {
-        listOf(
-            AssistantEntryOperation.Pending("operation", "a".repeat(2049)),
-            AssistantEntryOperation.Saved("operation", id, "a".repeat(2049)),
-            AssistantEntryOperation.Rejected("a".repeat(129)),
-            AssistantEntryOperation.Expired("../other"),
-        ).forEach { operation ->
-            assertFailsWith<IllegalArgumentException> { AssistantProtocol.encodeEntryOperation(operation) }
-        }
-    }
-
     private fun encode(source: AssistantSearchHit) =
         AssistantProtocol.encodeSearchResult(AssistantSearchResult(listOf(source), AssistantCoverage()))
 }

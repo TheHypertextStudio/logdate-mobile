@@ -4,7 +4,6 @@ package app.logdate.client.repository.assistants
 
 import app.logdate.util.UuidSerializer
 import kotlinx.datetime.Instant
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -30,24 +29,6 @@ data class AssistantSourceReadRequest(
     val cursor: String? = null,
 ) {
     override fun toString(): String = "AssistantSourceReadRequest([redacted])"
-}
-
-/** A proposal only. Its destination is held in the grant and approval is exclusively native. */
-@Serializable
-data class AssistantPrepareEntryRequest(
-    val text: String,
-    val idempotencyKey: String,
-    val sourceUrl: String? = null,
-    val eventTime: String? = null,
-) {
-    override fun toString(): String = "AssistantPrepareEntryRequest([redacted])"
-}
-
-@Serializable
-data class AssistantOperationStatusRequest(
-    val operationId: String,
-) {
-    override fun toString(): String = "AssistantOperationStatusRequest([redacted])"
 }
 
 /** Describes the permitted local corpus only; never counts or identifies excluded material. */
@@ -101,48 +82,6 @@ data class AssistantSourcePage(
     override fun toString(): String = "AssistantSourcePage([redacted])"
 }
 
-/** State stored by the device independently of protocol sessions or request handlers. */
-@Serializable
-sealed interface AssistantEntryOperation {
-    val operationId: String
-
-    @Serializable
-    @SerialName("pending")
-    data class Pending(
-        override val operationId: String,
-        val reviewUrl: String,
-    ) : AssistantEntryOperation {
-        override fun toString(): String = "AssistantEntryOperation.Pending([redacted])"
-    }
-
-    @Serializable
-    @SerialName("saved")
-    data class Saved(
-        override val operationId: String,
-        @Serializable(with = UuidSerializer::class)
-        val sourceId: Uuid,
-        val sourceUrl: String,
-    ) : AssistantEntryOperation {
-        override fun toString(): String = "AssistantEntryOperation.Saved([redacted])"
-    }
-
-    @Serializable
-    @SerialName("rejected")
-    data class Rejected(
-        override val operationId: String,
-    ) : AssistantEntryOperation {
-        override fun toString(): String = "AssistantEntryOperation.Rejected([redacted])"
-    }
-
-    @Serializable
-    @SerialName("expired")
-    data class Expired(
-        override val operationId: String,
-    ) : AssistantEntryOperation {
-        override fun toString(): String = "AssistantEntryOperation.Expired([redacted])"
-    }
-}
-
 sealed interface AssistantDecodeResult<out T> {
     class Decoded<T>(
         val value: T,
@@ -162,7 +101,6 @@ enum class AssistantOperationError {
     UNSUPPORTED_CONTENT,
     INVALID_INPUT,
     FRESHNESS_UNAVAILABLE,
-    OUTCOME_UNKNOWN,
 }
 
 @Serializable
@@ -184,25 +122,7 @@ object AssistantProtocol {
 
     fun decodeSourceRead(input: String): AssistantDecodeResult<AssistantSourceReadRequest> = decode(input)
 
-    fun decodePrepareEntry(input: String): AssistantDecodeResult<AssistantPrepareEntryRequest> = decode(input)
-
-    fun decodeOperationStatus(input: String): AssistantDecodeResult<AssistantOperationStatusRequest> = decode(input)
-
     fun encodeCapability(capability: AssistantCapability): String = json.encodeToString(capability)
-
-    fun encodeEntryOperation(operation: AssistantEntryOperation): String {
-        require(AssistantProtocolLimits.opaqueIdFits(operation.operationId, AssistantProtocolLimits.OPAQUE_ID_LENGTH)) {
-            "Invalid operation response bounds"
-        }
-        val link =
-            when (operation) {
-                is AssistantEntryOperation.Pending -> operation.reviewUrl
-                is AssistantEntryOperation.Saved -> operation.sourceUrl
-                else -> null
-            }
-        require(link == null || boundedLink(link)) { "Invalid operation response bounds" }
-        return json.encodeToString(operation)
-    }
 
     fun encodeSearchResult(result: AssistantSearchResult): String {
         require(
