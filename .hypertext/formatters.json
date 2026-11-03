@@ -266,6 +266,11 @@
   ],
   "exclude": [
     {
+      "include": [".hypertext/formatter-tools/vendor/tla2tools-2ef2af8.jar"],
+      "kind": "binary",
+      "reason": "Exact pinned upstream TLC tool JAR; preserve its verified bytes and embedded license notices."
+    },
+    {
       "include": [
         "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow06_rewind/Flow06_04_CurrentWeekRewindScreenshotsKt/S02_CurrentWeekRewindEmpty_Compact Phone_677a6e6d_0.png",
         "app/android-main/src/screenshotTestDebug/reference/app/logdate/screenshots/flows/flow06_rewind/Flow06_04_CurrentWeekRewindScreenshotsKt/S02_CurrentWeekRewindEmpty_Dynamic Color_99ae8525_0.png",
