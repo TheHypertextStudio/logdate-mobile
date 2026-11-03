@@ -137,7 +137,7 @@ def retire_preparation(
                     raise
             actions.append(action.name)
             deadline = end if action == signal.SIGKILL else end - grace / 4
-            while live() and monotonic() < deadline:
+            while observed() is not None and monotonic() < deadline:
                 sleep(min(0.1, max(0, deadline - monotonic())))
         if live():
             raise RuntimeError("The owned read-only preparation guest did not retire")
