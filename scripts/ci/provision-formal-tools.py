@@ -8,8 +8,12 @@ import os
 from pathlib import Path
 import re
 import signal
+import socket
 import stat
+import sys
 import tempfile
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -27,12 +31,84 @@ def allowed_url(url):
     return url
 
 
+def public_url(url):
+    try:
+        parsed = urllib.parse.urlsplit(url)
+        return {"scheme": parsed.scheme, "host": parsed.hostname, "path": parsed.path}
+    except ValueError:
+        return {"scheme": "invalid", "host": None, "path": None}
+
+
+class MavenResponseRedirect(ValueError):
+    def __init__(self, source, location, status):
+        self.context = {
+            "status": status,
+            "source": public_url(source),
+            "location": public_url(location),
+        }
+        super().__init__(json.dumps(self.context, sort_keys=True))
+
+
 class MavenRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, response, code, message, headers, new_url):
-        allowed_url(new_url)
-        return super().redirect_request(
-            request, response, code, message, headers, new_url
+        # These exact canonical artifact URLs return data directly. Never follow
+        # a response to another URL; a transient redirect may retry the original.
+        response.close()
+        raise MavenResponseRedirect(request.full_url, new_url, code)
+
+
+def fetch_exact(url, meta, opener=None):
+    allowed_url(url)
+    fetch = opener or urllib.request.build_opener(MavenRedirect()).open
+    deadline = time.monotonic() + 60
+    context = {"source": public_url(url)}
+    for attempt in range(1, 4):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        transient = True
+        try:
+            response = fetch(url, timeout=min(20, remaining))
+            try:
+                allowed_url(response.geturl())
+                if response.geturl() != url:
+                    raise ValueError(
+                        "Final formal input URL differs from exact artifact"
+                    )
+            except BaseException:
+                response.close()
+                raise
+            return response
+        except MavenResponseRedirect as error:
+            context = error.context
+        except urllib.error.HTTPError as error:
+            context = {"status": error.code, "source": public_url(url)}
+            error.close()
+            transient = error.code in {408, 425, 429, 500, 502, 503, 504}
+        except urllib.error.URLError as error:
+            reason = error.reason
+            transient = isinstance(reason, (TimeoutError, ConnectionError)) or (
+                isinstance(reason, socket.gaierror) and reason.errno == socket.EAI_AGAIN
+            )
+            context = {"error_type": type(reason).__name__, "source": public_url(url)}
+        except (TimeoutError, ConnectionError) as error:
+            context = {"error_type": type(error).__name__, "source": public_url(url)}
+        context = {
+            **context,
+            "module": meta.get("module", "pinned formal input"),
+            "attempt": attempt,
+            "max_attempts": 3,
+        }
+        if not transient or attempt == 3:
+            break
+        print(
+            "Formal input transport retry: " + json.dumps(context, sort_keys=True),
+            file=sys.stderr,
         )
+        time.sleep(min(0.25 * attempt, max(0, deadline - time.monotonic())))
+    raise ValueError(
+        "Formal input transport failed: " + json.dumps(context, sort_keys=True)
+    ) from None
 
 
 def verified(path, meta):
@@ -98,8 +174,7 @@ def ensure_input(root, relative, meta, *, url=None, source=None, opener=None):
     try:
         with os.fdopen(descriptor, "wb") as output:
             if source is None:
-                fetch = opener or urllib.request.build_opener(MavenRedirect()).open
-                stream = fetch(url, timeout=30)
+                stream = fetch_exact(url, meta, opener)
             else:
                 stream = source.open("rb")
             with stream:

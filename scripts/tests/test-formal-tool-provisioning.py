@@ -2,6 +2,12 @@
 """Formal prerequisite transport checks; no network, JVM or compiler process."""
 
 import hashlib
+import time
+import contextlib
+import email.message
+import urllib.request
+import urllib.response
+from unittest import mock
 import importlib.util
 import io
 import json
@@ -244,6 +250,156 @@ class ProvisioningTests(unittest.TestCase):
             vendor.write_bytes(b"changed vendor")
             with self.assertRaises(ValueError):
                 module.ensure_input(root, "tool.jar", self.meta(), source=vendor)
+
+
+class ScriptedHTTPS(urllib.request.BaseHandler):
+    handler_order = 100
+
+    def __init__(self, frames):
+        self.frames = list(frames)
+        self.requests = []
+        self.responses = []
+
+    def https_open(self, request):
+        self.requests.append(request.full_url)
+        if not self.frames:
+            raise AssertionError("Request budget exhausted")
+        code, location, payload = self.frames.pop(0)
+        headers = email.message.Message()
+        if location:
+            headers["Location"] = location
+        headers["Content-Length"] = str(len(payload))
+        response = urllib.response.addinfourl(
+            io.BytesIO(payload), headers, request.full_url, code
+        )
+        response.msg = "OK" if code == 200 else "Transient response"
+        self.responses.append(response)
+        return response
+
+
+class TransportRetryTests(unittest.TestCase):
+    module = ProvisioningTests.module
+    meta = ProvisioningTests.meta
+
+    def attempt(self, frames):
+        module = self.module()
+        transport = ScriptedHTTPS(frames)
+        opener = urllib.request.build_opener(transport, module.MavenRedirect())
+        return module, transport, opener.open
+
+    def test_redirect_then_direct_success_retries_only_original_url(self):
+        location = "https://user:password@untrusted.example/path.jar?secret=private"
+        module, transport, fetch = self.attempt(
+            [(302, location, b""), (200, None, b"verified jar fixture")]
+        )
+        captured = io.StringIO()
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            contextlib.redirect_stderr(captured),
+        ):
+            root = Path(directory)
+            try:
+                module.ensure_input(
+                    root, "tool.jar", self.meta(), url=URL, opener=fetch
+                )
+            except Exception as error:
+                self.fail(
+                    "Exact-original retry did not recover: " + type(error).__name__
+                )
+            self.assertEqual((root / "tool.jar").read_bytes(), b"verified jar fixture")
+        self.assertEqual(transport.requests, [URL, URL])
+        self.assertTrue(all(response.closed for response in transport.responses))
+        self.assertIn("untrusted.example", captured.getvalue())
+        self.assertNotIn("password", captured.getvalue())
+        self.assertNotIn("private", captured.getvalue())
+
+    def test_persistent_redirect_is_bounded_and_every_response_closed(self):
+        frames = [
+            (302, "https://untrusted.example/blocked.jar?secret=private", b"")
+        ] * 3
+        module, transport, fetch = self.attempt(frames)
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            root = Path(directory)
+            try:
+                module.ensure_input(
+                    root, "tool.jar", self.meta(), url=URL, opener=fetch
+                )
+            except Exception as error:
+                self.assertIsInstance(error, ValueError)
+                self.assertNotIn("private", str(error))
+            else:
+                self.fail("Persistent redirect must fail closed")
+            self.assertFalse((root / "tool.jar").exists())
+        self.assertEqual(transport.requests, [URL] * 3)
+        self.assertTrue(all(response.closed for response in transport.responses))
+
+    def test_transient_http_exhaustion_is_bounded_and_closed(self):
+        module, transport, fetch = self.attempt(
+            [(503, None, b"service unavailable")] * 3
+        )
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            try:
+                module.ensure_input(
+                    Path(directory), "tool.jar", self.meta(), url=URL, opener=fetch
+                )
+            except Exception as error:
+                self.assertIsInstance(error, ValueError)
+            else:
+                self.fail("Persistent transient failure must exhaust its finite budget")
+        self.assertEqual(transport.requests, [URL] * 3)
+        self.assertTrue(all(response.closed for response in transport.responses))
+
+    def test_elapsed_window_prevents_another_request(self):
+        module, transport, fetch = self.attempt([(503, None, b"wait")])
+        clock = [0.0]
+
+        def delay(_seconds):
+            clock[0] = 61.0
+
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            contextlib.redirect_stderr(io.StringIO()),
+            mock.patch.object(time, "monotonic", lambda: clock[0]),
+            mock.patch.object(time, "sleep", delay),
+        ):
+            try:
+                module.ensure_input(
+                    Path(directory), "tool.jar", self.meta(), url=URL, opener=fetch
+                )
+            except Exception as error:
+                self.assertIsInstance(error, ValueError)
+            else:
+                self.fail("Elapsed transport budget must fail closed")
+        self.assertEqual(transport.requests, [URL])
+        self.assertTrue(transport.responses[0].closed)
+
+    def test_not_found_is_not_retried(self):
+        module, transport, fetch = self.attempt([(404, None, b"not found")])
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(Exception):
+                module.ensure_input(
+                    Path(directory), "tool.jar", self.meta(), url=URL, opener=fetch
+                )
+        self.assertEqual(transport.requests, [URL])
+        self.assertTrue(transport.responses[0].closed)
+
+    def test_digest_failure_is_not_retried(self):
+        module, transport, fetch = self.attempt(
+            [(200, None, b"X" * len(b"verified jar fixture"))]
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(ValueError):
+                module.ensure_input(
+                    Path(directory), "tool.jar", self.meta(), url=URL, opener=fetch
+                )
+        self.assertEqual(transport.requests, [URL])
+        self.assertTrue(transport.responses[0].closed)
 
 
 if __name__ == "__main__":
