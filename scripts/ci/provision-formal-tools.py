@@ -31,6 +31,31 @@ def allowed_url(url):
     return url
 
 
+COMPILER_MODULE = "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.21"
+COMPILER_ORIGIN = "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.3.21/kotlin-compiler-embeddable-2.3.21.jar"
+COMPILER_PUBLISHER = "https://github.com/JetBrains/kotlin/releases/download/v2.3.21/kotlin-compiler-embeddable-2.3.21.jar"
+COMPILER_ASSET = "https://release-assets.githubusercontent.com/github-production-release-asset/3432266/8c5a5b7a-09b2-47cf-9427-cdcb63c3596b"
+
+
+def publisher_hop(original, meta, current, location, hop):
+    # This one observed publisher chain transports the existing recipe input;
+    # ensure_input still verifies its full size, SHA256 and Gradle SHA1.
+    if original != COMPILER_ORIGIN or meta.get("module") != COMPILER_MODULE:
+        return False
+    if hop == 0:
+        return current == original and location == COMPILER_PUBLISHER
+    if hop == 1 and current == COMPILER_PUBLISHER:
+        parsed = urllib.parse.urlsplit(location)
+        return (
+            parsed.scheme == "https"
+            and parsed.netloc == "release-assets.githubusercontent.com"
+            and parsed.path == urllib.parse.urlsplit(COMPILER_ASSET).path
+            and bool(parsed.query)
+            and not parsed.fragment
+        )
+    return False
+
+
 def public_url(url):
     try:
         parsed = urllib.parse.urlsplit(url)
@@ -41,6 +66,7 @@ def public_url(url):
 
 class MavenResponseRedirect(ValueError):
     def __init__(self, source, location, status):
+        self.location = location
         self.context = {
             "status": status,
             "source": public_url(source),
@@ -51,8 +77,8 @@ class MavenResponseRedirect(ValueError):
 
 class MavenRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, response, code, message, headers, new_url):
-        # These exact canonical artifact URLs return data directly. Never follow
-        # a response to another URL; a transient redirect may retry the original.
+        # Close before exposing a redirect to the bounded explicit route policy.
+        # urllib must never automatically follow a Location.
         response.close()
         raise MavenResponseRedirect(request.full_url, new_url, code)
 
@@ -68,17 +94,27 @@ def fetch_exact(url, meta, opener=None):
             break
         transient = True
         try:
-            response = fetch(url, timeout=min(20, remaining))
-            try:
-                allowed_url(response.geturl())
-                if response.geturl() != url:
-                    raise ValueError(
-                        "Final formal input URL differs from exact artifact"
-                    )
-            except BaseException:
-                response.close()
-                raise
-            return response
+            current = url
+            for hop in range(3):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("Formal input transport window expired")
+                try:
+                    response = fetch(current, timeout=min(20, remaining))
+                except MavenResponseRedirect as error:
+                    if publisher_hop(url, meta, current, error.location, hop):
+                        current = error.location
+                        continue
+                    raise
+                try:
+                    if response.geturl() != current or current == COMPILER_PUBLISHER:
+                        raise ValueError(
+                            "Final formal input URL differs from exact artifact route"
+                        )
+                except BaseException:
+                    response.close()
+                    raise
+                return response
         except MavenResponseRedirect as error:
             context = error.context
         except urllib.error.HTTPError as error:
@@ -178,8 +214,6 @@ def ensure_input(root, relative, meta, *, url=None, source=None, opener=None):
             else:
                 stream = source.open("rb")
             with stream:
-                if source is None:
-                    allowed_url(stream.geturl())
                 count = 0
                 while chunk := stream.read(min(65536, meta["bytes"] - count + 1)):
                     count += len(chunk)

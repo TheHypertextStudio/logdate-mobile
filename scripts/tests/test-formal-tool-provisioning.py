@@ -402,5 +402,175 @@ class TransportRetryTests(unittest.TestCase):
         self.assertTrue(transport.responses[0].closed)
 
 
+class PublisherRouteTests(unittest.TestCase):
+    module = ProvisioningTests.module
+    meta = ProvisioningTests.meta
+    attempt = TransportRetryTests.attempt
+    origin = "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.3.21/kotlin-compiler-embeddable-2.3.21.jar"
+    publisher = "https://github.com/JetBrains/kotlin/releases/download/v2.3.21/kotlin-compiler-embeddable-2.3.21.jar"
+    asset = "https://release-assets.githubusercontent.com/github-production-release-asset/3432266/8c5a5b7a-09b2-47cf-9427-cdcb63c3596b"
+    coordinate = "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.21"
+
+    def pinned_fixture(self):
+        data = b"verified jar fixture"
+        return {
+            **self.meta(data),
+            "module": self.coordinate,
+            "sha1": hashlib.sha1(data).hexdigest(),
+        }
+
+    def test_exact_chain_publishes_only_after_both_full_hashes(self):
+        signed = self.asset + "?sig=private&token=secret"
+        module, transport, fetch = self.attempt(
+            [
+                (301, self.publisher, b""),
+                (302, signed, b""),
+                (200, None, b"verified jar fixture"),
+            ]
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            target = module.ensure_input(
+                Path(directory),
+                "compiler.jar",
+                self.pinned_fixture(),
+                url=self.origin,
+                opener=fetch,
+            )
+            self.assertEqual(target.read_bytes(), b"verified jar fixture")
+        self.assertEqual(transport.requests, [self.origin, self.publisher, signed])
+        self.assertTrue(all(r.closed for r in transport.responses))
+
+    def rejected_chain(self, locations, *, meta=None):
+        frames = [
+            (301 if index == 0 else 302, location, b"")
+            for index, location in enumerate(locations)
+        ] * 3
+        module, transport, fetch = self.attempt(frames)
+        captured = io.StringIO()
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            contextlib.redirect_stderr(captured),
+        ):
+            with self.assertRaises(ValueError) as failure:
+                module.ensure_input(
+                    Path(directory),
+                    "compiler.jar",
+                    meta or self.pinned_fixture(),
+                    url=self.origin,
+                    opener=fetch,
+                )
+            self.assertFalse((Path(directory) / "compiler.jar").exists())
+        self.assertTrue(all(r.closed for r in transport.responses))
+        text = str(failure.exception) + captured.getvalue()
+        self.assertNotIn("private", text)
+        self.assertNotIn("password", text)
+        return transport.requests
+
+    def test_other_module_cannot_follow_publisher(self):
+        requests = self.rejected_chain(
+            [self.publisher], meta={**self.pinned_fixture(), "module": "other:module:1"}
+        )
+        self.assertEqual(requests, [self.origin] * 3)
+
+    def test_publisher_and_asset_path_host_and_authority_are_exact(self):
+        for bad in [
+            self.publisher + "?secret=private",
+            self.publisher + "#private",
+            self.publisher.replace("github.com", "github.com:443"),
+            self.publisher.replace("github.com", "user:password@github.com"),
+            self.publisher.replace("2.3.21.jar", "2.3.22.jar"),
+            self.publisher.replace("github.com", "untrusted.example"),
+        ]:
+            with self.subTest(bad=bad):
+                self.assertEqual(self.rejected_chain([bad]), [self.origin] * 3)
+        for bad in [
+            self.asset + "/wrong?token=private",
+            self.asset.replace("https:", "http:"),
+            self.asset.replace(
+                "release-assets.githubusercontent.com", "untrusted.example"
+            ),
+            self.asset + "?token=private#private",
+            self.asset.replace(
+                "release-assets.githubusercontent.com",
+                "user:password@release-assets.githubusercontent.com",
+            ),
+            self.asset.replace(
+                "release-assets.githubusercontent.com",
+                "release-assets.githubusercontent.com:443",
+            ),
+        ]:
+            with self.subTest(bad=bad):
+                self.assertEqual(
+                    self.rejected_chain([self.publisher, bad]),
+                    [self.origin, self.publisher] * 3,
+                )
+
+    def test_skip_hop_and_loop_are_not_followed(self):
+        self.assertEqual(
+            self.rejected_chain([self.asset + "?token=private"]), [self.origin] * 3
+        )
+        self.assertEqual(
+            self.rejected_chain([self.publisher, self.origin]),
+            [self.origin, self.publisher] * 3,
+        )
+        # No third redirect may be followed, even back to the known publisher.
+        requests = self.rejected_chain(
+            [self.publisher, self.asset + "?token=private", self.publisher]
+        )
+        self.assertEqual(
+            requests, [self.origin, self.publisher, self.asset + "?token=private"] * 3
+        )
+
+    def test_chain_digest_failure_is_not_retried_or_published(self):
+        for key in ["sha256", "sha1"]:
+            module, transport, fetch = self.attempt(
+                [
+                    (301, self.publisher, b""),
+                    (302, self.asset + "?token=private", b""),
+                    (200, None, b"verified jar fixture"),
+                ]
+            )
+            meta = self.pinned_fixture()
+            meta[key] = "0" * len(meta[key])
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaisesRegex(ValueError, "digest changed"):
+                    module.ensure_input(
+                        Path(directory),
+                        "compiler.jar",
+                        meta,
+                        url=self.origin,
+                        opener=fetch,
+                    )
+                self.assertFalse((Path(directory) / "compiler.jar").exists())
+            self.assertEqual(len(transport.requests), 3)
+            self.assertTrue(all(r.closed for r in transport.responses))
+
+    def test_asset_error_logs_never_expose_signed_query(self):
+        module, transport, fetch = self.attempt(
+            [
+                (301, self.publisher, b""),
+                (302, self.asset + "?token=private", b""),
+                (503, None, b""),
+            ]
+            * 3
+        )
+        captured = io.StringIO()
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            contextlib.redirect_stderr(captured),
+        ):
+            with self.assertRaises(ValueError) as failure:
+                module.ensure_input(
+                    Path(directory),
+                    "compiler.jar",
+                    self.pinned_fixture(),
+                    url=self.origin,
+                    opener=fetch,
+                )
+        self.assertNotIn("private", captured.getvalue() + str(failure.exception))
+        self.assertEqual(len(transport.requests), 9)
+        self.assertTrue(all(r.closed for r in transport.responses))
+
+
 if __name__ == "__main__":
     unittest.main()
