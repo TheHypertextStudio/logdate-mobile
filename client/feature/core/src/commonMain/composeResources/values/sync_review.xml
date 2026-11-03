@@ -20,4 +20,7 @@
     <string name="sync_review_hide_versions">Hide saved writing</string>
     <string name="sync_review_local">Saved local version</string>
     <string name="sync_review_remote">Downloaded version</string>
+    <string name="sync_review_caption">Caption</string>
+    <string name="sync_review_transcript">Transcript</string>
+    <string name="sync_review_working_text">Working text</string>
 </resources>

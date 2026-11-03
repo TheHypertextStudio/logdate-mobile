@@ -29,10 +29,11 @@ internal suspend fun SyncDownloadEngine.recordConflict(
     remoteUpdatedAt: Instant?,
     textVersions: TextConflictVersions?,
     selectedScope: DownloadScope?,
+    audioVersions: AudioConflictVersions? = null,
 ) {
     retainConflict(
         SyncConflictRecord(
-            id = if (textVersions == null) "${entityType.name}:$entityId" else Uuid.random().toString(),
+            id = if (textVersions == null && audioVersions == null) "${entityType.name}:$entityId" else Uuid.random().toString(),
             entityType = entityType.name,
             entityId = entityId,
             localVersion = localVersion,
@@ -43,6 +44,7 @@ internal suspend fun SyncDownloadEngine.recordConflict(
             detectedAt = Clock.System.now().toEpochMilliseconds(),
             scope = selectedScope?.let { UploadScope(it.owner, it.origin) },
             textVersions = textVersions,
+            audioVersions = audioVersions,
         ),
         selectedScope,
     )
