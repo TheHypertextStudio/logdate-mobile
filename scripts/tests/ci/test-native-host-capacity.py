@@ -94,6 +94,44 @@ class NativeHostCapacityTest(unittest.TestCase):
                     HOST.reclaim({**self.env, **change}, KEEP, run=run)
                 run.assert_not_called()
 
+    def test_cleanup_reclaims_only_installed_versioned_ndks(self):
+        kept = self.image(KEEP)
+        for name in ["ndk/27.3.13750724", "ndk/29.0.14206865"]:
+            directory = self.sdk / name
+            directory.mkdir(parents=True)
+            (directory / "package.xml").write_text("installed NDK")
+        for name in ["ndk/unfinished", "ndk/30.0.16248370", "cmake", "platform-tools"]:
+            (self.sdk / name).mkdir(parents=True)
+        run = Mock()
+        report = HOST.reclaim(self.env, KEEP, run=run)
+        self.assertEqual(
+            ["ndk;27.3.13750724", "ndk;29.0.14206865"], report.get("removedNdks")
+        )
+        self.assertEqual(
+            [
+                str(self.sdk / "cmdline-tools/latest/bin/sdkmanager"),
+                "--uninstall",
+                "ndk;27.3.13750724",
+                "ndk;29.0.14206865",
+            ],
+            run.call_args_list[1].args[0],
+        )
+        self.assertTrue(kept.exists())
+
+    def test_ndk_symlinks_are_rejected_before_any_cleanup(self):
+        for name in ["ndk", "ndk/27.3.13750724", "ndk/unknown"]:
+            with self.subTest(name=name):
+                link = self.sdk / name
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(self.root / "missing", target_is_directory=True)
+                run = Mock()
+                try:
+                    with self.assertRaisesRegex(RuntimeError, "symlink"):
+                        HOST.reclaim(self.env, KEEP, run=run)
+                    run.assert_not_called()
+                finally:
+                    link.unlink()
+
     def test_unknown_sdk_root_and_mismatched_alias_never_clean(self):
         for name in ["ANDROID_HOME", "ANDROID_SDK_ROOT"]:
             run = Mock()

@@ -85,7 +85,7 @@ class ServerClientHarnessLifecycleTest {
             assertDatabaseConnectionsReleased()
             val connection =
                 DriverManager.getConnection(
-                    System.getenv("DATABASE_URL"),
+                    harnessDatabaseUrl(),
                     System.getenv("DATABASE_USER"),
                     System.getenv("DATABASE_PASSWORD"),
                 )
@@ -104,13 +104,30 @@ class ServerClientHarnessLifecycleTest {
         }
 
     @Test
-    fun `cleanup assertion rejects a retained database session`() =
+    fun `cleanup ignores an unrelated database session`() =
         runBlocking {
             assumeTrue(!System.getenv("DATABASE_URL").isNullOrBlank())
             assertDatabaseConnectionsReleased()
             DriverManager
                 .getConnection(
                     System.getenv("DATABASE_URL"),
+                    System.getenv("DATABASE_USER"),
+                    System.getenv("DATABASE_PASSWORD"),
+                ).use { unrelated ->
+                    withServerClientHarness { assertTrue(connectionCount() > 0) }
+                    assertDatabaseConnectionsReleased()
+                    assertTrue(!unrelated.isClosed)
+                }
+        }
+
+    @Test
+    fun `cleanup assertion rejects a retained database session`() =
+        runBlocking {
+            assumeTrue(!System.getenv("DATABASE_URL").isNullOrBlank())
+            assertDatabaseConnectionsReleased()
+            DriverManager
+                .getConnection(
+                    harnessDatabaseUrl(),
                     System.getenv("DATABASE_USER"),
                     System.getenv("DATABASE_PASSWORD"),
                 ).use {
@@ -135,15 +152,19 @@ class ServerClientHarnessLifecycleTest {
                 System.getenv("DATABASE_USER"),
                 System.getenv("DATABASE_PASSWORD"),
             ).use { connection ->
-                connection.createStatement().use { statement ->
-                    statement
-                        .executeQuery(
-                            "SELECT count(*) FROM pg_stat_activity " +
-                                "WHERE datname = current_database() AND pid <> pg_backend_pid()",
-                        ).use { result ->
-                            check(result.next())
-                            result.getInt(1)
-                        }
-                }
+                connection
+                    .prepareStatement(
+                        "SELECT count(*) FROM pg_stat_activity " +
+                            "WHERE datname = current_database() AND pid <> pg_backend_pid() " +
+                            "AND application_name = ?",
+                    ).use { statement ->
+                        statement.setString(1, harnessDatabaseApplicationName)
+                        statement
+                            .executeQuery()
+                            .use { result ->
+                                check(result.next())
+                                result.getInt(1)
+                            }
+                    }
             }
 }

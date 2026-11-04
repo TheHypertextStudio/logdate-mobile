@@ -48,6 +48,25 @@ class AcceptanceParallelismTest(unittest.TestCase):
         self.assertNotIn("-x compile", shards)
         self.assertNotIn("continue-on-error:", producer + shards)
 
+    def test_desktop_compilation_cannot_consume_the_rendering_budget(self):
+        body = job(self.screenshots, "desktop-screenshots")
+        compile_step = step(body, "Compile Desktop screenshot tests")
+        validation = step(body, "Validate Desktop screenshots")
+        self.assertIn(":app:compose-main:compileTestKotlinDesktop", compile_step)
+        self.assertIn("./gradlew validateDesktopScreenshots --continue", validation)
+        self.assertIn("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS: 'true'", validation)
+        self.assertIn("runs-on: xcode-27", body)
+        compile_budget = int(
+            re.search(r"timeout-minutes: (\d+)", compile_step).group(1)
+        )
+        render_budget = int(re.search(r"timeout-minutes: (\d+)", validation).group(1))
+        job_budget = int(re.search(r"timeout-minutes: (\d+)", body).group(1))
+        # Reserve setup/report time even if both bounded phases use their full budgets.
+        self.assertGreaterEqual(job_budget, compile_budget + render_budget + 10)
+        self.assertLess(body.index(compile_step), body.index(validation))
+        self.assertNotIn("continue-on-error:", body)
+        self.assertNotIn("-x ", compile_step + validation)
+
     def test_native_compilation_is_shared_without_transferring_signing_or_device_state(
         self,
     ):
