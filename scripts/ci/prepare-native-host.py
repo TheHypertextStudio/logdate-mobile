@@ -70,6 +70,29 @@ def unused_images(sdk, keep_image):
     return result
 
 
+def unused_ndks(sdk):
+    # Acceptance assembles JVM/Android APKs and runs managed guests; it has no
+    # externalNativeBuild tasks. Keep build tools and caches, reclaim only the
+    # hosted image's installed side-by-side native compiler packages.
+    ndks = sdk / "ndk"
+    if ndks.is_symlink():
+        raise RuntimeError(f"Refusing symlink in native host cleanup scope: {ndks}")
+    if not ndks.exists():
+        return []
+    real_directory(ndks)
+    result = []
+    for version in sorted(ndks.iterdir()):
+        if not version.is_dir() and not version.is_symlink():
+            continue
+        real_directory(version)
+        if (
+            re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version.name)
+            and (version / "package.xml").is_file()
+        ):
+            result.append(f"ndk;{version.name}")
+    return result
+
+
 def reclaim(environment, keep_image, run=subprocess.run):
     require_host(environment)
     if not IMAGE.fullmatch(keep_image):
@@ -80,6 +103,7 @@ def reclaim(environment, keep_image, run=subprocess.run):
         raise RuntimeError("Refusing an unexpected hosted Android SDK root")
     real_directory(SDK)
     packages = unused_images(SDK, keep_image)
+    ndks = unused_ndks(SDK)
     # Validate every removal before performing any of them. These are preinstalled
     # tools on a single-use hosted VM, never a developer or self-hosted SDK.
     remove_dotnet = DOTNET.exists() or DOTNET.is_symlink()
@@ -87,12 +111,13 @@ def reclaim(environment, keep_image, run=subprocess.run):
         real_directory(DOTNET)
     if remove_dotnet:
         run(["sudo", "--", "rm", "-rf", "--", str(DOTNET)], check=True, timeout=120)
-    if packages:
+    if packages or ndks:
         run(
             [
                 str(SDK / "cmdline-tools/latest/bin/sdkmanager"),
                 "--uninstall",
                 *packages,
+                *ndks,
             ],
             check=True,
             timeout=120,
@@ -100,6 +125,7 @@ def reclaim(environment, keep_image, run=subprocess.run):
     return {
         "preservedImage": keep_image,
         "removedImages": packages,
+        "removedNdks": ndks,
         "removedDotnet": remove_dotnet,
     }
 

@@ -315,8 +315,10 @@ jobs:
 
   desktop-screenshots:
     name: Desktop screenshots
-    runs-on: macos-latest
-    timeout-minutes: 30
+    # Desktop references use macOS 27 text rasterization.
+    runs-on: xcode-27
+    # Cold compilation and rendering need independent budgets; leave time for setup/reports.
+    timeout-minutes: 60
     steps:
       - name: Check out repository
         uses: actions/checkout@v7.0.1
@@ -336,7 +338,17 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
+      # Cold runner compilation can take about 20 minutes before rendering starts.
+      - name: Compile Desktop screenshot tests
+        timeout-minutes: 30
+        run: ./gradlew :app:compose-main:compileTestKotlinDesktop
+
       - name: Validate Desktop screenshots
+        timeout-minutes: 20
+        env:
+          LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS: 'true'
+          TZ: America/Los_Angeles
+          JAVA_TOOL_OPTIONS: -Duser.timezone=America/Los_Angeles
         run: ./gradlew validateDesktopScreenshots --continue
 
       - name: Upload Desktop screenshot reports

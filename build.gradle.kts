@@ -176,7 +176,14 @@ private val featureCoverageModules =
 
 subprojects {
     tasks.withType<Test>().matching { it.name == "desktopTest" }.configureEach {
-        systemProperty("java.awt.headless", "true")
+        val requiredOffscreenScreenshots =
+            project.path == ":app:compose-main" &&
+                providers.environmentVariable("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS").orNull == "true"
+        systemProperty("java.awt.headless", (!requiredOffscreenScreenshots).toString())
+        if (requiredOffscreenScreenshots) {
+            systemProperty("apple.awt.UIElement", "true")
+            systemProperty("logdate.desktopScreenshots.visible", "false")
+        }
     }
     if (path in featureCoverageModules) {
         apply(plugin = "jacoco")
@@ -186,15 +193,6 @@ subprojects {
                 isIncludeNoLocationClasses = true
                 excludes = listOf("jdk.internal.*")
             }
-        }
-    }
-}
-
-// Compose desktop tests render offscreen; do not register a foreground Java app on macOS.
-subprojects {
-    tasks.withType<Test>().configureEach {
-        if (name == "desktopTest") {
-            systemProperty("java.awt.headless", "true")
         }
     }
 }

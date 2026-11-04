@@ -272,6 +272,12 @@ val desktopScreenshotDiffDir = layout.buildDirectory.dir("reports/desktopScreens
 val desktopScreenshotSceneFilter = providers.systemProperty("logdate.desktopScreenshots.sceneFilter").orNull
 
 tasks.named<Test>("desktopTest") {
+    // Reference pixels and their rasterization host matter even when compiled UI is unchanged.
+    inputs.dir(desktopScreenshotReferenceDir).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property(
+        "desktopScreenshotRenderHost",
+        "${System.getProperty("os.name")} ${System.getProperty("os.version").substringBefore('.')}",
+    )
     systemProperty("skiko.renderApi", "SOFTWARE_COMPAT")
     systemProperty("apple.awt.UIElement", "true")
     systemProperty("logdate.desktopScreenshots.referenceDir", desktopScreenshotReferenceDir.asFile.absolutePath)

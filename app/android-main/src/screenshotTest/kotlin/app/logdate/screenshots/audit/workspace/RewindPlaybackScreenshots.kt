@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -21,6 +23,7 @@ import app.logdate.feature.rewind.ui.RewindDetailUiState
 import app.logdate.feature.rewind.ui.RewindPanelUiState
 import app.logdate.feature.rewind.ui.SubtitledRewindPanelUiState
 import app.logdate.feature.rewind.ui.TextNoteRewindPanelUiState
+import app.logdate.feature.rewind.ui.detail.LocalRewindPreviewPainters
 import app.logdate.feature.rewind.ui.detail.RewindDetailScreenContent
 import app.logdate.navigation.rememberWorkspaceRouteDecorator
 import app.logdate.screenshots.common.ScreenshotTestData
@@ -139,16 +142,19 @@ internal fun ImmersiveRewindScreenshot(
 ) {
     ScreenshotTheme {
         val context = LocalContext.current
-        val image =
+        val bitmap =
             remember(context) {
-                BitmapFactory.decodeResource(context.resources, app.logdate.client.R.drawable.workspace_sample_photo).asImage()
+                BitmapFactory.decodeResource(context.resources, app.logdate.client.R.drawable.workspace_sample_photo)
             }
+        val image = remember(bitmap) { bitmap.asImage() }
         val handler = remember(image) { AsyncImagePreviewHandler { image } }
+        val previewPainters = remember(bitmap) { mapOf(PHOTO_URI to BitmapPainter(bitmap.asImageBitmap())) }
         CompositionLocalProvider(
             LocalWorkspaceEnabled provides true,
             LocalWorkspaceSearchAction provides {},
             LocalReduceMotionOverride provides reducedMotion,
             LocalAsyncImagePreviewHandler provides handler,
+            LocalRewindPreviewPainters provides previewPainters,
         ) {
             provideFoldableLayoutInfo(foldable) {
                 NavDisplay(

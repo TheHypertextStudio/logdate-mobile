@@ -113,12 +113,12 @@ Preview functions inside a flow file are numbered in display order (`S01_...`, `
 Apply a matrix annotation instead of listing `@Preview`s by hand. They live in
 `common/ScreenshotPreviewMatrix.kt`, and the device specs in `common/ScreenshotTestData.kt`.
 
-| Annotation | Configurations | Use it for |
-| --- | --- | --- |
-| `@ScreenshotPreviewMatrix` | Phone, Phone Dark, Landscape, Tablet | Most screens |
-| `@LargeScreenAuditPreviewMatrix` | Split Medium, Tablet Landscape, Tablet Portrait, Desktop Window | Large-screen regressions |
-| `@OsIntegrationPreviewMatrix` | Phone, Phone Dark, Compact Phone, Landscape, Tablet, RTL, Large Text (200%), Dynamic Color | Every Android OS integration feature (required) |
-| `@BubbleWindowPreview` | Bubble (360×480dp) | Added next to `@OsIntegrationPreviewMatrix` for screens that can open in an app bubble |
+| Annotation                       | Configurations                                                                             | Use it for                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `@ScreenshotPreviewMatrix`       | Phone, Phone Dark, Landscape, Tablet                                                       | Most screens                                                                           |
+| `@LargeScreenAuditPreviewMatrix` | Split Medium, Tablet Landscape, Tablet Portrait, Desktop Window                            | Large-screen regressions                                                               |
+| `@OsIntegrationPreviewMatrix`    | Phone, Phone Dark, Compact Phone, Landscape, Tablet, RTL, Large Text (200%), Dynamic Color | Every Android OS integration feature (required)                                        |
+| `@BubbleWindowPreview`           | Bubble (360×480dp)                                                                         | Added next to `@OsIntegrationPreviewMatrix` for screens that can open in an app bubble |
 
 Wear tests in `app/wear/src/screenshotTest/` use `@WearScreenshotPreviewMatrix` (small round and
 large round).
@@ -212,12 +212,12 @@ privacy-system-search|desktop|privacy-settings
 quick-settings-tiles|system|docs/screenshots/android-os-integration/quick-settings-tiles/shade-active--phone-api37.png
 ```
 
-| Lane | Target | What the check requires |
-| --- | --- | --- |
+| Lane      | Target                                                                | What the check requires                                                                                                                                         |
+| --------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `android` | `File.kt#Function` under `app/android-main/src/screenshotTest/kotlin` | The function exists, uses `@OsIntegrationPreviewMatrix`, and has a reference for every configuration in it (plus Bubble when `@BubbleWindowPreview` is applied) |
-| `desktop` | Shared scene id | References for `phone`, `phone-dark`, `compact-phone`, `phone-rtl`, and `phone-large-text` |
-| `system` | Repository path | A real PNG captured from a managed device, or non-empty `.txt` evidence |
-| `glance` | Repository path | A real PNG widget reference |
+| `desktop` | Shared scene id                                                       | References for `phone`, `phone-dark`, `compact-phone`, `phone-rtl`, and `phone-large-text`                                                                      |
+| `system`  | Repository path                                                       | A real PNG captured from a managed device, or non-empty `.txt` evidence                                                                                         |
+| `glance`  | Repository path                                                       | A real PNG widget reference                                                                                                                                     |
 
 `checkOsIntegrationScreenshotCoverage` (`./run screenshots:check`) fails when:
 
@@ -271,6 +271,7 @@ fun EmptyState() { }
 ### What NOT to Screenshot
 
 Skip screenshots for:
+
 - Low-level component variations (use UI tests instead)
 - Implementation details
 - Every single state combination (select important ones)
@@ -323,7 +324,7 @@ keeps going past a failing lane so each one reports:
 ./gradlew :app:wear:validateDebugScreenshotTest
 
 # Validate — Desktop app
-./gradlew :app:compose-main:validateDesktopScreenshotTest
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:compose-main:validateDesktopScreenshotTest
 ```
 
 **In CI/CD**: This command runs automatically on pull requests.
@@ -337,6 +338,7 @@ open app/android-main/build/outputs/screenshotTest-results/preview/debug/
 ```
 
 Inspect:
+
 - `rendered/` - Current screenshots
 - `reference/` - Baseline screenshots
 - `diffs/` - Difference highlights (if generated)
@@ -346,12 +348,14 @@ Inspect:
 ### Initial Setup
 
 1. Write your Compose screen:
+
    ```kotlin
    @Composable
    fun MyNewScreen() { }
    ```
 
 2. Create screenshot test:
+
    ```kotlin
    @PreviewTest
    @PreviewLightDark
@@ -363,6 +367,7 @@ Inspect:
    ```
 
 3. Generate baseline:
+
    ```bash
    ./gradlew :app:android-main:updateDebugScreenshotTest
    ```
@@ -377,11 +382,13 @@ Inspect:
 1. Make UI changes
 
 2. Run validation to check impact:
+
    ```bash
    ./gradlew :app:android-main:validateDebugScreenshotTest
    ```
 
 3. If changes are intentional, update baseline:
+
    ```bash
    ./gradlew :app:android-main:updateDebugScreenshotTest
    ```
@@ -400,6 +407,7 @@ Inspect:
 ### Storing Baselines
 
 Baseline images live in version control:
+
 ```
 app/android-main/src/screenshotTestDebug/reference/
 ├── app/logdate/screenshots/
@@ -551,7 +559,7 @@ Use the root tasks when you want the platform-agnostic entrypoint:
 
 # Per-platform entrypoints
 ./gradlew validateAndroidScreenshots
-./gradlew validateDesktopScreenshots
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew validateDesktopScreenshots
 ./gradlew validateIosScreenshots
 ```
 
@@ -571,11 +579,11 @@ fun ComposablePreview() {
 `.github/workflows/screenshot-test.yml` validates screenshots on pushes to `main`, and on pull requests
 that touch app, feature, UI, theme, or build code. It runs three jobs:
 
-| Job | Runner | Command |
-| --- | --- | --- |
-| `android-wear-screenshots` | macOS with JetBrains JDK 21 (phone and Wear, matching the committed references' rendering host) | `./gradlew :app:<module>:validateDebugScreenshotTest --continue` |
-| `desktop-screenshots` | macOS | `./gradlew validateDesktopScreenshots --continue` |
-| `ios-screenshot-validation` | macOS | `./gradlew validateIosScreenshots --continue` |
+| Job                         | Runner                                                                                          | Command                                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `android-wear-screenshots`  | macOS with JetBrains JDK 21 (phone and Wear, matching the committed references' rendering host) | `./gradlew :app:<module>:validateDebugScreenshotTest --continue` |
+| `desktop-screenshots`       | macOS                                                                                           | `./gradlew validateDesktopScreenshots --continue`                |
+| `ios-screenshot-validation` | macOS                                                                                           | `./gradlew validateIosScreenshots --continue`                    |
 
 Android rendering results, XML, and HTML diagnostics upload even when validation fails; the runner change does not relax image thresholds or regenerate baselines. Each job uploads its results (rendered images and diffs) as a build artifact. When a job fails,
 download the artifact and compare the `diffs/` images with the references.
@@ -591,6 +599,7 @@ images, diffs, and XML/HTML reports even when validation times out.
 ### "Expected images not found"
 
 Baseline images missing. Generate them:
+
 ```bash
 # Phone
 ./gradlew :app:android-main:updateDebugScreenshotTest
@@ -620,12 +629,14 @@ Visual changes detected. Options:
 ### Screenshot filename confusion
 
 Filenames are auto-generated from:
+
 - Package: `app.logdate.screenshots`
 - Class: `EditorScreenshotsKt`
 - Function: `EditorEmpty`
 - Theme: `_light.png` or `_dark.png`
 
 Example:
+
 ```
 app/logdate/screenshots/EditorScreenshotsKt/EditorEmpty_light.png
 app/logdate/screenshots/EditorScreenshotsKt/EditorEmpty_dark.png
@@ -646,19 +657,20 @@ app/logdate/screenshots/EditorScreenshotsKt/EditorEmpty_dark.png
 - [Compose Screenshot Testing](https://developer.android.com/studio/preview/compose-screenshot-testing)
 - [Google Issue #402137754](https://issuetracker.google.com/issues/402137754) - KMP compatibility
 - [Visual Regression Testing Best Practices](https://www.smashingmagazine.com/2021/06/visual-regression-testing/)
+
 ## Desktop Screenshot Operations
 
-Desktop screenshot validation for `app/compose-main` runs through the normal desktop unit test task and does not require any Android device, emulator, `adb`, or connected-device task.
+Desktop screenshot validation for `app/compose-main` uses hidden offscreen Swing surfaces. Set `LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true` to run real rendering and comparisons through the desktop test task. Regular desktop unit tests stay headless. Required screenshot validation fails when a display surface or a matching reference host is unavailable; the CI runner matches `render-host.txt`.
 
 Core tasks:
 
 ```bash
 # Validate committed desktop baselines
-./gradlew :app:compose-main:desktopTest \
-  --tests 'app.logdate.screenshots.DesktopScreenshotTest.shared_catalog_matches_baselines'
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:compose-main:desktopTest \
+  --tests '*shared catalog matches baselines*'
 
 # Convenience alias for the same validation lane
-./gradlew :app:compose-main:validateDesktopScreenshotTest
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:compose-main:validateDesktopScreenshotTest
 
 # Refresh committed desktop baselines
 ./gradlew :app:compose-main:updateDesktopScreenshotTest
@@ -671,32 +683,16 @@ Default behavior:
 - Hidden mode avoids stealing focus from the current desktop window.
 - Hidden mode also avoids hover and focus contamination from the mouse pointer during screenshot capture.
 
-Visible mode:
-
-Use visible mode only when you explicitly want to watch screenshots render live on the desktop.
-
-```bash
-./gradlew -Dlogdate.desktopScreenshots.visible=true \
-  :app:compose-main:desktopTest \
-  --tests 'app.logdate.screenshots.DesktopScreenshotTest.shared_catalog_matches_baselines'
-```
-
 Scene filtering:
 
 Use `logdate.desktopScreenshots.sceneFilter` to run only a subset of the shared screenshot catalog. The filter matches `SharedScreenshotSceneId.value` substrings.
 
 ```bash
 # Run only onboarding-start scenes
-./gradlew -Dlogdate.desktopScreenshots.sceneFilter=onboarding-start \
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew -Dlogdate.desktopScreenshots.sceneFilter=onboarding-start \
   :app:compose-main:desktopTest \
-  --tests 'app.logdate.screenshots.DesktopScreenshotTest.shared_catalog_matches_baselines'
+  --tests '*shared catalog matches baselines*'
 
-# Run only settings scenes and show them live
-./gradlew \
-  -Dlogdate.desktopScreenshots.visible=true \
-  -Dlogdate.desktopScreenshots.sceneFilter=settings \
-  :app:compose-main:desktopTest \
-  --tests 'app.logdate.screenshots.DesktopScreenshotTest.shared_catalog_matches_baselines'
 ```
 
 Desktop baseline locations:
@@ -709,13 +705,21 @@ Recommended workflow for desktop screenshot changes:
 
 1. Narrow the scope with `logdate.desktopScreenshots.sceneFilter` while iterating on a scene.
 2. Run hidden mode by default to avoid desktop interference.
-3. Use visible mode only when you need to inspect transitions or layout behavior live.
+3. Inspect the rendered content, wrapping and actions before accepting changed references.
 4. Refresh baselines with `:app:compose-main:updateDesktopScreenshotTest` after the render path is deterministic.
-5. Re-run `:app:compose-main:desktopTest --tests 'app.logdate.screenshots.DesktopScreenshotTest.shared_catalog_matches_baselines'` before committing.
+5. Run `LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:compose-main:desktopTest --tests '*shared catalog matches baselines*'` before committing.
 
 ## Native backup settings fixtures
 
 The shared catalog includes signed-out, signed-in and native-quota states in
-`NativeBackupScreenshotScenes.kt`. Each explicitly enables Android coverage rows
+`NativeBackupScreenshotScenes.kt`. Each explicitly enables Android coverage explanations
 and uses the OS integration viewport matrix. Follow the scoped commands and review
 criteria in [Settings UI composition](../reference/standards/settings-ui.md).
+
+## Populated Rewind media fixtures
+
+Supply predecoded fixture painters through `LocalRewindPreviewPainters`, keyed by
+exact media URI. `ImageNotePanel` uses these only in inspection mode, so populated
+previews render their actual fixture image without waiting for an asynchronous
+readiness callback. Loading and unavailable fixtures omit the matching painter.
+Runtime media continues to use the real image loader and its readiness callbacks.

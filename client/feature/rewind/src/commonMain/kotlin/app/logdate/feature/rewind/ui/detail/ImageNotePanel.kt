@@ -2,6 +2,7 @@
 
 package app.logdate.feature.rewind.ui.detail
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,6 +68,8 @@ fun ImageNotePanel(
     memoryId: String = "image-memory",
 ) {
     var loadState by remember(imageUri) { mutableStateOf<RewindMemoryLoadState>(RewindMemoryLoadState.Loading) }
+    val previewPainter = if (LocalInspectionMode.current) LocalRewindPreviewPainters.current[imageUri] else null
+    val displayedLoadState = if (previewPainter != null) RewindMemoryLoadState.Ready else loadState
     // Stored Rewind media has no dimensions. Keep its 3:2 viewport stable while Fit preserves the decoded bitmap's aspect.
     val preferredAspectRatio = 1.5f
     val density = LocalDensity.current
@@ -97,7 +101,7 @@ fun ImageNotePanel(
                 }
             RewindMemoryFrame(
                 memoryId,
-                loadState,
+                displayedLoadState,
                 with(density) { Modifier.size(layout.width.toDp(), layout.height.toDp()) },
                 shape = RoundedCornerShape(if (caption.isNullOrBlank()) 24.dp else 8.dp),
             ) {
@@ -124,26 +128,33 @@ fun ImageNotePanel(
                             )
                         }
                     }
-                    AsyncImage(
-                        model = imageUri,
-                        contentDescription =
-                            if (isVideoFrame) {
-                                stringResource(Res.string.cd_rewind_video_frame, dateFormatted)
-                            } else {
-                                caption?.takeIf { it.isNotBlank() }
-                                    ?: stringResource(Res.string.cd_rewind_journal_photo, dateFormatted)
-                            },
-                        modifier =
-                            with(
-                                density,
-                            ) { Modifier.fillMaxWidth().height(layout.mediaHeight.toDp()).testTag("rewind_media_$memoryId") },
-                        contentScale = ContentScale.Fit,
-                        onLoading = { loadState = RewindMemoryLoadState.Loading },
-                        onError = { loadState = RewindMemoryLoadState.Unavailable },
-                        onSuccess = {
-                            loadState = RewindMemoryLoadState.Ready
-                        },
-                    )
+                    val description =
+                        if (isVideoFrame) {
+                            stringResource(Res.string.cd_rewind_video_frame, dateFormatted)
+                        } else {
+                            caption?.takeIf { it.isNotBlank() }
+                                ?: stringResource(Res.string.cd_rewind_journal_photo, dateFormatted)
+                        }
+                    val imageModifier =
+                        with(density) { Modifier.fillMaxWidth().height(layout.mediaHeight.toDp()).testTag("rewind_media_$memoryId") }
+                    if (previewPainter != null) {
+                        Image(
+                            painter = previewPainter,
+                            contentDescription = description,
+                            modifier = imageModifier,
+                            contentScale = ContentScale.Fit,
+                        )
+                    } else {
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = description,
+                            modifier = imageModifier,
+                            contentScale = ContentScale.Fit,
+                            onLoading = { loadState = RewindMemoryLoadState.Loading },
+                            onError = { loadState = RewindMemoryLoadState.Unavailable },
+                            onSuccess = { loadState = RewindMemoryLoadState.Ready },
+                        )
+                    }
                     if (!caption.isNullOrBlank()) {
                         Column(
                             with(density) {
