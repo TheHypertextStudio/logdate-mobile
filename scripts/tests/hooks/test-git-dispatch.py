@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -25,7 +26,16 @@ class GitHookDispatchTests(unittest.TestCase):
             ROOT / ".hypertext/commits.json", self.repo / ".hypertext/commits.json"
         )
         for hook in ("pre-commit", "commit-msg", "pre-push"):
-            shutil.copyfile(ROOT / ".githooks" / hook, self.repo / ".githooks" / hook)
+            content = (ROOT / ".githooks" / hook).read_text()
+            tool = next(
+                value
+                for value in shlex.split(content.splitlines()[-1])
+                if value.endswith("/hypertext.py")
+            )
+            fixture = ROOT / "scripts/tests/hooks/shared-git-gate-fixture.py"
+            (self.repo / ".githooks" / hook).write_text(
+                content.replace(tool, shlex.quote(str(fixture)))
+            )
         helper = ROOT / "scripts/validation/run-git-hook.py"
         if helper.exists():
             shutil.copyfile(helper, self.repo / "scripts/validation" / helper.name)
