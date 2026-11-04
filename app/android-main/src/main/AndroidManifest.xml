@@ -205,6 +205,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <intent-filter>
+                <action
+          android:name="android.intent.action.APPLICATION_PREFERENCES"
+        />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
             <!--
                 Starts a new entry from launcher shortcuts, Quick Settings tiles, notifications,
                 assistants, and other apps. Extras: mode (text|voice|camera|video), journal_id.

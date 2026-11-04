@@ -44,6 +44,7 @@ import app.logdate.client.ui.navigation.classifyLogdateHost
 import app.logdate.client.ui.navigation.searchRouteFromParams
 import app.logdate.feature.core.notifications.NAV_SOURCE_DATA_TRANSFER
 import app.logdate.feature.core.settings.navigation.ExportSettingsRoute
+import app.logdate.feature.core.settings.navigation.SettingsRoute
 import app.logdate.feature.core.watch.continuity.WatchHandoffRoute
 import app.logdate.feature.editor.navigation.EntryEditorRoute
 import app.logdate.feature.events.navigation.EventDetailRoute
@@ -218,7 +219,7 @@ private inline fun <T : NavKey> String.parseDateString(create: (String) -> T): T
  * Resolves the optional launch destination from the activity intent.
  *
  * This is the single resolver used by `MainActivity` for deep links, notification taps,
- * widget launches, ambient prompts, and the Android 16 handoff fallback URI.
+ * widget launches, ambient prompts, application preferences, and the Android 16 handoff fallback URI.
  */
 fun resolveMainActivityNavKey(intent: Intent?): NavKey? {
     if (intent == null) return null
@@ -228,6 +229,8 @@ fun resolveMainActivityNavKey(intent: Intent?): NavKey? {
     // The first family the intent belongs to decides; a malformed one resolves to nothing rather
     // than to another family's destination.
     return when {
+        intent.action == Intent.ACTION_APPLICATION_PREFERENCES -> SettingsRoute()
+
         intent.action == ACTION_CAPTURE -> {
             captureRoute(
                 mode = intent.getStringExtra(EXTRA_CAPTURE_MODE),
