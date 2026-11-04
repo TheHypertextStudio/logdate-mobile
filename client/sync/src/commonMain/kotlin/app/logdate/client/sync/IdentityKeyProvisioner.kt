@@ -85,12 +85,7 @@ internal class IdentityKeyProvisioner(
         }
 
         if (client == null) {
-            runCatching { manager.setupNewIdentity() }
-                .onFailure {
-                    if (it is kotlinx.coroutines.CancellationException) throw it
-                    throwIfDeviceBlocked(it)
-                    Napier.e("Could not provision an identity key")
-                }
+            setupNewIdentity(manager)
             return
         }
 
@@ -104,12 +99,7 @@ internal class IdentityKeyProvisioner(
             }
 
             false -> {
-                runCatching { manager.setupNewIdentity() }
-                    .onFailure {
-                        if (it is kotlinx.coroutines.CancellationException) throw it
-                        throwIfDeviceBlocked(it)
-                        Napier.e("Could not provision an identity key")
-                    }
+                setupNewIdentity(manager)
                 if (manager.hasIdentityKey() && accountId != null) manager.bindToAccount(accountId)
             }
 
@@ -118,6 +108,15 @@ internal class IdentityKeyProvisioner(
                 // sync attempt checks again rather than guessing now.
             }
         }
+    }
+
+    private suspend fun setupNewIdentity(manager: IdentityKeyManager) {
+        runCatching { manager.setupNewIdentity() }
+            .onFailure {
+                if (it is CancellationException) throw it
+                throwIfDeviceBlocked(it)
+                Napier.e("Could not provision an identity key")
+            }
     }
 
     /** Personal-space keys are installed by verified enrollment/recovery, never background sync. */
