@@ -29,6 +29,7 @@ import app.logdate.feature.editor.ui.blocks.EntryContextPreview
 import app.logdate.feature.editor.ui.blocks.MemoryBlockContent
 import app.logdate.feature.editor.ui.blocks.MemoryBlockSurface
 import app.logdate.feature.editor.ui.editor.AudioBlockUiState
+import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EntryBlockUiState
 import app.logdate.feature.editor.ui.editor.HandwritingBlockUiState
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
@@ -92,19 +93,22 @@ internal class RetainedEditorBlocks(
         hidden: Boolean = false,
     ) {
         val state = ui.value
-        val placement = BlockPlacement(block, expanded, modifier, onSelect)
+        // Back may change its visual target while this media input still owns logical focus.
+        val inputExpanded =
+            expanded || ((block is ImageBlockUiState || block is CameraBlockUiState) && state.expandedBlockId == block.id)
+        val placement = BlockPlacement(block, inputExpanded, modifier, onSelect)
         CompositionLocalProvider(
             LocalRetainedEditorSurface provides true,
             LocalBlockFocusId provides block.id,
             LocalBlockFocusProgress provides progress,
         ) {
             Box(
-                modifier = modifier.then(if (expanded) Modifier.testTag("focused_block_${block.id}") else Modifier),
+                modifier = modifier.then(if (inputExpanded) Modifier.testTag("focused_block_${block.id}") else Modifier),
                 propagateMinConstraints = true,
             ) {
                 MemoryBlockSurface(
                     block = block,
-                    isSelected = expanded,
+                    isSelected = inputExpanded,
                     onSelect = onSelect,
                     onUpdate = state.onUpdateBlock,
                     onRemove = { state.onDeleteBlock(block.id) },
@@ -115,7 +119,7 @@ internal class RetainedEditorBlocks(
                     customPresentation = block is HandwritingBlockUiState,
                     focusTransitionProgress = progress,
                     morphSurface = true,
-                    expanded = expanded,
+                    expanded = inputExpanded,
                     retainedSurface = true,
                 ) {
                     if (block is TextBlockUiState || block.id in state.blockPresentations) {

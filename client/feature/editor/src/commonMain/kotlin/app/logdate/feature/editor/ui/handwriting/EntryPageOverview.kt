@@ -41,6 +41,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -88,6 +89,7 @@ import app.logdate.feature.editor.ui.layout.EditorBlockCornerRadius
 import app.logdate.feature.editor.ui.layout.EntryPageRailMaxWidth
 import app.logdate.feature.editor.ui.layout.LocalEntryChromeHeight
 import app.logdate.feature.editor.ui.layout.LocalEntryContentInsets
+import app.logdate.feature.editor.ui.layout.clipEntryContentToSafeWindow
 import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.feature.editor.ui.text.TextBlockContent
 import app.logdate.ui.foldable.FoldableSplitLayout
@@ -127,10 +129,11 @@ class EntryPageOverviewState internal constructor(
     internal var captureDrag: (Float) -> Unit = {}
     internal var releaseCaptureDrag: () -> Unit = {}
     internal var viewportWidth = 0
-    internal var viewportTop = 0f
+    internal var viewportTop by mutableFloatStateOf(0f)
     internal var focusedAnchor: EntryPageScrollAnchor? = null
     internal var focusScrollBookmark: Int? = null
     internal val blockPositions = mutableMapOf<Uuid, Float>()
+    internal val blockDocumentTops = mutableStateMapOf<Uuid, Int>()
     internal var draftRevealPlacement by mutableStateOf<DraftRevealPlacement?>(null)
     internal var draftRevealHeading by mutableStateOf<DraftRevealPlacement?>(null)
     internal var headerBottom by mutableStateOf<Float?>(null)
@@ -289,7 +292,10 @@ internal fun EntryPageOverview(
         val reading: @Composable () -> Unit = {
             if (notes.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp).clipEntryContentToSafeWindow(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
                             stringResource(Res.string.entry_page_earlier_today),
                             Modifier.weight(1f),

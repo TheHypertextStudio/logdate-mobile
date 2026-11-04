@@ -5,8 +5,13 @@ package app.logdate.feature.editor.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -21,9 +26,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.editor.ui.handwriting.EntryPageOverviewState
 import app.logdate.feature.editor.ui.handwriting.EntryPageScrollAnchor
+import app.logdate.feature.editor.ui.handwriting.clearEntryDock
 import app.logdate.feature.editor.ui.handwriting.recordDraftReveal
 import app.logdate.feature.editor.ui.layout.EditorBlockMinHeight
 import app.logdate.feature.editor.ui.layout.EntryPageRailMaxWidth
+import app.logdate.feature.editor.ui.layout.LocalEntryContentBottom
 import app.logdate.feature.editor.ui.layout.LocalEntryContentInsets
 import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.ui.foldable.FoldableSplitLayout
@@ -72,6 +79,7 @@ internal fun RetainedEditorDocument(
     val focusedId = continuity.focusedId
     val maximumProgress = continuity.progress.values.maxOrNull() ?: 0f
     val moving = focusedId != null || maximumProgress > 0f
+    SideEffect { state.blockDocumentTops.keys.retainAll(ui.blocks.map { it.id }.toSet()) }
 
     // Capture before focus effects can ask the scroll ancestor to reveal the cursor.
     if (ui.expandedBlockId != null && state.focusScrollBookmark == null) state.focusScrollBookmark = state.scroll.value
@@ -86,13 +94,36 @@ internal fun RetainedEditorDocument(
             Layout(
                 modifier = Modifier.fillMaxWidth(),
                 content = {
-                    Box { reading() }
+                    Box {
+                        CompositionLocalProvider(
+                            LocalEntryContentBottom provides
+                                if (book ==
+                                    null
+                                ) {
+                                    state.dockTop?.minus(gutter)
+                                } else {
+                                    null
+                                },
+                        ) {
+                            reading()
+                        }
+                    }
                     Box { heading() }
                     ui.blocks.forEach { block ->
                         key(block.id) {
                             val expanded = focusedId == block.id
                             val progress = continuity.progress[block.id] ?: 0f
                             val measurement = continuity.host.measure(block.id)
+                            val clippedByDock by remember(state, block.id, gutter) {
+                                derivedStateOf {
+                                    val top = state.blockDocumentTops[block.id]
+                                    val dock = state.dockTop
+                                    top != null &&
+                                        dock != null &&
+                                        state.viewportTop - state.scroll.value + top +
+                                        (if (state.pull > 0f) state.pull else state.pull * 0.35f) >= dock - gutter
+                                }
+                            }
                             val approach =
                                 Modifier.approachLayout(
                                     isMeasurementApproachInProgress = { target ->
@@ -144,7 +175,7 @@ internal fun RetainedEditorDocument(
                                         EntryPageScrollAnchor(block.id, state.blockPositions[block.id] ?: 88f, viewport.width)
                                     ui.onBlockFocused(block.id)
                                 },
-                                hidden = state.earlierExpanded || (focusedId != null && !expanded),
+                                hidden = state.earlierExpanded || (focusedId != null && !expanded) || (progress == 0f && clippedByDock),
                             )
                         }
                     }
@@ -177,18 +208,20 @@ internal fun RetainedEditorDocument(
                 val nowTop = contentTop + if (book == null && read.height > 0) read.height + section else 0
                 var next = nowTop + now.height + related
                 val positions =
-                    ui.blocks.map { block ->
+                    ui.blocks.mapIndexed { index, block ->
                         val top = next
+                        if (!lookahead) state.blockDocumentTops[block.id] = top
                         next += continuity.host
                             .measure(block.id)
                             .inlineSize.height
-                            .coerceAtLeast(minimum) + related
+                            .coerceAtLeast(minimum) + if (index == ui.blocks.lastIndex) gutter else related
                         top
                     }
                 val documentHeight = maxOf(next + dockPlaceable.height, contentTop + read.height + readingBottom)
                 // Counter-placement keeps focus fixed without resetting or clamping the overview bookmark.
                 val height = if (moving) maxOf(documentHeight, state.scroll.value + viewport.height) else documentHeight
                 layout(constraints.maxWidth, height) {
+                    val documentTop = state.viewportTop - state.scroll.value + if (state.pull > 0f) state.pull else state.pull * 0.35f
                     val passiveAlpha =
                         if (lookahead) {
                             if (focusedId == null) {
@@ -200,8 +233,18 @@ internal fun RetainedEditorDocument(
                             1f - maximumProgress
                         }
                     if (passiveAlpha > 0f && !state.earlierExpanded) {
-                        read.placeWithLayer(readingLeft, contentTop) { alpha = passiveAlpha }
-                        now.placeWithLayer(writingLeft, nowTop) { alpha = passiveAlpha }
+                        read.placeWithLayer(readingLeft, contentTop) {
+                            alpha = passiveAlpha
+                            if (book == null) {
+                                clearEntryDock(documentTop + contentTop, state.dockTop, gutter.toFloat())
+                            } else {
+                                clip = false
+                            }
+                        }
+                        now.placeWithLayer(writingLeft, nowTop) {
+                            alpha = passiveAlpha
+                            clearEntryDock(documentTop + nowTop, state.dockTop, gutter.toFloat())
+                        }
                         dockPlaceable.placeWithLayer(writingLeft, next) { alpha = passiveAlpha }
                     }
                     blocks.forEachIndexed { index, child ->
@@ -246,7 +289,10 @@ internal fun RetainedEditorDocument(
                                 x,
                                 y,
                                 zIndex = progress,
-                            ) { alpha = visible }
+                            ) {
+                                alpha = visible
+                                clearEntryDock(documentTop + y, state.dockTop, gutter.toFloat(), progress)
+                            }
                         }
                     }
                 }

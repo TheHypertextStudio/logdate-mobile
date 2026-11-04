@@ -26,7 +26,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -206,7 +205,14 @@ class EntryPageAdaptiveFlowTest(
             onNodeWithContentDescription("Return to entry").performClick()
             frames(20)
             mainClock.autoAdvance = true
-            onNodeWithTag("memory_block_${ink.id}").performScrollTo()
+            runOnIdle {
+                kotlinx.coroutines.runBlocking {
+                    overview.scroll.scrollTo(
+                        (checkNotNull(overview.blockDocumentTops[ink.id]) - 180).coerceAtLeast(0),
+                    )
+                }
+            }
+            waitForIdle()
             mainClock.autoAdvance = false
             onNodeWithTag("memory_block_${ink.id}").performClick()
             frames(20)
@@ -227,7 +233,16 @@ class EntryPageAdaptiveFlowTest(
             onNodeWithContentDescription("Return to entry").performClick()
             frames(20)
             mainClock.autoAdvance = true
-            onNodeWithTag("memory_block_${writing.id}").performScrollTo()
+            runOnIdle {
+                kotlinx.coroutines.runBlocking {
+                    overview.scroll.scrollTo(
+                        (
+                            checkNotNull(overview.blockDocumentTops[writing.id]) -
+                                180
+                        ).coerceAtLeast(0),
+                    )
+                }
+            }
             val memory = onNodeWithTag("memory_block_${writing.id}")
             val footer = onNodeWithTag("entry_creation_actions")
             val overlap = memory.fetchSemanticsNode().boundsInRoot.bottom - footer.fetchSemanticsNode().boundsInRoot.top + 16f

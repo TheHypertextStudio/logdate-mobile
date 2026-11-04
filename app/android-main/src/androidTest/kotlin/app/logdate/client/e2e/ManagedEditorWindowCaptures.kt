@@ -7,14 +7,18 @@ import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import androidx.camera.view.PreviewView
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.uiautomator.UiDevice
@@ -44,9 +48,22 @@ internal class ManagedEditorWindowCaptures(
                     .assertIsEnabled()
                     .fetchSemanticsNode()
                     .boundsInRoot
-            val chooser = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInRoot
-            assertTrue(shutter.bottom <= chooser.top, "Shutter must clear creation controls")
-            assertEquals(chooser.center.x, shutter.center.x, 1f, "Shutter and creation rail must share a center")
+            compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
+            compose.onNodeWithContentDescription("Write").assertIsNotDisplayed()
+            scenario.onActivity {
+                val view = it.window.decorView
+                val safe =
+                    WindowInsetsCompat
+                        .toWindowInsetsCompat(view.rootWindowInsets)
+                        .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+                assertTrue(shutter.bottom <= view.height - safe.bottom, "Shutter must clear system navigation")
+                assertEquals(
+                    (view.width + safe.left - safe.right) / 2f,
+                    shutter.center.x,
+                    1f,
+                    "Camera controls share the safe scene center",
+                )
+            }
         }
 
     fun captureReviewSizes() =
@@ -86,6 +103,70 @@ internal class ManagedEditorWindowCaptures(
                 assertTrue(field.top >= safe.top, "Writing must remain below system controls")
                 assertTrue(field.bottom <= view.height - safe.bottom + 1f, "Writing must remain above system controls")
                 assertEquals((view.width + safe.left - safe.right) / 2f, field.center.x, 1f)
+            }
+        }
+
+    fun captureOverviewSizes() =
+        captureSizes("overview", {
+            compose.onNodeWithTag("entry_journal_chooser").assertIsDisplayed()
+            compose.onNodeWithTag("entry_add_memory").assertIsDisplayed()
+        }) {
+            val memories =
+                compose.onAllNodes(
+                    SemanticsMatcher("retained memory surface") {
+                        it.config.getOrElse(SemanticsProperties.TestTag) { "" }.startsWith("memory_block_")
+                    },
+                )
+            val original = memories.fetchSemanticsNodes().single()
+            val initialDock = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInWindow
+            var density = 1f
+            var screenX = 0
+            var screenY = 0
+            scenario.onActivity {
+                density = it.resources.displayMetrics.density
+                val screen = IntArray(2)
+                val window = IntArray(2)
+                it.window.decorView.getLocationOnScreen(screen)
+                it.window.decorView.getLocationInWindow(window)
+                screenX = screen[0] - window[0]
+                screenY = screen[1] - window[1]
+            }
+            val initial = File(output, "${device.displayWidth}x${device.displayHeight}-overview-before-reveal.png")
+            check(device.takeScreenshot(initial))
+            val bitmap = checkNotNull(BitmapFactory.decodeFile(initial.path))
+            try {
+                for (edge in listOf(initialDock.top - 8 * density, initialDock.bottom + 8 * density)) {
+                    val y = edge.toInt() + screenY
+                    val canvas = bitmap.getPixel(2 + screenX, y)
+                    for (x in initialDock.left.toInt() + screenX until initialDock.right.toInt() + screenX) {
+                        val pixel = bitmap.getPixel(x, y)
+                        assertTrue(
+                            abs(Color.red(canvas) - Color.red(pixel)) <= 3 &&
+                                abs(Color.green(canvas) - Color.green(pixel)) <= 3 &&
+                                abs(Color.blue(canvas) - Color.blue(pixel)) <= 3,
+                            "Scrolling photo paint must leave the dock clearance and lower canvas continuous at $x,$y",
+                        )
+                    }
+                }
+            } finally {
+                bitmap.recycle()
+            }
+            check(device.click(initialDock.center.x.toInt() + screenX, (initialDock.top - 8 * density).toInt() + screenY))
+            compose.onNodeWithTag("entry_journal_chooser").assertIsDisplayed()
+            assertEquals(original.id, memories.fetchSemanticsNodes().single().id, "The clear gap cannot focus or replace the photo")
+            // A fitted photo may be taller than a resized window. Reveal its real lower edge,
+            // rather than requiring the entire original image to shrink into that window.
+            compose.onNodeWithTag("entry_page_creation").performScrollTo()
+            compose.waitForIdle()
+            val revealed = memories.fetchSemanticsNodes().single()
+            assertEquals(original.id, revealed.id, "Revealing the lower edge retains the same photo surface")
+            compose.onNodeWithTag("entry_journal_chooser").assertIsDisplayed()
+            val memory = revealed.boundsInWindow
+            val dock = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInWindow
+            scenario.onActivity {
+                assertEquals(memory.left, dock.left, 1f, "Memory and Add share the content rail")
+                assertEquals(memory.right, dock.right, 1f, "Memory and Add share the content rail")
+                assertTrue(memory.bottom + 16 * density <= dock.top + 1f, "Memory and Add retain the same 16dp design clearance")
             }
         }
 
@@ -180,7 +261,15 @@ internal class ManagedEditorWindowCaptures(
                         .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
                 val density = it.resources.displayMetrics.density
                 expectedCenter = (width + safe.left - safe.right) / 2f
-                expectedRail = min(width.toFloat() - safe.left - safe.right, 640 * density) - if (stage == "writing") 0f else 32 * density
+                expectedRail =
+                    if (stage ==
+                        "camera"
+                    ) {
+                        72 * density
+                    } else {
+                        min(width.toFloat() - safe.left - safe.right, 640 * density) -
+                            if (stage == "writing") 0f else 32 * density
+                    }
                 findPreview(decor)?.let { preview ->
                     val origin = IntArray(2)
                     preview.getLocationInWindow(origin)
@@ -189,15 +278,19 @@ internal class ManagedEditorWindowCaptures(
             }
             val root = compose.onNodeWithTag("stories_editor").fetchSemanticsNode().boundsInWindow
             val target =
-                compose
-                    .onNodeWithTag(
-                        when (stage) {
-                            "camera" -> "entry_creation_actions"
-                            "writing" -> "editor_text_input"
-                            else -> "camera_review_surface"
-                        },
-                    ).fetchSemanticsNode()
-                    .boundsInWindow
+                if (stage == "camera") {
+                    compose.onNodeWithContentDescription("Take Photo").fetchSemanticsNode().boundsInWindow
+                } else {
+                    compose
+                        .onNodeWithTag(
+                            when (stage) {
+                                "overview" -> "entry_creation_actions"
+                                "writing" -> "editor_text_input"
+                                else -> "camera_review_surface"
+                            },
+                        ).fetchSemanticsNode()
+                        .boundsInWindow
+                }
             val current = "root=$root rail=$target previewCenter=$previewCenter expectedRail=$expectedRail expectedCenter=$expectedCenter"
             stable = if (current == previous) stable + 1 else 0
             previous = current

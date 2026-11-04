@@ -113,7 +113,7 @@ private fun CapturedMediaContent(
                             .data(block.uri)
                             .build(),
                     contentDescription = block.caption.ifBlank { stringResource(Res.string.captured_photo) },
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

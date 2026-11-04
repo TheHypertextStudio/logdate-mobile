@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.lerp
 import app.logdate.client.datastore.EntryStartMode
 import app.logdate.feature.editor.ui.EditorInputFocusBookmarks
 import app.logdate.feature.editor.ui.LocalEditorInputFocusBookmarks
+import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.isEmptyCreationBlock
 import app.logdate.feature.editor.ui.layout.EditorContentLayer
@@ -112,15 +113,21 @@ internal fun EntryPageChrome(
             editor.audioCaptureStartReservations.isEmpty() &&
             !editor.disableEmptyBlockCreation &&
             (block == null || !editor.isReadOnly(block.id))
-    val showModes = creationAllowed && !overview.earlierExpanded && (block?.isEmptyCreationBlock() == true || editor.blocks.isEmpty())
+    val cameraOwnsInput = block is CameraBlockUiState
+    val showModes =
+        creationAllowed &&
+            !cameraOwnsInput &&
+            !overview.earlierExpanded &&
+            (block?.isEmptyCreationBlock() == true || editor.blocks.isEmpty())
     val showAdd = creationAllowed && !overview.earlierExpanded && !focused && editor.blocks.isNotEmpty()
     val reduceMotion = rememberSystemReduceMotion().value
     val routeProgress = LocalEntryCreationProgress.current
     val routeReady = routeProgress >= 0.999f
     val routeReveal = entryCreationBarProgress(routeProgress)
-    val modeProgress = rememberCreationProgress(showModes, reduceMotion) * routeReveal
-    val addProgress = rememberCreationProgress(showAdd, reduceMotion) * routeReveal
-    val dockProgress = maxOf(modeProgress, addProgress)
+    val dock = rememberCreationDockProgress(showModes, showAdd, reduceMotion)
+    val modeProgress = if (cameraOwnsInput) 0f else dock.modes * routeReveal
+    val addProgress = if (cameraOwnsInput) 0f else dock.add * routeReveal
+    val dockProgress = if (cameraOwnsInput) 0f else dock.visible * routeReveal
     val defaultCapture =
         when (defaultMode) {
             EntryStartMode.TEXT -> StoryCaptureMode.Write
@@ -258,6 +265,7 @@ internal fun EntryPageChrome(
                 addEligible = showAdd && routeReady && overview.browsingProgress == 0f,
                 modeProgress = modeProgress,
                 addProgress = addProgress,
+                visibilityProgress = dockProgress,
                 chromeHeight = chromeHeight,
                 modifier =
                     Modifier
