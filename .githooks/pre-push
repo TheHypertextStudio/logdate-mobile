@@ -1,3 +1,3 @@
 #!/bin/sh
 # Hypertext Studio managed Git hook v1
-exec python3 /Users/williecubed/.codex/plugins/cache/hypertext-studio/hypertext-studio/0.1.0-dev/scripts/hypertext.py verify --repo "$PWD" --git-hook pre-push --git-remote "$1" --git-remote-url "$2"
+exec python3 "$PWD/scripts/validation/run-git-hook.py" /Users/williecubed/.codex/plugins/cache/hypertext-studio/hypertext-studio/0.1.0-dev/scripts/hypertext.py pre-push "$@"

@@ -225,6 +225,10 @@ keep. Merge commits are disabled for this repository, and GitHub deletes the bra
 ## Workflow Rules and Exceptions
 
 - **Trust the tooling** — pre-commit hooks are authoritative
+- The hook dispatcher uses the installed Hypertext Git-gate options and runs the
+  repository checks registered in `.hypertext/git-hooks.json` in their declared
+  order. It verifies each check's digest before execution and forwards the same
+  native ref-update transaction to both pre-push stages.
 - **Fix, don't bypass** — resolve hook failures instead of skipping
 - **No proactive repo-wide validation** — avoid `./gradlew test` for whole repo unless:
   - You changed tooling/configuration that affects the whole repo
