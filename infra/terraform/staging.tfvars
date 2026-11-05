@@ -81,6 +81,7 @@ cloud_run_secret_env = {
 }
 
 secret_ids = [
+  "logdate-bluesky-oauth-client-jwks",
   "logdate-google-oidc-client-ids",
   "logdate-redis-url",
   "logdate-sentry-dsn",
