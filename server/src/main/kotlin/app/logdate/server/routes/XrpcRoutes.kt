@@ -12,7 +12,6 @@ import app.logdate.server.oauth.OAuthAccessTokenService
 import app.logdate.server.oauth.OAuthDpopVerifier
 import app.logdate.server.oauth.OAuthNonceService
 import app.logdate.server.oauth.OAuthScopes
-import app.logdate.server.oauth.OAuthUseDpopNonceException
 import app.logdate.server.routes.docs.XrpcDocs
 import app.logdate.server.routes.docs.XrpcRepoDocs
 import io.github.aakira.napier.Napier
@@ -873,6 +872,8 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
     identityService: AtprotoIdentityService,
     accountRepository: AccountRepository,
 ): XrpcPrincipal? {
+    val challenge = checks.nonces.challenge()
+    response.headers.append(DPOP_NONCE_HEADER, challenge.current)
     val accessClaims = checks.accessTokens.validateAccessToken(accessToken) ?: return respondAuthRequired("Invalid DPoP access token")
     val proof =
         request.header(DPOP_HEADER)?.trim()?.takeIf(String::isNotEmpty)
@@ -883,7 +884,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
                 proof = proof,
                 method = request.httpMethod.value,
                 htu = checks.publicOrigin?.let { it.trimEnd('/') + request.path() } ?: absoluteRequestUrl(),
-                expectedNonce = checks.nonces.currentNonce(),
+                nonceChallenge = challenge,
                 expectedAth = checks.dpop.accessTokenHash(accessToken),
             )
         } catch (error: Exception) {
@@ -896,7 +897,6 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
         }
     val verified =
         verification.getOrElse { error ->
-            if (error is OAuthUseDpopNonceException) response.headers.append(DPOP_NONCE_HEADER, error.nonce)
             return respondAuthRequired(error.message ?: "Invalid DPoP proof")
         }
     if (verified.keyThumbprint != accessClaims.keyThumbprint) return respondAuthRequired("DPoP proof does not match the access token")

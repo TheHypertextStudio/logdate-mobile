@@ -247,7 +247,7 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                 rotationPolicy = OAuthKeyRotationPolicy.fromEnvironment(),
             )
         }
-        single { OAuthNonceService() }
+        single { OAuthNonceService(sharedSecret = AtprotoSessionSecret.resolve()) }
         single<OAuthReplayStore> {
             if (isDatabaseAvailable) PostgreSQLOAuthReplayStore() else InMemoryOAuthReplayStore()
         }

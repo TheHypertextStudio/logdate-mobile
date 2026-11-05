@@ -48,6 +48,7 @@ class OAuthXrpcAccessTest {
             val response = fixture.oauthGet(path, ATPROTO)
 
             assertEquals(HttpStatusCode.OK, response.status, response.bodyAsText())
+            assertEquals(listOf(fixture.env.oauthNonceService.currentNonce()), response.headers.getAll("DPoP-Nonce"))
             val payload = json.parseToJsonElement(response.bodyAsText()).jsonObject
             assertEquals(fixture.account.did, payload.getValue("did").jsonPrimitive.content)
             assertEquals(fixture.account.handle, payload.getValue("handle").jsonPrimitive.content)
