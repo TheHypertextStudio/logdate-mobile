@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +30,7 @@ import app.logdate.client.permissions.rememberHealthConnectPermissionState
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.MasterFeatureToggle
 import app.logdate.ui.common.MaterialContainer
+import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
@@ -196,7 +196,7 @@ fun DayBoundarySettingsContent(
                 Spacer(modifier = Modifier.height(Spacing.sm))
 
                 MaterialContainer {
-                    ListItem(
+                    SettingsRow(
                         headlineContent = {
                             Text(stringResource(Res.string.day_schedule_fallback_time))
                         },
@@ -288,7 +288,7 @@ fun DayBoundarySettingsContent(
                         Spacer(modifier = Modifier.height(Spacing.sm))
 
                         MaterialContainer {
-                            ListItem(
+                            SettingsRow(
                                 headlineContent = {
                                     Text(stringResource(Res.string.day_schedule_fallback_time))
                                 },

@@ -200,7 +200,7 @@ class AutomaticSyncSettingsTest {
                 LogDateTheme(darkTheme = false) {
                     SyncSettingsContent(
                         onBack = {},
-                        syncStatus = SyncStatus(true, null, 0, false, false),
+                        syncStatus = SyncStatus(true, null, 0, false, false, earlierConflictCount = 1),
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.FAILED),
                         isAuthenticated = true,
                         archiveRequest = ArchiveRequestState.Requesting,
@@ -213,7 +213,7 @@ class AutomaticSyncSettingsTest {
                 }
             }
             onNodeWithText("Requesting backup…").assertIsNotEnabled()
-            onNodeWithText("Review sync issues").assertIsEnabled()
+            onNodeWithText("1 earlier sync issue").assertIsEnabled()
             saveScreenshot("phone-archive-requesting", onRoot().captureToImage())
         }
 

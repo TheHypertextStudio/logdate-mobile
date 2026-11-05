@@ -127,10 +127,8 @@ fun DataSettingsContent(
                     title = stringResource(Res.string.data_management),
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 ) {
-                    Column {
-                        ExportDataItem(onShowExportOptions = onShowExportOptions)
-                        ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
-                    }
+                    ExportDataItem(onShowExportOptions = onShowExportOptions)
+                    ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
                 }
             }
         },
@@ -194,10 +192,8 @@ fun DataSettingsContent(
                         title = stringResource(Res.string.data_management),
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     ) {
-                        Column {
-                            ExportDataItem(onShowExportOptions = onShowExportOptions)
-                            ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
-                        }
+                        ExportDataItem(onShowExportOptions = onShowExportOptions)
+                        ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
                     }
                 }
 

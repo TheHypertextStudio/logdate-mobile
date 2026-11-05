@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,6 +22,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.theme.Spacing
@@ -51,13 +51,13 @@ internal fun PrivacyPreferenceItem(
 ) {
     when (state) {
         PrivacyPreferenceState.Loading ->
-            ListItem(
+            SettingsRow(
                 headlineContent = { Text(title) },
                 supportingContent = { Text(stringResource(Res.string.privacy_preference_loading)) },
                 trailingContent = { PrivacyPreferenceProgress() },
             )
         PrivacyPreferenceState.Unavailable ->
-            ListItem(
+            SettingsRow(
                 headlineContent = { Text(title) },
                 supportingContent = { Text(stringResource(Res.string.privacy_preference_read_failed)) },
                 trailingContent = {
