@@ -2,6 +2,7 @@ package app.logdate.server.routes
 
 import app.logdate.server.ServerDescriptorConfig
 import app.logdate.server.accountkeys.AccountKeyEnvelopeRepository
+import app.logdate.server.atproto.AtprotoServiceAuth
 import app.logdate.server.atproto.AtprotoSessionTokenService
 import app.logdate.server.atproto.firehose.AtprotoFirehoseConfig
 import app.logdate.server.atproto.firehose.PublicRepoAccess
@@ -88,6 +89,7 @@ internal fun Application.atprotoRoutes() {
     val pdsSyncService by inject<PdsSyncService>()
     val pdsBlobService by inject<PdsBlobService>()
     val atprotoSessionTokenService by inject<AtprotoSessionTokenService>()
+    val signingKeyService by inject<SigningKeyService>()
     val oauthConfig by inject<OAuthConfig>()
     val oauthKeyService by inject<OAuthKeyService>()
     val oauthAuthorizationService by inject<OAuthAuthorizationService>()
@@ -125,6 +127,7 @@ internal fun Application.atprotoRoutes() {
             oauthNonceService = oauthNonceService,
             publicOrigin = oauthConfig.normalizedResource,
             publicRepos = publicRepos,
+            serviceAuth = AtprotoServiceAuth(accountRepository, signingKeyService),
         )
     }
     publicRepos?.let { firehoseRoutes(it) }

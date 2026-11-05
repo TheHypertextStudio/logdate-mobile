@@ -81,6 +81,12 @@ revision consume the rendered Neon contract.
   credentialed CORS so browsers cannot read responses using ambient cookies.
   Interactive authorization and LogDate API routes retain the configured
   `ALLOWED_ORIGINS` policy.
+- Service credentials are available only for an active account whose exact
+  current identity has publication consent. Each credential names one audience
+  and one method, expires within 60 seconds, and is signed with the existing
+  account key. Account-management and private journal methods cannot use
+  these credentials. An OAuth grant that only confirms identity cannot issue
+  them.
 - Use the same pinned `ATPROTO_SESSION_SECRET` version on all replicas of an
   environment. DPoP challenges are derived separately from session tokens and
   rotate every two and a half minutes. The preceding challenge remains valid

@@ -40,6 +40,33 @@ class OAuthXrpcAccessTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
+    fun `service auth requires a public identity and a grant that permits remote methods`() =
+        testApplication {
+            val fixture = setUp()
+            val path = "/xrpc/com.atproto.server.getServiceAuth?aud=did:web:api.bsky.app%23bsky_appview"
+            val profile = "$path&lxm=app.bsky.actor.getProfile"
+
+            assertEquals(HttpStatusCode.Unauthorized, client.get(profile).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet(profile, GENERIC).status)
+            assertTrue(
+                runBlocking {
+                    fixture.env.accountRepository.recordPublicIdentity(fixture.account.id, requireNotNull(fixture.account.did))
+                },
+            )
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet(profile, ATPROTO).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet("$path&lxm=com.atproto.server.deleteAccount", GENERIC).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet("$path&lxm=chat.bsky.convo.sendMessage", GENERIC).status)
+            assertEquals(HttpStatusCode.BadRequest, fixture.oauthGet("$profile&exp=not-a-number", GENERIC).status)
+
+            val issued = fixture.oauthGet(profile, GENERIC)
+            assertEquals(HttpStatusCode.OK, issued.status, issued.bodyAsText())
+            assertEquals("no-store", issued.headers[HttpHeaders.CacheControl])
+            val payload = json.parseToJsonElement(issued.bodyAsText()).jsonObject
+            val token = payload.getValue("token").jsonPrimitive.content
+            assertEquals(3, token.split('.').size)
+        }
+
+    @Test
     fun `an OAuth app can read its session identity without email details`() =
         testApplication {
             val fixture = setUp()

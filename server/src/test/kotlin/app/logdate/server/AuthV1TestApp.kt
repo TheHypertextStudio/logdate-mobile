@@ -2,6 +2,7 @@ package app.logdate.server
 
 import app.logdate.server.atproto.AtprotoPasswordService
 import app.logdate.server.atproto.AtprotoPdsSessionService
+import app.logdate.server.atproto.AtprotoServiceAuth
 import app.logdate.server.atproto.AtprotoSessionTokenService
 import app.logdate.server.atproto.InMemoryAtprotoPasswordCredentialRepository
 import app.logdate.server.atproto.InMemoryAtprotoSessionRepository
@@ -270,6 +271,7 @@ fun TestApplicationBuilder.configureAuthV1TestApp(
                 oauthAccessTokenService = oauthAccessTokenService,
                 oauthDpopVerifier = oauthDpopVerifier,
                 oauthNonceService = oauthNonceService,
+                serviceAuth = AtprotoServiceAuth(accountRepository, signingKeyService),
             )
             spaceXrpcRoutes(
                 enabled = personalSpaceEnabled,

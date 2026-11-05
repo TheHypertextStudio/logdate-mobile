@@ -1,5 +1,6 @@
 package app.logdate.server.routes.docs
 
+import app.logdate.server.atproto.ServiceAuthResponse
 import app.logdate.server.openapi.ApiTags
 import app.logdate.server.routes.ErrorCase
 import app.logdate.server.routes.ErrorEnvelope
@@ -137,6 +138,42 @@ internal object XrpcDocs {
             pdsError(
                 HttpStatusCode.InternalServerError,
                 ErrorCase("InternalServerError", "The request failed on the server; retry later.", "Session request failed"),
+            )
+            notConfigured()
+        }
+    }
+
+    val getServiceAuth: RouteConfig.() -> Unit = {
+        bearerOrDpopOperation(
+            "getAtprotoServiceAuth",
+            ApiTags.XRPC,
+            "Issue a service credential",
+            "Issue a credential for one service and XRPC method using the account's public identity.",
+        )
+        request {
+            queryParameter<String>("aud") {
+                description = "Service DID, optionally followed by its service fragment."
+                required = true
+            }
+            queryParameter<String>("lxm") {
+                description = "XRPC method to bind to the credential."
+                required = true
+            }
+            queryParameter<Long>("exp") {
+                description = "Expiration in Unix seconds, no more than 60 seconds in the future."
+            }
+        }
+        response {
+            ok("The short-lived credential.", ServiceAuthResponse("example-token"))
+            authRequired()
+            pdsError(
+                HttpStatusCode.BadRequest,
+                ErrorCase("InvalidRequest", "The audience or method is invalid.", "Provide a service DID and a valid XRPC method."),
+                ErrorCase("BadExpiration", "The expiration is invalid.", "The service credential must expire within 60 seconds."),
+            )
+            pdsError(
+                HttpStatusCode.Forbidden,
+                ErrorCase("Forbidden", "The identity or grant cannot issue this credential.", "Service authentication is unavailable."),
             )
             notConfigured()
         }
