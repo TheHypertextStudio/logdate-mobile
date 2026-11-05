@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 expect fun rememberNotificationPermissionState(): NotificationPermissionState
 
 @Composable
-expect fun rememberHealthConnectPermissionState(): HealthConnectPermissionState
+expect fun rememberHealthConnectPermissionState(onRequestResult: (Boolean) -> Unit = {}): HealthConnectPermissionState
 
 @Composable
 expect fun rememberMediaLibraryPermissionState(includeVideos: Boolean = true): MediaLibraryPermissionState

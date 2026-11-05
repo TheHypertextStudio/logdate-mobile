@@ -28,6 +28,7 @@ data class GlobalAppUiLoadedState(
      * The user's display name, used for the lock screen greeting.
      */
     val displayName: String = "",
+    val unlockState: AppUnlockState = AppUnlockState.Idle,
 ) : GlobalAppUiState
 
 data object GlobalAppUiLoadingState : GlobalAppUiState
@@ -37,3 +38,12 @@ val GlobalAppUiLoadedState.requiresUnlock: Boolean
 
 val GlobalAppUiLoadedState.isAppUnlocked: Boolean
     get() = authState == AppAuthState.NO_PROMPT_NEEDED || authState == AppAuthState.AUTHENTICATED
+
+/** Feedback for the app's own unlock request, independent of sensitive-action authentication. */
+sealed interface AppUnlockState {
+    data object Idle : AppUnlockState
+
+    data object Authenticating : AppUnlockState
+
+    data object Failed : AppUnlockState
+}

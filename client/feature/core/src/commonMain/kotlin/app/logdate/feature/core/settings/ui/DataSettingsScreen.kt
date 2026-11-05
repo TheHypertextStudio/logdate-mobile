@@ -3,26 +3,14 @@
 package app.logdate.feature.core.settings.ui
 
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.feature.core.export.UserDataExportViewModel
 import app.logdate.feature.core.restore.RestoreState
 import app.logdate.feature.core.restore.UserDataRestoreViewModel
-import app.logdate.ui.common.SettingsScaffold
-import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.data_management
-import logdate.client.feature.core.generated.resources.sync_feedback_failed
-import logdate.client.feature.core.generated.resources.sync_feedback_needs_account
-import logdate.client.feature.core.generated.resources.sync_feedback_sign_in_action
-import logdate.client.feature.core.generated.resources.sync_feedback_started
-import logdate.client.feature.core.generated.resources.sync_feedback_succeeded
-import logdate.client.feature.core.generated.resources.sync_feedback_up_to_date
-import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -31,83 +19,31 @@ fun DataSettingsScreen(
     onNavigateToCloudAccountCreation: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
     onNavigateToRecoveryPhrase: () -> Unit = {},
+    onBrowseFile: (String) -> Unit = {},
     viewModel: DataSettingsViewModel = koinViewModel(),
     exportViewModel: UserDataExportViewModel = koinViewModel(),
     restoreViewModel: UserDataRestoreViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val nativeBackupStatus by viewModel.nativeBackupStatus.collectAsState()
-    val exportState by exportViewModel.exportState.collectAsState()
-    val isExportSheetVisible by exportViewModel.isSheetVisible.collectAsState()
-    val restoreState by restoreViewModel.restoreState.collectAsState()
-    val isRestoreSheetVisible by restoreViewModel.isSheetVisible.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val nativeBackupStatus by viewModel.nativeBackupStatus.collectAsStateWithLifecycle()
+    val exportState by exportViewModel.exportState.collectAsStateWithLifecycle()
+    val isExportSheetVisible by exportViewModel.isSheetVisible.collectAsStateWithLifecycle()
+    val restoreState by restoreViewModel.restoreState.collectAsStateWithLifecycle()
+    val isRestoreSheetVisible by restoreViewModel.isSheetVisible.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(restoreState) {
-        if (restoreState is RestoreState.Completed) {
-            viewModel.runIntegrityCheck()
-        }
+        (restoreState as? RestoreState.Completed)?.let { viewModel.onRestoreCompleted(it.operationId) }
     }
 
-    // Report what Sync Now actually did. Without this the button is silent whether the sync
-    // succeeded, failed, or was refused for want of an account.
-    val syncFeedback by viewModel.syncFeedback.collectAsState()
-    val needsAccountMessage = stringResource(Res.string.sync_feedback_needs_account)
-    val signInActionLabel = stringResource(Res.string.sync_feedback_sign_in_action)
-    val upToDateMessage = stringResource(Res.string.sync_feedback_up_to_date)
-    LaunchedEffect(syncFeedback) {
-        val feedback = syncFeedback ?: return@LaunchedEffect
-        when (feedback) {
-            is SyncFeedback.NeedsAccount -> {
-                val action = snackbarHostState.showSnackbar(needsAccountMessage, signInActionLabel)
-                if (action == SnackbarResult.ActionPerformed) {
-                    onNavigateToSignIn()
-                }
-            }
-
-            is SyncFeedback.Succeeded -> {
-                val moved = feedback.uploadedItems + feedback.downloadedItems
-                snackbarHostState.showSnackbar(
-                    if (moved == 0) {
-                        upToDateMessage
-                    } else {
-                        getString(
-                            Res.string.sync_feedback_succeeded,
-                            feedback.uploadedItems,
-                            feedback.downloadedItems,
-                        )
-                    },
-                )
-            }
-
-            SyncFeedback.Started ->
-                snackbarHostState.showSnackbar(getString(Res.string.sync_feedback_started))
-
-            is SyncFeedback.Failed ->
-                snackbarHostState.showSnackbar(
-                    getString(Res.string.sync_feedback_failed, getString(feedback.message)),
-                )
-        }
-        viewModel.consumeSyncFeedback()
-    }
-
-    // The session flow starts at null meaning "not read yet", and stateIn's seed used to call
-    // that signed out - so the screen opened on Create Account for someone already signed in and
-    // syncing, then corrected itself a frame later. Hold the screen until the answer is known.
-    val isAuthenticated = uiState.isAuthenticated
-    if (isAuthenticated == null) {
-        SettingsScaffold(
-            title = stringResource(Res.string.data_management),
-            onBack = onBack,
-            snackbarHostState = snackbarHostState,
-        ) {}
-        return
-    }
+    SyncFeedbackEffect(viewModel, snackbarHostState, onNavigateToSignIn)
 
     DataSettingsContent(
         onBack = onBack,
         quotaUsage = uiState.quotaState.orDefault().toStorageQuotaUi(),
-        isQuotaAvailable = uiState.isQuotaAvailable && uiState.hasAuthoritativeQuota,
+        isQuotaAvailable = uiState.isQuotaAvailable,
+        quotaAvailability = uiState.quotaAvailability,
+        onRetryQuota = viewModel::observeQuota,
         exportState = exportState,
         isExportSheetVisible = isExportSheetVisible,
         onShowExportOptions = exportViewModel::showExportOptions,
@@ -116,6 +52,7 @@ fun DataSettingsScreen(
         onCancelExport = exportViewModel::cancelExport,
         onRetryExport = exportViewModel::retryExport,
         onDismissExport = exportViewModel::dismissSheet,
+        onBrowseExport = { path -> onBrowseFile(path) },
         restoreState = restoreState,
         isRestoreSheetVisible = isRestoreSheetVisible,
         onShowRestoreSheet = restoreViewModel::showRestoreSheet,
@@ -133,7 +70,11 @@ fun DataSettingsScreen(
         cloudArchiveStatus = uiState.cloudArchiveStatus,
         nativeBackupStatus = nativeBackupStatus,
         onRetryNativeRecovery = viewModel::retryNativeRecovery,
-        isAuthenticated = isAuthenticated,
+        isAuthenticated = uiState.isAuthenticated,
+        accountLoadFailed = uiState.accountLoadFailed,
+        onRetryAccount = viewModel::observeAccount,
+        syncRequest = uiState.syncRequest,
+        archiveRequest = uiState.archiveRequest,
         onSyncNow = { viewModel.syncNow() },
         onSyncUsingMobileData = { viewModel.syncNow(allowMeteredMedia = true) },
         onArchiveBackupNow = viewModel::backupArchiveNow,

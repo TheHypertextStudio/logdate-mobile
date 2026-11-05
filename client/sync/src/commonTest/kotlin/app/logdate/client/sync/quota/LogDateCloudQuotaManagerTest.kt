@@ -10,12 +10,16 @@ import app.logdate.shared.model.CloudStorageQuota
 import app.logdate.shared.model.QuotaCategoryUsage
 import app.logdate.shared.model.QuotaContentType
 import app.logdate.shared.model.QuotaUsage
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -135,6 +139,27 @@ class LogDateCloudQuotaManagerTest {
             assertEquals(1, remote.getQuotaUsageCalls)
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `a delayed old account response never overwrites the new account cache`() =
+        runTest {
+            val sessions = TestSessionStorage(UserSession("token-a", "refresh-a", "account-a"))
+            val remote = ScriptedRemoteQuotaDataSource(QuotaUsage(1_000, 100, emptyList()))
+            val manager = LogDateCloudQuotaManager(StaticQuotaCalculator(), remote, sessions)
+            manager.syncWithServer()
+            val oldResult = CompletableDeferred<QuotaResult<QuotaUsage>>()
+            remote.onGet = { oldResult.await() }
+            val oldRequest = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { manager.syncWithServer() }
+            runCurrent()
+            sessions.saveSession(UserSession("token-b", "refresh-b", "account-b"))
+            remote.onGet = { QuotaResult.Success(QuotaUsage(2_000, 900, emptyList())) }
+            manager.syncWithServer()
+            oldResult.complete(QuotaResult.Success(QuotaUsage(1_000, 150, emptyList())))
+            oldRequest.join()
+
+            assertEquals(900, manager.getCurrentQuota().usedBytes)
+        }
+
     private class StaticQuotaCalculator : QuotaCalculator {
         private val quota =
             CloudStorageQuota(
@@ -157,11 +182,13 @@ class LogDateCloudQuotaManagerTest {
         private val quota: QuotaUsage? = null,
         private val quotas: ArrayDeque<QuotaUsage> = ArrayDeque(),
     ) : RemoteQuotaDataSource {
+        var onGet: (suspend () -> QuotaResult<QuotaUsage>)? = null
         var getQuotaUsageCalls = 0
             private set
 
         override suspend fun getQuotaUsage(): QuotaResult<QuotaUsage> {
             getQuotaUsageCalls += 1
+            onGet?.let { return it() }
             return QuotaResult.Success(quotas.removeFirstOrNull() ?: requireNotNull(quota))
         }
 

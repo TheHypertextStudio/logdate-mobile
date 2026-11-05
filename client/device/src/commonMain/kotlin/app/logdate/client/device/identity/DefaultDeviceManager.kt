@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -78,6 +79,8 @@ class DefaultDeviceManager(
                     notificationToken = notificationToken.value,
                 )
             Result.success(success)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             Napier.e("Failed to register device", e)
             Result.failure(e)
@@ -90,23 +93,17 @@ class DefaultDeviceManager(
      */
     fun getAssociatedDevices(): Flow<List<DeviceInfo>> = deviceRepository.getAssociatedDevices()
 
+    fun observeAssociatedDevices(): Flow<DeviceListObservation> = deviceRepository.observeAssociatedDevices()
+
     /**
      * Renames the current device.
      *
      * @param newName The new name for the device
      */
     suspend fun renameDevice(newName: String) {
-        val updatedInfo =
-            deviceInfo.updateAndGet {
-                it.copy(id = deviceIdProvider.getDeviceId().value, name = newName)
-            }
-
-        // Update in repository
-        try {
-            deviceRepository.updateDeviceInfo(updatedInfo)
-        } catch (e: Exception) {
-            Napier.e("Failed to rename device in repository", e)
-        }
+        val updatedInfo = deviceInfo.value.copy(id = deviceIdProvider.getDeviceId().value, name = newName)
+        check(deviceRepository.updateDeviceInfo(updatedInfo)) { "Device rename was not accepted" }
+        deviceInfo.value = updatedInfo
     }
 
     /**
@@ -119,6 +116,8 @@ class DefaultDeviceManager(
         try {
             val success = deviceRepository.removeDevice(deviceId)
             Result.success(success)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (e: Exception) {
             Napier.e("Failed to remove device", e)
             Result.failure(e)
@@ -140,12 +139,7 @@ class DefaultDeviceManager(
                 it.copy(id = newId, lastActive = Clock.System.now())
             }
 
-        // Re-register with cloud
-        try {
-            deviceRepository.registerDevice(updatedInfo)
-        } catch (e: Exception) {
-            Napier.e("Failed to register new device ID with cloud", e)
-        }
+        check(deviceRepository.registerDevice(updatedInfo)) { "New device registration was not accepted" }
 
         return newId
     }

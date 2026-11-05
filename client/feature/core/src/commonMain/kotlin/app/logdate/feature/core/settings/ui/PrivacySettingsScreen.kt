@@ -10,7 +10,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,9 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsNavigationItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
-import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.app_security
@@ -32,6 +32,9 @@ import logdate.client.feature.core.generated.resources.location_settings
 import logdate.client.feature.core.generated.resources.manage_location_tracking_and_privacy_preferences
 import logdate.client.feature.core.generated.resources.navigate_to_location_settings
 import logdate.client.feature.core.generated.resources.privacy_and_security
+import logdate.client.feature.core.generated.resources.privacy_auth_description
+import logdate.client.feature.core.generated.resources.privacy_auth_subtitle
+import logdate.client.feature.core.generated.resources.privacy_auth_title
 import logdate.client.feature.core.generated.resources.settings_biometric_description
 import logdate.client.feature.core.generated.resources.settings_biometric_label
 import logdate.client.feature.core.generated.resources.system_search_visibility_description
@@ -60,15 +63,26 @@ fun PrivacySettingsScreen(
     onNavigateToLocationSettings: () -> Unit = {},
     viewModel: PrivacySettingsViewModel = koinViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val prompt =
+        PrivacyAuthenticationPrompt(
+            title = stringResource(Res.string.privacy_auth_title),
+            subtitle = stringResource(Res.string.privacy_auth_subtitle),
+            cancelLabel = stringResource(UiRes.string.common_cancel),
+            description = stringResource(Res.string.privacy_auth_description),
+        )
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.cancelAuthentication() }
+    }
 
     PrivacySettingsContent(
+        state = state,
         onBack = onBack,
-        onSetBiometricsEnabled = viewModel::setBiometricEnabled,
+        onSetBiometricsEnabled = { viewModel.setBiometricEnabled(it, prompt) },
         onSetSystemSearchVisibilityEnabled = viewModel::setSystemSearchVisibilityEnabled,
-        isBiometricsEnabled = state.isBiometricsEnabled,
-        isSystemSearchVisibilityEnabled = state.isSystemSearchVisibilityEnabled,
-        showSystemSearchVisibilityToggle = state.showSystemSearchVisibilityToggle,
+        onRetryBiometrics = { viewModel.retryBiometrics(prompt) },
+        onRetrySystemSearchVisibility = viewModel::retrySystemSearchVisibility,
         onNavigateToLocationSettings = onNavigateToLocationSettings,
     )
 }
@@ -81,6 +95,30 @@ fun PrivacySettingsContent(
     isBiometricsEnabled: Boolean,
     isSystemSearchVisibilityEnabled: Boolean = false,
     showSystemSearchVisibilityToggle: Boolean = false,
+    onNavigateToLocationSettings: () -> Unit = {},
+) {
+    PrivacySettingsContent(
+        state =
+            PrivacySettingsState(
+                biometrics = PrivacyPreferenceState.Available(isBiometricsEnabled),
+                systemSearchVisibility = PrivacyPreferenceState.Available(isSystemSearchVisibilityEnabled),
+                showSystemSearchVisibilityToggle = showSystemSearchVisibilityToggle,
+            ),
+        onBack = onBack,
+        onSetBiometricsEnabled = onSetBiometricsEnabled,
+        onSetSystemSearchVisibilityEnabled = onSetSystemSearchVisibilityEnabled,
+        onNavigateToLocationSettings = onNavigateToLocationSettings,
+    )
+}
+
+@Composable
+fun PrivacySettingsContent(
+    state: PrivacySettingsState,
+    onBack: () -> Unit,
+    onSetBiometricsEnabled: (Boolean) -> Unit,
+    onSetSystemSearchVisibilityEnabled: (Boolean) -> Unit = {},
+    onRetryBiometrics: () -> Unit = {},
+    onRetrySystemSearchVisibility: () -> Unit = {},
     onNavigateToLocationSettings: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -96,10 +134,11 @@ fun PrivacySettingsContent(
                 title = stringResource(Res.string.app_security),
                 modifier = Modifier.padding(horizontal = Spacing.lg),
             ) {
-                ToggleSettingsItem(
+                PrivacyPreferenceItem(
                     title = stringResource(Res.string.settings_biometric_label),
                     description = stringResource(Res.string.settings_biometric_description),
-                    checked = isBiometricsEnabled,
+                    state = state.biometrics,
+                    onRetry = onRetryBiometrics,
                     onCheckedChange = { enabled ->
                         if (enabled) {
                             onSetBiometricsEnabled(true)
@@ -111,16 +150,17 @@ fun PrivacySettingsContent(
             }
         }
 
-        if (showSystemSearchVisibilityToggle) {
+        if (state.showSystemSearchVisibilityToggle) {
             item {
                 SettingsSection(
                     title = stringResource(Res.string.system_search_visibility_section),
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 ) {
-                    ToggleSettingsItem(
+                    PrivacyPreferenceItem(
                         title = stringResource(Res.string.system_search_visibility_label),
                         description = stringResource(Res.string.system_search_visibility_description),
-                        checked = isSystemSearchVisibilityEnabled,
+                        state = state.systemSearchVisibility,
+                        onRetry = onRetrySystemSearchVisibility,
                         onCheckedChange = onSetSystemSearchVisibilityEnabled,
                     )
                 }

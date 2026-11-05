@@ -126,6 +126,7 @@ private fun MainWindowContent(
         appUiState = loadedState,
         onShowUnlockPrompt = viewModel::showNativeUnlockPrompt,
         shortcutRequests = shortcutRequests,
+        onAutomaticUnlockPrompt = viewModel::showAutomaticUnlockPrompt,
     )
 }
 

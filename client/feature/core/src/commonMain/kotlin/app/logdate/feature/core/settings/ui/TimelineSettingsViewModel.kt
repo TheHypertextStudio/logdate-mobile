@@ -3,54 +3,79 @@ package app.logdate.feature.core.settings.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.datastore.LogdatePreferencesDataSource
-import app.logdate.client.domain.dayboundary.DayBoundarySettings
 import app.logdate.client.domain.dayboundary.DayBoundarySettingsRepository
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
 import app.logdate.client.domain.dayboundary.ObserveHealthConnectStatusUseCase
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import app.logdate.client.domain.dayboundary.withFailureReporting
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the timeline settings hub.
- */
 class TimelineSettingsViewModel(
-    private val settingsRepository: DayBoundarySettingsRepository,
+    settingsRepository: DayBoundarySettingsRepository,
     private val preferencesDataSource: LogdatePreferencesDataSource,
-    observeHealthConnectStatus: ObserveHealthConnectStatusUseCase,
+    private val observeHealthConnectStatus: ObserveHealthConnectStatusUseCase,
 ) : ViewModel() {
+    private val settingsRepository = settingsRepository.withFailureReporting()
+
     data class UiState(
-        val dayBoundarySettings: DayBoundarySettings = DayBoundarySettings(),
-        val fallbackStartHour: Int = DEFAULT_FALLBACK_START_HOUR,
+        val preferences: DaySchedulePreferencesState = DaySchedulePreferencesState.Loading(),
         val healthConnectStatus: HealthConnectStatus = HealthConnectStatus.CHECKING,
-    )
+    ) {
+        val dayBoundarySettings get() = preferences.values?.settings
+        val fallbackStartHour get() = preferences.values?.fallbackStartHour
+    }
 
-    private val healthConnectStatus =
-        observeHealthConnectStatus().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = HealthConnectStatus.CHECKING,
-        )
+    private val mutableState = MutableStateFlow(UiState())
+    val uiState = mutableState.asStateFlow()
+    private var preferencesJob: Job? = null
+    private var healthJob: Job? = null
+    private var hasResumed = false
 
-    val uiState: StateFlow<UiState> =
-        combine(
-            settingsRepository.observeSettings(),
-            preferencesDataSource.observeDayStartHour(),
-            healthConnectStatus,
-        ) { settings, startHour, status ->
-            UiState(
-                dayBoundarySettings = settings,
-                fallbackStartHour = startHour ?: DEFAULT_FALLBACK_START_HOUR,
-                healthConnectStatus = status,
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState(),
-        )
+    init {
+        retryPreferences()
+        refreshHealthStatus()
+    }
 
-    companion object {
-        private const val DEFAULT_FALLBACK_START_HOUR = 4
+    fun onScreenResumed() {
+        if (hasResumed) refreshHealthStatus() else hasResumed = true
+    }
+
+    private fun refreshHealthStatus() {
+        if (healthJob?.isActive == true) return
+        healthJob =
+            viewModelScope.launch {
+                try {
+                    observeHealthConnectStatus().collect { status ->
+                        mutableState.update { it.copy(healthConnectStatus = status) }
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Napier.w("Could not check sleep schedule access", error)
+                }
+            }
+    }
+
+    fun retryPreferences() {
+        if (preferencesJob?.isActive == true) return
+        mutableState.update { it.copy(preferences = DaySchedulePreferencesState.Loading(it.preferences.values)) }
+        preferencesJob =
+            viewModelScope.launch {
+                try {
+                    observeDayScheduleValues(settingsRepository, preferencesDataSource).collect { values ->
+                        mutableState.update { it.copy(preferences = DaySchedulePreferencesState.Available(values)) }
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Napier.w("Could not read day schedule preferences", error)
+                    mutableState.update { it.copy(preferences = DaySchedulePreferencesState.Unavailable(it.preferences.values)) }
+                }
+            }
     }
 }

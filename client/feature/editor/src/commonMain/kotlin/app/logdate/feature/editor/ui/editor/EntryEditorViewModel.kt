@@ -220,11 +220,18 @@ class EntryEditorViewModel(
             ),
         )
 
-    fun setSelectedJournals(journalIds: List<Uuid>) = setSelectedJournalsImpl(journalIds)
+    private var hasUserSelectedJournals = false
+
+    fun setSelectedJournals(journalIds: List<Uuid>) {
+        hasUserSelectedJournals = true
+        setSelectedJournalsImpl(journalIds)
+    }
 
     fun initializeVisitContext(context: VisitMemoryContext?) = initializeVisitContextImpl(context)
 
-    fun initializeSelectedJournals(journalIds: List<Uuid>) = initializeSelectedJournalsImpl(journalIds)
+    fun initializeSelectedJournals(journalIds: List<Uuid>) {
+        if (!hasUserSelectedJournals) initializeSelectedJournalsImpl(journalIds)
+    }
 
     fun createNewBlock(
         type: BlockType,

@@ -1,0 +1,8 @@
+<resources>
+    <string name="location_settings_loading">Loading location settings…</string>
+    <string name="location_settings_read_failed">Couldn’t load location settings. Try again.</string>
+    <string name="location_settings_refreshing">Refreshing location settings…</string>
+    <string name="location_setting_saving">Saving change…</string>
+    <string name="location_setting_save_failed">Couldn’t save this change. Try again.</string>
+    <string name="location_interval_selected_frequency">Selected: every %1$d minutes</string>
+</resources>

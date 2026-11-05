@@ -18,40 +18,37 @@ import app.logdate.ui.theme.LogDateTheme
 import kotlin.test.Test
 
 /**
- * Account > Recovery phrase walked as the person does: Show, the words with Copy and Hide, and "I’ve
- * saved my recovery phrase". Nothing on the way asks them to type the words back.
+ * Recovery settings reveal, copy, and hide the stored phrase without a setup confirmation.
  */
 @OptIn(ExperimentalTestApi::class)
 class RecoveryPhraseOneStepUiTest {
     private val words = List(12) { "word${it + 1}" }
 
     @Test
-    fun showingAndSavingThePhraseNeverAsksForTheWords() =
+    fun showingAndHidingThePhraseNeverAsksForSetup() =
         runDesktopComposeUiTest(width = 720, height = 1600) {
-            var state by mutableStateOf<RecoveryPhraseUiState>(RecoveryPhraseUiState.Hidden)
+            var state by mutableStateOf<RecoveryPhraseUiState>(RecoveryPhraseUiState.Available())
             setContent {
                 LogDateTheme {
                     RecoveryPhraseContent(
                         state = state,
                         onBack = {},
-                        onReveal = { state = RecoveryPhraseUiState.Revealed(words) },
-                        onHide = { state = RecoveryPhraseUiState.Hidden },
+                        onReveal = { state = RecoveryPhraseUiState.Available(PhraseRevealState.Revealed(words)) },
+                        onHide = { state = RecoveryPhraseUiState.Available() },
                         onEnterPhrase = {},
-                        onConfirmSaved = { state = RecoveryPhraseUiState.Verified },
                     )
                 }
             }
 
             onNodeWithText("Show recovery phrase").assertIsDisplayed().performClick()
             onNodeWithText("word1").assertIsDisplayed()
-            onNodeWithText("Copy").assertIsDisplayed()
+            onNodeWithText("Copy phrase").assertIsDisplayed()
             onNodeWithText("Hide").assertIsDisplayed()
             onAllNodes(hasSetTextAction()).assertCountEquals(0)
 
-            onNode(hasScrollAction()).performScrollToNode(hasText("I’ve saved my recovery phrase"))
-            onNodeWithText("I’ve saved my recovery phrase").performClick()
-
-            onNodeWithText("You’ve saved a copy of your recovery phrase.").assertIsDisplayed()
+            onAllNodesWithText("I’ve saved my recovery phrase").assertCountEquals(0)
+            onNodeWithText("Hide").performClick()
+            onNodeWithText("Show recovery phrase").assertIsDisplayed()
             onAllNodes(hasSetTextAction()).assertCountEquals(0)
             onAllNodesWithText("Verify", substring = true, ignoreCase = true).assertCountEquals(0)
         }
@@ -63,7 +60,7 @@ class RecoveryPhraseOneStepUiTest {
             setContent {
                 LogDateTheme {
                     RecoveryPhraseContent(
-                        state = RecoveryPhraseUiState.Hidden,
+                        state = RecoveryPhraseUiState.Available(),
                         onBack = {},
                         onReveal = {},
                         onHide = {},
@@ -74,6 +71,7 @@ class RecoveryPhraseOneStepUiTest {
                 }
             }
 
+            onNode(hasScrollAction()).performScrollToNode(hasText("Finish setting up"))
             onNodeWithText("Finish setting up").assertIsDisplayed().performClick()
             kotlin.test.assertEquals(1, finishes)
         }

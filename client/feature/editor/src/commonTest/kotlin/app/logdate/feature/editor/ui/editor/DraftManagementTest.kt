@@ -612,6 +612,21 @@ class DraftManagementTest {
         }
 
     @Test
+    fun `remounting route context preserves the users changed journal selection`() =
+        testScope.runTest {
+            val navigationJournalId = Uuid.random()
+            val selectedJournalId = Uuid.random()
+            viewModel.initializeSelectedJournals(listOf(navigationJournalId))
+            viewModel.setSelectedJournals(listOf(selectedJournalId))
+            viewModel.autoSaveLatestEntry()
+            advanceUntilIdle()
+            viewModel.initializeSelectedJournals(listOf(navigationJournalId))
+            advanceUntilIdle()
+
+            assertEquals(listOf(selectedJournalId), viewModel.editorState.value.selectedJournalIds)
+        }
+
+    @Test
     fun `navigation journal context overrides initialized default without dirtying editor`() =
         testScope.runTest {
             val defaultJournalId = Uuid.random()

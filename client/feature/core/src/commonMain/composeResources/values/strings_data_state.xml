@@ -1,0 +1,11 @@
+<resources>
+    <string name="data_state_sync_request_failed">Couldn’t start sync. Try again in a moment.</string>
+    <string name="data_state_archive_request_failed">Couldn’t request a cloud backup. Try again.</string>
+    <string name="data_state_requesting_archive">Requesting backup…</string>
+    <string name="data_state_requesting_sync">Starting sync…</string>
+    <string name="data_state_account_loading">Checking your account…</string>
+    <string name="data_state_account_failed">Couldn’t check your account.</string>
+    <string name="data_state_retry">Try again</string>
+    <string name="data_state_quota_loading">Checking cloud storage…</string>
+    <string name="data_state_quota_failed">Couldn’t update cloud storage usage.</string>
+</resources>

@@ -3,6 +3,8 @@ package app.logdate.feature.core.settings.ui.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.device.identity.DefaultDeviceManager
+import app.logdate.client.device.identity.DeviceListObservation
+import app.logdate.client.device.identity.DeviceListScope
 import app.logdate.client.device.identity.safeDeviceDisplayName
 import app.logdate.client.device.models.DeviceInfo
 import app.logdate.client.device.models.DevicePlatform
@@ -23,11 +25,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.devices_error_load
-import logdate.client.feature.core.generated.resources.devices_error_remove
-import logdate.client.feature.core.generated.resources.devices_error_rename
-import logdate.client.feature.core.generated.resources.devices_error_reset_id
-import logdate.client.feature.core.generated.resources.devices_error_unknown
 import logdate.client.feature.core.generated.resources.devices_fallback_name
 import logdate.client.feature.core.generated.resources.devices_last_active_unknown
 import logdate.client.feature.core.generated.resources.devices_platform_android
@@ -56,44 +53,45 @@ class DevicesViewModel(
     private var linkedJob: Job? = null
     private var removalJob: Job? = null
     private var linkedSessions: List<LinkedDeviceSession> = emptyList()
+    private var observationGeneration = 0L
+    private var isObserving = false
+    private var pendingCurrentName: String? = null
+    private var observedScope: DeviceListScope? = null
+    private var hasObservedScope = false
+    private var scopeGeneration = 0L
 
-    /**
-     * Loads devices associated with the current account.
-     */
     fun loadDevices() {
         loadLinkedDevices()
+        isObserving = true
+        val generation = ++observationGeneration
         devicesJob?.cancel()
-        _uiState.update { it.copy(isLoading = it.devices.isEmpty()) }
-
+        _uiState.update {
+            if (it.availability == DeviceListAvailability.Available) {
+                it.copy(refresh = DeviceRefreshState.Running)
+            } else {
+                it.copy(availability = DeviceListAvailability.Loading, refresh = DeviceRefreshState.Idle)
+            }
+        }
         devicesJob =
             viewModelScope.launch {
                 try {
-                    // Get current device info
                     val currentDevice = deviceManager.getCurrentDeviceInfo()
                     launch { deviceManager.registerWithCloud() }
-
-                    // Collect associated devices
-                    deviceManager.getAssociatedDevices().collect { devices ->
-                        val registeredCurrent = devices.firstOrNull { it.id == currentDevice.id } ?: currentDevice
-                        val allDevices = (listOf(registeredCurrent) + devices).distinctBy { it.id }
-                        val deviceUiStates = allDevices.map { it.toUiState(it.id == currentDevice.id) }
-
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                devices = deviceUiStates,
-                            )
-                        }
+                    deviceManager.observeAssociatedDevices().collect { observation ->
+                        if (generation == observationGeneration) applyObservation(observation, currentDevice)
                     }
                 } catch (cancellation: CancellationException) {
                     throw cancellation
-                } catch (e: Exception) {
-                    Napier.e("Failed to load devices", e)
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = Res.string.devices_error_load.toUiText(e.message.toString()),
-                        )
+                } catch (failure: Exception) {
+                    Napier.e("Failed to load devices", failure)
+                    if (generation == observationGeneration) {
+                        _uiState.update {
+                            if (it.availability == DeviceListAvailability.Available) {
+                                it.copy(refresh = DeviceRefreshState.Failed)
+                            } else {
+                                it.copy(availability = DeviceListAvailability.Unavailable, refresh = DeviceRefreshState.Idle)
+                            }
+                        }
                     }
                 }
             }
@@ -183,65 +181,167 @@ class DevicesViewModel(
             DeviceLinkPlatform.WEAR_OS -> getPlatformName(DevicePlatform.WEAR_OS)
             else -> getPlatformName(DevicePlatform.UNKNOWN)
         }
+    private fun applyObservation(
+        observation: DeviceListObservation,
+        currentDevice: DeviceInfo,
+    ) {
+        if (!hasObservedScope || observedScope != observation.scope) {
+            scopeGeneration++
+            if (hasObservedScope) {
+                pendingCurrentName = null
+                _uiState.value = DevicesUiState()
+            }
+            observedScope = observation.scope
+            hasObservedScope = true
+        }
+        when (observation) {
+            is DeviceListObservation.Scoped -> Unit
+            is DeviceListObservation.Available ->
+                showDevices(observation.devices, currentDevice, DeviceRefreshState.Idle, confirmed = true)
+            is DeviceListObservation.Refreshing -> {
+                val cached = observation.cachedDevices
+                if (cached != null) {
+                    showDevices(cached, currentDevice, DeviceRefreshState.Running)
+                } else {
+                    _uiState.update {
+                        if (it.availability == DeviceListAvailability.Available) {
+                            it.copy(refresh = DeviceRefreshState.Running)
+                        } else {
+                            it.copy(availability = DeviceListAvailability.Loading, refresh = DeviceRefreshState.Idle)
+                        }
+                    }
+                }
+            }
+            is DeviceListObservation.Failed -> {
+                val cached = observation.cachedDevices
+                if (cached != null) {
+                    showDevices(cached, currentDevice, DeviceRefreshState.Failed)
+                } else {
+                    _uiState.update {
+                        if (it.availability == DeviceListAvailability.Available) {
+                            it.copy(refresh = DeviceRefreshState.Failed)
+                        } else {
+                            it.copy(availability = DeviceListAvailability.Unavailable, refresh = DeviceRefreshState.Idle)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showDevices(
+        devices: List<DeviceInfo>,
+        currentDevice: DeviceInfo,
+        refresh: DeviceRefreshState,
+        confirmed: Boolean = false,
+    ) {
+        val registeredCurrent = devices.firstOrNull { it.id == currentDevice.id } ?: currentDevice
+        val pendingName = pendingCurrentName
+        val visibleCurrent = if (pendingName == null) registeredCurrent else registeredCurrent.copy(name = pendingName)
+        if (confirmed && devices.any { it.id == currentDevice.id && it.name == pendingName }) pendingCurrentName = null
+        val allDevices = (listOf(visibleCurrent) + devices).distinctBy { it.id }
+        _uiState.update {
+            it.copy(
+                availability = DeviceListAvailability.Available,
+                devices = allDevices.map { info -> info.toUiState(info.id == currentDevice.id) },
+                refresh = refresh,
+            )
+        }
+    }
 
     fun stopObserving() {
+        isObserving = false
+        observationGeneration++
         devicesJob?.cancel()
         devicesJob = null
+        _uiState.update { if (it.refresh == DeviceRefreshState.Running) it.copy(refresh = DeviceRefreshState.Idle) else it }
     }
 
-    /**
-     * Renames the current device.
-     */
     fun renameDevice(newName: String) {
-        viewModelScope.launch {
-            try {
-                deviceManager.renameDevice(newName)
-                loadDevices() // Reload devices to update UI
-            } catch (e: Exception) {
-                Napier.e("Failed to rename device", e)
-                _uiState.update {
-                    it.copy(error = Res.string.devices_error_rename.toUiText(e.message.toString()))
-                }
+        if (newName.isBlank()) return
+        val current = _uiState.value.devices.firstOrNull { it.isCurrentDevice } ?: return
+        val owner = scopeGeneration
+        mutate(current.id, DeviceAction.Rename) {
+            val name = newName.trim()
+            deviceManager.renameDevice(name)
+            if (owner == scopeGeneration) {
+                pendingCurrentName = name
+                updateCurrentIdentity(current.id)
             }
         }
     }
 
-    /**
-     * Removes a device from the account.
-     */
     fun removeDevice(deviceId: Uuid) {
+        if (_uiState.value.devices.none { it.id == deviceId && !it.isCurrentDevice }) return
+        mutate(deviceId, DeviceAction.Remove) {
+            check(deviceManager.removeDevice(deviceId).getOrThrow()) { "Device removal was not accepted" }
+        }
+    }
+
+    fun resetDeviceId() {
+        val current = _uiState.value.devices.firstOrNull { it.isCurrentDevice } ?: return
+        mutate(current.id, DeviceAction.ResetIdentity) { deviceManager.refreshDeviceId() }
+    }
+
+    fun clearOperation(deviceId: Uuid) {
+        _uiState.update {
+            if (it.operations[deviceId] is DeviceOperationState.Running) it else it.copy(operations = it.operations - deviceId)
+        }
+    }
+
+    private fun mutate(
+        deviceId: Uuid,
+        action: DeviceAction,
+        operation: suspend () -> Unit,
+    ) {
+        if (_uiState.value.operations[deviceId] is DeviceOperationState.Running) return
+        val owner = scopeGeneration
+        _uiState.update { it.copy(operations = it.operations + (deviceId to DeviceOperationState.Running(action))) }
         viewModelScope.launch {
+            var result: DeviceOperationState? = null
             try {
-                val result = deviceManager.removeDevice(deviceId)
-                if (result.isFailure) {
-                    val reason = result.exceptionOrNull()?.message?.toUiText() ?: Res.string.devices_error_unknown.toUiText()
-                    _uiState.update { it.copy(error = Res.string.devices_error_remove.toUiText(reason)) }
-                    return@launch
+                operation()
+                if (owner != scopeGeneration) return@launch
+                result = DeviceOperationState.Succeeded(action)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (failure: Exception) {
+                Napier.e("Failed device action: $action", failure)
+                if (owner == scopeGeneration) result = DeviceOperationState.Failed(action)
+            } finally {
+                if (owner == scopeGeneration) {
+                    val outcome = result
+                    _uiState.update {
+                        it.copy(operations = if (outcome == null) it.operations - deviceId else it.operations + (deviceId to outcome))
+                    }
+                    // A reset can change local identity before cloud registration fails or is cancelled.
+                    if (action == DeviceAction.ResetIdentity) {
+                        updateCurrentIdentity(deviceId)
+                        if (isObserving) loadDevices()
+                    }
                 }
-                loadDevices() // Reload devices to update UI
-            } catch (e: Exception) {
-                Napier.e("Failed to remove device", e)
-                _uiState.update {
-                    it.copy(error = Res.string.devices_error_remove.toUiText(e.message.toString()))
-                }
+            }
+            if (owner == scopeGeneration &&
+                isObserving &&
+                result is DeviceOperationState.Succeeded &&
+                action != DeviceAction.ResetIdentity
+            ) {
+                loadDevices()
             }
         }
     }
 
-    /**
-     * Resets the current device ID.
-     */
-    fun resetDeviceId() {
-        viewModelScope.launch {
-            try {
-                deviceManager.refreshDeviceId()
-                loadDevices() // Reload devices to update UI
-            } catch (e: Exception) {
-                Napier.e("Failed to reset device ID", e)
-                _uiState.update {
-                    it.copy(error = Res.string.devices_error_reset_id.toUiText(e.message.toString()))
-                }
-            }
+    private suspend fun updateCurrentIdentity(previousId: Uuid) {
+        val current = deviceManager.getCurrentDeviceInfo()
+        _uiState.update {
+            val operation = it.operations[previousId]
+            it.copy(
+                devices = it.devices.map { row -> if (row.isCurrentDevice) current.toUiState(true) else row },
+                operations =
+                    (it.operations - previousId).let { operations ->
+                        if (operation == null) operations else operations + (current.id to operation)
+                    },
+            )
         }
     }
 
@@ -285,25 +385,3 @@ class DevicesViewModel(
             DevicePlatform.UNKNOWN -> Res.string.devices_platform_unknown
         }
 }
-
-/**
- * UI state for the devices screen.
- */
-data class DevicesUiState(
-    val isLoading: Boolean = false,
-    val devices: List<DeviceInfoUiState> = emptyList(),
-    val error: UiText? = null,
-    val linked: LinkedDevicesUiState = LinkedDevicesUiState.Unavailable,
-)
-
-/**
- * UI state for a device.
- */
-data class DeviceInfoUiState(
-    val id: Uuid,
-    val name: UiText,
-    val platformName: StringResource,
-    val lastActiveFormatted: UiText,
-    val appVersion: String,
-    val isCurrentDevice: Boolean,
-)

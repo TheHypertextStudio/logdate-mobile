@@ -392,7 +392,7 @@ class AppViewModelTest {
         }
 
     @Test
-    fun `a superseded journal challenge cannot complete the current unlock request`() =
+    fun `an overlapping journal challenge preserves the current unlock request`() =
         runTest {
             val gatekeeper = FakeBiometricGatekeeper()
             val viewModel = lockedViewModel(gatekeeper)
@@ -401,9 +401,7 @@ class AppViewModelTest {
             viewModel.showNativeUnlockPrompt()
             gatekeeper.completeRequest(0, AppAuthState.AUTHENTICATED)
             advanceUntilIdle()
-            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
-            gatekeeper.completeRequest(1, AppAuthState.AUTHENTICATED)
-            advanceUntilIdle()
+            assertEquals(1, gatekeeper.callbacks.size)
             assertEquals(false, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
         }
 
@@ -559,6 +557,302 @@ class AppViewModelTest {
             assertEquals(false, resolved)
         }
 
+    @Test
+    fun `failed sensitive challenge preserves the lock after the app backgrounds`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            viewModel.onAppBackgrounded()
+            var requestResult: AppAuthState? = null
+            gatekeeper.complete(AppAuthState.UNKNOWN) { requestResult = it }
+            advanceUntilIdle()
+
+            val state = assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value)
+            assertEquals(AppAuthState.UNKNOWN, state.authState)
+            assertEquals(true, state.requiresUnlock)
+            assertEquals(AppAuthState.UNKNOWN, requestResult)
+        }
+
+    @Test
+    fun `failed sensitive challenge preserves an already unlocked session`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            var requestResult: AppAuthState? = null
+            gatekeeper.complete(AppAuthState.UNKNOWN) { requestResult = it }
+            advanceUntilIdle()
+
+            val state = assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value)
+            assertEquals(AppAuthState.NO_PROMPT_NEEDED, state.authState)
+            assertEquals(false, state.requiresUnlock)
+            assertEquals(AppAuthState.UNKNOWN, requestResult)
+        }
+
+    @Test
+    fun `background locks despite the retained successful provider result`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            assertEquals(false, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+
+            viewModel.onAppBackgrounded()
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `each fresh unlock callback works even when provider success has not changed`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            repeat(3) {
+                viewModel.onAppForegrounded()
+                viewModel.showNativeUnlockPrompt()
+                gatekeeper.complete(AppAuthState.AUTHENTICATED)
+                advanceUntilIdle()
+                assertEquals(false, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+                viewModel.onAppBackgrounded()
+                advanceUntilIdle()
+                assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+            }
+        }
+
+    @Test
+    fun `provider capability outcomes cannot bypass the app lock`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            for (outcome in AppAuthState.entries.filter { it != AppAuthState.AUTHENTICATED }) {
+                viewModel.showNativeUnlockPrompt()
+                gatekeeper.publish(outcome)
+                gatekeeper.complete(outcome)
+                advanceUntilIdle()
+                assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock, outcome.name)
+            }
+        }
+
+    @Test
+    fun `a successful sensitive action cannot unlock the application`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `duplicate unlock taps use a single request and completed callbacks cannot unlock again`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            viewModel.showNativeUnlockPrompt()
+            assertEquals(1, gatekeeper.callbacks.size)
+            val oldCallback = gatekeeper.callbacks.single()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            viewModel.onAppBackgrounded()
+            oldCallback(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `successful device credential waits for foreground return`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            viewModel.onAppPaused()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+            assertEquals(false, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `another background invalidates a deferred successful unlock`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            viewModel.onAppPaused()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            viewModel.onAppBackgrounded()
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `an active challenge is retired by authoritative backgrounding`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            viewModel.onAppBackgrounded()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `a second pause retires an unfinished native handoff`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            viewModel.onAppPaused()
+            viewModel.onAppForegrounded()
+            viewModel.onAppPaused()
+            gatekeeper.complete(AppAuthState.AUTHENTICATED)
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `backgrounded app cannot start an unlock prompt`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.onAppBackgrounded()
+            viewModel.showNativeUnlockPrompt()
+
+            assertEquals(0, gatekeeper.callbacks.size)
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `duplicate terminal results cannot revoke a deferred native success`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showNativeUnlockPrompt()
+            val callback = gatekeeper.callbacks.single()
+            viewModel.onAppPaused()
+            callback(AppAuthState.AUTHENTICATED)
+            advanceUntilIdle()
+            callback(AppAuthState.UNKNOWN)
+            advanceUntilIdle()
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+
+            assertEquals(false, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `enabling protection while backgrounded requires authentication on return`() =
+        runTest {
+            val userRepo = FakeUserStateRepository(UserData(isOnboarded = true))
+            val viewModel =
+                AppViewModel(
+                    userRepo,
+                    FakeBiometricGatekeeper(),
+                    FakeNetworkAvailabilityMonitor(true),
+                    FakeSessionStorage(),
+                    TryRestoreSignInUseCase(FakePasskeyAccountRepository()),
+                )
+            advanceUntilIdle()
+            viewModel.onAppBackgrounded()
+            userRepo.setBiometricEnabled(true)
+            advanceUntilIdle()
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+
+            assertEquals(true, assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value).requiresUnlock)
+        }
+
+    @Test
+    fun `automatic unlock attempts once per foreground while manual retry stays available`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.showAutomaticUnlockPrompt()
+            gatekeeper.complete(AppAuthState.REQUIRE_PROMPT)
+            advanceUntilIdle()
+            viewModel.showAutomaticUnlockPrompt()
+            assertEquals(1, gatekeeper.callbacks.size)
+
+            viewModel.showNativeUnlockPrompt()
+            assertEquals(2, gatekeeper.callbacks.size)
+        }
+
+    @Test
+    fun `immediate background after unlock starts a new automatic challenge on return`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            repeat(3) {
+                viewModel.showAutomaticUnlockPrompt()
+                gatekeeper.complete(AppAuthState.AUTHENTICATED)
+                advanceUntilIdle()
+                viewModel.onAppBackgrounded()
+                viewModel.onAppForegrounded()
+            }
+            assertEquals(3, gatekeeper.callbacks.size)
+        }
+
+    @Test
+    fun `inactive automatic request does not consume the next foreground attempt`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper()
+            val viewModel = biometricApp(gatekeeper)
+            advanceUntilIdle()
+            viewModel.onAppBackgrounded()
+            viewModel.showAutomaticUnlockPrompt()
+            assertEquals(0, gatekeeper.callbacks.size)
+            viewModel.onAppForegrounded()
+            viewModel.showAutomaticUnlockPrompt()
+            assertEquals(1, gatekeeper.callbacks.size)
+        }
+
+    private fun biometricApp(gatekeeper: FakeBiometricGatekeeper) =
+        AppViewModel(
+            userStateRepository = FakeUserStateRepository(UserData(isOnboarded = true, securityLevel = AppSecurityLevel.BIOMETRIC)),
+            biometricGatekeeper = gatekeeper,
+            networkMonitor = FakeNetworkAvailabilityMonitor(isAvailable = true),
+            sessionStorage = FakeSessionStorage(),
+            tryRestoreSignInUseCase = TryRestoreSignInUseCase(FakePasskeyAccountRepository()),
+        )
+
     private class FakeUserStateRepository(
         initialValue: UserData,
     ) : UserStateRepository {
@@ -586,21 +880,31 @@ class AppViewModelTest {
     ) : BiometricGatekeeper {
         private val state = MutableStateFlow(initialState)
         override val authState: StateFlow<AppAuthState> = state
+
         val enrollmentRequests = mutableListOf<Boolean>()
-        private val resultCallbacks = mutableListOf<(AppAuthState) -> Unit>()
+        val callbacks = mutableListOf<(AppAuthState) -> Unit>()
+        private var pending: ((AppAuthState) -> Unit)? = null
 
-        fun complete(value: AppAuthState) = completeRequest(resultCallbacks.lastIndex, value)
+        fun setState(value: AppAuthState) = publish(value)
 
-        fun completeRequest(
-            index: Int,
-            value: AppAuthState,
-        ) {
-            state.value = value
-            resultCallbacks[index](value)
+        fun completeRequest(index: Int, value: AppAuthState) {
+            completeAuthenticationChallenge(state, value, callbacks[index])
         }
 
-        fun setState(value: AppAuthState) {
-            state.value = value
+        fun publish(result: AppAuthState) {
+            state.value = result
+        }
+
+        fun complete(
+            result: AppAuthState,
+            onResult: (AppAuthState) -> Unit = {},
+        ) {
+            val callback = pending
+            pending = null
+            completeAuthenticationChallenge(state, result) {
+                callback?.invoke(it)
+                onResult(it)
+            }
         }
 
         override fun authenticate(
@@ -613,7 +917,8 @@ class AppViewModelTest {
             onResult: (AppAuthState) -> Unit,
         ) {
             enrollmentRequests += requestEnrollmentIfNecessary
-            resultCallbacks += onResult
+            callbacks += onResult
+            pending = onResult
         }
 
         override fun requestEnrollment() {

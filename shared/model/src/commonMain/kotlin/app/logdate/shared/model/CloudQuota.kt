@@ -1,6 +1,7 @@
 package app.logdate.shared.model
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.Serializable
 
 /**
@@ -61,7 +62,13 @@ interface CloudQuotaManager {
     /**
      * Observes quota changes in real-time.
      */
-    fun observeQuota(): kotlinx.coroutines.flow.Flow<CloudStorageQuota>
+    fun observeQuota(): Flow<CloudStorageQuota>
+
+    /**
+     * Observes authoritative usage together with the account that produced it.
+     * Legacy implementations cannot establish that scope and report it as unavailable.
+     */
+    fun observeQuotaSnapshots(): Flow<CloudQuotaSnapshot> = flowOf(CloudQuotaSnapshot.Unavailable(null))
 
     /**
      * Records that a new cloud object was created.

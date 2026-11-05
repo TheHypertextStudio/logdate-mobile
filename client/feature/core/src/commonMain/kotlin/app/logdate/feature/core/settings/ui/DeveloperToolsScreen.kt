@@ -6,11 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
-import app.logdate.client.sync.diagnostics.DiagnosticReportingController
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
@@ -23,12 +22,12 @@ import org.koin.compose.viewmodel.koinViewModel
 fun DeveloperToolsScreen(
     onBack: () -> Unit,
     diagnostics: LocalDiagnosticsViewModel = koinViewModel(),
-    reporting: DiagnosticReportingController = koinInject(),
+    reporting: AutomaticDiagnosticReportingViewModel = koinViewModel(),
     location: LocationSettingsViewModel = koinViewModel(),
     featureFlags: FeatureFlagStore = koinInject(),
 ) {
-    val diagnosticsState by diagnostics.state.collectAsState()
-    val locationState by location.uiState.collectAsState()
+    val diagnosticsState by diagnostics.state.collectAsStateWithLifecycle()
+    val locationState by location.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(diagnostics) { diagnostics.refresh() }
     DeveloperToolsContent(
         onBack = onBack,
@@ -40,9 +39,11 @@ fun DeveloperToolsScreen(
         reportingContent = { AutomaticDiagnosticReportingSection(reporting) },
         locationContent = {
             DeveloperLocationSection(
-                settings = locationState.settings,
+                state = locationState,
                 onToggleServerAssist = location::toggleServerAssist,
                 onSetDefaultLocation = location::setDefaultLocation,
+                onRetry = location::retry,
+                onReload = location::reload,
             )
         },
         featurePreviewsContent = { FeaturePreviewsSection(store = featureFlags) },

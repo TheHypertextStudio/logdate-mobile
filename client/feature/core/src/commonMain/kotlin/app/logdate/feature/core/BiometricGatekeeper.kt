@@ -12,8 +12,8 @@ import logdate.client.ui.generated.resources.Res as UiRes
 /**
  * An interface for managing biometric authentication.
  *
- * This may be used to authenticate the user using biometrics, and provides a state flow that can be
- * observed to determine the current state of the app's biometric authentication.
+ * Each request receives its own terminal result. The last provider result is diagnostic state;
+ * application lifecycle authorization belongs to AppViewModel.
  *
  * Implementations of this interface should handle the platform-specific APIs for biometric
  * authentication.
@@ -23,6 +23,8 @@ interface BiometricGatekeeper {
 
     /**
      * Performs biometric authentication.
+     *
+     * An overlapping native request is dismissed without replacing the active challenge owner.
      *
      * A successful challenge emits [AppAuthState.AUTHENTICATED]. Missing enrollment or an
      * unavailable authenticator must keep the app locked; they never disable its security setting.

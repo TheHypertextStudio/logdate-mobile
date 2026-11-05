@@ -1,0 +1,8 @@
+<resources>
+    <string name="device_state_load_failed">Couldn’t load your devices. Try again.</string>
+    <string name="device_state_retry">Try again</string>
+    <string name="device_state_refreshing">Refreshing devices…</string>
+    <string name="device_state_rename_failed">Couldn’t rename this device. Try again.</string>
+    <string name="device_state_remove_failed">Couldn’t remove this device. Try again.</string>
+    <string name="device_state_reset_failed">Couldn’t finish resetting this device’s ID. Try again.</string>
+</resources>

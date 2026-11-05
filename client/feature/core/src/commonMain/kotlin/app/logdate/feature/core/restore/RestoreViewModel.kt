@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.Uuid
 
 sealed class RestoreState {
     data object Idle : RestoreState()
@@ -32,6 +33,7 @@ sealed class RestoreState {
 
     data class Completed(
         val summary: RestoreSummary,
+        val operationId: Uuid = Uuid.random(),
     ) : RestoreState()
 
     data class Failed(
@@ -45,6 +47,7 @@ class UserDataRestoreViewModel(
     private val restoreLauncher: RestoreLauncher,
     private val previewArchiveUseCase: PreviewArchiveUseCase,
 ) : ViewModel() {
+    private var restoreOperationId = Uuid.random()
     private val _restoreState = MutableStateFlow<RestoreState>(RestoreState.Idle)
     val restoreState: StateFlow<RestoreState> = _restoreState.asStateFlow()
 
@@ -58,13 +61,13 @@ class UserDataRestoreViewModel(
                 if (current is RestoreState.Completed &&
                     current.summary.recoveryId == summary.recoveryId
                 ) {
-                    RestoreState.Completed(summary)
+                    current.copy(summary = summary)
                 } else {
                     current
                 }
             }
             val previous = selectionRecoveryState as? RestoreState.Completed
-            if (previous?.summary?.recoveryId == summary.recoveryId) selectionRecoveryState = RestoreState.Completed(summary)
+            if (previous?.summary?.recoveryId == summary.recoveryId) selectionRecoveryState = previous.copy(summary = summary)
         }
         restoreLauncher.setRestoreCompletionCallback { outcome ->
             when (outcome) {
@@ -75,7 +78,7 @@ class UserDataRestoreViewModel(
                 }
                 is RestoreOutcome.Success -> {
                     selectionRecoveryState = null
-                    _restoreState.update { RestoreState.Completed(outcome.summary) }
+                    _restoreState.update { RestoreState.Completed(outcome.summary, restoreOperationId) }
                     _isSheetVisible.value = true
                 }
                 is RestoreOutcome.Failure -> {
@@ -171,6 +174,7 @@ class UserDataRestoreViewModel(
     fun confirmImport() {
         val current = _restoreState.value
         if (current !is RestoreState.Previewing) return
+        restoreOperationId = Uuid.random()
         _restoreState.update { RestoreState.Restoring() }
         restoreLauncher.startRestore(current.options)
     }

@@ -2,6 +2,7 @@ package app.logdate.client.device.identity
 
 import app.logdate.client.device.models.DeviceInfo
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlin.uuid.Uuid
 
 /**
@@ -26,6 +27,10 @@ interface DeviceRepository {
      * @return Flow of device information objects
      */
     fun getAssociatedDevices(): Flow<List<DeviceInfo>>
+
+    /** Settings observes refresh outcomes separately from cached rows. */
+    fun observeAssociatedDevices(): Flow<DeviceListObservation> =
+        getAssociatedDevices().map { DeviceListObservation.Available(scope = null, devices = it) }
 
     /**
      * Updates information about a device.

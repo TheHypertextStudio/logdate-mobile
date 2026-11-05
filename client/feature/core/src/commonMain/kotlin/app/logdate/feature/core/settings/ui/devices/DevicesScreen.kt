@@ -20,21 +20,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,36 +46,27 @@ import app.logdate.client.text.toUiText
 import app.logdate.feature.core.settings.ui.watch.WatchDeviceCard
 import app.logdate.feature.core.settings.ui.watch.WatchSettingsViewModel
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
-import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.DropdownMenu
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.device_name
+import logdate.client.feature.core.generated.resources.device_state_load_failed
+import logdate.client.feature.core.generated.resources.device_state_refreshing
+import logdate.client.feature.core.generated.resources.device_state_retry
 import logdate.client.feature.core.generated.resources.devices
 import logdate.client.feature.core.generated.resources.devices_connected
 import logdate.client.feature.core.generated.resources.devices_platform_wear_os
 import logdate.client.feature.core.generated.resources.devices_wear_os
-import logdate.client.feature.core.generated.resources.enter_a_new_name_for_this_device
 import logdate.client.feature.core.generated.resources.last_active_label
 import logdate.client.feature.core.generated.resources.loading_devices
-import logdate.client.feature.core.generated.resources.remove_device_confirmation
-import logdate.client.feature.core.generated.resources.remove_linked_watch_confirmation
-import logdate.client.feature.core.generated.resources.rename
-import logdate.client.feature.core.generated.resources.reset
-import logdate.client.feature.core.generated.resources.reset_device_id
-import logdate.client.feature.core.generated.resources.reset_device_id_confirmation
 import logdate.client.feature.core.generated.resources.sync_device_options_label
-import logdate.client.feature.core.generated.resources.sync_device_remove_title
 import logdate.client.feature.core.generated.resources.sync_device_rename_label
-import logdate.client.feature.core.generated.resources.sync_device_rename_title
 import logdate.client.feature.core.generated.resources.this_device
-import logdate.client.ui.generated.resources.common_cancel
-import logdate.client.ui.generated.resources.common_remove
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import logdate.client.ui.generated.resources.Res as UiRes
 
 /**
  * Screen that displays device information and allows management of devices.
@@ -90,13 +77,13 @@ fun DevicesScreen(
     viewModel: DevicesViewModel = koinInject(),
     onNavigateToWatch: (() -> Unit)? = null,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val flags = koinInject<FeatureFlagStore>()
-    val watchEnabled by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsState(false)
+    val watchEnabled by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
 
-    DisposableEffect(viewModel) {
+    LifecycleStartEffect(viewModel) {
         viewModel.loadDevices()
-        onDispose { viewModel.stopObserving() }
+        onStopOrDispose { viewModel.stopObserving() }
     }
 
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -122,30 +109,42 @@ fun DevicesScreen(
         newDeviceName = newDeviceName,
         onNewDeviceNameChange = { newDeviceName = it },
         onRenameClick = { device ->
+            viewModel.clearOperation(device.id)
             selectedDevice = device
             newDeviceName = deviceNames[device.id].orEmpty()
             showRenameDialog = true
         },
         onRemoveClick = { device ->
+            viewModel.clearOperation(device.id)
             selectedDevice = device
             showDeleteDialog = true
         },
         onRenameConfirm = {
             viewModel.renameDevice(newDeviceName)
-            showRenameDialog = false
         },
         onRemoveConfirm = {
             selectedDevice?.let { viewModel.removeDevice(it.id) }
-            showDeleteDialog = false
         },
         onResetDeviceId = {
             viewModel.resetDeviceId()
-            showResetDialog = false
         },
-        onShowResetDialog = { showResetDialog = true },
-        onDismissRenameDialog = { showRenameDialog = false },
-        onDismissDeleteDialog = { showDeleteDialog = false },
-        onDismissResetDialog = { showResetDialog = false },
+        onShowResetDialog = {
+            uiState.devices.firstOrNull { it.isCurrentDevice }?.let { viewModel.clearOperation(it.id) }
+            showResetDialog = true
+        },
+        onDismissRenameDialog = {
+            showRenameDialog = false
+            selectedDevice?.let { viewModel.clearOperation(it.id) }
+        },
+        onDismissDeleteDialog = {
+            showDeleteDialog = false
+            selectedDevice?.let { viewModel.clearOperation(it.id) }
+        },
+        onDismissResetDialog = {
+            showResetDialog = false
+            uiState.devices.firstOrNull { it.isCurrentDevice }?.let { viewModel.clearOperation(it.id) }
+        },
+        onRefresh = viewModel::loadDevices,
         onRemoveLinkedDevice = viewModel::removeLinkedDevice,
         onRetryLinkedDevices = viewModel::loadLinkedDevices,
         onDismissLinkedDeviceNotice = viewModel::dismissLinkedDeviceNotice,
@@ -171,6 +170,7 @@ fun DevicesScreenContent(
     onDismissRenameDialog: () -> Unit = {},
     onDismissDeleteDialog: () -> Unit = {},
     onDismissResetDialog: () -> Unit = {},
+    onRefresh: () -> Unit = {},
     connectionAction: @Composable () -> Unit = { DeviceApprovalAction() },
     modifier: Modifier = Modifier,
     watchDevice: (@Composable () -> Unit)? = null,
@@ -178,9 +178,24 @@ fun DevicesScreenContent(
     onRetryLinkedDevices: () -> Unit = {},
     onDismissLinkedDeviceNotice: () -> Unit = {},
 ) {
+    val selectedOperation = selectedDevice?.let { uiState.operations[it.id] }
+    val resetOperation = uiState.devices.firstOrNull { it.isCurrentDevice }?.let { uiState.operations[it.id] }
+    LaunchedEffect(selectedOperation, resetOperation) {
+        if (selectedOperation is DeviceOperationState.Succeeded) {
+            when (selectedOperation.action) {
+                DeviceAction.Rename -> if (showRenameDialog) onDismissRenameDialog()
+                DeviceAction.Remove -> if (showDeleteDialog) onDismissDeleteDialog()
+                DeviceAction.ResetIdentity -> Unit
+            }
+        }
+        if (resetOperation is DeviceOperationState.Succeeded && resetOperation.action == DeviceAction.ResetIdentity && showResetDialog) {
+            onDismissResetDialog()
+        }
+    }
     if (showRenameDialog && selectedDevice != null) {
         RenameDeviceDialog(
-            currentName = newDeviceName.ifBlank { selectedDevice.name.asString() },
+            currentName = newDeviceName,
+            operation = selectedOperation?.takeIf { it.action == DeviceAction.Rename },
             onNameChange = onNewDeviceNameChange,
             onConfirm = onRenameConfirm,
             onDismiss = onDismissRenameDialog,
@@ -190,6 +205,7 @@ fun DevicesScreenContent(
     if (showDeleteDialog && selectedDevice != null) {
         RemoveDeviceDialog(
             deviceName = selectedDevice.name.asString(),
+            operation = selectedOperation?.takeIf { it.action == DeviceAction.Remove },
             onConfirm = onRemoveConfirm,
             onDismiss = onDismissDeleteDialog,
         )
@@ -197,6 +213,7 @@ fun DevicesScreenContent(
 
     if (showResetDialog) {
         ResetDeviceIdDialog(
+            operation = resetOperation?.takeIf { it.action == DeviceAction.ResetIdentity },
             onConfirm = onResetDeviceId,
             onDismiss = onDismissResetDialog,
         )
@@ -211,11 +228,25 @@ fun DevicesScreenContent(
             onBack = onBackClick,
             modifier = Modifier.widthIn(max = 680.dp).fillMaxSize(),
         ) {
-            if (uiState.isLoading) {
-                item {
-                    LoadingState()
-                }
+            if (uiState.availability == DeviceListAvailability.Loading) {
+                item { LoadingState() }
+            } else if (uiState.availability == DeviceListAvailability.Unavailable) {
+                item { DeviceLoadFailure(onRefresh) }
             } else {
+                if (uiState.refresh == DeviceRefreshState.Running) {
+                    item {
+                        Row(
+                            modifier = Modifier.padding(horizontal = Spacing.lg),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Text(stringResource(Res.string.device_state_refreshing))
+                        }
+                    }
+                } else if (uiState.refresh == DeviceRefreshState.Failed) {
+                    item { DeviceLoadFailure(onRefresh) }
+                }
                 item {
                     Text(
                         stringResource(Res.string.devices_connected),
@@ -224,8 +255,20 @@ fun DevicesScreenContent(
                     )
                 }
                 items(uiState.devices, key = { it.id }) { device ->
+                    val operation = uiState.operations[device.id]
+                    val dialogOwnsFeedback =
+                        (
+                            device.id == selectedDevice?.id &&
+                                (
+                                    (showRenameDialog && operation?.action == DeviceAction.Rename) ||
+                                        (showDeleteDialog && operation?.action == DeviceAction.Remove)
+                                )
+                        ) ||
+                            (device.isCurrentDevice && showResetDialog && operation?.action == DeviceAction.ResetIdentity)
                     DeviceItem(
                         device = device,
+                        operation = operation,
+                        showOperationFeedback = !dialogOwnsFeedback,
                         onRenameClick = { onRenameClick(device) },
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     )
@@ -260,7 +303,7 @@ private fun CompanionDeviceInDevices(
     onClick: () -> Unit,
     model: WatchSettingsViewModel = koinViewModel(),
 ) {
-    val status by model.status.collectAsState()
+    val status by model.status.collectAsStateWithLifecycle()
     val name =
         when (val current = status) {
             is WatchStatus.Ready -> current.watchName
@@ -272,6 +315,14 @@ private fun CompanionDeviceInDevices(
     Column(Modifier.padding(horizontal = Spacing.lg)) {
         Text(stringResource(Res.string.devices_wear_os), style = MaterialTheme.typography.labelMedium)
         WatchDeviceCard(status, onClick)
+    }
+}
+
+@Composable
+private fun DeviceLoadFailure(onRetry: () -> Unit) {
+    Column(modifier = Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        Text(stringResource(Res.string.device_state_load_failed), color = MaterialTheme.colorScheme.error)
+        TextButton(onClick = onRetry) { Text(stringResource(Res.string.device_state_retry)) }
     }
 }
 
@@ -291,6 +342,8 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 private fun DeviceItem(
     device: DeviceInfoUiState,
     onRenameClick: () -> Unit,
+    operation: DeviceOperationState? = null,
+    showOperationFeedback: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     var showOptions by remember { mutableStateOf(false) }
@@ -336,7 +389,7 @@ private fun DeviceItem(
                 }
                 if (device.isCurrentDevice) {
                     Box {
-                        IconButton(onClick = { showOptions = true }) {
+                        IconButton(onClick = { showOptions = true }, enabled = operation !is DeviceOperationState.Running) {
                             Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.sync_device_options_label))
                         }
                         DropdownMenu(expanded = showOptions, onDismissRequest = { showOptions = false }) {
@@ -351,6 +404,11 @@ private fun DeviceItem(
                     }
                 }
             }
+            if (showOperationFeedback && operation is DeviceOperationState.Running) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+            } else if (showOperationFeedback && operation is DeviceOperationState.Failed) {
+                DeviceOperationFeedback(operation)
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(Res.string.last_active_label, device.lastActiveFormatted.asString()),
@@ -360,105 +418,4 @@ private fun DeviceItem(
             )
         }
     }
-}
-
-@Composable
-fun RenameDeviceDialog(
-    currentName: String,
-    onNameChange: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var name by remember { mutableStateOf(currentName) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.sync_device_rename_title)) },
-        text = {
-            Column {
-                Text(stringResource(Res.string.enter_a_new_name_for_this_device))
-                Spacer(modifier = Modifier.height(Spacing.sm))
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = {
-                        name = it
-                        onNameChange(it)
-                    },
-                    label = { Text(stringResource(Res.string.device_name)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                enabled = name.isNotBlank(),
-            ) {
-                Text(stringResource(Res.string.rename))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(UiRes.string.common_cancel))
-            }
-        },
-    )
-}
-
-@Composable
-fun RemoveDeviceDialog(
-    deviceName: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    erasesData: Boolean = false,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.sync_device_remove_title)) },
-        text = {
-            Text(
-                stringResource(
-                    if (erasesData) Res.string.remove_linked_watch_confirmation else Res.string.remove_device_confirmation,
-                    deviceName,
-                ),
-            )
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(stringResource(UiRes.string.common_remove))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(UiRes.string.common_cancel))
-            }
-        },
-    )
-}
-
-@Composable
-fun ResetDeviceIdDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.reset_device_id)) },
-        text = {
-            Text(
-                stringResource(Res.string.reset_device_id_confirmation),
-            )
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(stringResource(Res.string.reset))
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(UiRes.string.common_cancel))
-            }
-        },
-    )
 }

@@ -1,0 +1,4 @@
+<resources>
+    <string name="sign_in_methods_refreshing">Refreshing sign-in methods…</string>
+    <string name="sign_in_methods_load_again">Load sign-in methods</string>
+</resources>

@@ -3,15 +3,18 @@
 package app.logdate.feature.core.settings.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,6 +47,7 @@ fun DataSettingsContent(
     onCancelExport: () -> Unit,
     onRetryExport: () -> Unit,
     onDismissExport: () -> Unit,
+    onBrowseExport: (String) -> Unit = {},
     restoreState: RestoreState,
     isRestoreSheetVisible: Boolean = restoreState !is RestoreState.Idle,
     onShowRestoreSheet: () -> Unit,
@@ -61,7 +65,13 @@ fun DataSettingsContent(
     cloudArchiveStatus: CloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.CHECKING),
     nativeBackupStatus: NativeBackupStatus = NativeBackupStatus.Unsupported,
     onRetryNativeRecovery: () -> Unit = {},
-    isAuthenticated: Boolean = false,
+    isAuthenticated: Boolean? = null,
+    accountLoadFailed: Boolean = false,
+    onRetryAccount: () -> Unit = {},
+    syncRequest: SyncRequestState = SyncRequestState.Idle,
+    archiveRequest: ArchiveRequestState = ArchiveRequestState.Idle,
+    quotaAvailability: QuotaAvailability? = null,
+    onRetryQuota: () -> Unit = {},
     onSyncNow: () -> Unit = {},
     onSyncUsingMobileData: () -> Unit = {},
     onArchiveBackupNow: () -> Unit = {},
@@ -104,9 +114,11 @@ fun DataSettingsContent(
                         .padding(vertical = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             ) {
-                if (isAuthenticated && isQuotaAvailable) {
-                    QuotaUsageBlock(
+                if (isAuthenticated == true && isQuotaAvailable) {
+                    QuotaSettingsRegion(
                         quotaUsage = quotaUsage,
+                        availability = quotaAvailability,
+                        onRetry = onRetryQuota,
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     )
                 }
@@ -115,36 +127,48 @@ fun DataSettingsContent(
                     title = stringResource(Res.string.data_management),
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 ) {
-                    ExportDataItem(onShowExportOptions = onShowExportOptions)
-                    ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
+                    Column {
+                        ExportDataItem(onShowExportOptions = onShowExportOptions)
+                        ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
+                    }
                 }
             }
         },
         endPane = {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-            ) {
-                NativeBackupSettingsSection(
-                    nativeBackupStatus,
-                    Modifier.padding(horizontal = Spacing.lg),
-                    onRetryRecovery = onRetryNativeRecovery,
-                    onOpenArchive = onShowRestoreSheet,
-                )
-                SyncSettingsSection(
-                    syncStatus = syncStatus,
-                    cloudArchiveStatus = cloudArchiveStatus,
-                    onSyncUsingMobileData = onSyncUsingMobileData,
-                    onArchiveBackupNow = onArchiveBackupNow,
-                    isAuthenticated = isAuthenticated,
-                    onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
-                    onNavigateToSignIn = onNavigateToSignIn,
-                    onEnterRecoveryPhrase = onNavigateToRecoveryPhrase,
-                    modifier = Modifier.padding(horizontal = Spacing.lg),
+            Box(Modifier.fillMaxSize()) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = Spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+                ) {
+                    NativeBackupSettingsSection(
+                        nativeBackupStatus,
+                        Modifier.padding(horizontal = Spacing.lg),
+                        onRetryRecovery = onRetryNativeRecovery,
+                        onOpenArchive = onShowRestoreSheet,
+                    )
+                    SyncSettingsSection(
+                        syncStatus = syncStatus,
+                        cloudArchiveStatus = cloudArchiveStatus,
+                        onSyncUsingMobileData = onSyncUsingMobileData,
+                        onArchiveBackupNow = onArchiveBackupNow,
+                        isAuthenticated = isAuthenticated,
+                        accountLoadFailed = accountLoadFailed,
+                        onRetryAccount = onRetryAccount,
+                        syncRequest = syncRequest,
+                        archiveRequest = archiveRequest,
+                        onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
+                        onNavigateToSignIn = onNavigateToSignIn,
+                        onEnterRecoveryPhrase = onNavigateToRecoveryPhrase,
+                        modifier = Modifier.padding(horizontal = Spacing.lg),
+                    )
+                }
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding(),
                 )
             }
         },
@@ -154,10 +178,12 @@ fun DataSettingsContent(
                 onBack = onBack,
                 snackbarHostState = snackbarHostState,
             ) {
-                if (isAuthenticated && isQuotaAvailable) {
+                if (isAuthenticated == true && isQuotaAvailable) {
                     item {
-                        QuotaUsageBlock(
+                        QuotaSettingsRegion(
                             quotaUsage = quotaUsage,
+                            availability = quotaAvailability,
+                            onRetry = onRetryQuota,
                             modifier = Modifier.padding(horizontal = Spacing.lg),
                         )
                     }
@@ -168,8 +194,10 @@ fun DataSettingsContent(
                         title = stringResource(Res.string.data_management),
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     ) {
-                        ExportDataItem(onShowExportOptions = onShowExportOptions)
-                        ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
+                        Column {
+                            ExportDataItem(onShowExportOptions = onShowExportOptions)
+                            ImportBackupItem(onShowRestoreSheet = onShowRestoreSheet)
+                        }
                     }
                 }
 
@@ -190,6 +218,10 @@ fun DataSettingsContent(
                         onSyncUsingMobileData = onSyncUsingMobileData,
                         onArchiveBackupNow = onArchiveBackupNow,
                         isAuthenticated = isAuthenticated,
+                        accountLoadFailed = accountLoadFailed,
+                        onRetryAccount = onRetryAccount,
+                        syncRequest = syncRequest,
+                        archiveRequest = archiveRequest,
                         onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
                         onNavigateToSignIn = onNavigateToSignIn,
                         onEnterRecoveryPhrase = onNavigateToRecoveryPhrase,
@@ -223,6 +255,7 @@ private fun DataSettingsScreenPreview() {
         onCancelExport = {},
         onRetryExport = {},
         onDismissExport = {},
+        onBrowseExport = {},
         restoreState = RestoreState.Idle,
         onShowRestoreSheet = {},
         onSelectRestoreFile = {},

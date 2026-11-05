@@ -13,12 +13,12 @@ actual fun rememberNotificationPermissionState(): NotificationPermissionState =
     )
 
 @Composable
-actual fun rememberHealthConnectPermissionState(): HealthConnectPermissionState =
+actual fun rememberHealthConnectPermissionState(onRequestResult: (Boolean) -> Unit): HealthConnectPermissionState =
     HealthConnectPermissionState(
         hasPermission = false,
         permissionRequested = false,
         isRequestInFlight = false,
-        requestPermission = {},
+        requestPermission = { onRequestResult(false) },
         refreshPermissionState = {},
     )
 

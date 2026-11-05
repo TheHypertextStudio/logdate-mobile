@@ -10,12 +10,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -136,6 +135,7 @@ fun LogDateNavDisplay(
     onCloudSignIn: () -> Unit = {},
     sceneStrategy: SceneStrategy<NavKey> = rememberRelatedContentSceneStrategy(),
     shortcutRequests: AppShortcutRequests? = null,
+    onAutomaticUnlockPrompt: () -> Unit = onShowUnlockPrompt,
 ) {
     val creationLauncher = remember { EntryCreationLauncher() }
     val workspaceFlags: FeatureFlagStore = koinInject()
@@ -147,7 +147,6 @@ fun LogDateNavDisplay(
         .collectAsState(initial = FeatureFlag.ACTIVITY_AWARENESS.defaultEnabled)
     val backStack = rememberNavBackStack(appNavSavedStateConfiguration, BaseRoute)
     val placesEnabled by rememberPlacesBetaNavigation(workspaceFlags, backStack, appUiState.isOnboarded, appUiState.requiresUnlock)
-    var hasRequestedUnlock by remember { mutableStateOf(false) }
 
     LaunchedEffect(appUiState.isOnboarded, appUiState.requiresUnlock) {
         val action =
@@ -164,15 +163,13 @@ fun LogDateNavDisplay(
             backStack.clear()
             backStack.add(action.key)
         }
-        if (!appUiState.isOnboarded) return@LaunchedEffect
-        if (appUiState.requiresUnlock) {
-            if (!hasRequestedUnlock) {
-                hasRequestedUnlock = true
-                onShowUnlockPrompt()
-            }
-            return@LaunchedEffect
+    }
+
+    LifecycleResumeEffect(appUiState.isOnboarded, appUiState.requiresUnlock) {
+        if (appUiState.isOnboarded && appUiState.requiresUnlock) {
+            onAutomaticUnlockPrompt()
         }
-        hasRequestedUnlock = false
+        onPauseOrDispose {}
     }
 
     LaunchedEffect(pendingNavKey, placesEnabled, appUiState.isOnboarded, appUiState.requiresUnlock) {
@@ -235,9 +232,17 @@ fun LogDateNavDisplay(
                 LocalPlatformHaptics provides haptics,
                 LocalLogDateHaptics provides logDateHaptics,
             ) {
+                val entryDecorators =
+                    listOf<NavEntryDecorator<NavKey>>(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberPerVisitViewModelsDecorator(),
+                        rememberNavAnimatedVisibilityScopeEntryDecorator(),
+                        rememberWorkspaceRouteDecorator(),
+                    )
                 LockableContent(
                     isLocked = appUiState.requiresUnlock,
                     authState = appUiState.authState,
+                    unlockState = appUiState.unlockState,
                     displayName = appUiState.displayName,
                     onUsePasscode = onShowUnlockPrompt,
                 ) {
@@ -254,13 +259,7 @@ fun LogDateNavDisplay(
                                     ).onPreviewKeyEvent { event ->
                                         AppKeyboardShortcut.match(event, AppShortcutScope.App)?.let(openShortcut) ?: false
                                     },
-                            entryDecorators =
-                                listOf(
-                                    rememberSaveableStateHolderNavEntryDecorator(),
-                                    rememberPerVisitViewModelsDecorator(),
-                                    rememberNavAnimatedVisibilityScopeEntryDecorator(),
-                                    rememberWorkspaceRouteDecorator(),
-                                ),
+                            entryDecorators = entryDecorators,
                             entryProvider =
                                 entryProvider {
                                     taggedEntry<BaseRoute> { /* loading placeholder */ }

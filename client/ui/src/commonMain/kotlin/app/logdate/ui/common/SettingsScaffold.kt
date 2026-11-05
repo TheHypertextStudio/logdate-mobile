@@ -5,6 +5,7 @@ package app.logdate.ui.common
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -24,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -31,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.theme.Spacing
@@ -61,10 +64,21 @@ fun SettingsScaffold(
     snackbarHostState: SnackbarHostState? = null,
     topBarColors: TopAppBarColors? = null,
     maxContentWidth: Dp = 600.dp,
+    actions: @Composable RowScope.() -> Unit = {},
+    compactHeader: Boolean = false,
     content: LazyListScope.() -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior = if (compactHeader) {
+        TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    } else {
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    }
+    val navigationIcon: @Composable () -> Unit = {
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.common_back))
+        }
+    }
 
     Scaffold(
         modifier =
@@ -75,20 +89,25 @@ fun SettingsScaffold(
         topBar = {
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val sideInset = if (maxWidth > maxContentWidth) (maxWidth - maxContentWidth) / 2 else 0.dp
-                LargeTopAppBar(
-                    title = { Text(title) },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(Res.string.common_back),
-                            )
-                        }
-                    },
-                    modifier = Modifier.padding(horizontal = sideInset),
-                    scrollBehavior = scrollBehavior,
-                    colors = topBarColors ?: TopAppBarDefaults.topAppBarColors(),
-                )
+                if (compactHeader) {
+                    TopAppBar(
+                        title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        navigationIcon = navigationIcon,
+                        modifier = Modifier.padding(horizontal = sideInset),
+                        scrollBehavior = scrollBehavior,
+                        actions = actions,
+                        colors = topBarColors ?: TopAppBarDefaults.topAppBarColors(),
+                    )
+                } else {
+                    LargeTopAppBar(
+                        title = { Text(title) },
+                        navigationIcon = navigationIcon,
+                        modifier = Modifier.padding(horizontal = sideInset),
+                        scrollBehavior = scrollBehavior,
+                        actions = actions,
+                        colors = topBarColors ?: TopAppBarDefaults.topAppBarColors(),
+                    )
+                }
             }
         },
         snackbarHost = {

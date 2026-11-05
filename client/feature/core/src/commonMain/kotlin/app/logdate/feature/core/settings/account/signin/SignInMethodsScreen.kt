@@ -5,6 +5,7 @@ package app.logdate.feature.core.settings.account.signin
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,7 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import app.logdate.client.repository.account.LinkedSignInProvider
 import app.logdate.feature.core.settings.ui.dialogs.DangerConfirmationDialog
 import app.logdate.ui.common.SettingsRow
@@ -40,6 +44,8 @@ import app.logdate.ui.common.SimpleSettingsItem
 import app.logdate.ui.common.formatting.LocalToday
 import app.logdate.ui.common.formatting.asRelativeDate
 import app.logdate.ui.theme.Spacing
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -59,6 +65,7 @@ import logdate.client.feature.core.generated.resources.sign_in_methods_detail_pa
 import logdate.client.feature.core.generated.resources.sign_in_methods_google
 import logdate.client.feature.core.generated.resources.sign_in_methods_intro
 import logdate.client.feature.core.generated.resources.sign_in_methods_linked_section
+import logdate.client.feature.core.generated.resources.sign_in_methods_load_again
 import logdate.client.feature.core.generated.resources.sign_in_methods_load_failed_offline
 import logdate.client.feature.core.generated.resources.sign_in_methods_load_failed_server
 import logdate.client.feature.core.generated.resources.sign_in_methods_load_failed_signed_out
@@ -69,6 +76,7 @@ import logdate.client.feature.core.generated.resources.sign_in_methods_passkey_a
 import logdate.client.feature.core.generated.resources.sign_in_methods_passkey_added_for
 import logdate.client.feature.core.generated.resources.sign_in_methods_passkey_removed
 import logdate.client.feature.core.generated.resources.sign_in_methods_passkeys_section
+import logdate.client.feature.core.generated.resources.sign_in_methods_refreshing
 import logdate.client.feature.core.generated.resources.sign_in_methods_remove_failed_last
 import logdate.client.feature.core.generated.resources.sign_in_methods_remove_failed_offline
 import logdate.client.feature.core.generated.resources.sign_in_methods_remove_failed_server
@@ -101,8 +109,16 @@ fun SignInMethodsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event -> snackbarHostState.showSnackbar(event.message()) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(viewModel, snackbarHostState, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.notices.collect { notices ->
+                val notice = notices.firstOrNull() ?: return@collect
+                snackbarHostState.showSnackbar(notice.event.message())
+                currentCoroutineContext().ensureActive()
+                viewModel.acknowledgeNotice(notice.id)
+            }
+        }
     }
 
     SignInMethodsContent(
@@ -125,6 +141,12 @@ fun SignInMethodsContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var pendingRemoval by remember { mutableStateOf<PasskeyRow?>(null) }
+    LaunchedEffect(state) {
+        val loaded = state as? SignInMethodsUiState.Loaded
+        if (loaded == null || loaded.isBusy || loaded.passkeys.none { it.credentialId == pendingRemoval?.credentialId && it.canRemove }) {
+            pendingRemoval = null
+        }
+    }
 
     SettingsScaffold(
         title = stringResource(Res.string.sign_in_methods_title),
@@ -139,10 +161,32 @@ fun SignInMethodsContent(
                     }
                 }
 
+            SignInMethodsUiState.NotLoaded ->
+                item {
+                    FilledTonalButton(onClick = onRetry, modifier = Modifier.padding(horizontal = Spacing.lg)) {
+                        Text(stringResource(Res.string.sign_in_methods_load_again))
+                    }
+                }
+
             is SignInMethodsUiState.Failed ->
                 item { LoadFailed(reason = state.reason, onRetry = onRetry) }
 
             is SignInMethodsUiState.Loaded -> {
+                when (val refresh = state.refresh) {
+                    SignInMethodsRefreshState.Running ->
+                        item {
+                            Row(
+                                modifier = Modifier.padding(horizontal = Spacing.lg),
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                Text(stringResource(Res.string.sign_in_methods_refreshing))
+                            }
+                        }
+                    is SignInMethodsRefreshState.Failed -> item { LoadFailed(refresh.reason, onRetry) }
+                    SignInMethodsRefreshState.Idle -> Unit
+                }
                 item {
                     Text(
                         text = stringResource(Res.string.sign_in_methods_intro),
@@ -160,11 +204,22 @@ fun SignInMethodsContent(
                             PasskeyItem(
                                 passkey = passkey,
                                 isRemoving = state.removingCredentialId == passkey.credentialId,
+                                enabled = !state.isBusy,
+                                failure =
+                                    (state.removal as? PasskeyRemovalState.Failed)
+                                        ?.takeIf {
+                                            it.credentialId == passkey.credentialId
+                                        }?.reason,
                                 onRemove = { pendingRemoval = passkey },
                             )
                         }
                         if (state.canAddPasskey) {
-                            AddPasskeyItem(isAdding = state.isAddingPasskey, onClick = onAddPasskey)
+                            AddPasskeyItem(
+                                isAdding = state.isAddingPasskey,
+                                enabled = !state.isBusy,
+                                failure = (state.add as? AddPasskeyState.Failed)?.reason,
+                                onClick = onAddPasskey,
+                            )
                         }
                     }
                 }
@@ -202,6 +257,8 @@ fun SignInMethodsContent(
 private fun PasskeyItem(
     passkey: PasskeyRow,
     isRemoving: Boolean,
+    enabled: Boolean,
+    failure: RemovePasskeyFailure?,
     onRemove: () -> Unit,
 ) {
     val name = passkey.deviceName ?: stringResource(Res.string.sign_in_methods_unnamed_passkey)
@@ -210,25 +267,28 @@ private fun PasskeyItem(
         headlineContent = { Text(name) },
         supportingContent = {
             val dates = passkeyDates(passkey)
-            Text(
-                text =
-                    if (passkey.canRemove) {
-                        dates
-                    } else {
-                        stringResource(
-                            Res.string.sign_in_methods_detail_pair,
-                            dates,
-                            stringResource(Res.string.sign_in_methods_only_method),
-                        )
-                    },
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                failure?.let { Text(stringResource(it.message), color = MaterialTheme.colorScheme.error) }
+                Text(
+                    text =
+                        if (passkey.canRemove) {
+                            dates
+                        } else {
+                            stringResource(
+                                Res.string.sign_in_methods_detail_pair,
+                                dates,
+                                stringResource(Res.string.sign_in_methods_only_method),
+                            )
+                        },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         },
         trailingContent = {
             when {
                 isRemoving -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 passkey.canRemove ->
-                    IconButton(onClick = onRemove) {
+                    IconButton(onClick = onRemove, enabled = enabled) {
                         Icon(
                             Icons.Outlined.Delete,
                             contentDescription = stringResource(Res.string.sign_in_methods_remove_passkey_action, name),
@@ -271,11 +331,13 @@ private fun passkeyDates(passkey: PasskeyRow): String {
 @Composable
 private fun AddPasskeyItem(
     isAdding: Boolean,
+    enabled: Boolean,
+    failure: AddPasskeyFailure?,
     onClick: () -> Unit,
 ) {
     SimpleSettingsItem(
         title = stringResource(if (isAdding) Res.string.sign_in_methods_adding_passkey else Res.string.sign_in_methods_add_passkey),
-        description = stringResource(Res.string.sign_in_methods_add_passkey_description),
+        description = stringResource(failure?.message ?: Res.string.sign_in_methods_add_passkey_description),
         leadingContent = {
             if (isAdding) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
@@ -284,7 +346,7 @@ private fun AddPasskeyItem(
             }
         },
         onClick = onClick,
-        enabled = !isAdding,
+        enabled = enabled,
         action = {},
     )
 }
@@ -376,25 +438,25 @@ private suspend fun SignInMethodsEvent.message(): String =
             deviceName?.let { getString(Res.string.sign_in_methods_passkey_added_for, it) }
                 ?: getString(Res.string.sign_in_methods_passkey_added)
         SignInMethodsEvent.PasskeyRemoved -> getString(Res.string.sign_in_methods_passkey_removed)
-        is SignInMethodsEvent.AddPasskeyFailed ->
-            getString(
-                when (reason) {
-                    AddPasskeyFailure.ALREADY_ON_THIS_DEVICE -> Res.string.sign_in_methods_add_failed_already_here
-                    AddPasskeyFailure.NOT_SIGNED_IN -> Res.string.sign_in_methods_add_failed_signed_out
-                    AddPasskeyFailure.OFFLINE -> Res.string.sign_in_methods_add_failed_offline
-                    AddPasskeyFailure.PLATFORM -> Res.string.sign_in_methods_add_failed_platform
-                    AddPasskeyFailure.SERVER -> Res.string.sign_in_methods_add_failed_server
-                },
-            )
-        is SignInMethodsEvent.RemovePasskeyFailed ->
-            getString(
-                when (reason) {
-                    RemovePasskeyFailure.LAST_SIGN_IN_METHOD -> Res.string.sign_in_methods_remove_failed_last
-                    RemovePasskeyFailure.OFFLINE -> Res.string.sign_in_methods_remove_failed_offline
-                    RemovePasskeyFailure.SERVER -> Res.string.sign_in_methods_remove_failed_server
-                },
-            )
     }
+
+private val AddPasskeyFailure.message: StringResource
+    get() =
+        when (this) {
+            AddPasskeyFailure.ALREADY_ON_THIS_DEVICE -> Res.string.sign_in_methods_add_failed_already_here
+            AddPasskeyFailure.NOT_SIGNED_IN -> Res.string.sign_in_methods_add_failed_signed_out
+            AddPasskeyFailure.OFFLINE -> Res.string.sign_in_methods_add_failed_offline
+            AddPasskeyFailure.PLATFORM -> Res.string.sign_in_methods_add_failed_platform
+            AddPasskeyFailure.SERVER -> Res.string.sign_in_methods_add_failed_server
+        }
+
+private val RemovePasskeyFailure.message: StringResource
+    get() =
+        when (this) {
+            RemovePasskeyFailure.LAST_SIGN_IN_METHOD -> Res.string.sign_in_methods_remove_failed_last
+            RemovePasskeyFailure.OFFLINE -> Res.string.sign_in_methods_remove_failed_offline
+            RemovePasskeyFailure.SERVER -> Res.string.sign_in_methods_remove_failed_server
+        }
 
 @Preview
 @Composable

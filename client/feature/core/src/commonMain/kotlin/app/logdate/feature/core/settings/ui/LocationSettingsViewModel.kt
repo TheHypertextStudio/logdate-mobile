@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:standard:function-naming")
-
 package app.logdate.feature.core.settings.ui
 
 import androidx.lifecycle.ViewModel
@@ -8,179 +6,149 @@ import app.logdate.client.location.settings.DefaultLocation
 import app.logdate.client.location.settings.LocationCaptureMode
 import app.logdate.client.location.settings.LocationTrackingSettings
 import app.logdate.client.location.settings.LocationTrackingSettingsRepository
+import app.logdate.client.location.settings.withFailureReporting
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for managing location tracking settings.
- */
 class LocationSettingsViewModel(
-    private val settingsRepository: LocationTrackingSettingsRepository,
+    settingsRepository: LocationTrackingSettingsRepository,
 ) : ViewModel() {
-    /**
-     * UI state for the location settings screen.
-     */
-    data class UiState(
-        val settings: LocationTrackingSettings = LocationTrackingSettings(),
-        val isLoading: Boolean = false,
-        val errorMessage: String? = null,
-    )
+    private val settingsRepository = settingsRepository.withFailureReporting()
 
-    private val isLoadingState = MutableStateFlow(false)
-    private val errorMessageState = MutableStateFlow<String?>(null)
+    private val mutableState = MutableStateFlow<LocationSettingsState>(LocationSettingsState.Loading)
+    val uiState: StateFlow<LocationSettingsState> = mutableState.asStateFlow()
+    private var observationJob: Job? = null
+    private var observationVersion = 0L
 
-    /**
-     * Current UI state.
-     */
-    val uiState: StateFlow<UiState> =
-        combine(
-            settingsRepository.observeSettings(),
-            isLoadingState,
-            errorMessageState,
-        ) { settings, isLoading, errorMessage ->
-            UiState(
-                settings = settings,
-                isLoading = isLoading,
-                errorMessage = errorMessage,
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState(isLoading = true),
-        )
+    init {
+        reload()
+    }
 
-    /**
-     * Toggle background location tracking.
-     */
-    fun toggleBackgroundTracking(enabled: Boolean) {
+    fun reload() {
+        if (observationJob?.isActive == true) return
+        mutableState.update { current ->
+            (current as? LocationSettingsState.Available)?.copy(isRefreshing = true, refreshFailed = false)
+                ?: LocationSettingsState.Loading
+        }
+        observationJob =
+            viewModelScope.launch {
+                try {
+                    settingsRepository.observeSettings().collect { settings ->
+                        observationVersion++
+                        mutableState.update { current ->
+                            (current as? LocationSettingsState.Available)?.copy(
+                                settings = settings,
+                                isRefreshing = false,
+                                refreshFailed = false,
+                            ) ?: LocationSettingsState.Available(settings)
+                        }
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Napier.e("Unable to observe location settings", error)
+                    mutableState.update { current ->
+                        (current as? LocationSettingsState.Available)?.copy(isRefreshing = false, refreshFailed = true)
+                            ?: LocationSettingsState.Unavailable
+                    }
+                }
+            }
+    }
+
+    fun toggleBackgroundTracking(enabled: Boolean) = save(LocationSettingsChange.BackgroundTracking(enabled))
+
+    fun toggleJournalTracking(enabled: Boolean) = save(LocationSettingsChange.JournalTracking(enabled))
+
+    fun toggleTimelineTracking(enabled: Boolean) = save(LocationSettingsChange.TimelineTracking(enabled))
+
+    fun updateTrackingInterval(intervalMinutes: Long) = save(LocationSettingsChange.Interval(intervalMinutes.coerceAtLeast(2)))
+
+    fun toggleActiveTracking(enabled: Boolean) = setCaptureMode(if (enabled) LocationCaptureMode.ACTIVE else LocationCaptureMode.PASSIVE)
+
+    fun setCaptureMode(mode: LocationCaptureMode) = save(LocationSettingsChange.CaptureMode(mode))
+
+    fun toggleServerAssist(enabled: Boolean) = save(LocationSettingsChange.ServerAssist(enabled))
+
+    fun setDefaultLocation(location: DefaultLocation?) = save(LocationSettingsChange.DefaultFallback(location))
+
+    fun retry(setting: LocationSetting) {
+        val current = mutableState.value as? LocationSettingsState.Available ?: return
+        val failed = current.operation(setting) as? LocationSettingOperation.Failed ?: return
+        save(failed.change)
+    }
+
+    private fun save(change: LocationSettingsChange) {
+        val current = mutableState.value as? LocationSettingsState.Available ?: return
+        if (current.isSaving(change.setting)) return
+        if (change.applyTo(current.settings) == current.settings) {
+            setOperation(change.setting, LocationSettingOperation.Idle)
+            return
+        }
+        val observedVersion = observationVersion
+        setOperation(change.setting, LocationSettingOperation.Saving(change))
         viewModelScope.launch {
             try {
-                isLoadingState.value = true
-                settingsRepository.setBackgroundTrackingEnabled(enabled)
-                Napier.i("Background tracking set to: $enabled")
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle background tracking", e)
-                errorMessageState.value = "Failed to update setting: ${e.message}"
-            } finally {
-                isLoadingState.value = false
+                persist(change)
+                mutableState.update { latest ->
+                    if (latest !is LocationSettingsState.Available) return@update latest
+                    latest.copy(
+                        settings = if (observedVersion == observationVersion) change.applyTo(latest.settings) else latest.settings,
+                        operations = latest.operations - change.setting,
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                setOperation(change.setting, LocationSettingOperation.Idle)
+                throw cancelled
+            } catch (error: Exception) {
+                Napier.e("Unable to save location preference ${change.setting}", error)
+                setOperation(change.setting, LocationSettingOperation.Failed(change))
             }
         }
     }
 
-    /**
-     * Toggle auto-tracking for journal entries.
-     */
-    fun toggleJournalTracking(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                val currentSettings = settingsRepository.getSettings()
-                settingsRepository.updateSettings(
-                    currentSettings.copy(autoTrackForJournalEntries = enabled),
-                )
-                Napier.i("Journal entry tracking set to: $enabled")
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle journal tracking", e)
-                errorMessageState.value = "Failed to update setting: ${e.message}"
-            }
+    private suspend fun persist(change: LocationSettingsChange) {
+        when (change) {
+            is LocationSettingsChange.BackgroundTracking -> settingsRepository.setBackgroundTrackingEnabled(change.enabled)
+            is LocationSettingsChange.JournalTracking -> settingsRepository.setJournalTrackingEnabled(change.enabled)
+            is LocationSettingsChange.TimelineTracking -> settingsRepository.setTimelineTrackingEnabled(change.enabled)
+            is LocationSettingsChange.Interval -> settingsRepository.setTrackingInterval(change.minutes)
+            is LocationSettingsChange.CaptureMode -> settingsRepository.setCaptureMode(change.mode)
+            is LocationSettingsChange.ServerAssist -> settingsRepository.setServerAssistEnabled(change.enabled)
+            is LocationSettingsChange.DefaultFallback -> settingsRepository.setDefaultLocation(change.location)
         }
     }
 
-    /**
-     * Toggle auto-tracking for timeline viewing.
-     */
-    fun toggleTimelineTracking(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                val currentSettings = settingsRepository.getSettings()
-                settingsRepository.updateSettings(
-                    currentSettings.copy(autoTrackForTimelineReview = enabled),
-                )
-                Napier.i("Timeline tracking set to: $enabled")
-            } catch (e: Exception) {
-                Napier.e("Failed to toggle timeline tracking", e)
-                errorMessageState.value = "Failed to update setting: ${e.message}"
-            }
+    private fun LocationSettingsChange.applyTo(settings: LocationTrackingSettings): LocationTrackingSettings =
+        when (this) {
+            is LocationSettingsChange.BackgroundTracking -> settings.copy(backgroundTrackingEnabled = enabled)
+            is LocationSettingsChange.JournalTracking -> settings.copy(autoTrackForJournalEntries = enabled)
+            is LocationSettingsChange.TimelineTracking -> settings.copy(autoTrackForTimelineReview = enabled)
+            is LocationSettingsChange.Interval -> settings.copy(minimumPersistIntervalMinutes = minutes)
+            is LocationSettingsChange.CaptureMode -> settings.copy(captureMode = mode)
+            is LocationSettingsChange.ServerAssist -> settings.copy(serverAssistEnabled = enabled)
+            is LocationSettingsChange.DefaultFallback -> settings.copy(defaultLocation = location)
         }
-    }
 
-    /**
-     * Update the tracking interval.
-     */
-    fun updateTrackingInterval(intervalMinutes: Long) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setTrackingInterval(intervalMinutes)
-                Napier.i("Tracking interval set to: $intervalMinutes minutes")
-            } catch (e: Exception) {
-                Napier.e("Failed to update tracking interval", e)
-                errorMessageState.value = "Failed to update interval: ${e.message}"
-            }
-        }
-    }
-
-    fun toggleActiveTracking(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setCaptureMode(
-                    if (enabled) {
-                        LocationCaptureMode.ACTIVE
+    private fun setOperation(
+        setting: LocationSetting,
+        operation: LocationSettingOperation,
+    ) {
+        mutableState.update { current ->
+            if (current !is LocationSettingsState.Available) return@update current
+            current.copy(
+                operations =
+                    if (operation == LocationSettingOperation.Idle) {
+                        current.operations - setting
                     } else {
-                        LocationCaptureMode.PASSIVE
+                        current.operations + (setting to operation)
                     },
-                )
-                Napier.i("Active tracking set to: $enabled")
-            } catch (e: Exception) {
-                Napier.e("Failed to update capture mode", e)
-                errorMessageState.value = "Failed to update capture mode: ${e.message}"
-            }
+            )
         }
-    }
-
-    fun setCaptureMode(mode: LocationCaptureMode) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setCaptureMode(mode)
-                Napier.i("Capture mode set to: $mode")
-            } catch (e: Exception) {
-                Napier.e("Failed to update capture mode", e)
-                errorMessageState.value = "Failed to update capture mode: ${e.message}"
-            }
-        }
-    }
-
-    fun toggleServerAssist(enabled: Boolean) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setServerAssistEnabled(enabled)
-                Napier.i("Server assist set to: $enabled")
-            } catch (e: Exception) {
-                Napier.e("Failed to update server assist", e)
-                errorMessageState.value = "Failed to update server assist: ${e.message}"
-            }
-        }
-    }
-
-    fun setDefaultLocation(location: DefaultLocation?) {
-        viewModelScope.launch {
-            try {
-                settingsRepository.setDefaultLocation(location)
-                Napier.i("Default fallback location configured: ${location != null}")
-            } catch (e: Exception) {
-                Napier.e("Failed to update default fallback location", e)
-                errorMessageState.value = "Failed to update default location: ${e.message}"
-            }
-        }
-    }
-
-    /**
-     * Clear any error message.
-     */
-    fun clearErrorMessage() {
-        errorMessageState.value = null
     }
 }

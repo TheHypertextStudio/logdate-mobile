@@ -1,11 +1,8 @@
 package app.logdate.feature.core.settings.ui.devices
 
-import androidx.lifecycle.viewModelScope
 import app.logdate.client.device.identity.DefaultDeviceManager
-import app.logdate.client.device.identity.DeviceIdProvider
-import app.logdate.client.device.identity.DeviceRepository
-import app.logdate.client.device.models.DeviceInfo
 import app.logdate.client.device.models.DevicePlatform
+import androidx.lifecycle.viewModelScope
 import app.logdate.client.sync.peer.devices.LinkedDeviceRemoval
 import app.logdate.client.sync.peer.devices.LinkedDeviceSession
 import app.logdate.client.sync.peer.devices.LinkedDevicesFailure
@@ -13,38 +10,34 @@ import app.logdate.client.sync.peer.devices.LinkedDevicesLoad
 import app.logdate.client.sync.peer.devices.LinkedDevicesRepository
 import app.logdate.client.text.UiText
 import app.logdate.client.text.toUiText
+import kotlinx.coroutines.cancel
+import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.devices_fallback_name
+import logdate.client.feature.core.generated.resources.devices_platform_android
+import logdate.client.feature.core.generated.resources.devices_platform_wear_os
+import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.devices_error_load
-import logdate.client.feature.core.generated.resources.devices_error_remove
-import logdate.client.feature.core.generated.resources.devices_fallback_name
-import logdate.client.feature.core.generated.resources.devices_platform_android
-import logdate.client.feature.core.generated.resources.devices_platform_wear_os
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
@@ -59,10 +52,10 @@ class DevicesViewModelTest {
     private lateinit var deviceIdProvider: FakeDeviceIdProvider
     private lateinit var repository: FakeDeviceRepository
     private lateinit var deviceManager: DefaultDeviceManager
+    private val linked = FakeLinkedDevicesRepository()
     private lateinit var viewModel: DevicesViewModel
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
-    private val linked = FakeLinkedDevicesRepository()
 
     private val currentDeviceId = Uuid.parse("123e4567-e89b-12d3-a456-426614174000")
     private val device1Id = Uuid.parse("223e4567-e89b-12d3-a456-426614174000")
@@ -106,19 +99,20 @@ class DevicesViewModelTest {
 
     @AfterTest
     fun tearDown() {
+        viewModel.stopObserving()
         Dispatchers.resetMain()
     }
 
     @Test
-    fun `initial state should be idle`() =
+    fun `initial state must not present unloaded devices as success`() =
         testScope.runTest {
             // When created
             val initialState = viewModel.uiState.first()
 
             // Then
-            assertFalse(initialState.isLoading, "Initial state should not be loading")
+            assertEquals(DeviceListAvailability.Loading, initialState.availability)
             assertTrue(initialState.devices.isEmpty(), "Initial state should have no devices")
-            assertNull(initialState.error, "Initial state should have no error")
+            assertEquals(DeviceRefreshState.Idle, initialState.refresh)
         }
 
     @Test
@@ -130,9 +124,9 @@ class DevicesViewModelTest {
             val state = viewModel.uiState.first()
 
             // Then
-            assertFalse(state.isLoading, "Loading should be complete")
+            assertEquals(DeviceListAvailability.Available, state.availability)
             assertEquals(3, state.devices.size, "Should load all 3 devices")
-            assertNull(state.error, "Should have no error")
+            assertEquals(DeviceRefreshState.Idle, state.refresh)
             assertEquals(currentDeviceId, state.devices.first().id, "This device should lead the list")
 
             // Verify current device is properly marked
@@ -146,25 +140,6 @@ class DevicesViewModelTest {
                 .forEach { device ->
                     assertFalse(device.isCurrentDevice, "Other devices should not be marked as current")
                 }
-        }
-
-    @Test
-    fun `a watch is listed as Wear OS`() =
-        testScope.runTest {
-            val watchId = Uuid.parse("523e4567-e89b-12d3-a456-426614174000")
-            repository.addAssociatedDevice(deviceInfo(id = watchId, name = "Pixel Watch 3", platform = DevicePlatform.WEAR_OS))
-
-            viewModel.loadDevices()
-            advanceUntilIdle()
-
-            assertEquals(
-                Res.string.devices_platform_wear_os,
-                viewModel.uiState
-                    .first()
-                    .devices
-                    .single { it.id == watchId }
-                    .platformName,
-            )
         }
 
     @Test
@@ -199,7 +174,7 @@ class DevicesViewModelTest {
             repository.addAssociatedDevice(deviceInfo(Uuid.random(), "Another device", DevicePlatform.MACOS))
             advanceUntilIdle()
             assertEquals(3, viewModel.uiState.value.devices.size)
-            assertNull(viewModel.uiState.value.error)
+            assertEquals(DeviceRefreshState.Idle, viewModel.uiState.value.refresh)
         }
 
     @Test
@@ -274,8 +249,7 @@ class DevicesViewModelTest {
             val state = viewModel.uiState.first()
 
             // Then
-            assertFalse(state.isLoading, "Loading should complete even on error")
-            assertEquals(Res.string.devices_error_load, (state.error as? UiText.Resource)?.resource, "Error message should be set")
+            assertEquals(DeviceListAvailability.Unavailable, state.availability)
         }
 
     @Test
@@ -292,9 +266,117 @@ class DevicesViewModelTest {
             val state = viewModel.uiState.first()
 
             // Then
-            assertEquals(Res.string.devices_error_remove, (state.error as? UiText.Resource)?.resource, "Error message should be set")
+            assertEquals(DeviceOperationState.Failed(DeviceAction.Remove), state.operations[device1Id])
         }
 
+    @Test
+    fun `retry clears load failure immediately and success leaves no stale error`() =
+        testScope.runTest {
+            repository.shouldFailGetAssociatedDevices = true
+            viewModel.loadDevices()
+            advanceUntilIdle()
+            assertEquals(DeviceListAvailability.Unavailable, viewModel.uiState.value.availability)
+
+            repository.shouldFailGetAssociatedDevices = false
+            viewModel.loadDevices()
+            assertEquals(DeviceListAvailability.Loading, viewModel.uiState.value.availability)
+            advanceUntilIdle()
+            assertEquals(3, viewModel.uiState.value.devices.size)
+            assertEquals(DeviceRefreshState.Idle, viewModel.uiState.value.refresh)
+        }
+
+    @Test
+    fun `refresh keeps authoritative rows visible`() =
+        testScope.runTest {
+            viewModel.loadDevices()
+            advanceUntilIdle()
+            val rows = viewModel.uiState.value.devices
+            repository.observationGate = CompletableDeferred()
+            viewModel.loadDevices()
+            runCurrent()
+            assertEquals(rows, viewModel.uiState.value.devices)
+            assertEquals(DeviceListAvailability.Available, viewModel.uiState.value.availability)
+            assertEquals(DeviceRefreshState.Running, viewModel.uiState.value.refresh)
+            repository.observationGate?.complete(Unit)
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `duplicate removal only issues one pending request`() =
+        testScope.runTest {
+            viewModel.loadDevices()
+            advanceUntilIdle()
+            repository.removalGate = CompletableDeferred()
+            viewModel.removeDevice(device1Id)
+            viewModel.removeDevice(device1Id)
+            runCurrent()
+            assertEquals(1, repository.removeCallCount)
+            assertNotNull(
+                viewModel.uiState.value.devices
+                    .find { it.id == device1Id },
+            )
+            repository.removalGate?.complete(Unit)
+            advanceUntilIdle()
+            assertNull(
+                viewModel.uiState.value.devices
+                    .find { it.id == device1Id },
+            )
+        }
+
+    @Test
+    fun `cancelled removal leaves stable rows without failure`() =
+        testScope.runTest {
+            viewModel.loadDevices()
+            advanceUntilIdle()
+            repository.removalFailure = CancellationException("Cancelled")
+            viewModel.removeDevice(device1Id)
+            advanceUntilIdle()
+            assertNotNull(
+                viewModel.uiState.value.devices
+                    .find { it.id == device1Id },
+            )
+            assertNull(viewModel.uiState.value.operations[device1Id])
+        }
+
+    @Test
+    fun `manager rename rejection must not change local device name`() =
+        testScope.runTest {
+            repository.updateAccepted = false
+            assertFailsWith<IllegalStateException> { deviceManager.renameDevice("Rejected name") }
+            assertEquals("Current Device", deviceManager.getCurrentDeviceInfo().name)
+        }
+
+    @Test
+    fun `manager rename propagates cancellation without changing local name`() =
+        testScope.runTest {
+            repository.updateFailure = CancellationException("Cancelled")
+            assertFailsWith<CancellationException> { deviceManager.renameDevice("Cancelled name") }
+            assertEquals("Current Device", deviceManager.getCurrentDeviceInfo().name)
+        }
+
+    @Test
+    fun `manager reset reports failed registration while preserving actual new identity`() =
+        testScope.runTest {
+            repository.registrationAccepted = false
+            assertFailsWith<IllegalStateException> { deviceManager.refreshDeviceId() }
+            assertEquals(deviceIdProvider.getDeviceId().value, deviceManager.getCurrentDeviceInfo().id)
+            assertNotEquals(currentDeviceId, deviceManager.getCurrentDeviceInfo().id)
+        }
+
+    @Test
+    fun `manager reset propagates registration cancellation`() =
+        testScope.runTest {
+            repository.registrationFailure = CancellationException("Cancelled")
+            assertFailsWith<CancellationException> { deviceManager.refreshDeviceId() }
+            assertEquals(deviceIdProvider.getDeviceId().value, deviceManager.getCurrentDeviceInfo().id)
+        }
+
+    @Test
+    fun `manager registration propagates cancellation`() =
+        testScope.runTest {
+            repository.registrationFailure = CancellationException("Cancelled")
+            assertFailsWith<CancellationException> { deviceManager.registerWithCloud() }
+        }
     @Test
     fun `linked devices stay hidden while linking is unavailable`() =
         testScope.runTest {
@@ -512,83 +594,4 @@ class DevicesViewModelTest {
         }
     }
 
-    /**
-     * A test implementation of DeviceManager for view model tests.
-     */
-    private class FakeDeviceIdProvider(
-        initialDeviceId: Uuid,
-    ) : DeviceIdProvider {
-        private val deviceId = MutableStateFlow(initialDeviceId)
-        var refreshCallCount = 0
-
-        override fun getDeviceId(): StateFlow<Uuid> = deviceId
-
-        override suspend fun refreshDeviceId() {
-            refreshCallCount++
-            deviceId.value = Uuid.parse("423e4567-e89b-12d3-a456-426614174000")
-        }
-    }
-
-    private class FakeDeviceRepository : DeviceRepository {
-        private val associatedDevices = MutableStateFlow<List<DeviceInfo>>(emptyList())
-
-        var updateDeviceInfoCallCount = 0
-        var removeCallCount = 0
-        var lastRemovedDeviceId: Uuid? = null
-        var shouldFailGetAssociatedDevices = false
-        var shouldFailDeviceRemoval = false
-
-        override suspend fun registerDevice(
-            deviceInfo: DeviceInfo,
-            notificationToken: String?,
-        ): Boolean = true
-
-        override fun getAssociatedDevices(): Flow<List<DeviceInfo>> {
-            if (shouldFailGetAssociatedDevices) {
-                return flow { throw RuntimeException("Test failure: getAssociatedDevices") }
-            }
-            return associatedDevices
-        }
-
-        override suspend fun updateDeviceInfo(deviceInfo: DeviceInfo): Boolean {
-            updateDeviceInfoCallCount++
-            return true
-        }
-
-        override suspend fun updateDeviceToken(
-            deviceId: Uuid,
-            token: String,
-        ): Boolean = true
-
-        override suspend fun removeDevice(deviceId: Uuid): Boolean {
-            removeCallCount++
-            lastRemovedDeviceId = deviceId
-
-            if (shouldFailDeviceRemoval) {
-                throw RuntimeException("Test failure: removeDevice")
-            }
-
-            associatedDevices.value = associatedDevices.value.filter { it.id != deviceId }
-            return true
-        }
-
-        fun addAssociatedDevice(device: DeviceInfo) {
-            associatedDevices.value = associatedDevices.value + device
-        }
-    }
-
-    private fun deviceInfo(
-        id: Uuid,
-        name: String,
-        platform: DevicePlatform,
-    ): DeviceInfo =
-        DeviceInfo(
-            id = id,
-            name = name,
-            platform = platform,
-            createdAt = Clock.System.now(),
-            lastActive = Clock.System.now(),
-            appVersion = "1.0.0",
-            isCurrentDevice = false,
-        )
 }

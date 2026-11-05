@@ -1,0 +1,10 @@
+<resources>
+    <string name="settings_value_loading">Checking…</string>
+    <string name="settings_values_failed">Couldn’t load these settings.</string>
+    <string name="settings_write_failed">Couldn’t save this change.</string>
+    <string name="settings_write_pending">Saving…</string>
+    <string name="settings_retry_action">Try again</string>
+    <string name="day_schedule_health_failed">Couldn’t check sleep access.</string>
+    <string name="hosting_check_failed">Couldn’t check this server.</string>
+    <string name="hosting_not_checked">Not checked</string>
+</resources>

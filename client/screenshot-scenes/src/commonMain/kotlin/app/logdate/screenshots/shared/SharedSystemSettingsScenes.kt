@@ -32,6 +32,7 @@ import app.logdate.feature.core.settings.ui.SyncSettingsContent
 import app.logdate.feature.core.settings.ui.TimelineSettingsContent
 import app.logdate.feature.core.settings.ui.devices.DeviceInfoUiState
 import app.logdate.feature.core.settings.ui.devices.DevicesScreenContent
+import app.logdate.feature.core.settings.ui.devices.DeviceListAvailability
 import app.logdate.feature.core.settings.ui.devices.DevicesUiState
 import app.logdate.feature.core.settings.ui.devices.LinkedDeviceUiState
 import app.logdate.feature.core.settings.ui.devices.LinkedDevicesUiState
@@ -155,7 +156,7 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                 onBackClick = {},
                 uiState =
                     DevicesUiState(
-                        isLoading = false,
+                        availability = DeviceListAvailability.Available,
                         devices =
                             listOf(
                                 DeviceInfoUiState(
@@ -183,7 +184,7 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                 onBackClick = {},
                 uiState =
                     DevicesUiState(
-                        isLoading = false,
+                        availability = DeviceListAvailability.Available,
                         devices =
                             listOf(
                                 DeviceInfoUiState(

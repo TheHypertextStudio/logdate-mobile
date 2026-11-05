@@ -1,6 +1,7 @@
 package app.logdate.client.location.settings
 
 import app.logdate.client.datastore.KeyValueStorage
+import app.logdate.client.datastore.withFailureReporting
 import app.logdate.shared.model.AltitudeUnit
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,9 @@ import kotlinx.coroutines.flow.map
 class DefaultLocationTrackingSettingsRepository(
     private val keyValueStorage: KeyValueStorage,
 ) : LocationTrackingSettingsRepository {
+    internal fun reportingFailures(): LocationTrackingSettingsRepository =
+        DefaultLocationTrackingSettingsRepository(keyValueStorage.withFailureReporting())
+
     companion object {
         private const val KEY_BACKGROUND_TRACKING_ENABLED = "location_background_tracking_enabled"
         private const val KEY_MINIMUM_PERSIST_INTERVAL_MINUTES = "location_tracking_interval_minutes"
@@ -145,6 +149,14 @@ class DefaultLocationTrackingSettingsRepository(
         keyValueStorage.putBoolean(KEY_BACKGROUND_TRACKING_ENABLED, enabled)
     }
 
+    override suspend fun setJournalTrackingEnabled(enabled: Boolean) {
+        keyValueStorage.putBoolean(KEY_AUTO_TRACK_JOURNAL, enabled)
+    }
+
+    override suspend fun setTimelineTrackingEnabled(enabled: Boolean) {
+        keyValueStorage.putBoolean(KEY_AUTO_TRACK_TIMELINE, enabled)
+    }
+
     override suspend fun setTrackingInterval(intervalMinutes: Long) {
         val safeInterval = intervalMinutes.coerceAtLeast(2)
         Napier.i("Setting tracking interval: $safeInterval minutes")
@@ -242,3 +254,7 @@ class DefaultLocationTrackingSettingsRepository(
         )
     }
 }
+
+/** Settings need failure reporting without changing background-service storage policy. */
+fun LocationTrackingSettingsRepository.withFailureReporting(): LocationTrackingSettingsRepository =
+    if (this is DefaultLocationTrackingSettingsRepository) reportingFailures() else this

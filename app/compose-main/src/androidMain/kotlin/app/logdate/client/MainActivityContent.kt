@@ -35,11 +35,13 @@ internal fun MainActivityContent(
     updateController: PlayInAppUpdateController,
     onLaunchUpdate: () -> Unit,
     onCompleteUpdate: () -> Unit,
+    onAutomaticUnlockPrompt: () -> Unit = onShowUnlockPrompt,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         LogDateNavDisplay(
             appUiState = state,
             onShowUnlockPrompt = onShowUnlockPrompt,
+            onAutomaticUnlockPrompt = onAutomaticUnlockPrompt,
             onCloudSignIn = onCloudSignIn,
             pendingNavKey = pendingNavKey,
             onPendingNavKeyConsumed = onPendingNavKeyConsumed,

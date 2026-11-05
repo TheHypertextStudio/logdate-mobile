@@ -55,7 +55,7 @@ fun RecoveryPhrase_RecoveryCheckFailed() {
 @Composable
 private fun ConfirmedPhrase(accountRecovery: AccountRecoveryUiState) {
     RecoveryPhraseContent(
-        state = RecoveryPhraseUiState.Verified,
+        state = RecoveryPhraseUiState.Available(),
         onBack = {},
         onReveal = {},
         onHide = {},

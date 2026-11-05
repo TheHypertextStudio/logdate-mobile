@@ -15,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,10 +31,12 @@ import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.hosting_address
 import logdate.client.feature.core.generated.resources.hosting_check_again
+import logdate.client.feature.core.generated.resources.hosting_check_failed
 import logdate.client.feature.core.generated.resources.hosting_checking
 import logdate.client.feature.core.generated.resources.hosting_connected
 import logdate.client.feature.core.generated.resources.hosting_connected_version
 import logdate.client.feature.core.generated.resources.hosting_intro
+import logdate.client.feature.core.generated.resources.hosting_not_checked
 import logdate.client.feature.core.generated.resources.hosting_status
 import logdate.client.feature.core.generated.resources.hosting_title
 import logdate.client.feature.core.generated.resources.hosting_unreachable
@@ -52,9 +53,6 @@ fun HostingScreen(
     viewModel: HostingViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-    // Coming back from a move checks the server the app is now connected to.
-    LaunchedEffect(Unit) { viewModel.checkAgain() }
 
     HostingContent(state = state, onBack = onBack, onCheckAgain = viewModel::checkAgain, onMoveAccount = onMoveAccount)
 }
@@ -75,7 +73,11 @@ fun HostingContent(
                 modifier = Modifier.padding(horizontal = Spacing.lg),
             )
         }
-        val server = state.server ?: return@SettingsScaffold
+        val server = state.server
+        if (server == null) {
+            item { StatusItem(health = null, check = state.check, onCheckAgain = onCheckAgain) }
+            return@SettingsScaffold
+        }
         item {
             SettingsSection(
                 title = server.displayName ?: server.host,
@@ -86,7 +88,7 @@ fun HostingContent(
                     overlineContent = { Text(stringResource(Res.string.hosting_address)) },
                     headlineContent = { Text(server.host) },
                 )
-                StatusItem(health = state.health, onCheckAgain = onCheckAgain)
+                StatusItem(health = state.health, check = state.check, onCheckAgain = onCheckAgain)
             }
         }
         if (state.canMoveAccount) {
@@ -107,35 +109,57 @@ fun HostingContent(
 @Composable
 private fun StatusItem(
     health: ServerHealth?,
+    check: ServerCheckState,
     onCheckAgain: () -> Unit,
 ) {
+    val displayedHealth = if (check == ServerCheckState.Checking) null else health
     SettingsRow(
         leadingContent = {
-            when (health) {
-                null -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                is ServerHealth.Reachable ->
-                    Icon(
-                        Icons.Outlined.CheckCircle,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                ServerHealth.Unreachable -> Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            if (check == ServerCheckState.Failed) {
+                Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            } else {
+                when (displayedHealth) {
+                    null ->
+                        if (check == ServerCheckState.Checking) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Outlined.Language, contentDescription = null)
+                        }
+                    is ServerHealth.Reachable ->
+                        Icon(
+                            Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    ServerHealth.Unreachable ->
+                        Icon(
+                            Icons.Outlined.CloudOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                }
             }
         },
         overlineContent = { Text(stringResource(Res.string.hosting_status)) },
         headlineContent = {
             Text(
-                when (health) {
-                    null -> stringResource(Res.string.hosting_checking)
-                    is ServerHealth.Reachable ->
-                        health.version?.let { stringResource(Res.string.hosting_connected_version, it) }
+                when {
+                    check == ServerCheckState.Failed -> stringResource(Res.string.hosting_check_failed)
+                    displayedHealth == null ->
+                        stringResource(
+                            if (check == ServerCheckState.Checking) Res.string.hosting_checking else Res.string.hosting_not_checked,
+                        )
+                    displayedHealth is ServerHealth.Reachable ->
+                        displayedHealth.version?.let { stringResource(Res.string.hosting_connected_version, it) }
                             ?: stringResource(Res.string.hosting_connected)
-                    ServerHealth.Unreachable -> stringResource(Res.string.hosting_unreachable)
+                    else -> stringResource(Res.string.hosting_unreachable)
                 },
             )
         },
         trailingContent = {
-            if (health == ServerHealth.Unreachable) {
+            if (check != ServerCheckState.Checking &&
+                (check == ServerCheckState.Failed || displayedHealth == null || displayedHealth == ServerHealth.Unreachable)
+            ) {
                 TextButton(onClick = onCheckAgain) { Text(stringResource(Res.string.hosting_check_again)) }
             }
         },

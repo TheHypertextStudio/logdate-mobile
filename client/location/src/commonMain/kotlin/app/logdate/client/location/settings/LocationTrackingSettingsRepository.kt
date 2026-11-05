@@ -30,6 +30,16 @@ interface LocationTrackingSettingsRepository {
      */
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
 
+    /** Update location capture for journal entries without changing other preferences. */
+    suspend fun setJournalTrackingEnabled(enabled: Boolean) {
+        updateSettings(getSettings().copy(autoTrackForJournalEntries = enabled))
+    }
+
+    /** Update location capture for timeline review without changing other preferences. */
+    suspend fun setTimelineTrackingEnabled(enabled: Boolean) {
+        updateSettings(getSettings().copy(autoTrackForTimelineReview = enabled))
+    }
+
     /**
      * Update the tracking interval.
      *

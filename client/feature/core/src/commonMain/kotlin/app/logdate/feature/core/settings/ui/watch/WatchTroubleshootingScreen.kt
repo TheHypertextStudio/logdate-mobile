@@ -23,11 +23,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
@@ -54,8 +54,8 @@ fun WatchTroubleshootingScreen(
     viewModel: WatchSettingsViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val connectionState by viewModel.connectionState.collectAsState()
-    val requestFailure by viewModel.requestFailure.collectAsState()
+    val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
+    val requestFailure by viewModel.requestFailure.collectAsStateWithLifecycle()
 
     WatchTroubleshootingContent(
         connectionState = connectionState,

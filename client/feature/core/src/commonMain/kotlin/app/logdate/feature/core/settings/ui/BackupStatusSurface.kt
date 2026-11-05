@@ -47,6 +47,10 @@ import logdate.client.feature.core.generated.resources.cloud_archive_failed_deta
 import logdate.client.feature.core.generated.resources.cloud_archive_unavailable_detail
 import logdate.client.feature.core.generated.resources.cloud_archive_uploading
 import logdate.client.feature.core.generated.resources.journal_storage_enter_recovery_phrase
+import logdate.client.feature.core.generated.resources.data_state_archive_request_failed
+import logdate.client.feature.core.generated.resources.data_state_requesting_archive
+import logdate.client.feature.core.generated.resources.data_state_requesting_sync
+import logdate.client.feature.core.generated.resources.data_state_sync_request_failed
 import logdate.client.feature.core.generated.resources.sync_account_mobile_data
 import logdate.client.feature.core.generated.resources.sync_account_storage_unsupported_detail
 import logdate.client.feature.core.generated.resources.sync_account_update_app
@@ -69,6 +73,8 @@ internal fun BackupStatusItem(
     onUpdateApp: (() -> Unit)? = null,
     onEnterRecoveryPhrase: (() -> Unit)? = null,
     reviewableIssueCount: Int = 0,
+    syncRequest: SyncRequestState = SyncRequestState.Idle,
+    archiveRequest: ArchiveRequestState = ArchiveRequestState.Idle,
 ) {
     val status = backupStatus(syncStatus, cloudArchiveStatus)
     val showArchiveRetry = cloudArchiveStatus.needsManualRetry && status == AccountSyncStatus.UNKNOWN
@@ -191,12 +197,27 @@ internal fun BackupStatusItem(
                     }
                 }
             }
+            if (syncRequest == SyncRequestState.Failed) {
+                Text(stringResource(Res.string.data_state_sync_request_failed), color = MaterialTheme.colorScheme.error)
+            }
+            if (archiveRequest == ArchiveRequestState.Failed) {
+                Text(stringResource(Res.string.data_state_archive_request_failed), color = MaterialTheme.colorScheme.error)
+            }
             if (status == AccountSyncStatus.WAITING_FOR_WIFI) {
                 FilledTonalButton(
                     onClick = onSyncUsingMobileData,
+                    enabled = syncRequest != SyncRequestState.Requesting,
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                ) { Text(stringResource(Res.string.sync_account_mobile_data)) }
+                ) {
+                    val label =
+                        if (syncRequest == SyncRequestState.Requesting) {
+                            Res.string.data_state_requesting_sync
+                        } else {
+                            Res.string.sync_account_mobile_data
+                        }
+                    Text(stringResource(label))
+                }
             }
             val phraseRecoveryAvailable =
                 status == AccountSyncStatus.KEY_RECOVERY_REQUIRED || status == AccountSyncStatus.DEVICE_ACCESS_REQUIRED
@@ -217,9 +238,18 @@ internal fun BackupStatusItem(
             if (backupOverviewState(syncStatus, cloudArchiveStatus, reviewableIssueCount).canBackUpNow) {
                 Button(
                     onClick = onArchiveBackupNow,
+                    enabled = archiveRequest != ArchiveRequestState.Requesting,
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                ) { Text(stringResource(Res.string.backup_overview_now)) }
+                ) {
+                    val label =
+                        if (archiveRequest == ArchiveRequestState.Requesting) {
+                            Res.string.data_state_requesting_archive
+                        } else {
+                            Res.string.backup_overview_now
+                        }
+                    Text(stringResource(label))
+                }
             }
         }
     }

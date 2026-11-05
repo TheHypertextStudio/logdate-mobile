@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -72,7 +73,8 @@ actual fun rememberNotificationPermissionState(): NotificationPermissionState {
 }
 
 @Composable
-actual fun rememberHealthConnectPermissionState(): HealthConnectPermissionState {
+actual fun rememberHealthConnectPermissionState(onRequestResult: (Boolean) -> Unit): HealthConnectPermissionState {
+    val requestResult by rememberUpdatedState(onRequestResult)
     val context = LocalContext.current
     var hasPermission by remember { mutableStateOf(false) }
     var permissionRequested by remember { mutableStateOf(false) }
@@ -104,6 +106,7 @@ actual fun rememberHealthConnectPermissionState(): HealthConnectPermissionState 
             hasPermission = hasAllPermissions
             permissionRequested = true
             isRequestInFlight = false
+            requestResult(hasAllPermissions)
         }
 
     return HealthConnectPermissionState(

@@ -7,10 +7,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import io.github.aakira.napier.Napier
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.launch
 import platform.Contacts.CNContactStore
 import platform.Contacts.CNEntityType
 import platform.EventKit.EKEntityType
@@ -62,7 +65,9 @@ actual fun rememberNotificationPermissionState(): NotificationPermissionState {
 }
 
 @Composable
-actual fun rememberHealthConnectPermissionState(): HealthConnectPermissionState {
+actual fun rememberHealthConnectPermissionState(onRequestResult: (Boolean) -> Unit): HealthConnectPermissionState {
+    val requestResult by rememberUpdatedState(onRequestResult)
+    val scope = rememberCoroutineScope()
     val healthStore = remember { HKHealthStore() }
     val sleepType = remember { HKObjectType.categoryTypeForIdentifier(HKCategoryTypeIdentifierSleepAnalysis) }
     val healthAvailable = remember { HKHealthStore.isHealthDataAvailable() && sleepType != null }
@@ -90,6 +95,7 @@ actual fun rememberHealthConnectPermissionState(): HealthConnectPermissionState 
         requestPermission = {
             if (!healthAvailable || sleepType == null) {
                 permissionRequested = true
+                requestResult(false)
                 return@HealthConnectPermissionState
             }
             isRequestInFlight = true
@@ -100,9 +106,13 @@ actual fun rememberHealthConnectPermissionState(): HealthConnectPermissionState 
                 if (error != null) {
                     Napier.w("HealthKit authorization failed: ${error.localizedDescription}")
                 }
-                permissionRequested = true
-                isRequestInFlight = false
-                refreshNonce += 1
+                scope.launch {
+                    permissionRequested = true
+                    isRequestInFlight = false
+                    hasPermission = healthStore.authorizationStatusForType(sleepType) == HKAuthorizationStatusSharingAuthorized
+                    requestResult(hasPermission)
+                    refreshNonce += 1
+                }
             }
         },
         refreshPermissionState = {

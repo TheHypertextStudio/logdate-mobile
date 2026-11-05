@@ -4,9 +4,9 @@ package app.logdate.feature.core.settings.ui.watch
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.watch.WatchNotificationSettings
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
@@ -28,7 +28,7 @@ fun WatchNotificationSettingsScreen(
     viewModel: WatchSettingsViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val notificationSettings by viewModel.notificationSettings.collectAsState()
+    val notificationSettings by viewModel.notificationSettings.collectAsStateWithLifecycle()
 
     WatchNotificationSettingsContent(
         settings = notificationSettings,

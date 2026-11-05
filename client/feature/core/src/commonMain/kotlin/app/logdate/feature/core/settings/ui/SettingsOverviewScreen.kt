@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.feature.core.settings.ui.watch.WatchDeviceCard
 import app.logdate.feature.core.settings.ui.watch.WatchSettingsViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
@@ -65,23 +65,23 @@ fun SettingsOverviewScreen(
     campfireViewModel: CampfireViewModel = koinViewModel(),
     placesBetaViewModel: PlacesBetaSettingsViewModel = koinViewModel(),
 ) {
-    val placesBetaState by placesBetaViewModel.state.collectAsState()
+    val placesBetaState by placesBetaViewModel.state.collectAsStateWithLifecycle()
     val flags = koinInject<FeatureFlagStore>()
-    val watchRedesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsState(false)
+    val watchRedesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
     val deviceCards: (@Composable () -> Unit)? =
         if (watchRedesign && onNavigateToWatch != null) {
             {
                 val watchViewModel = koinViewModel<WatchSettingsViewModel>()
-                val watchStatus by watchViewModel.status.collectAsState()
+                val watchStatus by watchViewModel.status.collectAsStateWithLifecycle()
                 WatchDeviceCard(watchStatus, onClick = onNavigateToWatch, modifier = Modifier.padding(Spacing.lg))
             }
         } else {
             null
         }
-    val identity by viewModel.resolvedIdentity.collectAsState()
-    val streakData by viewModel.streakData.collectAsState()
-    val campfire by campfireViewModel.presentation.collectAsState()
-    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsState()
+    val identity by viewModel.resolvedIdentity.collectAsStateWithLifecycle()
+    val streakData by viewModel.streakData.collectAsStateWithLifecycle()
+    val campfire by campfireViewModel.presentation.collectAsStateWithLifecycle()
+    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsStateWithLifecycle()
 
     SettingsOverviewContent(
         onBack = onBack,

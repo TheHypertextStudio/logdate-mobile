@@ -126,25 +126,38 @@
 
     <!-- Recovery phrase -->
     <string name="recovery_phrase_title">Recovery phrase</string>
-    <string name="recovery_phrase_verify_failed">Couldn’t record that you saved a copy. Show the phrase again to retry.</string>
-    <string name="recovery_phrase_write_down">Write them down in this order, or copy them into a password manager.</string>
-    <string name="recovery_phrase_saved_action">I’ve saved my recovery phrase</string>
-    <string name="recovery_phrase_verified">You’ve saved a copy of your recovery phrase.</string>
-    <string name="recovery_phrase_intro">Save a copy of these 12 words in case you lose every device you’re signed in on. A new device can get your journal from one you already use, so you need them only if none is left. LogDate can’t see or recover them.</string>
+    <string name="recovery_phrase_about">How recovery works</string>
+    <string name="recovery_phrase_description">For restoring a journal backup when automatic recovery isn’t available.</string>
+    <string name="recovery_phrase_hidden">Hidden for privacy</string>
+    <string name="recovery_phrase_keep_private">Keep your recovery phrase private.</string>
+    <string name="recovery_phrase_help_title">Recovery on another device</string>
+    <string name="recovery_phrase_help_fallback">Use a recovery phrase if automatic recovery can’t open your backed-up journal on another device.</string>
+    <string name="recovery_phrase_backup_visual">Journal backup</string>
+    <string name="recovery_phrase_device_visual">Another device</string>
+    <string name="recovery_phrase_diagram_description">Journal backup to another device</string>
+    <string name="recovery_phrase_close_help">Close recovery help</string>
+    <string name="recovery_phrase_policy">Read recovery policy</string>
+    <string name="recovery_phrase_link_failed">Couldn’t open the page. Try again.</string>
     <string name="recovery_phrase_show">Show recovery phrase</string>
-    <string name="recovery_phrase_copy">Copy</string>
     <string name="recovery_phrase_hide">Hide</string>
+    <string name="recovery_phrase_copy">Copy phrase</string>
+    <string name="recovery_phrase_copying">Copying…</string>
+    <string name="recovery_phrase_copied">Copied</string>
+    <string name="recovery_phrase_copy_failed">Couldn’t copy the phrase. Try again.</string>
+    <string name="recovery_phrase_checking">Checking this device…</string>
+    <string name="recovery_phrase_confirming">Unlocking…</string>
     <string name="recovery_phrase_prompt_title">Show recovery phrase</string>
-    <string name="recovery_phrase_prompt_subtitle">Confirm it’s you to see your recovery phrase</string>
-    <string name="recovery_phrase_missing_title">This device doesn’t have your recovery phrase</string>
-    <string name="recovery_phrase_missing_body">Enter it to read journal entries synced from your other devices.</string>
+    <string name="recovery_phrase_prompt_subtitle">Unlock to view your recovery phrase</string>
+    <string name="recovery_phrase_missing_title">Phrase not stored here</string>
+    <string name="recovery_phrase_missing_body">Your recovery phrase may be on another device.</string>
     <string name="recovery_phrase_enter">Enter recovery phrase</string>
-    <string name="recovery_phrase_not_confirmed">Your recovery phrase stays hidden until you confirm it’s you.</string>
-    <string name="recovery_phrase_unreadable">This device couldn’t read your recovery phrase. Try again.</string>
+    <string name="recovery_phrase_retry">Try again</string>
+    <string name="recovery_phrase_unreadable">Couldn’t read the phrase on this device. Try again.</string>
+    <string name="recovery_phrase_auth_unavailable">Device authentication is unavailable. Try again when you can unlock this device.</string>
 
     <!-- Hosting -->
     <string name="hosting_title">Hosting</string>
-    <string name="hosting_intro">Your journal syncs to this server. Entries are encrypted on this device with your recovery phrase before they’re uploaded.</string>
+    <string name="hosting_intro">Your journal syncs to this server. Entries are encrypted on your device before they’re uploaded.</string>
     <string name="hosting_address">Address</string>
     <string name="hosting_status">Status</string>
     <string name="hosting_checking">Checking connection…</string>

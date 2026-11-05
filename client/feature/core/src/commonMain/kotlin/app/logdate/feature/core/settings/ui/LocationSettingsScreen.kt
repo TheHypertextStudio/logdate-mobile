@@ -16,33 +16,24 @@ import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.location.settings.LocationCaptureMode
 import app.logdate.client.location.settings.LocationTrackingSettings
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
-import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.location_background_tracking_description
-import logdate.client.feature.core.generated.resources.location_capture_mode
-import logdate.client.feature.core.generated.resources.location_capture_mode_active
-import logdate.client.feature.core.generated.resources.location_capture_mode_active_description
-import logdate.client.feature.core.generated.resources.location_capture_mode_passive
-import logdate.client.feature.core.generated.resources.location_capture_mode_passive_description
 import logdate.client.feature.core.generated.resources.location_data_privacy_note
 import logdate.client.feature.core.generated.resources.location_data_stored_on_device
 import logdate.client.feature.core.generated.resources.location_enable_background_tracking
@@ -75,16 +66,18 @@ fun LocationSettingsScreen(
     viewModel: LocationSettingsViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LocationSettingsContent(
-        settings = uiState.settings,
+        state = uiState,
         onBack = onBack,
         onToggleBackgroundTracking = viewModel::toggleBackgroundTracking,
         onSetCaptureMode = viewModel::setCaptureMode,
         onShowLocationTimeline = onShowLocationTimeline,
         onNavigateToTrackingOptions = onNavigateToTrackingOptions,
         onNavigateToInterval = onNavigateToInterval,
+        onRetry = viewModel::retry,
+        onReload = viewModel::reload,
         modifier = modifier,
     )
 }
@@ -100,6 +93,32 @@ fun LocationSettingsContent(
     onNavigateToInterval: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    LocationSettingsContent(
+        state = LocationSettingsState.Available(settings),
+        onBack = onBack,
+        onToggleBackgroundTracking = onToggleBackgroundTracking,
+        onSetCaptureMode = onSetCaptureMode,
+        onShowLocationTimeline = onShowLocationTimeline,
+        onNavigateToTrackingOptions = onNavigateToTrackingOptions,
+        onNavigateToInterval = onNavigateToInterval,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun LocationSettingsContent(
+    state: LocationSettingsState,
+    onBack: () -> Unit,
+    onToggleBackgroundTracking: (Boolean) -> Unit,
+    onSetCaptureMode: (LocationCaptureMode) -> Unit,
+    onShowLocationTimeline: () -> Unit,
+    onNavigateToTrackingOptions: () -> Unit,
+    onNavigateToInterval: () -> Unit,
+    modifier: Modifier = Modifier,
+    onRetry: (LocationSetting) -> Unit = {},
+    onReload: () -> Unit = {},
+) {
+    val settings = (state as? LocationSettingsState.Available)?.settings
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
         minPaneWidth = 320.dp,
@@ -116,11 +135,16 @@ fun LocationSettingsContent(
                     title = stringResource(Res.string.location_services),
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 ) {
-                    ToggleSettingsItem(
+                    LocationReadFeedback(state, onReload)
+                    LocationToggleSetting(
                         title = stringResource(Res.string.location_enable_background_tracking),
                         description = stringResource(Res.string.location_background_tracking_description),
-                        checked = settings.backgroundTrackingEnabled,
+                        state = state,
+                        setting = LocationSetting.BACKGROUND_TRACKING,
+                        value = { it.backgroundTrackingEnabled },
                         onCheckedChange = onToggleBackgroundTracking,
+                        onRetry = onRetry,
+                        onReload = onReload,
                     )
 
                     SettingsNavigationItem(
@@ -130,11 +154,13 @@ fun LocationSettingsContent(
                     )
                 }
 
-                if (settings.backgroundTrackingEnabled) {
+                if (settings?.backgroundTrackingEnabled == true) {
                     CaptureModeSelector(
                         currentMode = settings.captureMode,
                         onModeSelected = onSetCaptureMode,
                         modifier = Modifier.padding(horizontal = Spacing.lg),
+                        state = state,
+                        onRetry = onRetry,
                     )
                 }
             }
@@ -148,7 +174,7 @@ fun LocationSettingsContent(
                         .padding(vertical = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             ) {
-                if (settings.backgroundTrackingEnabled && settings.captureMode == LocationCaptureMode.PASSIVE) {
+                if (settings?.backgroundTrackingEnabled == true && settings.captureMode == LocationCaptureMode.PASSIVE) {
                     SettingsSection(
                         title = "",
                         modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -221,11 +247,16 @@ fun LocationSettingsContent(
                         title = stringResource(Res.string.location_services),
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     ) {
-                        ToggleSettingsItem(
+                        LocationReadFeedback(state, onReload)
+                        LocationToggleSetting(
                             title = stringResource(Res.string.location_enable_background_tracking),
                             description = stringResource(Res.string.location_background_tracking_description),
-                            checked = settings.backgroundTrackingEnabled,
+                            state = state,
+                            setting = LocationSetting.BACKGROUND_TRACKING,
+                            value = { it.backgroundTrackingEnabled },
                             onCheckedChange = onToggleBackgroundTracking,
+                            onRetry = onRetry,
+                            onReload = onReload,
                         )
 
                         SettingsNavigationItem(
@@ -236,12 +267,14 @@ fun LocationSettingsContent(
                     }
                 }
 
-                if (settings.backgroundTrackingEnabled) {
+                if (settings?.backgroundTrackingEnabled == true) {
                     item {
                         CaptureModeSelector(
                             currentMode = settings.captureMode,
                             onModeSelected = onSetCaptureMode,
                             modifier = Modifier.padding(horizontal = Spacing.lg),
+                            state = state,
+                            onRetry = onRetry,
                         )
                     }
 
@@ -317,52 +350,6 @@ fun LocationSettingsContent(
     )
 }
 
-@Composable
-private fun CaptureModeSelector(
-    currentMode: LocationCaptureMode,
-    onModeSelected: (LocationCaptureMode) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-    ) {
-        Text(
-            text = stringResource(Res.string.location_capture_mode),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = Spacing.sm),
-        )
-
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SegmentedButton(
-                selected = currentMode == LocationCaptureMode.PASSIVE,
-                onClick = { onModeSelected(LocationCaptureMode.PASSIVE) },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-            ) {
-                Text(stringResource(Res.string.location_capture_mode_passive))
-            }
-
-            SegmentedButton(
-                selected = currentMode == LocationCaptureMode.ACTIVE,
-                onClick = { onModeSelected(LocationCaptureMode.ACTIVE) },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-            ) {
-                Text(stringResource(Res.string.location_capture_mode_active))
-            }
-        }
-
-        Text(
-            text =
-                if (currentMode == LocationCaptureMode.ACTIVE) {
-                    stringResource(Res.string.location_capture_mode_active_description)
-                } else {
-                    stringResource(Res.string.location_capture_mode_passive_description)
-                },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
 
 @Composable
 private fun LocationSettingsNotes() {

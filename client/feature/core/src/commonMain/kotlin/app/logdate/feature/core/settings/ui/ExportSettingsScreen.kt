@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.feature.core.export.ExportBottomSheet
 import app.logdate.feature.core.export.ExportOptions
 import app.logdate.feature.core.export.ExportState
@@ -33,10 +33,10 @@ fun ExportSettingsScreen(
     exportViewModel: UserDataExportViewModel = koinViewModel(),
     restoreViewModel: UserDataRestoreViewModel = koinViewModel(),
 ) {
-    val exportState by exportViewModel.exportState.collectAsState()
-    val isExportSheetVisible by exportViewModel.isSheetVisible.collectAsState()
-    val restoreState by restoreViewModel.restoreState.collectAsState()
-    val isRestoreSheetVisible by restoreViewModel.isSheetVisible.collectAsState()
+    val exportState by exportViewModel.exportState.collectAsStateWithLifecycle()
+    val isExportSheetVisible by exportViewModel.isSheetVisible.collectAsStateWithLifecycle()
+    val restoreState by restoreViewModel.restoreState.collectAsStateWithLifecycle()
+    val isRestoreSheetVisible by restoreViewModel.isSheetVisible.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     ExportSettingsContent(

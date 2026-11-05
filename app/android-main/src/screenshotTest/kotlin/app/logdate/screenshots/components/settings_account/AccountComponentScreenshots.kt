@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:function-naming", "ktlint:standard:package-name")
+
 package app.logdate.screenshots.components.settings_account
 
 import androidx.compose.runtime.Composable
@@ -17,6 +19,7 @@ import app.logdate.feature.core.settings.account.delete.DeleteAccountContent
 import app.logdate.feature.core.settings.account.delete.DeleteAccountUiState
 import app.logdate.feature.core.settings.account.hosting.HostingContent
 import app.logdate.feature.core.settings.account.hosting.HostingUiState
+import app.logdate.feature.core.settings.account.recovery.PhraseRevealState
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseContent
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseUiState
 import app.logdate.feature.core.settings.account.signin.LinkedProviderRow
@@ -112,21 +115,24 @@ fun RecoveryPhrase_Revealed() {
     ScreenshotTheme {
         RecoveryPhraseContent(
             state =
-                RecoveryPhraseUiState.Revealed(
-                    listOf(
-                        "orbit",
-                        "canvas",
-                        "meadow",
-                        "lantern",
-                        "harbor",
-                        "velvet",
-                        "summit",
-                        "pepper",
-                        "gravel",
-                        "whisper",
-                        "copper",
-                        "tundra",
-                    ),
+                RecoveryPhraseUiState.Available(
+                    reveal =
+                        PhraseRevealState.Revealed(
+                            listOf(
+                                "orbit",
+                                "canvas",
+                                "meadow",
+                                "lantern",
+                                "harbor",
+                                "velvet",
+                                "summit",
+                                "pepper",
+                                "gravel",
+                                "whisper",
+                                "copper",
+                                "tundra",
+                            ),
+                        ),
                 ),
             onBack = {},
             onReveal = {},

@@ -1,3 +1,6 @@
+// Preserve the screenshot matrix's stable scene and golden identifiers.
+@file:Suppress("ktlint:standard:filename", "ktlint:standard:package-name", "ktlint:standard:function-naming")
+
 package app.logdate.screenshots.flows.flow07_settings_account
 
 import androidx.compose.runtime.Composable
@@ -7,6 +10,7 @@ import app.logdate.feature.core.settings.ui.devices.DeviceApprovalContent
 import app.logdate.feature.core.settings.ui.devices.DeviceApprovalFailure
 import app.logdate.feature.core.settings.ui.devices.DeviceApprovalUiState
 import app.logdate.feature.core.settings.ui.devices.DeviceInfoUiState
+import app.logdate.feature.core.settings.ui.devices.DeviceListAvailability
 import app.logdate.feature.core.settings.ui.devices.DevicesScreenContent
 import app.logdate.feature.core.settings.ui.devices.DevicesUiState
 import app.logdate.screenshots.common.ScreenshotPreviewMatrix
@@ -44,7 +48,7 @@ fun S01_DevicesLoading() {
     ScreenshotTheme {
         DevicesScreenContent(
             onBackClick = {},
-            uiState = DevicesUiState(isLoading = true),
+            uiState = DevicesUiState(availability = DeviceListAvailability.Loading),
         )
     }
 }
@@ -56,7 +60,7 @@ fun S02_DevicesPopulated() {
     ScreenshotTheme {
         DevicesScreenContent(
             onBackClick = {},
-            uiState = DevicesUiState(devices = devices),
+            uiState = DevicesUiState(availability = DeviceListAvailability.Available, devices = devices),
         )
     }
 }
@@ -68,7 +72,7 @@ fun S03_DevicesRenameDialog() {
     ScreenshotTheme {
         DevicesScreenContent(
             onBackClick = {},
-            uiState = DevicesUiState(devices = devices),
+            uiState = DevicesUiState(availability = DeviceListAvailability.Available, devices = devices),
             showRenameDialog = true,
             selectedDevice = devices.first(),
             newDeviceName = devices.first().name.asString(),
@@ -84,7 +88,7 @@ fun S04_DevicesRemoveDialog() {
     ScreenshotTheme {
         DevicesScreenContent(
             onBackClick = {},
-            uiState = DevicesUiState(devices = devices),
+            uiState = DevicesUiState(availability = DeviceListAvailability.Available, devices = devices),
             showDeleteDialog = true,
             selectedDevice = devices.last(),
         )
@@ -98,7 +102,7 @@ fun S05_DevicesResetDialog() {
     ScreenshotTheme {
         DevicesScreenContent(
             onBackClick = {},
-            uiState = DevicesUiState(devices = devices),
+            uiState = DevicesUiState(availability = DeviceListAvailability.Available, devices = devices),
             showResetDialog = true,
         )
     }
@@ -134,7 +138,7 @@ private fun ConnectionScene(state: DeviceApprovalUiState) {
     ScreenshotTheme {
         DevicesScreenContent(
             onBackClick = {},
-            uiState = DevicesUiState(devices = devices),
+            uiState = DevicesUiState(availability = DeviceListAvailability.Available, devices = devices),
             connectionAction = {
                 DeviceApprovalContent(state, onConnectClick = {}, onApprove = {}, onReject = {}, onDismiss = {})
             },

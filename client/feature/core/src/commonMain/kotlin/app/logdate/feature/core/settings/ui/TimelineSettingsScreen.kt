@@ -14,10 +14,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.MaterialContainer
@@ -46,14 +48,28 @@ fun TimelineSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: TimelineSettingsViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onScreenResumed() }
 
+    val values = uiState.preferences.values
+    if (values == null) {
+        DayScheduleReadContent(
+            title = stringResource(Res.string.timeline_settings),
+            state = uiState.preferences,
+            onBack = onBack,
+            onRetry = viewModel::retryPreferences,
+            modifier = modifier,
+        )
+        return
+    }
     TimelineSettingsContent(
         onBack = onBack,
         onNavigateToDayBoundary = onNavigateToDayBoundary,
-        sleepBasedBoundariesEnabled = uiState.dayBoundarySettings.sleepBasedBoundariesEnabled,
+        sleepBasedBoundariesEnabled = values.settings.sleepBasedBoundariesEnabled,
         healthConnectStatus = uiState.healthConnectStatus,
         modifier = modifier,
+        readState = uiState.preferences,
+        onRetryPreferences = viewModel::retryPreferences,
     )
 }
 
@@ -64,6 +80,8 @@ fun TimelineSettingsContent(
     sleepBasedBoundariesEnabled: Boolean,
     healthConnectStatus: HealthConnectStatus,
     modifier: Modifier = Modifier,
+    readState: DaySchedulePreferencesState? = null,
+    onRetryPreferences: () -> Unit = {},
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -101,6 +119,9 @@ fun TimelineSettingsContent(
                 MaterialContainer(
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 ) {
+                    Column(modifier = Modifier.padding(horizontal = Spacing.lg)) {
+                        DayScheduleReadFeedback(readState, onRetryPreferences)
+                    }
                     SettingsNavigationItem(
                         title = stringResource(Res.string.day_schedule),
                         description =
@@ -126,6 +147,9 @@ fun TimelineSettingsContent(
                     MaterialContainer(
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     ) {
+                        Column(modifier = Modifier.padding(horizontal = Spacing.lg)) {
+                            DayScheduleReadFeedback(readState, onRetryPreferences)
+                        }
                         SettingsNavigationItem(
                             title = stringResource(Res.string.day_schedule),
                             description =

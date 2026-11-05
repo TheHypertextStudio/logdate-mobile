@@ -107,6 +107,7 @@ kotlin {
             implementation(libs.napier)
         }
         commonTest.dependencies {
+            implementation(libs.ktor.client.mock)
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.androidx.datastore.preferences)

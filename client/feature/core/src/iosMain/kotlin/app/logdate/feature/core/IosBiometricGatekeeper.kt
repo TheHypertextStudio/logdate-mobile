@@ -37,6 +37,8 @@ import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthentication
 class IosBiometricGatekeeper : BiometricGatekeeper {
     private val _authState = MutableStateFlow(AppAuthState.NO_PROMPT_NEEDED)
 
+    private val challenges = AuthenticationChallengeOwner { completeAuthenticationChallenge(_authState, it) {} }
+
     override val authState: StateFlow<AppAuthState> = _authState.asStateFlow()
 
     /** Resolves the prompt's words from string resources before the prompt is shown. */
@@ -51,6 +53,7 @@ class IosBiometricGatekeeper : BiometricGatekeeper {
         description: UiText?,
         onResult: (AppAuthState) -> Unit,
     ) {
+        val complete = challenges.begin(onResult) ?: return
         val context = LAContext()
 
         val canEvaluate =
@@ -64,8 +67,7 @@ class IosBiometricGatekeeper : BiometricGatekeeper {
                         "LAContext cannot evaluate policy: code=${error?.code} domain=${error?.domain}",
                         tag = TAG,
                     )
-                    _authState.value = state
-                    onResult(state)
+                    complete(state)
                 }
                 ok
             }
@@ -85,8 +87,7 @@ class IosBiometricGatekeeper : BiometricGatekeeper {
                         )
                         mapLAError(error)
                     }
-                _authState.value = state
-                onResult(state)
+                complete(state)
             }
         }
     }
@@ -107,8 +108,8 @@ class IosBiometricGatekeeper : BiometricGatekeeper {
             LAErrorAppCancel,
             LAErrorSystemCancel,
             LAErrorUserFallback,
-            LAErrorAuthenticationFailed,
             -> AppAuthState.REQUIRE_PROMPT
+            LAErrorAuthenticationFailed -> AppAuthState.UNKNOWN
             else -> AppAuthState.UNKNOWN
         }
 

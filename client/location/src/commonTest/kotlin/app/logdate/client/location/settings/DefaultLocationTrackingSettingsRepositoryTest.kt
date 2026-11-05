@@ -23,6 +23,34 @@ import kotlin.test.assertTrue
  */
 class DefaultLocationTrackingSettingsRepositoryTest {
     @Test
+    fun `journal tracking changes preserve an interval changed during the save`() =
+        runTest {
+            val storage = InMemoryKeyValueStorage()
+            val repository = DefaultLocationTrackingSettingsRepository(storage)
+            storage.beforeBooleanWrite = { repository.setTrackingInterval(5) }
+
+            repository.setJournalTrackingEnabled(false)
+
+            assertEquals(5, repository.getSettings().minimumPersistIntervalMinutes)
+            assertFalse(repository.getSettings().autoTrackForJournalEntries)
+            assertTrue(repository.getSettings().autoTrackForTimelineReview)
+        }
+
+    @Test
+    fun `timeline tracking changes preserve a capture mode changed during the save`() =
+        runTest {
+            val storage = InMemoryKeyValueStorage()
+            val repository = DefaultLocationTrackingSettingsRepository(storage)
+            storage.beforeBooleanWrite = { repository.setCaptureMode(LocationCaptureMode.ACTIVE) }
+
+            repository.setTimelineTrackingEnabled(false)
+
+            assertEquals(LocationCaptureMode.ACTIVE, repository.getSettings().captureMode)
+            assertTrue(repository.getSettings().autoTrackForJournalEntries)
+            assertFalse(repository.getSettings().autoTrackForTimelineReview)
+        }
+
+    @Test
     fun `getSettings clamps interval and falls back on unknown capture mode`() =
         runTest {
             val storage = InMemoryKeyValueStorage()
@@ -138,6 +166,7 @@ class DefaultLocationTrackingSettingsRepositoryTest {
 }
 
 private class InMemoryKeyValueStorage : KeyValueStorage {
+    var beforeBooleanWrite: suspend () -> Unit = {}
     private val values = mutableMapOf<String, Any?>()
     private val state = MutableStateFlow<Map<String, Any?>>(emptyMap())
 
@@ -160,6 +189,7 @@ private class InMemoryKeyValueStorage : KeyValueStorage {
         key: String,
         value: Boolean,
     ) {
+        beforeBooleanWrite()
         values[key] = value
         state.value = values.toMap()
     }

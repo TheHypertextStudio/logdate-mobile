@@ -12,33 +12,41 @@ import app.logdate.client.repository.account.NotSignedInException
 import app.logdate.client.repository.account.PasskeyAccountRepository
 import app.logdate.shared.model.PasskeyInfo
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Instant
 
 /** What the sign-in methods screen shows. */
 sealed interface SignInMethodsUiState {
     data object Loading : SignInMethodsUiState
 
+    data object NotLoaded : SignInMethodsUiState
+
     data class Loaded(
         val passkeys: List<PasskeyRow>,
         val linkedProviders: List<LinkedProviderRow>,
         /** Whether this device can create a passkey. Where it can't, the action is not shown. */
         val canAddPasskey: Boolean,
-        val isAddingPasskey: Boolean = false,
-        val removingCredentialId: String? = null,
-    ) : SignInMethodsUiState
+        val add: AddPasskeyState = AddPasskeyState.Idle,
+        val removal: PasskeyRemovalState = PasskeyRemovalState.Idle,
+        val refresh: SignInMethodsRefreshState = SignInMethodsRefreshState.Idle,
+    ) : SignInMethodsUiState {
+        val isAddingPasskey: Boolean get() = add == AddPasskeyState.Running
+        val removingCredentialId: String? get() = (removal as? PasskeyRemovalState.Running)?.credentialId
+        val isBusy: Boolean get() =
+            isAddingPasskey ||
+                removal is PasskeyRemovalState.Running ||
+                refresh == SignInMethodsRefreshState.Running
+    }
 
     data class Failed(
         val reason: SignInMethodsLoadError,
@@ -89,22 +97,51 @@ enum class RemovePasskeyFailure {
     SERVER,
 }
 
-/** Results announced once, as a snackbar, rather than kept in state. */
+sealed interface AddPasskeyState {
+    data object Idle : AddPasskeyState
+
+    data object Running : AddPasskeyState
+
+    data class Failed(
+        val reason: AddPasskeyFailure,
+    ) : AddPasskeyState
+}
+
+sealed interface PasskeyRemovalState {
+    data object Idle : PasskeyRemovalState
+
+    data class Running(
+        val credentialId: String,
+    ) : PasskeyRemovalState
+
+    data class Failed(
+        val credentialId: String,
+        val reason: RemovePasskeyFailure,
+    ) : PasskeyRemovalState
+}
+
+sealed interface SignInMethodsRefreshState {
+    data object Idle : SignInMethodsRefreshState
+
+    data object Running : SignInMethodsRefreshState
+
+    data class Failed(
+        val reason: SignInMethodsLoadError,
+    ) : SignInMethodsRefreshState
+}
+
 sealed interface SignInMethodsEvent {
     data class PasskeyAdded(
         val deviceName: String?,
     ) : SignInMethodsEvent
 
     data object PasskeyRemoved : SignInMethodsEvent
-
-    data class AddPasskeyFailed(
-        val reason: AddPasskeyFailure,
-    ) : SignInMethodsEvent
-
-    data class RemovePasskeyFailed(
-        val reason: RemovePasskeyFailure,
-    ) : SignInMethodsEvent
 }
+
+data class SignInMethodsNotice(
+    val id: Long,
+    val event: SignInMethodsEvent,
+)
 
 /**
  * Lists the ways a person can sign in to their account and lets them add or remove passkeys.
@@ -126,116 +163,203 @@ class SignInMethodsViewModel(
     private val _state = MutableStateFlow<SignInMethodsUiState>(SignInMethodsUiState.Loading)
     val state: StateFlow<SignInMethodsUiState> = _state.asStateFlow()
 
-    private val _events = Channel<SignInMethodsEvent>(Channel.BUFFERED)
-    val events: Flow<SignInMethodsEvent> = _events.receiveAsFlow()
-
-    private var loadJob: Job? = null
+    private val _notices = MutableStateFlow<List<SignInMethodsNotice>>(emptyList())
+    val notices: StateFlow<List<SignInMethodsNotice>> = _notices.asStateFlow()
+    private var nextNoticeId = 0L
+    private var working = false
 
     init {
         refresh()
     }
 
-    /** Reloads the list. A reload already under way is left to finish. */
+    fun acknowledgeNotice(id: Long) {
+        _notices.update { notices -> notices.filterNot { it.id == id } }
+    }
+
     fun refresh() {
-        if (loadJob?.isActive == true) return
-        loadJob =
-            viewModelScope.launch {
-                if (_state.value !is SignInMethodsUiState.Loaded) {
-                    _state.value = SignInMethodsUiState.Loading
-                }
-                _state.value = load()
-            }
+        if (working) return
+        working = true
+        markRefreshing()
+        work { loadAndApply() }
     }
 
     fun addPasskey() {
         val loaded = _state.value as? SignInMethodsUiState.Loaded ?: return
-        if (loaded.isAddingPasskey || !loaded.canAddPasskey) return
-        _state.value = loaded.copy(isAddingPasskey = true)
-
-        viewModelScope.launch {
-            accountRepository
-                .addPasskey()
-                .onSuccess { passkey ->
-                    _events.send(SignInMethodsEvent.PasskeyAdded(passkey.displayName()))
-                }.onFailure { error ->
-                    addPasskeyFailure(error)?.let { _events.send(SignInMethodsEvent.AddPasskeyFailed(it)) }
-                }
-            _state.value = load().withAddingPasskey(false)
+        if (working || !loaded.canAddPasskey) return
+        working = true
+        _state.value = loaded.copy(add = AddPasskeyState.Running)
+        work {
+            val result = request { accountRepository.addPasskey() }
+            result.fold(
+                onSuccess = { passkey ->
+                    updateLoaded {
+                        val rows =
+                            (it.passkeys.filterNot { row -> row.credentialId == passkey.credentialId } + passkey.toRow(false))
+                                .sortedBy { row -> row.addedOn }
+                        it.copy(passkeys = removableRows(rows, it.linkedProviders), add = AddPasskeyState.Idle)
+                    }
+                    notice(SignInMethodsEvent.PasskeyAdded(passkey.displayName()))
+                    markRefreshing()
+                    loadAndApply()
+                },
+                onFailure = { failure ->
+                    if (failure is NotSignedInException) {
+                        _state.value = SignInMethodsUiState.Failed(SignInMethodsLoadError.NOT_SIGNED_IN)
+                    } else {
+                        val reason = addPasskeyFailure(failure)
+                        updateLoaded { it.copy(add = reason?.let { reason -> AddPasskeyState.Failed(reason) } ?: AddPasskeyState.Idle) }
+                    }
+                },
+            )
         }
     }
 
     fun removePasskey(credentialId: String) {
         val loaded = _state.value as? SignInMethodsUiState.Loaded ?: return
-        if (loaded.removingCredentialId != null) return
-        _state.value = loaded.copy(removingCredentialId = credentialId)
-
-        viewModelScope.launch {
-            accountRepository
-                .deletePasskey(credentialId)
-                .onSuccess { _events.send(SignInMethodsEvent.PasskeyRemoved) }
-                .onFailure { error ->
-                    Napier.w("Failed to remove passkey", error)
-                    _events.send(SignInMethodsEvent.RemovePasskeyFailed(removePasskeyFailure(error)))
-                }
-            _state.value = load()
+        if (working) return
+        val row = loaded.passkeys.firstOrNull { it.credentialId == credentialId } ?: return
+        if (!row.canRemove) {
+            _state.value = loaded.copy(removal = PasskeyRemovalState.Failed(credentialId, RemovePasskeyFailure.LAST_SIGN_IN_METHOD))
+            return
+        }
+        working = true
+        _state.value = loaded.copy(removal = PasskeyRemovalState.Running(credentialId))
+        work {
+            val result = request { accountRepository.deletePasskey(credentialId) }
+            result.fold(
+                onSuccess = {
+                    updateLoaded {
+                        val rows = it.passkeys.filterNot { row -> row.credentialId == credentialId }
+                        it.copy(passkeys = removableRows(rows, it.linkedProviders), removal = PasskeyRemovalState.Idle)
+                    }
+                    notice(SignInMethodsEvent.PasskeyRemoved)
+                    markRefreshing()
+                    loadAndApply()
+                },
+                onFailure = { failure ->
+                    if (failure is NotSignedInException) {
+                        _state.value = SignInMethodsUiState.Failed(SignInMethodsLoadError.NOT_SIGNED_IN)
+                    } else {
+                        Napier.w("Failed to remove passkey", failure)
+                        updateLoaded { it.copy(removal = PasskeyRemovalState.Failed(credentialId, removePasskeyFailure(failure))) }
+                    }
+                },
+            )
         }
     }
 
-    private suspend fun load(): SignInMethodsUiState {
-        val (passkeysResult, providersResult) =
-            coroutineScope {
-                val passkeys = async { accountRepository.listPasskeys() }
-                val providers = async { accountRepository.listLinkedSignInProviders() }
-                passkeys.await() to providers.await()
-            }
-
-        val passkeys = passkeysResult.getOrElse { return failedToLoad(it) }
-        // Passkeys are the main thing here; a server that can't list linked accounts shouldn't hide them.
-        val providers =
-            providersResult
-                .onFailure { Napier.w("Could not load linked sign-in providers", it) }
-                .getOrDefault(emptyList())
-        val platformSupportsPasskeys =
-            runCatching { passkeyManager.getCapabilities().isSupported }
-                .onFailure { Napier.w("Could not read this device's passkey support", it) }
-                .getOrDefault(false)
-        val canAddPasskey = platformSupportsPasskeys && connectedRpId()?.let(passkeysWorkWith) != false
-
-        val signInMethodCount = passkeys.size + providers.size
-        return SignInMethodsUiState.Loaded(
-            passkeys =
-                passkeys
-                    .sortedBy { it.createdAt }
-                    .map { passkey ->
-                        PasskeyRow(
-                            credentialId = passkey.credentialId,
-                            deviceName = passkey.displayName(),
-                            addedOn = passkey.createdAt.toLocalDate(),
-                            lastUsedOn = passkey.lastUsedAt?.toLocalDate(),
-                            canRemove = signInMethodCount > 1,
-                        )
-                    },
-            linkedProviders =
-                providers.map { provider ->
-                    LinkedProviderRow(
-                        kind = provider.kind,
-                        email = provider.email,
-                        lastSignInOn = provider.lastSignInAt?.toLocalDate(),
+    private fun work(block: suspend () -> Unit) {
+        working = true
+        viewModelScope.launch {
+            try {
+                block()
+            } finally {
+                updateLoaded {
+                    it.copy(
+                        add = if (it.add == AddPasskeyState.Running) AddPasskeyState.Idle else it.add,
+                        removal = if (it.removal is PasskeyRemovalState.Running) PasskeyRemovalState.Idle else it.removal,
+                        refresh = if (it.refresh == SignInMethodsRefreshState.Running) SignInMethodsRefreshState.Idle else it.refresh,
                     )
-                },
-            canAddPasskey = canAddPasskey,
-        )
+                }
+                if (_state.value == SignInMethodsUiState.Loading) _state.value = SignInMethodsUiState.NotLoaded
+                working = false
+            }
+        }
     }
+
+    private fun markRefreshing() {
+        val previous = _state.value as? SignInMethodsUiState.Loaded
+        _state.value = previous?.copy(refresh = SignInMethodsRefreshState.Running) ?: SignInMethodsUiState.Loading
+    }
+
+    private fun updateLoaded(transform: (SignInMethodsUiState.Loaded) -> SignInMethodsUiState.Loaded) {
+        _state.update { if (it is SignInMethodsUiState.Loaded) transform(it) else it }
+    }
+
+    private fun notice(event: SignInMethodsEvent) {
+        val notice = SignInMethodsNotice(++nextNoticeId, event)
+        _notices.update { it + notice }
+    }
+
+    private suspend fun loadAndApply() {
+        val previous = _state.value as? SignInMethodsUiState.Loaded
+        val result = load(previous)
+        _state.value =
+            when {
+                result is SignInMethodsUiState.Failed && previous != null && result.reason != SignInMethodsLoadError.NOT_SIGNED_IN ->
+                    previous.copy(refresh = SignInMethodsRefreshState.Failed(result.reason))
+                result is SignInMethodsUiState.Loaded && previous != null -> result.copy(add = previous.add, removal = previous.removal)
+                else -> result
+            }
+    }
+
+    private suspend fun load(previous: SignInMethodsUiState.Loaded?): SignInMethodsUiState {
+        try {
+            val (passkeysResult, providersResult) =
+                coroutineScope {
+                    val passkeys = async { request { accountRepository.listPasskeys() } }
+                    val providers = async { request { accountRepository.listLinkedSignInProviders() } }
+                    passkeys.await() to providers.await()
+                }
+            val passkeys = passkeysResult.getOrElse { return failedToLoad(it) }
+            val providersFailure = providersResult.exceptionOrNull()
+            if (providersFailure is NotSignedInException) return failedToLoad(providersFailure)
+            val providers =
+                providersResult.fold(
+                    onSuccess = { values -> values.map { LinkedProviderRow(it.kind, it.email, it.lastSignInAt?.toLocalDate()) } },
+                    onFailure = {
+                        Napier.w("Could not load linked sign-in providers", it)
+                        previous?.linkedProviders.orEmpty()
+                    },
+                )
+            val supported =
+                try {
+                    passkeyManager.getCapabilities().isSupported
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (failure: Exception) {
+                    Napier.w("Could not read this device's passkey support", failure)
+                    previous?.canAddPasskey ?: false
+                }
+            return SignInMethodsUiState.Loaded(
+                passkeys = removableRows(passkeys.sortedBy { it.createdAt }.map { it.toRow(false) }, providers),
+                linkedProviders = providers,
+                canAddPasskey = supported && connectedRpId()?.let(passkeysWorkWith) != false,
+                refresh = providersFailure?.let { SignInMethodsRefreshState.Failed(loadFailure(it)) } ?: SignInMethodsRefreshState.Idle,
+            )
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            return failedToLoad(failure)
+        }
+    }
+
+    private suspend fun <T> request(block: suspend () -> Result<T>): Result<T> =
+        try {
+            block().also { result -> result.exceptionOrNull()?.let { if (it is CancellationException) throw it } }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            Result.failure(failure)
+        }
+
+    private fun removableRows(
+        rows: List<PasskeyRow>,
+        providers: List<LinkedProviderRow>,
+    ): List<PasskeyRow> = rows.map { it.copy(canRemove = rows.size + providers.size > 1) }
+
+    private fun PasskeyInfo.toRow(canRemove: Boolean) =
+        PasskeyRow(
+            credentialId = credentialId,
+            deviceName = displayName(),
+            addedOn = createdAt.toLocalDate(),
+            lastUsedOn = lastUsedAt?.toLocalDate(),
+            canRemove = canRemove,
+        )
 
     private fun failedToLoad(error: Throwable): SignInMethodsUiState.Failed {
         Napier.w("Failed to load sign-in methods", error)
-        val reason =
-            when {
-                error is NotSignedInException -> SignInMethodsLoadError.NOT_SIGNED_IN
-                error.isNetworkError() -> SignInMethodsLoadError.OFFLINE
-                else -> SignInMethodsLoadError.SERVER
-            }
-        return SignInMethodsUiState.Failed(reason)
+        return SignInMethodsUiState.Failed(loadFailure(error))
     }
 
     private fun PasskeyInfo.displayName(): String? = nickname?.trim()?.takeIf { it.isNotEmpty() && it != defaultPasskeyName() }
@@ -243,8 +367,12 @@ class SignInMethodsViewModel(
     private fun Instant.toLocalDate(): LocalDate = toLocalDateTime(timeZone).date
 }
 
-private fun SignInMethodsUiState.withAddingPasskey(adding: Boolean): SignInMethodsUiState =
-    if (this is SignInMethodsUiState.Loaded) copy(isAddingPasskey = adding) else this
+private fun loadFailure(error: Throwable): SignInMethodsLoadError =
+    when {
+        error is NotSignedInException -> SignInMethodsLoadError.NOT_SIGNED_IN
+        error.isNetworkError() -> SignInMethodsLoadError.OFFLINE
+        else -> SignInMethodsLoadError.SERVER
+    }
 
 /** Maps an add-passkey failure to what the person is told, or `null` when they cancelled. */
 private fun addPasskeyFailure(error: Throwable): AddPasskeyFailure? {

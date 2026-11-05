@@ -16,6 +16,8 @@
     <string name="lock_screen_setup_security_subtitle">Set up device security to keep your journal private on this device.</string>
     <string name="lock_screen_retry_unlock">Try unlocking again</string>
     <string name="lock_screen_retry_unlock_subtitle">Your journal stays locked until device security can verify it’s you.</string>
+    <string name="lock_screen_verifying">Verifying…</string>
+    <string name="lock_screen_verification_failed">Couldn’t verify it’s you. Try again.</string>
 
     <!-- App updates -->
     <string name="update_ready_restart_to_finish_installing">Update ready. Restart LogDate to finish installing.</string>

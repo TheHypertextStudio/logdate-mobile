@@ -13,6 +13,7 @@ import app.logdate.client.location.di.locationSettingsModule
 import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.repository.account.PasskeyAccountRepository
 import app.logdate.client.repository.account.PasskeyConfirmations
+import app.logdate.client.sync.diagnostics.DiagnosticReportingController
 import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.feature.core.NoOpBiometricGatekeeper
@@ -47,6 +48,7 @@ import app.logdate.feature.core.settings.account.recovery.accountRecoveryOffered
 import app.logdate.feature.core.settings.account.recovery.passkeysSupported
 import app.logdate.feature.core.settings.account.signin.SignInMethodsViewModel
 import app.logdate.feature.core.settings.ui.AdvancedSettingsViewModel
+import app.logdate.feature.core.settings.ui.AutomaticDiagnosticReportingViewModel
 import app.logdate.feature.core.settings.ui.DangerZoneSettingsViewModel
 import app.logdate.feature.core.settings.ui.DataSettingsViewModel
 import app.logdate.feature.core.settings.ui.DayBoundarySettingsViewModel
@@ -135,8 +137,6 @@ actual val coreFeatureModule: Module =
             RecoveryPhraseViewModel(
                 gatekeeper = get(),
                 loadPhrase = { get<IdentityKeyManager>().getStoredRecoveryPhrase()?.words },
-                confirmPhrase = { get<IdentityKeyManager>().verifyRecoveryPhrase(it) },
-                isPhraseVerified = { get<IdentityKeyManager>().isRecoveryPhraseVerified() },
                 recovery = get(),
             )
         }
@@ -189,6 +189,7 @@ actual val coreFeatureModule: Module =
         }
         single<DiagnosticArchiveExporter> { DesktopDiagnosticArchiveExporter() }
         viewModel { LocalDiagnosticsViewModel(get(), get(), get()) }
+        viewModel { AutomaticDiagnosticReportingViewModel(get<DiagnosticReportingController>()) }
         viewModel {
             SignInMethodsViewModel(
                 accountRepository = get(),

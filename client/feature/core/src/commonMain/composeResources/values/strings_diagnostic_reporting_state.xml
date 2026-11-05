@@ -1,0 +1,14 @@
+<resources>
+    <string name="diagnostic_state_check">Check reporting settings</string>
+    <string name="diagnostic_state_loading">Checking reporting settings…</string>
+    <string name="diagnostic_state_read_failed">Couldn’t check reporting settings. Try again.</string>
+    <string name="diagnostic_state_toggle_preparing">Preparing reporting consent…</string>
+    <string name="diagnostic_state_toggle_saving">Saving reporting preference…</string>
+    <string name="diagnostic_state_toggle_prepare_failed">Couldn’t prepare reporting consent. Try again.</string>
+    <string name="diagnostic_state_enable_failed">Automatic reports couldn’t be enabled. Try again.</string>
+    <string name="diagnostic_state_disable_failed">Automatic reports couldn’t be turned off. Try again.</string>
+    <string name="diagnostic_state_delete_preparing">Preparing report deletion…</string>
+    <string name="diagnostic_state_deleting">Deleting uploaded reports…</string>
+    <string name="diagnostic_state_delete_prepare_failed">Couldn’t prepare report deletion. Try again.</string>
+    <string name="diagnostic_state_delete_failed">Uploaded reports couldn’t be deleted. Try again.</string>
+</resources>

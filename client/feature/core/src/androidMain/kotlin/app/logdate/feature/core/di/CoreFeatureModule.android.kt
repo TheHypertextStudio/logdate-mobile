@@ -20,6 +20,7 @@ import app.logdate.client.location.di.locationSettingsModule
 import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.repository.account.PasskeyAccountRepository
 import app.logdate.client.repository.account.PasskeyConfirmations
+import app.logdate.client.sync.diagnostics.DiagnosticReportingController
 import app.logdate.feature.core.AndroidBiometricGatekeeper
 import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.BiometricGatekeeper
@@ -27,7 +28,6 @@ import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
 import app.logdate.feature.core.export.AndroidExportLauncher
 import app.logdate.feature.core.export.AndroidMediaSourceOpener
 import app.logdate.feature.core.export.CloudArchiveCipher
-import app.logdate.feature.core.export.CloudBackupScheduler
 import app.logdate.feature.core.export.ExportLauncher
 import app.logdate.feature.core.export.ExportWorker
 import app.logdate.feature.core.export.UserDataExportViewModel
@@ -66,6 +66,7 @@ import app.logdate.feature.core.settings.account.signin.SignInMethodsViewModel
 import app.logdate.feature.core.settings.ui.AdvancedSettingsViewModel
 import app.logdate.feature.core.settings.ui.AndroidCloudArchiveStatusSource
 import app.logdate.feature.core.settings.ui.AndroidDiagnosticArchiveExporter
+import app.logdate.feature.core.settings.ui.AutomaticDiagnosticReportingViewModel
 import app.logdate.feature.core.settings.ui.CloudArchiveStatusSource
 import app.logdate.feature.core.settings.ui.DangerZoneSettingsViewModel
 import app.logdate.feature.core.settings.ui.DataSettingsViewModel
@@ -181,9 +182,6 @@ actual val coreFeatureModule: Module =
             RecoveryPhraseViewModel(
                 gatekeeper = get(),
                 loadPhrase = { get<IdentityKeyManager>().getStoredRecoveryPhrase()?.words },
-                confirmPhrase = { get<IdentityKeyManager>().verifyRecoveryPhrase(it) },
-                isPhraseVerified = { get<IdentityKeyManager>().isRecoveryPhraseVerified() },
-                onVerified = { get<CloudBackupScheduler>().enqueueImmediateBackup() },
                 recovery = get(),
             )
         }
@@ -236,6 +234,7 @@ actual val coreFeatureModule: Module =
         }
         single<DiagnosticArchiveExporter> { AndroidDiagnosticArchiveExporter(androidContext()) }
         viewModel { LocalDiagnosticsViewModel(get(), get(), get()) }
+        viewModel { AutomaticDiagnosticReportingViewModel(get<DiagnosticReportingController>()) }
         viewModel {
             SignInMethodsViewModel(
                 accountRepository = get(),

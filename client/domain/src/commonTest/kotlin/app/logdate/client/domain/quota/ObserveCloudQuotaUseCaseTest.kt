@@ -2,6 +2,7 @@ package app.logdate.client.domain.quota
 
 import app.logdate.shared.model.CloudObjectType
 import app.logdate.shared.model.CloudQuotaManager
+import app.logdate.shared.model.CloudQuotaSnapshot
 import app.logdate.shared.model.CloudStorageQuota
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.time.Instant
 
 /**
@@ -69,6 +71,16 @@ class ObserveCloudQuotaUseCaseTest {
 
         override suspend fun getLastServerSyncTime(): Instant? = null
     }
+
+    @Test
+    fun `a legacy quota manager cannot assert an account for its cached quota`() =
+        runTest {
+            val manager = MockCloudQuotaManager()
+            val snapshot = ObserveCloudQuotaUseCase(manager).observeSnapshots().toList().single()
+            assertIs<CloudQuotaSnapshot.Unavailable>(snapshot)
+            assertEquals(null, snapshot.accountId)
+            assertEquals(0, manager.getCurrentQuotaCalls)
+        }
 
     @Test
     fun `invoke should return flow of quota from quota manager`() =

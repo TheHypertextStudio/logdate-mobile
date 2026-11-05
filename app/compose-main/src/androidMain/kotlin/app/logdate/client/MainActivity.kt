@@ -229,6 +229,7 @@ class MainActivity : FragmentActivity() {
                         onPendingNavKeyConsumed = { pendingNavKey = null },
                         onCurrentNavKeyChanged = { currentNavKey = it },
                         onShowUnlockPrompt = viewModel::showNativeUnlockPrompt,
+                        onAutomaticUnlockPrompt = viewModel::showAutomaticUnlockPrompt,
                         onCloudSignIn = viewModel::requestCloudRestoreAfterSignIn,
                         onShareSearchResult = ::shareSearchResult,
                         updateController = playInAppUpdateController,
@@ -398,7 +399,7 @@ class MainActivity : FragmentActivity() {
         if (!bootstrapReady) return
         locationTrackingManager.onActivityPaused()
         if (!isChangingConfigurations) {
-            viewModel.onAppBackgrounded()
+            viewModel.onAppPaused()
         }
         if (activityProvider.currentActivity === this) {
             activityProvider.currentActivity = null

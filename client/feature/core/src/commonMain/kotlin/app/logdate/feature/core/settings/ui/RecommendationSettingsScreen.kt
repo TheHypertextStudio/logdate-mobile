@@ -16,7 +16,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.recommendation.AmbientPromptTime
 import app.logdate.client.domain.recommendation.MemoriesSettings
 import app.logdate.ui.adaptive.FoldableBookLayout
@@ -90,12 +90,12 @@ fun RecommendationSettingsScreen(
     onReminderFix: (ReminderSettingsFix) -> Unit = {},
 ) {
     val flags = koinInject<FeatureFlagStore>()
-    val remindersEnabled by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsState(false)
+    val remindersEnabled by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
     if (remindersEnabled) {
         ReminderSettingsScreen(onBack = onBack, onFix = onReminderFix)
         return
     }
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     RecommendationSettingsContent(
         settings = uiState.settings,

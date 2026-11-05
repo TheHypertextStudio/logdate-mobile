@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,12 +34,15 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.core.AppAuthState
+import app.logdate.feature.core.AppUnlockState
 import app.logdate.ui.adaptive.HingeAwareOverlay
 import app.logdate.ui.common.LocalPrivateModalVisible
 import app.logdate.ui.theme.Spacing
@@ -50,6 +54,8 @@ import logdate.app.composemain.generated.resources.lock_screen_setup_security
 import logdate.app.composemain.generated.resources.lock_screen_setup_security_subtitle
 import logdate.app.composemain.generated.resources.lock_screen_unlock_subtitle
 import logdate.app.composemain.generated.resources.lock_screen_use_passcode
+import logdate.app.composemain.generated.resources.lock_screen_verification_failed
+import logdate.app.composemain.generated.resources.lock_screen_verifying
 import logdate.app.composemain.generated.resources.lock_screen_welcome_back
 import logdate.app.composemain.generated.resources.lock_screen_welcome_back_no_name
 import org.jetbrains.compose.resources.painterResource
@@ -67,6 +73,7 @@ fun LockableContent(
     onUsePasscode: () -> Unit,
     modifier: Modifier = Modifier,
     authState: AppAuthState = AppAuthState.REQUIRE_PROMPT,
+    unlockState: AppUnlockState = AppUnlockState.Idle,
     content: @Composable () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
@@ -96,6 +103,7 @@ fun LockableContent(
                 displayName = displayName,
                 onUsePasscode = onUsePasscode,
                 authState = authState,
+                unlockState = unlockState,
             )
         }
     }
@@ -107,6 +115,7 @@ private fun LockScreen(
     displayName: String,
     onUsePasscode: () -> Unit,
     authState: AppAuthState,
+    unlockState: AppUnlockState,
     modifier: Modifier = Modifier,
 ) {
     val greeting =
@@ -173,8 +182,28 @@ private fun LockScreen(
                         textAlign = TextAlign.Center,
                     )
                     Spacer(Modifier.height(Spacing.xl))
-                    FilledTonalButton(onClick = onUsePasscode) {
-                        Text(stringResource(action), textAlign = TextAlign.Center)
+                    FilledTonalButton(
+                        onClick = onUsePasscode,
+                        enabled = unlockState != AppUnlockState.Authenticating,
+                    ) {
+                        if (unlockState == AppUnlockState.Authenticating) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(Modifier.size(Spacing.sm))
+                        }
+                        Text(
+                            stringResource(if (unlockState == AppUnlockState.Authenticating) Res.string.lock_screen_verifying else action),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    if (unlockState == AppUnlockState.Failed) {
+                        Spacer(Modifier.height(Spacing.sm))
+                        Text(
+                            text = stringResource(Res.string.lock_screen_verification_failed),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
                     }
                 }
             }

@@ -15,13 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.streak.StreakData
 import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.ui.adaptive.FoldableBookLayout
@@ -50,9 +50,9 @@ fun StreakSettingsScreen(
     viewModel: StreakSettingsViewModel = koinViewModel(),
     campfireViewModel: CampfireViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsState()
-    val campfire by campfireViewModel.presentation.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isCampfireEnabled by campfireViewModel.isCampfireEnabled.collectAsStateWithLifecycle()
+    val campfire by campfireViewModel.presentation.collectAsStateWithLifecycle()
 
     if (isCampfireEnabled == null) return
     if (isCampfireEnabled == true) {

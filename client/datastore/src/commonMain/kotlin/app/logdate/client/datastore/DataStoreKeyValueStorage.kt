@@ -23,7 +23,11 @@ import kotlinx.coroutines.flow.map
  */
 class DataStoreKeyValueStorage(
     private val dataStore: DataStore<Preferences>,
+    private val reportFailures: Boolean = false,
 ) : KeyValueStorage {
+    internal fun reportingFailures(): KeyValueStorage =
+        if (reportFailures) this else DataStoreKeyValueStorage(dataStore, reportFailures = true)
+
     override suspend fun getStringsOrThrow(keys: Set<String>): Map<String, String?> {
         val snapshot = dataStore.data.first()
         return keys.associateWith { snapshot[stringPreferencesKey(it)] }
@@ -75,6 +79,7 @@ class DataStoreKeyValueStorage(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            if (reportFailures) throw e
             Napier.e("Failed to get string for key: $key", e)
             null
         }
@@ -96,6 +101,7 @@ class DataStoreKeyValueStorage(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            if (reportFailures) throw e
             Napier.e("Failed to get boolean for key: $key", e)
             defaultValue
         }
@@ -117,6 +123,7 @@ class DataStoreKeyValueStorage(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            if (reportFailures) throw e
             Napier.e("Failed to get int for key: $key", e)
             defaultValue
         }
@@ -138,6 +145,7 @@ class DataStoreKeyValueStorage(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            if (reportFailures) throw e
             Napier.e("Failed to get long for key: $key", e)
             defaultValue
         }
@@ -159,6 +167,7 @@ class DataStoreKeyValueStorage(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            if (reportFailures) throw e
             Napier.e("Failed to get float for key: $key", e)
             defaultValue
         }
@@ -185,6 +194,7 @@ class DataStoreKeyValueStorage(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            if (reportFailures) throw e
             Napier.e("Failed to check if contains key: $key", e)
             false
         }
@@ -210,6 +220,7 @@ class DataStoreKeyValueStorage(
         val prefKey = stringPreferencesKey(key)
         return dataStore.data
             .catch { e ->
+                if (e is CancellationException || reportFailures) throw e
                 Napier.e("Error reading string for key: $key", e)
                 emit(emptyPreferences())
             }.map { preferences ->
@@ -224,6 +235,7 @@ class DataStoreKeyValueStorage(
         val prefKey = booleanPreferencesKey(key)
         return dataStore.data
             .catch { e ->
+                if (e is CancellationException || reportFailures) throw e
                 Napier.e("Error reading boolean for key: $key", e)
                 emit(emptyPreferences())
             }.map { preferences ->
@@ -238,6 +250,7 @@ class DataStoreKeyValueStorage(
         val prefKey = intPreferencesKey(key)
         return dataStore.data
             .catch { e ->
+                if (e is CancellationException || reportFailures) throw e
                 Napier.e("Error reading int for key: $key", e)
                 emit(emptyPreferences())
             }.map { preferences ->
@@ -252,6 +265,7 @@ class DataStoreKeyValueStorage(
         val prefKey = longPreferencesKey(key)
         return dataStore.data
             .catch { e ->
+                if (e is CancellationException || reportFailures) throw e
                 Napier.e("Error reading long for key: $key", e)
                 emit(emptyPreferences())
             }.map { preferences ->
@@ -266,6 +280,7 @@ class DataStoreKeyValueStorage(
         val prefKey = floatPreferencesKey(key)
         return dataStore.data
             .catch { e ->
+                if (e is CancellationException || reportFailures) throw e
                 Napier.e("Error reading float for key: $key", e)
                 emit(emptyPreferences())
             }.map { preferences ->

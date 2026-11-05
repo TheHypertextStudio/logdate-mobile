@@ -2,6 +2,8 @@ package app.logdate.client.device.identity.data
 
 import app.logdate.client.datastore.OriginBoundSession
 import app.logdate.client.datastore.SessionStorage
+import app.logdate.client.device.identity.DeviceListObservation
+import app.logdate.client.device.identity.DeviceListScope
 import app.logdate.client.device.identity.DeviceRepository
 import app.logdate.client.device.models.DeviceInfo
 import app.logdate.client.device.models.DevicePlatform
@@ -15,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -49,17 +52,30 @@ class CloudDeviceRepository(
     }
 
     override fun getAssociatedDevices(): Flow<List<DeviceInfo>> =
+        observeAssociatedDevices().mapNotNull { observation ->
+            when (observation) {
+                is DeviceListObservation.Scoped -> null
+                is DeviceListObservation.Refreshing -> observation.cachedDevices.orEmpty()
+                is DeviceListObservation.Available -> observation.devices
+                is DeviceListObservation.Failed -> observation.cachedDevices.orEmpty()
+            }
+        }
+
+    override fun observeAssociatedDevices(): Flow<DeviceListObservation> =
         sessions.getSessionFlow().flatMapLatest {
             flow {
                 val session = sessions.getOriginBoundSession()
                 if (session == null) {
-                    emit(emptyList())
+                    emit(DeviceListObservation.Available(scope = null, devices = emptyList()))
                     return@flow
                 }
+                val scope = DeviceListScope(session.origin, session.session.accountId)
+                // Retire the previous account before reading its replacement's cache or network.
+                emit(DeviceListObservation.Scoped(scope))
                 val key = cacheKey(session)
                 var lastKnown = cache.getString(key)?.let { runCatching { json.decodeFromString<List<RegisteredDevice>>(it) }.getOrNull() }
                 if (sessions.getOriginBoundSession() != session) return@flow
-                emit(lastKnown?.map { it.toInfo() } ?: emptyList())
+                emit(DeviceListObservation.Refreshing(scope, lastKnown?.map { it.toInfo() }))
                 while (currentCoroutineContext().isActive && sessions.getOriginBoundSession() == session) {
                     try {
                         registrationMutex.withLock { sendPendingRegistration(session) }
@@ -77,12 +93,13 @@ class CloudDeviceRepository(
                         if (sessions.getOriginBoundSession() != session) return@flow
                         cache.putString(key, json.encodeToString(devices))
                         lastKnown = devices
-                        emit(devices.map { it.toInfo() })
+                        emit(DeviceListObservation.Available(scope, devices.map { it.toInfo() }))
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (failure: Exception) {
                         Napier.w("Couldn't refresh the account device list", failure)
-                        if (lastKnown == null) emit(emptyList())
+                        if (sessions.getOriginBoundSession() != session) return@flow
+                        emit(DeviceListObservation.Failed(scope, lastKnown?.map { it.toInfo() }))
                     }
                     delay(5_000)
                 }
@@ -127,11 +144,17 @@ class CloudDeviceRepository(
     private suspend fun sendPendingRegistration(session: OriginBoundSession): Boolean {
         val key = "${cacheKey(session)}-pending"
         val encoded = cache.getString(key) ?: return true
-        if (sessions.getOriginBoundSession() != session) return false
+        if (!ownsScope(session)) return false
         val pending = json.decodeFromString<PendingRegistration>(encoded)
         val accepted = api.register(session, Uuid.parse(pending.id), pending.request)
-        if (accepted && sessions.getOriginBoundSession() == session) cache.remove(key)
-        return accepted
+        if (!ownsScope(session)) return false
+        if (accepted) cache.remove(key)
+        return accepted && ownsScope(session)
+    }
+
+    private fun ownsScope(captured: OriginBoundSession): Boolean {
+        val current = sessions.getOriginBoundSession() ?: return false
+        return current.origin == captured.origin && current.session.accountId == captured.session.accountId
     }
 
     @Serializable

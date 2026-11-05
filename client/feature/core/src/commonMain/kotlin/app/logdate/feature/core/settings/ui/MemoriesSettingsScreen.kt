@@ -13,11 +13,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.logdate.client.datastore.EntryStartMode
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.recommendation.RecallMode
 import app.logdate.client.domain.recommendation.WidgetContentType
 import app.logdate.ui.adaptive.FoldableBookLayout
@@ -63,8 +63,8 @@ fun MemoriesSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: MemoriesSettingsViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val captureModeState by viewModel.captureModeState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val captureModeState by viewModel.captureModeState.collectAsStateWithLifecycle()
 
     MemoriesSettingsContent(
         onBack = onBack,

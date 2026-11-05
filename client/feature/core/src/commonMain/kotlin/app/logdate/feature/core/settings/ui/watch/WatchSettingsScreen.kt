@@ -16,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,6 +27,7 @@ import app.logdate.client.domain.watch.SharedPreferenceKey
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPage
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPreferencesViewModel
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionSections
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold
@@ -61,10 +61,10 @@ fun WatchSettingsScreen(
     onNavigateToConnectionCheck: () -> Unit = onNavigateToTroubleshooting,
 ) {
     val flags = koinInject<FeatureFlagStore>()
-    val redesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsState(false)
-    val status by viewModel.status.collectAsState()
-    val requestFailure by viewModel.requestFailure.collectAsState()
-    val installRequestSent by viewModel.installRequestSent.collectAsState()
+    val redesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
+    val status by viewModel.status.collectAsStateWithLifecycle()
+    val requestFailure by viewModel.requestFailure.collectAsStateWithLifecycle()
+    val installRequestSent by viewModel.installRequestSent.collectAsStateWithLifecycle()
 
     if (redesign) {
         WatchCompanionPage(
@@ -108,9 +108,9 @@ private fun WatchCompanionSettings(
     captureActions: @Composable () -> Unit = {},
     viewModel: WatchCompanionPreferencesViewModel = koinViewModel(),
 ) {
-    val state by viewModel.state.collectAsState()
-    val saving by viewModel.saving.collectAsState()
-    val saveFailed by viewModel.saveFailed.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val saving by viewModel.saving.collectAsStateWithLifecycle()
+    val saveFailed by viewModel.saveFailed.collectAsStateWithLifecycle()
     WatchCompanionSections(
         state = state,
         saving = saving,

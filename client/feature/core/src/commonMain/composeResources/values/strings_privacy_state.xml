@@ -1,0 +1,15 @@
+<resources>
+    <string name="privacy_auth_title">Enable biometric lock</string>
+    <string name="privacy_auth_subtitle">Authenticate to turn on biometric lock</string>
+    <string name="privacy_auth_description">LogDate will require biometrics or your device passcode to unlock.</string>
+    <string name="privacy_preference_loading">Loading setting…</string>
+    <string name="privacy_preference_refreshing">Refreshing setting…</string>
+    <string name="privacy_preference_read_failed">Couldn’t load this setting. Try again.</string>
+    <string name="privacy_preference_saving">Saving change…</string>
+    <string name="privacy_preference_save_failed">Couldn’t save this change. Try again.</string>
+    <string name="privacy_authenticating">Waiting for device authentication…</string>
+    <string name="privacy_auth_failed">Couldn’t verify your identity. Try again.</string>
+    <string name="privacy_auth_unavailable">Device authentication isn’t available. Check your device security settings, then try again.</string>
+    <string name="privacy_enrollment_required">Set up biometrics or a screen lock in your device settings, then try again.</string>
+    <string name="privacy_security_update_required">Update your device security settings, then try again.</string>
+</resources>

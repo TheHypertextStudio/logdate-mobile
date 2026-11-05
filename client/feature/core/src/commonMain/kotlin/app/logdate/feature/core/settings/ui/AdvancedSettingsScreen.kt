@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.text.asString
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.feature.core.settings.updates.AppUpdateFlowType
 import app.logdate.feature.core.settings.updates.AppUpdateStatus
 import app.logdate.feature.core.settings.updates.AppUpdateUiState
@@ -63,9 +63,9 @@ fun AdvancedSettingsScreen(
     onNavigateToLabs: () -> Unit = {},
     viewModel: AdvancedSettingsViewModel = koinViewModel(),
 ) {
-    val appUpdateUiState by viewModel.appUpdateUiState.collectAsState()
-    val developerModeEnabled by viewModel.developerModeEnabled.collectAsState()
-    val developerModeSaveFailed by viewModel.developerModeSaveFailed.collectAsState()
+    val appUpdateUiState by viewModel.appUpdateUiState.collectAsStateWithLifecycle()
+    val developerModeEnabled by viewModel.developerModeEnabled.collectAsStateWithLifecycle()
+    val developerModeSaveFailed by viewModel.developerModeSaveFailed.collectAsStateWithLifecycle()
 
     AdvancedSettingsContent(
         onBack = onBack,

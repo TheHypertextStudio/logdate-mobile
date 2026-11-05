@@ -16,6 +16,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSOperationQueue
+import platform.UIKit.UIApplicationDidBecomeActiveNotification
 import platform.UIKit.UIApplicationDidEnterBackgroundNotification
 
 @Suppress("ktlint:standard:function-naming")
@@ -37,7 +38,15 @@ fun MainViewController() =
                     queue = NSOperationQueue.mainQueue,
                     usingBlock = { viewModel.onAppBackgrounded() },
                 )
+            val foregroundObserver =
+                NSNotificationCenter.defaultCenter.addObserverForName(
+                    name = UIApplicationDidBecomeActiveNotification,
+                    `object` = null,
+                    queue = NSOperationQueue.mainQueue,
+                    usingBlock = { viewModel.onAppForegrounded() },
+                )
             onDispose {
+                NSNotificationCenter.defaultCenter.removeObserver(foregroundObserver)
                 NSNotificationCenter.defaultCenter.removeObserver(observer)
             }
         }
@@ -46,5 +55,6 @@ fun MainViewController() =
         LogDateNavDisplay(
             appUiState = loadedState,
             onShowUnlockPrompt = viewModel::showNativeUnlockPrompt,
+            onAutomaticUnlockPrompt = viewModel::showAutomaticUnlockPrompt,
         )
     }

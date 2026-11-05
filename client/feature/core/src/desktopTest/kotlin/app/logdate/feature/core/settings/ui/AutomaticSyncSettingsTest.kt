@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -189,6 +191,53 @@ class AutomaticSyncSettingsTest {
             onNodeWithText("Sync using mobile data").performClick()
             assertEquals(1, requests)
             saveScreenshot("phone-wifi-mobile-data", onRoot().captureToImage())
+        }
+
+    @Test
+    fun archiveSchedulingDisablesOnlyItsRetryAction() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            setContent {
+                LogDateTheme(darkTheme = false) {
+                    SyncSettingsContent(
+                        onBack = {},
+                        syncStatus = SyncStatus(true, null, 0, false, false),
+                        cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.FAILED),
+                        isAuthenticated = true,
+                        archiveRequest = ArchiveRequestState.Requesting,
+                        onSyncNow = {},
+                        onNavigateToSignIn = {},
+                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
+                        isQuotaAvailable = true,
+                        snackbarHostState = SnackbarHostState(),
+                    )
+                }
+            }
+            onNodeWithText("Requesting backup…").assertIsNotEnabled()
+            onNodeWithText("Review sync issues").assertIsEnabled()
+            saveScreenshot("phone-archive-requesting", onRoot().captureToImage())
+        }
+
+    @Test
+    fun unknownAccountHasNoSignedOutActions() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            setContent {
+                LogDateTheme(darkTheme = false) {
+                    SyncSettingsContent(
+                        onBack = {},
+                        syncStatus = null,
+                        isAuthenticated = null,
+                        onSyncNow = {},
+                        onNavigateToSignIn = {},
+                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
+                        isQuotaAvailable = false,
+                        snackbarHostState = SnackbarHostState(),
+                    )
+                }
+            }
+            onNodeWithText("Checking your account…").assertExists()
+            onNodeWithText("Create Account").assertDoesNotExist()
+            onNodeWithText("Sign in").assertDoesNotExist()
+            saveScreenshot("phone-account-loading", onRoot().captureToImage())
         }
 
     private fun saveScreenshot(

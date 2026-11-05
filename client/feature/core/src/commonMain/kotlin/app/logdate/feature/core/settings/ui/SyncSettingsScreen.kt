@@ -5,10 +5,9 @@ package app.logdate.feature.core.settings.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,13 +25,6 @@ import app.logdate.ui.theme.Spacing
 import kotlinx.coroutines.launch
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.sync_and_backup
-import logdate.client.feature.core.generated.resources.sync_feedback_failed
-import logdate.client.feature.core.generated.resources.sync_feedback_needs_account
-import logdate.client.feature.core.generated.resources.sync_feedback_sign_in_action
-import logdate.client.feature.core.generated.resources.sync_feedback_started
-import logdate.client.feature.core.generated.resources.sync_feedback_succeeded
-import logdate.client.feature.core.generated.resources.sync_feedback_up_to_date
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -57,70 +49,17 @@ fun SyncSettingsScreen(
     journalStorage: JournalStorageMove = koinInject(),
     appUpdates: AppUpdateController = koinInject(),
 ) {
-    val appUpdateState by appUpdates.uiState.collectAsState()
-    val mergeIssues by remember(mergeJournals) { mergeJournals.observeIssues() }.collectAsState(emptyList())
-    val journalMove by journalStorage.state.collectAsState()
+    val appUpdateState by appUpdates.uiState.collectAsStateWithLifecycle()
+    val mergeIssues by remember(mergeJournals) { mergeJournals.observeIssues() }.collectAsStateWithLifecycle(emptyList())
+    val journalMove by journalStorage.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     LaunchedEffect(journalStorage) { journalStorage.refresh() }
-    val uiState by viewModel.uiState.collectAsState()
-    val reviewableIssueCount by viewModel.reviewableIssueCount.collectAsState()
-    val nativeBackupStatus by viewModel.nativeBackupStatus.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val reviewableIssueCount by viewModel.reviewableIssueCount.collectAsStateWithLifecycle()
+    val nativeBackupStatus by viewModel.nativeBackupStatus.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // This screen owns the Sync Now the user actually reaches from Settings, so it reports the
-    // outcome the same way Data & Storage does. Both share DataSettingsViewModel.
-    val syncFeedback by viewModel.syncFeedback.collectAsState()
-    val needsAccountMessage = stringResource(Res.string.sync_feedback_needs_account)
-    val signInActionLabel = stringResource(Res.string.sync_feedback_sign_in_action)
-    val upToDateMessage = stringResource(Res.string.sync_feedback_up_to_date)
-    LaunchedEffect(syncFeedback) {
-        val feedback = syncFeedback ?: return@LaunchedEffect
-        when (feedback) {
-            is SyncFeedback.NeedsAccount -> {
-                val action = snackbarHostState.showSnackbar(needsAccountMessage, signInActionLabel)
-                if (action == SnackbarResult.ActionPerformed) {
-                    onNavigateToSignIn()
-                }
-            }
-
-            is SyncFeedback.Succeeded -> {
-                val moved = feedback.uploadedItems + feedback.downloadedItems
-                snackbarHostState.showSnackbar(
-                    if (moved == 0) {
-                        upToDateMessage
-                    } else {
-                        getString(
-                            Res.string.sync_feedback_succeeded,
-                            feedback.uploadedItems,
-                            feedback.downloadedItems,
-                        )
-                    },
-                )
-            }
-
-            SyncFeedback.Started ->
-                snackbarHostState.showSnackbar(getString(Res.string.sync_feedback_started))
-
-            is SyncFeedback.Failed ->
-                snackbarHostState.showSnackbar(
-                    getString(Res.string.sync_feedback_failed, getString(feedback.message)),
-                )
-        }
-        viewModel.consumeSyncFeedback()
-    }
-
-    // The session flow starts at null meaning "not read yet", and stateIn's seed used to call
-    // that signed out - so the screen opened on Create Account for someone already signed in and
-    // syncing, then corrected itself a frame later. Hold the screen until the answer is known.
-    val isAuthenticated = uiState.isAuthenticated
-    if (isAuthenticated == null) {
-        SettingsScaffold(
-            title = stringResource(Res.string.sync_and_backup),
-            onBack = onBack,
-            snackbarHostState = snackbarHostState,
-        ) {}
-        return
-    }
+    SyncFeedbackEffect(viewModel, snackbarHostState, onNavigateToSignIn)
 
     SyncSettingsContent(
         onBack = onBack,
@@ -142,7 +81,11 @@ fun SyncSettingsScreen(
         nativeBackupStatus = nativeBackupStatus,
         onExportArchive = onNavigateToExport,
         onRetryNativeRecovery = viewModel::retryNativeRecovery,
-        isAuthenticated = isAuthenticated,
+        isAuthenticated = uiState.isAuthenticated,
+        accountLoadFailed = uiState.accountLoadFailed,
+        onRetryAccount = viewModel::observeAccount,
+        syncRequest = uiState.syncRequest,
+        archiveRequest = uiState.archiveRequest,
         onSyncNow = { viewModel.syncNow() },
         onSyncUsingMobileData = { viewModel.syncNow(allowMeteredMedia = true) },
         onArchiveBackupNow = viewModel::backupArchiveNow,
@@ -163,7 +106,11 @@ fun SyncSettingsContent(
     nativeBackupStatus: NativeBackupStatus = NativeBackupStatus.Unsupported,
     onExportArchive: () -> Unit = {},
     onRetryNativeRecovery: () -> Unit = {},
-    isAuthenticated: Boolean,
+    isAuthenticated: Boolean?,
+    accountLoadFailed: Boolean = false,
+    onRetryAccount: () -> Unit = {},
+    syncRequest: SyncRequestState = SyncRequestState.Idle,
+    archiveRequest: ArchiveRequestState = ArchiveRequestState.Idle,
     onSyncNow: () -> Unit,
     onSyncUsingMobileData: () -> Unit = {},
     onArchiveBackupNow: () -> Unit = {},
@@ -190,13 +137,17 @@ fun SyncSettingsContent(
         modifier = modifier,
     ) {
         item {
-            BackupCloudSection(
+            SyncSettingsSection(
                 isAuthenticated = isAuthenticated,
+                accountLoadFailed = accountLoadFailed,
+                onRetryAccount = onRetryAccount,
+                syncRequest = syncRequest,
+                archiveRequest = archiveRequest,
                 syncStatus = syncStatus,
                 cloudArchiveStatus = cloudArchiveStatus,
                 onSyncUsingMobileData = onSyncUsingMobileData,
-                onCreateAccount = onNavigateToCloudAccountCreation,
-                onSignIn = onNavigateToSignIn,
+                onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
+                onNavigateToSignIn = onNavigateToSignIn,
                 onEnterRecoveryPhrase = onNavigateToRecoveryPhrase,
                 modifier = Modifier.padding(horizontal = Spacing.lg),
                 onUpdateApp = onUpdateApp,
@@ -204,7 +155,7 @@ fun SyncSettingsContent(
                 reviewableIssueCount = reviewableIssueCount,
             )
         }
-        if (isAuthenticated && backupOverviewState(syncStatus, cloudArchiveStatus, reviewableIssueCount).hasDetails) {
+        if (isAuthenticated == true && backupOverviewState(syncStatus, cloudArchiveStatus, reviewableIssueCount).hasDetails) {
             item {
                 BackupDetailsSection(
                     syncStatus = syncStatus,
@@ -215,7 +166,7 @@ fun SyncSettingsContent(
                 )
             }
         }
-        if (isAuthenticated && journalMove != JournalMoveState.NotOffered) {
+        if (isAuthenticated == true && journalMove != JournalMoveState.NotOffered) {
             item {
                 JournalStorageSection(
                     state = journalMove,
@@ -239,7 +190,7 @@ fun SyncSettingsContent(
         item {
             BackupArchiveItem(onExportArchive, Modifier.padding(horizontal = Spacing.lg))
         }
-        if (isAuthenticated) {
+        if (isAuthenticated == true) {
             items(mergeIssues, key = { it.operationId }) { operation ->
                 JournalMergeRecoveryItem(operation) { onRecoverJournalMerge(operation) }
             }

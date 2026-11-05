@@ -29,6 +29,7 @@ import app.logdate.feature.core.settings.account.hosting.HostingContent
 import app.logdate.feature.core.settings.account.hosting.HostingUiState
 import app.logdate.feature.core.settings.account.recovery.AccountRecoveryUiState
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseContent
+import app.logdate.feature.core.settings.account.recovery.PhraseRevealState
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseUiState
 import app.logdate.feature.core.settings.account.signin.LinkedProviderRow
 import app.logdate.feature.core.settings.account.signin.PasskeyRow
@@ -112,20 +113,22 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
         sharedScene(SharedScreenshotSceneId.RecoveryPhrase, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
             RecoveryPhraseContent(
                 state =
-                    RecoveryPhraseUiState.Revealed(
-                        listOf(
-                            "orbit",
-                            "canvas",
-                            "meadow",
-                            "lantern",
-                            "harbor",
-                            "velvet",
-                            "summit",
-                            "pepper",
-                            "gravel",
-                            "whisper",
-                            "copper",
-                            "tundra",
+                    RecoveryPhraseUiState.Available(
+                        PhraseRevealState.Revealed(
+                            listOf(
+                                "orbit",
+                                "canvas",
+                                "meadow",
+                                "lantern",
+                                "harbor",
+                                "velvet",
+                                "summit",
+                                "pepper",
+                                "gravel",
+                                "whisper",
+                                "copper",
+                                "tundra",
+                            ),
                         ),
                     ),
                 onBack = {},
@@ -144,7 +147,7 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
                 ),
         ) {
             RecoveryPhraseContent(
-                state = RecoveryPhraseUiState.Verified,
+                state = RecoveryPhraseUiState.Available(),
                 onBack = {},
                 onReveal = {},
                 onHide = {},
@@ -154,7 +157,7 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
         },
         sharedScene(SharedScreenshotSceneId.RecoveryPhraseFinishSetup, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
             RecoveryPhraseContent(
-                state = RecoveryPhraseUiState.Verified,
+                state = RecoveryPhraseUiState.Available(),
                 onBack = {},
                 onReveal = {},
                 onHide = {},
