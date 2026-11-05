@@ -4,6 +4,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import app.logdate.feature.core.account.BlueskySignInScreen
 import app.logdate.feature.core.account.CloudAccountOnboardingScreen
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
 import app.logdate.feature.core.account.OnboardingStep
@@ -32,7 +33,12 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
     onAccountCreated: () -> Unit,
     onSkipped: () -> Unit,
     onBack: () -> Unit,
+    onContinueWithBluesky: (() -> Unit)? = null,
+    onBlueskyAccountCreated: () -> Unit = onAccountCreated,
 ) {
+    taggedEntry<BlueskySignInRoute> { route ->
+        BlueskySignInScreen(route.attemptId, onBlueskyAccountCreated, onBack)
+    }
     taggedEntry<CloudAccountSetupRoute> { route ->
         val viewModel: CloudAccountOnboardingViewModel = koinViewModel()
         LaunchedEffect(route.startOnSignIn) {
@@ -45,6 +51,7 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
             onAccountCreated = onAccountCreated,
             onSkipOnboarding = onSkipped,
             onBack = onBack,
+            onContinueWithBluesky = onContinueWithBluesky,
         )
     }
 }
