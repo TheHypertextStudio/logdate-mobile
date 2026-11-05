@@ -425,13 +425,16 @@ def run(
     from . import repository
 
     workspace_failures = []
-    repository.workspace_checks(
-        repo,
-        repo,
-        lambda identifier, ok, problem: (
-            workspace_failures.append(identifier + ": " + problem) if not ok else None
-        ),
-    )
+    if repository.javascript_workspace(repo):
+        repository.workspace_checks(
+            repo,
+            repo,
+            lambda identifier, ok, problem: (
+                workspace_failures.append(identifier + ": " + problem)
+                if not ok
+                else None
+            ),
+        )
     if workspace_failures:
         raise ValueError(
             "Studio workspace conformance blocks verification: "

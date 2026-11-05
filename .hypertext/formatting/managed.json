@@ -1,18 +1,19 @@
 {
   "schema_version": 1,
   "files": {
-    ".hypertext/formatting/core/__init__.py": "3858bfb4a4fa531ea1269e6e42cce86f0b7bfaf351600a755afc159def4c85d3",
-    ".hypertext/formatting/core/gate.py": "172510d10dc9a4f6d8623eb25d92991dd032c72ef81f62634c2a0715cbef93e6",
-    ".hypertext/formatting/core/runner.py": "bdd2d79fa3e00cdf8375da0fe3092e3dba67ec2f8462a9611182ea346f64a167",
-    ".hypertext/formatting/core/setup_files.py": "fbe7525bdac4f3f8dabb5c3cc298386db9700a881d86d37e9a033ae59d115b53",
-    ".hypertext/formatting/core/formatting.py": "3f2fbabd12f2ee87679e4f4d6e8200dfec93cc3399c0d28cde9981ec058d8a81",
-    ".hypertext/formatting/core/git_policy.py": "87337a7465e95df1d4da345a5ab9bf8c3f7dccadc38f88a41aec24e0ec21780d",
-    ".hypertext/formatting/LOCK.json": "00a0305b8c184e6d093105b9e1805e5a5b2cf73a8f85e5f2187fb1b82a89e467",
+    ".hypertext/formatting/core/__init__.py": "f75ebdeda1fcaf7b046d31e7beed78933f20c43eea0856f80b78d4bd94bda49e",
+    ".hypertext/formatting/core/gate.py": "8ef91c5c444bbc78e594bba76900a731e87ca2ed1e0a65be072696915dee1123",
+    ".hypertext/formatting/core/runner.py": "c1e82c995777161acde85093896472867650ba17bd8fb57e44047d0dda057087",
+    ".hypertext/formatting/core/setup_files.py": "ee170d45cebbeb2961a78efba3e6f757b043c38e3ba876cdbce8d3161f2fac87",
+    ".hypertext/formatting/core/formatting.py": "c710f8b6acb8e302bf4d8c20e4883142e03b959ee19090c4aff6cb3867c0dc0e",
+    ".hypertext/formatting/core/git_policy.py": "b9a7074c31e00b1f6119efbc0a85ac9c818f57308c0a026929ce0e6567aee4b8",
+    ".hypertext/formatting/LOCK.json": "671566b4162875eaec8e85805ff1fc56842eee9d2937f2edb967366620901b0a",
     ".hypertext/formatting/commit.py": "5745312af7089246e44ac8a2fd537db9c9b69203753eebfc83d8d2ab2604f8b4",
     ".hypertext/formatting/install.py": "a67c1660c371f22a5befa5cf61c4b34f1cd37c477d6a9225ea3a34a272095df2",
-    ".hypertext/formatter-tools/setup.py": "f472125c6773982fe1dcae32293d49435a814cd0a950464eaf92127f23d03bbc",
+    ".hypertext/formatter-tools/setup.py": "2b681e562bd663ca1ce8a18e30efc5f669d07dfdae620e3aed6bd12b562722a3",
     ".hypertext/formatter-tools/run.py": "d6fbab2bab923d03d8fa904d9e35d54436e0ee36ba471708931cd6d409fe421e",
     ".hypertext/formatter-tools/prettier.mjs": "56ea416b45c56a09331009a3e1eecd261100d0262d3a8ae9ca134b502ddbe278",
+    ".hypertext/formatter-tools/preset.mjs": "fdc861d82477fd53be5323d5e7ae9ea70d49fbfcaf04c81ecc4a97bd57af2309",
     ".hypertext/formatter-tools/text.py": "0c0e7f27d6ec0b9e02ec330a7faa60f535f60fafb8a4eb5bf023af68acc6a149"
   }
 }

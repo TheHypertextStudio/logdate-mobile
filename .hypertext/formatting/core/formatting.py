@@ -30,6 +30,11 @@ CONFIG_NAMES = {
     "package.json",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
+    "libs.versions.toml",
+    "gradle.properties",
+    "Cargo.toml",
+    "rust-toolchain.toml",
+    "global.json",
 }
 
 
@@ -44,12 +49,14 @@ def configuration_file(name):
         and base
         in {
             "tools.json",
+            "preset.mjs",
             "native-rules.json",
             "native-addons-rules.json",
             "document-rules.json",
             "dsl-rules.json",
             "kotlin.editorconfig",
             "npm-lock.json",
+            "requirements.txt",
         }
     )
 
@@ -144,12 +151,18 @@ def format_staged(repo):
     environment.update(
         GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never", SSH_ASKPASS_REQUIRE="never"
     )
-    deadline = time.monotonic() + 120
+    started = time.monotonic()
+    budget = 120
+    deadline = started + budget
+
+    def time_left():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ValueError(f"Staged formatting exceeded its {budget}-second deadline")
+        return remaining
 
     def execute(argv, data=None, env=None, allowed=(0,), timeout=30):
-        remaining = min(timeout, deadline - time.monotonic())
-        if remaining <= 0:
-            raise ValueError("Staged formatting exceeded its 120-second deadline")
+        remaining = min(timeout, time_left())
         output = io.BytesIO()
         with tempfile.TemporaryFile() as source, tempfile.TemporaryFile() as errors:
             if data is not None:
@@ -298,6 +311,23 @@ def format_staged(repo):
         if read_file(policy_path) != policy_bytes:
             raise ValueError("Working and staged formatter policies differ: " + POLICY)
         policy = validate_policy(json.loads(policy_bytes, object_pairs_hook=unique))
+        staged_timeouts = [
+            rule.get("timeout_seconds", 30)
+            for name in paths
+            if not any(
+                fnmatch.fnmatchcase(name, pattern)
+                for excluded in policy["exclude"]
+                for pattern in excluded["include"]
+            )
+            for rule in policy["formatters"]
+            if any(fnmatch.fnmatchcase(name, pattern) for pattern in rule["include"])
+        ]
+        budget = (
+            120
+            if len(staged_timeouts) <= 10
+            else min(3600, max(120, 2 * sum(staged_timeouts)))
+        )
+        deadline = started + budget
         # Interpreter entrypoints are part of the selected formatter configuration.
         # Never execute unstaged edits to an authored repository adapter.
         adapter_inputs = set()
@@ -480,6 +510,7 @@ def format_staged(repo):
                 )
             changes.append((target, working, merged, name))
 
+        time_left()
         if pending_index is not None:
             pending, pending_bytes, pending_info, pending_candidate = pending_index
             current = pending.lstat()
@@ -495,11 +526,14 @@ def format_staged(repo):
                 "Index or working files changed during formatting; retry without discarding edits"
             )
         for target, old, new, name in changes:
+            time_left()
             if old is not None and old != new:
                 # Retain original bytes until the index transaction is published.
                 (temporary / ("backup-" + str(len(writes)))).write_bytes(old)
+                time_left()
                 writes.append((target, old, new))
                 target.write_bytes(new)
+                time_left()
         if read_file(index) != original_index:
             raise ValueError(
                 "Git index changed during formatting; preserving the concurrent index"
@@ -512,12 +546,15 @@ def format_staged(repo):
             fd = None
             output.write(candidate.read_bytes())
             output.flush()
+            time_left()
             os.fsync(output.fileno())
+            time_left()
         if not owns_lock():
             raise ValueError(
                 "Git index lock changed during formatting; retry the commit"
             )
         if pending_index is not None:
+            time_left()
             pending_fd = os.open(pending, os.O_RDWR | getattr(os, "O_NOFOLLOW", 0))
             with os.fdopen(pending_fd, "r+b") as output:
                 current = os.fstat(output.fileno())
@@ -529,11 +566,15 @@ def format_staged(repo):
                         "Git partial-commit index changed before publication"
                     )
                 pending_written = True
+                time_left()
                 output.seek(0)
                 output.write(pending_candidate.read_bytes())
                 output.truncate()
                 output.flush()
+                time_left()
                 os.fsync(output.fileno())
+                time_left()
+        time_left()
         os.replace(lock, index)
         published = True
         return [name for target, old, new, name in changes]
