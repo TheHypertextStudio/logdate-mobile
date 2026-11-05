@@ -113,6 +113,9 @@ data class AuthAccountView(
     val storageMode: AccountStorageMode,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val identityKind: AccountIdentityKind = AccountIdentityKind.HOSTED,
+    /** Canonical identity generation, including zero before the first adoption. */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val identityEpoch: Long = 0,
 )
 
 @Serializable

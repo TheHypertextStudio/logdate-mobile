@@ -3,11 +3,14 @@ package app.logdate.server.routes
 import app.logdate.lexicon.app.logdate.space.UploadBlobOutput
 import app.logdate.server.database.toJavaUUID
 import app.logdate.server.entitlements.EntitlementEnforcer
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import app.logdate.server.logdate.LogDateBlobNamespace
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateBlobStreamRequest
+import app.logdate.server.logdate.SpaceObjectUploads
 import app.logdate.server.routes.docs.XrpcSpaceDocs
 import app.logdate.server.space.SpaceBlob
+import app.logdate.server.space.SpaceBlobPurgingException
 import app.logdate.server.space.SpaceQuota
 import app.logdate.server.space.SpaceQuotaExceededException
 import app.logdate.server.space.SpaceStore
@@ -15,6 +18,7 @@ import app.logdate.server.space.SpaceUploadReservation
 import app.logdate.server.transfer.TransferSlots
 import app.logdate.space.BlobUploadReceipt
 import app.logdate.space.BlobUploadReceiptLookup
+import io.github.aakira.napier.Napier
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
 import io.ktor.http.HttpHeaders
@@ -42,6 +46,7 @@ internal class SpaceObjects(
     val store: SpaceStore,
     val storage: LogDateBlobStorage,
     val transfers: TransferSlots,
+    val uploads: SpaceObjectUploads = SpaceObjectUploads.Direct,
 )
 
 /**
@@ -57,44 +62,58 @@ internal fun Route.uploadBlob(
     maxBlobBytes: Long,
 ) {
     post("/app.logdate.space.uploadBlob", XrpcSpaceDocs.uploadBlob) {
-        val (account, objects) = gate.authorize(call, blobs) ?: return@post
-        if (!gate.writable(call, account)) return@post
-        val space = call.ownSpace(call.request.queryParameters["space"], account, BLOB_NOT_FOUND) ?: return@post
-        val declared =
-            call.request.headers[HttpHeaders.ContentLength]
-                ?.toLongOrNull()
-                ?.takeIf { it >= 0 }
-                ?: return@post call.respondLengthRequired()
-        val intent = call.request.headers["X-LogDate-Upload-Intent"]
-        if (intent != null && !isSpaceUploadIntent(intent)) return@post call.respondInvalid("Invalid upload identity")
-        if (intent != null) {
-            if (!gate.spend(call, account, SpaceBudget.READS)) return@post
-            objects.confirmedReceipt(space.uri, intent)?.let { stored ->
-                call.respond(stored.uploadOutput())
-                return@post
-            }
-        }
-        if (declared > maxBlobBytes) return@post call.respondBlobTooLarge(maxBlobBytes)
-        val slot = objects.transfers.tryStreamedUpload() ?: return@post call.respondServerBusy(objects.transfers.limits)
         try {
-            if (!gate.spend(call, account, SpaceBudget.BLOB_UPLOADS)) return@post
-            val ownerId = account.id.toJavaUUID()
-            val limit = quota?.spaceQuota(ownerId)
-            val reservation =
-                limit?.let {
-                    try {
-                        objects.store.reserveUpload(ownerId, declared, it)
-                    } catch (e: SpaceQuotaExceededException) {
-                        return@post call.respondSpaceQuotaExceeded(e)
+            val (account, objects) = gate.authorize(call, blobs) ?: return@post
+            if (!gate.writable(call, account)) return@post
+            val space = call.ownSpace(call.request.queryParameters["space"], account, BLOB_NOT_FOUND) ?: return@post
+            val declared =
+                call.request.headers[HttpHeaders.ContentLength]
+                    ?.toLongOrNull()
+                    ?.takeIf { it >= 0 }
+                    ?: return@post call.respondLengthRequired()
+            val intent = call.request.headers["X-LogDate-Upload-Intent"]
+            if (intent != null && !isSpaceUploadIntent(intent)) return@post call.respondInvalid("Invalid upload identity")
+            if (intent != null) {
+                if (!gate.spend(call, account, SpaceBudget.READS)) return@post
+                objects.confirmedReceipt(space.uri, intent)?.let { stored ->
+                    call.respond(stored.uploadOutput())
+                    return@post
+                }
+            }
+            if (declared > maxBlobBytes) return@post call.respondBlobTooLarge(maxBlobBytes)
+            val slot = objects.transfers.tryStreamedUpload() ?: return@post call.respondServerBusy(objects.transfers.limits)
+            try {
+                if (!gate.spend(call, account, SpaceBudget.BLOB_UPLOADS)) return@post
+                val ownerId = account.id.toJavaUUID()
+                val limit = quota?.spaceQuota(ownerId)
+                val reservation =
+                    limit?.let {
+                        try {
+                            objects.store.reserveUpload(ownerId, declared, it, account.identityEpoch)
+                        } catch (e: SpaceQuotaExceededException) {
+                            return@post call.respondSpaceQuotaExceeded(e)
+                        }
+                    }
+                try {
+                    call.receiveAndStoreBlob(objects, ownerId, account.identityEpoch, space.uri, declared, limit, reservation, intent)
+                } finally {
+                    reservation?.let { held ->
+                        withContext(NonCancellable) {
+                            try {
+                                objects.store.releaseUpload(held)
+                            } catch (_: IdentityWriteRefusedException) {
+                                Napier.w("Upload reservation retained for maintenance")
+                            }
+                        }
                     }
                 }
-            try {
-                call.receiveAndStoreBlob(objects, ownerId, space.uri, declared, limit, reservation, intent)
             } finally {
-                reservation?.let { withContext(NonCancellable) { objects.store.releaseUpload(it) } }
+                slot.release()
             }
-        } finally {
-            slot.release()
+        } catch (canceled: kotlinx.coroutines.CancellationException) {
+            throw canceled
+        } catch (failure: Exception) {
+            call.respondForBlobError(failure)
         }
     }
 }
@@ -108,6 +127,7 @@ internal fun Route.uploadBlob(
 private suspend fun ApplicationCall.receiveAndStoreBlob(
     objects: SpaceObjects,
     ownerId: UUID,
+    identityEpoch: Long,
     space: String,
     declared: Long,
     quota: SpaceQuota?,
@@ -116,19 +136,24 @@ private suspend fun ApplicationCall.receiveAndStoreBlob(
 ) {
     val idleTimeout = objects.transfers.limits.idleTimeout
     val request = LogDateBlobStreamRequest(ownerId, LogDateBlobNamespace.SPACE, Uuid.random().toString(), SPACE_BLOB_MIME_TYPE)
+    val upload = withContext(Dispatchers.IO) { objects.uploads.begin(ownerId, identityEpoch, space, objects.storage, request) }
     val writer = withContext(Dispatchers.IO) { objects.storage.openBlobWriter(request) }
+    check(upload == null || writer.storagePath == upload.path) { "The provider wrote an unexpected object path" }
     val received =
         try {
             streamSpaceBlob(writer, limit = declared, idleTimeout = idleTimeout)
                 ?.takeIf { it.size == declared }
                 .also { if (it != null) withContext(Dispatchers.IO) { writer.commit() } }
         } catch (error: Throwable) {
-            withContext(NonCancellable + Dispatchers.IO) { runCatching { writer.abort() }.exceptionOrNull()?.let(error::addSuppressed) }
+            withContext(NonCancellable + Dispatchers.IO) {
+                val cleanupFailure = runCatching { objects.uploads.discard(upload, writer, objects.storage) }.exceptionOrNull()
+                cleanupFailure?.let(error::addSuppressed)
+            }
             if (error is SpaceTransferStalledException) return respondUploadStalled()
             throw error
         }
     if (received == null) {
-        withContext(NonCancellable + Dispatchers.IO) { writer.abort() }
+        objects.uploads.discard(upload, writer, objects.storage)
         return respondInvalid("The body must be exactly as long as its Content-Length")
     }
     val path = writer.storagePath
@@ -136,15 +161,26 @@ private suspend fun ApplicationCall.receiveAndStoreBlob(
         SpaceBlob(cid = received.cid, mimeType = SPACE_BLOB_MIME_TYPE, size = received.size, storagePath = path, uploadIntent = intent)
     val stored =
         try {
-            objects.store.putBlob(ownerId, space, blob, quota, reservation)
+            objects.uploads.register(upload, objects.storage) {
+                if (upload == null) {
+                    objects.store.putBlob(ownerId, space, blob, quota, reservation, identityEpoch)
+                } else {
+                    objects.store.putAdmittedBlob(ownerId, space, blob, upload.id, quota, reservation, upload.origin.identityEpoch)
+                }
+            }
         } catch (error: Throwable) {
-            withContext(NonCancellable + Dispatchers.IO) {
-                objects.storage.deleteUnsavedUpload(objects.store, space, received.cid, path, error)
+            if (upload == null) {
+                withContext(NonCancellable + Dispatchers.IO) {
+                    objects.storage.deleteUnsavedUpload(objects.store, space, received.cid, path, error)
+                }
             }
             if (error is SpaceQuotaExceededException) return respondSpaceQuotaExceeded(error)
+            if (error is SpaceBlobPurgingException) {
+                return respondServerBusy(objects.transfers.limits, "This upload is temporarily unavailable.")
+            }
             throw error
         }
-    if (stored.storagePath != path) withContext(Dispatchers.IO) { objects.storage.deleteBlobIfExists(path) }
+    if (upload == null && stored.storagePath != path) withContext(Dispatchers.IO) { objects.storage.deleteBlobIfExists(path) }
     respond(stored.uploadOutput())
 }
 

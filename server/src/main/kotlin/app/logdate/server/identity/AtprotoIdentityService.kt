@@ -113,23 +113,24 @@ class AtprotoIdentityService(
             return writeIdentity(stored, normalized)
         }
 
+        if (stored.did != null) {
+            throw IdentityLifecycleConflictException("The existing identity needs metadata reconciliation")
+        }
         val handle = provisionedHandleFor(normalized)
-        val did =
+        val provisioned =
             when (config.hostedAccountDidMethod) {
                 HostedAccountDidMethod.PLC -> {
-                    val provisionedIdentity =
-                        plcIdentityService.provisionHostedDid(
-                            accountId = stored.id,
-                            handle = handle,
-                            recoveryDidKey = existingRecoveryDidKey,
-                        )
-                    provisionedIdentity.did
+                    val identity = plcIdentityService.provisionHostedDid(stored.id, handle, existingRecoveryDidKey)
+                    normalized.copy(did = identity.did, handle = identity.handle, signingKeyPublic = identity.publicKeyMultibase)
                 }
-                HostedAccountDidMethod.WEB -> didForHandle(handle).toString()
+                HostedAccountDidMethod.WEB ->
+                    normalized.copy(
+                        did = didForHandle(handle).toString(),
+                        handle = handle,
+                        signingKeyPublic = stored.signingKeyPublic ?: signingKeyService.ensureActiveKey(stored.id).publicKeyMultibase,
+                    )
             }
-        val signingKey = stored.signingKeyPublic ?: signingKeyService.ensureActiveKey(stored.id).publicKeyMultibase
-
-        return writeIdentity(stored, normalized.copy(did = did, handle = handle, signingKeyPublic = signingKey))
+        return writeIdentity(stored, provisioned)
     }
 
     /**
@@ -145,6 +146,14 @@ class AtprotoIdentityService(
         if (hasCompleteIdentity(current)) return current
         throw IdentityLifecycleConflictException("The account's identity changed while it was being provisioned")
     }
+
+    /** Rotation/import must not treat a different complete identity as their successful result. */
+    private suspend fun changeIdentity(
+        stored: Account,
+        updated: Account,
+    ): Account =
+        accountRepository.updateIdentityIfUnchanged(stored, updated)
+            ?: throw IdentityLifecycleConflictException("The account's identity changed during the key update")
 
     private fun hasCanonicalIdentity(account: Account): Boolean {
         val handle = account.handle ?: return false
@@ -232,7 +241,7 @@ class AtprotoIdentityService(
         return when {
             did.startsWith("did:web:") -> {
                 val activeKey = signingKeyService.rotateKey(ensured.id)
-                val updatedAccount = accountRepository.save(ensured.copy(signingKeyPublic = activeKey.publicKeyMultibase))
+                val updatedAccount = changeIdentity(ensured, ensured.copy(signingKeyPublic = activeKey.publicKeyMultibase))
                 RotatedIdentitySigningKey(
                     account = updatedAccount,
                     previousPublicKeyMultibase = previousPublicKey,
@@ -249,7 +258,7 @@ class AtprotoIdentityService(
                         recoveryDidKey = ensured.plcRecoveryDidKey,
                     )
                 val activeKey = signingKeyService.ensureActiveKey(ensured.id)
-                val updatedAccount = accountRepository.save(ensured.copy(signingKeyPublic = activeKey.publicKeyMultibase))
+                val updatedAccount = changeIdentity(ensured, ensured.copy(signingKeyPublic = activeKey.publicKeyMultibase))
                 RotatedIdentitySigningKey(
                     account = updatedAccount,
                     previousPublicKeyMultibase = rotated.previousPublicKeyMultibase,
@@ -314,7 +323,8 @@ class AtprotoIdentityService(
                 }
             }
         val updatedAccount =
-            accountRepository.save(
+            changeIdentity(
+                ensured,
                 ensured.copy(
                     did = currentDid,
                     handle = currentHandle,
@@ -411,7 +421,8 @@ class AtprotoIdentityService(
         )
         val activeKey = signingKeyService.activatePreparedKey(ensured.id, preparedKey)
         val updatedAccount =
-            accountRepository.save(
+            changeIdentity(
+                ensured,
                 ensured.copy(
                     did = currentDid,
                     handle = currentHandle,

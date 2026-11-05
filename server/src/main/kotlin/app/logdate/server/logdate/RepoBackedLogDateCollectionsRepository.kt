@@ -56,7 +56,7 @@ internal class RepoBackedLogDateCollectionsRepository(
         userId: UUID,
         entry: LogDateEntry,
     ): LogDateEntry =
-        transaction.write {
+        transaction.write(userId) {
             metadataStore.requireWritable(userId, LogDateCollectionKind.ENTRY, entry.id)
             val repoDid = canonicalRepoDid(userId)
             val preserved =
@@ -110,7 +110,7 @@ internal class RepoBackedLogDateCollectionsRepository(
             deletedAt = deletedAt,
             allowMissing = true,
         )
-        transaction.write { repoEngine.deleteRecord(recordId).getOrThrow() }
+        transaction.write(userId) { repoEngine.deleteRecord(recordId).getOrThrow() }
     }
 
     override suspend fun journalExists(
@@ -262,7 +262,7 @@ internal class RepoBackedLogDateCollectionsRepository(
         userId: UUID,
         journal: LogDateJournal,
     ): LogDateJournal =
-        transaction.write {
+        transaction.write(userId) {
             metadataStore.requireWritable(userId, LogDateCollectionKind.JOURNAL, journal.id)
             val repoDid = canonicalRepoDid(userId)
             val recordId = journalRecordId(repoDid, journal.id)
@@ -353,7 +353,7 @@ internal class RepoBackedLogDateCollectionsRepository(
     override suspend fun upsertAssociations(
         userId: UUID,
         associations: List<LogDateAssociation>,
-    ): List<LogDateAssociation> = transaction.write { repoUpsertAssociations(userId, associations) }
+    ): List<LogDateAssociation> = transaction.write(userId) { repoUpsertAssociations(userId, associations) }
 
     override suspend fun deleteAssociations(
         userId: UUID,
@@ -370,7 +370,7 @@ internal class RepoBackedLogDateCollectionsRepository(
     override suspend fun upsertDraft(
         userId: UUID,
         draft: LogDateDraft,
-    ): LogDateDraft = transaction.write { repoUpsertDraft(userId, draft) }
+    ): LogDateDraft = transaction.write(userId) { repoUpsertDraft(userId, draft) }
 
     override suspend fun getDraft(
         userId: UUID,

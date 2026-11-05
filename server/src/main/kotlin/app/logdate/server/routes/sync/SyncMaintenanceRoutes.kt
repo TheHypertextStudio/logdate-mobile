@@ -1,10 +1,12 @@
 package app.logdate.server.routes.sync
 
 import app.logdate.server.auth.TokenService
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import app.logdate.server.logdate.BackupRetentionPolicy
 import app.logdate.server.logdate.LogDateBackupRepository
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateCollectionsRepository
+import app.logdate.server.logdate.deleteLegacyObject
 import app.logdate.server.responses.error
 import app.logdate.server.sync.SyncMetricsRegistry
 import io.github.aakira.napier.Napier
@@ -14,6 +16,8 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.route
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 
 /**
@@ -94,14 +98,16 @@ internal fun Route.syncMaintenanceRoutes(
                         )
                 var deletedCount = 0
                 toPurge.forEach { backup ->
-                    if (!storage.deleteBlob(backup.storagePath)) {
+                    if (!withContext(Dispatchers.IO) {
+                            backupRepository.deleteBackupWithObject(userId, backup.id) { path -> storage.deleteLegacyObject(path) }
+                        }
+                    ) {
                         Napier.w("Backup blob cleanup failed")
                         return@post call.respond(
                             HttpStatusCode.InternalServerError,
                             error("BACKUP_DELETE_FAILED", "Failed to delete backup blob"),
                         )
                     }
-                    backupRepository.deleteBackup(userId, backup.id)
                     deletedCount += 1
                 }
                 call.respond(
@@ -113,6 +119,8 @@ internal fun Route.syncMaintenanceRoutes(
                     ),
                 )
                 success = true
+            } catch (failure: IdentityWriteRefusedException) {
+                call.respondIdentityWriteRefusal(failure)
             } finally {
                 metrics.recordOperation("sync.backups.purge", System.currentTimeMillis() - start, success)
             }

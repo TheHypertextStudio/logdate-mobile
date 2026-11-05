@@ -1,18 +1,28 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.database
 
+import app.logdate.server.identity.adoption.AccountWriteOrigin
+import app.logdate.server.identity.adoption.IdentityFenceOutcome
+import app.logdate.server.identity.adoption.IdentityWriteExpectation
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import app.logdate.server.logdate.JournalMergeOperation
 import app.logdate.server.logdate.JournalMergeStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import java.sql.Connection
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
+import kotlin.time.Clock
+import kotlin.uuid.toKotlinUuid
 
 /** Account locks cover repo writes as well as merge state, across server instances. */
 class PostgreSQLJournalMergeStore(
@@ -43,7 +53,7 @@ class PostgreSQLJournalMergeStore(
                             statement.execute()
                         }
                         try {
-                            action()
+                            withContext(RawJdbcTransactionContext()) { action() }
                         } finally {
                             withContext(NonCancellable + Dispatchers.IO) { connection.rollback() }
                         }
@@ -81,18 +91,15 @@ class PostgreSQLJournalMergeStore(
         userId: UUID,
         operationId: String,
     ) {
-        withContext(Dispatchers.IO) {
-            source.connection.use { connection ->
-                connection
-                    .prepareStatement(
-                        "DELETE FROM journal_merge_operations WHERE account_id = ? AND operation_id = ? AND started = FALSE",
-                    ).use { statement ->
-                        statement.setObject(1, userId)
-                        statement.setString(2, operationId)
-                        statement.executeUpdate()
-                    }
-                connection.commit()
-            }
+        mutate(userId) { connection ->
+            connection
+                .prepareStatement(
+                    "DELETE FROM journal_merge_operations WHERE account_id = ? AND operation_id = ? AND started = FALSE",
+                ).use { statement ->
+                    statement.setObject(1, userId)
+                    statement.setString(2, operationId)
+                    statement.executeUpdate()
+                }
         }
     }
 
@@ -101,30 +108,27 @@ class PostgreSQLJournalMergeStore(
         previousOperationId: String,
         replacement: JournalMergeOperation,
     ) {
-        withContext(Dispatchers.IO) {
-            source.connection.use { connection ->
-                connection
-                    .prepareStatement(
-                        "DELETE FROM journal_merge_operations WHERE account_id = ? AND operation_id = ? AND completed = FALSE",
-                    ).use { statement ->
-                        statement.setObject(1, userId)
-                        statement.setString(2, previousOperationId)
-                        check(statement.executeUpdate() == 1)
-                    }
-                connection
-                    .prepareStatement(
-                        "INSERT INTO journal_merge_operations (account_id, operation_id, source_id, operation_json, started, completed) VALUES (?, ?, ?, ?, ?, ?)",
-                    ).use { statement ->
-                        statement.setObject(1, userId)
-                        statement.setString(2, replacement.operationId)
-                        statement.setString(3, replacement.sourceId)
-                        statement.setString(4, Json.encodeToString(replacement))
-                        statement.setBoolean(5, replacement.started)
-                        statement.setBoolean(6, replacement.completed)
-                        statement.executeUpdate()
-                    }
-                connection.commit()
-            }
+        mutate(userId) { connection ->
+            connection
+                .prepareStatement(
+                    "DELETE FROM journal_merge_operations WHERE account_id = ? AND operation_id = ? AND completed = FALSE",
+                ).use { statement ->
+                    statement.setObject(1, userId)
+                    statement.setString(2, previousOperationId)
+                    check(statement.executeUpdate() == 1)
+                }
+            connection
+                .prepareStatement(
+                    "INSERT INTO journal_merge_operations (account_id, operation_id, source_id, operation_json, started, completed) VALUES (?, ?, ?, ?, ?, ?)",
+                ).use { statement ->
+                    statement.setObject(1, userId)
+                    statement.setString(2, replacement.operationId)
+                    statement.setString(3, replacement.sourceId)
+                    statement.setString(4, Json.encodeToString(replacement))
+                    statement.setBoolean(5, replacement.started)
+                    statement.setBoolean(6, replacement.completed)
+                    statement.executeUpdate()
+                }
         }
     }
 
@@ -132,34 +136,31 @@ class PostgreSQLJournalMergeStore(
         userId: UUID,
         operation: JournalMergeOperation,
     ) {
-        withContext(Dispatchers.IO) {
-            source.connection.use { connection ->
-                connection
-                    .prepareStatement(
-                        """
-                        INSERT INTO journal_merge_operations
-                            (account_id, operation_id, source_id, operation_json, started, completed, deleted_at, tombstone_version)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        ON CONFLICT (account_id, operation_id) DO UPDATE SET
-                            operation_json = EXCLUDED.operation_json,
-                            started = EXCLUDED.started,
-                            completed = EXCLUDED.completed,
-                            deleted_at = EXCLUDED.deleted_at,
-                            tombstone_version = EXCLUDED.tombstone_version
-                        """.trimIndent(),
-                    ).use { statement ->
-                        statement.setObject(1, userId)
-                        statement.setString(2, operation.operationId)
-                        statement.setString(3, operation.sourceId)
-                        statement.setString(4, Json.encodeToString(operation))
-                        statement.setBoolean(5, operation.started)
-                        statement.setBoolean(6, operation.completed)
-                        statement.setObject(7, operation.deletedAt)
-                        statement.setObject(8, operation.tombstoneVersion)
-                        statement.executeUpdate()
-                    }
-                connection.commit()
-            }
+        mutate(userId) { connection ->
+            connection
+                .prepareStatement(
+                    """
+                    INSERT INTO journal_merge_operations
+                        (account_id, operation_id, source_id, operation_json, started, completed, deleted_at, tombstone_version)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (account_id, operation_id) DO UPDATE SET
+                        operation_json = EXCLUDED.operation_json,
+                        started = EXCLUDED.started,
+                        completed = EXCLUDED.completed,
+                        deleted_at = EXCLUDED.deleted_at,
+                        tombstone_version = EXCLUDED.tombstone_version
+                    """.trimIndent(),
+                ).use { statement ->
+                    statement.setObject(1, userId)
+                    statement.setString(2, operation.operationId)
+                    statement.setString(3, operation.sourceId)
+                    statement.setString(4, Json.encodeToString(operation))
+                    statement.setBoolean(5, operation.started)
+                    statement.setBoolean(6, operation.completed)
+                    statement.setObject(7, operation.deletedAt)
+                    statement.setObject(8, operation.tombstoneVersion)
+                    statement.executeUpdate()
+                }
         }
     }
 
@@ -167,18 +168,62 @@ class PostgreSQLJournalMergeStore(
         userId: UUID?,
         olderThan: Long,
     ) {
+        val owners = if (userId == null) retentionOwners(olderThan) else listOf(userId)
+        for (owner in owners) {
+            try {
+                mutate(owner) { connection ->
+                    connection
+                        .prepareStatement(
+                            "UPDATE journal_merge_operations SET tombstone_version = NULL " +
+                                "WHERE completed = TRUE AND deleted_at < ? AND account_id = ?",
+                        ).use {
+                            it.setLong(1, olderThan)
+                            it.setObject(2, owner)
+                            it.executeUpdate()
+                        }
+                }
+            } catch (refused: IdentityWriteRefusedException) {
+                if (userId != null) throw refused
+            }
+        }
+    }
+
+    private suspend fun retentionOwners(olderThan: Long): List<UUID> =
         withContext(Dispatchers.IO) {
             source.connection.use { connection ->
-                val userClause = if (userId == null) "" else " AND account_id = ?"
                 connection
                     .prepareStatement(
-                        "UPDATE journal_merge_operations SET tombstone_version = NULL WHERE completed = TRUE AND deleted_at < ?$userClause",
-                    ).use { statement ->
-                        statement.setLong(1, olderThan)
-                        if (userId != null) statement.setObject(2, userId)
-                        statement.executeUpdate()
+                        "SELECT DISTINCT account_id FROM journal_merge_operations " +
+                            "WHERE completed = TRUE AND deleted_at < ? AND tombstone_version IS NOT NULL ORDER BY account_id",
+                    ).use {
+                        it.setLong(1, olderThan)
+                        it.executeQuery().use { rows -> buildList { while (rows.next()) add(rows.getObject(1, UUID::class.java)) } }
                     }
-                connection.commit()
+            }
+        }
+
+    private suspend fun mutate(
+        userId: UUID,
+        action: (Connection) -> Unit,
+    ) {
+        val original = currentCoroutineContext()[AccountWriteOrigin]?.expectation
+        // These rows describe the legacy journal, even when a caller has a newer session.
+        if (original != null && (original.accountId != userId.toKotlinUuid() || original.identityEpoch != 0L)) {
+            throw IdentityWriteRefusedException(IdentityFenceOutcome.CHANGED)
+        }
+        withContext(Dispatchers.IO) {
+            source.connection.use { connection ->
+                connection.autoCommit = false
+                connection.transactionIsolation = Connection.TRANSACTION_READ_COMMITTED
+                try {
+                    val outcome = connection.lockIdentityWrite(IdentityWriteExpectation(userId.toKotlinUuid(), 0), Clock.System.now())
+                    if (outcome != IdentityFenceOutcome.ALLOWED) throw IdentityWriteRefusedException(outcome)
+                    action(connection)
+                    connection.commit()
+                } catch (failure: Throwable) {
+                    runCatching { connection.rollback() }.exceptionOrNull()?.let(failure::addSuppressed)
+                    throw failure
+                }
             }
         }
     }

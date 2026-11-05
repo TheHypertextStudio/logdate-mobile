@@ -89,11 +89,13 @@ public object DagCborCodec {
 
     private fun encodeMap(map: JsonObject): ByteArray {
         val entries =
-            map.entries.sortedWith(compareBy<Map.Entry<String, JsonElement>>({ it.key.encodeToByteArray().size }, { it.key }))
+            map.entries
+                .map { it.key.encodeToByteArray(throwOnInvalidSequence = true) to it.value }
+                .sortedWith { left, right -> compareEncodedKeys(left.first, right.first) }
         val encodedEntries =
             buildList(entries.size * 2) {
                 entries.forEach { (key, value) ->
-                    add(encodeText(key))
+                    add(encodeHead(MAJOR_TYPE_TEXT, key.size.toLong()) + key)
                     add(encodeJsonElement(value))
                 }
             }
@@ -117,8 +119,21 @@ public object DagCborCodec {
         }
 
     private fun encodeText(value: String): ByteArray {
-        val bytes = value.encodeToByteArray()
+        val bytes = value.encodeToByteArray(throwOnInvalidSequence = true)
         return encodeHead(MAJOR_TYPE_TEXT, bytes.size.toLong()) + bytes
+    }
+
+    private fun compareEncodedKeys(
+        left: ByteArray,
+        right: ByteArray,
+    ): Int {
+        val length = left.size.compareTo(right.size)
+        if (length != 0) return length
+        for (index in left.indices) {
+            val difference = (left[index].toInt() and 0xff).compareTo(right[index].toInt() and 0xff)
+            if (difference != 0) return difference
+        }
+        return 0
     }
 
     private fun encodeLong(value: Long): ByteArray =

@@ -1,10 +1,21 @@
 # Identity publishing reference
 
-This page lists the exact behaviour of the identity publishing command: its arguments, the states it
+This page documents the retained legacy identity publishing command: its arguments, the states it
 sorts identities into, its exit codes, the log codes it writes, the Cloud Run job that wraps it, and
 the local rehearsal. For why publishing works this way, see
 [Identity publishing](../explanation/identity-publishing.md). For the steps an operator follows, see
 the [identity publishing runbook](../runbook/identity-publishing.md).
+
+## Production boundary
+
+This command predates per-person publication consent. Do not use its mutating modes
+or Cloud Run wrapper to publish production identities. A handle filter, dry run,
+operator confirmation or global flag does not satisfy the
+[opt-in design](../superpowers/specs/2026-10-30-identity-publication-opt-in-design.md).
+Keep `ATPROTO_PLC_PUBLISH_ENABLED` disabled in production. The settings and mutating
+forms below describe existing legacy code for maintenance and loopback rehearsal;
+they are not a supported rollout procedure. The [runbook](../runbook/identity-publishing.md)
+states the current operational requirements.
 
 ## Settings
 
@@ -52,8 +63,10 @@ The options are:
 - `--report-file PATH` writes a JSON report with one entry per account, naming its ID, its DID, its
   state before and after, the action taken and any failure. Only the file's owner can read it.
 
-Every run is safe to repeat. An identity the directory already has is compared and never sent again,
-so an interrupted run can start again and continue where it stopped.
+The legacy command avoids sending an identical already-recorded genesis twice.
+That property does not establish per-person consent or make a repeated mutating run
+safe: accounts and proposed operations can change between attempts. Reconcile an
+uncertain exact operation before authorizing any further public write.
 
 ## States
 
@@ -128,7 +141,7 @@ prefixed with `would_` in a dry run), the states afterwards prefixed with `now_`
 
 ## Cloud Run job
 
-`./run identity:publish-job` runs the command as a one-shot Cloud Run job. The job takes its image,
+`./run identity:publish-job` is the legacy one-shot Cloud Run wrapper. Its mutating mode is not approved for production. The job takes its image,
 environment, secret versions and service account from a rendered deployment contract, as the account
 blob cleanup job does, so it reads the same database and directory as the deployed server. Automatic
 retries are off. When the execution finishes, the script prints the job's `SERVER_IDENTITY_*` and
@@ -146,6 +159,10 @@ time the job may run, which matters for runs of more than a few thousand account
 pace.
 
 ## Rehearsal
+
+This rehearsal covers the legacy automatic/batch mechanics. Its success does not
+validate the per-person opt-in flow, authorize production publication or establish
+that an actual person's journal remains private.
 
 `./run identity:rehearse` runs the whole publishing procedure on one machine, against test accounts,
 without contacting the public directory. It accepts `--accounts N`, which sets how many existing
@@ -176,3 +193,20 @@ It stops at the first step whose result is wrong. The steps are:
 6. It changes the server's PDS address, as if the identities had gone out with a wrong one, checks
    that `status` reports every identity as `mismatch`, and recovers with `publish --reconcile`.
 7. It switches publishing off again and checks that `publish` is refused while `status` still works.
+
+### Private media reuse during identity adoption
+
+The account adoption copy transport accepts a device-signed `BEGIN_BLOB` challenge
+whose digest binds the raw SHA-256 CID. `verify-source-blob` admits the existing
+account-owned personal-space object into private operation staging, reads it outside
+the SQL transaction, checks its exact size and CID, and records verification only
+under fresh operation authorization. The response contains the operation, admission,
+generation, CID, size, and MIME type. It never reveals the provider path or creates
+a target-space alias before commit. Reusing the retained immutable object does not
+charge its bytes twice.
+
+The device must independently download and authenticate the original media encryption
+with its account media key before using this receipt in a complete adoption manifest.
+A server ciphertext hash alone cannot prove the media is decryptable. Legacy media
+that requires encryption or a new object uses a separate private upload path; this
+reuse operation cannot substitute for that upload.

@@ -111,7 +111,7 @@ data class AuthenticatorAssertionResponse(
     val clientDataJSON: String,
     val authenticatorData: String,
     val signature: String,
-    val userHandle: String?,
+    val userHandle: String? = null,
 )
 
 @OptIn(ExperimentalUuidApi::class)

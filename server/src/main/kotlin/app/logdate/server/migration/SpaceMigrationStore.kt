@@ -15,6 +15,7 @@ import kotlin.uuid.toKotlinUuid
  * One account's move from legacy storage into its personal space.
  *
  * @property version increases with every change, so a change made from a stale copy is refused.
+ * @property identityEpoch binds this move and its eventual cleanup to the original account authority.
  * @property holdStartedAt when the moving device asked the server to hold writes to the store it is
  *   leaving: legacy writes before the switch, space writes before switching back. Null when nothing
  *   is held.
@@ -32,6 +33,7 @@ data class SpaceMigration(
     val switchedAtSeq: Long? = null,
     val revertedAt: Instant? = null,
     val cleanedAt: Instant? = null,
+    val identityEpoch: Long = 0,
 ) {
     /** This move with [changes] applied and its version advanced, as the next value to store. */
     fun next(
@@ -110,7 +112,7 @@ class InMemorySpaceMigrationStore(
         updated: SpaceMigration,
     ): Boolean =
         mutex.withLock {
-            if (rows[updated.accountId]?.version != expected?.version) return@withLock false
+            if (!matches(expected, updated) || !currentIdentity(updated)) return@withLock false
             rows[updated.accountId] = updated
             true
         }
@@ -122,7 +124,7 @@ class InMemorySpaceMigrationStore(
         to: AccountStorageMode,
     ): Boolean =
         mutex.withLock {
-            if (rows[updated.accountId]?.version != expected.version) return@withLock false
+            if (!matches(expected, updated) || !currentIdentity(updated)) return@withLock false
             if (!accounts.updateStorageModeIfUnchanged(updated.accountId.toKotlinUuid(), from, to)) return@withLock false
             rows[updated.accountId] = updated
             true
@@ -134,10 +136,31 @@ class InMemorySpaceMigrationStore(
     ): List<SpaceMigration> =
         mutex.withLock {
             rows.values
-                .filter { it.isCleanupDue(cutoff) }
-                .sortedBy { it.switchedAt }
+                .filter {
+                    it.isCleanupDue(cutoff) &&
+                        currentIdentity(it) &&
+                        accounts.findById(it.accountId.toKotlinUuid())?.storageMode == AccountStorageMode.PERSONAL_SPACE_V1
+                }.sortedBy { it.switchedAt }
                 .take(limit)
         }
+
+    private fun matches(
+        expected: SpaceMigration?,
+        updated: SpaceMigration,
+    ): Boolean {
+        val stored = rows[updated.accountId]
+        return updated.version > 0 &&
+            updated.version == (expected?.version ?: 0) + 1 &&
+            stored?.version == expected?.version &&
+            stored?.migrationId == expected?.migrationId &&
+            stored?.identityEpoch == expected?.identityEpoch &&
+            (expected == null || (expected.accountId == updated.accountId && expected.identityEpoch == updated.identityEpoch))
+    }
+
+    private suspend fun currentIdentity(migration: SpaceMigration): Boolean {
+        val account = accounts.findById(migration.accountId.toKotlinUuid()) ?: return false
+        return account.identityEpoch == migration.identityEpoch && account.isActive && account.moderation == null
+    }
 }
 
 private fun SpaceMigration.isCleanupDue(cutoff: Instant): Boolean =

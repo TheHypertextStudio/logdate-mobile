@@ -70,7 +70,13 @@ class SpaceStorePostgresTest {
                     val second = async(Dispatchers.IO) { store.put(write("second")) }
                     try {
                         withTimeout(15_000) {
-                            while (waiting(source, "wait_event_type = 'Lock' AND query LIKE '%space_states%'") < 2) delay(25)
+                            while (waiting(
+                                    source,
+                                    "wait_event_type = 'Lock' AND (query LIKE '%space_states%' OR query LIKE '%identity_epoch%')",
+                                ) < 2
+                            ) {
+                                delay(25)
+                            }
                         }
                     } finally {
                         lock.rollback()
@@ -142,7 +148,11 @@ class SpaceStorePostgresTest {
                             }
                         withTimeout(15_000) {
                             while (!purge.isCompleted &&
-                                waiting(source, "wait_event_type = 'Lock' AND wait_event <> 'advisory' AND query LIKE '%space_blobs%'") < 1
+                                waiting(
+                                    source,
+                                    "wait_event_type = 'Lock' AND wait_event <> 'advisory' " +
+                                        "AND (query LIKE '%space_blobs%' OR query LIKE '%identity_epoch%')",
+                                ) < 1
                             ) {
                                 delay(25)
                             }
@@ -183,7 +193,11 @@ class SpaceStorePostgresTest {
                 val failing = store.purge(tombstonesBefore = later, unreferencedBlobsBefore = later) { error("The object store is down") }
 
                 assertEquals(SpacePurgeResult(blobsDeleted = 0, blobsFailed = 1), failing)
-                assertNotNull(store.getBlob(space, "bafystubborn"))
+                assertNull(store.getBlob(space, "bafystubborn"))
+                assertEquals(
+                    1,
+                    count(source, "SELECT COUNT(*) FROM space_blobs WHERE space_uri = ? AND purge_operation_id IS NOT NULL", space),
+                )
                 assertEquals(
                     deleted.toInt(),
                     count(source, "SELECT purged_through_seq FROM space_states WHERE space_uri = ? AND author_did = ?", space, author),
@@ -245,10 +259,11 @@ class SpaceStorePostgresTest {
                         )
                     try {
                         withTimeout(15_000) {
-                            // The second write waits on the repository's state row, the rest on the usage row.
+                            // Each mutation takes the account fence before reaching state and usage locks.
                             while (waiting(
                                     source,
-                                    "wait_event_type = 'Lock' AND (query LIKE '%account_storage_usage%' OR query LIKE '%space_states%')",
+                                    "wait_event_type = 'Lock' AND (query LIKE '%account_storage_usage%' " +
+                                        "OR query LIKE '%space_states%' OR query LIKE '%identity_epoch%')",
                                 ) <
                                 4
                             ) {

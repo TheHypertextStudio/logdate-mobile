@@ -69,6 +69,8 @@ object SpaceBlobsTable : Table("space_blobs") {
     val mimeType = varchar("mime_type", 255)
     val sizeBytes = long("size_bytes")
     val storagePath = text("storage_path")
+    val purgeOperationId = varchar("purge_operation_id", 64).nullable()
+    val purgeIdentityEpoch = long("purge_identity_epoch").nullable()
     val createdAt = timestamp("created_at")
     override val primaryKey = PrimaryKey(spaceUri, cid)
 

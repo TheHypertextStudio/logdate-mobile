@@ -519,7 +519,10 @@ class WebAuthnPasskeyService(
             val signatureBytes =
                 decodeBase64Url(authenticationResponse.response.signature)
                     ?: return AuthenticationResult(success = false, error = "Signature is not valid base64url")
-            val userHandleBytes = authenticationResponse.response.userHandle?.let { decodeBase64Url(it) }
+            val userHandleBytes =
+                authenticationResponse.response.userHandle
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.let { decodeBase64Url(it) }
 
             val authenticationRequest =
                 if (userHandleBytes != null) {

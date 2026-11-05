@@ -1,5 +1,6 @@
 package app.logdate.server.routes.auth
 
+import app.logdate.server.auth.AccessTokenClaims
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountIdentityRepository
 import app.logdate.server.auth.AccountRepository
@@ -65,6 +66,7 @@ class AuthProfileAndMetricsRouteContractsTest {
             every { tokenService.validateAccessToken("access-ok") } returns accountId.toString()
             every { tokenService.validateRefreshToken(any()) } throws IllegalStateException("refresh-boom")
             every { tokenService.decodeAccessToken(any()) } returns null
+            every { tokenService.decodeAccessToken("access-ok") } returns AccessTokenClaims.full(accountId.toString(), account.did)
             every { tokenService.decodeRefreshToken(any()) } returns null
             every { webAuthn.getPasskeysForUser(any()) } returns emptyList()
             coEvery { accountRepository.usernameExists("taken_username") } returns true
@@ -132,9 +134,12 @@ class AuthProfileAndMetricsRouteContractsTest {
 
             coEvery { accountRepository.findById(accountId) } returns account
             every { tokenService.validateAccessToken("access-ok") } returns accountId.toString()
-            every { tokenService.validateAccessToken("missing-account") } returns Uuid.random().toString()
+            val missingAccountId = Uuid.random().toString()
+            every { tokenService.validateAccessToken("missing-account") } returns missingAccountId
             every { tokenService.decodeAccessToken(any()) } returns null
+            every { tokenService.decodeAccessToken("access-ok") } returns AccessTokenClaims.full(accountId.toString(), account.did)
             every { tokenService.decodeRefreshToken(any()) } returns null
+            every { tokenService.decodeAccessToken("missing-account") } returns AccessTokenClaims.full(missingAccountId)
             every { metrics.snapshot() } throws IllegalStateException("metrics-boom")
             coEvery { identityRepository.findByAccountId(any()) } throws IllegalStateException("identities-boom")
             coEvery { accountRepository.findById(any()) } throws IllegalStateException("me-boom")
@@ -220,6 +225,7 @@ class AuthProfileAndMetricsRouteContractsTest {
             every { tokenService.validateAccessToken("access-good") } returns accountId.toString()
             every { tokenService.validateAccessToken("invalid-token") } returns null
             every { tokenService.decodeAccessToken(any()) } returns null
+            every { tokenService.decodeAccessToken("access-good") } returns AccessTokenClaims.full(accountId.toString(), account.did)
             every { tokenService.decodeRefreshToken(any()) } returns null
 
             val webAuthn = mockk<WebAuthnPasskeyService>(relaxed = true)

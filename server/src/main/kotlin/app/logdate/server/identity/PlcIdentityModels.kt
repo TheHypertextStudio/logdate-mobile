@@ -19,6 +19,7 @@ data class ProvisionedPlcIdentity(
     val publicKeyMultibase: String,
     val publicKeyDidKey: String,
     val operation: PlcOperation,
+    val handle: String,
 )
 
 /**

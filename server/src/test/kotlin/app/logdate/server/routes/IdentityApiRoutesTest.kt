@@ -12,6 +12,7 @@ import app.logdate.server.identity.InMemorySigningKeyRepository
 import app.logdate.server.identity.PlcIdentityService
 import app.logdate.server.identity.SigningKeyService
 import app.logdate.server.identity.didKeyFor
+import app.logdate.server.identity.seedPublishedGenesis
 import app.logdate.server.passkeys.TestPasskeyStepUp
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -501,6 +502,8 @@ class IdentityApiRoutesTest {
                         createdAt = Clock.System.now(),
                     ),
                 )
+            val ensured = identityService.ensureIdentity(account)
+            seedPublishedGenesis(hostedPlcOperationRepository, requireNotNull(ensured.did), published)
             val accessToken = tokenService.generateAccessToken(account.id.toString())
             val donorEnsured = identityService.ensureIdentity(donor)
             val donorExport = signingKeyService.exportActiveKey(donorEnsured.id, "donor-secret")
@@ -627,6 +630,7 @@ class IdentityApiRoutesTest {
                 )
             val accessToken = tokenService.generateAccessToken(account.id.toString())
             val ensured = identityService.ensureIdentity(account)
+            seedPublishedGenesis(hostedPlcOperationRepository, requireNotNull(ensured.did), published)
             val recoveryKey = signingKeyService.generateKeyPair(curve = EcCurve.P256)
             val recoveryDidKey = didKeyFor(recoveryKey.publicKeyMultibase)
             identityService.registerPlcRecoveryKey(ensured, recoveryDidKey)
@@ -773,6 +777,7 @@ class IdentityApiRoutesTest {
             val accessToken = tokenService.generateAccessToken(account.id.toString())
             val recoveryDidKey = didKeyFor(signingKeyService.ensureActiveKey(Uuid.random()).publicKeyMultibase)
             val ensured = identityService.ensureIdentity(account)
+            seedPublishedGenesis(hostedPlcOperationRepository, requireNotNull(ensured.did), published)
             identityService.registerPlcRecoveryKey(ensured, recoveryDidKey)
 
             application {
@@ -861,6 +866,7 @@ class IdentityApiRoutesTest {
             val tokenService = JwtTokenService("identity-api-route-secret")
             val signingKeyService = SigningKeyService(InMemorySigningKeyRepository(), "test-kek")
             val published = mutableMapOf<String, MutableList<PlcIndexedOperation>>()
+            val hostedPlcOperationRepository = InMemoryHostedPlcOperationRepository()
             val identityService =
                 AtprotoIdentityService(
                     accountRepository = accountRepository,
@@ -882,7 +888,7 @@ class IdentityApiRoutesTest {
                                     publishHostedPlcOperations = true,
                                     recoveryKeysEnabled = true,
                                 ),
-                            hostedPlcOperationRepository = InMemoryHostedPlcOperationRepository(),
+                            hostedPlcOperationRepository = hostedPlcOperationRepository,
                             plcDirectoryClient =
                                 object : PlcDirectoryClient {
                                     override suspend fun getDocument(
@@ -933,6 +939,8 @@ class IdentityApiRoutesTest {
                         createdAt = Clock.System.now(),
                     ),
                 )
+            val ensured = identityService.ensureIdentity(account)
+            seedPublishedGenesis(hostedPlcOperationRepository, requireNotNull(ensured.did), published)
             val accessToken = tokenService.generateAccessToken(account.id.toString())
             val recoveryDidKey = didKeyFor(signingKeyService.ensureActiveKey(Uuid.random()).publicKeyMultibase)
             val stepUp = TestPasskeyStepUp()

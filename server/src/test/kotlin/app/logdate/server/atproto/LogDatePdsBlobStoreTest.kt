@@ -6,6 +6,7 @@ import app.logdate.server.identity.AtprotoIdentityConfig
 import app.logdate.server.identity.AtprotoIdentityService
 import app.logdate.server.identity.InMemorySigningKeyRepository
 import app.logdate.server.identity.SigningKeyService
+import app.logdate.server.identity.adoption.withAccountWriteOrigin
 import app.logdate.server.logdate.CompositeLogDateMediaBlobRepository
 import app.logdate.server.logdate.InMemoryLogDateAtprotoBlobRepository
 import app.logdate.server.logdate.InMemoryLogDateBlobStorage
@@ -65,17 +66,19 @@ class LogDatePdsBlobStoreTest {
                 )
 
             val uploaded =
-                store
-                    .putBlob(
-                        UploadBlobRequest(
-                            repo =
-                                studio.hypertext.atproto.identity.AtprotoDid.require(
-                                    requireNotNull(account.did),
-                                ),
-                            contentType = "image/jpeg",
-                            bytes = byteArrayOf(1, 2, 3),
-                        ),
-                    ).getOrThrow()
+                withAccountWriteOrigin(account.id, account.identityEpoch) {
+                    store
+                        .putBlob(
+                            UploadBlobRequest(
+                                repo =
+                                    studio.hypertext.atproto.identity.AtprotoDid.require(
+                                        requireNotNull(account.did),
+                                    ),
+                                contentType = "image/jpeg",
+                                bytes = byteArrayOf(1, 2, 3),
+                            ),
+                        ).getOrThrow()
+                }
             val downloaded =
                 store
                     .getBlob(

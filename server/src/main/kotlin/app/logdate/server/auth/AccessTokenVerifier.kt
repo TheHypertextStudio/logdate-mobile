@@ -36,8 +36,10 @@ class AccessTokenVerifier(
         allowSyncScope: Boolean,
     ): AccessCheck {
         if (token == null) return AccessCheck.Missing
-        tokenService.validateAccessToken(token)?.let { return AccessCheck.Granted(AccessTokenClaims.full(it)) }
         val claims = tokenService.decodeAccessToken(token) ?: return AccessCheck.Invalid
+        if (claims.scope == TokenScope.FULL) {
+            return if (claims.sessionId == null) AccessCheck.Granted(claims) else AccessCheck.Invalid
+        }
         val sessionId = claims.sessionId
         if (claims.scope != TokenScope.SYNC || sessionId == null) return AccessCheck.Invalid
         if (!allowSyncScope) return AccessCheck.ScopeDenied

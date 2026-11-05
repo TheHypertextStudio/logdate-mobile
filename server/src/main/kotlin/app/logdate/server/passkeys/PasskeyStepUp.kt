@@ -45,8 +45,28 @@ interface PasskeyStepUp {
 @Serializable
 data class PasskeyStepUpProof(
     val challenge: String,
-    val credential: PasskeyAssertionResponse,
-)
+    val credential: PasskeyAuthenticationResponse,
+) {
+    constructor(challenge: String, credential: PasskeyAssertionResponse) : this(
+        challenge,
+        PasskeyAuthenticationResponse(
+            credential.id,
+            credential.rawId,
+            AuthenticatorAssertionResponse(
+                credential.response.clientDataJSON,
+                credential.response.authenticatorData,
+                credential.response.signature,
+                credential.response.userHandle,
+            ),
+            credential.type,
+        ),
+    )
+
+    fun copy(
+        challenge: String = this.challenge,
+        credential: PasskeyAssertionResponse,
+    ): PasskeyStepUpProof = PasskeyStepUpProof(challenge, credential)
+}
 
 /** [PasskeyStepUp] backed by the account's registered passkeys. */
 @OptIn(ExperimentalUuidApi::class)

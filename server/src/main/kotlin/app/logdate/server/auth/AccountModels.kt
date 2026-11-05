@@ -71,6 +71,8 @@ data class Account(
     val publicIdentityDid: String? = null,
     /** Set by verified enrollment or adoption; profile saves cannot change identity ownership. */
     val identityKind: AccountIdentityKind = AccountIdentityKind.HOSTED,
+    /** Canonical identity generation; only an atomic identity cutover advances it. */
+    val identityEpoch: Long = 0,
 )
 
 @OptIn(ExperimentalUuidApi::class)

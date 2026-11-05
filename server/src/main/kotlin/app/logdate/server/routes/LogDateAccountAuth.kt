@@ -39,9 +39,9 @@ class LogDateAccountAuth(
     @OptIn(ExperimentalUuidApi::class)
     suspend fun requireLogDateAccount(call: ApplicationCall): Account? {
         val token = bearerToken(call.request.header(HttpHeaders.Authorization))
-        val accountId =
+        val claims =
             when (val check = verifier.verify(token, allowSyncScope = true)) {
-                is AccessCheck.Granted -> Uuid.parseOrNull(check.claims.accountId)
+                is AccessCheck.Granted -> check.claims
                 AccessCheck.SessionRevoked -> {
                     call.respond(
                         HttpStatusCode.Unauthorized,
@@ -52,10 +52,14 @@ class LogDateAccountAuth(
                 AccessCheck.Missing, AccessCheck.Invalid, AccessCheck.ScopeDenied -> null
             }
         val account =
-            accountId
-                ?.let { accountRepository.findById(it) }
-                ?.takeIf { it.isActive }
-                ?.let { ensureLogDateSessionIdentity(it, identityService) }
+            claims?.let { granted ->
+                Uuid
+                    .parseOrNull(granted.accountId)
+                    ?.let { ensureLogDateSessionIdentity(it, accountRepository, identityService) }
+                    ?.takeIf { current ->
+                        granted.did == current.did || (granted.did == null && current.identityEpoch == 0L)
+                    }
+            }
         if (account == null) {
             call.respond(HttpStatusCode.Unauthorized, PdsErrorResponse("AuthRequired", "A LogDate access token is required"))
         }

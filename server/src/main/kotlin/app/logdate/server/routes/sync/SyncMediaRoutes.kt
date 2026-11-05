@@ -5,11 +5,15 @@ import app.logdate.server.auth.AccountStorageModes
 import app.logdate.server.crypto.EncryptionService
 import app.logdate.server.entitlements.EntitlementEnforcer
 import app.logdate.server.entitlements.QuotaCheck
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
+import app.logdate.server.logdate.LegacyObjectUploads
+import app.logdate.server.logdate.LegacyObjectWriteFailure
 import app.logdate.server.logdate.LogDateBlobNamespace
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateBlobWriteRequest
 import app.logdate.server.logdate.LogDateMedia
 import app.logdate.server.logdate.LogDateMediaBlobRepository
+import app.logdate.server.logdate.deleteLegacyObject
 import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.responses.error
 import app.logdate.server.routes.docs.SyncStorageDocs
@@ -55,6 +59,7 @@ internal fun Route.syncMediaRoutes(
     entitlementEnforcer: EntitlementEnforcer?,
     rateLimiter: SlidingWindowRateLimiter?,
     config: SyncRouteConfig,
+    objectUploads: LegacyObjectUploads,
 ) {
     val mediaAccessPolicy = config.mediaAccessPolicy
     route("/media") {
@@ -161,93 +166,91 @@ internal fun Route.syncMediaRoutes(
                         )
                     }
 
-                val storagePath =
-                    if (mediaStorage != null) {
-                        runCatching {
+                val media =
+                    LogDateMedia(
+                        mediaId = mediaId,
+                        contentId = req.contentId,
+                        userId = userId,
+                        fileName = req.fileName,
+                        mimeType = req.mimeType,
+                        sizeBytes = req.sizeBytes,
+                        data = if (mediaStorage == null) encryptedPayload.data else ByteArray(0),
+                        storagePath = null,
+                        createdAt = System.currentTimeMillis(),
+                        version = 0L,
+                        deviceId = DeviceId(req.deviceId),
+                        encryptionVersion = 1,
+                        encryptionKeyId = "default",
+                        encryptionMode = "SERVER",
+                    )
+                var candidate: String? = null
+                val stored =
+                    try {
+                        if (mediaStorage == null) {
+                            mediaBlobRepository.upsertMedia(userId, media)
+                        } else {
+                            val write =
+                                LogDateBlobWriteRequest(
+                                    ownerId = userId,
+                                    namespace = LogDateBlobNamespace.MEDIA,
+                                    blobId = storageId,
+                                    fileName = req.fileName,
+                                    contentType = req.mimeType,
+                                    bytes = encryptedPayload.data,
+                                )
                             withContext(Dispatchers.IO) {
-                                mediaStorage.putBlob(
-                                    LogDateBlobWriteRequest(
-                                        ownerId = userId,
-                                        namespace = LogDateBlobNamespace.MEDIA,
-                                        blobId = storageId,
-                                        fileName = req.fileName,
-                                        contentType = req.mimeType,
-                                        bytes = encryptedPayload.data,
-                                    ),
+                                objectUploads.upload(
+                                    owner = userId,
+                                    namespace = LogDateBlobNamespace.MEDIA,
+                                    plannedPath = { mediaStorage.plannedPath(write) },
+                                    write = { mediaStorage.putBlob(write).also { candidate = it } },
+                                    canonicalPath = LogDateMedia::storagePath,
+                                    publish = { path, epoch ->
+                                        mediaBlobRepository.upsertMedia(userId, media.copy(storagePath = path), epoch)
+                                    },
+                                    deleteObject = { mediaStorage.deleteLegacyObject(it) },
                                 )
                             }
-                        }.getOrElse { error ->
-                            if (error is CancellationException) throw error
-                            Napier.e("Media storage upload failed")
-                            return@post call.respond(
-                                HttpStatusCode.InternalServerError,
-                                error("MEDIA_UPLOAD_FAILED", "Failed to store media"),
-                            )
                         }
-                    } else {
-                        null
-                    }
-                val stored =
-                    runCatching {
-                        mediaBlobRepository.upsertMedia(
-                            userId,
-                            LogDateMedia(
-                                mediaId = mediaId,
-                                contentId = req.contentId,
-                                userId = userId,
-                                fileName = req.fileName,
-                                mimeType = req.mimeType,
-                                sizeBytes = req.sizeBytes,
-                                data = if (storagePath == null) encryptedPayload.data else ByteArray(0),
-                                storagePath = storagePath,
-                                createdAt = System.currentTimeMillis(),
-                                version = 0L,
-                                deviceId = DeviceId(req.deviceId),
-                                encryptionVersion = 1,
-                                encryptionKeyId = "default",
-                                encryptionMode = "SERVER",
-                            ),
+                    } catch (canceled: CancellationException) {
+                        throw canceled
+                    } catch (failure: IdentityWriteRefusedException) {
+                        return@post call.respondIdentityWriteRefusal(failure)
+                    } catch (failure: StaleWriteException) {
+                        val path = candidate
+                        if (!objectUploads.isDurable && path != null) {
+                            cleanupMediaObject(userId, path, mediaBlobRepository, mediaStorage)
+                        }
+                        metrics.recordConflict()
+                        return@post call.respond(
+                            HttpStatusCode.Conflict,
+                            error("DELETION_CONFLICT", "This media was deleted; keep the edit for review"),
                         )
-                    }.getOrElse { error ->
-                        if (error is CancellationException) throw error
-                        if (error is StaleWriteException) {
-                            if (storagePath != null) {
-                                runCatching { withContext(Dispatchers.IO) { mediaStorage?.deleteBlob(storagePath) } }
-                                    .onFailure { Napier.w("Rejected media cleanup failed") }
-                            }
-                            metrics.recordConflict()
-                            return@post call.respond(
-                                HttpStatusCode.Conflict,
-                                error("DELETION_CONFLICT", "This media was deleted; keep the edit for review"),
-                            )
-                        }
-                        // The write may have committed before its acknowledgement failed.
-                        // Retain this immutable blob rather than deleting committed media.
+                    } catch (_: LegacyObjectWriteFailure) {
+                        Napier.e("Media storage upload failed")
+                        return@post call.respond(
+                            HttpStatusCode.InternalServerError,
+                            error("MEDIA_UPLOAD_FAILED", "Failed to store media"),
+                        )
+                    } catch (_: Exception) {
                         Napier.e("Media metadata persistence failed")
                         return@post call.respond(
                             HttpStatusCode.InternalServerError,
                             error("MEDIA_METADATA_WRITE_FAILED", "Failed to store media metadata"),
                         )
                     }
-                // A concurrent request may have committed this write-once receipt first.
-                if (intent != null && storagePath != null && stored.storagePath != storagePath) {
-                    runCatching { withContext(Dispatchers.IO) { mediaStorage?.deleteBlob(storagePath) } }
-                        .onFailure { Napier.w("Uncommitted receipt upload cleanup failed") }
+                val storagePath = candidate
+                if (!objectUploads.isDurable && intent != null && storagePath != null && stored.storagePath != storagePath) {
+                    cleanupMediaObject(userId, storagePath, mediaBlobRepository, mediaStorage)
                 }
                 val previousPath = previous?.storagePath
                 if (previousPath != null && previousPath != stored.storagePath) {
-                    try {
-                        withContext(Dispatchers.IO) { mediaStorage?.deleteBlob(previousPath) }
-                    } catch (cancellation: CancellationException) {
-                        throw cancellation
-                    } catch (cause: Exception) {
-                        Napier.w("Superseded media cleanup failed")
-                    }
+                    cleanupMediaObject(userId, previousPath, mediaBlobRepository, mediaStorage)
                 }
                 val downloadUrl = resolveMediaDownloadUrl(call, stored, mediaStorage, mediaAccessPolicy)
                 val response =
                     MediaUploadResponse(
-                        contentId = req.contentId,
+                        contentId = stored.contentId,
                         mediaId = stored.mediaId,
                         downloadUrl = downloadUrl,
                         uploadedAt = stored.createdAt,
@@ -349,24 +352,30 @@ internal fun Route.syncMediaRoutes(
                 if (record != null) {
                     val storagePath = record.storagePath
                     if (storagePath != null) {
-                        val storage =
-                            mediaStorage
-                                ?: return@delete call.respond(
-                                    HttpStatusCode.ServiceUnavailable,
-                                    error("MEDIA_STORAGE_UNAVAILABLE", "Media storage not configured"),
-                                )
-                        if (!withContext(Dispatchers.IO) { storage.deleteBlob(storagePath) }) {
-                            Napier.w("Media deletion failed")
-                            return@delete call.respond(
-                                HttpStatusCode.InternalServerError,
-                                error("MEDIA_DELETE_FAILED", "Failed to delete media blob"),
+                        mediaStorage
+                            ?: return@delete call.respond(
+                                HttpStatusCode.ServiceUnavailable,
+                                error("MEDIA_STORAGE_UNAVAILABLE", "Media storage not configured"),
                             )
-                        }
                     }
                 }
-                mediaBlobRepository.deleteMedia(userId, mediaId, System.currentTimeMillis())
+                val deleted =
+                    withContext(Dispatchers.IO) {
+                        mediaBlobRepository.deleteMediaWithObject(userId, mediaId, System.currentTimeMillis()) { path ->
+                            mediaStorage?.deleteLegacyObject(path) ?: false
+                        }
+                    }
+                if (!deleted) {
+                    Napier.w("Media deletion failed")
+                    return@delete call.respond(
+                        HttpStatusCode.InternalServerError,
+                        error("MEDIA_DELETE_FAILED", "Failed to delete media blob"),
+                    )
+                }
                 call.respond(HttpStatusCode.NoContent)
                 success = true
+            } catch (failure: IdentityWriteRefusedException) {
+                call.respondIdentityWriteRefusal(failure)
             } finally {
                 metrics.recordOperation(METRIC_MEDIA_DELETE, System.currentTimeMillis() - start, success)
             }

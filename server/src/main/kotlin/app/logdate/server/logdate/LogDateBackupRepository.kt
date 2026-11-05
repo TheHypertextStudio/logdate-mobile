@@ -20,10 +20,35 @@ data class LogDateBackup(
  * Internal boundary for encrypted backup metadata operations.
  */
 interface LogDateBackupRepository {
+    fun cleanupUnreferencedObject(
+        userId: UUID,
+        path: String,
+        identityEpoch: Long = 0,
+        deleteObject: (String) -> Boolean,
+    ): Boolean {
+        requireLegacyIdentityEpoch(identityEpoch)
+        if (listBackups(userId).any { it.storagePath == path }) return false
+        return deleteObject(path)
+    }
+
     fun createBackup(
         userId: UUID,
         backup: LogDateBackup,
+        identityEpoch: Long = 0,
     ): LogDateBackup
+
+    fun deleteBackupWithObject(
+        userId: UUID,
+        id: UUID,
+        identityEpoch: Long = 0,
+        deleteObject: (String) -> Boolean,
+    ): Boolean {
+        requireLegacyIdentityEpoch(identityEpoch)
+        val path = getBackup(userId, id)?.storagePath
+        if (path != null && !deleteObject(path)) return false
+        deleteBackup(userId, id, identityEpoch)
+        return true
+    }
 
     fun getBackup(
         userId: UUID,
@@ -35,6 +60,7 @@ interface LogDateBackupRepository {
     fun deleteBackup(
         userId: UUID,
         id: UUID,
+        identityEpoch: Long = 0,
     )
 }
 
@@ -47,7 +73,9 @@ class InMemoryLogDateBackupRepository : LogDateBackupRepository {
     override fun createBackup(
         userId: UUID,
         backup: LogDateBackup,
+        identityEpoch: Long,
     ): LogDateBackup {
+        requireLegacyIdentityEpoch(identityEpoch)
         val stored = backup.copy(userId = userId)
         rowsForUser(userId)[stored.id] = stored
         return stored
@@ -66,7 +94,9 @@ class InMemoryLogDateBackupRepository : LogDateBackupRepository {
     override fun deleteBackup(
         userId: UUID,
         id: UUID,
+        identityEpoch: Long,
     ) {
+        requireLegacyIdentityEpoch(identityEpoch)
         rowsForUser(userId).remove(id)
     }
 

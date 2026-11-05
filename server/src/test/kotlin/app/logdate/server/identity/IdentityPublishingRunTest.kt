@@ -126,16 +126,16 @@ class IdentityPublishingRunTest {
         }
 
     @Test
-    fun `an account without an identity gets one and it is published`() =
+    fun `private provisioning cannot implicitly publish a missing identity`() =
         runTest {
             val fixture = Fixture()
             fixture.signUp("cato", provision = false)
 
             val report = with(fixture) { publishingRun(config(publishing = true)) }.run(publish)
 
-            assertEquals(IdentityPublishingRun.EXIT_OK, report.exitCode)
+            assertEquals(IdentityPublishingRun.EXIT_FAILED, report.exitCode)
             val did = assertNotNull(fixture.accounts.findByUsername("cato")?.did)
-            assertEquals(1, fixture.directory.log(did).size)
+            assertEquals(0, fixture.directory.log(did).size)
             assertEquals("provision_and_publish", report.accounts.single().action)
         }
 

@@ -29,6 +29,27 @@ import kotlin.test.assertTrue
  */
 class GcsMediaStorageTest {
     @Test
+    fun `private reads require a live matching owner and pin the object generation`() {
+        val storage = mockk<Storage>()
+        val blob = mockk<Blob>()
+        val channel = mockk<com.google.cloud.ReadChannel>(relaxed = true)
+        val path = "identity-adoption-private/11111111-1111-4111-8111-111111111111"
+        val owner = "A".repeat(43)
+        every { storage.get(BlobId.of("bucket-a", path)) } returns blob
+        every { blob.metadata } returns mapOf("logdate-private-owner" to owner, "logdate-private-state" to "live")
+        every { blob.generation } returns 7L
+        every { blob.size } returns 3L
+        every { storage.reader(BlobId.of("bucket-a", path, 7L), *anyVararg()) } returns channel
+        val sut = GcsMediaStorage(bucketName = "bucket-a", storage = storage)
+        assertNotNull(sut.openPrivateBlob(path, owner)).use { assertEquals(3L, it.size) }
+        assertNull(sut.openPrivateBlob(path, "B".repeat(43)))
+        every { blob.metadata } returns mapOf("logdate-private-owner" to owner, "logdate-private-state" to "retired")
+        assertNull(sut.openPrivateBlob(path, owner))
+        verify(exactly = 1) { storage.reader(BlobId.of("bucket-a", path, 7L), *anyVararg()) }
+        verify(exactly = 1) { channel.close() }
+    }
+
+    @Test
     fun `cleanup confirms missing objects but propagates provider failure`() {
         val storage = mockk<Storage>()
         val sut = GcsMediaStorage(bucketName = "bucket-a", storage = storage)

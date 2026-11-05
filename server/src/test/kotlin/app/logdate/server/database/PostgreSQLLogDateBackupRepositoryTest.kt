@@ -1,11 +1,14 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.server.logdate.LogDateBackup
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.uuid.Uuid
 
 /**
  * Integration tests for [PostgreSQLLogDateBackupRepository] using an H2 in-memory database.
@@ -17,12 +20,13 @@ import kotlin.test.assertNull
 class PostgreSQLLogDateBackupRepositoryTest {
     @Test
     fun `postgres backup repository stores lists and deletes backups`() {
-        withH2Database(LogDateBackupsTable) {
+        withH2Database(AccountsTable, LogDateBackupsTable) {
             val repository = PostgreSQLLogDateBackupRepository()
-            val userId = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUUID()
+            createTestAccount(userId)
             val firstBackup =
                 LogDateBackup(
-                    id = UUID.randomUUID(),
+                    id = Uuid.random().toJavaUUID(),
                     userId = userId,
                     deviceId = "device-a",
                     manifest = """{"v":1}""",
@@ -32,7 +36,7 @@ class PostgreSQLLogDateBackupRepositoryTest {
                 )
             val secondBackup =
                 LogDateBackup(
-                    id = UUID.randomUUID(),
+                    id = Uuid.random().toJavaUUID(),
                     userId = userId,
                     deviceId = "device-b",
                     manifest = """{"v":2}""",

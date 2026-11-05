@@ -84,10 +84,11 @@ class IdentityBackfillCommandTest {
                         ),
                 )
 
-            val outcome = runIdentityBackfill(publishing, IdentityBackfillOptions(dryRun = false, allowPlcPublishing = false))
-
-            assertEquals(IdentityBackfillOutcome.RefusedPublishing, outcome)
-            assertEquals(legacy, accounts.findById(legacy.id))
+            for (allow in listOf(false, true)) {
+                val outcome = runIdentityBackfill(publishing, IdentityBackfillOptions(dryRun = false, allowPlcPublishing = allow))
+                assertEquals(IdentityBackfillOutcome.RefusedPublishing, outcome)
+                assertEquals(legacy, accounts.findById(legacy.id))
+            }
         }
 
     @Test

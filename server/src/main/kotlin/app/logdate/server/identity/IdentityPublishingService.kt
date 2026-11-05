@@ -154,7 +154,7 @@ class IdentityPublishingService(
 
     /**
      * Brings the inspected account's identity into the directory, then inspects it again to confirm
-     * the result. Requires `ATPROTO_PLC_PUBLISH_ENABLED`; [reconcile] additionally allows sending an
+     * the result. Requires separately granted publication authority; [reconcile] additionally allows sending an
      * update when the directory's copy differs from what LogDate serves. [beforeWrite] runs before
      * anything is sent, so the caller can pace writes.
      */

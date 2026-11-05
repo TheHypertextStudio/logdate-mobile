@@ -45,8 +45,24 @@ data class AtprotoDisconnectChallenge(
 data class AtprotoDisconnectRequest(
     val decisionId: String,
     val challenge: String,
-    val credential: PasskeyAssertionResponse,
+    val credential: PasskeyAuthenticationResponse,
 ) {
+    constructor(decisionId: String, challenge: String, credential: PasskeyAssertionResponse) : this(
+        decisionId,
+        challenge,
+        PasskeyAuthenticationResponse(
+            credential.id,
+            credential.rawId,
+            AuthenticatorAssertionResponse(
+                credential.response.clientDataJSON,
+                credential.response.authenticatorData,
+                credential.response.signature,
+                credential.response.userHandle,
+            ),
+            credential.type,
+        ),
+    )
+
     override fun toString(): String = "AtprotoDisconnectRequest"
 }
 

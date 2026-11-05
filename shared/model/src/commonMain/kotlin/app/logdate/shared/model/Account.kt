@@ -30,6 +30,8 @@ data class LogDateAccount(
     val storageMode: AccountStorageMode = AccountStorageMode.LEGACY,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val identityKind: AccountIdentityKind = AccountIdentityKind.HOSTED,
+    /** Absent on older servers; clients must not infer a canonical generation. */
+    val identityEpoch: Long? = null,
 )
 
 @Serializable

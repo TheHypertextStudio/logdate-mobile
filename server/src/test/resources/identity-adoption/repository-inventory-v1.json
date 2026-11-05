@@ -1,0 +1,143 @@
+{
+  "sourceDid": "did:web:source.example",
+  "head": {
+    "root": "bafyreibhaghiwzk5yvae6263ksgrsch6imh6m2binc6g7c3c7kbvytxiti",
+    "commit": "bafyreiaas64oz745tutgj6n6pqg2limokkfvrvwnnwn67w2wvttqgjxbo4",
+    "revision": 1836752088809216000
+  },
+  "commits": [
+    {
+      "cid": "bafyreicw55v43siu6kp2zezrr2slvcvn4zttq7chtsaacr3oc63gw4x67u",
+      "root": "bafyreifyljopnl6r7csbhuziobvq4c6b7dnqodnub4pgg6smbrpwmehhse",
+      "prev": null,
+      "revision": 1836752088808126464,
+      "createdAt": 1793703211726,
+      "count": 1,
+      "signature": "sQXhL7NYe6uxWJJj2vOQque2R-Ml7iaUWwhFusI4rZU"
+    },
+    {
+      "cid": "bafyreic3na4c2roshgxzqproqrvklogdr5chea5fqem6cfmghuselbfaqe",
+      "root": "bafyreihalm5jdlfctxhuxtr4pxw7lyjp4gngcs27g7mwhbddf3ip46zvfe",
+      "prev": "bafyreicw55v43siu6kp2zezrr2slvcvn4zttq7chtsaacr3oc63gw4x67u",
+      "revision": 1836752088808481792,
+      "createdAt": 1793703211727,
+      "count": 1,
+      "signature": "LzGBTcUJPMhAxQE704vRG5KnftTVVK9UgwKGtarIaF8"
+    },
+    {
+      "cid": "bafyreiaas64oz745tutgj6n6pqg2limokkfvrvwnnwn67w2wvttqgjxbo4",
+      "root": "bafyreibhaghiwzk5yvae6263ksgrsch6imh6m2binc6g7c3c7kbvytxiti",
+      "prev": "bafyreic3na4c2roshgxzqproqrvklogdr5chea5fqem6cfmghuselbfaqe",
+      "revision": 1836752088809216000,
+      "createdAt": 1793703211727,
+      "count": 2,
+      "signature": "BrxiX-3Hz5JMDGIdRFRes46CgkTYMbKMWJ1UCqJiG9k"
+    }
+  ],
+  "blocks": [
+    {
+      "cid": "bafkreiag35hx4e4u6hcxzrsyh65e3adauwtg6t2hohauv37wxgxyukgjwm",
+      "bytes": "CQgH"
+    },
+    {
+      "cid": "bafyreiaas64oz745tutgj6n6pqg2limokkfvrvwnnwn67w2wvttqgjxbo4",
+      "bytes": "pmNkaWR2ZGlkOndlYjpzb3VyY2UuZXhhbXBsZWNyZXZtM216Zm9kZ2N5d2EyMmNzaWdYIAa8Yl_tx8-STAxiHURUXrOOgoJE2DGyjFidVAqiYhvZZGRhdGHYKlglAAFxEiAnAY6LZV3FQE9r21SNGQj-Qw_maChovG-LYvqDXE7ommRwcmV22CpYJQABcRIgW2g4LUXSOa-YPi6EaqW4w49EcgOlgRnhFYY9JEWEoIFndmVyc2lvbgM"
+    },
+    {
+      "cid": "bafyreibhaghiwzk5yvae6263ksgrsch6imh6m2binc6g7c3c7kbvytxiti",
+      "bytes": "omFlgqRha1gdZnV0dXJlLmV4YW1wbGUucmVjb3JkL3Vua25vd25hcABhdPZhdtgqWCUAAXESIEA5KZuTvFBQyVMqA1RrwxsIGA6AswnSViulyG9cMyiYpGFrWCVzdHVkaW8uaHlwZXJ0ZXh0LmxvZ2RhdGUuY29udGVudC9ub3RlYXAAYXT2YXbYKlglAAFxEiCozjDMgFQom2mS75OEQDyRiCCRVnbj5TrB24ARU144b2Fs9g"
+    },
+    {
+      "cid": "bafyreic3na4c2roshgxzqproqrvklogdr5chea5fqem6cfmghuselbfaqe",
+      "bytes": "pmNkaWR2ZGlkOndlYjpzb3VyY2UuZXhhbXBsZWNyZXZtM216Zm9kZ2N5N3QyMmNzaWdYIC8xgU3FCTzIQMUBO9OL0RuSp37U1VSvVIMChrWqyGhfZGRhdGHYKlglAAFxEiDgWzqRrKKdz0vOPH3t9eEv4ZphS1832WOEYy7Q_ns1KWRwcmV22CpYJQABcRIgVu9rzckU8p-skzGOpLqKreZnOHxHnIABR24Xtmty_v1ndmVyc2lvbgM"
+    },
+    {
+      "cid": "bafyreicaheuzxe54kbimsuzkankgxqy3bama5aftbhjfmk5fzbxvymzita",
+      "bytes": "oWZmdXR1cmVka2VwdA"
+    },
+    {
+      "cid": "bafyreictuavcjs2k72msb5kcnw2eyf5chvrklud4dzx4hqwfotovqnu35e",
+      "bytes": "oWZvcnBoYW71"
+    },
+    {
+      "cid": "bafyreicw55v43siu6kp2zezrr2slvcvn4zttq7chtsaacr3oc63gw4x67u",
+      "bytes": "pmNkaWR2ZGlkOndlYjpzb3VyY2UuZXhhbXBsZWNyZXZtM216Zm9kZ2N4dXkyMmNzaWdYILEF4S-zWHursViSY9rzkKrntkfjJe4mlFsIRbrCOK2VZGRhdGHYKlglAAFxEiC4Wlz2r9H4pBPTKHBrDgvB-NsHDbQPHmN6TAxfZhDnkWRwcmV29md2ZXJzaW9uAw"
+    },
+    {
+      "cid": "bafyreifizyymzacufcnwtexpsoceaperraqjcvtw4pstvqo3qaivgxryn4",
+      "bytes": "oWlwcmVzZXJ2ZWRjbmV3"
+    },
+    {
+      "cid": "bafyreifyljopnl6r7csbhuziobvq4c6b7dnqodnub4pgg6smbrpwmehhse",
+      "bytes": "omFlgaRha1glc3R1ZGlvLmh5cGVydGV4dC5sb2dkYXRlLmNvbnRlbnQvbm90ZWFwAGF09mF22CpYJQABcRIg2AtIIQ_Def74ov5qzHW-PaJnYCQ-ULt_zeDnz9N09ClhbPY"
+    },
+    {
+      "cid": "bafyreigybneccd6dph7prix6nlghlpr5ujtwajb6kc5x7tpa47h5g5hufe",
+      "bytes": "oWlwcmVzZXJ2ZWRjb2xk"
+    },
+    {
+      "cid": "bafyreihalm5jdlfctxhuxtr4pxw7lyjp4gngcs27g7mwhbddf3ip46zvfe",
+      "bytes": "omFlgaRha1glc3R1ZGlvLmh5cGVydGV4dC5sb2dkYXRlLmNvbnRlbnQvbm90ZWFwAGF09mF22CpYJQABcRIgqM4wzIBUKJtpku-ThEA8kYggkVZ24-U6wduAEVNeOG9hbPY"
+    }
+  ],
+  "expected": {
+    "records": [
+      {
+        "collection": "future.example.record",
+        "rkey": "unknown",
+        "cid": "bafyreicaheuzxe54kbimsuzkankgxqy3bama5aftbhjfmk5fzbxvymzita"
+      },
+      {
+        "collection": "studio.hypertext.logdate.content",
+        "rkey": "note",
+        "cid": "bafyreifizyymzacufcnwtexpsoceaperraqjcvtw4pstvqo3qaivgxryn4"
+      }
+    ],
+    "blocks": [
+      {
+        "cid": "bafkreiag35hx4e4u6hcxzrsyh65e3adauwtg6t2hohauv37wxgxyukgjwm",
+        "roles": ["RAW", "UNREFERENCED"]
+      },
+      {
+        "cid": "bafyreiaas64oz745tutgj6n6pqg2limokkfvrvwnnwn67w2wvttqgjxbo4",
+        "roles": ["CURRENT_COMMIT"]
+      },
+      {
+        "cid": "bafyreibhaghiwzk5yvae6263ksgrsch6imh6m2binc6g7c3c7kbvytxiti",
+        "roles": ["CURRENT_NODE"]
+      },
+      {
+        "cid": "bafyreic3na4c2roshgxzqproqrvklogdr5chea5fqem6cfmghuselbfaqe",
+        "roles": ["HISTORICAL_COMMIT"]
+      },
+      {
+        "cid": "bafyreicaheuzxe54kbimsuzkankgxqy3bama5aftbhjfmk5fzbxvymzita",
+        "roles": ["CURRENT_RECORD"]
+      },
+      {
+        "cid": "bafyreictuavcjs2k72msb5kcnw2eyf5chvrklud4dzx4hqwfotovqnu35e",
+        "roles": ["UNREFERENCED"]
+      },
+      {
+        "cid": "bafyreicw55v43siu6kp2zezrr2slvcvn4zttq7chtsaacr3oc63gw4x67u",
+        "roles": ["HISTORICAL_COMMIT"]
+      },
+      {
+        "cid": "bafyreifizyymzacufcnwtexpsoceaperraqjcvtw4pstvqo3qaivgxryn4",
+        "roles": ["CURRENT_RECORD", "HISTORICAL_RECORD"]
+      },
+      {
+        "cid": "bafyreifyljopnl6r7csbhuziobvq4c6b7dnqodnub4pgg6smbrpwmehhse",
+        "roles": ["HISTORICAL_NODE"]
+      },
+      {
+        "cid": "bafyreigybneccd6dph7prix6nlghlpr5ujtwajb6kc5x7tpa47h5g5hufe",
+        "roles": ["HISTORICAL_RECORD"]
+      },
+      {
+        "cid": "bafyreihalm5jdlfctxhuxtr4pxw7lyjp4gngcs27g7mwhbddf3ip46zvfe",
+        "roles": ["HISTORICAL_NODE"]
+      }
+    ]
+  }
+}

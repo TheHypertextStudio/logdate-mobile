@@ -38,7 +38,7 @@ internal class RepoBackedLogDateMomentsRepository(
             if (expectedVersion != null && existing.version != expectedVersion) return@withAccountLock MomentUpdateResult.Conflict
             val changed = transform(existing)
             require(changed.id == id) { "A moment patch cannot change its identity" }
-            MomentUpdateResult.Updated(transaction.write { writeMoment(userId, changed) })
+            MomentUpdateResult.Updated(transaction.write(userId) { writeMoment(userId, changed) })
         }
 
     override suspend fun momentState(
@@ -49,7 +49,7 @@ internal class RepoBackedLogDateMomentsRepository(
     override suspend fun upsertMoment(
         userId: UUID,
         moment: LogDateMoment,
-    ): LogDateMoment = mutations.withAccountLock(userId) { transaction.write { writeMoment(userId, moment) } }
+    ): LogDateMoment = mutations.withAccountLock(userId) { transaction.write(userId) { writeMoment(userId, moment) } }
 
     override suspend fun createMomentIfAbsent(
         userId: UUID,
@@ -67,7 +67,7 @@ internal class RepoBackedLogDateMomentsRepository(
         id: String,
         deletedAt: Long,
     ) {
-        mutations.withAccountLock(userId) { transaction.write { removeMoment(userId, id, deletedAt) } }
+        mutations.withAccountLock(userId) { transaction.write(userId) { removeMoment(userId, id, deletedAt) } }
     }
 
     override suspend fun momentChanges(

@@ -26,8 +26,9 @@ internal suspend fun issueAuthResponse(
     deviceSessionId: String? = null,
     passkeyConfirmed: Boolean = false,
 ): AuthResponse {
-    val current = accountRepository.findById(account.id) ?: throw AccountSessionUnavailableException()
-    val fresh = ensureLogDateSessionIdentity(current, atprotoIdentityService) ?: throw AccountSessionUnavailableException()
+    val fresh =
+        ensureLogDateSessionIdentity(account.id, accountRepository, atprotoIdentityService)
+            ?: throw AccountSessionUnavailableException()
     val identities = identityRepository.findByAccountId(fresh.id)
     val linkedProviders = identities.map { it.provider.name.lowercase() }.distinct().sorted()
     val passkeyCredentialIds = webAuthnService.getPasskeysForUser(fresh.id).map { it.credentialId }
@@ -108,4 +109,5 @@ private fun authAccountView(
         updatedAt = (account.lastSignInAt ?: account.createdAt).toString(),
         storageMode = account.storageMode,
         identityKind = account.identityKind,
+        identityEpoch = account.identityEpoch,
     )

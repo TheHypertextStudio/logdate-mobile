@@ -19,4 +19,5 @@ fun LogDateAccount.toCloudAccount(): CloudAccount =
         passkeyCredentialIds = passkeyCredentialIds.mapNotNull(Uuid::parseOrNull),
         storageMode = storageMode,
         identityKind = identityKind,
+        identityEpoch = identityEpoch,
     )

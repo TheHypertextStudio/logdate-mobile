@@ -1,5 +1,8 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.server.logdate.InMemoryLogDateCollectionsMetadataStore
 import app.logdate.server.logdate.LogDateCollectionKind
@@ -7,12 +10,13 @@ import app.logdate.server.logdate.LogDateCollectionMetadata
 import app.logdate.server.logdate.LogDateCollectionsMetadataStore
 import kotlinx.coroutines.runBlocking
 import studio.hypertext.atproto.identity.AtprotoDid
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 /**
  * Tests for [PostgreSQLLogDateCollectionsMetadataStore], the component
@@ -31,7 +35,7 @@ import kotlin.test.assertTrue
 class PostgreSQLLogDateCollectionsMetadataStoreTest {
     @Test
     fun `mixed changes and deletions fit one cursor page without skipping records`() {
-        withH2Database(LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
+        withH2Database(AccountsTable, LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
             runBlocking {
                 assertMixedPagesAreLossless(PostgreSQLLogDateCollectionsMetadataStore())
                 assertMixedPagesAreLossless(InMemoryLogDateCollectionsMetadataStore())
@@ -40,7 +44,7 @@ class PostgreSQLLogDateCollectionsMetadataStoreTest {
     }
 
     private suspend fun assertMixedPagesAreLossless(store: LogDateCollectionsMetadataStore) {
-        val userId = UUID.randomUUID()
+        val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
         val repoDid = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
         store.upsert(userId, repoDid, LogDateCollectionKind.ENTRY, "deleted")
         store.upsert(userId, repoDid, LogDateCollectionKind.ENTRY, "first")
@@ -62,10 +66,10 @@ class PostgreSQLLogDateCollectionsMetadataStoreTest {
 
     @Test
     fun `a whole-feed read returns every change and deletion with no next page`() {
-        withH2Database(LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
+        withH2Database(AccountsTable, LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
             runBlocking {
                 val store = PostgreSQLLogDateCollectionsMetadataStore()
-                val userId = UUID.randomUUID()
+                val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
                 val repoDid = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
                 store.upsert(userId, repoDid, LogDateCollectionKind.ASSOCIATION, "kept-link")
                 store.upsert(userId, repoDid, LogDateCollectionKind.ASSOCIATION, "removed-link")
@@ -83,11 +87,12 @@ class PostgreSQLLogDateCollectionsMetadataStoreTest {
     @Test
     fun `metadata store tracks versions changes and purge counts by collection`() {
         withH2Database(
+            AccountsTable,
             LogDateCollectionStatesTable,
             LogDateCollectionRecordsTable,
         ) {
             val store = PostgreSQLLogDateCollectionsMetadataStore()
-            val userId = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             val repoDid = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
 
             runBlocking {
@@ -124,7 +129,7 @@ class PostgreSQLLogDateCollectionsMetadataStoreTest {
 
     @Test
     fun `tombstones are read only for deleted rows`() {
-        withH2Database(LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
+        withH2Database(AccountsTable, LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
             runBlocking {
                 assertTombstones(PostgreSQLLogDateCollectionsMetadataStore())
                 assertTombstones(InMemoryLogDateCollectionsMetadataStore())
@@ -133,7 +138,7 @@ class PostgreSQLLogDateCollectionsMetadataStoreTest {
     }
 
     private suspend fun assertTombstones(store: LogDateCollectionsMetadataStore) {
-        val userId = UUID.randomUUID()
+        val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
         val repoDid = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
         store.upsert(userId, repoDid, LogDateCollectionKind.ENTRY, "live")
         store.upsert(userId, repoDid, LogDateCollectionKind.ENTRY, "gone")

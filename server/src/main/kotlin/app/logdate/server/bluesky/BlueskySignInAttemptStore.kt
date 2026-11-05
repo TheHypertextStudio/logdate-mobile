@@ -1,5 +1,7 @@
 package app.logdate.server.bluesky
 
+import app.logdate.server.identity.adoption.IdentityAdoptionOAuthBinding
+import app.logdate.server.identity.adoption.VerifiedIdentityAdoptionOAuth
 import studio.hypertext.atproto.identity.AtprotoDid
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -7,6 +9,22 @@ import kotlin.uuid.Uuid
 
 /** App proof is separate from provider PKCE; a browser callback alone cannot sign an app in. */
 internal interface BlueskySignInAttemptStore {
+    suspend fun createAdoption(
+        id: String,
+        challenge: String,
+        expiresAt: Instant,
+        binding: IdentityAdoptionOAuthBinding,
+    ) {
+        error("Identity adoption storage is unavailable")
+    }
+
+    /** Idempotent only within this exact proposal and app proof; never an enrollment continuation. */
+    suspend fun exchangeAdoption(
+        id: String,
+        verifier: String,
+        binding: IdentityAdoptionOAuthBinding,
+    ): VerifiedIdentityAdoptionOAuth? = null
+
     @OptIn(ExperimentalUuidApi::class)
     suspend fun createReconnect(
         id: String,

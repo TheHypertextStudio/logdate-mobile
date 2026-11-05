@@ -78,6 +78,25 @@ class EncryptionService(
     }
 
     fun processMediaDownload(
+        input: Path,
+        output: Path,
+        shouldDecrypt: Boolean,
+        checkActive: () -> Unit = {},
+    ) {
+        val prefix = Files.newInputStream(input).use { it.readNBytes(PayloadPrefixes.SERVER_MEDIA.size) }
+        if (shouldDecrypt && prefix.hasPrefix(PayloadPrefixes.SERVER_MEDIA)) {
+            try {
+                codec.decryptMediaFile(input, output, checkActive)
+            } catch (error: Exception) {
+                Files.deleteIfExists(output)
+                throw error
+            }
+        } else {
+            copyBackupFile(input, output, checkActive)
+        }
+    }
+
+    fun processMediaDownload(
         payload: ByteArray,
         shouldDecrypt: Boolean,
     ): ByteArray {

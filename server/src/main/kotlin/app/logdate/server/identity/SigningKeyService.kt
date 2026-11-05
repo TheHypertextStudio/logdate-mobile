@@ -200,9 +200,12 @@ class SigningKeyService(
         require(exportedKey.publicKeyDidKey == didKeyFor(exportedKey.publicKeyMultibase)) {
             "publicKeyDidKey must match publicKeyMultibase"
         }
-        require(EcCurve.fromSigningKeyAlgorithm(exportedKey.algorithm) != null) {
-            "Unsupported signing key algorithm: ${exportedKey.algorithm}"
-        }
+        verifyImportedSigningKey(
+            privateKey,
+            exportedKey.publicKeyMultibase,
+            exportedKey.algorithm,
+            ByteArray(32).also(secureRandom::nextBytes),
+        )
         return buildStoredKey(
             accountId = accountId,
             algorithm = exportedKey.algorithm,
@@ -213,7 +216,7 @@ class SigningKeyService(
 
     private suspend fun createKey(accountId: Uuid): StoredSigningKey {
         val generated = generateKeyPair()
-        return repository.save(
+        return repository.createActiveKeyIfMissing(
             buildStoredKey(
                 accountId = accountId,
                 algorithm = generated.algorithm,

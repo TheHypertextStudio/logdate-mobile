@@ -31,13 +31,25 @@ class PayloadCodec(
         input: Path,
         output: Path,
         checkActive: () -> Unit = {},
+    ) = decryptFile(input, output, PayloadPrefixes.SERVER_BACKUP, checkActive)
+
+    fun decryptMediaFile(
+        input: Path,
+        output: Path,
+        checkActive: () -> Unit = {},
+    ) = decryptFile(input, output, PayloadPrefixes.SERVER_MEDIA, checkActive)
+
+    private fun decryptFile(
+        input: Path,
+        output: Path,
+        expectedPrefix: ByteArray,
+        checkActive: () -> Unit,
     ) {
         Files.newInputStream(input).buffered().use { source ->
             val prefix = source.readNBytes(256)
-            val header = PayloadHeaderCodec.decode(prefix, PayloadPrefixes.SERVER_BACKUP)
-            val key = keyring.getKey(header.keyId) ?: throw EncryptionException("Key not found: ${header.keyId}")
-            // The GCM tag is checked only at the end; callers must never serve this staging file
-            // until transformBackup returns successfully.
+            val header = PayloadHeaderCodec.decode(prefix, expectedPrefix)
+            val key = keyring.getKey(header.keyId) ?: throw EncryptionException("Decryption key is unavailable")
+            // Authentication completes before the staging output can be served.
             Files.newInputStream(input).buffered().use { encryptedSource ->
                 encryptedSource.skipNBytes(header.ciphertextOffset.toLong())
                 Files.newOutputStream(output).buffered().use { destination ->

@@ -2,6 +2,8 @@ package app.logdate.server
 
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateCollectionsRepository
+import app.logdate.server.logdate.ObjectUploadMaintenance
+import app.logdate.server.logdate.ObjectUploads
 import app.logdate.server.logging.SpaceMigrationNotices
 import app.logdate.server.logging.SpacePurgeNotices
 import app.logdate.server.migration.LegacyCopyCleanup
@@ -38,6 +40,10 @@ internal fun Application.installSyncMaintenance(isDatabaseAvailable: Boolean) {
     val spaceStore by inject<SpaceStore>()
     val blobStorage by inject<LogDateBlobStorage>()
     val legacyCleanup by inject<LegacyCopyCleanup>()
+    if (isDatabaseAvailable) {
+        val uploads by inject<ObjectUploads>()
+        installObjectUploadMaintenance(ObjectUploadMaintenance(uploads, blobStorage))
+    }
 
     val maintenanceReadEnv: (String) -> String? =
         if (isDatabaseAvailable) {

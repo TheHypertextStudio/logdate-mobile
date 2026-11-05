@@ -40,7 +40,7 @@ internal class RepoConditionalWriter(
         value: JsonObject,
         respectTombstones: Boolean,
     ): ConditionalCreate<Long> =
-        transaction.write {
+        transaction.write(userId) {
             create(userId, repoDid, collection, recordId, value, respectTombstones)
         }
 

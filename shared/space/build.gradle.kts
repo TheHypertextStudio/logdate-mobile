@@ -20,7 +20,7 @@ val generateSealedConformanceFixtures =
     tasks.register<GenerateConformanceFixtures>("generateSealedConformanceFixtures") {
         description = "Embed the conformance manifest and sealed fixtures in the test sources."
         root.set(conformanceDirectory)
-        fixtures.from(rootProject.fileTree(conformanceDirectory) { include("manifest.json", "sealed/*.json") })
+        fixtures.from(rootProject.fileTree(conformanceDirectory) { include("manifest.json", "sealed/*.json", "adoption/*.json") })
         packageName.set("app.logdate.space")
         objectName.set("SealedConformanceFixtures")
         outputDirectory.set(layout.buildDirectory.dir("generated/conformance/kotlin"))

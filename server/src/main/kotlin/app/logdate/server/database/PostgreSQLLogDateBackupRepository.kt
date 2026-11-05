@@ -13,11 +13,21 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 
 internal class PostgreSQLLogDateBackupRepository : LogDateBackupRepository {
+    override fun cleanupUnreferencedObject(
+        userId: UUID,
+        path: String,
+        identityEpoch: Long,
+        deleteObject: (String) -> Boolean,
+    ): Boolean = PostgreSQLLegacyObjectDeletion().cleanup(userId, path, identityEpoch, deleteObject)
+
     override fun createBackup(
         userId: UUID,
         backup: LogDateBackup,
+        identityEpoch: Long,
     ): LogDateBackup =
         transaction {
+            requireAccountIdentityWrite(userId, identityEpoch)
+            requireLegacyObjectMutation(userId, LegacyObjectKind.BACKUP, backup.id.toString(), backup.storagePath)
             LogDateBackupsTable.insert {
                 it[id] = backup.id
                 it[LogDateBackupsTable.userId] = userId
@@ -53,11 +63,24 @@ internal class PostgreSQLLogDateBackupRepository : LogDateBackupRepository {
                 .map { row -> row.toLogDateBackup() }
         }
 
+    override fun deleteBackupWithObject(
+        userId: UUID,
+        id: UUID,
+        identityEpoch: Long,
+        deleteObject: (String) -> Boolean,
+    ): Boolean =
+        PostgreSQLLegacyObjectDeletion().delete(userId, LegacyObjectKind.BACKUP, id.toString(), identityEpoch, deleteObject) {
+            deleteBackup(userId, id, identityEpoch)
+        }
+
     override fun deleteBackup(
         userId: UUID,
         id: UUID,
+        identityEpoch: Long,
     ) {
         transaction {
+            requireAccountIdentityWrite(userId, identityEpoch)
+            requireLegacyObjectMutation(userId, LegacyObjectKind.BACKUP, id.toString())
             LogDateBackupsTable.deleteWhere {
                 (LogDateBackupsTable.userId eq userId) and
                     (LogDateBackupsTable.id eq id)

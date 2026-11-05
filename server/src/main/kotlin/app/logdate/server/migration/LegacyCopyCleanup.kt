@@ -6,7 +6,6 @@ import app.logdate.shared.model.AccountStorageMode
 import app.logdate.shared.model.sync.SpaceMigrationPhase
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
-import java.util.UUID
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -20,10 +19,12 @@ private const val CLEANUP_BATCH = 50
  * empty and starts a new history with its next write. That is safe only because no account's DID has
  * been published, so no relay or app holds a copy of the old history.
  *
- * Deleting is idempotent: running it again after a failure deletes whatever is left.
+ * The exact unfinished CLEANED claim and its identity epoch authorize deletion. A false result
+ * means authority changed; the caller must not mark cleanup complete. Provider failures propagate
+ * so the same durable claim can retry idempotently.
  */
 fun interface LegacyJournalEraser {
-    suspend fun erase(accountId: UUID)
+    suspend fun erase(claim: SpaceMigration): Boolean
 }
 
 /** What one cleanup run did. */
@@ -55,8 +56,7 @@ class LegacyCopyCleanup(
         for (due in store.cleanupDue(now - config.legacyRetention, CLEANUP_BATCH)) {
             val claimed = claim(due, now) ?: continue
             try {
-                eraser.erase(claimed.accountId)
-                if (store.replace(claimed, claimed.next(clock.now()) { copy(cleanedAt = clock.now()) })) erased++
+                if (eraser.erase(claimed) && store.replace(claimed, claimed.next(clock.now()) { copy(cleanedAt = clock.now()) })) erased++
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
@@ -72,12 +72,17 @@ class LegacyCopyCleanup(
         due: SpaceMigration,
         now: Instant,
     ): SpaceMigration? {
-        if (due.phase == SpaceMigrationPhase.CLEANED) return due
-        val mode = accounts.findById(due.accountId.toKotlinUuid())?.storageMode
-        if (mode != AccountStorageMode.PERSONAL_SPACE_V1) {
+        val account = accounts.findById(due.accountId.toKotlinUuid())
+        if (account == null ||
+            account.identityEpoch != due.identityEpoch ||
+            !account.isActive ||
+            account.moderation != null ||
+            account.storageMode != AccountStorageMode.PERSONAL_SPACE_V1
+        ) {
             Napier.w(SpaceMigrationNotices.CLEANUP_SKIPPED)
             return null
         }
+        if (due.phase == SpaceMigrationPhase.CLEANED) return due
         val marked = due.next(now) { copy(phase = SpaceMigrationPhase.CLEANED, holdStartedAt = null) }
         return marked.takeIf { store.replace(due, it) }
     }

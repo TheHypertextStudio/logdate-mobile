@@ -19,6 +19,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
@@ -110,7 +111,11 @@ class IdentityRoutesTest {
 
             assertEquals(did, wellKnownDid("dana.logdate.app").bodyAsText())
 
-            runBlocking { env.accountRepository.save(account.copy(handle = "dana-renamed.logdate.app")) }
+            runBlocking {
+                assertNotNull(
+                    env.accountRepository.updateIdentityIfUnchanged(account, account.copy(handle = "dana-renamed.logdate.app")),
+                )
+            }
 
             assertEquals(HttpStatusCode.NotFound, wellKnownDid("dana.logdate.app").status)
             assertTrue(xrpcDid("dana.logdate.app").bodyAsText().contains("HandleNotFound"))

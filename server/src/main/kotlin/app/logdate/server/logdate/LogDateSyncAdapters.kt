@@ -24,7 +24,11 @@ internal class SyncBackedLogDateMediaRepository(
     override fun upsertMedia(
         userId: java.util.UUID,
         media: LogDateMedia,
-    ): LogDateMedia = syncRepository.upsertMedia(userId, media.toSyncRecord()).toLogDateMedia()
+        identityEpoch: Long,
+    ): LogDateMedia {
+        requireLegacyIdentityEpoch(identityEpoch)
+        return syncRepository.upsertMedia(userId, media.toSyncRecord()).toLogDateMedia()
+    }
 
     override fun getMedia(
         userId: java.util.UUID,
@@ -35,7 +39,9 @@ internal class SyncBackedLogDateMediaRepository(
         userId: java.util.UUID,
         mediaId: String,
         deletedAt: Long,
+        identityEpoch: Long,
     ) {
+        requireLegacyIdentityEpoch(identityEpoch)
         syncRepository.deleteMedia(userId, mediaId, deletedAt)
     }
 
@@ -49,7 +55,11 @@ internal class SyncBackedLogDateBackupRepository(
     override fun createBackup(
         userId: java.util.UUID,
         backup: LogDateBackup,
-    ): LogDateBackup = syncRepository.createBackupRecord(userId, backup.toSyncRecord()).toLogDateBackup()
+        identityEpoch: Long,
+    ): LogDateBackup {
+        requireLegacyIdentityEpoch(identityEpoch)
+        return syncRepository.createBackupRecord(userId, backup.toSyncRecord()).toLogDateBackup()
+    }
 
     override fun getBackup(
         userId: java.util.UUID,
@@ -62,7 +72,9 @@ internal class SyncBackedLogDateBackupRepository(
     override fun deleteBackup(
         userId: java.util.UUID,
         id: java.util.UUID,
+        identityEpoch: Long,
     ) {
+        requireLegacyIdentityEpoch(identityEpoch)
         syncRepository.deleteBackup(userId, id)
     }
 }

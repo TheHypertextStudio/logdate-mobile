@@ -1,5 +1,8 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.server.logdate.InMemoryLogDateCollectionsMetadataStore
 import app.logdate.server.logdate.InMemoryLogDateMediaRepository
@@ -11,17 +14,17 @@ import app.logdate.server.sync.StaleWriteException
 import app.logdate.shared.model.sync.DeviceId
 import kotlinx.coroutines.runBlocking
 import studio.hypertext.atproto.identity.AtprotoDid
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.uuid.Uuid
 
 class CollectionDeletionWinsTest {
     @Test
     fun `canonical metadata tombstones reject writes without partial batches`() =
-        withH2Database(LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
+        withH2Database(AccountsTable, LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
             runBlocking {
                 verifyMetadata(PostgreSQLLogDateCollectionsMetadataStore())
                 verifyMetadata(InMemoryLogDateCollectionsMetadataStore())
@@ -30,17 +33,18 @@ class CollectionDeletionWinsTest {
 
     @Test
     fun `media tombstones reject writes even when deletion arrived first`() =
-        withH2Database(LogDateMediaRecordsTable) {
+        withH2Database(AccountsTable, LogDateMediaRecordsTable) {
             verifyMedia(PostgreSQLLogDateMediaRepository())
             verifyMedia(InMemoryLogDateMediaRepository())
         }
 
     @Test
     fun `moment retention does not remove durable sync deletion fences`() =
-        withH2Database(LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
+        withH2Database(AccountsTable, LogDateCollectionStatesTable, LogDateCollectionRecordsTable) {
             runBlocking {
                 for (store in listOf(PostgreSQLLogDateCollectionsMetadataStore(), InMemoryLogDateCollectionsMetadataStore())) {
-                    val user = UUID.randomUUID()
+                    val user = Uuid.random().toJavaUUID()
+                    if (store is PostgreSQLLogDateCollectionsMetadataStore) createTestAccount(user)
                     val did = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
                     val durable =
                         listOf(
@@ -71,7 +75,8 @@ class CollectionDeletionWinsTest {
         }
 
     private suspend fun verifyMetadata(store: LogDateCollectionsMetadataStore) {
-        val user = UUID.randomUUID()
+        val user = Uuid.random().toJavaUUID()
+        if (store is PostgreSQLLogDateCollectionsMetadataStore) createTestAccount(user)
         val did = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
         for (kind in listOf(LogDateCollectionKind.ENTRY, LogDateCollectionKind.JOURNAL, LogDateCollectionKind.ASSOCIATION)) {
             store.delete(user, did, kind, "deleted", 100, allowMissing = true)
@@ -98,7 +103,8 @@ class CollectionDeletionWinsTest {
     }
 
     private fun verifyMedia(repository: LogDateMediaRepository) {
-        val user = UUID.randomUUID()
+        val user = Uuid.random().toJavaUUID()
+        createTestAccount(user)
         repository.deleteMedia(user, "deleted", 100)
         repository.deleteMedia(user, "deleted", 50)
         assertFailsWith<StaleWriteException> {

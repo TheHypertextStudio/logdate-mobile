@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.repo.RepoBlockStore
 import studio.hypertext.atproto.repo.SignedRepoCommit
+import java.util.UUID
 
 /**
  * Passes every call to [delegate] and reports each commit it stores to [sequencer].
@@ -25,6 +26,14 @@ internal class SequencingRepoBlockStore(
     private val sequencer: Lazy<RepoEventSequencer>,
 ) : RepoBlockStore by delegate,
     RepoWriteTransaction {
+    override suspend fun <T> write(
+        userId: UUID,
+        identityEpoch: Long,
+        action: suspend () -> T,
+    ): T =
+        (delegate as? RepoWriteTransaction)?.write(userId, identityEpoch, action)
+            ?: RepoWriteTransaction.Direct.write(userId, identityEpoch, action)
+
     override suspend fun <T> write(action: suspend () -> T): T = (delegate as? RepoWriteTransaction)?.write(action) ?: action()
 
     override suspend fun appendCommit(

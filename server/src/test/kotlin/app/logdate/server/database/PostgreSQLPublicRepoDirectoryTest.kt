@@ -6,6 +6,7 @@ import app.logdate.server.auth.AccountModeration
 import app.logdate.server.database.support.localTestPostgresDataSource
 import app.logdate.server.database.support.withH2Database
 import app.logdate.server.database.support.withOwnPostgresDatabase
+import app.logdate.server.identity.adoption.withAccountWriteOrigin
 import app.logdate.shared.model.AccountStorageMode
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
@@ -28,7 +29,10 @@ import kotlin.uuid.Uuid
 class PostgreSQLPublicRepoDirectoryTest {
     private val cid = Cid.sha256(DAG_CBOR_CODEC, byteArrayOf(1))
 
-    private fun onH2(test: suspend () -> Unit) = withH2Database(AccountsTable, AtprotoRepoHeadsTable) { runBlocking { test() } }
+    private fun onH2(test: suspend () -> Unit) =
+        withH2Database(AccountsTable, AtprotoRepoHeadsTable, LogDateCollectionStatesTable) {
+            runBlocking { test() }
+        }
 
     private fun onPostgres(test: suspend () -> Unit) =
         withOwnPostgresDatabase("directory_") { url ->
@@ -63,9 +67,15 @@ class PostgreSQLPublicRepoDirectoryTest {
                 storageMode = mode,
                 isActive = active,
             )
-        accounts.create(account)
+        accounts.create(account.copy(isActive = true))
+        if (head) {
+            withAccountWriteOrigin(account.id) {
+                PostgreSQLRepoBlockStore().writeHead(RepoHead(AtprotoDid.require(did), cid, cid, revision = 7)).getOrThrow()
+            }
+        }
+        // These fixtures model repositories written before moderation or deactivation.
+        if (!active) transaction { exec("UPDATE accounts SET is_active = FALSE WHERE id = '${account.id}'") }
         moderation?.let { accounts.setModeration(account.id, it) }
-        if (head) PostgreSQLRepoBlockStore().writeHead(RepoHead(AtprotoDid.require(did), cid, cid, revision = 7)).getOrThrow()
     }
 
     private suspend fun scenario(directory: PublicRepoDirectory) {

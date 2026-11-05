@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"
+  />
+  <title>LogDate · Identity publication study</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #e9e9ed;
+      --surface: #f2f2f7;
+      --group: #fff;
+      --ink: #19191c;
+      --muted: #61616a;
+      --line: #d9d9df;
+      --blue: #0068d9;
+      --button-ink: #fff;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font:
+        17px/1.45 -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+    body.dark {
+      color-scheme: dark;
+      --canvas: #111113;
+      --surface: #000;
+      --group: #1c1c1e;
+      --ink: #f5f5f7;
+      --muted: #a5a5ae;
+      --line: #38383d;
+      --blue: #389bff;
+      --button-ink: #06121e;
+    }
+    .study {
+      max-width: 1040px;
+      margin: auto;
+      padding: 32px 24px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.035em;
+      font-weight: 650;
+    }
+    .caption {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 9px 0 0;
+      max-width: 430px;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: end;
+      gap: 8px;
+    }
+    button,
+    select {
+      font: inherit;
+    }
+    .controls button,
+    .controls select {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--group);
+      color: var(--ink);
+      padding: 8px 11px;
+      font-size: 13px;
+      min-height: 36px;
+    }
+    button {
+      cursor: pointer;
+    }
+    button:focus-visible,
+    select:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 3px;
+    }
+    .canvas {
+      display: flex;
+      justify-content: center;
+    }
+    .phone {
+      width: 390px;
+      height: 844px;
+      max-width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 38px;
+      box-shadow: 0 18px 48px #00000012;
+    }
+    .statusbar {
+      height: 49px;
+      padding: 15px 26px 0;
+      font-size: 14px;
+      font-weight: 650;
+      display: flex;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .signals {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .signal {
+      width: 15px;
+      height: 10px;
+      display: inline-block;
+      background: currentColor;
+      clip-path: polygon(
+        0 75%,
+        20% 75%,
+        20% 50%,
+        45% 50%,
+        45% 25%,
+        70% 25%,
+        70% 0,
+        100% 0,
+        100% 100%,
+        0 100%
+      );
+    }
+    .battery {
+      width: 22px;
+      height: 11px;
+      border: 1px solid currentColor;
+      border-radius: 3px;
+      position: relative;
+      padding: 2px;
+    }
+    .battery:after {
+      content: "";
+      display: block;
+      height: 100%;
+      background: currentColor;
+      border-radius: 1px;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+    .nav button {
+      border: 0;
+      background: none;
+      padding: 8px 0;
+      color: var(--blue);
+      font-size: 17px;
+    }
+    .nav .title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .nav .spacer {
+      width: 44px;
+    }
+    main {
+      min-height: 0;
+      overflow: auto;
+      flex: 1;
+      padding: 14px 20px 24px;
+    }
+    h2 {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.13;
+      letter-spacing: -0.035em;
+      margin: 6px 0 22px;
+    }
+    .section-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      margin: 25px 16px 8px;
+    }
+    .group {
+      background: var(--group);
+      border-radius: 11px;
+      overflow: hidden;
+    }
+    .row {
+      padding: 13px 16px;
+      min-height: 50px;
+      position: relative;
+    }
+    .row + .row:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16px;
+      right: 0;
+      height: 1px;
+      background: var(--line);
+    }
+    .row.horizontal {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .value {
+      color: var(--muted);
+    }
+    .row small,
+    .field-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+    .row .mono {
+      font:
+        12px/1.55 ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+      overflow-wrap: anywhere;
+    }
+    .row button {
+      padding: 0;
+      background: none;
+      color: var(--blue);
+      border: 0;
+      text-align: left;
+      width: 100%;
+      min-height: 24px;
+    }
+    .chevron {
+      color: var(--muted);
+      opacity: 0.7;
+      font-size: 22px;
+      line-height: 1;
+    }
+    .account {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 16px;
+    }
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #d5e4e3;
+      display: grid;
+      place-items: center;
+      color: #355856;
+      font-weight: 500;
+      font-size: 20px;
+    }
+    .account strong {
+      font-weight: 600;
+    }
+    .account small {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .intro {
+      font-size: 20px;
+      letter-spacing: -0.015em;
+      line-height: 1.4;
+      margin: 8px 0 22px;
+    }
+    .quiet {
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .footnote {
+      padding: 0 16px;
+      margin: 10px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    details {
+      padding: 13px 16px;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--blue);
+    }
+    .key {
+      font-size: 13px;
+      margin: 12px 0 0;
+    }
+    .key code {
+      font:
+        12px ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+      overflow-wrap: anywhere;
+    }
+    .bottom {
+      padding: 18px 20px 8px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .bottom p {
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 0 0 14px;
+    }
+    .primary {
+      background: var(--blue);
+      color: var(--button-ink);
+      border: 0;
+      border-radius: 12px;
+      width: 100%;
+      min-height: 50px;
+      font-size: 17px;
+      font-weight: 600;
+      padding: 12px 20px;
+    }
+    .home {
+      height: 28px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+    .home:after {
+      content: "";
+      width: 130px;
+      height: 5px;
+      border-radius: 4px;
+      background: var(--ink);
+    }
+    .outcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 70px 12px 32px;
+    }
+    .outcome h2 {
+      font-size: 29px;
+      margin: 25px 0 14px;
+    }
+    .outcome p {
+      margin: 0 0 12px;
+      max-width: 290px;
+    }
+    .ring {
+      width: 54px;
+      height: 54px;
+      border: 4px solid var(--line);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 1.5s linear infinite;
+    }
+    .check {
+      width: 62px;
+      height: 62px;
+      color: var(--blue);
+    }
+    .study-note {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 530px;
+      margin: 22px auto 0;
+    }
+    .phone.large {
+      font-size: 22px;
+    }
+    .phone.large h2 {
+      font-size: 38px;
+    }
+    .phone.large .intro {
+      font-size: 25px;
+    }
+    .phone.large .row small,
+    .phone.large .field-label,
+    .phone.large .footnote,
+    .phone.large .section-label {
+      font-size: 17px;
+    }
+    .phone.large .bottom p,
+    .phone.large .quiet,
+    .phone.large .row .mono {
+      font-size: 18px;
+    }
+    .phone.large .primary,
+    .phone.large .nav button,
+    .phone.large .nav .title {
+      font-size: 22px;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ring {
+        animation: none;
+      }
+    }
+    @media (max-width: 650px) {
+      .study {
+        padding: 18px 10px;
+      }
+      header {
+        flex-direction: column;
+        gap: 14px;
+        padding: 0 8px;
+      }
+      .controls {
+        justify-content: start;
+      }
+      .phone {
+        border-radius: 25px;
+      }
+    }
+  </style>
+  <div class="study">
+    <header>
+      <div>
+        <p class="eyebrow">LogDate · Native Account</p>
+        <h1>Identity publication</h1>
+        <p class="caption">
+          A separate choice within Account. Synthetic design study; no sign-in,
+          network requests or publication.
+        </p>
+      </div>
+      <div class="controls" aria-label="Mockup preview controls">
+        <label
+          ><span class="field-label">Screen</span
+          ><select id="screen">
+            <option value="account">Account</option>
+            <option value="review">Review</option>
+            <option value="checking">Checking</option>
+            <option value="published">Published</option>
+          </select></label
+        >
+        <button id="theme" aria-pressed="false">Dark appearance</button>
+        <button id="size" aria-pressed="false">Large text</button>
+      </div>
+    </header>
+    <div class="canvas">
+      <div class="phone" id="phone">
+        <div class="statusbar" aria-hidden="true">
+          <span>9:41</span
+          ><span class="signals"
+            ><span class="signal"></span><span class="battery"></span
+          ></span>
+        </div>
+        <nav class="nav" aria-label="Account navigation" id="nav"></nav>
+        <main id="content" tabindex="-1"></main>
+        <div class="bottom" id="bottom"></div>
+        <div class="home" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="study-note" id="note"></p>
+  </div>
+  <script>
+    const screen = document.querySelector("#screen");
+    const nav = document.querySelector("#nav");
+    const content = document.querySelector("#content");
+    const bottom = document.querySelector("#bottom");
+    const note = document.querySelector("#note");
+    let publicationState = "private";
+    const identity =
+      '<div class="row"><small>Handle</small><div>alex.logdate.example</div></div><div class="row"><small>Permanent identity</small><div class="mono">did:plc:aaaaaaaaaaaaaaaaaaaaaaaa</div></div><div class="row"><small>Personal data server</small><div>cloud.logdate.example</div></div>';
+    function show(value, focus = false) {
+      if (value === "review") publicationState = "private";
+      if (value === "checking") publicationState = "checking";
+      if (value === "published") publicationState = "published";
+      screen.value = value;
+      bottom.hidden = false;
+      content.scrollTop = 0;
+      if (value === "account") {
+        const visibility =
+          publicationState === "private"
+            ? "Private"
+            : publicationState === "checking"
+              ? "Checking"
+              : "Public";
+        const destination =
+          publicationState === "private" ? "review" : publicationState;
+        const action =
+          publicationState === "private"
+            ? "Use in other apps"
+            : publicationState === "checking"
+              ? "View publication"
+              : "Identity details";
+        nav.innerHTML =
+          '<button data-go="account" aria-label="Back to Settings">‹ Settings</button><span class="spacer"></span>';
+        const privacy =
+          publicationState === "private"
+            ? "Your identity is available only in LogDate."
+            : "Your journal stays private.";
+        content.innerHTML =
+          '<h2>Account</h2><div class="group account"><div class="avatar" aria-hidden="true">AE</div><div><strong>Alex Example</strong><small>LogDate account</small></div></div><p class="section-label">IDENTITY</p><div class="group"><div class="row horizontal"><span>Visibility</span><span class="value">' +
+          visibility +
+          '</span></div><div class="row horizontal"><button data-go="' +
+          destination +
+          '">' +
+          action +
+          '</button><span class="chevron" aria-hidden="true">›</span></div></div><p class="footnote">' +
+          privacy +
+          '</p><p class="section-label">SECURITY</p><div class="group"><div class="row horizontal"><span>Passkeys</span><span class="chevron" aria-hidden="true">›</span></div><div class="row horizontal"><span>Recovery phrase</span><span class="chevron" aria-hidden="true">›</span></div><div class="row horizontal"><span>Devices</span><span class="chevron" aria-hidden="true">›</span></div></div>';
+        bottom.hidden = true;
+        note.textContent =
+          "Entry appears in the existing Account section only for an eligible hosted identity. No onboarding interruption.";
+      } else if (value === "review") {
+        nav.innerHTML =
+          '<button data-go="account">Cancel</button><span class="spacer"></span>';
+        content.innerHTML =
+          '<h2>Publish your identity</h2><p class="intro">Your handle and identity details will be public. This history cannot be erased.</p><div class="group">' +
+          identity +
+          '</div><p class="section-label">PUBLIC KEYS</p><div class="group"><details><summary>Review keys and priority</summary><p class="key">1. Your recovery key<br><code>Example fingerprint · 73F2 0A91</code></p><p class="key">2. LogDate hosting key<br><code>Example fingerprint · 04BC E751</code></p><p class="key">Repository signing key<br><code>Example fingerprint · A882 C140</code></p></details></div>';
+        bottom.innerHTML =
+          '<p>Your journal stays private. Publishing creates a permanent public identity history.</p><button class="primary" data-go="checking">Publish identity</button>';
+        note.textContent =
+          "The real action requires a fresh passkey for these exact details. This preview only changes its local screen.";
+      } else if (value === "checking") {
+        nav.innerHTML =
+          '<span class="spacer"></span><span class="title">Identity</span><button data-go="account">Done</button>';
+        content.innerHTML =
+          '<div class="outcome" role="status"><div class="ring" aria-hidden="true"></div><h2>Checking publication</h2><p>Waiting for confirmation from the directory.</p><p class="quiet">You can return to your journal while this is checked.</p></div>';
+        bottom.hidden = true;
+        note.textContent =
+          "An uncertain response never becomes “nothing was published.” No Cancel or automatic retry appears after possible dispatch.";
+      } else {
+        nav.innerHTML =
+          '<span class="spacer"></span><span class="title">Identity</span><button data-go="account">Done</button>';
+        content.innerHTML =
+          '<div class="outcome" role="status"><svg class="check" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="3"/><path d="m19 32 9 9 18-20" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>Identity published</h2><p>alex.logdate.example</p><p class="quiet">Your journal stays private.</p></div><div class="group">' +
+          identity +
+          "</div>";
+        bottom.hidden = true;
+        note.textContent =
+          "Shown only after independent directory readback. Recovery-key registration and public journal posts remain separate actions.";
+      }
+      if (focus) content.focus();
+    }
+    screen.addEventListener("change", () => show(screen.value, true));
+    document.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-go]");
+      if (action) show(action.dataset.go, true);
+    });
+    document.querySelector("#theme").addEventListener("click", (event) => {
+      const active = document.body.classList.toggle("dark");
+      event.target.setAttribute("aria-pressed", String(active));
+      event.target.textContent = active
+        ? "Light appearance"
+        : "Dark appearance";
+    });
+    document.querySelector("#size").addEventListener("click", (event) => {
+      const active = document.querySelector("#phone").classList.toggle("large");
+      event.target.setAttribute("aria-pressed", String(active));
+    });
+    show("account");
+  </script>
+</html>

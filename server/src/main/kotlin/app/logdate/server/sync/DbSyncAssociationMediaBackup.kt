@@ -2,6 +2,10 @@
 
 package app.logdate.server.sync
 
+import app.logdate.server.database.requireAccountIdentityWrite
+import app.logdate.server.database.requireLegacyCollectionWrite
+import app.logdate.server.database.requireUnretiredObjectPath
+import app.logdate.server.migration.SpaceMigrationConfig
 import app.logdate.shared.model.sync.DeviceId
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -16,13 +20,17 @@ import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
 import kotlin.math.absoluteValue
 import kotlin.random.Random
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 
 internal fun dbUpsertAssociations(
     userId: UUID,
     records: List<AssociationRecord>,
+    migrationConfig: SpaceMigrationConfig,
+    clock: Clock,
 ) {
     transaction {
+        requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
         records.forEach { record ->
             val key = AssociationKey(record.journalId, record.contentId)
             val existing =
@@ -70,8 +78,11 @@ internal fun dbDeleteAssociations(
     userId: UUID,
     keys: List<AssociationKey>,
     deletedAt: Long,
+    migrationConfig: SpaceMigrationConfig,
+    clock: Clock,
 ) {
     transaction {
+        requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
         keys.forEach { key ->
             val existing =
                 AssociationSyncTable
@@ -166,6 +177,8 @@ internal fun dbUpsertMedia(
     record: MediaRecord,
 ): MediaRecord =
     transaction {
+        requireAccountIdentityWrite(userId, 0)
+        requireUnretiredObjectPath(record.storagePath)
         val id =
             if (record.mediaId.isBlank()) "media-${Random.nextLong().absoluteValue}" else record.mediaId
         val existing =
@@ -239,6 +252,7 @@ internal fun dbDeleteMedia(
     deletedAt: Long,
 ) {
     transaction {
+        requireAccountIdentityWrite(userId, 0)
         val existing =
             MediaSyncTable
                 .selectAll()
@@ -286,6 +300,8 @@ internal fun dbCreateBackupRecord(
     record: BackupRecord,
 ): BackupRecord =
     transaction {
+        requireAccountIdentityWrite(userId, 0)
+        requireUnretiredObjectPath(record.storagePath)
         BackupSyncTable.insert {
             it[id] = record.id
             it[BackupSyncTable.userId] = userId
@@ -326,6 +342,7 @@ internal fun dbDeleteBackup(
     id: UUID,
 ) {
     transaction {
+        requireAccountIdentityWrite(userId, 0)
         BackupSyncTable.deleteWhere {
             (BackupSyncTable.id eq id) and (BackupSyncTable.userId eq userId)
         }

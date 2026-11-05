@@ -62,7 +62,7 @@ internal class MigrationFixture(
     val inventory = LegacyInventoryReader(metadata, history, media)
     val service = SpaceMigrationService(store, accounts, spaces, inventory, config, clock)
     val holds = SpaceMigrationHolds(store, config, clock)
-    val eraser = InMemoryLegacyJournalEraser(accounts, repositories, metadata, history, mediaRecords, atprotoBlobs, merges, storage)
+    val eraser = InMemoryLegacyJournalEraser(accounts, store, repositories, metadata, history, mediaRecords, atprotoBlobs, merges, storage)
     val cleanup = LegacyCopyCleanup(store, accounts, eraser, config, clock)
     val copier = LegacyMediaCopier(media, storage, spaces)
 

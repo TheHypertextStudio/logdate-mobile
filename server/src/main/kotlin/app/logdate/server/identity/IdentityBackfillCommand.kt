@@ -15,9 +15,8 @@ private const val EXIT_FAILED = 1
 private const val EXIT_REFUSED = 2
 
 /**
- * How the operator ran `--backfill-identities`. A dry run only counts. A real run provisions, and
- * when the server publishes PLC operations it refuses unless [allowPlcPublishing] says the operator
- * means to publish every new identity to the public PLC directory.
+ * How the operator ran `--backfill-identities`. A dry run only counts; a real run provisions private
+ * identities. The retired [allowPlcPublishing] option is parsed only to return a safe refusal.
  */
 data class IdentityBackfillOptions(
     val dryRun: Boolean,
@@ -57,7 +56,7 @@ suspend fun runIdentityBackfill(
     options: IdentityBackfillOptions,
 ): IdentityBackfillOutcome {
     if (options.dryRun) return IdentityBackfillOutcome.DryRun(identityService.accountsMissingIdentity().size)
-    if (identityService.config.publishesPlcOperations && !options.allowPlcPublishing) {
+    if (identityService.config.publishesPlcOperations || options.allowPlcPublishing) {
         return IdentityBackfillOutcome.RefusedPublishing
     }
     return IdentityBackfillOutcome.Completed(identityService.backfillMissingIdentities())

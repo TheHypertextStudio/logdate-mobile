@@ -3,6 +3,8 @@ package app.logdate.server.routes.sync
 import app.logdate.server.auth.JwtTokenService
 import app.logdate.server.crypto.EncryptionService
 import app.logdate.server.crypto.ProcessedPayload
+import app.logdate.server.logdate.InMemoryLogDateBackupRepository
+import app.logdate.server.logdate.LogDateBackup
 import app.logdate.server.logdate.LogDateBackupRepository
 import app.logdate.server.logdate.LogDateBlobNamespace
 import app.logdate.server.logdate.asLogDateBackupRepository
@@ -121,14 +123,20 @@ class SyncMediaAndBackupLifecycleTest {
             val repository = InMemorySyncRepository()
             val tokenService = JwtTokenService("sync-binary-secret")
             val storage = mockk<GcsMediaStorage>()
-            val backupRepository = mockk<LogDateBackupRepository>()
+            val backupRepository =
+                object : LogDateBackupRepository by InMemoryLogDateBackupRepository() {
+                    override fun createBackup(
+                        userId: UUID,
+                        backup: LogDateBackup,
+                        identityEpoch: Long,
+                    ): LogDateBackup = error("Backup metadata failed before commit")
+                }
             val backupPath = "users/u/backups/backup-rollback.enc"
 
             every { storage.putBlobFile(match { it.namespace == LogDateBlobNamespace.BACKUP }) } returns backupPath
-            every { storage.deleteBlob(backupPath) } returns true
+            every { storage.deleteBlobIfExists(backupPath) } returns Unit
             every { storage.getBlob(any()) } returns null
             every { storage.getSignedDownloadUrl(any(), any()) } returns "https://signed.example/object"
-            every { backupRepository.createBackup(any(), any()) } throws IllegalStateException("backup metadata fail")
 
             application {
                 install(ContentNegotiation) { json() }
@@ -164,7 +172,7 @@ class SyncMediaAndBackupLifecycleTest {
                 }
             assertEquals(HttpStatusCode.InternalServerError, backupUpload.status)
             assertTrue(backupUpload.bodyAsText().contains("BACKUP_METADATA_WRITE_FAILED"))
-            verify(exactly = 1) { storage.deleteBlob(backupPath) }
+            verify(exactly = 1) { storage.deleteBlobIfExists(backupPath) }
         }
 
     @Test

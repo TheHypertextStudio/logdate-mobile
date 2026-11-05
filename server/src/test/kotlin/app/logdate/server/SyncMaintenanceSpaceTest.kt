@@ -153,7 +153,8 @@ class SyncMaintenanceSpaceTest {
             val deleted = listOf(first, second).single { it.storagePath != failingPath }
             assertEquals(SpacePurgeResult(blobsDeleted = 1, blobsFailed = 1), result)
             assertNotNull(delegate.getBlob(survivor.storagePath))
-            assertEquals(survivor, store.getBlob(space, survivor.cid), "the row stays so the next purge retries it")
+            assertNull(store.getBlob(space, survivor.cid), "Unresolved deletion quarantines the retained row")
+            assertEquals(1L, store.storedBytes(owner), "Uncertain deletion remains charged against quota")
             assertNull(delegate.getBlob(deleted.storagePath))
             assertNull(store.getBlob(space, deleted.cid))
             assertEquals(listOf(LogLevel.ERROR to SpacePurgeNotices.BLOB_DELETE_FAILED), logged.filter { it.first == LogLevel.ERROR })
@@ -162,6 +163,7 @@ class SyncMaintenanceSpaceTest {
 
             assertNull(delegate.getBlob(survivor.storagePath))
             assertNull(store.getBlob(space, survivor.cid))
+            assertEquals(0L, store.storedBytes(owner))
         }
 
     @Test

@@ -2,6 +2,8 @@
 
 package app.logdate.server.sync
 
+import app.logdate.server.database.AccountsTable
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.shared.model.sync.LocationHistoryUpload
 import java.util.UUID
@@ -26,18 +28,24 @@ class LocationHistoryRepositoryTest {
 
     @Test
     fun `database retries and tombstones survive repository recreation`() {
-        withH2Database(LocationHistoryTable, LocationHistoryVersionsTable) {
-            verifyRetries(DbLocationHistoryRepository())
-            verifyTombstones(DbLocationHistoryRepository())
+        withH2Database(AccountsTable, LocationHistoryTable, LocationHistoryVersionsTable) {
+            verifyRetries(DbLocationHistoryRepository()) { createTestAccount(it) }
+            verifyTombstones(DbLocationHistoryRepository()) { createTestAccount(it) }
             val user = UUID.fromString(Uuid.random().toString())
+            createTestAccount(user)
             val saved = DbLocationHistoryRepository().upload(user, listOf(record("durable")))
             assertEquals(saved, DbLocationHistoryRepository().changes(user, 0, 10).records)
         }
     }
 
-    private fun verifyRetries(repository: LocationHistoryRepository) {
+    private fun verifyRetries(
+        repository: LocationHistoryRepository,
+        prepareOwner: (UUID) -> Unit = {},
+    ) {
         val user = UUID.fromString(Uuid.random().toString())
         val other = UUID.fromString(Uuid.random().toString())
+        prepareOwner(user)
+        prepareOwner(other)
         val upload = record("one")
         val first = repository.upload(user, listOf(upload))
         assertEquals(first, repository.upload(user, listOf(upload)))
@@ -63,8 +71,12 @@ class LocationHistoryRepositoryTest {
         assertEquals(1, repository.changes(user, 0, 10).records.size)
     }
 
-    private fun verifyTombstones(repository: LocationHistoryRepository) {
+    private fun verifyTombstones(
+        repository: LocationHistoryRepository,
+        prepareOwner: (UUID) -> Unit = {},
+    ) {
         val user = UUID.fromString(Uuid.random().toString())
+        prepareOwner(user)
         val first = repository.upload(user, listOf(record("one"), record("two")))
         val page = repository.changes(user, 0, 1)
         assertTrue(page.hasMore)

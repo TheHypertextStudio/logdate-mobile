@@ -48,6 +48,18 @@ class LogDateBlobStream(
  * route code is no longer coupled to media-specific upload methods.
  */
 interface LogDateBlobStorage {
+    /** Pure path planning, before upload admission. The provider must write exactly this path. */
+    fun plannedPath(request: LogDateBlobWriteRequest): String = error("Storage path planning is unavailable")
+
+    /** Opaque private ingress paths contain no account or journal identifiers. */
+    fun plannedPrivateBlobPath(blobId: String): String = privateBlobPath(blobId)
+
+    /** Keep a permanent owner-tagged marker so late create-only writers cannot resurrect bytes. */
+    fun retirePrivateBlob(
+        blobId: String,
+        owner: String,
+    ): Boolean = false
+
     fun putBlob(request: LogDateBlobWriteRequest): String
 
     fun getBlob(storagePath: String): ByteArray?
@@ -68,6 +80,12 @@ interface LogDateBlobStorage {
      * Nothing is copied to memory or disk first; the caller closes the stream.
      */
     fun openBlob(storagePath: String): LogDateBlobStream?
+
+    /** Opens one immutable live private object for its exact provider owner; unsupported stores refuse. */
+    fun openPrivateBlob(
+        storagePath: String,
+        owner: String,
+    ): LogDateBlobStream? = null
 
     fun deleteBlob(storagePath: String): Boolean
 

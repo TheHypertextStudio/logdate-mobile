@@ -1,5 +1,7 @@
 package app.logdate.server.logdate
 
+import app.logdate.server.identity.adoption.IdentityFenceOutcome
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import java.util.UUID
 
 enum class ResourceKind(
@@ -19,9 +21,16 @@ data class ResourceRoute(
 interface ResourceRouteRepository {
     suspend fun find(resourceId: String): ResourceRoute?
 
-    suspend fun upsert(route: ResourceRoute): ResourceRoute
+    suspend fun upsert(
+        route: ResourceRoute,
+        identityEpoch: Long = 0,
+    ): ResourceRoute
 
-    suspend fun delete(resourceId: String)
+    suspend fun delete(
+        resourceId: String,
+        accountId: UUID,
+        identityEpoch: Long = 0,
+    )
 }
 
 class InMemoryResourceRouteRepository : ResourceRouteRepository {
@@ -29,12 +38,26 @@ class InMemoryResourceRouteRepository : ResourceRouteRepository {
 
     override suspend fun find(resourceId: String): ResourceRoute? = routes[resourceId]
 
-    override suspend fun upsert(route: ResourceRoute): ResourceRoute {
-        routes[route.resourceId] = route
+    override suspend fun upsert(
+        route: ResourceRoute,
+        identityEpoch: Long,
+    ): ResourceRoute {
+        requireLegacyIdentityEpoch(identityEpoch)
+        routes.compute(route.resourceId) { _, existing ->
+            if (existing != null && existing.accountId != route.accountId) {
+                throw IdentityWriteRefusedException(IdentityFenceOutcome.CHANGED)
+            }
+            route
+        }
         return route
     }
 
-    override suspend fun delete(resourceId: String) {
-        routes.remove(resourceId)
+    override suspend fun delete(
+        resourceId: String,
+        accountId: UUID,
+        identityEpoch: Long,
+    ) {
+        requireLegacyIdentityEpoch(identityEpoch)
+        routes.computeIfPresent(resourceId) { _, existing -> if (existing.accountId == accountId) null else existing }
     }
 }

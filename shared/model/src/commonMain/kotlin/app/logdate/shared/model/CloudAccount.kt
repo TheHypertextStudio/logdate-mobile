@@ -36,6 +36,8 @@ data class CloudAccount(
      */
     val storageMode: AccountStorageMode = AccountStorageMode.UNRECOGNIZED,
     val identityKind: AccountIdentityKind = AccountIdentityKind.UNRECOGNIZED,
+    /** The generation last reported by the server; unknown until explicitly supplied. */
+    val identityEpoch: Long? = null,
 )
 
 /**

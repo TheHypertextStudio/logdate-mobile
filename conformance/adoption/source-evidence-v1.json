@@ -1,0 +1,32 @@
+{
+  "suiteVersion": 1,
+  "description": "Synthetic canonical typed lexical source evidence shared with the native Swift client.",
+  "evidence": {
+    "version": 1,
+    "kind": "SYNC_CONTENT",
+    "key": ["synthetic-note"],
+    "fields": [
+      "object",
+      {
+        "decimal": ["number", "0.123456789012345678901234567890"],
+        "large": ["number", "9223372036854775808"],
+        "absent": ["null"],
+        "jsonNull": ["null"],
+        "future": [
+          "object",
+          {
+            "text": ["string", "雪"]
+          }
+        ]
+      }
+    ],
+    "sqlNullColumns": {
+      "absent": true
+    },
+    "binary": null
+  },
+  "expected": {
+    "cborHex": "a6636b6579816e73796e7468657469632d6e6f7465646b696e646c53594e435f434f4e54454e546662696e617279f6666669656c647382666f626a656374a5656c6172676582666e756d626572733932323333373230333638353437373538303866616273656e7481646e756c6c6666757475726582666f626a656374a164746578748266737472696e6763e99baa67646563696d616c82666e756d6265727820302e313233343536373839303132333435363738393031323334353637383930686a736f6e4e756c6c81646e756c6c6776657273696f6e016e73716c4e756c6c436f6c756d6e73a166616273656e74f5",
+    "sha256Hex": "63fea4f2cdc0b74406c08a2d04faf03defb6673aa82bbdd942671fcee222d083"
+  }
+}

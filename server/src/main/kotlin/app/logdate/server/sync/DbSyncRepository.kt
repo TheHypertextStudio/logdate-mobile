@@ -2,6 +2,9 @@
 
 package app.logdate.server.sync
 
+import app.logdate.server.database.requireLegacyCollectionWrite
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
+import app.logdate.server.migration.SpaceMigrationConfig
 import app.logdate.shared.model.sync.DeviceId
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -12,17 +15,24 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.neq
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * Exposed-based implementation of SyncRepository with user isolation.
  * All queries are scoped by user_id for multi-tenancy.
  */
-class DbSyncRepository : SyncRepository {
+class DbSyncRepository(
+    private val migrationConfig: SpaceMigrationConfig = SpaceMigrationConfig(),
+    private val clock: Clock = Clock.System,
+) : SyncRepository {
+    private fun requireLegacyWrite(userId: UUID) = requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
+
     // --- Status ---
     override fun status(userId: UUID): SyncStatus =
         transaction {
@@ -55,6 +65,7 @@ class DbSyncRepository : SyncRepository {
         record: ContentRecord,
     ): ContentRecord =
         transaction {
+            requireLegacyWrite(userId)
             val existing =
                 ContentSyncTable
                     .selectAll()
@@ -132,6 +143,7 @@ class DbSyncRepository : SyncRepository {
         deletedAt: Long,
     ) {
         transaction {
+            requireLegacyWrite(userId)
             val existing =
                 ContentSyncTable
                     .selectAll()
@@ -216,7 +228,7 @@ class DbSyncRepository : SyncRepository {
     override fun upsertJournal(
         userId: UUID,
         record: JournalRecord,
-    ): JournalRecord = dbUpsertJournal(userId, record)
+    ): JournalRecord = dbUpsertJournal(userId, record, migrationConfig, clock)
 
     override fun getJournal(
         userId: UUID,
@@ -227,7 +239,7 @@ class DbSyncRepository : SyncRepository {
         userId: UUID,
         id: String,
         deletedAt: Long,
-    ) = dbDeleteJournal(userId, id, deletedAt)
+    ) = dbDeleteJournal(userId, id, deletedAt, migrationConfig, clock)
 
     override fun journalChanges(
         userId: UUID,
@@ -239,13 +251,13 @@ class DbSyncRepository : SyncRepository {
     override fun upsertAssociations(
         userId: UUID,
         records: List<AssociationRecord>,
-    ) = dbUpsertAssociations(userId, records)
+    ) = dbUpsertAssociations(userId, records, migrationConfig, clock)
 
     override fun deleteAssociations(
         userId: UUID,
         keys: List<AssociationKey>,
         deletedAt: Long,
-    ) = dbDeleteAssociations(userId, keys, deletedAt)
+    ) = dbDeleteAssociations(userId, keys, deletedAt, migrationConfig, clock)
 
     override fun associationChanges(
         userId: UUID,
@@ -293,6 +305,7 @@ class DbSyncRepository : SyncRepository {
         olderThan: Long,
     ): SyncPurgeResult =
         transaction {
+            requireLegacyWrite(userId)
             val contentPurged =
                 ContentSyncTable.update({
                     (ContentSyncTable.userId eq userId) and
@@ -338,49 +351,50 @@ class DbSyncRepository : SyncRepository {
             )
         }
 
-    override fun purgeTombstonesOlderThan(olderThan: Long): SyncPurgeResult =
-        transaction {
-            val contentPurged =
-                ContentSyncTable.update({
-                    (ContentSyncTable.deleted eq true) and
-                        (ContentSyncTable.deletedAt less olderThan) and
-                        (
-                            ContentSyncTable.content.isNotNull() or ContentSyncTable.mediaUri.isNotNull() or
-                                ContentSyncTable.transcript.isNotNull() or ContentSyncTable.durationMs.isNotNull()
-                        )
-                }) {
-                    it[content] = null
-                    it[mediaUri] = null
-                    it[transcript] = null
-                    it[durationMs] = null
+    override fun purgeTombstonesOlderThan(olderThan: Long): SyncPurgeResult {
+        // Discover owners without taking data-row locks; each mutation locks its account first.
+        val owners =
+            transaction {
+                buildSet {
+                    addAll(
+                        ContentSyncTable
+                            .select(ContentSyncTable.userId)
+                            .where {
+                                (ContentSyncTable.deleted eq true) and (ContentSyncTable.deletedAt less olderThan)
+                            }.map { it[ContentSyncTable.userId] },
+                    )
+                    addAll(
+                        JournalSyncTable
+                            .select(JournalSyncTable.userId)
+                            .where {
+                                (JournalSyncTable.deleted eq true) and (JournalSyncTable.deletedAt less olderThan)
+                            }.map { it[JournalSyncTable.userId] },
+                    )
+                    addAll(
+                        MediaSyncTable
+                            .select(MediaSyncTable.userId)
+                            .where {
+                                (MediaSyncTable.deleted eq true) and (MediaSyncTable.deletedAt less olderThan)
+                            }.map { it[MediaSyncTable.userId] },
+                    )
+                }.sorted()
+            }
+        return owners.fold(SyncPurgeResult(0, 0, 0, 0, olderThan)) { total, owner ->
+            val purged =
+                try {
+                    purgeTombstones(owner, olderThan)
+                } catch (_: IdentityWriteRefusedException) {
+                    // Held, retired and newer-epoch inventories remain available for reconciliation.
+                    SyncPurgeResult(0, 0, 0, 0, olderThan)
                 }
-            val journalPurged =
-                JournalSyncTable.update({
-                    (JournalSyncTable.deleted eq true) and
-                        (JournalSyncTable.deletedAt less olderThan) and
-                        ((JournalSyncTable.title neq "") or (JournalSyncTable.description neq ""))
-                }) {
-                    it[title] = ""
-                    it[description] = ""
-                }
-            val associationPurged = 0
-            val mediaPurged =
-                MediaSyncTable.update({
-                    (MediaSyncTable.deleted eq true) and
-                        (MediaSyncTable.deletedAt less olderThan) and
-                        (MediaSyncTable.data neq byteArrayOf())
-                }) {
-                    it[data] = byteArrayOf()
-                }
-
-            SyncPurgeResult(
-                contentPurged = contentPurged,
-                journalPurged = journalPurged,
-                associationPurged = associationPurged,
-                mediaPurged = mediaPurged,
-                cutoff = olderThan,
+            total.copy(
+                contentPurged = total.contentPurged + purged.contentPurged,
+                journalPurged = total.journalPurged + purged.journalPurged,
+                associationPurged = total.associationPurged + purged.associationPurged,
+                mediaPurged = total.mediaPurged + purged.mediaPurged,
             )
         }
+    }
 
     // --- Helpers ---
 }

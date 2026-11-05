@@ -1,6 +1,8 @@
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
+import app.logdate.server.identity.adoption.withAccountWriteOrigin
 import kotlinx.coroutines.runBlocking
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.repo.Cid
@@ -8,6 +10,7 @@ import studio.hypertext.atproto.repo.RepoBlock
 import studio.hypertext.atproto.repo.RepoCommit
 import studio.hypertext.atproto.repo.RepoHead
 import studio.hypertext.atproto.repo.SignedRepoCommit
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -15,6 +18,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Integration tests for [PostgreSQLRepoBlockStore] focused on AT Protocol repository storage.
@@ -27,10 +32,11 @@ import kotlin.test.assertTrue
  * It also ensures that repository isolation is maintained during data cleanup operations,
  * confirming that clearing one repository does not affect others.
  */
+@OptIn(ExperimentalUuidApi::class)
 class PostgreSQLRepoBlockStoreTest {
     @Test
     fun `cold batch reads preserve order duplicates and retry missing blocks`() {
-        withH2Database(AtprotoRepoBlocksTable, AtprotoRepoBlockLinksTable) {
+        withRepoDatabase(AtprotoRepoBlocksTable, AtprotoRepoBlockLinksTable) {
             val writer = PostgreSQLRepoBlockStore()
             val reader = PostgreSQLRepoBlockStore()
             val repo = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
@@ -40,14 +46,14 @@ class PostgreSQLRepoBlockStoreTest {
                     RepoBlock(Cid.sha256(DAG_CBOR_CODEC_VALUE, bytes), bytes)
                 }
             runBlocking {
-                blocks.take(2).forEach { writer.writeBlock(repo, it).getOrThrow() }
+                blocks.take(2).forEach { withRepoOrigin(repo) { writer.writeBlock(repo, it) }.getOrThrow() }
                 val requested = listOf(blocks[1].cid, blocks[2].cid, blocks[0].cid, blocks[1].cid)
                 val loaded = reader.readBlocks(requested).getOrThrow()
                 assertEquals(listOf(blocks[1].cid, null, blocks[0].cid, blocks[1].cid), loaded.map { it?.cid })
                 loaded[0]!!.bytes[0] = 0
                 assertRepoBlockEquals(blocks[1], loaded[3]!!)
                 assertRepoBlockEquals(blocks[1], reader.readBlock(blocks[1].cid).getOrThrow()!!)
-                writer.writeBlock(repo, blocks[2]).getOrThrow()
+                withRepoOrigin(repo) { writer.writeBlock(repo, blocks[2]) }.getOrThrow()
                 assertRepoBlockEquals(blocks[2], reader.readBlocks(listOf(blocks[2].cid)).getOrThrow().single()!!)
                 assertTrue(reader.readBlocks(emptyList()).getOrThrow().isEmpty())
             }
@@ -56,7 +62,7 @@ class PostgreSQLRepoBlockStoreTest {
 
     @Test
     fun `compare and swap head only advances the expected revision`() {
-        withH2Database(AtprotoRepoHeadsTable) {
+        withRepoDatabase(AtprotoRepoHeadsTable) {
             val store = PostgreSQLRepoBlockStore()
             val repo = AtprotoDid.require("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
             val firstHead =
@@ -75,12 +81,12 @@ class PostgreSQLRepoBlockStoreTest {
                 )
 
             runBlocking {
-                assertTrue(store.compareAndSwapHead(firstHead, expectedRevision = null).getOrThrow())
-                assertFalse(store.compareAndSwapHead(secondHead, expectedRevision = null).getOrThrow())
-                assertFalse(store.compareAndSwapHead(secondHead, expectedRevision = 0L).getOrThrow())
+                assertTrue(withRepoOrigin(repo) { store.compareAndSwapHead(firstHead, expectedRevision = null) }.getOrThrow())
+                assertFalse(withRepoOrigin(repo) { store.compareAndSwapHead(secondHead, expectedRevision = null) }.getOrThrow())
+                assertFalse(withRepoOrigin(repo) { store.compareAndSwapHead(secondHead, expectedRevision = 0L) }.getOrThrow())
                 assertEquals(firstHead, store.readHead(repo).getOrThrow())
 
-                assertTrue(store.compareAndSwapHead(secondHead, expectedRevision = 1L).getOrThrow())
+                assertTrue(withRepoOrigin(repo) { store.compareAndSwapHead(secondHead, expectedRevision = 1L) }.getOrThrow())
                 assertEquals(secondHead, store.readHead(repo).getOrThrow())
             }
         }
@@ -88,7 +94,7 @@ class PostgreSQLRepoBlockStoreTest {
 
     @Test
     fun `repo block store persists heads blocks and commits by repo`() {
-        withH2Database(
+        withRepoDatabase(
             AtprotoRepoHeadsTable,
             AtprotoRepoBlocksTable,
             AtprotoRepoBlockLinksTable,
@@ -121,10 +127,10 @@ class PostgreSQLRepoBlockStoreTest {
             val head = RepoHead(repo = repo, root = rootCid, commitCid = commitCid, revision = 1L)
 
             runBlocking {
-                store.writeBlock(repo, repoBlock).getOrThrow()
-                store.writeBlock(otherRepo, otherBlock).getOrThrow()
-                store.appendCommit(repo, commit).getOrThrow()
-                store.writeHead(head).getOrThrow()
+                withRepoOrigin(repo) { store.writeBlock(repo, repoBlock) }.getOrThrow()
+                withRepoOrigin(otherRepo) { store.writeBlock(otherRepo, otherBlock) }.getOrThrow()
+                withRepoOrigin(repo) { store.appendCommit(repo, commit) }.getOrThrow()
+                withRepoOrigin(repo) { store.writeHead(head) }.getOrThrow()
             }
 
             runBlocking {
@@ -143,7 +149,7 @@ class PostgreSQLRepoBlockStoreTest {
 
     @Test
     fun `clearing a repo removes only repo scoped rows`() {
-        withH2Database(
+        withRepoDatabase(
             AtprotoRepoHeadsTable,
             AtprotoRepoBlocksTable,
             AtprotoRepoBlockLinksTable,
@@ -158,44 +164,48 @@ class PostgreSQLRepoBlockStoreTest {
             val otherCommitCid = Cid.sha256(DAG_CBOR_CODEC_VALUE, "other-commit".encodeToByteArray())
 
             runBlocking {
-                store.writeBlock(repo, sharedBlock).getOrThrow()
-                store.writeBlock(otherRepo, sharedBlock).getOrThrow()
-                store
-                    .appendCommit(
-                        repo,
-                        SignedRepoCommit(
-                            cid = repoCommitCid,
-                            commit =
-                                RepoCommit(
-                                    repo = repo,
-                                    root = sharedBlockCid,
-                                    revision = 1L,
-                                    createdAtEpochMillis = 1L,
-                                    recordCount = 1,
-                                ),
-                            signature = "sig-repo",
-                        ),
-                    ).getOrThrow()
-                store
-                    .appendCommit(
-                        otherRepo,
-                        SignedRepoCommit(
-                            cid = otherCommitCid,
-                            commit =
-                                RepoCommit(
-                                    repo = otherRepo,
-                                    root = sharedBlockCid,
-                                    revision = 1L,
-                                    createdAtEpochMillis = 2L,
-                                    recordCount = 1,
-                                ),
-                            signature = "sig-other",
-                        ),
-                    ).getOrThrow()
-                store.writeHead(RepoHead(repo, sharedBlockCid, repoCommitCid, 1L)).getOrThrow()
-                store.writeHead(RepoHead(otherRepo, sharedBlockCid, otherCommitCid, 1L)).getOrThrow()
+                withRepoOrigin(repo) { store.writeBlock(repo, sharedBlock) }.getOrThrow()
+                withRepoOrigin(otherRepo) { store.writeBlock(otherRepo, sharedBlock) }.getOrThrow()
+                withRepoOrigin(repo) {
+                    store
+                        .appendCommit(
+                            repo,
+                            SignedRepoCommit(
+                                cid = repoCommitCid,
+                                commit =
+                                    RepoCommit(
+                                        repo = repo,
+                                        root = sharedBlockCid,
+                                        revision = 1L,
+                                        createdAtEpochMillis = 1L,
+                                        recordCount = 1,
+                                    ),
+                                signature = "sig-repo",
+                            ),
+                        )
+                }.getOrThrow()
+                withRepoOrigin(otherRepo) {
+                    store
+                        .appendCommit(
+                            otherRepo,
+                            SignedRepoCommit(
+                                cid = otherCommitCid,
+                                commit =
+                                    RepoCommit(
+                                        repo = otherRepo,
+                                        root = sharedBlockCid,
+                                        revision = 1L,
+                                        createdAtEpochMillis = 2L,
+                                        recordCount = 1,
+                                    ),
+                                signature = "sig-other",
+                            ),
+                        )
+                }.getOrThrow()
+                withRepoOrigin(repo) { store.writeHead(RepoHead(repo, sharedBlockCid, repoCommitCid, 1L)) }.getOrThrow()
+                withRepoOrigin(otherRepo) { store.writeHead(RepoHead(otherRepo, sharedBlockCid, otherCommitCid, 1L)) }.getOrThrow()
 
-                store.clearRepo(repo).getOrThrow()
+                withRepoOrigin(repo) { store.clearRepo(repo) }.getOrThrow()
 
                 assertNull(store.readHead(repo).getOrThrow())
                 assertTrue(store.listBlocks(repo).getOrThrow().isEmpty())
@@ -206,6 +216,35 @@ class PostgreSQLRepoBlockStoreTest {
                 assertEquals(1, store.listCommits(otherRepo).getOrThrow().size)
             }
         }
+    }
+
+    private fun withRepoDatabase(
+        vararg tables: org.jetbrains.exposed.v1.core.Table,
+        block: () -> Unit,
+    ) = withH2Database(AccountsTable, LogDateCollectionStatesTable, *tables) {
+        createTestAccount(firstOwner, FIRST_DID)
+        createTestAccount(secondOwner, SECOND_DID)
+        block()
+    }
+
+    private suspend fun <T> withRepoOrigin(
+        repo: AtprotoDid,
+        action: suspend () -> T,
+    ): T {
+        val owner =
+            when (repo.toString()) {
+                FIRST_DID -> firstOwner
+                SECOND_DID -> secondOwner
+                else -> error("Missing explicit test owner")
+            }
+        return withAccountWriteOrigin(Uuid.parse(owner.toString())) { action() }
+    }
+
+    private companion object {
+        const val FIRST_DID = "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+        const val SECOND_DID = "did:plc:7wbylgv44bzg5gkq4h6w3lby"
+        val firstOwner: UUID = UUID.fromString("11111111-1111-4111-8111-111111111111")
+        val secondOwner: UUID = UUID.fromString("22222222-2222-4222-8222-222222222222")
     }
 }
 
