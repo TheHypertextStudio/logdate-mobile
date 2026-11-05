@@ -67,7 +67,9 @@ class UserDataRestoreViewModel(
                 }
             }
             val previous = selectionRecoveryState as? RestoreState.Completed
-            if (previous?.summary?.recoveryId == summary.recoveryId) selectionRecoveryState = previous.copy(summary = summary)
+            if (previous != null && previous.summary.recoveryId == summary.recoveryId) {
+                selectionRecoveryState = previous.copy(summary = summary)
+            }
         }
         restoreLauncher.setRestoreCompletionCallback { outcome ->
             when (outcome) {
