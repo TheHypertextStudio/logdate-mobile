@@ -1,5 +1,12 @@
 # Distributing LogDate
 
+Store listings and release materials follow the
+[product purpose and positioning](./product-info/product-positioning.md): **LogDate is a home to
+document, reflect on, and share memories.** Lead with that purpose and demonstrate the capabilities
+available in the advertised release. Journaling is functionality, not the primary category pitch.
+Use the same direction for screenshots, feature graphics, banners, and preview videos, adapting
+the composition and specific feature claims to each platform.
+
 For more information on how to build Compose Multiplatform apps,
 see [this][compose-publishing-tutorial]
 tutorial.

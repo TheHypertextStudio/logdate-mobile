@@ -6,6 +6,16 @@
 
 Provides comprehensive entry editing capabilities including rich text, images, and multimedia content with real-time saving and block-based editing architecture. The core feature for creating and modifying journal entries.
 
+The editor serves the **document** part of LogDate's purpose: **a home to document, reflect on,
+and share memories**. Writing and media capture preserve an experience and its context; saving
+an entry is part of the larger memory experience. Follow the
+[product positioning](../../../docs/product-info/product-positioning.md) when describing this feature.
+
+Documenting also calls for ongoing invention beyond the editor's existing inputs. Explore creative,
+opinionated ways to record memories that feel fun and playful, while preserving meaningful results
+for later reflection and sharing. A capture experience can differ by client or form factor while
+contributing to the same lasting home for memories.
+
 ## Architecture
 
 ```

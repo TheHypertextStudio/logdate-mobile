@@ -2,7 +2,30 @@
 
 This document outlines the core UX design principles and patterns that guide the LogDate application experience across all platforms.
 
+## Product Purpose
+
+**LogDate is a home to document, reflect on, and share memories.** Apply the
+[product purpose and positioning](../product-info/product-positioning.md) to every experience.
+Start with the memory someone wants to preserve, revisit, understand, or share. Writing is one
+way to document it; the complete experience must also support reflection and deliberate sharing.
+
+Connect words, photos, video, audio, people, and places where they give a memory meaning. Treat
+each person's choice of medium, frequency, and audience with care. A private memory and a return
+after a long gap both belong here. Individual features can serve one activity without redefining
+the whole product around journaling, daily habits, or public posting.
+
 ## Core Principles
+
+### Creative Recording and Lasting Memories
+
+Keep finding creative ways to record life. Give capture experiences an opinionated, playful
+character that makes them enjoyable to use and produces memories worth keeping. Design useful
+defaults and coherent interactions rather than accumulating unrelated modes or effects. Let
+playfulness come from how someone records and experiences a memory, not just visual decoration.
+
+Consider the immediate interaction and the memory's later life together: what context survives,
+how it can be revisited or shared, and how it remains meaningful as the app changes. A lasting
+home for memories should feel inviting and dependable without becoming clinical.
 
 ### 1. Fluid, Continuous Transitions
 - Elements should transform rather than simply appear/disappear
@@ -54,7 +77,10 @@ This document outlines the core UX design principles and patterns that guide the
 
 ## Platform Adaptations
 
-While these principles apply across all platforms, their implementation may vary:
+LogDate is a shared memory platform with purpose-built clients. Design each client's workflow,
+navigation, inputs, content density, and creation or playback emphasis for its use case and form
+factor. Consistency means shared meaning and dependable behavior, not identical screens or feature
+parity. The opportunities below guide design; they do not establish shipped platform support.
 
 ### Mobile (Android & iOS)
 - Emphasize gesture-based interactions
@@ -68,8 +94,18 @@ While these principles apply across all platforms, their implementation may vary
 
 ### Wearable
 - Focus on glanceable information
-- Simplify interactions to account for limited input options
-- Prioritize critical features only
+- Make brief recording and playback useful with limited attention and input
+- Give the watch a complete experience for its use case rather than a miniature phone UI
+
+### Foldable and Tablet
+- Respond to available space, input, and supported postures, including transitions between them
+- Use the form factor to improve the activity, beyond stretching a phone composition
+- Consider richer creation and reflection where the device's inputs and space make them useful
+
+### TV Direction
+- Explore relaxed playback and revisiting memories together with simple, remote-friendly controls
+- Keep memories legible at viewing distance and make the intended audience explicit
+- Design for the viewing setting rather than extending the phone editor to a large screen
 
 ## Implementation Guidelines
 

@@ -2,6 +2,11 @@
 
 The Rewind feature provides users with a beautiful, engaging way to view and interact with their weekly life summaries through a vertically scrollable list of floating cards.
 
+Rewind supports **reflection** within LogDate's purpose: **a home to document, reflect on, and
+share memories**. Describe it through the experiences and connections someone can rediscover,
+with the interface serving that purpose. Follow the
+[product positioning](../../../docs/product-info/product-positioning.md).
+
 ## 🎯 UX Design Philosophy
 
 ### Core Principles

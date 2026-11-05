@@ -6,6 +6,12 @@
 
 Contains data models and entities shared across all platforms and modules, ensuring consistent data representation throughout the application. These models serve as the contract between different layers and modules.
 
+These contracts support LogDate as a shared memory platform: clients can offer different recording,
+reflection, and sharing experiences while preserving the meaning and context of the same memories.
+Model the durable content and relationships without tying their meaning to a particular capture
+screen, device, or temporary visual treatment. See the
+[product positioning](../../docs/product-info/product-positioning.md).
+
 ## Architecture
 
 ```

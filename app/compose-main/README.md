@@ -6,6 +6,11 @@
 
 This is the primary application entry point that orchestrates all feature modules into a cohesive user experience. It contains the main navigation structure, dependency injection setup, and platform-specific configurations for Android, iOS, and Desktop platforms.
 
+Shared implementation supports LogDate's memory platform; it does not require one user experience
+on every device. Shape navigation, capture, reflection, and sharing around the client's form factor,
+inputs, and use case. Follow the [product positioning](../../docs/product-info/product-positioning.md)
+when deciding what belongs in shared behavior and what should vary by client.
+
 ## Platforms Supported
 
 - **Android**: Target SDK 35, Min SDK 30

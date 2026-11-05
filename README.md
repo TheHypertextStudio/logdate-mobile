@@ -1,6 +1,22 @@
 # LogDate: A Home for Your Memories
 
-This is a Kotlin Multiplatform project targeting Android, iOS, Desktop, and Server platforms. LogDate is a comprehensive journaling application that combines modern UI design with intelligent features and cross-platform synchronization.
+**LogDate is a home to document, reflect on, and share memories.** It brings words, photos,
+video, audio, and the context of a life into a connected product experience: keeping moments,
+returning to them, and sharing memories with the people someone chooses.
+
+Documenting memories is an ongoing area of invention: LogDate should offer creative, opinionated
+ways to record life that feel fun and playful, while giving the resulting memories a lasting home.
+From an engineering perspective, it is a shared memory platform with clients shaped around their
+particular use cases and form factors, rather than one interface repeated across devices.
+
+LogDate provides journaling functionality, but its market positioning is broader than a
+"journaling app" or "diary app." Writing entries is one way to document memories; it does not
+define the product. Read the [product purpose and positioning](docs/product-info/product-positioning.md)
+for the governing direction, messaging hierarchy, and marketing guidance. Specific capability
+availability belongs to each platform's release scope, not this statement of purpose.
+
+This repository contains Kotlin Multiplatform client and server code targeting Android, iOS,
+Desktop, and Server platforms.
 
 ## 🏗️ Architecture Overview
 

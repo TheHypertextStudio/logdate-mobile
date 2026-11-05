@@ -10,7 +10,7 @@ This document covers the first slice of that direction: the forgiving streak mod
 
 ### The streak punishes the people it should encourage
 
-The current streak is a single consecutive-day count. One missed day drops it to zero, and the app says so: the Welcome Back screen shows "Your streak has been reset." A journaling app lives on people returning after a gap. Telling them what they lost is the worst possible greeting.
+The current streak is a single consecutive-day count. One missed day drops it to zero, and the app says so: the Welcome Back screen shows "Your streak has been reset." A home for memories must welcome people returning after a gap, consistent with the [product purpose](../../product-info/product-positioning.md). Telling them what they lost is the worst possible greeting.
 
 ### The number goes stale
 

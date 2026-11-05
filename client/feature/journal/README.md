@@ -4,7 +4,11 @@
 
 ## Overview
 
-Provides comprehensive journal management capabilities including creation, viewing, organization, and sharing of journals and their entries. This module handles the core journaling experience of the application.
+Provides journal management capabilities including creation, viewing, organization, and sharing
+of journals and their entries. Journals organize memories within LogDate's broader purpose:
+**a home to document, reflect on, and share memories**. This module supplies part of that experience;
+it does not define the whole product or its market category. See the
+[product positioning](../../../docs/product-info/product-positioning.md).
 
 ## Architecture
 

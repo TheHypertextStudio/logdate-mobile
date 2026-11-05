@@ -2,7 +2,11 @@
 
 ## Goal
 
-LogDate aims to be the world's best social journal. This design covers the "social" half of that mission and how it should relate to the AT Protocol network, which its community calls the Atmosphere.
+**LogDate is a home to document, reflect on, and share memories.** The governing
+[product positioning](../../product-info/product-positioning.md) treats journaling as functionality,
+not the primary market pitch. This design develops sharing and interoperability in service of
+that broader purpose, and defines how LogDate should relate to the AT Protocol network, which
+its community calls the Atmosphere.
 
 The direction has three parts:
 

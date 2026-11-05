@@ -6,6 +6,12 @@
 
 Implements the core business logic of the application through use cases, following clean architecture principles. This module serves as the bridge between the UI layer and the data layer, containing all the application's business rules and behaviors.
 
+The domain supports LogDate's shared memory platform across purpose-built clients. Keep memory
+behavior and the person's content, context, and audience choices coherent while allowing workflows
+and capability coverage to differ by device. Creative recording experiences should produce lasting
+memories that remain useful for reflection and sharing. Follow the
+[product positioning](../../docs/product-info/product-positioning.md).
+
 ## Architecture
 
 ```

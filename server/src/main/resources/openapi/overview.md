@@ -1,4 +1,4 @@
-LogDate Cloud is the server behind the LogDate journaling apps. It keeps a person's entries, journals, photos and voice recordings in sync across their devices, holds encrypted backups, and, when it is switched on, gives each account an AT Protocol identity so a journal is portable.
+LogDate Cloud is the server behind LogDate, a home to document, reflect on, and share memories. It keeps a person's entries, journals, photos and voice recordings in sync across their devices, holds encrypted backups, and, when it is switched on, gives each account an AT Protocol identity so a journal is portable. Journaling is supporting functionality within that broader product purpose.
 
 This reference is written for anyone building against that server: a developer writing their first LogDate client, a hobbyist running their own copy on a weekend, or someone integrating an AT Protocol tool. It assumes you can read JSON and run `curl`, and nothing more. Every concept is explained the first time you meet it, every endpoint has a real example you can paste, and every error tells you what to do next.
 

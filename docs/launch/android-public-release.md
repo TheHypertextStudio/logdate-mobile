@@ -4,7 +4,14 @@ This is the release contract for the first public Android version. Internal Play
 
 ## Product shipped
 
-The public offer is a free, offline-capable journal with text, audio, photo, and video entries, Library, optional LogDate Cloud sync and backup, clean-device restore, and local weekly Rewind. Annual Rewind, paid subscriptions, Events, and People are deferred. Public copy and navigation must match that offer.
+The product promise is **a home to document, reflect on, and share memories**, as defined in the
+[product positioning](../product-info/product-positioning.md). Journaling describes functionality,
+not the primary market pitch. This release contributes to that purpose through free, offline-capable
+text, audio, photo, and video entries, Library, optional LogDate Cloud sync and backup, clean-device
+restore, and local weekly Rewind. Annual Rewind, paid subscriptions, Events, and People are deferred.
+Public copy and navigation must match that offer. Describe sharing through the concrete workflows
+verified for this release; the broader purpose does not imply shared journals or collaboration
+have shipped.
 
 ## Acceptance matrix
 

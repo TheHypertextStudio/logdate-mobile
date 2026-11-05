@@ -6,6 +6,11 @@
 
 Ktor-based server providing API endpoints, data synchronization services, and backend functionality for the LogDate application. Designed to be easily containerizable and self-hostable, allowing users to run their own instance of LogDate Cloud with full data ownership and privacy control.
 
+LogDate's purpose is **a home to document, reflect on, and share memories**. The server supports
+that experience through durable data, media, and account services. Journals and entries are
+technical concepts within that purpose, not the product's primary market position. See the
+[product positioning](../docs/product-info/product-positioning.md).
+
 **Key Design Principles:**
 - **Self-hostable**: Complete Docker containerization for easy deployment
 - **Privacy-first**: Users maintain full control over their data

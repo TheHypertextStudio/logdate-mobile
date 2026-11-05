@@ -6,6 +6,12 @@
 
 Provides cross-platform content sharing capabilities with integration for social media platforms, system share sheets, and link generation. This module enables users to share journals, photos, and videos from the application to various external platforms.
 
+This module supports **sharing** within LogDate's purpose: **a home to document, reflect on, and
+share memories**. The value is letting people share chosen memories with chosen people; external
+platform integrations are delivery mechanisms. Follow the
+[product positioning](../../docs/product-info/product-positioning.md), and distinguish this module's
+available export workflows from the broader [sharing design](../../docs/feature-design/social-model.md).
+
 ## Architecture
 
 ```

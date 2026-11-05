@@ -1,10 +1,14 @@
 # `:client:intelligence`
 
-**AI and machine learning features for intelligent journaling**
+**AI and machine learning features for understanding and rediscovering memories**
 
 ## Overview
 
-Provides intelligent features like entry summarization, people extraction, and content analysis using AI services. Enhances the journaling experience with automatic insights and content understanding.
+Provides features like entry summarization, people extraction, and content analysis using AI
+services. These capabilities support reflection by helping people understand and rediscover
+their memories. They serve LogDate's purpose as **a home to document, reflect on, and share
+memories**; AI and journaling are enabling functionality, not the primary product pitch. See the
+[product positioning](../../docs/product-info/product-positioning.md).
 
 ## Architecture
 

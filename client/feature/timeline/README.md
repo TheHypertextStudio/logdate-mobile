@@ -6,6 +6,11 @@
 
 Provides timeline-based navigation through journal entries with filtering, search, and detailed views of daily activities. The primary interface for browsing and discovering past journal content.
 
+The timeline supports **reflection** within LogDate's purpose: **a home to document, reflect on,
+and share memories**. Its value is helping someone revisit experiences and their context over
+time, beyond listing entries. Follow the
+[product positioning](../../../docs/product-info/product-positioning.md) when describing this feature.
+
 ## Architecture
 
 ```

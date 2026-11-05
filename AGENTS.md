@@ -2,6 +2,29 @@
 
 > Principles, workflow, and non-negotiables for any AI agent working in this repository.
 
+## Product Purpose and Positioning
+
+**LogDate is a home to document, reflect on, and share memories.** This is the prime directive
+for product decisions, design, documentation, and marketing. Read
+[`docs/product-info/product-positioning.md`](./docs/product-info/product-positioning.md) before
+shaping product work or writing product copy.
+
+LogDate provides journaling functionality, but **do not sell it primarily as a "journaling app"
+or "diary app."** The category is crowded and does not express the holistic memory-oriented
+purpose. Journals, entries, and writing are supporting functionality and valid technical terms.
+Documenting, reflecting, and sharing are equally part of the product direction; do not reduce
+the story to writing entries or treat sharing as incidental. Ground each feature and asset in
+what a person wants to preserve, revisit, understand, or share. Keep platform and release
+availability claims accurate; the product purpose does not establish that a feature has shipped.
+
+Continuously explore creative ways to record memories. Capture should be opinionated, fun, and
+playful, with meaningful results people can preserve and revisit over a long time. Design the
+recording experience and its lasting result together; avoid a collection of disconnected novelty
+features. From an engineering perspective, LogDate is a shared memory platform with purpose-built
+clients. Adapt workflows to each device, form factor, and use case, including watch, phone,
+foldable, tablet, laptop, and potential TV experiences. Do not equate coherence with identical UI
+or feature parity. These are product principles, not claims that every client or capability ships.
+
 ## Development Workflow
 
 All changes land directly on `main`. There are no long-lived feature branches. This demands extreme
@@ -166,6 +189,7 @@ repository.
 | Topic                     | Location                                                                                                                                    |
 |---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | Build commands            | [`./run help`](./run)                                                                                                                       |
+| Product purpose & positioning | [`docs/product-info/product-positioning.md`](./docs/product-info/product-positioning.md) |
 | Architecture & module map | [`README.md`](./README.md) and module `README.md` files                                                                                     |
 | Commit message format     | [`docs/reference/standards/commit-messages.md`](./docs/reference/standards/commit-messages.md)                                              |
 | Valid commit scopes       | [`allowed-scopes.txt`](./allowed-scopes.txt) and [`docs/reference/standards/commit-scopes.md`](./docs/reference/standards/commit-scopes.md) |
