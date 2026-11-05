@@ -403,7 +403,7 @@ internal fun Application.blueskyApiRoutes() {
     val runtime = getKoin().getOrNull<BlueskyOAuthRuntime>() ?: return
     routing {
         blueskyMetadataRoutes(runtime.client)
-        blueskyCallbackRoutes(runtime.signIn)
+        blueskyCallbackRoutes(runtime.signIn, staging = runtime.stagingBrowserReturn)
     }
 }
 

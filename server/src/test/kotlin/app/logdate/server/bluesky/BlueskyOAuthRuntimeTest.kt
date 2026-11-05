@@ -24,6 +24,21 @@ import kotlin.test.assertTrue
 
 class BlueskyOAuthRuntimeTest {
     @Test
+    fun `only the configured staging backend selects the staging browser return`() {
+        for (origin in listOf("https://cloud-staging.logdate.app", "https://cloud.logdate.app")) {
+            val env = environment() + ("LOGDATE_PUBLIC_ORIGIN" to origin)
+            val locks = HikariDataSource()
+            val http = HttpClient(MockEngine { respond("unused") })
+            val runtime = assertNotNull(createBlueskyOAuthRuntime(true, env::get, { mockk() }, { locks }, { http }, {}, {}))
+            try {
+                assertEquals(origin == "https://cloud-staging.logdate.app", runtime.stagingBrowserReturn)
+            } finally {
+                runtime.close()
+            }
+        }
+    }
+
+    @Test
     fun `connection lifecycle runtime is enabled only by its explicit flag`() {
         for (enabled in listOf(false, true)) {
             val env = environment() + ("LOGDATE_ATPROTO_CONNECTION_ENABLED" to enabled.toString())

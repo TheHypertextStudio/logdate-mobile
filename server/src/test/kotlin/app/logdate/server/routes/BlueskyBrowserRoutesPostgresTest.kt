@@ -80,7 +80,7 @@ class BlueskyBrowserRoutesPostgresTest {
                 val good = provider.atmosphere.approve(start.authorizationUrl).toList()
                 val before = provider.atmosphere.requestLog.size
                 testApplication {
-                    application { routing { blueskyCallbackRoutes(signIn) } }
+                    application { routing { blueskyCallbackRoutes(signIn, staging = true) } }
                     val browser = createClient { followRedirects = false }
                     for (bad in listOf(
                         good + ("state" to "other-state"),
@@ -89,11 +89,14 @@ class BlueskyBrowserRoutesPostgresTest {
                     )) {
                         val response = browser.get("$CALLBACK?${bad.formUrlEncode()}")
                         assertEquals(HttpStatusCode.SeeOther, response.status)
-                        assertEquals(BlueskyBrowserReturn.ERROR_URL, response.headers["Location"])
+                        assertEquals("https://app.staging.logdate.app/auth/bluesky/error", response.headers["Location"])
                         assertEquals(before, provider.atmosphere.requestLog.size)
                     }
                     val response = browser.get("$CALLBACK?${good.formUrlEncode()}")
-                    assertEquals("${BlueskyBrowserReturn.URL}?attempt=${start.attemptId}", response.headers["Location"])
+                    assertEquals(
+                        "https://app.staging.logdate.app/auth/bluesky/return?attempt=${start.attemptId}",
+                        response.headers["Location"],
+                    )
                 }
                 assertEquals(provider.atmosphere.alice.did, signIn.exchange(start.attemptId, VERIFIER)?.did.toString())
             }
