@@ -8,6 +8,9 @@ Rewind that summarizes the week. They choose what to share. Everything is stored
 first, so the app works without an account or a network connection. An optional LogDate Cloud
 account adds sync between devices and an encrypted backup.
 
+The [product purpose and positioning](docs/product-info/product-positioning.md) sets the direction
+for product, design, documentation, and marketing work.
+
 This repository holds the apps and the server. It is a Kotlin Multiplatform project: the apps share
 their code through Compose Multiplatform, and the server is a Ktor application.
 

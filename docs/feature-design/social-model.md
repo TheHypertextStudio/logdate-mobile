@@ -2,12 +2,14 @@
 
 ## Vision
 
-LogDate is meant to be a social journal, but not a social network. The difference matters.
+**LogDate is a home to document, reflect on, and share memories.** This design develops the sharing
+part of that purpose, following the [product positioning](../product-info/product-positioning.md).
+Sharing connects memories with the people who were part of a moment or would care about it.
+It should feel like handing someone a photo from your trip or reading them a line you wrote.
 
-A social network is built around an audience: followers, a feed, counts that tell you how a post
-did. A social journal is built around the few people who were part of a moment, or who would care
-about it. Sharing in LogDate should feel like handing someone a photo from your trip or reading
-them a line you wrote, not like publishing.
+The purpose is connection through memories. Public feeds, follower counts, and audience growth
+do not define success. Journaling is supporting functionality, not the product's market position;
+"social journal" must not replace the broader purpose.
 
 Circles are how LogDate does that. A circle is a named group of people you choose, such as Family,
 Roommates or Hiking Buddies. You share a moment with one or more circles, or with specific people,
