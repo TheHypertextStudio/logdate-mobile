@@ -76,6 +76,11 @@ revision consume the rendered Neon contract.
   [repository event stream runbook](repository-event-stream.md).
 - Do not add non-Cloud-Run domains to Terraform `domains`. Marketing redirects
   and unrelated DNS live outside this Cloud Run service.
+- Browser clients can use any origin for XRPC, OAuth discovery and OAuth token
+  endpoints with explicit authorization and proof headers. These routes omit
+  credentialed CORS so browsers cannot read responses using ambient cookies.
+  Interactive authorization and LogDate API routes retain the configured
+  `ALLOWED_ORIGINS` policy.
 - Use the same pinned `ATPROTO_SESSION_SECRET` version on all replicas of an
   environment. DPoP challenges are derived separately from session tokens and
   rotate every two and a half minutes. The preceding challenge remains valid

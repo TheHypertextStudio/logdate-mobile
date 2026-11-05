@@ -16,6 +16,7 @@ import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Tests for the application's "edge" configurations, focusing on network-level
@@ -138,6 +139,52 @@ class ApplicationEdgeTest {
 
             val response = client.get("/test")
             assertEquals(HttpStatusCode.OK, response.status)
+        }
+
+    @Test
+    fun `Atmosphere browser clients can preflight protocol requests without credentials`() =
+        testApplication {
+            application { edgeModule(env = mapOf("ALLOWED_ORIGINS" to "https://app.logdate.com")) }
+            configureAuthV1TestApp()
+
+            for (path in listOf("/xrpc/com.atproto.server.getSession", "/oauth/par", "/oauth/token", "/oauth/revoke")) {
+                val response =
+                    client.options(path) {
+                        header(HttpHeaders.Origin, "https://reader.example")
+                        header(HttpHeaders.AccessControlRequestMethod, if (path.startsWith("/xrpc/")) "GET" else "POST")
+                        header(HttpHeaders.AccessControlRequestHeaders, "authorization, content-type, dpop, atproto-proxy")
+                    }
+                assertEquals(HttpStatusCode.OK, response.status, path)
+                assertEquals("*", response.headers[HttpHeaders.AccessControlAllowOrigin], path)
+                assertNull(response.headers[HttpHeaders.AccessControlAllowCredentials], path)
+                val allowed = response.headers[HttpHeaders.AccessControlAllowHeaders].orEmpty().lowercase()
+                assertTrue("dpop" in allowed && "atproto-proxy" in allowed, path)
+            }
+        }
+
+    @Test
+    fun `browser metadata and XRPC errors expose protocol response headers`() =
+        testApplication {
+            application { edgeModule(env = mapOf("ALLOWED_ORIGINS" to "https://app.logdate.com")) }
+            configureAuthV1TestApp()
+            val browserOrigin = "https://reader.example"
+
+            for (path in listOf("/.well-known/oauth-protected-resource", "/.well-known/oauth-authorization-server", "/oauth/jwks")) {
+                val metadata = client.get(path) { header(HttpHeaders.Origin, browserOrigin) }
+                assertEquals(HttpStatusCode.OK, metadata.status, path)
+                assertEquals("*", metadata.headers[HttpHeaders.AccessControlAllowOrigin], path)
+            }
+            val error = client.get("/xrpc/com.atproto.server.getSession") { header(HttpHeaders.Origin, browserOrigin) }
+            assertEquals(HttpStatusCode.Unauthorized, error.status)
+            assertEquals("*", error.headers[HttpHeaders.AccessControlAllowOrigin])
+            val exposed = error.headers[HttpHeaders.AccessControlExposeHeaders].orEmpty().lowercase()
+            assertTrue("dpop-nonce" in exposed && "www-authenticate" in exposed)
+
+            val interactive = client.get("/oauth/authorize") { header(HttpHeaders.Origin, browserOrigin) }
+            assertNull(interactive.headers[HttpHeaders.AccessControlAllowOrigin])
+            val privateResponse = client.get("/test") { header(HttpHeaders.Origin, "https://app.logdate.com") }
+            assertEquals("https://app.logdate.com", privateResponse.headers[HttpHeaders.AccessControlAllowOrigin])
+            assertEquals("true", privateResponse.headers[HttpHeaders.AccessControlAllowCredentials])
         }
 
     private fun Application.edgeModule(env: Map<String, String>) {

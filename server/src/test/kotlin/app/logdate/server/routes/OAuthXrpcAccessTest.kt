@@ -70,7 +70,15 @@ class OAuthXrpcAccessTest {
             val fixture = setUp()
             val path = "/xrpc/com.atproto.server.getSession"
 
-            assertEquals(HttpStatusCode.Unauthorized, fixture.oauthGet(path, ATPROTO, includeProof = false).status)
+            val stale = fixture.oauthGet(path, ATPROTO, nonce = "stale")
+            assertEquals(HttpStatusCode.Unauthorized, stale.status)
+            assertEquals("DPoP error=\"use_dpop_nonce\"", stale.headers[HttpHeaders.WWWAuthenticate])
+            assertEquals(fixture.env.oauthNonceService.currentNonce(), stale.headers["DPoP-Nonce"])
+            assertEquals(HttpStatusCode.OK, fixture.oauthGet(path, ATPROTO, nonce = stale.headers["DPoP-Nonce"]!!).status)
+
+            val missing = fixture.oauthGet(path, ATPROTO, includeProof = false)
+            assertEquals(HttpStatusCode.Unauthorized, missing.status)
+            assertEquals("DPoP error=\"invalid_dpop_proof\"", missing.headers[HttpHeaders.WWWAuthenticate])
 
             runBlocking { fixture.env.accountRepository.deactivateAccount(fixture.account.id) }
             assertEquals(HttpStatusCode.Unauthorized, fixture.oauthGet(path, ATPROTO).status)
@@ -232,11 +240,12 @@ class OAuthXrpcAccessTest {
             path: String,
             scope: String,
             includeProof: Boolean = true,
+            nonce: String = env.oauthNonceService.currentNonce(),
         ): HttpResponse {
             val token = accessToken(scope)
             return test.client.get(path) {
                 header(HttpHeaders.Authorization, "DPoP $token")
-                if (includeProof) header("DPoP", proof("GET", path, token))
+                if (includeProof) header("DPoP", proof("GET", path, token, nonce))
             }
         }
 
@@ -268,12 +277,13 @@ class OAuthXrpcAccessTest {
             method: String,
             path: String,
             token: String,
+            nonce: String = env.oauthNonceService.currentNonce(),
         ): String =
             createDpopProof(
                 keyPair = dpopKey,
                 method = method,
                 htu = "http://localhost${path.substringBefore('?')}",
-                nonce = env.oauthNonceService.currentNonce(),
+                nonce = nonce,
                 ath = env.oauthDpopVerifier.accessTokenHash(token),
             )
     }

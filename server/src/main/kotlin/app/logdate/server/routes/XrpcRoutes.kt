@@ -7,11 +7,13 @@ import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.TokenService
 import app.logdate.server.identity.AtprotoIdentityService
+import app.logdate.server.installAtprotoBrowserCors
 import app.logdate.server.logging.IdentityNotices
 import app.logdate.server.oauth.OAuthAccessTokenService
 import app.logdate.server.oauth.OAuthDpopVerifier
 import app.logdate.server.oauth.OAuthNonceService
 import app.logdate.server.oauth.OAuthScopes
+import app.logdate.server.oauth.OAuthUseDpopNonceException
 import app.logdate.server.routes.docs.XrpcDocs
 import app.logdate.server.routes.docs.XrpcRepoDocs
 import io.github.aakira.napier.Napier
@@ -111,6 +113,7 @@ fun Route.xrpcRoutes(
     }
 
     route("/xrpc") {
+        installAtprotoBrowserCors()
         get("/com.atproto.identity.resolveHandle", XrpcDocs.resolveHandle) {
             val handleValue =
                 call.request.queryParameters["handle"]
@@ -874,10 +877,12 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
 ): XrpcPrincipal? {
     val challenge = checks.nonces.challenge()
     response.headers.append(DPOP_NONCE_HEADER, challenge.current)
-    val accessClaims = checks.accessTokens.validateAccessToken(accessToken) ?: return respondAuthRequired("Invalid DPoP access token")
+    val accessClaims =
+        checks.accessTokens.validateAccessToken(accessToken)
+            ?: return respondAuthRequired("Invalid DPoP access token", dpopError = "invalid_token")
     val proof =
         request.header(DPOP_HEADER)?.trim()?.takeIf(String::isNotEmpty)
-            ?: return respondAuthRequired("Missing DPoP proof")
+            ?: return respondAuthRequired("Missing DPoP proof", dpopError = "invalid_dpop_proof")
     val verification =
         try {
             checks.dpop.verify(
@@ -897,15 +902,20 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
         }
     val verified =
         verification.getOrElse { error ->
-            return respondAuthRequired(error.message ?: "Invalid DPoP proof")
+            return respondAuthRequired(
+                error.message ?: "Invalid DPoP proof",
+                dpopError = if (error is OAuthUseDpopNonceException) "use_dpop_nonce" else "invalid_dpop_proof",
+            )
         }
-    if (verified.keyThumbprint != accessClaims.keyThumbprint) return respondAuthRequired("DPoP proof does not match the access token")
+    if (verified.keyThumbprint != accessClaims.keyThumbprint) {
+        return respondAuthRequired("DPoP proof does not match the access token", dpopError = "invalid_token")
+    }
     val account =
         accountRepository
             .findByDid(accessClaims.subjectDid)
             ?.takeIf(Account::isActive)
             ?.let { identityService.ensureIdentity(it) }
-            ?: return respondAuthRequired("Account not found for DPoP access token")
+            ?: return respondAuthRequired("Account not found for DPoP access token", dpopError = "invalid_token")
     return XrpcPrincipal(account, OAuthGrant(clientId = accessClaims.clientId, scopes = OAuthScopes.parse(accessClaims.scope)))
 }
 
@@ -939,7 +949,11 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireLogDatePri
     return XrpcPrincipal(account, oauth = null)
 }
 
-private suspend fun io.ktor.server.application.ApplicationCall.respondAuthRequired(message: String): XrpcPrincipal? {
+private suspend fun io.ktor.server.application.ApplicationCall.respondAuthRequired(
+    message: String,
+    dpopError: String? = null,
+): XrpcPrincipal? {
+    if (dpopError != null) response.headers.append(HttpHeaders.WWWAuthenticate, "DPoP error=\"$dpopError\"")
     respond(HttpStatusCode.Unauthorized, PdsErrorResponse("AuthRequired", message))
     return null
 }

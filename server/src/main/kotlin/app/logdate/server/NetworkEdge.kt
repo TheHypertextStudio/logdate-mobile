@@ -8,6 +8,8 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.httpsredirect.HttpsRedirect
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.routing
 import java.net.URI
 
 /**
@@ -16,7 +18,7 @@ import java.net.URI
  *
  * Knobs:
  *  - `ALLOWED_ORIGINS` — comma-separated `scheme://host[:port]` entries trusted for CORS. Unset or
- *    blank disables the CORS plugin entirely (same-origin only). No default in any profile.
+ *    blank disables credentialed cross-origin access. Protocol routes have a separate public policy.
  *  - `TRUST_FORWARDED_HEADERS` — when `true`, trusts the proxy in front of the server (see
  *    [installForwardedClientAddress]) so the request's
  *    scheme and client address ([clientAddress]) reflect what the load balancer saw rather than what
@@ -38,22 +40,24 @@ internal fun Application.installNetworkEdge(
 ) {
     val parsedOrigins = parseAllowedOrigins(allowedOrigins)
     if (parsedOrigins.isNotEmpty()) {
-        install(CORS) {
-            parsedOrigins.forEach { origin ->
-                val hostAndPort =
-                    buildString {
-                        append(origin.host)
-                        origin.port?.let { append(":").append(it) }
-                    }
-                allowHost(host = hostAndPort, schemes = listOf(origin.scheme))
+        routing {
+            install(CORS) {
+                parsedOrigins.forEach { origin ->
+                    val hostAndPort =
+                        buildString {
+                            append(origin.host)
+                            origin.port?.let { append(":").append(it) }
+                        }
+                    allowHost(host = hostAndPort, schemes = listOf(origin.scheme))
+                }
+                allowMethod(HttpMethod.Options)
+                allowMethod(HttpMethod.Put)
+                allowMethod(HttpMethod.Patch)
+                allowMethod(HttpMethod.Delete)
+                allowHeader(HttpHeaders.ContentType)
+                allowHeader(HttpHeaders.Authorization)
+                allowCredentials = true
             }
-            allowMethod(HttpMethod.Options)
-            allowMethod(HttpMethod.Put)
-            allowMethod(HttpMethod.Patch)
-            allowMethod(HttpMethod.Delete)
-            allowHeader(HttpHeaders.ContentType)
-            allowHeader(HttpHeaders.Authorization)
-            allowCredentials = true
         }
     }
 
@@ -63,6 +67,19 @@ internal fun Application.installNetworkEdge(
 
     if (requireHttps) {
         install(HttpsRedirect)
+    }
+}
+
+/** Browser clients authenticate these protocol calls with explicit tokens and proofs. */
+internal fun Route.installAtprotoBrowserCors() {
+    install(CORS) {
+        anyHost()
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader("DPoP")
+        allowHeader("atproto-proxy")
+        exposeHeader("DPoP-Nonce")
+        exposeHeader(HttpHeaders.WWWAuthenticate)
     }
 }
 
