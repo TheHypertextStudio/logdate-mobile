@@ -119,7 +119,6 @@ import kotlinx.coroutines.flow.first
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.dsl.workerOf
-import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -357,7 +356,7 @@ internal fun Application.initializeKoin() {
     startKoin {
         androidLogger()
         androidContext(this@initializeKoin)
-        workManagerFactory()
         modules(appModule)
     }
+    initializeLogDateWorkManager(this)
 }
