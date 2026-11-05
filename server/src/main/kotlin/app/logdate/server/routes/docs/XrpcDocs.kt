@@ -4,6 +4,7 @@ import app.logdate.server.openapi.ApiTags
 import app.logdate.server.routes.ErrorCase
 import app.logdate.server.routes.ErrorEnvelope
 import app.logdate.server.routes.bearerOperation
+import app.logdate.server.routes.bearerOrDpopOperation
 import app.logdate.server.routes.bearerUnauthorized
 import app.logdate.server.routes.ok
 import app.logdate.server.routes.pdsError
@@ -111,13 +112,14 @@ internal object XrpcDocs {
     // ---- Sessions --------------------------------------------------------------------------------
 
     val getSession: RouteConfig.() -> Unit = {
-        bearerOperation(
+        bearerOrDpopOperation(
             "getAtprotoSession",
             ApiTags.XRPC,
             "Get the current session",
             """
-            `com.atproto.server.getSession`. Returns the account behind an `accessJwt` sent as
-            `Authorization: Bearer`. Use it to check whether a stored session is still valid.
+            `com.atproto.server.getSession`. Accepts a legacy session access token as
+            `Authorization: Bearer` or an OAuth access token as `Authorization: DPoP` with a
+            `DPoP` proof. OAuth responses omit email and email verification fields.
             """,
         )
         response {
@@ -131,7 +133,7 @@ internal object XrpcDocs {
                     active = true,
                 ),
             )
-            bearerUnauthorized(ErrorEnvelope.PDS)
+            authRequired()
             pdsError(
                 HttpStatusCode.InternalServerError,
                 ErrorCase("InternalServerError", "The request failed on the server; retry later.", "Session request failed"),

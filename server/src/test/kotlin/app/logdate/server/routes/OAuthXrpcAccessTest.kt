@@ -40,6 +40,42 @@ class OAuthXrpcAccessTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
+    fun `an OAuth app can read its session identity without email details`() =
+        testApplication {
+            val fixture = setUp()
+            val path = "/xrpc/com.atproto.server.getSession"
+
+            val response = fixture.oauthGet(path, ATPROTO)
+
+            assertEquals(HttpStatusCode.OK, response.status, response.bodyAsText())
+            val payload = json.parseToJsonElement(response.bodyAsText()).jsonObject
+            assertEquals(fixture.account.did, payload.getValue("did").jsonPrimitive.content)
+            assertEquals(fixture.account.handle, payload.getValue("handle").jsonPrimitive.content)
+            assertEquals("true", payload.getValue("active").jsonPrimitive.content)
+            for (field in listOf("email", "emailConfirmed", "emailAuthFactor")) {
+                assertFalse(payload.containsKey(field), field)
+            }
+
+            val legacySession = runBlocking { fixture.env.atprotoSessionTokenService.createSession(fixture.account) }
+            val legacy = client.get(path) { header(HttpHeaders.Authorization, "Bearer ${legacySession.accessJwt}") }
+            assertEquals(HttpStatusCode.OK, legacy.status, legacy.bodyAsText())
+            val legacyPayload = json.parseToJsonElement(legacy.bodyAsText()).jsonObject
+            assertEquals("alice@example.com", legacyPayload.getValue("email").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `getSession requires the OAuth proof and rejects a deactivated account`() =
+        testApplication {
+            val fixture = setUp()
+            val path = "/xrpc/com.atproto.server.getSession"
+
+            assertEquals(HttpStatusCode.Unauthorized, fixture.oauthGet(path, ATPROTO, includeProof = false).status)
+
+            runBlocking { fixture.env.accountRepository.deactivateAccount(fixture.account.id) }
+            assertEquals(HttpStatusCode.Unauthorized, fixture.oauthGet(path, ATPROTO).status)
+        }
+
+    @Test
     fun `journal collections look empty to an OAuth app but not to the owner`() =
         testApplication {
             val fixture = setUp()
@@ -194,11 +230,12 @@ class OAuthXrpcAccessTest {
         suspend fun oauthGet(
             path: String,
             scope: String,
+            includeProof: Boolean = true,
         ): HttpResponse {
             val token = accessToken(scope)
             return test.client.get(path) {
                 header(HttpHeaders.Authorization, "DPoP $token")
-                header("DPoP", proof("GET", path, token))
+                if (includeProof) header("DPoP", proof("GET", path, token))
             }
         }
 
@@ -253,7 +290,13 @@ class OAuthXrpcAccessTest {
             runBlocking {
                 val saved =
                     env.accountRepository.save(
-                        Account(id = Uuid.random(), username = "alice", displayName = "Alice", createdAt = Clock.System.now()),
+                        Account(
+                            id = Uuid.random(),
+                            username = "alice",
+                            displayName = "Alice",
+                            email = "alice@example.com",
+                            createdAt = Clock.System.now(),
+                        ),
                     )
                 env.atprotoIdentityService.ensureIdentity(saved)
             }

@@ -184,6 +184,14 @@ class PasskeyAtprotoSignInE2ETest {
                         val session = http.signInThroughBrowser(logDate, app, account, scope = "atproto")
                         assertEquals("atproto", session.scope)
 
+                        val did = assertNotNull(account.response.data.account.did)
+                        val identity = session.get(http, "$logDate/xrpc/com.atproto.server.getSession")
+                        assertEquals(HttpStatusCode.OK, identity.status, identity.bodyAsText())
+                        val identityBody = identity.json()
+                        assertEquals(did, identityBody.getValue("did").jsonPrimitive.content)
+                        assertEquals(account.response.data.account.handle, identityBody.getValue("handle").jsonPrimitive.content)
+                        assertFalse(identityBody.containsKey("email"))
+
                         val upload =
                             session.post(
                                 http,
@@ -193,7 +201,6 @@ class PasskeyAtprotoSignInE2ETest {
                             )
 
                         assertEquals(HttpStatusCode.Forbidden, upload.status, upload.bodyAsText())
-                        val did = assertNotNull(account.response.data.account.did)
                         val read = session.get(http, "$logDate/xrpc/com.atproto.repo.listRecords?repo=$did&collection=$CONTENT")
                         assertEquals(HttpStatusCode.Forbidden, read.status, read.bodyAsText())
                         assertTrue("InsufficientScope" in read.bodyAsText(), read.bodyAsText())

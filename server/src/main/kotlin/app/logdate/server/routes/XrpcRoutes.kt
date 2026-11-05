@@ -54,6 +54,7 @@ import studio.hypertext.atproto.pds.PdsRepoService
 import studio.hypertext.atproto.pds.PdsSessionService
 import studio.hypertext.atproto.pds.PdsSyncService
 import studio.hypertext.atproto.pds.PutRecordRequest
+import studio.hypertext.atproto.pds.SessionInfoResponse
 import studio.hypertext.atproto.pds.UploadBlobRequest
 import studio.hypertext.atproto.repo.Cid
 import studio.hypertext.atproto.repo.RepoRecordId
@@ -83,6 +84,18 @@ fun Route.xrpcRoutes(
     val openCollections = OAuthScopes.requireOpenable(collectionsOpenToApps)
     val publicReads = publicRepos?.let { PublicRepoReads(it, identityService, blobService) }
 
+    suspend fun ApplicationCall.authenticateXrpc(): XrpcPrincipal? =
+        requireAuthenticatedAccount(
+            identityService = identityService,
+            accountRepository = accountRepository,
+            tokenService = tokenService,
+            atprotoSessionTokenService = atprotoSessionTokenService,
+            oauthAccessTokenService = oauthAccessTokenService,
+            oauthDpopVerifier = oauthDpopVerifier,
+            oauthNonceService = oauthNonceService,
+            publicOrigin = publicOrigin,
+        )
+
     // A repo can hold its owner's private journal, so reads are owner-only. Anyone else gets
     // `respondAsMissing`, the answer for a repo that does not exist, before anything is looked up.
     // The exception is a repo the server shows publicly (see [PublicRepoReads]): each read handler
@@ -92,17 +105,7 @@ fun Route.xrpcRoutes(
         repo: String,
         respondAsMissing: suspend ApplicationCall.() -> Unit,
     ): XrpcPrincipal? {
-        val principal =
-            requireAuthenticatedAccount(
-                identityService = identityService,
-                accountRepository = accountRepository,
-                tokenService = tokenService,
-                atprotoSessionTokenService = atprotoSessionTokenService,
-                oauthAccessTokenService = oauthAccessTokenService,
-                oauthDpopVerifier = oauthDpopVerifier,
-                oauthNonceService = oauthNonceService,
-                publicOrigin = publicOrigin,
-            ) ?: return null
+        val principal = authenticateXrpc() ?: return null
         if (ownsRepo(principal.account, repo)) return principal
         respondAsMissing()
         return null
@@ -168,6 +171,19 @@ fun Route.xrpcRoutes(
                     HttpStatusCode.NotImplemented,
                     PdsErrorResponse("Unsupported", "Session service is not configured"),
                 )
+            if (call.request.header(HttpHeaders.Authorization)?.startsWith("DPoP ") == true) {
+                val account = (call.authenticateXrpc() ?: return@get).account
+                call.respond(
+                    HttpStatusCode.OK,
+                    SessionInfoResponse(
+                        handle = requireNotNull(account.handle),
+                        did = AtprotoDid.require(requireNotNull(account.did)),
+                        didDoc = identityService.documentFor(account),
+                        active = account.isActive,
+                    ),
+                )
+                return@get
+            }
             val bearerToken = call.requireBearerToken() ?: return@get
             val result = sessions.getSession(bearerToken)
             val session = result.getOrNull()
