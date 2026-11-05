@@ -237,6 +237,23 @@ uses matching populated Managed Device scenarios. Real adoption requires separat
 authorized deployment and explicit confirmation on the selected account, followed
 by journal/device continuity checks. Synthetic fixtures are not proof of that move.
 
+### First-party deployment configuration
+
+Bluesky sign-in and identity adoption have separate deployment switches. Enable
+`LOGDATE_BLUESKY_SIGN_IN_ENABLED` only in an environment with encrypted account
+keys, personal-space storage and shared PostgreSQL. Bind
+`BLUESKY_OAUTH_CLIENT_JWKS` to an exact Secret Manager version for that
+environment. The public client metadata exposes the corresponding public keys.
+Keep the private key material in Secret Manager and retain old versions while
+active grants still depend on them.
+
+Verify the confidential client callback, native return and first-party passkey
+before enabling `LOGDATE_IDENTITY_ADOPTION_ENABLED` in the same environment.
+The staging release workflow renders its committed contract template, so a
+reviewed staging rollout must keep that template and Terraform inputs in sync.
+These switches authorize private sign-in and adoption. Public identity
+publication has its own consent and release path.
+
 ## Work left to the implementation plan
 
 Choose concrete type names and endpoint suffixes; enumerate every mutation and
