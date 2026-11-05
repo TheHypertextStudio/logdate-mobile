@@ -47,6 +47,8 @@ cloud_run_env = {
   SYNC_MEDIA_SIGNED_URLS                   = "true"
   SYNC_MEDIA_SIGNED_URL_TTL_HOURS          = "1"
   AUTO_MIGRATE                             = "false"
+  LOGDATE_BLUESKY_SIGN_IN_ENABLED          = "true"
+  LOGDATE_IDENTITY_ADOPTION_ENABLED        = "true"
   LOGDATE_ENCRYPTED_ACCOUNT_KEYS_ENABLED   = "true"
   LOGDATE_PERSONAL_SPACE_ENABLED           = "true"
   LOGDATE_PERSONAL_SPACE_MIGRATION_ENABLED = "true"
@@ -57,10 +59,11 @@ cloud_run_env = {
 # Secret IDs are scoped to this project's Secret Manager namespace (separate
 # from the prod project's identically-named secrets, no collision).
 cloud_run_secret_env = {
-  DATABASE_URL      = { secret_id = "logdate-db-url", version = "1" }
-  DATABASE_USER     = { secret_id = "logdate-db-user", version = "1" }
-  DATABASE_PASSWORD = { secret_id = "logdate-db-password", version = "1" }
-  JWT_SECRET        = { secret_id = "logdate-jwt-secret", version = "1" }
+  BLUESKY_OAUTH_CLIENT_JWKS = { secret_id = "logdate-bluesky-oauth-client-jwks", version = "1" }
+  DATABASE_URL              = { secret_id = "logdate-db-url", version = "1" }
+  DATABASE_USER             = { secret_id = "logdate-db-user", version = "1" }
+  DATABASE_PASSWORD         = { secret_id = "logdate-db-password", version = "1" }
+  JWT_SECRET                = { secret_id = "logdate-jwt-secret", version = "1" }
   # Encrypts hosted AT Protocol signing keys and the OAuth signing keys. Version 2 is an
   # independent random value. Version 1 was a copy of logdate-jwt-secret version 1; keep it
   # while any database backup still holds keys encrypted with it.
