@@ -413,7 +413,13 @@ class PrivacySettingsViewModelTest {
             onResult: (AppAuthState) -> Unit,
         ) {
             authenticateInvocations++
-            lastPrompt = PrivacyAuthenticationPrompt(title, subtitle, cancelLabel, description.orEmpty())
+            lastPrompt =
+                PrivacyAuthenticationPrompt(
+                    assertIs<UiText.Raw>(title).value,
+                    assertIs<UiText.Raw>(subtitle).value,
+                    assertIs<UiText.Raw>(cancelLabel).value,
+                    description?.let { assertIs<UiText.Raw>(it).value }.orEmpty(),
+                )
             pendingResults += onResult
             if (respondImmediately) onResult(resultToReport)
         }
