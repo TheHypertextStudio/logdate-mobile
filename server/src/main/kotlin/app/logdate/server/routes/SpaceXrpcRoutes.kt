@@ -9,7 +9,9 @@ import app.logdate.lexicon.app.logdate.space.PutRecordOutput
 import app.logdate.server.auth.Account
 import app.logdate.server.database.toJavaUUID
 import app.logdate.server.entitlements.EntitlementEnforcer
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import app.logdate.server.logdate.LogDateBlobStorage
+import app.logdate.server.logdate.SpaceObjectUploads
 import app.logdate.server.migration.SpaceMigrationHolds
 import app.logdate.server.migration.SpaceWriteRefusal
 import app.logdate.server.ratelimit.FixedWindowRateLimiter
@@ -124,9 +126,10 @@ fun Route.spaceXrpcRoutes(
     transfers: TransferSlots = TransferSlots(),
     maxBlobBytes: Long = MAX_SPACE_BLOB_BYTES,
     migrationHolds: SpaceMigrationHolds = SpaceMigrationHolds.None,
+    objectUploads: SpaceObjectUploads = SpaceObjectUploads.Direct,
 ) {
     val records = store?.takeIf { enabled }
-    val blobs = records?.let { recordStore -> blobStorage?.let { SpaceObjects(recordStore, it, transfers) } }
+    val blobs = records?.let { recordStore -> blobStorage?.let { SpaceObjects(recordStore, it, transfers, objectUploads) } }
     val gate = SpaceGate(auth, rateLimiter, rateLimits, migrationHolds)
     route("/xrpc") {
         putRecord(records, gate, entitlementEnforcer)
@@ -249,10 +252,14 @@ private fun Route.putRecord(
                 swapCid = input.swapCid,
                 createOnly = input.createOnly == true,
                 quota = quota?.spaceQuota(account.id.toJavaUUID()),
+                identityEpoch = account.identityEpoch,
             )
         val stored =
             try {
                 store.put(write)
+            } catch (e: IdentityWriteRefusedException) {
+                val refused = blobFailureResponse(e)
+                return@post call.respond(refused.status, refused.body)
             } catch (e: SpaceSwapException) {
                 return@post call.respondSwapConflict(e)
             } catch (e: SpaceQuotaExceededException) {
@@ -283,7 +290,10 @@ private fun Route.deleteRecord(
         if (input.swapCid?.let(::isCid) == false) return@post call.respondInvalid("swapCid must be CID-shaped")
         val seq =
             try {
-                store.delete(account.id.toJavaUUID(), space.uri, space.authority, input.rkey, input.swapCid)
+                store.delete(account.id.toJavaUUID(), space.uri, space.authority, input.rkey, input.swapCid, account.identityEpoch)
+            } catch (e: IdentityWriteRefusedException) {
+                val refused = blobFailureResponse(e)
+                return@post call.respond(refused.status, refused.body)
             } catch (e: SpaceSwapException) {
                 return@post call.respondSwapConflict(e)
             }

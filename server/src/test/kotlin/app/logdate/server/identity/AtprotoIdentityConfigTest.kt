@@ -44,19 +44,28 @@ class AtprotoIdentityConfigTest {
     }
 
     @Test
-    fun `environment factory supports hosted did method and plc publish flags`() {
+    fun `environment factory supports hosted did method with private provisioning`() {
         val config =
             AtprotoIdentityConfig.fromEnvironment(
                 handleDomain = "users.logdate.app",
                 pdsServiceEndpoint = "https://pds.logdate.app/",
                 hostedAccountDidMethod = "web",
-                publishHostedPlcOperations = "TrUe",
+                publishHostedPlcOperations = "false",
                 plcDirectoryUrl = "https://plc.example.com/",
             )
 
         assertEquals(HostedAccountDidMethod.WEB, config.hostedAccountDidMethod)
-        assertTrue(config.publishHostedPlcOperations)
+        assertFalse(config.publishHostedPlcOperations)
         assertEquals("https://plc.example.com", config.normalizedPlcDirectoryUrl)
+    }
+
+    @Test
+    fun `environment factory refuses retired bulk publication configuration`() {
+        for (value in listOf("true", " TrUe ", "1")) {
+            assertFailsWith<IllegalArgumentException> {
+                AtprotoIdentityConfig.fromEnvironment(publishHostedPlcOperations = value)
+            }
+        }
     }
 
     @Test
@@ -84,7 +93,7 @@ class AtprotoIdentityConfigTest {
 
     @Test
     fun `publishing alone does not turn on recovery keys`() {
-        val publishing = AtprotoIdentityConfig.fromEnvironment(publishHostedPlcOperations = "true", recoveryKeysEnabled = null)
+        val publishing = AtprotoIdentityConfig(publishHostedPlcOperations = true, recoveryKeysEnabled = false)
 
         assertTrue(publishing.publishesPlcOperations)
         assertEquals(false, publishing.supportsRecoveryKeys)

@@ -72,6 +72,9 @@ internal object AuthSchemaDocs {
                         "identityKind" to
                             "Where the DID is managed: `hosted` by LogDate, or `external` by its existing provider. " +
                             "This does not publish the LogDate account or move its journal. Older servers omit it, meaning `hosted`.",
+                        "identityEpoch" to
+                            "The server-owned canonical identity generation. Always supplied, including zero before the first " +
+                            "identity adoption. A fresh profile alone does not authorize installing a migrated journal.",
                         "storageMode" to
                             "How the server keeps this account's journal data: `legacy` (one sync endpoint for each kind of " +
                             "data) or `personalSpaceV1` (sealed records in the account's personal space). Every device of the " +
@@ -99,6 +102,9 @@ internal object AuthSchemaDocs {
                         "identityKind" to
                             "Where the DID is managed: `hosted` by LogDate, or `external` by its existing provider. " +
                             "This does not publish the LogDate account or move its journal. Older servers omit it, meaning `hosted`.",
+                        "identityEpoch" to
+                            "The server-owned canonical identity generation. Older server responses can omit it or return null; " +
+                            "an unknown generation must not be assumed to be zero or used to authorize identity adoption.",
                         "storageMode" to
                             "How the server keeps this account's journal data: `legacy` (one sync endpoint for each kind of " +
                             "data) or `personalSpaceV1` (sealed records in the account's personal space). Every device of the " +
@@ -275,6 +281,26 @@ internal object AuthSchemaDocs {
                         "authenticatorData" to "Authenticator flags and counter. $BASE64URL",
                         "signature" to "The signature over `authenticatorData` and the client data hash. $BASE64URL",
                         "userHandle" to "The user handle the passkey stored; here the account ID.",
+                    ),
+                ),
+            "PasskeyAuthenticationResponse" to
+                SchemaDoc(
+                    "A passkey assertion used to confirm an account action.",
+                    mapOf(
+                        "id" to "The credential ID, base64url.",
+                        "rawId" to "The same credential ID, base64url.",
+                        "response" to "The signature and the data it covers.",
+                        "type" to "Always `public-key`.",
+                    ),
+                ),
+            "AuthenticatorAssertionResponse" to
+                SchemaDoc(
+                    "The authenticator's signed response to an account-action challenge.",
+                    mapOf(
+                        "clientDataJSON" to "The client data the platform signed over. $BASE64URL",
+                        "authenticatorData" to "Authenticator flags and counter. $BASE64URL",
+                        "signature" to "The signature over `authenticatorData` and the client data hash. $BASE64URL",
+                        "userHandle" to "Optional user handle returned by the authenticator. $BASE64URL",
                     ),
                 ),
             // ---- Google -----------------------------------------------------------------------

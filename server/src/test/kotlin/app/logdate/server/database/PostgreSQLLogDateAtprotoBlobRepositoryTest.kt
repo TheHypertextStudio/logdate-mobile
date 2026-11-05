@@ -1,11 +1,14 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.server.logdate.LogDateAtprotoBlob
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.uuid.Uuid
 
 /**
  * Integration tests for [PostgreSQLLogDateAtprotoBlobRepository] using an H2 database.
@@ -17,9 +20,10 @@ import kotlin.test.assertNotNull
 class PostgreSQLLogDateAtprotoBlobRepositoryTest {
     @Test
     fun `postgres atproto blob repository stores and updates blob metadata`() {
-        withH2Database(LogDateAtprotoBlobsTable) {
+        withH2Database(AccountsTable, LogDateAtprotoBlobsTable) {
             val repository = PostgreSQLLogDateAtprotoBlobRepository()
-            val userId = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUUID()
+            createTestAccount(userId)
 
             repository.upsertBlob(
                 userId = userId,

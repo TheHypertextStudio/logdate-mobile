@@ -12,8 +12,8 @@ import kotlin.test.assertTrue
 
 class IdentityPublishingCommandTest {
     private val publishingOn =
-        AtprotoIdentityConfig.fromEnvironment(
-            publishHostedPlcOperations = "true",
+        AtprotoIdentityConfig(
+            publishHostedPlcOperations = true,
             plcDirectoryUrl = "http://127.0.0.1:2582",
         )
     private val publishingOff = AtprotoIdentityConfig.fromEnvironment(plcDirectoryUrl = "http://127.0.0.1:2582")

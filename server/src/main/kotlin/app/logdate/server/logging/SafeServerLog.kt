@@ -118,7 +118,7 @@ internal object IdentityNotices {
     const val HANDLE_RESOLUTION_FAILED = "Resolving a handle failed"
     const val SESSION_REQUEST_FAILED = "A hosted session request failed"
     const val BACKFILL_REFUSED_PUBLISHING =
-        "Identity backfill refused: PLC publishing is enabled and --allow-plc-publishing was not given"
+        "Identity backfill refused: bulk publication requires individual identity consent"
     const val BACKFILL_FAILED = "Identity backfill failed"
     const val BACKFILL_ACCOUNT_FAILED = "Identity backfill could not provision one account; the run continues"
 
@@ -203,7 +203,7 @@ internal object RepoEventNotices {
 }
 
 /**
- * Fixed log messages for sending `did:plc` operations to the PLC directory, from sign-up, key
+ * Fixed log messages for sending authorized `did:plc` operations to the PLC directory, from key
  * changes and the identity publishing command alike. Production logs keep only approved messages,
  * so each outcome stays countable there as one SERVER_PLC_* or SERVER_IDENTITY_* code. The
  * publishing command also writes one [summary] line of counts per batch and per run.
@@ -218,7 +218,7 @@ internal object IdentityPublishingNotices {
     const val RUN_COMPLETE = "Identity publishing finished"
     const val RUN_STOPPED = "Identity publishing stopped at its failure limit"
     const val REFUSED_USAGE = "Identity publishing refused to start: the arguments are not valid"
-    const val REFUSED_PUBLISHING_OFF = "Identity publishing refused to start: ATPROTO_PLC_PUBLISH_ENABLED is not true"
+    const val REFUSED_PUBLISHING_OFF = "Identity publishing refused to start: individual publication authority is unavailable"
     const val REFUSED_DIRECTORY_UNCONFIRMED =
         "Identity publishing refused to start: --confirm-directory does not name the configured PLC directory"
     const val REFUSED_NOT_PLC = "Identity publishing refused to start: hosted accounts do not use did:plc"

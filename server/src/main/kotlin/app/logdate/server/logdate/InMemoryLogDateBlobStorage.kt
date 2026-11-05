@@ -14,7 +14,7 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
 
     override fun putBlobFile(request: LogDateBlobFileWriteRequest): String {
         val storagePath =
-            storagePathFor(
+            plannedPath(
                 LogDateBlobWriteRequest(
                     request.ownerId,
                     request.namespace,
@@ -40,7 +40,18 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
         }
     }
 
+    override fun openPrivateBlob(
+        storagePath: String,
+        owner: String,
+    ): LogDateBlobStream? {
+        requirePrivateBlobOwner(owner)
+        privateBlobId(storagePath) ?: return null
+        val blob = blobs[storagePath]?.takeIf { it.owner == owner && !it.retired } ?: return null
+        return LogDateBlobStream(blob.bytes.size.toLong(), blob.bytes.inputStream())
+    }
+
     override fun openBlob(storagePath: String): LogDateBlobStream? {
+        if (blobs[storagePath]?.retired == true) return null
         fileBlobs[storagePath]?.let { file ->
             return try {
                 LogDateBlobStream(Files.size(file), Files.newInputStream(file))
@@ -53,10 +64,17 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
     }
 
     override fun openBlobWriter(request: LogDateBlobStreamRequest): LogDateBlobWriter {
+        val owner = request.privateOwner
+        require(owner == null || request.createOnly)
+        owner?.let(::requirePrivateBlobOwner)
         val storagePath =
-            storagePathFor(
-                LogDateBlobWriteRequest(request.ownerId, request.namespace, request.blobId, null, request.contentType, ByteArray(0)),
-            )
+            if (owner == null) {
+                plannedPath(
+                    LogDateBlobWriteRequest(request.ownerId, request.namespace, request.blobId, null, request.contentType, ByteArray(0)),
+                )
+            } else {
+                plannedPrivateBlobPath(request.blobId)
+            }
         val buffer = java.io.ByteArrayOutputStream()
         val output = ChecksummingOutputStream(buffer)
         return object : LogDateBlobWriter {
@@ -67,12 +85,20 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
                 output.close()
                 val bytes = buffer.toByteArray()
                 if (bytes.size.toLong() != output.size) throw LogDateBlobIntegrityException("Stored size differs from bytes written")
-                fileBlobs.remove(storagePath)?.let { Files.deleteIfExists(it) }
-                blobs[storagePath] = StoredBlob(bytes = bytes, contentType = request.contentType)
+                if (!request.createOnly) fileBlobs.remove(storagePath)?.let { Files.deleteIfExists(it) }
+                if (request.createOnly) {
+                    if (fileBlobs.containsKey(storagePath) ||
+                        blobs.putIfAbsent(storagePath, StoredBlob(bytes, request.contentType, owner)) != null
+                    ) {
+                        throw LogDateBlobCollisionException()
+                    }
+                } else {
+                    blobs[storagePath] = StoredBlob(bytes = bytes, contentType = request.contentType)
+                }
             }
 
             override fun abort() {
-                blobs.remove(storagePath)
+                if (owner == null) blobs.remove(storagePath) else deleteBlob(storagePath)
             }
         }
     }
@@ -82,6 +108,7 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
         destination: Path,
         checkActive: () -> Unit,
     ): Boolean {
+        if (blobs[storagePath]?.retired == true) return false
         val file = fileBlobs[storagePath]
         if (file != null) {
             try {
@@ -101,7 +128,7 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
     }
 
     override fun putBlob(request: LogDateBlobWriteRequest): String {
-        val storagePath = storagePathFor(request)
+        val storagePath = plannedPath(request)
         fileBlobs.remove(storagePath)?.let { Files.deleteIfExists(it) }
         blobs[storagePath] =
             StoredBlob(
@@ -111,17 +138,36 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
         return storagePath
     }
 
-    override fun getBlob(storagePath: String): ByteArray? =
-        blobs[storagePath]?.bytes ?: fileBlobs[storagePath]?.let { Files.readAllBytes(it) }
+    override fun getBlob(storagePath: String): ByteArray? {
+        if (blobs[storagePath]?.retired == true) return null
+        return blobs[storagePath]?.bytes ?: fileBlobs[storagePath]?.let { Files.readAllBytes(it) }
+    }
 
     override fun deleteBlob(storagePath: String): Boolean {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX)) {
+            var deleted = false
+            blobs.computeIfPresent(storagePath) { _, blob ->
+                if (blob.retired || blob.owner == null) {
+                    blob
+                } else {
+                    deleted = true
+                    null
+                }
+            }
+            return deleted
+        }
         val file = fileBlobs.remove(storagePath)
         file?.let { Files.deleteIfExists(it) }
         return blobs.remove(storagePath) != null || file != null
     }
 
     override fun deleteBlobIfExists(storagePath: String) {
-        deleteBlob(storagePath)
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX)) {
+            if (blobs[storagePath]?.retired == true) return
+            check(deleteBlob(storagePath) || blobs[storagePath] == null || blobs[storagePath]?.retired == true)
+        } else {
+            deleteBlob(storagePath)
+        }
     }
 
     override fun listOwnerBlobPaths(ownerId: java.util.UUID): List<String> =
@@ -132,7 +178,7 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
         expirationHours: Long,
     ): String = "https://logdate.test/download/$storagePath?expiresInHours=$expirationHours"
 
-    private fun storagePathFor(request: LogDateBlobWriteRequest): String =
+    override fun plannedPath(request: LogDateBlobWriteRequest): String =
         when (request.namespace) {
             LogDateBlobNamespace.MEDIA -> {
                 val fileName = requireNotNull(request.fileName) { "Media blobs require a file name" }
@@ -152,8 +198,28 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
             }
         }
 
+    override fun retirePrivateBlob(
+        blobId: String,
+        owner: String,
+    ): Boolean {
+        requirePrivateBlobOwner(owner)
+        val path = plannedPrivateBlobPath(blobId)
+        var retired = false
+        blobs.compute(path) { _, blob ->
+            if (fileBlobs.containsKey(path) || (blob != null && blob.owner != owner)) {
+                blob
+            } else {
+                retired = true
+                StoredBlob(byteArrayOf(), "application/octet-stream", owner, true)
+            }
+        }
+        return retired
+    }
+
     private data class StoredBlob(
         val bytes: ByteArray,
         val contentType: String,
+        val owner: String? = null,
+        val retired: Boolean = false,
     )
 }

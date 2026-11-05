@@ -1,12 +1,14 @@
 package app.logdate.server.database
 
+import app.logdate.server.identity.adoption.IdentityFenceOutcome
+import app.logdate.server.identity.adoption.IdentityWriteExpectation
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
+import app.logdate.server.migration.SpaceMigrationConfig
 import app.logdate.server.space.MAX_SPACE_CHANGES_BYTES
 import app.logdate.server.space.OBJECT_DELETE_TIMEOUT
 import app.logdate.server.space.SpaceBlob
-import app.logdate.server.space.SpaceChange
 import app.logdate.server.space.SpaceChangePage
 import app.logdate.server.space.SpaceMissingBlobException
-import app.logdate.server.space.SpaceObjectDeleteException
 import app.logdate.server.space.SpacePurgeResult
 import app.logdate.server.space.SpaceQuota
 import app.logdate.server.space.SpaceRecordWrite
@@ -17,8 +19,6 @@ import app.logdate.server.space.StoredSpaceRecord
 import app.logdate.server.space.UPLOAD_RESERVATION_LIFETIME
 import app.logdate.server.space.countWithinBudget
 import app.logdate.server.space.decodeRecord
-import app.logdate.server.space.deleteObjectOrThrow
-import app.logdate.server.space.logObjectDeleteFailure
 import app.logdate.server.space.recordCid
 import app.logdate.server.space.requireChangesLimit
 import app.logdate.server.space.requireFreshCursor
@@ -28,26 +28,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.lessEq
-import org.jetbrains.exposed.v1.core.max
-import org.jetbrains.exposed.v1.core.neq
-import org.jetbrains.exposed.v1.core.notExists
-import org.jetbrains.exposed.v1.core.or
-import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.sql.Connection
@@ -58,23 +53,25 @@ import kotlin.time.Instant
 
 private const val PUT_BLOB_ATTEMPTS = 3
 
-/** How many purge candidates one query loads. */
-private const val PURGE_BATCH_SIZE = 500
-
 /**
  * Stores sealed space records in PostgreSQL. Every write locks its (space, author) state row before
  * taking the next sequence number, so concurrent writes never share one. A page of changes carries
  * at most [changesByteBudget] stored record bytes, and a purge waits at most [objectDeleteTimeout]
  * for each object delete.
  */
+@OptIn(kotlin.uuid.ExperimentalUuidApi::class)
 class PostgreSQLSpaceStore(
     private val changesByteBudget: Long = MAX_SPACE_CHANGES_BYTES,
     private val objectDeleteTimeout: Duration = OBJECT_DELETE_TIMEOUT,
+    private val migrationConfig: SpaceMigrationConfig = SpaceMigrationConfig(),
 ) : SpaceStore {
+    private val blobMetadata = PostgreSQLSpaceBlobMetadata(::changeUsage)
+
     override suspend fun put(write: SpaceRecordWrite): StoredSpaceRecord {
         requireSealedRecord(write.record)
         return withContext(Dispatchers.IO) {
             transaction {
+                requireIdentity(write.accountId, write.identityEpoch, write.space, write.author)
                 val lastSeq = lockState(write.accountId, write.space, write.author)
                 val existing = lockedRecordRow(write.space, write.author, write.rkey)
                 val liveCid = existing?.takeUnless { it[SpaceRecordsTable.deleted] }?.get(SpaceRecordsTable.cid)
@@ -99,7 +96,7 @@ class PostgreSQLSpaceStore(
                         it[deletedAt] = null
                     }
                 } else {
-                    SpaceRecordsTable.update({ recordKey(write.space, write.author, write.rkey) }) {
+                    SpaceRecordsTable.update({ spaceRecordKey(write.space, write.author, write.rkey) }) {
                         it[SpaceRecordsTable.seq] = seq
                         it[SpaceRecordsTable.cid] = cid
                         it[record] = bytes
@@ -108,7 +105,7 @@ class PostgreSQLSpaceStore(
                         it[deletedAt] = null
                     }
                 }
-                SpaceRecordBlobsTable.deleteWhere { blobKey(write.space, write.author, write.rkey) }
+                SpaceRecordBlobsTable.deleteWhere { spaceRecordBlobKey(write.space, write.author, write.rkey) }
                 SpaceRecordBlobsTable.batchInsert(write.blobs.distinct(), shouldReturnGeneratedValues = false) { blobCid ->
                     this[SpaceRecordBlobsTable.spaceUri] = write.space
                     this[SpaceRecordBlobsTable.authorDid] = write.author
@@ -126,16 +123,18 @@ class PostgreSQLSpaceStore(
         author: String,
         rkey: String,
         swapCid: String?,
+        identityEpoch: Long,
     ): Long =
         withContext(Dispatchers.IO) {
             transaction {
+                requireIdentity(accountId, identityEpoch, space, author)
                 val lastSeq = lockState(accountId, space, author)
                 val existing = lockedRecordRow(space, author, rkey) ?: return@transaction lastSeq
                 if (existing[SpaceRecordsTable.deleted]) return@transaction existing[SpaceRecordsTable.seq]
                 if (swapCid != null && existing[SpaceRecordsTable.cid] != swapCid) throw SpaceSwapException("The record changed")
                 val seq = advanceState(space, author, lastSeq)
                 changeUsage(existing[SpaceRecordsTable.accountId], -existing[SpaceRecordsTable.sizeBytes].toLong())
-                SpaceRecordsTable.update({ recordKey(space, author, rkey) }) {
+                SpaceRecordsTable.update({ spaceRecordKey(space, author, rkey) }) {
                     it[SpaceRecordsTable.seq] = seq
                     it[cid] = null
                     it[record] = null
@@ -143,7 +142,7 @@ class PostgreSQLSpaceStore(
                     it[deleted] = true
                     it[deletedAt] = Clock.System.now()
                 }
-                SpaceRecordBlobsTable.deleteWhere { blobKey(space, author, rkey) }
+                SpaceRecordBlobsTable.deleteWhere { spaceRecordBlobKey(space, author, rkey) }
                 seq
             }
         }
@@ -175,7 +174,7 @@ class PostgreSQLSpaceStore(
                 val purgedThrough =
                     SpaceStatesTable
                         .select(SpaceStatesTable.purgedThroughSeq)
-                        .where { stateKey(space, author) }
+                        .where { spaceStateKey(space, author) }
                         .singleOrNull()
                         ?.get(SpaceStatesTable.purgedThroughSeq) ?: 0L
                 requireFreshCursor(since, purgedThrough)
@@ -196,7 +195,7 @@ class PostgreSQLSpaceStore(
                         .selectAll()
                         .where { after and (SpaceRecordsTable.seq lessEq sizes[fitting - 1].first) }
                         .orderBy(SpaceRecordsTable.seq to SortOrder.ASC)
-                        .map { it.toChange() }
+                        .map { it.toSpaceChange() }
                 SpaceChangePage(page, page.lastOrNull()?.seq ?: since, sizes.size > fitting)
             }
         }
@@ -208,15 +207,46 @@ class PostgreSQLSpaceStore(
         blob: SpaceBlob,
         quota: SpaceQuota?,
         reservation: SpaceUploadReservation?,
+        identityEpoch: Long,
+    ): SpaceBlob = putBlobOwned(accountId, space, blob, quota, reservation, identityEpoch, null)
+
+    override suspend fun putAdmittedBlob(
+        accountId: UUID,
+        space: String,
+        blob: SpaceBlob,
+        admissionId: String,
+        quota: SpaceQuota?,
+        reservation: SpaceUploadReservation?,
+        identityEpoch: Long,
+    ): SpaceBlob = putBlobOwned(accountId, space, blob, quota, reservation, identityEpoch, admissionId)
+
+    private suspend fun putBlobOwned(
+        accountId: UUID,
+        space: String,
+        blob: SpaceBlob,
+        quota: SpaceQuota?,
+        reservation: SpaceUploadReservation?,
+        identityEpoch: Long,
+        admissionId: String?,
     ): SpaceBlob =
         withContext(Dispatchers.IO) {
             val intent = blob.uploadIntent
-            if (intent == null) return@withContext putBlobTransactions(accountId, space, blob, quota, reservation)
+            if (intent == null) {
+                return@withContext putBlobTransactions(
+                    accountId,
+                    space,
+                    blob,
+                    quota,
+                    reservation,
+                    identityEpoch,
+                    admissionId,
+                )
+            }
             val identity = UUID.nameUUIDFromBytes("space-upload:$accountId:$space:$intent".encodeToByteArray())
             val key = identity.mostSignificantBits xor identity.leastSignificantBits
             // Bounded stripes cover in-process adapters; PostgreSQL also fences across instances.
             receiptLocks[(key and Long.MAX_VALUE).rem(receiptLocks.size).toInt()].withLock {
-                putBlobTransactions(accountId, space, blob, quota, reservation, key)
+                putBlobTransactions(accountId, space, blob, quota, reservation, identityEpoch, admissionId, key)
             }
         }
 
@@ -226,32 +256,76 @@ class PostgreSQLSpaceStore(
         blob: SpaceBlob,
         quota: SpaceQuota?,
         reservation: SpaceUploadReservation?,
+        identityEpoch: Long,
+        admissionId: String?,
         receiptLock: Long? = null,
     ): SpaceBlob {
         repeat(PUT_BLOB_ATTEMPTS) {
             transaction(transactionIsolation = Connection.TRANSACTION_READ_COMMITTED) {
+                requireIdentity(accountId, identityEpoch, space)
+                if (reservation != null && (reservation.accountId != accountId || reservation.identityEpoch != identityEpoch)) {
+                    throw IdentityWriteRefusedException(IdentityFenceOutcome.CHANGED)
+                }
                 if (receiptLock != null && db.vendor == "postgresql") {
                     // Derived signed integer only; no request text is interpolated into SQL.
                     exec("SELECT pg_advisory_xact_lock($receiptLock)") { it.next() }
                 }
-                val previous = blob.uploadIntent?.let { receiptRow(space, it) }
-                if (previous != null) {
-                    reservation?.let { held -> SpaceUploadReservationsTable.deleteWhere { id eq held.id } }
-                    previous
-                } else {
-                    tryPutBlob(accountId, space, blob, quota, reservation)?.also { stored ->
-                        blob.uploadIntent?.let { intent ->
-                            SpaceBlobUploadReceiptsTable.insert {
-                                it[spaceUri] = space
-                                it[uploadIntent] = intent
-                                it[cid] = stored.cid
+                val publish = {
+                    val previous = blob.uploadIntent?.let { blobMetadata.receipt(space, it, forWrite = true) }
+                    if (previous != null) {
+                        reservation?.let { held -> SpaceUploadReservationsTable.deleteWhere { id eq held.id } }
+                        previous
+                    } else {
+                        blobMetadata.put(accountId, space, blob, quota, reservation)?.also { stored ->
+                            blob.uploadIntent?.let { intent ->
+                                SpaceBlobUploadReceiptsTable.insert {
+                                    it[spaceUri] = space
+                                    it[uploadIntent] = intent
+                                    it[cid] = stored.cid
+                                }
                             }
                         }
                     }
                 }
+                if (admissionId == null) {
+                    publish()
+                } else {
+                    PostgreSQLObjectUploads(migrationConfig).attachSpaceInTransaction(
+                        admissionId,
+                        IdentityWriteExpectation(accountId.toKotlinUuid(), identityEpoch),
+                        space,
+                        blob.storagePath,
+                        publish,
+                    )
+                }
             }?.let { return it }
         }
         error("Blob ${blob.cid} was purged during every attempt to store it")
+    }
+
+    private fun requireIdentity(
+        accountId: UUID,
+        identityEpoch: Long,
+        space: String? = null,
+        author: String? = null,
+    ) {
+        val outcome = identityOutcome(accountId, identityEpoch, space, author)
+        if (outcome != IdentityFenceOutcome.ALLOWED) throw IdentityWriteRefusedException(outcome)
+    }
+
+    private fun identityOutcome(
+        accountId: UUID,
+        identityEpoch: Long,
+        space: String? = null,
+        author: String? = null,
+    ): IdentityFenceOutcome {
+        val connection = TransactionManager.current().connection.connection as Connection
+        return connection.lockIdentityWrite(
+            IdentityWriteExpectation(accountId.toKotlinUuid(), identityEpoch),
+            Clock.System.now(),
+            space,
+            author,
+        )
     }
 
     private companion object {
@@ -262,11 +336,13 @@ class PostgreSQLSpaceStore(
         accountId: UUID,
         bytes: Long,
         quota: SpaceQuota,
+        identityEpoch: Long,
     ): SpaceUploadReservation =
         withContext(Dispatchers.IO) {
             transaction {
+                requireIdentity(accountId, identityEpoch)
                 requireRoom(quota, lockUsage(accountId) + reservedBytes(accountId, except = null), bytes)
-                val reservation = SpaceUploadReservation(UUID.randomUUID(), accountId, bytes)
+                val reservation = SpaceUploadReservation(UUID.randomUUID(), accountId, bytes, identityEpoch)
                 SpaceUploadReservationsTable.insert {
                     it[id] = reservation.id
                     it[SpaceUploadReservationsTable.accountId] = accountId
@@ -279,7 +355,10 @@ class PostgreSQLSpaceStore(
 
     override suspend fun releaseUpload(reservation: SpaceUploadReservation) {
         withContext(Dispatchers.IO) {
-            transaction { SpaceUploadReservationsTable.deleteWhere { id eq reservation.id } }
+            transaction {
+                requireIdentity(reservation.accountId, reservation.identityEpoch)
+                SpaceUploadReservationsTable.deleteWhere { (id eq reservation.id) and (accountId eq reservation.accountId) }
+            }
         }
     }
 
@@ -294,242 +373,23 @@ class PostgreSQLSpaceStore(
             }
         }
 
-    /**
-     * Inserts the blob row, or locks and refreshes the existing one and returns it with its original
-     * storage path. Returns null when the existing row was purged between the two statements, so the
-     * caller tries again rather than answering success without a row. A new row counts towards the
-     * account's stored bytes, checked against [quota]; either way [reservation] is used up.
-     */
-    private fun tryPutBlob(
-        accountId: UUID,
-        space: String,
-        blob: SpaceBlob,
-        quota: SpaceQuota?,
-        reservation: SpaceUploadReservation?,
-    ): SpaceBlob? {
-        val now = Clock.System.now()
-        val inserted =
-            SpaceBlobsTable
-                .insertIgnore {
-                    it[spaceUri] = space
-                    it[cid] = blob.cid
-                    it[SpaceBlobsTable.accountId] = accountId
-                    it[mimeType] = blob.mimeType
-                    it[sizeBytes] = blob.size
-                    it[storagePath] = blob.storagePath
-                    it[createdAt] = now
-                }.insertedCount
-        if (inserted > 0) {
-            changeUsage(accountId, blob.size, quota, reservation?.id)
-            reservation?.let { held -> SpaceUploadReservationsTable.deleteWhere { id eq held.id } }
-            return blob
-        }
-        val key = (SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid eq blob.cid)
-        val existingPath =
-            SpaceBlobsTable
-                .select(SpaceBlobsTable.storagePath)
-                .where { key }
-                .forUpdate()
-                .singleOrNull()
-                ?.get(SpaceBlobsTable.storagePath) ?: return null
-        SpaceBlobsTable.update({ key }) {
-            it[mimeType] = blob.mimeType
-            it[sizeBytes] = blob.size
-            it[createdAt] = now
-        }
-        reservation?.let { held -> SpaceUploadReservationsTable.deleteWhere { id eq held.id } }
-        return blob.copy(storagePath = existingPath)
-    }
-
     override suspend fun getBlob(
         space: String,
         cid: String,
-    ): SpaceBlob? =
-        withContext(Dispatchers.IO) {
-            transaction {
-                SpaceBlobsTable
-                    .selectAll()
-                    .where { (SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid eq cid) }
-                    .singleOrNull()
-                    ?.let {
-                        SpaceBlob(
-                            it[SpaceBlobsTable.cid],
-                            it[SpaceBlobsTable.mimeType],
-                            it[SpaceBlobsTable.sizeBytes],
-                            it[SpaceBlobsTable.storagePath],
-                        )
-                    }
-            }
-        }
+    ): SpaceBlob? = blobMetadata.get(space, cid)
 
     override suspend fun getBlobUploadReceipt(
         space: String,
         intent: String,
-    ): SpaceBlob? =
-        withContext(Dispatchers.IO) {
-            transaction { receiptRow(space, intent) }
-        }
-
-    private fun receiptRow(
-        space: String,
-        intent: String,
-    ): SpaceBlob? {
-        val cid =
-            SpaceBlobUploadReceiptsTable
-                .select(SpaceBlobUploadReceiptsTable.cid)
-                .where { (SpaceBlobUploadReceiptsTable.spaceUri eq space) and (SpaceBlobUploadReceiptsTable.uploadIntent eq intent) }
-                .singleOrNull()
-                ?.get(SpaceBlobUploadReceiptsTable.cid) ?: return null
-        return SpaceBlobsTable
-            .selectAll()
-            .where { (SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid eq cid) }
-            .singleOrNull()
-            ?.let {
-                SpaceBlob(
-                    it[SpaceBlobsTable.cid],
-                    it[SpaceBlobsTable.mimeType],
-                    it[SpaceBlobsTable.sizeBytes],
-                    it[SpaceBlobsTable.storagePath],
-                    intent,
-                )
-            }
-    }
+    ): SpaceBlob? = blobMetadata.getReceipt(space, intent)
 
     override suspend fun purge(
         tombstonesBefore: Instant,
         unreferencedBlobsBefore: Instant,
         deleteObject: (storagePath: String) -> Unit,
     ): SpacePurgeResult =
-        withContext(Dispatchers.IO) {
-            transaction { SpaceUploadReservationsTable.deleteWhere { expiresAt lessEq Clock.System.now() } }
-            purgeTombstones(tombstonesBefore)
-            var deleted = 0
-            var failed = 0
-            var after: Pair<String, String>? = null
-            do {
-                val batch = purgeCandidates(unreferencedBlobsBefore, after)
-                batch.forEach { (space, cid) ->
-                    when (purgeBlob(space, cid, unreferencedBlobsBefore, deleteObject)) {
-                        BlobPurge.DELETED -> deleted++
-                        BlobPurge.FAILED -> failed++
-                        BlobPurge.KEPT -> Unit
-                    }
-                }
-                after = batch.lastOrNull()
-            } while (batch.size == PURGE_BATCH_SIZE)
-            SpacePurgeResult(deleted, failed)
-        }
-
-    /**
-     * Deletes tombstones made before [before], one repository at a time. Each repository's state row is
-     * locked first, as every write locks it, and its purged-through sequence number is raised to the
-     * highest tombstone deleted, in the same transaction.
-     */
-    private fun purgeTombstones(before: Instant) {
-        val old = (SpaceRecordsTable.deleted eq true) and (SpaceRecordsTable.deletedAt less before)
-        val repositories =
-            transaction {
-                SpaceRecordsTable
-                    .select(SpaceRecordsTable.spaceUri, SpaceRecordsTable.authorDid)
-                    .where { old }
-                    .withDistinct()
-                    .map { it[SpaceRecordsTable.spaceUri] to it[SpaceRecordsTable.authorDid] }
-            }
-        repositories.forEach { (space, author) ->
-            transaction {
-                val purgedThrough =
-                    SpaceStatesTable
-                        .select(SpaceStatesTable.purgedThroughSeq)
-                        .where { stateKey(space, author) }
-                        .forUpdate()
-                        .singleOrNull()
-                        ?.get(SpaceStatesTable.purgedThroughSeq) ?: return@transaction
-                val tombstones = old and (SpaceRecordsTable.spaceUri eq space) and (SpaceRecordsTable.authorDid eq author)
-                val highest = SpaceRecordsTable.seq.max()
-                val highestSeq =
-                    SpaceRecordsTable
-                        .select(highest)
-                        .where { tombstones }
-                        .single()[highest] ?: return@transaction
-                SpaceRecordsTable.deleteWhere { tombstones }
-                if (highestSeq > purgedThrough) {
-                    SpaceStatesTable.update({ stateKey(space, author) }) { it[SpaceStatesTable.purgedThroughSeq] = highestSeq }
-                }
-            }
-        }
-    }
-
-    /**
-     * The next [PURGE_BATCH_SIZE] blobs, in key order after [after], that were created before
-     * [createdBefore] and that no record refers to. Paging by key rather than restarting from the
-     * first keeps a blob whose object delete failed from being picked again in the same purge.
-     */
-    private fun purgeCandidates(
-        createdBefore: Instant,
-        after: Pair<String, String>?,
-    ): List<Pair<String, String>> =
-        transaction {
-            SpaceBlobsTable
-                .select(SpaceBlobsTable.spaceUri, SpaceBlobsTable.cid)
-                .where {
-                    val candidate = (SpaceBlobsTable.createdAt less createdBefore) and unreferenced()
-                    if (after == null) {
-                        candidate
-                    } else {
-                        val (space, cid) = after
-                        candidate and
-                            (
-                                (SpaceBlobsTable.spaceUri greater space) or
-                                    ((SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid greater cid))
-                            )
-                    }
-                }.orderBy(SpaceBlobsTable.spaceUri to SortOrder.ASC, SpaceBlobsTable.cid to SortOrder.ASC)
-                .limit(PURGE_BATCH_SIZE)
-                .map { it[SpaceBlobsTable.spaceUri] to it[SpaceBlobsTable.cid] }
-        }
-
-    private enum class BlobPurge { DELETED, KEPT, FAILED }
-
-    /**
-     * Deletes one unreferenced blob: its object first, then its row, inside one transaction that holds
-     * the row lock throughout. A write that refers to the blob locks its row first, so taking the same
-     * lock waits for that write to commit; the check after it is a separate statement, so under read
-     * committed it sees the committed reference and keeps the blob. When the object delete fails, or
-     * doesn't finish within [objectDeleteTimeout], the transaction rolls back and the row stays for
-     * the next purge.
-     *
-     * The row can outlive its object: when the object delete succeeds but the commit fails, or a
-     * timed-out delete finishes after the rollback. Until the next purge deletes the row, a write may
-     * still refer to the blob, and reading it answers BlobNotFound because the object is gone.
-     */
-    private fun purgeBlob(
-        space: String,
-        cid: String,
-        createdBefore: Instant,
-        deleteObject: (storagePath: String) -> Unit,
-    ): BlobPurge =
-        try {
-            transaction(transactionIsolation = Connection.TRANSACTION_READ_COMMITTED) {
-                val key = (SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid eq cid)
-                SpaceBlobsTable
-                    .select(SpaceBlobsTable.cid)
-                    .where { key }
-                    .forUpdate()
-                    .singleOrNull() ?: return@transaction BlobPurge.KEPT
-                val row =
-                    SpaceBlobsTable
-                        .select(SpaceBlobsTable.storagePath, SpaceBlobsTable.accountId, SpaceBlobsTable.sizeBytes)
-                        .where { key and (SpaceBlobsTable.createdAt less createdBefore) and unreferenced() }
-                        .singleOrNull() ?: return@transaction BlobPurge.KEPT
-                deleteObjectOrThrow(deleteObject, row[SpaceBlobsTable.storagePath], objectDeleteTimeout)
-                SpaceBlobsTable.deleteWhere { key }
-                changeUsage(row[SpaceBlobsTable.accountId], -row[SpaceBlobsTable.sizeBytes])
-                BlobPurge.DELETED
-            }
-        } catch (e: SpaceObjectDeleteException) {
-            logObjectDeleteFailure(e)
-            BlobPurge.FAILED
-        }
+        PostgreSQLSpaceMaintenance(objectDeleteTimeout) { owner, delta -> changeUsage(owner, delta) }
+            .purge(tombstonesBefore, unreferencedBlobsBefore, deleteObject)
 
     /**
      * Locks the space blobs [cids] refers to, in key order, and throws [SpaceMissingBlobException] for
@@ -545,49 +405,29 @@ class PostgreSQLSpaceStore(
         val found =
             SpaceBlobsTable
                 .select(SpaceBlobsTable.cid)
-                .where { (SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid inList wanted) }
-                .orderBy(SpaceBlobsTable.cid to SortOrder.ASC)
+                .where {
+                    (SpaceBlobsTable.spaceUri eq space) and (SpaceBlobsTable.cid inList wanted) and
+                        SpaceBlobsTable.purgeOperationId.isNull()
+                }.orderBy(SpaceBlobsTable.cid to SortOrder.ASC)
                 .forUpdate()
                 .map { it[SpaceBlobsTable.cid] }
                 .toSet()
         wanted.firstOrNull { it !in found }?.let { throw SpaceMissingBlobException(it) }
     }
 
-    /**
-     * Adds [delta] to [accountId]'s stored bytes, first checking growth against [quota] together with
-     * the room other uploads hold, leaving out [reservation]. Locks the usage row until the
-     * transaction ends, so concurrent writes check one after another. Every path takes this lock
-     * after any record, state or blob row lock it needs, so the order never deadlocks.
-     */
     private fun changeUsage(
         accountId: UUID,
         delta: Long,
         quota: SpaceQuota? = null,
         reservation: UUID? = null,
-    ) {
-        val stored = lockUsage(accountId)
-        if (delta > 0 && quota != null) requireRoom(quota, stored + reservedBytes(accountId, except = reservation), delta)
-        AccountStorageTotals.set(accountId, StorageKind.SPACE, stored, delta)
-    }
+    ) = PostgreSQLSpaceUsage.change(accountId, delta, quota, reservation)
 
-    /** Locks [accountId]'s storage totals until the transaction ends and returns its space bytes. */
-    private fun lockUsage(accountId: UUID): Long =
-        requireNotNull(AccountStorageTotals.lock(accountId)) { "Space rows belong to an account that exists" }.spaceBytes
+    private fun lockUsage(accountId: UUID): Long = PostgreSQLSpaceUsage.lock(accountId)
 
-    /** The room [accountId]'s unexpired upload reservations hold, leaving out [except]. */
     private fun reservedBytes(
         accountId: UUID,
         except: UUID?,
-    ): Long {
-        val total = SpaceUploadReservationsTable.bytes.sum()
-        val active =
-            (SpaceUploadReservationsTable.accountId eq accountId) and
-                (SpaceUploadReservationsTable.expiresAt greater Clock.System.now())
-        return SpaceUploadReservationsTable
-            .select(total)
-            .where { if (except == null) active else active and (SpaceUploadReservationsTable.id neq except) }
-            .single()[total] ?: 0L
-    }
+    ): Long = PostgreSQLSpaceUsage.reserved(accountId, except)
 
     /** Creates the state row if needed, locks it, and returns its last sequence number. */
     private fun lockState(
@@ -603,7 +443,7 @@ class PostgreSQLSpaceStore(
         }
         return SpaceStatesTable
             .selectAll()
-            .where { stateKey(space, author) }
+            .where { spaceStateKey(space, author) }
             .forUpdate()
             .single()[SpaceStatesTable.lastSeq]
     }
@@ -614,7 +454,7 @@ class PostgreSQLSpaceStore(
         lastSeq: Long,
     ): Long {
         val next = lastSeq + 1
-        SpaceStatesTable.update({ stateKey(space, author) }) { it[SpaceStatesTable.lastSeq] = next }
+        SpaceStatesTable.update({ spaceStateKey(space, author) }) { it[SpaceStatesTable.lastSeq] = next }
         return next
     }
 
@@ -625,7 +465,7 @@ class PostgreSQLSpaceStore(
     ): ResultRow? =
         SpaceRecordsTable
             .selectAll()
-            .where { recordKey(space, author, rkey) }
+            .where { spaceRecordKey(space, author, rkey) }
             .singleOrNull()
 
     /** Locks the row too, so purging can't remove a tombstone this transaction is about to rewrite. */
@@ -636,43 +476,7 @@ class PostgreSQLSpaceStore(
     ): ResultRow? =
         SpaceRecordsTable
             .selectAll()
-            .where { recordKey(space, author, rkey) }
+            .where { spaceRecordKey(space, author, rkey) }
             .forUpdate()
             .singleOrNull()
-
-    private fun stateKey(
-        space: String,
-        author: String,
-    ): Op<Boolean> = (SpaceStatesTable.spaceUri eq space) and (SpaceStatesTable.authorDid eq author)
-
-    private fun recordKey(
-        space: String,
-        author: String,
-        rkey: String,
-    ): Op<Boolean> = (SpaceRecordsTable.spaceUri eq space) and (SpaceRecordsTable.authorDid eq author) and (SpaceRecordsTable.rkey eq rkey)
-
-    private fun blobKey(
-        space: String,
-        author: String,
-        rkey: String,
-    ): Op<Boolean> =
-        (SpaceRecordBlobsTable.spaceUri eq space) and (SpaceRecordBlobsTable.authorDid eq author) and (SpaceRecordBlobsTable.rkey eq rkey)
-
-    private fun unreferenced(): Op<Boolean> =
-        notExists(
-            SpaceRecordBlobsTable
-                .select(SpaceRecordBlobsTable.cid)
-                .where {
-                    (SpaceRecordBlobsTable.spaceUri eq SpaceBlobsTable.spaceUri) and (SpaceRecordBlobsTable.cid eq SpaceBlobsTable.cid)
-                },
-        )
-
-    private fun ResultRow.toChange(): SpaceChange =
-        SpaceChange(
-            rkey = this[SpaceRecordsTable.rkey],
-            seq = this[SpaceRecordsTable.seq],
-            deleted = this[SpaceRecordsTable.deleted],
-            cid = this[SpaceRecordsTable.cid],
-            record = this[SpaceRecordsTable.record]?.let(::decodeRecord),
-        )
 }

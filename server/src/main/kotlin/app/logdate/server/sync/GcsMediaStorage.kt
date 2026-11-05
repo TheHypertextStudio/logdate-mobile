@@ -8,7 +8,11 @@ import app.logdate.server.logdate.LogDateBlobStream
 import app.logdate.server.logdate.LogDateBlobStreamRequest
 import app.logdate.server.logdate.LogDateBlobWriteRequest
 import app.logdate.server.logdate.LogDateBlobWriter
+import app.logdate.server.logdate.PRIVATE_BLOB_OWNER
+import app.logdate.server.logdate.PRIVATE_BLOB_PREFIX
+import app.logdate.server.logdate.PRIVATE_BLOB_STATE
 import app.logdate.server.logdate.copyBackupFile
+import app.logdate.server.logdate.requirePrivateBlobOwner
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
@@ -36,9 +40,16 @@ class GcsMediaStorage(
             .build()
             .service,
 ) : LogDateBlobStorage {
+    private val privateBlobs = GcsPrivateBlobLifecycle(storage, bucketName, kmsKeyName)
+
+    override fun retirePrivateBlob(
+        blobId: String,
+        owner: String,
+    ): Boolean = privateBlobs.retire(blobId, owner)
+
     override fun putBlobFile(request: app.logdate.server.logdate.LogDateBlobFileWriteRequest): String {
         val storagePath =
-            buildStoragePath(
+            plannedPath(
                 LogDateBlobWriteRequest(
                     request.ownerId,
                     request.namespace,
@@ -69,38 +80,75 @@ class GcsMediaStorage(
         }
     }
 
+    override fun openPrivateBlob(
+        storagePath: String,
+        owner: String,
+    ): LogDateBlobStream? = privateBlobs.open(storagePath, owner)
+
     override fun openBlob(storagePath: String): LogDateBlobStream? {
         val blob = storage.get(BlobId.of(bucketName, storagePath)) ?: return null
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX) && privateBlobs.retired(blob)) return null
         return LogDateBlobStream(blob.size, Channels.newInputStream(blob.reader()))
     }
 
     override fun openBlobWriter(request: LogDateBlobStreamRequest): LogDateBlobWriter {
+        val owner = request.privateOwner
+        require(owner == null || request.createOnly)
+        owner?.let(::requirePrivateBlobOwner)
         val storagePath =
-            buildStoragePath(
-                LogDateBlobWriteRequest(request.ownerId, request.namespace, request.blobId, null, request.contentType, ByteArray(0)),
-            )
+            if (owner == null) {
+                plannedPath(
+                    LogDateBlobWriteRequest(request.ownerId, request.namespace, request.blobId, null, request.contentType, ByteArray(0)),
+                )
+            } else {
+                plannedPrivateBlobPath(request.blobId)
+            }
         val blobId = BlobId.of(bucketName, storagePath)
-        val blobInfo = BlobInfo.newBuilder(blobId).setContentType(request.contentType).build()
-        val options = if (kmsKeyName != null) arrayOf(Storage.BlobWriteOption.kmsKeyName(kmsKeyName)) else emptyArray()
+        val blobInfo =
+            BlobInfo
+                .newBuilder(blobId)
+                .setContentType(request.contentType)
+                .apply {
+                    if (owner != null) setMetadata(mapOf(PRIVATE_BLOB_OWNER to owner, PRIVATE_BLOB_STATE to "live"))
+                }.build()
+        val options =
+            buildList {
+                if (kmsKeyName != null) add(Storage.BlobWriteOption.kmsKeyName(kmsKeyName))
+                if (request.createOnly) add(Storage.BlobWriteOption.doesNotExist())
+            }.toTypedArray()
         val channel = storage.writer(blobInfo, *options)
         channel.setChunkSize(STREAMED_WRITE_CHUNK_BYTES)
         val output = ChecksummingOutputStream(Channels.newOutputStream(channel))
         return object : LogDateBlobWriter {
             override val storagePath = storagePath
             override val output = output
+            private var closeConfirmed = false
+            private var closeUncertain = false
+
+            override fun closeForCleanup() {
+                if (closeUncertain) throw MediaStorageException("Blob writer completion is uncertain")
+                if (closeConfirmed) return
+                try {
+                    output.close()
+                    closeConfirmed = true
+                } catch (_: Exception) {
+                    closeUncertain = true
+                    throw MediaStorageException("Blob writer completion is uncertain")
+                }
+            }
 
             override fun commit() {
-                output.close()
+                closeForCleanup()
                 val stored = storage.get(blobId)
                 if (stored == null || stored.size != output.size || stored.crc32cToHexString != output.crc32cHex) {
-                    runCatching { storage.delete(blobId) }
                     throw LogDateBlobIntegrityException("Stored object differs from the bytes written")
                 }
             }
 
             override fun abort() {
+                closeForCleanup()
                 try {
-                    storage.delete(blobId)
+                    if (owner == null) storage.delete(blobId) else privateBlobs.deletePayload(storagePath)
                 } catch (error: com.google.cloud.storage.StorageException) {
                     if (error.code != 404) throw MediaStorageException("Blob cleanup failed")
                 }
@@ -115,7 +163,8 @@ class GcsMediaStorage(
     ): Boolean {
         val blobId = BlobId.of(bucketName, storagePath)
         checkActive()
-        if (storage.get(blobId) == null) return false
+        val blob = storage.get(blobId) ?: return false
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX) && privateBlobs.retired(blob)) return false
         try {
             storage.reader(blobId).use { channel ->
                 Channels.newInputStream(channel).use { source ->
@@ -135,7 +184,7 @@ class GcsMediaStorage(
      * Upload a LogDate blob into the configured GCS bucket.
      */
     override fun putBlob(request: LogDateBlobWriteRequest): String {
-        val storagePath = buildStoragePath(request)
+        val storagePath = plannedPath(request)
         val label = request.namespace.errorLabel()
         val blobId = BlobId.of(bucketName, storagePath)
         val blobInfo =
@@ -191,6 +240,7 @@ class GcsMediaStorage(
      * @return File contents as ByteArray, or null if not found
      */
     override fun getBlob(storagePath: String): ByteArray? {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX) && privateBlobs.retired(storagePath)) return null
         val blobId = BlobId.of(bucketName, storagePath)
         return try {
             storage.readAllBytes(blobId)
@@ -206,6 +256,7 @@ class GcsMediaStorage(
      * @return true if deleted successfully, false otherwise
      */
     override fun deleteBlob(storagePath: String): Boolean {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX)) return privateBlobs.deletePayload(storagePath)
         val blobId = BlobId.of(bucketName, storagePath)
         return try {
             val deleted = storage.delete(blobId)
@@ -222,6 +273,11 @@ class GcsMediaStorage(
     }
 
     override fun deleteBlobIfExists(storagePath: String) {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX)) {
+            if (privateBlobs.retired(storagePath)) return
+            if (privateBlobs.deletePayload(storagePath) || storage.get(BlobId.of(bucketName, storagePath)) == null) return
+            error("Private payload cleanup was not confirmed")
+        }
         try {
             storage.delete(BlobId.of(bucketName, storagePath))
         } catch (error: com.google.cloud.storage.StorageException) {
@@ -250,7 +306,7 @@ class GcsMediaStorage(
         }
     }
 
-    private fun buildStoragePath(request: LogDateBlobWriteRequest): String =
+    override fun plannedPath(request: LogDateBlobWriteRequest): String =
         when (request.namespace) {
             LogDateBlobNamespace.MEDIA -> {
                 val fileName = requireNotNull(request.fileName) { "Media blobs require a file name" }

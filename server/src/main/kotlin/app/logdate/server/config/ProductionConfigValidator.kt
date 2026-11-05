@@ -369,11 +369,11 @@ object ProductionConfigValidator {
     }
 
     /**
-     * `WEBAUTHN_ALLOWED_ORIGINS` carries the extra origins passkey ceremonies may present — most
-     * importantly the Android `android:apk-key-hash:<hash>` origins, without which on-device signup
-     * and sign-in fail. Each entry must be an `https://` URL or an apk-key-hash origin; malformed
-     * entries are a hard failure. A missing android origin is only a warning: a web-only deployment
-     * is legitimate, but real Android clients will not be able to authenticate.
+     * `WEBAUTHN_ALLOWED_ORIGINS` carries the extra origins passkey ceremonies may present —
+     * including the RP ID's `https://` origin used by Apple native apps and Android
+     * `android:apk-key-hash:<hash>` origins. Each entry must be an `https://` URL or an apk-key-hash
+     * origin; malformed entries are a hard failure. A missing android origin is only a warning:
+     * a web-only deployment is legitimate, but real Android clients will not authenticate.
      */
     private fun validateAllowedOrigins(
         raw: String?,

@@ -15,8 +15,11 @@ internal class PostgreSQLLogDateAtprotoBlobRepository : LogDateAtprotoBlobReposi
     override fun upsertBlob(
         userId: UUID,
         blob: LogDateAtprotoBlob,
+        identityEpoch: Long,
     ): LogDateAtprotoBlob =
         transaction {
+            requireAccountIdentityWrite(userId, identityEpoch)
+            requireUnretiredObjectPath(blob.storagePath)
             val existing =
                 LogDateAtprotoBlobsTable
                     .selectAll()

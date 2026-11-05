@@ -32,12 +32,15 @@ import app.logdate.server.entitlements.UsageCalculator
 import app.logdate.server.identity.AtprotoIdentityConfig
 import app.logdate.server.identity.AtprotoIdentityService
 import app.logdate.server.identity.SigningKeyService
+import app.logdate.server.identity.adoption.IdentityAdoptionRuntime
 import app.logdate.server.logdate.CompositeLogDateMediaBlobRepository
+import app.logdate.server.logdate.LegacyObjectUploads
 import app.logdate.server.logdate.LogDateBackupRepository
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateCollectionsRepository
 import app.logdate.server.logdate.LogDateMomentsRepository
 import app.logdate.server.logdate.ResourceRouteRepository
+import app.logdate.server.logdate.SpaceObjectUploads
 import app.logdate.server.migration.LegacyMediaCopier
 import app.logdate.server.migration.SpaceMigrationHolds
 import app.logdate.server.migration.SpaceMigrationService
@@ -189,6 +192,7 @@ private fun Application.personalSpaceRoutes() {
     val entitlementEnforcer by inject<EntitlementEnforcer>()
     val transfers by inject<TransferSlots>()
     val migrationHolds by inject<SpaceMigrationHolds>()
+    val spaceUploads by inject<SpaceObjectUploads>()
 
     routing {
         spaceXrpcRoutes(
@@ -199,6 +203,7 @@ private fun Application.personalSpaceRoutes() {
             entitlementEnforcer = entitlementEnforcer,
             transfers = transfers,
             migrationHolds = migrationHolds,
+            objectUploads = spaceUploads,
         )
     }
 }
@@ -206,6 +211,7 @@ private fun Application.personalSpaceRoutes() {
 /** `/api/v1` account surface: server info, plans, auth, and identity management. */
 internal fun Application.accountApiRoutes() {
     blueskyAccountApiRoutes()
+    identityAdoptionApiRoutes()
     val accountRepository by inject<AccountRepository>()
     val accountIdentityRepository by inject<AccountIdentityRepository>()
     val sessionManager by inject<SessionManager>()
@@ -298,18 +304,18 @@ internal fun Application.contentApiRoutes() {
     val logDateCollectionsRepository by inject<LogDateCollectionsRepository>()
     val logDateMediaBlobRepository by inject<CompositeLogDateMediaBlobRepository>()
     val logDateBackupRepository by inject<LogDateBackupRepository>()
+    val objectUploads by inject<LegacyObjectUploads>()
     val resourceRouteRepository by inject<ResourceRouteRepository>()
     val httpClient by inject<HttpClient>()
     val accessTokenVerifier by inject<AccessTokenVerifier>()
     val momentsRepository by inject<LogDateMomentsRepository>()
     val syncRateLimiter = SlidingWindowRateLimiter()
     val transfers by inject<TransferSlots>()
-    val migrationHolds by inject<SpaceMigrationHolds>()
-    val storageModes = accountRepository.storageModes(migrationHolds)
+    val accountAccess = accountRouteAccess(accountRepository, accessTokenVerifier)
 
     routing {
         route("/api/v1") {
-            locationHistoryRoutes(tokenService, locationHistoryRepository, storageModes)
+            locationHistoryRoutes(tokenService, locationHistoryRepository, accountAccess.storageModes)
             syncRoutes(
                 tokenService = tokenService,
                 mediaStorage = blobStorage,
@@ -322,8 +328,10 @@ internal fun Application.contentApiRoutes() {
                 diagnosticReportService = diagnosticReportService(diagnosticReportAvailability, diagnosticReportStore),
                 accessTokenVerifier = accessTokenVerifier,
                 momentsRepository = momentsRepository,
-                storageModes = storageModes,
+                storageModes = accountAccess.storageModes,
                 transfers = transfers,
+                objectUploads = objectUploads,
+                backupAccountAuth = accountAccess.auth,
             )
             quotaRoutes(
                 tokenService = tokenService,
@@ -388,6 +396,7 @@ private fun Application.serverDescriptor() =
         diagnosticReportsEnabled = inject<app.logdate.server.diagnostics.DiagnosticReportAvailability>().value.enabled,
         blueskySignInEnabled = getKoin().getOrNull<BlueskyOAuthRuntime>() != null,
         atprotoConnectionEnabled = getKoin().getOrNull<AtprotoConnectionService>() != null,
+        identityAdoptionEnabled = getKoin().getOrNull<IdentityAdoptionRuntime>() != null,
     )
 
 internal fun Application.blueskyApiRoutes() {

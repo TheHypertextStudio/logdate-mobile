@@ -12,6 +12,7 @@ import app.logdate.server.atproto.InMemoryAtprotoPasswordCredentialRepository
 import app.logdate.server.atproto.InMemoryAtprotoSessionRepository
 import app.logdate.server.atproto.LogDatePdsBlobStore
 import app.logdate.server.atproto.LogDateRepoStore
+import app.logdate.server.atproto.accountBoundPdsRepoService
 import app.logdate.server.atproto.firehose.PublicRecordValidator
 import app.logdate.server.atproto.firehose.PublicRepoPolicy
 import app.logdate.server.auth.AccessTokenVerifier
@@ -56,6 +57,7 @@ import app.logdate.server.database.PostgreSQLLogDateMediaRepository
 import app.logdate.server.database.PostgreSQLOAuthReplayStore
 import app.logdate.server.database.PostgreSQLOAuthRuntimeStateRepository
 import app.logdate.server.database.PostgreSQLOAuthSigningKeyRepository
+import app.logdate.server.database.PostgreSQLObjectUploads
 import app.logdate.server.database.PostgreSQLPendingEmailVerificationRepository
 import app.logdate.server.database.PostgreSQLRefreshTokenRevocationRepository
 import app.logdate.server.database.PostgreSQLResourceRouteRepository
@@ -89,6 +91,7 @@ import app.logdate.server.logdate.InMemoryLogDateCollectionsMetadataStore
 import app.logdate.server.logdate.InMemoryLogDateMediaRepository
 import app.logdate.server.logdate.InMemoryResourceRouteRepository
 import app.logdate.server.logdate.JournalMergeStore
+import app.logdate.server.logdate.LegacyObjectUploads
 import app.logdate.server.logdate.LogDateAtprotoBlobRepository
 import app.logdate.server.logdate.LogDateBackupRepository
 import app.logdate.server.logdate.LogDateBlobStorage
@@ -98,9 +101,11 @@ import app.logdate.server.logdate.LogDateMediaBlobRepository
 import app.logdate.server.logdate.LogDateMediaRepository
 import app.logdate.server.logdate.LogDateMomentsRepository
 import app.logdate.server.logdate.MergeAwareLogDateCollectionsRepository
+import app.logdate.server.logdate.ObjectUploads
 import app.logdate.server.logdate.RepoBackedLogDateCollectionsRepository
 import app.logdate.server.logdate.RepoBackedLogDateMomentsRepository
 import app.logdate.server.logdate.ResourceRouteRepository
+import app.logdate.server.logdate.SpaceObjectUploads
 import app.logdate.server.oauth.InMemoryOAuthReplayStore
 import app.logdate.server.oauth.InMemoryOAuthRuntimeStateRepository
 import app.logdate.server.oauth.InMemoryOAuthSigningKeyRepository
@@ -137,7 +142,6 @@ import studio.hypertext.atproto.pds.PdsRepoService
 import studio.hypertext.atproto.pds.PdsSessionService
 import studio.hypertext.atproto.pds.PdsSyncService
 import studio.hypertext.atproto.pds.runtime.DefaultPdsBlobService
-import studio.hypertext.atproto.pds.runtime.DefaultPdsRepoService
 import studio.hypertext.atproto.pds.runtime.DefaultPdsSyncService
 import studio.hypertext.atproto.pds.runtime.StaticPdsDiscoveryService
 import studio.hypertext.atproto.plc.KtorPlcDirectoryClient
@@ -204,7 +208,7 @@ fun serverModule(isDatabaseAvailable: Boolean) =
         single<AccountKeyEnvelopeRepository> {
             if (isDatabaseAvailable) PostgreSQLAccountKeyEnvelopeRepository() else InMemoryAccountKeyEnvelopeRepository()
         }
-        single<SpaceStore> { if (isDatabaseAvailable) PostgreSQLSpaceStore() else InMemorySpaceStore() }
+        single<SpaceStore> { if (isDatabaseAvailable) PostgreSQLSpaceStore(migrationConfig = get()) else InMemorySpaceStore() }
         single { TransferSlots() }
         spaceMigrationDefinitions(isDatabaseAvailable)
         single { GoogleVcJwksCache() }
@@ -318,17 +322,17 @@ fun serverModule(isDatabaseAvailable: Boolean) =
         }
 
         single<LocationHistoryRepository> {
-            if (isDatabaseAvailable) DbLocationHistoryRepository() else InMemoryLocationHistoryRepository()
+            if (isDatabaseAvailable) DbLocationHistoryRepository(migrationConfig = get()) else InMemoryLocationHistoryRepository()
         }
         single<SyncRepository> {
-            if (isDatabaseAvailable) DbSyncRepository() else InMemorySyncRepository()
+            if (isDatabaseAvailable) DbSyncRepository(migrationConfig = get()) else InMemorySyncRepository()
         }
 
         firehoseDefinitions(isDatabaseAvailable)
 
         single<LogDateCollectionsMetadataStore> {
             if (isDatabaseAvailable) {
-                PostgreSQLLogDateCollectionsMetadataStore()
+                PostgreSQLLogDateCollectionsMetadataStore(migrationConfig = get())
             } else {
                 InMemoryLogDateCollectionsMetadataStore()
             }
@@ -466,14 +470,20 @@ fun serverModule(isDatabaseAvailable: Boolean) =
             )
         } bind RepoEngine::class bind RepoRecordStore::class
 
-        single<PdsRepoService> { DefaultPdsRepoService(get()) }
+        single<PdsRepoService> { accountBoundPdsRepoService(get(), get()) }
         single<PdsSyncService> { DefaultPdsSyncService(get()) }
+        single<ObjectUploads> {
+            if (isDatabaseAvailable) PostgreSQLObjectUploads(get()) else ObjectUploads.Direct
+        }
+        single { LegacyObjectUploads(if (isDatabaseAvailable) get<ObjectUploads>() else null) }
+        single { SpaceObjectUploads(if (isDatabaseAvailable) get<ObjectUploads>() else null) }
         single<PdsBlobService> {
             DefaultPdsBlobService(
                 LogDatePdsBlobStore(
                     identityService = get(),
                     mediaBlobRepository = get(),
                     blobStorage = get(),
+                    uploads = get(),
                 ),
             )
         }

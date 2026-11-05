@@ -2,6 +2,7 @@ package app.logdate.server.routes.sync
 
 import app.logdate.server.auth.AccountStorageModes
 import app.logdate.server.auth.TokenService
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import app.logdate.server.responses.error
 import app.logdate.server.routes.docs.LocationHistoryDocs
 import app.logdate.server.sync.LocationHistoryConflictException
@@ -17,6 +18,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.route
 import io.ktor.utils.io.readRemaining
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.io.readByteArray
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -38,7 +41,10 @@ internal fun Route.locationHistoryRoutes(
                     return@put call.respond(HttpStatusCode.PayloadTooLarge, error("VALIDATION_ERROR", "Batch is too large"))
                 }
                 val request = locationHistoryJson.decodeFromString<LocationHistoryBatchRequest>(body.decodeToString())
-                call.respond(LocationHistoryBatchResponse(repository.upload(userId, request.records)))
+                val accepted = withContext(Dispatchers.IO) { repository.upload(userId, request.records) }
+                call.respond(LocationHistoryBatchResponse(accepted))
+            } catch (failure: IdentityWriteRefusedException) {
+                call.respondIdentityWriteRefusal(failure)
             } catch (_: LocationHistoryConflictException) {
                 call.respond(HttpStatusCode.Conflict, error("VERSION_CONFLICT", "Pull changes before retrying this batch"))
             } catch (_: SerializationException) {

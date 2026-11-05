@@ -2,7 +2,6 @@ package app.logdate.server.database
 
 import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
-import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.java.javaUUID
 import org.jetbrains.exposed.v1.datetime.timestamp
@@ -36,6 +35,7 @@ object AccountsTable : Table("accounts") {
     val storageMode = varchar("storage_mode", 32).default(AccountStorageMode.LEGACY.wireValue)
 
     val identityKind = varchar("identity_kind", 32).default(AccountIdentityKind.HOSTED.wireValue)
+    val identityEpoch = long("identity_epoch").default(0)
 
     /** The [app.logdate.server.auth.AccountModeration.wireValue] when operators suspended or took down the account; null otherwise. */
     val moderation = varchar("moderation", 16).nullable()
@@ -203,6 +203,8 @@ object HostedPlcOperationsTable : Table("hosted_plc_operations") {
     val operationType = varchar("operation_type", 32)
     val operationJson = text("operation_json")
     val createdAt = timestamp("created_at")
+    val publicationAttempted = bool("publication_attempted").nullable()
+    val identityEpoch = long("identity_epoch").default(0)
 
     override val primaryKey = PrimaryKey(id)
 
@@ -211,6 +213,13 @@ object HostedPlcOperationsTable : Table("hosted_plc_operations") {
         index("idx_hosted_plc_operations_did_created", false, did, createdAt)
         uniqueIndex("uq_hosted_plc_operations_did_prev", did, prevCid)
     }
+}
+
+/** Minimal irreversible-publication evidence, retained independently of an account's content. */
+object IdentityPublicationAttemptsTable : Table("identity_publication_attempts") {
+    val did = varchar("did", 2048)
+    val attemptedAt = timestamp("attempted_at")
+    override val primaryKey = PrimaryKey(did)
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -457,40 +466,5 @@ object LogDateAtprotoBlobsTable : Table("logdate_atproto_blobs") {
     init {
         index("idx_logdate_atproto_blobs_user", false, userId)
         index("idx_logdate_atproto_blobs_user_created_at", false, userId, createdAt)
-    }
-}
-
-/** Mirrors V39: one row per linked device session. */
-object DeviceSessionsTable : Table("device_sessions") {
-    val id = javaUUID("id")
-    val accountId = javaUUID("account_id").references(AccountsTable.id, onDelete = ReferenceOption.CASCADE)
-    val deviceName = varchar("device_name", 120)
-    val platform = varchar("platform", 32)
-    val createdAt = long("created_at")
-    val lastRefreshedAt = long("last_refreshed_at")
-    val expiresAt = long("expires_at")
-    val revokedAt = long("revoked_at").nullable()
-
-    override val primaryKey = PrimaryKey(id)
-
-    init {
-        index("idx_device_sessions_account", false, accountId)
-    }
-}
-
-/** Mirrors V39: one row per minted link code, keyed by the SHA-256 hash of the code's bytes. */
-object DeviceLinkCodesTable : Table("device_link_codes") {
-    val codeHash = varchar("code_hash", 64)
-    val accountId = javaUUID("account_id").references(AccountsTable.id, onDelete = ReferenceOption.CASCADE)
-    val createdAt = long("created_at")
-    val expiresAt = long("expires_at")
-    val redeemedAt = long("redeemed_at").nullable()
-    val sessionId = javaUUID("session_id").nullable()
-
-    override val primaryKey = PrimaryKey(codeHash)
-
-    init {
-        index("idx_device_link_codes_account_created", false, accountId, createdAt)
-        index("idx_device_link_codes_expires", false, expiresAt)
     }
 }

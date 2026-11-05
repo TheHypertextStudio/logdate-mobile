@@ -1,5 +1,7 @@
 package app.logdate.server.sync
 
+import app.logdate.server.database.AccountsTable
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.shared.model.sync.DeviceId
 import java.util.UUID
@@ -10,11 +12,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
+@OptIn(ExperimentalUuidApi::class)
 class DeletionWinsContractTest {
     @Test
     fun `database rejects resurrection and retains unknown deletions`() =
         withH2Database(
+            AccountsTable,
             ContentSyncTable,
             JournalSyncTable,
             AssociationSyncTable,
@@ -26,8 +33,12 @@ class DeletionWinsContractTest {
     fun `memory rejects resurrection and retains unknown deletions`() = verifyDeletionWins(InMemorySyncRepository())
 
     private fun verifyDeletionWins(repository: SyncRepository) {
-        val owner = UUID.randomUUID()
-        val otherOwner = UUID.randomUUID()
+        val owner = Uuid.random().toJavaUuid()
+        val otherOwner = Uuid.random().toJavaUuid()
+        if (repository is DbSyncRepository) {
+            createTestAccount(owner)
+            createTestAccount(otherOwner)
+        }
         val device = DeviceId("device")
         val note = ContentRecord("deleted-note", "TEXT", "retained edit", null, null, 1, Long.MAX_VALUE, 0, device)
         val journal = JournalRecord("deleted-journal", "Retained journal", "", 1, Long.MAX_VALUE, 0, device)

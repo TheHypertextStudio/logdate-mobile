@@ -1,10 +1,12 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.server.logdate.LogDateMedia
 import app.logdate.server.sync.StaleWriteException
 import app.logdate.shared.model.sync.DeviceId
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -12,6 +14,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
 
 /**
  * Integration tests for [PostgreSQLLogDateMediaRepository] utilizing an H2 database.
@@ -27,9 +30,10 @@ import kotlin.test.assertTrue
 class PostgreSQLLogDateMediaRepositoryTest {
     @Test
     fun `receipt records choose one committed version and cannot resurrect a deletion`() {
-        withH2Database(LogDateMediaRecordsTable) {
+        withH2Database(AccountsTable, LogDateMediaRecordsTable) {
             val repository = PostgreSQLLogDateMediaRepository()
-            val owner = UUID.randomUUID()
+            val owner = Uuid.random().toJavaUUID()
+            createTestAccount(owner)
             val media =
                 LogDateMedia(
                     "receipt-v1-test",
@@ -48,7 +52,7 @@ class PostgreSQLLogDateMediaRepositoryTest {
             val replay = repository.upsertMedia(owner, media.copy(data = byteArrayOf(4, 5, 6)))
             assertContentEquals(first.data, replay.data)
             assertEquals(first.version, replay.version)
-            assertNull(repository.getMedia(UUID.randomUUID(), media.mediaId))
+            assertNull(repository.getMedia(Uuid.random().toJavaUUID(), media.mediaId))
             repository.deleteMedia(owner, media.mediaId, 30)
             assertFailsWith<StaleWriteException> { repository.upsertMedia(owner, media) }
         }
@@ -56,9 +60,10 @@ class PostgreSQLLogDateMediaRepositoryTest {
 
     @Test
     fun `postgres media repository stores updates and tombstones media`() {
-        withH2Database(LogDateMediaRecordsTable) {
+        withH2Database(AccountsTable, LogDateMediaRecordsTable) {
             val repository = PostgreSQLLogDateMediaRepository()
-            val userId = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUUID()
+            createTestAccount(userId)
 
             val created =
                 repository.upsertMedia(

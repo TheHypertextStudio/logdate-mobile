@@ -1,5 +1,7 @@
 package app.logdate.server.database
 
+import app.logdate.server.identity.adoption.IdentityFenceOutcome
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
 import app.logdate.server.logdate.LogDateCollectionChangesMetadata
 import app.logdate.server.logdate.LogDateCollectionKind
 import app.logdate.server.logdate.LogDateCollectionMetadata
@@ -7,6 +9,7 @@ import app.logdate.server.logdate.LogDateCollectionsMetadataStore
 import app.logdate.server.logdate.LogDateCollectionsPurgeResult
 import app.logdate.server.logdate.LogDateCollectionsState
 import app.logdate.server.logdate.LogDateCollectionsStatus
+import app.logdate.server.migration.SpaceMigrationConfig
 import app.logdate.server.sync.StaleWriteException
 import app.logdate.server.sync.changePageReadSize
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +23,7 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -27,7 +31,21 @@ import studio.hypertext.atproto.identity.AtprotoDid
 import java.util.UUID
 import kotlin.time.Clock
 
-internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMetadataStore {
+internal class PostgreSQLLogDateCollectionsMetadataStore(
+    private val migrationConfig: SpaceMigrationConfig = SpaceMigrationConfig(),
+    private val clock: Clock = Clock.System,
+) : LogDateCollectionsMetadataStore {
+    override suspend fun requireWritable(
+        userId: UUID,
+        collection: LogDateCollectionKind,
+        recordKey: String,
+    ) {
+        withContext(Dispatchers.IO) {
+            transaction { requireCollectionWrite(userId) }
+        }
+        super.requireWritable(userId, collection, recordKey)
+    }
+
     override suspend fun status(userId: UUID): LogDateCollectionsStatus =
         withContext(Dispatchers.IO) {
             transaction {
@@ -164,7 +182,10 @@ internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMet
         recordKey: String,
     ): LogDateCollectionMetadata =
         withContext(Dispatchers.IO) {
-            transaction { upsertRow(userId, repoDid, collection, recordKey) }
+            transaction {
+                requireCollectionWrite(userId, repoDid)
+                upsertRow(userId, repoDid, collection, recordKey)
+            }
         }
 
     override suspend fun upsertBatch(
@@ -175,6 +196,7 @@ internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMet
     ): List<LogDateCollectionMetadata> =
         withContext(Dispatchers.IO) {
             transaction {
+                requireCollectionWrite(userId, repoDid)
                 // One transaction for the whole batch: Exposed rolls the entire block back if any
                 // row upsert throws, instead of leaving the first N rows committed and the rest
                 // missing.
@@ -233,6 +255,7 @@ internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMet
     ): LogDateCollectionMetadata? =
         withContext(Dispatchers.IO) {
             transaction {
+                requireCollectionWrite(userId, repoDid)
                 val state = nextState(userId, repoDid)
                 val existing =
                     LogDateCollectionRecordsTable
@@ -271,13 +294,25 @@ internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMet
     // Sync fences survive retention; Moments retain their separately defined expiry behavior.
     override suspend fun purgeAllTombstones(olderThan: Long): LogDateCollectionsPurgeResult =
         withContext(Dispatchers.IO) {
-            transaction {
-                LogDateCollectionRecordsTable.deleteWhere {
-                    (collection eq LogDateCollectionKind.MOMENT.storageName) and
-                        (deleted eq true) and (deletedAt less olderThan)
+            val owners =
+                transaction {
+                    LogDateCollectionRecordsTable
+                        .select(LogDateCollectionRecordsTable.userId)
+                        .where {
+                            (LogDateCollectionRecordsTable.collection eq LogDateCollectionKind.MOMENT.storageName) and
+                                (LogDateCollectionRecordsTable.deleted eq true) and (LogDateCollectionRecordsTable.deletedAt less olderThan)
+                        }.withDistinct()
+                        .map { it[LogDateCollectionRecordsTable.userId] }
+                        .sorted()
                 }
-                LogDateCollectionsPurgeResult(0, 0, 0, olderThan)
+            owners.forEach { owner ->
+                try {
+                    purgeTombstones(owner, olderThan)
+                } catch (_: IdentityWriteRefusedException) {
+                    // Retain held, newer-epoch and retired inventories for their dedicated cleanup policy.
+                }
             }
+            LogDateCollectionsPurgeResult(0, 0, 0, olderThan)
         }
 
     override suspend fun purgeTombstones(
@@ -286,6 +321,7 @@ internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMet
     ): LogDateCollectionsPurgeResult =
         withContext(Dispatchers.IO) {
             transaction {
+                requireCollectionWrite(userId)
                 LogDateCollectionRecordsTable.deleteWhere {
                     (LogDateCollectionRecordsTable.userId eq userId) and
                         (collection eq LogDateCollectionKind.MOMENT.storageName) and
@@ -294,6 +330,25 @@ internal class PostgreSQLLogDateCollectionsMetadataStore : LogDateCollectionsMet
                 LogDateCollectionsPurgeResult(0, 0, 0, olderThan)
             }
         }
+
+    private fun requireCollectionWrite(
+        userId: UUID,
+        preferredRepoDid: AtprotoDid? = null,
+    ) {
+        // This store serves legacy collection sync; target personal-space writes have a separate boundary.
+        requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
+        val canonical =
+            LogDateCollectionStatesTable
+                .select(LogDateCollectionStatesTable.repoDid)
+                .where { LogDateCollectionStatesTable.userId eq userId }
+                .singleOrNull()
+                ?.get(LogDateCollectionStatesTable.repoDid)
+        val retired =
+            listOfNotNull(canonical, preferredRepoDid?.toString()).distinct().any {
+                accountWriteConnection().identityRetired(it)
+            }
+        if (retired) throw IdentityWriteRefusedException(IdentityFenceOutcome.CHANGED)
+    }
 
     private fun liveCount(
         userId: UUID,

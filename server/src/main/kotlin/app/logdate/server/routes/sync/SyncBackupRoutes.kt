@@ -1,17 +1,26 @@
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+
 package app.logdate.server.routes.sync
 
 import app.logdate.server.auth.TokenService
 import app.logdate.server.crypto.EncryptionService
+import app.logdate.server.database.toJavaUUID
 import app.logdate.server.entitlements.EntitlementEnforcer
 import app.logdate.server.entitlements.QuotaCheck
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
+import app.logdate.server.logdate.LegacyObjectUploads
+import app.logdate.server.logdate.LegacyObjectWriteFailure
 import app.logdate.server.logdate.LogDateBackup
 import app.logdate.server.logdate.LogDateBackupRepository
 import app.logdate.server.logdate.LogDateBlobFileWriteRequest
 import app.logdate.server.logdate.LogDateBlobNamespace
 import app.logdate.server.logdate.LogDateBlobStorage
+import app.logdate.server.logdate.LogDateBlobWriteRequest
 import app.logdate.server.logdate.copyBackupFile
+import app.logdate.server.logdate.deleteLegacyObject
 import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.responses.error
+import app.logdate.server.routes.LogDateAccountAuth
 import app.logdate.server.routes.docs.SyncStorageDocs
 import app.logdate.server.sync.SyncMetricsRegistry
 import app.logdate.server.transfer.TransferLimits
@@ -33,8 +42,10 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondOutputStream
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.route
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
@@ -54,6 +65,8 @@ internal fun Route.syncBackupRoutes(
     rateLimiter: SlidingWindowRateLimiter?,
     config: SyncRouteConfig,
     transfers: TransferSlots,
+    objectUploads: LegacyObjectUploads,
+    accountAuth: LogDateAccountAuth? = null,
 ) {
     val mediaAccessPolicy = config.mediaAccessPolicy
     route("/backups") {
@@ -64,7 +77,8 @@ internal fun Route.syncBackupRoutes(
             var success = false
             var bytes = 0L
             try {
-                val userId = extractUserId(call, tokenService) ?: return@post
+                val authority = call.backupWriteAuthority(tokenService, accountAuth) ?: return@post
+                val userId = authority.accountId.toJavaUUID()
                 // Backups pass through temporary files, which Cloud Run keeps in memory, so each instance
                 // runs only as many as its buffered transfer slots allow. A refused one spends no budget.
                 val slot = transfers.tryBuffered() ?: return@post call.respondTransferBusy(transfers.limits)
@@ -113,49 +127,73 @@ internal fun Route.syncBackupRoutes(
                                 )
                             }
 
-                            val storagePath =
+                            val write =
+                                LogDateBlobFileWriteRequest(
+                                    ownerId = userId,
+                                    namespace = LogDateBlobNamespace.BACKUP,
+                                    blobId = backupId.toString(),
+                                    fileName = null,
+                                    contentType = "application/octet-stream",
+                                    path = encryptedFile,
+                                    checkActive = checkActive,
+                                )
+                            var candidate: String? = null
+                            val record =
                                 try {
-                                    storage.putBlobFile(
-                                        LogDateBlobFileWriteRequest(
-                                            ownerId = userId,
+                                    withContext(Dispatchers.IO) {
+                                        objectUploads.upload(
+                                            owner = userId,
                                             namespace = LogDateBlobNamespace.BACKUP,
-                                            blobId = backupId.toString(),
-                                            fileName = null,
-                                            contentType = "application/octet-stream",
-                                            path = encryptedFile,
-                                            checkActive = checkActive,
-                                        ),
-                                    )
+                                            epoch = authority.identityEpoch,
+                                            plannedPath = {
+                                                storage.plannedPath(
+                                                    LogDateBlobWriteRequest(
+                                                        ownerId = userId,
+                                                        namespace = write.namespace,
+                                                        blobId = write.blobId,
+                                                        contentType = write.contentType,
+                                                        bytes = ByteArray(0),
+                                                    ),
+                                                )
+                                            },
+                                            write = { storage.putBlobFile(write).also { candidate = it } },
+                                            canonicalPath = LogDateBackup::storagePath,
+                                            publish = { path, epoch ->
+                                                backupRepository.createBackup(
+                                                    userId,
+                                                    LogDateBackup(
+                                                        id = backupId,
+                                                        userId = userId,
+                                                        deviceId = req.deviceId,
+                                                        manifest = req.manifest,
+                                                        storagePath = path,
+                                                        createdAt = System.currentTimeMillis(),
+                                                        sizeBytes = bytes,
+                                                    ),
+                                                    epoch,
+                                                )
+                                            },
+                                            deleteObject = { storage.deleteLegacyObject(it) },
+                                        )
+                                    }
                                 } catch (cancellation: CancellationException) {
+                                    val path = candidate
+                                    if (!objectUploads.isDurable && path != null) {
+                                        cleanupBackupObject(userId, path, backupRepository, storage)
+                                    }
                                     throw cancellation
-                                } catch (failure: Exception) {
+                                } catch (failure: IdentityWriteRefusedException) {
+                                    return@post call.respondIdentityWriteRefusal(failure)
+                                } catch (_: LegacyObjectWriteFailure) {
                                     Napier.e("Failed to store backup blob")
                                     return@post call.respond(
                                         HttpStatusCode.InternalServerError,
                                         error("BACKUP_STORAGE_FAILED", "Failed to store backup"),
                                     )
-                                }
-
-                            val record =
-                                try {
-                                    backupRepository.createBackup(
-                                        userId,
-                                        LogDateBackup(
-                                            id = backupId,
-                                            userId = userId,
-                                            deviceId = req.deviceId,
-                                            manifest = req.manifest,
-                                            storagePath = storagePath,
-                                            createdAt = System.currentTimeMillis(),
-                                            sizeBytes = bytes,
-                                        ),
-                                    )
-                                } catch (cancellation: CancellationException) {
-                                    runCatching { storage.deleteBlob(storagePath) }
-                                    throw cancellation
-                                } catch (failure: Exception) {
-                                    if (!runCatching { storage.deleteBlob(storagePath) }.getOrDefault(false)) {
-                                        Napier.w("Failed to roll back backup blob after metadata write failure")
+                                } catch (_: Exception) {
+                                    val path = candidate
+                                    if (!objectUploads.isDurable && path != null) {
+                                        cleanupBackupObject(userId, path, backupRepository, storage)
                                     }
                                     Napier.e("Failed to persist backup metadata")
                                     return@post call.respond(
@@ -328,7 +366,8 @@ internal fun Route.syncBackupRoutes(
             val start = System.currentTimeMillis()
             var success = false
             try {
-                val userId = extractUserId(call, tokenService) ?: return@delete
+                val authority = call.backupWriteAuthority(tokenService, accountAuth) ?: return@delete
+                val userId = authority.accountId.toJavaUUID()
                 val backupId = call.parseBackupId() ?: return@delete
 
                 val record = backupRepository.getBackup(userId, backupId)
@@ -339,18 +378,26 @@ internal fun Route.syncBackupRoutes(
                                 HttpStatusCode.ServiceUnavailable,
                                 error("BACKUP_STORAGE_UNAVAILABLE", "Backup storage not configured"),
                             )
-                    if (!storage.deleteBlob(record.storagePath)) {
+                    if (!withContext(Dispatchers.IO) {
+                            backupRepository.deleteBackupWithObject(
+                                userId,
+                                backupId,
+                                authority.identityEpoch,
+                            ) { path -> storage.deleteLegacyObject(path) }
+                        }
+                    ) {
                         Napier.w("Failed to delete backup blob")
                         return@delete call.respond(
                             HttpStatusCode.InternalServerError,
                             error("BACKUP_DELETE_FAILED", "Failed to delete backup blob"),
                         )
                     }
-                    backupRepository.deleteBackup(userId, backupId)
                 }
 
                 call.respond(HttpStatusCode.NoContent)
                 success = true
+            } catch (failure: IdentityWriteRefusedException) {
+                call.respondIdentityWriteRefusal(failure)
             } finally {
                 metrics.recordOperation("sync.backup.delete", System.currentTimeMillis() - start, success)
             }

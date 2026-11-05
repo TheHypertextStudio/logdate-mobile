@@ -203,7 +203,7 @@ class ResourceRoutesTest {
                     kind = ResourceKind.REWIND,
                 ),
             )
-            resourceRoutes.delete("88888888-8888-8888-8888-888888888888")
+            resourceRoutes.delete("88888888-8888-8888-8888-888888888888", ownerId.toJavaUUID())
             installRoutes(accounts, collections, resourceRoutes)
 
             val response = client.get("/api/v1/resources/88888888-8888-8888-8888-888888888888")

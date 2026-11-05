@@ -83,12 +83,12 @@ class PlcIdentityServiceTest {
             )
             assertEquals(listOf(recoveryDidKey, provisioned.publicKeyDidKey), provisioned.operation.rotationKeys)
             assertEquals(AtprotoDid.require(provisioned.did), service.documentFor(provisioned).id)
-            assertEquals(2, operationRepository.listByDid(provisioned.did).size)
+            assertEquals(1, operationRepository.listByDid(provisioned.did).size)
             assertEquals(PlcEncoding.operationCid(provisioned.operation), operationRepository.listByDid(provisioned.did).first().cid)
         }
 
     @Test
-    fun `provisionHostedDid publishes signed plc operation when publishing is enabled`() =
+    fun `provisionHostedDid stays private even when legacy publishing is enabled`() =
         kotlinx.coroutines.test.runTest {
             val published = mutableListOf<PlcIndexedOperation>()
             val service =
@@ -102,6 +102,7 @@ class PlcIdentityServiceTest {
                             publishHostedPlcOperations = true,
                             recoveryKeysEnabled = true,
                         ),
+                    hostedPlcOperationRepository = InMemoryHostedPlcOperationRepository(),
                     plcDirectoryClient =
                         object : PlcDirectoryClient {
                             override suspend fun getDocument(did: AtprotoDid) = error("unused")
@@ -135,9 +136,8 @@ class PlcIdentityServiceTest {
 
             val provisioned = service.provisionHostedDid(accountId = Uuid.random(), handle = "brie.logdate.app")
 
-            assertEquals(1, published.size)
-            assertEquals(provisioned.did, published.single().did.toString())
-            assertTrue(published.single().operation.isSigned)
+            assertTrue(provisioned.did.startsWith("did:plc:"))
+            assertEquals(0, published.size)
         }
 
     @Test
@@ -235,6 +235,7 @@ class PlcIdentityServiceTest {
                 )
             val accountId = Uuid.random()
             val provisioned = service.provisionHostedDid(accountId = accountId, handle = "alice.logdate.app")
+            service.publishStoredGenesis(operationRepository.listByDid(provisioned.did).single())
             val recoveryDidKey = didKeyFor(signingKeyService.ensureActiveKey(Uuid.random()).publicKeyMultibase)
 
             val rotated =
@@ -310,6 +311,7 @@ class PlcIdentityServiceTest {
                 )
             val accountId = Uuid.random()
             val provisioned = service.provisionHostedDid(accountId = accountId, handle = "alice.logdate.app")
+            service.publishStoredGenesis(operationRepository.listByDid(provisioned.did).single())
             val activeBefore = signingKeyService.ensureActiveKey(accountId)
             val recoveryDidKey = didKeyFor(signingKeyService.ensureActiveKey(Uuid.random()).publicKeyMultibase)
 
@@ -384,6 +386,7 @@ class PlcIdentityServiceTest {
                 )
             val accountId = Uuid.random()
             val provisioned = service.provisionHostedDid(accountId = accountId, handle = "alice.logdate.app")
+            service.publishStoredGenesis(operationRepository.listByDid(provisioned.did).single())
             val recoveryKey = signingKeyService.generateKeyPair(curve = EcCurve.P256)
             val recoveryDidKey = didKeyFor(recoveryKey.publicKeyMultibase)
             service.updateHostedRecoveryKey(

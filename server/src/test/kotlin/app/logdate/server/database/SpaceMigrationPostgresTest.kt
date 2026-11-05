@@ -86,13 +86,19 @@ class SpaceMigrationPostgresTest {
             val blocks = PostgreSQLRepoBlockStore()
             val block = byteArrayOf(0xA0.toByte())
             val cid = Cid.sha256(DAG_CBOR_CODEC, block)
-            blocks.writeBlock(AtprotoDid.require(did), RepoBlock(cid, block)).getOrThrow()
-            blocks.writeHead(RepoHead(AtprotoDid.require(did), cid, cid, 1)).getOrThrow()
+            blocks.write(account) {
+                blocks.writeBlock(AtprotoDid.require(did), RepoBlock(cid, block)).getOrThrow()
+                blocks.writeHead(RepoHead(AtprotoDid.require(did), cid, cid, 1)).getOrThrow()
+            }
             val space = SpaceRef.personal(did).uri
             PostgreSQLSpaceStore().put(SpaceRecordWrite(account, space, did, "kept", sealed(), emptyList(), null, false))
 
-            PostgreSQLLegacyJournalEraser(storage).erase(account)
-            PostgreSQLLegacyJournalEraser(storage).erase(account)
+            val cleanupAt = Clock.System.now()
+            val claim = SpaceMigration(account, "cleanup", SpaceMigrationPhase.CLEANED, cleanupAt, cleanupAt)
+            assertTrue(PostgreSQLSpaceMigrationStore().replace(null, claim))
+            transaction { exec("UPDATE accounts SET storage_mode = 'personalSpaceV1' WHERE id = '$account'") }
+            assertTrue(PostgreSQLLegacyJournalEraser(storage).erase(claim))
+            assertTrue(PostgreSQLLegacyJournalEraser(storage).erase(claim))
 
             listOf(
                 "SELECT count(*) FROM logdate_collection_records WHERE user_id = '$account'",

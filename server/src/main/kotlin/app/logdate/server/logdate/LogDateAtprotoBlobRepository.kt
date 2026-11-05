@@ -25,6 +25,7 @@ interface LogDateAtprotoBlobRepository {
     fun upsertBlob(
         userId: UUID,
         blob: LogDateAtprotoBlob,
+        identityEpoch: Long = 0,
     ): LogDateAtprotoBlob
 
     fun getBlob(
@@ -42,7 +43,9 @@ class InMemoryLogDateAtprotoBlobRepository : LogDateAtprotoBlobRepository {
     override fun upsertBlob(
         userId: UUID,
         blob: LogDateAtprotoBlob,
+        identityEpoch: Long,
     ): LogDateAtprotoBlob {
+        requireLegacyIdentityEpoch(identityEpoch)
         val stored =
             blob.copy(
                 cid = blob.cid,

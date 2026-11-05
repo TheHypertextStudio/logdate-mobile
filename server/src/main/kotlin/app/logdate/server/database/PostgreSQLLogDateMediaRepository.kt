@@ -17,12 +17,22 @@ import kotlin.math.absoluteValue
 import kotlin.random.Random
 
 internal class PostgreSQLLogDateMediaRepository : LogDateMediaRepository {
+    override fun cleanupUnreferencedObject(
+        userId: UUID,
+        path: String,
+        identityEpoch: Long,
+        deleteObject: (String) -> Boolean,
+    ): Boolean = PostgreSQLLegacyObjectDeletion().cleanup(userId, path, identityEpoch, deleteObject)
+
     override fun upsertMedia(
         userId: UUID,
         media: LogDateMedia,
+        identityEpoch: Long,
     ): LogDateMedia =
         transaction {
+            requireAccountIdentityWrite(userId, identityEpoch)
             val mediaId = media.mediaId.ifBlank { "media-${Random.nextLong().absoluteValue}" }
+            requireLegacyObjectMutation(userId, LegacyObjectKind.MEDIA, mediaId, media.storagePath)
             val existing = mediaRowForUpdate(userId, mediaId)
             if (existing != null && existing[LogDateMediaRecordsTable.deleted]) {
                 throw StaleWriteException(mediaId, existing[LogDateMediaRecordsTable.deletedAt] ?: 0L)
@@ -141,17 +151,30 @@ internal class PostgreSQLLogDateMediaRepository : LogDateMediaRepository {
                     (LogDateMediaRecordsTable.userId eq userId) and
                         (LogDateMediaRecordsTable.mediaId eq mediaId) and
                         (LogDateMediaRecordsTable.deleted eq false)
-                }.forUpdate()
-                .singleOrNull()
+                }.singleOrNull()
                 ?.toLogDateMedia()
+        }
+
+    override fun deleteMediaWithObject(
+        userId: UUID,
+        mediaId: String,
+        deletedAt: Long,
+        identityEpoch: Long,
+        deleteObject: (String) -> Boolean,
+    ): Boolean =
+        PostgreSQLLegacyObjectDeletion().delete(userId, LegacyObjectKind.MEDIA, mediaId, identityEpoch, deleteObject) {
+            deleteMedia(userId, mediaId, deletedAt, identityEpoch)
         }
 
     override fun deleteMedia(
         userId: UUID,
         mediaId: String,
         deletedAt: Long,
+        identityEpoch: Long,
     ) {
         transaction {
+            requireAccountIdentityWrite(userId, identityEpoch)
+            requireLegacyObjectMutation(userId, LegacyObjectKind.MEDIA, mediaId)
             val existing =
                 LogDateMediaRecordsTable
                     .selectAll()

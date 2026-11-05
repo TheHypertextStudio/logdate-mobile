@@ -86,7 +86,8 @@ internal fun Route.registerUpdateProfileRoute(
                     ),
                 )
             val ensuredAccount =
-                ensureLogDateSessionIdentity(saved, atprotoIdentityService) ?: throw AccountSessionUnavailableException()
+                ensureLogDateSessionIdentity(saved.id, accountRepository, atprotoIdentityService)
+                    ?: throw AccountSessionUnavailableException()
 
             call.respond(
                 HttpStatusCode.OK,
@@ -109,6 +110,7 @@ internal fun Route.registerUpdateProfileRoute(
                             emailVerifiedAt = ensuredAccount.emailVerifiedAt,
                             storageMode = ensuredAccount.storageMode,
                             identityKind = ensuredAccount.identityKind,
+                            identityEpoch = ensuredAccount.identityEpoch,
                         ),
                 ),
             )

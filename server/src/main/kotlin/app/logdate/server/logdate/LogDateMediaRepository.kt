@@ -77,10 +77,36 @@ data class LogDateMedia(
  * Internal boundary for media metadata operations.
  */
 interface LogDateMediaRepository {
+    fun cleanupUnreferencedObject(
+        userId: UUID,
+        path: String,
+        identityEpoch: Long = 0,
+        deleteObject: (String) -> Boolean,
+    ): Boolean {
+        requireLegacyIdentityEpoch(identityEpoch)
+        if (listAllForUser(userId).any { it.storagePath == path }) return false
+        return deleteObject(path)
+    }
+
     fun upsertMedia(
         userId: UUID,
         media: LogDateMedia,
+        identityEpoch: Long = 0,
     ): LogDateMedia
+
+    fun deleteMediaWithObject(
+        userId: UUID,
+        mediaId: String,
+        deletedAt: Long,
+        identityEpoch: Long = 0,
+        deleteObject: (String) -> Boolean,
+    ): Boolean {
+        requireLegacyIdentityEpoch(identityEpoch)
+        val path = getMedia(userId, mediaId)?.storagePath
+        if (path != null && !deleteObject(path)) return false
+        deleteMedia(userId, mediaId, deletedAt, identityEpoch)
+        return true
+    }
 
     fun getMedia(
         userId: UUID,
@@ -91,6 +117,7 @@ interface LogDateMediaRepository {
         userId: UUID,
         mediaId: String,
         deletedAt: Long,
+        identityEpoch: Long = 0,
     )
 
     /**
@@ -112,7 +139,9 @@ class InMemoryLogDateMediaRepository : LogDateMediaRepository {
     override fun upsertMedia(
         userId: UUID,
         media: LogDateMedia,
+        identityEpoch: Long,
     ): LogDateMedia {
+        requireLegacyIdentityEpoch(identityEpoch)
         val mediaId = media.mediaId.ifBlank { "media-${Random.nextLong().absoluteValue}" }
         rowsForUser(userId)[mediaId]?.deletedAt?.let { throw StaleWriteException(mediaId, it) }
         if (mediaId.startsWith("receipt-v1-")) rowsForUser(userId)[mediaId]?.let { return it.media }
@@ -140,7 +169,9 @@ class InMemoryLogDateMediaRepository : LogDateMediaRepository {
         userId: UUID,
         mediaId: String,
         deletedAt: Long,
+        identityEpoch: Long,
     ) {
+        requireLegacyIdentityEpoch(identityEpoch)
         val existing = rowsForUser(userId)[mediaId]
         val previous =
             existing?.media ?: LogDateMedia(

@@ -1,0 +1,68 @@
+{
+  "suiteVersion": 1,
+  "description": "Synthetic framing and commitment vectors. Blob bytes here are not authenticated media.",
+  "binding": {
+    "operationId": "00000000-0000-4000-8000-000000000001",
+    "accountId": "00000000-0000-4000-8000-000000000002",
+    "backendOrigin": "HTTPS://CLOUD.EXAMPLE:443/",
+    "deviceId": "synthetic-device",
+    "sourceSpace": "at://did:web:source.example/space/app.logdate.space.personal/self",
+    "targetSpace": "at://did:web:target.example/space/app.logdate.space.personal/self",
+    "sourceEpoch": 0,
+    "sourceSequence": 300
+  },
+  "identityKeyHex": "0707070707070707070707070707070707070707070707070707070707070707",
+  "records": [
+    {
+      "sourceCollection": "app.logdate.crypto.sealed",
+      "sourceRkey": "a",
+      "targetCollection": "app.logdate.crypto.sealed",
+      "targetRkey": "a",
+      "sourceVersion": 1,
+      "sourceDigest": "0101010101010101010101010101010101010101010101010101010101010101",
+      "targetDigest": "0202020202020202020202020202020202020202020202020202020202020202",
+      "deleted": false
+    },
+    {
+      "sourceCollection": "app.logdate.crypto.sealed",
+      "sourceRkey": "b",
+      "targetCollection": "app.logdate.crypto.sealed",
+      "targetRkey": "b",
+      "sourceVersion": 2,
+      "sourceDigest": "0303030303030303030303030303030303030303030303030303030303030303",
+      "targetDigest": "0303030303030303030303030303030303030303030303030303030303030303",
+      "deleted": true
+    }
+  ],
+  "blobs": [
+    {
+      "cid": "bafkreihiygdypfbbtiqj5thhlnneyvuyrn7nzbbbwcop6k6o6hrgasnvkq",
+      "size": 29,
+      "ciphertextDigest": "e8c1878794219a209ecce75b5a4c56988b7edc8421b09cff2bcef1e26049b554"
+    }
+  ],
+  "pending": [
+    {
+      "edit": "Synthetic private note 雪",
+      "revision": 1,
+      "aa": "left",
+      "😀a": "right"
+    }
+  ],
+  "conflicts": [
+    {
+      "baseVersion": 2,
+      "deleted": true,
+      "future": [null, "保留"]
+    }
+  ],
+  "expected": {
+    "indexKeyHex": "ccee3890b57c6ae55edcc6c614a9d665721a70968887322e6b886142dd648b6c",
+    "recordDigestHex": "5a17af50d8a5ab324c2dfa79a227f9fa067351c9609ee9ce103f829451a0228f",
+    "blobDigestHex": "3f918e3db56cf9961a8da2c74a36acef467938435c6b794195b8542798a94cfc",
+    "pendingCommitmentHex": "d3b9005bd313e4d4599d2cf2a024948c19b207a9791076d8c93bc9f9c026bc31",
+    "conflictCommitmentHex": "a31a1fda5631a156938653104dd593d5770fb87d877ddc83bc55e47ed07e694d",
+    "manifestCborHex": "ad65626c6f6273a3656279746573181d65636f756e74016664696765737458203f918e3db56cf9961a8da2c74a36acef467938435c6b794195b8542798a94cfc677265636f726473a4646c6976650165636f756e74026664696765737458205a17af50d8a5ab324c2dfa79a227f9fa067351c9609ee9ce103f829451a0228f6a746f6d6273746f6e6573016776657273696f6e016864657669636549647073796e7468657469632d646576696365696163636f756e744964782430303030303030302d303030302d343030302d383030302d3030303030303030303030326b6f7065726174696f6e4964782430303030303030302d303030302d343030302d383030302d3030303030303030303030316b736f7572636545706f6368006b736f757263655370616365784161743a2f2f6469643a7765623a736f757263652e6578616d706c652f73706163652f6170702e6c6f67646174652e73706163652e706572736f6e616c2f73656c666b7461726765745370616365784161743a2f2f6469643a7765623a7461726765742e6578616d706c652f73706163652f6170702e6c6f67646174652e73706163652e706572736f6e616c2f73656c666d6261636b656e644f726967696e7568747470733a2f2f636c6f75642e6578616d706c656e736f7572636553657175656e636519012c7170656e64696e67436f6d6d69746d656e745820d3b9005bd313e4d4599d2cf2a024948c19b207a9791076d8c93bc9f9c026bc3172636f6e666c696374436f6d6d69746d656e745820a31a1fda5631a156938653104dd593d5770fb87d877ddc83bc55e47ed07e694d",
+    "manifestSha256Hex": "67d9ddfb558605caa6e155d4c746dd65a383c93f61f45f4173e9893db7cb8fcb"
+  }
+}

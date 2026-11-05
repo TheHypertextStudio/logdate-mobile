@@ -238,9 +238,10 @@ private class FailingMediaRepository(
     override fun upsertMedia(
         userId: UUID,
         media: LogDateMedia,
+        identityEpoch: Long,
     ): LogDateMedia {
         check(failure != MetadataFailure.BEFORE_COMMIT) { "Metadata write failed before commit" }
-        val stored = delegate.upsertMedia(userId, media)
+        val stored = delegate.upsertMedia(userId, media, identityEpoch)
         check(failure != MetadataFailure.AFTER_COMMIT) { "Metadata acknowledgement lost after commit" }
         return stored
     }

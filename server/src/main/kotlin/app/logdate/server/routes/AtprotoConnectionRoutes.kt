@@ -50,7 +50,7 @@ internal fun Route.atprotoConnectionRoutes(
         if (reconnect != null) {
             post("/reconnect/start", AtprotoConnectionDocs.reconnectStart) {
                 context.withAccount(call, "reconnect.start") { account ->
-                    val request = call.receiveConnectionRequest<AtprotoReconnectStartRequest>(metrics) ?: return@withAccount
+                    val request = call.receiveAccountRequest<AtprotoReconnectStartRequest>(metrics) ?: return@withAccount
                     if (!CONNECTION_IDENTIFIER.matches(request.challenge)) return@withAccount call.rejectConnectionInput(metrics)
                     val started = reconnect.start(account.id, request.challenge)
                     call.respond(BlueskyStartResponse(started.attemptId, started.authorizationUrl))
@@ -58,7 +58,7 @@ internal fun Route.atprotoConnectionRoutes(
             }
             post("/reconnect/complete", AtprotoConnectionDocs.reconnectComplete) {
                 context.withAccount(call, "reconnect.complete") { account ->
-                    val request = call.receiveConnectionRequest<AtprotoReconnectCompleteRequest>(metrics) ?: return@withAccount
+                    val request = call.receiveAccountRequest<AtprotoReconnectCompleteRequest>(metrics) ?: return@withAccount
                     if (!CONNECTION_IDENTIFIER.matches(request.attemptId) || !request.verifier.matches(Regex("[A-Za-z0-9._~-]{43,128}"))) {
                         return@withAccount call.rejectConnectionInput(metrics)
                     }
@@ -71,14 +71,14 @@ internal fun Route.atprotoConnectionRoutes(
         }
         post("/step-up", AtprotoConnectionDocs.begin) {
             context.withAccount(call, "step-up") { account ->
-                val request = call.receiveConnectionRequest<AtprotoDisconnectBeginRequest>(metrics) ?: return@withAccount
+                val request = call.receiveAccountRequest<AtprotoDisconnectBeginRequest>(metrics) ?: return@withAccount
                 if (request.expectedRevision < 0) return@withAccount call.rejectConnectionInput(metrics)
                 call.respond(service.beginDisconnect(account.id, request.expectedRevision))
             }
         }
         delete(AtprotoConnectionDocs.disconnect) {
             context.withAccount(call, "disconnect") { account ->
-                val request = call.receiveConnectionRequest<AtprotoDisconnectRequest>(metrics) ?: return@withAccount
+                val request = call.receiveAccountRequest<AtprotoDisconnectRequest>(metrics) ?: return@withAccount
                 if (!request.isBounded()) return@withAccount call.rejectConnectionInput(metrics)
                 call.respond(service.disconnect(account.id, request.decisionId, PasskeyStepUpProof(request.challenge, request.credential)))
             }
@@ -125,19 +125,23 @@ private fun ConnectionFailureKind.status(): HttpStatusCode =
         ConnectionFailureKind.INELIGIBLE, ConnectionFailureKind.CHANGED, ConnectionFailureKind.LAST_SIGNIN_FACTOR -> HttpStatusCode.Conflict
     }
 
-private suspend inline fun <reified T> ApplicationCall.receiveConnectionRequest(metrics: AuthMetricsRegistry): T? {
+internal suspend inline fun <reified T> ApplicationCall.receiveAccountRequest(
+    metrics: AuthMetricsRegistry,
+    maximumBytes: Int = MAX_CONNECTION_REQUEST_BYTES,
+): T? {
+    require(maximumBytes in MAX_CONNECTION_REQUEST_BYTES..(6 * 1024 * 1024))
     val media = request.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()
     if (!media.equals("application/json", ignoreCase = true)) {
         respondApiError(HttpStatusCode.BadRequest, "INVALID_REQUEST", "Request body is invalid", metrics)
         return null
     }
     val declared = request.headers[HttpHeaders.ContentLength]?.toLongOrNull()
-    if (declared != null && declared > MAX_CONNECTION_REQUEST_BYTES) {
+    if (declared != null && declared > maximumBytes) {
         respondApiError(HttpStatusCode.PayloadTooLarge, "INVALID_REQUEST", "Request body is too large", metrics)
         return null
     }
-    val bytes = receiveChannel().readRemaining((MAX_CONNECTION_REQUEST_BYTES + 1).toLong()).readByteArray()
-    if (bytes.size > MAX_CONNECTION_REQUEST_BYTES) {
+    val bytes = receiveChannel().readRemaining((maximumBytes + 1).toLong()).readByteArray()
+    if (bytes.size > maximumBytes) {
         respondApiError(HttpStatusCode.PayloadTooLarge, "INVALID_REQUEST", "Request body is too large", metrics)
         return null
     }
@@ -158,7 +162,7 @@ private fun AtprotoDisconnectRequest.isBounded(): Boolean =
         credential.response.clientDataJSON.length in 1..8192 &&
         credential.response.authenticatorData.length in 1..8192 &&
         credential.response.signature.length in 1..8192 &&
-        credential.response.userHandle.length <= 512
+        (credential.response.userHandle?.length ?: 0) <= 512
 
 private suspend fun ApplicationCall.rejectConnectionInput(metrics: AuthMetricsRegistry) {
     respondApiError(HttpStatusCode.BadRequest, "VALIDATION_ERROR", "Connection request is invalid", metrics)

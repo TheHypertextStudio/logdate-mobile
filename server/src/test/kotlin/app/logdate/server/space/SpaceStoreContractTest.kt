@@ -2,7 +2,9 @@ package app.logdate.server.space
 
 import app.logdate.server.database.AccountStorageUsageTable
 import app.logdate.server.database.AccountsTable
+import app.logdate.server.database.IdentityAdoptionOperationsTable
 import app.logdate.server.database.PostgreSQLSpaceStore
+import app.logdate.server.database.RetiredIdentityDidsTable
 import app.logdate.server.database.SpaceBlobUploadReceiptsTable
 import app.logdate.server.database.SpaceBlobsTable
 import app.logdate.server.database.SpaceRecordBlobsTable
@@ -218,6 +220,63 @@ abstract class SpaceStoreContractTest {
         }
 
     @Test
+    fun `a late abandoned deletion cannot remove a newly uploaded copy`() =
+        withStore(objectDeleteTimeout = 200.milliseconds) { store, account ->
+            val objects = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+            objects["path/old"] = byteArrayOf(1, 2, 3)
+            val blob = SpaceBlob("bafylate", "application/octet-stream", 3, "path/old", "intent-late")
+            store.putBlob(account, space, blob)
+            val release = CountDownLatch(1)
+            val finished = CountDownLatch(1)
+            val later = Clock.System.now() + 1.hours
+            try {
+                val first =
+                    store.purge(later, later) { path ->
+                        try {
+                            while (release.count > 0) {
+                                try {
+                                    release.await()
+                                } catch (
+                                    _: InterruptedException,
+                                ) {
+                                    // Simulates an object store that ignores cancellation.
+                                }
+                            }
+                            objects.remove(path)
+                        } finally {
+                            finished.countDown()
+                        }
+                    }
+                assertEquals(SpacePurgeResult(0, 1), first)
+                assertNull(store.getBlob(space, blob.cid))
+                assertNull(store.getBlobUploadReceipt(space, "intent-late"))
+                assertFailsWith<SpaceMissingBlobException> { store.put(write(account, "pending", blobs = listOf(blob.cid))) }
+                assertFailsWith<SpaceBlobPurgingException> {
+                    store.putBlob(account, space, blob.copy(storagePath = "path/premature"))
+                }
+                assertFailsWith<SpaceBlobPurgingException> {
+                    store.putBlob(account, space, blob.copy(cid = "bafyother", storagePath = "path/premature"))
+                }
+                assertEquals(3L, store.storedBytes(account))
+                assertEquals(
+                    SpacePurgeResult(1, 0),
+                    store.purge(Instant.fromEpochSeconds(0), Instant.fromEpochSeconds(0)) { path -> objects.remove(path) },
+                )
+                objects["path/new"] = byteArrayOf(1, 2, 3)
+                val current = store.putBlob(account, space, blob.copy(storagePath = "path/new"))
+                val record = store.put(write(account, "pending", blobs = listOf(blob.cid)))
+                release.countDown()
+                assertTrue(finished.await(5, TimeUnit.SECONDS), "The abandoned callback must finish within the test")
+                assertEquals("path/new", current.storagePath)
+                assertTrue(objects["path/new"]!!.contentEquals(byteArrayOf(1, 2, 3)))
+                assertEquals(record, store.get(space, author, "pending"))
+            } finally {
+                release.countDown()
+                assertTrue(finished.await(5, TimeUnit.SECONDS))
+            }
+        }
+
+    @Test
     fun `a cursor from before purged tombstones is too old and a full listing still works`() =
         withStore { store, account ->
             store.put(write(account, "a"))
@@ -254,7 +313,8 @@ abstract class SpaceStoreContractTest {
                 }
             assertEquals(SpacePurgeResult(blobsDeleted = 1, blobsFailed = 1), failing)
             assertEquals(listOf("path/second"), deleted)
-            assertEquals(SpaceBlob("bafyfirst", "application/octet-stream", 10, "path/first"), store.getBlob(space, "bafyfirst"))
+            assertNull(store.getBlob(space, "bafyfirst"), "An unresolved deletion must not expose a usable blob")
+            assertEquals(10L, store.storedBytes(account), "Uncertain deletion still counts against quota")
             assertNull(store.getBlob(space, "bafysecond"))
 
             assertEquals(listOf("path/first"), store.purgeRecording(tombstonesBefore = later, unreferencedBlobsBefore = later))
@@ -285,7 +345,8 @@ abstract class SpaceStoreContractTest {
             assertEquals(SpacePurgeResult(blobsDeleted = 1, blobsFailed = 1), hanging)
             assertEquals(listOf("path/prompt"), deleted.toList())
             assertTrue(interrupted.await(5, TimeUnit.SECONDS), "The abandoned delete must be interrupted")
-            assertEquals(SpaceBlob("bafystuck", "application/octet-stream", 10, "path/stuck"), store.getBlob(space, "bafystuck"))
+            assertNull(store.getBlob(space, "bafystuck"), "A timed-out deletion must not expose a usable blob")
+            assertEquals(10L, store.storedBytes(account), "Uncertain deletion still counts against quota")
 
             assertEquals(listOf("path/stuck"), store.purgeRecording(tombstonesBefore = later, unreferencedBlobsBefore = later))
             assertNull(store.getBlob(space, "bafystuck"))
@@ -479,6 +540,8 @@ class PostgreSQLSpaceStoreH2Test : SpaceStoreContractTest() {
         block: suspend (SpaceStore, UUID) -> Unit,
     ) = withH2Database(
         AccountsTable,
+        IdentityAdoptionOperationsTable,
+        RetiredIdentityDidsTable,
         SpaceStatesTable,
         SpaceRecordsTable,
         SpaceRecordBlobsTable,

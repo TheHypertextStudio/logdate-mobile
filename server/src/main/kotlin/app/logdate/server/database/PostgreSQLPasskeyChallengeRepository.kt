@@ -4,6 +4,7 @@ package app.logdate.server.database
 
 import app.logdate.server.bluesky.BLUESKY_SIGN_IN_CHALLENGE_TYPE
 import app.logdate.server.bluesky.connection.ATPROTO_DISCONNECT_CHALLENGE_TYPE
+import app.logdate.server.identity.adoption.IDENTITY_ADOPTION_CHALLENGE_TYPE
 import app.logdate.server.passkeys.OAUTH_AUTHORIZATION_CHALLENGE_TYPE
 import app.logdate.server.passkeys.PasskeyChallengeRepository
 import app.logdate.shared.model.PasskeyChallenge
@@ -79,6 +80,7 @@ class PostgreSQLPasskeyChallengeRepository : PasskeyChallengeRepository {
                 OAUTH_AUTHORIZATION_CHALLENGE_TYPE,
                 BLUESKY_SIGN_IN_CHALLENGE_TYPE,
                 ATPROTO_DISCONNECT_CHALLENGE_TYPE,
+                IDENTITY_ADOPTION_CHALLENGE_TYPE,
             )
         ) {
             return type

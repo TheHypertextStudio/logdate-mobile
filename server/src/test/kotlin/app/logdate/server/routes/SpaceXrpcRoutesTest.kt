@@ -25,6 +25,7 @@ import app.logdate.server.ratelimit.RateLimitPolicy
 import app.logdate.server.routes.support.DeviceLinkTestKit
 import app.logdate.server.space.InMemorySpaceStore
 import app.logdate.server.space.SpaceBlob
+import app.logdate.server.space.SpaceBlobPurgingException
 import app.logdate.server.space.SpaceQuota
 import app.logdate.server.space.SpaceStore
 import app.logdate.server.space.SpaceUploadReservation
@@ -718,7 +719,7 @@ class SpaceXrpcRoutesTest {
             val watch = runBlocking { kit.linkWatch(env.accountId(did)) }.tokens.accessToken
             runBlocking {
                 val account = requireNotNull(env.accountRepository.findByDid(did))
-                env.accountRepository.save(account.copy(isActive = false))
+                env.accountRepository.deactivateAccount(account.id)
             }
 
             val unauthenticated = everySpaceMethod(space) { _, _ -> }
@@ -768,6 +769,35 @@ class SpaceXrpcRoutesTest {
     }
 
     @Test
+    fun `an upload waiting on object cleanup answers ServerBusy and removes its candidate`() =
+        testApplication {
+            val store =
+                object : SpaceStore by InMemorySpaceStore() {
+                    override suspend fun putBlob(
+                        accountId: java.util.UUID,
+                        space: String,
+                        blob: SpaceBlob,
+                        quota: SpaceQuota?,
+                        reservation: SpaceUploadReservation?,
+                        identityEpoch: Long,
+                    ): SpaceBlob = throw SpaceBlobPurgingException()
+                }
+            val env =
+                configureAuthV1TestApp(
+                    personalSpaceEnabled = true,
+                    spaceStore = store,
+                    spaceTransferLimits = TransferLimits(retryAfterSeconds = 7),
+                )
+            val (did, token) = env.signedInAccount("alice")
+            val response = uploadBlob(token, "at://$did/space/app.logdate.space.personal/self", ByteArray(600))
+            assertEquals(HttpStatusCode.ServiceUnavailable, response.status)
+            assertEquals("ServerBusy", response.errorCode())
+            assertEquals("7", response.headers[HttpHeaders.RetryAfter])
+            val owner = runBlocking { requireNotNull(env.accountRepository.findByDid(did)) }.id.toString()
+            assertEquals(emptyList(), env.blobStorage.listOwnerBlobPaths(java.util.UUID.fromString(owner)))
+        }
+
+    @Test
     fun `an upload whose metadata can't be stored leaves no object behind`() =
         testApplication {
             val store =
@@ -778,6 +808,7 @@ class SpaceXrpcRoutesTest {
                         blob: SpaceBlob,
                         quota: SpaceQuota?,
                         reservation: SpaceUploadReservation?,
+                        identityEpoch: Long,
                     ): SpaceBlob = error("The metadata store is down")
                 }
             val env = configureAuthV1TestApp(personalSpaceEnabled = true, spaceStore = store)
@@ -809,8 +840,9 @@ class SpaceXrpcRoutesTest {
                         blob: SpaceBlob,
                         quota: SpaceQuota?,
                         reservation: SpaceUploadReservation?,
+                        identityEpoch: Long,
                     ): SpaceBlob {
-                        val stored = saving.putBlob(accountId, space, blob, quota, reservation)
+                        val stored = saving.putBlob(accountId, space, blob, quota, reservation, identityEpoch)
                         if (failNext) {
                             failNext = false
                             throw failure
@@ -847,7 +879,7 @@ class SpaceXrpcRoutesTest {
             assertEquals(HttpStatusCode.OK, before.status)
             runBlocking {
                 val account = requireNotNull(env.accountRepository.findByDid(did))
-                env.accountRepository.save(account.copy(isActive = false))
+                env.accountRepository.deactivateAccount(account.id)
             }
             val unauthenticated = everySpaceMethod(space) { _, _ -> }
             everySpaceMethod(space) { _, _ -> bearer(token) }.forEach { (method, response) ->
@@ -1110,12 +1142,13 @@ class SpaceXrpcRoutesTest {
                         accountId: java.util.UUID,
                         bytes: Long,
                         quota: SpaceQuota,
+                        identityEpoch: Long,
                     ): SpaceUploadReservation {
                         if (!entered.isCompleted) {
                             entered.complete(Unit)
                             proceed.await()
                         }
-                        return saving.reserveUpload(accountId, bytes, quota)
+                        return saving.reserveUpload(accountId, bytes, quota, identityEpoch)
                     }
                 }
             val env =
@@ -1159,12 +1192,13 @@ class SpaceXrpcRoutesTest {
                         blob: SpaceBlob,
                         quota: SpaceQuota?,
                         reservation: SpaceUploadReservation?,
+                        identityEpoch: Long,
                     ): SpaceBlob {
                         if (failNext) {
                             failNext = false
                             error("The metadata store is down")
                         }
-                        return saving.putBlob(accountId, space, blob, quota, reservation)
+                        return saving.putBlob(accountId, space, blob, quota, reservation, identityEpoch)
                     }
                 }
             val env =

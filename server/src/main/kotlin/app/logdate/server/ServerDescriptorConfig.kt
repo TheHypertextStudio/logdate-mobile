@@ -40,6 +40,7 @@ data class ServerDescriptorConfig(
         diagnosticReportsEnabled: Boolean = false,
         blueskySignInEnabled: Boolean = false,
         atprotoConnectionEnabled: Boolean = false,
+        identityAdoptionEnabled: Boolean = false,
     ): ServerDescriptor {
         val serverOrigin = identityConfig.pdsServiceEndpoint.trimEnd('/')
         val capabilities =
@@ -82,6 +83,7 @@ data class ServerDescriptorConfig(
                     }
                     if (encryptedAccountKeysEnabled) {
                         add(ServerProtocolFeature.ENCRYPTED_ACCOUNT_KEYS_V1)
+                        if (identityAdoptionEnabled && personalSpaceEnabled) add(ServerProtocolFeature.IDENTITY_ADOPTION_V1)
                     }
                     if (personalSpaceEnabled) {
                         add(ServerProtocolFeature.PERSONAL_SPACE_V1)

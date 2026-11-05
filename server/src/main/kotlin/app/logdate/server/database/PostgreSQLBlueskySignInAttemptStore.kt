@@ -8,6 +8,11 @@ import app.logdate.server.bluesky.BlueskySignInFailure
 import app.logdate.server.bluesky.BlueskySignInFailureKind
 import app.logdate.server.bluesky.VerifiedBlueskySignIn
 import app.logdate.server.identity.AtRestKeyCipher
+import app.logdate.server.identity.adoption.IdentityAdoptionOAuthBinding
+import app.logdate.server.identity.adoption.IdentityFenceOutcome
+import app.logdate.server.identity.adoption.IdentityWriteExpectation
+import app.logdate.server.identity.adoption.IdentityWriteRefusedException
+import app.logdate.server.identity.adoption.VerifiedIdentityAdoptionOAuth
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 import studio.hypertext.atproto.identity.AtprotoDid
@@ -29,6 +34,56 @@ internal class PostgreSQLBlueskySignInAttemptStore(
     private val secrets = BlueskyOAuthSecretCodec(cipher)
     private val identifier = Regex("[A-Za-z0-9_-]{43}")
     private val proof = Regex("[A-Za-z0-9._~-]{43,128}")
+
+    override suspend fun createAdoption(
+        id: String,
+        challenge: String,
+        expiresAt: Instant,
+        binding: IdentityAdoptionOAuthBinding,
+    ) {
+        require(expiresAt <= clock.now() + 5.minutes)
+        createAttempt(id, challenge, expiresAt, binding.accountId.toString(), Purpose.ADOPTION, adoption = binding)
+    }
+
+    override suspend fun exchangeAdoption(
+        id: String,
+        verifier: String,
+        binding: IdentityAdoptionOAuthBinding,
+    ): VerifiedIdentityAdoptionOAuth? {
+        if (!identifier.matches(id) || !proof.matches(verifier)) return null
+        val key = key(id)
+        val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(hash(verifier))
+        val result =
+            source.blueskyTransaction {
+                // The original account lock precedes the attempt row. Callback checks never take this lock.
+                if (adoptionOrigin(binding, lock = true) != IdentityFenceOutcome.ALLOWED || !identityAdoptionBrowserAllows(binding)) {
+                    return@blueskyTransaction null
+                }
+                val attempt = pending(key) ?: return@blueskyTransaction null
+                if (attempt.purpose != Purpose.ADOPTION ||
+                    attempt.adoption != binding ||
+                    attempt.accountId != binding.accountId.toString() ||
+                    !MessageDigest.isEqual(challenge.encodeToByteArray(), attempt.challenge.encodeToByteArray())
+                ) {
+                    return@blueskyTransaction null
+                }
+                if (attempt.failure != null) {
+                    delete(key)
+                    return@blueskyTransaction attempt
+                }
+                if (attempt.did == null || attempt.did.toString() == binding.sourceDid) return@blueskyTransaction null
+                if (!attempt.adoptionRedeemed) {
+                    prepareStatement("UPDATE bluesky_sign_in_attempts SET encrypted_payload = ? WHERE attempt_key = ?").use {
+                        it.setString(1, encrypt(key, attempt.copy(adoptionRedeemed = true)))
+                        it.setString(2, key)
+                        check(it.executeUpdate() == 1)
+                    }
+                }
+                attempt
+            } ?: return null
+        result.failure?.let { throw BlueskySignInFailure(it) }
+        return VerifiedIdentityAdoptionOAuth(requireNotNull(result.did), binding, result.expiresAt)
+    }
 
     override suspend fun create(
         id: String,
@@ -55,13 +110,32 @@ internal class PostgreSQLBlueskySignInAttemptStore(
         accountId: String?,
         purpose: Purpose = Purpose.SIGN_IN,
         expectedDid: AtprotoDid? = null,
+        adoption: IdentityAdoptionOAuthBinding? = null,
     ) {
         require(identifier.matches(id) && identifier.matches(challenge))
         val now = clock.now()
         require(expiresAt > now && expiresAt <= now + 10.minutes)
         val key = key(id)
-        val encrypted = encrypt(key, Attempt(challenge, expiresAt, accountId, purpose = purpose, expectedDid = expectedDid))
+        val encrypted =
+            encrypt(
+                key,
+                Attempt(
+                    challenge,
+                    expiresAt,
+                    accountId,
+                    purpose = purpose,
+                    expectedDid = expectedDid,
+                    adoption = adoption,
+                ),
+            )
         source.blueskyTransaction {
+            if (purpose == Purpose.ADOPTION) {
+                val binding = requireNotNull(adoption)
+                lockIdentityAdoptionBrowserProposal(binding.proposalId)
+                val outcome = adoptionOrigin(binding, lock = true)
+                if (outcome != IdentityFenceOutcome.ALLOWED) throw IdentityWriteRefusedException(outcome)
+                registerIdentityAdoptionBrowser(binding, key, challenge, now, expiresAt)
+            }
             prepareStatement("DELETE FROM bluesky_sign_in_attempts WHERE expires_at <= ?").use {
                 it.setTimestamp(1, now.timestamp())
                 it.executeUpdate()
@@ -86,6 +160,16 @@ internal class PostgreSQLBlueskySignInAttemptStore(
             if (attempt.did != null || attempt.failure != null) return@blueskyTransaction false
             if (attempt.purpose == Purpose.RECONNECT && (attempt.expectedDid != did || !ownsReconnect(attempt))) {
                 return@blueskyTransaction false
+            }
+            if (attempt.purpose == Purpose.ADOPTION) {
+                val origin = attempt.adoption ?: return@blueskyTransaction false
+                if (attempt.accountId != origin.accountId.toString() ||
+                    did.toString() == origin.sourceDid ||
+                    !identityAdoptionBrowserAllows(origin) ||
+                    adoptionOrigin(origin, lock = false) != IdentityFenceOutcome.ALLOWED
+                ) {
+                    return@blueskyTransaction false
+                }
             }
             val exchangeDeadline = clock.now() + 5.minutes
             prepareStatement("UPDATE bluesky_sign_in_attempts SET encrypted_payload = ?, expires_at = ? WHERE attempt_key = ?").use {
@@ -172,6 +256,34 @@ internal class PostgreSQLBlueskySignInAttemptStore(
         }
     }
 
+    private fun Connection.adoptionOrigin(
+        binding: IdentityAdoptionOAuthBinding,
+        lock: Boolean,
+    ): IdentityFenceOutcome {
+        if (binding.sourceEpoch < 0 ||
+            binding.sourceEpoch == Long.MAX_VALUE ||
+            binding.deviceId.isBlank() ||
+            binding.deviceId.encodeToByteArray().size > 128 ||
+            binding.deviceId.any { it.isISOControl() } ||
+            AtprotoDid.parse(binding.sourceDid).isFailure
+        ) {
+            return IdentityFenceOutcome.CHANGED
+        }
+        if (lock) {
+            val outcome =
+                PostgreSQLAccountIdentityFence(this).lockAndCheck(
+                    IdentityWriteExpectation(binding.accountId, binding.sourceEpoch),
+                    clock.now(),
+                )
+            if (outcome != IdentityFenceOutcome.ALLOWED) return outcome
+        }
+        return if (identityAdoptionSourceEligible(binding.accountId, binding.sourceDid, binding.sourceEpoch)) {
+            IdentityFenceOutcome.ALLOWED
+        } else {
+            IdentityFenceOutcome.CHANGED
+        }
+    }
+
     private fun Connection.pending(key: String): Attempt? {
         val encrypted =
             prepareStatement("SELECT encrypted_payload FROM bluesky_sign_in_attempts WHERE attempt_key = ? FOR UPDATE").use {
@@ -204,7 +316,7 @@ internal class PostgreSQLBlueskySignInAttemptStore(
     private fun key(id: String) = HexFormat.of().formatHex(hash(id))
 
     @Serializable
-    private enum class Purpose { SIGN_IN, RECONNECT }
+    private enum class Purpose { SIGN_IN, RECONNECT, ADOPTION }
 
     @Serializable
     private data class Attempt(
@@ -217,5 +329,9 @@ internal class PostgreSQLBlueskySignInAttemptStore(
         val purpose: Purpose = Purpose.SIGN_IN,
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val expectedDid: AtprotoDid? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val adoption: IdentityAdoptionOAuthBinding? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val adoptionRedeemed: Boolean = false,
     )
 }

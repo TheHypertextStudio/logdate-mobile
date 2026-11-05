@@ -31,7 +31,7 @@ class PostgreSQLHostedPlcOperationRepositoryTest {
     @Test
     fun `postgres hosted plc operation repository stores and queries history`() =
         kotlinx.coroutines.test.runTest {
-            withH2Database(AccountsTable, HostedPlcOperationsTable) {
+            withH2Database(AccountsTable, HostedPlcOperationsTable, IdentityPublicationAttemptsTable) {
                 val repository = PostgreSQLHostedPlcOperationRepository()
                 val accountId = Uuid.random()
                 val did = "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
@@ -92,7 +92,7 @@ class PostgreSQLHostedPlcOperationRepositoryTest {
     @Test
     fun `a second operation on the same head is refused as a conflict`() =
         kotlinx.coroutines.test.runTest {
-            withH2Database(AccountsTable, HostedPlcOperationsTable) {
+            withH2Database(AccountsTable, HostedPlcOperationsTable, IdentityPublicationAttemptsTable) {
                 val repository = PostgreSQLHostedPlcOperationRepository()
                 val accountId = Uuid.random()
                 val did = "did:plc:ewvi7nxzyoun6zhxrhs64oiz"

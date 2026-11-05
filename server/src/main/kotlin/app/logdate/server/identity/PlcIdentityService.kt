@@ -73,22 +73,37 @@ class PlcIdentityService(
         val signedOperation = unsignedOperation.signed(signature)
         val did = PlcEncoding.deriveDid(signedOperation)
 
-        if (config.publishHostedPlcOperations) {
-            submitToDirectory(requireNotNull(plcDirectoryClient), did, signedOperation)
-        }
-        persistHostedOperation(
-            accountId = accountId,
-            did = did,
-            operation = signedOperation,
-            resolvedCid = confirmPublishedCid(did, signedOperation),
-        )
+        val candidate =
+            StoredHostedPlcOperation(
+                Uuid.random(),
+                accountId,
+                did.toString(),
+                PlcEncoding.operationCid(signedOperation),
+                operationType = signedOperation.type,
+                operationJson = json.encodeToString(PlcOperation.serializer(), signedOperation),
+                publicationAttempted = false,
+            )
+        val selected = hostedPlcOperationRepository?.claimGenesis(candidate) ?: candidate
+        val identity = provisionedIdentity(selected, activeKey)
+        return identity
+    }
 
-        return ProvisionedPlcIdentity(
-            did = did.toString(),
-            publicKeyMultibase = activeKey.publicKeyMultibase,
-            publicKeyDidKey = publicKeyDidKey,
-            operation = signedOperation,
-        )
+    private fun provisionedIdentity(
+        stored: StoredHostedPlcOperation,
+        activeKey: StoredSigningKey,
+    ): ProvisionedPlcIdentity {
+        val operation = storedGenesisOperation(stored)
+        if (operation.verificationMethods["atproto"] != didKeyFor(activeKey.publicKeyMultibase)) {
+            throw IdentityLifecycleConflictException("Hosted signing authority needs reconciliation")
+        }
+        val handle =
+            operation.alsoKnownAs
+                .singleOrNull()
+                ?.takeIf { it.startsWith("at://") }
+                ?.removePrefix("at://")
+                ?.let { Handle.parse(it).getOrNull()?.toString() }
+                ?: throw IdentityLifecycleConflictException("Hosted identity metadata needs reconciliation")
+        return ProvisionedPlcIdentity(stored.did, activeKey.publicKeyMultibase, didKeyFor(activeKey.publicKeyMultibase), operation, handle)
     }
 
     /**
@@ -164,7 +179,7 @@ class PlcIdentityService(
                 ),
             )
 
-        submitToDirectory(plcClient, did, signedOperation)
+        submitToDirectory(accountId, plcClient, did, signedOperation)
         persistHostedOperation(
             accountId = accountId,
             did = did,
@@ -239,13 +254,16 @@ class PlcIdentityService(
         val plcClient = plcDirectoryClient ?: throw IdentityLifecycleConflictException("PLC publishing requires a PLC directory client")
         val did = AtprotoDid.require(stored.did)
         val operation = storedGenesisOperation(stored)
-        submitToDirectory(plcClient, did, operation)
+        if (hostedPlcOperationRepository?.markPublicationAttempted(stored.id, stored.identityEpoch) != true) {
+            throw IdentityLifecycleConflictException("Publication attempt history could not be recorded")
+        }
+        submitToDirectory(stored.accountId, plcClient, did, operation, stored.identityEpoch)
         val cid =
             directoryCid(did, operation)
                 ?: throw PlcPublicationUnconfirmedException(
                     "The PLC directory accepted the genesis operation for $did but its audit log does not show it",
                 )
-        hostedPlcOperationRepository?.recordPublishedCid(stored.id, cid)
+        hostedPlcOperationRepository.recordPublishedCid(stored.id, cid, stored.identityEpoch)
         return cid
     }
 
@@ -433,7 +451,7 @@ class PlcIdentityService(
     ) {
         val plcClient = plcDirectoryClient
         if (config.publishHostedPlcOperations && plcClient != null) {
-            submitToDirectory(plcClient, did, operation)
+            submitToDirectory(accountId, plcClient, did, operation)
         }
         try {
             persistHostedOperation(
@@ -456,10 +474,15 @@ class PlcIdentityService(
      * successes and failures stay countable in production logs.
      */
     private suspend fun submitToDirectory(
+        accountId: Uuid,
         plcClient: PlcDirectoryClient,
         did: AtprotoDid,
         operation: PlcOperation,
+        identityEpoch: Long = 0,
     ) {
+        if (hostedPlcOperationRepository?.beginPublicationAttempt(accountId, did.toString(), identityEpoch) != true) {
+            throw IdentityLifecycleConflictException("Publication attempt history could not be recorded")
+        }
         plcClient
             .submit(did, operation)
             .onFailure { failure -> Napier.e(IdentityPublishingNotices.forSubmitFailure(failure), failure) }
@@ -511,6 +534,7 @@ class PlcIdentityService(
                 operationType = operation.type,
                 operationJson = json.encodeToString(PlcOperation.serializer(), operation),
                 createdAt = Clock.System.now(),
+                publicationAttempted = config.publishHostedPlcOperations,
             ),
         )
     }

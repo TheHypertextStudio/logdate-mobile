@@ -1,141 +1,65 @@
 # Identity publishing
 
-Every LogDate account has an AT Protocol identity, made of a handle such as `alice.logdate.app` and
-a permanent identifier called a DID. Identity publishing is the step that sends those identities to
-the public PLC directory, where every other AT Protocol app can look them up. This page explains
-what an identity is made of, why publishing one cannot be undone, which safeguards LogDate wants in
-place before it publishes, and how the publishing command sorts identities so that it can run safely
-more than once. The [identity publishing runbook](../runbook/identity-publishing.md) lists the steps
-an operator follows, and the [identity publishing reference](../reference/identity-publishing.md)
-lists the command's options, states, exit codes and log codes.
+LogDate identities are private by default. Publishing is a separate, explicit choice
+by the person who owns an identity. Sign-up, passkey sign-in, journal sync, account
+recovery and identity adoption do not grant permission to publish.
 
-## Identities and the PLC directory
+An identity published to the PLC directory becomes part of its public history.
+Removing an app or closing a LogDate account cannot erase that history. The review
+must explain this before the person authorizes an exact operation.
 
-Suppose Alice signs up for LogDate. The server gives her the handle `alice.logdate.app` and a DID
-such as `did:plc:ewvi7nxzyoun6zhxrhs64oiz`. A `did:plc` identity is defined by a chain of signed
-operations. The first one, the genesis operation, names her handle, the address of the server that
-hosts her data (her PDS), the key that signs her data, and the rotation keys that may sign later
-operations. The DID is a hash of that genesis operation, so it cannot be changed without becoming a
-different identity.
+## Private accounts
 
-LogDate signs each account's genesis operation the first time the account needs an identity,
-usually at sign-up, and stores it in its own hosted operation log. Another app, such as Bluesky,
-cannot read that log. It asks the public directory at `https://plc.directory`, and until Alice's
-operations are in the directory nobody outside LogDate can resolve her identity or use her account
-anywhere else.
+A private LogDate account can use its journal and account recovery without making
+its identity discoverable to other AT Protocol apps. Handle resolution, DID
+responses, repository listings and announcements must honor the same private state.
+A private repository is never made public as a side effect of publishing identity
+metadata. Private journal records and media stay in authenticated private storage.
 
-## The publishing setting
+## Existing Atmosphere identities
 
-Whether stored operations are sent depends on the server setting `ATPROTO_PLC_PUBLISH_ENABLED`. While
-it is off, which is the default, operations are signed and stored but never sent, and the server
-refuses identity changes that need the directory, such as rotating a signing key. While it is on,
-new identities are sent as they are created, and the server tells apps it supports directory
-changes by advertising the `atprotoPlcPublishingV1` protocol feature.
+Someone with an existing Atmosphere identity adopts that DID instead of publishing
+a second identity. Adoption preserves the LogDate account and its keys, devices and
+journal while retiring its unpublished DID. The existing PDS remains in place;
+changing PDS is an optional, separately reviewed operation.
 
-Turning the setting on affects only identities created from then on. Alice's identity, created a
-year earlier while publishing was off, stays in the hosted log until something sends it. That is the
-job of the publishing command, which also fills the gap for accounts that were created before
-LogDate supported identities at all.
+An externally hosted DID may already be public. Signing in with it does not permit
+LogDate to publish journal records, change its DID document, register a recovery key
+or replace its hosting provider. External authorization ending must leave the local
+journal available. See the [adoption design](../superpowers/specs/2026-10-28-existing-atmosphere-identity-adoption-design.md).
 
-## Why publishing cannot be undone
+## Publishing an unpublished LogDate identity
 
-The PLC directory only ever adds to an identity's history, and nothing can delete an identity or an
-operation from it. A rotation key that is listed earlier than the key that signed an operation can
-replace that operation within 72 hours of the directory accepting it, and after that the operation
-is permanent. A tombstone operation deactivates an identity for good: the DID stays in the directory,
-marked as deactivated, and can never be used again.
+The existing native Account surface should offer an explicit review, outside
+sign-up. It identifies the exact DID, handle, PDS address and public key changes;
+explains the permanent public history; and requires a fresh passkey confirmation.
+A durable per-person consent record must bind those reviewed values to one operation.
+An operator flag, a deployment or an earlier sign-in is not that consent.
 
-A mistake in what gets published therefore stays visible to the whole network. If Alice's identity
-went out with the wrong PDS address, the best repair is a corrected operation on top of it. If an
-identity went out for an account that should never have had one, such as a test account, nothing
-removes it. This is why LogDate lets only production publish, why the command asks the operator to
-type the directory it is writing to, and why a run stops at its first failure by default.
+The [opt-in design](../superpowers/specs/2026-10-30-identity-publication-opt-in-design.md)
+defines the intended flow and verification requirements. It is a design, not an
+implemented publication capability or permission to perform a real publication.
 
-## Safeguards before publishing
+## Recovery keys
 
-Publishing makes every account a public identity, and an identity in the public directory invites
-other services to read the account's public repository, to resolve its handle, and to trust the
-operations that control it. LogDate therefore wants eight safeguards confirmed on production before
-it turns publishing on.
+Offering an independently held recovery key is a separate action. For an adopted
+identity, LogDate must inspect the provider's current management requirements,
+request the narrow authorization needed for that operation, show the exact proposed
+key and priority changes, and preserve the current handle, PDS and repository key.
+Declining recovery-key registration cannot undo adoption or prevent journal access.
 
-Private data has to stay private. Publishing invites other services to read an account's public
-repository, so the endpoints that return repositories, records and blobs must still refuse a request
-without a session. LogDate's journal entries are stored in that repository, and a missing check would
-turn an account's identity into a way to read its journal.
+The recovery phrase and private key stay on the device. Registering its public key
+on an already public identity changes public AT Protocol data and requires explicit
+publication authorization, followed by independent directory readback.
 
-Signing keys and sessions need secrets of their own. Each account's signing key is what proves its
-operations and commits, and it is encrypted with a key-encryption key that is separate from the secret
-that signs ordinary sessions. If those secrets were the same, one leaked secret would let someone sign
-sessions and decrypt every account's key, and the server therefore refuses to start in production
-unless they differ.
+## Legacy operator tooling
 
-The OAuth signing key has to survive restarts. Other AT Protocol apps fetch the key that verifies
-LogDate's access tokens, and a key that changed at every restart would make every token those apps
-hold fail at once.
+The checkout retains an older bulk publishing command and its
+[technical reference](../reference/identity-publishing.md). Its automatic publication
+setting and all-account publishing workflow predate the per-person opt-in decision.
+They must not be used to publish production identities. In particular, keep
+`ATPROTO_PLC_PUBLISH_ENABLED` disabled; shipping it would enable the wrong model.
 
-Handle resolution has to work as well. Another app trusts a handle only when the domain points at the
-DID and the DID points back at the domain, so once an identity is public, a handle that does not
-resolve shows as unverified in every other app. The
-[handle resolution explanation](handle-resolution.md) describes both halves.
-
-People need to be able to hold their own recovery key. Without one, LogDate's key is the only
-rotation key, and whoever controls LogDate's servers controls every identity. A recovery key that
-only the person holds is listed ahead of LogDate's key, so it can overrule LogDate within the
-directory's 72-hour window. The key is derived from the person's recovery phrase, and registering,
-replacing or using it needs a fresh passkey confirmation.
-
-Nobody has to open or save the recovery phrase for this. The app already holds the phrase, so it
-registers the key by itself. A passkey sign-in or sign-up hands the app a step-up grant, which is
-the server's proof that the person confirmed with a passkey a moment ago. The grant lasts five
-minutes, works once, and is accepted only for registering the first recovery key, so the person
-never sees a second prompt. Replacing a key or using it always asks for the passkey again. When no
-grant is available, the Account screen says that one passkey confirmation is still needed.
-
-Sign-in has to be passkey-only. An identity that other apps can reach must not be protectable by a
-password that someone could guess or reuse, so the server's `createSession` and `createAccount`
-endpoints refuse passwords, even for an account that once had one.
-
-The public repository has to follow the specification. Relays and other services read an account's
-repository commits and reject any that deviate from the format, so a repository that works inside
-LogDate but fails the reference implementation would be broken for everyone else. LogDate checks its
-repository exports with the reference `@atproto/repo` library in its tests, and an operator repeats
-that check against a real account before publishing.
-
-The PLC operations themselves have to be valid. The directory refuses an operation whose signature is
-not the low-S form, which is the single canonical signature the protocol allows, or that is not
-signed by a rotation key of the previous operation. LogDate rejects such operations before storing
-them, computes each operation's CID locally in the same way the directory does, and makes the
-device check what a recovery key is about to sign. The rehearsal sends real operations to the
-reference directory, so a passing rehearsal on the deployed commit shows that LogDate's operations
-are ones the directory accepts.
-
-## How the command stays safe to repeat
-
-The publishing command compares each account with the directory before it does anything, and it
-sorts the account into a state. An account whose identity the directory already has is only compared,
-so running the command twice sends nothing the second time. An account whose genesis operation was
-sent but whose CID was never recorded, because an earlier run stopped in between, is recorded
-without sending again. An account whose directory copy differs from what LogDate serves is reported
-as a mismatch and left alone unless the operator asks for a reconcile, because correcting it
-publishes a new operation that cannot be removed. An account whose owner took control of the
-identity with their own rotation key is never touched, because overriding that choice would defeat
-the point of the recovery key.
-
-Several accounts need a person rather than a command: an account with a DID but no stored genesis
-operation, an account with no handle, and an identity the directory reports as deactivated. The
-command lists them and does nothing for them, so the operator decides what each one means before the
-run continues.
-
-The command writes only counts and approved codes to production logs, because production logs
-carry nothing that identifies an account. When an operator needs to know which accounts failed, the
-command's report file names them, and only its owner can read that file.
-
-## Rehearsal
-
-Because publishing is irreversible, LogDate rehearses it on one machine first. The rehearsal starts
-a throwaway database, the reference PLC directory (the software that runs `plc.directory`), and a
-LogDate server built from the checkout, all on loopback addresses. It then follows the runbook's
-procedure with test accounts, including a deliberate bad publish and its recovery, and it refuses to
-talk to any address that is not on the machine. What the rehearsal cannot show is the state of
-production itself, which is why the runbook has separate steps for checking production before
-anything is sent.
+The [runbook](../runbook/identity-publishing.md) describes the current operational
+boundary. A successful loopback rehearsal proves mechanics only. It does not prove
+consent, production privacy, provider compatibility or readiness to publish.

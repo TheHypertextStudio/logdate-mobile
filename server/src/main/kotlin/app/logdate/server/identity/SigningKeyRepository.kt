@@ -19,20 +19,36 @@ data class StoredSigningKey(
 
 @OptIn(ExperimentalUuidApi::class)
 interface SigningKeyRepository : EncryptedPrivateKeyStore {
-    suspend fun save(signingKey: StoredSigningKey): StoredSigningKey
+    /** A missing originating epoch means zero; it cannot write after authority advances. */
+    suspend fun save(
+        signingKey: StoredSigningKey,
+        identityEpoch: Long = 0,
+    ): StoredSigningKey
+
+    /** Atomically keeps the existing sole active key or stores this first candidate. */
+    suspend fun createActiveKeyIfMissing(
+        signingKey: StoredSigningKey,
+        identityEpoch: Long = 0,
+    ): StoredSigningKey
 
     suspend fun findActiveByAccountId(accountId: Uuid): StoredSigningKey?
 
-    suspend fun revokeActiveKeys(accountId: Uuid): Int
+    suspend fun revokeActiveKeys(
+        accountId: Uuid,
+        identityEpoch: Long = 0,
+    ): Int
 
     /**
      * Revokes the account's active keys and stores [signingKey] as its only active key. The
      * PostgreSQL repository does both in one transaction, so a failure never leaves the account
      * without an active key.
      */
-    suspend fun replaceActiveKey(signingKey: StoredSigningKey): StoredSigningKey {
-        revokeActiveKeys(signingKey.accountId)
-        return save(signingKey)
+    suspend fun replaceActiveKey(
+        signingKey: StoredSigningKey,
+        identityEpoch: Long = 0,
+    ): StoredSigningKey {
+        revokeActiveKeys(signingKey.accountId, identityEpoch)
+        return save(signingKey, identityEpoch)
     }
 }
 
@@ -40,37 +56,67 @@ interface SigningKeyRepository : EncryptedPrivateKeyStore {
 class InMemorySigningKeyRepository : SigningKeyRepository {
     private val keysById = linkedMapOf<Uuid, StoredSigningKey>()
 
-    override suspend fun save(signingKey: StoredSigningKey): StoredSigningKey {
-        keysById[signingKey.id] = signingKey
-        return signingKey
-    }
-
-    override suspend fun findActiveByAccountId(accountId: Uuid): StoredSigningKey? =
-        keysById.values
-            .filter { it.accountId == accountId && it.revokedAt == null }
-            .maxByOrNull(StoredSigningKey::createdAt)
-
-    override suspend fun revokeActiveKeys(accountId: Uuid): Int {
-        val revokedAt = Clock.System.now()
-        val activeKeys = keysById.values.filter { it.accountId == accountId && it.revokedAt == null }
-        activeKeys.forEach { key ->
-            keysById[key.id] = key.copy(revokedAt = revokedAt)
+    override suspend fun save(
+        signingKey: StoredSigningKey,
+        identityEpoch: Long,
+    ): StoredSigningKey =
+        synchronized(keysById) {
+            keysById[signingKey.id] = signingKey
+            signingKey
         }
-        return activeKeys.size
+
+    override suspend fun createActiveKeyIfMissing(
+        signingKey: StoredSigningKey,
+        identityEpoch: Long,
+    ): StoredSigningKey =
+        synchronized(keysById) {
+            require(signingKey.revokedAt == null)
+            activeKey(signingKey.accountId) ?: signingKey.also { keysById[it.id] = it }
+        }
+
+    override suspend fun findActiveByAccountId(accountId: Uuid): StoredSigningKey? = synchronized(keysById) { activeKey(accountId) }
+
+    private fun activeKey(accountId: Uuid): StoredSigningKey? {
+        val active = keysById.values.filter { it.accountId == accountId && it.revokedAt == null }
+        if (active.size > 1) throw IdentityLifecycleConflictException("Active signing keys need reconciliation")
+        return active.singleOrNull()
     }
+
+    override suspend fun revokeActiveKeys(
+        accountId: Uuid,
+        identityEpoch: Long,
+    ): Int = synchronized(keysById) { revokeLocked(accountId) }
+
+    private fun revokeLocked(accountId: Uuid): Int {
+        val revokedAt = Clock.System.now()
+        val active = keysById.values.filter { it.accountId == accountId && it.revokedAt == null }
+        active.forEach { keysById[it.id] = it.copy(revokedAt = revokedAt) }
+        return active.size
+    }
+
+    override suspend fun replaceActiveKey(
+        signingKey: StoredSigningKey,
+        identityEpoch: Long,
+    ): StoredSigningKey =
+        synchronized(keysById) {
+            revokeLocked(signingKey.accountId)
+            keysById[signingKey.id] = signingKey
+            signingKey
+        }
 
     override suspend fun encryptedPrivateKeys(): List<EncryptedPrivateKey> =
-        keysById.values
-            .filter { it.revokedAt == null }
-            .map { EncryptedPrivateKey(id = it.id.toString(), privateKeyEncrypted = it.privateKeyEncrypted) }
+        synchronized(keysById) {
+            keysById.values.filter { it.revokedAt == null }.map { EncryptedPrivateKey(it.id.toString(), it.privateKeyEncrypted) }
+        }
 
     override suspend fun replaceEncryptedPrivateKey(
         id: String,
         expected: String,
         replacement: String,
-    ): Boolean {
-        val key = keysById[Uuid.parse(id)]?.takeIf { it.privateKeyEncrypted == expected } ?: return false
-        keysById[key.id] = key.copy(privateKeyEncrypted = replacement)
-        return true
-    }
+    ): Boolean =
+        synchronized(keysById) {
+            val key = keysById[Uuid.parse(id)]?.takeIf { it.privateKeyEncrypted == expected } ?: return@synchronized false
+            keysById[key.id] = key.copy(privateKeyEncrypted = replacement)
+            true
+        }
 }

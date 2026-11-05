@@ -22,6 +22,27 @@ import kotlin.uuid.Uuid
 
 class PostgreSQLAccountCredentialMutationLockTest {
     @Test
+    fun `provider work retains account coordination without an open database transaction`() =
+        withBlueskyOAuthDatabase { source ->
+            PostgreSQLAccountCredentialMutationLock(source).withLock(Uuid.random()) {
+                source.connection.use { observer ->
+                    observer
+                        .prepareStatement(
+                            "SELECT COUNT(*) FROM pg_stat_activity a WHERE a.datname = current_database() " +
+                                "AND a.pid <> pg_backend_pid() AND a.xact_start IS NOT NULL " +
+                                "AND EXISTS(SELECT 1 FROM pg_locks l WHERE l.pid = a.pid " +
+                                "AND l.locktype = 'advisory' AND l.granted)",
+                        ).use { statement ->
+                            statement.executeQuery().use { rows ->
+                                rows.next()
+                                assertEquals(0, rows.getInt(1), "Provider work must not retain an idle database transaction")
+                            }
+                        }
+                }
+            }
+        }
+
+    @Test
     fun `a cancelled waiter never enters the operation or leaves a stuck local lock`() =
         withBlueskyOAuthDatabase { source ->
             val one = PostgreSQLAccountCredentialMutationLock(source)

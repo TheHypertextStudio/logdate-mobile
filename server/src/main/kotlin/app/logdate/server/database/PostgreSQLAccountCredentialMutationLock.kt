@@ -37,24 +37,26 @@ internal class PostgreSQLAccountCredentialMutationLock(
     ): T =
         withContext(Dispatchers.IO) {
             source.connection.use { connection ->
-                connection.autoCommit = false
+                connection.autoCommit = true
+                val digest =
+                    MessageDigest
+                        .getInstance("SHA-256")
+                        .digest("logdate:account-credential-mutation:$accountId".encodeToByteArray())
+                val key = ByteBuffer.wrap(digest).long
+                var acquired = false
                 var failure: Throwable? = null
                 try {
-                    val digest =
-                        MessageDigest
-                            .getInstance("SHA-256")
-                            .digest("logdate:account-credential-mutation:$accountId".encodeToByteArray())
-                    val key = ByteBuffer.wrap(digest).long
                     withTimeout(10_000) {
                         while (!tryLock(connection, key)) delay(50)
                     }
+                    acquired = true
                     currentCoroutineContext().ensureActive()
                     block()
                 } catch (problem: Throwable) {
                     failure = problem
                     throw problem
                 } finally {
-                    withContext(NonCancellable) { release(connection, failure) }
+                    withContext(NonCancellable) { release(connection, key, acquired, failure) }
                 }
             }
         }
@@ -63,7 +65,7 @@ internal class PostgreSQLAccountCredentialMutationLock(
         connection: Connection,
         key: Long,
     ): Boolean =
-        connection.prepareStatement("SELECT pg_try_advisory_xact_lock(?)").use {
+        connection.prepareStatement("SELECT pg_try_advisory_lock(?)").use {
             it.queryTimeout = 2
             it.setLong(1, key)
             it.executeQuery().use { rows ->
@@ -74,10 +76,19 @@ internal class PostgreSQLAccountCredentialMutationLock(
 
     private fun release(
         connection: Connection,
+        key: Long,
+        acquired: Boolean,
         failure: Throwable?,
     ) {
         try {
-            connection.rollback()
+            connection.prepareStatement("SELECT pg_advisory_unlock(?)").use {
+                it.queryTimeout = 2
+                it.setLong(1, key)
+                it.executeQuery().use { rows ->
+                    check(rows.next())
+                    check(rows.getBoolean(1) || !acquired) { "Account coordination lock was lost" }
+                }
+            }
         } catch (problem: Throwable) {
             try {
                 connection.abort { it.run() }

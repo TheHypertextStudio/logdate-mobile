@@ -2,6 +2,8 @@
 
 package app.logdate.server.sync
 
+import app.logdate.server.database.requireLegacyCollectionWrite
+import app.logdate.server.migration.SpaceMigrationConfig
 import app.logdate.shared.model.sync.DeviceId
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -12,13 +14,17 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 
 internal fun dbUpsertJournal(
     userId: UUID,
     record: JournalRecord,
+    migrationConfig: SpaceMigrationConfig,
+    clock: Clock,
 ): JournalRecord =
     transaction {
+        requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
         val existing =
             JournalSyncTable
                 .selectAll()
@@ -76,8 +82,11 @@ internal fun dbDeleteJournal(
     userId: UUID,
     id: String,
     deletedAt: Long,
+    migrationConfig: SpaceMigrationConfig,
+    clock: Clock,
 ) {
     transaction {
+        requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
         val existing =
             JournalSyncTable
                 .selectAll()

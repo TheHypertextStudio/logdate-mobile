@@ -22,6 +22,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
@@ -192,7 +193,9 @@ class RecoveryKeySafeguardsTest {
             val account = world.registeredAccount(key)
             val prepared = world.identity.prepareRecovery(account)
             val stored = world.accountRepository.findById(account.id)!!
-            world.accountRepository.save(stored.copy(handle = "renamed.logdate.app"))
+            assertNotNull(
+                world.accountRepository.updateIdentityIfUnchanged(stored, stored.copy(handle = "renamed.logdate.app")),
+            )
 
             val refused =
                 assertFailsWith<IdentityLifecycleConflictException> {
@@ -419,12 +422,15 @@ class RecoveryKeySafeguardsTest {
     ) : SigningKeyRepository by delegate {
         var failNextActivation = false
 
-        override suspend fun replaceActiveKey(signingKey: StoredSigningKey): StoredSigningKey {
+        override suspend fun replaceActiveKey(
+            signingKey: StoredSigningKey,
+            identityEpoch: Long,
+        ): StoredSigningKey {
             if (failNextActivation) {
                 failNextActivation = false
                 throw IllegalStateException("The database went away")
             }
-            return delegate.replaceActiveKey(signingKey)
+            return delegate.replaceActiveKey(signingKey, identityEpoch)
         }
     }
 

@@ -129,9 +129,9 @@ private fun isPublishSubcommand(subcommand: String): Boolean =
 /**
  * Returns the notice explaining why [invocation] must not run against [config], or null when it may.
  *
- * Reading is always allowed. Writing needs publishing switched on for the server
- * (`ATPROTO_PLC_PUBLISH_ENABLED=true`) and the operator to name the directory being written to
- * with `--confirm-directory`, so a run can never reach a directory nobody meant to touch.
+ * Reading is always allowed. The legacy environment switch cannot grant write authority.
+ * Any separately authorized writer must also name the exact directory with `--confirm-directory`.
+ * Operator confirmation alone does not satisfy individual account consent.
  */
 fun identityPublishingRefusal(
     invocation: IdentityPublishingInvocation,

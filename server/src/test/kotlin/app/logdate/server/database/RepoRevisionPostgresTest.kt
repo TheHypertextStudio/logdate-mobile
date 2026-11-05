@@ -1,5 +1,6 @@
 package app.logdate.server.database
 
+import app.logdate.server.database.support.createTestAccount
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
@@ -15,6 +16,7 @@ import studio.hypertext.atproto.repo.RepoRecordId
 import studio.hypertext.atproto.syntax.Nsid
 import studio.hypertext.atproto.syntax.RecordKey
 import studio.hypertext.atproto.syntax.Tid
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -40,18 +42,22 @@ class RepoRevisionPostgresTest {
             val source = DatabaseConfig.createDataSource(databaseUrl = url, username = null, password = null) as HikariDataSource
             val repo = AtprotoDid.require("did:plc:" + Tid.fromInstant(Clock.System.now()).value + "aaaaaaaaaaa")
             val blockStore = PostgreSQLRepoBlockStore()
+            val owner = UUID.randomUUID()
             try {
                 TransactionManager.defaultDatabase = DatabaseConfig.initializeDatabase(source, autoMigrate = true)
+                createTestAccount(owner, repo.toString())
                 // A clock at the Unix epoch gives revisions 0, 1, 2: the counter values that
                 // repositories carry from before revisions were TIDs.
                 val legacy = DefaultRepoEngine(blockStore, FixedClock(Instant.fromEpochSeconds(0)))
-                repeat(3) { index -> legacy.putRecord(record(repo, "legacy-$index"), value("legacy")).getOrThrow() }
+                repeat(3) { index ->
+                    blockStore.write(owner) { legacy.putRecord(record(repo, "legacy-$index"), value("legacy")).getOrThrow() }
+                }
                 val legacyRevisions = blockStore.listCommits(repo).getOrThrow().map { it.commit.revision }
                 assertEquals(listOf(0L, 1L, 2L), legacyRevisions)
 
                 val now = Clock.System.now()
                 val engine = DefaultRepoEngine(blockStore, FixedClock(now))
-                engine.putRecord(record(repo, "current"), value("current")).getOrThrow()
+                blockStore.write(owner) { engine.putRecord(record(repo, "current"), value("current")).getOrThrow() }
 
                 val head = assertNotNull(blockStore.readHead(repo).getOrThrow())
                 assertEquals(Tid.fromInstant(now), Tid.fromLong(head.revision))
@@ -64,7 +70,8 @@ class RepoRevisionPostgresTest {
                 }
                 assertTrue(archive.blocks.any { it.cid == head.commitCid })
             } finally {
-                blockStore.clearRepo(repo).getOrThrow()
+                blockStore.write(owner) { blockStore.clearRepo(repo).getOrThrow() }
+                deleteTestAccountRow(owner)
                 source.close()
                 TransactionManager.defaultDatabase = previous
             }

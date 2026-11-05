@@ -38,6 +38,7 @@ internal class BlueskyOAuthRuntime(
     private val lockSource: HikariDataSource,
     val connection: AtprotoConnectionRuntime? = null,
     val sessionLock: OAuthSessionLock,
+    val attempts: BlueskySignInAttemptStore? = null,
 ) : AutoCloseable {
     private val closed = AtomicBoolean()
 
@@ -154,6 +155,7 @@ private fun createBlueskyServices(
                 null
             },
             sessionLock,
+            attempts,
         )
     } catch (failure: Throwable) {
         client.close()

@@ -18,8 +18,8 @@ interface AccountRepository {
      * whatever [Account.storageMode] the caller holds: only [updateStorageModeIfUnchanged] does, so a
      * save of an account read before its mode changed can't undo the change, and a mode a newer
      * server wrote is never overwritten.
-     * Updates also preserve [Account.publicIdentityDid] and [Account.identityKind]. For external or unknown
-     * kinds they preserve all identity fields: a profile save cannot change the owning DID or grant hosted keys.
+     * Updates preserve activation, moderation, publication consent, identity kind and epoch, and all
+     * identity authority fields. Only [updateIdentityIfUnchanged] changes hosted identity authority.
      */
     suspend fun save(account: Account): Account
 
@@ -101,23 +101,19 @@ interface AccountRepository {
      * first. It never inserts, so it cannot bring back a deleted account, and it leaves every other
      * column alone.
      *
-     * This default reads and then saves. The PostgreSQL repository overrides it with one
-     * conditional `UPDATE`, which is what keeps two server instances from both assigning a DID.
+     * Implementations must check identity epoch, account standing and any adoption hold atomically
+     * with the write. A read followed by [save] cannot implement this operation.
      */
     suspend fun updateIdentityIfUnchanged(
         expected: Account,
         updated: Account,
-    ): Account? {
-        val current = findById(expected.id) ?: return null
-        if (current.identityKind != AccountIdentityKind.HOSTED || updated.identityKind != AccountIdentityKind.HOSTED) return null
-        if (!current.hasSameIdentityAs(expected)) return null
-        return save(current.withIdentityOf(updated))
-    }
+    ): Account?
 }
 
 /** True when both accounts store the same handle, DID, signing key and PLC recovery key. */
 fun Account.hasSameIdentityAs(other: Account): Boolean =
     identityKind == other.identityKind &&
+        identityEpoch == other.identityEpoch &&
         handle == other.handle &&
         did == other.did &&
         signingKeyPublic == other.signingKeyPublic &&
@@ -138,6 +134,7 @@ class InMemoryAccountRepository : AccountRepository {
     // In-memory storage for demo purposes
     // In production, this would be backed by a database
     private val accounts = mutableMapOf<Uuid, Account>()
+    private val retiredAccountIds = mutableSetOf<String>()
     private val usernameIndex = mutableMapOf<String, Uuid>() // username -> account ID
     private val emailIndex = mutableMapOf<String, Uuid>() // email -> account ID
     private val didIndex = mutableMapOf<String, Uuid>() // did -> account ID
@@ -160,7 +157,11 @@ class InMemoryAccountRepository : AccountRepository {
 
     override suspend fun save(account: Account): Account = synchronized(accounts) { saveLocked(account) }
 
-    private fun saveLocked(account: Account): Account {
+    private fun saveLocked(
+        account: Account,
+        replaceIdentity: Boolean = false,
+    ): Account {
+        if (retiredAccountIdDigest(account.id) in retiredAccountIds) throw AccountIdentityClaimConflictException()
         val existing = accounts[account.id]
         val stored =
             if (existing == null) {
@@ -169,11 +170,13 @@ class InMemoryAccountRepository : AccountRepository {
             } else {
                 account
                     .copy(
+                        isActive = existing.isActive,
                         storageMode = existing.storageMode,
                         moderation = existing.moderation,
                         publicIdentityDid = existing.publicIdentityDid,
                         identityKind = existing.identityKind,
-                    ).let { if (existing.identityKind == AccountIdentityKind.HOSTED) it else it.withIdentityOf(existing) }
+                        identityEpoch = existing.identityEpoch,
+                    ).let { if (replaceIdentity) it else it.withIdentityOf(existing) }
             }
         require(usernameIndex[stored.username].let { it == null || it == stored.id }) { "Username already belongs to an account" }
         require(stored.did?.let { didIndex[it] }.let { it == null || it == stored.id }) { "DID already belongs to an account" }
@@ -193,7 +196,8 @@ class InMemoryAccountRepository : AccountRepository {
     }
 
     private fun hasCreationConflict(account: Account): Boolean =
-        accounts.containsKey(account.id) ||
+        retiredAccountIdDigest(account.id) in retiredAccountIds ||
+            accounts.containsKey(account.id) ||
             usernameIndex.containsKey(account.username) ||
             account.did?.let(didIndex::containsKey) == true ||
             account.handle?.let(handleIndex::containsKey) == true
@@ -204,13 +208,16 @@ class InMemoryAccountRepository : AccountRepository {
     ): Account? =
         synchronized(accounts) {
             val current = accounts[expected.id] ?: return@synchronized null
-            if (current.identityKind != AccountIdentityKind.HOSTED ||
+            if (expected.id != updated.id ||
+                !current.isActive ||
+                current.moderation != null ||
+                current.identityKind != AccountIdentityKind.HOSTED ||
                 updated.identityKind != AccountIdentityKind.HOSTED ||
                 !current.hasSameIdentityAs(expected)
             ) {
                 return@synchronized null
             }
-            saveLocked(current.withIdentityOf(updated))
+            saveLocked(current.withIdentityOf(updated), replaceIdentity = true)
         }
 
     override suspend fun updateStorageModeIfUnchanged(
@@ -299,18 +306,19 @@ class InMemoryAccountRepository : AccountRepository {
 
     override suspend fun emailExists(email: String): Boolean = emailIndex.containsKey(email)
 
-    override suspend fun updateLastSignIn(accountId: Uuid): Boolean {
-        val account = accounts[accountId] ?: return false
-        val updatedAccount = account.copy(lastSignInAt = Clock.System.now())
-        accounts[accountId] = updatedAccount
-        return true
-    }
+    override suspend fun updateLastSignIn(accountId: Uuid): Boolean =
+        synchronized(accounts) {
+            val account = accounts[accountId] ?: return@synchronized false
+            accounts[accountId] = account.copy(lastSignInAt = Clock.System.now())
+            true
+        }
 
-    override suspend fun deactivateAccount(accountId: Uuid): Boolean {
-        val account = accounts[accountId] ?: return false
-        accounts[accountId] = account.copy(isActive = false)
-        return true
-    }
+    override suspend fun deactivateAccount(accountId: Uuid): Boolean =
+        synchronized(accounts) {
+            val account = accounts[accountId] ?: return@synchronized false
+            accounts[accountId] = account.copy(isActive = false)
+            true
+        }
 
     override suspend fun getAllAccounts(): List<Account> = accounts.values.filter { it.isActive }
 
@@ -326,21 +334,22 @@ class InMemoryAccountRepository : AccountRepository {
             it.createdAt > timestamp && it.isActive
         }
 
-    override suspend fun deleteAccount(accountId: Uuid): Boolean {
-        val account = accounts.remove(accountId)
-        account?.let {
-            usernameIndex.remove(it.username)
-            it.email?.let { email -> emailIndex.remove(email) }
-            it.did?.let { did -> didIndex.remove(did) }
-            it.handle?.let { handle -> handleIndex.remove(handle) }
+    override suspend fun deleteAccount(accountId: Uuid): Boolean =
+        synchronized(accounts) {
+            val account = accounts.remove(accountId) ?: return@synchronized false
+            retiredAccountIds.add(retiredAccountIdDigest(accountId))
+            usernameIndex.remove(account.username)
+            account.email?.let(emailIndex::remove)
+            account.did?.let(didIndex::remove)
+            account.handle?.let(handleIndex::remove)
+            true
         }
-        return account != null
-    }
 }
 
 /** Enrollment establishes an external DID; this validation never treats a profile claim as proof. */
 @OptIn(ExperimentalUuidApi::class)
 internal fun Account.requireValidNewIdentity() {
+    require(identityEpoch == 0L) { "A new account starts at identity epoch zero" }
     require(identityKind != AccountIdentityKind.UNRECOGNIZED) { "A new account needs a known identity kind" }
     require(storageMode != AccountStorageMode.UNRECOGNIZED) { "A new account needs a known storage mode" }
     if (identityKind == AccountIdentityKind.EXTERNAL) {

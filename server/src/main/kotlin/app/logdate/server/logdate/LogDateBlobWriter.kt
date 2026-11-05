@@ -11,6 +11,8 @@ data class LogDateBlobStreamRequest(
     val namespace: LogDateBlobNamespace,
     val blobId: String,
     val contentType: String,
+    val createOnly: Boolean = false,
+    val privateOwner: String? = null,
 )
 
 /**
@@ -27,10 +29,13 @@ interface LogDateBlobWriter {
 
     /**
      * Finishes the object and checks that storage holds exactly the bytes written to [output], by
-     * length and CRC32C. When it doesn't, the object is deleted and this throws
-     * [LogDateBlobIntegrityException].
+     * length and CRC32C. A mismatch throws [LogDateBlobIntegrityException]; the caller must
+     * settle the writer and clean its unpublished candidate through its reference-checked lifecycle.
      */
     fun commit()
+
+    /** Stops further provider writes without deleting the object; cleanup must verify references first. */
+    fun closeForCleanup() = output.close()
 
     /** Deletes whatever was written. Calling it after a failed [commit], or twice, is safe. */
     fun abort()
@@ -69,3 +74,6 @@ class ChecksummingOutputStream(
         size += len
     }
 }
+
+/** A pre-existing physical object is never owned by a new upload attempt. */
+class LogDateBlobCollisionException : RuntimeException("The object path already exists")

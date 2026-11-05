@@ -32,6 +32,11 @@ internal object LocationHistoryDocs {
             the entire batch with 409; download changes before retrying. Repeating an accepted immutable device
             version is idempotent even if its encrypted payload uses a new nonce. Deletions use `deleted: true`
             and a null payload. Tombstones are retained indefinitely and cannot be replaced by live records.
+
+            The final write checks account authority again. If the account changes while a request is in flight,
+            409 IDENTITY_WRITE_HELD or IDENTITY_CHANGED rejects the entire batch without advancing its cursor.
+            Keep pending edits locally and read the account again. A deleted or unavailable owner returns
+            401 ACCOUNT_UNAVAILABLE.
             """,
         )
         request {
@@ -54,7 +59,11 @@ internal object LocationHistoryDocs {
         }
         response {
             ok("The accepted records with their account-scoped server versions.", LocationHistoryBatchResponse(listOf(deletedRecord)))
-            syncUnauthorized()
+            syncError(
+                HttpStatusCode.Unauthorized,
+                ErrorCase("UNAUTHORIZED", "Sign in with a valid access token.", "Missing or invalid Authorization header"),
+                ErrorCase("ACCOUNT_UNAVAILABLE", "The account cannot accept this upload.", "This account is unavailable."),
+            )
             syncStorageModeMismatch()
             syncMigrationHold()
             syncError(
@@ -63,6 +72,8 @@ internal object LocationHistoryDocs {
             )
             syncError(
                 HttpStatusCode.Conflict,
+                ErrorCase("IDENTITY_WRITE_HELD", "Account changes have paused writes.", "Sync is paused while your account changes."),
+                ErrorCase("IDENTITY_CHANGED", "Read the account again before syncing.", "Refresh your account before syncing."),
                 ErrorCase(
                     "VERSION_CONFLICT",
                     "Download current versions and reconcile the batch before retrying.",

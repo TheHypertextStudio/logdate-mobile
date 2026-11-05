@@ -26,6 +26,11 @@ internal class PostgreSQLBlueskyAccountEnrollmentRepository(
         require(passkey.credentialId == passkey.passkey.credentialId && passkey.passkey.isActive && passkey.publicKey.isNotEmpty())
         return try {
             source.blueskyTransaction {
+                val did = requireNotNull(account.did)
+                lockIdentityClaim(did)
+                lockAccountIdClaim(account.id.toJavaUUID())
+                if (accountIdRetired(account.id.toJavaUUID())) return@blueskyTransaction false
+                if (!identityClaimAvailable(did)) return@blueskyTransaction false
                 if (!insertAccount(account)) return@blueskyTransaction false
                 insertPasskey(account, passkey)
                 insertIdentity(account, passkey.credentialId)

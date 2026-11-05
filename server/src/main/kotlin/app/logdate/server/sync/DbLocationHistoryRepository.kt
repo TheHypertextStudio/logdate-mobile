@@ -1,5 +1,7 @@
 package app.logdate.server.sync
 
+import app.logdate.server.database.requireLegacyCollectionWrite
+import app.logdate.server.migration.SpaceMigrationConfig
 import app.logdate.shared.model.sync.LocationHistoryRecord
 import app.logdate.shared.model.sync.LocationHistoryUpload
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -16,6 +18,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import java.util.UUID
+import kotlin.time.Clock
 
 object LocationHistoryVersionsTable : Table("location_history_versions") {
     val userId = javaUUID("user_id")
@@ -41,12 +44,16 @@ object LocationHistoryTable : Table("location_history") {
 }
 
 /** The per-account row lock serializes version allocation and batch conflict checks across servers. */
-class DbLocationHistoryRepository : LocationHistoryRepository {
+class DbLocationHistoryRepository(
+    private val migrationConfig: SpaceMigrationConfig = SpaceMigrationConfig(),
+    private val clock: Clock = Clock.System,
+) : LocationHistoryRepository {
     override fun upload(
         userId: UUID,
         records: List<LocationHistoryUpload>,
     ): List<LocationHistoryRecord> =
         transaction {
+            requireLegacyCollectionWrite(userId, migrationConfig, clock.now())
             validateLocationHistoryBatch(records)
             LocationHistoryVersionsTable.insertIgnore {
                 it[LocationHistoryVersionsTable.userId] = userId

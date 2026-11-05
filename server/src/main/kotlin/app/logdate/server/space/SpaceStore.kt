@@ -5,9 +5,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import studio.hypertext.atproto.repo.Cid
@@ -18,7 +15,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -29,7 +25,8 @@ import kotlin.time.Instant
  *
  * [blobs] are the CIDs of space blobs the record refers to. [swapCid], when set, requires the live
  * record to have that CID; [createOnly] requires that no live record exists under [rkey]. With a
- * [quota], a write that would take the account past it is refused.
+ * [quota], a write that would take the account past it is refused. [identityEpoch] is the authority
+ * generation acknowledged by the client; legacy requests remain at zero after the account advances.
  */
 data class SpaceRecordWrite(
     val accountId: UUID,
@@ -41,6 +38,7 @@ data class SpaceRecordWrite(
     val swapCid: String?,
     val createOnly: Boolean,
     val quota: SpaceQuota? = null,
+    val identityEpoch: Long = 0,
 )
 
 /**
@@ -63,13 +61,14 @@ class SpaceQuotaExceededException(
 
 /**
  * Room for [bytes] held against [accountId]'s quota while an upload is in progress, so concurrent
- * uploads can't together pass it. [SpaceStore.putBlob] uses it up; [SpaceStore.releaseUpload] gives
- * it back. One the server never comes back for stops counting after [UPLOAD_RESERVATION_LIFETIME].
+ * uploads can't together pass it. [identityEpoch] binds its lifetime to the initiating authority.
+ * [SpaceStore.putBlob] uses it up; [SpaceStore.releaseUpload] gives it back. One the server never comes back for stops counting after [UPLOAD_RESERVATION_LIFETIME].
  */
 data class SpaceUploadReservation(
     val id: UUID,
     val accountId: UUID,
     val bytes: Long,
+    val identityEpoch: Long = 0,
 )
 
 /**
@@ -127,6 +126,9 @@ class SpaceMissingBlobException(
     val cid: String,
 ) : RuntimeException("Blob $cid isn't stored in this space")
 
+/** A blob has an unresolved object deletion and cannot be reused until cleanup is confirmed. */
+class SpaceBlobPurgingException : RuntimeException("This upload is temporarily unavailable")
+
 /** The most changes one [SpaceStore.changes] call returns. */
 const val MAX_SPACE_CHANGES_LIMIT = 500
 
@@ -147,7 +149,7 @@ data class SpaceBlob(
 
 /**
  * What one [SpaceStore.purge] did with unreferenced blobs. [blobsFailed] counts blobs whose object
- * couldn't be deleted from storage; their rows stay, so the next purge tries them again.
+ * couldn't be deleted from storage; their quarantined rows stay charged until confirmed cleanup.
  */
 data class SpacePurgeResult(
     val blobsDeleted: Int,
@@ -186,6 +188,7 @@ interface SpaceStore {
         author: String,
         rkey: String,
         swapCid: String?,
+        identityEpoch: Long = 0,
     ): Long
 
     /** The live record under [rkey], or null if there's none. */
@@ -213,6 +216,7 @@ interface SpaceStore {
      * Records a blob's metadata and returns what's stored. For a blob already in the space, it keeps
      * the original storage path and restarts the unreferenced grace period, so the returned
      * [SpaceBlob.storagePath] can differ from [blob]'s; the caller then deletes its own copy.
+     * [SpaceBlobPurgingException] refuses reuse while an earlier object deletion is unresolved.
      *
      * A new blob counts towards the account's stored bytes, and throws [SpaceQuotaExceededException]
      * when [quota] has no room for it; a blob the space already holds adds nothing. [reservation], the
@@ -224,7 +228,19 @@ interface SpaceStore {
         blob: SpaceBlob,
         quota: SpaceQuota? = null,
         reservation: SpaceUploadReservation? = null,
+        identityEpoch: Long = 0,
     ): SpaceBlob
+
+    /** Finalizes a server-owned upload ticket atomically with blob metadata; unsupported stores refuse it. */
+    suspend fun putAdmittedBlob(
+        accountId: UUID,
+        space: String,
+        blob: SpaceBlob,
+        admissionId: String,
+        quota: SpaceQuota? = null,
+        reservation: SpaceUploadReservation? = null,
+        identityEpoch: Long = 0,
+    ): SpaceBlob = error("Durable blob admission is unavailable")
 
     /**
      * Holds room for [bytes] against [quota] for an upload about to start, or throws
@@ -234,6 +250,7 @@ interface SpaceStore {
         accountId: UUID,
         bytes: Long,
         quota: SpaceQuota,
+        identityEpoch: Long = 0,
     ): SpaceUploadReservation
 
     /** Gives back the room [reservation] held. Releasing one that [putBlob] used up, or twice, does nothing. */
@@ -242,7 +259,7 @@ interface SpaceStore {
     /** The bytes [accountId]'s live space records and blobs take in storage. */
     suspend fun storedBytes(accountId: UUID): Long
 
-    /** The metadata of the blob [cid] in [space], or null. */
+    /** Metadata for a usable blob, or null when missing or quarantined for object deletion. */
     suspend fun getBlob(
         space: String,
         cid: String,
@@ -258,7 +275,7 @@ interface SpaceStore {
      * Deletes tombstones made before [tombstonesBefore], remembering the highest purged sequence number
      * of each repository for [changes], and blobs created before
      * [unreferencedBlobsBefore] that no record refers to. Each blob's object is deleted with
-     * [deleteObject] while its row is locked, and the row goes only after that succeeds, so an object
+     * [deleteObject] after quarantine, and the row goes only after that succeeds, so an object
      * is never left without a row pointing at it. When [deleteObject] throws or doesn't finish within
      * the store's object delete timeout, the failure is logged as
      * [SpacePurgeNotices.BLOB_DELETE_FAILED] and the row stays for the next purge; [deleteObject] must
@@ -366,269 +383,10 @@ internal fun deleteObjectOrThrow(
     }
 }
 
-/** Logs a blob whose object couldn't be deleted. Its row stays, so the next purge retries it. */
+/** Logs a failed object deletion; quarantine and its quota charge remain for maintenance to retry. */
 internal fun logObjectDeleteFailure(error: SpaceObjectDeleteException) {
     Napier.e(SpacePurgeNotices.BLOB_DELETE_FAILED, error.cause)
 }
 
 /** Decodes stored DAG-CBOR bytes, so every read returns the same form of a record. */
 internal fun decodeRecord(bytes: ByteArray): JsonObject = DagCborCodec.decode(bytes).jsonObject
-
-/**
- * A [SpaceStore] for servers running without a database. A page of changes carries at most
- * [changesByteBudget] stored record bytes, and a purge waits at most [objectDeleteTimeout] for each
- * object delete. One lock guards everything, so quota checks and the totals they read change together.
- */
-class InMemorySpaceStore(
-    private val changesByteBudget: Long = MAX_SPACE_CHANGES_BYTES,
-    private val objectDeleteTimeout: Duration = OBJECT_DELETE_TIMEOUT,
-) : SpaceStore {
-    private class Row(
-        val accountId: UUID,
-        val seq: Long,
-        val cid: String?,
-        val bytes: ByteArray?,
-        val deletedAt: Instant?,
-    )
-
-    private class BlobRow(
-        val accountId: UUID,
-        val blob: SpaceBlob,
-        val createdAt: Instant,
-    )
-
-    private class Held(
-        val accountId: UUID,
-        val bytes: Long,
-        val expiresAt: Instant,
-    )
-
-    private val mutex = Mutex()
-    private val states = mutableMapOf<Pair<String, String>, Long>()
-    private val purgedThrough = mutableMapOf<Pair<String, String>, Long>()
-    private val records = mutableMapOf<Triple<String, String, String>, Row>()
-    private val recordBlobs = mutableMapOf<Triple<String, String, String>, Set<String>>()
-    private val blobs = mutableMapOf<Pair<String, String>, BlobRow>()
-    private val uploadReceipts = mutableMapOf<Pair<String, String>, String>()
-    private val stored = mutableMapOf<UUID, Long>()
-    private val reservations = mutableMapOf<UUID, Held>()
-
-    override suspend fun put(write: SpaceRecordWrite): StoredSpaceRecord =
-        mutex.withLock {
-            requireSealedRecord(write.record)
-            val key = Triple(write.space, write.author, write.rkey)
-            val live = records[key]?.takeIf { it.deletedAt == null }
-            if (write.createOnly && live != null) throw SpaceSwapException("A record with this key exists")
-            if (write.swapCid != null && live?.cid != write.swapCid) throw SpaceSwapException("The record changed")
-            write.blobs
-                .sorted()
-                .firstOrNull { (write.space to it) !in blobs }
-                ?.let { throw SpaceMissingBlobException(it) }
-            val (cid, bytes) = recordCid(write.record)
-            val growth = bytes.size.toLong() - (live?.bytes?.size ?: 0)
-            requireRoom(write.quota, held(write.accountId, except = null), growth)
-            addStored(write.accountId, growth)
-            val seq = nextSeq(write.space, write.author)
-            records[key] = Row(write.accountId, seq, cid, bytes, deletedAt = null)
-            recordBlobs[key] = write.blobs.toSet()
-            StoredSpaceRecord(write.rkey, cid, seq, decodeRecord(bytes))
-        }
-
-    override suspend fun delete(
-        accountId: UUID,
-        space: String,
-        author: String,
-        rkey: String,
-        swapCid: String?,
-    ): Long =
-        mutex.withLock {
-            val key = Triple(space, author, rkey)
-            val row = records[key] ?: return@withLock states[space to author] ?: 0L
-            if (row.deletedAt != null) return@withLock row.seq
-            if (swapCid != null && row.cid != swapCid) throw SpaceSwapException("The record changed")
-            val seq = nextSeq(space, author)
-            addStored(row.accountId, -(row.bytes?.size ?: 0).toLong())
-            records[key] = Row(row.accountId, seq, cid = null, bytes = null, deletedAt = Clock.System.now())
-            recordBlobs.remove(key)
-            seq
-        }
-
-    override suspend fun get(
-        space: String,
-        author: String,
-        rkey: String,
-    ): StoredSpaceRecord? =
-        mutex.withLock {
-            val row = records[Triple(space, author, rkey)] ?: return@withLock null
-            val bytes = row.bytes ?: return@withLock null
-            StoredSpaceRecord(rkey, requireNotNull(row.cid), row.seq, decodeRecord(bytes))
-        }
-
-    override suspend fun changes(
-        space: String,
-        author: String,
-        since: Long,
-        limit: Int,
-    ): SpaceChangePage {
-        requireChangesLimit(limit)
-        return mutex.withLock {
-            requireFreshCursor(since, purgedThrough[space to author] ?: 0L)
-            val rows =
-                records
-                    .filter { (key, row) -> key.first == space && key.second == author && row.seq > since }
-                    .entries
-                    .sortedBy { it.value.seq }
-                    .take(limit + 1)
-            val fitting = countWithinBudget(rows.take(limit).map { (it.value.bytes?.size ?: 0).toLong() }, changesByteBudget)
-            val page =
-                rows.take(fitting).map { (key, row) ->
-                    SpaceChange(key.third, row.seq, row.deletedAt != null, row.cid, row.bytes?.let(::decodeRecord))
-                }
-            SpaceChangePage(page, page.lastOrNull()?.seq ?: since, rows.size > fitting)
-        }
-    }
-
-    override suspend fun putBlob(
-        accountId: UUID,
-        space: String,
-        blob: SpaceBlob,
-        quota: SpaceQuota?,
-        reservation: SpaceUploadReservation?,
-    ): SpaceBlob =
-        mutex.withLock {
-            blob.uploadIntent?.let { intent ->
-                uploadReceipts[space to intent]?.let { cid ->
-                    blobs[space to cid]?.let { row ->
-                        reservation?.let { reservations.remove(it.id) }
-                        return@withLock row.blob.copy(uploadIntent = intent)
-                    }
-                }
-            }
-            val existing = blobs[space to blob.cid]
-            if (existing == null) {
-                requireRoom(quota, held(accountId, except = reservation?.id), blob.size)
-                addStored(accountId, blob.size)
-            }
-            reservation?.let { reservations.remove(it.id) }
-            val stored = blob.copy(storagePath = existing?.blob?.storagePath ?: blob.storagePath)
-            blobs[space to blob.cid] = BlobRow(existing?.accountId ?: accountId, stored, Clock.System.now())
-            blob.uploadIntent?.let { uploadReceipts[space to it] = stored.cid }
-            stored
-        }
-
-    override suspend fun reserveUpload(
-        accountId: UUID,
-        bytes: Long,
-        quota: SpaceQuota,
-    ): SpaceUploadReservation =
-        mutex.withLock {
-            requireRoom(quota, held(accountId, except = null), bytes)
-            val reservation = SpaceUploadReservation(UUID.randomUUID(), accountId, bytes)
-            reservations[reservation.id] = Held(accountId, bytes, Clock.System.now() + UPLOAD_RESERVATION_LIFETIME)
-            reservation
-        }
-
-    override suspend fun releaseUpload(reservation: SpaceUploadReservation) {
-        mutex.withLock { reservations.remove(reservation.id) }
-    }
-
-    override suspend fun storedBytes(accountId: UUID): Long = mutex.withLock { stored[accountId] ?: 0L }
-
-    override suspend fun getBlob(
-        space: String,
-        cid: String,
-    ): SpaceBlob? = mutex.withLock { blobs[space to cid]?.blob }
-
-    override suspend fun getBlobUploadReceipt(
-        space: String,
-        intent: String,
-    ): SpaceBlob? =
-        mutex.withLock {
-            uploadReceipts[space to intent]?.let { cid -> blobs[space to cid]?.blob?.copy(uploadIntent = intent) }
-        }
-
-    override suspend fun purge(
-        tombstonesBefore: Instant,
-        unreferencedBlobsBefore: Instant,
-        deleteObject: (storagePath: String) -> Unit,
-    ): SpacePurgeResult {
-        val candidates =
-            mutex.withLock {
-                val now = Clock.System.now()
-                reservations.values.removeAll { it.expiresAt <= now }
-                val old = records.filterValues { it.deletedAt != null && it.deletedAt < tombstonesBefore }
-                old.forEach { (key, row) ->
-                    val repository = key.first to key.second
-                    purgedThrough[repository] = maxOf(purgedThrough[repository] ?: 0L, row.seq)
-                    records.remove(key)
-                }
-                blobs.keys.filter { purgeable(it, unreferencedBlobsBefore) }.sortedWith(compareBy({ it.first }, { it.second }))
-            }
-        var deleted = 0
-        var failed = 0
-        candidates.forEach { key ->
-            mutex.withLock {
-                if (!purgeable(key, unreferencedBlobsBefore)) return@withLock
-                val row = blobs.getValue(key)
-                try {
-                    withContext(Dispatchers.IO) { deleteObjectOrThrow(deleteObject, row.blob.storagePath, objectDeleteTimeout) }
-                } catch (e: SpaceObjectDeleteException) {
-                    logObjectDeleteFailure(e)
-                    failed++
-                    return@withLock
-                }
-                blobs.remove(key)
-                uploadReceipts.entries.removeAll { it.key.first == key.first && it.value == key.second }
-                addStored(row.accountId, -row.blob.size)
-                deleted++
-            }
-        }
-        return SpacePurgeResult(deleted, failed)
-    }
-
-    /** What [accountId] stores plus the room its unexpired uploads hold, leaving out the reservation [except]. */
-    private fun held(
-        accountId: UUID,
-        except: UUID?,
-    ): Long {
-        val now = Clock.System.now()
-        val reserved =
-            reservations
-                .filter { (id, held) -> id != except && held.accountId == accountId && held.expiresAt > now }
-                .values
-                .sumOf { it.bytes }
-        return (stored[accountId] ?: 0L) + reserved
-    }
-
-    private fun addStored(
-        accountId: UUID,
-        delta: Long,
-    ) {
-        if (delta == 0L) return
-        val current = stored[accountId] ?: 0L
-        val next = current + delta
-        if (next < 0) {
-            Napier.e("Storage total would go below zero: account=$accountId kind=SPACE current=$current delta=$delta; stored 0")
-        }
-        stored[accountId] = next.coerceAtLeast(0L)
-    }
-
-    /** Whether the blob [key] still exists, was stored before [createdBefore], and no record refers to it. */
-    private fun purgeable(
-        key: Pair<String, String>,
-        createdBefore: Instant,
-    ): Boolean {
-        val row = blobs[key] ?: return false
-        if (row.createdAt >= createdBefore) return false
-        return recordBlobs.none { (recordKey, cids) -> recordKey.first == key.first && key.second in cids }
-    }
-
-    private fun nextSeq(
-        space: String,
-        author: String,
-    ): Long {
-        val seq = (states[space to author] ?: 0L) + 1
-        states[space to author] = seq
-        return seq
-    }
-}

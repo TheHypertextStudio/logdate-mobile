@@ -45,13 +45,14 @@ internal fun Module.spaceMigrationDefinitions(isDatabaseAvailable: Boolean) {
         )
     }
     single { SpaceMigrationService(get(), get(), get(), get(), get()) }
-    single { LegacyMediaCopier(get<CompositeLogDateMediaBlobRepository>(), get(), get()) }
+    single { LegacyMediaCopier(get<CompositeLogDateMediaBlobRepository>(), get(), get(), get()) }
     single<LegacyJournalEraser> {
         if (isDatabaseAvailable) {
             PostgreSQLLegacyJournalEraser(get<LogDateBlobStorage>())
         } else {
             InMemoryLegacyJournalEraser(
                 accounts = get(),
+                migrations = get(),
                 repositories = get<RepoBlockStore>(),
                 metadata = get<LogDateCollectionsMetadataStore>() as InMemoryLogDateCollectionsMetadataStore,
                 locationHistory = get<LocationHistoryRepository>() as InMemoryLocationHistoryRepository,

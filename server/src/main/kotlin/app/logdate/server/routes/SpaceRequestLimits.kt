@@ -109,11 +109,14 @@ internal suspend fun ApplicationCall.respondSpaceQuotaExceeded(refused: SpaceQuo
 }
 
 /** Answers `503 ServerBusy`: this instance is running as many file transfers as it can hold. */
-internal suspend fun ApplicationCall.respondServerBusy(limits: TransferLimits) {
+internal suspend fun ApplicationCall.respondServerBusy(
+    limits: TransferLimits,
+    message: String = "The server is busy with other file transfers. Try again in ${limits.retryAfterSeconds} seconds.",
+) {
     response.header(HttpHeaders.RetryAfter, limits.retryAfterSeconds.toString())
     respond(
         HttpStatusCode.ServiceUnavailable,
-        PdsErrorResponse(SERVER_BUSY, "The server is busy with other file transfers. Try again in ${limits.retryAfterSeconds} seconds."),
+        PdsErrorResponse(SERVER_BUSY, message),
     )
 }
 

@@ -28,6 +28,16 @@ import kotlin.io.path.readBytes
 class FilesystemLogDateBlobStorage(
     private val rootPath: Path,
 ) : LogDateBlobStorage {
+    private val privateBlobs = FilesystemPrivateBlobLifecycle(rootPath)
+
+    override fun retirePrivateBlob(
+        blobId: String,
+        owner: String,
+    ): Boolean = privateBlobs.retire(blobId, owner)
+
+    override fun plannedPath(request: LogDateBlobWriteRequest): String =
+        relativePath(request.namespace, request.ownerId.toString(), request.blobId)
+
     override fun putBlobFile(request: LogDateBlobFileWriteRequest): String {
         val relative = relativePath(request.namespace, request.ownerId.toString(), request.blobId)
         val absolute = rootPath.resolve(relative)
@@ -50,8 +60,14 @@ class FilesystemLogDateBlobStorage(
         return relative
     }
 
+    override fun openPrivateBlob(
+        storagePath: String,
+        owner: String,
+    ): LogDateBlobStream? = privateBlobs.open(storagePath, owner)
+
     override fun openBlob(storagePath: String): LogDateBlobStream? {
         val file = rootPath.resolve(storagePath)
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX) && privateBlobs.retired(file)) return null
         val input =
             try {
                 Files.newInputStream(file)
@@ -67,11 +83,23 @@ class FilesystemLogDateBlobStorage(
     }
 
     override fun openBlobWriter(request: LogDateBlobStreamRequest): LogDateBlobWriter {
-        val relative = relativePath(request.namespace, request.ownerId.toString(), request.blobId)
+        val owner = request.privateOwner
+        require(owner == null || request.createOnly)
+        val relative =
+            if (owner == null) {
+                relativePath(request.namespace, request.ownerId.toString(), request.blobId)
+            } else {
+                plannedPrivateBlobPath(request.blobId)
+            }
         val absolute = rootPath.resolve(relative)
         absolute.parent.createDirectories()
-        val pending = Files.createTempFile(absolute.parent, ".logdate-blob-", ".pending")
-        val output = ChecksummingOutputStream(Files.newOutputStream(pending).buffered())
+        val pending =
+            if (owner == null) {
+                Files.createTempFile(absolute.parent, ".logdate-blob-", ".pending")
+            } else {
+                privateBlobs.pending(request.blobId, owner)
+            }
+        val output = ChecksummingOutputStream(Files.newOutputStream(pending, java.nio.file.StandardOpenOption.WRITE).buffered())
         return object : LogDateBlobWriter {
             override val storagePath = relative
             override val output = output
@@ -82,6 +110,19 @@ class FilesystemLogDateBlobStorage(
                     Files.deleteIfExists(pending)
                     throw LogDateBlobIntegrityException("Stored size differs from bytes written")
                 }
+                if (owner != null) {
+                    privateBlobs.publish(request.blobId, owner, pending)
+                    return
+                }
+                if (request.createOnly) {
+                    try {
+                        Files.createLink(absolute, pending)
+                        Files.delete(pending)
+                    } catch (_: java.nio.file.FileAlreadyExistsException) {
+                        throw LogDateBlobCollisionException()
+                    }
+                    return
+                }
                 try {
                     Files.move(pending, absolute, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
                 } catch (_: AtomicMoveNotSupportedException) {
@@ -89,10 +130,15 @@ class FilesystemLogDateBlobStorage(
                 }
             }
 
+            override fun closeForCleanup() {
+                output.close()
+                if (owner == null) Files.deleteIfExists(pending) else privateBlobs.settle(request.blobId, owner)
+            }
+
             override fun abort() {
                 runCatching { output.close() }
                 Files.deleteIfExists(pending)
-                Files.deleteIfExists(absolute)
+                if (owner == null) Files.deleteIfExists(absolute) else privateBlobs.delete(request.blobId)
             }
         }
     }
@@ -101,8 +147,9 @@ class FilesystemLogDateBlobStorage(
         storagePath: String,
         destination: Path,
         checkActive: () -> Unit,
-    ): Boolean =
-        try {
+    ): Boolean {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX) && privateBlobs.retired(rootPath.resolve(storagePath))) return false
+        return try {
             Files.newInputStream(rootPath.resolve(storagePath)).use { source ->
                 Files.newOutputStream(destination).use { output -> copyBackupFile(source, output, checkActive) }
             }
@@ -113,6 +160,7 @@ class FilesystemLogDateBlobStorage(
             Files.deleteIfExists(destination)
             throw error
         }
+    }
 
     init {
         rootPath.createDirectories()
@@ -126,8 +174,9 @@ class FilesystemLogDateBlobStorage(
         return relative
     }
 
-    override fun getBlob(storagePath: String): ByteArray? =
-        try {
+    override fun getBlob(storagePath: String): ByteArray? {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX) && privateBlobs.retired(rootPath.resolve(storagePath))) return null
+        return try {
             rootPath.resolve(storagePath).readBytes()
         } catch (_: NoSuchFileException) {
             null
@@ -135,16 +184,24 @@ class FilesystemLogDateBlobStorage(
             Napier.w("Filesystem blob read failed")
             null
         }
+    }
 
-    override fun deleteBlob(storagePath: String): Boolean =
-        try {
+    override fun deleteBlob(storagePath: String): Boolean {
+        return try {
+            if (storagePath.startsWith(PRIVATE_BLOB_PREFIX)) return privateBlobs.delete(storagePath.removePrefix(PRIVATE_BLOB_PREFIX))
             rootPath.resolve(storagePath).deleteIfExists()
         } catch (e: Exception) {
             Napier.w("Filesystem blob delete failed")
             false
         }
+    }
 
     override fun deleteBlobIfExists(storagePath: String) {
+        if (storagePath.startsWith(PRIVATE_BLOB_PREFIX)) {
+            if (privateBlobs.retired(rootPath.resolve(storagePath))) return
+            check(privateBlobs.delete(storagePath.removePrefix(PRIVATE_BLOB_PREFIX)) || !Files.exists(rootPath.resolve(storagePath)))
+            return
+        }
         rootPath.resolve(storagePath).deleteIfExists()
     }
 

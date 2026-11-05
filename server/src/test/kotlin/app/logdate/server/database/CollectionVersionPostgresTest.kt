@@ -22,7 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
-/** Runs against the local test PostgreSQL only; forces competing writes past their initial state read. */
+/** Runs against the local test PostgreSQL only; queues competing writes at account/state admission before checking persisted pagination. */
 class CollectionVersionPostgresTest {
     @Test
     fun `concurrent writes have unique versions and cannot vanish between single record pages`() =
@@ -60,7 +60,8 @@ class CollectionVersionPostgresTest {
                                             statement
                                                 .executeQuery(
                                                     "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() " +
-                                                        "AND wait_event_type = 'Lock' AND query LIKE '%logdate_collection_states%'",
+                                                        "AND wait_event_type = 'Lock' AND (query LIKE '%logdate_collection_states%' " +
+                                                        "OR query LIKE '%FROM accounts WHERE%')",
                                                 ).use { rows ->
                                                     rows.next()
                                                     rows.getInt(1)

@@ -128,7 +128,8 @@ private suspend fun ApplicationCall.registerMedia(
     transfers: TransferSlots,
     request: SpaceMigrationRequest,
 ) {
-    if (migrations.active(accountId, request.migrationId, SpaceMigrationPhase.UPLOADING) == null) {
+    val migration = migrations.active(accountId, request.migrationId, SpaceMigrationPhase.UPLOADING)
+    if (migration == null) {
         return respondOutcome<RegisteredLegacyMedia>(
             SpaceMigrationResult.Refused(SpaceMigrationErrorCodes.NOT_ACTIVE, "No move with this id is uploading"),
         )
@@ -144,7 +145,7 @@ private suspend fun ApplicationCall.registerMedia(
         return respond(HttpStatusCode.ServiceUnavailable, error("SERVER_BUSY", "The server is copying as many files as it can; try again"))
     }
     try {
-        respondOutcome(copier.copy(accountId, SpaceRef.personal(did).uri, requiredPathParam("mediaId")))
+        respondOutcome(copier.copy(accountId, SpaceRef.personal(did).uri, requiredPathParam("mediaId"), migration))
     } finally {
         slot.release()
     }

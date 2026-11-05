@@ -1,10 +1,12 @@
 package app.logdate.server.database
 
 import app.logdate.server.auth.Account
+import app.logdate.server.auth.AccountIdentityClaimConflictException
 import app.logdate.server.auth.AccountModeration
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.requireValidNewIdentity
 import app.logdate.server.entitlements.AccountEntitlementsTable
+import app.logdate.server.identity.adoption.IdentityFenceOutcome
 import app.logdate.shared.model.AccountIdentityKind
 import app.logdate.shared.model.AccountStorageMode
 import org.jetbrains.exposed.v1.core.Column
@@ -19,6 +21,7 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -32,6 +35,13 @@ class PostgreSQLAccountRepository : AccountRepository {
     override suspend fun create(account: Account): Boolean =
         transaction {
             account.requireValidNewIdentity()
+            lockAccountCreationClaims(account)
+            val connection = accountWriteConnection()
+            if (connection.accountIdRetired(account.id.toJavaUUID()) ||
+                (account.did != null && !connection.identityClaimAvailable(account.did))
+            ) {
+                return@transaction false
+            }
             AccountsTable
                 .insertIgnore {
                     it[id] = account.id.toJavaUUID()
@@ -58,6 +68,9 @@ class PostgreSQLAccountRepository : AccountRepository {
 
     override suspend fun save(account: Account): Account =
         transaction {
+            lockAccountCreationClaims(account)
+            val connection = accountWriteConnection()
+            if (connection.accountIdRetired(account.id.toJavaUUID())) throw AccountIdentityClaimConflictException()
             val existingAccount =
                 AccountsTable
                     .selectAll()
@@ -66,32 +79,10 @@ class PostgreSQLAccountRepository : AccountRepository {
                     .singleOrNull()
 
             if (existingAccount != null) {
-                // Update existing account
-                AccountsTable.update({ AccountsTable.id eq account.id.toJavaUUID() }) {
-                    it[username] = account.username
-                    it[displayName] = account.displayName
-                    if (existingAccount[AccountsTable.identityKind] == AccountIdentityKind.HOSTED.wireValue) {
-                        it[did] = account.did
-                        it[handle] = account.handle
-                        it[signingKeyPublic] = account.signingKeyPublic
-                        it[plcRecoveryDidKey] = account.plcRecoveryDidKey
-                    }
-                    it[email] = account.email
-                    it[emailVerified] = account.emailVerified
-                    it[emailVerifiedAt] = account.emailVerifiedAt
-                    it[bio] = account.bio
-                    it[originalBio] = account.originalBio
-                    it[lastSignInAt] = account.lastSignInAt
-                    it[isActive] = account.isActive
-                    it[preferences] = account.preferences ?: "{}"
-                }
-                AccountsTable
-                    .selectAll()
-                    .where { AccountsTable.id eq account.id.toJavaUUID() }
-                    .single()
-                    .toAccount()
+                updateExistingAccount(account, existingAccount)
             } else {
                 account.requireValidNewIdentity()
+                if (account.did != null && !connection.identityClaimAvailable(account.did)) throw AccountIdentityClaimConflictException()
                 AccountsTable.insert {
                     it[id] = account.id.toJavaUUID()
                     it[username] = account.username
@@ -117,9 +108,39 @@ class PostgreSQLAccountRepository : AccountRepository {
             }
         }
 
+    private fun updateExistingAccount(
+        account: Account,
+        existingAccount: ResultRow,
+    ): Account {
+        AccountsTable.update({ AccountsTable.id eq account.id.toJavaUUID() }) {
+            it[username] = account.username
+            it[displayName] = account.displayName
+            it[email] = account.email
+            it[emailVerified] = account.emailVerified
+            it[emailVerifiedAt] = account.emailVerifiedAt
+            it[bio] = account.bio
+            it[originalBio] = account.originalBio
+            it[lastSignInAt] = account.lastSignInAt
+            it[isActive] = existingAccount[AccountsTable.isActive]
+            it[preferences] = account.preferences ?: "{}"
+        }
+        return AccountsTable
+            .selectAll()
+            .where { AccountsTable.id eq account.id.toJavaUUID() }
+            .single()
+            .toAccount()
+    }
+
     override suspend fun createOnly(account: Account): Boolean =
         transaction {
             account.requireValidNewIdentity()
+            lockAccountCreationClaims(account)
+            val connection = accountWriteConnection()
+            if (connection.accountIdRetired(account.id.toJavaUUID()) ||
+                (account.did != null && !connection.identityClaimAvailable(account.did))
+            ) {
+                return@transaction false
+            }
             AccountsTable
                 .insertIgnore {
                     it[id] = account.id.toJavaUUID()
@@ -315,6 +336,20 @@ class PostgreSQLAccountRepository : AccountRepository {
     override suspend fun deleteAccount(accountId: Uuid): Boolean =
         transaction {
             val id = accountId.toJavaUUID()
+            val connection = accountWriteConnection()
+            if (org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
+                    .current()
+                    .db.vendor == "postgresql"
+            ) {
+                connection.lockAccountIdClaim(id)
+            }
+            AccountsTable
+                .select(AccountsTable.id)
+                .where { AccountsTable.id eq id }
+                .forUpdate()
+                .singleOrNull()
+                ?: return@transaction false
+            connection.retireAccountId(id)
             // Keep deletion deterministic even when an older deployment has not
             // yet repaired one of the account-owned foreign keys. These rows are
             // all user-owned authentication/identity state; billing events use
@@ -340,16 +375,21 @@ class PostgreSQLAccountRepository : AccountRepository {
         updated: Account,
     ): Account? =
         transaction {
-            if (expected.identityKind != AccountIdentityKind.HOSTED ||
+            if (expected.id != updated.id ||
+                expected.identityKind != AccountIdentityKind.HOSTED ||
                 updated.identityKind != AccountIdentityKind.HOSTED
             ) {
                 return@transaction null
             }
             val id = expected.id.toJavaUUID()
+            lockAccountDidClaims(expected.did, updated.did)
+            if (accountIdentityWriteOutcome(expected) != IdentityFenceOutcome.ALLOWED) return@transaction null
+            if (updated.did != null && !accountWriteConnection().identityClaimAvailable(updated.did, id)) return@transaction null
             val changed =
                 AccountsTable.update({
                     (AccountsTable.id eq id) and
                         (AccountsTable.identityKind eq AccountIdentityKind.HOSTED.wireValue) and
+                        (AccountsTable.identityEpoch eq expected.identityEpoch) and
                         AccountsTable.handle.matches(expected.handle) and
                         AccountsTable.did.matches(expected.did) and
                         AccountsTable.signingKeyPublic.matches(expected.signingKeyPublic) and
@@ -400,5 +440,6 @@ class PostgreSQLAccountRepository : AccountRepository {
             moderation = AccountModeration.fromWireValue(this[AccountsTable.moderation]),
             publicIdentityDid = this[AccountsTable.publicIdentityDid],
             identityKind = AccountIdentityKind.fromWireValue(this[AccountsTable.identityKind]),
+            identityEpoch = this[AccountsTable.identityEpoch],
         )
 }

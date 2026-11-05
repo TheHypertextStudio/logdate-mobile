@@ -5,12 +5,16 @@ import app.logdate.server.bluesky.createBlueskyOAuthRuntime
 import app.logdate.server.database.createAccountCredentialMutationRuntime
 import app.logdate.server.devices.accountDeviceModule
 import app.logdate.server.entitlements.entitlementsModule
+import app.logdate.server.identity.adoption.IdentityAdoptionRuntime
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import org.koin.core.context.stopKoin
+import org.koin.dsl.module
+import org.koin.ktor.ext.getKoin
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
+import org.koin.core.Koin as KoinContainer
 
 /**
  * Installs the Koin container with every server module, and tears it down when the application
@@ -18,15 +22,17 @@ import org.koin.logger.slf4jLogger
  */
 internal fun Application.installServerKoin(
     isDatabaseAvailable: Boolean,
+    adoptionRuntimeFactory: (Boolean, BlueskyOAuthRuntime?, KoinContainer) -> IdentityAdoptionRuntime? =
+        ::createServerIdentityAdoptionRuntime,
     blueskyRuntimeFactory: (Boolean) -> BlueskyOAuthRuntime? = { createBlueskyOAuthRuntime(it) },
 ) {
     // Stop any existing Koin instance to ensure clean state for tests
     runCatching { stopKoin() }
 
     val credentials = createAccountCredentialMutationRuntime(isDatabaseAvailable)
-    var bluesky: BlueskyOAuthRuntime? = null
+    val resources = mutableListOf<AutoCloseable>(credentials)
     try {
-        bluesky = blueskyRuntimeFactory(isDatabaseAvailable)
+        val bluesky = blueskyRuntimeFactory(isDatabaseAvailable)?.also(resources::add)
         install(Koin) {
             slf4jLogger()
             modules(
@@ -35,33 +41,36 @@ internal fun Application.installServerKoin(
                 entitlementsModule(databaseAvailable = isDatabaseAvailable),
                 blueskyModule(bluesky),
                 accountCredentialModule(credentials, isDatabaseAvailable, bluesky),
+                identityAdoptionRecoveryModule(isDatabaseAvailable),
             )
         }
-
-        monitor.subscribe(ApplicationStopped) {
-            try {
-                bluesky?.close()
-            } finally {
-                try {
-                    credentials.close()
-                } finally {
-                    runCatching { stopKoin() }
-                }
+        val adoption =
+            adoptionRuntimeFactory(isDatabaseAvailable, bluesky, getKoin())?.also { runtime ->
+                resources.add(runtime)
+                getKoin().loadModules(listOf(module { single { runtime } }))
             }
+        monitor.subscribe(ApplicationStopped) {
+            closeServerResources(resources)?.let { throw it }
         }
         bluesky?.connection?.maintenance?.start()
+        adoption?.start()
     } catch (failure: Throwable) {
-        try {
-            bluesky?.close()
-        } catch (cleanup: Throwable) {
-            failure.addSuppressed(cleanup)
-        }
-        try {
-            credentials.close()
-        } catch (cleanup: Throwable) {
-            failure.addSuppressed(cleanup)
-        }
-        runCatching { stopKoin() }
-        throw failure
+        throw requireNotNull(closeServerResources(resources, failure))
     }
+}
+
+private fun closeServerResources(
+    resources: List<AutoCloseable>,
+    failure: Throwable? = null,
+): Throwable? {
+    var first = failure
+    for (resource in resources.asReversed()) {
+        try {
+            resource.close()
+        } catch (cleanup: Throwable) {
+            first?.addSuppressed(cleanup) ?: run { first = cleanup }
+        }
+    }
+    runCatching { stopKoin() }
+    return first
 }

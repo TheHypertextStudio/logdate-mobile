@@ -63,6 +63,9 @@ data class AtprotoIdentityConfig(
             plcDirectoryUrl: String? = System.getenv("ATPROTO_PLC_DIRECTORY_URL"),
             recoveryKeysEnabled: String? = System.getenv("ATPROTO_RECOVERY_KEYS_ENABLED"),
         ): AtprotoIdentityConfig {
+            require(publishHostedPlcOperations.isNullOrBlank() || publishHostedPlcOperations.trim().equals("false", ignoreCase = true)) {
+                "ATPROTO_PLC_PUBLISH_ENABLED is retired; identity publication requires individual consent"
+            }
             val normalizedHandleDomain =
                 handleDomain
                     ?.trim()
@@ -82,7 +85,7 @@ data class AtprotoIdentityConfig(
                 handleDomain = normalizedHandleDomain,
                 pdsServiceEndpoint = resolvedEndpoint.removeSuffix("/"),
                 hostedAccountDidMethod = resolvedHostedDidMethod,
-                publishHostedPlcOperations = publishHostedPlcOperations?.trim()?.equals("true", ignoreCase = true) == true,
+                publishHostedPlcOperations = false,
                 plcDirectoryUrl =
                     plcDirectoryUrl
                         ?.trim()

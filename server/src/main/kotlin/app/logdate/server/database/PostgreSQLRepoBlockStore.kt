@@ -1,7 +1,10 @@
 package app.logdate.server.database
 
+import app.logdate.server.identity.IdentityLifecycleConflictException
+import app.logdate.server.identity.adoption.withAccountWriteOrigin
 import app.logdate.server.logdate.RepoWriteTransaction
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -15,7 +18,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.jetbrains.exposed.v1.jdbc.upsert
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.repo.Cid
 import studio.hypertext.atproto.repo.RepoBlock
@@ -23,7 +25,10 @@ import studio.hypertext.atproto.repo.RepoBlockStore
 import studio.hypertext.atproto.repo.RepoCommit
 import studio.hypertext.atproto.repo.RepoHead
 import studio.hypertext.atproto.repo.SignedRepoCommit
+import java.util.UUID
 import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Exposed-backed repo block store for the server's durable AT Protocol mirror.
@@ -31,17 +36,39 @@ import kotlin.time.Clock
  * Repo ownership is keyed by DID string rather than a foreign-key account id so the shared repo
  * library can keep speaking pure AT Protocol identifiers.
  */
+@OptIn(ExperimentalUuidApi::class)
 class PostgreSQLRepoBlockStore :
     RepoBlockStore,
     RepoWriteTransaction {
     private val blockCache = RepoBlockReadCache()
 
-    override suspend fun <T> write(action: suspend () -> T): T =
+    override suspend fun <T> write(action: suspend () -> T): T {
+        val origin = requireRepoWriteOrigin()
+        return write(origin.accountId.toJavaUUID(), origin.identityEpoch, action)
+    }
+
+    override suspend fun <T> write(
+        userId: UUID,
+        identityEpoch: Long,
+        action: suspend () -> T,
+    ): T =
         try {
-            withContext(Dispatchers.IO) {
-                suspendTransaction {
-                    maxAttempts = 1
-                    action()
+            withAccountWriteOrigin(Uuid.parse(userId.toString()), identityEpoch) {
+                val origin = requireRepoWriteOrigin()
+                val marker = currentCoroutineContext()[OwnedRepoTransaction]
+                withContext(Dispatchers.IO) {
+                    checkOwnedRepoTransaction(marker)
+                    if (marker != null) {
+                        requireHostedRepoAccount(origin)
+                        action()
+                    } else {
+                        suspendTransaction {
+                            maxAttempts = 1
+                            requireHostedRepoAccount(origin)
+                            requirePreparedRepoIdentity(origin)
+                            withContext(OwnedRepoTransaction(accountWriteConnection())) { action() }
+                        }
+                    }
                 }
             }
         } catch (failure: Throwable) {
@@ -70,30 +97,28 @@ class PostgreSQLRepoBlockStore :
 
     override suspend fun writeHead(head: RepoHead): Result<Unit> =
         runCatching {
-            withContext(Dispatchers.IO) {
-                transaction {
-                    val repoDid = head.repo.toString()
-                    val existing =
-                        AtprotoRepoHeadsTable
-                            .selectAll()
-                            .where { AtprotoRepoHeadsTable.repoDid eq repoDid }
-                            .singleOrNull()
+            ownedRepoMutation(head.repo) {
+                val repoDid = head.repo.toString()
+                val existing =
+                    AtprotoRepoHeadsTable
+                        .selectAll()
+                        .where { AtprotoRepoHeadsTable.repoDid eq repoDid }
+                        .singleOrNull()
 
-                    if (existing == null) {
-                        AtprotoRepoHeadsTable.insert {
-                            it[AtprotoRepoHeadsTable.repoDid] = repoDid
-                            it[rootCid] = head.root.toString()
-                            it[commitCid] = head.commitCid.toString()
-                            it[revision] = head.revision
-                            it[updatedAt] = Clock.System.now()
-                        }
-                    } else {
-                        AtprotoRepoHeadsTable.update({ AtprotoRepoHeadsTable.repoDid eq repoDid }) {
-                            it[rootCid] = head.root.toString()
-                            it[commitCid] = head.commitCid.toString()
-                            it[revision] = head.revision
-                            it[updatedAt] = Clock.System.now()
-                        }
+                if (existing == null) {
+                    AtprotoRepoHeadsTable.insert {
+                        it[AtprotoRepoHeadsTable.repoDid] = repoDid
+                        it[rootCid] = head.root.toString()
+                        it[commitCid] = head.commitCid.toString()
+                        it[revision] = head.revision
+                        it[updatedAt] = Clock.System.now()
+                    }
+                } else {
+                    AtprotoRepoHeadsTable.update({ AtprotoRepoHeadsTable.repoDid eq repoDid }) {
+                        it[rootCid] = head.root.toString()
+                        it[commitCid] = head.commitCid.toString()
+                        it[revision] = head.revision
+                        it[updatedAt] = Clock.System.now()
                     }
                 }
             }
@@ -104,31 +129,29 @@ class PostgreSQLRepoBlockStore :
         expectedRevision: Long?,
     ): Result<Boolean> =
         runCatching {
-            withContext(Dispatchers.IO) {
-                transaction {
-                    val repoDid = head.repo.toString()
-                    if (expectedRevision == null) {
-                        AtprotoRepoHeadsTable
-                            .insertIgnore {
-                                it[AtprotoRepoHeadsTable.repoDid] = repoDid
-                                it[rootCid] = head.root.toString()
-                                it[commitCid] = head.commitCid.toString()
-                                it[revision] = head.revision
-                                it[updatedAt] = Clock.System.now()
-                            }.insertedCount == 1
-                    } else {
-                        val updated =
-                            AtprotoRepoHeadsTable.update({
-                                (AtprotoRepoHeadsTable.repoDid eq repoDid) and
-                                    (AtprotoRepoHeadsTable.revision eq expectedRevision)
-                            }) {
-                                it[rootCid] = head.root.toString()
-                                it[commitCid] = head.commitCid.toString()
-                                it[revision] = head.revision
-                                it[updatedAt] = Clock.System.now()
-                            }
-                        updated > 0
-                    }
+            ownedRepoMutation(head.repo) {
+                val repoDid = head.repo.toString()
+                if (expectedRevision == null) {
+                    AtprotoRepoHeadsTable
+                        .insertIgnore {
+                            it[AtprotoRepoHeadsTable.repoDid] = repoDid
+                            it[rootCid] = head.root.toString()
+                            it[commitCid] = head.commitCid.toString()
+                            it[revision] = head.revision
+                            it[updatedAt] = Clock.System.now()
+                        }.insertedCount == 1
+                } else {
+                    val updated =
+                        AtprotoRepoHeadsTable.update({
+                            (AtprotoRepoHeadsTable.repoDid eq repoDid) and
+                                (AtprotoRepoHeadsTable.revision eq expectedRevision)
+                        }) {
+                            it[rootCid] = head.root.toString()
+                            it[commitCid] = head.commitCid.toString()
+                            it[revision] = head.revision
+                            it[updatedAt] = Clock.System.now()
+                        }
+                    updated > 0
                 }
             }
         }
@@ -168,34 +191,38 @@ class PostgreSQLRepoBlockStore :
         block: RepoBlock,
     ): Result<Unit> {
         val generation = blockCache.generation()
+        val immutable = RepoBlock(block.cid, block.bytes.copyOf())
         return runCatching {
-            withContext(Dispatchers.IO) {
-                transaction {
-                    val cidValue = block.cid.toString()
-                    AtprotoRepoBlocksTable.insertIgnore {
-                        it[cid] = cidValue
-                        it[bytes] = block.bytes
-                    }
-                    AtprotoRepoBlockLinksTable.insertIgnore {
-                        it[repoDid] = repo.toString()
-                        it[cid] = cidValue
-                    }
-                    Unit
-                }
+            require(immutable.cid == Cid.sha256(0x71, immutable.bytes) || immutable.cid == Cid.rawSha256(immutable.bytes)) {
+                "Repository block bytes do not match their CID"
             }
-        }.onSuccess { blockCache.remember(block, generation) }
+            ownedRepoMutation(repo) {
+                val cidValue = immutable.cid.toString()
+                AtprotoRepoBlocksTable.insertIgnore {
+                    it[cid] = cidValue
+                    it[bytes] = immutable.bytes
+                }
+                val stored = AtprotoRepoBlocksTable.selectAll().where { AtprotoRepoBlocksTable.cid eq cidValue }.single()
+                if (!stored[AtprotoRepoBlocksTable.bytes].contentEquals(immutable.bytes)) {
+                    throw IdentityLifecycleConflictException("Stored repository block requires reconciliation")
+                }
+                AtprotoRepoBlockLinksTable.insertIgnore {
+                    it[repoDid] = repo.toString()
+                    it[cid] = cidValue
+                }
+                Unit
+            }
+        }.onSuccess { blockCache.remember(immutable, generation) }
     }
 
     override suspend fun clearRepo(repo: AtprotoDid): Result<Unit> =
         runCatching {
-            withContext(Dispatchers.IO) {
-                transaction {
-                    val repoDid = repo.toString()
-                    AtprotoRepoHeadsTable.deleteWhere { AtprotoRepoHeadsTable.repoDid eq repoDid }
-                    AtprotoRepoBlockLinksTable.deleteWhere { AtprotoRepoBlockLinksTable.repoDid eq repoDid }
-                    AtprotoRepoCommitsTable.deleteWhere { AtprotoRepoCommitsTable.repoDid eq repoDid }
-                    Unit
-                }
+            ownedRepoMutation(repo) {
+                val repoDid = repo.toString()
+                AtprotoRepoHeadsTable.deleteWhere { AtprotoRepoHeadsTable.repoDid eq repoDid }
+                AtprotoRepoBlockLinksTable.deleteWhere { AtprotoRepoBlockLinksTable.repoDid eq repoDid }
+                AtprotoRepoCommitsTable.deleteWhere { AtprotoRepoCommitsTable.repoDid eq repoDid }
+                Unit
             }
         }.onSuccess { blockCache.clear() }
 
@@ -223,20 +250,28 @@ class PostgreSQLRepoBlockStore :
         commit: SignedRepoCommit,
     ): Result<Unit> =
         runCatching {
-            withContext(Dispatchers.IO) {
-                transaction {
-                    AtprotoRepoCommitsTable.upsert(AtprotoRepoCommitsTable.repoDid, AtprotoRepoCommitsTable.revision) {
-                        it[repoDid] = repo.toString()
-                        it[revision] = commit.commit.revision
-                        it[cid] = commit.cid.toString()
-                        it[rootCid] = commit.commit.root.toString()
-                        it[prevCid] = commit.commit.prev?.toString()
-                        it[createdAtEpochMillis] = commit.commit.createdAtEpochMillis
-                        it[recordCount] = commit.commit.recordCount
-                        it[signature] = commit.signature
-                    }
-                    Unit
+            require(commit.commit.repo == repo) { "Commit header names a different repository" }
+            ownedRepoMutation(repo) {
+                AtprotoRepoCommitsTable.insertIgnore {
+                    it[repoDid] = repo.toString()
+                    it[revision] = commit.commit.revision
+                    it[cid] = commit.cid.toString()
+                    it[rootCid] = commit.commit.root.toString()
+                    it[prevCid] = commit.commit.prev?.toString()
+                    it[createdAtEpochMillis] = commit.commit.createdAtEpochMillis
+                    it[recordCount] = commit.commit.recordCount
+                    it[signature] = commit.signature
                 }
+                val stored =
+                    AtprotoRepoCommitsTable
+                        .selectAll()
+                        .where {
+                            (AtprotoRepoCommitsTable.repoDid eq repo.toString()) and
+                                (AtprotoRepoCommitsTable.revision eq commit.commit.revision)
+                        }.single()
+                        .toSignedRepoCommit()
+                if (stored != commit) throw IdentityLifecycleConflictException("Conflicting repository commit history")
+                Unit
             }
         }
 

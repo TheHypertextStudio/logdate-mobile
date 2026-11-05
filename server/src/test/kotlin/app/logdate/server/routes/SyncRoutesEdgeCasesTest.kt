@@ -186,7 +186,7 @@ class SyncRoutesEdgeCasesTest {
             val storage = mockk<GcsMediaStorage>()
             every { storage.getBlob("missing-path") } returns null
             every { storage.getBlob("invalid-cipher-path") } returns (PayloadPrefixes.SERVER_MEDIA + byteArrayOf(1, 2, 3))
-            every { storage.deleteBlob(any()) } returns true
+            every { storage.deleteBlobIfExists(any()) } returns Unit
 
             val env = configureSyncTestApp(mediaStorage = storage)
             val auth = authHeader(env.tokenService, userId)
@@ -252,7 +252,7 @@ class SyncRoutesEdgeCasesTest {
                 Files.write(secondArg<Path>(), PayloadPrefixes.SERVER_BACKUP + byteArrayOf(1, 2, 3))
                 true
             }
-            every { storage.deleteBlob(any()) } returns true
+            every { storage.deleteBlobIfExists(any()) } returns Unit
 
             val env = configureSyncTestApp(mediaStorage = storage)
             val auth = authHeader(env.tokenService, userId)

@@ -96,20 +96,7 @@ public object SealedRecordCodec {
         sealedRkey: String,
         record: Sealed,
     ): SealedPayload {
-        if (record.version != VERSION) throw SealedRecordException("Envelope version ${record.version} isn't supported")
-        if (record.keyId != keys.keyId) throw SealedRecordException("The record was sealed with another key")
-        if (record.nonce.size != NONCE) throw SealedRecordException("The envelope's nonce isn't $NONCE bytes")
-        if (!SealedPadding.isPaddedSize(record.ciphertext.size - TAG)) {
-            throw SealedRecordException("The envelope's ciphertext isn't a sealed size")
-        }
-        val plaintext =
-            try {
-                cipher(keys).decryptWithIv(record.nonce.toByteArray(), record.ciphertext.toByteArray(), aad(space, author, sealedRkey))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                throw SealedRecordException("The sealed record failed authentication", e)
-            }
+        val plaintext = decryptPadded(keys, space, author, sealedRkey, record)
         val payload =
             try {
                 LexiconData.decodeFromDagCbor(SealedPayload.serializer(), SealedPadding.unpad(plaintext))
@@ -125,6 +112,29 @@ public object SealedRecordCodec {
             throw SealedRecordException("The sealed key doesn't match the record inside")
         }
         return payload
+    }
+
+    @OptIn(DelicateCryptographyApi::class)
+    internal suspend fun decryptPadded(
+        keys: SealingKeys,
+        space: SpaceRef,
+        author: String,
+        sealedRkey: String,
+        record: Sealed,
+    ): ByteArray {
+        if (record.version != VERSION) throw SealedRecordException("Envelope version ${record.version} isn't supported")
+        if (record.keyId != keys.keyId) throw SealedRecordException("The record was sealed with another key")
+        if (record.nonce.size != NONCE) throw SealedRecordException("The envelope's nonce isn't $NONCE bytes")
+        if (!SealedPadding.isPaddedSize(record.ciphertext.size - TAG)) {
+            throw SealedRecordException("The envelope's ciphertext isn't a sealed size")
+        }
+        return try {
+            cipher(keys).decryptWithIv(record.nonce.toByteArray(), record.ciphertext.toByteArray(), aad(space, author, sealedRkey))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            throw SealedRecordException("The sealed record failed authentication", e)
+        }
     }
 
     /** Encrypts already padded [plaintext] into an envelope stored under [sealedRkey]. */

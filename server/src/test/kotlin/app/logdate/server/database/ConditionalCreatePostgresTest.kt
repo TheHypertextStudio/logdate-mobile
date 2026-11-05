@@ -63,7 +63,7 @@ class ConditionalCreatePostgresTest {
                             ),
                         )
                     val owner = account.id.toJavaUUID()
-                    insertTestAccountRow(owner)
+                    insertTestAccountRow(owner, account.did)
                     val backing = PostgreSQLLogDateCollectionsMetadataStore()
                     val blocks = PostgreSQLRepoBlockStore()
                     val canonical = RepoBackedLogDateCollectionsRepository(accounts, identity, signing, blocks, backing)
@@ -155,7 +155,7 @@ class ConditionalCreatePostgresTest {
                                 ),
                             ),
                         )
-                    insertTestAccountRow(account.id.toJavaUUID())
+                    insertTestAccountRow(account.id.toJavaUUID(), account.did)
                     val backing = PostgreSQLLogDateCollectionsMetadataStore()
                     val failing =
                         object : LogDateCollectionsMetadataStore by backing {
@@ -220,7 +220,7 @@ class ConditionalCreatePostgresTest {
                         identity.ensureIdentity(
                             accounts.save(Account(id = owner, username = username, displayName = "Race", createdAt = Clock.System.now())),
                         )
-                    insertTestAccountRow(ownerId)
+                    insertTestAccountRow(ownerId, account.did)
                     val repository =
                         RepoBackedLogDateCollectionsRepository(
                             accounts,

@@ -1,8 +1,9 @@
 package app.logdate.server.sync
 
+import app.logdate.server.database.AccountsTable
+import app.logdate.server.database.support.createTestAccount
 import app.logdate.server.database.support.withH2Database
 import app.logdate.shared.model.sync.DeviceId
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -10,6 +11,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toJavaUuid
 
 /**
  * Comprehensive integration tests for [DbSyncRepository], ensuring correct persistence
@@ -19,11 +23,12 @@ import kotlin.test.assertTrue
  * and media, including server-side versioning, pagination of changes, user isolation,
  * and tombstone management for deleted data.
  */
+@OptIn(ExperimentalUuidApi::class)
 class DbSyncRepositoryTest {
     @Test
     fun `database retains opaque transcript when an older record omits it`() {
         withRepository { repository ->
-            val owner = UUID.randomUUID()
+            val owner = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             val audio = ContentRecord("voice", "AUDIO", null, "audio.m4a", 10, 1, 2, 0, DeviceId("device"), transcript = "LDSE2:opaque")
             repository.upsertContent(owner, audio)
             repository.upsertContent(owner, audio.copy(transcript = null, lastUpdated = 3))
@@ -49,8 +54,8 @@ class DbSyncRepositoryTest {
     @Test
     fun `content journal and association changes include updates and tombstones`() {
         withRepository { repository ->
-            val userId = UUID.randomUUID()
-            val otherUser = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
+            val otherUser = Uuid.random().toJavaUuid().also { createTestAccount(it) }
 
             // Insert + update content to cover both upsert branches.
             val createdContent =
@@ -197,7 +202,7 @@ class DbSyncRepositoryTest {
     @Test
     fun `media operations support update retrieval and tombstone purge`() {
         withRepository { repository ->
-            val userId = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             val now = System.currentTimeMillis()
 
             val created =
@@ -251,8 +256,8 @@ class DbSyncRepositoryTest {
     @Test
     fun `backup operations create list lookup and delete`() {
         withRepository { repository ->
-            val userId = UUID.randomUUID()
-            val backupId = UUID.randomUUID()
+            val userId = Uuid.random().toJavaUuid().also { createTestAccount(it) }
+            val backupId = Uuid.random().toJavaUuid()
             val createdAt = System.currentTimeMillis()
 
             repository.createBackupRecord(
@@ -285,8 +290,8 @@ class DbSyncRepositoryTest {
     @Test
     fun `global cleanup scrubs payloads and preserves deletion delivery across users`() {
         withRepository { repository ->
-            val userA = UUID.randomUUID()
-            val userB = UUID.randomUUID()
+            val userA = Uuid.random().toJavaUuid().also { createTestAccount(it) }
+            val userB = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             val oldTs = 1L
             val newTs = 5_000L
 
@@ -369,7 +374,7 @@ class DbSyncRepositoryTest {
     @Test
     fun `a write older than a delete is rejected and the tombstone stays`() {
         withRepository { repository ->
-            val owner = UUID.randomUUID()
+            val owner = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             val note = ContentRecord("note-1", "TEXT", "original", null, null, 1, 1, 0, DeviceId("device"))
             repository.upsertContent(owner, note)
             repository.deleteContent(owner, "note-1", deletedAt = 10)
@@ -384,7 +389,7 @@ class DbSyncRepositoryTest {
     @Test
     fun `a future dated write cannot resurrect a deleted record`() {
         withRepository { repository ->
-            val owner = UUID.randomUUID()
+            val owner = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             val note = ContentRecord("note-1", "TEXT", "original", null, null, 1, 1, 0, DeviceId("device"))
             repository.upsertContent(owner, note)
             repository.deleteContent(owner, "note-1", deletedAt = 10)
@@ -399,7 +404,7 @@ class DbSyncRepositoryTest {
     @Test
     fun `deleting an unknown note leaves a tombstone that rejects a late write`() {
         withRepository { repository ->
-            val owner = UUID.randomUUID()
+            val owner = Uuid.random().toJavaUuid().also { createTestAccount(it) }
             repository.deleteContent(owner, "never-seen", deletedAt = 10)
 
             assertFailsWith<StaleWriteException> {
@@ -413,6 +418,7 @@ class DbSyncRepositoryTest {
 
     private fun withRepository(testBody: (DbSyncRepository) -> Unit) {
         withH2Database(
+            AccountsTable,
             ContentSyncTable,
             JournalSyncTable,
             AssociationSyncTable,
