@@ -96,6 +96,9 @@ interface AudioTaggingService {
      */
     fun startModelDownload() = Unit
 
+    /** Retries a failed installed-file check without starting a download. */
+    fun checkModelAvailability() = Unit
+
     /** Releases native resources held by the underlying model. */
     fun release()
 }

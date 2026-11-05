@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioRecord
 import androidx.core.content.ContextCompat
+import app.logdate.client.media.audio.download.ModelDownloadController
 import app.logdate.client.media.audio.download.ModelDownloadStatus
 import app.logdate.client.media.audio.transcription.TranscriptAccumulator
 import app.logdate.client.media.audio.transcription.TranscriptionFailure
@@ -25,11 +26,9 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -366,30 +365,18 @@ class SherpaOnnxTranscriptionService(
 
     private val modelManager by lazy { SherpaOnnxModelManager(context) }
 
-    private val _offlineModelDownloadStatus = MutableStateFlow<ModelDownloadStatus>(ModelDownloadStatus.Idle)
+    private val modelDownload = ModelDownloadController(
+            request = modelManager.whisperDownloadRequest(),
+        scope = scope,
+        isReady = { modelManager.checkWhisperModelReady() },
+        download = { modelManager.downloadWhisperModel() },
+    )
 
-    override val offlineModelDownloadStatus: StateFlow<ModelDownloadStatus> = _offlineModelDownloadStatus.asStateFlow()
+    override val offlineModelDownloadStatus: StateFlow<ModelDownloadStatus> = modelDownload.status
 
-    private var offlineDownloadJob: Job? = null
+    override fun checkOfflineModelAvailability() = modelDownload.checkAvailability()
 
-    override fun startOfflineModelDownload() {
-        if (offlineDownloadJob?.isActive == true) return
-        if (isOfflineModelAvailable) {
-            _offlineModelDownloadStatus.value = ModelDownloadStatus.Completed
-            return
-        }
-        offlineDownloadJob =
-            scope.launch(Dispatchers.IO) {
-                try {
-                    modelManager.downloadWhisperModel().collect { status ->
-                        _offlineModelDownloadStatus.value = status
-                    }
-                } catch (e: Exception) {
-                    Napier.e("Whisper download crashed", e)
-                    _offlineModelDownloadStatus.value = ModelDownloadStatus.UnknownError
-                }
-            }
-    }
+    override fun startOfflineModelDownload() = modelDownload.startDownload()
 
     override suspend fun resetTranscription() {
         accumulator.reset()

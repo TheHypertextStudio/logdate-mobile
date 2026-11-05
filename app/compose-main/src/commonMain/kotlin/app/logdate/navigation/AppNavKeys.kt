@@ -44,9 +44,11 @@ import app.logdate.feature.core.settings.navigation.ResetSettingsRoute
 import app.logdate.feature.core.settings.navigation.RewindSettingsRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
 import app.logdate.feature.core.settings.navigation.SignInMethodsRoute
+import app.logdate.feature.core.settings.navigation.SoundRecognitionSettingsRoute
 import app.logdate.feature.core.settings.navigation.StreakSettingsRoute
 import app.logdate.feature.core.settings.navigation.SyncSettingsRoute
 import app.logdate.feature.core.settings.navigation.TimelineSettingsRoute
+import app.logdate.feature.core.settings.navigation.TranscriptionSettingsRoute
 import app.logdate.feature.core.settings.navigation.VoiceNotesSettingsRoute
 import app.logdate.feature.core.settings.navigation.WatchNotificationSettingsRoute
 import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
@@ -151,6 +153,8 @@ val appNavSavedStateConfiguration: SavedStateConfiguration =
                     subclass(DeveloperToolsRoute::class, DeveloperToolsRoute.serializer())
                     subclass(MemoriesSettingsRoute::class, MemoriesSettingsRoute.serializer())
                     subclass(VoiceNotesSettingsRoute::class, VoiceNotesSettingsRoute.serializer())
+                    subclass(TranscriptionSettingsRoute::class, TranscriptionSettingsRoute.serializer())
+                    subclass(SoundRecognitionSettingsRoute::class, SoundRecognitionSettingsRoute.serializer())
                     subclass(StreakSettingsRoute::class, StreakSettingsRoute.serializer())
                     subclass(TimelineSettingsRoute::class, TimelineSettingsRoute.serializer())
                     subclass(SyncSettingsRoute::class, SyncSettingsRoute.serializer())

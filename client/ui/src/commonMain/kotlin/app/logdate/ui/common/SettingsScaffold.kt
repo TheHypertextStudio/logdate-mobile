@@ -25,6 +25,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextOverflow
 import app.logdate.ui.theme.Spacing
 import logdate.client.ui.generated.resources.Res
 import logdate.client.ui.generated.resources.common_back
@@ -52,6 +53,7 @@ fun SettingsScaffold(
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState? = null,
     topBarColors: TopAppBarColors? = null,
+    titleMaxLines: Int = Int.MAX_VALUE,
     content: LazyListScope.() -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
@@ -64,7 +66,7 @@ fun SettingsScaffold(
         contentWindowInsets = WindowInsets.navigationBars,
         topBar = {
             LargeTopAppBar(
-                title = { Text(title) },
+                title = { Text(title, maxLines = titleMaxLines, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(

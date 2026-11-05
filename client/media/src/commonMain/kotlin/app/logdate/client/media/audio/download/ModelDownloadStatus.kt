@@ -3,13 +3,18 @@ package app.logdate.client.media.audio.download
 /**
  * Status of an on-device speech / audio-tagging model download.
  *
- * Both [app.logdate.client.media.audio.transcription.TranscriptionService.downloadOfflineModel]
- * and [app.logdate.client.media.audio.tagging.AudioTaggingService.downloadModel] emit this
- * sealed type so the UI can render a single download progress component for either, and
- * map each failure case to a localized string at the call site.
+ * Both [app.logdate.client.media.audio.transcription.TranscriptionService.offlineModelDownloadStatus]
+ * and [app.logdate.client.media.audio.tagging.AudioTaggingService.modelDownloadStatus] expose
+ * this type so the UI can render consistent availability and download progress.
  */
 sealed interface ModelDownloadStatus {
-    /** No download has started yet. */
+    /** Installed files have not yet been checked. */
+    data object Checking : ModelDownloadStatus
+
+    /** The platform supplies transcription without an app-managed download. */
+    data object ManagedBySystem : ModelDownloadStatus
+
+    /** Installed files were checked and the model is missing. */
     data object Idle : ModelDownloadStatus
 
     /**
@@ -36,11 +41,14 @@ sealed interface ModelDownloadStatus {
     data object Completed : ModelDownloadStatus
 
     /**
-     * Terminal failure states. Marker sub-interface so call sites can check
+     * Unavailable or interrupted states; temporary failures are retried automatically. Marker sub-interface so call sites can check
      * `state is Failure` instead of comparing every case by hand. The UI maps
      * each concrete case to a localized string.
      */
     sealed interface Failure : ModelDownloadStatus
+
+    /** Availability could not be determined; retry discovery rather than downloading. */
+    data object CheckFailed : Failure
 
     /** No internet, DNS failure, or host unreachable. */
     data object NoNetwork : Failure
@@ -53,6 +61,9 @@ sealed interface ModelDownloadStatus {
 
     /** The downloaded archive failed to unpack — corrupt or unexpected layout. */
     data object ArchiveCorrupt : Failure
+
+    /** The current package is invalid; wait for a corrected source revision. */
+    data object AwaitingUpdate : Failure
 
     /** This implementation doesn't support a downloadable model at all. */
     data object NotSupported : Failure

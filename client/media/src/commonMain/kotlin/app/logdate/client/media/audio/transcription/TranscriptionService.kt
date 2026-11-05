@@ -198,6 +198,9 @@ interface TranscriptionService {
      */
     fun startOfflineModelDownload() = Unit
 
+    /** Retries a failed installed-file check without starting a download. */
+    fun checkOfflineModelAvailability() = Unit
+
     /**
      * Releases resources when the service is no longer needed
      */

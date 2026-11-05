@@ -1,6 +1,7 @@
 package app.logdate.feature.speech.recognition
 
 import android.content.Context
+import app.logdate.client.media.audio.download.ModelDownloadController
 import app.logdate.client.media.audio.download.ModelDownloadStatus
 import app.logdate.client.media.audio.tagging.AudioTaggingResult
 import app.logdate.client.media.audio.tagging.AudioTaggingService
@@ -13,17 +14,13 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -61,30 +58,18 @@ class SherpaOnnxAudioTaggingService(
     // editor session — it's a process-lifetime singleton, so the scope
     // intentionally lives forever.
     private val downloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val _modelDownloadStatus = MutableStateFlow<ModelDownloadStatus>(ModelDownloadStatus.Idle)
+    private val modelDownload = ModelDownloadController(
+            request = modelManager.taggingDownloadRequest(),
+        scope = downloadScope,
+        isReady = { modelManager.checkAudioTaggingModelReady() },
+        download = { modelManager.downloadAudioTaggingModel() },
+    )
 
-    override val modelDownloadStatus: StateFlow<ModelDownloadStatus> = _modelDownloadStatus.asStateFlow()
+    override val modelDownloadStatus: StateFlow<ModelDownloadStatus> = modelDownload.status
 
-    private var modelDownloadJob: Job? = null
+    override fun checkModelAvailability() = modelDownload.checkAvailability()
 
-    override fun startModelDownload() {
-        if (modelDownloadJob?.isActive == true) return
-        if (isAvailable) {
-            _modelDownloadStatus.value = ModelDownloadStatus.Completed
-            return
-        }
-        modelDownloadJob =
-            downloadScope.launch {
-                try {
-                    modelManager.downloadAudioTaggingModel().collect { status ->
-                        _modelDownloadStatus.value = status
-                    }
-                } catch (e: Exception) {
-                    Napier.e("CED tagging model download crashed", e)
-                    _modelDownloadStatus.value = ModelDownloadStatus.UnknownError
-                }
-            }
-    }
+    override fun startModelDownload() = modelDownload.startDownload()
 
     override suspend fun warmUp(): Boolean = ensureInitialized()
 

@@ -1,18 +1,20 @@
 package app.logdate.client.media.audio.sherpa
 
+import app.logdate.client.media.audio.download.FileModelDownloadRequest
+import app.logdate.client.media.audio.download.ModelDownloadRequest
 import app.logdate.client.media.audio.download.ModelDownloadStatus
+import app.logdate.client.media.audio.download.ModelPackageInstallation
+import app.logdate.client.media.audio.download.checkedModelFilesReady
+import app.logdate.client.media.audio.download.checkedModelPackageReady
+import app.logdate.client.media.audio.download.deleteModelDirectory
+import app.logdate.client.media.audio.download.downloadModelPackage
+import app.logdate.client.media.audio.download.reconcileCompletedModelPackage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
-import java.io.BufferedInputStream
 import java.io.File
-import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URI
 
 /**
  * Desktop counterpart of `SherpaOnnxModelManager`. Resolves on-disk paths
@@ -27,42 +29,98 @@ import java.net.URI
  * downloaded on demand.
  */
 internal class DesktopSherpaModelManager(
-    rootDirectory: File = defaultRootDirectory(),
+    private val rootDirectory: File = defaultRootDirectory(),
+    private val whisperDownloadUrl: String = WHISPER_DOWNLOAD_URL,
+    private val vadDownloadUrl: String = VAD_DOWNLOAD_URL,
+    private val availableBytes: (File) -> Long = { it.usableSpace },
 ) {
     private val whisperModelDir = File(rootDirectory, WHISPER_MODEL_DIR_NAME)
     private val taggingModelDir = File(rootDirectory, TAGGING_MODEL_DIR_NAME)
+    private val vadModelDir = File(rootDirectory, "silero-vad")
 
-    init {
-        rootDirectory.mkdirs()
-    }
+    fun whisperDownloadRequest(): ModelDownloadRequest = FileModelDownloadRequest(File(rootDirectory, ".whisper-download-requested").path)
+
+    fun taggingDownloadRequest(): ModelDownloadRequest = FileModelDownloadRequest(File(rootDirectory, ".tagging-download-requested").path)
 
     fun getWhisperModelPath(): String? = if (isWhisperModelReady()) whisperModelDir.absolutePath else null
 
-    fun isWhisperModelReady(): Boolean =
-        whisperModelDir.exists() &&
-            whisperModelDir.resolve(WHISPER_TOKENS_NAME).exists() &&
-            whisperModelDir.resolve(WHISPER_ENCODER_NAME).exists() &&
-            whisperModelDir.resolve(WHISPER_DECODER_NAME).exists()
+    fun checkWhisperModelReady(): Boolean = checkWhisperFilesReady() && getVadModelPath() != null
+
+    fun isWhisperModelReady(): Boolean = modelReady { checkWhisperModelReady() }
 
     fun getAudioTaggingModelPath(): String? = if (isAudioTaggingModelReady()) taggingModelDir.absolutePath else null
 
-    fun isAudioTaggingModelReady(): Boolean =
-        taggingModelDir.exists() &&
-            taggingModelDir.resolve(TAGGING_MODEL_FILE_NAME).exists() &&
-            taggingModelDir.resolve(TAGGING_LABELS_FILE_NAME).exists()
+    fun checkAudioTaggingModelReady(): Boolean =
+        checkedModelPackageReady(taggingModelDir.path, listOf(TAGGING_MODEL_FILE_NAME, TAGGING_LABELS_FILE_NAME))
+
+    fun isAudioTaggingModelReady(): Boolean = modelReady { checkAudioTaggingModelReady() }
+
+    private fun checkWhisperFilesReady(): Boolean =
+        checkedModelPackageReady(
+            whisperModelDir.path,
+            listOf(WHISPER_ENCODER_NAME, WHISPER_DECODER_NAME, WHISPER_TOKENS_NAME),
+        )
+
+    fun getVadModelPath(): String? =
+        when {
+            checkedModelFilesReady(rootDirectory.path, listOf(VAD_MODEL_FILE_NAME)) -> rootDirectory.resolve(VAD_MODEL_FILE_NAME).path
+            checkedModelFilesReady(vadModelDir.path, listOf(VAD_MODEL_FILE_NAME)) -> vadModelDir.resolve(VAD_MODEL_FILE_NAME).path
+            else -> null
+        }.also { if (it != null) reconcileCompletedModelPackage(vadModelDir) }
 
     fun downloadWhisperModel(): Flow<ModelDownloadStatus> =
-        downloadAndExtractTarBz2(
-            url = WHISPER_DOWNLOAD_URL,
-            targetDir = whisperModelDir,
-            isReady = ::isWhisperModelReady,
-        )
+        flow {
+            val needsVad = getVadModelPath() == null
+            var completedBytes = 0L
+            if (!checkWhisperFilesReady()) {
+                var installed = false
+                downloadAndExtractTarBz2(
+                    whisperDownloadUrl,
+                    whisperModelDir,
+                    ::checkWhisperFilesReady,
+                    listOf(WHISPER_ENCODER_NAME, WHISPER_DECODER_NAME, WHISPER_TOKENS_NAME),
+                ).collect { status ->
+                    when (status) {
+                        is ModelDownloadStatus.Downloading -> {
+                            completedBytes = status.bytesDownloaded
+                            emit(if (needsVad) status.copy(totalBytes = null) else status)
+                        }
+                        ModelDownloadStatus.Completed -> installed = true
+                        else -> emit(status)
+                    }
+                }
+                if (!installed) return@flow
+            }
+            if (needsVad) {
+                downloadAndExtractTarBz2(
+                    vadDownloadUrl,
+                    vadModelDir,
+                    { getVadModelPath() != null },
+                    listOf(VAD_MODEL_FILE_NAME),
+                    VAD_MODEL_FILE_NAME,
+                ).collect { status ->
+                    emit(
+                        if (status is ModelDownloadStatus.Downloading) {
+                            status.copy(
+                                bytesDownloaded = completedBytes + status.bytesDownloaded,
+                                totalBytes = status.totalBytes?.plus(completedBytes),
+                            )
+                        } else {
+                            status
+                        },
+                    )
+                }
+            } else {
+                emit(ModelDownloadStatus.Completed)
+            }
+        }.flowOn(Dispatchers.IO)
 
     fun downloadAudioTaggingModel(): Flow<ModelDownloadStatus> =
         downloadAndExtractTarBz2(
             url = TAGGING_DOWNLOAD_URL,
             targetDir = taggingModelDir,
-            isReady = ::isAudioTaggingModelReady,
+            isReady = ::checkAudioTaggingModelReady,
+            requiredNames = listOf(TAGGING_MODEL_FILE_NAME, TAGGING_LABELS_FILE_NAME),
         )
 
     /**
@@ -75,158 +133,41 @@ internal class DesktopSherpaModelManager(
         url: String,
         targetDir: File,
         isReady: () -> Boolean,
+        requiredNames: List<String>,
+        rawFileName: String? = null,
     ): Flow<ModelDownloadStatus> =
-        flow {
-            if (isReady()) {
-                emit(ModelDownloadStatus.Completed)
-                return@flow
-            }
-
-            var connection: HttpURLConnection? = null
-            try {
-                connection =
-                    (URI(url).toURL().openConnection() as HttpURLConnection).apply {
-                        connectTimeout = HTTP_CONNECT_TIMEOUT_MS
-                        readTimeout = HTTP_READ_TIMEOUT_MS
-                        instanceFollowRedirects = true
-                        requestMethod = "GET"
+        downloadModelPackage(
+            url,
+            ModelPackageInstallation(
+                targetDir,
+                requiredNames,
+                isReady,
+                unpackedBytes = { if (rawFileName == null) modelArchiveUnpackedBytes(it) else it.length() },
+                extract = { archive, staging ->
+                    if (rawFileName == null) {
+                        extractModelArchive(archive, staging)
+                    } else {
+                        deleteModelDirectory(staging.path)
+                        staging.mkdirs()
+                        archive.copyTo(staging.resolve(rawFileName))
                     }
+                },
+            ),
+            availableBytes,
+        )
 
-                val responseCode = connection.responseCode
-                if (responseCode !in 200..299) {
-                    Napier.w("Desktop model download HTTP $responseCode for $url")
-                    emit(ModelDownloadStatus.ServerUnavailable)
-                    return@flow
-                }
-
-                val totalBytes =
-                    connection.contentLengthLong.takeIf { it > 0 }
-                        ?: connection.getHeaderField("Content-Length")?.toLongOrNull()?.takeIf { it > 0 }
-
-                emit(ModelDownloadStatus.Downloading(bytesDownloaded = 0L, totalBytes = totalBytes))
-
-                val tempArchive = File(targetDir.parentFile, "${targetDir.name}.tar.bz2.tmp")
-                tempArchive.parentFile?.mkdirs()
-                tempArchive.delete()
-
-                connection.inputStream.use { input ->
-                    FileOutputStream(tempArchive).use { output ->
-                        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-                        var totalRead = 0L
-                        var bytesSinceLastEmit = 0L
-                        while (true) {
-                            val read = input.read(buffer)
-                            if (read <= 0) break
-                            output.write(buffer, 0, read)
-                            totalRead += read
-                            bytesSinceLastEmit += read
-                            if (bytesSinceLastEmit >= PROGRESS_EMIT_INTERVAL_BYTES) {
-                                emit(
-                                    ModelDownloadStatus.Downloading(
-                                        bytesDownloaded = totalRead,
-                                        totalBytes = totalBytes,
-                                    ),
-                                )
-                                bytesSinceLastEmit = 0L
-                            }
-                        }
-                        emit(
-                            ModelDownloadStatus.Downloading(
-                                bytesDownloaded = totalRead,
-                                totalBytes = totalBytes,
-                            ),
-                        )
-                    }
-                }
-
-                emit(ModelDownloadStatus.Extracting)
-                try {
-                    extractTarBz2IntoDir(tempArchive, targetDir)
-                } finally {
-                    tempArchive.delete()
-                }
-
-                if (!isReady()) {
-                    Napier.w("Extracted desktop archive at $url is missing expected files")
-                    targetDir.deleteRecursively()
-                    emit(ModelDownloadStatus.ArchiveCorrupt)
-                    return@flow
-                }
-
-                emit(ModelDownloadStatus.Completed)
-            } catch (e: java.net.UnknownHostException) {
-                Napier.e("Desktop model download failed: no network for $url", e)
-                targetDir.deleteRecursively()
-                emit(ModelDownloadStatus.NoNetwork)
-            } catch (e: java.net.SocketTimeoutException) {
-                Napier.e("Desktop model download timed out for $url", e)
-                targetDir.deleteRecursively()
-                emit(ModelDownloadStatus.NoNetwork)
-            } catch (e: java.io.IOException) {
-                val outOfSpace = e.message?.contains("space", ignoreCase = true) == true
-                Napier.e("Desktop model download IO error for $url (outOfSpace=$outOfSpace)", e)
-                targetDir.deleteRecursively()
-                emit(if (outOfSpace) ModelDownloadStatus.OutOfStorage else ModelDownloadStatus.UnknownError)
-            } catch (e: Exception) {
-                Napier.e("Desktop model download failed for $url", e)
-                targetDir.deleteRecursively()
-                emit(ModelDownloadStatus.UnknownError)
-            } finally {
-                connection?.disconnect()
-            }
-        }.flowOn(Dispatchers.IO)
-
-    private fun extractTarBz2IntoDir(
-        archive: File,
-        targetDir: File,
-    ) {
-        if (targetDir.exists()) {
-            targetDir.deleteRecursively()
+    private fun modelReady(check: () -> Boolean): Boolean =
+        try {
+            check()
+        } catch (e: Exception) {
+            Napier.e("Could not inspect installed model files", e)
+            false
         }
-        targetDir.mkdirs()
-
-        var topLevelPrefix: String? = null
-        TarArchiveInputStream(
-            BZip2CompressorInputStream(BufferedInputStream(archive.inputStream())),
-        ).use { tarIn ->
-            var entry = tarIn.nextEntry
-            while (entry != null) {
-                val entryName = entry.name
-
-                if (topLevelPrefix == null) {
-                    val slashIndex = entryName.indexOf('/')
-                    if (slashIndex > 0) {
-                        topLevelPrefix = entryName.substring(0, slashIndex + 1)
-                    }
-                }
-
-                val relativePath =
-                    topLevelPrefix?.let {
-                        if (entryName.startsWith(it)) entryName.removePrefix(it) else entryName
-                    } ?: entryName
-
-                if (relativePath.isEmpty()) {
-                    entry = tarIn.nextEntry
-                    continue
-                }
-
-                val outFile = File(targetDir, relativePath)
-                if (!outFile.canonicalPath.startsWith(targetDir.canonicalPath)) {
-                    throw SecurityException("Tar entry escaped target dir: $entryName")
-                }
-
-                if (entry.isDirectory) {
-                    outFile.mkdirs()
-                } else {
-                    outFile.parentFile?.mkdirs()
-                    FileOutputStream(outFile).use { tarIn.copyTo(it, BUFFER_SIZE) }
-                }
-                entry = tarIn.nextEntry
-            }
-        }
-    }
 
     companion object {
+        const val VAD_MODEL_FILE_NAME = "silero_vad.onnx"
+        private const val VAD_DOWNLOAD_URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
+
         const val WHISPER_MODEL_DIR_NAME = "sherpa-onnx-whisper-small-en"
         const val WHISPER_ENCODER_NAME = "small.en-encoder.int8.onnx"
         const val WHISPER_DECODER_NAME = "small.en-decoder.int8.onnx"
@@ -241,12 +182,6 @@ internal class DesktopSherpaModelManager(
         private const val TAGGING_DOWNLOAD_URL =
             "https://github.com/k2-fsa/sherpa-onnx/releases/download/audio-tagging-models/" +
                 "sherpa-onnx-ced-small-audio-tagging-2024-04-19.tar.bz2"
-
-        private const val HTTP_CONNECT_TIMEOUT_MS = 30_000
-        private const val HTTP_READ_TIMEOUT_MS = 60_000
-        private const val DOWNLOAD_BUFFER_SIZE = 64 * 1024
-        private const val PROGRESS_EMIT_INTERVAL_BYTES = 512L * 1024
-        private const val BUFFER_SIZE = 8192
 
         /**
          * The default root directory used when no override is supplied. Picks

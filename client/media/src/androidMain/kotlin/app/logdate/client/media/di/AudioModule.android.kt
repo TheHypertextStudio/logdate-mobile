@@ -46,7 +46,7 @@ actual val audioModule: Module =
         // Core on-device speech ships as an install-time feature split. The facade
         // keeps the base module independent of Sherpa-ONNX while making recording
         // treat transcription as an always-present product capability.
-        single<TranscriptionService> {
+        single<TranscriptionService>(createdAtStart = true) {
             InstallTimeTranscriptionService(
                 context = androidContext(),
                 scope = get(),
@@ -55,7 +55,7 @@ actual val audioModule: Module =
         }
 
         // CED remains an optional model download inside the installed speech feature.
-        single<AudioTaggingService> {
+        single<AudioTaggingService>(createdAtStart = true) {
             InstallTimeAudioTaggingService(
                 context = androidContext(),
                 providerLoader = get(),

@@ -1,20 +1,17 @@
 package app.logdate.feature.speech.recognition
 
 import android.content.Context
+import app.logdate.client.media.audio.download.checkedModelPackageReady
+import app.logdate.client.media.audio.download.ModelDownloadRequest
+import app.logdate.client.media.audio.download.FileModelDownloadRequest
+import app.logdate.client.media.audio.download.ModelPackageInstallation
+import app.logdate.client.media.audio.download.downloadModelPackage
 import app.logdate.client.media.audio.download.ModelDownloadStatus
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
-import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URI
 import java.util.zip.ZipInputStream
 
 /**
@@ -29,12 +26,16 @@ import java.util.zip.ZipInputStream
  */
 class SherpaOnnxModelManager(
     private val context: Context,
+    private val availableBytes: (File) -> Long = { it.usableSpace },
 ) {
     private val sttModelDir = File(context.filesDir, STT_MODEL_DIR_NAME)
     private val punctModelDir = File(context.filesDir, PUNCT_MODEL_DIR_NAME)
     private val vadModelDir = File(context.filesDir, VAD_MODEL_DIR_NAME)
     private val whisperModelDir = File(context.filesDir, WHISPER_MODEL_DIR_NAME)
     private val taggingModelDir = File(context.filesDir, TAGGING_MODEL_DIR_NAME)
+
+    fun whisperDownloadRequest(): ModelDownloadRequest = FileModelDownloadRequest(File(context.filesDir, ".whisper-download-requested").path)
+    fun taggingDownloadRequest(): ModelDownloadRequest = FileModelDownloadRequest(File(context.filesDir, ".tagging-download-requested").path)
 
     suspend fun getModelPath(): String? {
         if (isSttModelReady()) {
@@ -91,11 +92,9 @@ class SherpaOnnxModelManager(
      */
     fun getWhisperModelPath(): String? = if (isWhisperModelReady()) whisperModelDir.absolutePath else null
 
-    fun isWhisperModelReady(): Boolean =
-        whisperModelDir.exists() &&
-            whisperModelDir.resolve(WHISPER_TOKENS_NAME).exists() &&
-            whisperModelDir.resolve(WHISPER_ENCODER_NAME).exists() &&
-            whisperModelDir.resolve(WHISPER_DECODER_NAME).exists()
+    fun checkWhisperModelReady(): Boolean = checkedModelPackageReady(whisperModelDir.path, listOf(WHISPER_ENCODER_NAME, WHISPER_DECODER_NAME, WHISPER_TOKENS_NAME))
+
+    fun isWhisperModelReady(): Boolean = modelReady { checkWhisperModelReady() }
 
     /**
      * Returns the absolute path to the CED-small audio tagging model
@@ -108,10 +107,9 @@ class SherpaOnnxModelManager(
      */
     fun getAudioTaggingModelPath(): String? = if (isAudioTaggingModelReady()) taggingModelDir.absolutePath else null
 
-    fun isAudioTaggingModelReady(): Boolean =
-        taggingModelDir.exists() &&
-            taggingModelDir.resolve(TAGGING_MODEL_FILE_NAME).exists() &&
-            taggingModelDir.resolve(TAGGING_LABELS_FILE_NAME).exists()
+    fun checkAudioTaggingModelReady(): Boolean = checkedModelPackageReady(taggingModelDir.path, listOf(TAGGING_MODEL_FILE_NAME, TAGGING_LABELS_FILE_NAME))
+
+    fun isAudioTaggingModelReady(): Boolean = modelReady { checkAudioTaggingModelReady() }
 
     /**
      * Streams the Whisper small.en archive from the Sherpa-ONNX release page,
@@ -122,7 +120,8 @@ class SherpaOnnxModelManager(
         downloadAndExtractTarBz2(
             url = WHISPER_DOWNLOAD_URL,
             targetDir = whisperModelDir,
-            isReady = ::isWhisperModelReady,
+            isReady = ::checkWhisperModelReady,
+            requiredNames = listOf(WHISPER_ENCODER_NAME, WHISPER_DECODER_NAME, WHISPER_TOKENS_NAME),
         )
 
     /**
@@ -134,7 +133,8 @@ class SherpaOnnxModelManager(
         downloadAndExtractTarBz2(
             url = TAGGING_DOWNLOAD_URL,
             targetDir = taggingModelDir,
-            isReady = ::isAudioTaggingModelReady,
+            isReady = ::checkAudioTaggingModelReady,
+            requiredNames = listOf(TAGGING_MODEL_FILE_NAME, TAGGING_LABELS_FILE_NAME),
         )
 
     /**
@@ -152,167 +152,12 @@ class SherpaOnnxModelManager(
         url: String,
         targetDir: File,
         isReady: () -> Boolean,
-    ): Flow<ModelDownloadStatus> =
-        flow {
-            if (isReady()) {
-                emit(ModelDownloadStatus.Completed)
-                return@flow
-            }
-
-            var connection: HttpURLConnection? = null
-            try {
-                connection =
-                    (URI(url).toURL().openConnection() as HttpURLConnection).apply {
-                        connectTimeout = HTTP_CONNECT_TIMEOUT_MS
-                        readTimeout = HTTP_READ_TIMEOUT_MS
-                        instanceFollowRedirects = true
-                        requestMethod = "GET"
-                    }
-
-                val responseCode = connection.responseCode
-                if (responseCode !in 200..299) {
-                    Napier.w("Model download HTTP $responseCode for $url")
-                    emit(ModelDownloadStatus.ServerUnavailable)
-                    return@flow
-                }
-
-                val totalBytes =
-                    connection.contentLengthLong.takeIf { it > 0 }
-                        ?: connection.getHeaderField("Content-Length")?.toLongOrNull()?.takeIf { it > 0 }
-
-                emit(ModelDownloadStatus.Downloading(bytesDownloaded = 0L, totalBytes = totalBytes))
-
-                // Buffer the bytes to a temp file first so the bzip2 + tar
-                // decode passes can fail cleanly without leaving the network
-                // half-read. Stream-based progress reporting happens here.
-                val tempArchive = File(targetDir.parentFile, "${targetDir.name}.tar.bz2.tmp")
-                tempArchive.parentFile?.mkdirs()
-                tempArchive.delete()
-
-                connection.inputStream.use { input ->
-                    FileOutputStream(tempArchive).use { output ->
-                        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-                        var totalRead = 0L
-                        var bytesSinceLastEmit = 0L
-                        while (true) {
-                            val read = input.read(buffer)
-                            if (read <= 0) break
-                            output.write(buffer, 0, read)
-                            totalRead += read
-                            bytesSinceLastEmit += read
-                            if (bytesSinceLastEmit >= PROGRESS_EMIT_INTERVAL_BYTES) {
-                                emit(
-                                    ModelDownloadStatus.Downloading(
-                                        bytesDownloaded = totalRead,
-                                        totalBytes = totalBytes,
-                                    ),
-                                )
-                                bytesSinceLastEmit = 0L
-                            }
-                        }
-                        emit(
-                            ModelDownloadStatus.Downloading(
-                                bytesDownloaded = totalRead,
-                                totalBytes = totalBytes,
-                            ),
-                        )
-                    }
-                }
-
-                emit(ModelDownloadStatus.Extracting)
-                try {
-                    extractTarBz2IntoDir(tempArchive, targetDir)
-                } finally {
-                    tempArchive.delete()
-                }
-
-                if (!isReady()) {
-                    Napier.w("Extracted archive at $url is missing expected files")
-                    targetDir.deleteRecursively()
-                    emit(ModelDownloadStatus.ArchiveCorrupt)
-                    return@flow
-                }
-
-                emit(ModelDownloadStatus.Completed)
-            } catch (e: java.net.UnknownHostException) {
-                Napier.e("Model download failed: no network for $url", e)
-                targetDir.deleteRecursively()
-                emit(ModelDownloadStatus.NoNetwork)
-            } catch (e: java.net.SocketTimeoutException) {
-                Napier.e("Model download timed out for $url", e)
-                targetDir.deleteRecursively()
-                emit(ModelDownloadStatus.NoNetwork)
-            } catch (e: java.io.IOException) {
-                // Includes "no space left on device". The JDK doesn't expose a
-                // typed signal for this, so we sniff the message internally
-                // (logged separately) and bucket anything else as Unknown.
-                val outOfSpace = e.message?.contains("space", ignoreCase = true) == true
-                Napier.e("Model download IO error for $url (outOfSpace=$outOfSpace)", e)
-                targetDir.deleteRecursively()
-                emit(if (outOfSpace) ModelDownloadStatus.OutOfStorage else ModelDownloadStatus.UnknownError)
-            } catch (e: Exception) {
-                Napier.e("Model download failed for $url", e)
-                targetDir.deleteRecursively()
-                emit(ModelDownloadStatus.UnknownError)
-            } finally {
-                connection?.disconnect()
-            }
-        }.flowOn(Dispatchers.IO)
-
-    /**
-     * Unpacks a downloaded tar.bz2 archive into [targetDir], stripping the
-     * archive's top-level directory the same way the build-time plugin does
-     * for bundled assets.
-     */
-    private fun extractTarBz2IntoDir(
-        archive: File,
-        targetDir: File,
-    ) {
-        if (targetDir.exists()) {
-            targetDir.deleteRecursively()
-        }
-        targetDir.mkdirs()
-
-        var topLevelPrefix: String? = null
-        TarArchiveInputStream(
-            BZip2CompressorInputStream(BufferedInputStream(archive.inputStream())),
-        ).use { tarIn ->
-            var entry = tarIn.nextEntry
-            while (entry != null) {
-                val entryName = entry.name
-
-                if (topLevelPrefix == null) {
-                    val slashIndex = entryName.indexOf('/')
-                    if (slashIndex > 0) {
-                        topLevelPrefix = entryName.substring(0, slashIndex + 1)
-                    }
-                }
-
-                val relativePath =
-                    topLevelPrefix?.let {
-                        if (entryName.startsWith(it)) entryName.removePrefix(it) else entryName
-                    } ?: entryName
-
-                if (relativePath.isEmpty()) {
-                    entry = tarIn.nextEntry
-                    continue
-                }
-
-                val outFile = File(targetDir, relativePath)
-                if (!outFile.canonicalPath.startsWith(targetDir.canonicalPath)) {
-                    throw SecurityException("Tar entry escaped target dir: $entryName")
-                }
-
-                if (entry.isDirectory) {
-                    outFile.mkdirs()
-                } else {
-                    outFile.parentFile?.mkdirs()
-                    FileOutputStream(outFile).use { tarIn.copyTo(it, BUFFER_SIZE) }
-                }
-                entry = tarIn.nextEntry
-            }
-        }
-    }
+        requiredNames: List<String>,
+    ): Flow<ModelDownloadStatus> = downloadModelPackage(
+        url,
+        ModelPackageInstallation(targetDir, requiredNames, isReady, ::modelArchiveUnpackedBytes, ::extractModelArchive),
+        availableBytes,
+    )
 
     private fun isSttModelReady(): Boolean =
         sttModelDir.exists() &&
@@ -392,6 +237,13 @@ class SherpaOnnxModelManager(
         }
     }
 
+    private fun modelReady(check: () -> Boolean): Boolean = try {
+        check()
+    } catch (e: Exception) {
+        Napier.e("Could not inspect installed model files", e)
+        false
+    }
+
     companion object {
         private const val STT_MODEL_DIR_NAME = "sherpa-onnx-stt"
         private const val STT_ASSET_NAME = "sherpa-onnx-stt-en.zip"
@@ -417,12 +269,7 @@ class SherpaOnnxModelManager(
             "https://github.com/k2-fsa/sherpa-onnx/releases/download/audio-tagging-models/" +
                 "sherpa-onnx-ced-small-audio-tagging-2024-04-19.tar.bz2"
 
-        private const val HTTP_CONNECT_TIMEOUT_MS = 30_000
-        private const val HTTP_READ_TIMEOUT_MS = 60_000
-        private const val DOWNLOAD_BUFFER_SIZE = 64 * 1024
-        // Emit a Downloading update every ~512 KB so the UI feels responsive
-        // without spamming Compose with hundreds of state changes per second.
-        private const val PROGRESS_EMIT_INTERVAL_BYTES = 512L * 1024
         private const val BUFFER_SIZE = 8192
+
     }
 }

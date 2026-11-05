@@ -19,6 +19,8 @@ import app.logdate.feature.core.settings.account.move.MoveServerScreen
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseScreen
 import app.logdate.feature.core.settings.account.signin.SignInMethodsScreen
 import app.logdate.feature.core.settings.ui.AdvancedSettingsScreen
+import app.logdate.feature.core.settings.ui.AudioModelSettingsScreen
+import app.logdate.feature.core.settings.ui.AudioSettingsCapability
 import app.logdate.feature.core.settings.ui.BirthdaySettingsScreen
 import app.logdate.feature.core.settings.ui.ClearDataSettingsScreen
 import app.logdate.feature.core.settings.ui.DataSettingsScreen
@@ -187,7 +189,17 @@ fun EntryProviderScope<NavKey>.settingsEntries(
         )
     }
     taggedEntry<VoiceNotesSettingsRoute> {
-        VoiceNotesSettingsScreen(onBack = onBack)
+        VoiceNotesSettingsScreen(
+            onBack = onBack,
+            onOpenTranscription = { onNavigateTo(TranscriptionSettingsRoute) },
+            onOpenSoundRecognition = { onNavigateTo(SoundRecognitionSettingsRoute) },
+        )
+    }
+    taggedEntry<TranscriptionSettingsRoute> {
+        AudioModelSettingsScreen(AudioSettingsCapability.Transcription, onBack)
+    }
+    taggedEntry<SoundRecognitionSettingsRoute> {
+        AudioModelSettingsScreen(AudioSettingsCapability.SoundRecognition, onBack)
     }
     taggedEntry<StreakSettingsRoute> {
         StreakSettingsScreen(onBack = onBack)

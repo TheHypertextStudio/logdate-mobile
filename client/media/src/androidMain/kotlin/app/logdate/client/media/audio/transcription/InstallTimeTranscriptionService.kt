@@ -105,6 +105,10 @@ internal class InstallTimeTranscriptionService(
     override val offlineModelDownloadStatus: StateFlow<ModelDownloadStatus>
         get() = delegate?.offlineModelDownloadStatus ?: notSupportedDownloadStatus
 
+    override fun checkOfflineModelAvailability() {
+        delegate?.checkOfflineModelAvailability()
+    }
+
     override fun startOfflineModelDownload() {
         delegate?.startOfflineModelDownload()
     }

@@ -1,29 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Voice notes settings -->
-    <string name="voice_notes_settings">Voice notes</string>
-    <string name="voice_notes_settings_description">On-device transcription and ambient sound detection</string>
+    <!-- Audio notes settings -->
+    <string name="voice_notes_settings">Audio notes</string>
+    <string name="voice_notes_settings_description">Transcription and sound recognition</string>
 
-    <string name="voice_notes_settings_intro">Voice notes work without anything extra. Download these on-device models if you want sharper transcripts and the soundscape each note was captured in — everything stays on your device.</string>
+    <string name="voice_notes_settings_intro">Record voices, music, or the sounds around you. Set up transcription and sound recognition on this device.</string>
 
-    <string name="voice_notes_model_transcription_title">Sharper transcripts</string>
-    <string name="voice_notes_model_transcription_description">Rewrites your spoken notes after recording with proper punctuation and casing.</string>
+    <string name="audio_transcription_heading">Speech, in writing</string>
+    <string name="audio_recognition_heading">Recognize the sounds around you</string>
 
-    <string name="voice_notes_model_tagging_title">Soundscape detection</string>
-    <string name="voice_notes_model_tagging_description">Tags ambient sounds — birds, traffic, music, rain — alongside each voice note.</string>
+    <string name="voice_notes_model_transcription_title">Transcription</string>
+    <string name="audio_transcription_live_description">See speech as text while recording. An extra download can improve it afterward.</string>
+    <string name="voice_notes_model_transcription_description">Turn speech in your recordings into text.</string>
 
-    <string name="voice_notes_model_status_ready">Ready</string>
+    <string name="voice_notes_model_tagging_title">Sound recognition</string>
+    <string name="voice_notes_model_tagging_description">Identify sounds such as rain, birds, traffic, and music.</string>
+
+    <string name="voice_notes_model_status_ready">Ready to use</string>
     <string name="voice_notes_model_status_idle">Not downloaded</string>
     <string name="voice_notes_model_status_downloading">Downloading…</string>
-    <string name="voice_notes_model_status_extracting">Installing…</string>
+    <string name="voice_notes_model_status_extracting">Setting up…</string>
 
     <string name="voice_notes_model_action_download">Download</string>
-    <string name="voice_notes_model_action_retry">Retry</string>
 
-    <string name="voice_notes_model_failed_no_network">No internet. Reconnect and try again.</string>
-    <string name="voice_notes_model_failed_server">The download server is unreachable right now.</string>
-    <string name="voice_notes_model_failed_storage">Not enough storage to install this model.</string>
-    <string name="voice_notes_model_failed_corrupt">The downloaded files were incomplete.</string>
-    <string name="voice_notes_model_failed_unknown">Something went wrong.</string>
-    <string name="voice_notes_model_failed_unsupported">Not supported on this device.</string>
+    <string name="audio_download_waiting_update">This download isn’t ready yet. We’ll keep checking.</string>
+    <string name="voice_notes_model_failed_no_network">Waiting for a connection. The download will continue automatically.</string>
+    <string name="voice_notes_model_failed_server">Waiting to connect. We’ll keep trying.</string>
+    <string name="voice_notes_model_failed_storage">Waiting for space to finish this download.</string>
+    <string name="voice_notes_model_failed_corrupt">We couldn’t finish the download.</string>
+    <string name="voice_notes_model_failed_unknown">We couldn’t finish the download.</string>
+    <string name="voice_notes_model_failed_unsupported">Not available on this device</string>
+
+    <string name="voice_notes_model_status_checking">Checking…</string>
+    <string name="voice_notes_model_status_managed">Built into your device</string>
+    <string name="voice_notes_model_failed_check">Still checking. This will update automatically.</string>
+    <string name="voice_notes_model_bytes_progress">%1$s of %2$s</string>
+    <string name="voice_notes_model_bytes_downloaded">%1$s downloaded</string>
+    <string name="voice_notes_model_tagging_detail">Recognizes sounds such as rain, birds, traffic, and music on your device.</string>
+    <string name="voice_notes_model_tagging_non_speech">Your recording does not need to contain speech.</string>
+    <string name="voice_notes_model_transcription_live_detail">See English speech as text while recording. An extra download can help improve the text after you finish.</string>
+    <string name="voice_notes_model_transcription_file_detail">Turn English speech in saved recordings into text. Audio is processed on your device.</string>
+    <string name="voice_notes_model_transcription_system_detail">Turn English speech in saved recordings into text using your device’s built-in speech recognition. Requires English support and permission to use speech recognition.</string>
+    <string name="voice_notes_model_recording_independent">You can record and listen without setting this up.</string>
+    <string name="voice_notes_model_unavailable_detail">This feature isn’t available on this device. You can still record and listen.</string>
+    <string name="voice_notes_model_tagging_system_detail">Your device can recognize sounds such as rain, birds, traffic, and music in your recordings.</string>
 </resources>

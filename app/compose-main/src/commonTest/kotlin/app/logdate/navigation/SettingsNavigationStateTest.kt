@@ -14,12 +14,26 @@ import app.logdate.feature.core.settings.navigation.RecoveryPhraseEntrySettingsR
 import app.logdate.feature.core.settings.navigation.RecoveryPhraseRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
 import app.logdate.feature.core.settings.navigation.SignInMethodsRoute
+import app.logdate.feature.core.settings.navigation.SoundRecognitionSettingsRoute
+import app.logdate.feature.core.settings.navigation.TranscriptionSettingsRoute
+import app.logdate.feature.core.settings.navigation.VoiceNotesSettingsRoute
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 abstract class SettingsNavigationStateTest {
+    @Test
+    fun `audio capability back stacks survive saved state restoration`() {
+        for (destination in listOf(TranscriptionSettingsRoute, SoundRecognitionSettingsRoute)) {
+            val stack: List<NavKey> = listOf(HomeRoute, SettingsRoute(), VoiceNotesSettingsRoute, destination)
+            val serializer = ListSerializer(PolymorphicSerializer(NavKey::class))
+            val saved = encodeToSavedState(serializer, stack, appNavSavedStateConfiguration)
+            val restored = decodeFromSavedState(serializer, saved, appNavSavedStateConfiguration)
+            assertEquals(stack, restored)
+        }
+    }
+
     @Test
     fun `account settings back stacks survive saved state restoration`() {
         val destinations =

@@ -30,17 +30,8 @@ internal class DesktopSherpaVadProvider(
         initMutex.withLock {
             if (vad != null) return@withLock true
 
-            // Desktop never bundles VAD as an asset; the user has to download
-            // the on-device models from settings before transcription works.
-            // Missing on-device models disable VAD without crashing the transcription pipeline.
-            val whisperPath = modelManager.getWhisperModelPath() ?: return@withLock false
-            val vadModelFile =
-                java.io
-                    .File(whisperPath)
-                    .parentFile
-                    ?.resolve(VAD_MODEL_FILE_NAME)
-                    ?: return@withLock false
-            if (!vadModelFile.exists()) return@withLock false
+            val modelPath = modelManager.getVadModelPath() ?: return@withLock false
+            val vadModelFile = java.io.File(modelPath)
 
             val config =
                 VadModelConfig
@@ -146,9 +137,6 @@ internal class DesktopSherpaVadProvider(
         const val SAMPLE_RATE = 16_000
         const val WINDOW_SIZE = 512
 
-        // Sherpa-ONNX bundles silero_vad.onnx in the same release directory
-        // as the Whisper model on desktop; once downloaded the .onnx sits
-        // alongside the encoder/decoder files.
-        const val VAD_MODEL_FILE_NAME = "silero_vad.onnx"
+        const val VAD_MODEL_FILE_NAME = DesktopSherpaModelManager.VAD_MODEL_FILE_NAME
     }
 }

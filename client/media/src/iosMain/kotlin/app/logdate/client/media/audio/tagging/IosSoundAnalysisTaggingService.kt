@@ -5,6 +5,7 @@
 
 package app.logdate.client.media.audio.tagging
 
+import app.logdate.client.media.audio.download.ModelDownloadStatus
 import app.logdate.client.media.storage.MediaFileResolver
 import app.logdate.client.media.storage.fileUrl
 import io.github.aakira.napier.Napier
@@ -15,6 +16,9 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -48,6 +52,9 @@ import platform.darwin.NSObject
 internal class IosSoundAnalysisTaggingService(
     private val mediaFiles: MediaFileResolver,
 ) : AudioTaggingService {
+    override val modelDownloadStatus: StateFlow<ModelDownloadStatus> =
+        MutableStateFlow<ModelDownloadStatus>(ModelDownloadStatus.ManagedBySystem).asStateFlow()
+
     override val isAvailable: Boolean = true
 
     override suspend fun warmUp(): Boolean = true

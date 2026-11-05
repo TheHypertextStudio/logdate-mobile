@@ -115,12 +115,9 @@ internal class IosTranscriptionService(
 
     override val supportsFileTranscription: Boolean = true
 
-    // The iOS system Speech Recognition model is always present on device —
-    // there is nothing to download.
-    override val isOfflineModelAvailable: Boolean = true
-
+    // Speech recognition is system-managed; no app-managed download is offered.
     override val offlineModelDownloadStatus: StateFlow<ModelDownloadStatus> =
-        MutableStateFlow(ModelDownloadStatus.Completed).asStateFlow()
+        MutableStateFlow(ModelDownloadStatus.ManagedBySystem).asStateFlow()
 
     override suspend fun resetTranscription() {
         _transcriptionFlow.emit(TranscriptionResult.InProgress)
