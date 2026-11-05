@@ -107,8 +107,10 @@ dependencies {
     implementation(libs.koin.logger.slf4j)
 
     // Testing
-    testImplementation(projects.client.networking)
-    testImplementation(projects.integration.atprotoOauthFixtures)
+    if (rootProject.name != "LogDateServerDocker") {
+        testImplementation(project(":client:networking"))
+        testImplementation(project(":integration:atproto-oauth-fixtures"))
+    }
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.ktor.client.websockets)

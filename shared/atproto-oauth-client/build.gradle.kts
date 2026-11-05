@@ -62,7 +62,9 @@ kotlin {
         }
 
         jvmTest.dependencies {
-            implementation(projects.integration.atprotoOauthFixtures)
+            if (rootProject.name != "LogDateServerDocker") {
+                implementation(project(":integration:atproto-oauth-fixtures"))
+            }
             implementation(libs.kotlin.test.junit)
             implementation(libs.nimbus.jose.jwt)
         }
