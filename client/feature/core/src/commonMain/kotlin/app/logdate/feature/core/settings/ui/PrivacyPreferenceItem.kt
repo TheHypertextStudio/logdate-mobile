@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,6 +22,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.theme.Spacing
@@ -50,20 +50,24 @@ internal fun PrivacyPreferenceItem(
     onRetry: () -> Unit,
 ) {
     when (state) {
-        PrivacyPreferenceState.Loading ->
-            ListItem(
+        PrivacyPreferenceState.Loading -> {
+            SettingsRow(
                 headlineContent = { Text(title) },
                 supportingContent = { Text(stringResource(Res.string.privacy_preference_loading)) },
                 trailingContent = { PrivacyPreferenceProgress() },
             )
-        PrivacyPreferenceState.Unavailable ->
-            ListItem(
+        }
+
+        PrivacyPreferenceState.Unavailable -> {
+            SettingsRow(
                 headlineContent = { Text(title) },
                 supportingContent = { Text(stringResource(Res.string.privacy_preference_read_failed)) },
                 trailingContent = {
                     TextButton(onClick = onRetry) { Text(stringResource(UiRes.string.common_retry)) }
                 },
             )
+        }
+
         is PrivacyPreferenceState.Available -> {
             val pending =
                 state.operation == PrivacyPreferenceOperation.Authenticating ||
@@ -78,9 +82,15 @@ internal fun PrivacyPreferenceItem(
             val failedOperation = state.operation as? PrivacyPreferenceOperation.Failed
             val status =
                 when (val operation = state.operation) {
-                    PrivacyPreferenceOperation.Authenticating -> stringResource(Res.string.privacy_authenticating)
-                    is PrivacyPreferenceOperation.Saving -> stringResource(Res.string.privacy_preference_saving)
-                    is PrivacyPreferenceOperation.Failed ->
+                    PrivacyPreferenceOperation.Authenticating -> {
+                        stringResource(Res.string.privacy_authenticating)
+                    }
+
+                    is PrivacyPreferenceOperation.Saving -> {
+                        stringResource(Res.string.privacy_preference_saving)
+                    }
+
+                    is PrivacyPreferenceOperation.Failed -> {
                         stringResource(
                             when (operation.reason) {
                                 PrivacyPreferenceFailure.SAVE -> Res.string.privacy_preference_save_failed
@@ -90,12 +100,15 @@ internal fun PrivacyPreferenceItem(
                                 PrivacyPreferenceFailure.SECURITY_UPDATE_REQUIRED -> Res.string.privacy_security_update_required
                             },
                         )
-                    PrivacyPreferenceOperation.Idle ->
+                    }
+
+                    PrivacyPreferenceOperation.Idle -> {
                         when {
                             state.isRefreshing -> stringResource(Res.string.privacy_preference_refreshing)
                             state.refreshFailed -> stringResource(Res.string.privacy_preference_read_failed)
                             else -> null
                         }
+                    }
                 }
             if (status != null) {
                 Row(

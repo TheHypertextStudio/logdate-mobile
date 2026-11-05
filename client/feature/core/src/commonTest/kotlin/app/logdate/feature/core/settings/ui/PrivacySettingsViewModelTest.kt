@@ -3,6 +3,7 @@ package app.logdate.feature.core.settings.ui
 import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.text.UiText
+import app.logdate.client.text.toUiText
 import app.logdate.feature.core.AppAuthState
 import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.shared.model.user.AppSecurityLevel
@@ -82,7 +83,10 @@ class PrivacySettingsViewModelTest {
             model.setBiometricEnabled(true, prompt)
 
             assertEquals(listOf(true), repository.writes)
-            assertEquals(prompt, gatekeeper.lastPrompt)
+            assertEquals(
+                listOf(prompt.title.toUiText(), prompt.subtitle.toUiText(), prompt.cancelLabel.toUiText(), prompt.description.toUiText()),
+                gatekeeper.lastPrompt,
+            )
             assertTrue(assertIs<PrivacyPreferenceState.Available>(model.state.value.biometrics).enabled)
             assertEquals(
                 PrivacyPreferenceOperation.Idle,
@@ -400,7 +404,7 @@ class PrivacySettingsViewModelTest {
     ) : BiometricGatekeeper {
         override val authState: StateFlow<AppAuthState> = MutableStateFlow(AppAuthState.NO_PROMPT_NEEDED)
         var authenticateInvocations = 0
-        var lastPrompt: PrivacyAuthenticationPrompt? = null
+        var lastPrompt: List<UiText?>? = null
         private val pendingResults = mutableListOf<(AppAuthState) -> Unit>()
 
         override fun authenticate(
@@ -413,7 +417,7 @@ class PrivacySettingsViewModelTest {
             onResult: (AppAuthState) -> Unit,
         ) {
             authenticateInvocations++
-            lastPrompt = PrivacyAuthenticationPrompt(title, subtitle, cancelLabel, description.orEmpty())
+            lastPrompt = listOf(title, subtitle, cancelLabel, description)
             pendingResults += onResult
             if (respondImmediately) onResult(resultToReport)
         }

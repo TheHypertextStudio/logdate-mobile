@@ -190,6 +190,7 @@ class DevicesViewModel(
             DeviceLinkPlatform.WEAR_OS -> getPlatformName(DevicePlatform.WEAR_OS)
             else -> getPlatformName(DevicePlatform.UNKNOWN)
         }
+
     private fun applyObservation(
         observation: DeviceListObservation,
         currentDevice: DeviceInfo,
@@ -204,9 +205,14 @@ class DevicesViewModel(
             hasObservedScope = true
         }
         when (observation) {
-            is DeviceListObservation.Scoped -> Unit
-            is DeviceListObservation.Available ->
+            is DeviceListObservation.Scoped -> {
+                Unit
+            }
+
+            is DeviceListObservation.Available -> {
                 showDevices(observation.devices, currentDevice, DeviceRefreshState.Idle, confirmed = true)
+            }
+
             is DeviceListObservation.Refreshing -> {
                 val cached = observation.cachedDevices
                 if (cached != null) {
@@ -221,6 +227,7 @@ class DevicesViewModel(
                     }
                 }
             }
+
             is DeviceListObservation.Failed -> {
                 val cached = observation.cachedDevices
                 if (cached != null) {

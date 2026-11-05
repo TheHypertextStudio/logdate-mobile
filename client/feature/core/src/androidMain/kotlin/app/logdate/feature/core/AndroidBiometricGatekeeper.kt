@@ -148,6 +148,7 @@ class AndroidBiometricGatekeeper : BiometricGatekeeper {
                             BiometricPrompt.ERROR_USER_CANCELED,
                             BiometricPrompt.ERROR_NEGATIVE_BUTTON,
                             -> AppAuthState.REQUIRE_PROMPT
+
                             else -> AppAuthState.UNKNOWN
                         }
                     complete(state)
