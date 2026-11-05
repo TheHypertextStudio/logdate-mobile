@@ -18,6 +18,7 @@ import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.feature.core.NoOpBiometricGatekeeper
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
+import app.logdate.feature.core.account.di.blueskySignInFeatureModule
 import app.logdate.feature.core.export.DesktopExportLauncher
 import app.logdate.feature.core.export.DesktopMediaSourceOpener
 import app.logdate.feature.core.export.ExportLauncher
@@ -86,6 +87,7 @@ actual val coreFeatureModule: Module =
     module {
         // Include our domain modules - note that accountModule is included separately to avoid circular deps
         includes(domainModule)
+        includes(blueskySignInFeatureModule)
         includes(accountModule)
         includes(devicesModule)
         includes(labsSettingsModule)
