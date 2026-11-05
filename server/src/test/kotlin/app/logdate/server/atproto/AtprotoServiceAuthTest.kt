@@ -43,6 +43,7 @@ class AtprotoServiceAuthTest {
             assertEquals(fixture.account.did, claims["iss"]?.jsonPrimitive?.content)
             assertEquals(AUDIENCE, claims["aud"]?.jsonPrimitive?.content)
             assertEquals(METHOD, claims["lxm"]?.jsonPrimitive?.content)
+            assertEquals(now.epochSeconds.toString(), claims["iat"]?.jsonPrimitive?.content)
             assertEquals((now.epochSeconds + 60).toString(), claims["exp"]?.jsonPrimitive?.content)
             val validSignature =
                 EcKeySupport.verifySha256(key.publicKey, key.curve, "$header.$payload".encodeToByteArray(), decoder.decode(signature))

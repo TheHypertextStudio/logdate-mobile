@@ -1,6 +1,7 @@
 package app.logdate.server.routes
 
 import app.logdate.server.atproto.AtprotoServiceAuth
+import app.logdate.server.atproto.AtprotoServiceProxy
 import app.logdate.server.atproto.AtprotoSessionTokenService
 import app.logdate.server.atproto.InvalidSwapException
 import app.logdate.server.atproto.firehose.PublicRepoAccess
@@ -83,6 +84,7 @@ fun Route.xrpcRoutes(
     collectionsOpenToApps: Set<String> = OAuthScopes.collectionsOpenToApps,
     publicRepos: PublicRepoAccess? = null,
     serviceAuth: AtprotoServiceAuth? = null,
+    serviceProxy: AtprotoServiceProxy? = null,
 ) {
     val openCollections = OAuthScopes.requireOpenable(collectionsOpenToApps)
     val publicReads = publicRepos?.let { PublicRepoReads(it, identityService, blobService) }
@@ -199,6 +201,7 @@ fun Route.xrpcRoutes(
         }
 
         xrpcServiceAuthRoutes(serviceAuth) { authenticateXrpc() }
+        serviceProxy?.let { xrpcServiceProxyRoutes(it) { authenticateXrpc() } }
 
         post("/com.atproto.server.refreshSession", XrpcDocs.refreshSession) {
             val sessions =

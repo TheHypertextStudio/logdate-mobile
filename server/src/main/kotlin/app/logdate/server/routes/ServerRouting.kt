@@ -98,6 +98,7 @@ internal fun Application.atprotoRoutes() {
     val oauthNonceService by inject<OAuthNonceService>()
     val publicRepos = publicReposIfEnabled()
     val oauthPasskeySignIn = oauthPasskeySignInIfEnabled()
+    val serviceAuth = AtprotoServiceAuth(accountRepository, signingKeyService)
 
     routing {
         identityRoutes(atprotoIdentityService)
@@ -127,7 +128,8 @@ internal fun Application.atprotoRoutes() {
             oauthNonceService = oauthNonceService,
             publicOrigin = oauthConfig.normalizedResource,
             publicRepos = publicRepos,
-            serviceAuth = AtprotoServiceAuth(accountRepository, signingKeyService),
+            serviceAuth = serviceAuth,
+            serviceProxy = atprotoServiceProxy(serviceAuth),
         )
     }
     publicRepos?.let { firehoseRoutes(it) }

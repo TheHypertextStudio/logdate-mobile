@@ -52,7 +52,7 @@ class AtprotoServiceAuth(
         }
 
         val header = encode(Json.encodeToString(ServiceJwtHeader(alg = curve.jwsAlgorithm, typ = "JWT")).encodeToByteArray())
-        val claims = ServiceJwtClaims(iss = did, aud = audience, lxm = method, exp = expiration, jti = Uuid.random().toString())
+        val claims = ServiceJwtClaims(iss = did, aud = audience, lxm = method, iat = now, exp = expiration, jti = Uuid.random().toString())
         val payload = encode(Json.encodeToString(claims).encodeToByteArray())
         val input = "$header.$payload"
         val signature = EcKeySupport.signSha256(keys.decryptPrivateKey(key), curve, input.encodeToByteArray())
@@ -93,6 +93,7 @@ private data class ServiceJwtClaims(
     val iss: String,
     val aud: String,
     val lxm: String,
+    val iat: Long,
     val exp: Long,
     val jti: String,
 )

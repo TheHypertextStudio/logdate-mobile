@@ -78,6 +78,8 @@ internal fun Route.installAtprotoBrowserCors() {
         allowHeader(HttpHeaders.ContentType)
         allowHeader("DPoP")
         allowHeader("atproto-proxy")
+        allowHeader("atproto-accept-labelers")
+        exposeHeader("atproto-content-labelers")
         exposeHeader("DPoP-Nonce")
         exposeHeader(HttpHeaders.WWWAuthenticate)
     }
