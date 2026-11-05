@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,6 +23,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.logdate.client.location.settings.LocationTrackingSettings
+import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.theme.Spacing
@@ -69,7 +69,7 @@ internal fun LocationSettingAvailability(
     state: LocationSettingsState,
     onReload: () -> Unit,
 ) {
-    ListItem(
+    SettingsRow(
         headlineContent = { Text(title) },
         supportingContent = {
             Text(

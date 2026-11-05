@@ -52,11 +52,11 @@ import logdate.client.feature.core.generated.resources.cloud_archive_exporting
 import logdate.client.feature.core.generated.resources.cloud_archive_failed_detail
 import logdate.client.feature.core.generated.resources.cloud_archive_unavailable_detail
 import logdate.client.feature.core.generated.resources.cloud_archive_uploading
-import logdate.client.feature.core.generated.resources.journal_storage_enter_recovery_phrase
 import logdate.client.feature.core.generated.resources.data_state_archive_request_failed
 import logdate.client.feature.core.generated.resources.data_state_requesting_archive
 import logdate.client.feature.core.generated.resources.data_state_requesting_sync
 import logdate.client.feature.core.generated.resources.data_state_sync_request_failed
+import logdate.client.feature.core.generated.resources.journal_storage_enter_recovery_phrase
 import logdate.client.feature.core.generated.resources.sync_account_mobile_data
 import logdate.client.feature.core.generated.resources.sync_account_storage_unsupported_detail
 import logdate.client.feature.core.generated.resources.sync_account_update_app
