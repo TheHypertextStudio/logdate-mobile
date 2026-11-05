@@ -12,12 +12,20 @@ import io.ktor.server.routing.get
 import kotlinx.coroutines.CancellationException
 
 /** The provider callback may return a public attempt ID, never credentials or an arbitrary destination. */
-internal fun Route.blueskyCallbackRoutes(signIn: BlueskySignInService) {
+internal fun Route.blueskyCallbackRoutes(
+    signIn: BlueskySignInService,
+    staging: Boolean = false,
+) {
+    val returnUrl = if (staging) "https://app.staging.logdate.app${BlueskyBrowserReturn.PATH}" else BlueskyBrowserReturn.URL
+    val errorUrl = if (staging) "https://app.staging.logdate.app/auth/bluesky/error" else BlueskyBrowserReturn.ERROR_URL
+
+    fun appReturn(id: String?): String = if (id != null && id.matches(Regex("[A-Za-z0-9_-]{43}"))) "$returnUrl?attempt=$id" else errorUrl
+
     get("/oauth/bluesky/callback") {
         val parameters = callbackParameters(call.request.queryParameters)
         val target =
             if (parameters == null) {
-                BlueskyBrowserReturn.ERROR_URL
+                errorUrl
             } else {
                 try {
                     appReturn(signIn.callback(parameters))
@@ -26,7 +34,7 @@ internal fun Route.blueskyCallbackRoutes(signIn: BlueskySignInService) {
                 } catch (failure: BlueskySignInFailure) {
                     appReturn(failure.verifiedAttemptId)
                 } catch (_: Exception) {
-                    BlueskyBrowserReturn.ERROR_URL
+                    errorUrl
                 }
             }
         call.response.headers.append(HttpHeaders.CacheControl, "no-store")
@@ -35,9 +43,6 @@ internal fun Route.blueskyCallbackRoutes(signIn: BlueskySignInService) {
         call.respond(HttpStatusCode.SeeOther)
     }
 }
-
-private fun appReturn(id: String?): String =
-    if (id != null && id.matches(Regex("[A-Za-z0-9_-]{43}"))) "${BlueskyBrowserReturn.URL}?attempt=$id" else BlueskyBrowserReturn.ERROR_URL
 
 private fun callbackParameters(parameters: Parameters): Map<String, String>? {
     val entries = parameters.entries()

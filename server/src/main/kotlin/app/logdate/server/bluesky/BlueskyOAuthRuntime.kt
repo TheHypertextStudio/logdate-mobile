@@ -39,6 +39,7 @@ internal class BlueskyOAuthRuntime(
     val connection: AtprotoConnectionRuntime? = null,
     val sessionLock: OAuthSessionLock,
     val attempts: BlueskySignInAttemptStore? = null,
+    val stagingBrowserReturn: Boolean = false,
 ) : AutoCloseable {
     private val closed = AtomicBoolean()
 
@@ -156,6 +157,7 @@ private fun createBlueskyServices(
             },
             sessionLock,
             attempts,
+            stagingBrowserReturn = config.clientUri == "https://cloud-staging.logdate.app",
         )
     } catch (failure: Throwable) {
         client.close()
