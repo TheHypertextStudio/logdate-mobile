@@ -7,12 +7,11 @@ the server does. It never starts the HTTP server.
 
   status    reads every identity and compares it with the PLC directory
   dry-run   lists what publishing would do, without sending anything
-  publish   sends identities to the PLC directory (needs ATPROTO_PLC_PUBLISH_ENABLED=true in the
-            contract and --confirm-directory naming that directory)
 
 After the execution finishes, the job's SERVER_IDENTITY_* and SERVER_PLC_* log lines are printed.
 See docs/runbook/identity-publishing.md.
 """
+
 import argparse
 import importlib.util
 import json
@@ -22,11 +21,12 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PUBLIC_PLC_DIRECTORY = "https://plc.directory"
 
 
 def _cleanup_job_module():
-    spec = importlib.util.spec_from_file_location("account_blob_cleanup_job", ROOT / "scripts/account-blob-cleanup-job.py")
+    spec = importlib.util.spec_from_file_location(
+        "account_blob_cleanup_job", ROOT / "scripts/account-blob-cleanup-job.py"
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -39,7 +39,7 @@ def command_args(args):
     elif args.mode == "dry-run":
         command = ["publish", "--dry-run"]
     else:
-        command = ["publish", "--confirm-directory", args.confirm_directory]
+        raise ValueError("Cloud Run identity publication requires per-account consent")
     if args.reconcile:
         command.append("--reconcile")
     for flag, value in (
@@ -54,18 +54,6 @@ def command_args(args):
     return ["--identity-publishing", *command]
 
 
-def check_contract(contract, args):
-    """Refuses a publish the contract doesn't allow, before anything is deployed."""
-    env = contract["env_vars"]
-    if args.mode != "publish":
-        return
-    if env.get("ATPROTO_PLC_PUBLISH_ENABLED") != "true":
-        raise SystemExit("ERROR: the contract does not set ATPROTO_PLC_PUBLISH_ENABLED=true; turn publishing on first.")
-    directory = env.get("ATPROTO_PLC_DIRECTORY_URL", PUBLIC_PLC_DIRECTORY).rstrip("/")
-    if args.confirm_directory.rstrip("/") != directory:
-        raise SystemExit(f"ERROR: --confirm-directory must name the contract's PLC directory, {directory}.")
-
-
 def render_job(contract, args):
     job = _cleanup_job_module().render_job(contract)
     job["metadata"]["name"] = contract["service_name"] + "-identity-publishing"
@@ -76,36 +64,74 @@ def render_job(contract, args):
 
 
 def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=("status", "dry-run", "publish"))
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "mode", choices=("status", "dry-run", "publish"), metavar="{status,dry-run}"
+    )
     parser.add_argument("--contract-file", type=pathlib.Path, required=True)
-    parser.add_argument("--confirm-directory", help="required for publish: the PLC directory being written to")
-    parser.add_argument("--reconcile", action="store_true", help="also correct identities whose directory copy differs")
-    parser.add_argument("--handle", help="only the account with this handle, such as your own for a first check")
+    parser.add_argument("--confirm-directory", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--reconcile",
+        action="store_true",
+        help="include identities whose directory copy differs in the dry-run report",
+    )
+    parser.add_argument(
+        "--handle",
+        help="only the account with this handle, such as your own for a first check",
+    )
     parser.add_argument("--limit", type=int)
     parser.add_argument("--batch-size", type=int)
     parser.add_argument("--operations-per-minute", type=int)
     parser.add_argument("--max-failures", type=int)
     parser.add_argument("--timeout-seconds", type=int, default=3600)
     args = parser.parse_args(argv)
-    if args.mode == "publish" and not args.confirm_directory:
-        parser.error("publish needs --confirm-directory")
-    if args.mode != "publish" and args.confirm_directory:
-        parser.error("--confirm-directory applies only to publish")
-    if args.mode == "status" and (args.reconcile or args.batch_size or args.operations_per_minute or args.max_failures):
+    if args.mode == "publish":
+        raise SystemExit(
+            "Cloud Run identity publication requires per-account consent. Use status or dry-run."
+        )
+    if args.confirm_directory:
+        parser.error("status and dry-run do not take --confirm-directory")
+    if args.mode == "status" and (
+        args.reconcile
+        or args.batch_size
+        or args.operations_per_minute
+        or args.max_failures
+    ):
         parser.error("status takes only --limit")
     if args.mode == "dry-run" and (args.operations_per_minute or args.max_failures):
-        parser.error("a dry run sends nothing, so pacing and failure limits don't apply")
+        parser.error(
+            "a dry run sends nothing, so pacing and failure limits don't apply"
+        )
     return args
 
 
 def latest_execution(contract, job_name):
     """A failed execution doesn't print its name, so look up the newest one."""
     listed = subprocess.run(
-        ["gcloud", "run", "jobs", "executions", "list", "--job", job_name, "--region", contract["region"],
-         "--project", contract["project_id"], "--limit", "1", "--sort-by", "~metadata.creationTimestamp",
-         "--format", "value(metadata.name)"],
-        check=False, capture_output=True, text=True,
+        [
+            "gcloud",
+            "run",
+            "jobs",
+            "executions",
+            "list",
+            "--job",
+            job_name,
+            "--region",
+            contract["region"],
+            "--project",
+            contract["project_id"],
+            "--limit",
+            "1",
+            "--sort-by",
+            "~metadata.creationTimestamp",
+            "--format",
+            "value(metadata.name)",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
     )
     return listed.stdout.strip()
 
@@ -117,8 +143,20 @@ def print_job_logs(contract, execution):
         'AND (textPayload:"SERVER_IDENTITY" OR textPayload:"SERVER_PLC")'
     )
     subprocess.run(
-        ["gcloud", "logging", "read", query, "--project", contract["project_id"], "--order", "asc",
-         "--freshness", "1d", "--format", "value(textPayload)"],
+        [
+            "gcloud",
+            "logging",
+            "read",
+            query,
+            "--project",
+            contract["project_id"],
+            "--order",
+            "asc",
+            "--freshness",
+            "1d",
+            "--format",
+            "value(textPayload)",
+        ],
         check=False,
     )
 
@@ -126,27 +164,61 @@ def print_job_logs(contract, execution):
 def main(argv=None):
     args = parse_args(argv)
     contract = json.loads(args.contract_file.read_text())
-    check_contract(contract, args)
     job = render_job(contract, args)
     # This is configuration and exact secret references; no secret contents are fetched.
-    with tempfile.TemporaryDirectory(prefix="logdate-identity-publishing-job-") as directory:
+    with tempfile.TemporaryDirectory(
+        prefix="logdate-identity-publishing-job-"
+    ) as directory:
         path = pathlib.Path(directory) / "job.json"
         path.write_text(json.dumps(job))
         path.chmod(0o600)
-        subprocess.run(["gcloud", "run", "jobs", "replace", str(path), "--region", contract["region"],
-                        "--project", contract["project_id"], "--quiet"], check=True)
+        subprocess.run(
+            [
+                "gcloud",
+                "run",
+                "jobs",
+                "replace",
+                str(path),
+                "--region",
+                contract["region"],
+                "--project",
+                contract["project_id"],
+                "--quiet",
+            ],
+            check=True,
+        )
     execution = subprocess.run(
-        ["gcloud", "run", "jobs", "execute", job["metadata"]["name"], "--wait", "--region", contract["region"],
-         "--project", contract["project_id"], "--quiet", "--format", "value(metadata.name)"],
-        check=False, capture_output=True, text=True,
+        [
+            "gcloud",
+            "run",
+            "jobs",
+            "execute",
+            job["metadata"]["name"],
+            "--wait",
+            "--region",
+            contract["region"],
+            "--project",
+            contract["project_id"],
+            "--quiet",
+            "--format",
+            "value(metadata.name)",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
     )
-    name = execution.stdout.strip() or latest_execution(contract, job["metadata"]["name"])
+    name = execution.stdout.strip() or latest_execution(
+        contract, job["metadata"]["name"]
+    )
     if name:
         print_job_logs(contract, name)
     if execution.returncode != 0:
         sys.stderr.write(execution.stderr)
-        print("The job exited non-zero: 1 means a failure or an identity that needs an operator, "
-              "2 means it refused to run, 3 means identities still need publishing.", file=sys.stderr)
+        print(
+            "The job exited non-zero: 1 means a failure or an identity that needs an operator, "
+            "2 means it refused to run, 3 means identities still need publishing.",
+            file=sys.stderr,
+        )
     return execution.returncode
 
 

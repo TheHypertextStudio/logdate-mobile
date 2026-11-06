@@ -41,7 +41,18 @@ internal object AtProtoSchemaDocs {
                     mapOf(
                         "reviewId" to "The ID of this review.",
                         "username" to "The exact username being reviewed.",
+                        "history" to "Earlier account changes included in the reviewed history.",
                         "passkey" to "Authentication options for this review.",
+                    ),
+                ),
+            "PlcPublicationHistory" to
+                SchemaDoc(
+                    "The earlier account changes disclosed by this publication.",
+                    mapOf(
+                        "updates" to "The number of updates after the account identity was created.",
+                        "signingChanges" to "How many updates changed the account signing key.",
+                        "recoveryChanges" to "How many updates changed the account recovery keys.",
+                        "previousUsernames" to "Distinct earlier usernames included in the public history.",
                     ),
                 ),
             "PlcPublicationConfirmRequest" to

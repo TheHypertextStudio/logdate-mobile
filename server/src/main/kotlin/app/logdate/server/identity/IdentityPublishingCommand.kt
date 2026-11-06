@@ -22,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import studio.hypertext.atproto.plc.KtorPlcDirectoryClient
+import java.net.Proxy
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -139,7 +140,9 @@ fun identityPublishingRefusal(
 ): String? {
     if (config.hostedAccountDidMethod != HostedAccountDidMethod.PLC) return IdentityPublishingNotices.REFUSED_NOT_PLC
     if (!invocation.options.writes) return null
-    if (!config.publishesPlcOperations) return IdentityPublishingNotices.REFUSED_PUBLISHING_OFF
+    if (!config.publishesPlcOperations || !isLoopbackPlcFixture(config.normalizedPlcDirectoryUrl)) {
+        return IdentityPublishingNotices.REFUSED_PUBLISHING_OFF
+    }
     val confirmed = invocation.confirmDirectory?.trim()?.removeSuffix("/")
     if (confirmed == null || !confirmed.equals(config.normalizedPlcDirectoryUrl, ignoreCase = true)) {
         return IdentityPublishingNotices.REFUSED_DIRECTORY_UNCONFIRMED
@@ -186,7 +189,17 @@ private fun runIdentityPublishingCommand(args: List<String>): Int {
     }
 
     val dataSource = DatabaseConfig.createDataSource()
-    val httpClient = HttpClient(OkHttp)
+    val httpClient =
+        HttpClient(OkHttp) {
+            followRedirects = false
+            engine {
+                config {
+                    proxy(Proxy.NO_PROXY)
+                    followRedirects(false)
+                    followSslRedirects(false)
+                }
+            }
+        }
     try {
         TransactionManager.defaultDatabase = DatabaseConfig.initializeDatabase(dataSource, autoMigrate = false)
         val accounts = PostgreSQLAccountRepository()
@@ -242,7 +255,7 @@ private fun publishedAnnouncer(
         RepoEventSequencer(
             store = events,
             blocks = blocks,
-            gate = AccountPublicRepoGate(accounts, identityConfig, events),
+            gate = AccountPublicRepoGate(accounts, events),
             policy = PublicRepoPolicy(),
         )
     val crawler = RelayCrawler(httpClient, firehose.relayHosts, RelayCrawler.hostnameFor(identityConfig.pdsServiceEndpoint))
