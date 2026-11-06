@@ -23,6 +23,7 @@ github_repo        = "TheHypertextStudio/logdate-mobile"
 # Cloud Run host. Don't add it back without coordinating with the
 # hypertext.studio DNS owner.
 enable_domain_mapping = true
+enable_load_balancer  = true
 domains               = ["cloud.logdate.app"]
 
 # REQUIRED before production can deploy. scripts/render-cloud-run-contract.sh accepts exactly
@@ -88,6 +89,8 @@ cloud_run_env = {
   ATPROTO_RECOVERY_KEYS_ENABLED            = "true"
   LOGDATE_PERSONAL_SPACE_ENABLED           = "true"
   LOGDATE_PERSONAL_SPACE_MIGRATION_ENABLED = "true"
+  ATPROTO_FIREHOSE_ENABLED                 = "true"
+  ATPROTO_RELAY_HOSTS                      = "bsky.network"
 }
 
 cloud_run_secret_env = {
