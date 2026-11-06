@@ -46,7 +46,7 @@ class OAuthDpopVerifierTest {
                     proof = proof,
                     method = "POST",
                     htu = "https://logdate.app/oauth/token",
-                    expectedNonce = "nonce-1",
+                    nonceChallenge = OAuthNonceChallenge("nonce-1"),
                     expectedAth = ath,
                 ).getOrThrow()
 
@@ -110,7 +110,9 @@ class OAuthDpopVerifierTest {
             verifier.verify(tamperedSignature, "POST", "https://logdate.app/oauth/token").exceptionOrNull(),
         )
         assertIs<OAuthUseDpopNonceException>(
-            verifier.verify(wrongNonce, "POST", "https://logdate.app/oauth/token", expectedNonce = "nonce-1").exceptionOrNull(),
+            verifier
+                .verify(wrongNonce, "POST", "https://logdate.app/oauth/token", nonceChallenge = OAuthNonceChallenge("nonce-1"))
+                .exceptionOrNull(),
         )
         assertIs<OAuthInvalidDpopProofException>(
             verifier.verify(wrongAth, "POST", "https://logdate.app/oauth/token", expectedAth = "expected").exceptionOrNull(),

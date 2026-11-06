@@ -7,21 +7,21 @@ resolved.
 
 ## Server Environments
 
-| Concern | Staging | Production |
-| --- | --- | --- |
-| Deploy workflow | `.github/workflows/deploy-server-staging.yml` | `.github/workflows/deploy-server-production.yml` |
-| Trigger | Successful `CI` workflow on `main` | `server-v*` tag push only |
-| GitHub Environment | `staging` | `production` |
-| Terraform file | `infra/terraform/staging.tfvars` | `infra/terraform/production.tfvars` |
-| GCP project | `logdate-dev` | `logdate` |
-| Cloud Run service | `logdate-server-staging` | `logdate-server` |
-| Public host | `cloud-staging.logdate.app` | `cloud.logdate.app` |
-| WebAuthn RP ID | `staging.logdate.app` | `logdate.app` |
-| WebAuthn origin | `https://app.staging.logdate.app` | `https://cloud.logdate.app` |
-| Auto migrations | `AUTO_MIGRATE=false` | `AUTO_MIGRATE=false` |
-| Browser passkey origins | `https://app.staging.logdate.app` | `https://cloud.logdate.app` |
-| Secret storage | Staging project's Secret Manager | Production project's Secret Manager |
-| Media bucket | `logdate-media-staging` | `logdate-media-logdate` |
+| Concern                 | Staging                                       | Production                                       |
+| ----------------------- | --------------------------------------------- | ------------------------------------------------ |
+| Deploy workflow         | `.github/workflows/deploy-server-staging.yml` | `.github/workflows/deploy-server-production.yml` |
+| Trigger                 | Successful `CI` workflow on `main`            | `server-v*` tag push only                        |
+| GitHub Environment      | `staging`                                     | `production`                                     |
+| Terraform file          | `infra/terraform/staging.tfvars`              | `infra/terraform/production.tfvars`              |
+| GCP project             | `logdate-dev`                                 | `logdate`                                        |
+| Cloud Run service       | `logdate-server-staging`                      | `logdate-server`                                 |
+| Public host             | `cloud-staging.logdate.app`                   | `cloud.logdate.app`                              |
+| WebAuthn RP ID          | `staging.logdate.app`                         | `logdate.app`                                    |
+| WebAuthn origin         | `https://app.staging.logdate.app`             | `https://cloud.logdate.app`                      |
+| Auto migrations         | `AUTO_MIGRATE=false`                          | `AUTO_MIGRATE=false`                             |
+| Browser passkey origins | `https://app.staging.logdate.app`             | `https://cloud.logdate.app`                      |
+| Secret storage          | Staging project's Secret Manager              | Production project's Secret Manager              |
+| Media bucket            | `logdate-media-staging`                       | `logdate-media-logdate`                          |
 
 Production deploys are deliberately tag-gated and staging-verified. The
 production workflow checks for a successful staging deploy for the same SHA,
@@ -76,6 +76,23 @@ revision consume the rendered Neon contract.
   [repository event stream runbook](repository-event-stream.md).
 - Do not add non-Cloud-Run domains to Terraform `domains`. Marketing redirects
   and unrelated DNS live outside this Cloud Run service.
+- Browser clients can use any origin for XRPC, OAuth discovery and OAuth token
+  endpoints with explicit authorization and proof headers. These routes omit
+  credentialed CORS so browsers cannot read responses using ambient cookies.
+  Interactive authorization and LogDate API routes retain the configured
+  `ALLOWED_ORIGINS` policy.
+- Service credentials are available only for an active account whose exact
+  current identity has publication consent. Each credential names one audience
+  and one method, expires within 60 seconds, and is signed with the existing
+  account key. Account-management and private journal methods cannot use
+  these credentials. An OAuth grant that only confirms identity cannot issue
+  them.
+- Use the same pinned `ATPROTO_SESSION_SECRET` version on all replicas of an
+  environment. DPoP challenges are derived separately from session tokens and
+  rotate every two and a half minutes. The preceding challenge remains valid
+  for one rotation. During a secret change, drain the old revision so requests
+  stop alternating between incompatible challenges. The replay store still
+  rejects a repeated proof across replicas.
 - Do not mount optional Cloud Run secrets until the Secret Manager container
   has at least one version. Cloud Run rejects revisions with empty mounted
   secrets.
@@ -98,15 +115,15 @@ origins remain unchanged.
 
 ## App Builds
 
-| Concern | Android debug / CI | Android Play internal | Android Play production | iOS TestFlight | iOS App Store | Desktop |
-| --- | --- | --- | --- | --- | --- | --- |
-| Workflow | `ci.yml`, `screenshot-test.yml` | `publish-android-play.yml` | `publish-android-play.yml` | `publish-ios-app-store.yml` | `publish-ios-app-store.yml` | Local Gradle tasks |
-| Trigger | PR/push/manual test workflows | `main` push or manual dispatch | `android-v*` tag push | `main` push or manual dispatch | `ios-v*` tag push | Manual |
-| Human gate | None | Disabled unless repo var is true | Pushing the `android-v*` tag; `production` environment accepts only `main` and release tags | Disabled unless repo var is true | `ios-production` reviewers | None |
-| Firebase input | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_DEBUG_BASE64` | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_RELEASE_BASE64` | None; promotes tested internal artifact | `LOGDATE_IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` | `LOGDATE_IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` | None |
-| Firebase file on runner | `app/android-main/google-services.json` | `app/android-main/src/release/google-services.json` | Not materialized | `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` | `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` | None |
-| Signing | Debug signing | Release keystore from GitHub secrets | No keystore; promotes existing Play artifact | Apple distribution cert/profile | Apple distribution cert/profile | Local unsigned packages |
-| Backend default | `https://cloud.logdate.app` unless overridden | `https://cloud.logdate.app` | Same tested artifact | `https://cloud.logdate.app` via shared config | Same source as TestFlight | `https://cloud.logdate.app` via shared config |
+| Concern                 | Android debug / CI                                  | Android Play internal                                 | Android Play production                                                                     | iOS TestFlight                                            | iOS App Store                                             | Desktop                                       |
+| ----------------------- | --------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------- |
+| Workflow                | `ci.yml`, `screenshot-test.yml`                     | `publish-android-play.yml`                            | `publish-android-play.yml`                                                                  | `publish-ios-app-store.yml`                               | `publish-ios-app-store.yml`                               | Local Gradle tasks                            |
+| Trigger                 | PR/push/manual test workflows                       | `main` push or manual dispatch                        | `android-v*` tag push                                                                       | `main` push or manual dispatch                            | `ios-v*` tag push                                         | Manual                                        |
+| Human gate              | None                                                | Disabled unless repo var is true                      | Pushing the `android-v*` tag; `production` environment accepts only `main` and release tags | Disabled unless repo var is true                          | `ios-production` reviewers                                | None                                          |
+| Firebase input          | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_DEBUG_BASE64` | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_RELEASE_BASE64` | None; promotes tested internal artifact                                                     | `LOGDATE_IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64`            | `LOGDATE_IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64`            | None                                          |
+| Firebase file on runner | `app/android-main/google-services.json`             | `app/android-main/src/release/google-services.json`   | Not materialized                                                                            | `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` | `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` | None                                          |
+| Signing                 | Debug signing                                       | Release keystore from GitHub secrets                  | No keystore; promotes existing Play artifact                                                | Apple distribution cert/profile                           | Apple distribution cert/profile                           | Local unsigned packages                       |
+| Backend default         | `https://cloud.logdate.app` unless overridden       | `https://cloud.logdate.app`                           | Same tested artifact                                                                        | `https://cloud.logdate.app` via shared config             | Same source as TestFlight                                 | `https://cloud.logdate.app` via shared config |
 
 The shared app default is production cloud:
 

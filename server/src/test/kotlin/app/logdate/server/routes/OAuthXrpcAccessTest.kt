@@ -40,6 +40,78 @@ class OAuthXrpcAccessTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
+    fun `service auth requires a public identity and a grant that permits remote methods`() =
+        testApplication {
+            val fixture = setUp()
+            val path = "/xrpc/com.atproto.server.getServiceAuth?aud=did:web:api.bsky.app%23bsky_appview"
+            val profile = "$path&lxm=app.bsky.actor.getProfile"
+
+            assertEquals(HttpStatusCode.Unauthorized, client.get(profile).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet(profile, GENERIC).status)
+            assertTrue(
+                runBlocking {
+                    fixture.env.accountRepository.recordPublicIdentity(fixture.account.id, requireNotNull(fixture.account.did))
+                },
+            )
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet(profile, ATPROTO).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet("$path&lxm=com.atproto.server.deleteAccount", GENERIC).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet("$path&lxm=chat.bsky.convo.sendMessage", GENERIC).status)
+            assertEquals(HttpStatusCode.BadRequest, fixture.oauthGet("$profile&exp=not-a-number", GENERIC).status)
+
+            val issued = fixture.oauthGet(profile, GENERIC)
+            assertEquals(HttpStatusCode.OK, issued.status, issued.bodyAsText())
+            assertEquals("no-store", issued.headers[HttpHeaders.CacheControl])
+            val payload = json.parseToJsonElement(issued.bodyAsText()).jsonObject
+            val token = payload.getValue("token").jsonPrimitive.content
+            assertEquals(3, token.split('.').size)
+        }
+
+    @Test
+    fun `an OAuth app can read its session identity without email details`() =
+        testApplication {
+            val fixture = setUp()
+            val path = "/xrpc/com.atproto.server.getSession"
+
+            val response = fixture.oauthGet(path, ATPROTO)
+
+            assertEquals(HttpStatusCode.OK, response.status, response.bodyAsText())
+            assertEquals(listOf(fixture.env.oauthNonceService.currentNonce()), response.headers.getAll("DPoP-Nonce"))
+            val payload = json.parseToJsonElement(response.bodyAsText()).jsonObject
+            assertEquals(fixture.account.did, payload.getValue("did").jsonPrimitive.content)
+            assertEquals(fixture.account.handle, payload.getValue("handle").jsonPrimitive.content)
+            assertEquals("true", payload.getValue("active").jsonPrimitive.content)
+            for (field in listOf("email", "emailConfirmed", "emailAuthFactor")) {
+                assertFalse(payload.containsKey(field), field)
+            }
+
+            val legacySession = runBlocking { fixture.env.atprotoSessionTokenService.createSession(fixture.account) }
+            val legacy = client.get(path) { header(HttpHeaders.Authorization, "Bearer ${legacySession.accessJwt}") }
+            assertEquals(HttpStatusCode.OK, legacy.status, legacy.bodyAsText())
+            val legacyPayload = json.parseToJsonElement(legacy.bodyAsText()).jsonObject
+            assertEquals("alice@example.com", legacyPayload.getValue("email").jsonPrimitive.content)
+        }
+
+    @Test
+    fun `getSession requires the OAuth proof and rejects a deactivated account`() =
+        testApplication {
+            val fixture = setUp()
+            val path = "/xrpc/com.atproto.server.getSession"
+
+            val stale = fixture.oauthGet(path, ATPROTO, nonce = "stale")
+            assertEquals(HttpStatusCode.Unauthorized, stale.status)
+            assertEquals("DPoP error=\"use_dpop_nonce\"", stale.headers[HttpHeaders.WWWAuthenticate])
+            assertEquals(fixture.env.oauthNonceService.currentNonce(), stale.headers["DPoP-Nonce"])
+            assertEquals(HttpStatusCode.OK, fixture.oauthGet(path, ATPROTO, nonce = stale.headers["DPoP-Nonce"]!!).status)
+
+            val missing = fixture.oauthGet(path, ATPROTO, includeProof = false)
+            assertEquals(HttpStatusCode.Unauthorized, missing.status)
+            assertEquals("DPoP error=\"invalid_dpop_proof\"", missing.headers[HttpHeaders.WWWAuthenticate])
+
+            runBlocking { fixture.env.accountRepository.deactivateAccount(fixture.account.id) }
+            assertEquals(HttpStatusCode.Unauthorized, fixture.oauthGet(path, ATPROTO).status)
+        }
+
+    @Test
     fun `journal collections look empty to an OAuth app but not to the owner`() =
         testApplication {
             val fixture = setUp()
@@ -194,11 +266,13 @@ class OAuthXrpcAccessTest {
         suspend fun oauthGet(
             path: String,
             scope: String,
+            includeProof: Boolean = true,
+            nonce: String = env.oauthNonceService.currentNonce(),
         ): HttpResponse {
             val token = accessToken(scope)
             return test.client.get(path) {
                 header(HttpHeaders.Authorization, "DPoP $token")
-                header("DPoP", proof("GET", path, token))
+                if (includeProof) header("DPoP", proof("GET", path, token, nonce))
             }
         }
 
@@ -230,12 +304,13 @@ class OAuthXrpcAccessTest {
             method: String,
             path: String,
             token: String,
+            nonce: String = env.oauthNonceService.currentNonce(),
         ): String =
             createDpopProof(
                 keyPair = dpopKey,
                 method = method,
                 htu = "http://localhost${path.substringBefore('?')}",
-                nonce = env.oauthNonceService.currentNonce(),
+                nonce = nonce,
                 ath = env.oauthDpopVerifier.accessTokenHash(token),
             )
     }
@@ -253,7 +328,13 @@ class OAuthXrpcAccessTest {
             runBlocking {
                 val saved =
                     env.accountRepository.save(
-                        Account(id = Uuid.random(), username = "alice", displayName = "Alice", createdAt = Clock.System.now()),
+                        Account(
+                            id = Uuid.random(),
+                            username = "alice",
+                            displayName = "Alice",
+                            email = "alice@example.com",
+                            createdAt = Clock.System.now(),
+                        ),
                     )
                 env.atprotoIdentityService.ensureIdentity(saved)
             }

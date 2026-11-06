@@ -231,14 +231,13 @@ class OAuthAuthorizationService(
             throw OAuthInvalidGrantException("code_verifier did not match the authorization request")
         }
 
-        val expectedNonce = nonceService.currentNonce()
         val proof =
             dpopVerifier
                 .verify(
                     proof = dpopProof,
                     method = "POST",
                     htu = htu,
-                    expectedNonce = expectedNonce,
+                    nonceChallenge = nonceService.challenge(),
                 ).getOrElse { throw it }
         if (proof.keyThumbprint != stored.dpopKeyThumbprint) {
             throw OAuthInvalidGrantException("DPoP key did not match the original pushed authorization request")
@@ -309,14 +308,13 @@ class OAuthAuthorizationService(
             keyThumbprint = stored.clientAuthKeyThumbprint,
         )
 
-        val expectedNonce = nonceService.currentNonce()
         val proof =
             dpopVerifier
                 .verify(
                     proof = dpopProof,
                     method = "POST",
                     htu = htu,
-                    expectedNonce = expectedNonce,
+                    nonceChallenge = nonceService.challenge(),
                 ).getOrElse { throw it }
         if (proof.keyThumbprint != stored.dpopKeyThumbprint) {
             throw OAuthInvalidGrantException("Refresh token DPoP key did not match the original grant")
@@ -368,14 +366,13 @@ class OAuthAuthorizationService(
             keyThumbprint = stored.clientAuthKeyThumbprint,
         )
 
-        val expectedNonce = nonceService.currentNonce()
         val proof =
             dpopVerifier
                 .verify(
                     proof = dpopProof,
                     method = "POST",
                     htu = htu,
-                    expectedNonce = expectedNonce,
+                    nonceChallenge = nonceService.challenge(),
                 ).getOrElse { throw it }
         if (proof.keyThumbprint != stored.dpopKeyThumbprint) {
             throw OAuthInvalidGrantException("Refresh token DPoP key did not match the original grant")

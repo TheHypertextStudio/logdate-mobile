@@ -2,35 +2,44 @@ package app.logdate.server.oauth
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
-import kotlin.time.Duration.Companion.minutes
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
-/**
- * Tests for [OAuthNonceService], which manages short-lived cryptographic nonces
- * used primarily in DPoP flows.
- *
- * These tests ensure:
- * - Nonce stability within its configured time-to-live (TTL).
- * - Correct rotation and invalidation of nonces after manual refresh.
- * - Proper expiration behavior, forcing the generation of a new nonce after the
- *   TTL has elapsed to maintain security against replay attempts.
- */
 class OAuthNonceServiceTest {
     @Test
-    fun `nonce stays stable until refreshed or expired`() {
-        val clock = MutableClock(Instant.parse("2026-03-08T00:00:00Z"))
-        val service = OAuthNonceService(clock = clock, ttl = 5.minutes)
+    fun `replicas accept the same challenge including across one rotation`() {
+        val clock = MutableClock(Instant.fromEpochSeconds(0))
+        val issuer = OAuthNonceService(clock = clock, sharedSecret = "shared-test-key")
+        val replica = OAuthNonceService(clock = clock, sharedSecret = "shared-test-key")
+        val initial = issuer.currentNonce()
 
-        val initial = service.currentNonce()
-        val repeated = service.currentNonce()
-        val refreshed = service.refreshNonce()
+        assertEquals(initial, replica.currentNonce())
+        assertTrue(replica.challenge().accepts(initial))
 
-        assertEquals(initial, repeated)
-        assertNotEquals(initial, refreshed)
+        clock.nowValue += 150.seconds
+        assertNotEquals(initial, replica.currentNonce())
+        assertTrue(replica.challenge().accepts(initial))
+        val verifier = OAuthDpopVerifier(clock = clock)
+        val url = "https://logdate.app/oauth/token"
+        val proof = createDpopProof(generateP256KeyPair(), "POST", url, nonce = initial, iat = clock.now().epochSeconds)
+        assertTrue(verifier.verify(proof, "POST", url, nonceChallenge = replica.challenge()).isSuccess)
+        assertTrue(verifier.verify(proof, "POST", url, nonceChallenge = replica.challenge()).isFailure)
 
-        clock.nowValue += 6.minutes
-        val rotated = service.currentNonce()
-        assertNotEquals(refreshed, rotated)
+        clock.nowValue += 150.seconds
+        assertFalse(replica.challenge().accepts(initial))
+    }
+
+    @Test
+    fun `a different secret and missing or malformed challenges are rejected`() {
+        val clock = MutableClock(Instant.fromEpochSeconds(0))
+        val issuer = OAuthNonceService(clock = clock, sharedSecret = "shared-test-key")
+        val replica = OAuthNonceService(clock = clock, sharedSecret = "other-test-key")
+
+        assertFalse(replica.challenge().accepts(issuer.currentNonce()))
+        assertFalse(replica.challenge().accepts(null))
+        assertFalse(replica.challenge().accepts("invalid"))
     }
 }

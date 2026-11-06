@@ -5,6 +5,7 @@ import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.TokenService
 import app.logdate.server.clientAddress
 import app.logdate.server.identity.AtprotoIdentityService
+import app.logdate.server.installAtprotoBrowserCors
 import app.logdate.server.oauth.OAuthAuthorizationService
 import app.logdate.server.oauth.OAuthConfig
 import app.logdate.server.oauth.OAuthException
@@ -19,6 +20,7 @@ import app.logdate.server.oauth.OAuthUseDpopNonceException
 import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.routes.docs.OAuthDocs
 import io.github.aakira.napier.Napier
+import io.github.smiley4.ktoropenapi.config.RouteConfig
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
 import io.ktor.http.HttpHeaders
@@ -33,6 +35,8 @@ import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingHandler
+import io.ktor.server.routing.route
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import studio.hypertext.atproto.pds.AuthorizationCodeTokenRequest
@@ -49,6 +53,28 @@ import studio.hypertext.atproto.pds.RefreshTokenGrantRequest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+private fun Route.browserGet(
+    path: String,
+    docs: RouteConfig.() -> Unit,
+    handler: RoutingHandler,
+) {
+    route(path) {
+        installAtprotoBrowserCors()
+        get("", docs, handler)
+    }
+}
+
+private fun Route.browserPost(
+    path: String,
+    docs: RouteConfig.() -> Unit,
+    handler: RoutingHandler,
+) {
+    route(path) {
+        installAtprotoBrowserCors()
+        post("", docs, handler)
+    }
+}
+
 /**
  * Serves OAuth discovery metadata and AT Protocol-compatible OAuth authorization endpoints.
  */
@@ -64,21 +90,21 @@ fun Route.oauthRoutes(
     passkeySignIn: OAuthPasskeySignInService? = null,
     passkeyRateLimiter: SlidingWindowRateLimiter = SlidingWindowRateLimiter(),
 ) {
-    get("/.well-known/oauth-authorization-server", OAuthDocs.getAuthorizationServerMetadata) {
+    browserGet("/.well-known/oauth-authorization-server", OAuthDocs.getAuthorizationServerMetadata) {
         call.respond(HttpStatusCode.OK, discoveryService?.authorizationServerMetadata() ?: config.authorizationServerMetadata())
     }
 
-    get("/.well-known/oauth-protected-resource", OAuthDocs.getProtectedResourceMetadata) {
+    browserGet("/.well-known/oauth-protected-resource", OAuthDocs.getProtectedResourceMetadata) {
         call.respond(HttpStatusCode.OK, discoveryService?.protectedResourceMetadata() ?: config.protectedResourceMetadata())
     }
 
-    get("/oauth/jwks", OAuthDocs.getJwks) {
+    browserGet("/oauth/jwks", OAuthDocs.getJwks) {
         call.respond(HttpStatusCode.OK, keyService.jwks())
     }
 
-    post("/oauth/par", OAuthDocs.pushAuthorizationRequest) {
+    browserPost("/oauth/par", OAuthDocs.pushAuthorizationRequest) {
         val service =
-            authorizationService ?: return@post call.respond(
+            authorizationService ?: return@browserPost call.respond(
                 HttpStatusCode.NotImplemented,
                 OAuthErrorResponse("server_error", "OAuth PAR is not configured"),
             )
@@ -88,7 +114,7 @@ fun Route.oauthRoutes(
                 .header(DPOP_HEADER)
                 ?.trim()
                 ?.takeIf(String::isNotEmpty)
-                ?: return@post call.respondOAuthError(OAuthInvalidRequestException("DPoP proof is required"))
+                ?: return@browserPost call.respondOAuthError(OAuthInvalidRequestException("DPoP proof is required"))
 
         runCatching {
             service
@@ -240,9 +266,9 @@ fun Route.oauthRoutes(
             }.onFailure { error -> call.respondOAuthError(error) }
     }
 
-    post("/oauth/token", OAuthDocs.exchangeToken) {
+    browserPost("/oauth/token", OAuthDocs.exchangeToken) {
         val service =
-            authorizationService ?: return@post call.respond(
+            authorizationService ?: return@browserPost call.respond(
                 HttpStatusCode.NotImplemented,
                 OAuthErrorResponse("server_error", "OAuth token exchange is not configured"),
             )
@@ -252,7 +278,7 @@ fun Route.oauthRoutes(
                 .header(DPOP_HEADER)
                 ?.trim()
                 ?.takeIf(String::isNotEmpty)
-                ?: return@post call.respondOAuthError(OAuthInvalidRequestException("DPoP proof is required"))
+                ?: return@browserPost call.respondOAuthError(OAuthInvalidRequestException("DPoP proof is required"))
 
         runCatching {
             when (val grantType = parameters.requireValue("grant_type")) {
@@ -298,9 +324,9 @@ fun Route.oauthRoutes(
         }
     }
 
-    post("/oauth/revoke", OAuthDocs.revokeToken) {
+    browserPost("/oauth/revoke", OAuthDocs.revokeToken) {
         val service =
-            authorizationService ?: return@post call.respond(
+            authorizationService ?: return@browserPost call.respond(
                 HttpStatusCode.NotImplemented,
                 OAuthErrorResponse("server_error", "OAuth revocation is not configured"),
             )
@@ -310,7 +336,7 @@ fun Route.oauthRoutes(
                 .header(DPOP_HEADER)
                 ?.trim()
                 ?.takeIf(String::isNotEmpty)
-                ?: return@post call.respondOAuthError(OAuthInvalidRequestException("DPoP proof is required"))
+                ?: return@browserPost call.respondOAuthError(OAuthInvalidRequestException("DPoP proof is required"))
 
         runCatching {
             service

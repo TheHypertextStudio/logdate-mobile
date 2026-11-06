@@ -24,18 +24,15 @@ cannot read that log. It asks the public directory at `https://plc.directory`, a
 operations are in the directory nobody outside LogDate can resolve her identity or use her account
 anywhere else.
 
-## The publishing setting
+## Publication consent
 
-Whether stored operations are sent depends on the server setting `ATPROTO_PLC_PUBLISH_ENABLED`. While
-it is off, which is the default, operations are signed and stored but never sent, and the server
-refuses identity changes that need the directory, such as rotating a signing key. While it is on,
-new identities are sent as they are created, and the server tells apps it supports directory
-changes by advertising the `atprotoPlcPublishingV1` protocol feature.
-
-Turning the setting on affects only identities created from then on. Alice's identity, created a
-year earlier while publishing was off, stays in the hosted log until something sends it. That is the
-job of the publishing command, which also fills the gap for accounts that were created before
-LogDate supported identities at all.
+A LogDate identity starts private. Publication requires the account owner's
+explicit, informed confirmation for that identity. Keep the legacy
+`ATPROTO_PLC_PUBLISH_ENABLED` switch off in deployed environments. The
+switch submits new identities during signup, and the legacy command can
+publish existing identities in bulk. Use the loopback rehearsal and
+read-only inventory to inspect the system while per-account publication is
+being built.
 
 ## Why publishing cannot be undone
 
@@ -53,10 +50,9 @@ type the directory it is writing to, and why a run stops at its first failure by
 
 ## Safeguards before publishing
 
-Publishing makes every account a public identity, and an identity in the public directory invites
-other services to read the account's public repository, to resolve its handle, and to trust the
-operations that control it. LogDate therefore wants eight safeguards confirmed on production before
-it turns publishing on.
+Publishing makes the consenting account's identity visible to other services.
+Those services can resolve its handle and verify the operations that control
+it. The safeguards below apply before per-account publication goes live.
 
 Private data has to stay private. Publishing invites other services to read an account's public
 repository, so the endpoints that return repositories, records and blobs must still refuse a request
