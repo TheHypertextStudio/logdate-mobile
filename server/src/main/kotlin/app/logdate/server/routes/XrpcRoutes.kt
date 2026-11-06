@@ -1,5 +1,7 @@
 package app.logdate.server.routes
 
+import app.logdate.server.atproto.AtprotoServiceAuth
+import app.logdate.server.atproto.AtprotoServiceProxy
 import app.logdate.server.atproto.AtprotoSessionTokenService
 import app.logdate.server.atproto.InvalidSwapException
 import app.logdate.server.atproto.firehose.PublicRepoAccess
@@ -7,6 +9,7 @@ import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.TokenService
 import app.logdate.server.identity.AtprotoIdentityService
+import app.logdate.server.installAtprotoBrowserCors
 import app.logdate.server.logging.IdentityNotices
 import app.logdate.server.oauth.OAuthAccessTokenService
 import app.logdate.server.oauth.OAuthDpopVerifier
@@ -54,6 +57,7 @@ import studio.hypertext.atproto.pds.PdsRepoService
 import studio.hypertext.atproto.pds.PdsSessionService
 import studio.hypertext.atproto.pds.PdsSyncService
 import studio.hypertext.atproto.pds.PutRecordRequest
+import studio.hypertext.atproto.pds.SessionInfoResponse
 import studio.hypertext.atproto.pds.UploadBlobRequest
 import studio.hypertext.atproto.repo.Cid
 import studio.hypertext.atproto.repo.RepoRecordId
@@ -79,9 +83,23 @@ fun Route.xrpcRoutes(
     publicOrigin: String? = null,
     collectionsOpenToApps: Set<String> = OAuthScopes.collectionsOpenToApps,
     publicRepos: PublicRepoAccess? = null,
+    serviceAuth: AtprotoServiceAuth? = null,
+    serviceProxy: AtprotoServiceProxy? = null,
 ) {
     val openCollections = OAuthScopes.requireOpenable(collectionsOpenToApps)
     val publicReads = publicRepos?.let { PublicRepoReads(it, identityService, blobService) }
+
+    suspend fun ApplicationCall.authenticateXrpc(): XrpcPrincipal? =
+        requireAuthenticatedAccount(
+            identityService = identityService,
+            accountRepository = accountRepository,
+            tokenService = tokenService,
+            atprotoSessionTokenService = atprotoSessionTokenService,
+            oauthAccessTokenService = oauthAccessTokenService,
+            oauthDpopVerifier = oauthDpopVerifier,
+            oauthNonceService = oauthNonceService,
+            publicOrigin = publicOrigin,
+        )
 
     // A repo can hold its owner's private journal, so reads are owner-only. Anyone else gets
     // `respondAsMissing`, the answer for a repo that does not exist, before anything is looked up.
@@ -92,23 +110,14 @@ fun Route.xrpcRoutes(
         repo: String,
         respondAsMissing: suspend ApplicationCall.() -> Unit,
     ): XrpcPrincipal? {
-        val principal =
-            requireAuthenticatedAccount(
-                identityService = identityService,
-                accountRepository = accountRepository,
-                tokenService = tokenService,
-                atprotoSessionTokenService = atprotoSessionTokenService,
-                oauthAccessTokenService = oauthAccessTokenService,
-                oauthDpopVerifier = oauthDpopVerifier,
-                oauthNonceService = oauthNonceService,
-                publicOrigin = publicOrigin,
-            ) ?: return null
+        val principal = authenticateXrpc() ?: return null
         if (ownsRepo(principal.account, repo)) return principal
         respondAsMissing()
         return null
     }
 
     route("/xrpc") {
+        installAtprotoBrowserCors()
         get("/com.atproto.identity.resolveHandle", XrpcDocs.resolveHandle) {
             val handleValue =
                 call.request.queryParameters["handle"]
@@ -168,6 +177,19 @@ fun Route.xrpcRoutes(
                     HttpStatusCode.NotImplemented,
                     PdsErrorResponse("Unsupported", "Session service is not configured"),
                 )
+            if (call.request.header(HttpHeaders.Authorization)?.startsWith("DPoP ") == true) {
+                val account = (call.authenticateXrpc() ?: return@get).account
+                call.respond(
+                    HttpStatusCode.OK,
+                    SessionInfoResponse(
+                        handle = requireNotNull(account.handle),
+                        did = AtprotoDid.require(requireNotNull(account.did)),
+                        didDoc = identityService.documentFor(account),
+                        active = account.isActive,
+                    ),
+                )
+                return@get
+            }
             val bearerToken = call.requireBearerToken() ?: return@get
             val result = sessions.getSession(bearerToken)
             val session = result.getOrNull()
@@ -177,6 +199,9 @@ fun Route.xrpcRoutes(
             }
             call.respond(HttpStatusCode.OK, session)
         }
+
+        xrpcServiceAuthRoutes(serviceAuth) { authenticateXrpc() }
+        serviceProxy?.let { xrpcServiceProxyRoutes(it) { authenticateXrpc() } }
 
         post("/com.atproto.server.refreshSession", XrpcDocs.refreshSession) {
             val sessions =
@@ -857,17 +882,21 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
     identityService: AtprotoIdentityService,
     accountRepository: AccountRepository,
 ): XrpcPrincipal? {
-    val accessClaims = checks.accessTokens.validateAccessToken(accessToken) ?: return respondAuthRequired("Invalid DPoP access token")
+    val challenge = checks.nonces.challenge()
+    response.headers.append(DPOP_NONCE_HEADER, challenge.current)
+    val accessClaims =
+        checks.accessTokens.validateAccessToken(accessToken)
+            ?: return respondAuthRequired("Invalid DPoP access token", dpopError = "invalid_token")
     val proof =
         request.header(DPOP_HEADER)?.trim()?.takeIf(String::isNotEmpty)
-            ?: return respondAuthRequired("Missing DPoP proof")
+            ?: return respondAuthRequired("Missing DPoP proof", dpopError = "invalid_dpop_proof")
     val verification =
         try {
             checks.dpop.verify(
                 proof = proof,
                 method = request.httpMethod.value,
                 htu = checks.publicOrigin?.let { it.trimEnd('/') + request.path() } ?: absoluteRequestUrl(),
-                expectedNonce = checks.nonces.currentNonce(),
+                nonceChallenge = challenge,
                 expectedAth = checks.dpop.accessTokenHash(accessToken),
             )
         } catch (error: Exception) {
@@ -880,16 +909,20 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireOAuthPrinc
         }
     val verified =
         verification.getOrElse { error ->
-            if (error is OAuthUseDpopNonceException) response.headers.append(DPOP_NONCE_HEADER, error.nonce)
-            return respondAuthRequired(error.message ?: "Invalid DPoP proof")
+            return respondAuthRequired(
+                error.message ?: "Invalid DPoP proof",
+                dpopError = if (error is OAuthUseDpopNonceException) "use_dpop_nonce" else "invalid_dpop_proof",
+            )
         }
-    if (verified.keyThumbprint != accessClaims.keyThumbprint) return respondAuthRequired("DPoP proof does not match the access token")
+    if (verified.keyThumbprint != accessClaims.keyThumbprint) {
+        return respondAuthRequired("DPoP proof does not match the access token", dpopError = "invalid_token")
+    }
     val account =
         accountRepository
             .findByDid(accessClaims.subjectDid)
             ?.takeIf(Account::isActive)
             ?.let { identityService.ensureIdentity(it) }
-            ?: return respondAuthRequired("Account not found for DPoP access token")
+            ?: return respondAuthRequired("Account not found for DPoP access token", dpopError = "invalid_token")
     return XrpcPrincipal(account, OAuthGrant(clientId = accessClaims.clientId, scopes = OAuthScopes.parse(accessClaims.scope)))
 }
 
@@ -923,7 +956,11 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireLogDatePri
     return XrpcPrincipal(account, oauth = null)
 }
 
-private suspend fun io.ktor.server.application.ApplicationCall.respondAuthRequired(message: String): XrpcPrincipal? {
+private suspend fun io.ktor.server.application.ApplicationCall.respondAuthRequired(
+    message: String,
+    dpopError: String? = null,
+): XrpcPrincipal? {
+    if (dpopError != null) response.headers.append(HttpHeaders.WWWAuthenticate, "DPoP error=\"$dpopError\"")
     respond(HttpStatusCode.Unauthorized, PdsErrorResponse("AuthRequired", message))
     return null
 }

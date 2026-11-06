@@ -670,21 +670,16 @@ with the change that makes them required.
 
 ### `ATPROTO_PLC_PUBLISH_ENABLED`
 
-- **Description**: Whether the server sends `did:plc` operations to the PLC directory. Until an
-  account's operations are published, nobody outside LogDate can resolve its DID.
-- **Type**: Boolean (`true` to enable)
+- **Description**: Legacy bulk publication switch for hosted `did:plc` identities.
+- **Type**: Boolean
 - **Default**: `false`
-- **Example**: `ATPROTO_PLC_PUBLISH_ENABLED=true`
 - **Required**: No
-- **Notes**: Only applies when `ATPROTO_HOSTED_DID_METHOD` is `plc`. When enabled, the server
-  advertises the `atprotoPlcPublishingV1` protocol feature, and clients may then offer identity
-  changes such as signing-key rotation. When disabled, the server refuses those changes.
-  Recovery keys do not need it; see `ATPROTO_RECOVERY_KEYS_ENABLED`. Production leaves it off.
-  DIDs created while it is off are never published later on their own: turning it on means running
-  the identity publishing command for existing accounts, which submits the hosted operation log as
-  it is. Publishing can't be undone, so follow
-  [identity publishing runbook](../../docs/runbook/identity-publishing.md) to turn it on. Only a
-  production deployment contract may set it to `true`.
+- **Notes**: Keep this off in deployed environments. Enabling it submits new
+  identities during signup and permits the legacy bulk command to send
+  existing identities to the directory. Those writes are permanent.
+  Publication requires the account owner's explicit consent for their own
+  identity. Use the [runbook](../../docs/runbook/identity-publishing.md) for
+  the loopback rehearsal and read-only inventory.
 
 ### `ATPROTO_RECOVERY_KEYS_ENABLED`
 

@@ -160,7 +160,13 @@ class LinkedDeviceRouteScopeTest {
         val template: String,
     ) {
         val label get() = "$method $template"
-        val path get() = template.replace(PATH_PARAMETER, "sweep")
+        val path
+            get() =
+                if (template == "/xrpc/{method}") {
+                    "/xrpc/com.atproto.moderation.createReport"
+                } else {
+                    template.replace(PATH_PARAMETER, "sweep")
+                }
     }
 
     private fun registeredRoutes(server: Application): List<RegisteredRoute> {
@@ -305,6 +311,13 @@ class LinkedDeviceRouteScopeTest {
                 "GET /openapi.yaml",
                 "POST /xrpc/com.atproto.server.createAccount",
                 "POST /xrpc/com.atproto.server.createSession",
+                "OPTIONS /.well-known/oauth-authorization-server/{...}",
+                "OPTIONS /.well-known/oauth-protected-resource/{...}",
+                "OPTIONS /oauth/jwks/{...}",
+                "OPTIONS /oauth/par/{...}",
+                "OPTIONS /oauth/token/{...}",
+                "OPTIONS /oauth/revoke/{...}",
+                "OPTIONS /xrpc/{...}",
             )
 
         /** Routes missing from the OpenAPI document that need a signed-in account. */
@@ -316,6 +329,8 @@ class LinkedDeviceRouteScopeTest {
                 "GET /api/v1/ops/sync/metrics/prometheus",
                 "POST /api/v1/ops/sync/tombstones:purge",
                 "POST /api/v1/ops/backups:purge",
+                "GET /xrpc/{method}",
+                "POST /xrpc/{method}",
             )
 
         /** One route per way the server reads an access token, so a mislabelled route cannot slip out of the sweep. */

@@ -1,9 +1,11 @@
 package app.logdate.server.routes.docs
 
+import app.logdate.server.atproto.ServiceAuthResponse
 import app.logdate.server.openapi.ApiTags
 import app.logdate.server.routes.ErrorCase
 import app.logdate.server.routes.ErrorEnvelope
 import app.logdate.server.routes.bearerOperation
+import app.logdate.server.routes.bearerOrDpopOperation
 import app.logdate.server.routes.bearerUnauthorized
 import app.logdate.server.routes.ok
 import app.logdate.server.routes.pdsError
@@ -111,13 +113,14 @@ internal object XrpcDocs {
     // ---- Sessions --------------------------------------------------------------------------------
 
     val getSession: RouteConfig.() -> Unit = {
-        bearerOperation(
+        bearerOrDpopOperation(
             "getAtprotoSession",
             ApiTags.XRPC,
             "Get the current session",
             """
-            `com.atproto.server.getSession`. Returns the account behind an `accessJwt` sent as
-            `Authorization: Bearer`. Use it to check whether a stored session is still valid.
+            `com.atproto.server.getSession`. Accepts a legacy session access token as
+            `Authorization: Bearer` or an OAuth access token as `Authorization: DPoP` with a
+            `DPoP` proof. OAuth responses omit email and email verification fields.
             """,
         )
         response {
@@ -131,10 +134,46 @@ internal object XrpcDocs {
                     active = true,
                 ),
             )
-            bearerUnauthorized(ErrorEnvelope.PDS)
+            authRequired()
             pdsError(
                 HttpStatusCode.InternalServerError,
                 ErrorCase("InternalServerError", "The request failed on the server; retry later.", "Session request failed"),
+            )
+            notConfigured()
+        }
+    }
+
+    val getServiceAuth: RouteConfig.() -> Unit = {
+        bearerOrDpopOperation(
+            "getAtprotoServiceAuth",
+            ApiTags.XRPC,
+            "Issue a service credential",
+            "Issue a credential for one service and XRPC method using the account's public identity.",
+        )
+        request {
+            queryParameter<String>("aud") {
+                description = "Service DID, optionally followed by its service fragment."
+                required = true
+            }
+            queryParameter<String>("lxm") {
+                description = "XRPC method to bind to the credential."
+                required = true
+            }
+            queryParameter<Long>("exp") {
+                description = "Expiration in Unix seconds, no more than 60 seconds in the future."
+            }
+        }
+        response {
+            ok("The short-lived credential.", ServiceAuthResponse("example-token"))
+            authRequired()
+            pdsError(
+                HttpStatusCode.BadRequest,
+                ErrorCase("InvalidRequest", "The audience or method is invalid.", "Provide a service DID and a valid XRPC method."),
+                ErrorCase("BadExpiration", "The expiration is invalid.", "The service credential must expire within 60 seconds."),
+            )
+            pdsError(
+                HttpStatusCode.Forbidden,
+                ErrorCase("Forbidden", "The identity or grant cannot issue this credential.", "Service authentication is unavailable."),
             )
             notConfigured()
         }
