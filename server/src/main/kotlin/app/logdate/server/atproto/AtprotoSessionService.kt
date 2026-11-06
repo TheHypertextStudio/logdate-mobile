@@ -54,6 +54,7 @@ public data class AtprotoSession(
     val createdAtEpochMillis: Long,
     val refreshExpiresAtEpochMillis: Long,
     val revokedAtEpochMillis: Long? = null,
+    val appPasswordId: Uuid? = null,
 )
 
 /**
@@ -69,10 +70,17 @@ public interface AtprotoPasswordCredentialRepository {
 /**
  * Session persistence for standard AT Protocol account sessions.
  */
+@OptIn(ExperimentalUuidApi::class)
 public interface AtprotoSessionRepository {
     public suspend fun save(session: AtprotoSession): AtprotoSession
 
     public suspend fun findById(sessionId: String): AtprotoSession?
+
+    public suspend fun isAppPasswordActive(
+        accountId: Uuid,
+        passwordId: Uuid,
+        did: String,
+    ): Boolean = false
 
     public suspend fun revoke(sessionId: String): Boolean
 }
@@ -198,6 +206,26 @@ public class AtprotoSessionTokenService(
         return issueSessionTokens(account = account, session = session)
     }
 
+    internal suspend fun createAppPasswordSession(
+        account: Account,
+        passwordId: Uuid,
+        persist: suspend (AtprotoSession, String) -> Boolean,
+    ): IssuedAtprotoSession? {
+        val did = account.did ?: return null
+        if (account.publicIdentityDid != did || !account.isActive || account.moderation != null) return null
+        val now = clock.now()
+        val session =
+            AtprotoSession(
+                id = Uuid.random().toString(),
+                accountId = account.id,
+                createdAtEpochMillis = now.toEpochMilliseconds(),
+                refreshExpiresAtEpochMillis = (now + REFRESH_TOKEN_TTL).toEpochMilliseconds(),
+                appPasswordId = passwordId,
+            )
+        if (!persist(session, did)) return null
+        return issueSessionTokens(account, session)
+    }
+
     public suspend fun refreshSession(
         refreshJwt: String,
         accountRepository: AccountRepository,
@@ -206,8 +234,8 @@ public class AtprotoSessionTokenService(
         val token = validateToken(refreshJwt, expectedType = REFRESH_TOKEN_TYPE) ?: return null
         val session = activeSession(token.sessionId) ?: return null
         val account = accountRepository.findById(session.accountId) ?: return null
-        val ensured = identityService.ensureIdentity(account)
-        return issueSessionTokens(account = ensured, session = session)
+        val current = sessionAccount(account, session, token, identityService, allowAppPassword = true) ?: return null
+        return issueSessionTokens(account = current, session = session)
     }
 
     public suspend fun getAccessAccount(
@@ -218,7 +246,35 @@ public class AtprotoSessionTokenService(
         val token = validateToken(accessJwt, expectedType = ACCESS_TOKEN_TYPE) ?: return null
         val session = activeSession(token.sessionId) ?: return null
         val account = accountRepository.findById(session.accountId) ?: return null
-        return identityService.ensureIdentity(account)
+        return sessionAccount(account, session, token, identityService, allowAppPassword = false)
+    }
+
+    internal suspend fun getAppPasswordAccessAccount(
+        accessJwt: String,
+        accountRepository: AccountRepository,
+        identityService: AtprotoIdentityService,
+    ): Account? {
+        val token = validateToken(accessJwt, expectedType = ACCESS_TOKEN_TYPE) ?: return null
+        val session = activeSession(token.sessionId)?.takeIf { it.appPasswordId != null } ?: return null
+        val account = accountRepository.findById(session.accountId) ?: return null
+        return sessionAccount(account, session, token, identityService, allowAppPassword = true)
+    }
+
+    private suspend fun sessionAccount(
+        account: Account,
+        session: AtprotoSession,
+        token: ValidatedAtprotoSessionToken,
+        identityService: AtprotoIdentityService,
+        allowAppPassword: Boolean,
+    ): Account? {
+        if (token.accountId != session.accountId) return null
+        val passwordId = session.appPasswordId ?: return identityService.ensureIdentity(account)
+        if (!allowAppPassword || account.did != token.did || account.publicIdentityDid != token.did ||
+            !account.isActive || account.moderation != null
+        ) {
+            return null
+        }
+        return account.takeIf { sessionRepository.isAppPasswordActive(account.id, passwordId, token.did) }
     }
 
     public suspend fun revokeRefreshToken(refreshJwt: String): Boolean {
@@ -263,6 +319,7 @@ public class AtprotoSessionTokenService(
             accessJwt = accessJwt,
             refreshJwt = refreshJwt,
             sessionId = session.id,
+            appPassword = session.appPasswordId != null,
         )
     }
 
@@ -392,10 +449,25 @@ public class AtprotoPdsSessionService(
             buildSessionResponse(ensured, sessionTokenService.createSession(ensured))
         }
 
+    internal suspend fun loginWithAppPassword(
+        identifier: String,
+        password: String,
+        store: app.logdate.server.database.AtprotoAppPasswordStore,
+    ): SessionResponse? {
+        val match = store.match(identifier, password) ?: return null
+        val account = accountRepository.findById(match.accountId) ?: return null
+        if (account.did != match.did) return null
+        val issued = sessionTokenService.createAppPasswordSession(account, match.passwordId, store::startSession) ?: return null
+        return buildSessionResponse(account, issued)
+    }
+
     override suspend fun getSession(accessJwt: String): Result<SessionInfoResponse> =
         runCatching {
             val account =
-                sessionTokenService.getAccessAccount(accessJwt, accountRepository, identityService)
+                sessionTokenService
+                    .getAppPasswordAccessAccount(accessJwt, accountRepository, identityService)
+                    ?.copy(email = null, emailVerified = false)
+                    ?: sessionTokenService.getAccessAccount(accessJwt, accountRepository, identityService)
                     ?: throw IllegalArgumentException("InvalidToken")
             buildSessionInfo(account)
         }
@@ -406,7 +478,7 @@ public class AtprotoPdsSessionService(
                 sessionTokenService.refreshSession(refreshJwt, accountRepository, identityService)
                     ?: throw IllegalArgumentException("InvalidToken")
             val account = accountRepository.findById(Uuid.parse(issued.accessSubject)) ?: throw IllegalArgumentException("InvalidToken")
-            buildSessionResponse(identityService.ensureIdentity(account), issued)
+            buildSessionResponse(account, issued)
         }
 
     override suspend fun deleteSession(refreshJwt: String): Result<Unit> =
@@ -478,8 +550,8 @@ public class AtprotoPdsSessionService(
             handle = requireNotNull(account.handle),
             did = AtprotoDid.require(requireNotNull(account.did)),
             didDoc = identityService.documentFor(account),
-            email = account.email,
-            emailConfirmed = account.emailVerified,
+            email = account.email.takeUnless { issued.appPassword },
+            emailConfirmed = account.emailVerified.takeUnless { issued.appPassword },
             emailAuthFactor = false,
             active = account.isActive,
             status = account.statusValue(),
@@ -500,6 +572,7 @@ public data class IssuedAtprotoSession(
     val accessJwt: String,
     val refreshJwt: String,
     val sessionId: String,
+    internal val appPassword: Boolean = false,
 ) {
     public val accessSubject: String
         get() = decodeSubject(accessJwt)

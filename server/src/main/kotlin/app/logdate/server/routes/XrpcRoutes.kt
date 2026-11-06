@@ -17,6 +17,8 @@ import app.logdate.server.oauth.OAuthDpopVerifier
 import app.logdate.server.oauth.OAuthNonceService
 import app.logdate.server.oauth.OAuthScopes
 import app.logdate.server.oauth.OAuthUseDpopNonceException
+import app.logdate.server.ratelimit.FixedWindowRateLimiter
+import app.logdate.server.ratelimit.RateLimitPolicy
 import app.logdate.server.routes.docs.XrpcDocs
 import app.logdate.server.routes.docs.XrpcRepoDocs
 import io.github.aakira.napier.Napier
@@ -27,6 +29,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
+import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.contentType
 import io.ktor.server.request.header
@@ -59,6 +62,7 @@ import studio.hypertext.atproto.pds.PdsSessionService
 import studio.hypertext.atproto.pds.PdsSyncService
 import studio.hypertext.atproto.pds.PutRecordRequest
 import studio.hypertext.atproto.pds.SessionInfoResponse
+import studio.hypertext.atproto.pds.SessionResponse
 import studio.hypertext.atproto.pds.UploadBlobRequest
 import studio.hypertext.atproto.repo.Cid
 import studio.hypertext.atproto.repo.RepoRecordId
@@ -87,11 +91,13 @@ fun Route.xrpcRoutes(
     serviceAuth: AtprotoServiceAuth? = null,
     serviceProxy: AtprotoServiceProxy? = null,
     preferencesStore: BlueskyPreferencesStore? = null,
+    appPasswordLogin: (suspend (String, String) -> SessionResponse?)? = null,
 ) {
+    val passwordRateLimiter = FixedWindowRateLimiter()
     val openCollections = OAuthScopes.requireOpenable(collectionsOpenToApps)
     val publicReads = publicRepos?.let { PublicRepoReads(it, identityService, blobService) }
 
-    suspend fun ApplicationCall.authenticateXrpc(): XrpcPrincipal? =
+    suspend fun ApplicationCall.authenticateXrpc(allowAppPassword: Boolean = false): XrpcPrincipal? =
         requireAuthenticatedAccount(
             identityService = identityService,
             accountRepository = accountRepository,
@@ -101,6 +107,7 @@ fun Route.xrpcRoutes(
             oauthDpopVerifier = oauthDpopVerifier,
             oauthNonceService = oauthNonceService,
             publicOrigin = publicOrigin,
+            allowAppPassword = allowAppPassword && appPasswordLogin != null,
         )
 
     // A repo can hold its owner's private journal, so reads are owner-only. Anyone else gets
@@ -156,9 +163,7 @@ fun Route.xrpcRoutes(
             call.respond(HttpStatusCode.OK, resolved)
         }
 
-        // Sign-in is passkey-only, so neither password method does any work. Refusing before the body is
-        // read means no request, however malformed, reaches the account or password services. Neither
-        // method can succeed, so both stay out of the API reference.
+        // Only the app-password exchange may accept a generated credential.
         post("/com.atproto.server.createAccount", { hidden = true }) {
             call.respond(
                 HttpStatusCode.BadRequest,
@@ -167,10 +172,36 @@ fun Route.xrpcRoutes(
         }
 
         post("/com.atproto.server.createSession", { hidden = true }) {
-            call.respond(
-                HttpStatusCode.BadRequest,
-                PdsErrorResponse("InvalidRequest", "Password sign-in is not supported. Sign in with a passkey."),
-            )
+            if (appPasswordLogin == null) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    PdsErrorResponse("InvalidRequest", "Password sign-in is not supported. Sign in with a passkey."),
+                )
+                return@post
+            }
+            call.response.headers.append(HttpHeaders.CacheControl, "no-store")
+            if (!passwordRateLimiter.allow(call.request.origin.remoteHost, RateLimitPolicy(maxRequests = 12, windowSeconds = 60))) {
+                call.respond(HttpStatusCode.TooManyRequests, PdsErrorResponse("RateLimitExceeded", "Too many sign-in attempts."))
+                return@post
+            }
+            val input =
+                try {
+                    call.receive<AppPasswordLoginInput>()
+                } catch (_: ContentTransformationException) {
+                    null
+                }
+            val identifier =
+                input
+                    ?.identifier
+                    ?.trim()
+                    ?.lowercase()
+                    ?.takeIf { it.length in 1..255 }
+            val session = if (identifier != null && input != null) appPasswordLogin(identifier, input.password) else null
+            if (session == null) {
+                call.respond(HttpStatusCode.Unauthorized, PdsErrorResponse("AuthenticationRequired", "Invalid login"))
+                return@post
+            }
+            call.respond(HttpStatusCode.OK, session)
         }
 
         get("/com.atproto.server.getSession", XrpcDocs.getSession) {
@@ -202,9 +233,9 @@ fun Route.xrpcRoutes(
             call.respond(HttpStatusCode.OK, session)
         }
 
-        xrpcServiceAuthRoutes(serviceAuth) { authenticateXrpc() }
-        blueskyPreferencesRoutes(preferencesStore) { authenticateXrpc() }
-        serviceProxy?.let { xrpcServiceProxyRoutes(it) { authenticateXrpc() } }
+        xrpcServiceAuthRoutes(serviceAuth) { authenticateXrpc(allowAppPassword = true) }
+        blueskyPreferencesRoutes(preferencesStore) { authenticateXrpc(allowAppPassword = true) }
+        serviceProxy?.let { xrpcServiceProxyRoutes(it) { authenticateXrpc(allowAppPassword = true) } }
 
         post("/com.atproto.server.refreshSession", XrpcDocs.refreshSession) {
             val sessions =
@@ -826,6 +857,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireAuthentica
     oauthDpopVerifier: OAuthDpopVerifier?,
     oauthNonceService: OAuthNonceService?,
     publicOrigin: String?,
+    allowAppPassword: Boolean = false,
 ): XrpcPrincipal? {
     if (accountRepository == null) {
         respond(HttpStatusCode.NotImplemented, PdsErrorResponse("Unsupported", "Repo auth is not configured"))
@@ -857,6 +889,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireAuthentica
                 accountRepository = accountRepository,
                 tokenService = tokenService,
                 atprotoSessionTokenService = atprotoSessionTokenService,
+                allowAppPassword = allowAppPassword,
             )
         }
 
@@ -937,6 +970,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireLogDatePri
     accountRepository: AccountRepository,
     tokenService: TokenService?,
     atprotoSessionTokenService: AtprotoSessionTokenService?,
+    allowAppPassword: Boolean,
 ): XrpcPrincipal? {
     if (atprotoSessionTokenService == null && tokenService == null) {
         respond(HttpStatusCode.NotImplemented, PdsErrorResponse("Unsupported", "Repo auth is not configured"))
@@ -945,6 +979,12 @@ private suspend fun io.ktor.server.application.ApplicationCall.requireLogDatePri
     atprotoSessionTokenService
         ?.getAccessAccount(bearerToken, accountRepository, identityService)
         ?.let { return XrpcPrincipal(it, oauth = null) }
+
+    if (allowAppPassword) {
+        atprotoSessionTokenService
+            ?.getAppPasswordAccessAccount(bearerToken, accountRepository, identityService)
+            ?.let { return XrpcPrincipal(it, oauth = null, appPassword = true) }
+    }
 
     val accountId =
         tokenService
@@ -975,6 +1015,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondAuthRequir
 internal data class XrpcPrincipal(
     val account: Account,
     val oauth: OAuthGrant?,
+    val appPassword: Boolean = false,
 )
 
 /** What an app signed in through OAuth was granted. */
@@ -1163,3 +1204,9 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondForSyncErr
         }
     }
 }
+
+@Serializable
+private class AppPasswordLoginInput(
+    val identifier: String,
+    val password: String,
+)

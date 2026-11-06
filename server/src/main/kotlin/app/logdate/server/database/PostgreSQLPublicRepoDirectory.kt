@@ -19,12 +19,9 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 /**
  * The repositories of accounts that may be shown, found with one indexed query per page: accounts joined
- * to repository heads, filtered by the same rules as `AccountPublicRepoGate`, in DID order. A `did:plc`
- * counts only when [publishesPlc] says the server sends them to the PLC directory.
+ * to repository heads, filtered by the same per-account consent rules as `AccountPublicRepoGate`, in DID order.
  */
-class PostgreSQLPublicRepoDirectory(
-    private val publishesPlc: Boolean,
-) : PublicRepoDirectory {
+class PostgreSQLPublicRepoDirectory : PublicRepoDirectory {
     override suspend fun after(
         afterDid: String?,
         limit: Int,
@@ -32,8 +29,7 @@ class PostgreSQLPublicRepoDirectory(
         withContext(Dispatchers.IO) {
             transaction {
                 val publicIdentity =
-                    (AccountsTable.did like "did:web:%") or
-                        (if (publishesPlc) AccountsTable.did like "did:plc:%" else Op.FALSE)
+                    (AccountsTable.did like "did:web:%") or (AccountsTable.did like "did:plc:%")
                 AccountsTable
                     .join(
                         AtprotoRepoHeadsTable,

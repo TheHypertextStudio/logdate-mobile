@@ -1,5 +1,7 @@
-# actionlint's label catalog predates GitHub's standard macOS 27 preview runner.
+# xcode-27: actionlint's label catalog predates GitHub's standard macOS 27 preview runner.
 # https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md
+# studio-linux: the Hypertext Studio self-hosted Linux runner pool.
 self-hosted-runner:
   labels:
     - xcode-27
+    - studio-linux

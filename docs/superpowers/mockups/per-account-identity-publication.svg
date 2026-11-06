@@ -1,0 +1,93 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1464"
+  height="638"
+  viewBox="0 0 1464 638"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">Using a LogDate account in other apps</title>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; fill: #18201b; }
+    .label { font-size: 13px; font-weight: 600; fill: #4d5a52; }
+    .heading { font-size: 25px; font-weight: 700; }
+    .section { font-size: 16px; font-weight: 650; }
+    .body { font-size: 15px; fill: #354339; }
+    .button { font-size: 15px; font-weight: 650; fill: #17583d; }
+    .primary { fill: #fff; }
+  </style>
+  <defs>
+    <rect id="screen" x="0" y="23" width="338" height="557" rx="22" fill="#fff" stroke="#dbe4de" />
+    <path id="rule" d="M22 0h294" stroke="#e2e8e4" />
+  </defs>
+  <rect width="1464" height="638" fill="#edf1ee" />
+  <g transform="translate(26 29)">
+    <text class="label" x="0" y="0">Account settings</text>
+    <use href="#screen" />
+    <text class="heading" x="22" y="74">Account</text>
+    <text class="section" x="22" y="122">Use LogDate in other apps</text>
+    <text class="body" x="22" y="150">
+      <tspan x="22">Take your LogDate account with you</tspan>
+      <tspan x="22" dy="21">when you sign in to compatible apps.</tspan>
+    </text>
+    <use href="#rule" y="192" />
+    <text class="button" x="22" y="222">Set up</text>
+    <path d="M303 210l6 6-6 6" fill="none" stroke="#56615b" stroke-width="2" />
+  </g>
+  <g transform="translate(384 29)">
+    <text class="label" x="0" y="0">Before you enable it</text>
+    <use href="#screen" />
+    <text class="heading" x="22" y="73">
+      <tspan x="22">One account across</tspan>
+      <tspan x="22" dy="28">apps</tspan>
+    </text>
+    <text class="section" x="22" y="132">alex.logdate.app</text>
+    <text class="body" x="22" y="160">
+      <tspan x="22">Sign in to compatible apps with this</tspan>
+      <tspan x="22" dy="21">account. LogDate still hosts it.</tspan>
+      <tspan x="22" dy="21">Your journals and collections</tspan>
+      <tspan x="22" dy="21">stay private.</tspan>
+    </text>
+    <use href="#rule" y="242" />
+    <text class="section" x="22" y="267">Your account becomes public</text>
+    <text class="body" x="22" y="292">
+      <tspan x="22">Anyone can look up your username</tspan>
+      <tspan x="22" dy="21">and see that LogDate hosts it. That</tspan>
+      <tspan x="22" dy="21">history stays public even if you stop</tspan>
+      <tspan x="22" dy="21">using other apps.</tspan>
+    </text>
+    <text class="section" x="22" y="386">You decide where to sign in</text>
+    <text class="body" x="22" y="411">
+      <tspan x="22">Each app asks for access separately.</tspan>
+      <tspan x="22" dy="21">Public activity from different apps</tspan>
+      <tspan x="22" dy="21">can be linked to this account.</tspan>
+    </text>
+    <rect x="22" y="474" width="294" height="44" rx="12" fill="#1e694a" />
+    <text class="button primary" x="169" y="502" text-anchor="middle">Enable other apps</text>
+    <text class="button" x="169" y="550" text-anchor="middle">Cancel</text>
+  </g>
+  <g transform="translate(742 29)">
+    <text class="label" x="0" y="0">After passkey confirmation</text>
+    <use href="#screen" />
+    <text class="heading" x="22" y="74">Account</text>
+    <text class="section" x="22" y="122">Use LogDate in other apps</text>
+    <text class="body" x="22" y="150">
+      <tspan x="22">Setting up your account</tspan>
+      <tspan x="22" dy="21">for other apps…</tspan>
+    </text>
+  </g>
+  <g transform="translate(1100 29)">
+    <text class="label" x="0" y="0">Ready to use</text>
+    <use href="#screen" />
+    <text class="heading" x="22" y="74">Account</text>
+    <text class="section" x="22" y="122">Use LogDate in other apps</text>
+    <text class="body" x="22" y="152">alex.logdate.app</text>
+    <text class="button" x="22" y="185">Copy username</text>
+    <use href="#rule" y="210" />
+    <text class="section" x="22" y="242">Sign in to another app</text>
+    <text class="body" x="22" y="269">
+      <tspan x="22">In a compatible app, choose sign in</tspan>
+      <tspan x="22" dy="21">and enter your LogDate username.</tspan>
+    </text>
+  </g>
+</svg>

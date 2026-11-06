@@ -10,6 +10,7 @@ import app.logdate.server.di.installServerKoin
 import app.logdate.server.diagnostics.installDiagnosticReportMaintenance
 import app.logdate.server.identity.handleIdentityBackfillCommand
 import app.logdate.server.identity.handleIdentityPublishingCommand
+import app.logdate.server.identity.installPlcPublicationRehearsal
 import app.logdate.server.identity.installStoredKeyRewrap
 import app.logdate.server.logging.initializeSentry
 import app.logdate.server.logging.installRequestDiagnostics
@@ -79,6 +80,9 @@ fun Application.module(
     healthInternalToken: String = System.getenv(HEALTH_TOKEN_ENV).orEmpty(),
     releaseVersion: String = System.getenv("RELEASE_VERSION").orEmpty(),
 ) {
+    require(System.getenv("ATPROTO_PLC_PUBLISH_ENABLED")?.trim()?.equals("true", ignoreCase = true) != true) {
+        "Automatic PLC publication is disabled for the server"
+    }
     installRequestDiagnostics { event ->
         val metrics by inject<SyncMetricsRegistry>()
         metrics.recordDiagnostic(event)
@@ -97,7 +101,11 @@ fun Application.module(
         openApiRoutes(openApiSpec)
         serverMetaRoutes(isDatabaseAvailable, healthInternalToken, releaseVersion)
     }
-    atprotoRoutes()
+    val appPasswords = installPlcPublicationRehearsal(isDatabaseAvailable)
+    require(System.getenv("LOGDATE_PLC_PUBLICATION_REHEARSAL") != "true" || appPasswords != null) {
+        "Publication rehearsal requires a disposable local database, strict passkeys, a loopback directory, and no relays"
+    }
+    atprotoRoutes(appPasswords)
     accountApiRoutes()
     contentApiRoutes()
     spaceMigrationApiRoutes()
