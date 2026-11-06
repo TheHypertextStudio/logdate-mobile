@@ -30,6 +30,66 @@ internal object AtProtoSchemaDocs {
                         "message" to "A sentence for developers. May change; do not parse it.",
                     ),
                 ),
+            "PlcPublicationStatusResponse" to
+                SchemaDoc(
+                    "Current username visibility for the account.",
+                    mapOf("username" to "The account's username.", "state" to "Private, pending, public, or needs attention."),
+                ),
+            "PlcPublicationReviewResponse" to
+                SchemaDoc(
+                    "An immutable review and its passkey options.",
+                    mapOf(
+                        "reviewId" to "The ID of this review.",
+                        "username" to "The exact username being reviewed.",
+                        "passkey" to "Authentication options for this review.",
+                    ),
+                ),
+            "PlcPublicationConfirmRequest" to
+                SchemaDoc(
+                    "A fresh passkey assertion authorizing one saved review.",
+                    mapOf(
+                        "reviewId" to "The ID returned by the review endpoint.",
+                        "challenge" to "The challenge issued for this review.",
+                        "credential" to "The passkey assertion.",
+                    ),
+                ),
+            "PlcPublicationAcceptedResponse" to
+                SchemaDoc("The review was authorized.", mapOf("state" to "Pending verification by the directory.")),
+            "PasskeyAuthenticationOptions" to
+                SchemaDoc(
+                    "Options for a passkey assertion.",
+                    mapOf(
+                        "challenge" to "The challenge to sign.",
+                        "rpId" to "The relying party identifier.",
+                        "allowCredentials" to "Credential identifiers accepted for this review.",
+                        "timeout" to "The challenge lifetime in milliseconds.",
+                    ),
+                ),
+            "PasskeyAuthenticationResponse" to
+                SchemaDoc(
+                    "A passkey assertion from the platform.",
+                    mapOf(
+                        "id" to "The credential identifier.",
+                        "rawId" to "The base64url credential identifier.",
+                        "response" to "The signed assertion fields.",
+                        "type" to "The credential type.",
+                    ),
+                ),
+            "AuthenticatorAssertionResponse" to
+                SchemaDoc(
+                    "The signed fields returned by a passkey assertion.",
+                    mapOf(
+                        "clientDataJSON" to "The encoded client data.",
+                        "authenticatorData" to "The encoded authenticator data.",
+                        "signature" to "The encoded assertion signature.",
+                        "userHandle" to "The optional encoded account handle supplied by the authenticator.",
+                    ),
+                ),
+            "BlueskyPreferences" to
+                SchemaDoc(
+                    "The private Bluesky settings stored for one account.",
+                    mapOf("preferences" to "The ordered list of typed Bluesky preferences."),
+                ),
             "ServiceAuthResponse" to
                 SchemaDoc(
                     "A credential for a specific service and XRPC method.",

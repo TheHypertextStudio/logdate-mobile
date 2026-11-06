@@ -3,6 +3,7 @@ package app.logdate.server.routes
 import app.logdate.server.atproto.AtprotoServiceAuth
 import app.logdate.server.atproto.AtprotoServiceProxy
 import app.logdate.server.atproto.AtprotoSessionTokenService
+import app.logdate.server.atproto.BlueskyPreferencesStore
 import app.logdate.server.atproto.InvalidSwapException
 import app.logdate.server.atproto.firehose.PublicRepoAccess
 import app.logdate.server.auth.Account
@@ -85,6 +86,7 @@ fun Route.xrpcRoutes(
     publicRepos: PublicRepoAccess? = null,
     serviceAuth: AtprotoServiceAuth? = null,
     serviceProxy: AtprotoServiceProxy? = null,
+    preferencesStore: BlueskyPreferencesStore? = null,
 ) {
     val openCollections = OAuthScopes.requireOpenable(collectionsOpenToApps)
     val publicReads = publicRepos?.let { PublicRepoReads(it, identityService, blobService) }
@@ -201,6 +203,7 @@ fun Route.xrpcRoutes(
         }
 
         xrpcServiceAuthRoutes(serviceAuth) { authenticateXrpc() }
+        blueskyPreferencesRoutes(preferencesStore) { authenticateXrpc() }
         serviceProxy?.let { xrpcServiceProxyRoutes(it) { authenticateXrpc() } }
 
         post("/com.atproto.server.refreshSession", XrpcDocs.refreshSession) {

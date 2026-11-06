@@ -67,6 +67,51 @@ class OAuthXrpcAccessTest {
         }
 
     @Test
+    fun `public accounts keep their own Bluesky preferences on this server`() =
+        testApplication {
+            val fixture = setUp()
+            val get = "/xrpc/app.bsky.actor.getPreferences"
+            val put = "/xrpc/app.bsky.actor.putPreferences"
+            val empty = Json.parseToJsonElement("""{"preferences":[]}""")
+            val preferences = """{"preferences":[{"${'$'}type":"app.bsky.actor.defs#feedViewPref","feed":"home","hideReplies":true}]}"""
+            assertEquals(HttpStatusCode.Unauthorized, client.get(get).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet(get, GENERIC).status)
+
+            val other =
+                runBlocking {
+                    check(fixture.env.accountRepository.recordPublicIdentity(fixture.account.id, requireNotNull(fixture.account.did)))
+                    val saved =
+                        fixture.env.accountRepository.save(
+                            Account(
+                                id = Uuid.random(),
+                                username = "bob",
+                                displayName = "Bob",
+                                createdAt = Clock.System.now(),
+                            ),
+                        )
+                    fixture.env.atprotoIdentityService.ensureIdentity(saved).also {
+                        check(fixture.env.accountRepository.recordPublicIdentity(it.id, requireNotNull(it.did)))
+                    }
+                }
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthPost(put, ATPROTO, preferences).status)
+            assertEquals(HttpStatusCode.Forbidden, fixture.oauthGet(get, ATPROTO).status)
+            assertEquals(empty, Json.parseToJsonElement(fixture.oauthGet(get, GENERIC).bodyAsText()))
+            assertEquals(HttpStatusCode.NoContent, fixture.oauthPost(put, GENERIC, preferences).status)
+            assertEquals(Json.parseToJsonElement(preferences), Json.parseToJsonElement(fixture.oauthGet(get, GENERIC).bodyAsText()))
+            assertEquals(HttpStatusCode.BadRequest, fixture.oauthPost(put, GENERIC, """{"preferences":[{}]}""").status)
+            val details = """{"preferences":[{"${'$'}type":"app.bsky.actor.defs#personalDetailsPref"}]}"""
+            assertEquals(HttpStatusCode.BadRequest, fixture.oauthPost(put, GENERIC, details).status)
+            val oversized = """{"preferences":["${"x".repeat(256 * 1024)}"]}"""
+            assertEquals(HttpStatusCode.PayloadTooLarge, fixture.oauthPost(put, GENERIC, oversized).status)
+            assertEquals(Json.parseToJsonElement(preferences), Json.parseToJsonElement(fixture.oauthGet(get, GENERIC).bodyAsText()))
+            val otherToken = fixture.env.tokenService.generateAccessToken(other.id.toString())
+            val otherPreferences = client.get(get) { header(HttpHeaders.Authorization, "Bearer $otherToken") }
+            assertEquals(empty, Json.parseToJsonElement(otherPreferences.bodyAsText()))
+            assertEquals(HttpStatusCode.NoContent, fixture.oauthPost(put, GENERIC, empty.toString()).status)
+            assertEquals(empty, Json.parseToJsonElement(fixture.oauthGet(get, GENERIC).bodyAsText()))
+        }
+
+    @Test
     fun `an OAuth app can read its session identity without email details`() =
         testApplication {
             val fixture = setUp()
