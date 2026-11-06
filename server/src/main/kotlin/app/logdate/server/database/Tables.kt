@@ -77,11 +77,20 @@ object AtprotoPasswordCredentialsTable : Table("atproto_password_credentials") {
     override val primaryKey = PrimaryKey(accountId)
 }
 
+internal object AtprotoAppPasswordsTable : Table("atproto_app_passwords") {
+    val id = javaUUID("id")
+    val accountId = javaUUID("account_id")
+    val did = varchar("did", 255)
+    val revokedAt = timestamp("revoked_at").nullable()
+    override val primaryKey = PrimaryKey(id)
+}
+
 @OptIn(ExperimentalUuidApi::class)
 object AtprotoSessionsTable : Table("atproto_sessions") {
     val id = varchar("id", 64)
     val accountId = javaUUID("account_id").references(AccountsTable.id)
     val createdAt = timestamp("created_at")
+    val appPasswordId = javaUUID("app_password_id").nullable()
     val refreshExpiresAt = timestamp("refresh_expires_at")
     val revokedAt = timestamp("revoked_at").nullable()
 

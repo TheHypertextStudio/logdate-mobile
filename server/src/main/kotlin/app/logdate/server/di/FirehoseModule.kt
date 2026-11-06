@@ -54,7 +54,7 @@ internal fun Module.firehoseDefinitions(isDatabaseAvailable: Boolean) {
     single<RepoEventStore> { if (isDatabaseAvailable) PostgreSQLRepoEventStore() else InMemoryRepoEventStore() }
     single { PublicRepoPolicy() }
     single { PublicRecordValidator() }
-    single { AccountPublicRepoGate(accounts = get(), identityConfig = get(), events = get()) } bind PublicRepoGate::class
+    single { AccountPublicRepoGate(accounts = get(), events = get()) } bind PublicRepoGate::class
     single {
         RepoEventSequencer(
             store = get(),
@@ -65,7 +65,7 @@ internal fun Module.firehoseDefinitions(isDatabaseAvailable: Boolean) {
     }
     single<PublicRepoDirectory> {
         if (isDatabaseAvailable) {
-            PostgreSQLPublicRepoDirectory(publishesPlc = get<AtprotoIdentityConfig>().publishesPlcOperations)
+            PostgreSQLPublicRepoDirectory()
         } else {
             AccountsPublicRepoDirectory(accounts = get(), gate = get(), blocks = get<UndecoratedRepoBlocks>().store)
         }

@@ -2,7 +2,6 @@ package app.logdate.server.atproto.firehose
 
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
-import app.logdate.server.identity.AtprotoIdentityConfig
 import app.logdate.shared.model.AccountStorageMode
 import studio.hypertext.atproto.identity.AtprotoDid
 
@@ -59,7 +58,6 @@ interface PublicRepoGate {
 /** The gate that reads the account's storage mode and state from [accounts] and past announcements from [events]. */
 class AccountPublicRepoGate(
     private val accounts: AccountRepository,
-    private val identityConfig: AtprotoIdentityConfig,
     private val events: RepoEventStore,
 ) : PublicRepoGate {
     override suspend fun mayShow(did: AtprotoDid): Boolean = accounts.findByDid(did.toString())?.let(::mayShow) == true
@@ -79,13 +77,13 @@ class AccountPublicRepoGate(
     fun mayShow(account: Account): Boolean = isPublicAccount(account) && account.isActive && account.moderation == null
 
     /**
-     * True only for the exact identity its owner made public. A hosted `did:plc` also requires
-     * directory publication; neither a resolvable `did:web` nor a server flag establishes consent.
+     * True only for the exact identity its owner made public. For PLC identities the marker
+     * is recorded only after the directory confirms the consented history.
      */
     fun hasPublicIdentity(account: Account): Boolean {
         val did = account.did ?: return false
         if (account.publicIdentityDid != did) return false
-        return did.startsWith("did:web:") || (did.startsWith("did:plc:") && identityConfig.publishesPlcOperations)
+        return did.startsWith("did:web:") || did.startsWith("did:plc:")
     }
 
     private fun isPublicAccount(account: Account): Boolean =

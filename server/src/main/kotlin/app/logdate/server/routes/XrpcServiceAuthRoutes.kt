@@ -61,6 +61,7 @@ internal fun Route.xrpcServiceAuthRoutes(
 internal fun XrpcPrincipal.mayUseServiceMethod(method: String): Boolean {
     val name = method.lowercase()
     if (PRIVATE_SERVICE_METHOD_PREFIXES.any(name::startsWith)) return false
+    if (appPassword) return name.startsWith("app.bsky.")
     return oauth == null || (OAuthScopes.TRANSITION_GENERIC in oauth.scopes && !name.startsWith("chat.bsky."))
 }
 

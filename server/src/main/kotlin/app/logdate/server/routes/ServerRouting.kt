@@ -2,6 +2,7 @@ package app.logdate.server.routes
 
 import app.logdate.server.ServerDescriptorConfig
 import app.logdate.server.accountkeys.AccountKeyEnvelopeRepository
+import app.logdate.server.atproto.AtprotoPdsSessionService
 import app.logdate.server.atproto.AtprotoServiceAuth
 import app.logdate.server.atproto.AtprotoSessionTokenService
 import app.logdate.server.atproto.BlueskyPreferencesStore
@@ -19,6 +20,7 @@ import app.logdate.server.auth.RefreshTokenRevocationRepository
 import app.logdate.server.auth.SessionManager
 import app.logdate.server.auth.TokenService
 import app.logdate.server.auth.storageModes
+import app.logdate.server.database.AtprotoAppPasswordStore
 import app.logdate.server.devices.AccountDeviceRepository
 import app.logdate.server.devices.DeviceLinkService
 import app.logdate.server.enrollment.DeviceEnrollmentRepository
@@ -72,6 +74,7 @@ import studio.hypertext.atproto.pds.PdsDiscoveryService
 import studio.hypertext.atproto.pds.PdsRepoService
 import studio.hypertext.atproto.pds.PdsSessionService
 import studio.hypertext.atproto.pds.PdsSyncService
+import studio.hypertext.atproto.pds.SessionResponse
 import kotlin.time.Duration.Companion.seconds
 
 // The composition root: each function resolves what its routes need from Koin and hands it over
@@ -79,7 +82,7 @@ import kotlin.time.Duration.Companion.seconds
 // in-memory implementations.
 
 /** AT Protocol surface: identity, app links, OAuth, and XRPC. */
-internal fun Application.atprotoRoutes() {
+internal fun Application.atprotoRoutes(appPasswords: AtprotoAppPasswordStore? = null) {
     val accountRepository by inject<AccountRepository>()
     val tokenService by inject<TokenService>()
     val atprotoIdentityService by inject<AtprotoIdentityService>()
@@ -87,6 +90,14 @@ internal fun Application.atprotoRoutes() {
     val pdsDiscoveryService by inject<PdsDiscoveryService>()
     val pdsRepoService by inject<PdsRepoService>()
     val pdsSessionService by inject<PdsSessionService>()
+    val passwordLogin: (suspend (String, String) -> SessionResponse?)? =
+        appPasswords?.let { store ->
+            val service = pdsSessionService as? AtprotoPdsSessionService ?: return@let null
+            val login: suspend (String, String) -> SessionResponse? = { identifier, password ->
+                service.loginWithAppPassword(identifier, password, store)
+            }
+            login
+        }
     val pdsSyncService by inject<PdsSyncService>()
     val pdsBlobService by inject<PdsBlobService>()
     val atprotoSessionTokenService by inject<AtprotoSessionTokenService>()
@@ -131,8 +142,9 @@ internal fun Application.atprotoRoutes() {
             publicOrigin = oauthConfig.normalizedResource,
             publicRepos = publicRepos,
             serviceAuth = serviceAuth,
-            serviceProxy = atprotoServiceProxy(serviceAuth),
+            serviceProxy = if (appPasswords == null) atprotoServiceProxy(serviceAuth) else null,
             preferencesStore = preferencesStore,
+            appPasswordLogin = passwordLogin,
         )
     }
     publicRepos?.let { firehoseRoutes(it) }

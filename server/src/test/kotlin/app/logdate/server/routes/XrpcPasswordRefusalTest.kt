@@ -160,6 +160,61 @@ class XrpcPasswordRefusalTest {
             assertEquals("InvalidToken", errorOf(response.bodyAsText()))
         }
 
+    @Test
+    fun `fixture exchanges a generated app password without allowing password account creation`() =
+        testApplication {
+            val credential =
+                app.logdate.server.atproto.AtprotoAppPassword
+                    .generate()
+            val issued =
+                SessionResponse(
+                    accessJwt = "test-access",
+                    refreshJwt = "test-refresh",
+                    handle = "casey.logdate.app",
+                    did =
+                        studio.hypertext.atproto.identity.AtprotoDid
+                            .require("did:plc:abcdefghijklmnopqrstuvwx"),
+                )
+            var attempts = 0
+            configureApp(appPasswordLogin = { identifier, password ->
+                attempts++
+                issued.takeIf { identifier == "casey.logdate.app" && password == credential.value }
+            })
+
+            val request = """{"identifier":"CASEY.LOGDATE.APP","password":"${credential.value}"}"""
+            val response = client.postJson("/xrpc/com.atproto.server.createSession", request)
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals("no-store", response.headers[HttpHeaders.CacheControl])
+            val body = json.parseToJsonElement(response.bodyAsText()).jsonObject
+            assertEquals("test-access", body["accessJwt"]?.jsonPrimitive?.content)
+            assertFalse(response.bodyAsText().contains(credential.value))
+
+            val refused = client.postJson("/xrpc/com.atproto.server.createAccount", request)
+            assertEquals(HttpStatusCode.BadRequest, refused.status)
+            assertEquals(1, attempts)
+        }
+
+    @Test
+    fun `the fixture rate limits password attempts without exposing credential eligibility`() =
+        testApplication {
+            var attempts = 0
+            configureApp(appPasswordLogin = { _, _ ->
+                attempts++
+                null
+            })
+            val path = "/xrpc/com.atproto.server.createSession"
+            val invalid = """{"identifier":"casey.logdate.app","password":"wrong-password"}"""
+            val missing = """{"identifier":"missing.logdate.app","password":"wrong-password"}"""
+
+            val invalidResponse = client.postJson(path, invalid)
+            val missingResponse = client.postJson(path, missing)
+            assertEquals(HttpStatusCode.Unauthorized, invalidResponse.status)
+            assertEquals(invalidResponse.bodyAsText(), missingResponse.bodyAsText())
+            repeat(10) { assertEquals(HttpStatusCode.Unauthorized, client.postJson(path, invalid).status) }
+            assertEquals(HttpStatusCode.TooManyRequests, client.postJson(path, invalid).status)
+            assertEquals(12, attempts)
+        }
+
     private suspend fun assertRefusal(
         response: HttpResponse,
         message: String,
@@ -194,6 +249,7 @@ class XrpcPasswordRefusalTest {
         }
 
     private fun ApplicationTestBuilder.configureApp(
+        appPasswordLogin: (suspend (String, String) -> SessionResponse?)? = null,
         routedService: (AtprotoPdsSessionService) -> PdsSessionService? = { it },
     ): AppEnvironment {
         val accountRepository = InMemoryAccountRepository()
@@ -218,6 +274,7 @@ class XrpcPasswordRefusalTest {
                     identityService = identityService,
                     accountRepository = accountRepository,
                     sessionService = routedService(realService),
+                    appPasswordLogin = appPasswordLogin,
                 )
             }
         }

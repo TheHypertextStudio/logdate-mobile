@@ -1,0 +1,54 @@
+name: Verify AT Protocol interoperability on Studio runners
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    if: ${{ github.repository == 'TheHypertextStudio/logdate-mobile' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.workflow_ref == 'TheHypertextStudio/logdate-mobile/.github/workflows/verify-atproto-self-hosted.yml@refs/heads/main' }}
+    runs-on:
+      group: studio-linux
+      labels: [self-hosted, Linux, ARM64, studio-linux]
+    timeout-minutes: 40
+    env:
+      LOGDATE_ENV: test
+      DATABASE_USER: logdate
+      DATABASE_PASSWORD: logdate
+      LOGDATE_DIAGNOSTIC_TEST_DISPOSABLE: 'true'
+      LOGDATE_DIAGNOSTIC_TEST_DATABASE_URL: jdbc:postgresql://127.0.0.1:5432/logdate_plc_rehearsal_ci
+    steps:
+      - name: Check the isolated guest can run disposable PostgreSQL
+        run: docker info --format '{{.ServerVersion}}'
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Start disposable test services
+        run: python3 scripts/ci/start-test-services.py start publication
+      - name: Verify the operator command remains read-only
+        run: |
+          bundle="$(mktemp -d "$RUNNER_TEMP/logdate-operator-test.XXXXXX")"
+          mkdir -p "$bundle/scripts/tests/deploy"
+          cp scripts/identity-publishing-job.py scripts/account-blob-cleanup-job.py "$bundle/scripts/"
+          cp scripts/tests/deploy/test-identity-publishing-job.py "$bundle/scripts/tests/deploy/"
+          python3 "$bundle/scripts/tests/deploy/test-identity-publishing-job.py"
+      - name: Test server publication, credential, and repository boundaries
+        run: |
+          cp gradle/server-docker.settings.gradle.kts settings.gradle.kts
+          cp gradle/server-docker.build.gradle.kts build.gradle.kts
+          ./gradlew --no-daemon --continue :server:test \
+            --tests '*PlcPublication*Test' --tests '*AtprotoAppPassword*Test' \
+            --tests '*AtprotoSessionServiceTest' --tests '*XrpcPasswordRefusalTest' \
+            --tests '*PostgreSQLPublicRepoDirectoryTest' --tests '*BlueskyPreferences*Test' \
+            --tests '*AtprotoIdentityConfigTest' --tests '*IdentityPublishingCommandTest' \
+            --tests '*OpenApiContractTest' --tests '*SchemaDocumentationTest' \
+            --tests '*LinkedDeviceRouteScopeTest' :server:validateOpenApi
+      - name: Stop disposable test services
+        if: always()
+        run: python3 scripts/ci/start-test-services.py stop publication

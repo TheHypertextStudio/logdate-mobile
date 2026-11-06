@@ -74,7 +74,7 @@ class PostgreSQLPublicRepoDirectoryTest {
         seed("did:web:d.example.com", active = false)
         seed("did:web:e.example.com", moderation = AccountModeration.TAKENDOWN)
         seed("did:web:f.example.com", head = false)
-        seed("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
+        seed("did:plc:ewvi7nxzyoun6zhxrhs64oiz", publicIdentity = false)
 
         assertEquals(listOf("did:web:a.example.com", "did:web:b.example.com"), directory.after(null, 10).map { it.did })
         assertEquals(listOf("did:web:b.example.com"), directory.after("did:web:a.example.com", 10).map { it.did })
@@ -85,35 +85,32 @@ class PostgreSQLPublicRepoDirectoryTest {
     }
 
     @Test
-    fun `h2 never lists private identities even when PLC publishing is enabled`() =
+    fun `h2 never lists private identities`() =
         onH2 {
             seed("did:web:private.example.com", publicIdentity = false)
             seed("did:plc:ewvi7nxzyoun6zhxrhs64oiz", publicIdentity = false)
-            assertEquals(emptyList(), PostgreSQLPublicRepoDirectory(publishesPlc = true).after(null, 10))
+            assertEquals(emptyList(), PostgreSQLPublicRepoDirectory().after(null, 10))
         }
 
     @Test
-    fun `h2 lists only accounts that may be shown, in DID order`() = onH2 { scenario(PostgreSQLPublicRepoDirectory(publishesPlc = false)) }
+    fun `h2 lists only accounts that may be shown, in DID order`() = onH2 { scenario(PostgreSQLPublicRepoDirectory()) }
 
     @Test
     fun `postgres lists only accounts that may be shown, in DID order`() =
         onPostgres {
-            scenario(PostgreSQLPublicRepoDirectory(publishesPlc = false))
+            scenario(PostgreSQLPublicRepoDirectory())
         }
 
     @Test
-    fun `a did plc is listed only when the server publishes them`() =
+    fun `PLC discovery uses the per-account marker and excludes private identities`() =
         onPostgres {
             seed("did:plc:ewvi7nxzyoun6zhxrhs64oiz")
             seed("did:web:a.example.com")
 
-            assertEquals(
-                listOf("did:web:a.example.com"),
-                PostgreSQLPublicRepoDirectory(publishesPlc = false).after(null, 10).map { it.did },
-            )
+            seed("did:plc:abcdefghijklmnopqrstuvwx", publicIdentity = false)
             assertEquals(
                 listOf("did:plc:ewvi7nxzyoun6zhxrhs64oiz", "did:web:a.example.com"),
-                PostgreSQLPublicRepoDirectory(publishesPlc = true).after(null, 10).map { it.did },
+                PostgreSQLPublicRepoDirectory().after(null, 10).map { it.did },
             )
         }
 }

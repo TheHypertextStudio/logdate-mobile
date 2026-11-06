@@ -78,17 +78,22 @@ data class AtprotoIdentityConfig(
                     "web" -> HostedAccountDidMethod.WEB
                     else -> throw IllegalArgumentException("Unsupported hosted DID method: $hostedAccountDidMethod")
                 }
+            val directory =
+                plcDirectoryUrl
+                    ?.trim()
+                    .orEmpty()
+                    .ifBlank { PUBLIC_PLC_DIRECTORY_URL }
+                    .removeSuffix("/")
+            val legacyPublishing = publishHostedPlcOperations?.trim()?.equals("true", ignoreCase = true) == true
+            require(!legacyPublishing || (!RuntimeProfile.fromEnvironment().isProduction && isLoopbackPlcFixture(directory))) {
+                "Automatic PLC publication is allowed only with a loopback fixture outside production"
+            }
             return AtprotoIdentityConfig(
                 handleDomain = normalizedHandleDomain,
                 pdsServiceEndpoint = resolvedEndpoint.removeSuffix("/"),
                 hostedAccountDidMethod = resolvedHostedDidMethod,
-                publishHostedPlcOperations = publishHostedPlcOperations?.trim()?.equals("true", ignoreCase = true) == true,
-                plcDirectoryUrl =
-                    plcDirectoryUrl
-                        ?.trim()
-                        .orEmpty()
-                        .ifBlank { PUBLIC_PLC_DIRECTORY_URL }
-                        .removeSuffix("/"),
+                publishHostedPlcOperations = legacyPublishing,
+                plcDirectoryUrl = directory,
                 recoveryKeysEnabled = recoveryKeysEnabled?.trim()?.equals("true", ignoreCase = true) == true,
             )
         }
@@ -115,4 +120,12 @@ internal fun isAcceptableServiceEndpoint(
     if (profile.isProduction || !endpoint.startsWith("http://")) return false
     val host = runCatching { URI(endpoint).host }.getOrNull().orEmpty()
     return host in LOOPBACK_HOSTS
+}
+
+/** Legacy rehearsal transport must never resolve or follow a public hostname. */
+internal fun isLoopbackPlcFixture(value: String): Boolean {
+    val uri = runCatching { URI(value) }.getOrNull() ?: return false
+    return uri.scheme == "http" && uri.host == "127.0.0.1" && uri.port in 1..65535 &&
+        uri.rawAuthority == "127.0.0.1:${uri.port}" && uri.rawPath in setOf("", "/") &&
+        uri.rawQuery == null && uri.rawFragment == null
 }

@@ -5,7 +5,9 @@ import app.logdate.server.atproto.AtprotoPasswordCredentialRepository
 import app.logdate.server.atproto.AtprotoSession
 import app.logdate.server.atproto.AtprotoSessionRepository
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -82,6 +84,7 @@ class PostgreSQLAtprotoSessionRepository : AtprotoSessionRepository {
                         kotlin.time.Instant
                             .fromEpochMilliseconds(session.refreshExpiresAtEpochMillis)
 
+                    it[appPasswordId] = session.appPasswordId?.toJavaUUID()
                     it[revokedAt] = session.revokedAtEpochMillis?.let(kotlin.time.Instant::fromEpochMilliseconds)
                 }
             } else {
@@ -95,6 +98,7 @@ class PostgreSQLAtprotoSessionRepository : AtprotoSessionRepository {
                         kotlin.time.Instant
                             .fromEpochMilliseconds(session.refreshExpiresAtEpochMillis)
 
+                    it[appPasswordId] = session.appPasswordId?.toJavaUUID()
                     it[revokedAt] = session.revokedAtEpochMillis?.let(kotlin.time.Instant::fromEpochMilliseconds)
                 }
             }
@@ -108,6 +112,21 @@ class PostgreSQLAtprotoSessionRepository : AtprotoSessionRepository {
                 .where { AtprotoSessionsTable.id eq sessionId }
                 .singleOrNull()
                 ?.toAtprotoSession()
+        }
+
+    override suspend fun isAppPasswordActive(
+        accountId: Uuid,
+        passwordId: Uuid,
+        did: String,
+    ): Boolean =
+        transaction {
+            AtprotoAppPasswordsTable
+                .selectAll()
+                .where {
+                    (AtprotoAppPasswordsTable.id eq passwordId.toJavaUUID()) and
+                        (AtprotoAppPasswordsTable.accountId eq accountId.toJavaUUID()) and
+                        (AtprotoAppPasswordsTable.did eq did) and AtprotoAppPasswordsTable.revokedAt.isNull()
+                }.any()
         }
 
     override suspend fun revoke(sessionId: String): Boolean =
@@ -145,4 +164,5 @@ private fun ResultRow.toAtprotoSession(): AtprotoSession =
         createdAtEpochMillis = this[AtprotoSessionsTable.createdAt].toEpochMilliseconds(),
         refreshExpiresAtEpochMillis = this[AtprotoSessionsTable.refreshExpiresAt].toEpochMilliseconds(),
         revokedAtEpochMillis = this[AtprotoSessionsTable.revokedAt]?.toEpochMilliseconds(),
+        appPasswordId = this[AtprotoSessionsTable.appPasswordId]?.toKotlinUuid(),
     )

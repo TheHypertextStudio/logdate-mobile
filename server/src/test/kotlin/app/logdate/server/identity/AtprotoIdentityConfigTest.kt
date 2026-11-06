@@ -44,18 +44,18 @@ class AtprotoIdentityConfigTest {
     }
 
     @Test
-    fun `environment factory supports hosted did method and plc publish flags`() {
+    fun `environment factory supports a hosted did method and directory for reads`() {
         val config =
             AtprotoIdentityConfig.fromEnvironment(
                 handleDomain = "users.logdate.app",
                 pdsServiceEndpoint = "https://pds.logdate.app/",
                 hostedAccountDidMethod = "web",
-                publishHostedPlcOperations = "TrUe",
+                publishHostedPlcOperations = "FaLsE",
                 plcDirectoryUrl = "https://plc.example.com/",
             )
 
         assertEquals(HostedAccountDidMethod.WEB, config.hostedAccountDidMethod)
-        assertTrue(config.publishHostedPlcOperations)
+        assertFalse(config.publishHostedPlcOperations)
         assertEquals("https://plc.example.com", config.normalizedPlcDirectoryUrl)
     }
 
@@ -84,10 +84,24 @@ class AtprotoIdentityConfigTest {
 
     @Test
     fun `publishing alone does not turn on recovery keys`() {
-        val publishing = AtprotoIdentityConfig.fromEnvironment(publishHostedPlcOperations = "true", recoveryKeysEnabled = null)
+        val publishing =
+            AtprotoIdentityConfig.fromEnvironment(
+                publishHostedPlcOperations = "true",
+                plcDirectoryUrl = "http://127.0.0.1:2582",
+                recoveryKeysEnabled = null,
+            )
 
         assertTrue(publishing.publishesPlcOperations)
         assertEquals(false, publishing.supportsRecoveryKeys)
+    }
+
+    @Test
+    fun `automatic publishing cannot target a public or indirect directory`() {
+        listOf("https://plc.directory", "https://custom.example.com", "http://127.0.0.1:2582/redirect").forEach { directory ->
+            assertFailsWith<IllegalArgumentException> {
+                AtprotoIdentityConfig.fromEnvironment(publishHostedPlcOperations = "true", plcDirectoryUrl = directory)
+            }
+        }
     }
 
     @Test
