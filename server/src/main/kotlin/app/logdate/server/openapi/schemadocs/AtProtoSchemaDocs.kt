@@ -30,6 +30,11 @@ internal object AtProtoSchemaDocs {
                         "message" to "A sentence for developers. May change; do not parse it.",
                     ),
                 ),
+            "ServiceAuthResponse" to
+                SchemaDoc(
+                    "A credential for a specific service and XRPC method.",
+                    mapOf("token" to "The short-lived service JWT to send as a bearer credential."),
+                ),
             "OAuthErrorResponse" to
                 SchemaDoc(
                     "The RFC 6749 error envelope every `/oauth/` endpoint answers with.",

@@ -6,6 +6,10 @@ the local rehearsal. For why publishing works this way, see
 [Identity publishing](../explanation/identity-publishing.md). For the steps an operator follows, see
 the [identity publishing runbook](../runbook/identity-publishing.md).
 
+The write commands in this reference describe the legacy bulk publisher.
+Use them only in the loopback rehearsal. Keep deployed identities private
+until each person authorizes publication of their own identity.
+
 ## Settings
 
 Publishing is controlled by one server setting and one URL, both described in full in the

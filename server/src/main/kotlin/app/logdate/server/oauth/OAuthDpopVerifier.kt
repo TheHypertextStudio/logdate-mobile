@@ -33,10 +33,10 @@ class OAuthDpopVerifier(
         proof: String,
         method: String,
         htu: String,
-        expectedNonce: String? = null,
+        nonceChallenge: OAuthNonceChallenge? = null,
         expectedAth: String? = null,
     ): Result<VerifiedDpopProof> {
-        val checked = checkProof(proof, method, htu, expectedNonce, expectedAth).getOrElse { return Result.failure(it) }
+        val checked = checkProof(proof, method, htu, nonceChallenge, expectedAth).getOrElse { return Result.failure(it) }
         // A proof stays acceptable for the clock-skew window on either side of its iat.
         if (!usedProofs.firstUse("dpop:${checked.keyThumbprint}:${checked.jwtId}", acceptedClockSkew * 2)) {
             return Result.failure(OAuthInvalidDpopProofException("DPoP proof has already been used"))
@@ -48,7 +48,7 @@ class OAuthDpopVerifier(
         proof: String,
         method: String,
         htu: String,
-        expectedNonce: String?,
+        nonceChallenge: OAuthNonceChallenge?,
         expectedAth: String?,
     ): Result<VerifiedDpopProof> =
         runCatching {
@@ -81,8 +81,8 @@ class OAuthDpopVerifier(
             if (abs(now - claims.iat) > acceptedClockSkew.inWholeSeconds) {
                 throw OAuthInvalidDpopProofException("DPoP proofs must be issued recently")
             }
-            if (expectedNonce != null && claims.nonce != expectedNonce) {
-                throw OAuthUseDpopNonceException(expectedNonce)
+            if (nonceChallenge != null && !nonceChallenge.accepts(claims.nonce)) {
+                throw OAuthUseDpopNonceException(nonceChallenge.current)
             }
             if (expectedAth != null && claims.ath != expectedAth) {
                 throw OAuthInvalidDpopProofException("DPoP ath did not match the access token")

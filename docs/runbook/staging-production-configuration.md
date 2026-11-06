@@ -235,6 +235,23 @@ cleanup records its progress there, so a second run resumes an interrupted clean
   [repository event stream runbook](repository-event-stream.md).
 - Do not add non-Cloud-Run domains to Terraform `domains`. Marketing redirects
   and unrelated DNS live outside this Cloud Run service.
+- Browser clients can use any origin for XRPC, OAuth discovery and OAuth token
+  endpoints with explicit authorization and proof headers. These routes omit
+  credentialed CORS so browsers cannot read responses using ambient cookies.
+  Interactive authorization and LogDate API routes retain the configured
+  `ALLOWED_ORIGINS` policy.
+- Service credentials are available only for an active account whose exact
+  current identity has publication consent. Each credential names one audience
+  and one method, expires within 60 seconds, and is signed with the existing
+  account key. Account-management and private journal methods cannot use
+  these credentials. An OAuth grant that only confirms identity cannot issue
+  them.
+- Use the same pinned `ATPROTO_SESSION_SECRET` version on all replicas of an
+  environment. DPoP challenges are derived separately from session tokens and
+  rotate every two and a half minutes. The preceding challenge remains valid
+  for one rotation. During a secret change, drain the old revision so requests
+  stop alternating between incompatible challenges. The replay store still
+  rejects a repeated proof across replicas.
 - Do not mount optional Cloud Run secrets until the Secret Manager container
   has at least one version. Cloud Run rejects revisions with empty mounted
   secrets.
