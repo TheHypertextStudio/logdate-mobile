@@ -28,3 +28,18 @@ Each instance caps active forwarding requests, enforces a per-account request
 budget, and bounds DID documents, request bodies, and response bodies. These
 limits favor predictable resource use over large or streaming payloads.
 Read-after-write reconciliation is outside the current forwarding path.
+
+## Bluesky preferences
+
+`app.bsky.actor.getPreferences` reads the signed-in account's document from
+LogDate. `app.bsky.actor.putPreferences` replaces the whole document. An
+empty list clears the settings. PostgreSQL stores one document per account,
+deleted with the account. Clients need an active public identity and an
+OAuth client needs the generic transition grant. Preference requests stay
+at LogDate even when a client sends a proxy header.
+
+The document limit is 256 KiB. Settings must identify a Bluesky preference
+type. LogDate preserves fields for unfamiliar Bluesky preferences so newer
+clients can read back what they wrote. LogDate does not collect birth dates
+through this API and discards the server-derived age preference if a client
+echoes it back.

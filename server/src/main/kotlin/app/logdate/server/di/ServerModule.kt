@@ -8,8 +8,10 @@ import app.logdate.server.atproto.AtprotoPasswordService
 import app.logdate.server.atproto.AtprotoPdsSessionService
 import app.logdate.server.atproto.AtprotoSessionRepository
 import app.logdate.server.atproto.AtprotoSessionTokenService
+import app.logdate.server.atproto.BlueskyPreferencesStore
 import app.logdate.server.atproto.InMemoryAtprotoPasswordCredentialRepository
 import app.logdate.server.atproto.InMemoryAtprotoSessionRepository
+import app.logdate.server.atproto.InMemoryBlueskyPreferencesStore
 import app.logdate.server.atproto.LogDatePdsBlobStore
 import app.logdate.server.atproto.LogDateRepoStore
 import app.logdate.server.atproto.firehose.PublicRecordValidator
@@ -44,6 +46,7 @@ import app.logdate.server.database.PostgreSQLAccountKeyEnvelopeRepository
 import app.logdate.server.database.PostgreSQLAccountRepository
 import app.logdate.server.database.PostgreSQLAtprotoPasswordCredentialRepository
 import app.logdate.server.database.PostgreSQLAtprotoSessionRepository
+import app.logdate.server.database.PostgreSQLBlueskyPreferencesStore
 import app.logdate.server.database.PostgreSQLDeviceEnrollmentRepository
 import app.logdate.server.database.PostgreSQLDeviceSessionRepository
 import app.logdate.server.database.PostgreSQLDiagnosticReportStore
@@ -355,6 +358,14 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                 PostgreSQLLogDateAtprotoBlobRepository()
             } else {
                 InMemoryLogDateAtprotoBlobRepository()
+            }
+        }
+
+        single<BlueskyPreferencesStore> {
+            if (isDatabaseAvailable) {
+                PostgreSQLBlueskyPreferencesStore()
+            } else {
+                InMemoryBlueskyPreferencesStore()
             }
         }
 

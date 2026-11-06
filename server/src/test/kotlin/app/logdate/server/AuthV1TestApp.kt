@@ -7,6 +7,7 @@ import app.logdate.server.atproto.AtprotoServiceProxy
 import app.logdate.server.atproto.AtprotoSessionTokenService
 import app.logdate.server.atproto.InMemoryAtprotoPasswordCredentialRepository
 import app.logdate.server.atproto.InMemoryAtprotoSessionRepository
+import app.logdate.server.atproto.InMemoryBlueskyPreferencesStore
 import app.logdate.server.atproto.LogDatePdsBlobStore
 import app.logdate.server.atproto.LogDateRepoStore
 import app.logdate.server.auth.AccessTokenVerifier
@@ -276,6 +277,7 @@ fun TestApplicationBuilder.configureAuthV1TestApp(
                 oauthNonceService = oauthNonceService,
                 serviceAuth = serviceAuth,
                 serviceProxy = serviceProxyHttp?.let { AtprotoServiceProxy(it, serviceAuth) },
+                preferencesStore = InMemoryBlueskyPreferencesStore(),
             )
             spaceXrpcRoutes(
                 enabled = personalSpaceEnabled,

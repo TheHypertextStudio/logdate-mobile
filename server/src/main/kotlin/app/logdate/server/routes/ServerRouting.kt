@@ -4,6 +4,7 @@ import app.logdate.server.ServerDescriptorConfig
 import app.logdate.server.accountkeys.AccountKeyEnvelopeRepository
 import app.logdate.server.atproto.AtprotoServiceAuth
 import app.logdate.server.atproto.AtprotoSessionTokenService
+import app.logdate.server.atproto.BlueskyPreferencesStore
 import app.logdate.server.atproto.firehose.AtprotoFirehoseConfig
 import app.logdate.server.atproto.firehose.PublicRepoAccess
 import app.logdate.server.atproto.firehose.RepoEventStream
@@ -99,6 +100,7 @@ internal fun Application.atprotoRoutes() {
     val publicRepos = publicReposIfEnabled()
     val oauthPasskeySignIn = oauthPasskeySignInIfEnabled()
     val serviceAuth = AtprotoServiceAuth(accountRepository, signingKeyService)
+    val preferencesStore by inject<BlueskyPreferencesStore>()
 
     routing {
         identityRoutes(atprotoIdentityService)
@@ -130,6 +132,7 @@ internal fun Application.atprotoRoutes() {
             publicRepos = publicRepos,
             serviceAuth = serviceAuth,
             serviceProxy = atprotoServiceProxy(serviceAuth),
+            preferencesStore = preferencesStore,
         )
     }
     publicRepos?.let { firehoseRoutes(it) }
