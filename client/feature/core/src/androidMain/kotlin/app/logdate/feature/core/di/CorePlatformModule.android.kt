@@ -2,7 +2,7 @@ package app.logdate.feature.core.di
 
 import android.app.Activity
 import app.logdate.client.data.account.RestoreCredentialCleanupScheduler
-import app.logdate.client.data.restore.NativeJournalStagedSourceIndex
+import app.logdate.client.data.account.RestoreCredentialLifecycle
 import app.logdate.client.device.crypto.AndroidDeviceTransferSealer
 import app.logdate.client.device.crypto.DeviceTransferSealer
 import app.logdate.client.device.crypto.IdentityKeyManager
@@ -72,9 +72,8 @@ actual val corePlatformModule: Module =
         worker {
             RestoreCredentialCleanupWorker(
                 context = get(),
-                parameters = get(),
-                staging = get<NativeJournalStagedSourceIndex>(),
-                identity = get(),
+                params = get(),
+                lifecycle = get<RestoreCredentialLifecycle>(),
             )
         }
         single { AndroidNativeBackupStatusSource(androidContext()) }
