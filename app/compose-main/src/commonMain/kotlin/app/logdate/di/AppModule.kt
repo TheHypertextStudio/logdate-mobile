@@ -6,7 +6,7 @@ import app.logdate.feature.editor.di.editorFeatureModule
 import app.logdate.feature.events.di.eventsFeatureModule
 import app.logdate.feature.journals.di.journalsFeatureModule
 import app.logdate.feature.library.di.libraryFeatureModule
-import app.logdate.feature.location.timeline.di.locationTimelineModule
+import app.logdate.feature.location.timeline.di.locationTimelineFeatureModule
 import app.logdate.feature.onboarding.di.onboardingFeatureModule
 import app.logdate.feature.postcards.di.postcardsFeatureModule
 import app.logdate.feature.rewind.di.rewindFeatureModule
@@ -40,7 +40,7 @@ internal val defaultModules: Set<Module> =
         rewindFeatureModule,
         journalsFeatureModule,
         libraryFeatureModule,
-        locationTimelineModule,
+        locationTimelineFeatureModule,
         searchFeatureModule,
         postcardsFeatureModule,
         stickersFeatureModule,
