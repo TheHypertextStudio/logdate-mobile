@@ -6,39 +6,26 @@
   android:targetSandboxVersion="2"
 >
 
-    <uses-feature
-    android:name="android.software.companion_device_setup"
-    android:required="false"
-  />
+    <uses-feature android:name="android.software.companion_device_setup" android:required="false" />
 
     <!--
         Chromebooks and desktops without a touchscreen can install LogDate; it works with a
         keyboard, mouse, or trackpad. See large-screens-and-desktop-windowing.md.
     -->
-    <uses-feature
-    android:name="android.hardware.touchscreen"
-    android:required="false"
-  />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission
-    android:name="android.permission.REQUEST_COMPANION_PROFILE_WATCH"
-  />
-    <uses-permission
-    android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE"
-  />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_PROFILE_WATCH" />
+    <uses-permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE" />
 
-    <uses-permission
-    android:name="com.google.android.gms.permission.AD_ID"
-    tools:node="remove"
-  />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <uses-permission
     android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
     tools:node="remove"
   />
 
     <application
-    android:name="app.logdate.client.LogdateApplication"
+    android:name="app.logdate.client.LogDateApplication"
     android:allowBackup="true"
     android:backupAgent="app.logdate.client.data.restore.NativeAccountBackupAgent"
     android:fullBackupOnly="true"
@@ -54,10 +41,7 @@
     tools:targetApi="34"
   >
 
-        <meta-data
-      android:name="google_analytics_adid_collection_enabled"
-      android:value="false"
-    />
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
 
         <meta-data
       android:name="app.logdate.watchExperienceDefault"
@@ -70,10 +54,7 @@
     />
 
         <!-- Maps SDK 20 can load a legacy renderer on older Google Play services. -->
-        <uses-library
-      android:name="org.apache.http.legacy"
-      android:required="false"
-    />
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
 
         <!-- Koin installs the worker factory after loading the application's dependencies. -->
         <provider
@@ -89,14 +70,8 @@
       />
         </provider>
 
-        <meta-data
-      android:name="firebase_performance_logcat_enabled"
-      android:value="true"
-    />
-        <meta-data
-      android:name="com.google.mlkit.vision.DEPENDENCIES"
-      android:value="barcode_ui"
-    />
+        <meta-data android:name="firebase_performance_logcat_enabled" android:value="true" />
+        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
         <meta-data
       android:name="com.google.android.geo.API_KEY"
       android:value="@string/google_maps_api_key"
@@ -117,10 +92,7 @@
       android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|keyboard|keyboardHidden|navigation"
       android:windowSoftInputMode="adjustResize"
     >
-            <meta-data
-        android:name="android.app.shortcuts"
-        android:resource="@xml/shortcuts"
-      />
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
             <meta-data
         android:name="android.allow.multiple_resumed_activities"
         android:value="true"
@@ -206,9 +178,7 @@
             </intent-filter>
 
             <intent-filter>
-                <action
-          android:name="android.intent.action.APPLICATION_PREFERENCES"
-        />
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -294,9 +264,7 @@
       android:targetActivity="app.logdate.client.MainActivity"
     >
             <intent-filter>
-                <action
-          android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"
-        />
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity-alias>
 
@@ -314,12 +282,8 @@
       android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
     >
             <intent-filter>
-                <action
-          android:name="android.intent.action.VIEW_PERMISSION_USAGE"
-        />
-                <category
-          android:name="android.intent.category.HEALTH_PERMISSIONS"
-        />
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
 
@@ -342,9 +306,7 @@
     >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action
-          android:name="android.intent.action.MY_PACKAGE_REPLACED"
-        />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
@@ -356,9 +318,7 @@
       android:exported="true"
     >
             <intent-filter>
-                <action
-          android:name="com.google.android.gms.wearable.DATA_CHANGED"
-        />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
           android:scheme="wear"
           android:host="*"
@@ -381,9 +341,7 @@
                 <data android:path="/logdate/state" />
             </intent-filter>
             <intent-filter>
-                <action
-          android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED"
-        />
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
                 <data android:scheme="wear" />
                 <data android:host="*" />
                 <data android:pathPrefix="/logdate/sync" />
@@ -400,9 +358,7 @@
         />
             </intent-filter>
             <intent-filter>
-                <action
-          android:name="com.google.android.gms.wearable.CHANNEL_EVENT"
-        />
+                <action android:name="com.google.android.gms.wearable.CHANNEL_EVENT" />
                 <data
           android:scheme="wear"
           android:host="*"
@@ -423,22 +379,14 @@
                 <data android:pathPrefix="/logdate/notes" />
             </intent-filter>
             <intent-filter>
-                <action
-          android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED"
-        />
+                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
                 <data android:scheme="wear" />
                 <data android:host="*" />
                 <data android:path="/logdate_watch_sync_v2" />
             </intent-filter>
             <intent-filter>
-                <action
-          android:name="com.google.android.gms.wearable.REQUEST_RECEIVED"
-        />
-                <data
-          android:scheme="wear"
-          android:host="*"
-          android:path="/logdate/v2/receipts"
-        />
+                <action android:name="com.google.android.gms.wearable.REQUEST_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:path="/logdate/v2/receipts" />
                 <data
           android:scheme="wear"
           android:host="*"
@@ -505,9 +453,7 @@
       android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
     >
             <intent-filter>
-                <action
-          android:name="android.service.quicksettings.action.QS_TILE"
-        />
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
 
@@ -520,9 +466,7 @@
       android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
     >
             <intent-filter>
-                <action
-          android:name="android.service.quicksettings.action.QS_TILE"
-        />
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
             <meta-data
         android:name="android.service.quicksettings.ACTIVE_TILE"
@@ -568,9 +512,7 @@
         android:value="logdate_app_functions.xml"
       />
             <intent-filter>
-                <action
-          android:name="android.app.appfunctions.AppFunctionService"
-        />
+                <action android:name="android.app.appfunctions.AppFunctionService" />
             </intent-filter>
         </service>
 
