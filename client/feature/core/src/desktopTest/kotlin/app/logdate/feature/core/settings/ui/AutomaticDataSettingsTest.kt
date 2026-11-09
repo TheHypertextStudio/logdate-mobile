@@ -68,8 +68,8 @@ class AutomaticDataSettingsTest {
             }
             onNodeWithText("Checking your account…").assertExists()
             onNodeWithText("Create Account").assertDoesNotExist()
-            onNodeWithText("Export").performClick()
-            onNodeWithText("Import").performClick()
+            onNodeWithText("Export data").performClick()
+            onNodeWithText("Import backup").performClick()
             assertEquals(1, exports)
             assertEquals(1, imports)
         }
@@ -90,8 +90,8 @@ class AutomaticDataSettingsTest {
             }
             onNodeWithText("25 B / 100 B").assertExists()
             onNodeWithText("Couldn’t update cloud storage usage.").assertExists()
-            onNodeWithText("Export").assertExists()
-            onNodeWithText("Import").assertExists()
+            onNodeWithText("Export data").assertExists()
+            onNodeWithText("Import backup").assertExists()
             onNodeWithText("Try again").assertExists()
         }
 
