@@ -213,7 +213,7 @@ class AutomaticSyncSettingsTest {
                 }
             }
             onNodeWithText("Requesting backup…").assertIsNotEnabled()
-            onNodeWithText("Review sync issues").assertIsEnabled()
+            onNodeWithText("Export & Import").assertIsEnabled()
             saveScreenshot("phone-archive-requesting", onRoot().captureToImage())
         }
 
