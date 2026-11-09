@@ -9,8 +9,8 @@
 
 The entry function (`Application.module()`, `MainActivity.onCreate()`, `LogDateApplication.onCreate()`)
 reads as a sequence of calls, one per concern. Each call is defined in its own file, next to the
-code it configures. Someone reading the entrypoint should learn *what* the app is made of; they
-open the concern's file to learn *how* it works.
+code it configures. Someone reading the entrypoint should learn _what_ the app is made of; they
+open the concern's file to learn _how_ it works.
 
 An entrypoint that has grown past this is not "complex". It has simply absorbed work that belongs
 elsewhere. The fix is always the same: name the concern, move it into its own file, leave one line
@@ -47,16 +47,16 @@ Worked example: `server/src/main/kotlin/app/logdate/server/Application.kt` and t
 into (`OpenApiPlugin.kt`, `NetworkEdge.kt`, `SyncMaintenance.kt`, `ServerJson.kt`,
 `di/ServerKoin.kt`, `routes/ServerMetaRoutes.kt`, `routes/ServerRouting.kt`).
 
-### Android Activity: `MainActivity+<Concern>.kt`
+### Android Activity: `MainActivity<Concern>.kt`
 
 State-free concerns become `internal fun MainActivity.<verb>()` extension functions in a
-`MainActivity+<Concern>.kt` file (the file needs `@file:Suppress("ktlint:standard:filename")`).
+`MainActivity<Concern>.kt` file (following standard Kotlin filename conventions without suppressions).
 Compose trees go into a top-level `@Composable` in their own file. Anything that must read or write
 the Activity's private state stays in the class as a short private method that `onCreate` calls in
 sequence.
 
 Worked example: `app/compose-main/src/androidMain/kotlin/app/logdate/client/MainActivity.kt` with
-`MainActivity+MultiWindow.kt`, `MainActivity+Share.kt`, `MainActivity+Handoff.kt`, and
+`MainActivityMultiWindow.kt`, `MainActivityShare.kt`, `MainActivityHandoff.kt`, and
 `MainActivityContent.kt`.
 
 ## Size Limits (detekt)
@@ -68,10 +68,10 @@ limits use detekt; native Apple file lengths use SwiftLint's `file_length` rule.
 
 detekt enforces two rules across every module, on main source sets only:
 
-| Rule | Limit | Notes |
-|------|-------|-------|
-| `LongMethod` | 60 lines | `@Composable` functions are exempt |
-| `LargeClass` | 600 lines | |
+| Rule         | Limit     | Notes                              |
+| ------------ | --------- | ---------------------------------- |
+| `LongMethod` | 60 lines  | `@Composable` functions are exempt |
+| `LargeClass` | 600 lines |                                    |
 
 Run it with:
 
