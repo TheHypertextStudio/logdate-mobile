@@ -160,9 +160,13 @@ internal fun RetainedEditorDocument(
                         val progress = continuity.progress[block.id] ?: 0f
                         val target =
                             when {
-                                lookahead || progress == if (expanded) 1f else 0f ->
+                                lookahead || progress == if (expanded) 1f else 0f -> {
                                     if (expanded) Constraints.fixed(viewport.width, viewport.height) else Constraints.fixedWidth(blockWidth)
-                                else -> Constraints(maxWidth = viewport.width, maxHeight = Constraints.Infinity)
+                                }
+
+                                else -> {
+                                    Constraints(maxWidth = viewport.width, maxHeight = Constraints.Infinity)
+                                }
                             }
                         val child = children[index + 2].measure(target)
                         val source = continuity.host.measure(block.id)

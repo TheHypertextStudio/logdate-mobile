@@ -3,6 +3,7 @@
 package app.logdate.feature.editor.ui.audio
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.logdate.client.media.device.MediaDeviceSelectionUiState
@@ -78,6 +80,17 @@ fun AudioRecordingControls(
     errorMessage: String? = null,
 ) {
     val haptics = rememberLogDateHaptics()
+    val handleStart = {
+        haptics.recordingStarted()
+        onStartRecording()
+    }
+    val handleStop = {
+        haptics.recordingFinished()
+        onStopRecording()
+    }
+    val canControlRecording = !isStarting && recordingState != RecordingState.PROCESSING
+    val canSelectInput = recordingState != RecordingState.RECORDING && recordingState != RecordingState.PROCESSING
+
     FoldableTabletopLayout(
         modifier = modifier,
         minPaneHeight = 160.dp,
@@ -98,6 +111,8 @@ fun AudioRecordingControls(
                 RecordingWaveformBox(
                     recordingState = recordingState,
                     audioLevels = audioLevels,
+                    onStartRecording = handleStart,
+                    enabled = canControlRecording,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -114,19 +129,13 @@ fun AudioRecordingControls(
                 RecordingInputSelector(
                     inputSelection = inputSelection,
                     onInputSelected = onInputSelected,
-                    enabled = recordingState != RecordingState.RECORDING && recordingState != RecordingState.PROCESSING,
+                    enabled = canSelectInput,
                 )
                 RecordingActionButton(
                     recordingState = recordingState,
-                    onStartRecording = {
-                        haptics.recordingStarted()
-                        onStartRecording()
-                    },
-                    onStopRecording = {
-                        haptics.recordingFinished()
-                        onStopRecording()
-                    },
-                    enabled = !isStarting && recordingState != RecordingState.PROCESSING,
+                    onStartRecording = handleStart,
+                    onStopRecording = handleStop,
+                    enabled = canControlRecording,
                     modifier = Modifier.widthIn(max = 360.dp).fillMaxWidth(0.8f),
                 )
                 RecordingErrorText(errorMessage)
@@ -141,14 +150,9 @@ fun AudioRecordingControls(
                 onInputSelected = onInputSelected,
                 isStarting = isStarting,
                 errorMessage = errorMessage,
-                onStartRecording = {
-                    haptics.recordingStarted()
-                    onStartRecording()
-                },
-                onStopRecording = {
-                    haptics.recordingFinished()
-                    onStopRecording()
-                },
+                onStartRecording = handleStart,
+                onStopRecording = handleStop,
+                enabled = canControlRecording,
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -169,6 +173,7 @@ private fun AudioRecordingControlsColumn(
     onStopRecording: () -> Unit,
     isStarting: Boolean,
     errorMessage: String?,
+    enabled: Boolean = !isStarting && recordingState != RecordingState.PROCESSING,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -191,6 +196,8 @@ private fun AudioRecordingControlsColumn(
         RecordingWaveformBox(
             recordingState = recordingState,
             audioLevels = audioLevels,
+            onStartRecording = onStartRecording,
+            enabled = enabled,
             modifier = Modifier.weight(1f),
         )
 
@@ -198,7 +205,7 @@ private fun AudioRecordingControlsColumn(
             recordingState = recordingState,
             onStartRecording = onStartRecording,
             onStopRecording = onStopRecording,
-            enabled = !isStarting && recordingState != RecordingState.PROCESSING,
+            enabled = enabled,
             modifier = Modifier.widthIn(max = 360.dp).fillMaxWidth(0.8f),
         )
         RecordingErrorText(errorMessage)
@@ -298,20 +305,35 @@ private fun RecordingInputSelector(
 private fun RecordingWaveformBox(
     recordingState: RecordingState,
     audioLevels: List<Float>,
+    onStartRecording: () -> Unit = {},
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val canStart = recordingState == RecordingState.INACTIVE && enabled
+    val boxBackground =
+        if (recordingState == RecordingState.RECORDING) {
+            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        }
+    val tapModifier =
+        if (canStart) {
+            Modifier.clickable(
+                onClick = onStartRecording,
+                onClickLabel = stringResource(Res.string.start_recording),
+                role = Role.Button,
+            )
+        } else {
+            Modifier
+        }
+
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(
-                    if (recordingState == RecordingState.RECORDING) {
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    },
-                ),
+                .background(boxBackground)
+                .then(tapModifier),
         contentAlignment = Alignment.Center,
     ) {
         if (audioLevels.isEmpty() && recordingState != RecordingState.RECORDING) {

@@ -134,7 +134,7 @@ internal fun MemoryBlockSurface(
                     Modifier
                 } else {
                     when (block) {
-                        is TextBlockUiState ->
+                        is TextBlockUiState -> {
                             if (recordingActive) {
                                 Modifier
                             } else if (retainedSurface) {
@@ -156,8 +156,15 @@ internal fun MemoryBlockSurface(
                             } else {
                                 Modifier.padding(end = if (showFocusAction) 96.dp else 48.dp)
                             }
-                        is ImageBlockUiState -> Modifier.padding(top = photoTopInset)
-                        else -> Modifier
+                        }
+
+                        is ImageBlockUiState -> {
+                            Modifier.padding(top = photoTopInset)
+                        }
+
+                        else -> {
+                            Modifier
+                        }
                     }
                 }
             Column(

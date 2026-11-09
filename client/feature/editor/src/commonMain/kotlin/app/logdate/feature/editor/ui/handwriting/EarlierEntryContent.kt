@@ -22,7 +22,10 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun EarlierEntryContent(note: JournalNote) {
     when (note) {
-        is JournalNote.Text -> Text(note.content, style = MaterialTheme.typography.bodyLarge)
+        is JournalNote.Text -> {
+            Text(note.content, style = MaterialTheme.typography.bodyLarge)
+        }
+
         is JournalNote.Handwriting -> {
             if (note.unreadableContent != null) {
                 Text(stringResource(Res.string.entry_page_handwriting_newer_version))
@@ -37,6 +40,7 @@ internal fun EarlierEntryContent(note: JournalNote) {
                 )
             }
         }
+
         is JournalNote.Image -> {
             ImageBlockPreview(
                 ImageBlockUiState(uri = note.mediaRef, caption = note.caption),
@@ -45,10 +49,12 @@ internal fun EarlierEntryContent(note: JournalNote) {
             )
             if (note.caption.isNotBlank()) Text(note.caption)
         }
+
         is JournalNote.Audio -> {
             AudioPlaybackComponent(note.mediaRef, Modifier.fillMaxWidth(), knownDurationMs = note.durationMs)
             if (note.caption.isNotBlank()) Text(note.caption)
         }
+
         is JournalNote.Video -> {
             VideoPlayerContent(note.mediaRef, Modifier.fillMaxWidth().heightIn(min = 160.dp, max = 400.dp))
             if (note.caption.isNotBlank()) Text(note.caption)
