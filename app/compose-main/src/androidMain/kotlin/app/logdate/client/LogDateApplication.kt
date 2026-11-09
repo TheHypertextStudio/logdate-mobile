@@ -41,7 +41,7 @@ private const val APP_STARTUP_TAG = "LogDateStartup"
  *
  * For app UI, see [MainActivity].
  */
-open class LogDateApplication :
+class LogDateApplication :
     Application(),
     KoinComponent,
     SingletonImageLoader.Factory {
@@ -114,9 +114,9 @@ open class LogDateApplication :
 }
 
 /**
- * Manifest and legacy compatibility alias for [LogDateApplication].
+ * Legacy compatibility alias for [LogDateApplication].
  */
-open class LogdateApplication : LogDateApplication()
+typealias LogdateApplication = LogDateApplication
 
 /** Initializes the foreground runtime when Android retained a restore-agent Application instance. */
 fun ensureLogDateApplicationStarted(application: Application) {

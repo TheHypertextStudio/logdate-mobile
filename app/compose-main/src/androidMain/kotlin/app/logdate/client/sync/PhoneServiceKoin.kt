@@ -1,7 +1,7 @@
 package app.logdate.client.sync
 
 import android.content.Context
-import app.logdate.client.LogdateApplication
+import app.logdate.client.LogDateApplication
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -13,7 +13,7 @@ internal suspend fun resolvePhoneServiceKoin(): org.koin.core.Koin? {
             val koin =
                 org.koin.java.KoinJavaComponent
                     .getKoin()
-            val application = koin.get<Context>().applicationContext as? LogdateApplication
+            val application = koin.get<Context>().applicationContext as? LogDateApplication
             if (application != null && !application.startup.awaitReady()) return null
             return koin
         } catch (cancelled: CancellationException) {

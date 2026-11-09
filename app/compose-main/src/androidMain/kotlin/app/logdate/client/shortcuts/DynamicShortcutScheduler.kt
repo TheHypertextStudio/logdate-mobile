@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
  * The periodic job runs every 24 hours so day-rollover ("Today" shortcut) and
  * newly generated weekly rewinds get reflected in the launcher without needing
  * to wait for the user to relaunch the app. The immediate one-shot is enqueued
- * from `LogdateApplication.onCreate` so the launcher catches up as soon as the
+ * from `LogDateApplication.onCreate` so the launcher catches up as soon as the
  * process starts.
  *
  * Mirrors [app.logdate.client.rewind.RewindGenerationScheduler] in shape so the
