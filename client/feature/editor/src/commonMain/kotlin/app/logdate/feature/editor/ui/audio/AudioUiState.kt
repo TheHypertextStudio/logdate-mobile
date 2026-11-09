@@ -115,6 +115,15 @@ data class AudioUiState(
                 else -> null
             }
 
+    val isTranscriptionFinal: Boolean
+        get() = (transcriptionState as? TranscriptionState.Success)?.isFinal == true
+
+    val isTranscriptionRefining: Boolean
+        get() = (transcriptionState as? TranscriptionState.Success)?.isRefining == true
+
+    val hasTranscriptionError: Boolean
+        get() = transcriptionState is TranscriptionState.Error
+
     val transcriptionInProgress: Boolean
         get() =
             transcriptionState is TranscriptionState.InProgress ||

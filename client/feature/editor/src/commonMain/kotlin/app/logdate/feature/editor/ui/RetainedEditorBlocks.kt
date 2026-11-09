@@ -36,6 +36,7 @@ import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import app.logdate.feature.editor.ui.editor.delegate.PendingAudioResolver
 import app.logdate.feature.editor.ui.image.ImageBlockPreview
 import app.logdate.feature.editor.ui.layout.EditorBlockMinHeight
+import app.logdate.feature.editor.ui.layout.FocusedBlockChromePolicy
 import app.logdate.feature.editor.ui.layout.FocusedBlockLayout
 import app.logdate.feature.editor.ui.layout.LocalEntryChromeHeight
 import app.logdate.feature.editor.ui.layout.LocalEntryContentInsets
@@ -131,7 +132,9 @@ internal class RetainedEditorBlocks(
                         val preview: (@Composable () -> Unit)? =
                             when {
                                 !expanded -> null
+
                                 photo != null -> ({ ImageBlockPreview(photo, modifier = Modifier.fillMaxSize()) })
+
                                 showContext -> (
                                     {
                                         EntryContextPreview(
@@ -140,6 +143,7 @@ internal class RetainedEditorBlocks(
                                         )
                                     }
                                 )
+
                                 else -> null
                             }
                         FocusedBlockLayout(
@@ -178,16 +182,25 @@ private fun RetainedBlockInput(
     val custom = state.blockPresentations[block.id]
     val progress = LocalBlockFocusProgress.current ?: if (placement.expanded) 1f else 0f
     val visualExpanded = placement.expanded || progress > 0f
+    val clearance =
+        FocusedBlockChromePolicy.clearanceFor(
+            block = block,
+            chromeHeight = LocalEntryChromeHeight.current,
+            dockReserve = LocalEntryCreationReserve.current,
+        )
     val focusedPadding =
         (if (visualExpanded) Modifier.fillMaxSize() else Modifier.fillMaxWidth()).retainedContentPadding(
-            top = if (block is TextBlockUiState || block is AudioBlockUiState) LocalEntryChromeHeight.current else 0.dp,
-            bottom = if (block is TextBlockUiState) LocalEntryCreationReserve.current else 0.dp,
+            top = clearance.top,
+            bottom = clearance.bottom,
             expanded = placement.expanded,
             progress = progress,
         )
     when {
-        custom != null -> if (placement.expanded) custom.focused() else custom.inline(placement.onSelect)
-        block is TextBlockUiState ->
+        custom != null -> {
+            if (placement.expanded) custom.focused() else custom.inline(placement.onSelect)
+        }
+
+        block is TextBlockUiState -> {
             TextBlockContent(
                 block,
                 isExpanded = visualExpanded,
@@ -196,7 +209,9 @@ private fun RetainedBlockInput(
                 onFocused = placement.onSelect,
                 modifier = focusedPadding,
             )
-        block is AudioBlockUiState ->
+        }
+
+        block is AudioBlockUiState -> {
             AudioBlockEditor(
                 block,
                 onBlockUpdated = state.onUpdateBlock,
@@ -215,7 +230,9 @@ private fun RetainedBlockInput(
                 inline = !placement.expanded,
                 selected = placement.expanded,
             )
-        placement.expanded ->
+        }
+
+        placement.expanded -> {
             BlockContentInner(
                 block,
                 true,
@@ -227,7 +244,9 @@ private fun RetainedBlockInput(
                 state.onPersistCameraCaptureTarget,
                 Modifier.fillMaxSize(),
             )
-        else ->
+        }
+
+        else -> {
             Box {
                 MemoryBlockContent(
                     block,
@@ -241,6 +260,7 @@ private fun RetainedBlockInput(
                     state.onPersistAudioRecordingTarget,
                 )
             }
+        }
     }
 }
 

@@ -12,11 +12,17 @@ internal fun Modifier.entryEditorShortcuts(
 ): Modifier =
     onPreviewKeyEvent { event ->
         when (AppKeyboardShortcut.match(event, AppShortcutScope.Editor)) {
-            AppKeyboardShortcut.SaveEntry -> canSave.also { if (it) onSave() }
+            AppKeyboardShortcut.SaveEntry -> {
+                canSave.also { if (it) onSave() }
+            }
+
             AppKeyboardShortcut.CloseEditor -> {
                 onClose()
                 true
             }
-            else -> false
+
+            else -> {
+                false
+            }
         }
     }

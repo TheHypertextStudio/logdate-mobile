@@ -31,6 +31,7 @@ import app.logdate.feature.editor.ui.editor.delegate.PendingAudioResolver
 import app.logdate.feature.editor.ui.editor.startReservedAudioCapture
 import app.logdate.feature.editor.ui.layout.EditorBlockCornerRadius
 import app.logdate.feature.editor.ui.layout.LocalEditorCorners
+import app.logdate.shared.model.Location
 import app.logdate.ui.audio.AudioContextProcessor
 import app.logdate.util.formatDateLocalized
 import io.github.aakira.napier.Napier
@@ -42,6 +43,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
@@ -259,29 +261,13 @@ fun AudioBlockEditor(
                 },
             )
         } else if (existingAudioUri != null) {
-            val audioContextProcessor: AudioContextProcessor = koinInject()
-            val waveformAmplitudes by produceState(
-                initialValue = emptyList<Float>(),
-                block.uri,
-                block.duration,
-                block.timestamp,
-                block.location,
-            ) {
-                try {
-                    audioContextProcessor
-                        .processProgressively(
-                            audioUri = existingAudioUri,
-                            durationMs = block.duration,
-                            createdAt = block.timestamp,
-                            latitude = block.location?.latitude,
-                            longitude = block.location?.longitude,
-                        ).collect { value = it.amplitudes }
-                } catch (error: CancellationException) {
-                    throw error
-                } catch (error: Exception) {
-                    Napier.w(error) { "Unable to load the recording waveform" }
-                }
-            }
+            val waveformAmplitudes =
+                rememberWaveformAmplitudes(
+                    audioUri = existingAudioUri,
+                    durationMs = block.duration,
+                    createdAt = block.timestamp,
+                    location = block.location,
+                )
             AudioBlockContent(
                 block = block,
                 isExpanded = !inline || selected,
@@ -314,11 +300,9 @@ fun AudioBlockEditor(
                         audioLevels = audioLevels,
                         recordingDuration = audioUiState.duration,
                         transcriptionText = audioUiState.transcription,
-                        transcriptionIsFinal =
-                            (audioUiState.transcriptionState as? AudioUiState.TranscriptionState.Success)?.isFinal == true,
-                        transcriptionIsRefining =
-                            (audioUiState.transcriptionState as? AudioUiState.TranscriptionState.Success)?.isRefining == true,
-                        transcriptionHasError = audioUiState.transcriptionState is AudioUiState.TranscriptionState.Error,
+                        transcriptionIsFinal = audioUiState.isTranscriptionFinal,
+                        transcriptionIsRefining = audioUiState.isTranscriptionRefining,
+                        transcriptionHasError = audioUiState.hasTranscriptionError,
                         isPaused = audioUiState.isPaused,
                         onRestart = {
                             audioViewModel.restartRecording { path, fallbackPath ->
@@ -332,15 +316,11 @@ fun AudioBlockEditor(
                         onInputSelected = audioRouteRepository::selectInputDevice,
                     )
                 } else {
-                    // A voice launch asked to record. Start once the microphone is allowed and the
-                    // editor's window has focus: launched from Quick Settings, the shade is still
-                    // closing over the editor, and Android refuses to start recording until it has.
-                    val windowInfo = LocalWindowInfo.current
-                    LaunchedEffect(block.id, block.startOnOpen) {
-                        if (!block.startOnOpen) return@LaunchedEffect
-                        snapshotFlow { windowInfo.isWindowFocused }.first { it }
-                        requestRecordingStart()
-                    }
+                    VoiceLaunchTriggerEffect(
+                        enabled = block.startOnOpen,
+                        blockId = block.id,
+                        onStartRecording = { requestRecordingStart() },
+                    )
                     AudioRecordingControls(
                         recordingState = recordingState,
                         audioLevels = audioLevels,
@@ -358,5 +338,60 @@ fun AudioBlockEditor(
                 }
             }
         }
+    }
+}
+
+/**
+ * Loads waveform amplitudes progressively without blocking the main composition thread.
+ */
+@Composable
+private fun rememberWaveformAmplitudes(
+    audioUri: String,
+    durationMs: Long,
+    createdAt: Instant,
+    location: Location?,
+    processor: AudioContextProcessor = koinInject(),
+): List<Float> {
+    val amplitudes by produceState(
+        initialValue = emptyList(),
+        audioUri,
+        durationMs,
+        createdAt,
+        location,
+    ) {
+        try {
+            processor
+                .processProgressively(
+                    audioUri = audioUri,
+                    durationMs = durationMs,
+                    createdAt = createdAt,
+                    latitude = location?.latitude,
+                    longitude = location?.longitude,
+                ).collect { value = it.amplitudes }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Napier.w(error) { "Unable to load the recording waveform" }
+        }
+    }
+    return amplitudes
+}
+
+/**
+ * Triggers audio recording for voice launches once the microphone permission is confirmed
+ * and the hosting window gains focus (e.g. after the Quick Settings shade finishes closing).
+ */
+@Composable
+@Suppress("ktlint:standard:function-naming")
+private fun VoiceLaunchTriggerEffect(
+    enabled: Boolean,
+    blockId: Uuid,
+    onStartRecording: () -> Unit,
+) {
+    val windowInfo = LocalWindowInfo.current
+    LaunchedEffect(blockId, enabled) {
+        if (!enabled) return@LaunchedEffect
+        snapshotFlow { windowInfo.isWindowFocused }.first { it }
+        onStartRecording()
     }
 }

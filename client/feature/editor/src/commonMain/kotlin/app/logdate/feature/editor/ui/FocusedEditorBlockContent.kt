@@ -38,6 +38,7 @@ import app.logdate.feature.editor.ui.editor.delegate.PendingAudioResolver
 import app.logdate.feature.editor.ui.handwriting.HandwritingCanvas
 import app.logdate.feature.editor.ui.image.ImageBlockPreview
 import app.logdate.feature.editor.ui.layout.EditorBlockCornerRadius
+import app.logdate.feature.editor.ui.layout.FocusedBlockChromePolicy
 import app.logdate.feature.editor.ui.layout.FocusedBlockLayout
 import app.logdate.feature.editor.ui.layout.LocalEntryChromeHeight
 import app.logdate.feature.editor.ui.layout.LocalEntryCreationReserve
@@ -142,26 +143,17 @@ internal fun FocusedEditorBlockContent(
                         onPersistCameraCaptureTarget = uiState.onPersistCameraCaptureTarget,
                         modifier =
                             Modifier.fillMaxSize().then(
-                                if (floatingChrome &&
-                                    !(liveBlock is CameraBlockUiState && liveBlock.uri == null)
-                                ) {
-                                    Modifier
-                                        .entryContentPadding(
-                                            top =
-                                                if (liveBlock is TextBlockUiState ||
-                                                    liveBlock is AudioBlockUiState
-                                                ) {
-                                                    LocalEntryChromeHeight.current
-                                                } else {
-                                                    0.dp
-                                                },
-                                            bottom =
-                                                if (liveBlock is TextBlockUiState) {
-                                                    LocalEntryCreationReserve.current
-                                                } else {
-                                                    0.dp
-                                                },
+                                if (floatingChrome && !(liveBlock is CameraBlockUiState && liveBlock.uri == null)) {
+                                    val clearance =
+                                        FocusedBlockChromePolicy.clearanceFor(
+                                            block = liveBlock,
+                                            chromeHeight = LocalEntryChromeHeight.current,
+                                            dockReserve = LocalEntryCreationReserve.current,
                                         )
+                                    Modifier.entryContentPadding(
+                                        top = clearance.top,
+                                        bottom = clearance.bottom,
+                                    )
                                 } else {
                                     Modifier
                                 },
@@ -213,13 +205,15 @@ internal fun BlockContentInner(
     modifier: Modifier = Modifier,
 ) {
     when (block) {
-        is HandwritingBlockUiState ->
+        is HandwritingBlockUiState -> {
             HandwritingCanvas(
                 block.page,
                 Modifier.fillMaxWidth().height(240.dp),
                 description = stringResource(Res.string.ink_preview_description),
             )
-        is TextBlockUiState ->
+        }
+
+        is TextBlockUiState -> {
             TextBlockContent(
                 block = block,
                 isExpanded = isExpanded,
@@ -227,8 +221,9 @@ internal fun BlockContentInner(
                 onFocused = { onBlockFocused(block.id) },
                 modifier = modifier,
             )
+        }
 
-        is ImageBlockUiState ->
+        is ImageBlockUiState -> {
             app.logdate.feature.editor.ui.image.ImageBlockEditor(
                 block = block,
                 onBlockUpdated = onBlockUpdated,
@@ -236,8 +231,9 @@ internal fun BlockContentInner(
                 isExpanded = isExpanded,
                 modifier = modifier,
             )
+        }
 
-        is AudioBlockUiState ->
+        is AudioBlockUiState -> {
             AudioBlockEditor(
                 block = block,
                 onBlockUpdated = onBlockUpdated,
@@ -246,8 +242,9 @@ internal fun BlockContentInner(
                 onPersistRecordingTarget = onPersistAudioRecordingTarget,
                 modifier = modifier,
             )
+        }
 
-        is CameraBlockUiState ->
+        is CameraBlockUiState -> {
             CameraBlockEditor(
                 block = block,
                 onBlockUpdated = onBlockUpdated,
@@ -255,13 +252,15 @@ internal fun BlockContentInner(
                 onPersistCaptureTarget = onPersistCameraCaptureTarget,
                 modifier = modifier,
             )
+        }
 
-        is VideoBlockUiState ->
+        is VideoBlockUiState -> {
             VideoBlockEditor(
                 block = block,
                 onBlockUpdated = onBlockUpdated,
                 onDeleteRequested = { onBlockDeleted(block.id) },
                 modifier = modifier,
             )
+        }
     }
 }

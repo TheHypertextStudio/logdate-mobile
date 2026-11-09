@@ -23,19 +23,25 @@ internal fun HandwritingRealEditorContent(
     val notes = koinInject<JournalNotesRepository>()
     LaunchedEffect(resumeDraft, resumeSaved) {
         when {
-            resumeDraft ->
+            resumeDraft -> {
                 editor.editorState
                     .first { it.availableDrafts.isNotEmpty() }
                     .availableDrafts
                     .maxByOrNull { it.updatedAt }
                     ?.let { editor.loadDraft(it.id) }
-            resumeSaved ->
+            }
+
+            resumeSaved -> {
                 notes.allNotesObserved
                     .first()
                     .filterIsInstance<JournalNote.Handwriting>()
                     .maxByOrNull { it.creationTimestamp }
                     ?.let { editor.loadExistingEntry(it.uid) }
-            else -> editor.initializePreferredEntryMode()
+            }
+
+            else -> {
+                editor.initializePreferredEntryMode()
+            }
         }
     }
     EntryEditorContent(
