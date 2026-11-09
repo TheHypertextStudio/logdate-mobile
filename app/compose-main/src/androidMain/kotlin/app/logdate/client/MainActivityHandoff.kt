@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:standard:filename")
-
 package app.logdate.client
 
 import android.app.HandoffActivityParams
