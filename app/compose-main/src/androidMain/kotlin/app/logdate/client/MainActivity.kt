@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +28,6 @@ import app.logdate.client.database.DatabaseStartupMonitor
 import app.logdate.client.database.DatabaseStartupState
 import app.logdate.client.datastore.SessionStorage
 import app.logdate.client.device.restore.PostRestoreDetector
-import app.logdate.client.device.restore.PostRestoreType
 import app.logdate.client.device.restore.retainedJournalWorkspace
 import app.logdate.client.domain.dayboundary.DayBoundarySettingsRepository
 import app.logdate.client.domain.recommendation.MemoriesSettingsRepository
@@ -50,10 +48,8 @@ import app.logdate.client.testing.onboarding.OnboardingTestFixtureApplier
 import app.logdate.client.testing.onboarding.readOnboardingTestFixture
 import app.logdate.client.tiles.EXTRA_SHOW_RECORDING
 import app.logdate.client.tiles.RecordingWindowTracker
-import app.logdate.client.updates.ActivityResultAppUpdateFlowLauncher
 import app.logdate.client.updates.PlayInAppUpdateController
 import app.logdate.client.watch.WatchCompanionAssociationManager
-import app.logdate.feature.core.AndroidBiometricGatekeeper
 import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.BiometricGatekeeper
 import app.logdate.feature.core.GlobalAppUiLoadedState
@@ -77,7 +73,6 @@ import app.logdate.ui.keyboard.appKeyboardShortcutGroups
 import app.logdate.ui.platform.enableTransparentSystemBars
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -92,7 +87,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * association, biometric gatekeeper, multi-window editor windows, deep links, and the
  * Android 16+ handoff API) into the shared [LogDateNavDisplay] graph.
  *
- * Each concern lives in its own `MainActivity+<Concern>.kt` file; `onCreate` only sequences them.
+ * Each concern lives in its own `MainActivity<Concern>.kt` file; `onCreate` only sequences them.
  */
 class MainActivity : FragmentActivity() {
     private val biometricGatekeeper: BiometricGatekeeper by inject()
@@ -128,37 +123,21 @@ class MainActivity : FragmentActivity() {
     private var databaseStartupState by mutableStateOf<DatabaseStartupState>(DatabaseStartupState.Initializing)
     private val launchTracker = LaunchStageTracker()
     private var hasCheckedForAppUpdates by mutableStateOf(false)
-    private var hasDetectedPostRestore by mutableStateOf(false)
 
-    private val createDocumentLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-        ) { result ->
-            val uri = if (result.resultCode == RESULT_OK) result.data?.data else null
-            androidExportLauncher.onExportDestinationSelected(uri)
-        }
+    private val postRestoreCoordinator by lazy {
+        PostRestoreCoordinator(postRestoreDetector, viewModel)
+    }
 
-    private val openDocumentLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-        ) { result ->
-            val uri = if (result.resultCode == RESULT_OK) result.data?.data else null
-            androidRestoreLauncher.onRestoreSourceSelected(uri)
-        }
-
-    private val appUpdateLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.StartIntentSenderForResult(),
-        ) { result ->
-            playInAppUpdateController.onUpdateFlowResult(result.resultCode)
-        }
-
-    private val watchAssociationLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.StartIntentSenderForResult(),
-        ) { result ->
-            watchCompanionAssociationManager.onAssociationFlowResult(result.resultCode)
-        }
+    private val launchers =
+        MainActivityLaunchers(
+            activity = this,
+            biometricGatekeeper = biometricGatekeeper,
+            activityProvider = activityProvider,
+            androidExportLauncher = androidExportLauncher,
+            androidRestoreLauncher = androidRestoreLauncher,
+            playInAppUpdateController = playInAppUpdateController,
+            watchCompanionAssociationManager = watchCompanionAssociationManager,
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Napier.i("MainActivity onCreate: starting launch", tag = APP_LAUNCH_TAG)
@@ -166,7 +145,7 @@ class MainActivity : FragmentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableTransparentSystemBars()
-        startLaunchWatchdog()
+        lifecycleScope.startLaunchWatchdog(launchTracker)
         splashScreen.setKeepOnScreenCondition {
             launchTracker.bootstrapState is LaunchBootstrapState.BlockingSplash
         }
@@ -192,7 +171,7 @@ class MainActivity : FragmentActivity() {
         FileKit.init(this)
         Napier.i("MainActivity onCreate: FileKit initialized", tag = APP_LAUNCH_TAG)
 
-        attachPlatformLaunchers()
+        launchers.attachPlatformLaunchers()
         setupMultiWindowSupport()
         Napier.i("MainActivity onCreate: multi-window support configured", tag = APP_LAUNCH_TAG)
 
@@ -244,35 +223,6 @@ class MainActivity : FragmentActivity() {
 
         if (savedInstanceState == null && intent?.let { handleMultiWindowIntent(it) } == true) {
             return
-        }
-    }
-
-    private fun attachPlatformLaunchers() {
-        (biometricGatekeeper as? AndroidBiometricGatekeeper)?.setActivity(this)
-        Napier.i("MainActivity onCreate: biometric gatekeeper configured", tag = APP_LAUNCH_TAG)
-
-        activityProvider.currentActivity = this
-        androidExportLauncher.setupActivityResultLauncher(createDocumentLauncher)
-        androidExportLauncher.setupWorkObserver(this)
-        androidRestoreLauncher.setupActivityResultLauncher(openDocumentLauncher)
-        androidRestoreLauncher.setupWorkObserver(this)
-        playInAppUpdateController.attachLauncher(ActivityResultAppUpdateFlowLauncher(appUpdateLauncher))
-        watchCompanionAssociationManager.attachLauncher(watchAssociationLauncher)
-        Napier.i("MainActivity onCreate: export/restore/update launchers configured", tag = APP_LAUNCH_TAG)
-    }
-
-    private fun startLaunchWatchdog() {
-        lifecycleScope.launch {
-            delay(LAUNCH_WATCHDOG_TIMEOUT_MS)
-            launchTracker.expireWatchdog()
-            if (launchTracker.bootstrapState is LaunchBootstrapState.SplashReleased) {
-                Napier.w(
-                    "MainActivity launch watchdog expired after ${LAUNCH_WATCHDOG_TIMEOUT_MS}ms; " +
-                        "releasing splash while waiting for ${LaunchStage.AppUiLoaded.analyticsName}; " +
-                        "last completed stage=${launchTracker.snapshot.latestCompletedStage.analyticsName}",
-                    tag = APP_LAUNCH_TAG,
-                )
-            }
         }
     }
 
@@ -407,39 +357,7 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun detectPostRestoreOnce(state: GlobalAppUiLoadedState) {
-        if (hasDetectedPostRestore || databaseStartupState is DatabaseStartupState.Initializing) return
-        hasDetectedPostRestore = true
-
-        val detected = postRestoreDetector.detect(isOnboarded = state.isOnboarded)
-        if (postRestoreDetector.isAccountRecoveryPending() || detected == PostRestoreType.CONTENT_MISSING) {
-            val accountDelivery = postRestoreDetector.pendingAccountRecoveryId()
-            viewModel.tryRestoreSignInAfterCloudRestore(
-                recoverMissingContent =
-                    detected == PostRestoreType.CONTENT_MISSING &&
-                        databaseStartupState !is DatabaseStartupState.RecoveryRequired,
-                onAccountResolved = { if (accountDelivery != null) postRestoreDetector.acknowledgeAccountRecovery(accountDelivery) },
-            )
-        }
-
-        when (detected) {
-            PostRestoreType.NONE -> {
-                postRestoreDetector.markDeviceInitialized()
-            }
-
-            PostRestoreType.CONTENT_RESTORED -> {
-                if (databaseStartupState !is DatabaseStartupState.RecoveryRequired) {
-                    postRestoreDetector.markDeviceInitialized()
-                }
-            }
-
-            PostRestoreType.RECOVERY_REQUIRED -> {
-                Napier.w("Native restore delivery state needs recovery", tag = APP_LAUNCH_TAG)
-            }
-
-            PostRestoreType.CONTENT_MISSING -> {
-                Napier.i("Native restore needs journal content recovery", tag = APP_LAUNCH_TAG)
-            }
-        }
+        postRestoreCoordinator.detectPostRestoreOnce(state, databaseStartupState)
     }
 
     private fun maybeCheckForUpdates(state: GlobalAppUiState) {
@@ -473,5 +391,4 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-private const val APP_LAUNCH_TAG = "LogDateAppLaunch"
-private const val LAUNCH_WATCHDOG_TIMEOUT_MS = 750L
+internal const val APP_LAUNCH_TAG = "LogDateAppLaunch"
