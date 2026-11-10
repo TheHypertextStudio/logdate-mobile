@@ -29,6 +29,7 @@ plugins {
     alias(libs.plugins.androidx.baselineprofile) apply false
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.kotlinx.serialization) apply false
     alias(libs.plugins.gradlePlayPublisher) apply false
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.ktlint) apply false
