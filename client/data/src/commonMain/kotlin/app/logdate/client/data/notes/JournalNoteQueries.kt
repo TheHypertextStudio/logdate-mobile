@@ -34,6 +34,9 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
+/**
+ * Read-side queries and reactive streams over the note, caption, place, and transcript tables.
+ */
 internal class JournalNoteQueries(
     private val textNoteDao: TextNoteDao,
     private val imageNoteDao: ImageNoteDao,

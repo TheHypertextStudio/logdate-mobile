@@ -44,7 +44,36 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
- * A repository for journal notes that stores data locally.
+ * Local-first implementation of [JournalNotesRepository], [ExportableJournalContentRepository],
+ * and [SyncableJournalNotesRepository] backed by the Room note and journal-content DAOs.
+ *
+ * Persists text, image, audio, and video notes along with their captions, places, transcripts, and
+ * journal memberships, enqueues pending sync operations inside the same transaction, and reclaims
+ * owned media files once no note, draft, journal cover, or retained edit still references them.
+ *
+ * @property textNoteDao DAO for text and handwriting notes.
+ * @property imageNoteDao DAO for image notes.
+ * @property audioNoteDao DAO for audio notes.
+ * @property videoNoteDao DAO for video notes.
+ * @property journalContentDao DAO for journal-to-note membership links.
+ * @property journalRepository Repository used to resolve journal destinations and read cover URIs.
+ * @property mediaCaptionDao DAO for note media captions.
+ * @property notePlaceResolver Resolves semantic places attached to notes.
+ * @property indexedMediaRepository Optional repository for indexing saved image and video media.
+ * @property mediaManager Optional manager for verifying and deleting owned media files.
+ * @property transactionManager Runs multi-table writes and post-commit callbacks atomically.
+ * @property syncManagerProvider Supplies the active [SyncManager] for debounced sync triggers.
+ * @property syncMetadataService Tracks pending note and association uploads.
+ * @property syncScope Scope used for automatic transcription and debounced sync triggers.
+ * @property transcriptionRepository Optional repository for audio note transcripts.
+ * @property mediaReferences Canonicalizes media references across legacy and current spellings.
+ * @property recoveryReceipts Tracks archive-recovery and local-deletion receipts per account scope.
+ * @property currentRecoveryScope Returns the active account merge scope for recovery guards.
+ * @property draftSnapshots Returns current editor drafts so their media is preserved on delete, or null when unavailable.
+ * @property journalCoverUris Returns current journal cover URIs so cover media is preserved on delete, or null when unavailable.
+ * @property mediaReclamation Records owned media candidates before note deletion commits.
+ * @property retainedMedia Returns media references held by retained conflict edits.
+ * @property mediaClaimFence Serializes note media creation and reclamation against concurrent cleanup.
  */
 class OfflineFirstJournalNotesRepository(
     private val textNoteDao: TextNoteDao,
@@ -267,8 +296,13 @@ class OfflineFirstJournalNotesRepository(
             }
         if (otherReferences.any { reference -> mediaReferences.spellingsOf(reference).any(spellings::contains) }) return
 
-        runCatching { manager.deleteOwnedMedia(contentUri) }
-            .onFailure { Napier.w("Could not remove media for a deleted note", it) }
+        try {
+            manager.deleteOwnedMedia(contentUri)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            Napier.w("Could not remove media for a deleted note", error)
+        }
     }
 
     override suspend fun remove(note: JournalNote) {

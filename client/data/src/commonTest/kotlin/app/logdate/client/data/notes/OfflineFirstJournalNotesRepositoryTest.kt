@@ -1007,6 +1007,19 @@ class OfflineFirstJournalNotesRepositoryTest {
             assertEquals(listOf(note.mediaRef), mediaManager.deletedOwnedMedia)
         }
 
+    @Test
+    fun `removing a note rethrows cancellation from media deletion`() =
+        runTest {
+            val repository = createRepository()
+            val note = createTestImageNote()
+            imageNoteDao.addNote(note.toEntity())
+            mediaManager.failDeleteWith = kotlinx.coroutines.CancellationException("Media delete cancelled")
+
+            assertFailsWith<kotlinx.coroutines.CancellationException> {
+                repository.remove(note)
+            }
+        }
+
     /**
      * Converts a Journal model to a JournalEntity for database operations.
      */
@@ -1121,8 +1134,12 @@ class OfflineFirstJournalNotesRepositoryTest {
         override suspend fun getMedia(uri: String): MediaObject = mediaByUri.getValue(uri)
 
         val deletedOwnedMedia = mutableListOf<String>()
+        var failDeleteWith: Throwable? = null
 
-        override suspend fun deleteOwnedMedia(uri: String): Boolean = deletedOwnedMedia.add(uri)
+        override suspend fun deleteOwnedMedia(uri: String): Boolean {
+            failDeleteWith?.let { throw it }
+            return deletedOwnedMedia.add(uri)
+        }
 
         override suspend fun exists(mediaId: String): Boolean = mediaByUri.containsKey(mediaId)
 
