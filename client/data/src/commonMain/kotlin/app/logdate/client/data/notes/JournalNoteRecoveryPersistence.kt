@@ -20,6 +20,9 @@ import app.logdate.client.sync.metadata.UploadScope
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
+/**
+ * Applies archive-restore and sync note mutations inside account-scoped transactions.
+ */
 internal class JournalNoteRecoveryPersistence(
     private val textNoteDao: TextNoteDao,
     private val imageNoteDao: ImageNoteDao,

@@ -6,12 +6,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.uuid.Uuid
 
+/**
+ * Resolves and observes semantic [NotePlace] records referenced by persisted notes.
+ */
 interface NotePlaceResolver {
     suspend fun get(placeId: Uuid): NotePlace?
 
     fun observeAll(): Flow<Map<Uuid, NotePlace>>
 }
 
+/**
+ * [NotePlaceResolver] backed by [PlaceDao].
+ *
+ * @property placeDao DAO used to query and observe saved places.
+ */
 class DatabaseNotePlaceResolver(
     private val placeDao: PlaceDao,
 ) : NotePlaceResolver {
@@ -25,6 +33,7 @@ class DatabaseNotePlaceResolver(
         }
 }
 
+/** No-op [NotePlaceResolver] that resolves no places, used when place lookup is unavailable. */
 object EmptyNotePlaceResolver : NotePlaceResolver {
     override suspend fun get(placeId: Uuid): NotePlace? = null
 

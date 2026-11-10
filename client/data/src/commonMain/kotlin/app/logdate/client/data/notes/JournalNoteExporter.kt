@@ -15,6 +15,9 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
+/**
+ * Exports notes and their journal memberships within a time window to a JSON backup file.
+ */
 internal class JournalNoteExporter(
     private val textNoteDao: TextNoteDao,
     private val imageNoteDao: ImageNoteDao,

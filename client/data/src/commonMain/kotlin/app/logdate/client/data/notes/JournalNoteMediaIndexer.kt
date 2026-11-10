@@ -6,6 +6,9 @@ import app.logdate.client.media.storage.UnavailableMediaReferences
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.media.IndexedMediaRepository
 
+/**
+ * Validates and indexes image and video media attached to newly persisted notes.
+ */
 internal class JournalNoteMediaIndexer(
     private val mediaManager: MediaManager?,
     private val indexedMediaRepository: IndexedMediaRepository?,
@@ -42,7 +45,9 @@ internal class JournalNoteMediaIndexer(
                 )
             }
 
-            else -> null
+            else -> {
+                null
+            }
         }
     }
 
@@ -52,17 +57,20 @@ internal class JournalNoteMediaIndexer(
         if (repository.isIndexed(pending.uri)) return
 
         when (pending) {
-            is PendingMediaIndex.Image ->
+            is PendingMediaIndex.Image -> {
                 repository.indexImage(
                     uri = pending.uri,
                     timestamp = pending.timestamp,
                 )
-            is PendingMediaIndex.Video ->
+            }
+
+            is PendingMediaIndex.Video -> {
                 repository.indexVideo(
                     uri = pending.uri,
                     timestamp = pending.timestamp,
                     duration = pending.duration,
                 )
+            }
         }
     }
 }
