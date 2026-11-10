@@ -1,6 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+>
 
     <!-- Biometric authentication for journal lock screen -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
@@ -12,15 +14,19 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application>
+        <!-- Declares to Google Play Services to download the barcode scanner module upon install. -->
+        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
+
         <!--
             Declare foregroundServiceType="dataSync" on WorkManager's SystemForegroundService.
             tools:node="merge" adds the attribute to WorkManager's own manifest entry so that
             ExportWorker and RestoreWorker can run as foreground services.
         -->
         <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
-            tools:node="merge" />
+      android:name="androidx.work.impl.foreground.SystemForegroundService"
+      android:foregroundServiceType="dataSync"
+      tools:node="merge"
+    />
     </application>
 
 </manifest>

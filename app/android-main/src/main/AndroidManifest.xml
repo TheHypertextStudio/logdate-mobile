@@ -6,17 +6,11 @@
   android:targetSandboxVersion="2"
 >
 
-    <uses-feature android:name="android.software.companion_device_setup" android:required="false" />
-
     <!--
         Chromebooks and desktops without a touchscreen can install LogDate; it works with a
         keyboard, mouse, or trackpad. See large-screens-and-desktop-windowing.md.
     -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.REQUEST_COMPANION_PROFILE_WATCH" />
-    <uses-permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE" />
 
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <uses-permission
@@ -53,9 +47,6 @@
       android:value="${quietSaveDefault}"
     />
 
-        <!-- Maps SDK 20 can load a legacy renderer on older Google Play services. -->
-        <uses-library android:name="org.apache.http.legacy" android:required="false" />
-
         <!-- Koin installs the worker factory after loading the application's dependencies. -->
         <provider
       android:name="androidx.startup.InitializationProvider"
@@ -71,15 +62,6 @@
         </provider>
 
         <meta-data android:name="firebase_performance_logcat_enabled" android:value="true" />
-        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
-        <meta-data
-      android:name="com.google.android.geo.API_KEY"
-      android:value="@string/google_maps_api_key"
-    />
-        <meta-data
-      android:name="health_connect.privacy_policy_url"
-      android:value="https://logdate.app/privacy"
-    />
 
         <activity
       android:name="app.logdate.client.MainActivity"
@@ -545,15 +527,6 @@
             </intent-filter>
         </receiver>
 
-        <service
-      android:name="app.logdate.client.watch.presence.LogDateCompanionDeviceService"
-      android:exported="true"
-      android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE"
-    >
-            <intent-filter><action
-          android:name="android.companion.CompanionDeviceService"
-        /></intent-filter>
-        </service>
     </application>
 
 </manifest>
