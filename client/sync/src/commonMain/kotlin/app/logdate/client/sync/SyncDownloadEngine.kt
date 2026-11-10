@@ -338,11 +338,13 @@ internal class SyncDownloadEngine(
                                 strategy,
                                 page.deletions,
                                 localById,
-                                DownloadDeletionContext(rows, downloadScope, source, appliedIds, skippedIds, failedIds),
+                                DownloadDeletionContext(rows, downloadScope, source, skippedIds),
                             )
-                        downloadedCount += deletionResult.downloadedCount
-                        conflictsResolved += deletionResult.conflictsResolved
-                        batchErrors += deletionResult.errors
+                        appliedIds += deletionResult.appliedIds
+                        failedIds += deletionResult.failedIds
+                        downloadedCount += deletionResult.batch.downloadedCount
+                        conflictsResolved += deletionResult.batch.conflictsResolved
+                        batchErrors += deletionResult.batch.errors
 
                         BatchResult(downloadedCount, conflictsResolved, batchErrors)
                     }

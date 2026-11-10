@@ -14,13 +14,32 @@ import kotlinx.coroutines.CancellationException
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
+/**
+ * Read-only inputs shared by every deletion in one downloaded page.
+ *
+ * @property rows Download inbox rows for the page, keyed by entity id.
+ * @property scope The inbox scope the page belongs to; deletion aborts if the active scope changes.
+ * @property source Diagnostic source attributed to the emitted events.
+ * @property skippedIds Ids whose media work was skipped, reported as skipped in diagnostics.
+ */
 internal class DownloadDeletionContext(
     val rows: Map<String, DownloadInboxEntity>,
     val scope: DownloadScope?,
     val source: DiagnosticSource?,
-    val appliedIds: MutableSet<String>,
     val skippedIds: Set<String>,
-    val failedIds: MutableSet<String>,
+)
+
+/**
+ * Outcome of applying a page of deletions.
+ *
+ * @property batch Counts and errors to fold into the page totals.
+ * @property appliedIds Ids whose deletion committed.
+ * @property failedIds Ids whose deletion failed and should be reported back to the inbox.
+ */
+internal class DeletionPageResult(
+    val batch: BatchResult,
+    val appliedIds: Set<String>,
+    val failedIds: Set<String>,
 )
 
 /** Applies tombstones only after conflicting edits and membership work have been retained. */
@@ -37,7 +56,9 @@ internal class SyncDownloadDeletionApplier(
         ids: List<Uuid>,
         localById: MutableMap<Uuid, T>,
         context: DownloadDeletionContext,
-    ): BatchResult {
+    ): DeletionPageResult {
+        val appliedIds = mutableSetOf<String>()
+        val failedIds = mutableSetOf<String>()
         var downloaded = 0
         var conflicts = 0
         val errors = mutableListOf<SyncError>()
@@ -51,7 +72,7 @@ internal class SyncDownloadDeletionApplier(
             try {
                 if (applyDeletion(strategy, id, localById, context)) conflicts++
                 downloaded++
-                context.appliedIds += id.toString()
+                appliedIds += id.toString()
                 diagnostics.completed(row, attemptId, context.source, id.toString() in context.skippedIds)
             } catch (error: Exception) {
                 throwIfDeviceBlocked(error)
@@ -63,12 +84,12 @@ internal class SyncDownloadDeletionApplier(
                     throw error
                 }
                 diagnostics.failed(row, attemptId, context.source)
-                context.failedIds += id.toString()
+                failedIds += id.toString()
                 errors += SyncError(SyncErrorType.UNKNOWN_ERROR, "Failed to apply remote deletion")
                 Napier.e("Failed to apply remote deletion")
             }
         }
-        return BatchResult(downloaded, conflicts, errors)
+        return DeletionPageResult(BatchResult(downloaded, conflicts, errors), appliedIds, failedIds)
     }
 
     private suspend fun <T : Any> applyDeletion(
@@ -82,19 +103,23 @@ internal class SyncDownloadDeletionApplier(
             val existing = strategy.localItem(id)
             val version = context.rows[id.toString()]?.version
             val pending = metadata.getPendingUploads(strategy.entityType).firstOrNull { it.entityId == id.toString() }
-            val relatedEdits = relatedMemberships(strategy.entityType, id.toString()).any { it.operation != PendingOperation.DELETE }
+            val memberships = relatedMemberships(strategy.entityType, id.toString())
             val preserve =
-                existing != null &&
-                    (
-                        pending?.operation?.let { it != PendingOperation.DELETE } == true ||
-                            relatedEdits ||
-                            (version != null && strategy.syncVersionOf(existing) > version)
-                    )
+                decideRemoteDeletion(
+                    DeletionFacts(
+                        localExists = existing != null,
+                        pendingOperation = pending?.operation,
+                        hasRelatedEdits = memberships.any { it.operation != PendingOperation.DELETE },
+                        localSyncVersion = existing?.let(strategy.syncVersionOf) ?: 0L,
+                        remoteVersion = version,
+                    ),
+                ) == DeletionDecision.PRESERVE
             if (preserve) {
                 preserveConflict(strategy.entityType, id.toString())
             } else if (pending != null) {
                 check(metadata.settleIfCurrent(strategy.entityType, pending, Clock.System.now(), version ?: 0L))
             }
+            // Re-read: preserveConflict already settled the memberships it retained.
             for (membership in relatedMemberships(strategy.entityType, id.toString())) {
                 check(metadata.settleIfCurrent(EntityType.ASSOCIATION, membership, Clock.System.now(), 0L))
             }
@@ -135,5 +160,42 @@ internal class SyncDownloadDeletionApplier(
                 if (type == EntityType.NOTE) it.contentId.toString() == id else it.journalId.toString() == id
             } == true
         }
+    }
+}
+
+/** What remote deletion should do with a local item. */
+internal enum class DeletionDecision { PRESERVE, DELETE }
+
+/**
+ * Local state that determines whether a remote tombstone may remove an item.
+ *
+ * @property localExists Whether the item is still present in local storage.
+ * @property pendingOperation The item's queued upload, or null when nothing is queued.
+ * @property hasRelatedEdits Whether a queued membership change still references the item.
+ * @property localSyncVersion The sync version of the local copy; unused when [localExists] is false.
+ * @property remoteVersion The tombstone's version from the download inbox, or null when unknown.
+ */
+internal data class DeletionFacts(
+    val localExists: Boolean,
+    val pendingOperation: PendingOperation?,
+    val hasRelatedEdits: Boolean,
+    val localSyncVersion: Long,
+    val remoteVersion: Long?,
+)
+
+/**
+ * Decides whether a remote deletion must keep a local copy of the item as a conflict.
+ *
+ * A local item survives as a conflict when it carries unsent work (a create or update, or a
+ * membership edit) or is newer than the tombstone. A queued local delete agrees with the remote one.
+ */
+internal fun decideRemoteDeletion(facts: DeletionFacts): DeletionDecision {
+    if (!facts.localExists) return DeletionDecision.DELETE
+    val hasPendingEdit = facts.pendingOperation?.let { it != PendingOperation.DELETE } == true
+    val newerThanTombstone = facts.remoteVersion != null && facts.localSyncVersion > facts.remoteVersion
+    return if (hasPendingEdit || facts.hasRelatedEdits || newerThanTombstone) {
+        DeletionDecision.PRESERVE
+    } else {
+        DeletionDecision.DELETE
     }
 }
