@@ -32,6 +32,23 @@ internal data class ChangesPage<T>(
  * Everything [SyncDownloadEngine] needs to know about one [EntityType] to run the shared
  * download-paginate-resolve-conflicts sequence: how to fetch a page, read an item's identity
  * and versioning, resolve a conflict, and apply the outcome locally.
+ *
+ * @property entityType The metadata entity type tracked for pending uploads and sync cursors.
+ * @property logLabel Human-readable singular entity name used in logs and error messages.
+ * @property fetchChanges Fetches one page of changes and tombstones after the given cursor.
+ * @property localItem Reads the current local copy of an item by its id, or null if absent.
+ * @property idOf Extracts the unique identifier from a domain item.
+ * @property syncVersionOf Extracts the sync version recorded on a domain item.
+ * @property lastUpdatedOf Extracts the last-modified timestamp from a domain item.
+ * @property conflictResolver Resolves a concurrent edit when both local and remote copies changed.
+ * @property applyCreate Persists a newly downloaded item locally.
+ * @property applyReplace Replaces an existing local item with the resolved remote or merged copy.
+ * @property applyDelete Deletes the local item identified by a remote tombstone.
+ * @property hydrate Fetches any additional remote payload needed before persisting an item.
+ * @property afterDelete Runs post-delete cleanup inside the deletion transaction.
+ * @property sameUploadedFields Returns true when local and remote copies already carry the same synced fields.
+ * @property sameCreateBaseFields Returns true when a pending local create matches the remote record's base fields.
+ * @property acknowledgeUpload Settles a pending upload when a remote record already reflects it.
  */
 internal class DownloadStrategy<T : Any>(
     val entityType: EntityType,

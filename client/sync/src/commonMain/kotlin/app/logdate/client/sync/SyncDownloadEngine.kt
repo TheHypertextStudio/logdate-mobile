@@ -35,27 +35,18 @@ import kotlin.uuid.Uuid
  *   download failure is reported identically to an upload failure.
  */
 internal class SyncDownloadEngine(
-    private val transactionManager: SyncTransactionManager,
-    private val syncMetadataService: SyncMetadataService,
+    internal val transactionManager: SyncTransactionManager,
+    internal val syncMetadataService: SyncMetadataService,
     private val conflictStore: SyncConflictStore,
     private val mapCloudApiError: (CloudApiException) -> SyncResult,
     private val mapException: (Exception, String) -> SyncResult,
     private val unreadableCloudRecordStore: UnreadableCloudRecordStore = InMemoryUnreadableCloudRecordStore(),
-    private val downloadInbox: DownloadInbox? = null,
+    internal val downloadInbox: DownloadInbox? = null,
     private val diagnosticSource: () -> DiagnosticSource? = { null },
     private val diagnostics: (SyncDiagnosticEvent, DiagnosticSource?) -> Unit = { _, _ -> },
     private val retainDeletedEdit: suspend (EntityType, String) -> Unit = { _, _ -> error("Recovery storage unavailable") },
 ) {
-    private val recordDiagnostics = SyncDownloadRecordDiagnostics(::report)
-    private val deletionApplier =
-        SyncDownloadDeletionApplier(
-            transactionManager,
-            syncMetadataService,
-            downloadInbox,
-            ::ensureScope,
-            retainDeletedEdit,
-            recordDiagnostics,
-        )
+    internal val recordDiagnostics = SyncDownloadRecordDiagnostics(::report)
 
     private fun report(
         event: SyncDiagnosticEvent,
@@ -359,14 +350,17 @@ internal class SyncDownloadEngine(
                         }
 
                         val deletionResult =
-                            deletionApplier.apply(
+                            applyRemoteDeletions(
                                 strategy,
                                 page.deletions,
-                                DownloadDeletionContext(rows, downloadScope, source, appliedIds, skippedIds, failedIds),
+                                DownloadDeletionContext(rows, downloadScope, source, skippedIds),
                             )
-                        downloadedCount += deletionResult.downloadedCount
-                        conflictsResolved += deletionResult.conflictsResolved
-                        batchErrors += deletionResult.errors
+                        appliedIds += deletionResult.appliedIds
+                        skippedIds += deletionResult.skippedIds
+                        failedIds += deletionResult.failedIds
+                        downloadedCount += deletionResult.batch.downloadedCount
+                        conflictsResolved += deletionResult.batch.conflictsResolved
+                        batchErrors += deletionResult.batch.errors
 
                         BatchResult(downloadedCount, conflictsResolved, batchErrors)
                     }
@@ -471,14 +465,20 @@ internal class SyncDownloadEngine(
             mapException(e, "Download ${strategy.logLabel}s")
         }
 
-    private fun ensureScope(selected: app.logdate.client.sync.recovery.DownloadScope?) {
+    internal fun ensureScope(selected: app.logdate.client.sync.recovery.DownloadScope?) {
         if (selected != null && selected != downloadInbox?.currentScope()) throw CancellationException("Download scope changed")
     }
 
     suspend fun preserveDeletionConflict(
         entityType: EntityType,
         entityId: String,
-    ) = deletionApplier.preserveConflict(entityType, entityId)
+    ) = preserveRemoteDeletionConflict(
+        transactionManager,
+        syncMetadataService,
+        retainDeletedEdit,
+        entityType,
+        entityId,
+    )
 
     internal suspend fun retainConflict(
         record: SyncConflictRecord,
