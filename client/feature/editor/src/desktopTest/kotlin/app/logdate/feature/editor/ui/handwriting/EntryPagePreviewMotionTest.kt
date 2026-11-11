@@ -3,6 +3,7 @@ package app.logdate.feature.editor.ui.handwriting
 import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -26,8 +27,17 @@ class EntryPagePreviewMotionTest(
     fun focusAndReturn() =
         runDesktopComposeUiTest(width = width, height = height) {
             val posture = if (name == "book") FoldablePosture.Book else FoldablePosture.Standard
-            setContent { EntryPageStudy(fold = foldFixture(posture, width, height)) }
+            val page = EntryPageOverviewState(false)
+            setContent { EntryPageStudy(fold = foldFixture(posture, width, height), overviewStateOverride = page) }
             waitForIdle()
+            val previewTop = onNodeWithTag("handwriting_preview").getUnclippedBoundsInRoot().top.value
+            runOnIdle {
+                kotlinx.coroutines.runBlocking {
+                    page.scroll.scrollTo(
+                        (page.scroll.value + previewTop - 160).toInt().coerceAtLeast(0),
+                    )
+                }
+            }
             val output = File("build/reports/entry-page-motion/$name").apply { mkdirs() }
             var index = 0
 

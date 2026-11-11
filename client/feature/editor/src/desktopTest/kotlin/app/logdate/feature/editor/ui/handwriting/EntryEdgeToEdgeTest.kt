@@ -33,6 +33,7 @@ import app.logdate.feature.editor.ui.blocks.MemoryCaptionField
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
+import app.logdate.feature.editor.ui.layout.LocalEntryContentBottom
 import app.logdate.feature.editor.ui.layout.LocalEntryContentInsets
 import app.logdate.feature.editor.ui.layout.clipEntryContentToSafeWindow
 import app.logdate.feature.editor.ui.state.BlocksUiState
@@ -52,6 +53,48 @@ import kotlin.time.Clock
 
 @OptIn(ExperimentalTestApi::class)
 class EntryEdgeToEdgeTest {
+    @Test
+    fun partiallyVisibleReadingOwnerKeepsItsHeadingButHidesClippedActionUntilBoundaryMoves() =
+        runDesktopComposeUiTest(width = 400, height = 800) {
+            val boundary = mutableStateOf(544f)
+            var clicks = 0
+            setContent {
+                CompositionLocalProvider(LocalEntryContentBottom provides boundary.value) {
+                    Box(
+                        Modifier
+                            .absoluteOffset(y = 500.dp)
+                            .size(150.dp)
+                            .testTag("partial_owner")
+                            .clipEntryContentToSafeWindow(),
+                    ) {
+                        Box(Modifier.size(24.dp).testTag("reading_heading").clipEntryContentToSafeWindow())
+                        Box(
+                            Modifier
+                                .absoluteOffset(
+                                    y = 60.dp,
+                                ).size(48.dp)
+                                .testTag("reading_action")
+                                .clipEntryContentToSafeWindow()
+                                .clickable { clicks++ },
+                        )
+                    }
+                }
+            }
+            val heading = onNodeWithTag("reading_heading")
+            val action = onNodeWithTag("reading_action")
+            val identity = action.fetchSemanticsNode().id
+            assertTrue(!heading.fetchSemanticsNode().config.contains(SemanticsProperties.HideFromAccessibility))
+            assertTrue(!onNodeWithTag("partial_owner").fetchSemanticsNode().config.contains(SemanticsProperties.HideFromAccessibility))
+            assertTrue(action.fetchSemanticsNode().config.contains(SemanticsProperties.HideFromAccessibility))
+            onRoot().performTouchInput { click(Offset(24f, 580f)) }
+            assertEquals(0, clicks)
+            runOnIdle { boundary.value = 700f }
+            assertTrue(!action.fetchSemanticsNode().config.contains(SemanticsProperties.HideFromAccessibility))
+            assertEquals(identity, action.fetchSemanticsNode().id)
+            onRoot().performTouchInput { click(Offset(24f, 580f)) }
+            assertEquals(1, clicks)
+        }
+
     @Test
     fun clippedControlCannotReceivePointerInputInSystemUi() =
         runDesktopComposeUiTest(width = 400, height = 800) {

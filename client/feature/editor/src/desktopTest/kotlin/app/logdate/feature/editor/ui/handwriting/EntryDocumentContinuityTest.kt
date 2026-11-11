@@ -31,6 +31,7 @@ import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import app.logdate.feature.editor.ui.rememberRetainedEditorBlocks
 import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.ui.theme.LogDateTheme
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -151,7 +152,8 @@ class EntryDocumentContinuityTest {
                 EntryPageStudy(initialBlocks = memories, overviewStateOverride = page)
             }
             val last = onNodeWithTag("memory_block_${memories.last().id}")
-            last.performScrollTo()
+            runOnIdle { runBlocking { page.scroll.scrollTo(page.scroll.maxValue) } }
+            last.assertIsDisplayed()
             last.performSemanticsAction(SemanticsActions.OnClick) { it() }
             waitForIdle()
             val original = assertNotNull(page.focusScrollBookmark)
