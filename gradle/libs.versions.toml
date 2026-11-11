@@ -475,3 +475,8 @@ screenshot = { id = 'com.android.compose.screenshot', version.ref = 'screenshot'
 benManesVersions = { id = 'com.github.ben-manes.versions', version.ref = 'benManesVersions' }
 ktlint = { id = 'org.jlleitschuh.gradle.ktlint', version.ref = 'ktlint' }
 detekt = { id = 'dev.detekt', version.ref = 'detekt' }
+
+# LogDate Convention Plugins (build-logic)
+app-logdate-kmp-library = { id = 'app.logdate.kmp-library' }
+app-logdate-compose-feature = { id = 'app.logdate.compose-feature' }
+app-logdate-lexicon-models = { id = 'app.logdate.lexicon-models' }

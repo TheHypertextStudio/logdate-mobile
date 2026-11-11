@@ -1,11 +1,5 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.kover)
@@ -16,36 +10,17 @@ kotlin {
 
     android {
         namespace = "app.logdate.client.database"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
         withDeviceTestBuilder {}.configure {
             instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
         androidResources {
             enable = true
         }
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
 
     jvm()
 
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             // External dependencies
             api(libs.kotlinx.datetime)
@@ -61,8 +36,6 @@ kotlin {
             implementation(libs.sqlcipher.android)
         }
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
             implementation(libs.room.testing)
         }
         findByName("androidHostTest")?.dependencies {

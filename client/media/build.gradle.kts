@@ -1,9 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
-    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.dokka)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
@@ -12,15 +8,6 @@ plugins {
 kotlin {
     android {
         namespace = "app.logdate.client.media"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
         androidResources {
             enable = true
         }
@@ -30,23 +17,13 @@ kotlin {
                 file("proguard-rules.pro")
             }
         }
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
 
     jvm("desktop")
 
     sourceSets {
         val desktopMain by getting
 
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
@@ -69,10 +46,6 @@ kotlin {
             // Repository
             implementation(projects.client.repository)
             implementation(projects.client.util)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
         }
         androidMain.dependencies {
             implementation(projects.client.device)
