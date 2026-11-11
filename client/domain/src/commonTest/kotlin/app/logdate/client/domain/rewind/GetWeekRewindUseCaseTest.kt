@@ -189,8 +189,9 @@ class GetWeekRewindUseCaseTest {
             assertTrue(params.start <= params.end)
 
             val timeDifference = params.end.toEpochMilliseconds() - params.start.toEpochMilliseconds()
-            val expectedWeekMs = 7 * 24 * 60 * 60 * 1000L
-            assertTrue(timeDifference <= expectedWeekMs)
+            // 7 days in milliseconds, with an extra hour tolerance for daylight saving "fall back" transitions
+            val maxWeekMs = (7 * 24 + 1) * 60 * 60 * 1000L
+            assertTrue(timeDifference <= maxWeekMs)
         }
 
     @Test
