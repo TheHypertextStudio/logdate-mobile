@@ -8,6 +8,8 @@ on:
   pull_request:
     branches: [main, develop]
     paths-ignore: ['**/*.md', 'docs/**']
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read

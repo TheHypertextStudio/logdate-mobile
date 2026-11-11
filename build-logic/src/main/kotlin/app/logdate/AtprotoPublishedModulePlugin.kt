@@ -1,5 +1,6 @@
 package app.logdate
 
+import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import groovy.util.Node
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -7,10 +8,12 @@ import org.gradle.api.Project
 import org.gradle.api.XmlProvider
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.artifacts.repositories.PasswordCredentials
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.plugins.signing.SigningExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 private const val DEFAULT_ATPROTO_GROUP = "studio.hypertext.atproto"
 private const val DEFAULT_ATPROTO_VERSION = "0.1.0"
@@ -61,9 +64,15 @@ private const val ORG_URL = "https://thehypertext.studio"
 class AtprotoPublishedModulePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
+            pluginManager.apply(KmpLibraryPlugin::class.java)
+            pluginManager.apply("org.jetbrains.kotlinx.kover")
             pluginManager.apply("org.jetbrains.dokka")
             pluginManager.apply("maven-publish")
             pluginManager.apply("signing")
+
+            extensions.configure(KotlinMultiplatformExtension::class.java) {
+                jvm()
+            }
 
             group = propertyOrEnv("atproto.group", "ATPROTO_GROUP") ?: DEFAULT_ATPROTO_GROUP
             version = envOrProperty("ATPROTO_VERSION", "atproto.version") ?: DEFAULT_ATPROTO_VERSION
