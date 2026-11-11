@@ -1,6 +1,6 @@
 plugins {
     id("app.logdate.settings-ui")
-    id("app.logdate.compose-feature")
+    alias(libs.plugins.app.logdate.compose.feature)
 }
 
 kotlin {

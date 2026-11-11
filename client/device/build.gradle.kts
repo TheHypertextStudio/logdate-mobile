@@ -1,12 +1,8 @@
 
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.dokka)
     alias(libs.plugins.buildConfig)
-    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
@@ -14,25 +10,10 @@ kotlin {
 
     android {
         namespace = "app.logdate.client.device"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
         withDeviceTestBuilder {}.configure {
             instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
 
     jvm("desktop")
 
@@ -40,10 +21,6 @@ kotlin {
         val desktopMain by getting
         val desktopTest by getting
 
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             implementation(projects.shared.model)
             implementation(projects.shared.config)
@@ -60,8 +37,6 @@ kotlin {
             implementation(libs.napier)
         }
         commonTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
             implementation(libs.ktor.client.mock)
         }
         androidMain.dependencies {

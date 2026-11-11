@@ -1,11 +1,5 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
 }
@@ -13,37 +7,14 @@ plugins {
 kotlin {
     android {
         namespace = "app.logdate.client.screenshot.scenes"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
         androidResources {
             enable = true
         }
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
 
     jvm("desktop")
 
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
-
         val desktopMain by getting
 
         commonMain.dependencies {
@@ -68,10 +39,6 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.kotlinx.datetime)
-        }
-
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
         }
 
         desktopMain.dependencies {

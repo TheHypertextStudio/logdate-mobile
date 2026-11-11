@@ -1,14 +1,7 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.kotlinx.serialization)
     // TODO: Re-enable once we can figure out why Modifier is an unresolved reference
     alias(libs.plugins.dokka)
 }
@@ -59,15 +52,6 @@ tasks.matching { it.name == "check" || it.name == "ktlintCheck" }.configureEach 
 kotlin {
     android {
         namespace = "app.logdate.client.ui"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
         androidResources {
             enable = true
         }
@@ -77,24 +61,11 @@ kotlin {
                 file("proguard-rules.pro")
             }
         }
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
 
     jvm("desktop")
 
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
-
         val desktopMain by getting
 
         commonMain.dependencies {
