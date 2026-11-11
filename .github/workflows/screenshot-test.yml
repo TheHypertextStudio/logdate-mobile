@@ -33,6 +33,8 @@ on:
       - 'gradle/**'
       - '*.gradle.kts'
       - 'gradle.properties'
+  merge_group:
+    types: [checks_requested]
 
 # A newer push to the same pull request makes the older run moot, and every
 # lane holds a scarce macOS runner. Runs on main are never cancelled once they

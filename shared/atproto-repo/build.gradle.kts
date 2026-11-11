@@ -1,14 +1,5 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    id("app.logdate.atproto-published-module")
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
-    alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.kover)
+    alias(libs.plugins.app.logdate.atproto.published.module)
 }
 
 description = "Kotlin Multiplatform AT Protocol repository record primitives."
@@ -18,25 +9,7 @@ kotlin {
 
     android {
         namespace = "studio.hypertext.atproto.repo"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
     }
-
-    iosArm64()
-    iosSimulatorArm64()
-
-    jvm()
 
     sourceSets {
         commonMain.dependencies {
@@ -46,10 +19,6 @@ kotlin {
             api(libs.kotlinx.serialization.json)
             api(libs.okio)
             implementation(libs.napier)
-        }
-
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
         }
 
         jvmTest.dependencies {
