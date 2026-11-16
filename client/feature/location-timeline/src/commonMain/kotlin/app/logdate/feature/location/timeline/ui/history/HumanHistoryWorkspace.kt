@@ -102,9 +102,15 @@ internal fun HumanHistoryWorkspace(
         focus = { mapContent(Modifier.fillMaxSize()) },
         supporting = {
             when {
-                supportingDetail != null -> supportingDetail()
-                state.detailVisible && state.selectedItem != null -> HistoryDetail(state.selectedItem!!, actions)
-                state.tab == HistoryTab.Places ->
+                supportingDetail != null -> {
+                    supportingDetail()
+                }
+
+                state.detailVisible && state.selectedItem != null -> {
+                    HistoryDetail(state.selectedItem!!, actions)
+                }
+
+                state.tab == HistoryTab.Places -> {
                     HistoryPlacesList(
                         state,
                         actions,
@@ -112,7 +118,9 @@ internal fun HumanHistoryWorkspace(
                         modifier = if (mapAvailable) Modifier else Modifier.widthIn(max = 720.dp).fillMaxWidth(),
                         mapAvailable = mapAvailable,
                     ) { HistoryRecovery(state, actions) }
-                else ->
+                }
+
+                else -> {
                     HistoryDayList(state, actions, Modifier.fillMaxSize(), listState = listState) {
                         HistoryRecovery(state, actions)
                         HistoryDateHeader(state, actions)
@@ -125,6 +133,7 @@ internal fun HumanHistoryWorkspace(
                         ) { Text(stringResource(if (replayVisible) Res.string.history_close_replay else Res.string.history_replay)) }
                         if (replayVisible) HistoryReplay(state, actions)
                     }
+                }
             }
         },
     )

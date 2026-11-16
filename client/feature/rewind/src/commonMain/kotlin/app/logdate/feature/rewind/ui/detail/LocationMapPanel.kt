@@ -158,13 +158,20 @@ private fun MapBackdrop(
 ) {
     Box(modifier) {
         when {
-            geometry.points.isEmpty() ->
+            geometry.points.isEmpty() -> {
                 RewindMapMessage(
                     stringResource(Res.string.rewind_map_no_locations),
                     Modifier.align(Alignment.Center),
                 )
-            !layoutReady -> RewindMapMessage(stringResource(Res.string.rewind_map_loading), Modifier.align(Alignment.Center))
-            else -> RewindGeographicMap(geometry, contentInsets, Modifier.fillMaxSize())
+            }
+
+            !layoutReady -> {
+                RewindMapMessage(stringResource(Res.string.rewind_map_loading), Modifier.align(Alignment.Center))
+            }
+
+            else -> {
+                RewindGeographicMap(geometry, contentInsets, Modifier.fillMaxSize())
+            }
         }
     }
 }

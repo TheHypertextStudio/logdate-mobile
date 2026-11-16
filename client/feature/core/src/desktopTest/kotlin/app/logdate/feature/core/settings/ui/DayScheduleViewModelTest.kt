@@ -65,9 +65,18 @@ class DayScheduleViewModelTest {
                             checks++
                             HealthDataAvailability.AVAILABLE
                         }
-                        "hasSleepPermissions" -> granted
-                        "toString" -> "Mutable test health provider"
-                        else -> error("Unexpected health operation: ${method.name}")
+
+                        "hasSleepPermissions" -> {
+                            granted
+                        }
+
+                        "toString" -> {
+                            "Mutable test health provider"
+                        }
+
+                        else -> {
+                            error("Unexpected health operation: ${method.name}")
+                        }
                     }
                 } as LocalFirstHealthRepository
             val model =

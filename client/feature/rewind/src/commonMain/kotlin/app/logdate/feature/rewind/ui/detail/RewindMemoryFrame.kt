@@ -83,9 +83,15 @@ fun RewindMemoryFrame(
                 }
             Box(Modifier.matchParentSize().then(statusInput), contentAlignment = Alignment.Center) {
                 when (loadState) {
-                    RewindMemoryLoadState.Loading -> CircularProgressIndicator(color = Color.White)
-                    RewindMemoryLoadState.Ready -> Unit
-                    RewindMemoryLoadState.Unavailable ->
+                    RewindMemoryLoadState.Loading -> {
+                        CircularProgressIndicator(color = Color.White)
+                    }
+
+                    RewindMemoryLoadState.Ready -> {
+                        Unit
+                    }
+
+                    RewindMemoryLoadState.Unavailable -> {
                         Text(
                             description,
                             style = MaterialTheme.typography.bodyLarge,
@@ -97,6 +103,7 @@ fun RewindMemoryFrame(
                                     ).background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(12.dp))
                                     .padding(16.dp),
                         )
+                    }
                 }
             }
         }

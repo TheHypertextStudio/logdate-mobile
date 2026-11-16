@@ -1,9 +1,9 @@
 package app.logdate.feature.core.settings.ui.devices
 
-import app.logdate.client.text.toUiText
 import app.logdate.client.device.identity.DefaultDeviceManager
 import app.logdate.client.device.models.DeviceInfo
 import app.logdate.client.device.models.DevicePlatform
+import app.logdate.client.text.toUiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,7 +46,11 @@ class DevicesOperationStateTest {
         repository.addAssociatedDevice(deviceInfo(otherId, "Other device", DevicePlatform.IOS))
         repository.addAssociatedDevice(deviceInfo(secondId, "Second device", DevicePlatform.WEB))
         idProvider = FakeDeviceIdProvider(currentId)
-        viewModel = DevicesViewModel(DefaultDeviceManager(idProvider, repository, "This device", DevicePlatform.ANDROID, "1.0"), unavailableLinkedDevices)
+        viewModel =
+            DevicesViewModel(
+                DefaultDeviceManager(idProvider, repository, "This device", DevicePlatform.ANDROID, "1.0"),
+                unavailableLinkedDevices,
+            )
         viewModel.loadDevices()
     }
 

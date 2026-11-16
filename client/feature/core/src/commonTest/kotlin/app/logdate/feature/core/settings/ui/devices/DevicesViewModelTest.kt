@@ -1,8 +1,8 @@
 package app.logdate.feature.core.settings.ui.devices
 
+import androidx.lifecycle.viewModelScope
 import app.logdate.client.device.identity.DefaultDeviceManager
 import app.logdate.client.device.models.DevicePlatform
-import androidx.lifecycle.viewModelScope
 import app.logdate.client.sync.peer.devices.LinkedDeviceRemoval
 import app.logdate.client.sync.peer.devices.LinkedDeviceSession
 import app.logdate.client.sync.peer.devices.LinkedDevicesFailure
@@ -10,15 +10,10 @@ import app.logdate.client.sync.peer.devices.LinkedDevicesLoad
 import app.logdate.client.sync.peer.devices.LinkedDevicesRepository
 import app.logdate.client.text.UiText
 import app.logdate.client.text.toUiText
-import kotlinx.coroutines.cancel
-import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.devices_fallback_name
-import logdate.client.feature.core.generated.resources.devices_platform_android
-import logdate.client.feature.core.generated.resources.devices_platform_wear_os
-import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -27,6 +22,10 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.devices_fallback_name
+import logdate.client.feature.core.generated.resources.devices_platform_android
+import logdate.client.feature.core.generated.resources.devices_platform_wear_os
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -38,6 +37,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**
@@ -377,6 +377,7 @@ class DevicesViewModelTest {
             repository.registrationFailure = CancellationException("Cancelled")
             assertFailsWith<CancellationException> { deviceManager.registerWithCloud() }
         }
+
     @Test
     fun `linked devices stay hidden while linking is unavailable`() =
         testScope.runTest {
@@ -593,5 +594,4 @@ class DevicesViewModelTest {
             }
         }
     }
-
 }
