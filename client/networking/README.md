@@ -1,267 +1,63 @@
 # `:client:networking`
 
-**Network layer implementation with Ktor**
+This module is the client's network layer. It provides the shared Ktor `HttpClient`, the clients for the LogDate server's HTTP APIs, a connectivity monitor, and a data usage policy that tells other modules how much network work is appropriate right now. Sync, media, intelligence, permissions and the account features all call the server through it.
 
-## Overview
+## What it contains
 
-Handles all network communications including API calls, authentication, and network state monitoring. Provides offline-first networking with retry mechanisms and intelligent request handling.
+All code lives under `app.logdate.client.networking`.
 
-## Architecture
+**HTTP client**
 
-```
-Networking Module
-├── HTTP Client (Ktor)
-├── API Service Implementations
-├── Network Availability Monitoring
-├── Request/Response Interceptors
-└── Platform-specific Clients
-```
+- `httpClient` is an `expect val` with one `actual` per platform. Android uses the Ktor Android engine, the JVM uses OkHttp, iOS uses Darwin, and wasmJs uses the JS engine. Every platform applies `configureClientDefaults()`, which sets a 15 second connect timeout, a 60 second socket timeout and no overall request limit (uploads can run long), and installs JSON content negotiation with `ignoreUnknownKeys` and a contextual `Uuid` serializer.
+- `createNativeRestoreHttpClient()` on Android builds a separate client that does not follow redirects and uses short timeouts. Its caller owns it, so closing it cannot stop the application's shared client; `:client:data` uses it for native account recovery jobs.
 
-## Key Components
+**Server API clients.** Each has a Ktor-backed implementation, and most are declared through an interface named `...Contract`. Most calls return `Result` so callers can tell transport failures from server answers; `LocationHistoryApiClient` returns values directly and throws `LocationHistoryTransportException` on an HTTP failure.
 
-### Core Networking
-- `Client.kt` - Common HTTP client interface
-- `NetworkAvailabilityMonitor.kt` - Network state monitoring
-- `NetworkState.kt` - Network state definitions
+| Client                        | Purpose                                                                                                                                                                                                                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PasskeyApiClient`            | Username availability, passkey account creation and authentication, Google sign-up and sign-in, token refresh and logout, account info, entitlement and profile updates, passkey listing, adding and deletion, restore key registration and restore sign-in, and account deletion. |
+| `DeviceEnrollmentApiClient`   | Creating, approving and rejecting a device enrollment, and issuing the new device its session tokens.                                                                                                                                                                              |
+| `DeviceLinkApiClient`         | Minting, redeeming and removing device link codes under `/auth/devices`.                                                                                                                                                                                                           |
+| `EmailVerificationApiClient`  | The begin and complete steps of Android Digital Credentials email verification.                                                                                                                                                                                                    |
+| `IdentityApiClient`           | AT Protocol identity status, hosted PLC operations, and signing key export, rotation, import and recovery.                                                                                                                                                                         |
+| `AccountKeyEnvelopeApi`       | Checking whether the server supports account key envelopes, and fetching and storing one per credential.                                                                                                                                                                           |
+| `LocationHistoryApiClient`    | Uploading encrypted location history records and reading changes since a cursor.                                                                                                                                                                                                   |
+| `QuotaApiClient`              | The signed-in user's storage quota usage.                                                                                                                                                                                                                                          |
+| `PlanCatalogClient`           | The plans a server offers, readable without an account.                                                                                                                                                                                                                            |
+| `CloudTranscriptionApiClient` | Reserving a realtime transcription session lease.                                                                                                                                                                                                                                  |
+| `ServerDiscoveryClient`       | Identifying a LogDate server and reporting a `DiscoveryFailure` (`UNREACHABLE`, `NOT_RESPONDING` or `UNREADABLE`).                                                                                                                                                                 |
+| `ServerHealthChecker`         | A health check against a server base URL.                                                                                                                                                                                                                                          |
 
-### Platform Implementations
-- `Client.android.kt` - Android HTTP client with OkHttp
-- `Client.ios.kt` - iOS HTTP client with Darwin
-- `Client.jvm.kt` - Desktop HTTP client
-- `Client.wasmJs.kt` - Web client implementation
+`DeviceApprovalCode` is the value type for the code a person checks while approving a device; it has `parse` and `verify`.
 
-### Network Monitoring
-- `AndroidNetworkAvailabilityMonitor.kt` - Android connectivity
-- `DesktopNetworkAvailabilityMonitor.kt` - Desktop connectivity
-- Real-time network state updates
+**Connectivity and data usage**
 
-## Features
+- `NetworkAvailabilityMonitor` reports `isNetworkAvailable()` and a `SharedFlow<NetworkState>`. `NetworkState` is `Connected` or `NotConnected`, each with a `lastConnected` instant. Implementations are `AndroidNetworkAvailabilityMonitor`, `DesktopNetworkAvailabilityMonitor` and `IosNetworkAvailabilityMonitor`.
+- `NetworkSaverModeProvider` and `NetworkSaverState` (package `saver`) describe Android's background data status, the active connection type, whether it is metered and whether the system validated it. The interface is owned here so this module can consume it without depending on the sensor module, which supplies the platform implementations. `ConfigurableNetworkSaverModeProvider` is a settable implementation for platforms and tests without data saver detection.
+- `DataUsagePolicy` turns that state into a `DataUsageMode`: `Unrestricted` (an unmetered connection such as Wi-Fi or Ethernet), `Conservative` (a metered connection such as cellular, or a watch's Bluetooth link through its phone) or `Restricted` (no connection, or data saver on while the connection is metered or a Bluetooth link). `DefaultDataUsagePolicy` is the implementation. Extension functions such as `shouldSyncMedia()`, `shouldSyncMetadata()` and `shouldAllowAICalls()` answer the common questions, and `currentRestriction()` returns a `DataRestriction` (`NONE`, `OFFLINE` or `BACKGROUND_DATA_BLOCKED`) so the UI can say why nothing is happening.
 
-### HTTP Client Configuration
-- Platform-optimized client implementations
-- Automatic request/response serialization
-- Authentication header management
-- Request timeout configuration
+**Dependency injection.** `networkingModule` is an `expect val` Koin module. Each platform binds `httpClient`, `NetworkAvailabilityMonitor` (not on wasmJs), `DataUsagePolicy`, `ServerHealthChecker`, `ServerDiscoveryClient`, `PlanCatalogClient` and `CloudTranscriptionApiClientContract`. The other API clients are constructed by the modules that use them.
 
-### Network State Management
-- Real-time connectivity monitoring
-- Network type detection (WiFi, cellular, etc.)
-- Bandwidth-aware request scheduling
-- Offline state handling
+## How it fits with other modules
 
-### Request Handling
-- Automatic retry mechanisms
-- Request queuing for offline scenarios
-- Response caching strategies
-- Error handling and recovery
+The module depends on `:shared:model`, `:shared:config` and `:client:util`, and on Ktor, kotlinx.serialization, kotlinx.datetime, Koin and Napier. It exposes the Ktor content negotiation and serialization libraries as `api` dependencies.
 
-## Dependencies
+`:client:sync`, `:client:domain`, `:client:data`, `:client:intelligence`, `:client:media`, `:client:permissions`, `:client:sensor`, `:client:feature:core`, `:client:feature:timeline`, `:integration:server-client-e2e` and the three app modules depend on it.
 
-### Core Dependencies
-- **Ktor Client**: HTTP client framework
-- **Kotlinx Serialization**: JSON serialization
-- **Kotlinx Coroutines**: Async operations
+## Platforms
 
-### Platform Dependencies
-- **Android**: OkHttp engine
-- **iOS**: Darwin engine
-- **JVM**: CIO engine
-- **Web**: JS engine
+Android, JVM (desktop), iOS (`iosArm64` and `iosSimulatorArm64`) and wasmJs (browser).
 
-## Network Architecture
+## Running the tests
 
-### Request Flow
-```
-Repository
-    ↓
-HTTP Client
-    ↓
-Network Interceptors
-    ↓
-Platform Engine
-    ↓
-Remote API
-```
-
-### Offline Handling
-```
-Request → Network Check → Cache/Queue → Retry → Response
-                ↓              ↓         ↓
-            Offline        Local Cache  Success
-```
-
-## Configuration
-
-### Client Setup
-```kotlin
-val httpClient = HttpClient(platformEngine) {
-    install(ContentNegotiation) {
-        json()
-    }
-    install(Logging)
-    install(HttpTimeout)
-}
-```
-
-### Network Monitoring
-```kotlin
-networkMonitor.networkState.collect { state ->
-    when (state) {
-        is NetworkState.Available -> enableSync()
-        is NetworkState.Unavailable -> disableSync()
-    }
-}
-```
-
-## Testing
-
-### Test Structure
-The networking module includes comprehensive test coverage with 66 test cases across 5 test files:
-
-```
-networking/src/commonTest/kotlin/
-├── HttpClientTest.kt (14 tests)
-├── NetworkAvailabilityMonitorTest.kt (12 tests)  
-├── NetworkStateTest.kt (14 tests)
-├── NetworkErrorHandlingTest.kt (16 tests)
-├── PlatformSpecificNetworkingTest.kt (10 tests)
-└── fakes/
-    └── FakeNetworkAvailabilityMonitor.kt
-```
-
-### Test Coverage
-
-#### HTTP Client Testing (`HttpClientTest.kt`)
-- **JSON Serialization**: Tests request/response JSON parsing and content negotiation
-- **HTTP Methods**: Validates GET, POST, PUT, DELETE operations with MockEngine
-- **Error Handling**: Tests various HTTP status codes (4xx, 5xx) and network failures
-- **Timeout Handling**: Validates request timeout behavior and configuration
-- **Configuration**: Tests client setup, logging, and plugin installation
-
-#### Network Monitoring Testing (`NetworkAvailabilityMonitorTest.kt`)
-- **State Changes**: Tests network state transitions and real-time updates
-- **Interface Compliance**: Validates contract implementation across platforms
-- **Flow Behavior**: Tests Flow emissions and subscription handling
-- **Timestamp Accuracy**: Validates state change timing and metadata
-
-#### Network State Testing (`NetworkStateTest.kt`)
-- **Sealed Interface**: Tests state definitions and type safety
-- **Equality & Hashing**: Validates proper data class behavior
-- **Immutability**: Tests state object consistency
-- **Timestamp Handling**: Tests instant-based state tracking
-
-#### Error Handling Testing (`NetworkErrorHandlingTest.kt`)
-- **HTTP Status Codes**: Tests 400, 401, 403, 404, 500, 503 error scenarios
-- **Network Exceptions**: Tests connectivity, timeout, and DNS failures
-- **Retry Mechanisms**: Validates exponential backoff and retry strategies
-- **Circuit Breaker**: Tests failure thresholds and recovery patterns
-
-#### Platform-Specific Testing (`PlatformSpecificNetworkingTest.kt`)
-- **Expect/Actual Pattern**: Tests platform interface consistency
-- **Engine Configuration**: Validates platform-specific HTTP client setup
-- **Cross-Platform Behavior**: Tests common functionality across platforms
-- **Interface Contracts**: Validates platform implementation compliance
-
-### Test Infrastructure
-
-#### Mock Engine Setup
-```kotlin
-val mockEngine = MockEngine { request ->
-    respond(
-        content = ByteReadChannel("""{"key": "value"}"""),
-        status = HttpStatusCode.OK,
-        headers = headersOf(HttpHeaders.ContentType, "application/json")
-    )
-}
-```
-
-#### Fake Network Monitor
-```kotlin
-class FakeNetworkAvailabilityMonitor : NetworkAvailabilityMonitor {
-    fun setConnected() { /* Controllable state changes */ }
-    fun setDisconnected() { /* For deterministic testing */ }
-}
-```
-
-### Running Tests
-
-#### All Tests
-
-From the project root, run:
+The shared tests in `commonTest` use the Ktor mock engine and run on the JVM and on Android host tests. `androidHostTest` adds a test for `AndroidNetworkAvailabilityMonitor`.
 
 ```bash
-./gradlew :client:networking:test
+./gradlew :client:networking:jvmTest
+./gradlew :client:networking:testAndroidHostTest
 ```
 
-#### Specific Test Classes
+## Things to know
 
-From the project root, run:
-
-```bash
-./gradlew :client:networking:test --tests "HttpClientTest"
-./gradlew :client:networking:test --tests "NetworkErrorHandlingTest"
-```
-
-#### Test Reports
-Test coverage reports are generated at:
-```
-client/networking/build/reports/tests/test/index.html
-```
-
-### Test Dependencies
-```kotlin
-// HTTP Client Mocking
-implementation(libs.ktor.client.mock)
-
-// Coroutine Testing
-implementation(libs.kotlinx.coroutines.test)
-
-// Dependency Injection Testing
-implementation(libs.koin.test)
-
-// Test Framework
-implementation(libs.kotlin.test)
-```
-
-### Best Practices
-
-#### Mock Data
-- Use realistic JSON response structures
-- Test both success and error scenarios
-- Include edge cases (empty responses, malformed JSON)
-
-#### Async Testing
-```kotlin
-@Test
-fun testNetworkCall() = runTest {
-    val result = httpClient.get("https://example.com/data")
-    assertEquals(HttpStatusCode.OK, result.status)
-}
-```
-
-#### State Testing
-```kotlin
-@Test
-fun testNetworkStateChanges() = runTest {
-    val monitor = FakeNetworkAvailabilityMonitor()
-    monitor.setConnected()
-    assertTrue(monitor.networkState.value is NetworkState.Connected)
-}
-```
-
-## TODOs
-
-### Core Features
-- [ ] Implement request caching strategies
-- [ ] Implement retry strategies with exponential backoff
-- [ ] Implement certificate pinning for security
-- [ ] Add request batching for efficiency
-
-### Performance & Reliability
-- [ ] Add request/response compression
-- [ ] Implement adaptive timeout strategies
-- [ ] Add circuit breaker pattern
-
-### Security & Monitoring
-- [ ] Implement request authentication refresh
-- [ ] Add basic network error analytics
+- The shared client never sends request bodies, headers or URLs to a logging sink. Ktor's general logger would include private origins, resource IDs, cookies and query values, so operation diagnostics are emitted separately by the sync module through an allowlisted event contract.
+- Authenticated calls take the access token as a parameter, so the caller chooses which session a request runs under.

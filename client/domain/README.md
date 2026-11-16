@@ -1,167 +1,56 @@
 # `:client:domain`
 
-**Business logic and use case implementation for the application**
+This module holds LogDate's application logic. Use cases such as `AddNoteUseCase` and `GetStreamingTimelineUseCase` read and write through the repository interfaces in `:client:repository`, combine data from the location, media, intelligence and sync modules, and expose plain Kotlin flows and suspend functions. View models in the feature modules call these use cases, and the Koin modules in this module wire them together.
 
-## Overview
+## What it contains
 
-Implements the core business logic of the application through use cases, following clean architecture principles. This module serves as the bridge between the UI layer and the data layer, containing all the application's business rules and behaviors.
+Everything is under `app.logdate.client.domain`, one package per area of the app.
 
-## Architecture
+| Package                                           | What it holds                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `notes`, `notes/drafts`                           | Creating, fetching and removing notes (`AddNoteUseCase`, `FetchNotesForDayUseCase`, `RemoveNoteUseCase`) and the editor draft lifecycle (`CreateEntryDraftUseCase`, `UpdateEntryDraftUseCase`, `CleanupExpiredDraftsUseCase`).                                                                                                            |
+| `editor`                                          | `SaveEntryUseCase` and `ObserveEditorDataUseCase`, which load and save what the editor shows.                                                                                                                                                                                                                                             |
+| `journals`                                        | Journal queries, updates, deletion, `MergeJournalsUseCase` and `SuggestJournalsUseCase`.                                                                                                                                                                                                                                                  |
+| `timeline`                                        | `GetStreamingTimelineUseCase`, which shows the newest entries first and enriches their days afterwards, `GetTimelinePageUseCase`, `GetDayBoundsUseCase`, `GroupNotesByDayBoundsUseCase`, `SummarizeJournalEntriesUseCase` and `InferMomentsUseCase`.                                                                                      |
+| `dayboundary`                                     | The person's day-boundary settings (`DayBoundarySettings`). A day can end at a sleep-based boundary from Health Connect, a chosen time, or a 4 AM default.                                                                                                                                                                                |
+| `moments`                                         | Marked moments: saving captions, attaching photos and enriching a mark's location.                                                                                                                                                                                                                                                        |
+| `events`                                          | Calendar events: import from the device calendar, inference from stops, photos and notes (`InferEventsUseCase`), and linking notes to events.                                                                                                                                                                                             |
+| `rewind`                                          | Weekly and annual rewinds: generation (`GenerateBasicRewindUseCase`, `GenerateAnnualRewindUseCase`), retrieval, deletion, titles, viewed state and reflection prompt responses.                                                                                                                                                           |
+| `search`                                          | `UniversalSearchUseCase`, which ranks local full-text search results across content types, plus journal-scoped search and recent searches.                                                                                                                                                                                                |
+| `location`, `location/history`, `places`, `world` | Logging and observing location, resolving a location to a place (`ResolveLocationToPlaceUseCase`), and `LocationHistoryService`, which reconstructs a day of visits and journeys from raw samples through `ReconstructLocationDay`, `StayDetector` and `SegmentAssembler`.                                                                |
+| `streak`, `recommendation`, `today`, `reminders`  | The writing streak and campfire (`CampfireCalculator`), the summary of today's moments and mood check-ins (`TodaySummary`), the home recommendation (`GetHomeRecommendationUseCase`), memory recall and ambient prompts, and moment-aware reminders. `ReminderOrchestrator` is a pure function of the clock and signals.                  |
+| `activity`                                        | The activity both a phone and a watch act on (`ActivityTracker`, `ActivityLog`) and the activity captured with a note.                                                                                                                                                                                                                    |
+| `account`, `quota`, `identity`, `profile`, `user` | Passkey and Google sign-in, account creation, sign-out, the signed-in cloud account, entitlement and available plans, cloud storage quota, and the user's identity and profile.                                                                                                                                                           |
+| `export`                                          | `export/archive`, where `ExportArchiveUseCase` builds a checksummed 2.x export archive through an `ArchiveContainer`, and `GetExportCountsUseCase`, which counts the journals, notes, drafts and media an export would hold. `ExportSchemaVersion` holds the schema version.                                                              |
+| `restore`, `restore/archive3`                     | `RestoreUserDataUseCase`, `PreviewArchiveUseCase`, archive validation and media integrity checks (`ArchivePayloadValidator`, `ArchiveMediaIntegrity`, `RepairArchiveMediaUseCase`), `ExportMigrationRunner` and its per-version migrations (in `ExportMigrations.kt`) for older schema versions, and a native archive 3 writer and codec. |
+| `entities`, `media`, `onboarding`                 | People extraction, media indexing for a period, and the personal introduction step of onboarding.                                                                                                                                                                                                                                         |
+| `watch`                                           | The window of notes the phone puts in the watch's library (`WatchWindowPolicy`) and the settings shared with the watch.                                                                                                                                                                                                                   |
+| `assistants`                                      | `AssistantAccessPolicy` and `AssistantReadAccessGuard`, which check an assistant's grant, device state and expiry before releasing read results.                                                                                                                                                                                          |
+| `di`                                              | The Koin modules: `domainModule`, `accountModule`, `accountDomainModule`, `locationDomainModule`, `quotaDomainModule` and `healthDomainModule`.                                                                                                                                                                                           |
 
-```
-Domain Module
-├── Use Cases (Application Logic)
-├── Domain Models
-├── Result Types
-└── Business Rules
-```
+Use cases are plain classes with constructor-injected dependencies, usually exposing `operator fun invoke`. The Koin modules register them with `factory`. `domainModule` holds the use cases that do not create circular dependencies, which is why account, location, quota and health bindings live in their own modules.
 
-## Key Components
+## How it fits with other modules
 
-### Core Use Case Categories
+The module depends on `:shared:model`, `:shared:config`, `:client:util`, `:client:permissions`, `:client:repository`, `:client:sync`, `:client:media`, `:client:location`, `:client:intelligence`, `:client:networking`, `:client:device`, `:client:datastore`, `:client:health-connect`, `:client:calendar-sync` and `:client:text`. Android adds the Health Connect client library and Koin Android.
 
-- **Account**: User authentication and account management
-- **Notes**: Journal note creation, manipulation, and retrieval
-- **Drafts**: Draft entry management and persistence
-- **Journals**: Journal collection management
-- **Timeline**: Chronological data presentation
-- **Rewind**: Historical data analysis and summary
-- **Location**: Geolocation tracking and history
-- **World**: Environmental context integration
-- **Entities**: People and entity extraction
-- **Quota**: Usage tracking and limits
+The app modules (`app/android-main`, `app/compose-main` and `app/wear`), `:client:data`, `:client:screenshot-scenes`, `benchmark/micro` and the `:client:feature:*` modules for editor, journal, library, location timeline, onboarding, postcards, rewind, search, stickers, timeline, events, core and Android widgets depend on it.
 
-### Important Use Cases
+## Platforms
 
-- `AddNoteUseCase`: Creates and stores journal notes
-- `GetStreamingTimelineUseCase`: Streaming timeline with fast first paint (used by HomeViewModel)
-- `SummarizeJournalEntriesUseCase`: Generates summaries of journal content
-- `GetRewindUseCase`: Creates retrospective content from past entries
-- `ObserveLocationUseCase`: Monitors device location changes
-- `CreatePasskeyUseCase`: Handles secure authentication
-- `GetDayBoundsUseCase`: Determines semantic day boundaries based on user activity patterns
+Android, JVM and iOS (`iosArm64` and `iosSimulatorArm64`). Health data comes from `:client:health-connect`. The Android source set declares the Health Connect package query and the sleep read permission in its manifest and holds `androidHealthConnectModule`, which includes `healthDomainModule` and the Android health module. The module publishes consumer ProGuard rules from `proguard-rules.pro` and has Compose resources for its strings (`strings_domain.xml`).
 
-### Domain Models
+## Running the tests
 
-- `RewindQueryResult`: Represents rewind operation results
-- `TimelineConfig`: Timeline presentation configuration
-- `ExportModels`: Data structures for export operations
+Most tests are in `commonTest` and use hand-written fakes from the `fakes` package. The `jvmTest` source set adds tests that need the JVM, such as location history replay, archive export and restore, and native archive 3 fixtures under `jvmTest/resources`.
 
-## Features
-
-### Clean Architecture Implementation
-
-- **Separation of Concerns**: Business logic isolated from implementation details
-- **Dependency Inversion**: Domain layer depends only on abstractions
-- **Use Case Pattern**: Each business function encapsulated in a use case
-- **Repository Abstraction**: Data access through repository interfaces
-- **Domain-Driven Design**: Models represent business concepts
-
-### Business Logic
-
-- **Journal Management**: Creation, update, and deletion of journals
-- **Note Processing**: Text and media note handling
-- **Timeline Generation**: Chronological organization of user data
-- **Draft System**: Auto-save and draft management
-- **Location Tracking**: User movement and place tracking
-- **Rewind Generation**: Nostalgic content creation from history
-
-### Intelligence Features
-
-- **Content Analysis**: Extracting meaning and patterns from user entries
-- **Entity Recognition**: Identifying people, places, and events in content
-- **Summarization**: Creating concise summaries of journal content
-- **Memory Generation**: Creating meaningful connections between past entries
-- **Context Enhancement**: Adding contextual information to user data
-- **Semantic Understanding**: Comprehending the meaning behind user entries
-- **Insight Generation**: Providing users with meaningful observations about their data
-- **Pattern Recognition**: Identifying recurring themes and behaviors
-
-### Platform Abstractions
-
-- **Multiplatform Design**: Core logic works across all platforms
-- **Interface-Based Architecture**: Implementation details provided by platform modules
-- **Consistent API Surface**: Same functionality exposed to all platforms
-
-## Dependencies
-
-### Core Dependencies
-
-- `:shared:model`: Shared data models
-- `:client:repository`: Data access interfaces
-- `:client:media`: Media handling abstractions
-- `:client:location`: Location services
-- `:client:intelligence`: AI and intelligent features
-- **Kotlinx Coroutines**: Asynchronous programming
-- **Kotlinx DateTime**: Date and time handling
-- **Koin**: Dependency injection
-
-## Usage Patterns
-
-### Standard Use Case Pattern
-
-```kotlin
-class GetJournalByIdUseCase(
-    private val repository: JournalRepository,
-) {
-    operator fun invoke(journalId: Uuid): Flow<Journal> = repository.observeJournalById(journalId)
-}
+```bash
+./gradlew :client:domain:jvmTest
 ```
 
-### Injection Pattern
+## Things to know
 
-```kotlin
-// In DomainModule.kt
-factory { GetJournalByIdUseCase(get()) }
-
-// In ViewModel
-class JournalViewModel(
-    private val getJournalById: GetJournalByIdUseCase
-) : ViewModel() {
-    // Use the use case
-}
-```
-
-## Testing
-
-The domain module includes comprehensive testing:
-
-- **Unit Tests**: Individual use case testing
-- **Integration Tests**: Use case interactions
-- **Mock-Based Testing**: Repository and service mocking
-- **Business Rule Verification**: Ensuring business rules are enforced
-
-## TODOs
-
-### Core Improvements
-
-- [ ] Add comprehensive unit testing for all use cases
-- [ ] Implement result wrapper for all use cases
-- [ ] Add proper error handling and recovery strategies
-- [ ] Improve documentation for business rules
-- [ ] Add validation for all input parameters
-
-### Intelligence Enhancements
-
-- [ ] Expand entity recognition capabilities
-- [ ] Improve summarization quality and customization
-- [ ] Add sentiment analysis for emotional insights
-- [ ] Implement topic modeling for better content organization
-- [ ] Add personalized content recommendations
-- [ ] Improve context-aware processing
-
-### Advanced Features
-
-- [ ] Implement offline-first business logic
-- [ ] Add domain-level analytics tracking
-- [ ] Define strategies for handling large datasets
-- [ ] Add domain-level validation rules
-- [ ] Implement business-rule based retry policies
-
-### Domain Logic Refinements
-
-- [ ] Refine business rules for data integrity
-- [ ] Improve error classification and handling
-- [ ] Enhance domain model structure and relationships
-- [ ] Add more sophisticated domain events
-- [ ] Implement comprehensive validation rules
+- `ExportSchemaVersion` follows a versioning policy: a minor bump is additive and relies on `ignoreUnknownKeys`, and a major bump needs a migration path in `ExportMigrations.kt`.
+- `LocationHistoryService` works from stored data. Opening a day needs neither current-location permission nor a network call.
+- `ExportArchiveUseCase` resolves every media file before writing anything, copies media into the container, and writes `SHA256SUMS` last. A file that cannot be opened is dropped from the plan and reported as omitted, and the files that describe the archive then state exactly what it holds.
+- Domain code uses `kotlin.time.Instant` for points in time and `kotlinx.datetime` for calendar types, following the repository conventions.

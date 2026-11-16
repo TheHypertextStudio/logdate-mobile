@@ -1,212 +1,49 @@
 # `:client:feature:timeline`
 
-**Timeline view and entry browsing**
+This module provides the detail panel for a single day of the timeline and the entry that lets someone caption a marked moment. The panel shows the sections someone sees when they open a day: summary, people, notes, events and locations. The module also holds the words that the Home timeline shows for a summary that could not be made and for the current location on the empty-day suggestion card. The Home screen in `:client:feature:core` renders the marked moment entry and uses those words, `:app:compose-main` shows the day panel and registers the module's Koin definitions, and `:client:screenshot-scenes` renders the marked moment content.
 
-## Overview
+## What it contains
 
-Provides timeline-based navigation through journal entries with filtering, search, and detailed views of daily activities. The primary interface for browsing and discovering past journal content.
+Everything lives under `app.logdate.feature.timeline`.
 
-## Architecture
+| Package      | What it does                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui`         | `TimelineDomainText.kt` maps `TimelineSummaryUnavailableReason` to the string resource a day's summary section shows (`notice`) and `CurrentLocationDescription` to `UiText` (`toUiText`).                                                                                                                                                                              |
+| `ui/details` | `TimelineDayDetailPanel` and its sections: `TldrSection`, `PeopleEncounteredSection`, `NotesListSection`, `EventsSection` and `LocationsSection`. `AudioNoteSnippet` wraps the shared voice card for a day's recordings, and `TimelineDetailsEmptyPlaceholder` shows when no day is selected. `DayLocation` is the place type that `LocationsSection` and the map take. |
+| `ui/marks`   | `MarkedMomentEntry` loads what a marked moment needs and renders `MarkedMomentContent`. `MarkedMomentViewModel` retains caption edits and serializes writes.                                                                                                                                                                                                            |
+| `di`         | `timelineFeatureModule` includes `domainModule`, `intelligenceModule` and `networkingModule` and registers `MarkedMomentViewModel`.                                                                                                                                                                                                                                     |
 
-```
-Timeline Feature
-├── Timeline List Views
-├── Daily Detail Panels
-├── Search & Filtering
-├── Content Sections
-└── Navigation Integration
-```
+### The day panel
 
-## Key Components
+`TimelineDayDetailPanel` takes a `TimelineDayUiState` from `:client:ui` and draws it inside a `WorkspacePanel` with a header that carries back, decorate and rewind actions. The decorate and rewind actions appear when the caller passes `onDecorate` and `onOpenRewind`. If the caller passes no visited locations, the panel derives them from the places in the day state that have coordinates.
 
-### Core Timeline
+The state itself, the list of days, the sticky date headers, the moment layouts and the voice cards come from `:client:ui` (`app.logdate.ui.timeline` and `app.logdate.ui.audio`), so other surfaces draw them identically. `HomeViewModel` and `HomeTimelineMapping.kt` in `:client:feature:core` build the day states from the streaming timeline.
 
-- `TimelineRoute.kt` - Main timeline screen
-- `TimelineViewModel.kt` - Timeline state management
-- `Timeline.kt` - Timeline list component
-- `TimelineTranscriptionPlanner.kt` - Chooses which visible recordings to transcribe automatically
+[Semantic timeline](../../../docs/feature-design/semantic-timeline.md) describes the day structure, the voice card and the rules to keep when changing them.
 
-### Day rendering
+### Marked moments
 
-The list of days, the sticky date headers, the moment layouts and the voice cards live in
-`:client:ui` (`app.logdate.ui.timeline.newstuff` and `app.logdate.ui.audio`), so other surfaces draw
-them identically. This module builds the state they render:
+`MarkedMomentEntry` enriches a mark with its place, looks up the name of a saved place near it, and observes photo suggestions from the media library. It renders `MarkedMomentContent`, which offers writing more in the editor, attaching a suggested photo, saving the caption, leaving the mark and deleting it after a confirmation.
 
-- `TimelineViewModel` turns each day's notes, places and inferred moments into a day with
-  `createSemanticTimelineDayUiState`, which supplies one moment itself when inference returns none for a day that has notes or places.
-- `TimelineRoute` passes the list's visible audio note IDs back to the view model, which requests
-  transcripts for them through `TimelineTranscriptionPlanner`. A recording that already has a
-  transcript row is skipped, and one is requested again only if queueing it failed. The Home workspace host applies the same rule in `HomeViewModel`, which has its own copy, so the two must change together.
+### Locations on a day
 
-[Semantic timeline](../../../docs/feature-design/semantic-timeline.md) describes the day structure,
-the voice card and the rules to keep when changing them.
+`TimelineLocationsMap` is an `expect` composable. Android draws a Google map through `maps-compose` when `rememberGoogleMapsEnabled()` is true. In every other case, and on desktop and iOS always, it draws `TimelineLocationsStaticPreview`.
 
-### Detail Views
+## How it fits with other modules
 
-- `TimelineDayDetailPanel.kt` - Daily detail view
-- `NotesListSection.kt` - Notes display section
-- `PeopleEncounteredSection.kt` - People tracking
+The build file lists dependencies on `:shared:model`, `:client:ui`, `:client:domain`, `:client:permissions`, `:client:repository`, `:client:intelligence`, `:client:media`, `:client:networking`, `:client:awareness`, `:client:util` and `:client:feature:editor`. Android additionally uses `maps-compose` and Accompanist permissions. Navigation is supplied by callers: `TimelineDayDetailPanel` takes callbacks such as `onExit`, `onOpenEvent`, `onOpenLocations`, `onNoteClick` and `onJournalClick`, and `MarkedMomentEntry` takes `onWriteMore`.
 
-### Navigation
+`:client:feature:core`, `:app:compose-main` and `:client:screenshot-scenes` depend on this module. `:app:android-main` uses it in its Android instrumentation and screenshot test source sets.
 
-- `TimelineNavRoute.kt` - Navigation definitions
-- Timeline-to-editor navigation
-- Deep linking to specific dates
+## Platforms
 
-## Features
+The module targets Android, desktop (`jvm("desktop")`), `iosArm64` and `iosSimulatorArm64`. Platform source sets contain the `TimelineLocationsMap` actuals.
 
-### Timeline Navigation
+## Running the tests
 
-- Chronological entry browsing
-- Date-based navigation
-- Infinite scroll with pagination
-- Quick date jumper
+- `./gradlew :client:feature:timeline:desktopTest` runs the tests in `commonTest` on the JVM. They cover the note context menu items and marked moment caption editing.
 
-### Daily Detail Views
+## Things to know before changing it
 
-- Comprehensive day summaries
-- Entry previews and quick access
-- People encountered tracking
-- Activity and location context
-
-### Search & Discovery
-
-- Full-text search across entries
-- Tag and category filtering
-- Date range selection
-- Advanced search operators
-
-### Content Organization
-
-- Grouped by date/time
-- Content type categorization
-- Priority and importance highlighting
-- Related content suggestions
-
-## Dependencies
-
-### Core Dependencies
-
-- `:client:domain` - Timeline business logic
-- `:client:ui` - Shared UI components
-- **Compose Multiplatform**: UI framework
-- **AndroidX Navigation**: Navigation framework
-
-### Data Dependencies
-
-- Timeline data from repository layer
-- Search indexing integration
-- Media content loading
-
-## Timeline Architecture
-
-### Data Flow
-
-```
-Repository
-    ↓
-Timeline Use Cases
-    ↓
-Timeline ViewModel
-    ↓
-Timeline UI State
-    ↓
-Timeline Components
-```
-
-### Content Aggregation
-
-```
-Daily Entries
-    ↓
-Content Grouping
-    ↓
-┌─────────────┬─────────────┬─────────────┐
-│ Text Entries │ Media       │ People      │
-└─────────────┴─────────────┴─────────────┘
-```
-
-## UI Components
-
-### Timeline List
-
-- Virtualized scrolling for performance
-- Adaptive item sizing
-- Smooth animations and transitions
-- Pull-to-refresh functionality
-
-### Daily Panels
-
-- Expandable/collapsible sections
-- Rich content previews
-- Quick action buttons
-- Context menus for entry management
-
-### Search Interface
-
-- Real-time search suggestions
-- Filter chips and tags
-- Search history
-- Saved search queries
-
-## Performance Optimizations
-
-### Data Loading
-
-- Lazy loading with pagination
-- Intelligent prefetching
-- Background data synchronization
-- Memory-efficient content caching
-
-### UI Rendering
-
-- Virtualized lists for large datasets
-- Image lazy loading
-- Adaptive content quality
-- Smooth scroll performance
-
-## TODOs
-
-### Core Timeline Features
-
-- [ ] Add timeline customization options
-- [ ] Implement timeline themes and layouts
-- [ ] Add timeline export functionality
-- [ ] Implement timeline sharing capabilities
-- [ ] Add timeline search enhancement with filters
-- [ ] Implement timeline analytics and insights
-- [ ] Add timeline automation and smart grouping
-- [ ] Implement timeline performance optimization
-
-### Advanced Navigation
-
-- [ ] Add calendar view integration
-- [ ] Implement timeline map view
-- [ ] Add timeline statistics and visualizations
-- [ ] Implement timeline bookmarks and favorites
-- [ ] Add timeline collaboration features
-- [ ] Implement timeline widgets
-- [ ] Add timeline shortcuts and quick actions
-- [ ] Implement timeline voice navigation
-
-### Search & Discovery
-
-- [ ] Implement AI-powered content discovery
-- [ ] Add semantic search capabilities
-- [ ] Implement content recommendations
-- [ ] Add similar entry suggestions
-- [ ] Implement trend analysis and insights
-- [ ] Add content clustering and categorization
-- [ ] Implement timeline memory triggers
-- [ ] Add anniversary and milestone detection
-
-### User Experience
-
-- [ ] Add timeline accessibility improvements
-- [ ] Implement timeline gestures and shortcuts
-- [ ] Add timeline reading mode
-- [ ] Implement timeline dark/light themes
-- [ ] Add timeline font and sizing options
-- [ ] Implement timeline layout customization
-- [ ] Add timeline notification settings
-- [ ] Implement timeline backup and sync status
+- `targetSectionIndex` in `TimelineDayDetailPanel.kt` maps an entry id to the index of its section in the panel's `LazyColumn`. The sections appear in the order summary, people, notes, events, locations, and each appears only when it has content, so adding or reordering sections means updating it.
+- `MarkedMomentViewModel` writes the caption before running a save, attach or delete action and ignores edits once the mark is no longer open.

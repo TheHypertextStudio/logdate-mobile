@@ -1,127 +1,59 @@
 # `:app:compose-main`
 
-**Main cross-platform application module using Compose Multiplatform**
+This module is the Compose Multiplatform application shell for LogDate. It wires the feature modules together into one app: it owns the navigation graph, the dependency injection root, the lock screen, and the entry points for Android, iOS and desktop. `:app:android-main` depends on it to build the Android application, the iOS build of this module produces the `ComposeApp` framework, and desktop packages are built from it directly.
 
-## Overview
+## What it contains
 
-This is the primary application entry point that orchestrates all feature modules into a cohesive user experience. It contains the main navigation structure, dependency injection setup, and platform-specific configurations for Android, iOS, and Desktop platforms.
+Code lives under `app.logdate`. The packages below are the main ones.
 
-## Platforms Supported
+### Shared code (`commonMain`)
 
-- **Android**: Target SDK 35, Min SDK 30
-- **iOS**: x64, arm64, simulator arm64
-- **Desktop**: JVM with native distribution packages (DMG, MSI, DEB)
+| Package                                             | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.logdate.di`                                    | `appModule` (an `expect val`, implemented per platform) and `defaultModules`, the set of feature Koin modules that each platform's `appModule` includes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `app.logdate.navigation`                            | The Navigation 3 graph. `appNavSavedStateConfiguration` registers every typed destination (`NavKey`) for state restoration, `LogDateNavDisplay` is the multiplatform root, and `resolveNavBootstrapAction` decides how to reset or keep the back stack once onboarding and lock state resolve. `rememberPerVisitViewModelsDecorator` gives marked entries a view model store that is cleared when the entry leaves the back stack, and `rememberWorkspaceRouteDecorator` wraps collection and detail destinations in `ActivityRouteFrame`. `isWatchSupported` is an `expect val` that is true only where the Wear OS companion integration exists. |
+| `app.logdate.navigation.scenes`                     | `RelatedContentSceneStrategy`, which shows related entries together on layouts that support two panes, and `SettingsActivitySceneStrategy`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `app.logdate.client.ui`                             | `LockableContent`, which keeps content composed but not interactive while the app is locked, so an unfinished editor survives authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `app.logdate.client.ui.navigation`                  | `SearchRoute`, `LocationTimelineRoute` (the standalone entry into the location timeline), `DeepLinkBus` (a process-wide flow of navigation requests that come from outside Compose, such as iOS URL callbacks) and the deep link parsing in `SearchRouteDeepLink.kt`.                                                                                                                                                                                                                                                                                                                                                                              |
+| `app.logdate.client.capture`                        | `ACTION_CAPTURE` and the `EXTRA_CAPTURE_*` keys: the one way shortcuts, tiles, notifications and assistants start a new entry, resolved to an editor route by `captureRoute`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `app.logdate.client.launch`                         | `LaunchStage` and `LaunchStageTracker`, ordered startup milestones that control when the Android splash screen is released.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `app.logdate.client.appfunctions`                   | `assistantReadRefusal` and the limits `ASSISTANT_SEARCH_LIMIT` and `ASSISTANT_EXCERPT_LENGTH`: assistants may read the journal only when system search visibility is on and the app is unlocked.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `app.logdate.client.shortcuts`, `.ambient`, `.text` | `dynamicShortcutSlots` (how many dynamic launcher shortcuts remain after manifest and live ones), `quickReplyNote` and `quickReplyPreview`, and `oneLineExcerpt`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
-## Key Components
+### Android (`androidMain`)
 
-### Navigation Structure
-- **Android (Navigation3)**: `MainNavigationRoot.kt`, `MainAppNavigator.kt`, scene/route files
-- **Shared (Navigation Compose)**: `LogDateAppRoot.kt`, `LogDateNavHost.kt`, feature route files
+`MainActivity` (split across `MainActivity*.kt` files, one per concern), `EditorActivity`, `LogDateApplication`, the Koin modules in `app.logdate.di` (`AppModule.android.kt` plus modules for ambient capture, shortcuts, workers, windowing, and the phone side of watch sync and reminders), and the packages `app.logdate.client.sync` (including `sync.v2`), `watch`, `shortcuts`, `tiles`, `reminders`, `ambient`, `appfunctions`, `calendar`, `restore` and `rewind`, plus `app.logdate.dynamic` (Play dynamic feature loading). The Android manifest and resources are in `src/androidMain`. The Android library namespace is `studio.hypertext.logdate`.
 
-### Platform Entry Points
-- **Android**: `MainActivity.kt` and `LogDateApplication.kt`
-- **iOS**: `MainViewController.kt` 
-- **Desktop**: `main.kt`, `MainWindow.kt`, and `EditorWindow.kt`
+### Desktop (`desktopMain`)
 
-### Dependency Injection
-- **AppModule.kt** - Core DI module
-- **AppModule.android.kt** - Android-specific DI
-- **AppModule.desktop.kt** - Desktop-specific DI
-- **AppModule.apple.kt** - iOS-specific DI
+`main.kt` starts the Compose `application` with Koin. `app.logdate.desktop` holds `LogDateApplication`, `LogDateApplicationState` (one main window plus any number of editor windows), `MainWindow`, `EntryEditorWindow` in `EditorWindow.kt` (with a fullscreen immersive mode on F11), the menu shortcuts in `AppShortcutMenu.kt`, `DesktopWindowPreferences` (window geometry kept in `java.util.prefs`) and `DesktopNotification` (in `app.logdate.desktop.notification`). `AppModule.desktop.kt` supplies the desktop `appModule`.
 
-## Feature Modules Integration
+### iOS (`iosMain`)
 
-### Core Features
-- `:client:feature:core` - Core application features
-- `:client:feature:onboarding` - User onboarding flows
-- `:client:feature:editor` - Entry creation and editing
-- `:client:feature:timeline` - Timeline and browsing
-- `:client:feature:journal` - Journal management
-- `:client:feature:rewind` - Memory recall features
+`MainViewController` creates the Compose view controller. When it composes, it calls `startCrashReportingUserBridge`, which deletes a stored crash-reporting user identifier, installs the Coil image loader built by `buildLogDateImageLoader`, starts the stored media reference migration and automatic account recovery, and forwards the iOS foreground and background notifications to `AppViewModel`. The Swift host calls into the module through top-level functions: `HandleIosDeepLink` in `IosDeepLinks.kt` parses custom-scheme and `logdate.app` links and emits the resulting action on `DeepLinkBus`; `HandleApnsTokenRegistered`, `HandleApnsRegistrationFailed` and `HandleSilentPushSync` in `IosPush.kt` log push registration results and run a background sync; `BackgroundSyncRunner` runs `SyncManager.fullSync` for background refresh; and `initKoinIos` in `di/KoinIos.kt` starts Koin once. `di/AppModule.apple.kt` supplies the iOS `appModule`.
 
-### Infrastructure Modules
-- `:client:data` - Data layer implementation
-- `:client:ui` - Shared UI components
-- `:client:theme` - Application theming
-- `:client:networking` - Network layer
-- `:client:sync` - Data synchronization
+## How it fits with other modules
 
-## External Dependencies
+The module depends on the feature modules (`:client:feature:core`, `onboarding`, `editor`, `timeline`, `journal`, `library`, `rewind`, `location-timeline`, `search`, `postcards`, `stickers`, `events`), on the client infrastructure modules (data, database, ui, theme, networking, device, intelligence, domain, repository, datastore, location, sensor, media, permissions, sharing, sync, health connect, calendar sync, notifications, util), and on `:shared:model` and `:shared:config`. Android additionally uses `:client:feature:android-widgets`. `:app:android-main` is the module that depends on this one.
 
-- **Compose Multiplatform** - UI framework
-- **AndroidX Navigation3** - Android navigation stack
-- **AndroidX Navigation Compose** - Shared navigation
-- **Koin** - Dependency Injection
-- **Napier** - Logging
-- **FileKit Compose** - File operations
-- **Material3 Adaptive** - Responsive layouts
+## Platforms
 
-## Architecture
+- Android: the module is an Android KMP library with `minSdk` and `compileSdk` taken from `gradle/libs.versions.toml`.
+- iOS: `iosArm64` and `iosSimulatorArm64`, producing a static framework named `ComposeApp`.
+- Desktop: a JVM target named `desktop`, with main class `app.logdate.MainKt`. Native packages are configured as DMG, MSI and DEB under `compose.desktop`.
 
-The app module follows a feature-based modular architecture where:
-- Each feature is self-contained with its own UI, navigation, and dependencies
-- Infrastructure modules provide shared functionality
-- Dependency injection wires everything together at the app level
-- Adaptive layouts are used for different screen sizes and orientations
+## Tests
 
-## Navigation Flow
+| Source set                     | Task                                    | Contents                                                                                                 |
+| ------------------------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `commonTest` and `desktopTest` | `:app:compose-main:desktopTest`         | Navigation, activity restoration, lock screen, rewind and settings tests, plus desktop screenshot tests. |
+| `androidHostTest`              | `:app:compose-main:testAndroidHostTest` | Robolectric tests for launch, shortcuts, restore, reminders, tiles and related Android code.             |
 
-```
-Android (Navigation3)
-├── Onboarding Flow (first launch)
-├── Home Scene (tabs + adaptive panes)
-├── Editor (modal)
-└── Detail Screens
+The desktop screenshot tests compare renders with the baselines in `src/desktopTest/reference`. `validateDesktopScreenshotTest` runs `desktopTest` to compare renders with the baselines, and `updateDesktopScreenshotTest` rewrites them; without a scene filter it keeps baselines that still pass. Pass `-Dlogdate.desktopScreenshots.sceneFilter=<scene>` to limit either task to one scene. Baselines depend on the rendering host, so the task records the operating system name and major version as an input.
 
-Shared (Navigation Compose)
-├── Onboarding Flow
-├── Home
-├── Editor
-└── Detail Screens
-```
+## Other things to know
 
-## Adaptive Layout
-
-The app implements adaptive layouts to support different screen sizes and orientations:
-- Phone: Single-pane layouts with bottom navigation
-- Tablet/Desktop: Multi-pane layouts with navigation rail or sidebar
-- Foldable: Dynamic layouts that adjust to fold state
-
-## Build Configuration
-
-### Android
-```kotlin
-applicationId = "studio.hypertext.logdate"
-versionCode = 1
-versionName = "0.1.0"
-```
-
-### Desktop
-```kotlin
-mainClass = "app.logdate.MainKt"
-packageName = "LogDate"
-description = "The LogDate desktop application"
-```
-
-## TODOs
-
-### Core Features
-- [ ] Implement deep linking support
-- [ ] Add app shortcuts for quick entry creation
-- [ ] Implement backup/restore functionality
-- [ ] Add widget support for quick note taking
-- [ ] Implement offline sync conflict resolution UI
-
-### Platform-Specific
-- [ ] Add accessibility improvements
-- [ ] Implement app update mechanism
-- [ ] Add telemetry and analytics integration
-- [ ] Implement multi-window support for desktop
-- [ ] Add app lifecycle state management
-
-### UI/UX
-- [ ] Improve adaptive layouts for foldable devices
-- [ ] Add tablet-specific optimizations
-- [ ] Implement dark/light theme transitions
-- [ ] Add custom animations for navigation
-- [ ] Improve performance on low-end devices
+- Every concrete navigation key must be registered in `appNavSavedStateConfiguration`; Navigation 3 on iOS cannot use reflection-based serialization.
+- Compose resources are generated into `logdate.app.composemain.generated.resources`.
+- `buildConfig` generates `app.logdate.client.BuildConfig` with `LOGDATE_ORIGIN` and `LOGDATE_API_BASE_URL`, read from the Gradle properties `logdate.origin` and `logdate.apiBaseUrl`.
+- The AppFunctions KSP compiler runs for the Android target and its generated schema is added to the Android assets.

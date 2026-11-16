@@ -1,280 +1,86 @@
 # `:client:sync`
 
-**Data synchronization across devices and platforms**
+This module keeps a person's journals, notes, drafts, media and location history in step across their devices and LogDate Cloud. It owns the upload and download engines, the outbox bookkeeping that remembers what is waiting to be sent, conflict resolution, end-to-end encryption of what leaves the device, the paired phone and watch protocol, and the platform schedulers that decide when a sync runs. Feature and app modules call it through the `SyncManager` interface and the Koin `syncModule`.
 
-## Overview
+## What it contains
 
-Manages data synchronization between local storage and cloud services, ensuring consistent data across all user devices. Implements intelligent sync strategies with conflict resolution and offline support.
+Everything is under `app.logdate.client.sync`. The package root holds the engine itself, and subpackages hold the pieces around it.
 
-## Architecture
+**Engine (package root)**
 
-```
-Sync Module
-├── Sync Manager
-├── Conflict Resolution
-├── Background Workers
-├── Sync Strategies
-└── Platform Implementations
-```
+- `SyncManager` is the interface the rest of the app uses. It exposes `syncStatusFlow`, `sync`, `requestBackup`, `uploadPendingChanges`, `downloadRemoteChanges`, a method per kind of data (`syncContent`, `syncJournals`, `syncAssociations`, `syncDrafts`), `fullSync`, dead letter handling (`observeDeadLetters`, `retryDeadLetter`, `discardDeadLetter`) and `whilePaused`. `SyncResult` and `SyncStatus` are its result types.
+- `DefaultSyncManager` coordinates a run through `SyncUploader`, `SyncDownloader`, the media recovery coordinator and the retry coordinator. `NoOpSyncManager` is the implementation for environments where sync is unavailable.
+- `SyncDownloadEngine` runs the download, paginate and resolve sequence shared by journals and notes through a `ConflictResolver`. Drafts (`DraftDownloader`) and associations (`AssociationDownloader`) have their own download loops.
+- `SyncRetryCoordinator` decides when a failed upload is tried again and when it becomes a dead letter, using the delay schedule in `SyncBackoff` (package `metadata`).
+- `FullSyncScope` pins the account and server a full run started with, so each phase can check it is still working for the same owner.
+- `SyncTransactionManager` wraps remote applies in a transaction. Android, desktop and iOS each have a `RoomSyncTransactionManager`, and desktop and iOS also have a no-op variant.
+
+**Subpackages**
+
+| Package       | What it holds                                                                                                                                                                                                                                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `cloud`       | `CloudApiClient` and `LogDateCloudApiClient`, the per-kind data sources (`CloudContentDataSource`, `CloudJournalDataSource`, `CloudMediaDataSource` and others), `SafeCloudTransport`, which records only allowlisted diagnostics, and conditional-create requests. `cloud/account` has `DefaultCloudAccountRepository` and the server account stores. |
+| `metadata`    | `SyncMetadataService` and `EntityType`, the outbox of pending uploads, plus the dead letter, retry schedule, media reference and last error stores.                                                                                                                                                                                                    |
+| `conflict`    | `ConflictResolver` and the journal, note and marked moment resolvers, `SyncConflictStore`, and deletion conflict recovery.                                                                                                                                                                                                                             |
+| `recovery`    | `DownloadInbox`, where downloaded records wait to be applied, and the media recovery queues that fetch files after their notes arrive.                                                                                                                                                                                                                 |
+| `crypto`      | `SyncPayloadCipher`, which seals records under the account's identity key and tags each with a key fingerprint, and `MediaPayloadCrypto`, which writes media in the chunked LDCE2 format and also reads LDCE1.                                                                                                                                         |
+| `space`       | The personal space transport, described below.                                                                                                                                                                                                                                                                                                         |
+| `location`    | `LocationHistorySyncEngine` and its stager, which move encrypted location history records.                                                                                                                                                                                                                                                             |
+| `moments`     | Upload, download and apply for marked moments.                                                                                                                                                                                                                                                                                                         |
+| `quota`       | `LogDateCloudQuotaManager`, the implementation of the shared `CloudQuotaManager`, and the calculators for cloud storage usage.                                                                                                                                                                                                                         |
+| `migration`   | `MigrationManager`, which compares the cloud identity with the local one and migrates local data when they differ.                                                                                                                                                                                                                                     |
+| `diagnostics` | Sync diagnostic recording, the consent-gated diagnostic report and private log files.                                                                                                                                                                                                                                                                  |
+| `peer`        | The phone and watch pair: link exchange (`PhoneLinkExchange`, `WatchLinkExchange`), the shared state document and its `StateMerger`, delivery routing (`WatchSyncRouter`), and watch removal.                                                                                                                                                          |
+| `datalayer`   | The Wear data layer message mappers and paths, with `datalayer/v2` holding the second protocol version (`WearProtocol`, `WearProtocolGate`).                                                                                                                                                                                                           |
+| `continuity`  | The watch recording and playback companions.                                                                                                                                                                                                                                                                                                           |
+| `di`          | `syncModule` (an `expect` module with one `actual` per platform), `conflictResolverModule`, `cloudModule`, `spaceSyncModule` and `diagnosticsModule`.                                                                                                                                                                                                  |
+
+**Platform code**
+
+- Android: `AndroidSyncManager` schedules WorkManager jobs, with a periodic sync every 15 minutes while the user is signed in, and immediate syncs for user-triggered work. `AndroidLogDateSyncWorker` runs them. `PeriodicSyncScheduleController` and `resumeMediaReadiness` re-schedule a full sync when a media policy change allows media to upload again, and the worker publishes `SyncResult.recoveredMediaScope` only when the same `FullSyncScope` is still current.
+- Desktop and iOS: `ForegroundSyncManager` wraps `DefaultSyncManager`. It syncs while the app is running and signed in, retries a full sync when the network returns after a failed sync that was not an authentication error (connectivity changes are debounced by two seconds), and repeats on a 30 minute interval, or 60 minutes when the data usage policy is restricted. Both platforms bind it as the `SyncManager`.
 
 ## Personal space transport
 
-An account can keep its data in a sealed personal space instead of the per-kind sync endpoints
-(`/contents`, `/journals`, and so on). In a personal space every kind of data is an `app.logdate.*`
-record, encrypted on the device before it leaves, so the server stores only ciphertext. The code
-lives in `space/`, underneath the sync engine described below: the outbox, retries, dead letters,
-the download inbox, conflict resolvers and each kind's apply step all stay the same.
+An account can keep its data in a sealed personal space instead of the per-kind sync endpoints. Every kind of data then becomes an `app.logdate.*` record, encrypted on the device before it leaves, so the server stores only ciphertext. The code lives in `space/`, underneath the sync engine: the outbox, retries, dead letters, the download inbox and each kind's conflict resolver and apply step stay the same.
 
-### When a device uses it
+**When a device uses it.** `SpaceTransportGate` chooses a `SpaceRoute` from three facts: the `PERSONAL_SPACE` feature flag is on in this build, the connected server advertises the `personalSpaceV1` protocol feature, and the server reports the signed-in account's `AccountStorageMode`. A `PERSONAL_SPACE_V1` account syncs through the space, a `LEGACY` account syncs through the per-kind endpoints, and anything else blocks sync and shows the `ACCOUNT_STORAGE_ERROR` issue. Nothing syncs on a blocked route, so an account's data is never split between two stores.
 
-`SpaceTransportGate` opens only when all three agree:
+**How a kind plugs in.** A `SpaceKind` pairs a `SpaceRecordMapper`, which converts between a local item and its record and does no storage or network work, with a `SpaceLocalRecords`, which loads the item an outbox entry names, offers the kind's conflict resolver and records an upload. Kinds are registered in `SpaceRecordRegistry`, which accepts only the entity types listed in `WIRED_ENTITY_TYPES`: journals, notes, associations, drafts, moments, places, place visits, place corrections, place entry links, place journeys and location samples. The mappers are in `space/mappers`. A kind can be added only after its downloader reads `SpaceStagedRecords`, so staged records always have something to apply them.
 
-1. this build turns it on with the `PERSONAL_SPACE` feature flag (off by default);
-2. the connected server advertises the `personalSpaceV1` protocol feature;
-3. the server reports that the signed-in account is stored in a personal space.
+**Upload.** For each outbox entry, `SpaceUploader` builds the record, checks it against its schema, seals it and writes it with a swap condition: a create only if the record is absent, an update only if it still has the content identifier this device last saw. When another device changed the record first, the uploader reads that version, runs the kind's resolver and writes again. `SpaceSwapStore` keeps each record's last known version in the `sync_space_records` table.
 
-The third check reads the account's `AccountStorageMode`, which the server reports and the app saves
-when sync starts. The gate then picks one of three routes: `PERSONAL_SPACE_V1` syncs through the
-space (when the first two checks also hold), `LEGACY` syncs through the per-kind endpoints, and
-anything else (an unrecognized mode, a mode not yet reported, or a space account this device can't
-reach) blocks sync and shows the `ACCOUNT_STORAGE_ERROR` issue. Nothing syncs on a blocked route, so
-an account's data is never split between two stores.
+**Download.** `SpaceDownloader` pages the space's change feed from one cursor, the `SPACE` checkpoint. It opens each change, checks it against its schema and stages it in the download inbox under its kind. A change this device cannot open or check is staged under `SPACE_UNREADABLE` with the reason (a missing key, a corrupt record or a record type from a newer version) and retried on later downloads. When the server reports that the cursor is older than the deletions it has purged, the downloader lists the whole space and stages a deletion for every record the device knows that the listing lacks.
 
-### How a kind of data plugs in
+**Media.** `SpaceMediaDataSource` encrypts media in LDCE2 with the account media key and streams it to the space as a blob. A note refers to the blob through a `SpaceMediaReference` that carries its content identifier, and a download checks that the bytes match it before decrypting.
 
-Each kind needs two pieces, registered together as a `SpaceKind` in `SpaceRecordRegistry`:
+**Errors.** `spaceCall` reports failures in the sync engine's own terms: an expired token is the `401` that refreshes the session, rate limiting keeps the server's `Retry-After`, a full quota is `STORAGE_QUOTA_EXCEEDED`, and a failure before any response is a retried network error.
 
-- a `SpaceRecordMapper`, which converts between the local item and its record. It is pure: no
-  storage, no network. Give it round-trip tests that prove every synced field survives.
-- a `SpaceLocalRecords`, which loads the item an outbox entry names, offers the kind's existing
-  conflict resolver, and records an upload the way the kind's existing upload path does.
+**Moving an existing journal.** An account created before personal spaces starts on legacy storage, and one of its devices moves the journal into the space. The code is in `space/migration`, and [Moving journals into personal spaces](../../docs/explanation/journal-moves.md) explains the whole move. `SpaceJournalMigration` runs after every complete sync when the `PERSONAL_SPACE` and `PERSONAL_SPACE_MIGRATION` flags are on, the server advertises `personalSpaceMigrationV1`, and this device has downloaded everything and has nothing waiting to upload. `SpaceMigrationUpload` writes each record unconditionally and saves a `SpaceMigrationCheckpoint` every 25 records so a later run resumes. `MigrationMediaPreparer` gives each media file a space reference and stores the references in the checkpoint store rather than the real `MediaSyncRefStore`, because other devices still read legacy references until the switch. `SpaceMigrationRun` reads the space back (`SpaceMigrationReadBackCheck`, `SpaceMigrationMediaCheck`), compares legacy storage with this device (`LegacyComparison`) and asks the server to switch with a proof of both. After the switch, `settleAfterSwitch` adopts the moved media references and `rebaseForRoute` resets the sync versions kept for the other store. `JournalStorageMove` is what the app sees: a `JournalMoveState` for Settings, with `retry` and `switchBack` for the person's actions, and a `JournalMoveProblem` on every stop that names the kind of data and what fixes it.
 
-Contribute the `SpaceKind` to Koin and the registry picks it up. Journals and notes are wired
-through on both sides (`SyncUploader` and `SyncDownloader`). Another kind's downloader must read
-`SpaceStagedRecords` before its kind can be registered; the registry refuses it until then, so
-staged records never pile up with nothing to apply them.
+## How it fits with other modules
 
-### Upload
+The module depends on `:shared:model`, `:shared:config`, `:shared:space`, `:shared:atproto-repo`, `:shared:atproto-xrpc`, `:client:networking`, `:client:repository`, `:client:database`, `:client:datastore`, `:client:device`, `:client:media`, `:client:text` and `:client:util`, with `:client:notifications` added on Android. It uses Ktor for HTTP, the `cryptography-kotlin` library's optimal provider for encryption, Koin and Napier. Android adds WorkManager and Room.
 
-For each outbox entry, `SpaceUploader` builds the record, checks it against its schema, seals it and
-writes it with a swap condition: a create only if the record is absent, an update only if it still
-has the content identifier this device last saw. If another device changed it first, the uploader
-reads that version, runs the kind's resolver, and writes again. The last known version of each
-record is kept in the `sync_space_records` table (`SpaceSwapStore`).
+`:client:domain`, `:client:data`, `:client:feature:core`, `:client:feature:journal`, `:client:screenshot-scenes`, `:integration:server-client-e2e` and the three app modules depend on it.
 
-### Download
+## Platforms
 
-`SpaceDownloader` pages the space's change feed from one cursor, the `SPACE` download checkpoint.
-Each change is opened, checked against its schema, and staged in the download inbox under its kind.
-A change this device can't open or check is staged under `SPACE_UNREADABLE` with the reason
-(a missing key, a corrupt record, or a record type from a newer version) and opened again on later
-downloads, so nothing is dropped. When the server says the cursor is older than deletions it has
-purged, the downloader lists the whole space again and stages a deletion for every record this
-device knows that the listing no longer has.
+Android, desktop (the JVM target is named `desktop`) and iOS (`iosArm64` and `iosSimulatorArm64`). Source sets are `commonMain`, `androidMain`, `desktopMain` and `iosMain`, with tests in `commonTest`, `desktopTest` and `androidHostTest`.
 
-### Media
+## Running the tests
 
-`SpaceMediaDataSource` encrypts media exactly as before (LDCE2, the account media key) and streams
-it to the space as a blob. The note then refers to it with a `SpaceMediaReference`, which carries
-the blob's content identifier; a download checks that the bytes match it before decrypting.
-Queuing a downloaded note's media for recovery still reads the per-kind record format, so the
-notes mapping also has to queue it from staged space records.
+Shared and desktop tests run on the JVM, and Android scheduling tests run as host tests.
 
-### Errors
-
-`spaceCall` reports every failure in the sync engine's own terms: an expired token is the `401`
-that refreshes the session, rate limiting keeps the server's `Retry-After`, a full quota is
-`STORAGE_QUOTA_EXCEEDED`, and a failure before any response is a retried network error.
-
-### Moving an existing journal
-
-An account created before personal spaces starts on legacy storage, and one of its devices moves the
-journal into the personal space. The code lives in `space/migration`, and
-[Moving journals into personal spaces](../../docs/explanation/journal-moves.md) explains the whole
-move. `SpaceJournalMigration` runs it after every complete sync, once the `PERSONAL_SPACE` and
-`PERSONAL_SPACE_MIGRATION` feature flags are on, the server advertises `personalSpaceMigrationV1`,
-and this device has downloaded everything and has nothing waiting to upload.
-
-The move reuses the space kinds above: `SpaceMigrationUpload` builds each record with the same
-`SpaceKind.outgoingRecords` the uploader uses and writes it unconditionally, saving a
-`SpaceMigrationCheckpoint` every 25 records so a later run resumes. `MigrationMediaPreparer` gives
-each media file a space reference through `SyncMediaTransfer`, but writes the new references to the
-checkpoint store through `MigrationMediaRefs` rather than to the real `MediaSyncRefStore`, because
-other devices still read legacy references until the switch. `SpaceMigrationRun` then reads the
-space back (`SpaceMigrationReadBackCheck`, `SpaceMigrationMediaCheck`), compares legacy storage with
-this device (`LegacyComparison`) while the server holds legacy writes, and asks the server to switch
-with a proof of both. After the switch, `settleAfterSwitch` adopts the moved media references and
-`rebaseForRoute` resets the sync versions kept for the other store.
-
-`JournalStorageMove` is what the app sees: a `JournalMoveState` for Settings, and `retry` and
-`switchBack` for the person's actions. Every stop carries a `JournalMoveProblem` that names the kind
-of data and what fixes it, and nothing about legacy sync changes until the server has switched.
-
-## Key Components
-
-### Core Sync
-- `SyncManager.kt` - Central sync coordination
-- `SyncModule.kt` - Dependency injection configuration
-
-### Platform Workers
-- `AndroidLogDateSyncWorker.kt` - Android background sync
-- `DesktopSyncManager.kt` - Desktop sync implementation
-- Platform-specific sync scheduling
-
-### Sync Strategies
-- Incremental synchronization
-- Full sync on first launch
-- Conflict detection and resolution
-- Priority-based sync queuing
-
-## Features
-
-### Intelligent Synchronization
-- Delta sync for efficiency
-- Bandwidth-aware sync strategies
-- Battery-conscious sync scheduling
-- Network-aware sync timing
-
-### Conflict Resolution
-- Field-aware merges with manual escalation for divergent data
-- Manual conflict resolution UI
-- Automatic merge for compatible changes
-- Conflict history tracking
-
-### Background Processing
-- Platform-appropriate background workers
-- Sync retry mechanisms
-- Progress tracking and reporting
-- Sync failure recovery
-
-## Dependencies
-
-### Core Dependencies
-- `:client:data` - Data layer access
-- `:client:networking` - Remote API communication
-- `:client:database` - Local data storage
-
-### Platform Dependencies
-- **Android**: WorkManager for background sync
-- **Desktop**: Scheduled sync while app is running
-- **iOS**: BGAppRefresh background tasks
-
-## Sync Architecture
-
-### Data Flow
-```
-Local Changes
-    ↓
-Sync Queue
-    ↓
-Conflict Detection
-    ↓
-Remote Upload
-    ↓
-Sync Confirmation
+```bash
+./gradlew :client:sync:desktopTest
+./gradlew :client:sync:testAndroidHostTest
 ```
 
-### Conflict Resolution Flow
-```
-Conflict Detected
-    ↓
-Strategy Selection
-    ↓
-┌─────────────┬─────────────┬─────────────┐
-│ Auto Merge  │ User Choice │ Last Write  │
-└─────────────┴─────────────┴─────────────┘
-    ↓
-Resolution Applied
-```
+## Things to know
 
-## Sync Strategies
-
-### Incremental Sync
-- Track change timestamps
-- Upload only modified data
-- Download only newer changes
-- Minimize bandwidth usage
-
-### Full Sync
-- Complete data reconciliation
-- Used for new device setup
-- Recovery from sync failures
-- Periodic integrity checks
-
-## Platform Implementations
-
-### Android
-- **WorkManager**: Periodic and one-time sync jobs
-- **Foreground Service**: Long-running sync operations
-- **Network Callbacks**: Sync on connectivity changes
-
-#### Recovery when media becomes allowed
-
-`AndroidSyncManager` owns authenticated scheduling through `PeriodicSyncScheduleController`.
-An unrestricted-network transition stays unacknowledged until an existing writer finishes or a
-replacement full request reaches WorkManager storage. `KEEP` alone cannot satisfy this contract:
-if a worker deferred an original before the transition, discarding the new request leaves that
-original in the worker's previous retry delay.
-
-`resumeMediaReadiness` observes the unique immediate chain without holding the scheduling or sync
-phase mutex. A running writer that returns to `ENQUEUED` becomes replaceable. A queued request
-carrying mobile-data consent keeps its original inputs and grant; the generic tag cannot reconstruct
-which account and server received consent. After a writer yields, queue backoff is released outside
-the scheduling mutex. Inside that mutex, scheduling rechecks the owner, server, current policy and
-observed work snapshot, then awaits persisted enqueue. A changed snapshot is observed again; query
-and persistence failures remain retryable through the controller.
-
-Skipping a replacement requires this observation to have seen the relevant work active and then
-finish successfully with no unfinished successor. Historical success and partial sync success do
-not prove complete media recovery. `SyncResult.recoveredMediaScope` comes from the full run after
-entry and draft phases finish without pending work. `FullSyncScope` retains the selected owner and
-origin across phase-lock waits, and each phase checks it after acquiring its mutex. Actual request
-bindings must match it too. The worker publishes that proof only while the same scope is current.
-Token rotation for the same owner and origin preserves the scope.
-
-The regression example is a media-policy change while immediate work remains `RUNNING`: retain the
-wake, observe that work return to retry, persist one full replacement, then acknowledge readiness.
-Host tests cover snapshot races, cancellation, consent retention and completion proof. The managed
-restart suite exercises the real scheduler with running predecessors and verifies that unfinished
-cloud restore work retains its UUID across process death. Original-byte recovery through the server
-requires its own media acceptance scenario.
-
-### Desktop
-- **Foreground Scheduler**: Periodic sync while app is running
-- **Application Lifecycle**: Sync on app focus
-
-### iOS
-- **BGAppRefresh**: Scheduled background refreshes
-- **App State Changes**: Sync on app lifecycle events
-
-## TODOs
-
-### Core Sync Features
-- [ ] Implement real-time sync with WebSockets
-- [ ] Add selective sync by journal/category
-- [ ] Implement sync analytics and monitoring
-- [ ] Add sync bandwidth management
-- [ ] Implement sync conflict UI for manual resolution
-- [ ] Add sync status dashboard
-- [ ] Implement sync scheduling customization
-- [ ] Add sync error recovery mechanisms
-
-### Advanced Sync
-- [ ] Implement peer-to-peer sync between devices
-- [ ] Add collaborative real-time editing
-- [ ] Implement sync compression algorithms
-- [ ] Add sync encryption for enhanced security
-- [ ] Implement sync versioning and rollback
-- [ ] Add sync performance optimization
-- [ ] Implement sync load balancing
-- [ ] Add sync health monitoring
-
-### Platform Enhancements
-- [ ] Implement iOS CloudKit integration
-- [ ] Add Android Auto Backup integration
-- [ ] Implement desktop file system sync
-- [ ] Add sync widget for quick status
-- [ ] Implement sync shortcuts and automation
-- [ ] Add sync integration with system backup
-- [ ] Implement sync with external services
-- [ ] Add sync API for third-party integrations
+- The conversion tests in `commonTest` check number rules against known answers from `tools/lexicon-check/conversion-vectors.json`. The `generateConversionVectors` task embeds them as generated Kotlin in the `app.logdate.client.sync.space` package, because common tests also run on iOS, where there is no repository to read files from.
+- `desktopTest` declares the server's error documentation directory (`server/src/main/kotlin/app/logdate/server/routes/docs`) as an input, because the error code contract test reads it.
+- The Android module owns string resources for the backup worker's foreground notification, since Android holds this module responsible for that service.
+- Download scope identifiers (owner and origin) are operational state and stay out of diagnostic reports.
+- Giving a new record kind a mapper needs round-trip tests that prove every synced field survives.

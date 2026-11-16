@@ -1,214 +1,52 @@
 # `:client:ui`
 
-**Shared UI components and utilities**
+This module is the shared Compose Multiplatform UI toolkit for LogDate. It holds the Home workspace layout primitives, the settings page components, the timeline and audio building blocks, platform adaptations such as haptics and back gestures, and the motion and shape tokens the phone and the watch share. Feature modules and the app shells build their screens from it so that the same panel, row and card behaves the same everywhere.
 
-## Overview
+## What it contains
 
-Provides a comprehensive set of reusable UI components, layouts, and utilities for consistent design across all platforms. This module serves as the foundation for the application's user interface, implementing the design system and offering common UI patterns.
+All code is under the package `app.logdate.ui`.
 
-Private dialogs, menus, and sheets use the shared components described in
-[App lock and private windows](../../docs/reference/standards/app-lock.md). These components hide
-independent windows while the journal is locked and preserve caller-owned editing state.
+| Package                                                                                                                    | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.logdate.ui` (top level)                                                                                               | `AdaptiveLayout`, `FunButton`, `GenericLoadingScreen`, `PlatformDimensions`, `SearchAppBar`, `ParallaxImage` and `ParallaxEnabledCanvas` (in `SensorActiveDisplay.kt`, driven by the gyroscope offset from `:client:sensor`), and the `LocalSharedTransitionScope` and `LocalNavAnimatedVisibilityScope` composition locals (in `SharedTransitions.kt`).                                                                                                                                                                                                                                              |
+| `workspace`                                                                                                                | The Home workspace. `WorkspaceScaffold` owns navigation, system insets, the destination header and the creation action. `AdaptiveWorkspaceLayout` places panels. `WorkspacePanel`, `PanelHeader` and `PanelGroup` draw them. `WorkspaceSupportingSheet`, `WorkspacePlaybackLayout`, `WorkspaceRouteFrame`, `WorkspaceAppBar`, `WorkspaceSearchScope`, `WorkspaceSectionSwitch`, `WorkspaceAccountAction` and `WorkspaceCaptionBar` cover the remaining shell pieces. `workspaceNavigationMode` chooses between the bar, the rail and the expanded rail.                                               |
+| `adaptive`                                                                                                                 | `AdaptivePaneLayout` and `AdaptiveWidthClass`, `FoldableBookLayout`, `FoldableTabletopLayout`, `HingeAwareOverlay` and `ActivityRouteFrame`.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `common`                                                                                                                   | Shared components and modifiers: the settings components (`SettingsScaffold`, `SettingsSection`, `SettingsRow`, `SimpleSettingsItem`, `ToggleSettingsItem`, `LinkedToggleSettingsItem`, `SettingsChoiceItem`), the app-lock-aware `AlertDialog`, `DropdownMenu`, `ModalBottomSheet`, `DatePickerDialog`, `Dialog` and `TooltipBox`, `MarkdownText`, `MessageBanner`, `MultiSelectState`, `SwipeToAction`, the drag-and-drop modifiers (`noteDragSource`, `noteDropTarget`, `batchDragSource`, `mediaDragSource`), `EditorWindows`, `HomeScreenPins`, `PlatformBackHandler` and `MainWrapperScaffold`. |
+| `timeline`                                                                                                                 | `TimelinePane`, the timeline state types (`HomeTimelineUiState`, `TimelineDayUiState`), `TimelineLine`, `NewTimelineItem`, `TimelineDaySelection`, and under `timeline/newstuff` the moment composables and list items.                                                                                                                                                                                                                                                                                                                                                                               |
+| `audio`                                                                                                                    | `MomentAudioCard`, `MiniAudioPlayer`, `AudioWaveformComponent`, `RecordingSessionControl`, `PlaybackHandoffState` with `LocalPlaybackHandoff` and `PlaybackHandoffAction`, the shared `AudioPlaybackState` and `TranscriptionProvider`, the `WaveformStorage` interface, and subpackages for waveform paths (`waveform`), segment detection (`analysis`), palette generation (`color`) and the card expansion states (`expansion`). `audioUiModule` is the Koin module that supplies `WaveformStorage`, the amplitude extractor and `AudioContextProcessor`.                                          |
+| `platform`                                                                                                                 | `PlatformKind` with `currentPlatform` and `LocalPlatformKind`, `LogDateHaptics` with `DefaultLogDateHaptics`, `PlatformSheet`, predictive back and edge-swipe handlers, `rememberSystemReduceMotion` and `rememberScreenCornerRadius`.                                                                                                                                                                                                                                                                                                                                                                |
+| `tokens`                                                                                                                   | `LogDateMotion` (spring specs) and `RecordShape` (the circle to rounded-square morph of the record button, shared with the watch).                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `step`                                                                                                                     | `StepScaffold` and `StepProgress`, the common frame for onboarding-style steps.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `scaffold`                                                                                                                 | `ResponsiveScaffold`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `search`                                                                                                                   | `UniversalSearchResultItem` and `EntrySearchResultItem` with their UI state types and snippet highlighting.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `creation`                                                                                                                 | `EntryCreationLauncher` and the motion and shape used when an entry opens from a source.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `navigation`                                                                                                               | `LogDateNavRoute`, the sealed route interface, and `ActivityPresentation`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `streak`                                                                                                                   | `Campfire` and `CampfireChip`, the streak display.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `keyboard`                                                                                                                 | `AppKeyboardShortcut` and `KeyChord`, the single catalog read by Compose key handlers, Android's shortcut helper and the desktop menu bar.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `content`, `profiles`, `location`, `media`, `provenance`, `restore`, `handwriting`, `glyphs`, `watch`, `foldable`, `utils` | Smaller shared pieces: journal metadata blocks and audience icons, person and place UI state, `MediaDeviceSelector`, the "captured on watch" markers, post-restore composition locals, `HandwritingPreview`, `LogDateGlyph`, watch setup and tile previews, and foldable helpers.                                                                                                                                                                                                                                                                                                                     |
 
-## Architecture
+## How it fits with other modules
 
-```
-UI Module
-├── Core Components
-├── Timeline Components
-├── Layout System
-├── Shared Transitions
-└── Platform Adaptations
-```
+`:client:theme` and `:client:text` are exposed as `api` dependencies, so modules that use `:client:ui` also see the theme. The module uses `:client:media`, `:client:repository`, `:client:awareness`, `:client:util`, `:client:sensor` and `:shared:model` as implementation dependencies, together with Compose, Material 3 and Material 3 Adaptive, Navigation 3 runtime, Coil, a Markdown renderer, Lifecycle and Koin. The Android source set adds Google Maps Compose, Activity Compose, AndroidX Window and the Wear protolayout and tiles renderer libraries for the watch tile previews; the desktop source set adds Compose Desktop.
 
-## Key Components
+The build files of `:app:android-main`, `:app:compose-main`, `:app:wear`, `:client:screenshot-scenes` and most feature modules (`android-widgets`, `core`, `editor`, `events`, `journal`, `library`, `location-timeline`, `onboarding`, `postcards`, `rewind`, `search`, `stickers`, `timeline`) declare a dependency on it.
 
-### Core UI Components
+## Platforms
 
-- `AdaptiveLayout.kt` - Responsive layout system
-- `FunButton.kt` - Styled button components
-- `GenericLoadingScreen.kt` - Loading states
-- `SearchAppBar.kt` - Search interface component
-- `SensorActiveDisplay.kt` - Sensor visualization
+Android, iOS (`iosArm64`, `iosSimulatorArm64`) and desktop (declared as `jvm("desktop")`). Platform behaviour is selected with `expect` and `actual` declarations; for example `PlatformBackHandler`, `PlatformSheet` and the drag-and-drop modifiers have an `actual` in each of `androidMain`, `iosMain` and `desktopMain`. The drag-and-drop modifiers do real work only on Android.
 
-### Timeline Components
+## Contracts to follow
 
-- `TimelinePane.kt` - Primary timeline display
-- `TimelineLine.kt` - Timeline visual connector
-- `NewTimelineItem.kt` - Timeline entry component
-- `TimelineDaySelection.kt` - Date selection
-- `HomeTimelineUiState.kt` - Timeline state management
+- **Settings pages.** Emit settings rows directly inside `SettingsSection`; the section spaces its direct children, so a `Column` around several rows removes the gaps. See [Settings UI composition](../../docs/reference/standards/settings-ui.md).
+- **Private windows.** Dialogs, menus, sheets, date pickers and tooltips come from `app.logdate.ui.common` so that they hide while the journal is locked. See [App lock and private windows](../../docs/reference/standards/app-lock.md). The Gradle task `checkPrivateModalContract` scans the `*Main` source sets under `client` and `app/compose-main` for direct use of the Material or Compose window APIs and fails on any outside the three allowed files. It runs as part of `check` and `ktlintCheck`.
+- **Home workspace.** Home destinations use the `workspace` primitives, and content responds to its panel's measured bounds rather than to the window. The root task `./gradlew checkHomeWorkspaceContract` checks the migrated Home roots listed in `config/workspace/home-roots.txt`.
+- **No Koin in leaf components.** Audio cards read `LocalAudioContextProcessor` from a composition local instead of injecting it, so they still draw in previews and screenshot scenes that have no Koin graph.
 
-### Layout Utilities
+## Running the tests
 
-- `PlatformDimensions.kt` - Cross-platform dimensions
-- `Modifiers.kt` - Common modifier extensions
-- `PaddingValues.kt` - Standardized spacing
-- `MaterialContainer.kt` - Material design containers
-
-### User Interaction
-
-- `SharedTransitions.kt` - Animation definitions
-- `PlatformBackHandler.kt` - Back navigation handling
-- `MainWrapperScaffold.kt` - Application scaffold
-
-## Features
-
-### Core UI System
-
-- **Adaptive Layouts**: Responsive design across screen sizes
-- **Theming Support**: Material 3 design system implementation
-- **Component Library**: Consistent reusable components
-- **Animation System**: Shared motion and transitions
-- **Interactive Elements**: Buttons, search, and selection
-
-### Timeline Visualization
-
-- **Timeline Display**: Chronological data visualization
-- **Day Selection**: Interactive date selection
-- **People Visualization**: Person and entity display
-- **Content Cards**: Journal and note display
-- **Timeline Navigation**: Scroll and navigation controls
-
-### Layout Frameworks
-
-- **Responsive Design**: Adapts to different screen sizes
-- **Padding System**: Consistent spacing throughout app
-- **Material Integration**: Material 3 components and styles
-- **Platform Adaptation**: Platform-specific optimizations
-- **Accessibility Support**: Accessible UI components
-
-### UI Utilities
-
-- **Format Utilities**: Date and time formatting
-- **Layout Helpers**: Padding and alignment utilities
-- **List Utilities**: List handling and display
-- **Transition Keys**: Animation coordination
-- **Modifier Extensions**: Reusable modifier functions
-
-## Dependencies
-
-### Core Dependencies
-
-- `:client:theme` - Design system implementation
-- `:client:util` - Utility functions
-- `:client:sensor` - Sensor integration
-- `:shared:model` - Shared data models
-- **Compose**: UI framework
-- **Material 3**: Design system components
-- **Material 3 Adaptive**: Responsive components
-- **Navigation Compose**: Navigation architecture
-- **Coil**: Image loading
-
-## Usage Patterns
-
-### Adaptive Layout
-
-```kotlin
-@Composable
-fun MainScreen(useCompactLayout: Boolean) {
-    AdaptiveLayout(
-        useCompactLayout = useCompactLayout,
-        supplementalContent = {
-            // Sidebar or supplementary content
-            NavigationPanel()
-        },
-        mainContent = {
-            // Primary content area
-            ContentArea()
-        }
-    )
-}
+```bash
+./gradlew :client:ui:desktopTest
+./gradlew :client:ui:checkPrivateModalContract
 ```
 
-### Timeline Component
-
-```kotlin
-@Composable
-fun TimelineScreen(timelineData: List<TimelineDayUiState>) {
-    TimelinePane(
-        uiState = TimelineUiState(items = timelineData),
-        onOpenDay = { date -> 
-            // Handle day selection
-        },
-        onNewEntry = {
-            // Handle new entry creation
-        },
-        onShareMemory = { memoryId ->
-            // Handle memory sharing
-        }
-    )
-}
-```
-
-### UI Utilities
-
-```kotlin
-@Composable
-fun CustomComponent() {
-    Box(
-        modifier = Modifier
-            .padding(PaddingValues.Spacing.md)
-            .conditional(isHighlighted) {
-                background(MaterialTheme.colorScheme.primaryContainer)
-            }
-    ) {
-        // Component content
-    }
-}
-```
-
-## Platform-Specific Implementations
-
-```kotlin
-// Platform dimensions implementation
-expect class PlatformDimensions() {
-    val statusBarHeight: Dp
-    val navigationBarHeight: Dp
-    val defaultPadding: Dp
-}
-
-// Android implementation
-actual class PlatformDimensions actual constructor() {
-    actual val statusBarHeight: Dp = 24.dp
-    actual val navigationBarHeight: Dp = 48.dp
-    actual val defaultPadding: Dp = 16.dp
-}
-```
-
-## TODOs
-
-### Core Components
-- [ ] Implement comprehensive component testing
-- [ ] Add component playground/showcase
-- [ ] Improve component documentation
-- [ ] Add more customization options
-- [ ] Implement theme switching support
-
-### Timeline Components
-- [ ] Optimize timeline rendering performance
-- [ ] Add more timeline visualization options
-- [ ] Implement infinite scrolling optimization
-- [ ] Add timeline filtering components
-- [ ] Improve timeline accessibility
-
-### Layout System
-- [ ] Enhance responsive layout system
-- [ ] Add more breakpoint definitions
-- [ ] Implement layout metrics tracking
-- [ ] Add support for different form factors
-- [ ] Improve large screen support
-
-### Animation System
-- [ ] Add more shared transitions
-- [ ] Implement motion system guidelines
-- [ ] Add staggered animation support
-- [ ] Improve transition performance
-- [ ] Add gesture-driven animations
-
-## Settings composition
-
-[Settings UI composition](../../docs/reference/standards/settings-ui.md) explains the shared
-section, row and card APIs, includes correct and incorrect grouping examples, and names the
-production and screenshot fixtures to follow. Rows are direct children of `SettingsSection`;
-its container supplies their separation. Do not wrap multiple rows in a layout or add manual dividers.
+`desktopTest` runs the `commonTest` and `desktopTest` source sets on the JVM. The desktop tests measure shared layouts headlessly with `compose.ui.test` and read fixtures from the repository's `test-fixtures` directory. They cover the workspace layout, adaptive panes, audio, timeline moments, provenance, tokens and handwriting.
