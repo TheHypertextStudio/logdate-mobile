@@ -37,6 +37,7 @@ import app.logdate.feature.core.settings.account.signin.LinkedProviderRow
 import app.logdate.feature.core.settings.account.signin.PasskeyRow
 import app.logdate.feature.core.settings.account.signin.SignInMethodsContent
 import app.logdate.feature.core.settings.account.signin.SignInMethodsUiState
+import app.logdate.feature.core.settings.ui.AudioNotesSettingsContent
 import app.logdate.feature.core.settings.ui.DataSettingsContent
 import app.logdate.feature.core.settings.ui.DefaultCaptureModeState
 import app.logdate.feature.core.settings.ui.IntegrityState
@@ -49,7 +50,6 @@ import app.logdate.feature.core.settings.ui.SettingsOverviewContent
 import app.logdate.feature.core.settings.ui.StorageCategory
 import app.logdate.feature.core.settings.ui.StorageQuotaUi
 import app.logdate.feature.core.settings.ui.UserProfile
-import app.logdate.feature.core.settings.ui.VoiceNotesSettingsContent
 import app.logdate.feature.core.settings.ui.VoiceNotesSettingsViewModel
 import app.logdate.ui.platform.LocalReduceMotionOverride
 import app.logdate.ui.streak.CampfireSize
@@ -311,7 +311,7 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
             )
         },
         sharedScene(SharedScreenshotSceneId.VoiceNotesSettings, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
-            VoiceNotesSettingsContent(
+            AudioNotesSettingsContent(
                 state =
                     VoiceNotesSettingsViewModel.UiState(
                         transcription =
@@ -327,8 +327,8 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
                                     ),
                             ),
                     ),
-                onDownloadTranscription = {},
-                onDownloadTagging = {},
+                onOpenTranscription = {},
+                onOpenSoundRecognition = {},
                 onBack = {},
             )
         },

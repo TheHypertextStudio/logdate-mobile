@@ -37,6 +37,10 @@ internal class InstallTimeAudioTaggingService(
     override val modelDownloadStatus: StateFlow<ModelDownloadStatus>
         get() = delegate?.modelDownloadStatus ?: notSupportedDownloadStatus
 
+    override fun checkModelAvailability() {
+        delegate?.checkModelAvailability()
+    }
+
     override fun startModelDownload() {
         delegate?.startModelDownload()
     }

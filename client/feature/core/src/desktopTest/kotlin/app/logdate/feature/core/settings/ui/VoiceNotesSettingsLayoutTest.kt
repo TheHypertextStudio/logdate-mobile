@@ -1,6 +1,5 @@
 package app.logdate.feature.core.settings.ui
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,22 +27,22 @@ class VoiceNotesSettingsLayoutTest {
             setContent {
                 LogDateTheme {
                     if (showVoiceNotes.value) {
-                        VoiceNotesSettingsContent(VoiceNotesSettingsViewModel.UiState(), {}, {}, {})
+                        AudioNotesSettingsContent(VoiceNotesSettingsViewModel.UiState(), {}, {}, {})
                     } else {
                         SettingsScaffold(title = stringResource(Res.string.voice_notes_settings), onBack = {}) {
                             item {
                                 Text(
-                                    text = stringResource(Res.string.voice_notes_settings_intro),
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    stringResource(Res.string.voice_notes_settings_intro),
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+                                    modifier = Modifier.padding(horizontal = Spacing.lg),
                                 )
                             }
                         }
                     }
                 }
             }
-            val intro = onNodeWithText("Voice notes work without anything extra.", substring = true)
+            val intro = onNodeWithText("Record voices, music, or the sounds around you.", substring = true)
             val expectedBounds = intro.fetchSemanticsNode().boundsInRoot
             runOnIdle { showVoiceNotes.value = true }
             assertEquals(expectedBounds, intro.fetchSemanticsNode().boundsInRoot)

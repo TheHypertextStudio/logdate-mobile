@@ -61,6 +61,12 @@ data object MemoriesSettingsRoute : NavKey
 data object VoiceNotesSettingsRoute : NavKey
 
 @Serializable
+data object TranscriptionSettingsRoute : NavKey
+
+@Serializable
+data object SoundRecognitionSettingsRoute : NavKey
+
+@Serializable
 data object StreakSettingsRoute : NavKey
 
 @Serializable
