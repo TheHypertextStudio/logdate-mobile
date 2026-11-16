@@ -49,15 +49,25 @@ private fun nativePrivacyRepairCoverage(
     for (payload in payloads) {
         if (payload.path.split('/').any { it.isEmpty() || it == "." || it == ".." }) return false
         when {
-            payload.path == COVERAGE_PREFERENCES -> Unit
+            payload.path == COVERAGE_PREFERENCES -> {
+                Unit
+            }
+
             payload.path == COVERAGE_WAL -> {
                 if (acceptedWal == null || !coveragePrefix(payload.file, acceptedWal.file)) return false
             }
+
             coverageProtectedPath(payload.path) -> {
                 if (hashes.getValue(payload) != protectedHashes[payload.path]) return false
             }
-            coverageSdkPath(payload.path) -> Unit
-            else -> return false
+
+            coverageSdkPath(payload.path) -> {
+                Unit
+            }
+
+            else -> {
+                return false
+            }
         }
     }
     return payloads.all { coverageRegularFile(it.file, it.expectedSize) && coverageChecksum(it.file) == hashes.getValue(it) }

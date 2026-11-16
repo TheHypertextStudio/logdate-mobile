@@ -283,7 +283,10 @@ class DeletionConflictRecovery(
             blocks =
                 draft.blocks.map { block ->
                     when (block) {
-                        is SerializableHandwritingBlock -> block
+                        is SerializableHandwritingBlock -> {
+                            block
+                        }
+
                         is SerializableTextBlock -> {
                             block
                         }

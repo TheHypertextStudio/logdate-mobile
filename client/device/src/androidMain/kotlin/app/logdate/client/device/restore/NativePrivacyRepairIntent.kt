@@ -88,6 +88,7 @@ internal class NativePrivacyRepairIntent(
                     check(NativeRestorePrivacyPolicy.hasKnownPrivacyMetadata(current))
                     current
                 }
+
                 intent.before -> {
                     val repaired =
                         checkNotNull(
@@ -98,7 +99,10 @@ internal class NativePrivacyRepairIntent(
                     check(nativePrivacyPreferenceFingerprint(repaired) == intent.after)
                     repaired
                 }
-                else -> error("Preferences changed after native privacy repair was authorized")
+
+                else -> {
+                    error("Preferences changed after native privacy repair was authorized")
+                }
             }
         }
         afterDurableStep("preferences")

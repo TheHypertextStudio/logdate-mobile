@@ -98,11 +98,13 @@ internal class SpaceDraftDownloader(
                             tally.conflictsResolved++
                             RemoteOutcome.DECLINED
                         }
+
                         existing != null && existing.lastModifiedAt > draft.lastModifiedAt -> {
                             syncMetadataService.enqueuePending(id, EntityType.DRAFT, PendingOperation.UPDATE)
                             tally.conflictsResolved++
                             RemoteOutcome.KEPT_LOCAL
                         }
+
                         else -> {
                             if (existing != draft) saveDraft(draft)
                             downloadInbox?.takeIf { draft.hasSpaceMedia() }?.enqueueSpaceDraftMedia(id, remote.syncVersion)
