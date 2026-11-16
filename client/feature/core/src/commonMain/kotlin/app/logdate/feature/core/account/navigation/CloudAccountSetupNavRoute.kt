@@ -33,8 +33,9 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
     onSkipped: () -> Unit,
     onBack: () -> Unit,
     onSignedIn: () -> Unit = onAccountCreated,
+    metadata: Map<String, Any> = emptyMap(),
 ) {
-    taggedEntry<CloudAccountSetupRoute> { route ->
+    taggedEntry<CloudAccountSetupRoute>(metadata = metadata) { route ->
         val viewModel: CloudAccountOnboardingViewModel = koinViewModel()
         LaunchedEffect(route.startOnSignIn) {
             if (route.startOnSignIn) {

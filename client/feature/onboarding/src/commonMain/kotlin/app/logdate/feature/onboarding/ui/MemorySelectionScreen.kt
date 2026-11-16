@@ -77,7 +77,7 @@ import app.logdate.client.media.MediaObject
 import app.logdate.client.permissions.rememberMediaLibraryPermissionState
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.adaptive.FoldableTabletopLayout
-import app.logdate.ui.step.StepBusyButton
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffoldDefaults
 import app.logdate.ui.theme.LogDateTheme
 import app.logdate.ui.theme.Spacing
@@ -661,7 +661,7 @@ private fun ContinueMemoryImportButton(
             modifier = Modifier.widthIn(max = StepScaffoldDefaults.ContentMaxWidth).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
-            StepBusyButton(
+            StepPrimaryButton(
                 text =
                     if (selectedCount > 0) {
                         stringResource(Res.string.continue_with_memories_count, selectedCount)

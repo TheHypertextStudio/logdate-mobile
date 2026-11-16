@@ -259,6 +259,8 @@ fun A01_OnboardingStartLanding() {
             showLanding = true,
             onGetStarted = {},
             onSignIn = {},
+            // The scene fades in on arrival; a still render has to show it arrived.
+            animateContent = false,
         )
     }
 }
@@ -306,11 +308,8 @@ fun A04_CloudAccountIntro() {
         CloudAccountWelcomeContent(
             onContinue = {},
             onSignIn = {},
-            onSkip = {},
+            onBack = {},
             serverSelectionState = ServerSelectionState(),
-            onSelectServerPreset = {},
-            onCustomServerUrlChange = {},
-            onShowCustomServerInfo = {},
         )
     }
 }

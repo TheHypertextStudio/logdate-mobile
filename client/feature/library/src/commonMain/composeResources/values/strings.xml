@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="search_library">Search library</string>
     <string name="cd_library_photo">Photo from %1$s</string>
@@ -11,11 +11,18 @@
     <string name="library_audio_recording">Audio recording</string>
     <string name="library_stop_presenting">Stop Presenting</string>
     <string name="library_permission_required_headline">Let&apos;s get started</string>
-    <string name="library_permission_required_body">Grant photo and video access so your library can show your memories.</string>
+    <string
+    name="library_permission_required_body"
+  >Grant photo and video access so your library can show your memories.</string>
     <string name="library_empty_headline">Your memories live here</string>
-    <string name="library_empty_body">Photos and videos you capture in LogDate will show up in your library. Go snap something!</string>
+    <string name="library_empty_add_photos">Add photos from this device</string>
+    <string
+    name="library_empty_body"
+  >Photos and videos you capture in LogDate will show up in your library. Go snap something!</string>
     <string name="library_error_headline">Library couldn&apos;t load</string>
-    <string name="library_error_body">Your entries are still saved. Try loading your library again.</string>
+    <string
+    name="library_error_body"
+  >Your entries are still saved. Try loading your library again.</string>
     <string name="library_recording_playback_title">LogDate recording</string>
     <string name="library_memory_title">Memory</string>
     <string name="library_memory_details">Memory details</string>

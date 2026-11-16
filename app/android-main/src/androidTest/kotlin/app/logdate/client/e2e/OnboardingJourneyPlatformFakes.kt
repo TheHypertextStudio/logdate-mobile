@@ -180,7 +180,12 @@ internal class OnboardingFakeGenerativeAiChatClient : GenerativeAIChatClient {
     override suspend fun submit(request: GenerativeAIRequest): AIResult<GenerativeAIResponse> =
         AIResult.Success(
             GenerativeAIResponse(
-                content = """{"message":"It's good to meet you. You're ready to start logging."}""",
+                content =
+                    if (request.responseFormat != null) {
+                        """{"message":"It's good to meet you. You're ready to start logging."}"""
+                    } else {
+                        "You took a quiet evening walk along the water."
+                    },
                 model = defaultModel,
             ),
         )

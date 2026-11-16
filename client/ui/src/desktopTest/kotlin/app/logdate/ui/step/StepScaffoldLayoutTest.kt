@@ -57,11 +57,43 @@ private const val LONG_SUPPORTING_TEXT =
 /**
  * Geometry guarantees [StepScaffold] makes in every posture. Each onboarding step once hand-rolled
  * these, and each got at least one of them wrong: content scrolling underneath the buttons,
- * buttons stretched across a whole foldable pane, and short steps pinned to the top of the screen
- * above a large empty gap.
+ * buttons stretched across a whole foldable pane, and a title that sat at a different height on
+ * every step.
  */
 @OptIn(ExperimentalTestApi::class)
 class StepScaffoldLayoutTest {
+    @Test
+    fun `the main action sits in the same place with one action, two, or a footer`() {
+        fun mainAction(
+            second: Boolean,
+            footer: Boolean,
+        ): DpRect {
+            lateinit var bounds: DpRect
+            runDesktopComposeUiTest(width = 411, height = 891) {
+                setContent {
+                    LogDateTheme {
+                        StepScaffold(
+                            title = TITLE,
+                            onBack = null,
+                            footer = if (footer) ({ Text("You can change this later.") }) else null,
+                            actions = {
+                                Button(onClick = {}, modifier = Modifier.fillMaxWidth().testTag(PRIMARY_ACTION_TAG)) { Text("Continue") }
+                                if (second) TextButton(onClick = {}) { Text("Not now") }
+                            },
+                        )
+                    }
+                }
+                bounds = onNodeWithTag(PRIMARY_ACTION_TAG).getBoundsInRoot()
+            }
+            return bounds
+        }
+
+        val alone = mainAction(second = false, footer = false)
+        assertEquals(alone, mainAction(second = true, footer = false))
+        assertEquals(alone, mainAction(second = true, footer = true))
+        assertEquals(alone, mainAction(second = false, footer = true))
+    }
+
     @Test
     fun `scrolled-to-end content stays above the actions on a phone`() =
         runDesktopComposeUiTest(width = 411, height = 891) {
@@ -75,18 +107,27 @@ class StepScaffoldLayoutTest {
         }
 
     @Test
-    fun `short content is centered between the top and the actions on a phone`() =
-        runDesktopComposeUiTest(width = 411, height = 891) {
-            setStep(contentItems = 1, onBack = null)
-
-            val title = onNodeWithText(TITLE).getBoundsInRoot()
-            val last = bounds(LAST_CONTENT_TAG)
-            val action = bounds(PRIMARY_ACTION_TAG)
-            val above = title.top
-            val below = action.top - last.bottom
-            assertTrue(above > 120.dp, "short content hugs the top (title at $above)")
-            assertTrue(abs((above - below).value) <= 48f, "content is not centered: $above above, $below below")
+    fun `the title sits in the same place whatever else the step holds`() {
+        fun title(
+            contentItems: Int,
+            onBack: (() -> Unit)?,
+            withHero: Boolean,
+            supportingText: String = "This is how other people find you.",
+        ): DpRect {
+            lateinit var bounds: DpRect
+            runDesktopComposeUiTest(width = 411, height = 891) {
+                setContent { LogDateTheme { SampleStep(contentItems, onBack, withHero, supportingText = supportingText) } }
+                bounds = onNodeWithTag(STEP_TITLE_TAG).getBoundsInRoot()
+            }
+            return bounds
         }
+
+        val bare = title(contentItems = 0, onBack = null, withHero = false)
+        assertEquals(bare, title(contentItems = 1, onBack = {}, withHero = false))
+        assertEquals(bare, title(contentItems = 1, onBack = {}, withHero = true))
+        assertEquals(bare, title(contentItems = 30, onBack = null, withHero = true))
+        assertEquals(bare, title(contentItems = 3, onBack = {}, withHero = false, supportingText = LONG_SUPPORTING_TEXT))
+    }
 
     @Test
     fun `hero sits above the title`() =
@@ -99,15 +140,41 @@ class StepScaffoldLayoutTest {
         }
 
     @Test
-    fun `wide unfolded window places actions beside the body`() =
+    fun `a tablet shows the whole step in one panel in the middle of the window`() =
         runDesktopComposeUiTest(width = 1280, height = 800) {
             setStep(contentItems = 1)
 
-            val title = onNodeWithText(TITLE).getBoundsInRoot()
+            val title = onNodeWithTag(STEP_TITLE_TAG).getBoundsInRoot()
             val action = bounds(PRIMARY_ACTION_TAG)
-            assertTrue(action.left >= title.right, "actions (left ${action.left}) are not beside the body (right ${title.right})")
+            assertTrue(action.top >= title.bottom, "actions (top ${action.top}) are not under the title (bottom ${title.bottom})")
+            val center = (action.left + action.right) / 2
+            assertTrue(abs((center - 640.dp).value) <= 1f, "the step is not in the middle of the window (centered on $center)")
+            assertTrue(
+                action.left >= title.left && action.right <= title.right,
+                "the title and the actions are not in one column",
+            )
+            assertTrue(action.bottom <= 800.dp - StepScaffoldDefaults.PanelWindowMargin, "actions run into the window margin")
             assertCapped(action)
         }
+
+    @Test
+    fun `the title and the main action stay put on a tablet whatever the step holds`() {
+        fun step(
+            contentItems: Int,
+            withHero: Boolean,
+        ): Pair<DpRect, DpRect> {
+            lateinit var bounds: Pair<DpRect, DpRect>
+            runDesktopComposeUiTest(width = 1280, height = 800) {
+                setStep(contentItems = contentItems, withHero = withHero)
+                bounds = onNodeWithTag(STEP_TITLE_TAG).getBoundsInRoot() to bounds(PRIMARY_ACTION_TAG)
+            }
+            return bounds
+        }
+
+        val bare = step(contentItems = 0, withHero = false)
+        assertEquals(bare, step(contentItems = 1, withHero = true))
+        assertEquals(bare, step(contentItems = 30, withHero = false))
+    }
 
     @Test
     fun `wide window with no content keeps the actions under the header`() =

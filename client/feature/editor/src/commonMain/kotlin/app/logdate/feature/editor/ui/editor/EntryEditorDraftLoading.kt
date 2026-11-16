@@ -113,22 +113,24 @@ internal fun EntryEditorViewModel.dismissExpandedBlockOrClearSingleEmptyImpl(own
 }
 
 /**
- * Loads a draft into the editor.
+ * Opens a first entry for writing at once, then swaps in the newest saved draft when one turns up
+ * and nothing has been added in the meantime.
  */
 internal fun EntryEditorViewModel.resumeFirstEntryDraftImpl() {
+    openBlankThought()
     viewModelScope.launch {
-        val drafts = editorState.first { !it.isLoading }.availableDrafts
+        val drafts = editorState.first { !it.isLoading && !it.isLoadingDrafts }.availableDrafts
         val latest =
             drafts
                 .withIndex()
                 .maxWithOrNull(
                     compareBy<IndexedValue<EntryDraft>> { it.value.updatedAt }.thenBy { it.index },
-                )?.value
-        if (latest != null) {
-            loadDraft(latest.id)
-        } else {
-            initializePreferredEntryMode()
+                )?.value ?: return@launch
+        val current = mutableEditorState.value
+        if (current.draftState is DraftState.Active || current.entryEditBase != null || current.blocks.any { it.hasContent() }) {
+            return@launch
         }
+        loadDraft(latest.id)
     }
 }
 

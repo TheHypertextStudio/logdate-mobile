@@ -24,8 +24,8 @@ class IosGyroSensorProvider(
 
     init {
         if (motionManager.gyroAvailable) {
-            // Set update interval (in seconds)
-            motionManager.gyroUpdateInterval = 0.1
+            // Motion on screen follows these readings, so they have to arrive about once a frame.
+            motionManager.gyroUpdateInterval = 1.0 / 60.0
 
             // Start gyroscope updates
             motionManager.startGyroUpdatesToQueue(operationQueue) { gyroData, error ->

@@ -426,9 +426,11 @@ class CloudAccountOnboardingViewModel(
     }
 
     private fun signInWithPasskey(
-        username: String,
+        typedName: String,
         adoptLocalData: Boolean,
     ) {
+        val name = parseSignInName(typedName)
+        val username = name.username
         _uiState.value =
             _uiState.value.copy(
                 isSigningIn = true,
@@ -437,6 +439,12 @@ class CloudAccountOnboardingViewModel(
             )
 
         viewModelScope.launch {
+            // The name says where the account lives. Point the app there before asking for the
+            // passkey, and stop with that server's problem if it cannot be used.
+            if (name.server != null && !useServerNamedBy(name)) {
+                _uiState.value = _uiState.value.copy(isSigningIn = false)
+                return@launch
+            }
             val usernameParam = username.takeIf { it.isNotBlank() }
             val result = authenticateWithPasskeyUseCase(usernameParam, adoptLocalData)
 
@@ -467,6 +475,46 @@ class CloudAccountOnboardingViewModel(
                         _uiState.value = _uiState.value.copy(pendingLocalDataAdoption = null)
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Points the app at the server a sign-in name belongs to, and reports whether it can be used.
+     * A server that cannot be used leaves its problem in the UI state.
+     */
+    private suspend fun useServerNamedBy(name: SignInName): Boolean {
+        val preset = if (name.isOnLogDateCloud) ServerPreset.PRODUCTION else ServerPreset.CUSTOM
+        _uiState.value =
+            _uiState.value.copy(
+                serverSelectionState =
+                    _uiState.value.serverSelectionState.copy(
+                        selectedPreset = preset,
+                        customServerUrl = if (preset == ServerPreset.CUSTOM) name.server.orEmpty() else "",
+                        validationState = ServerValidationState.Validating,
+                    ),
+            )
+        persistServerSelection(
+            nextStep = _uiState.value.currentStep,
+            failureMessage = { error -> serverSelectionFailureMessage(error, preset) },
+        ) {
+            when (preset) {
+                ServerPreset.PRODUCTION -> serverConfigurationCoordinator.saveLogDateCloudSelection()
+                ServerPreset.CUSTOM -> serverConfigurationCoordinator.validateAndSaveCustomServer(name.server.orEmpty())
+            }
+        }
+        return _uiState.value.serverSelectionState.validationState is ServerValidationState.Success
+    }
+
+    /**
+     * Confirms where a new account will be hosted, from the hosting step of account creation.
+     * The username is checked again, because a name free on one server may be taken on another.
+     */
+    fun confirmHosting() {
+        viewModelScope.launch {
+            prepareServerSelection(_uiState.value.currentStep).join()
+            if (_uiState.value.serverSelectionState.validationState is ServerValidationState.Success) {
+                updateUsername(_uiState.value.username)
             }
         }
     }
@@ -591,7 +639,7 @@ class CloudAccountOnboardingViewModel(
             )
     }
 
-    private fun prepareServerSelection(nextStep: OnboardingStep) {
+    private fun prepareServerSelection(nextStep: OnboardingStep): Job =
         viewModelScope.launch {
             val serverSelectionState = _uiState.value.serverSelectionState
             when (serverSelectionState.selectedPreset) {
@@ -628,7 +676,6 @@ class CloudAccountOnboardingViewModel(
                 }
             }
         }
-    }
 
     private suspend fun persistServerSelection(
         nextStep: OnboardingStep,
@@ -755,6 +802,11 @@ data class CloudAccountOnboardingUiState(
      */
     val pendingLocalDataAdoption: String? = null,
     val currentStep: OnboardingStep = OnboardingStep.Welcome,
+    /**
+     * What LogDate Cloud costs. During the beta it is free and stays free for everyone who joins.
+     * When subscriptions start, this is built from the server's plan catalog and the store's price.
+     */
+    val cloudOffer: CloudOffer = CloudOffer.FreeDuringBeta,
     val serverSelectionState: ServerSelectionState = ServerSelectionState(),
     val displayName: String = "",
     val username: String = "",

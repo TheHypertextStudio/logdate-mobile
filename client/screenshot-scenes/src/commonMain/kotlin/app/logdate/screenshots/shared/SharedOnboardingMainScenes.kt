@@ -101,7 +101,6 @@ internal val catalogOnboardingMainScenes: List<SharedScreenshotSceneSpec> =
             CloudAccountSetupContent(
                 onBack = {},
                 onContinue = {},
-                onSignIn = {},
                 onSkip = {},
             )
         },

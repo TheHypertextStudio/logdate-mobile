@@ -341,7 +341,7 @@ class OnboardingJourneyE2ETest {
  * A [TestRule] that overrides the activity launch configuration to use a specific
  * onboarding fixture during tests.
  */
-private class OnboardingLaunchOverrideRule : TestRule {
+internal class OnboardingLaunchOverrideRule : TestRule {
     override fun apply(
         base: Statement,
         description: Description,

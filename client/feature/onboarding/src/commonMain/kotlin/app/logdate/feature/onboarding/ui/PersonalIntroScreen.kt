@@ -44,8 +44,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepProgress
 import app.logdate.ui.step.StepScaffold
 import app.logdate.ui.theme.LogDateTheme
@@ -274,7 +274,7 @@ private fun BioStep(
         hero = { StepHeroIcon(Icons.Rounded.Face) },
         headerAlignment = Alignment.CenterHorizontally,
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = stringResource(Res.string.lets_see_what_i_think),
                 onClick = onContinue,
                 busy = isProcessing,

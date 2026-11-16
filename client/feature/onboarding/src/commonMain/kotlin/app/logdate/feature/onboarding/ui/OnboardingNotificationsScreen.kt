@@ -23,8 +23,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.domain.reminders.ReminderPreferences
 import app.logdate.client.domain.reminders.ReminderPreferencesState
 import app.logdate.client.permissions.rememberNotificationPermissionState
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
 import app.logdate.ui.theme.LogDateTheme
 import kotlinx.coroutines.launch
@@ -162,7 +162,7 @@ fun OnboardingNotificationsContent(
         hero = { StepHeroIcon(Icons.Rounded.NotificationsActive) },
         headerAlignment = Alignment.CenterHorizontally,
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = primaryActionLabel,
                 onClick = onPrimaryAction,
                 busy = isSaving,

@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -27,6 +28,7 @@ import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
+import app.logdate.client.sensor.GyroSensorProvider
 import app.logdate.client.ui.LockableContent
 import app.logdate.client.ui.navigation.DeepLinkAction
 import app.logdate.client.ui.navigation.DeepLinkBus
@@ -83,8 +85,8 @@ import app.logdate.feature.library.navigation.MediaDetailRoute
 import app.logdate.feature.library.navigation.libraryEntries
 import app.logdate.feature.library.ui.LibraryScreen
 import app.logdate.feature.location.timeline.ui.LocationTimelineScreen
-import app.logdate.feature.onboarding.navigation.FirstEntryImportOffer
-import app.logdate.feature.onboarding.navigation.OnboardingComplete
+import app.logdate.feature.onboarding.flow.OnboardingCompletionCoordinator
+import app.logdate.feature.onboarding.navigation.FirstEntryMemorySelection
 import app.logdate.feature.onboarding.navigation.onboardingEntries
 import app.logdate.feature.postcards.navigation.PostcardEditorRoute
 import app.logdate.feature.postcards.navigation.PostcardViewerRoute
@@ -100,6 +102,7 @@ import app.logdate.ui.creation.EntryCreationLauncher
 import app.logdate.ui.creation.LocalEntryCreationLauncher
 import app.logdate.ui.keyboard.AppKeyboardShortcut
 import app.logdate.ui.keyboard.AppShortcutScope
+import app.logdate.ui.motion.LocalGyroSensorProvider
 import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
@@ -112,6 +115,7 @@ import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.provenance.LocalActivityContextVisible
 import app.logdate.ui.provenance.LocalWatchProvenanceVisible
 import app.logdate.ui.theme.LogDateTheme
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 
@@ -137,6 +141,9 @@ fun LogDateNavDisplay(
 ) {
     val creationLauncher = remember { EntryCreationLauncher() }
     val workspaceFlags: FeatureFlagStore = koinInject()
+    val onboardingCompletion: OnboardingCompletionCoordinator = koinInject()
+    val navigationScope = rememberCoroutineScope()
+    val gyroSensor: GyroSensorProvider = koinInject()
     val watchExperienceEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }
         .collectAsState(initial = FeatureFlag.WATCH_EXPERIENCE_V2.defaultEnabled)
     val activityAwarenessEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.ACTIVITY_AWARENESS) }
@@ -207,6 +214,7 @@ fun LogDateNavDisplay(
                 app.logdate.ui.workspace.LocalWorkspaceSearchAction provides { backStack.add(SearchRoute()) },
                 LocalPlatformHaptics provides haptics,
                 LocalLogDateHaptics provides logDateHaptics,
+                LocalGyroSensorProvider provides gyroSensor,
             ) {
                 val entryDecorators =
                     listOf<NavEntryDecorator<NavKey>>(
@@ -239,7 +247,9 @@ fun LogDateNavDisplay(
                             entryProvider =
                                 entryProvider {
                                     taggedEntry<BaseRoute> { /* loading placeholder */ }
-                                    taggedEntry<HomeRoute>(metadata = ActivityPresentation.Home.asMetadata()) {
+                                    taggedEntry<HomeRoute>(
+                                        metadata = ActivityPresentation.Home.asMetadata() + homeRouteTransitionMetadata,
+                                    ) {
                                         HomeScreen(
                                             onNewEntry = backStack.homeEntryCreation(creationLauncher),
                                             onWriteMark = { backStack.add(EntryEditorRoute(markId = it.toString())) },
@@ -282,6 +292,8 @@ fun LogDateNavDisplay(
                                                         )
                                                     },
                                                     modifier = modifier,
+                                                    // The library is where photos already on the device are brought in.
+                                                    onAddPhotos = { backStack.add(FirstEntryMemorySelection) },
                                                 )
                                             },
                                             locationContent = { modifier ->
@@ -327,10 +339,13 @@ fun LogDateNavDisplay(
                                     editorEntry(
                                         onNavigateBack = { backStack.removeLastOrNull() },
                                         onEntrySaved = { saved ->
-                                            backStack.completeEditorVisit(
-                                                saved,
-                                                if (appUiState.isOnboarded) HomeRoute else OnboardingComplete,
-                                            )
+                                            if (appUiState.isOnboarded) {
+                                                backStack.completeEditorVisit(saved, HomeRoute)
+                                            } else {
+                                                navigationScope.launch {
+                                                    backStack.completeFirstEntry(saved, onboardingCompletion::finishOnboarding)
+                                                }
+                                            }
                                         },
                                         metadata = editorRouteTransitionMetadata,
                                     )
@@ -402,6 +417,7 @@ fun LogDateNavDisplay(
                                         },
                                         onSkipped = { backStack.removeLastOrNull() },
                                         onBack = { backStack.removeLastOrNull() },
+                                        metadata = onboardingRouteTransitionMetadata,
                                     )
                                     onboardingEntries(
                                         onNavigateBack = { backStack.removeLastOrNull() },
@@ -414,10 +430,7 @@ fun LogDateNavDisplay(
                                             backStack.clear()
                                             backStack.add(HomeRoute)
                                         },
-                                        onFirstEntryReady = {
-                                            backStack.clear()
-                                            backStack.add(FirstEntryImportOffer)
-                                        },
+                                        metadata = onboardingRouteTransitionMetadata,
                                         onCreateFirstEntry = { backStack.add(EntryEditorRoute(firstEntry = true)) },
                                         onGoToItem = { route -> backStack.add(route) },
                                     )

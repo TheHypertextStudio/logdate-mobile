@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -202,6 +203,9 @@ class FakeEntryDraftRepository : EntryDraftRepository {
     var getDraftFailure: Throwable? = null
     var deleteAllDraftsFailure: Throwable? = null
     var getDraftGate: CompletableDeferred<Unit>? = null
+
+    /** Holds back the draft list, as a cold database does on first launch. */
+    var draftListGate: CompletableDeferred<Unit>? = null
     var createDraftGate: CompletableDeferred<Unit>? = null
     var deleteDraftGate: CompletableDeferred<Unit>? = null
     var deleteAllDraftsGate: CompletableDeferred<Unit>? = null
@@ -222,7 +226,11 @@ class FakeEntryDraftRepository : EntryDraftRepository {
         deletionFailures[draftId] = failure
     }
 
-    override fun getDrafts(): Flow<List<EntryDraft>> = drafts
+    override fun getDrafts(): Flow<List<EntryDraft>> =
+        flow {
+            draftListGate?.await()
+            emitAll(drafts)
+        }
 
     override fun getDraft(uid: Uuid): Flow<Result<EntryDraft>> =
         flow {

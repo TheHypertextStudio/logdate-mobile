@@ -1,375 +1,58 @@
-@file:Suppress(
-    "ktlint:standard:function-naming",
-    "ktlint:standard:no-wildcard-imports",
-)
+@file:Suppress("ktlint:standard:function-naming")
 
 package app.logdate.feature.onboarding.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import app.logdate.ui.adaptive.FoldableBookLayout
-import app.logdate.ui.adaptive.FoldableTabletopLayout
 import app.logdate.ui.theme.LogDateTheme
-import app.logdate.ui.theme.Spacing
-import kotlinx.coroutines.delay
-import logdate.client.feature.onboarding.generated.resources.*
-import logdate.client.feature.onboarding.generated.resources.Res
-import logdate.client.feature.onboarding.generated.resources.onboarding_action_sign_in
-import logdate.client.feature.onboarding.generated.resources.onboarding_start_write_entry
-import org.jetbrains.compose.resources.stringResource
 
-private const val DELAY_TIME = 1_000L
 const val ONBOARDING_START_ROOT_TAG = "onboarding_start_root"
 const val ONBOARDING_START_GET_STARTED_TAG = "onboarding_start_get_started"
 const val ONBOARDING_START_FROM_BACKUP_TAG = "onboarding_start_from_backup"
 
-/**
- * An onboarding screen that
- */
 @Composable
 fun OnboardingStartScreen(
     onNext: () -> Unit,
     onSignIn: () -> Unit,
     modifier: Modifier = Modifier,
-    useLargerTextSizes: Boolean = false,
 ) {
-    OnboardingStartScreenContent(
-        showLanding = true,
-        onGetStarted = onNext,
+    var overview by rememberSaveable { mutableStateOf(false) }
+    OnboardingOpeningScreen(
+        overview = overview,
+        onContinue = { if (overview) onNext() else overview = true },
+        onBack = { overview = false },
         onSignIn = onSignIn,
         modifier = modifier,
-        useLargerTextSizes = useLargerTextSizes,
-        animateContent = false,
     )
 }
 
+/** Retains the deterministic splash/landing entry used by screenshot and adaptive fixtures. */
 @Composable
 fun OnboardingStartScreenContent(
     showLanding: Boolean,
     onGetStarted: () -> Unit,
     onSignIn: () -> Unit,
     modifier: Modifier = Modifier,
-    useLargerTextSizes: Boolean = false,
     animateContent: Boolean = true,
 ) {
-    Box(
-        modifier =
-            modifier
-                .testTag(ONBOARDING_START_ROOT_TAG)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(Spacing.lg),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (animateContent) {
-            AnimatedContent(
-                targetState = showLanding,
-                transitionSpec = { onboardingFadeTransition() },
-                label = "Main Content",
-                modifier = Modifier.fillMaxSize(),
-            ) { target ->
-                if (target) {
-                    OnboardingLandingContent(
-                        onGetStarted = onGetStarted,
-                        onSignIn = onSignIn,
-                        useLargerTextSizes = useLargerTextSizes,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    OnboardingSplashPane()
-                }
-            }
-        } else if (showLanding) {
-            OnboardingLandingContent(
-                onGetStarted = onGetStarted,
-                onSignIn = onSignIn,
-                useLargerTextSizes = useLargerTextSizes,
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            OnboardingSplashPane()
-        }
-    }
-}
-
-@Composable
-private fun OnboardingSplashPane() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .widthIn(max = 520.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        OnboardingSplashContent()
-    }
-}
-
-@Composable
-private fun OnboardingLandingContent(
-    onGetStarted: () -> Unit,
-    onSignIn: () -> Unit,
-    modifier: Modifier = Modifier,
-    useLargerTextSizes: Boolean = false,
-) {
-    FoldableTabletopLayout(
+    OnboardingOpeningScreen(
+        overview = false,
+        onContinue = onGetStarted,
+        onBack = {},
+        onSignIn = onSignIn,
         modifier = modifier,
-        minPaneHeight = 260.dp,
-        topPane = {
-            OnboardingLandingMessagePane(
-                useLargerTextSizes = useLargerTextSizes,
-                modifier = Modifier.fillMaxSize(),
-            )
-        },
-        bottomPane = {
-            OnboardingLandingActionPane(
-                onGetStarted = onGetStarted,
-                onSignIn = onSignIn,
-                modifier = Modifier.fillMaxSize(),
-            )
-        },
-        standardContent = {
-            FoldableBookLayout(
-                modifier = Modifier.fillMaxSize(),
-                minPaneWidth = 320.dp,
-                startPane = {
-                    OnboardingLandingMessagePane(
-                        useLargerTextSizes = useLargerTextSizes,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                },
-                endPane = {
-                    OnboardingLandingActionPane(
-                        onGetStarted = onGetStarted,
-                        onSignIn = onSignIn,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                },
-                standardContent = {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.primary),
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(96.dp, Alignment.CenterVertically),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            OnboardingLandingMessage(useLargerTextSizes = useLargerTextSizes)
-                            OnboardingLandingActions(
-                                onGetStarted = onGetStarted,
-                                onSignIn = onSignIn,
-                            )
-                        }
-                    }
-                },
-            )
-        },
+        showControls = showLanding,
+        animateScene = animateContent,
     )
 }
 
+@Preview
 @Composable
-private fun OnboardingLandingMessagePane(
-    useLargerTextSizes: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(Spacing.lg),
-        contentAlignment = Alignment.Center,
-    ) {
-        OnboardingLandingMessage(useLargerTextSizes = useLargerTextSizes)
-    }
-}
-
-@Composable
-private fun OnboardingLandingActionPane(
-    onGetStarted: () -> Unit,
-    onSignIn: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(Spacing.lg),
-        contentAlignment = Alignment.Center,
-    ) {
-        OnboardingLandingActions(
-            onGetStarted = onGetStarted,
-            onSignIn = onSignIn,
-        )
-    }
-}
-
-@Composable
-private fun OnboardingLandingMessage(useLargerTextSizes: Boolean) {
-    Column(
-        modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            stringResource(Res.string.onboarding_start_welcome_title),
-            style =
-                if (useLargerTextSizes) {
-                    MaterialTheme.typography.displaySmall
-                } else {
-                    MaterialTheme.typography.headlineLarge
-                },
-            color = MaterialTheme.colorScheme.onPrimary,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            stringResource(Res.string.onboarding_start_welcome_subtitle),
-            style =
-                if (useLargerTextSizes) {
-                    MaterialTheme.typography.headlineSmall
-                } else {
-                    MaterialTheme.typography.headlineMedium
-                },
-            color = MaterialTheme.colorScheme.onPrimary,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
-private fun OnboardingLandingActions(
-    onGetStarted: () -> Unit,
-    onSignIn: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .widthIn(max = 320.dp)
-                .heightIn(max = 220.dp),
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm, Alignment.CenterVertically),
-    ) {
-        FilledTonalButton(
-            onClick = onGetStarted,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .testTag(ONBOARDING_START_GET_STARTED_TAG)
-                    .semantics {
-                        contentDescription = ONBOARDING_START_GET_STARTED_TAG
-                    },
-        ) {
-            Text(stringResource(Res.string.onboarding_start_write_entry))
-        }
-        OutlinedButton(
-            onClick = onSignIn,
-            modifier = Modifier.fillMaxWidth().testTag(ONBOARDING_START_FROM_BACKUP_TAG),
-        ) {
-            Text(
-                stringResource(Res.string.onboarding_action_sign_in),
-                color = MaterialTheme.colorScheme.onPrimary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun OnboardingSplashContent() {
-    var shouldShowSubheading by remember { mutableStateOf(false) }
-
-    LaunchedEffect(shouldShowSubheading) {
-        delay(DELAY_TIME)
-        shouldShowSubheading = true
-    }
-
-    Column(
-        modifier = Modifier.widthIn(max = 444.dp),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg * 4, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            stringResource(Res.string.onboarding_start_tagline),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onPrimary,
-            textAlign = TextAlign.Center,
-        )
-        AnimatedContent(
-            shouldShowSubheading,
-            transitionSpec = { onboardingFadeTransition() },
-            label = "Subheading",
-        ) { target ->
-            if (target) {
-                Text(
-                    stringResource(Res.string.onboarding_start_tagline_subheading),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Preview(
-//    name = "Splash Screen - Size Compact", group = "Compact Devices"
-)
-@Composable
-fun OnboardingStartScreenPreview() {
-    LogDateTheme {
-        OnboardingStartScreen(onNext = {}, onSignIn = {})
-    }
-}
-
-@Preview(
-//    name = "Splash Screen Loaded - Size Compact", group = "Compact Devices"
-)
-@Composable
-fun OnboardingSplashContentPreview() {
-    LogDateTheme {
-        OnboardingLandingContent(onGetStarted = {}, onSignIn = {})
-    }
-}
-
-@Preview(
-//    device = "spec:id=reference_tablet,shape=Normal,width=1280,height=800,unit=dp,dpi=240",
-//    name = "Splash Screen Loaded - Size Medium"
-)
-@Composable
-fun OnboardingSplashContentPreview_Medium() {
-    LogDateTheme {
-        OnboardingLandingContent(
-            onGetStarted = {},
-            onSignIn = {},
-            useLargerTextSizes = true,
-        )
-    }
+private fun OnboardingStartPreview() {
+    LogDateTheme { OnboardingStartScreen(onNext = {}, onSignIn = {}) }
 }

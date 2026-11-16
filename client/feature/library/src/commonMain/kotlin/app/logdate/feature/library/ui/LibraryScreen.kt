@@ -35,10 +35,11 @@ fun LibraryScreen(
     onOpenPostcards: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = koinViewModel(),
+    onAddPhotos: (() -> Unit)? = null,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LibraryScreenContent(state, onOpenMediaDetail, onOpenSearch, onOpenPostcards, viewModel::retry, modifier)
+    LibraryScreenContent(state, onOpenMediaDetail, onOpenSearch, onOpenPostcards, viewModel::retry, modifier, onAddPhotos)
 }
 
 /**
@@ -55,6 +56,7 @@ fun LibraryScreenContent(
     onOpenPostcards: (() -> Unit)? = null,
     onRetry: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onAddPhotos: (() -> Unit)? = null,
 ) {
     val openSearch = LocalWorkspaceSearchAction.current ?: onOpenSearch
     if (!LocalWorkspaceHosted.current) {
@@ -69,7 +71,7 @@ fun LibraryScreenContent(
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 )
             }
-            LibraryPanel(state, onItemClick, onRetry, Modifier.weight(1f).fillMaxWidth())
+            LibraryPanel(state, onItemClick, onRetry, Modifier.weight(1f).fillMaxWidth(), onAddPhotos)
         }
     }
 }

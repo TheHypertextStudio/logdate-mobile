@@ -36,6 +36,7 @@ import app.logdate.client.sync.metadata.QueuedUpload
 import app.logdate.client.sync.metadata.SyncDeadLetterRecord
 import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.feature.core.settings.ui.ServerConfigurationCoordinator
+import app.logdate.feature.core.settings.ui.ServerPreset
 import app.logdate.shared.config.DefaultLogDateConfigRepository
 import app.logdate.shared.model.BeginAccountCreationData
 import app.logdate.shared.model.BeginAccountCreationRequest
@@ -55,6 +56,7 @@ import app.logdate.shared.model.PasskeyCapabilities
 import app.logdate.shared.model.PasskeyInfo
 import app.logdate.shared.model.PasskeyRegistrationOptions
 import app.logdate.shared.model.ServerDescriptor
+import app.logdate.shared.model.ServerProtocolFeature
 import app.logdate.shared.model.UsernameAvailabilityData
 import app.logdate.shared.model.profile.LogDateProfile
 import kotlinx.coroutines.Dispatchers
@@ -276,11 +278,80 @@ class CloudAccountOnboardingViewModelTest {
 
     // --- helpers -----------------------------------------------------------
 
+    @Test
+    fun `signing in with a bare username asks the passkey for that name without choosing a server`() =
+        runTest {
+            val passkeys = FakePasskeyAccountRepository()
+            val discovery = FakeServerDiscoveryClient()
+            val viewModel = buildViewModel(isEmailVerificationAvailable = false, passkeyRepo = passkeys, discovery = discovery)
+            advanceUntilIdle()
+
+            viewModel.signInWithPasskey("alex")
+            advanceUntilIdle()
+
+            assertEquals(listOf<String?>("alex"), passkeys.signInAttempts)
+            assertTrue(discovery.asked.isEmpty(), "a bare name looked for a server: ${discovery.asked}")
+        }
+
+    @Test
+    fun `signing in with a name on another server points the app there first`() =
+        runTest {
+            val passkeys = FakePasskeyAccountRepository()
+            val discovery = FakeServerDiscoveryClient()
+            val viewModel = buildViewModel(isEmailVerificationAvailable = false, passkeyRepo = passkeys, discovery = discovery)
+            advanceUntilIdle()
+
+            viewModel.signInWithPasskey("alex@journal.example.com")
+            advanceUntilIdle()
+
+            assertEquals(listOf("https://journal.example.com"), discovery.asked)
+            assertEquals(listOf<String?>("alex"), passkeys.signInAttempts)
+            val selection = viewModel.uiState.value.serverSelectionState
+            assertEquals(ServerPreset.CUSTOM, selection.selectedPreset)
+            assertEquals("https://journal.example.com", selection.customServerUrl)
+        }
+
+    @Test
+    fun `signing in with a LogDate handle uses LogDate Cloud`() =
+        runTest {
+            val passkeys = FakePasskeyAccountRepository()
+            val discovery = FakeServerDiscoveryClient()
+            val viewModel = buildViewModel(isEmailVerificationAvailable = false, passkeyRepo = passkeys, discovery = discovery)
+            advanceUntilIdle()
+
+            viewModel.signInWithPasskey("alex.logdate.app")
+            advanceUntilIdle()
+
+            assertEquals(listOf(DefaultLogDateConfigRepository.DEFAULT_BACKEND_URL), discovery.asked)
+            assertEquals(listOf<String?>("alex"), passkeys.signInAttempts)
+            assertEquals(
+                ServerPreset.PRODUCTION,
+                viewModel.uiState.value.serverSelectionState.selectedPreset,
+            )
+        }
+
+    @Test
+    fun `a server that does not answer stops sign-in before the passkey and says why`() =
+        runTest {
+            val passkeys = FakePasskeyAccountRepository()
+            val discovery = FakeServerDiscoveryClient(unreachable = setOf("https://journal.example.com"))
+            val viewModel = buildViewModel(isEmailVerificationAvailable = false, passkeyRepo = passkeys, discovery = discovery)
+            advanceUntilIdle()
+
+            viewModel.signInWithPasskey("alex@journal.example.com")
+            advanceUntilIdle()
+
+            assertTrue(passkeys.signInAttempts.isEmpty(), "the passkey was asked for although the server did not answer")
+            assertFalse(viewModel.uiState.value.isSigningIn)
+            assertTrue(viewModel.uiState.value.errorMessage != null, "nothing says the server could not be used")
+        }
+
     private fun buildViewModel(
         isEmailVerificationAvailable: Boolean,
         verifyOutcome: EmailVerificationOutcome = EmailVerificationOutcome.Failed("not_invoked"),
         passkeyRepo: FakePasskeyAccountRepository = FakePasskeyAccountRepository(),
         profileRepo: FakeProfileRepository = FakeProfileRepository(),
+        discovery: FakeServerDiscoveryClient = FakeServerDiscoveryClient(),
     ): CloudAccountOnboardingViewModel {
         val sessionStorage = FakeSessionStorage()
         val emailManager = FakeEmailVerificationManager()
@@ -310,7 +381,7 @@ class CloudAccountOnboardingViewModelTest {
             serverConfigurationCoordinator =
                 ServerConfigurationCoordinator(
                     serverHealthChecker = FakeServerHealthChecker(),
-                    serverDiscoveryClient = FakeServerDiscoveryClient(),
+                    serverDiscoveryClient = discovery,
                     configRepository = DefaultLogDateConfigRepository(),
                 ),
         )
@@ -378,10 +449,15 @@ class CloudAccountOnboardingViewModelTest {
             return Result.failure(NotImplementedError())
         }
 
+        val signInAttempts = mutableListOf<String?>()
+
         override suspend fun authenticateWithPasskey(
             username: String?,
             adoptLocalData: Boolean,
-        ): Result<LogDateAccount> = Result.failure(NotImplementedError())
+        ): Result<LogDateAccount> {
+            signInAttempts += username
+            return Result.failure(NotImplementedError())
+        }
 
         override suspend fun checkUsernameAvailability(username: String): Result<Boolean> = Result.success(true)
 
@@ -582,14 +658,25 @@ class CloudAccountOnboardingViewModelTest {
             Result.success(ServerHealthInfo(status = "ok", version = "test"))
     }
 
-    private class FakeServerDiscoveryClient : ServerDiscoveryClient {
-        override suspend fun discoverServer(serverOrigin: String): Result<ServerDescriptor> =
+    private class FakeServerDiscoveryClient(
+        private val unreachable: Set<String> = emptySet(),
+    ) : ServerDiscoveryClient {
+        val asked = mutableListOf<String>()
+
+        override suspend fun discoverServer(serverOrigin: String): Result<ServerDescriptor> {
+            asked += serverOrigin
+            if (serverOrigin in unreachable) return Result.failure(IllegalStateException("unreachable"))
+            return discovered(serverOrigin)
+        }
+
+        private fun discovered(serverOrigin: String): Result<ServerDescriptor> =
             Result.success(
                 ServerDescriptor(
                     serverOrigin = serverOrigin,
                     apiBaseUrl = "$serverOrigin/api/v1",
                     deploymentKind = DeploymentKind.SELF_HOSTED,
                     displayName = "Test",
+                    protocolFeatures = listOf(ServerProtocolFeature.CANONICAL_OWNER_BINDING_V1),
                 ),
             )
     }

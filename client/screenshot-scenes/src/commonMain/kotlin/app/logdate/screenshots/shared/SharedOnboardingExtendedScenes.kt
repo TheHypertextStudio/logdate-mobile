@@ -111,11 +111,8 @@ internal val catalogOnboardingExtendedScenes: List<SharedScreenshotSceneSpec> =
             CloudAccountWelcomeContent(
                 onContinue = {},
                 onSignIn = {},
-                onSkip = {},
+                onBack = {},
                 serverSelectionState = ServerSelectionState(),
-                onSelectServerPreset = {},
-                onCustomServerUrlChange = {},
-                onShowCustomServerInfo = {},
                 isPasskeySupported = true,
             )
         },
@@ -145,11 +142,8 @@ internal val catalogOnboardingExtendedScenes: List<SharedScreenshotSceneSpec> =
             CloudAccountWelcomeContent(
                 onContinue = {},
                 onSignIn = {},
-                onSkip = {},
+                onBack = {},
                 serverSelectionState = ServerSelectionState(),
-                onSelectServerPreset = {},
-                onCustomServerUrlChange = {},
-                onShowCustomServerInfo = {},
                 isPasskeySupported = true,
             )
         },
