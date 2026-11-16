@@ -14,7 +14,7 @@
 # ./gradlew checkOsIntegrationScreenshotCoverage (or ./run screenshots:check) enforces this file.
 # See docs/testing/screenshot-tests.md.
 
-# Privacy settings: system search visibility, which is also the consent for assistant read access.
+# Privacy settings: system search visibility.
 privacy-system-search|android|app/logdate/screenshots/flows/flow20_os_integration/Flow20_01_SystemSearchVisibilityScreenshots.kt#S01_PrivacySystemSearchVisibility
 privacy-system-search|desktop|privacy-settings
 
@@ -81,9 +81,8 @@ capture-widget|system|docs/screenshots/android-os-integration/widgets/capture-wi
 # What Android assistants may see and do, in Settings › Privacy & security.
 android-assistants|android|app/logdate/screenshots/components/settings_account/AndroidAssistantScreenshots.kt#AndroidAssistants
 
-# Assistant actions: Android's registry and calls through cmd app_function, and the saved entry.
+# Assistant actions: Android's registry, and searches and new entries through cmd app_function.
 app-functions|system|docs/screenshots/android-os-integration/app-functions/assistant-actions--phone-api37.txt
-app-functions|system|docs/screenshots/android-os-integration/app-functions/entry-from-assistant--phone-api37.png
 app-functions|system|docs/screenshots/android-os-integration/app-functions/assistant-actions--tablet-api37.txt
 
 # Editor Handoff: the offered extras, an entry opened from them, and one that has not arrived.

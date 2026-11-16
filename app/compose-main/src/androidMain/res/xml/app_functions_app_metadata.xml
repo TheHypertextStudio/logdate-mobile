@@ -1,5 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!-- What assistants read about LogDate's actions, and the summary Android shows the person. -->
-<AppFunctionAppMetadata xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:description="LogDate is a personal journal. Use createTextEntry to save something the person wants to remember, listJournals to name their journals, and searchEntries to find what they wrote. searchEntries works only when the person has allowed system search in LogDate and LogDate is unlocked; when it fails, tell the person what the error says."
-    app:displayDescription="@string/app_functions_display_description" />
+<AppFunctionAppMetadata
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  app:instructions="LogDate is the person's private journal. Assistants never write or change entries. Use search to find what the person wrote, where they've been and who comes up in their entries, listJournals to name their journals, and startEntry to open a new voice note or entry that the person records or writes themselves. Each action works only for what the person allowed in LogDate's settings, and reading also needs LogDate unlocked. When an action fails, tell the person what the error says."
+  app:displayDescription="@string/app_functions_display_description"
+/>

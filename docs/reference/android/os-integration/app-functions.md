@@ -1,112 +1,146 @@
 # AppFunctions
 
-Status: built, behind `APP_FUNCTIONS` (Settings > Advanced > Developer tools > Feature previews), and
-verified on an Android 17 emulator. Requires Android 16 (API 36) or later. Library:
-`androidx.appfunctions` 1.0.0-alpha10.
+Status: built, behind `APP_FUNCTIONS` (Settings > Advanced > Developer tools > Feature previews), for
+Android 16 (API 36) and later. Library: `androidx.appfunctions` 1.0.0-rc01.
 
 ## What it is
 
 **AppFunctions** let an app offer actions to on-device agents and assistants, such as Gemini. An app
-declares functions with typed parameters and results. Android registers them, and an agent can then
-call them on the person's behalf. For example, "add to my journal that the hike was beautiful".
+declares functions with typed parameters and results. Android registers them, and an agent can call
+them on the person's behalf: "what did I write about the canal walk?" or "start a voice note in
+LogDate".
 
 AppFunctions are an Android platform API with a Jetpack library, `androidx.appfunctions`. They replace
-the older App Actions `<capability>` bindings that `shortcuts.xml` used to carry. Those bindings were
-removed because they pointed at a class that no longer exists.
+the older App Actions `<capability>` bindings that `shortcuts.xml` used to carry.
+
+## The rule assistants follow
+
+An assistant never writes or changes a journal entry, not even as a suggestion the person could
+accept. It can look at what the person chose to share, and it can open a new, empty entry that the
+person then records or writes. Connected assistants follow the same rule, and both use one
+permission model: `AssistantCapability` in `client/repository`.
 
 ## What the person can ask for
 
-| Function | What it does | Needs consent? |
-| --- | --- | --- |
-| `createTextEntry(text)` | Saves a text entry, dated now, and returns it | No |
-| `listJournals()` | Returns each journal's id and title, so an agent can name one | Yes |
-| `searchEntries(query)` | Returns up to 10 matching entries, best match first, each shortened to one line | Yes |
+| Function            | What it does                                                          | Needs                                           |
+| ------------------- | --------------------------------------------------------------------- | ----------------------------------------------- |
+| `search(query)`     | Up to 10 matches, best first, each shortened to one line              | Entries, Places or People, and LogDate unlocked |
+| `listJournals()`    | The journals whose entries the person shared, by id and title         | Entries, and LogDate unlocked                   |
+| `startEntry(voice)` | A `PendingIntent` that opens a new voice note or written entry, empty | Start a voice note or entry                     |
 
-The entry an assistant saves appears in the timeline like any other:
+`search` returns only kinds of content the person shared:
 
-![The timeline's Today section showing "Walked the long way home along the river.", saved by an assistant](../../../screenshots/android-os-integration/app-functions/entry-from-assistant--phone-api37.png)
+- **Entries.** Written entries and voice-note transcripts, but only from the journals the person
+  picked. An entry that belongs to several journals counts only when every one of them is shared.
+  Entries outside any journal need their own checkbox.
+- **Places** and **People**, each with its own switch.
 
-Two functions from the original plan were left out on purpose:
+Rewinds, stickers, postcards, photo captions and ambient sounds are never returned, because no
+permission covers them. Matches the person didn't share are dropped before the limit of 10, so an
+assistant can't learn from a short result that more exists.
 
-- **`startVoiceEntry`.** An assistant calls a function from the background, and Android does not let a
-  background call open an activity reliably. Voice entries start from the Record voice shortcut,
-  tile, and widget instead.
-- **`summarizeDay`.** It would hand over a whole day of writing at once. `searchEntries` returns only
-  what matches, under the same consent.
+`startEntry` can't run in the background and open LogDate itself: Android doesn't let a background
+call start an activity. Instead it returns a `PendingIntent`, and the assistant opens it while the
+person is looking at it. The intent carries only the mode, never any text.
 
-## Consent and the app lock
+## Choosing what assistants can do
 
-Reading someone's journal is far more sensitive than adding to it. `listJournals` and
-`searchEntries` check two things on every call:
+The person decides in **Settings › Privacy & security › Android assistants**. Everything starts off.
+The page uses the same switches as the connected-assistant screens: Entries (with a journal picker),
+Places, People, and Start a voice note or entry. The row in Privacy & security, and the page, appear
+only on Android 16 and later while `APP_FUNCTIONS` is on. The Settings › Assistants list also shows
+an "On this phone" entry for Android assistants when it is given one.
 
-1. **System search visibility.** The person controls this in Privacy settings. It is the same setting
-   that lets LogDate entries appear in Android search, read through
-   `LogdatePreferencesDataSource.getSystemSearchVisibilityEnabled()`.
-2. **The app lock.** If the lock is on in Settings (`UserData.securityLevel`) and the person has not
-   unlocked LogDate in this process (`BiometricGatekeeper` reports `AUTHENTICATED`), the call is
-   refused. The setting is read directly because the gatekeeper starts every new process as "no
-   prompt needed", including one Android starts just to answer an assistant.
+The choice is stored on this device (`DeviceAssistantAccessStore` in `client/domain`, kept in
+`LogdatePreferencesDataSource`). It is separate from system search visibility, which only controls
+whether entries appear in Android's own search.
 
-A refusal throws `AppFunctionDeniedException` with a message that says which check failed and what the
-person can do; it never returns partial data. The decisions are `assistantUnlocked` and
-`assistantReadRefusal` (app/compose-main commonMain, `client/appfunctions/AssistantAccess.kt`), pure
-functions with tests.
+## Refusals and the app lock
+
+Every function says why it refused, in words the assistant can pass on:
+
+- **Not shared.** The person hasn't turned on what the function needs. The message names the
+  settings page where they can change it.
+- **Locked.** Reading stops while LogDate is locked. If the app lock is on (`UserData.securityLevel`)
+  and the person hasn't unlocked LogDate in this process, the call is refused. The setting is read
+  directly, because the gatekeeper starts every new process as "no prompt needed", including one
+  Android starts just to answer an assistant. `startEntry` ignores the lock: it reveals nothing, and
+  LogDate's own lock screen still appears when the entry opens.
+- **Unavailable.** LogDate couldn't open its journal, for example while a restore is finishing.
+
+Refusals throw `AppFunctionDeniedException` (or `AppFunctionAppUnknownException` for Unavailable)
+and never return partial data. The decisions live in `assistantReadRefusal`,
+`assistantCaptureRefusal` and `assistantUnlocked` (app/compose-main commonMain,
+`client/appfunctions/AssistantAccess.kt`), and which content counts is decided by
+`AssistantSourceEligibility` and `DeviceAssistantLibrary` in `client/domain`.
 
 ## How it works
 
 - `LogDateAppFunctions` (app/compose-main androidMain, `client/appfunctions/`) is an abstract
-  `AppFunctionService` annotated `@AppFunctionServiceEntryPoint`. Each function's KDoc is its
-  description for agents (`isDescribedByKDoc = true`).
+  `AppFunctionService` annotated `@AppFunctionServiceEntryPoint`. Each function carries
+  `@AppFunctionDeclaration(isDescribedByKDoc = true)`, so its KDoc is the description agents read.
+- Before it touches storage, every function waits for LogDate's startup
+  (`ApplicationStartupCoordinator.start(application).awaitReady()`). Android may start LogDate's
+  process just to answer an assistant, and that process hasn't opened the encrypted database yet.
 - The AppFunctions KSP compiler, applied to the module's Android target as `kspAndroid`, generates the
   concrete `LogDateAppFunctionService` and the schema asset `logdate_app_functions.xml`. The
   multiplatform Android library does not package KSP assets on its own, so `app/compose-main`'s build
-  adds that folder to its assets; check that the APK contains `assets/logdate_app_functions.xml`.
+  adds that folder to its assets. Check that the APK contains `assets/logdate_app_functions.xml`.
 - The app manifest declares the generated service with the `android.app.appfunctions.v2` property
   naming that asset, and an application-level `app_metadata` property pointing at
-  `res/xml/app_functions_app_metadata.xml`, which tells agents what LogDate is and when to use each
-  function.
-- The functions call the same use cases the app uses: `AddNoteUseCase`, the current user's journals,
-  and the search repository.
+  `res/xml/app_functions_app_metadata.xml`. Its `instructions` attribute tells agents what LogDate is
+  and how to use each function; `displayDescription` is what Android shows the person.
 
 ## Flag and rollout
 
 `APP_FUNCTIONS`, off by default. The generated service is declared disabled and enabled by
-`PlatformComponentToggler` while the flag is on, so Android only indexes the functions then. As of
-mid-2026, Gemini calls AppFunctions only for apps in a private preview, so functions are verified
-through Android's own registry.
+`PlatformComponentToggler` while the flag is on, so Android only indexes the functions then.
+
+Gemini calls an app's AppFunctions only after the app is registered in Google Connected Console as an
+Android MCP connected app, linked to its Play app. Until the Play production release that carries the
+functions is approved, only the connected app's testers can use them, and only with the exact app
+bundle version that was submitted. The steps are in
+[Create and manage Connected Apps](https://developer.android.com/ai/appfunctions/create-manage-connected-apps).
 
 ## Privacy
 
-- `createTextEntry` returns nothing from the person's journal beyond the entry it saved.
-- `listJournals` and `searchEntries` follow the consent and lock rules above on every call. Journal
-  titles count as journal content, and search returns short excerpts rather than whole entries.
-- Whether the app lock is on comes from the lock setting, not from the unlock screen's state: a
-  process Android starts only to answer an assistant has never shown that screen, so with the lock
-  on, LogDate stays locked to assistants until the person unlocks it in the app.
+- No function writes or changes an entry. `startEntry` opens an empty entry; the person records or
+  writes it and decides whether to save it.
+- A public capture intent never carries text either. Other apps can open a new entry with
+  `app.logdate.action.CAPTURE`, but it always starts empty; see the
+  [capture launch contract](capture-launch-contract.md).
+- Journal titles count as journal content, so `listJournals` follows the Entries permission.
+- Search returns short excerpts rather than whole entries.
 
 ## How to test
 
-- `AssistantAccessTest` covers the consent and lock decision and the excerpts.
+- `AssistantSourceEligibilityTest`, `DeviceAssistantLibraryTest` and `DeviceAssistantAccessStoreTest`
+  (`client/domain`) cover what each permission shares, the journal scope, the excluded content types,
+  the limit and how the choice is stored.
+- `AssistantAccessTest` (app/compose-main) covers refusals, the lock and excerpts.
+  `CaptureTextIntentTest` checks that only LogDate's own route can start an entry with text.
+- `AndroidAssistantsContentTest` and `AndroidAssistantsViewModelTest` (`client/feature/core`) cover
+  the settings page.
 - `OsSurfaceScreenshotsTest#assistantActions` drives the functions on an Android 16+ managed device
-  the way an agent would and saves the output as
-  `docs/screenshots/android-os-integration/app-functions/assistant-actions--phone-api37.txt`: the
-  registered functions, a saved entry, a refused search with consent off, and a successful search
-  with consent on.
-- By hand, on an emulator with the flag on:
+  the way an agent would. It checks that no write function is registered, that each function refuses
+  until the person shares something, that reading stops while LogDate is locked, and that a shared
+  entry is found. It saves the output as
+  `docs/screenshots/android-os-integration/app-functions/assistant-actions--<device>-api37.txt`.
+- By hand, on an emulator with the flag on and something shared:
 
   ```bash
   adb -s emulator-5554 shell cmd app_function list-app-functions
   ```
 
   ```bash
-  adb -s emulator-5554 shell "cmd app_function execute-app-function --package studio.hypertext.logdate.debug --function 'app.logdate.client.appfunctions.LogDateAppFunctions#createTextEntry' --parameters '{\"text\":[\"A note from adb\"]}'"
+  adb -s emulator-5554 shell "cmd app_function execute-app-function --package studio.hypertext.logdate.debug --function 'app.logdate.client.appfunctions.LogDateAppFunctions#search' --parameters '{\"query\":[\"canal\"]}'"
   ```
 
   Each parameter is a one-element JSON array.
 
 ## Updating screenshots
 
-`./run screenshots:os` records the text evidence and the timeline capture under
+`./run screenshots:os` records the text evidence under
 `docs/screenshots/android-os-integration/app-functions/`.
 
 ## Cross-device: Handoff
@@ -141,8 +175,8 @@ travels as a **draft** through backup's draft sync (`DraftUploader` and `DraftDo
   being off, a sync error (with its message), and a draft the other device has not uploaded. Try
   again starts the wait over, and Start a new entry stops waiting.
 
-| Opened from another device | When the draft has not arrived |
-| --- | --- |
+| Opened from another device                                                                                                                                                                 | When the draft has not arrived                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![The editor showing the handed-off entry about the ridge trail](../../../screenshots/android-os-integration/large-screens-and-desktop-windowing/editor-handoff-arrived--tablet-api37.png) | ![The editor explaining that the entry has not arrived because backup is off on this device, with Start a new entry and Try again](../../../screenshots/android-os-integration/large-screens-and-desktop-windowing/editor-handoff-missing--phone-api37.png) |
 
 The flag only controls whether an editor offers itself to other devices. An editor that a handoff
