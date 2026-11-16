@@ -1,22 +1,21 @@
-TLC2 Version 2026.10.24.013619 (rev: 2ef2af8)
-Warning: Please run the Java VM, which executes TLC with a throughput optimized garbage collector, by passing the "-XX:+UseParallelGC" property.
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+Warning: Please run the Java VM which executes TLC with a throughput optimized garbage collector by passing the "-XX:+UseParallelGC" property.
 (Use the -nowarning option to disable this warning.)
-Running breadth-first search Model-Checking with fp 108 and seed -4481995468372027396 with 2 workers on 16 cores with 1400MB heap and 64MB offheap memory [pid: 29408] (Mac OS X 27.0.1 aarch64, JetBrains s.r.o. 21.0.10 64bit, MSBDiskFPSet, DiskStateQueue).
-Parsing file /Users/williecubed/.codex/worktrees/6863/logdate-mobile/docs/verification/backup-sync/BackupSync.tla
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-5756851198467305370/Naturals.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-5756851198467305370/FiniteSets.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-5756851198467305370/TLC.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-5756851198467305370/Sequences.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Running breadth-first search Model-Checking with fp 77 and seed 6494805758824479318 with 2 workers on 16 cores with 1400MB heap and 64MB offheap memory [pid: 23903] (Mac OS X 27.2 aarch64, JetBrains s.r.o. 21.0.10 x86_64, OffHeapDiskFPSet, DiskStateQueue).
+Parsing file /Users/williecubed/.cache/logdate-worktrees/backup-invariants/docs/verification/backup-sync/BackupSync.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/Naturals.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/FiniteSets.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/TLC.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/Sequences.tla
 Semantic processing of module Naturals
 Semantic processing of module Sequences
 Semantic processing of module FiniteSets
 Semantic processing of module TLC
 Semantic processing of module BackupSync
-Linting of module BackupSync
-Starting... (2026-10-28 06:15:14)
+Starting... (2026-11-16 09:38:49)
 Implied-temporal checking--satisfiability problem has 2 branches.
 Computing initial states...
-Finished computing initial states: 1 distinct state generated at 2026-10-28 06:15:14.
+Finished computing initial states: 1 distinct state generated at 2026-11-16 09:38:49.
 Error: Invariant TruthfulNotification is violated.
 Error: The behavior up to this point is:
 State 1: <Initial predicate>
@@ -27,6 +26,7 @@ State 1: <Initial predicate>
 /\ active = 0
 /\ waiters = {1, 2}
 /\ falsePending = FALSE
+/\ protectingWork = FALSE
 /\ keys = FALSE
 /\ network = "offline"
 /\ acknowledged = 0
@@ -40,7 +40,7 @@ State 1: <Initial predicate>
 /\ serverUp = FALSE
 /\ owner = 0
 
-State 2: <Environment line 25, col 16 to line 30, col 71 of module BackupSync>
+State 2: <Edit line 73, col 3 to line 93, col 7 of module BackupSync>
 /\ phase = "idle"
 /\ charging = FALSE
 /\ completed = 0
@@ -48,11 +48,34 @@ State 2: <Environment line 25, col 16 to line 30, col 71 of module BackupSync>
 /\ active = 0
 /\ waiters = {1, 2}
 /\ falsePending = FALSE
+/\ protectingWork = FALSE
+/\ keys = FALSE
+/\ network = "offline"
+/\ acknowledged = 0
+/\ notice = "off"
+/\ generation = 1
+/\ replayedCommitted = FALSE
+/\ authenticated = FALSE
+/\ committed = 0
+/\ replayedAcknowledged = FALSE
+/\ total = 0
+/\ serverUp = FALSE
+/\ owner = 0
+
+State 3: <Environment line 95, col 3 to line 113, col 7 of module BackupSync>
+/\ phase = "idle"
+/\ charging = FALSE
+/\ completed = 0
+/\ transfers = {}
+/\ active = 0
+/\ waiters = {1, 2}
+/\ falsePending = FALSE
+/\ protectingWork = FALSE
 /\ keys = TRUE
 /\ network = "wifi"
 /\ acknowledged = 0
 /\ notice = "off"
-/\ generation = 0
+/\ generation = 1
 /\ replayedCommitted = FALSE
 /\ authenticated = TRUE
 /\ committed = 0
@@ -61,7 +84,7 @@ State 2: <Environment line 25, col 16 to line 30, col 71 of module BackupSync>
 /\ serverUp = FALSE
 /\ owner = 0
 
-State 3: <BeginCheck line 36, col 15 to line 42, col 70 of module BackupSync>
+State 4: <BeginCheck line 138, col 3 to line 155, col 7 of module BackupSync>
 /\ phase = "checking"
 /\ charging = FALSE
 /\ completed = 0
@@ -69,11 +92,12 @@ State 3: <BeginCheck line 36, col 15 to line 42, col 70 of module BackupSync>
 /\ active = 0
 /\ waiters = {2}
 /\ falsePending = FALSE
+/\ protectingWork = FALSE
 /\ keys = TRUE
 /\ network = "wifi"
 /\ acknowledged = 0
 /\ notice = "off"
-/\ generation = 0
+/\ generation = 1
 /\ replayedCommitted = FALSE
 /\ authenticated = TRUE
 /\ committed = 0
@@ -82,7 +106,7 @@ State 3: <BeginCheck line 36, col 15 to line 42, col 70 of module BackupSync>
 /\ serverUp = FALSE
 /\ owner = 1
 
-State 4: <LongCheck line 43, col 14 to line 48, col 69 of module BackupSync>
+State 5: <LongCheck line 157, col 3 to line 188, col 7 of module BackupSync>
 /\ phase = "checking"
 /\ charging = FALSE
 /\ completed = 0
@@ -90,11 +114,12 @@ State 4: <LongCheck line 43, col 14 to line 48, col 69 of module BackupSync>
 /\ active = 0
 /\ waiters = {2}
 /\ falsePending = FALSE
+/\ protectingWork = TRUE
 /\ keys = TRUE
 /\ network = "wifi"
 /\ acknowledged = 0
 /\ notice = "backing"
-/\ generation = 0
+/\ generation = 1
 /\ replayedCommitted = FALSE
 /\ authenticated = TRUE
 /\ committed = 0
@@ -103,6 +128,7 @@ State 4: <LongCheck line 43, col 14 to line 48, col 69 of module BackupSync>
 /\ serverUp = FALSE
 /\ owner = 1
 
-7135 states generated, 262 distinct states found, 114 states left on queue.
+7240 states generated, 310 distinct states found, 161 states left on queue.
 The depth of the complete state graph search is 5.
-Finished in 00s at (2026-10-28 06:15:15)
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 31 and the 95th percentile is 2).
+Finished in 00s at (2026-11-16 09:38:49)

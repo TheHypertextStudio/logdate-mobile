@@ -176,12 +176,12 @@ class FormalFormatTests(unittest.TestCase):
         self.assertEqual(again.stdout, result.stdout)
         return result.stdout
 
-    def test_all_five_actual_configs_are_formatted_and_idempotent(self):
+    def test_all_actual_configs_are_formatted_and_idempotent(self):
         self.adapter()
         for path in sorted(FIXTURES.glob("*.cfg")):
             with self.subTest(path=path.name):
                 self.assert_formatted(path.read_bytes())
-        self.assertEqual(len(list(FIXTURES.glob("*.cfg"))), 5)
+        self.assertEqual(len(list(FIXTURES.glob("*.cfg"))), 11)
 
     def test_canonical_sections_and_constants_change_layout(self):
         self.assert_formatted(
