@@ -31,30 +31,38 @@ internal fun SyncSettingsSection(
             AccountLoadingRegion(true, onRetryAccount, Modifier.padding(Spacing.md))
         }
         when (isAuthenticated) {
-            null -> AccountLoadingRegion(accountLoadFailed, onRetryAccount, Modifier.padding(Spacing.md))
-            true -> BackupStatusItem(
-                syncStatus = syncStatus,
-                cloudArchiveStatus = cloudArchiveStatus,
-                onSyncUsingMobileData = onSyncUsingMobileData,
-                onArchiveBackupNow = onArchiveBackupNow,
-                syncRequest = syncRequest,
-                archiveRequest = archiveRequest,
-                onUpdateApp = onUpdateApp,
-                onEnterRecoveryPhrase = onEnterRecoveryPhrase,
-                reviewableIssueCount = reviewableIssueCount,
-            )
-            false -> BackupCloudSection(
-                isAuthenticated = false,
-                syncStatus = syncStatus,
-                cloudArchiveStatus = cloudArchiveStatus,
-                onSyncUsingMobileData = onSyncUsingMobileData,
-                onCreateAccount = onNavigateToCloudAccountCreation,
-                onSignIn = onNavigateToSignIn,
-                onEnterRecoveryPhrase = onEnterRecoveryPhrase,
-                onArchiveBackupNow = onArchiveBackupNow,
-                onUpdateApp = onUpdateApp,
-                reviewableIssueCount = reviewableIssueCount,
-            )
+            null -> {
+                AccountLoadingRegion(accountLoadFailed, onRetryAccount, Modifier.padding(Spacing.md))
+            }
+
+            true -> {
+                BackupStatusItem(
+                    syncStatus = syncStatus,
+                    cloudArchiveStatus = cloudArchiveStatus,
+                    onSyncUsingMobileData = onSyncUsingMobileData,
+                    onArchiveBackupNow = onArchiveBackupNow,
+                    syncRequest = syncRequest,
+                    archiveRequest = archiveRequest,
+                    onUpdateApp = onUpdateApp,
+                    onEnterRecoveryPhrase = onEnterRecoveryPhrase,
+                    reviewableIssueCount = reviewableIssueCount,
+                )
+            }
+
+            false -> {
+                BackupCloudSection(
+                    isAuthenticated = false,
+                    syncStatus = syncStatus,
+                    cloudArchiveStatus = cloudArchiveStatus,
+                    onSyncUsingMobileData = onSyncUsingMobileData,
+                    onCreateAccount = onNavigateToCloudAccountCreation,
+                    onSignIn = onNavigateToSignIn,
+                    onEnterRecoveryPhrase = onEnterRecoveryPhrase,
+                    onArchiveBackupNow = onArchiveBackupNow,
+                    onUpdateApp = onUpdateApp,
+                    reviewableIssueCount = reviewableIssueCount,
+                )
+            }
         }
     }
 }

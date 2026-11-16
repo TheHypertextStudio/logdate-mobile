@@ -144,14 +144,27 @@ class PrivacySettingsViewModel(
                     save(Preference.BIOMETRICS, true)
                     return
                 }
+
                 AppAuthState.REQUIRE_PROMPT, AppAuthState.NO_PROMPT_NEEDED -> {
                     setOperation(Preference.BIOMETRICS, PrivacyPreferenceOperation.Idle)
                     return
                 }
-                AppAuthState.REQUEST_ENROLLMENT -> PrivacyPreferenceFailure.ENROLLMENT_REQUIRED
-                AppAuthState.UPDATE_REQUIRED -> PrivacyPreferenceFailure.SECURITY_UPDATE_REQUIRED
-                AppAuthState.UNSUPPORTED -> PrivacyPreferenceFailure.AUTHENTICATION_UNAVAILABLE
-                AppAuthState.UNKNOWN -> PrivacyPreferenceFailure.AUTHENTICATION
+
+                AppAuthState.REQUEST_ENROLLMENT -> {
+                    PrivacyPreferenceFailure.ENROLLMENT_REQUIRED
+                }
+
+                AppAuthState.UPDATE_REQUIRED -> {
+                    PrivacyPreferenceFailure.SECURITY_UPDATE_REQUIRED
+                }
+
+                AppAuthState.UNSUPPORTED -> {
+                    PrivacyPreferenceFailure.AUTHENTICATION_UNAVAILABLE
+                }
+
+                AppAuthState.UNKNOWN -> {
+                    PrivacyPreferenceFailure.AUTHENTICATION
+                }
             }
         setOperation(Preference.BIOMETRICS, PrivacyPreferenceOperation.Failed(true, failure))
     }

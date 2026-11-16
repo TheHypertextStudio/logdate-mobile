@@ -52,13 +52,17 @@ internal fun QuotaSettingsRegion(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         if (availability == null || availability.quota != null) QuotaUsageBlock(quotaUsage)
         when (availability) {
-            null, is QuotaAvailability.Available -> Unit
+            null, is QuotaAvailability.Available -> {
+                Unit
+            }
+
             is QuotaAvailability.Loading -> {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     CircularProgressIndicator(Modifier.size(20.dp))
                     Text(stringResource(Res.string.data_state_quota_loading))
                 }
             }
+
             is QuotaAvailability.Unavailable -> {
                 Text(stringResource(Res.string.data_state_quota_failed), color = MaterialTheme.colorScheme.error)
                 TextButton(onClick = onRetry) { Text(stringResource(Res.string.data_state_retry)) }

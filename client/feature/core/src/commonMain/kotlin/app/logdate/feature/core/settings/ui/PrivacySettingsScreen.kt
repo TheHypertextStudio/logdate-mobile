@@ -17,9 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsNavigationItem
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.theme.Spacing

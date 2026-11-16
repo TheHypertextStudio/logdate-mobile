@@ -55,16 +55,20 @@ class DataSettingsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val reviewableIssueCount: StateFlow<Int> =
-        sessionStorage.getSessionFlow().flatMapLatest { session ->
-            if (session == null) {
-                flowOf(0)
-            } else {
-                syncManager.observeDeadLetters().map { issues ->
-                    val bound = sessionStorage.getOriginBoundSession()
-                    issues.count { it.scope?.ownerId == session.accountId && it.scope?.serverOrigin == bound?.origin }
-                }.onStart { emit(0) }
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+        sessionStorage
+            .getSessionFlow()
+            .flatMapLatest { session ->
+                if (session == null) {
+                    flowOf(0)
+                } else {
+                    syncManager
+                        .observeDeadLetters()
+                        .map { issues ->
+                            val bound = sessionStorage.getOriginBoundSession()
+                            issues.count { it.scope?.ownerId == session.accountId && it.scope?.serverOrigin == bound?.origin }
+                        }.onStart { emit(0) }
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     private val _uiState = MutableStateFlow(DataSettingsState())
     val uiState: StateFlow<DataSettingsState> = _uiState.asStateFlow()

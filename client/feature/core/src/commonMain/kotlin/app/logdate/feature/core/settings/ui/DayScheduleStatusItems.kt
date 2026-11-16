@@ -60,11 +60,17 @@ internal fun DayScheduleReadFeedback(
     onRetry: () -> Unit,
 ) {
     when (state) {
-        is DaySchedulePreferencesState.Loading ->
+        is DaySchedulePreferencesState.Loading -> {
             DaySettingsStatusRow(stringResource(Res.string.settings_value_loading), pending = true)
-        is DaySchedulePreferencesState.Unavailable ->
+        }
+
+        is DaySchedulePreferencesState.Unavailable -> {
             DaySettingsStatusRow(stringResource(Res.string.settings_values_failed), onRetry = onRetry)
-        else -> Unit
+        }
+
+        else -> {
+            Unit
+        }
     }
 }
 
@@ -74,11 +80,17 @@ internal fun DaySettingFeedback(
     onRetry: () -> Unit,
 ) {
     when (state) {
-        is DaySettingWriteState.Saving ->
+        is DaySettingWriteState.Saving -> {
             DaySettingsStatusRow(stringResource(Res.string.settings_write_pending), pending = true)
-        is DaySettingWriteState.Failed ->
+        }
+
+        is DaySettingWriteState.Failed -> {
             DaySettingsStatusRow(stringResource(Res.string.settings_write_failed), onRetry = onRetry)
-        DaySettingWriteState.Idle -> Unit
+        }
+
+        DaySettingWriteState.Idle -> {
+            Unit
+        }
     }
 }
 

@@ -71,12 +71,17 @@ internal fun HealthConnectGateCard(
     val titleRes =
         when (gateState.kind) {
             HealthConnectGateKind.CHECKING -> Res.string.day_schedule_health_checking
+
             HealthConnectGateKind.NEEDS_SETUP -> Res.string.day_schedule_health_setup_required
+
             HealthConnectGateKind.NEEDS_PERMISSION,
             HealthConnectGateKind.PERMISSION_DENIED,
             -> Res.string.day_schedule_health_permissions_needed
+
             HealthConnectGateKind.UNAVAILABLE -> Res.string.day_schedule_health_not_available
+
             HealthConnectGateKind.RECOVERY_REQUIRED -> Res.string.day_schedule_health_recovery_title
+
             HealthConnectGateKind.READY -> Res.string.day_schedule_health_checking
         }
     val descriptionRes = resolveDayBoundaryGateDescription(gateState)
@@ -106,22 +111,32 @@ internal fun HealthConnectGateCard(
                     onClick = {
                         when (gateState.kind) {
                             // First-time ask: show the system permission dialog.
-                            HealthConnectGateKind.NEEDS_PERMISSION -> onRequestPermissions()
+                            HealthConnectGateKind.NEEDS_PERMISSION -> {
+                                onRequestPermissions()
+                            }
+
                             // Already denied or revoked: re-requesting the dialog is pointless.
                             // Send the user to Health Connect settings to grant manually.
                             HealthConnectGateKind.PERMISSION_DENIED,
                             HealthConnectGateKind.RECOVERY_REQUIRED,
-                            ->
+                            -> {
                                 when (gateState.missingRequirement) {
                                     HealthConnectMissingRequirement.PERMISSION -> onOpenHealthConnectPermissions()
                                     HealthConnectMissingRequirement.SETUP -> onSetUpHealthConnect()
                                     HealthConnectMissingRequirement.UNAVAILABLE, null -> Unit
                                 }
-                            HealthConnectGateKind.NEEDS_SETUP -> onSetUpHealthConnect()
+                            }
+
+                            HealthConnectGateKind.NEEDS_SETUP -> {
+                                onSetUpHealthConnect()
+                            }
+
                             HealthConnectGateKind.CHECKING,
                             HealthConnectGateKind.UNAVAILABLE,
                             HealthConnectGateKind.READY,
-                            -> Unit
+                            -> {
+                                Unit
+                            }
                         }
                     },
                     enabled = !isRequestInFlight,
@@ -140,41 +155,77 @@ internal fun HealthConnectGateCard(
 
 private fun resolveDayBoundaryGateDescription(gateState: HealthConnectGateState): StringResource =
     when (gateState.kind) {
-        HealthConnectGateKind.CHECKING -> Res.string.day_schedule_health_checking_detail
-        HealthConnectGateKind.NEEDS_SETUP -> Res.string.day_schedule_health_setup_required_detail
-        HealthConnectGateKind.NEEDS_PERMISSION -> Res.string.day_schedule_health_permissions_needed_detail
-        HealthConnectGateKind.PERMISSION_DENIED -> Res.string.day_schedule_health_permission_denied_detail
-        HealthConnectGateKind.UNAVAILABLE -> Res.string.day_schedule_health_not_available_detail
-        HealthConnectGateKind.READY -> Res.string.day_schedule_health_checking_detail
-        HealthConnectGateKind.RECOVERY_REQUIRED ->
+        HealthConnectGateKind.CHECKING -> {
+            Res.string.day_schedule_health_checking_detail
+        }
+
+        HealthConnectGateKind.NEEDS_SETUP -> {
+            Res.string.day_schedule_health_setup_required_detail
+        }
+
+        HealthConnectGateKind.NEEDS_PERMISSION -> {
+            Res.string.day_schedule_health_permissions_needed_detail
+        }
+
+        HealthConnectGateKind.PERMISSION_DENIED -> {
+            Res.string.day_schedule_health_permission_denied_detail
+        }
+
+        HealthConnectGateKind.UNAVAILABLE -> {
+            Res.string.day_schedule_health_not_available_detail
+        }
+
+        HealthConnectGateKind.READY -> {
+            Res.string.day_schedule_health_checking_detail
+        }
+
+        HealthConnectGateKind.RECOVERY_REQUIRED -> {
             when (gateState.missingRequirement) {
                 HealthConnectMissingRequirement.PERMISSION -> Res.string.day_schedule_health_recovery_permissions_detail
+
                 HealthConnectMissingRequirement.SETUP -> Res.string.day_schedule_health_recovery_setup_detail
+
                 HealthConnectMissingRequirement.UNAVAILABLE,
                 null,
                 -> Res.string.day_schedule_health_recovery_unavailable_detail
             }
+        }
     }
 
 private fun resolveDayBoundaryPrimaryActionLabel(gateState: HealthConnectGateState): StringResource? =
     when (gateState.kind) {
         // First-time ask: the system dialog will show.
-        HealthConnectGateKind.NEEDS_PERMISSION -> Res.string.day_schedule_health_grant_access
+        HealthConnectGateKind.NEEDS_PERMISSION -> {
+            Res.string.day_schedule_health_grant_access
+        }
+
         // Already denied: open Health Connect settings so the user can grant manually.
-        HealthConnectGateKind.PERMISSION_DENIED -> Res.string.day_schedule_health_open_settings
-        HealthConnectGateKind.NEEDS_SETUP -> Res.string.day_schedule_health_set_up
-        HealthConnectGateKind.RECOVERY_REQUIRED ->
+        HealthConnectGateKind.PERMISSION_DENIED -> {
+            Res.string.day_schedule_health_open_settings
+        }
+
+        HealthConnectGateKind.NEEDS_SETUP -> {
+            Res.string.day_schedule_health_set_up
+        }
+
+        HealthConnectGateKind.RECOVERY_REQUIRED -> {
             when (gateState.missingRequirement) {
                 HealthConnectMissingRequirement.PERMISSION -> Res.string.day_schedule_health_open_settings
+
                 HealthConnectMissingRequirement.SETUP -> Res.string.day_schedule_health_set_up
+
                 HealthConnectMissingRequirement.UNAVAILABLE,
                 null,
                 -> null
             }
+        }
+
         HealthConnectGateKind.CHECKING,
         HealthConnectGateKind.UNAVAILABLE,
         HealthConnectGateKind.READY,
-        -> null
+        -> {
+            null
+        }
     }
 
 @OptIn(ExperimentalMaterial3Api::class)

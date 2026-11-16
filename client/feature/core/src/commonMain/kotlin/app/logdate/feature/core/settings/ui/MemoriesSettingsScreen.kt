@@ -16,8 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.logdate.client.datastore.EntryStartMode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.logdate.client.datastore.EntryStartMode
 import app.logdate.client.domain.recommendation.RecallMode
 import app.logdate.client.domain.recommendation.WidgetContentType
 import app.logdate.ui.adaptive.FoldableBookLayout

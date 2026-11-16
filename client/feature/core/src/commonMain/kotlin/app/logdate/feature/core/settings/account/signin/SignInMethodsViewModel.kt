@@ -286,10 +286,17 @@ class SignInMethodsViewModel(
         val result = load(previous)
         _state.value =
             when {
-                result is SignInMethodsUiState.Failed && previous != null && result.reason != SignInMethodsLoadError.NOT_SIGNED_IN ->
+                result is SignInMethodsUiState.Failed && previous != null && result.reason != SignInMethodsLoadError.NOT_SIGNED_IN -> {
                     previous.copy(refresh = SignInMethodsRefreshState.Failed(result.reason))
-                result is SignInMethodsUiState.Loaded && previous != null -> result.copy(add = previous.add, removal = previous.removal)
-                else -> result
+                }
+
+                result is SignInMethodsUiState.Loaded && previous != null -> {
+                    result.copy(add = previous.add, removal = previous.removal)
+                }
+
+                else -> {
+                    result
+                }
             }
     }
 

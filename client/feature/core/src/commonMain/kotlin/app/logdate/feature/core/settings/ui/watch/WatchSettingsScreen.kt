@@ -21,13 +21,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.domain.watch.SharedPreferenceKey
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPage
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPreferencesViewModel
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionSections
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold

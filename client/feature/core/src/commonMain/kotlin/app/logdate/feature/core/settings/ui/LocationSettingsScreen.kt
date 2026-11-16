@@ -350,7 +350,6 @@ fun LocationSettingsContent(
     )
 }
 
-
 @Composable
 private fun LocationSettingsNotes() {
     Surface {

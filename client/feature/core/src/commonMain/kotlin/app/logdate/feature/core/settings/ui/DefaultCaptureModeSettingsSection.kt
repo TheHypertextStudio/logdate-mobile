@@ -39,7 +39,7 @@ internal fun DefaultCaptureModeSettingsSection(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
         SettingsSection(title = stringResource(Res.string.capture_default_title)) {
             when (state) {
-                DefaultCaptureModeState.Loading ->
+                DefaultCaptureModeState.Loading -> {
                     SimpleSettingsItem(
                         title =
                             stringResource(
@@ -49,7 +49,9 @@ internal fun DefaultCaptureModeSettingsSection(
                         action = {
                         },
                     )
-                DefaultCaptureModeState.Unavailable ->
+                }
+
+                DefaultCaptureModeState.Unavailable -> {
                     SimpleSettingsItem(
                         title =
                             stringResource(
@@ -59,7 +61,9 @@ internal fun DefaultCaptureModeSettingsSection(
                         action = {
                         },
                     )
-                is DefaultCaptureModeState.Ready ->
+                }
+
+                is DefaultCaptureModeState.Ready -> {
                     EntryStartMode.entries.forEach { mode ->
                         SettingsChoiceItem(
                             title =
@@ -77,6 +81,7 @@ internal fun DefaultCaptureModeSettingsSection(
                             enabled = LocalSettingsEnabled.current && !state.saving,
                         )
                     }
+                }
             }
         }
         Text(
