@@ -1,16 +1,12 @@
 {
-  "checkedAtUtc": "2026-10-28T13:15:16.566125+00:00",
-  "specSha256": "fa61e9b1cf3fd628d52fda70a76dec2956f7f71c99082523ecfa09a63e3c827b",
-  "toolJarSha256": "d15655eeaff4b3f7b3d65c46b838bc0f35d131b2ef4b1e473689b62c98d4726f",
+  "checkedAtUtc": "2026-11-16T17:39:22.492948+00:00",
+  "specSha256": "ea46a446a92b3d21b3ded1ea8d99e6966910ed4a1ee9456884011aca3cb3c6c4",
+  "toolJarSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
   "bounds": {
     "contentItems": 1,
     "contentGenerations": 2,
     "workerIdentities": 2,
-    "networkStates": [
-      "offline",
-      "cellular",
-      "wifi"
-    ],
+    "networkStates": ["offline", "cellular", "wifi"],
     "chargingStates": 2,
     "authenticationKeyServerFlags": 3,
     "snapshotProgressTotal": 1
@@ -21,45 +17,99 @@
       "passed": true,
       "returnCode": 0,
       "expectedCounterexample": null,
-      "configSha256": "471f3c0b2acaa6b2059c31df69309ff8cdaca2f6f7ad45ae8f1adc9a044dbb6c",
-      "generatedStates": 381745,
-      "distinctStates": 7488
+      "configSha256": "5449aa52ff1e7dcd0ad104df450f0faa3c40f5fc8cfaebc2b90487679ab888fc",
+      "generatedStates": 355041,
+      "distinctStates": 7008
     },
     {
       "case": "Cellular",
       "passed": true,
       "returnCode": 0,
       "expectedCounterexample": null,
-      "configSha256": "745c9eaae08e1e720eda1dbcaff5744bf58fb697bd8cf66f63488197a82b2441",
-      "generatedStates": 381889,
-      "distinctStates": 7488
+      "configSha256": "fa65b023427d70494ae49c2f97c3ca5848c58acd69683b9e64356072418a75ff",
+      "generatedStates": 355297,
+      "distinctStates": 7008
     },
     {
       "case": "BuggyEcho",
       "passed": true,
       "returnCode": 12,
       "expectedCounterexample": "NoAcknowledgedPayload",
-      "configSha256": "b6c9280aac54505d75792ff34bb972ee5834d5d829b7fa22afabdd4886f59064",
-      "generatedStates": 175872,
-      "distinctStates": 4605
+      "configSha256": "3370af8d7f30ea12920ae80739923ff2a22a401d02db904623af6b2b4160261c",
+      "generatedStates": 160162,
+      "distinctStates": 4247
     },
     {
       "case": "BuggyNotice",
       "passed": true,
       "returnCode": 12,
       "expectedCounterexample": "TruthfulNotification",
-      "configSha256": "2bbc6a8451586b9c025690dfe7b9c12b672a4e51515cef525e7f13143d02bbdb",
-      "generatedStates": 7135,
-      "distinctStates": 262
+      "configSha256": "bfed8f2971f72b39fde34e3f952357d8e22e924bf0622d5e01e3e12005155bda",
+      "generatedStates": 7240,
+      "distinctStates": 310
     },
     {
       "case": "BuggyLostAck",
       "passed": true,
       "returnCode": 12,
       "expectedCounterexample": "NoCommittedPayloadReplay",
-      "configSha256": "69f14620689a1092f53136ec3f6c396edc8bc07f7198ccaa4cab410ac1e55cf6",
-      "generatedStates": 143847,
-      "distinctStates": 3535
+      "configSha256": "6df45d537e827ed2f025cb710581f70e5a3c6ba9b8e039d5911a205129687117",
+      "generatedStates": 128424,
+      "distinctStates": 3246
+    },
+    {
+      "case": "FixedQuiet",
+      "passed": true,
+      "returnCode": 0,
+      "expectedCounterexample": null,
+      "configSha256": "01d61dd8e734a840560c08aa24b129028edda3035c66c0e31ab53b2366778820",
+      "generatedStates": 355297,
+      "distinctStates": 7008
+    },
+    {
+      "case": "FixedEligibility",
+      "passed": true,
+      "returnCode": 0,
+      "expectedCounterexample": null,
+      "configSha256": "0715e111ddcc2477b315ecf97868c73949b7d4ac91d84b84219b587af76d1679",
+      "generatedStates": 354977,
+      "distinctStates": 7008
+    },
+    {
+      "case": "FixedCachedOriginal",
+      "passed": true,
+      "returnCode": 0,
+      "expectedCounterexample": null,
+      "configSha256": "4122d80d2790e6725f075dcd1c0020a17b1ea52cd27cbe634af20438bfbe6e9e",
+      "generatedStates": 355297,
+      "distinctStates": 7008
+    },
+    {
+      "case": "RequiredForeground",
+      "passed": true,
+      "returnCode": 0,
+      "expectedCounterexample": null,
+      "configSha256": "5c18b6709f4b2c6de15c93576e21b105ea7fa50a7e549347fc8566867eeae7b3",
+      "generatedStates": 470137,
+      "distinctStates": 9216
+    },
+    {
+      "case": "BuggyEligible",
+      "passed": true,
+      "returnCode": 12,
+      "expectedCounterexample": "NoDeferredLiveClaim",
+      "configSha256": "20772b6dbe7f35a0870a62a5a971580654f6f4c9139d96edde90c7dad546c5b3",
+      "generatedStates": 8311,
+      "distinctStates": 414
+    },
+    {
+      "case": "BuggyQuietCheck",
+      "passed": true,
+      "returnCode": 12,
+      "expectedCounterexample": "NoUnnecessaryCheckNotice",
+      "configSha256": "275abee720e91a05edd27e5eb4219d1190655874d4f1a8e5c42b0a460acca980",
+      "generatedStates": 7159,
+      "distinctStates": 238
     }
   ],
   "passed": true

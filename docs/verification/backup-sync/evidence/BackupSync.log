@@ -1,31 +1,30 @@
-TLC2 Version 2026.10.24.013619 (rev: 2ef2af8)
-Warning: Please run the Java VM, which executes TLC with a throughput optimized garbage collector, by passing the "-XX:+UseParallelGC" property.
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+Warning: Please run the Java VM which executes TLC with a throughput optimized garbage collector by passing the "-XX:+UseParallelGC" property.
 (Use the -nowarning option to disable this warning.)
-Running breadth-first search Model-Checking with fp 117 and seed -6409737380433797667 with 2 workers on 16 cores with 1400MB heap and 64MB offheap memory [pid: 29282] (Mac OS X 27.0.1 aarch64, JetBrains s.r.o. 21.0.10 64bit, MSBDiskFPSet, DiskStateQueue).
-Parsing file /Users/williecubed/.codex/worktrees/6863/logdate-mobile/docs/verification/backup-sync/BackupSync.tla
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-2307462347152094892/Naturals.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-2307462347152094892/FiniteSets.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-2307462347152094892/TLC.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
-Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/tlc-2307462347152094892/Sequences.tla (jar:file:/Users/williecubed/.cache/tlaplus/1.8.0/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Running breadth-first search Model-Checking with fp 119 and seed -523515786575045810 with 2 workers on 16 cores with 1400MB heap and 64MB offheap memory [pid: 23594] (Mac OS X 27.2 aarch64, JetBrains s.r.o. 21.0.10 x86_64, OffHeapDiskFPSet, DiskStateQueue).
+Parsing file /Users/williecubed/.cache/logdate-worktrees/backup-invariants/docs/verification/backup-sync/BackupSync.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/Naturals.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/FiniteSets.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/TLC.tla
+Parsing file /private/var/folders/jk/zv725cxs3j1gnn_pcbrj_gmw0000gn/T/Sequences.tla
 Semantic processing of module Naturals
 Semantic processing of module Sequences
 Semantic processing of module FiniteSets
 Semantic processing of module TLC
 Semantic processing of module BackupSync
-Linting of module BackupSync
-Starting... (2026-10-28 06:14:59)
+Starting... (2026-11-16 09:38:33)
 Implied-temporal checking--satisfiability problem has 2 branches.
 Computing initial states...
-Finished computing initial states: 1 distinct state generated at 2026-10-28 06:14:59.
-Progress(16) at 2026-10-28 06:15:01: 381,745 states generated, 7,488 distinct states found, 0 states left on queue.
-Checking 2 branches of temporal properties for the complete state space with 14976 total distinct states at (2026-10-28 06:15:01)
-Finished checking temporal properties in 04s at 2026-10-28 06:15:05
+Finished computing initial states: 1 distinct state generated at 2026-11-16 09:38:33.
+Progress(16) at 2026-11-16 09:38:35: 355,041 states generated, 7,008 distinct states found, 0 states left on queue.
+Checking 2 branches of temporal properties for the complete state space with 14016 total distinct states at (2026-11-16 09:38:35)
+Finished checking temporal properties in 04s at 2026-11-16 09:38:39
 Model checking completed. No error has been found.
   Estimates of the probability that TLC did not check all reachable states
   because two distinct states had the same fingerprint:
-  calculated (optimistic):  val = 1.5E-10
-  based on the actual fingerprints:  val = 1.4E-12
-381745 states generated, 7488 distinct states found, 0 states left on queue.
+  calculated (optimistic):  val = 1.3E-10
+  based on the actual fingerprints:  val = 1.1E-12
+355041 states generated, 7008 distinct states found, 0 states left on queue.
 The depth of the complete state graph search is 16.
 The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 31 and the 95th percentile is 2).
-Finished in 06s at (2026-10-28 06:15:05)
+Finished in 06s at (2026-11-16 09:38:39)

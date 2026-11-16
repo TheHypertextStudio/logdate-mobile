@@ -161,9 +161,15 @@
       "include": [
         "docs/verification/backup-sync/BackupSync.cfg",
         "docs/verification/backup-sync/BuggyEcho.cfg",
+        "docs/verification/backup-sync/BuggyEligible.cfg",
         "docs/verification/backup-sync/BuggyLostAck.cfg",
         "docs/verification/backup-sync/BuggyNotice.cfg",
-        "docs/verification/backup-sync/Cellular.cfg"
+        "docs/verification/backup-sync/BuggyQuietCheck.cfg",
+        "docs/verification/backup-sync/Cellular.cfg",
+        "docs/verification/backup-sync/FixedCachedOriginal.cfg",
+        "docs/verification/backup-sync/FixedEligibility.cfg",
+        "docs/verification/backup-sync/FixedQuiet.cfg",
+        "docs/verification/backup-sync/RequiredForeground.cfg"
       ],
       "argv": ["python3", ".hypertext/formatter-tools/formal_formats.py", "cfg", "{path}"],
       "timeout_seconds": 120
@@ -5514,6 +5520,11 @@
       "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
     },
     {
+      "include": ["docs/verification/backup-sync/evidence/BuggyEligible.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
       "include": ["docs/verification/backup-sync/evidence/BuggyLostAck.log"],
       "kind": "generated",
       "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
@@ -5524,7 +5535,32 @@
       "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
     },
     {
+      "include": ["docs/verification/backup-sync/evidence/BuggyQuietCheck.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
       "include": ["docs/verification/backup-sync/evidence/Cellular.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/FixedCachedOriginal.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/FixedEligibility.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/FixedQuiet.log"],
+      "kind": "generated",
+      "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
+    },
+    {
+      "include": ["docs/verification/backup-sync/evidence/RequiredForeground.log"],
       "kind": "generated",
       "reason": "Frozen machine-produced observation/model-checker evidence; preserve original measured values and failure/success transcript bytes."
     },
