@@ -1,5 +1,6 @@
 package app.logdate.client.domain.assistants
 
+import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.client.repository.assistants.AssistantSourceKind
 import app.logdate.client.repository.assistants.AssistantSourceMetadata
 import kotlin.test.Test
@@ -53,5 +54,36 @@ class AssistantSourceEligibilityTest {
     fun `knowing a source identifier never substitutes for read permission`() {
         val withoutRead = fixture.grant.copy(capabilities = emptySet())
         assertFalse(eligibility.allows(withoutRead, source))
+    }
+
+    @Test
+    fun `places and people need their own permission and ignore the journal scope`() {
+        val place = source.copy(kind = AssistantSourceKind.PLACE, journalIds = emptySet())
+        val person = source.copy(kind = AssistantSourceKind.PERSON, journalIds = emptySet())
+        assertFalse(eligibility.allows(fixture.grant, place))
+        assertFalse(eligibility.allows(fixture.grant, person))
+        val places = fixture.grant.copy(capabilities = setOf(AssistantCapability.READ_PLACES))
+        assertTrue(eligibility.allows(places, place))
+        assertFalse(eligibility.allows(places, person))
+        assertFalse(eligibility.allows(places, source))
+        val people = fixture.grant.copy(capabilities = setOf(AssistantCapability.READ_PEOPLE))
+        assertTrue(eligibility.allows(people, person))
+        assertFalse(eligibility.allows(people, place))
+    }
+
+    @Test
+    fun `a journal is visible only when its entries are shared`() {
+        val journal = source.copy(id = fixture.journalId, kind = AssistantSourceKind.JOURNAL, journalIds = setOf(fixture.journalId))
+        assertTrue(eligibility.allows(fixture.grant, journal))
+        assertFalse(eligibility.allows(fixture.grant, journal.copy(id = fixture.otherId, journalIds = setOf(fixture.otherId))))
+        assertFalse(eligibility.allows(fixture.grant.copy(capabilities = setOf(AssistantCapability.READ_PLACES)), journal))
+    }
+
+    @Test
+    fun `consent kept on the device follows the same rule as a grant`() {
+        val scope = fixture.grant.contentScope
+        assertTrue(eligibility.allows(setOf(AssistantCapability.READ_MEMORIES), scope, source))
+        assertFalse(eligibility.allows(setOf(AssistantCapability.START_CAPTURE), scope, source))
+        assertFalse(eligibility.allows(AssistantCapability.entries.toSet(), scope, source.copy(kind = AssistantSourceKind.UNSUPPORTED)))
     }
 }

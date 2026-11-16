@@ -66,6 +66,9 @@ class LogdatePreferencesDataSource(
         val DAY_START_HOUR = intPreferencesKey("day_start_hour")
         val DAY_END_HOUR = intPreferencesKey("day_end_hour")
         val SYSTEM_SEARCH_VISIBILITY_ENABLED = booleanPreferencesKey("system_search_visibility_enabled")
+        val DEVICE_ASSISTANT_SCOPES = stringSetPreferencesKey("device_assistant_scopes")
+        val DEVICE_ASSISTANT_JOURNAL_IDS = stringSetPreferencesKey("device_assistant_journal_ids")
+        val DEVICE_ASSISTANT_INCLUDES_UNFILED = booleanPreferencesKey("device_assistant_includes_unfiled")
         val FAVORITE_NOTE_IDS = stringSetPreferencesKey("favorite_note_ids")
 
         // Account IDs that have already had their local data backfilled into the sync queue
@@ -223,6 +226,26 @@ class LogdatePreferencesDataSource(
     }
 
     suspend fun getSystemSearchVisibilityEnabled(): Boolean = observeSystemSearchVisibilityEnabled().first()
+
+    /** What assistants on this device may see and do. Nothing until the person turns it on. */
+    fun observeDeviceAssistantAccess(): Flow<StoredDeviceAssistantAccess> =
+        userPreferences.data.map { prefs ->
+            StoredDeviceAssistantAccess(
+                scopes = prefs[DEVICE_ASSISTANT_SCOPES].orEmpty(),
+                journalIds = prefs[DEVICE_ASSISTANT_JOURNAL_IDS].orEmpty(),
+                includesUnfiled = prefs[DEVICE_ASSISTANT_INCLUDES_UNFILED] ?: false,
+            )
+        }
+
+    suspend fun setDeviceAssistantAccess(access: StoredDeviceAssistantAccess) {
+        userPreferences.updateData { preferences ->
+            preferences.toMutablePreferences().apply {
+                this[DEVICE_ASSISTANT_SCOPES] = access.scopes
+                this[DEVICE_ASSISTANT_JOURNAL_IDS] = access.journalIds
+                this[DEVICE_ASSISTANT_INCLUDES_UNFILED] = access.includesUnfiled
+            }
+        }
+    }
 
     suspend fun getAndroidPlatformSearchIndexedGeneration(): Long? =
         userPreferences.data
