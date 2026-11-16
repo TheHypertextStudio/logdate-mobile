@@ -25,6 +25,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    systemProperty(
+        "logdate.testKitDir",
+        layout.buildDirectory
+            .dir("test-kit")
+            .get()
+            .asFile.absolutePath,
+    )
 }
 
 gradlePlugin {
