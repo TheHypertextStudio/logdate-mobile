@@ -54,6 +54,7 @@ private val approvedNotices =
         KeyCustodyNotices.OAUTH_KEY_ROTATION_FAILED to "SERVER_OAUTH_KEY_ROTATION_FAILED",
         DownloadUrlSigningNotices.MEDIA_SIGNING_FAILED to "SERVER_MEDIA_URL_SIGNING_FAILED",
         DownloadUrlSigningNotices.BACKUP_SIGNING_FAILED to "SERVER_BACKUP_URL_SIGNING_FAILED",
+        MaintenanceNotices.LEASE_FAILED to "SERVER_MAINTENANCE_LEASE_FAILED",
         SpacePurgeNotices.BLOBS_PURGED to "SERVER_SPACE_BLOBS_PURGED",
         SpacePurgeNotices.BLOB_DELETE_FAILED to "SERVER_SPACE_BLOB_DELETE_FAILED",
         SpacePurgeNotices.PURGE_FAILED to "SERVER_SPACE_PURGE_FAILED",
@@ -169,6 +170,15 @@ internal object SpaceMigrationNotices {
     const val CLEANUP_SKIPPED = "A switched journal isn't in its personal space; its legacy copy stays"
     const val CLEANUP_RUN_FAILED = "Deleting the legacy copies of moved journals failed"
     const val CLEANUP_PAUSED = "Deleting the legacy copies of moved journals is paused"
+}
+
+/**
+ * Fixed log messages for the sync maintenance loop that every server instance runs. A pass runs only on
+ * the instance holding the database's maintenance lease, so a lease that cannot be checked skips the
+ * pass on that instance until the next interval.
+ */
+internal object MaintenanceNotices {
+    const val LEASE_FAILED = "Checking the sync maintenance lease failed; the pass is skipped until the next interval"
 }
 
 /**

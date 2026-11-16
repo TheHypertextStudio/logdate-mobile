@@ -1,7 +1,9 @@
 package app.logdate.server
 
+import app.logdate.server.database.PostgreSQLMaintenanceLease
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateCollectionsRepository
+import app.logdate.server.logging.MaintenanceNotices
 import app.logdate.server.logging.SpaceMigrationNotices
 import app.logdate.server.logging.SpacePurgeNotices
 import app.logdate.server.migration.LegacyCopyCleanup
@@ -21,9 +23,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
+import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -31,6 +35,9 @@ import kotlin.time.Instant
  * Starts the tombstone retention sweep against the Koin-provided repository and cancels it when
  * the application stops. Without a database the sweep is forced off: there is nothing durable to
  * purge and the in-memory repositories don't accumulate tombstones across restarts.
+ *
+ * Every instance starts the sweep, after a random wait so instances that start together spread out,
+ * and a pass runs only on the instance holding the database's maintenance lease at the time.
  */
 internal fun Application.installSyncMaintenance(isDatabaseAvailable: Boolean) {
     val collectionsRepository by inject<LogDateCollectionsRepository>()
@@ -53,6 +60,8 @@ internal fun Application.installSyncMaintenance(isDatabaseAvailable: Boolean) {
             spaceStore = spaceStore,
             blobStorage = blobStorage,
             legacyCleanup = legacyCleanup,
+            lease = if (isDatabaseAvailable) PostgreSQLMaintenanceLease(SYNC_MAINTENANCE_LEASE) else MaintenanceLease.Local,
+            startJitter = ::randomStartDelay,
         )
     monitor.subscribe(ApplicationStopped) {
         maintenanceJob?.cancel()
@@ -60,7 +69,8 @@ internal fun Application.installSyncMaintenance(isDatabaseAvailable: Boolean) {
 }
 
 /**
- * Schedules the tombstone retention sweep.
+ * Schedules the tombstone retention sweep. The first pass waits for [startJitter] of the interval, and
+ * each pass runs only while this instance holds [lease].
  *
  * This drove [SyncRepository] and therefore the legacy `sync_*` tables, which no route has
  * written since sync moved to [LogDateCollectionsRepository] - so the purge ran cleanly against
@@ -73,6 +83,8 @@ internal fun startSyncMaintenance(
     spaceStore: SpaceStore? = null,
     blobStorage: LogDateBlobStorage? = null,
     legacyCleanup: LegacyCopyCleanup? = null,
+    lease: MaintenanceLease = MaintenanceLease.Local,
+    startJitter: (interval: Duration) -> Duration = { Duration.ZERO },
 ): Job? {
     val enabled = readEnv("SYNC_TOMBSTONE_PURGE_ENABLED")?.toBooleanStrictOrNull() ?: true
     if (!enabled) return null
@@ -89,32 +101,67 @@ internal fun startSyncMaintenance(
     // /health off in the canonical production deploy.
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     return scope.launch {
+        delay(startJitter(intervalMinutes.minutes))
         while (isActive) {
-            val start = System.currentTimeMillis()
-            var success = false
             try {
-                val cutoff = System.currentTimeMillis() - retentionDays * 24 * 60 * 60 * 1000
-                val purged = collectionsRepository.purgeTombstones(cutoff)
-                Napier.i(
-                    "Purged sync tombstones older than $retentionDays days " +
-                        "(entries=${purged.entryPurged} journals=${purged.journalPurged} " +
-                        "associations=${purged.associationPurged})",
-                )
-                success = true
+                lease.runExclusively {
+                    purgeTombstonesRecorded(collectionsRepository, metrics, retentionDays)
+                    if (spaceStore != null) purgeSpacesRecorded(spaceStore, blobStorage, metrics, retentionDays.days)
+                    if (oldDataCleanup != null) cleanUpMovedJournalsRecorded(oldDataCleanup, metrics)
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                Napier.e("Failed to purge sync tombstones", e)
-            } finally {
-                metrics.recordOperation(
-                    "maintenance.tombstone_purge",
-                    System.currentTimeMillis() - start,
-                    success,
-                )
+                Napier.e(MaintenanceNotices.LEASE_FAILED, e)
             }
-            if (spaceStore != null) purgeSpacesRecorded(spaceStore, blobStorage, metrics, retentionDays.days)
-            if (oldDataCleanup != null) cleanUpMovedJournalsRecorded(oldDataCleanup, metrics)
             delay(intervalMinutes.minutes)
         }
+    }
+}
+
+/** The name of the lease that lets one instance at a time run the sync maintenance pass. */
+internal const val SYNC_MAINTENANCE_LEASE = "logdate.sync-maintenance"
+
+/** The longest an instance waits before its first maintenance pass. */
+private val MAX_START_JITTER = 5.minutes
+
+/**
+ * A random wait before an instance's first maintenance pass, shorter than both [interval] and five
+ * minutes, so instances that start together do not all reach for the lease at once.
+ */
+internal fun randomStartDelay(
+    interval: Duration,
+    random: Random = Random.Default,
+): Duration {
+    val bound = minOf(interval, MAX_START_JITTER).inWholeMilliseconds
+    return if (bound <= 0) Duration.ZERO else random.nextLong(bound).milliseconds
+}
+
+/** Purges sync tombstones older than [retentionDays] and records it as `maintenance.tombstone_purge`. */
+private suspend fun purgeTombstonesRecorded(
+    collectionsRepository: LogDateCollectionsRepository,
+    metrics: SyncMetricsRegistry,
+    retentionDays: Long,
+) {
+    val start = System.currentTimeMillis()
+    var success = false
+    try {
+        val cutoff = System.currentTimeMillis() - retentionDays * 24 * 60 * 60 * 1000
+        val purged = collectionsRepository.purgeTombstones(cutoff)
+        Napier.i(
+            "Purged sync tombstones older than $retentionDays days " +
+                "(entries=${purged.entryPurged} journals=${purged.journalPurged} " +
+                "associations=${purged.associationPurged})",
+        )
+        success = true
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Napier.e("Failed to purge sync tombstones", e)
+    } finally {
+        metrics.recordOperation(
+            "maintenance.tombstone_purge",
+            System.currentTimeMillis() - start,
+            success,
+        )
     }
 }
 
