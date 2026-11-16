@@ -163,22 +163,24 @@ private fun WatchTroubleshootingActions(
                 Spacer(Modifier.width(Spacing.sm))
                 Text(stringResource(Res.string.watch_troubleshooting_pair))
             }
-            OutlinedButton(
-                onClick = onInstallOnWatch,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(
-                    Icons.Default.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(Spacing.sm))
-                Text(stringResource(Res.string.watch_troubleshooting_install))
+            if (connectionState is WatchConnectionState.AppNotInstalled) {
+                OutlinedButton(
+                    onClick = onInstallOnWatch,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Default.Download,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(Spacing.sm))
+                    Text(stringResource(Res.string.watch_troubleshooting_install))
+                }
             }
             OutlinedButton(
                 onClick = onOpenOnWatch,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = connectionState is WatchConnectionState.Connected,
+                enabled = connectionState is WatchConnectionState.Connected || connectionState is WatchConnectionState.AppUnknown,
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.OpenInNew,

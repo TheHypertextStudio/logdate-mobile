@@ -14,6 +14,8 @@ interface WatchConnectionManager {
      */
     fun observeConnectionState(): Flow<WatchConnectionState>
 
+    suspend fun refresh() = Unit
+
     /**
      * Starts the system flow to associate LogDate with a watch.
      */
@@ -36,6 +38,9 @@ interface WatchConnectionManager {
     suspend fun installAppOnWatch(): WatchRequestResult
 
     suspend fun installAppOnWatch(nodeId: String?): WatchRequestResult = installAppOnWatch()
+
+    /** Called only after the person confirms that LogDate is missing on this exact watch. */
+    suspend fun confirmMissingAppAndInstall(nodeId: String): WatchRequestResult = installAppOnWatch(nodeId)
 
     /**
      * Opens LogDate at Today on a connected watch that has it installed.

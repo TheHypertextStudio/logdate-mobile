@@ -81,6 +81,8 @@ fun WatchSettingsScreen(
             onNavigateToRemove,
             modifier,
             installRequestSent,
+            onRetry = viewModel::refresh,
+            onConfirmMissing = viewModel::confirmMissingAppAndInstall,
         ) { captureActions -> WatchCompanionSettings(captureActions = captureActions) }
         return
     }
@@ -91,6 +93,8 @@ fun WatchSettingsScreen(
         onBeginAssociation = viewModel::beginAssociation,
         onRequestSync = viewModel::requestSync,
         onInstallOnWatch = viewModel::installAppOnWatch,
+        onRetry = viewModel::refresh,
+        onConfirmMissing = viewModel::confirmMissingAppAndInstall,
         onNavigateToNotifications = onNavigateToNotifications,
         onNavigateToTroubleshooting = onNavigateToTroubleshooting,
         modifier = modifier,
@@ -137,6 +141,8 @@ fun WatchSettingsContent(
     onNavigateToTroubleshooting: () -> Unit,
     modifier: Modifier = Modifier,
     companionSettings: (@Composable () -> Unit)? = null,
+    onRetry: () -> Unit = {},
+    onConfirmMissing: (String) -> Unit = {},
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -157,6 +163,8 @@ fun WatchSettingsContent(
                     onInstallOnWatch = onInstallOnWatch,
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                     onRequestSync = onRequestSync,
+                    onRetry = onRetry,
+                    onConfirmMissing = onConfirmMissing,
                 )
                 WatchPrivacyNote()
             }
@@ -189,6 +197,8 @@ fun WatchSettingsContent(
                         onInstallOnWatch = onInstallOnWatch,
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                         onRequestSync = onRequestSync,
+                        onRetry = onRetry,
+                        onConfirmMissing = onConfirmMissing,
                     )
                 }
                 if (status.hasLogDate()) {

@@ -54,59 +54,57 @@ class AndroidWatchConnectionManagerTest {
         }
 
     @Test
-    fun `install opens the Play listing on the watch without LogDate`() =
+    fun `an unconfirmed advertisement never opens the store`() =
+        runTest {
+            connected(withoutLogDate)
+            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.INSTALLATION_UNKNOWN), manager().installAppOnWatch())
+            verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(any(), any()) }
+        }
+
+    @Test
+    fun `explicit first time missing app confirmation opens only that watch listing`() =
         runTest {
             connected(withLogDate, withoutLogDate)
             every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
-
-            val result = manager().installAppOnWatch()
-
-            assertEquals(WatchRequestResult.Sent, result)
+            assertEquals(WatchRequestResult.Sent, manager().confirmMissingAppAndInstall("watch-without-logdate"))
             assertEquals(listOf("market://details?id=studio.hypertext.logdate"), sentLinks)
             verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-without-logdate") }
+            verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
         }
 
     @Test
-    fun `targeted update stays on selected installed watch despite another missing app`() =
+    fun `installed watch never receives an install handoff even after confirmation`() =
         runTest {
-            connected(withLogDate, withoutLogDate)
-            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
-            assertEquals(WatchRequestResult.Sent, manager().installAppOnWatch("watch-with-logdate"))
-            verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
-            verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-without-logdate") }
-        }
-
-    @Test
-    fun `targeted open never falls back to another installed watch`() =
-        runTest {
-            connected(withLogDate, withoutLogDate)
+            connected(withLogDate)
+            val manager = manager()
+            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.ALREADY_INSTALLED), manager.installAppOnWatch())
+            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.ALREADY_INSTALLED), manager.installAppOnWatch("watch-with-logdate"))
             assertEquals(
-                WatchRequestResult.Failed(WatchRequestFailure.NOT_INSTALLED_ON_WATCH),
-                manager().openAppOnWatch("watch-without-logdate"),
+                WatchRequestResult.Failed(WatchRequestFailure.ALREADY_INSTALLED),
+                manager.confirmMissingAppAndInstall("watch-with-logdate"),
             )
             verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(any(), any()) }
         }
 
     @Test
-    fun `install opens the Play listing on a watch that has LogDate when it is the only one`() =
+    fun `a target that disconnects cannot redirect installation to another watch`() =
         runTest {
             connected(withLogDate)
-            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
-
-            manager().installAppOnWatch()
-
-            verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
+            assertEquals(
+                WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED),
+                manager().confirmMissingAppAndInstall("watch-without-logdate"),
+            )
+            verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(any(), any()) }
         }
 
     @Test
-    fun `open reports that LogDate is missing instead of sending anything`() =
+    fun `opening an unconfirmed app stays on the selected watch without claiming absence`() =
         runTest {
-            connected(withoutLogDate)
-
-            val result = manager().openAppOnWatch()
-
-            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.NOT_INSTALLED_ON_WATCH), result)
-            verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(any(), any()) }
+            connected(withLogDate, withoutLogDate)
+            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
+            assertEquals(WatchRequestResult.Sent, manager().openAppOnWatch("watch-without-logdate"))
+            verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-without-logdate") }
+            verify(exactly = 0) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
         }
 
     @Test
@@ -130,15 +128,15 @@ class AndroidWatchConnectionManagerTest {
                 }
             every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns refused
 
-            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.WATCH_DID_NOT_RESPOND), manager().openAppOnWatch())
+            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.OPEN_FAILED), manager().openAppOnWatch())
         }
 
     @Test
-    fun `a Wearable API failure reads as no watch connected`() =
+    fun `a Wearable API failure never claims no watch exists`() =
         runTest {
             every { nodeClient.connectedNodes } returns Tasks.forException(IllegalStateException("Wearable API unavailable"))
 
-            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED), manager().openAppOnWatch())
+            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE), manager().openAppOnWatch())
         }
 
     @Test
@@ -157,6 +155,15 @@ class AndroidWatchConnectionManagerTest {
             val error = assertFailsWith<IllegalStateException> { manager().requestSync() }
 
             assertEquals("No watch running LogDate received the sync request", error.message)
+        }
+
+    @Test
+    fun `an actual remote timeout stays distinct from a refused open`() =
+        runTest {
+            connected(withLogDate)
+            val silent = mockk<ListenableFuture<Void>> { every { get(any(), any()) } throws java.util.concurrent.TimeoutException() }
+            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns silent
+            assertEquals(WatchRequestResult.Failed(WatchRequestFailure.WATCH_DID_NOT_RESPOND), manager().openAppOnWatch())
         }
 
     private fun connected(vararg watches: Node) {

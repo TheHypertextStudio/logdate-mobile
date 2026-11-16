@@ -88,9 +88,12 @@ fun WatchCompanionPage(
     modifier: Modifier = Modifier,
     installRequestSent: Boolean = false,
     setupLauncher: ((WatchSetupProvider) -> Boolean)? = null,
+    onRetry: () -> Unit = {},
+    onConfirmMissing: (String) -> Unit = {},
     preferences: @Composable (captureActions: @Composable () -> Unit) -> Unit = {},
 ) {
-    val installed = status is WatchStatus.Ready || status is WatchStatus.NeedsAttention
+    val verified = status is WatchStatus.Ready || status is WatchStatus.NeedsAttention
+    val installed = verified || (status is WatchStatus.Unknown && status.knownInstalled)
     if (!installed) {
         Scaffold(
             modifier = modifier.fillMaxSize().applyScreenStyles(),
@@ -114,6 +117,8 @@ fun WatchCompanionPage(
                 onInstall = onInstall,
                 setupLauncher = setupLauncher,
                 modifier = Modifier.fillMaxSize().padding(insets),
+                onRetry = onRetry,
+                onConfirmMissing = onConfirmMissing,
             )
         }
         return
@@ -122,11 +127,18 @@ fun WatchCompanionPage(
         if (status is WatchStatus.Ready) {
             WatchReadyIdentity(status)
         } else {
-            WatchStatusCard(status, requestFailure, onAssociate, onInstall)
+            WatchStatusCard(
+                status,
+                requestFailure,
+                onAssociate,
+                onInstall,
+                onRetry = onRetry,
+                onConfirmMissing = onConfirmMissing,
+            )
         }
     }
     val settings: @Composable () -> Unit = {
-        if (installed) {
+        if (verified) {
             preferences {
                 SettingsNavigationItem(
                     stringResource(Res.string.watch_v2_microphone),
@@ -167,7 +179,7 @@ fun WatchCompanionPage(
                 icon = { Icon(Icons.Default.Troubleshoot, null) },
                 onClick = onDiagnostics,
             )
-            if (installed) {
+            if (verified) {
                 SettingsNavigationItem(
                     stringResource(Res.string.watch_v2_remove),
                     stringResource(Res.string.watch_v2_remove_description),
@@ -185,7 +197,7 @@ fun WatchCompanionPage(
     ) {
         item {
             BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = Spacing.lg)) {
-                if (maxWidth >= 760.dp) {
+                if (maxWidth >= 760.dp && verified) {
                     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
                         Column(
                             modifier = Modifier.weight(2f),

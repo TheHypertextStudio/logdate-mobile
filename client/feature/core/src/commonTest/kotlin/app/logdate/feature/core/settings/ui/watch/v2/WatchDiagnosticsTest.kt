@@ -10,6 +10,7 @@ import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchPeerSnapshot
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class WatchDiagnosticsTest {
     private val snapshot =
@@ -58,5 +59,19 @@ class WatchDiagnosticsTest {
             )
         assertEquals(WatchDiagnosticFix.SYNC, checks.single { it.check == WatchDiagnosticCheck.SYNC }.fix)
         assertEquals(WatchDiagnosticFix.OPEN_WATCH, checks.single { it.check == WatchDiagnosticCheck.NOTIFICATIONS }.fix)
+    }
+
+    @Test fun `an installed watch with no reply never recommends install or update`() {
+        val checks = WatchDiagnostics.evaluate(snapshot.copy(reply = null, peer = WatchPeerSnapshot.Inactive))
+        assertTrue(checks.none { it.fix == WatchDiagnosticFix.INSTALL || it.fix == WatchDiagnosticFix.UPDATE })
+        assertEquals(WatchDiagnosticFix.OPEN_WATCH, checks.single { it.check == WatchDiagnosticCheck.PROTOCOL }.fix)
+    }
+
+    @Test fun `unknown installation cannot be inferred from an absent reply`() {
+        val checks =
+            WatchDiagnostics.evaluate(
+                snapshot.copy(connection = WatchConnectionState.AppUnknown("Watch", "watch-node"), reply = null),
+            )
+        assertTrue(checks.none { it.fix == WatchDiagnosticFix.INSTALL || it.fix == WatchDiagnosticFix.UPDATE })
     }
 }

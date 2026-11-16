@@ -6,8 +6,13 @@ import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchRequestResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -34,7 +39,16 @@ class WatchDiagnosticsViewModel(
     val busy = mutableBusy.asStateFlow()
 
     init {
-        check()
+        viewModelScope.launch {
+            mutableState.subscriptionCount.map { it > 0 }.distinctUntilChanged().collectLatest { visible ->
+                if (visible) {
+                    while (isActive) {
+                        check()
+                        delay(5_000)
+                    }
+                }
+            }
+        }
     }
 
     fun check() = runAction { }

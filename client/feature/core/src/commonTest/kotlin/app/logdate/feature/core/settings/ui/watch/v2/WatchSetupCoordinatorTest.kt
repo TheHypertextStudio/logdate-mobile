@@ -105,15 +105,79 @@ class WatchSetupCoordinatorTest {
             assertEquals(WatchSetupState.Ready, states.last())
         }
 
+    @Test fun `unknown first time setup asks before claiming absence or opening Play`() =
+        runTest {
+            val manager = Manager(WatchConnectionState.AppUnknown("Watch", "watch-node"))
+            assertEquals(
+                listOf(WatchSetupState.CheckOnWatch("Watch", "watch-node", false)),
+                DefaultWatchSetupCoordinator(manager) {
+                    false
+                }.addToWatch().toList(),
+            )
+            assertEquals(0, manager.installCalls)
+        }
+
+    @Test fun `known installed history never opens Play even after missing confirmation`() =
+        runTest {
+            val manager = Manager(WatchConnectionState.AppUnknown("Watch", "watch-node", knownInstalled = true))
+            assertEquals(
+                listOf(WatchSetupState.CheckOnWatch("Watch", "watch-node", true)),
+                DefaultWatchSetupCoordinator(manager) {
+                    false
+                }.addAfterMissingConfirmation("watch-node").toList(),
+            )
+            assertEquals(0, manager.installCalls)
+        }
+
+    @Test fun `confirmed first time setup waits for this exact watch to become installed`() =
+        runTest {
+            val manager = Manager(WatchConnectionState.AppUnknown("Watch", "watch-node"))
+            val states = mutableListOf<WatchSetupState>()
+            val job = launch { DefaultWatchSetupCoordinator(manager) { true }.addAfterMissingConfirmation("watch-node").toList(states) }
+            runCurrent()
+            assertEquals(listOf(WatchSetupState.OpeningPlayOnWatch, WatchSetupState.WaitingForInstall), states)
+            manager.state.value = WatchConnectionState.Connected("Other", "other")
+            runCurrent()
+            assertEquals(2, states.size)
+            manager.state.value = WatchConnectionState.Connected("Watch", "watch-node")
+            job.join()
+            assertEquals(WatchSetupState.Ready, states.last())
+        }
+
+    @Test
+    fun confirmedTargetChangeCannotPrepareAnotherWatch() =
+        runTest {
+            val manager = Manager(WatchConnectionState.Connected("Other watch", "watch-b"))
+            val states = DefaultWatchSetupCoordinator(manager) { true }.addAfterMissingConfirmation("watch-a").toList()
+            assertEquals(listOf(WatchSetupState.Failed), states)
+            assertEquals(emptyList(), manager.preparedNodes)
+            assertEquals(0, manager.installCalls)
+        }
+
+    @Test
+    fun missingNodeIsNotImplicitConfirmation() =
+        runTest {
+            val manager = Manager(WatchConnectionState.AppUnknown("Watch"))
+            val states = DefaultWatchSetupCoordinator(manager) { true }.addToWatch().toList()
+            assertEquals(listOf(WatchSetupState.CheckOnWatch("Watch", null, false)), states)
+            assertEquals(emptyList(), manager.preparedNodes)
+            assertEquals(0, manager.installCalls)
+        }
+
     private class Manager(
         initial: WatchConnectionState,
     ) : WatchConnectionManager {
         val state = MutableStateFlow(initial)
+        val preparedNodes = mutableListOf<String?>()
         var installCalls = 0
         var associationCalls = 0
         var installResult: WatchRequestResult = WatchRequestResult.Sent
 
         override fun observeConnectionState() = state
+
+        override suspend fun prepareSetup(nodeId: String?) {
+            preparedNodes += nodeId
+        }
 
         override suspend fun beginAssociation() {
             associationCalls++

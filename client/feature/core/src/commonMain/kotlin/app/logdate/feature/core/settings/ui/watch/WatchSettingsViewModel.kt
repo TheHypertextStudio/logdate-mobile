@@ -6,12 +6,14 @@ import app.logdate.client.domain.watch.SharedPreferenceKey
 import app.logdate.client.domain.watch.WatchNotificationSettings
 import app.logdate.client.domain.watch.WatchSettingsRepository
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -23,6 +25,7 @@ import kotlinx.coroutines.launch
  * Exposes the current watch connection state and notification settings, sends requests to the
  * watch, and records why the last one failed so the screens can say so.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class WatchSettingsViewModel(
     private val connectionManager: WatchConnectionManager,
     private val settingsRepository: WatchSettingsRepository,
@@ -41,13 +44,13 @@ class WatchSettingsViewModel(
      * Data Layer that is slow or unavailable cannot hold the page on its loading state.
      */
     val status: StateFlow<WatchStatus?> =
-        combine(
-            connectionState,
-            peerSnapshots.observe().onStart { emit(WatchPeerSnapshot.Inactive) },
-            windowDays,
-        ) { connection, peer, days ->
-            WatchStatusResolver.resolve(connection, peer, days)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        connectionState
+            .flatMapLatest { connection ->
+                val peer = connection.nodeId?.let(peerSnapshots::observeFor) ?: peerSnapshots.observe()
+                combine(peer.onStart { emit(WatchPeerSnapshot.Inactive) }, windowDays) { snapshot, days ->
+                    WatchStatusResolver.resolve(connection, snapshot, days)
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val notificationSettings: StateFlow<WatchNotificationSettings> =
         settingsRepository
@@ -61,6 +64,10 @@ class WatchSettingsViewModel(
 
     private val _installRequestSent = MutableStateFlow(false)
     val installRequestSent: StateFlow<Boolean> = _installRequestSent.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch { connectionManager.refresh() }
+    }
 
     fun beginAssociation() {
         viewModelScope.launch {
@@ -80,6 +87,13 @@ class WatchSettingsViewModel(
                 Napier.e(e) { "Failed to request watch sync" }
             }
         }
+    }
+
+    fun confirmMissingAppAndInstall(nodeId: String) {
+        val current = connectionState.value as? WatchConnectionState.AppUnknown ?: return
+        if (current.nodeId != nodeId || current.knownInstalled) return
+        _installRequestSent.value = false
+        sendToWatch({ connectionManager.confirmMissingAppAndInstall(nodeId) }) { _installRequestSent.value = true }
     }
 
     fun installAppOnWatch() {

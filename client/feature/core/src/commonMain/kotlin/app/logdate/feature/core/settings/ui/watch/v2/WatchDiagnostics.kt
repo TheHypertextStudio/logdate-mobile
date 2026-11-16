@@ -48,8 +48,12 @@ object WatchDiagnostics {
                 (watch?.link == PeerLinkState.PAIRED || watch?.link == PeerLinkState.LINKED)
         return listOf(
             step(WatchDiagnosticCheck.WATCH, seen, WatchDiagnosticFix.PAIR),
-            step(WatchDiagnosticCheck.APP, installed, WatchDiagnosticFix.INSTALL),
-            step(WatchDiagnosticCheck.PROTOCOL, snapshot.peer.v2Active && watch != null, WatchDiagnosticFix.UPDATE),
+            step(
+                WatchDiagnosticCheck.APP,
+                installed,
+                if (connection is WatchConnectionState.AppNotInstalled) WatchDiagnosticFix.INSTALL else WatchDiagnosticFix.OPEN_WATCH,
+            ),
+            step(WatchDiagnosticCheck.PROTOCOL, snapshot.peer.v2Active && watch != null, WatchDiagnosticFix.OPEN_WATCH),
             step(WatchDiagnosticCheck.ASSOCIATION, snapshot.associated, WatchDiagnosticFix.PAIR),
             step(WatchDiagnosticCheck.LINK, linked, WatchDiagnosticFix.OPEN_WATCH),
             step(WatchDiagnosticCheck.PING, snapshot.reply != null),

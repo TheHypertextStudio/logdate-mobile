@@ -18,15 +18,24 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 private const val REMOTE_START_TIMEOUT_SECONDS = 15L
 
@@ -61,6 +70,14 @@ class AndroidWatchConnectionManager(
     private val prepareWatch: suspend (String) -> Unit = {},
     private val verifiedAppNodes: Flow<Set<String>?> = flowOf(null),
 ) : WatchConnectionManager {
+    private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val snapshots = Mutex()
+    private val knownAppNodes = ConcurrentHashMap<String, WatchNodeSnapshot>()
+
+    override suspend fun refresh() {
+        refreshes.emit(Unit)
+    }
+
     override fun observeConnectionState(): Flow<WatchConnectionState> =
         combine(
             associationManager.observeAssociationState(),
@@ -95,42 +112,50 @@ class AndroidWatchConnectionManager(
     }
 
     override suspend fun installAppOnWatch(): WatchRequestResult {
-        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
+        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
+        if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
+        return WatchRequestResult.Failed(
+            if (watches.withApp.isNotEmpty()) WatchRequestFailure.ALREADY_INSTALLED else WatchRequestFailure.INSTALLATION_UNKNOWN,
+        )
+    }
+
+    override suspend fun confirmMissingAppAndInstall(nodeId: String): WatchRequestResult {
+        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
+        if (watches.withApp.any { it.id == nodeId }) return WatchRequestResult.Failed(WatchRequestFailure.ALREADY_INSTALLED)
         val target =
-            watches.withoutApp.firstOrNull()
-                ?: watches.withApp.firstOrNull()
+            watches.withoutApp.firstOrNull { it.id == nodeId }
                 ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
         return startOnWatch(playListingLink(context.packageName), target)
     }
 
     override suspend fun openAppOnWatch(): WatchRequestResult {
-        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
+        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
         if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        val target = watches.withApp.firstOrNull() ?: return WatchRequestResult.Failed(WatchRequestFailure.NOT_INSTALLED_ON_WATCH)
+        val target = watches.withApp.firstOrNull() ?: watches.withoutApp.first()
         return startOnWatch(WATCH_TODAY_LINK, target)
     }
 
     override suspend fun installAppOnWatch(nodeId: String?): WatchRequestResult {
         if (nodeId == null) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        val target =
-            (watches.withApp + watches.withoutApp).firstOrNull { it.id == nodeId }
-                ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        return startOnWatch(playListingLink(context.packageName), target)
+        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
+        if ((watches.withApp + watches.withoutApp).none { it.id == nodeId }) {
+            return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
+        }
+        return WatchRequestResult.Failed(
+            if (watches.withApp.any { it.id == nodeId }) {
+                WatchRequestFailure.ALREADY_INSTALLED
+            } else {
+                WatchRequestFailure.INSTALLATION_UNKNOWN
+            },
+        )
     }
 
     override suspend fun openAppOnWatch(nodeId: String?): WatchRequestResult {
         if (nodeId == null) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
+        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
         val target =
-            watches.withApp.firstOrNull { it.id == nodeId }
-                ?: return WatchRequestResult.Failed(
-                    if (watches.withoutApp.any { it.id == nodeId }) {
-                        WatchRequestFailure.NOT_INSTALLED_ON_WATCH
-                    } else {
-                        WatchRequestFailure.NO_WATCH_CONNECTED
-                    },
-                )
+            (watches.withApp + watches.withoutApp).firstOrNull { it.id == nodeId }
+                ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
         return startOnWatch(WATCH_TODAY_LINK, target)
     }
 
@@ -154,29 +179,39 @@ class AndroidWatchConnectionManager(
             WatchRequestResult.Sent
         } catch (e: CancellationException) {
             throw e
+        } catch (e: TimeoutException) {
+            WatchRequestResult.Failed(WatchRequestFailure.WATCH_DID_NOT_RESPOND)
         } catch (e: Exception) {
             Napier.e(e) { "${watch.displayName} did not open $link" }
-            WatchRequestResult.Failed(WatchRequestFailure.WATCH_DID_NOT_RESPOND)
+            WatchRequestResult.Failed(WatchRequestFailure.OPEN_FAILED)
         }
 
     /** The connected watches, split by whether they have LogDate, or null when the Wearable API failed. */
     private suspend fun connectedWatches(): ConnectedWatches? =
-        try {
-            val connected = nodeClient.connectedNodes.await()
-            val withAppIds =
-                capabilityClient
-                    .getCapability(WatchNodeSelector.WATCH_CAPABILITY, CapabilityClient.FILTER_ALL)
-                    .await()
-                    .nodes
-                    .map { it.id }
-                    .toSet()
-            val (withApp, withoutApp) = connected.partition { it.id in withAppIds }
-            ConnectedWatches(withApp = withApp, withoutApp = withoutApp)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Napier.e(e) { "Could not list the watches connected to this phone" }
-            null
+        withTimeoutOrNull(5_000) {
+            try {
+                val connected = nodeClient.connectedNodes.await()
+                val withAppIds =
+                    capabilityClient
+                        .getCapability(WatchNodeSelector.WATCH_CAPABILITY, CapabilityClient.FILTER_ALL)
+                        .await()
+                        .nodes
+                        .map { it.id }
+                        .toSet()
+                val verified = verifiedAppNodes.first().orEmpty()
+                val (withApp, withoutApp) =
+                    connected.partition {
+                        it.id in withAppIds ||
+                            it.id in verified ||
+                            knownAppNodes.containsKey(it.id)
+                    }
+                ConnectedWatches(withApp = withApp, withoutApp = withoutApp)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Napier.e(e) { "Could not list the watches connected to this phone" }
+                null
+            }
         }
 
     private class ConnectedWatches(
@@ -193,8 +228,6 @@ class AndroidWatchConnectionManager(
                 trySend(resolveTransportSnapshot())
             }
 
-            emitSnapshot()
-
             val capabilityListener =
                 CapabilityClient.OnCapabilityChangedListener {
                     launch {
@@ -204,44 +237,63 @@ class AndroidWatchConnectionManager(
             capabilityClient.addListener(
                 capabilityListener,
                 Uri.parse("wear://*/${WatchNodeSelector.WATCH_CAPABILITY}"),
-                CapabilityClient.FILTER_ALL,
+                CapabilityClient.FILTER_LITERAL,
             )
+            // Node reachability can change without an app capability changing. Stop with the collector.
+            val polling =
+                launch {
+                    while (isActive) {
+                        emitSnapshot()
+                        delay(3_000)
+                    }
+                }
+            val requested = launch { refreshes.collect { emitSnapshot() } }
 
             awaitClose {
+                polling.cancel()
+                requested.cancel()
                 capabilityClient.removeListener(capabilityListener)
             }
         }
 
     /** Captures the current set of connected nodes and installed LogDate watch nodes. */
     private suspend fun resolveTransportSnapshot(): WatchTransportSnapshot =
-        try {
-            val connectedNodes =
-                nodeClient.connectedNodes.await().map { node ->
-                    WatchNodeSnapshot(
-                        id = node.id,
-                        displayName = node.displayName,
-                        isNearby = node.isNearby,
-                    )
-                }
-            val appNodes =
-                capabilityClient
-                    .getCapability(WatchNodeSelector.WATCH_CAPABILITY, CapabilityClient.FILTER_ALL)
-                    .await()
-                    .nodes
-                    .map { node ->
-                        WatchNodeSnapshot(
-                            id = node.id,
-                            displayName = node.displayName,
-                            isNearby = node.isNearby,
-                        )
-                    }
+        snapshots.withLock {
+            withTimeoutOrNull(5_000) {
+                try {
+                    val connectedNodes =
+                        nodeClient.connectedNodes.await().map { node ->
+                            WatchNodeSnapshot(
+                                id = node.id,
+                                displayName = node.displayName,
+                                isNearby = node.isNearby,
+                            )
+                        }
+                    val appNodes =
+                        capabilityClient
+                            .getCapability(WatchNodeSelector.WATCH_CAPABILITY, CapabilityClient.FILTER_ALL)
+                            .await()
+                            .nodes
+                            .map { node ->
+                                WatchNodeSnapshot(
+                                    id = node.id,
+                                    displayName = node.displayName,
+                                    isNearby = node.isNearby,
+                                )
+                            }
 
-            WatchTransportSnapshot(
-                connectedNodes = connectedNodes,
-                appNodes = appNodes,
-            )
-        } catch (e: Exception) {
-            Napier.e(e) { "Failed to resolve watch transport state" }
-            WatchTransportSnapshot()
+                    appNodes.forEach { knownAppNodes[it.id] = it }
+                    WatchTransportSnapshot(
+                        connectedNodes = connectedNodes,
+                        appNodes = appNodes,
+                        knownAppNodes = knownAppNodes.values.toList(),
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Napier.e(e) { "Failed to resolve watch transport state" }
+                    WatchTransportSnapshot(available = false)
+                }
+            } ?: WatchTransportSnapshot(available = false)
         }
 }

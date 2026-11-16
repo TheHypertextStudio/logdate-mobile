@@ -23,13 +23,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.theme.Spacing
@@ -42,21 +48,30 @@ import logdate.client.feature.core.generated.resources.watch_attention_not_sent
 import logdate.client.feature.core.generated.resources.watch_attention_not_sent_description
 import logdate.client.feature.core.generated.resources.watch_attention_set_up_again
 import logdate.client.feature.core.generated.resources.watch_attention_set_up_again_description
+import logdate.client.feature.core.generated.resources.watch_check_on_watch
 import logdate.client.feature.core.generated.resources.watch_connected
+import logdate.client.feature.core.generated.resources.watch_discovery_unavailable
 import logdate.client.feature.core.generated.resources.watch_install_on_watch
+import logdate.client.feature.core.generated.resources.watch_installation_unknown
 import logdate.client.feature.core.generated.resources.watch_link_on_its_own
 import logdate.client.feature.core.generated.resources.watch_link_through_phone
 import logdate.client.feature.core.generated.resources.watch_loading
+import logdate.client.feature.core.generated.resources.watch_missing_confirm_action
+import logdate.client.feature.core.generated.resources.watch_missing_confirm_cancel
+import logdate.client.feature.core.generated.resources.watch_missing_confirm_description
+import logdate.client.feature.core.generated.resources.watch_missing_confirm_title
 import logdate.client.feature.core.generated.resources.watch_needs_association
 import logdate.client.feature.core.generated.resources.watch_needs_association_description
 import logdate.client.feature.core.generated.resources.watch_no_paired
 import logdate.client.feature.core.generated.resources.watch_no_paired_description
 import logdate.client.feature.core.generated.resources.watch_out_of_range
 import logdate.client.feature.core.generated.resources.watch_pair_watch
+import logdate.client.feature.core.generated.resources.watch_setup_install_action
 import logdate.client.feature.core.generated.resources.watch_sync_now
 import logdate.client.feature.core.generated.resources.watch_sync_pending
 import logdate.client.feature.core.generated.resources.watch_sync_up_to_date
 import logdate.client.feature.core.generated.resources.watch_unsupported
+import logdate.client.feature.core.generated.resources.watch_v2_check_again
 import logdate.client.feature.core.generated.resources.watch_window_days
 import org.jetbrains.compose.resources.stringResource
 
@@ -69,6 +84,8 @@ internal fun WatchStatusCard(
     onInstallOnWatch: () -> Unit,
     modifier: Modifier = Modifier,
     onRequestSync: (() -> Unit)? = null,
+    onRetry: () -> Unit = {},
+    onConfirmMissing: (String) -> Unit = {},
 ) {
     MaterialContainer(modifier = modifier.testTag("watch_status_card")) {
         when (status) {
@@ -82,6 +99,21 @@ internal fun WatchStatusCard(
                     iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                     title = stringResource(Res.string.watch_unsupported),
                 )
+            }
+
+            is WatchStatus.Unknown -> {
+                CenteredStatus(
+                    icon = Icons.Outlined.Watch,
+                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    title =
+                        stringResource(
+                            status.watchName?.let { Res.string.watch_installation_unknown } ?: Res.string.watch_discovery_unavailable,
+                        ),
+                    description = stringResource(Res.string.watch_check_on_watch),
+                ) {
+                    WatchUnknownActions(status, onRetry, onConfirmMissing)
+                    requestFailure?.let { WatchRequestFailureMessage(it) }
+                }
             }
 
             WatchStatus.NoWatch -> {
@@ -363,4 +395,37 @@ private fun WatchNameRow(
             )
         },
     )
+}
+
+@Composable
+fun WatchUnknownActions(
+    status: WatchStatus.Unknown,
+    onRetry: () -> Unit,
+    onConfirmMissing: (String) -> Unit,
+) {
+    var confirming by remember(status.nodeId) { mutableStateOf(false) }
+    status.watchName?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+    Button(onClick = onRetry) { Text(stringResource(Res.string.watch_v2_check_again)) }
+    val nodeId = status.nodeId
+    if (nodeId != null && !status.knownInstalled) {
+        TextButton(onClick = { confirming = true }) { Text(stringResource(Res.string.watch_missing_confirm_action)) }
+        if (confirming) {
+            AlertDialog(
+                onDismissRequest = { confirming = false },
+                title = { Text(stringResource(Res.string.watch_missing_confirm_title)) },
+                text = { Text(stringResource(Res.string.watch_missing_confirm_description)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirming = false
+                        onConfirmMissing(nodeId)
+                    }) {
+                        Text(stringResource(Res.string.watch_setup_install_action))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.watch_missing_confirm_cancel)) }
+                },
+            )
+        }
+    }
 }

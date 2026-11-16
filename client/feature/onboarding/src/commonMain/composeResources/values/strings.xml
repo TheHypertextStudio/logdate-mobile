@@ -315,6 +315,8 @@
 
     <!-- Shared -->
     <string name="onboarding_privacy_title">Private by default</string>
+    <string name="watch_setup_check">Open LogDate on your watch and check again. If it isn’t installed, confirm that below to add it.</string>
+    <string name="watch_setup_check_known">Open LogDate on your watch and keep it near your phone with Bluetooth on. Then check again.</string>
 
     <!-- Cinematic opening and overview -->
     <string name="onboarding_opening_title">Meet LogDate.</string>

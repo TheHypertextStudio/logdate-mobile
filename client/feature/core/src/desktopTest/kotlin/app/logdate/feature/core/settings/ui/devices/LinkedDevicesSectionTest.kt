@@ -2,6 +2,7 @@
 
 package app.logdate.feature.core.settings.ui.devices
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import app.logdate.client.sync.peer.devices.LinkedDevicesFailure
 import app.logdate.client.text.toUiText
+import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.ui.theme.LogDateTheme
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.devices_platform_wear_os
@@ -73,17 +75,18 @@ class LinkedDevicesSectionTest {
         }
 
     @Test
-    fun `the paired watch appears once when the page shows it as its watch`() =
+    fun `a paired watch keeps its removal action even when a companion slot exists`() =
         runComposeUiTest {
-            setContent { Section(LinkedDevicesUiState.Listed(listOf(watch.copy(pairedWatch = true))), hidePairedWatch = true) }
+            setContent { Section(LinkedDevicesUiState.Listed(listOf(watch.copy(pairedWatch = true)))) }
 
-            assertTrue(onAllNodesWithTag(LinkedDevicesTags.SECTION).fetchSemanticsNodes().isEmpty())
+            onNodeWithText("Pixel Watch 3").assertExists()
+            onNode(hasText("Remove") and hasClickAction()).assertExists()
         }
 
     @Test
     fun `the paired watch is listed when the page shows no watch card`() =
         runComposeUiTest {
-            setContent { Section(LinkedDevicesUiState.Listed(listOf(watch.copy(pairedWatch = true))), hidePairedWatch = false) }
+            setContent { Section(LinkedDevicesUiState.Listed(listOf(watch.copy(pairedWatch = true)))) }
 
             onNodeWithText("Pixel Watch 3").assertExists()
         }
@@ -127,6 +130,76 @@ class LinkedDevicesSectionTest {
             assertTrue(onAllNodesWithTag(LinkedDevicesTags.SECTION).fetchSemanticsNodes().isEmpty())
         }
 
+    @Test
+    fun `the exact paired row retains current disconnected state and both actions`() =
+        runComposeUiTest {
+            val linked = watch.copy(pairedWatch = true, pairedWatchNodeId = "watch-node")
+            setContent {
+                LogDateTheme {
+                    DevicesScreenContent(
+                        onBackClick = {},
+                        uiState = loadedWith(linked),
+                        watchDevice = { Text("Local companion card") },
+                        connectionAction = {},
+                        onManagePairedWatch = {},
+                        pairedWatchStatus = WatchStatus.Ready("Pixel Watch 3", false, nodeId = "watch-node"),
+                    )
+                }
+            }
+            onNodeWithText("Out of range").assertExists()
+            onNodeWithText("Watch").assertExists()
+            onNodeWithText("Remove").assertExists()
+            onNodeWithText("Local companion card").assertDoesNotExist()
+            onNodeWithText("Connected devices").assertDoesNotExist()
+            onNodeWithText("Linked devices").assertDoesNotExist()
+        }
+
+    @Test
+    fun `the exact paired row shows actual current phone connection`() =
+        runComposeUiTest {
+            val linked = watch.copy(pairedWatch = true, pairedWatchNodeId = "watch-node")
+            setContent {
+                LogDateTheme {
+                    DevicesScreenContent(
+                        onBackClick = {},
+                        uiState = loadedWith(linked),
+                        connectionAction = {},
+                        onManagePairedWatch = {},
+                        pairedWatchStatus = WatchStatus.Ready("Pixel Watch 3", true, nodeId = "watch-node"),
+                    )
+                }
+            }
+            onNodeWithText("Connected").assertExists()
+            onNodeWithText("Remove").assertExists()
+        }
+
+    @Test
+    fun `a stale or unidentified paired row never receives another nodes current state`() {
+        for (pairedNode in listOf("old-node", null)) {
+            runComposeUiTest {
+                val linked = watch.copy(pairedWatch = true, pairedWatchNodeId = pairedNode)
+                setContent {
+                    LogDateTheme {
+                        DevicesScreenContent(
+                            onBackClick = {},
+                            uiState = loadedWith(linked),
+                            watchDevice = { Text("Current companion card") },
+                            connectionAction = {},
+                            onManagePairedWatch = {},
+                            pairedWatchStatus = WatchStatus.Ready("Same display name", true, nodeId = "different-node"),
+                        )
+                    }
+                }
+                onNodeWithText("Connected").assertDoesNotExist()
+                onNodeWithText("Current companion card").assertExists()
+                onNodeWithText("Remove").assertExists()
+            }
+        }
+    }
+
+    private fun loadedWith(linked: LinkedDeviceUiState) =
+        DevicesUiState(availability = DeviceListAvailability.Available, linked = LinkedDevicesUiState.Listed(listOf(linked)))
+
     private fun SemanticsNodeInteractionsProvider.clickLast(text: String) {
         val nodes = onAllNodesWithText(text)
         nodes[nodes.fetchSemanticsNodes().size - 1].performClick()
@@ -135,14 +208,12 @@ class LinkedDevicesSectionTest {
     @Composable
     private fun Section(
         state: LinkedDevicesUiState,
-        hidePairedWatch: Boolean = false,
         onRemove: (String) -> Unit = {},
         onRetry: () -> Unit = {},
     ) {
         LogDateTheme {
             LinkedDevicesSection(
                 state = state,
-                hidePairedWatch = hidePairedWatch,
                 onRemove = onRemove,
                 onRetry = onRetry,
                 onDismissNotice = {},

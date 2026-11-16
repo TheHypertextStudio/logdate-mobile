@@ -1,27 +1,39 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Watch connection -->
     <string name="watch_settings">Watch</string>
     <string name="watch_settings_description">Manage your Wear OS watch connection and sync</string>
     <string name="watch_loading">Looking for your watch\u2026</string>
     <string name="watch_no_paired">No watch connected</string>
-    <string name="watch_no_paired_description">Pair a Wear OS watch with your phone to capture voice notes, mood check-ins, and more from your wrist.</string>
+    <string
+    name="watch_no_paired_description"
+  >Pair a Wear OS watch with your phone to capture voice notes, mood check-ins, and more from your wrist.</string>
     <string name="watch_needs_association">Pair LogDate with your watch</string>
-    <string name="watch_needs_association_description">%1$s is connected, but LogDate still needs permission to manage the watch relationship on this phone.</string>
+    <string
+    name="watch_needs_association_description"
+  >%1$s is connected, but LogDate still needs permission to manage the watch relationship on this phone.</string>
     <string name="watch_association_pending">Finish pairing on this phone</string>
-    <string name="watch_association_pending_description">Complete the system pairing prompt, then LogDate will reconnect to your watch automatically.</string>
+    <string
+    name="watch_association_pending_description"
+  >Complete the system pairing prompt, then LogDate will reconnect to your watch automatically.</string>
     <string name="watch_pair_watch">Pair Watch</string>
     <string name="watch_app_not_installed">Install LogDate on your watch</string>
-    <string name="watch_app_not_installed_description">Your %1$s is connected but doesn&apos;t have LogDate yet.</string>
+    <string
+    name="watch_app_not_installed_description"
+  >Your %1$s is connected but doesn&apos;t have LogDate yet.</string>
     <string name="watch_install_on_watch">Install on Watch</string>
     <string name="watch_setup_pair_title">LogDate on your wrist</string>
-    <string name="watch_setup_pair_description">Record voice notes, mark moments, and replay memories on a Wear OS watch. Your moments appear in the timeline on this phone.</string>
+    <string
+    name="watch_setup_pair_description"
+  >Record voice notes, mark moments, and replay memories on a Wear OS watch. Your moments appear in the timeline on this phone.</string>
     <string name="watch_setup_start_action">Set up LogDate</string>
     <string name="watch_setup_associate_title">Connect %1$s</string>
     <string name="watch_setup_associate_description">Let LogDate connect to your watch.</string>
     <string name="watch_setup_associate_action">Continue on phone</string>
     <string name="watch_setup_install_title">LogDate on %1$s</string>
-    <string name="watch_setup_install_description">Install LogDate from Play on your watch, then open it.</string>
+    <string
+    name="watch_setup_install_description"
+  >Install LogDate from Play on your watch, then open it.</string>
     <string name="watch_setup_install_action">Open Play</string>
     <string name="watch_setup_sent">Check your watch for Play.</string>
     <string name="watch_connected">Connected</string>
@@ -31,9 +43,13 @@
     <string name="watch_link_on_its_own">Backs up on its own over Wi-Fi or mobile data</string>
     <string name="watch_window_days">%1$d days of moments on your watch</string>
     <string name="watch_attention_set_up_again">Set up LogDate on your watch again</string>
-    <string name="watch_attention_set_up_again_description">Your watch is no longer connected to your account. Open LogDate on your watch while it&apos;s near this phone.</string>
+    <string
+    name="watch_attention_set_up_again_description"
+  >Your watch is no longer connected to your account. Open LogDate on your watch while it&apos;s near this phone.</string>
     <string name="watch_attention_not_sent">%1$d moments on your watch didn&apos;t send</string>
-    <string name="watch_attention_not_sent_description">Your watch tries again on its own. Bring it close to this phone with Bluetooth on.</string>
+    <string
+    name="watch_attention_not_sent_description"
+  >Your watch tries again on its own. Bring it close to this phone with Bluetooth on.</string>
 
     <!-- Watch sync -->
     <string name="watch_sync">Sync</string>
@@ -44,10 +60,14 @@
     <!-- Watch notifications -->
     <string name="watch_notifications">Notifications</string>
     <string name="watch_notifications_title">Watch notifications</string>
-    <string name="watch_notifications_description">Alerts when entries arrive from your watch</string>
+    <string
+    name="watch_notifications_description"
+  >Alerts when entries arrive from your watch</string>
     <string name="watch_notification_entry_section">Entry notifications</string>
     <string name="watch_notification_show">Show notifications for new entries</string>
-    <string name="watch_notification_show_description">Get notified when a voice note or entry arrives from your watch</string>
+    <string
+    name="watch_notification_show_description"
+  >Get notified when a voice note or entry arrives from your watch</string>
 
     <!-- Watch troubleshooting -->
     <string name="watch_help">Help</string>
@@ -58,44 +78,74 @@
     <string name="watch_troubleshooting_install">Install or update on watch</string>
     <string name="watch_troubleshooting_open">Open LogDate on watch</string>
     <string name="watch_troubleshooting_common_issues">Common issues</string>
-    <string name="watch_troubleshooting_tips">• Make sure Bluetooth is enabled on both devices\n• Keep your watch and phone within range of each other\n• Check that battery saver is not restricting LogDate\n• Restart both devices if sync seems stuck</string>
+    <string
+    name="watch_troubleshooting_tips"
+  >• Make sure Bluetooth is enabled on both devices\n• Keep your watch and phone within range of each other\n• Check that battery saver is not restricting LogDate\n• Restart both devices if sync seems stuck</string>
 
     <!-- Watch requests -->
-    <string name="watch_request_failed_no_watch">No watch is connected to this phone. Bring your watch close with Bluetooth on, then try again.</string>
-    <string name="watch_request_failed_not_installed">LogDate isn&apos;t installed on your watch yet. Install it first.</string>
-    <string name="watch_request_failed_no_response">Your watch didn&apos;t respond. Unlock it, move it close to your phone, and try again.</string>
+    <string
+    name="watch_request_failed_no_watch"
+  >No watch is connected to this phone. Bring your watch close with Bluetooth on, then try again.</string>
+    <string
+    name="watch_request_failed_not_installed"
+  >LogDate isn&apos;t installed on your watch yet. Install it first.</string>
+    <string
+    name="watch_request_failed_no_response"
+  >Your watch didn&apos;t respond. Unlock it, move it close to your phone, and try again.</string>
 
     <!-- Watch privacy -->
     <string name="watch_privacy_title">Your data stays on your devices</string>
-    <string name="watch_privacy_description">Entries captured on your watch sync directly to this phone over Bluetooth. Nothing is sent to the cloud unless you enable cloud sync separately.</string>
+    <string
+    name="watch_privacy_description"
+  >Entries captured on your watch sync directly to this phone over Bluetooth. Nothing is sent to the cloud unless you enable cloud sync separately.</string>
     <string name="watch_library_section">On your watch</string>
     <string name="watch_library_days">Timeline history</string>
     <string name="watch_library_days_value">%1$d days</string>
     <string name="watch_library_on_this_day">On this day</string>
-    <string name="watch_library_on_this_day_description">Include moments from this date in past years.</string>
+    <string
+    name="watch_library_on_this_day_description"
+  >Include moments from this date in past years.</string>
     <string name="watch_library_rewind">Rewind</string>
     <string name="watch_library_rewind_description">Include this week&apos;s Rewind.</string>
     <string name="watch_capture_section">Capture</string>
     <string name="watch_capture_places">Places</string>
-    <string name="watch_capture_places_description">Save places with watch captures when location access is allowed on your watch.</string>
+    <string
+    name="watch_capture_places_description"
+  >Save places with watch captures when location access is allowed on your watch.</string>
     <string name="watch_capture_mood">Mood after recording</string>
-    <string name="watch_capture_mood_description">Offer a mood check-in after saving a recording.</string>
-    <string name="watch_preferences_save_failed">Couldn&apos;t save your watch settings. Try again.</string>
+    <string
+    name="watch_capture_mood_description"
+  >Offer a mood check-in after saving a recording.</string>
+    <string
+    name="watch_preferences_save_failed"
+  >Couldn&apos;t save your watch settings. Try again.</string>
     <string name="watch_preferences_loading">Loading your watch settings…</string>
     <string name="watch_library_days_cancel">Cancel</string>
     <string name="watch_v2_audio">Audio downloads</string>
-    <string name="watch_v2_audio_description">Audio plays from your phone when needed. Keep your phone nearby for recordings that are not stored on your watch.</string>
+    <string
+    name="watch_v2_audio_description"
+  >Audio plays from your phone when needed. Keep your phone nearby for recordings that are not stored on your watch.</string>
     <string name="watch_v2_diagnostics">Check connection</string>
-    <string name="watch_v2_diagnostics_description">Check the watch connection, syncing, and permissions.</string>
+    <string
+    name="watch_v2_diagnostics_description"
+  >Check the watch connection, syncing, and permissions.</string>
     <string name="watch_v2_microphone">Microphone</string>
     <string name="watch_v2_microphone_description">Manage recording access on your watch.</string>
-    <string name="watch_v2_notifications_description">Choose when your watch can get your attention.</string>
+    <string
+    name="watch_v2_notifications_description"
+  >Choose when your watch can get your attention.</string>
     <string name="watch_v2_reminders">Reminders</string>
-    <string name="watch_v2_reminders_description">A gentle nudge on days you haven’t captured a moment.</string>
+    <string
+    name="watch_v2_reminders_description"
+  >A gentle nudge on days you haven’t captured a moment.</string>
     <string name="watch_v2_remove">Remove watch</string>
-    <string name="watch_v2_remove_description">Review what removing this watch will do before continuing.</string>
+    <string
+    name="watch_v2_remove_description"
+  >Review what removing this watch will do before continuing.</string>
     <string name="watch_v2_tiles">Tiles &amp; complications</string>
-    <string name="watch_v2_tiles_description">Keep Today, Record, Mark and favorite moments close at hand.</string>
+    <string
+    name="watch_v2_tiles_description"
+  >Keep Today, Record, Mark and favorite moments close at hand.</string>
     <string name="watch_v2_today">Today</string>
     <string name="watch_v2_today_count">%1$d moments</string>
     <string name="watch_v2_today_loading">Waiting for today</string>
@@ -112,21 +162,35 @@
     <string name="watch_v2_check_notifications">Watch notifications</string>
     <string name="watch_v2_check_again">Check again</string>
     <string name="watch_v2_check_running">Checking your watch…</string>
-    <string name="watch_v2_check_error">Couldn’t check your watch. Keep it nearby and try again.</string>
+    <string
+    name="watch_v2_check_error"
+  >Couldn’t check your watch. Keep it nearby and try again.</string>
     <string name="watch_v2_fix_pair">Pair watch</string>
     <string name="watch_v2_fix_install">Install LogDate</string>
     <string name="watch_v2_fix_update">Update LogDate</string>
     <string name="watch_v2_fix_open">Open on watch</string>
     <string name="watch_v2_fix_sync">Sync now</string>
-    <string name="watch_v2_tiles_today_description">See today’s moments and start a recording. On your watch, touch and hold the current tile, swipe to Add tiles, then choose LogDate Today.</string>
+    <string
+    name="watch_v2_tiles_today_description"
+  >See today’s moments and start a recording. On your watch, touch and hold the current tile, swipe to Add tiles, then choose LogDate Today.</string>
     <string name="watch_v2_tiles_anniversary">On this day</string>
-    <string name="watch_v2_tiles_anniversary_description">Revisit moments from this date. Add the LogDate On this day tile using Add tiles on your watch.</string>
+    <string
+    name="watch_v2_tiles_anniversary_description"
+  >Revisit moments from this date. Add the LogDate On this day tile using Add tiles on your watch.</string>
     <string name="watch_v2_complications">Watch face shortcuts</string>
-    <string name="watch_v2_complications_description">Touch and hold your watch face, tap Edit, then choose a complication slot. Choose LogDate Campfire, Record, Mark or On this day. Available slots depend on your watch face.</string>
-    <string name="watch_v2_notifications_fix">For watch reminders, open Settings on your watch, then Apps → LogDate → Permissions → Notifications.</string>
-    <string name="watch_v2_microphone_fix">On your watch, open Settings → Apps → LogDate → Permissions → Microphone. Allow access to record audio. LogDate never records until you start a recording.</string>
+    <string
+    name="watch_v2_complications_description"
+  >Touch and hold your watch face, tap Edit, then choose a complication slot. Choose LogDate Campfire, Record, Mark or On this day. Available slots depend on your watch face.</string>
+    <string
+    name="watch_v2_notifications_fix"
+  >For watch reminders, open Settings on your watch, then Apps → LogDate → Permissions → Notifications.</string>
+    <string
+    name="watch_v2_microphone_fix"
+  >On your watch, open Settings → Apps → LogDate → Permissions → Microphone. Allow access to record audio. LogDate never records until you start a recording.</string>
     <string name="watch_v2_ready_card">LogDate is ready on your %1$s</string>
-    <string name="watch_v2_ready_card_description">Your watch can record moments. Open Watch settings to choose what it keeps.</string>
+    <string
+    name="watch_v2_ready_card_description"
+  >Your watch can record moments. Open Watch settings to choose what it keeps.</string>
     <string name="watch_v2_dismiss">Dismiss</string>
     <string name="watch_v2_record">Record</string>
     <string name="watch_v2_voice">Voice note</string>
@@ -136,48 +200,102 @@
     <string name="watch_v2_mark">Mark</string>
     <string name="watch_remove_loading">Checking the linked watch…</string>
     <string name="watch_remove_review">Remove %1$s?</string>
-    <string name="watch_remove_pending">Last reported unsent moments: %1$s. If the watch is offline, these and any newer unsent moments may be lost.</string>
+    <string
+    name="watch_remove_pending"
+  >Last reported unsent moments: %1$s. If the watch is offline, these and any newer unsent moments may be lost.</string>
     <string name="watch_remove_count_unknown">unavailable</string>
-    <string name="watch_remove_consequence">When the watch is nearby, LogDate syncs its moments before removing it. If it is offline, LogDate revokes its access now and queues erasure for its next connection. Unsent moments on the watch may be lost. Your phone journal and backed-up moments stay safe.</string>
+    <string
+    name="watch_remove_consequence"
+  >When the watch is nearby, LogDate syncs its moments before removing it. If it is offline, LogDate revokes its access now and queues erasure for its next connection. Unsent moments on the watch may be lost. Your phone journal and backed-up moments stay safe.</string>
     <string name="watch_remove_confirm">Remove watch</string>
     <string name="watch_remove_busy">Removing the watch…</string>
-    <string name="watch_remove_unavailable">No verified watch link is available. Set up the watch again before removing it securely.</string>
-    <string name="watch_remove_done">Watch removed. Its retained LogDate data has been erased.</string>
-    <string name="watch_remove_deferred">Watch access revoked. LogDate will erase its local data when it reconnects. Unsent moments on that watch may be lost.</string>
-    <string name="watch_remove_failed">Removal isn’t complete. Keep the watch nearby and try again. Recording on the watch may pause until this finishes.</string>
+    <string
+    name="watch_remove_unavailable"
+  >No verified watch link is available. Set up the watch again before removing it securely.</string>
+    <string
+    name="watch_remove_done"
+  >Watch removed. Its retained LogDate data has been erased.</string>
+    <string
+    name="watch_remove_deferred"
+  >Watch access revoked. LogDate will erase its local data when it reconnects. Unsent moments on that watch may be lost.</string>
+    <string
+    name="watch_remove_failed"
+  >Removal isn’t complete. Keep the watch nearby and try again. Recording on the watch may pause until this finishes.</string>
     <string name="watch_remove_retry">Check again</string>
     <string name="watch_audio_wifi_or_charging">Wi-Fi or while charging</string>
     <string name="watch_audio_wifi_only">Wi-Fi only</string>
     <string name="watch_audio_charging_only">While charging only</string>
     <string name="watch_audio_on_demand">Only when I play</string>
-    <string name="watch_audio_policy_description">Keep audio ready under this policy. You can always play other moments on demand.</string>
+    <string
+    name="watch_audio_policy_description"
+  >Keep audio ready under this policy. You can always play other moments on demand.</string>
     <string name="watch_v2_access_section">Quick access</string>
     <string name="watch_v2_connection_section">Connection</string>
     <string name="watch_v2_preview_label">Today tile preview</string>
     <string name="watch_v2_memory_preview_label">On this day tile preview</string>
     <string name="watch_v2_tile_empty">Nothing recorded yet today</string>
     <string name="watch_v2_tile_memory_empty">Nothing from this day in past years</string>
-    <plurals name="watch_v2_tile_moments"><item quantity="one">%d moment today</item><item quantity="other">%d moments today</item></plurals>
-    <plurals name="watch_v2_tile_years"><item quantity="one">%d year ago</item><item quantity="other">%d years ago</item></plurals>
-    <string name="watch_v2_campfire_provider">Your recording rhythm, with the current Campfire state. Tap to open LogDate.</string>
-    <string name="watch_v2_record_provider">A microphone shortcut. Tap to start a voice recording.</string>
+    <plurals name="watch_v2_tile_moments"><item quantity="one">%d moment today</item><item
+      quantity="other"
+    >%d moments today</item></plurals>
+    <plurals name="watch_v2_tile_years"><item quantity="one">%d year ago</item><item
+      quantity="other"
+    >%d years ago</item></plurals>
+    <string
+    name="watch_v2_campfire_provider"
+  >Your recording rhythm, with the current Campfire state. Tap to open LogDate.</string>
+    <string
+    name="watch_v2_record_provider"
+  >A microphone shortcut. Tap to start a voice recording.</string>
     <string name="watch_v2_mark_provider">Save the current moment without opening LogDate.</string>
-    <string name="watch_v2_memory_provider">A memory from a past year. Tap to open its moment.</string>
+    <string
+    name="watch_v2_memory_provider"
+  >A memory from a past year. Tap to open its moment.</string>
     <string name="watch_v2_prompt_section">Reminders and alerts</string>
     <string name="watch_system_setup">Set up your watch</string>
     <string name="watch_system_setup_choose">Which watch do you have?</string>
     <string name="watch_system_setup_pixel">Google Pixel Watch</string>
     <string name="watch_system_setup_galaxy">Samsung Galaxy Watch</string>
     <string name="watch_system_setup_other">Other Wear OS watch</string>
-    <string name="watch_system_setup_other_help">Turn on your watch and follow its setup screen to install your watch maker’s companion app on this phone. Complete pairing in that app, then return to LogDate. If the watch does not show setup instructions, use its manufacturer’s setup guide. Wear OS 3 and later use manufacturer companion apps, rather than the older Wear OS by Google app.</string>
+    <string
+    name="watch_system_setup_other_help"
+  >Turn on your watch and follow its setup screen to install your watch maker’s companion app on this phone. Complete pairing in that app, then return to LogDate. If the watch does not show setup instructions, use its manufacturer’s setup guide. Wear OS 3 and later use manufacturer companion apps, rather than the older Wear OS by Google app.</string>
     <string name="watch_system_setup_close">Close</string>
-    <string name="watch_system_setup_failed">Couldn’t open the companion app or its store listing. Try again.</string>
-    <string name="watch_diagnostics_prerequisite">Connect a Wear OS watch to this phone before checking LogDate’s connection. Complete setup in your watch maker’s companion app, return here, and check again.</string>
+    <string
+    name="watch_system_setup_failed"
+  >Couldn’t open the companion app or its store listing. Try again.</string>
+    <string
+    name="watch_diagnostics_prerequisite"
+  >Connect a Wear OS watch to this phone before checking LogDate’s connection. Complete setup in your watch maker’s companion app, return here, and check again.</string>
     <string name="watch_handoff_title">Opening from your watch</string>
     <string name="watch_handoff_waiting">Waiting for this moment to arrive from your watch…</string>
-    <string name="watch_handoff_missing">This moment hasn’t arrived on this phone. Keep your watch nearby, then try again.</string>
-    <string name="watch_handoff_share_failed">Couldn’t open sharing for this moment. Try again.</string>
+    <string
+    name="watch_handoff_missing"
+  >This moment hasn’t arrived on this phone. Keep your watch nearby, then try again.</string>
+    <string
+    name="watch_handoff_share_failed"
+  >Couldn’t open sharing for this moment. Try again.</string>
     <string name="watch_handoff_retry">Try again</string>
     <string name="watch_handoff_share_title">Share moment</string>
     <string name="watch_v2_handwriting">Handwriting</string>
+    <string name="watch_discovery_unavailable">Can’t check your watch right now</string>
+    <string name="watch_installation_unknown">Check LogDate on your watch</string>
+    <string
+    name="watch_check_on_watch"
+  >Open LogDate on your watch and keep it near your phone with Bluetooth on. Then check again.</string>
+    <string
+    name="watch_request_failed_installed"
+  >LogDate is already on your watch. Open it there to continue.</string>
+    <string
+    name="watch_request_failed_unknown"
+  >The phone can’t confirm whether LogDate is on this watch. Check on your watch, then try again.</string>
+    <string
+    name="watch_request_failed_open"
+  >Couldn’t open LogDate on your watch. Open it on the watch, then try again.</string>
+    <string name="watch_missing_confirm_action">LogDate isn’t on this watch</string>
+    <string name="watch_missing_confirm_title">Install LogDate on this watch?</string>
+    <string
+    name="watch_missing_confirm_description"
+  >Continue only if you checked this watch and LogDate isn’t installed. This opens its Google Play listing.</string>
+    <string name="watch_missing_confirm_cancel">Cancel</string>
 </resources>

@@ -4,6 +4,7 @@ import app.logdate.client.sync.datalayer.v2.WearProtocolGate
 import app.logdate.client.sync.peer.state.PeerRole
 import app.logdate.client.sync.peer.state.PeerStateStore
 import app.logdate.client.sync.peer.state.StateMerger
+import app.logdate.client.sync.peer.state.WatchState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,7 +17,14 @@ class PeerStateWatchSnapshotSource(
     private val gate: WearProtocolGate,
     private val peerStates: PeerStateStore,
     private val merger: StateMerger = StateMerger(),
+    private val accepts: suspend (String, WatchState) -> Boolean = { _, _ -> true },
 ) : WatchPeerSnapshotSource {
+    override fun observeFor(nodeId: String): Flow<WatchPeerSnapshot> =
+        combine(gate.isV2Active(), peerStates.documents(PeerRole.WATCH)) { active, documents ->
+            val report = merger.merge(phone = null, watch = documents[nodeId]).watch?.takeIf { accepts(nodeId, it) }
+            WatchPeerSnapshot(active, report, report?.features.orEmpty())
+        }.distinctUntilChanged()
+
     override fun observe(): Flow<WatchPeerSnapshot> =
         combine(
             gate.isV2Active(),

@@ -16,6 +16,11 @@ enum class WatchRequestFailure {
     /** The phone can't see a connected watch. */
     NO_WATCH_CONNECTED,
 
+    LOOKUP_UNAVAILABLE,
+    ALREADY_INSTALLED,
+    INSTALLATION_UNKNOWN,
+    OPEN_FAILED,
+
     /** No connected watch has LogDate installed, so there is nothing to open. */
     NOT_INSTALLED_ON_WATCH,
 

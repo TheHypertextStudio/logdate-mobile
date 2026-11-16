@@ -64,4 +64,39 @@ class PeerStateWatchSnapshotSourceTest {
 
             assertFalse(source.observe().first().v2Active)
         }
+
+    @Test
+    fun `a newer report from another watch cannot replace the selected watch`() =
+        runTest {
+            val selected = WatchState(outboxCount = 2, features = setOf(WearFeatures.RECEIPTS))
+            val other = WatchState(outboxCount = 99, features = setOf(WearFeatures.WINDOW))
+            peerStates.accept(
+                "selected",
+                Decoded.Supported(StateDocument(role = PeerRole.WATCH, writtenAt = 1, watch = selected)),
+                PeerRole.WATCH,
+            )
+            peerStates.accept(
+                "other",
+                Decoded.Supported(StateDocument(role = PeerRole.WATCH, writtenAt = 2, watch = other)),
+                PeerRole.WATCH,
+            )
+            val snapshot = source.observeFor("selected").first()
+            assertEquals(2, snapshot.watch?.outboxCount)
+            assertEquals(setOf(WearFeatures.RECEIPTS), snapshot.features)
+        }
+
+    @Test
+    fun `a previous link report never supplies current setup or sync claims`() =
+        runTest {
+            val retained = StateDocument(role = PeerRole.WATCH, writtenAt = 1, watch = WatchState(outboxCount = 9))
+            peerStates.accept("selected", Decoded.Supported(retained), PeerRole.WATCH)
+            val scoped =
+                PeerStateWatchSnapshotSource(
+                    gate = WearProtocolGate(flag, MutableStateFlow(true), peerStates.features(PeerRole.WATCH)),
+                    peerStates = peerStates,
+                    accepts = { _, _ -> false },
+                )
+            assertNull(scoped.observeFor("selected").first().watch)
+            assertEquals(emptySet(), scoped.observeFor("selected").first().features)
+        }
 }
