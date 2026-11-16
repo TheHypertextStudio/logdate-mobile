@@ -34,8 +34,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * Models generated from LogDate's real schemas, plus a synthetic schema for kinds LogDate doesn't
- * use yet, must round-trip unchanged through JSON and DAG-CBOR on every platform.
+ * Models generated from this module's fixture schemas must round-trip unchanged through JSON and
+ * DAG-CBOR on every platform.
  */
 class GeneratedModelRoundTripTest {
     private val json = LexiconData.json
@@ -75,13 +75,13 @@ class GeneratedModelRoundTripTest {
                     .jsonPrimitive.content
             }
 
-        assertEquals("app.logdate.journal.entry", element.getValue("\$type").jsonPrimitive.content)
+        assertEquals("com.example.journal.entry", element.getValue("\$type").jsonPrimitive.content)
         assertEquals(
             listOf(
-                "app.logdate.journal.entry#textBlock",
-                "app.logdate.journal.entry#imageBlock",
-                "app.logdate.journal.entry#videoBlock",
-                "app.logdate.journal.entry#audioBlock",
+                "com.example.journal.entry#textBlock",
+                "com.example.journal.entry#imageBlock",
+                "com.example.journal.entry#videoBlock",
+                "com.example.journal.entry#audioBlock",
             ),
             types,
         )
@@ -101,7 +101,7 @@ class GeneratedModelRoundTripTest {
         val stickerBlock =
             JsonObject(
                 mapOf(
-                    "\$type" to JsonPrimitive("app.logdate.journal.entry#stickerBlock"),
+                    "\$type" to JsonPrimitive("com.example.journal.entry#stickerBlock"),
                     "id" to JsonPrimitive("s1"),
                     "sticker" to JsonPrimitive("party"),
                 ),
@@ -115,7 +115,7 @@ class GeneratedModelRoundTripTest {
         val decoded = json.decodeFromJsonElement(Entry.serializer(), withSticker)
         val unknown = assertIs<EntryBlocksItem.Unknown>(decoded.blocks.last())
 
-        assertEquals("app.logdate.journal.entry#stickerBlock", unknown.type)
+        assertEquals("com.example.journal.entry#stickerBlock", unknown.type)
         assertEquals(withSticker, json.encodeToJsonElement(Entry.serializer(), decoded))
     }
 

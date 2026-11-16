@@ -98,19 +98,12 @@ kotlin {
     }
 }
 
-// Test fixtures: real LogDate and community schemas plus one synthetic schema for the kinds LogDate
-// doesn't use yet. The build generates them before compiling the tests, which round-trip them on
-// every platform, so a schema or generator change reaches the tests with nothing to run by hand.
-// This module is the generator, so it runs its own JVM build.
+// Test fixtures: this module's own schemas under src/commonTest/lexicons. The build generates their
+// models before compiling the tests, which round-trip them on every platform, so a schema or
+// generator change reaches the tests with nothing to run by hand. This module is the generator, so
+// it runs its own JVM build.
 lexiconModels {
-    val repositoryLexicons = rootProject.layout.projectDirectory.dir("lexicons")
-    schemas.from(
-        repositoryLexicons.file("app/logdate/defs.json"),
-        repositoryLexicons.file("app/logdate/journal/entry.json"),
-        repositoryLexicons.file("app/logdate/crypto/sealed.json"),
-        repositoryLexicons.file("community/lexicon/location/geo.json"),
-        layout.projectDirectory.file("src/commonTest/lexicons/kitchenSink.json"),
-    )
+    schemas.from(layout.projectDirectory.dir("src/commonTest/lexicons"))
     basePackage = "studio.hypertext.atproto.lexicon.fixtures"
     namespaceLayout = false
     sourceSet = "commonTest"

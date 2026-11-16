@@ -1,0 +1,51 @@
+{
+  "lexicon": 1,
+  "id": "com.example.crypto.sealed",
+  "description": "An encrypted envelope, so generated code covers byte fields and an unknown payload.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["version", "keyId", "nonce", "ciphertext"],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "keyId": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "nonce": {
+            "type": "bytes",
+            "maxLength": 64
+          },
+          "ciphertext": {
+            "type": "bytes",
+            "maxLength": 4000000
+          }
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "description": "What the envelope contains once decrypted.",
+      "required": ["collection", "rkey", "record"],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string",
+          "format": "record-key"
+        },
+        "record": {
+          "type": "unknown"
+        }
+      }
+    }
+  }
+}
