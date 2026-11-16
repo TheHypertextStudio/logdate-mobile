@@ -31,7 +31,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinx.serialization) apply false
     alias(libs.plugins.gradlePlayPublisher) apply false
-    alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.dokka)
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kover)
@@ -88,8 +88,6 @@ val ktlintEngineVersion = libs.versions.ktlintEngine.get()
 
 subprojects {
     apply {
-        // TODO: Migrate to version catalog
-        plugin("org.jetbrains.dokka")
         plugin("org.jlleitschuh.gradle.ktlint")
     }
 
@@ -136,13 +134,6 @@ subprojects {
     }
     tasks.withType<DetektCreateBaselineTask>().configureEach {
         baseline.set(file("detekt-baseline.xml"))
-    }
-
-    val dokkaPlugin by configurations
-    dependencies {
-        // TODO: Figure out how to migrate to version catalog in build configuration
-        //noinspection UseTomlInstead
-        dokkaPlugin("org.jetbrains.dokka:versioning-plugin:2.2.0")
     }
 
     pluginManager.withPlugin("com.android.application") {
@@ -246,10 +237,16 @@ fun existingTaskPaths(
         findProject(path)?.tasks?.findByName(taskName)?.path
     }
 
+// The API reference merges every published AT Protocol module into one site at build/dokka/html.
+dependencies {
+    atprotoModulePaths.forEach { dokka(project(it)) }
+}
+
 tasks.register("generateAtprotoDokka") {
     group = "documentation"
-    description = "Generate Dokka HTML publications for every ATProto module."
+    description = "Generate Dokka HTML publications for every ATProto module, and the merged site."
     dependsOn(atprotoModulePaths.map { "$it:dokkaGeneratePublicationHtml" })
+    dependsOn(":dokkaGeneratePublicationHtml")
 }
 
 tasks.register("publishAtprotoToMavenLocal") {

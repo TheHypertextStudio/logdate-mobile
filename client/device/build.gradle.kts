@@ -1,7 +1,6 @@
 
 plugins {
     alias(libs.plugins.app.logdate.kmp.library)
-    alias(libs.plugins.dokka)
     alias(libs.plugins.buildConfig)
 }
 

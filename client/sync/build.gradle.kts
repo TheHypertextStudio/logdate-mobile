@@ -4,7 +4,6 @@ import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.app.logdate.kmp.library)
-    alias(libs.plugins.dokka)
 }
 
 // The conversion tests check the number rules against the same known answers the Mac and Linux apps

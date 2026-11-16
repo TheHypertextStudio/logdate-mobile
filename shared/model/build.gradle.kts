@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.app.logdate.kmp.base)
-    alias(libs.plugins.dokka)
 }
 
 kotlin {

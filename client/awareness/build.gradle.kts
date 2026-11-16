@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.dokka)
     alias(libs.plugins.kover)
 }
 
