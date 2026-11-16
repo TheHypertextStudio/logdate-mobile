@@ -1,6 +1,8 @@
 package app.logdate.client.database
 
 import androidx.room.Room
+import androidx.room.execSQL
+import androidx.room.useWriterConnection
 import app.logdate.client.database.entities.AudioNoteEntity
 import app.logdate.client.database.entities.AudioTagEntity
 import app.logdate.client.database.entities.TextNoteEntity
@@ -13,6 +15,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -144,14 +147,64 @@ class SearchIndexBootstrapperJvmTest {
             assertTrue(database.searchDao().searchRanked("bird", limit = 10).isEmpty())
         }
 
+    @Test
+    fun `opening a database with an outdated index leaves the rebuild to a later call`() =
+        runTest {
+            val first = openDatabase()
+            val note =
+                TextNoteEntity(
+                    content = "Watched the herons at the marsh.",
+                    uid = Uuid.random(),
+                    created = Instant.fromEpochMilliseconds(1_000),
+                    lastUpdated = Instant.fromEpochMilliseconds(1_000),
+                )
+            first.textNoteDao().addNote(note)
+            first.useWriterConnection { connection ->
+                connection.execSQL("DELETE FROM entries_fts")
+                connection.execSQL("UPDATE search_index_metadata SET schemaVersion = 4 WHERE id = 1")
+            }
+            first.close()
+            database = null
+
+            val search = reopenDatabase().searchDao()
+
+            assertTrue(search.searchRanked("heron*", limit = 10).isEmpty(), "the database rebuilt the index while opening")
+            assertTrue(search.rebuildIfNeeded())
+            val found = search.searchRanked("heron*", limit = 10)
+            assertEquals(listOf(note.uid.toString()), found.map { it.uid })
+            assertFalse(search.rebuildIfNeeded(), "a current index was rebuilt again")
+        }
+
+    @Test
+    fun `unbounded searches return at most the requested number of matches`() =
+        runTest {
+            val database = openDatabase()
+            repeat(30) { index ->
+                database.textNoteDao().addNote(
+                    TextNoteEntity(
+                        content = "Lake swim number $index",
+                        uid = Uuid.random(),
+                        created = Instant.fromEpochMilliseconds(1_000L + index),
+                        lastUpdated = Instant.fromEpochMilliseconds(1_000L + index),
+                    ),
+                )
+            }
+
+            assertEquals(12, database.searchDao().search("lake*", limit = 12).size)
+            assertEquals(12, database.searchDao().searchWithSnippets("lake*", limit = 12).size)
+        }
+
     private fun openDatabase(): LogDateDatabase {
         database?.close()
         Files.deleteIfExists(databasePath)
         databasePath = Files.createTempFile("logdate-search-index", ".db")
         Files.deleteIfExists(databasePath)
 
-        return getRoomDatabase(
+        return reopenDatabase()
+    }
+
+    private fun reopenDatabase(): LogDateDatabase =
+        getRoomDatabase(
             builder = Room.databaseBuilder<LogDateDatabase>(databasePath.absolutePathString()),
         ).also { database = it }
-    }
 }

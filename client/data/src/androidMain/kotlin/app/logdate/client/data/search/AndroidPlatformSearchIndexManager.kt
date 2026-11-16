@@ -17,6 +17,7 @@ import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.repository.search.SearchContentType
 import com.google.common.util.concurrent.ListenableFuture
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -78,6 +79,13 @@ class AndroidPlatformSearchIndexManager(
         }
 
         externalScope.launch(Dispatchers.IO) {
+            try {
+                searchDao.rebuildIfNeeded()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Napier.e("Search index rebuild failed; system search may be incomplete", error)
+            }
             combine(
                 searchDao.observeGeneration(),
                 preferencesDataSource.observeSystemSearchVisibilityEnabled(),
