@@ -5,10 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Implementation of BatteryInfoProvider for JVM platforms.
- *
- * This implementation provides reasonable defaults for JVM platforms.
- * For desktop-specific implementations, see [DesktopBatteryInfoProvider].
+ * The [BatteryInfoProvider] for the desktop app. It reports a fixed battery state, since the JVM
+ * exposes none.
  */
 class JvmBatteryInfoProvider : BatteryInfoProvider {
     // Default to a reasonable battery state for JVM
