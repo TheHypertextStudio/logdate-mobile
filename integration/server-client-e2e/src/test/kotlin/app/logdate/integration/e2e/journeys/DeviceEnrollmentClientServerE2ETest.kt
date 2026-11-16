@@ -33,7 +33,7 @@ class DeviceEnrollmentClientServerE2ETest {
                 val claimSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(ByteArray(32) { (it + 40).toByte() })
                 val request =
                     enrollmentClient.createFromPhone(
-                        deviceName = "Willie's Mac",
+                        deviceName = "Alice's Mac",
                         publicKey = publicKey,
                         claimSecret = claimSecret,
                         confirmationCode = "413827",
@@ -75,7 +75,7 @@ class DeviceEnrollmentClientServerE2ETest {
                 val claimSecret = Base64.getUrlEncoder().withoutPadding().encodeToString(ByteArray(32) { (it + 40).toByte() })
                 val request =
                     enrollmentClient.createFromPhone(
-                        deviceName = "Willie's Mac",
+                        deviceName = "Alice's Mac",
                         publicKey = publicKey,
                         claimSecret = claimSecret,
                         confirmationCode = "413827",
@@ -86,7 +86,7 @@ class DeviceEnrollmentClientServerE2ETest {
                 assertEquals("pending", request.status)
                 val retried =
                     enrollmentClient.createFromPhone(
-                        deviceName = "Willie's Mac",
+                        deviceName = "Alice's Mac",
                         publicKey = publicKey,
                         claimSecret = claimSecret,
                         confirmationCode = "413827",

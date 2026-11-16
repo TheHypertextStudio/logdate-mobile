@@ -235,9 +235,9 @@ class MediaDeviceSelectionUiStateTest {
             MediaDeviceSelectionResolver.resolveAudioOutput(
                 devices =
                     listOf(
-                        output("a2dp", "Willie's Earbuds v4", groupId = "AA:BB", qualityRank = 2),
-                        output("sco", "Willie's Earbuds v4", groupId = "AA:BB", qualityRank = 1),
-                        output("le", "Willie's Earbuds v4", groupId = "AA:BB", qualityRank = 3),
+                        output("a2dp", "Alice's Earbuds v4", groupId = "AA:BB", qualityRank = 2),
+                        output("sco", "Alice's Earbuds v4", groupId = "AA:BB", qualityRank = 1),
+                        output("le", "Alice's Earbuds v4", groupId = "AA:BB", qualityRank = 3),
                     ),
                 preferredDeviceId = null,
             )

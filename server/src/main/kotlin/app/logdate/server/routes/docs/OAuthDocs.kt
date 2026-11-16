@@ -468,7 +468,7 @@ internal object OAuthDocs {
                 ErrorCase(
                     "access_denied",
                     "The passkey belongs to a different account from the one the client named in `login_hint`.",
-                    "This passkey is for @willie.logdate.app, but Journal Viewer asked to sign in as @sam.logdate.app. " +
+                    "This passkey is for @alice.logdate.app, but Journal Viewer asked to sign in as @sam.logdate.app. " +
                         "Use the passkey for @sam.logdate.app.",
                 ),
             )

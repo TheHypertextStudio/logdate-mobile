@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 class PersonalIntroUiStateTest {
     @Test
     fun `an empty bio does not block setup`() {
-        val state = PersonalIntroUiState(name = "Willie", bio = "")
+        val state = PersonalIntroUiState(name = "Alice", bio = "")
 
         assertTrue(
             state.canContinueFromBio,
@@ -20,7 +20,7 @@ class PersonalIntroUiStateTest {
     @Test
     fun `a name is still required`() {
         assertFalse(PersonalIntroUiState(name = "   ").canContinueFromName)
-        assertTrue(PersonalIntroUiState(name = "Willie").canContinueFromName)
+        assertTrue(PersonalIntroUiState(name = "Alice").canContinueFromName)
     }
 
     @Test

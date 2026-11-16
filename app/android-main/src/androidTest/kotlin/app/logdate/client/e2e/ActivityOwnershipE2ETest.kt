@@ -126,7 +126,7 @@ class ActivityOwnershipE2ETest {
                                         onNavigateToMemories = {},
                                         onNavigateToSync = {},
                                         onNavigateToExport = {},
-                                        userProfile = UserProfile("Willie", "willie", isAuthenticated = true),
+                                        userProfile = UserProfile("Alice", "alice", isAuthenticated = true),
                                     )
                                 }
                             }

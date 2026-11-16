@@ -21,11 +21,11 @@ import kotlin.uuid.Uuid
 internal object DocExamples {
     const val ACCOUNT_ID = "3f8a1c2e-5b7d-4e9f-a1b2-c3d4e5f60718"
     val accountUuid: Uuid = Uuid.parse(ACCOUNT_ID)
-    const val USERNAME = "willie"
-    const val DISPLAY_NAME = "Willie"
-    const val EMAIL = "willie@example.com"
+    const val USERNAME = "alice"
+    const val DISPLAY_NAME = "Alice"
+    const val EMAIL = "alice@example.com"
     const val DID = "did:plc:7iza6de2dwap2sbkpav7c6c6"
-    const val HANDLE = "willie.logdate.app"
+    const val HANDLE = "alice.logdate.app"
     const val DEVICE_ID = "pixel-9"
 
     /** 2026-09-12T14:03:11.412Z, the moment every example happens. */

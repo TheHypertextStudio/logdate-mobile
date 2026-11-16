@@ -45,7 +45,7 @@ class DeepLinkResolverTest {
 
         assertEquals(
             NoteDetailRoute(noteId),
-            resolveDeepLinkUri(Uri.parse("https://williecubed.logdate.app/note/$noteId")),
+            resolveDeepLinkUri(Uri.parse("https://alice.logdate.app/note/$noteId")),
         )
     }
 

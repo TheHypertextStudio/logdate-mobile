@@ -86,7 +86,7 @@ class CryptographyDeviceTransferTest {
 
     @Test
     fun `session tokens never appear in its string form`() {
-        val session = DeviceTransferSession("Willie", "secret-access", "secret-refresh")
+        val session = DeviceTransferSession("Alice", "secret-access", "secret-refresh")
 
         assertEquals(false, "secret-access" in session.toString() || "secret-refresh" in session.toString())
     }

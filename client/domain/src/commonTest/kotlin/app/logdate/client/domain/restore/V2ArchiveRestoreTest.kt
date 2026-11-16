@@ -56,7 +56,7 @@ internal class V2ArchiveRestoreTest : RestoreArchiveTestFixture() {
                     exportedAt = now,
                     exportTimeZone = "America/Los_Angeles",
                     generator = ArchiveGenerator(version = "2.0.0"),
-                    owner = ArchiveOwner(displayName = "Willie"),
+                    owner = ArchiveOwner(displayName = "Alice"),
                     scope = ArchiveScope(complete = true),
                     counts =
                         ArchiveCounts(
@@ -162,7 +162,7 @@ internal class V2ArchiveRestoreTest : RestoreArchiveTestFixture() {
                     profileJson =
                         ArchiveJson.document.encodeToString(
                             ArchiveProfileFile.serializer(),
-                            ArchiveProfileFile(ArchiveProfile(displayName = "Willie", updatedAt = now)),
+                            ArchiveProfileFile(ArchiveProfile(displayName = "Alice", updatedAt = now)),
                         ),
                     placesJson =
                         ArchiveJson.document.encodeToString(
@@ -238,7 +238,7 @@ internal class V2ArchiveRestoreTest : RestoreArchiveTestFixture() {
                     .single()
                     .blocks.size,
             )
-            assertEquals("Willie", profileRepo.profile.displayName)
+            assertEquals("Alice", profileRepo.profile.displayName)
             assertEquals(1, placesRepo.places.size)
             assertEquals(1, locationHistoryRepo.logLocationCallCount)
         }
@@ -251,7 +251,7 @@ internal class V2ArchiveRestoreTest : RestoreArchiveTestFixture() {
                     exportedAt = now,
                     exportTimeZone = "America/Los_Angeles",
                     generator = ArchiveGenerator(version = "2.0.0"),
-                    owner = ArchiveOwner(displayName = "Willie"),
+                    owner = ArchiveOwner(displayName = "Alice"),
                     scope = ArchiveScope(complete = true),
                     counts =
                         ArchiveCounts(

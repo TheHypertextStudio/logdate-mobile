@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 class DeviceDisplayNameTest {
     @Test
     fun `system name is preferred when readable`() {
-        assertEquals("Willie's Pixel", safeDeviceDisplayName(" Willie's Pixel ", "Android device"))
+        assertEquals("Alice's Pixel", safeDeviceDisplayName(" Alice's Pixel ", "Android device"))
     }
 
     @Test

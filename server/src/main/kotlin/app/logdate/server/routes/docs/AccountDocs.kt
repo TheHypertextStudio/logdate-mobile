@@ -108,7 +108,7 @@ internal object AccountDocs {
         )
         request {
             jsonBody(
-                UpdateAccountProfileRequest(displayName = "Willie C.", bio = "Morning walker, occasional photographer."),
+                UpdateAccountProfileRequest(displayName = "Alice P.", bio = "Morning walker, occasional photographer."),
                 "The fields to change. Omitted fields are left as they are.",
             )
         }
@@ -490,7 +490,7 @@ internal object AccountDocs {
             """
             Lists the identities linked to the account: one entry per passkey and one for Google, with the
             email each carries and when it was last used to sign in. This is how a settings screen shows
-            "Signed in with Google as willie@example.com". `lastSignInAt` is absent for a passkey that was
+            "Signed in with Google as alice@example.com". `lastSignInAt` is absent for a passkey that was
             registered but has not signed in yet; Google identities always carry it.
             """,
         )

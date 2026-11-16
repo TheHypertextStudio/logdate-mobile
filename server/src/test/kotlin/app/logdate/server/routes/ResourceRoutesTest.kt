@@ -33,7 +33,7 @@ import kotlin.uuid.Uuid
 class ResourceRoutesTest {
     private val json = Json { ignoreUnknownKeys = true }
     private val ownerId = Uuid.parse("123e4567-e89b-12d3-a456-426614174000")
-    private val ownerHandle = "williecubed.logdate.app"
+    private val ownerHandle = "alice.logdate.app"
 
     @Test
     fun `resolves journal resource id to owner handle and canonical web path`() =
@@ -276,8 +276,8 @@ class ResourceRoutesTest {
     private fun testAccount(handle: String? = ownerHandle): Account =
         Account(
             id = ownerId,
-            username = "williecubed",
-            displayName = "Willie",
+            username = "alice",
+            displayName = "Alice",
             handle = handle,
             createdAt = Clock.System.now(),
         )

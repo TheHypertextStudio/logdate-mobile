@@ -169,7 +169,7 @@ class DeviceEnrollmentSessionRoutesTest {
             post("/api/v1/device-enrollments") {
                 header(HttpHeaders.Authorization, token)
                 contentType(ContentType.Application.Json)
-                setBody("""{"deviceName":"Willie's Mac","publicKey":"$publicKey"}""")
+                setBody("""{"deviceName":"Alice's Mac","publicKey":"$publicKey"}""")
             }
         assertEquals(HttpStatusCode.Created, response.status)
         val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject

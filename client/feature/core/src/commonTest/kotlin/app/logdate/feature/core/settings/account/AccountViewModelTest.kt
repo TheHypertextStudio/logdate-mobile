@@ -171,7 +171,7 @@ class AccountViewModelTest {
                 FakeConnectedServer(
                     ConnectedServerInfo(
                         origin = "https://journal.example.com",
-                        displayName = "Willie's LogDate",
+                        displayName = "Alice's LogDate",
                         isLogDateCloud = false,
                         publishesIdentityChanges = false,
                     ),
@@ -179,7 +179,7 @@ class AccountViewModelTest {
 
             val state = signedIn(viewModel(server = server))
 
-            assertEquals(ServerRow(name = "Willie's LogDate", host = "journal.example.com", isLogDateCloud = false), state.server)
+            assertEquals(ServerRow(name = "Alice's LogDate", host = "journal.example.com", isLogDateCloud = false), state.server)
         }
 
     @Test
