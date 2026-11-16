@@ -2,6 +2,7 @@ package app.logdate.client.intelligence.narrative
 
 import app.logdate.client.intelligence.AIError
 import app.logdate.client.intelligence.AIResult
+import app.logdate.client.intelligence.LenientJson
 import app.logdate.client.intelligence.cache.AICachePolicy
 import app.logdate.client.intelligence.cache.GenerativeAICache
 import app.logdate.client.intelligence.cache.GenerativeAICacheContentType
@@ -34,7 +35,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlin.time.Instant
 
 /**
@@ -325,7 +325,7 @@ Respond ONLY with valid JSON in this format. No additional text."""
 }
 """
 
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
     }
 
     /**

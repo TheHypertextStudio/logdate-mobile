@@ -1,5 +1,6 @@
 package app.logdate.client.domain.onboarding
 
+import app.logdate.client.domain.LenientJson
 import app.logdate.client.intelligence.generativeai.GenerativeAIChatClient
 import app.logdate.client.intelligence.generativeai.GenerativeAIChatMessage
 import app.logdate.client.intelligence.generativeai.GenerativeAIRequest
@@ -11,7 +12,6 @@ import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.shared.model.profile.LogDateProfile
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 /**
  * Use case for processing personal introduction during onboarding.
@@ -35,7 +35,7 @@ class ProcessPersonalIntroductionUseCase(
   "additionalProperties": false
 }
 """
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
     }
 
     /**

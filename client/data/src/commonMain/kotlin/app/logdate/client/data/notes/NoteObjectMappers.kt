@@ -1,5 +1,6 @@
 package app.logdate.client.data.notes
 
+import app.logdate.client.data.LenientJson
 import app.logdate.client.database.entities.AudioNoteEntity
 import app.logdate.client.database.entities.GenericNoteData
 import app.logdate.client.database.entities.ImageNoteEntity
@@ -16,10 +17,9 @@ import app.logdate.shared.model.HandwritingDocument
 import app.logdate.shared.model.PhotoPresentation
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
 
-private val locationJson = Json { ignoreUnknownKeys = true }
+private val locationJson = LenientJson
 
 /**
  * Converts entity location fields to a NoteLocation domain model.

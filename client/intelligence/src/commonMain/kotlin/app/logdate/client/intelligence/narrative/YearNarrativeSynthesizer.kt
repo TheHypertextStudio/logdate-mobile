@@ -2,6 +2,7 @@ package app.logdate.client.intelligence.narrative
 
 import app.logdate.client.intelligence.AIError
 import app.logdate.client.intelligence.AIResult
+import app.logdate.client.intelligence.LenientJson
 import app.logdate.client.intelligence.cache.AICachePolicy
 import app.logdate.client.intelligence.cache.GenerativeAICache
 import app.logdate.client.intelligence.cache.GenerativeAICacheContentType
@@ -23,7 +24,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 /**
  * Synthesizes a year-level narrative from existing weekly rewind summaries.
@@ -112,7 +112,7 @@ Respond ONLY with valid JSON."""
 }
 """
 
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json = LenientJson
     }
 
     /**
