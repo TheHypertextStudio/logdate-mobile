@@ -1,7 +1,7 @@
 # User-held recovery keys
 
 Part of the Identity safeguards project in the LogDate on the AT Protocol initiative. The umbrella
-design is [LogDate on the AT Protocol](./2026-10-09-logdate-atproto-interoperability-design.md),
+design is [AT Protocol interoperability](../../explanation/atproto-interoperability.md),
 which lists "people can hold their own recovery key on every platform" as the third safeguard
 before any identity is published.
 
@@ -140,6 +140,7 @@ recovery key, not the server:
    It returns the unsigned operation, the bytes to sign, and an opaque `preparedKey` token: the new
    private key and a SHA-256 digest of the bytes to sign, sealed with the server's key-encryption
    key and bound to the account. The server stores nothing between the two calls.
+
 2. The app derives the recovery key from the phrase on this device and checks that it matches the
    one registered on the identity. It then **decodes the operation and refuses to sign** unless it is
    exactly the change asked for:
@@ -151,6 +152,7 @@ recovery key, not the server:
 
    The recovery key outranks the server's key, and an operation it signs cannot be undone by a lower
    key, so a compromised or buggy server must not be able to get it to sign anything else.
+
 3. The person confirms with a passkey, and the app sends the token, the signature and the step-up to
    `POST /api/v1/identity/recovery-key/recover/complete`. The server:
    - opens the token and checks that it belongs to this account;
@@ -233,11 +235,11 @@ stack, it shows that recovery keys are not available here and offers no action.
 
 ### Platforms
 
-| Platform | Derivation and signing | Reachable today |
-| --- | --- | --- |
-| Android | BouncyCastle (`JvmPlcRecoveryKeySupport`) | Yes, when signed in |
-| iOS | `cryptography-kotlin` over CryptoKit (`CryptographyPlcRecoveryKeySupport`) | Yes, when signed in |
-| Desktop | BouncyCastle (`JvmPlcRecoveryKeySupport`) | Built and wired; the desktop app cannot show a passkey prompt, so the row is never offered |
+| Platform | Derivation and signing                                                     | Reachable today                                                                            |
+| -------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Android  | BouncyCastle (`JvmPlcRecoveryKeySupport`)                                  | Yes, when signed in                                                                        |
+| iOS      | `cryptography-kotlin` over CryptoKit (`CryptographyPlcRecoveryKeySupport`) | Yes, when signed in                                                                        |
+| Desktop  | BouncyCastle (`JvmPlcRecoveryKeySupport`)                                  | Built and wired; the desktop app cannot show a passkey prompt, so the row is never offered |
 
 ### Copy
 

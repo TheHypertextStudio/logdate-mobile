@@ -204,5 +204,5 @@ RewindScreenContent(
 
 - [Material 3 Adaptive Design Guidelines](https://m3.material.io/foundations/adaptive-design)
 - [Compose Lazy Lists Best Practices](https://developer.android.com/jetpack/compose/lists)
-- [LogDate UI System Documentation](../ui/README.md)
+- [LogDate UI System Documentation](../../ui/README.md)
 - [Rewind Domain Logic](../../domain/README.md)

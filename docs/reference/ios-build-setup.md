@@ -23,11 +23,11 @@ The runtime bundle identifier is configured in
 and assembled by `PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}"` in the
 `iosApp` target.
 
-| Setting | Value |
-| --- | --- |
-| `BUNDLE_ID` | `studio.hypertext.apps.logdate` |
-| `TEAM_ID` | `T95VDD3A4W` |
-| Effective bundle | `${BUNDLE_ID}` |
+| Setting          | Value                           |
+| ---------------- | ------------------------------- |
+| `BUNDLE_ID`      | `studio.hypertext.apps.logdate` |
+| `TEAM_ID`        | `T95VDD3A4W`                    |
+| Effective bundle | `${BUNDLE_ID}`                  |
 
 The Compose macOS package and the separate native implementation in
 `logdate-apple` use the same application identifier. They are alternative
@@ -112,10 +112,10 @@ The Release plist is gitignored. Drop it into the repo before shipping:
    sure the iOS app there is registered with bundle id
    `studio.hypertext.apps.logdate`.
 2. Save it as
-   [`iosApp/iosApp/Firebase/GoogleService-Info-Release.plist`](../../iosApp/iosApp/Firebase/).
+   `iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` (not tracked; the directory exists only after you add the file).
 3. Export `LOGDATE_FIREBASE_IOS_APP_ID` from the registration's `GOOGLE_APP_ID`,
    then run `./scripts/validate-firebase-config.sh ios
-   iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` before a Release build.
+iosApp/iosApp/Firebase/GoogleService-Info-Release.plist` before a Release build.
 
 ### How the plist gets into the bundle
 

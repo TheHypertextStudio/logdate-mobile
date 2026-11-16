@@ -2,7 +2,7 @@
 
 Part of the Migrate sync and export to the lexicons project in the LogDate on the AT Protocol
 initiative. This design covers the task "Sync every kind of journal data as LogDate schema
-records". It builds on [Private and shared storage](./2026-10-18-private-and-shared-storage-design.md),
+records". It builds on [Private storage](../../explanation/private-storage.md),
 which added the sealed personal space and the shared `DataHome` interface. Moving existing
 accounts over is the next task and has its own design.
 
@@ -40,16 +40,17 @@ refresh. Only the transport underneath changes.
 - **Record mappers.** Each kind gets a mapper between its Room/domain model and its
   `app.logdate.*` record, with round-trip tests that prove nothing is lost:
 
-  | Kind | Records |
-  |---|---|
-  | Note | `journal.entry` (one single-block entry per note; rkey = note uid), `journal.transcript` |
-  | Journal | `journal.journal` (including `favorite` and `mergedInto`) |
-  | Association | `journal.membership` (rkey `<journalId>:<entryId>`) |
-  | Draft | `journal.draft` |
-  | Marked moment | the moment record |
-  | Location history | `place.sample` batches, `place.place`, `place.correction`, memory links, manual visits |
+  | Kind             | Records                                                                                  |
+  | ---------------- | ---------------------------------------------------------------------------------------- |
+  | Note             | `journal.entry` (one single-block entry per note; rkey = note uid), `journal.transcript` |
+  | Journal          | `journal.journal` (including `favorite` and `mergedInto`)                                |
+  | Association      | `journal.membership` (rkey `<journalId>:<entryId>`)                                      |
+  | Draft            | `journal.draft`                                                                          |
+  | Marked moment    | the moment record                                                                        |
+  | Location history | `place.sample` batches, `place.place`, `place.correction`, memory links, manual visits   |
 
   The lexicons were revised so every synced field has a home; see the lexicon reference.
+
 - **Upload.** For each outbox row, the mapper builds the record, the sealing code seals it, and
   `DataHome.putRecord` writes it. Creates use `RecordSwap.Absent`; updates use
   `RecordSwap.Matching(cid)` with the CID from the last write or read. A conflict re-reads the
@@ -100,10 +101,10 @@ this task's end-to-end coverage for every kind of data on Android, iOS and deskt
 
 ## Decisions
 
-| Decision | Why |
-|---|---|
-| One note becomes one single-block entry | Notes aren't grouped today; merging them would lose each note's own time, location and capture context |
-| Storage mode lives on the server, per account | Every device of an account must agree on the transport |
-| New accounts start in personal-space mode once the flag is on | They have nothing to migrate |
-| The device performs journal merges | A sealed space can't be merged on the server |
-| Linked watches may use the space directly | A linked watch is one of the owner's own devices |
+| Decision                                                      | Why                                                                                                    |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| One note becomes one single-block entry                       | Notes aren't grouped today; merging them would lose each note's own time, location and capture context |
+| Storage mode lives on the server, per account                 | Every device of an account must agree on the transport                                                 |
+| New accounts start in personal-space mode once the flag is on | They have nothing to migrate                                                                           |
+| The device performs journal merges                            | A sealed space can't be merged on the server                                                           |
+| Linked watches may use the space directly                     | A linked watch is one of the owner's own devices                                                       |
