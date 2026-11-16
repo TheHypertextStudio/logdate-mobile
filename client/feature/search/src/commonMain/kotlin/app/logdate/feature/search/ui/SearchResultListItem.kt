@@ -50,9 +50,15 @@ internal fun SearchResultListItem(
     val typeLabel = stringResource(state.typeLabelKey)
     val supporting =
         when (detail) {
-            is SearchResultDetail.Journal -> pluralStringResource(Res.plurals.search_entry_count, detail.entryCount, detail.entryCount)
-            is SearchResultDetail.Person -> detail.relationshipLabel ?: typeLabel
-            else ->
+            is SearchResultDetail.Journal -> {
+                pluralStringResource(Res.plurals.search_entry_count, detail.entryCount, detail.entryCount)
+            }
+
+            is SearchResultDetail.Person -> {
+                detail.relationshipLabel ?: typeLabel
+            }
+
+            else -> {
                 listOf(
                     result.created
                         .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -60,6 +66,7 @@ internal fun SearchResultListItem(
                         .toReadableDateShort(),
                     typeLabel,
                 ).joinToString(" · ")
+            }
         }
     ListItem(
         headlineContent = {
@@ -97,7 +104,7 @@ private fun Leading(
 ) {
     val label = stringResource(state.typeLabelKey)
     when (result.contentType) {
-        SearchContentType.JOURNAL ->
+        SearchContentType.JOURNAL -> {
             Cover(
                 result.contentType,
                 (detail as? SearchResultDetail.Journal)?.coverUri,
@@ -105,7 +112,9 @@ private fun Leading(
                 label,
                 size = 53.dp,
             )
-        SearchContentType.PERSON ->
+        }
+
+        SearchContentType.PERSON -> {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -123,7 +132,9 @@ private fun Leading(
                     )
                 }
             }
-        else ->
+        }
+
+        else -> {
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -132,5 +143,6 @@ private fun Leading(
             ) {
                 Box(contentAlignment = Alignment.Center) { Icon(imageVector = state.typeIcon, contentDescription = label) }
             }
+        }
     }
 }
