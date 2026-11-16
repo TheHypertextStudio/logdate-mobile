@@ -3,6 +3,7 @@ package app.logdate.server.database
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountModeration
 import app.logdate.server.auth.AccountRepository
+import app.logdate.server.billing.CloudLaunch
 import app.logdate.server.entitlements.AccountEntitlementsTable
 import app.logdate.shared.model.AccountStorageMode
 import org.jetbrains.exposed.v1.core.Column
@@ -26,7 +27,13 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-class PostgreSQLAccountRepository : AccountRepository {
+class PostgreSQLAccountRepository(
+    /**
+     * Whether an account created now joins the LogDate Cloud beta, which keeps the base plan at no
+     * charge for as long as the account exists. True until LogDate Cloud launches.
+     */
+    private val newAccountsJoinCloudBeta: Boolean = !CloudLaunch.fromEnvironment().launched,
+) : AccountRepository {
     override suspend fun create(account: Account): Boolean =
         transaction {
             AccountsTable
@@ -49,6 +56,7 @@ class PostgreSQLAccountRepository : AccountRepository {
                     it[preferences] = account.preferences ?: "{}"
                     it[storageMode] = account.newAccountStorageMode()
                     it[publicIdentityDid] = account.publicIdentityDid
+                    it[cloudBetaMember] = newAccountsJoinCloudBeta
                 }.insertedCount > 0
         }
 
@@ -100,6 +108,7 @@ class PostgreSQLAccountRepository : AccountRepository {
                     it[preferences] = account.preferences ?: "{}"
                     it[storageMode] = account.newAccountStorageMode()
                     it[publicIdentityDid] = account.publicIdentityDid
+                    it[cloudBetaMember] = newAccountsJoinCloudBeta
                 }
                 account
             }
@@ -127,6 +136,7 @@ class PostgreSQLAccountRepository : AccountRepository {
                     it[preferences] = account.preferences ?: "{}"
                     it[storageMode] = account.newAccountStorageMode()
                     it[publicIdentityDid] = account.publicIdentityDid
+                    it[cloudBetaMember] = newAccountsJoinCloudBeta
                 }.insertedCount == 1
         }
 

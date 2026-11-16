@@ -506,6 +506,22 @@ class ProductionConfigValidatorTest {
                     expectedMessage = "ATPROTO_PDS_SERVICE_URL must equal LOGDATE_PUBLIC_ORIGIN",
                 ),
                 ValidationCase(
+                    name = "launched without Stripe selected",
+                    overrides =
+                        mapOf(
+                            "LOGDATE_CLOUD_LAUNCHED" to "true",
+                            "BILLING_PROVIDER" to "play",
+                            "STRIPE_SECRET_KEY" to "sk_test_example",
+                            "STRIPE_WEBHOOK_SECRET" to "whsec_example",
+                        ),
+                    expectedMessage = "BILLING_PROVIDER must be stripe or both when LOGDATE_CLOUD_LAUNCHED=true",
+                ),
+                ValidationCase(
+                    name = "launched without the Stripe secrets",
+                    overrides = mapOf("LOGDATE_CLOUD_LAUNCHED" to "true", "STRIPE_SECRET_KEY" to "sk_test_example"),
+                    expectedMessage = "STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are required when LOGDATE_CLOUD_LAUNCHED=true",
+                ),
+                ValidationCase(
                     name = "first-party billing is disabled",
                     overrides =
                         mapOf(

@@ -1,5 +1,8 @@
 package app.logdate.server.config
 
+import app.logdate.server.billing.BillingProvider
+import app.logdate.server.billing.CloudLaunch
+import app.logdate.server.billing.StripeConfig
 import io.github.aakira.napier.Napier
 import java.net.URI
 import java.util.Base64
@@ -78,6 +81,7 @@ object ProductionConfigValidator {
         validateServerEncryption(readEnv, failures)
         validateSignedMediaUrls(readEnv, failures)
         validateWebAuthn(readEnv, failures)
+        validateCloudLaunch(readEnv, failures)
 
         if (readEnv("LOGDATE_EXPECT_FIRST_PARTY").isEnabled()) {
             validateFirstPartyConfig(readEnv, failures)
@@ -309,6 +313,25 @@ object ProductionConfigValidator {
     ) {
         if (!readEnv("SYNC_MEDIA_SIGNED_URLS").isEnabled()) {
             failures += "SYNC_MEDIA_SIGNED_URLS must be true in production."
+        }
+    }
+
+    /**
+     * Launching ends the beta: an account created afterwards has no plan until it buys one. Without
+     * Stripe there would be nothing to buy, so the server cannot launch unless Stripe is selected and
+     * both of its secrets are set.
+     */
+    private fun validateCloudLaunch(
+        readEnv: (String) -> String?,
+        failures: MutableList<String>,
+    ) {
+        if (!CloudLaunch.fromEnvironment(readEnv).launched) return
+        if (!BillingProvider.fromEnvironment(readEnv).stripeEnabled) {
+            failures += "BILLING_PROVIDER must be stripe or both when ${CloudLaunch.ENV_VAR}=true."
+        }
+        if (StripeConfig.fromEnvironment(readEnv) == null) {
+            failures +=
+                "${StripeConfig.SECRET_KEY_ENV} and ${StripeConfig.WEBHOOK_SECRET_ENV} are required when ${CloudLaunch.ENV_VAR}=true."
         }
     }
 

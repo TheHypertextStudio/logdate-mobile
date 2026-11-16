@@ -322,6 +322,8 @@ class OpenApiContractTest {
         private val PUBLIC_OPERATIONS =
             setOf(
                 "checkUsernameAvailability",
+                "getBillingReturnPage",
+                "receiveStripeWebhook",
                 "beginPasskeySignup",
                 "completePasskeySignup",
                 "signupWithGoogle",

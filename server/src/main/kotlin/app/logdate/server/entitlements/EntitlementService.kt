@@ -1,5 +1,6 @@
 package app.logdate.server.entitlements
 
+import app.logdate.shared.model.EntitlementResponse
 import java.util.UUID
 
 /**
@@ -16,8 +17,9 @@ import java.util.UUID
  */
 interface EntitlementService {
     /**
-     * Resolve the effective entitlement for [accountId]. Always returns a value — unrecognized or
-     * missing accounts fall through to the free plan so the UI doesn't have to branch on null.
+     * Resolve the effective entitlement for [accountId]. Always returns a value: an account with
+     * neither a subscription nor a beta membership gets [Entitlement.noPlan], so callers don't
+     * branch on null.
      */
     suspend fun resolve(accountId: UUID): Entitlement
 }
@@ -36,8 +38,27 @@ data class Entitlement(
     val status: EntitlementStatus,
     val limits: EntitlementLimits,
     val features: Map<String, Boolean> = emptyMap(),
+    /** The account has this plan at no charge because it joined during the LogDate Cloud beta. */
+    val includedWithBeta: Boolean = false,
 ) {
     fun hasFeature(feature: EntitlementFeature): Boolean = features[feature.key] == true
+
+    companion object {
+        /** The plan identifier reported for an account that has no plan. */
+        const val NO_PLAN_ID: String = EntitlementResponse.NO_PLAN_ID
+
+        /**
+         * What an account has when it has no subscription and did not join during the beta: nothing
+         * may be stored. Reads still work, so whatever the account stored earlier stays reachable.
+         */
+        fun noPlan(): Entitlement =
+            Entitlement(
+                planId = NO_PLAN_ID,
+                tier = EntitlementTier.FREE,
+                status = EntitlementStatus.CANCELLED,
+                limits = EntitlementLimits(storageBytes = 0L, backupCount = 0),
+            )
+    }
 }
 
 enum class EntitlementFeature(
@@ -83,7 +104,23 @@ enum class EntitlementStatus {
  * write — see `SyncRoutes` where media uploads consult `storageBytes`.
  */
 data class EntitlementLimits(
+    /** The storage the plan includes. With [extraStorage], an account may store more than this. */
     val storageBytes: Long?,
     val backupCount: Int?,
     val transcriptionSecondsPerMonth: Long? = null,
+    /** Storage the plan sells past [storageBytes], or null when the plan stops there. */
+    val extraStorage: ExtraStorage? = null,
+)
+
+/**
+ * Storage a plan sells past what it includes, in steps of [stepBytes], charged by use.
+ *
+ * [billable] says whether this account's use can be charged right now: it has a subscription with
+ * the billing provider and its payments are current. An account whose payment is failing, or that
+ * was granted the plan without a subscription, keeps what it stores but cannot grow past the
+ * included storage, because nothing would pay for the growth.
+ */
+data class ExtraStorage(
+    val stepBytes: Long,
+    val billable: Boolean,
 )

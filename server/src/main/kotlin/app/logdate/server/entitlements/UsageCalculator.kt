@@ -33,28 +33,37 @@ sealed class QuotaCheck {
         val reason: QuotaReason,
         val limit: Long,
         val current: Long,
+        /** The plan whose limit refused the write, so a client can say which plan is full. */
+        val planId: String,
     ) : QuotaCheck()
 }
 
-enum class QuotaReason { STORAGE_BYTES, BACKUP_COUNT }
+enum class QuotaReason {
+    /** The plan's storage is full and the plan sells none past it. */
+    STORAGE_BYTES,
+
+    BACKUP_COUNT,
+
+    /** The plan sells storage past what it includes, but the account's payment is not current. */
+    EXTRA_STORAGE_UNPAID,
+
+    /** The account has no plan, so it may store nothing. */
+    NO_PLAN,
+}
 
 /**
  * Quota gate used by write endpoints. Computes `current + incremental vs. limit` for the
  * dimension in question and emits [QuotaCheck.Denied] when the write would push past.
  *
- * **Status handling — payment lifecycle edge cases.** The enforcer deliberately reads only the
- * plan's *limits*, not the account's [EntitlementStatus]:
+ * **Storage past what a plan includes.** A plan with [ExtraStorage] keeps accepting writes past
+ * its included storage while the account's use is billable; the storage meter then charges for the
+ * extra by the step. When it is not billable (a failing payment, or a plan granted without a
+ * subscription) the account stops at the included storage until that is put right.
  *
- *  - `ACTIVE` and `PAST_DUE` and `GRACE` all yield the same quota. This is by design: a user in
- *    grace shouldn't get surprised with 402s, they should get a separate "your payment failed"
- *    nudge from the billing UI. Uploads keep working until the provider actually cancels.
- *  - `CANCELLED` keeps whatever plan row the account still points at — typically the plan they
- *    had before cancelling, until a later webhook overwrites the row to the `free` plan. That
- *    means downgrades coast through the end of the billing period rather than going cliff-edge
- *    the moment Stripe/Play notifies us, which matches standard SaaS expectations.
- *  - Provider swaps (a user who had Stripe buys on Play, or vice versa) are "last webhook write
- *    wins" because both providers' webhook handlers overwrite the single
- *    `account_entitlements` row keyed on account_id. Nothing extra to do here.
+ * **Payment state.** A past-due or grace subscription keeps its plan's included storage, so someone
+ * whose card failed is nudged by the billing screen rather than surprised by refused uploads. A
+ * subscription that has ended gives no plan at all: [EntitlementService] resolves the account to the
+ * base plan when it joined during the beta, and to no plan otherwise.
  */
 class EntitlementEnforcer(
     private val entitlementService: EntitlementService,
@@ -65,23 +74,19 @@ class EntitlementEnforcer(
         pendingBytes: Long,
     ): QuotaCheck {
         val entitlement = entitlementService.resolve(accountId)
-        val limit = entitlement.limits.storageBytes ?: return QuotaCheck.Allowed
-        val current = usageCalculator.storageBytes(accountId)
-        val projected = current + pendingBytes
-        return if (projected > limit) {
-            QuotaCheck.Denied(QuotaReason.STORAGE_BYTES, limit = limit, current = current)
-        } else {
-            QuotaCheck.Allowed
-        }
+        return checkStorage(entitlement, accountId, pendingBytes)
     }
 
     /**
-     * The account's storage quota as the space store enforces it, or null when the plan has no
-     * storage limit. Spaces share the plan's one storage limit with media and backups; the store
-     * adds its own bytes and checks each write against the limit in the same transaction.
+     * The account's storage quota as the space store enforces it, or null when the account may
+     * store without limit: its plan has none, or it sells extra storage this account can be billed
+     * for. Spaces share the plan's one storage limit with media and backups; the store adds its own
+     * bytes and checks each write against the limit in the same transaction.
      */
     suspend fun spaceQuota(accountId: UUID): SpaceQuota? {
-        val limit = entitlementService.resolve(accountId).limits.storageBytes ?: return null
+        val limits = entitlementService.resolve(accountId).limits
+        val limit = limits.storageBytes ?: return null
+        if (limits.extraStorage?.billable == true) return null
         return SpaceQuota(limitBytes = limit, otherBytes = usageCalculator.storageBytesOutsideSpaces(accountId))
     }
 
@@ -90,19 +95,38 @@ class EntitlementEnforcer(
         pendingBytes: Long,
     ): QuotaCheck {
         val entitlement = entitlementService.resolve(accountId)
-        val storageLimit = entitlement.limits.storageBytes
-        if (storageLimit != null) {
-            val current = usageCalculator.storageBytes(accountId)
-            if (current + pendingBytes > storageLimit) {
-                return QuotaCheck.Denied(QuotaReason.STORAGE_BYTES, limit = storageLimit, current = current)
-            }
-        }
+        val storage = checkStorage(entitlement, accountId, pendingBytes)
+        if (storage is QuotaCheck.Denied) return storage
         val backupLimit = entitlement.limits.backupCount ?: return QuotaCheck.Allowed
         val current = usageCalculator.backupCount(accountId)
         return if (current + 1 > backupLimit) {
-            QuotaCheck.Denied(QuotaReason.BACKUP_COUNT, limit = backupLimit.toLong(), current = current.toLong())
+            QuotaCheck.Denied(
+                QuotaReason.BACKUP_COUNT,
+                limit = backupLimit.toLong(),
+                current = current.toLong(),
+                planId = entitlement.planId,
+            )
         } else {
             QuotaCheck.Allowed
+        }
+    }
+
+    private suspend fun checkStorage(
+        entitlement: Entitlement,
+        accountId: UUID,
+        pendingBytes: Long,
+    ): QuotaCheck {
+        val limit = entitlement.limits.storageBytes ?: return QuotaCheck.Allowed
+        val current = usageCalculator.storageBytes(accountId)
+        if (entitlement.planId == Entitlement.NO_PLAN_ID) {
+            return QuotaCheck.Denied(QuotaReason.NO_PLAN, limit = limit, current = current, planId = entitlement.planId)
+        }
+        if (current + pendingBytes <= limit) return QuotaCheck.Allowed
+        val extraStorage = entitlement.limits.extraStorage
+        return when {
+            extraStorage == null -> QuotaCheck.Denied(QuotaReason.STORAGE_BYTES, limit, current, entitlement.planId)
+            extraStorage.billable -> QuotaCheck.Allowed
+            else -> QuotaCheck.Denied(QuotaReason.EXTRA_STORAGE_UNPAID, limit, current, entitlement.planId)
         }
     }
 }

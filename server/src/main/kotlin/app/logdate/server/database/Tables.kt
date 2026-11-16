@@ -40,6 +40,13 @@ object AccountsTable : Table("accounts") {
     /** The exact DID the owner made public; null until the informed publication flow completes. */
     val publicIdentityDid = varchar("public_identity_did", 255).nullable()
 
+    /**
+     * Whether the account joined while LogDate Cloud was in beta, which keeps the base plan at no
+     * charge for as long as the account exists. Written once, when the account is created, and
+     * never changed by a save.
+     */
+    val cloudBetaMember = bool("cloud_beta_member").default(true)
+
     override val primaryKey = PrimaryKey(id)
 }
 

@@ -1551,6 +1551,8 @@ fun Route.authV1Routes(
                         backupCountLimit = resolved.limits.backupCount,
                         transcriptionSecondsPerMonthLimit = resolved.limits.transcriptionSecondsPerMonth,
                         features = resolved.features,
+                        extraStorageStepBytes = resolved.limits.extraStorage?.stepBytes,
+                        includedWithBeta = resolved.includedWithBeta,
                     ),
                 )
             } catch (e: Exception) {
