@@ -118,6 +118,7 @@ fun TimelineList(
     onDismissSuggestion: () -> Unit = {},
     onUseSuggestion: () -> Unit = {},
     onRecordVoice: () -> Unit = onStartWriting,
+    onSignInToRestoreAccount: () -> Unit = {},
 ) {
     val isPostCloudRestore = LocalIsPostCloudRestore.current
     val draftMessage = stringResource(Res.string.suggestion_draft_fallback)
@@ -291,6 +292,7 @@ fun TimelineList(
                         PostRestoreEmptyState(
                             onImportBackup = onImportBackup,
                             onStartWriting = onStartWriting,
+                            onSignIn = onSignInToRestoreAccount,
                             modifier = Modifier.padding(Spacing.lg),
                         )
                     } else {

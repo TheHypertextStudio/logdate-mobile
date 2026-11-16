@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Media accessibility -->
     <string name="cd_timeline_photo">Photo on the timeline</string>
@@ -12,7 +12,9 @@
     <string name="scroll_to_top">Scroll to top</string>
     <string name="search">Search</string>
     <string name="navigate_to_home_screen">Navigate to home screen</string>
-    <string name="manage_your_profile_settings">Manage your profile settings</string>
+    <string
+    name="manage_your_profile_settings"
+  >Manage your profile settings</string>
     <string name="close_search">Close search</string>
     <string name="open_navigation">Open navigation</string>
 
@@ -32,14 +34,20 @@
     <string name="suggestion_morning_message">How is your day starting?</string>
     <plurals name="suggestion_after_moving_message">
         <item quantity="one">You were moving for a minute. How did it go?</item>
-        <item quantity="other">You were moving for %1$d minutes. How did it go?</item>
+        <item
+      quantity="other"
+    >You were moving for %1$d minutes. How did it go?</item>
     </plurals>
     <plurals name="suggestion_after_trip_message">
         <item quantity="one">Your trip took a minute. Where did you go?</item>
-        <item quantity="other">Your trip took %1$d minutes. Where did you go?</item>
+        <item
+      quantity="other"
+    >Your trip took %1$d minutes. Where did you go?</item>
     </plurals>
     <string name="suggestion_label_draft">Draft</string>
-    <string name="suggestion_draft_fallback">Finish your draft while it&apos;s still fresh.</string>
+    <string
+    name="suggestion_draft_fallback"
+  >Finish your draft while it&apos;s still fresh.</string>
     <string name="finish_draft">Finish Draft</string>
     <string name="suggestion_label_memory">Memory</string>
     <string name="suggestion_near_location">Near %1$s</string>
@@ -68,19 +76,29 @@
     <string name="media_device_status_external">External device</string>
     <string name="media_device_status_available">Available</string>
     <string name="media_route_open_sound_settings">Open sound settings</string>
-    <string name="media_route_open_output_switcher">Open output switcher</string>
+    <string
+    name="media_route_open_output_switcher"
+  >Open output switcher</string>
 
     <!-- Timeline narrative -->
     <string name="a_long_time_passed">A long time passed...</string>
     <string name="back_to_today">Back to today</string>
-    <string name="congrats_curious_explorer">Congrats, curious explorer!</string>
+    <string
+    name="congrats_curious_explorer"
+  >Congrats, curious explorer!</string>
     <string name="expanded_content">Expanded content</string>
     <string name="happy_birthday">Happy birthday.</string>
     <string name="youve_reached_the_end">You&apos;ve reached the end</string>
-    <string name="journey_days_count">You&apos;ve been on this journey for %1$d days.</string>
-    <string name="add_your_birthday_in_settings_to_see_something_special_here">Add your birthday in settings to see something special here.</string>
+    <string
+    name="journey_days_count"
+  >You&apos;ve been on this journey for %1$d days.</string>
+    <string
+    name="add_your_birthday_in_settings_to_see_something_special_here"
+  >Add your birthday in settings to see something special here.</string>
     <string name="timeline_empty_title">Start your timeline</string>
-    <string name="timeline_empty_message">Capture a note, photo, or voice memo and LogDate will shape it into your timeline.</string>
+    <string
+    name="timeline_empty_message"
+  >Capture a note, photo, or voice memo and LogDate will shape it into your timeline.</string>
     <string name="timeline_empty_action">Create Entry</string>
     <string name="timeline_loading_older_days">Loading older days</string>
     <string name="timeline_moment_photo_count">%1$d photos</string>
@@ -89,15 +107,20 @@
 
     <!-- Post-restore screens -->
     <string name="post_restore_welcome_back">Welcome back</string>
-    <string name="post_restore_import_message">Your journals are stored locally and weren&apos;t included in this restore. Import from a backup to pick up where you left off, or start fresh.</string>
+    <string
+    name="post_restore_import_message"
+  >Your journals are stored locally and weren&apos;t included in this restore. Import a backup, sign in to restore your account, or start fresh.</string>
     <string name="post_restore_import_action">Import from Backup</string>
+    <string name="post_restore_sign_in">Sign in to restore your account</string>
     <string name="post_restore_start_fresh">Start Fresh</string>
 
     <!-- Profile -->
     <string name="photo_of_name">Photo of %1$s</string>
 
     <!-- Demo / placeholder content -->
-    <string name="materialcontainer_examples">MaterialContainer Examples</string>
+    <string
+    name="materialcontainer_examples"
+  >MaterialContainer Examples</string>
     <string name="sample_content">Sample Content</string>
     <string name="section_1">Section 1</string>
     <string name="section_2">Section 2</string>

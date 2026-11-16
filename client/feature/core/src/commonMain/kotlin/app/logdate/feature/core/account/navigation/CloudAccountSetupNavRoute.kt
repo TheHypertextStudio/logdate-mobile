@@ -32,6 +32,7 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
     onAccountCreated: () -> Unit,
     onSkipped: () -> Unit,
     onBack: () -> Unit,
+    onSignedIn: () -> Unit = onAccountCreated,
 ) {
     taggedEntry<CloudAccountSetupRoute> { route ->
         val viewModel: CloudAccountOnboardingViewModel = koinViewModel()
@@ -43,6 +44,7 @@ fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(
         CloudAccountOnboardingScreen(
             viewModel = viewModel,
             onAccountCreated = onAccountCreated,
+            onSignedIn = onSignedIn,
             onSkipOnboarding = onSkipped,
             onBack = onBack,
         )

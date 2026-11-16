@@ -43,6 +43,7 @@ import app.logdate.feature.core.profile.navigation.ProfileRoute
 import app.logdate.feature.core.profile.navigation.profileEntry
 import app.logdate.feature.core.requiresUnlock
 import app.logdate.feature.core.settings.navigation.BirthdaySettingsRoute
+import app.logdate.feature.core.settings.navigation.DataSettingsRoute
 import app.logdate.feature.core.settings.navigation.ExportSettingsRoute
 import app.logdate.feature.core.settings.navigation.RecoveryPhraseEntrySettingsRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
@@ -59,7 +60,6 @@ import app.logdate.feature.core.sync.navigation.syncIssuesEntry
 import app.logdate.feature.core.watch.continuity.watchHandoffEntries
 import app.logdate.feature.editor.navigation.EditorLaunchMode
 import app.logdate.feature.editor.navigation.EntryEditorRoute
-import app.logdate.feature.editor.navigation.RecordingEditorDestination
 import app.logdate.feature.editor.navigation.completeEditorVisit
 import app.logdate.feature.editor.navigation.editorEntry
 import app.logdate.feature.events.navigation.EventDetailRoute
@@ -85,7 +85,6 @@ import app.logdate.feature.library.ui.LibraryScreen
 import app.logdate.feature.location.timeline.ui.LocationTimelineScreen
 import app.logdate.feature.onboarding.navigation.FirstEntryImportOffer
 import app.logdate.feature.onboarding.navigation.OnboardingComplete
-import app.logdate.feature.onboarding.navigation.OnboardingStart
 import app.logdate.feature.onboarding.navigation.onboardingEntries
 import app.logdate.feature.postcards.navigation.PostcardEditorRoute
 import app.logdate.feature.postcards.navigation.PostcardViewerRoute
@@ -113,7 +112,6 @@ import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.provenance.LocalActivityContextVisible
 import app.logdate.ui.provenance.LocalWatchProvenanceVisible
 import app.logdate.ui.theme.LogDateTheme
-import io.github.aakira.napier.Napier
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 
@@ -128,6 +126,7 @@ fun LogDateNavDisplay(
     appUiState: GlobalAppUiLoadedState,
     onShowUnlockPrompt: () -> Unit,
     pendingNavKey: NavKey? = null,
+    hasPendingRetainedJournalRecovery: Boolean = false,
     onPendingNavKeyConsumed: () -> Unit = {},
     onCurrentNavKeyChanged: (NavKey?) -> Unit = {},
     onShareSearchResult: ((SearchResult) -> Unit)? = null,
@@ -145,39 +144,20 @@ fun LogDateNavDisplay(
     val backStack = rememberNavBackStack(appNavSavedStateConfiguration, BaseRoute)
     val placesEnabled by rememberPlacesBetaNavigation(workspaceFlags, backStack, appUiState.isOnboarded, appUiState.requiresUnlock)
 
-    LaunchedEffect(appUiState.isOnboarded, appUiState.requiresUnlock) {
-        val action =
-            resolveNavBootstrapAction(
-                backStack = backStack,
-                isOnboarded = appUiState.isOnboarded,
-                requiresUnlock = appUiState.requiresUnlock,
-            )
-        if (action is NavBootstrapAction.ResetTo) {
-            val top = backStack.lastOrNull()
-            if (action.key == OnboardingStart && top != null && top != BaseRoute) {
-                Napier.w("Not onboarded; replacing restored back stack (top=$top) with onboarding")
-            }
-            backStack.clear()
-            backStack.add(action.key)
-        }
-    }
+    NavBootstrapEffect(
+        backStack = backStack,
+        pendingNavKey = pendingNavKey,
+        placesEnabled = placesEnabled,
+        isOnboarded = appUiState.isOnboarded,
+        requiresUnlock = appUiState.requiresUnlock,
+        onPendingNavKeyConsumed = onPendingNavKeyConsumed,
+    )
 
     LifecycleResumeEffect(appUiState.isOnboarded, appUiState.requiresUnlock) {
         if (appUiState.isOnboarded && appUiState.requiresUnlock) {
             onAutomaticUnlockPrompt()
         }
         onPauseOrDispose {}
-    }
-
-    LaunchedEffect(pendingNavKey, placesEnabled, appUiState.isOnboarded, appUiState.requiresUnlock) {
-        val target = pendingNavKey?.let { placesNavigationTarget(it, placesEnabled) } ?: return@LaunchedEffect
-        if (!appUiState.isOnboarded || appUiState.requiresUnlock) return@LaunchedEffect
-        if (target is EntryEditorRoute && target.resumeRecording) {
-            RecordingEditorDestination.open(backStack, target)
-        } else {
-            addPlacesSafeTarget(backStack, target)
-        }
-        onPendingNavKeyConsumed()
     }
 
     LaunchedEffect(backStack.lastOrNull()) {
@@ -274,6 +254,9 @@ fun LogDateNavDisplay(
                                                 backStack.add(EntryEditorRoute(draftId = draftId))
                                             },
                                             onImportBackup = { backStack.add(ExportSettingsRoute) },
+                                            onSignInToRestoreAccount = {
+                                                backStack.add(CloudAccountSetupRoute(startOnSignIn = true))
+                                            },
                                             onOpenMediaDetail = { backStack.add(MediaDetailRoute(it)) },
                                             onOpenSyncSettings = { backStack.add(SyncSettingsRoute) },
                                             onEnterRecoveryPhrase = { backStack.add(RecoveryPhraseEntrySettingsRoute) },
@@ -282,6 +265,8 @@ fun LogDateNavDisplay(
                                             onOpenDay = { date -> backStack.add(TimelineDetailRoute(date.toString())) },
                                             onOpenTextNote = { backStack.navigateToNoteDetail(it) },
                                             onOpenStreak = { backStack.add(StreakSettingsRoute) },
+                                            hasRetainedJournalRecovery = hasPendingRetainedJournalRecovery,
+                                            onOpenRecoveryOptions = { backStack.add(DataSettingsRoute) },
                                             libraryContent = { modifier ->
                                                 LibraryScreen(
                                                     onOpenMediaDetail = { backStack.add(MediaDetailRoute(it)) },
@@ -411,6 +396,10 @@ fun LogDateNavDisplay(
                                     )
                                     cloudAccountSetupEntry(
                                         onAccountCreated = { backStack.removeLastOrNull() },
+                                        onSignedIn = {
+                                            onCloudSignIn()
+                                            backStack.removeLastOrNull()
+                                        },
                                         onSkipped = { backStack.removeLastOrNull() },
                                         onBack = { backStack.removeLastOrNull() },
                                     )

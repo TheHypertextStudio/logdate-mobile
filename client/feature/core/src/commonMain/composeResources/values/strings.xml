@@ -4,6 +4,15 @@
     <string name="app_name">LogDate</string>
     <string name="action_add_to_library">Add to library</string>
     <string name="action_create_journal">Create journal</string>
+    <string
+    name="retained_journal_recovery_title"
+  >Your journal is protected</string>
+    <string
+    name="retained_journal_recovery_message"
+  >A restored journal is waiting for its key. Your encrypted data is safe while you choose how to recover access.</string>
+    <string
+    name="retained_journal_recovery_action"
+  >Open recovery options</string>
     <string name="action_reset_app">Reset</string>
     <string name="action_reset_app_long">Reset App</string>
     <string name="action_write_in_journal">Write in journal</string>

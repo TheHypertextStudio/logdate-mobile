@@ -42,16 +42,16 @@ The manifest selects `backup_rules.xml` for older Android versions and `data_ext
 for Android 12 and later. The main preferences file is `files/logdate.preferences_pb`, rather than
 a file beneath `datastore/`.
 
-| Content | Encrypted cloud backup | Direct transfer |
-| --- | --- | --- |
-| Main and legacy preferences | Included | Included |
-| Journal database and SQLite sidecars | Included | Included |
-| Database passphrase recovery | Included | Included |
-| Phrase-derived or account-bound identity recovery and independent media keys | Included | Included |
-| Committed originals and accepted camera drafts | Excluded | Included |
-| Incomplete archive recovery records | Included | Included |
-| Retained source archives for incomplete recovery | Excluded | Included |
-| Keystore-bound preferences, vendor installation state, background jobs, caches, and staging | Excluded | Excluded |
+| Content                                                                                     | Encrypted cloud backup | Direct transfer |
+| ------------------------------------------------------------------------------------------- | ---------------------- | --------------- |
+| Main and legacy preferences                                                                 | Included               | Included        |
+| Journal database and SQLite sidecars                                                        | Included               | Included        |
+| Database passphrase recovery                                                                | Included               | Included        |
+| Phrase-derived or account-bound identity recovery and independent media keys                | Included               | Included        |
+| Committed originals and accepted camera drafts                                              | Excluded               | Included        |
+| Incomplete archive recovery records                                                         | Included               | Included        |
+| Retained source archives for incomplete recovery                                            | Excluded               | Included        |
+| Keystore-bound preferences, vendor installation state, background jobs, caches, and staging | Excluded               | Excluded        |
 
 Cloud backup requires client-side encryption for the portable recovery material. Android's 25 MB
 per-app cloud quota applies to the selected data as a whole: exceeding it prevents a new backup;
@@ -220,9 +220,13 @@ excluded from Android backup; this repairs local interruption, not a key omitted
 
 Missing database keys must be recognized through dependency wrappers in `ApplicationStartupGate`.
 That surface runs before database-backed navigation and retains the encrypted journal while allowing
-another key-open attempt. Archive and account recovery currently depend on ready storage and cannot
-be reached through this gate. Adding those actions requires an isolated recovery destination;
-passing a different archive or account into the failed journal is not a key-recovery mechanism.
+another key-open attempt. If the key remains unavailable, the gate can preserve the encrypted journal
+in a retained recovery workspace, open a separate working database, and route to Data & Storage.
+That destination provides archive import and account sign-in without opening or replacing the retained
+ciphertext. Back from Data & Storage returns to Home with a persistent recovery notice and an action
+back to those options, so the fresh working database is not presented as an empty journal. The
+notice remains behind the normal app-lock gate. Passing a different archive or account into the
+failed journal is not a key-recovery mechanism.
 An identity recovery phrase does not recover the independent SQLCipher database key. Never invoke
 the storage-reset controller automatically or replace retained content with an empty database.
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -37,6 +39,7 @@ import logdate.client.ui.generated.resources.Res
 import logdate.client.ui.generated.resources.common_retry
 import logdate.client.ui.generated.resources.post_restore_import_action
 import logdate.client.ui.generated.resources.post_restore_import_message
+import logdate.client.ui.generated.resources.post_restore_sign_in
 import logdate.client.ui.generated.resources.post_restore_start_fresh
 import logdate.client.ui.generated.resources.post_restore_welcome_back
 import logdate.client.ui.generated.resources.timeline_empty_action
@@ -220,6 +223,7 @@ internal fun TimelineEmptyState(
 internal fun PostRestoreEmptyState(
     onImportBackup: () -> Unit,
     onStartWriting: () -> Unit,
+    onSignIn: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val acknowledgeRestore = LocalAcknowledgeCloudRestore.current
@@ -240,16 +244,19 @@ internal fun PostRestoreEmptyState(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(
+        FilledTonalButton(onClick = {
+            acknowledgeRestore()
+            onImportBackup()
+        }) {
+            Text(stringResource(Res.string.post_restore_import_action))
+        }
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            FilledTonalButton(onClick = {
-                acknowledgeRestore()
-                onImportBackup()
-            }) {
-                Text(stringResource(Res.string.post_restore_import_action))
+            TextButton(onClick = onSignIn) {
+                Text(stringResource(Res.string.post_restore_sign_in))
             }
-            FilledTonalButton(onClick = {
+            TextButton(onClick = {
                 acknowledgeRestore()
                 onStartWriting()
             }) {

@@ -70,6 +70,7 @@ fun TimelinePane(
     modifier: Modifier = Modifier,
     pendingMomentContent: @Composable (app.logdate.client.repository.moments.MarkedMoment) -> Unit = {},
     onOpenTextNote: (Uuid) -> Unit = {},
+    onSignInToRestoreAccount: () -> Unit = {},
 ) {
     val endOfTimelineState by remember(birthday) {
         derivedStateOf {
@@ -109,6 +110,7 @@ fun TimelinePane(
                     onDismissSuggestion = onDismissSuggestion,
                     onUseSuggestion = onUseSuggestion,
                     onRecordVoice = onRecordVoice,
+                    onSignInToRestoreAccount = onSignInToRestoreAccount,
                 )
                 ScrollToTopButton(listState, Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.lg))
             }

@@ -82,7 +82,7 @@ internal fun FragmentActivity.whenApplicationReady(onReady: () -> Unit) {
                                             retainedJournalWorkspace(applicationContext).prepare()
                                         }
                                     }
-                                }) { Text(stringResource(R.string.database_key_recovery_backup_action)) }
+                                }) { Text(stringResource(R.string.database_key_recovery_open_options_action)) }
                             }
                         },
                     )

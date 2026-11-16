@@ -18,9 +18,10 @@ sealed interface NavBootstrapAction {
     /** Keep the back stack exactly as-is. */
     data object None : NavBootstrapAction
 
-    /** Replace the entire back stack with [key]. */
+    /** Replace the stack with [key], then append [pendingKey] when the user is eligible. */
     data class ResetTo(
         val key: NavKey,
+        val pendingKey: NavKey? = null,
     ) : NavBootstrapAction
 }
 
@@ -29,13 +30,15 @@ sealed interface NavBootstrapAction {
  *
  * The back stack survives activity recreation (rotation, theme change, process death) via
  * `rememberNavBackStack`, so this only replaces a stack that is still on the [BaseRoute]
- * placeholder or is stranded in a flow the user has since left. A stack the user actually
- * navigated is never discarded.
+ * placeholder or is stranded in a flow the user has since left. A pending destination joins the
+ * initial Home reset so it can open without briefly showing an empty Home. A stack the user
+ * actually navigated is never discarded.
  */
 fun resolveNavBootstrapAction(
     backStack: List<NavKey>,
     isOnboarded: Boolean,
     requiresUnlock: Boolean,
+    pendingNavKey: NavKey? = null,
 ): NavBootstrapAction {
     val top = backStack.lastOrNull()
     if (!isOnboarded) {
@@ -54,7 +57,7 @@ fun resolveNavBootstrapAction(
         return NavBootstrapAction.None
     }
     return if (top == null || top == BaseRoute || top is OnboardingBaseRoute) {
-        NavBootstrapAction.ResetTo(HomeRoute)
+        NavBootstrapAction.ResetTo(HomeRoute, pendingKey = pendingNavKey)
     } else {
         NavBootstrapAction.None
     }
