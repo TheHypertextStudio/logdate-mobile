@@ -162,6 +162,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  zod: 4.6.6
+
 importers:
 
   .:
@@ -282,8 +285,8 @@ packages:
   varint@6.0.0:
     resolution: {integrity: sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -292,7 +295,7 @@ snapshots:
       '@atproto/lex-data': 0.1.8
       '@atproto/lex-json': 0.1.7
       '@atproto/syntax': 0.7.7
-      zod: 3.25.76
+      zod: 4.6.6
 
   '@atproto/common@0.8.6':
     dependencies:
@@ -334,7 +337,7 @@ snapshots:
       '@atproto/lex-data': 0.1.8
       '@atproto/syntax': 0.7.7
       varint: 6.0.0
-      zod: 3.25.76
+      zod: 4.6.6
 
   '@atproto/syntax@0.7.7':
     dependencies:
@@ -407,4 +410,4 @@ snapshots:
 
   varint@6.0.0: {}
 
-  zod@3.25.76: {}
+  zod@4.6.6: {}
