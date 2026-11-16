@@ -23,21 +23,10 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-dependencyResolutionManagement {
-    repositories {
-        google {
-            mavenContent {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
-        }
-        mavenCentral()
-    }
-}
+// The full build and the server's container build resolve from the same repositories.
+apply(from = "build-logic/repositories.settings.gradle.kts")
 
 include(":client:util")
-project(":client:util").projectDir = file("client/util")
 
 include(":server")
 
