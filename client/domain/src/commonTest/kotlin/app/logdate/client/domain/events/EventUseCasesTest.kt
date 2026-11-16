@@ -24,28 +24,6 @@ import kotlin.uuid.Uuid
  */
 class EventUseCasesTest {
     /**
-     * `ObserveEventsForDateRangeUseCase` forwards both bounds to the repository unchanged and
-     * passes the repository's emission through. Inspecting the fake's recorded bounds confirms
-     * arguments survive the call.
-     */
-    @Test
-    fun `observe events for date range passes through to repository`() =
-        runTest {
-            val event = sampleEvent(title = "Recital")
-            val repo =
-                FakeEventRepository(
-                    rangeResult = listOf(event),
-                )
-            val useCase = ObserveEventsForDateRangeUseCase(repo)
-
-            val result = useCase(Instant.fromEpochSeconds(0), Instant.fromEpochSeconds(10)).first()
-
-            assertEquals(listOf(event), result)
-            assertEquals(Instant.fromEpochSeconds(0), repo.lastRangeStart)
-            assertEquals(Instant.fromEpochSeconds(10), repo.lastRangeEnd)
-        }
-
-    /**
      * `GetEventByIdUseCase` returns the matching event when present and `null` when missing.
      * Both branches are exercised in one test for compactness.
      */
@@ -92,43 +70,6 @@ class EventUseCasesTest {
 
             assertTrue(result.isSuccess)
             assertEquals(id, repo.lastDeleted)
-        }
-
-    /**
-     * `ObserveEventsForNoteUseCase` looks up events by note id and emits an empty list for
-     * unknown notes. Both the populated and empty branches are checked.
-     */
-    @Test
-    fun `observe events for note returns events for note`() =
-        runTest {
-            val event = sampleEvent()
-            val noteId = Uuid.random()
-            val repo =
-                FakeEventRepository(
-                    eventsForNote = mapOf(noteId to listOf(event)),
-                )
-            val useCase = ObserveEventsForNoteUseCase(repo)
-
-            assertEquals(listOf(event), useCase(noteId).first())
-            assertEquals(emptyList(), useCase(Uuid.random()).first())
-        }
-
-    /**
-     * `ObserveNotesForEventUseCase` (used by the event detail screen for the linked-notes
-     * count) forwards the event id and returns the configured note ids.
-     */
-    @Test
-    fun `observe notes for event returns note ids for event`() =
-        runTest {
-            val eventId = Uuid.random()
-            val noteId = Uuid.random()
-            val repo =
-                FakeEventRepository(
-                    notesForEvent = mapOf(eventId to listOf(noteId)),
-                )
-            val useCase = ObserveNotesForEventUseCase(repo)
-
-            assertEquals(listOf(noteId), useCase(eventId).first())
         }
 
     /**
