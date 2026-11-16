@@ -43,6 +43,7 @@ import app.logdate.ui.timeline.TimelineSuggestionBlockUiState
 import app.logdate.ui.timeline.collectLazyTimelineAudioNoteIds
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import logdate.client.ui.generated.resources.Res
 import logdate.client.ui.generated.resources.suggestion_after_moving_message
@@ -224,17 +225,14 @@ fun TimelineList(
             }
 
         LaunchedEffect(listState, items, dayIndicesByKey) {
+            // Scrolling changes the visible days far less often than it changes layout, so the
+            // audio notes are collected only when the set of visible days changes.
             snapshotFlow {
-                val visibleDayIndices =
-                    listState.layoutInfo.visibleItemsInfo
-                        .mapNotNull { itemInfo -> dayIndicesByKey[itemInfo.key] }
-                        .toSet()
-
-                collectLazyTimelineAudioNoteIds(
-                    items = items,
-                    visibleDayIndices = visibleDayIndices,
-                )
+                listState.layoutInfo.visibleItemsInfo
+                    .mapNotNullTo(HashSet()) { itemInfo -> dayIndicesByKey[itemInfo.key] }
             }.distinctUntilChanged()
+                .map { visibleDayIndices -> collectLazyTimelineAudioNoteIds(items = items, visibleDayIndices = visibleDayIndices) }
+                .distinctUntilChanged()
                 .collect { noteIds ->
                     onVisibleAudioNoteIdsChanged(noteIds)
                 }
