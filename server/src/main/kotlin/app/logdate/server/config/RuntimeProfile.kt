@@ -24,11 +24,23 @@ enum class RuntimeProfile {
                 "production", "prod" -> PRODUCTION
                 "test" -> TEST
                 "", "development", "dev", "local" -> DEVELOPMENT
-                else -> DEVELOPMENT
+                else -> throw UnknownRuntimeProfileException(raw)
             }
         }
     }
 }
+
+/**
+ * Thrown when `LOGDATE_ENV` holds a value the server does not recognize.
+ *
+ * A misspelled `production` must stop startup: treating it as development would skip
+ * [ProductionConfigValidator] and relax every security default that depends on the profile.
+ */
+class UnknownRuntimeProfileException(
+    value: String,
+) : IllegalStateException(
+        "${RuntimeProfile.ENV_VAR} is \"$value\". Set it to production, development or test, or leave it unset for development.",
+    )
 
 /**
  * Reads a boolean environment variable with a production-aware default: when the variable is unset,
