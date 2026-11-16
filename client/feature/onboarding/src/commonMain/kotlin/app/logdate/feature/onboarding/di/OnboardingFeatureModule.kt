@@ -44,7 +44,7 @@ val onboardingFeatureModule: Module =
                 watchRollout = watch.enabled,
             )
         }
-        viewModel { MemorySelectionViewModel(get(), get(), get(), get(), get()) }
+        viewModel { MemorySelectionViewModel(get(), get(), get(), get()) }
         viewModel { PersonalIntroViewModel(get(), get()) }
         viewModel { WelcomeBackViewModel(get(), get(), get()) }
         viewModel { RecoveryPhraseViewModel(get()) }
