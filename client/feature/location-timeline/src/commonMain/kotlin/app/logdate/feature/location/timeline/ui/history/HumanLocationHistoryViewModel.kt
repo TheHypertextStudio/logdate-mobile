@@ -25,6 +25,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
@@ -78,10 +79,14 @@ class HumanLocationHistoryViewModel(
             ),
         )
     val state = mutableState.asStateFlow()
-    val mapSnapshot = MutableStateFlow<Pair<String, LocationHistorySnapshot>?>(null)
-    val snapshot = MutableStateFlow<LocationHistorySnapshot?>(null)
-    val recordingEnabled = MutableStateFlow(false)
-    val completeDayEnabled = MutableStateFlow(false)
+    private val mapSnapshotState = MutableStateFlow<Pair<String, LocationHistorySnapshot>?>(null)
+    val mapSnapshot: StateFlow<Pair<String, LocationHistorySnapshot>?> = mapSnapshotState.asStateFlow()
+    private val snapshotState = MutableStateFlow<LocationHistorySnapshot?>(null)
+    val snapshot: StateFlow<LocationHistorySnapshot?> = snapshotState.asStateFlow()
+    private val recordingEnabledState = MutableStateFlow(false)
+    val recordingEnabled: StateFlow<Boolean> = recordingEnabledState.asStateFlow()
+    private val completeDayEnabledState = MutableStateFlow(false)
+    val completeDayEnabled: StateFlow<Boolean> = completeDayEnabledState.asStateFlow()
     private var observeJob: Job? = null
     private var enrichmentJob: Job? = null
     private var replayJob: Job? = null
@@ -330,7 +335,7 @@ class HumanLocationHistoryViewModel(
                         data to
                             tracking
                     }.collect { (data, tracking) ->
-                        mapSnapshot.value = requestedKey to data
+                        mapSnapshotState.value = requestedKey to data
                         applySnapshot(data, tracking)
                         enrich(data)
                     }
@@ -375,10 +380,10 @@ class HumanLocationHistoryViewModel(
                 data.items,
                 savedState["historySelectionEvidence"],
             )
-        snapshot.value = data
+        snapshotState.value = data
         savedState["historySelection"] = selection
-        recordingEnabled.value = tracking.backgroundTrackingEnabled
-        completeDayEnabled.value = tracking.backgroundTrackingEnabled && tracking.captureMode == LocationCaptureMode.ACTIVE
+        recordingEnabledState.value = tracking.backgroundTrackingEnabled
+        completeDayEnabledState.value = tracking.backgroundTrackingEnabled && tracking.captureMode == LocationCaptureMode.ACTIVE
         mutableState.update { current ->
             current.copy(
                 selectedItemId = selection,
