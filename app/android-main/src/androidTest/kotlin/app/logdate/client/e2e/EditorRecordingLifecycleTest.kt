@@ -95,7 +95,7 @@ class EditorRecordingLifecycleTest {
             capture(context, "recording-recreated")
             scenario.onActivity { activity ->
                 activity.startActivity(
-                    Intent(context, MainActivity::class.java).apply {
+                    Intent().setClassName(context, app.logdate.client.capture.INTERNAL_CAPTURE_ACTIVITY).apply {
                         addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         action = app.logdate.client.capture.ACTION_CAPTURE
                         putExtra(app.logdate.client.capture.EXTRA_CAPTURE_MODE, "text")
@@ -243,7 +243,7 @@ class EditorRecordingLifecycleTest {
         try {
             val text = "Synthetic entry for explicit discard"
             val launch =
-                Intent(context, MainActivity::class.java).apply {
+                Intent().setClassName(context, app.logdate.client.capture.INTERNAL_CAPTURE_ACTIVITY).apply {
                     action = app.logdate.client.capture.ACTION_CAPTURE
                     putExtra(app.logdate.client.capture.EXTRA_CAPTURE_MODE, "text")
                     putExtra(app.logdate.client.capture.EXTRA_CAPTURE_TEXT, text)
@@ -350,7 +350,7 @@ class EditorRecordingLifecycleTest {
     fun unavailableEarlierRecordingRetainsDurationAndOffersRecoveryWithoutStartingCapture() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val launch =
-            Intent(context, MainActivity::class.java).apply {
+            Intent().setClassName(context, app.logdate.client.capture.INTERNAL_CAPTURE_ACTIVITY).apply {
                 action = app.logdate.client.capture.ACTION_CAPTURE
                 putExtra(app.logdate.client.capture.EXTRA_CAPTURE_MODE, "text")
                 putExtra(app.logdate.client.capture.EXTRA_CAPTURE_TEXT, "Review retained recordings")

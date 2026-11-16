@@ -22,12 +22,12 @@ lets a new surface start capture without inventing new intent extras.
 
 Whichever surface they use, the editor opens already doing the thing they asked for:
 
-| Mode | The editor opens with |
-| --- | --- |
-| `Text` | An empty text block and the keyboard up |
-| `Voice` | An audio block, already recording |
+| Mode     | The editor opens with                                     |
+| -------- | --------------------------------------------------------- |
+| `Text`   | An empty text block and the keyboard up                   |
+| `Voice`  | An audio block, already recording                         |
 | `Camera` | A camera block showing the live preview, ready for photos |
-| `Video` | A camera block showing the live preview, ready for video |
+| `Video`  | A camera block showing the live preview, ready for video  |
 
 A route can also carry a `promptPhotoUri`: the New entry widget's photo prompts start the entry with
 that photo, followed by text, or by a recording in `Voice` mode.
@@ -59,8 +59,14 @@ have defaults.
 action:  app.logdate.action.CAPTURE
 extras:  mode        text | voice | camera | video    optional, defaults to text
          journal_id  journal UUID                     optional, pre-selects that journal
-         text        text                             optional, starts the entry with it
 ```
+
+A capture intent from another app always opens an empty entry. Starting text would let an app, or
+an assistant, put words in the person's journal for them to accept, so `MainActivity` ignores a
+`text` extra on the public action. LogDate's own components can still start an entry with text the
+person wrote, such as a notification reply that could not be saved: they launch
+`app.logdate.client.InternalCaptureActivity`, a non-exported alias of `MainActivity` that no other
+app can reach (`internalCaptureIntent` in `client/capture/InternalCapture.kt`).
 
 The equivalent deep links are:
 
@@ -80,12 +86,12 @@ shortcut cannot break an older app. An invalid journal id is ignored for the sam
 Widgets that are already on a home screen and shortcuts that are already pinned carry the old extras.
 They must keep resolving:
 
-| Old intent | Resolves to |
-| --- | --- |
-| `EXTRA_NAV_SOURCE=widget_new_entry` with `widget_record=true` | `Voice` |
-| `EXTRA_NAV_SOURCE=widget_new_entry` with `widget_camera=true` | `Camera` |
-| `EXTRA_NAV_SOURCE=widget_new_entry` with `widget_photo_uri` | `Text` with that `promptPhotoUri` (or `Voice` with `widget_record=true`) |
-| `ambient_prompt_target=new_entry` | `Text` |
+| Old intent                                                    | Resolves to                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `EXTRA_NAV_SOURCE=widget_new_entry` with `widget_record=true` | `Voice`                                                                  |
+| `EXTRA_NAV_SOURCE=widget_new_entry` with `widget_camera=true` | `Camera`                                                                 |
+| `EXTRA_NAV_SOURCE=widget_new_entry` with `widget_photo_uri`   | `Text` with that `promptPhotoUri` (or `Voice` with `widget_record=true`) |
+| `ambient_prompt_target=new_entry`                             | `Text`                                                                   |
 
 ### The lock
 
