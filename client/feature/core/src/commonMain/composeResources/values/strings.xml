@@ -163,81 +163,87 @@
     <string name="people_title">People</string>
     <string
     name="people_overview_description"
-  >The people who matter, grounded in your contacts and memories</string>
+  >Your list of people, stored on this device</string>
     <string
     name="people_settings_description"
-  >LogDate can learn who matters in your life so memories, events, and search feel more personal.</string>
-    <string name="people_enable_label">Enable People</string>
-    <string
-    name="people_enable_description"
-  >Keep a searchable directory of the people who show up in your memories.</string>
+  >This list is built on this device from names in your entries and voice note transcripts. A name found there is added only after you review it. The list isn&apos;t synced or included in exports.</string>
     <string name="people_browse_label">Browse people</string>
-    <string name="people_browse_description">%1$d people currently in your library</string>
-    <string name="people_get_started">Get started</string>
-    <string name="people_find_more">Find more people</string>
-    <string name="people_setup_title">Find people</string>
-    <string
-    name="people_setup_description"
-  >Use your contacts to help LogDate recognize the people who matter most.</string>
-    <string
-    name="people_setup_full_description"
-  >Bring in your full contacts list for the fastest setup.</string>
-    <string
-    name="people_setup_selected_description"
-  >Choose a smaller set if you only want to share specific people.</string>
+    <plurals name="people_browse_description">
+        <item quantity="one">%1$d person in your list</item>
+        <item quantity="other">%1$d people in your list</item>
+    </plurals>
     <string name="people_review_label">Review suggestions</string>
-    <string name="people_review_description">%1$d people are waiting for review.</string>
+    <plurals name="people_review_description">
+        <item quantity="one">%1$d name to review</item>
+        <item quantity="other">%1$d names to review</item>
+    </plurals>
     <string name="people_review_add_action">Add to people</string>
-    <string name="people_review_dismiss_action">Not this person</string>
+    <string
+    name="people_review_dismiss_action"
+  >Don&apos;t suggest again</string>
     <string
     name="people_inbox_empty_state"
-  >New suggestions will show up here when LogDate is confident enough to ask.</string>
-    <string name="people_contacts_section">Contacts</string>
+  >No names to review. A name is suggested after it appears in at least two entries or transcripts.</string>
+    <string name="people_import_title">Import contacts</string>
     <string
-    name="people_contacts_description"
-  >Full access imports your address book with READ_CONTACTS. Selected access uses Android&apos;s contact picker and only imports the people you choose.</string>
+    name="people_import_description"
+  >Adds everyone in your contacts to the list, with their names, nicknames and a link to their contact photo.</string>
     <string name="people_import_all_contacts">Import all contacts</string>
-    <string name="people_choose_contacts">Choose contacts</string>
-    <string name="people_importing_contacts">Importing contacts...</string>
+    <string name="people_importing_contacts">Importing contacts…</string>
     <string
-    name="people_disabled_notice"
-  >Turn on People to browse your directory and import contacts.</string>
-    <string name="people_access_mode_format">Access mode: %1$s</string>
-    <string name="people_access_mode_none">No contact import yet</string>
-    <string name="people_access_mode_selected">Selected contacts</string>
-    <string name="people_access_mode_full">Full contacts</string>
+    name="people_contacts_access_needed"
+  >LogDate needs permission to read your contacts before it can import them. Allow Contacts for LogDate in your device settings, under Apps, LogDate, Permissions, then import again.</string>
     <string
-    name="people_import_counts_summary"
-  >Imported %1$d selected contacts and %2$d full-access contacts.</string>
+    name="people_import_failed"
+  >Couldn&apos;t import contacts. Try again.</string>
+    <string name="people_import_none">No contacts were imported.</string>
+    <string name="people_import_added">Contacts imported: %1$d.</string>
+    <string name="people_import_updated">Contacts updated: %1$d.</string>
     <string
-    name="people_contacts_permission_note"
-  >Full import will request READ_CONTACTS. Selected access does not require that permission on Android 17+.</string>
+    name="people_import_added_and_updated"
+  >Contacts imported: %1$d. Contacts updated: %2$d.</string>
     <string
     name="people_directory_empty_state"
-  >No people yet. When LogDate gets enough signal, they&apos;ll show up here.</string>
-    <string name="people_directory_open_details">Open details</string>
-    <string name="people_settings_update_failed">Couldn&apos;t update People settings.</string>
-    <string name="people_import_failed">Couldn&apos;t import contacts.</string>
-    <string name="people_selected_import_failed">Couldn&apos;t import selected contacts.</string>
-    <string name="people_disabled_import_notice">Enable People before importing contacts.</string>
-    <string name="people_import_none">No contacts were imported.</string>
-    <string name="people_import_added">Imported %1$d contacts.</string>
-    <string name="people_import_updated">Updated %1$d contacts.</string>
-    <string name="people_import_added_and_updated">Imported %1$d contacts and updated %2$d.</string>
-    <string name="person_detail_loading">Loading person...</string>
-    <string name="person_detail_load_failed">This person couldn&apos;t be loaded.</string>
-    <string name="person_origin_manual">Added manually</string>
-    <string name="person_origin_inferred">Learned from your memories</string>
-    <string name="person_origin_contact_selected">Imported from selected contacts</string>
-    <string name="person_origin_contact_full">Imported from full contacts access</string>
+  >No one is in your list yet. Names you add from suggestions appear here.</string>
+    <string
+    name="people_directory_empty_state_with_contacts"
+  >No one is in your list yet. Names you add from suggestions and contacts you import appear here.</string>
+    <string
+    name="people_refresh_failed"
+  >Couldn&apos;t look for names in your entries. This list may be out of date.</string>
+    <string
+    name="people_add_suggestion_failed"
+  >Couldn&apos;t add this name to people. Try again.</string>
+    <string
+    name="people_dismiss_suggestion_failed"
+  >Couldn&apos;t dismiss this suggestion. Try again.</string>
+    <string
+    name="person_detail_load_failed"
+  >This person couldn&apos;t be loaded.</string>
+    <string name="person_origin_manual">Added by you</string>
+    <string name="person_origin_inferred">Found in your entries</string>
+    <string name="person_origin_contact">From your contacts</string>
     <string name="person_aliases_label">Also called %1$s</string>
-    <string name="person_detail_linked_entries">Memories</string>
+    <string name="person_detail_linked_entries">Entries</string>
     <string name="person_detail_linked_events">Events</string>
-    <string name="person_detail_no_linked_entries">No memories linked yet.</string>
-    <string name="person_detail_no_linked_events">No events linked yet.</string>
+    <string
+    name="person_detail_no_linked_entries"
+  >No entries are linked to this person yet.</string>
+    <string
+    name="person_detail_no_linked_events"
+  >No events are linked to this person yet.</string>
+    <string name="person_detail_handwriting_preview">Handwriting</string>
     <string name="person_detail_voice_note_preview">Voice note</string>
     <string name="person_detail_photo_preview">Photo</string>
     <string name="person_detail_video_preview">Video</string>
+    <string name="person_remove_action">Remove from people</string>
+    <string name="person_remove_dialog_title">Remove %1$s?</string>
+    <string
+    name="person_remove_dialog_message"
+  >%1$s is removed from your list and won&apos;t be suggested or imported again. Your entries stay as they are.</string>
+    <string
+    name="person_remove_failed"
+  >Couldn&apos;t remove this person. Try again.</string>
 
     <!-- Events -->
     <string name="events_settings">Events</string>

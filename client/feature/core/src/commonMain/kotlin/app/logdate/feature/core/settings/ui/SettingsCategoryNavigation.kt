@@ -26,8 +26,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.domain.identity.ObserveUserIdentityUseCase
+import app.logdate.client.domain.identity.ResolvedUserIdentity
 import app.logdate.feature.core.settings.navigation.SettingsCategory
 import app.logdate.ui.theme.Spacing
+import kotlinx.coroutines.flow.Flow
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.about_logdate
 import logdate.client.feature.core.generated.resources.account_title
@@ -54,15 +56,23 @@ import org.koin.compose.koinInject
 import logdate.client.ui.generated.resources.Res as UiRes
 
 @Composable
+private fun rememberUserIdentity(): Flow<ResolvedUserIdentity> {
+    val observeUserIdentity = koinInject<ObserveUserIdentityUseCase>()
+    return remember(observeUserIdentity) { observeUserIdentity() }
+}
+
+@Composable
 fun SettingsCategoryNavigationScreen(
     selectedSection: String,
     onNavigateTo: (NavKey) -> Unit,
     onBack: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToWatch: (() -> Unit)? = null,
-    observeUserIdentity: ObserveUserIdentityUseCase = koinInject(),
+    userIdentity: Flow<ResolvedUserIdentity> = rememberUserIdentity(),
+    peopleSwitch: PeopleSwitch = koinInject(),
 ) {
-    val identity by remember(observeUserIdentity) { observeUserIdentity() }.collectAsState(initial = null)
+    val identity by userIdentity.collectAsState(initial = null)
+    val optionalRows = rememberOptionalSettingsRows(peopleSwitch)
     SettingsCategoryNavigation(
         selectedSection = selectedSection,
         onNavigateTo = onNavigateTo,
@@ -70,9 +80,18 @@ fun SettingsCategoryNavigationScreen(
         onNavigateToProfile = onNavigateToProfile,
         onNavigateToWatch = onNavigateToWatch,
         isAuthenticated = identity?.isAuthenticated == true,
+        showPeople = optionalRows.people,
     )
 }
 
+/**
+ * The list of Settings categories shown beside a settings page on wide windows.
+ *
+ * The list scrolls to the selected category when that category changes or moves. A category that
+ * appears or disappears elsewhere in the list leaves the scroll position alone.
+ *
+ * @param showPeople whether People is turned on for this installation; its category is listed only then
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsCategoryNavigation(
@@ -83,20 +102,21 @@ fun SettingsCategoryNavigation(
     onNavigateToWatch: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     isAuthenticated: Boolean = true,
+    showPeople: Boolean = false,
 ) {
     val categories =
         SettingsCategory.entries.filter { category ->
             when (category) {
                 SettingsCategory.Account, SettingsCategory.Devices -> isAuthenticated || category.id == selectedSection
                 SettingsCategory.Events -> FeatureFlag.EVENTS.availableForLaunch
-                SettingsCategory.People -> FeatureFlag.PEOPLE.availableForLaunch
+                SettingsCategory.People -> showPeople
                 SettingsCategory.Watch -> onNavigateToWatch != null
                 else -> true
             }
         }
     val listState = rememberLazyListState()
-    LaunchedEffect(selectedSection) {
-        val selectedIndex = categories.indexOfFirst { it.id == selectedSection }
+    val selectedIndex = categories.indexOfFirst { it.id == selectedSection }
+    LaunchedEffect(selectedIndex) {
         if (selectedIndex >= 0) listState.scrollToItem(selectedIndex)
     }
     Column(modifier.fillMaxSize().testTag("settings_categories")) {

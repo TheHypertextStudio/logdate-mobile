@@ -12,9 +12,6 @@ import kotlin.uuid.Uuid
 @Dao
 interface PersonLinkDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(link: PersonLinkEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(links: List<PersonLinkEntity>)
 
     @Update
@@ -33,6 +30,6 @@ interface PersonLinkDao {
         status: String = "ACTIVE",
     ): Flow<List<PersonLinkEntity>>
 
-    @Query("DELETE FROM person_links WHERE provenance = :provenance")
-    suspend fun deleteByProvenance(provenance: String)
+    @Query("DELETE FROM person_links WHERE person_id = :personId")
+    suspend fun deleteForPerson(personId: Uuid)
 }

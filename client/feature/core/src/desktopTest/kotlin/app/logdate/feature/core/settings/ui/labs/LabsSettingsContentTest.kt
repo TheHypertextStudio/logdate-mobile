@@ -19,6 +19,7 @@ import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.ui.theme.LogDateTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 private const val INTRO = "These features are unfinished."
 private const val SECTION = "Unreleased features"
@@ -26,6 +27,8 @@ private const val EMPTY = "No unreleased features to try."
 private const val WATCH_TITLE = "Redesigned watch app"
 private const val ACTIVITY_PERMISSION_TITLE = "Allow physical activity"
 private const val WATCH_DESCRIPTION = "Try the new watch app and the phone screens that go with it."
+private const val PEOPLE_TITLE = "People"
+private const val PEOPLE_DESCRIPTION = "Keeps a list of the people in your entries."
 
 /**
  * The Labs page is the only place a tester can turn an unreleased feature on in a release build, so
@@ -81,6 +84,50 @@ class LabsSettingsContentTest {
         }
 
     @Test
+    fun `People shows its title and description and a tap asks to turn it on`() =
+        runDesktopComposeUiTest {
+            val requests = mutableListOf<Pair<FeatureFlag, Boolean>>()
+            setContent { Labs(peopleFlag(enabled = false)) { flag, enabled -> requests += flag to enabled } }
+            onNodeWithText(PEOPLE_DESCRIPTION).assertIsDisplayed()
+            onNode(isToggleable()).assertIsOff()
+
+            onNodeWithText(PEOPLE_TITLE).performClick()
+
+            assertEquals(listOf(FeatureFlag.PEOPLE to true), requests)
+        }
+
+    @Test
+    fun `People that is on asks to turn off when tapped`() =
+        runDesktopComposeUiTest {
+            val requests = mutableListOf<Pair<FeatureFlag, Boolean>>()
+            setContent { Labs(peopleFlag(enabled = true)) { flag, enabled -> requests += flag to enabled } }
+            onNode(isToggleable()).assertIsOn()
+
+            onNodeWithText(PEOPLE_TITLE).performClick()
+
+            assertEquals(listOf(FeatureFlag.PEOPLE to false), requests)
+        }
+
+    @Test
+    fun `the page lists People above the watch app as Android offers them`() =
+        runDesktopComposeUiTest {
+            val offered =
+                LabsUiState.Ready(
+                    listOf(
+                        LabsFlag(FeatureFlag.PEOPLE, enabled = false),
+                        LabsFlag(FeatureFlag.WATCH_EXPERIENCE_V2, enabled = false),
+                    ),
+                )
+            setContent { Labs(offered) }
+
+            val people = onNodeWithText(PEOPLE_TITLE).fetchSemanticsNode().boundsInRoot
+            val watch = onNodeWithText(WATCH_TITLE).fetchSemanticsNode().boundsInRoot
+
+            assertTrue(people.top < watch.top)
+            onAllNodes(isToggleable()).assertCountEquals(2)
+        }
+
+    @Test
     fun `activity awareness that is on without physical activity asks for it`() =
         runDesktopComposeUiTest {
             var asked = 0
@@ -133,6 +180,8 @@ class LabsSettingsContentTest {
 private fun watchFlag(enabled: Boolean): LabsUiState = LabsUiState.Ready(listOf(LabsFlag(FeatureFlag.WATCH_EXPERIENCE_V2, enabled)))
 
 private fun activityFlag(enabled: Boolean): LabsUiState = LabsUiState.Ready(listOf(LabsFlag(FeatureFlag.ACTIVITY_AWARENESS, enabled)))
+
+private fun peopleFlag(enabled: Boolean): LabsUiState = LabsUiState.Ready(listOf(LabsFlag(FeatureFlag.PEOPLE, enabled)))
 
 @Composable
 private fun Labs(

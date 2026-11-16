@@ -42,7 +42,7 @@ The module targets Android, desktop (`jvm("desktop")`), `iosArm64` and `iosSimul
 ## Things to know before changing it
 
 - Settings screens emit their rows directly inside `SettingsSection` and use the shared row wrappers. [Settings UI composition](../../../docs/reference/standards/settings-ui.md) explains the rules that `checkSettingsUiContract` enforces.
-- `settings/ui/labs` is the Labs page, reached in About LogDate by tapping the version seven times. It lists a feature flag only if the flag is off by default, available for launch, and has wording in `LabsFlagCopy.kt`. A new flag that is off by default needs an entry in `labsCopy()` before it appears. `labsFlags` shows the watch and activity awareness switches on Android only.
+- `settings/ui/labs` is the Labs page, reached in About LogDate by tapping the version seven times. It lists a feature flag only if the flag is off by default, available for launch, and has wording in `LabsFlagCopy.kt`. A new flag that is off by default needs an entry in `labsCopy()` before it appears. `labsFlags` shows the watch and activity awareness switches on Android only. Labs is the only control that turns People on or off; the People row in Settings, the People pages and people in search results follow the stored switch.
 - `AppViewModel` owns the app lock lifecycle. `BiometricGatekeeper` reports each request's result separately, and its last provider result is diagnostic only.
 - `observeSyncPresentation` returns `SyncPresentation.Hidden` whenever there is no signed-in session, so the sync chip and banner never show without an account.
 - `AutomaticAccountRecovery` registers the recovery phrase's key on the signed-in identity using the confirmation from the latest passkey sign-in, so no second prompt appears.

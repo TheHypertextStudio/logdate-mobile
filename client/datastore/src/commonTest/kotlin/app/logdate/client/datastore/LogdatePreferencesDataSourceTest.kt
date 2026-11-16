@@ -39,12 +39,6 @@ class LogdatePreferencesDataSourceTest {
         }
 
     @Test
-    fun `people feature is unavailable for public launch`() =
-        runTest {
-            assertEquals(false, dataSource.observePeopleEnabled().first())
-        }
-
-    @Test
     fun `system search visibility can be persisted`() =
         runTest {
             dataSource.setSystemSearchVisibilityEnabled(true)

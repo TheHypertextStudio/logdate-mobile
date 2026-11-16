@@ -3,13 +3,16 @@ package app.logdate.feature.core.people.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.repository.knowledge.InferredPeopleRepository
-import app.logdate.client.util.runCatchingUnlessCancelled
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -26,7 +29,8 @@ class PeopleInboxViewModel(
         val evidencePreview: List<String>,
     )
 
-    val suggestions =
+    /** The names waiting for review, or `null` until they have been read. */
+    val suggestions: StateFlow<List<SuggestionUiState>?> =
         inferredPeopleRepository
             .observeOpenClusters()
             .mapLatest { clusters ->
@@ -52,27 +56,74 @@ class PeopleInboxViewModel(
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = emptyList(),
+                initialValue = null,
             )
 
+    private val mutableNotice = MutableStateFlow<PeopleNotice?>(null)
+    val notice: StateFlow<PeopleNotice?> = mutableNotice.asStateFlow()
+
+    private val decisionsInFlight = mutableSetOf<Uuid>()
+
     init {
-        viewModelScope.launch {
-            runCatchingUnlessCancelled { inferredPeopleRepository.refresh() }
-                .onFailure { failure -> Napier.w("Could not refresh people suggestions", failure) }
+        runReporting(PeopleNotice.RefreshFailed, "Could not refresh inferred people") {
+            inferredPeopleRepository.refresh()
         }
     }
 
+    /** Adds the suggested name to the list of people. */
     fun confirm(clusterId: Uuid) {
-        viewModelScope.launch {
-            runCatchingUnlessCancelled { inferredPeopleRepository.confirmClusterAsPerson(clusterId) }
-                .onFailure { failure -> Napier.e("Could not confirm a suggested person", failure) }
+        decide(clusterId, PeopleNotice.AddSuggestionFailed, "Could not add a suggested name to people") {
+            inferredPeopleRepository.confirmClusterAsPerson(clusterId)
         }
     }
 
+    /** Rejects the suggested name, so it is not suggested again. */
     fun dismiss(clusterId: Uuid) {
+        decide(clusterId, PeopleNotice.DismissSuggestionFailed, "Could not dismiss a suggested name") {
+            inferredPeopleRepository.rejectCluster(clusterId)
+        }
+    }
+
+    fun dismissNotice() {
+        mutableNotice.value = null
+    }
+
+    /** Runs one decision per suggestion at a time, so a second tap cannot decide it twice. */
+    private fun decide(
+        clusterId: Uuid,
+        failureNotice: PeopleNotice,
+        logMessage: String,
+        work: suspend () -> Unit,
+    ) {
+        if (!decisionsInFlight.add(clusterId)) return
+        runReporting(failureNotice, logMessage) {
+            try {
+                work()
+            } finally {
+                decisionsInFlight.remove(clusterId)
+            }
+        }
+    }
+
+    /**
+     * Runs [work] and, when it fails, logs [logMessage] and shows [failureNotice]. Starting new work
+     * clears the notice left by an earlier failure.
+     */
+    private fun runReporting(
+        failureNotice: PeopleNotice,
+        logMessage: String,
+        work: suspend () -> Unit,
+    ) {
+        mutableNotice.value = null
         viewModelScope.launch {
-            runCatchingUnlessCancelled { inferredPeopleRepository.rejectCluster(clusterId) }
-                .onFailure { failure -> Napier.e("Could not dismiss a suggested person", failure) }
+            try {
+                work()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Napier.e(logMessage, error)
+                mutableNotice.value = failureNotice
+            }
         }
     }
 }

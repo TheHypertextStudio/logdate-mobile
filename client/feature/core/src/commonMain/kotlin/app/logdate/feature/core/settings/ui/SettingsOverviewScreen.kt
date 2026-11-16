@@ -64,10 +64,12 @@ fun SettingsOverviewScreen(
     viewModel: SettingsOverviewViewModel = koinViewModel(),
     campfireViewModel: CampfireViewModel = koinViewModel(),
     placesBetaViewModel: PlacesBetaSettingsViewModel = koinViewModel(),
+    flags: FeatureFlagStore = koinInject(),
+    peopleSwitch: PeopleSwitch = koinInject(),
 ) {
     val placesBetaState by placesBetaViewModel.state.collectAsStateWithLifecycle()
-    val flags = koinInject<FeatureFlagStore>()
     val watchRedesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
+    val optionalRows = rememberOptionalSettingsRows(peopleSwitch)
     val deviceCards: (@Composable () -> Unit)? =
         if (watchRedesign && onNavigateToWatch != null) {
             {
@@ -116,9 +118,17 @@ fun SettingsOverviewScreen(
         deviceCards = deviceCards,
         placesBetaState = placesBetaState,
         onSetPlacesBetaEnabled = placesBetaViewModel::setEnabled,
+        showEventsSettings = optionalRows.events,
+        showPeopleSettings = optionalRows.people,
     )
 }
 
+/**
+ * The Settings overview without its view models.
+ *
+ * @param showEventsSettings whether the Events row is shown; off while Events has not launched
+ * @param showPeopleSettings whether the People row is shown; off until People is turned on in Labs
+ */
 @Composable
 fun SettingsOverviewContent(
     onBack: () -> Unit,
@@ -150,6 +160,8 @@ fun SettingsOverviewContent(
     deviceCards: (@Composable () -> Unit)? = null,
     placesBetaState: PlacesBetaSettingsState = PlacesBetaSettingsState.Loading,
     onSetPlacesBetaEnabled: (Boolean) -> Unit = {},
+    showEventsSettings: Boolean = false,
+    showPeopleSettings: Boolean = false,
 ) {
     FoldableBookLayout(
         modifier = modifier,
@@ -176,6 +188,8 @@ fun SettingsOverviewContent(
                     onNavigateToEventsSettings = onNavigateToEventsSettings,
                     onNavigateToPeopleSettings = onNavigateToPeopleSettings,
                     onNavigateToLibrarySettings = onNavigateToLibrarySettings,
+                    showEventsSettings = showEventsSettings,
+                    showPeopleSettings = showPeopleSettings,
                     placesBetaSettings = { PlacesBetaSettingsItem(placesBetaState, onSetPlacesBetaEnabled) },
                 )
             }
@@ -233,6 +247,8 @@ fun SettingsOverviewContent(
                         onNavigateToEventsSettings = onNavigateToEventsSettings,
                         onNavigateToPeopleSettings = onNavigateToPeopleSettings,
                         onNavigateToLibrarySettings = onNavigateToLibrarySettings,
+                        showEventsSettings = showEventsSettings,
+                        showPeopleSettings = showPeopleSettings,
                         placesBetaSettings = { PlacesBetaSettingsItem(placesBetaState, onSetPlacesBetaEnabled) },
                     )
                 }

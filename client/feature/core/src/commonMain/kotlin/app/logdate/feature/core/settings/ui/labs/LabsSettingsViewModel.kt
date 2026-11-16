@@ -69,7 +69,9 @@ class LabsSettingsViewModel(
  * switch would do nothing. A flag without Labs wording is left out too, so a feature that is still
  * being built behind its own flag does not appear here until someone decides to offer it. The
  * redesigned watch app is offered on Android only, because a Wear OS watch does not pair with an
- * iPhone and a desktop has none, so a switch for it elsewhere would do nothing either.
+ * iPhone and a desktop has none, so a switch for it elsewhere would do nothing either. People is
+ * offered on Android only for now: importing contacts works only there, and a desktop would show
+ * import controls that do nothing.
  */
 fun labsFlags(
     platform: PlatformKind,
@@ -79,6 +81,6 @@ fun labsFlags(
 
 private fun FeatureFlag.existsOn(platform: PlatformKind): Boolean =
     when (this) {
-        FeatureFlag.WATCH_EXPERIENCE_V2, FeatureFlag.ACTIVITY_AWARENESS -> platform == PlatformKind.Android
+        FeatureFlag.PEOPLE, FeatureFlag.WATCH_EXPERIENCE_V2, FeatureFlag.ACTIVITY_AWARENESS -> platform == PlatformKind.Android
         else -> true
     }

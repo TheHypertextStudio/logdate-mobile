@@ -30,6 +30,10 @@ interface PersonDao {
     @Query("SELECT * FROM people WHERE contact_lookup_key = :lookupKey AND deleted_at IS NULL LIMIT 1")
     suspend fun getByContactLookupKey(lookupKey: String): PersonEntity?
 
+    /** The contact lookup keys of people who were removed from the directory. */
+    @Query("SELECT contact_lookup_key FROM people WHERE deleted_at IS NOT NULL AND contact_lookup_key IS NOT NULL")
+    suspend fun getRemovedContactLookupKeys(): List<String>
+
     @Query("SELECT * FROM people WHERE deleted_at IS NULL")
     suspend fun getAll(): List<PersonEntity>
 

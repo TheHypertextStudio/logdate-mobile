@@ -38,7 +38,8 @@ import org.koin.compose.viewmodel.koinViewModel
 /**
  * Labs: switches for features that have not launched, for testing them in a release build.
  *
- * Settings has no row for it; tapping the version on the About page seven times opens it.
+ * The Settings overview has no row for it. Tapping the version on the About page seven times turns
+ * on developer mode, and the About page then shows a Labs row that opens it.
  */
 @Composable
 fun LabsSettingsScreen(

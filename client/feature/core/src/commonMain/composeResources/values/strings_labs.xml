@@ -1,18 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Labs -->
     <string name="labs_settings_title">Labs</string>
     <string name="labs_settings_description">Try unreleased features</string>
-    <string name="labs_intro">These features are unfinished. Turning one on can change how LogDate works, and it can stop working in any update.</string>
+    <string
+    name="labs_intro"
+  >These features are unfinished. Turning one on can change how LogDate works, and it can stop working in any update.</string>
     <string name="labs_section_unreleased">Unreleased features</string>
     <string name="labs_empty">No unreleased features to try.</string>
+    <string name="labs_people_title">People</string>
+    <string name="labs_people_description">Keeps a list of the people in your entries.</string>
     <string name="labs_watch_experience_title">Redesigned watch app</string>
     <string name="labs_activity_awareness_title">Activity awareness</string>
-    <string name="labs_activity_awareness_description">Reminders wait while you walk, ride or travel, and can come when you arrive. Your activity stays on your devices.</string>
+    <string
+    name="labs_activity_awareness_description"
+  >Reminders wait while you’re on the move.</string>
     <string name="labs_activity_permission_title">Allow physical activity</string>
-    <string name="labs_activity_permission_description">Activity awareness needs it to tell when you walk, ride or travel.</string>
+    <string
+    name="labs_activity_permission_description"
+  >Needed to tell when you’re on the move.</string>
     <string name="labs_activity_permission_action">Allow</string>
-    <string name="labs_identity_recovery_key_title">Move your account with your recovery phrase</string>
-    <string name="labs_identity_recovery_key_description">Lets your recovery phrase move your account to another server, even if your current server can’t help. It’s set up when you sign in with your passkey.</string>
-    <string name="labs_watch_experience_description">Try the new watch app and the phone screens that go with it.</string>
+    <string name="labs_identity_recovery_key_title">Move with your recovery phrase</string>
+    <string
+    name="labs_identity_recovery_key_description"
+  >Move your account to another server.</string>
+    <string
+    name="labs_watch_experience_description"
+  >Try the new watch app and the phone screens that go with it.</string>
 </resources>

@@ -16,69 +16,63 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.permissions.ContactsPermissionState
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold
-import app.logdate.ui.common.ToggleSettingsItem
-import app.logdate.ui.platform.PlatformSheet
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.people_browse_description
 import logdate.client.feature.core.generated.resources.people_browse_label
-import logdate.client.feature.core.generated.resources.people_choose_contacts
-import logdate.client.feature.core.generated.resources.people_directory_empty_state
-import logdate.client.feature.core.generated.resources.people_disabled_notice
-import logdate.client.feature.core.generated.resources.people_enable_description
-import logdate.client.feature.core.generated.resources.people_enable_label
-import logdate.client.feature.core.generated.resources.people_find_more
-import logdate.client.feature.core.generated.resources.people_get_started
 import logdate.client.feature.core.generated.resources.people_import_all_contacts
+import logdate.client.feature.core.generated.resources.people_import_description
+import logdate.client.feature.core.generated.resources.people_import_title
 import logdate.client.feature.core.generated.resources.people_importing_contacts
 import logdate.client.feature.core.generated.resources.people_review_description
 import logdate.client.feature.core.generated.resources.people_review_label
 import logdate.client.feature.core.generated.resources.people_settings_description
-import logdate.client.feature.core.generated.resources.people_setup_description
-import logdate.client.feature.core.generated.resources.people_setup_full_description
-import logdate.client.feature.core.generated.resources.people_setup_selected_description
-import logdate.client.feature.core.generated.resources.people_setup_title
 import logdate.client.feature.core.generated.resources.people_title
-import logdate.client.ui.generated.resources.common_dismiss
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import logdate.client.ui.generated.resources.Res as UiRes
 
+/**
+ * The People page in Settings. It is reachable only while People is turned on in Labs.
+ *
+ * Opening the page looks for names in entries and transcripts again. An import asked for without
+ * contacts access requests the permission and continues by itself once it is granted.
+ */
 @Composable
 fun PeopleSettingsScreen(
     onBack: () -> Unit,
     onBrowsePeople: () -> Unit,
     onOpenReviewInbox: () -> Unit,
     contactsPermissionState: ContactsPermissionState,
-    onImportSelectedContacts: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PeopleSettingsViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(uiState.isPeopleEnabled) {
-        if (uiState.isPeopleEnabled) {
-            viewModel.refreshPeople()
-        }
+    LaunchedEffect(viewModel) {
+        viewModel.refreshPeople()
+    }
+
+    LaunchedEffect(contactsPermissionState.hasPermission, contactsPermissionState.permissionRequested) {
+        viewModel.onContactsAccessChanged(
+            granted = contactsPermissionState.hasPermission,
+            answered = contactsPermissionState.permissionRequested,
+        )
     }
 
     PeopleSettingsContent(
@@ -86,37 +80,36 @@ fun PeopleSettingsScreen(
         onBack = onBack,
         onBrowsePeople = onBrowsePeople,
         onOpenReviewInbox = onOpenReviewInbox,
-        contactsPermissionState = contactsPermissionState,
-        onPeopleEnabledChanged = viewModel::setPeopleEnabled,
         onImportAllContacts = {
             if (contactsPermissionState.hasPermission) {
                 viewModel.importAllContacts()
             } else {
+                viewModel.importWhenContactsAllowed(deniedBefore = contactsPermissionState.permissionRequested)
                 contactsPermissionState.requestPermission()
             }
         },
-        onImportSelectedContacts = onImportSelectedContacts,
         onDismissMessage = viewModel::dismissMessage,
         modifier = modifier,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Stateless People page body.
+ *
+ * A phone, tablet or desktop window shows one list. A foldable held open in book posture puts the
+ * description, the contact import and its result on the start pane, and the rows that open the
+ * list and the suggestions on the end pane.
+ */
 @Composable
 fun PeopleSettingsContent(
     uiState: PeopleSettingsViewModel.UiState,
     onBack: () -> Unit,
     onBrowsePeople: () -> Unit,
     onOpenReviewInbox: () -> Unit,
-    contactsPermissionState: ContactsPermissionState,
-    onPeopleEnabledChanged: (Boolean) -> Unit,
     onImportAllContacts: () -> Unit,
-    onImportSelectedContacts: () -> Unit,
     onDismissMessage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showSetupSheet by rememberSaveable { mutableStateOf(false) }
-
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
         minPaneWidth = 320.dp,
@@ -130,18 +123,17 @@ fun PeopleSettingsContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             ) {
                 PeopleDescription()
-                PeopleEnableToggle(
-                    uiState = uiState,
-                    onPeopleEnabledChanged = onPeopleEnabledChanged,
-                )
-                PeopleSetupCard(
-                    uiState = uiState,
-                    onLaunchSetup = { showSetupSheet = true },
-                )
-                uiState.notice?.let { message ->
+                if (uiState.contactImportAvailable) {
+                    ContactImportCard(
+                        isImporting = uiState.isImporting,
+                        onImportAllContacts = onImportAllContacts,
+                    )
+                }
+                uiState.notice?.let { notice ->
                     PeopleNoticeCard(
-                        message = message,
-                        onDismissMessage = onDismissMessage,
+                        notice = notice,
+                        onDismiss = onDismissMessage,
+                        modifier = Modifier.padding(horizontal = Spacing.lg),
                     )
                 }
             }
@@ -153,134 +145,54 @@ fun PeopleSettingsContent(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(vertical = Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             ) {
-                PeopleBrowseRow(
+                PeopleListRows(
                     uiState = uiState,
                     onBrowsePeople = onBrowsePeople,
+                    onOpenReviewInbox = onOpenReviewInbox,
                 )
-                if (uiState.pendingReviewCount > 0) {
-                    PeopleReviewRow(
-                        uiState = uiState,
-                        onOpenReviewInbox = onOpenReviewInbox,
-                    )
-                }
             }
         },
         standardContent = {
             SettingsScaffold(
                 title = stringResource(Res.string.people_title),
                 onBack = onBack,
-                modifier = modifier,
             ) {
                 item { PeopleDescription() }
 
                 item {
-                    PeopleEnableToggle(
-                        uiState = uiState,
-                        onPeopleEnabledChanged = onPeopleEnabledChanged,
-                    )
-                }
-
-                item {
-                    PeopleBrowseRow(
+                    PeopleListRows(
                         uiState = uiState,
                         onBrowsePeople = onBrowsePeople,
+                        onOpenReviewInbox = onOpenReviewInbox,
                     )
                 }
 
-                if (uiState.pendingReviewCount > 0) {
+                if (uiState.contactImportAvailable) {
                     item {
-                        PeopleReviewRow(
-                            uiState = uiState,
-                            onOpenReviewInbox = onOpenReviewInbox,
+                        ContactImportCard(
+                            isImporting = uiState.isImporting,
+                            onImportAllContacts = onImportAllContacts,
                         )
                     }
                 }
 
-                item {
-                    PeopleSetupCard(
-                        uiState = uiState,
-                        onLaunchSetup = { showSetupSheet = true },
-                    )
-                }
-
-                uiState.notice?.let { message ->
+                uiState.notice?.let { notice ->
                     item {
                         PeopleNoticeCard(
-                            message = message,
-                            onDismissMessage = onDismissMessage,
+                            notice = notice,
+                            onDismiss = onDismissMessage,
+                            modifier = Modifier.padding(horizontal = Spacing.lg),
                         )
                     }
                 }
             }
         },
     )
-
-    if (showSetupSheet) {
-        PlatformSheet(onDismissRequest = { showSetupSheet = false }) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Spacing.lg, vertical = Spacing.md),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-            ) {
-                Text(
-                    text = stringResource(Res.string.people_setup_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Text(
-                    text = stringResource(Res.string.people_setup_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Button(
-                    onClick = {
-                        showSetupSheet = false
-                        onImportAllContacts()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(Res.string.people_import_all_contacts))
-                }
-                Text(
-                    text = stringResource(Res.string.people_setup_full_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (uiState.supportsSelectedContactsPicker) {
-                    OutlinedButton(
-                        onClick = {
-                            showSetupSheet = false
-                            onImportSelectedContacts()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(Res.string.people_choose_contacts))
-                    }
-                    Text(
-                        text = stringResource(Res.string.people_setup_selected_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (!contactsPermissionState.hasPermission && !uiState.supportsSelectedContactsPicker) {
-                    Text(
-                        text = stringResource(Res.string.people_setup_full_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
 }
 
 /**
- * Lead-in copy explaining what the People feature does.
- *
- * Rendered identically in the single-column list and in the book-posture start pane.
+ * Says where the list comes from and where it is stored.
  */
 @Composable
 private fun PeopleDescription() {
@@ -293,32 +205,13 @@ private fun PeopleDescription() {
 }
 
 /**
- * Master enable toggle for the People feature.
+ * The rows that open the list of people and, while names wait for review, the suggestions.
  */
 @Composable
-private fun PeopleEnableToggle(
-    uiState: PeopleSettingsViewModel.UiState,
-    onPeopleEnabledChanged: (Boolean) -> Unit,
-) {
-    MaterialContainer(
-        modifier = Modifier.padding(horizontal = Spacing.lg),
-    ) {
-        ToggleSettingsItem(
-            title = stringResource(Res.string.people_enable_label),
-            description = stringResource(Res.string.people_enable_description),
-            checked = uiState.isPeopleEnabled,
-            onCheckedChange = onPeopleEnabledChanged,
-        )
-    }
-}
-
-/**
- * Navigation row that opens the people directory.
- */
-@Composable
-private fun PeopleBrowseRow(
+private fun PeopleListRows(
     uiState: PeopleSettingsViewModel.UiState,
     onBrowsePeople: () -> Unit,
+    onOpenReviewInbox: () -> Unit,
 ) {
     MaterialContainer(
         modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -327,47 +220,41 @@ private fun PeopleBrowseRow(
             title = stringResource(Res.string.people_browse_label),
             description =
                 if (uiState.totalPeopleCount == 0) {
-                    stringResource(Res.string.people_directory_empty_state)
+                    emptyPeopleListText(uiState.contactImportAvailable)
                 } else {
-                    stringResource(Res.string.people_browse_description, uiState.totalPeopleCount)
+                    pluralStringResource(
+                        Res.plurals.people_browse_description,
+                        uiState.totalPeopleCount,
+                        uiState.totalPeopleCount,
+                    )
                 },
             icon = { Icon(Icons.Default.People, contentDescription = null) },
             onClick = onBrowsePeople,
-            enabled = uiState.isPeopleEnabled && uiState.totalPeopleCount > 0,
+            enabled = uiState.totalPeopleCount > 0,
         )
+        if (uiState.pendingReviewCount > 0) {
+            SettingsNavigationItem(
+                title = stringResource(Res.string.people_review_label),
+                description =
+                    pluralStringResource(
+                        Res.plurals.people_review_description,
+                        uiState.pendingReviewCount,
+                        uiState.pendingReviewCount,
+                    ),
+                icon = { Icon(Icons.Default.Star, contentDescription = null) },
+                onClick = onOpenReviewInbox,
+            )
+        }
     }
 }
 
 /**
- * Navigation row that opens the pending review inbox.
- *
- * Callers gate visibility on a non-zero pending review count.
+ * Says what a contact import copies and starts it. Shown only where contacts can be imported.
  */
 @Composable
-private fun PeopleReviewRow(
-    uiState: PeopleSettingsViewModel.UiState,
-    onOpenReviewInbox: () -> Unit,
-) {
-    MaterialContainer(
-        modifier = Modifier.padding(horizontal = Spacing.lg),
-    ) {
-        SettingsNavigationItem(
-            title = stringResource(Res.string.people_review_label),
-            description = stringResource(Res.string.people_review_description, uiState.pendingReviewCount),
-            icon = { Icon(Icons.Default.Star, contentDescription = null) },
-            onClick = onOpenReviewInbox,
-            enabled = uiState.isPeopleEnabled,
-        )
-    }
-}
-
-/**
- * Setup card that introduces contact import and launches the setup sheet.
- */
-@Composable
-private fun PeopleSetupCard(
-    uiState: PeopleSettingsViewModel.UiState,
-    onLaunchSetup: () -> Unit,
+private fun ContactImportCard(
+    isImporting: Boolean,
+    onImportAllContacts: () -> Unit,
 ) {
     MaterialContainer(
         modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -380,38 +267,29 @@ private fun PeopleSetupCard(
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             Text(
-                text = stringResource(Res.string.people_setup_title),
+                text = stringResource(Res.string.people_import_title),
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text =
-                    if (uiState.isPeopleEnabled) {
-                        stringResource(Res.string.people_setup_description)
-                    } else {
-                        stringResource(Res.string.people_disabled_notice)
-                    },
+                text = stringResource(Res.string.people_import_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(
-                onClick = onLaunchSetup,
-                enabled = uiState.isPeopleEnabled && !uiState.isImporting,
+                onClick = onImportAllContacts,
+                enabled = !isImporting,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Default.PersonAdd, contentDescription = null)
                 Text(
-                    text =
-                        if (uiState.totalPeopleCount == 0) {
-                            stringResource(Res.string.people_get_started)
-                        } else {
-                            stringResource(Res.string.people_find_more)
-                        },
+                    text = stringResource(Res.string.people_import_all_contacts),
                     modifier = Modifier.padding(start = Spacing.sm),
                 )
             }
-            if (uiState.isImporting) {
+            if (isImporting) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CircularProgressIndicator(strokeWidth = 2.dp)
                     Text(
@@ -419,35 +297,6 @@ private fun PeopleSetupCard(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-            }
-        }
-    }
-}
-
-/**
- * Dismissible notice card surfacing import results and failures.
- */
-@Composable
-private fun PeopleNoticeCard(
-    message: PeopleSettingsNotice,
-    onDismissMessage: () -> Unit,
-) {
-    MaterialContainer(
-        modifier = Modifier.padding(horizontal = Spacing.lg),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(Spacing.md),
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        ) {
-            Text(
-                text = peopleSettingsNoticeText(message),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            OutlinedButton(onClick = onDismissMessage) {
-                Text(stringResource(UiRes.string.common_dismiss))
             }
         }
     }

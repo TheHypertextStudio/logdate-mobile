@@ -8,16 +8,12 @@ import androidx.room.Transaction
 import androidx.room.Update
 import app.logdate.client.database.entities.people.InferredPersonClusterEntity
 import app.logdate.client.database.entities.people.InferredPersonEvidenceEntity
-import app.logdate.client.database.entities.people.PersonEntity
 import app.logdate.client.database.entities.people.PersonLinkEntity
 import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.Uuid
 
 @Dao
 interface InferredPersonClusterDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(cluster: InferredPersonClusterEntity)
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(clusters: List<InferredPersonClusterEntity>)
 
@@ -36,44 +32,39 @@ interface InferredPersonClusterDao {
     @Query("DELETE FROM inferred_person_clusters WHERE status = :status")
     suspend fun deleteByStatus(status: String)
 
-    @Query(
-        "DELETE FROM inferred_person_evidence WHERE cluster_id IN " +
-            "(SELECT id FROM inferred_person_clusters WHERE status = :status)",
-    )
-    suspend fun deleteEvidenceForStatus(status: String)
-
-    @Query("DELETE FROM person_links WHERE provenance = :provenance")
-    suspend fun deleteLinksByProvenance(provenance: String)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPeople(people: List<PersonEntity>)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertLinks(links: List<PersonLinkEntity>)
+    @Query("DELETE FROM inferred_person_evidence WHERE cluster_id IN (SELECT id FROM inferred_person_clusters WHERE status = :status)")
+    suspend fun deleteEvidenceByClusterStatus(status: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvidence(evidence: List<InferredPersonEvidenceEntity>)
 
+    @Query("DELETE FROM person_links WHERE provenance = :provenance")
+    suspend fun deleteLinksByProvenance(provenance: String)
+
+    /** Inserts links, leaving any existing link between the same person and target untouched. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLinksIfAbsent(links: List<PersonLinkEntity>)
+
     /**
-     * Replaces every open suggestion and inferred link with a freshly computed set in one
-     * transaction, so screens never observe the graph half cleared and a failed refresh keeps the
-     * previous suggestions.
+     * Replaces every suggestion with [openStatus] and every link with [replacedLinkProvenance] in
+     * one transaction, so an interrupted refresh leaves the previous result in place.
+     *
+     * Room runs a transaction through a single DAO, which is why the evidence and link rows that
+     * belong to a refresh are written here. Links with any other provenance are never replaced.
      */
     @Transaction
     suspend fun replaceOpenInference(
         openStatus: String,
-        inferredProvenance: String,
-        people: List<PersonEntity>,
-        links: List<PersonLinkEntity>,
+        replacedLinkProvenance: String,
         clusters: List<InferredPersonClusterEntity>,
         evidence: List<InferredPersonEvidenceEntity>,
+        links: List<PersonLinkEntity>,
     ) {
-        deleteEvidenceForStatus(openStatus)
+        deleteEvidenceByClusterStatus(openStatus)
         deleteByStatus(openStatus)
-        deleteLinksByProvenance(inferredProvenance)
-        insertPeople(people)
-        insertLinks(links)
+        deleteLinksByProvenance(replacedLinkProvenance)
         insertAll(clusters)
         insertEvidence(evidence)
+        insertLinksIfAbsent(links)
     }
 }

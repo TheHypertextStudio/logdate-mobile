@@ -350,8 +350,10 @@ actual val dataModule: Module =
                 personLinkDao = get(),
                 personResolutionDecisionDao = get(),
                 textNoteDao = get(),
+                audioNoteDao = get(),
                 transcriptionDao = get(),
                 eventDao = get(),
+                transactions = get(),
                 journalNotesRepository = get(),
                 eventRepository = get(),
             )
@@ -491,7 +493,7 @@ actual val dataModule: Module =
         }
 
         // Search
-        single { OfflineFirstSearchRepository(get(), get()) }
+        single { OfflineFirstSearchRepository(searchDao = get(), personDao = get(), featureFlags = get()) }
         single {
             AndroidPlatformSearchIndexManager(
                 context = androidContext(),

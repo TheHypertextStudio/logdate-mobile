@@ -1,5 +1,19 @@
 # People
 
+## Availability
+
+People ships turned off. It is offered as an opt-in switch in Labs on Android, and Labs is the only
+place it is turned on or off. While it is off, Settings shows no People row or category and the
+People pages close as soon as they open. The directory already built stays stored on the device and
+is shown again when People is turned back on.
+
+Names are found on the device in text entries and voice note transcripts, and every name found is a
+suggestion: it appears for review after at least two mentions, and it joins the directory when the
+person confirms it. A person can be removed, and a removed or rejected name is not suggested again.
+Contacts can be imported on Android. The sections below describe the intended product, which goes
+further than this: people in search, sync and export of the directory, choosing individual contacts
+to import, and names in non-Latin scripts are part of the design and are not built.
+
 ## Vision
 
 People should give LogDate a durable understanding of who matters in the user's life.
@@ -51,6 +65,10 @@ of the user's life.
 The second layer is the set of people the product has probably found but is not ready to present as
 fully confirmed. These identities should stay separate until confidence improves or the user
 resolves them.
+
+In the current build, only the person's confirmation moves a name from the second layer to the
+first. Repeated mentions alone do not, because the name finder is not accurate enough to be trusted
+with that decision.
 
 This distinction is the feature, not an implementation detail.
 

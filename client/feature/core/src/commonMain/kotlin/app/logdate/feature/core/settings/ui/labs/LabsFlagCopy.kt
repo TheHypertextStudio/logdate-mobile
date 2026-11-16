@@ -6,6 +6,8 @@ import logdate.client.feature.core.generated.resources.labs_activity_awareness_d
 import logdate.client.feature.core.generated.resources.labs_activity_awareness_title
 import logdate.client.feature.core.generated.resources.labs_identity_recovery_key_description
 import logdate.client.feature.core.generated.resources.labs_identity_recovery_key_title
+import logdate.client.feature.core.generated.resources.labs_people_description
+import logdate.client.feature.core.generated.resources.labs_people_title
 import logdate.client.feature.core.generated.resources.labs_watch_experience_description
 import logdate.client.feature.core.generated.resources.labs_watch_experience_title
 import org.jetbrains.compose.resources.StringResource
@@ -19,11 +21,20 @@ internal data class LabsFlagCopy(
 /**
  * The Labs wording for this flag, or `null` for a flag Labs does not offer.
  *
- * Labs offers only the flags listed here. Every other flag, including the ones other features keep
- * off while they are built, stays out of Labs until someone adds wording for it.
+ * Labs offers only the flags listed here: People, the redesigned watch app and activity awareness.
+ * The recovery phrase flag has wording too, but it is on by default, so Labs does not list it.
+ * Every other flag, including the ones other features keep off while they are built, stays out of
+ * Labs until someone adds wording for it.
  */
 internal fun FeatureFlag.labsCopy(): LabsFlagCopy? =
     when (this) {
+        FeatureFlag.PEOPLE -> {
+            LabsFlagCopy(
+                title = Res.string.labs_people_title,
+                description = Res.string.labs_people_description,
+            )
+        }
+
         FeatureFlag.WATCH_EXPERIENCE_V2 -> {
             LabsFlagCopy(
                 title = Res.string.labs_watch_experience_title,

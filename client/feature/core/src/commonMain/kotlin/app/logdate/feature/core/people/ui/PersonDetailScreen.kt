@@ -4,266 +4,207 @@ package app.logdate.feature.core.people.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.logdate.client.repository.journals.JournalNote
-import app.logdate.shared.model.Event
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.adaptive.FoldableBookLayout
-import app.logdate.ui.common.MaterialContainer
+import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.people_title
-import logdate.client.feature.core.generated.resources.person_aliases_label
-import logdate.client.feature.core.generated.resources.person_detail_linked_entries
-import logdate.client.feature.core.generated.resources.person_detail_linked_events
-import logdate.client.feature.core.generated.resources.person_detail_load_failed
-import logdate.client.feature.core.generated.resources.person_detail_loading
-import logdate.client.feature.core.generated.resources.person_detail_no_linked_entries
-import logdate.client.feature.core.generated.resources.person_detail_no_linked_events
-import logdate.client.feature.core.generated.resources.person_detail_photo_preview
-import logdate.client.feature.core.generated.resources.person_detail_video_preview
-import logdate.client.feature.core.generated.resources.person_detail_voice_note_preview
+import logdate.client.feature.core.generated.resources.person_remove_dialog_message
+import logdate.client.feature.core.generated.resources.person_remove_dialog_title
+import logdate.client.ui.generated.resources.common_cancel
+import logdate.client.ui.generated.resources.common_remove
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.uuid.Uuid
+import logdate.client.ui.generated.resources.Res as UiRes
 
+/**
+ * One person's page.
+ *
+ * @param onOpenEntry opens a linked entry. Without it the linked entries are listed but cannot be
+ *   opened.
+ */
 @Composable
 fun PersonDetailScreen(
     personId: Uuid,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenEntry: ((Uuid) -> Unit)? = null,
     viewModel: PersonDetailViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState().collectAsState()
+    val uiState by viewModel.uiState().collectAsStateWithLifecycle()
 
     LaunchedEffect(personId) {
         viewModel.load(personId)
+    }
+
+    LaunchedEffect(uiState.isRemoved) {
+        if (!uiState.isRemoved) return@LaunchedEffect
+        onBack()
     }
 
     PersonDetailContent(
         uiState = uiState,
         onBack = onBack,
         modifier = modifier,
+        onRemove = viewModel::remove,
+        onOpenEntry = onOpenEntry,
+        onDismissNotice = viewModel::dismissNotice,
     )
 }
 
 /**
- * Stateless person detail screen body.
+ * Stateless person page body.
  *
- * On a phone, tablet, or desktop this renders the existing single-pane list: a person's
- * identity (name, relationship, aliases, notes) followed by their linked entries and events,
- * all inside one [MaterialContainer]. On a foldable held open in book posture, the same
- * sections split across the hinge — identity on the start pane, linked activity on the end
- * pane — so the user reads the person and their history side by side.
+ * A phone, tablet or desktop window shows one list: who the person is, the entries linked to them,
+ * and the action that removes them. A foldable held open in book posture puts the person and the
+ * remove action on the start pane and the linked entries on the end pane. Removing asks for
+ * confirmation first.
  */
 @Composable
 fun PersonDetailContent(
     uiState: PersonDetailViewModel.UiState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onRemove: () -> Unit = {},
+    onOpenEntry: ((Uuid) -> Unit)? = null,
+    onDismissNotice: () -> Unit = {},
 ) {
+    var confirmingRemoval by rememberSaveable { mutableStateOf(false) }
+    val person = uiState.person?.takeUnless { uiState.isLoading }
+    val sectionModifier = Modifier.padding(horizontal = Spacing.lg)
+
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
         minPaneWidth = 320.dp,
         startPane = {
-            MaterialContainer(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(Spacing.lg),
-            ) {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(Spacing.md),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                ) {
-                    PersonMetadataSection(uiState = uiState)
+            PersonPane {
+                if (person == null) {
+                    PersonStatus(isLoading = uiState.isLoading, modifier = sectionModifier)
+                    return@PersonPane
                 }
+                PersonIdentity(person = person, modifier = sectionModifier)
+                uiState.notice?.let { notice ->
+                    PeopleNoticeCard(notice = notice, onDismiss = onDismissNotice, modifier = sectionModifier)
+                }
+                RemovePersonButton(
+                    enabled = !uiState.isRemoving,
+                    onClick = { confirmingRemoval = true },
+                    modifier = sectionModifier,
+                )
             }
         },
         endPane = {
-            MaterialContainer(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(Spacing.lg),
-            ) {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(Spacing.md),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                ) {
-                    PersonLinkedSection(uiState = uiState)
+            PersonPane {
+                if (person == null) return@PersonPane
+                PersonEntries(entries = uiState.linkedEntries, onOpenEntry = onOpenEntry, modifier = sectionModifier)
+                if (uiState.showEvents) {
+                    PersonEvents(events = uiState.linkedEvents, modifier = sectionModifier)
                 }
             }
         },
         standardContent = {
             SettingsScaffold(
-                title = uiState.person?.name ?: stringResource(Res.string.people_title),
+                title = person?.name ?: stringResource(Res.string.people_title),
                 onBack = onBack,
-                modifier = modifier,
             ) {
-                item {
-                    MaterialContainer(
-                        modifier = Modifier.padding(horizontal = Spacing.lg),
-                    ) {
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(Spacing.md),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-                        ) {
-                            when {
-                                uiState.isLoading -> {
-                                    Text(stringResource(Res.string.person_detail_loading))
-                                }
-
-                                uiState.person == null -> {
-                                    Text(
-                                        text = stringResource(Res.string.person_detail_load_failed),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
-
-                                else -> {
-                                    PersonMetadataSection(uiState = uiState)
-                                    PersonLinkedSection(uiState = uiState)
-                                }
-                            }
-                        }
+                if (person == null) {
+                    item { PersonStatus(isLoading = uiState.isLoading, modifier = sectionModifier) }
+                    return@SettingsScaffold
+                }
+                item { PersonIdentity(person = person, modifier = sectionModifier) }
+                uiState.notice?.let { notice ->
+                    item {
+                        PeopleNoticeCard(notice = notice, onDismiss = onDismissNotice, modifier = sectionModifier)
                     }
+                }
+                item {
+                    PersonEntries(entries = uiState.linkedEntries, onOpenEntry = onOpenEntry, modifier = sectionModifier)
+                }
+                if (uiState.showEvents) {
+                    item { PersonEvents(events = uiState.linkedEvents, modifier = sectionModifier) }
+                }
+                item {
+                    RemovePersonButton(
+                        enabled = !uiState.isRemoving,
+                        onClick = { confirmingRemoval = true },
+                        modifier = sectionModifier,
+                    )
                 }
             }
         },
     )
-}
 
-/**
- * Renders a person's identity: name, relationship, aliases, and free-form notes.
- *
- * Falls back to the loading and load-failed messages so a pane can stand on its own while the
- * profile is still resolving.
- */
-@Composable
-private fun PersonMetadataSection(uiState: PersonDetailViewModel.UiState) {
-    when {
-        uiState.isLoading -> {
-            Text(stringResource(Res.string.person_detail_loading))
-        }
-
-        uiState.person == null -> {
-            Text(
-                text = stringResource(Res.string.person_detail_load_failed),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-
-        else -> {
-            val person = uiState.person
-            Text(
-                text = person.name,
-                style = MaterialTheme.typography.headlineSmall,
-            )
-            person.relationshipLabel?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (person.aliases.isNotEmpty()) {
-                Text(
-                    text = stringResource(Res.string.person_aliases_label, person.aliases.joinToString()),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            person.notes?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
+    if (confirmingRemoval && person != null) {
+        RemovePersonDialog(
+            name = person.name,
+            onConfirm = {
+                confirmingRemoval = false
+                onRemove()
+            },
+            onDismiss = { confirmingRemoval = false },
+        )
     }
 }
 
 /**
- * Renders the activity tied to a person: their linked journal entries and events.
- *
- * Shows nothing until the profile is loaded so the empty-state copy only appears once we know
- * the person genuinely has no linked activity.
+ * One scrolling pane of the book-posture layout.
  */
 @Composable
-private fun PersonLinkedSection(uiState: PersonDetailViewModel.UiState) {
-    if (uiState.isLoading || uiState.person == null) {
-        return
-    }
-
-    Text(
-        text = stringResource(Res.string.person_detail_linked_entries),
-        style = MaterialTheme.typography.titleMedium,
+private fun PersonPane(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+        content = content,
     )
-    if (uiState.linkedEntries.isEmpty()) {
-        Text(
-            text = stringResource(Res.string.person_detail_no_linked_entries),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    } else {
-        uiState.linkedEntries.take(5).forEach { note ->
-            Text(
-                text = note.previewLabel(),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-    }
-    Text(
-        text = stringResource(Res.string.person_detail_linked_events),
-        style = MaterialTheme.typography.titleMedium,
-    )
-    if (uiState.linkedEvents.isEmpty()) {
-        Text(
-            text = stringResource(Res.string.person_detail_no_linked_events),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    } else {
-        uiState.linkedEvents.take(5).forEach { event ->
-            Text(
-                text = event.previewLabel(),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-    }
 }
 
 @Composable
-private fun JournalNote.previewLabel(): String =
-    when (this) {
-        is JournalNote.Handwriting -> "Handwriting"
-        is JournalNote.Text -> content.take(120)
-        is JournalNote.Audio -> stringResource(Res.string.person_detail_voice_note_preview)
-        is JournalNote.Image -> caption.ifBlank { stringResource(Res.string.person_detail_photo_preview) }.take(120)
-        is JournalNote.Video -> caption.ifBlank { stringResource(Res.string.person_detail_video_preview) }.take(120)
-    }
-
-private fun Event.previewLabel(): String = title
+private fun RemovePersonDialog(
+    name: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.person_remove_dialog_title, name)) },
+        text = { Text(stringResource(Res.string.person_remove_dialog_message, name)) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            ) {
+                Text(stringResource(UiRes.string.common_remove))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(UiRes.string.common_cancel))
+            }
+        },
+    )
+}

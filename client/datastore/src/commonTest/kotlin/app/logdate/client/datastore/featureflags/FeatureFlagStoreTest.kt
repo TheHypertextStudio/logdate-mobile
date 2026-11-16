@@ -220,12 +220,31 @@ class FeatureFlagStoreTest {
         runTest {
             val dataSource = LogdatePreferencesDataSource(preferences)
             store.setEnabled(FeatureFlag.EVENTS, enabled = true)
-            store.setEnabled(FeatureFlag.PEOPLE, enabled = true)
 
             assertFalse(store.isEnabled(FeatureFlag.EVENTS))
-            assertFalse(store.isEnabled(FeatureFlag.PEOPLE))
             assertFalse(dataSource.observeEventsEnabled().first())
-            assertFalse(dataSource.observePeopleEnabled().first())
+        }
+
+    @Test
+    fun `People starts off and turns on and back off when set`() =
+        runTest {
+            assertTrue(FeatureFlag.PEOPLE.availableForLaunch)
+            assertFalse(FeatureFlag.PEOPLE.defaultEnabled)
+            assertFalse(store.isEnabled(FeatureFlag.PEOPLE))
+
+            store.setEnabled(FeatureFlag.PEOPLE, enabled = true)
+            assertTrue(store.isEnabled(FeatureFlag.PEOPLE))
+
+            store.setEnabled(FeatureFlag.PEOPLE, enabled = false)
+            assertFalse(store.isEnabled(FeatureFlag.PEOPLE))
+        }
+
+    @Test
+    fun `an installation that already stored People as on stays on`() =
+        runTest {
+            preferences.updateData { it.toMutablePreferences().apply { this[booleanPreferencesKey("people_enabled")] = true } }
+
+            assertTrue(store.isEnabled(FeatureFlag.PEOPLE))
         }
 
     @Test
@@ -265,7 +284,7 @@ class FeatureFlagStoreTest {
         }
 
     /**
-     * The three flags that predate this type are also read through their own accessors on
+     * Library and Events predate this type and are also read through their own accessors on
      * [LogdatePreferencesDataSource]. Both paths have to agree, or a feature is on according to
      * one caller and off according to another.
      */
@@ -292,7 +311,6 @@ class FeatureFlagStoreTest {
 
             assertEquals(dataSource.observeLibraryEnabled().first(), FeatureFlag.LIBRARY.defaultEnabled)
             assertEquals(dataSource.observeEventsEnabled().first(), FeatureFlag.EVENTS.defaultEnabled)
-            assertEquals(dataSource.observePeopleEnabled().first(), FeatureFlag.PEOPLE.defaultEnabled)
         }
 
     @Test

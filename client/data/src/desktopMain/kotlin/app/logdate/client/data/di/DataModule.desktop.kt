@@ -300,8 +300,10 @@ actual val dataModule: Module =
                 personLinkDao = get(),
                 personResolutionDecisionDao = get(),
                 textNoteDao = get(),
+                audioNoteDao = get(),
                 transcriptionDao = get(),
                 eventDao = get(),
+                transactions = get(),
                 journalNotesRepository = get(),
                 eventRepository = get(),
             )
@@ -387,7 +389,7 @@ actual val dataModule: Module =
         }
 
         // Search
-        single<SearchRepository> { OfflineFirstSearchRepository(get(), get()) }
+        single<SearchRepository> { OfflineFirstSearchRepository(searchDao = get(), personDao = get(), featureFlags = get()) }
         single<RecentSearchesRepository> { DataStoreRecentSearchesRepository(get()) }
 
         // Streaks
