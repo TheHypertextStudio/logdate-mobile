@@ -11,12 +11,14 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.client.repository.media.IndexedMedia
 import app.logdate.client.repository.media.IndexedMediaRepository
+import app.logdate.feature.library.ui.LibraryMediaIndex
 import app.logdate.feature.library.ui.LibraryMediaSource
 import app.logdate.feature.library.ui.buildLibraryMediaSources
 import app.logdate.shared.model.AltitudeUnit
 import app.logdate.shared.model.Location
 import app.logdate.shared.model.LocationAltitude
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,13 +26,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import logdate.client.feature.library.generated.resources.Res
 import logdate.client.feature.library.generated.resources.library_media_detail_error_load_failed
 import logdate.client.feature.library.generated.resources.library_media_detail_error_not_found
+import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.Uuid
 
 /**
@@ -46,15 +52,13 @@ class MediaDetailViewModel(
     private val indexedMediaRepository: IndexedMediaRepository,
     private val resolveLocationToPlaceUseCase: ResolveLocationToPlaceUseCase,
     private val remoteDisplayManager: RemoteDisplayManager,
+    private val workContext: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<MediaDetailUiState>(MediaDetailUiState.Loading)
     val uiState: StateFlow<MediaDetailUiState> = _uiState.asStateFlow()
     private val currentMediaId = MutableStateFlow(mediaId)
     private val _viewerState = MutableStateFlow(MediaViewerState())
     val viewerState: StateFlow<MediaViewerState> = _viewerState.asStateFlow()
-
-    /** All library media for presenter navigation. */
-    private val allMediaItems = MutableStateFlow<List<LibraryMediaSource>>(emptyList())
 
     /** Presenter mode state. */
     val presenterState: StateFlow<PresenterState> =
@@ -124,35 +128,53 @@ class MediaDetailViewModel(
     }
 
     private fun observeMedia() {
+        val library =
+            combine(indexedMediaRepository.observeAllMedia(), notesRepository.allNotesObserved) { mediaItems, notes ->
+                LibraryMediaIndex(buildLibraryMediaSources(mediaItems, notes))
+            }.flowOn(workContext)
+                .map { index -> index to index.viewerItems() }
         viewModelScope.launch {
-            combine(
-                indexedMediaRepository.observeAllMedia(),
-                notesRepository.allNotesObserved,
-                currentMediaId,
-            ) { mediaItems, notes, selectedMediaId ->
-                Triple(mediaItems, notes, selectedMediaId)
+            combine(library, currentMediaId) { (index, viewerItems), selectedMediaId ->
+                Selection(index, viewerItems, selectedMediaId)
             }.catch { error ->
                 Napier.e("Failed to load media detail", error)
                 _uiState.value = MediaDetailUiState.Error(Res.string.library_media_detail_error_load_failed)
-            }.collect { (mediaItems, notes, selectedMediaId) ->
-                val libraryMedia = buildLibraryMediaSources(mediaItems, notes)
-                allMediaItems.value = libraryMedia
-
-                val media =
-                    libraryMedia.find { it.id == selectedMediaId || it.matchingNotes.any { note -> note.uid == selectedMediaId } }
+            }.collectLatest { (index, viewerItems, selectedMediaId) ->
+                val media = index.find(selectedMediaId)
                 if (media == null) {
                     _viewerState.value = MediaViewerState()
                     _uiState.value = MediaDetailUiState.Error(Res.string.library_media_detail_error_not_found)
-                } else {
-                    updateViewerState(libraryMedia, media.id)
-                    if (media.id != selectedMediaId) {
-                        currentMediaId.value = media.id
-                    }
-                    updateForMedia(media)
+                    return@collectLatest
                 }
+                _viewerState.value =
+                    MediaViewerState(
+                        currentIndex = index.positionOf(media.id) ?: 0,
+                        totalItems = viewerItems.size,
+                        mediaItems = viewerItems,
+                    )
+                if (media.id != selectedMediaId) {
+                    currentMediaId.value = media.id
+                }
+                updateForMedia(media)
             }
         }
     }
+
+    private data class Selection(
+        val index: LibraryMediaIndex,
+        val viewerItems: List<MediaViewerItem>,
+        val selectedMediaId: Uuid,
+    )
+
+    private fun LibraryMediaIndex.viewerItems(): List<MediaViewerItem> =
+        sources.map { media ->
+            MediaViewerItem(
+                uid = media.id,
+                uri = media.uri,
+                isVideo = media.isVideo,
+                isAudio = media.isAudio,
+            )
+        }
 
     private suspend fun updateForMedia(media: LibraryMediaSource) =
         coroutineScope {
@@ -300,32 +322,6 @@ class MediaDetailViewModel(
 
         return noteLocation.displayName
             ?: coords?.let { "${it.latitude}, ${it.longitude}" }
-    }
-
-    private fun updateViewerState(
-        libraryMedia: List<LibraryMediaSource>,
-        selectedMediaId: Uuid,
-    ) {
-        val items =
-            libraryMedia.map { media ->
-                MediaViewerItem(
-                    uid = media.id,
-                    uri = media.uri,
-                    isVideo = media.isVideo,
-                    isAudio = media.isAudio,
-                )
-            }
-        val currentIndex =
-            items
-                .indexOfFirst { it.uid == selectedMediaId }
-                .takeIf { it >= 0 }
-                ?: 0
-        _viewerState.value =
-            MediaViewerState(
-                currentIndex = currentIndex,
-                totalItems = items.size,
-                mediaItems = items,
-            )
     }
 
     private fun selectMedia(

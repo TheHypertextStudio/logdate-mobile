@@ -59,9 +59,10 @@ internal fun buildLibraryMediaSources(
                 )
             }
 
+    val indexedUris = indexedSources.mapTo(HashSet()) { it.uri }
     val noteOnlySources =
         noteMediaByUri
-            .filterKeys { uri -> indexedSources.none { it.uri == uri } }
+            .filterKeys { uri -> uri !in indexedUris }
             .values
             .map { noteMedia ->
                 val primary = noteMedia.first()
@@ -78,6 +79,26 @@ internal fun buildLibraryMediaSources(
             }
 
     return (indexedSources + noteOnlySources).sortedByDescending { it.timestamp }
+}
+
+/**
+ * The Library's visible media with constant-time lookup by media id or by the id of a note that
+ * shows it, so moving between items never rebuilds or rescans the whole Library.
+ */
+internal class LibraryMediaIndex(
+    val sources: List<LibraryMediaSource>,
+) {
+    private val positionById: Map<Uuid, Int> =
+        buildMap {
+            sources.forEachIndexed { position, source ->
+                source.matchingNotes.forEach { note -> getOrPut(note.uid) { position } }
+            }
+            sources.forEachIndexed { position, source -> put(source.id, position) }
+        }
+
+    fun positionOf(id: Uuid): Int? = positionById[id]
+
+    fun find(id: Uuid): LibraryMediaSource? = positionOf(id)?.let(sources::get)
 }
 
 private data class LibraryNoteMedia(

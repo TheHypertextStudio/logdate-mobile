@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.media.IndexedMediaRepository
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,11 +13,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.coroutines.CoroutineContext
 
 /**
  * ViewModel for the Library screen.
@@ -28,6 +30,7 @@ import kotlinx.datetime.toLocalDateTime
 class LibraryViewModel(
     private val notesRepository: JournalNotesRepository,
     private val indexedMediaRepository: IndexedMediaRepository,
+    private val workContext: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     private val retryRequests = MutableStateFlow(0)
 
@@ -42,8 +45,8 @@ class LibraryViewModel(
                     indexedMediaRepository.observeAllMedia(),
                     notesRepository.allNotesObserved,
                 ) { indexedMedia, notes ->
-                    buildLibraryMediaSources(indexedMedia, notes)
-                }.map { mediaSources -> toUiState(mediaSources) }
+                    toUiState(buildLibraryMediaSources(indexedMedia, notes))
+                }.flowOn(workContext)
                     .onStart { emit(LibraryUiState.Loading) }
                     .catch { e ->
                         Napier.e("Failed to load library media", e)
@@ -65,11 +68,11 @@ class LibraryViewModel(
             )
         }
 
+    /** Groups media that [buildLibraryMediaSources] already returns newest first. */
     private fun groupByMonth(mediaItems: List<LibraryMediaSource>): List<LibraryGridGroup> {
         val timeZone = TimeZone.currentSystemDefault()
-        val sorted = mediaItems.sortedByDescending { it.timestamp }
         val grouped =
-            sorted.groupBy { media ->
+            mediaItems.groupBy { media ->
                 val localDate = media.timestamp.toLocalDateTime(timeZone)
                 "${localDate.year}-${localDate.month}"
             }
