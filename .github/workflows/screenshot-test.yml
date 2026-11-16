@@ -39,8 +39,10 @@ on:
 # A newer push to the same pull request makes the older run moot, and every
 # lane holds a scarce macOS runner. Runs on main are never cancelled once they
 # start, so each merged change gets its own screenshot result.
+# A pull request run is grouped by its number, not its ref: an event that arrives after the pull
+# request merged reports main as its ref, and would otherwise join main's group and cancel main's run.
 concurrency:
-  group: screenshots-${{ github.ref }}
+  group: screenshots-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
