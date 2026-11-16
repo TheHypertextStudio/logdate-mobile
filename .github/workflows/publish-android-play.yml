@@ -93,6 +93,9 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+
       - name: Resolve Android version
         id: version
         shell: bash
@@ -201,6 +204,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v6.4.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
 
       - name: Resolve Android version
         id: version

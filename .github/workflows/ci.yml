@@ -54,6 +54,12 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
+      # The test aggregate holds more in the Gradle daemon than a single build does.
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+        with:
+          gradle-heap: 6g
+
       # The repository engine's JVM tests verify exported repositories with the AT Protocol
       # reference implementation, which runs on Node.js (tools/atproto-repo-verify).
       - name: Set up pnpm
@@ -215,6 +221,8 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
       - name: Run e2e tests
         env:
           DATABASE_URL: jdbc:postgresql://localhost:5432/logdate
@@ -258,6 +266,12 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      # Android lint and detekt both analyse inside the Gradle daemon.
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+        with:
+          gradle-heap: 6g
 
       - name: Check Home workspace ownership
         run: ./gradlew checkHomeWorkspaceContract
@@ -398,6 +412,9 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
 
       - name: Build server
         run: ./gradlew :server:build -x test -x jacocoTestCoverageVerification

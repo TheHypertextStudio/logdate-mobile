@@ -151,6 +151,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
 
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+
       - name: Prepare Android compile SDK
         shell: bash
         run: |
@@ -203,6 +206,9 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
 
       - name: Prepare native runner capacity
         shell: bash
@@ -514,6 +520,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
 
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+
       - name: Prepare native runner capacity
         shell: bash
         run: |
@@ -702,6 +711,9 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.4.0
+
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
 
       - name: Prepare native runner capacity
         shell: bash

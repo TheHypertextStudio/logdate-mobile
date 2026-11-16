@@ -62,6 +62,9 @@ jobs:
         with:
           cache-read-only: ${{ github.ref_type != 'tag' }}
 
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+
       - name: Resolve ATProto version
         shell: bash
         run: |
