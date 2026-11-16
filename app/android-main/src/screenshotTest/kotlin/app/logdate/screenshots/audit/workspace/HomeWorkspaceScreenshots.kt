@@ -55,7 +55,9 @@ import app.logdate.feature.library.ui.LibraryScreenContent
 import app.logdate.feature.location.timeline.ui.history.HumanLocationHistoryActions
 import app.logdate.feature.location.timeline.ui.history.HumanLocationHistoryContent
 import app.logdate.feature.rewind.ui.RewindScreenContent
+import app.logdate.feature.rewind.ui.overview.RewindOverviewPeriod
 import app.logdate.feature.rewind.ui.overview.RewindOverviewScreenUiState
+import app.logdate.feature.rewind.ui.overview.RewindSceneMemory
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.screenshots.components.home_timeline.HistoryMapFixture
@@ -217,12 +219,37 @@ private fun WorkspaceSceneContent(
                     mostRecentRewind.copy(
                         heroImageUri = "workspace://week-photo",
                         isViewed = false,
-                        highlightedQuote = "I finally made a little room to slow down.",
+                        highlightedQuote = "I took the long way home and stopped by the park.",
+                        memories =
+                            listOf(
+                                RewindSceneMemory.Visual("workspace://week-photo"),
+                                RewindSceneMemory.Writing("I took the long way home and stopped by the park."),
+                                RewindSceneMemory.Recording(42000, "The afternoon outside was worth keeping."),
+                            ),
+                        start = kotlinx.datetime.LocalDate(2026, 10, 26),
+                        end = kotlinx.datetime.LocalDate(2026, 10, 28),
                     ),
-                pastRewinds = pastRewinds,
+                pastRewinds =
+                    pastRewinds.mapIndexed { index, week ->
+                        week.copy(
+                            memories =
+                                listOf(
+                                    RewindSceneMemory.Writing(
+                                        if (index % 2 == 0) {
+                                            "The train was late, so we finally tried the café beside the station."
+                                        } else {
+                                            "Spent the afternoon sketching the next version of the app."
+                                        },
+                                    ),
+                                ),
+                        )
+                    },
             ),
             {
             },
+            selectedPeriod = RewindOverviewPeriod.ThisWeek,
+            onSelectPeriod = {},
+            onRefreshCurrentWeek = {},
         )
     }
 }

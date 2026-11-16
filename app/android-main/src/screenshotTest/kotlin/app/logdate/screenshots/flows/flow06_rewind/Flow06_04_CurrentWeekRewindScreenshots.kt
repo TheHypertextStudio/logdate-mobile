@@ -11,6 +11,7 @@ import app.logdate.feature.rewind.ui.RewindScreenContent
 import app.logdate.feature.rewind.ui.overview.RewindOverviewPeriod
 import app.logdate.feature.rewind.ui.overview.RewindOverviewScreenUiState
 import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
+import app.logdate.feature.rewind.ui.overview.RewindSceneMemory
 import app.logdate.screenshots.common.OsIntegrationPreviewMatrix
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.ui.common.formatting.LocalToday
@@ -52,6 +53,15 @@ fun S01_CurrentWeekRewindReady() {
                                 rewindAvailable = true,
                                 entryCount = 3,
                                 photoCount = 1,
+                                audioCount = 1,
+                                memories =
+                                    listOf(
+                                        RewindSceneMemory.Visual(
+                                            "android.resource://studio.hypertext.logdate.debug/drawable/workspace_sample_photo",
+                                        ),
+                                        RewindSceneMemory.Writing("I took the long way home and stopped by the park."),
+                                        RewindSceneMemory.Recording(42000, "A few thoughts from the walk home."),
+                                    ),
                                 heroImageUri = "android.resource://studio.hypertext.logdate.debug/drawable/workspace_sample_photo",
                             ),
                     ),
@@ -79,6 +89,45 @@ fun S02_CurrentWeekRewindEmpty() {
                 selectedPeriod = RewindOverviewPeriod.ThisWeek,
                 onSelectPeriod = {},
                 onCreateMemory = {},
+                firstDayOfWeek = DayOfWeek.MONDAY,
+            )
+        }
+    }
+}
+
+@PreviewTest
+@OsIntegrationPreviewMatrix
+@Composable
+fun S03_CurrentWeekTextMemories() {
+    ScreenshotTheme {
+        CompositionLocalProvider(
+            LocalToday provides LocalDate(2026, 10, 28),
+        ) {
+            RewindScreenContent(
+                state =
+                    RewindOverviewScreenUiState.Ready(
+                        pastRewinds = emptyList(),
+                        mostRecentRewind =
+                            RewindPreviewUiState(
+                                rewindId = Uuid.parse("00000000-0000-0000-0000-000000000044"),
+                                message = "A quiet walk and a slower morning.",
+                                label = "This week so far",
+                                title = "October 26–28",
+                                start = LocalDate(2026, 10, 26),
+                                end = LocalDate(2026, 10, 28),
+                                rewindAvailable = true,
+                                highlightedQuote = "I took the long way home and stopped by the park.",
+                                memories =
+                                    listOf(
+                                        RewindSceneMemory.Writing("I took the long way home and stopped by the park."),
+                                        RewindSceneMemory.Writing("A slower start. The walk was worth keeping."),
+                                    ),
+                            ),
+                    ),
+                onOpenRewind = {},
+                selectedPeriod = RewindOverviewPeriod.ThisWeek,
+                onSelectPeriod = {},
+                onRefreshCurrentWeek = {},
                 firstDayOfWeek = DayOfWeek.MONDAY,
             )
         }

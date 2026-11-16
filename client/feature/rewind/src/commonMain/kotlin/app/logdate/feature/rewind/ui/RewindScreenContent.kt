@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +29,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,10 +42,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,12 +56,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.logdate.feature.rewind.ui.components.RewindCoverCard
+import app.logdate.feature.rewind.ui.components.RewindWeekScene
 import app.logdate.feature.rewind.ui.detail.rewindAccentColor
 import app.logdate.feature.rewind.ui.overview.RewindHistoryUiState
 import app.logdate.feature.rewind.ui.overview.RewindOverviewPeriod
@@ -68,7 +77,6 @@ import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.workspace.PanelContainment
 import app.logdate.ui.workspace.WorkspacePanel
-import app.logdate.ui.workspace.WorkspaceSectionSwitch
 import app.logdate.util.getLocaleFirstDayOfWeek
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
@@ -87,30 +95,7 @@ import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-/**
- * The main rewind screen content that displays a vertically scrollable list of floating cards.
- *
- * Each card represents a weekly rewind with snap-to-center scrolling behavior. The design ensures
- * there's always at least one card visible, including a placeholder for the current week when no
- * rewind is ready yet.
- *
- * ## UX Design Principles:
- * - **Always Visible Content**: Never shows empty state - current week placeholder ensures floating
- *   card design is always showcased
- * - **Instagram Story-like Navigation**: Vertical scrolling with cards snapping to screen center
- * - **Visual Hierarchy**: Ready cards are vibrant and clickable, pending cards are muted
- * - **Progressive Disclosure**: Visual affordances guide users to scroll for more content
- *
- * ## Interaction Model:
- * - **Snap Scrolling**: Cards automatically center when user stops scrolling
- * - **State-Aware Clicks**: Only available rewinds are interactive
- * - **Next Card Indicator**: Floating button shows when more cards are available below
- * - **End Surprise**: Celebration message appears when user reaches the bottom
- *
- * @param state The current UI state containing rewind data
- * @param onOpenRewind Callback invoked when user taps on an available rewind card
- * @param modifier Modifier for customizing the appearance and behavior
- */
+/** Scrollable weekly entry cards. Opening playback remains an explicit action on a saved story. */
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 fun RewindScreenContent(
@@ -178,7 +163,6 @@ fun RewindScreenContent(
                     listOf(
                         state.mostRecentRewind.copy(
                             label = currentWeekLabel,
-                            title = if (isThisWeek) currentWeekTitle else state.mostRecentRewind.title,
                         ),
                     ) + state.pastRewinds.map { it.toPreview() }
                 }
@@ -246,22 +230,37 @@ fun RewindScreenContent(
             if (hasWeeklyInPreviousYear && !annualAlreadyExists) previousYear else null
         }
 
-    val reduceMotion by rememberSystemReduceMotion()
+    var focusedWeek by remember { mutableStateOf<RewindPreviewUiState?>(null) }
+    var jumpRevision by rememberSaveable { mutableIntStateOf(0) }
     WorkspacePanel(modifier, containment = PanelContainment.Collection) {
         Column(Modifier.fillMaxSize()) {
-            PeriodControls(state, selectedPeriod, onSelectPeriod, onRefreshCurrentWeek)
+            PeriodControls(
+                state,
+                selectedPeriod,
+                onSelectPeriod?.let { choose ->
+                    { period ->
+                        jumpRevision++
+                        choose(period)
+                    }
+                },
+                onRefreshCurrentWeek,
+                focusedRewindId = focusedWeek?.rewindId,
+            )
             RewindCardScrollPane(
-                rewinds = uniqueRewindPreviews(rewindItems),
+                rewinds = uniqueRewindPreviews(rewindItems).sortedByDescending { it.start },
+                initialRewindId = rewindItems.firstOrNull()?.rewindId,
+                scrollRequest = jumpRevision,
+                onFocusedRewind = { focusedWeek = it },
                 onOpenRewind = onOpenRewind,
                 annualRewindYear = annualRewindYear,
                 onGenerateAnnualRewind = onGenerateAnnualRewind,
-                animateCards = !reduceMotion,
+                showEndOfListSurprise = false,
+                showNextCardIndicator = false,
+                animateCards = false,
                 modifier = Modifier.weight(1f),
             )
             if (state is RewindOverviewScreenUiState.NotReady && !state.isGeneratingRewind && preparationAction != null) {
-                Button(onClick = preparationAction, modifier = Modifier.padding(Spacing.lg)) {
-                    Text(preparationLabel)
-                }
+                Button(onClick = preparationAction, modifier = Modifier.padding(Spacing.lg)) { Text(preparationLabel) }
             }
         }
     }
@@ -273,34 +272,87 @@ private fun PeriodControls(
     selectedPeriod: RewindOverviewPeriod,
     onSelectPeriod: ((RewindOverviewPeriod) -> Unit)?,
     onRefreshCurrentWeek: (() -> Unit)?,
+    focusedRewindId: Uuid? = null,
 ) {
     if (onSelectPeriod == null) return
+    var showWeeks by remember { mutableStateOf(false) }
+    val jumpLabel = stringResource(Res.string.rewind_jump_week)
+    var showOptions by remember(selectedPeriod) { mutableStateOf(false) }
+    val currentWeek =
+        (state as? RewindOverviewScreenUiState.Ready)
+            ?.takeIf {
+                selectedPeriod == RewindOverviewPeriod.ThisWeek &&
+                    onRefreshCurrentWeek != null &&
+                    (focusedRewindId == null || focusedRewindId == it.mostRecentRewind.rewindId)
+            }
     Column(Modifier.fillMaxWidth().padding(horizontal = Spacing.md)) {
-        FlowRow(
+        Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            WorkspaceSectionSwitch(
-                labels = listOf(stringResource(Res.string.rewind_last_week), stringResource(Res.string.rewind_this_week_so_far)),
-                selectedIndex = selectedPeriod.ordinal,
-                onSelect = { onSelectPeriod(RewindOverviewPeriod.entries[it]) },
-            )
-            if (selectedPeriod == RewindOverviewPeriod.ThisWeek &&
-                state is RewindOverviewScreenUiState.Ready &&
-                onRefreshCurrentWeek != null
-            ) {
-                TextButton(onClick = onRefreshCurrentWeek, enabled = !state.isRefreshing) {
-                    Text(stringResource(if (state.isRefreshing) Res.string.rewind_updating else Res.string.rewind_update))
+            Box(Modifier.weight(1f)) {
+                TextButton(onClick = { showWeeks = true }, modifier = Modifier.semantics { contentDescription = jumpLabel }) {
+                    Text(stringResource(Res.string.rewind_weeks))
+                    Icon(PlatformIcons.expandMore(), contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+                DropdownMenu(expanded = showWeeks, onDismissRequest = { showWeeks = false }) {
+                    RewindOverviewPeriod.entries.forEach { period ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    stringResource(
+                                        if (period ==
+                                            RewindOverviewPeriod.ThisWeek
+                                        ) {
+                                            Res.string.rewind_this_week_so_far
+                                        } else {
+                                            Res.string.rewind_last_week
+                                        },
+                                    ),
+                                )
+                            },
+                            onClick = {
+                                showWeeks = false
+                                onSelectPeriod(period)
+                            },
+                        )
+                    }
+                }
+            }
+            if (currentWeek != null) {
+                Box {
+                    IconButton(onClick = { showOptions = true }) {
+                        Icon(PlatformIcons.more(), stringResource(Res.string.rewind_options))
+                    }
+                    DropdownMenu(expanded = showOptions, onDismissRequest = { showOptions = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.rewind_update)) },
+                            enabled = !currentWeek.isRefreshing,
+                            onClick = {
+                                showOptions = false
+                                onRefreshCurrentWeek?.invoke()
+                            },
+                        )
+                    }
                 }
             }
         }
-        if (state is RewindOverviewScreenUiState.Ready && state.refreshFailed) {
+        if (currentWeek?.isRefreshing == true) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                Text(stringResource(Res.string.rewind_updating), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        if (currentWeek?.refreshFailed == true) {
             Text(
                 stringResource(Res.string.rewind_update_failed),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
             )
+            TextButton(onClick = { onRefreshCurrentWeek?.invoke() }) {
+                Text(stringResource(Res.string.rewind_retry_generation))
+            }
         }
     }
 }
@@ -311,18 +363,42 @@ private fun RewindCardScrollPane(
     onOpenRewind: RewindOpenCallback,
     annualRewindYear: Int? = null,
     onGenerateAnnualRewind: ((year: Int) -> Unit)? = null,
+    initialRewindId: Uuid? = null,
+    scrollRequest: Int = 0,
+    onFocusedRewind: ((RewindPreviewUiState) -> Unit)? = null,
+    showEndOfListSurprise: Boolean = true,
+    showNextCardIndicator: Boolean = true,
     animateCards: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
+    val selectedIndex = rewinds.indexOfFirst { it.rewindId == initialRewindId }.coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
+    var handledAnchor by rememberSaveable { mutableStateOf<String?>(null) }
+    var handledRequest by rememberSaveable { mutableIntStateOf(-1) }
+    LaunchedEffect(initialRewindId, scrollRequest) {
+        val anchor = initialRewindId?.toString()
+        if (anchor != null && (anchor != handledAnchor || scrollRequest != handledRequest)) {
+            listState.scrollToItem(selectedIndex)
+            handledAnchor = anchor
+            handledRequest = scrollRequest
+        }
+    }
+    val focusedIndex by remember(listState) {
+        derivedStateOf {
+            val layout = listState.layoutInfo
+            val center = (layout.viewportStartOffset + layout.viewportEndOffset) / 2f
+            layout.visibleItemsInfo.minByOrNull { abs(it.offset + it.size / 2f - center) }?.index ?: selectedIndex
+        }
+    }
+    val focusedRewind = rewinds.getOrNull(focusedIndex)
+    LaunchedEffect(focusedRewind) { focusedRewind?.let { onFocusedRewind?.invoke(it) } }
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
     val animateEntrance = animateCards && !LocalInspectionMode.current
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val coverLayout = rewindCoverLayout(maxWidth, maxHeight)
-        val cardWidth = coverLayout.width
-        val cardHeight = coverLayout.height
-        val framing = coverLayout.framing
+        val cardHeight = (maxHeight * .88f).coerceAtMost(840.dp)
+        val framing = 0.dp
         val indicatorBottom = (framing - Spacing.xxxl).coerceAtLeast(Spacing.lg)
 
         // Track which card indices have already played their entrance animation,
@@ -339,11 +415,11 @@ private fun RewindCardScrollPane(
                     top = framing,
                     bottom = framing,
                 ),
-            verticalArrangement = Arrangement.spacedBy(Spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize(),
         ) {
-            itemsIndexed(rewinds) { index, rewind ->
+            itemsIndexed(rewinds, key = { _, rewind -> rewind.rewindId }) { index, rewind ->
                 val alreadyAnimated = index in animatedIndices
                 var visible by remember { mutableStateOf(!animateEntrance || alreadyAnimated) }
                 LaunchedEffect(animateEntrance) {
@@ -365,8 +441,13 @@ private fun RewindCardScrollPane(
                         onOpenRewind = onOpenRewind,
                         listState = listState,
                         index = index,
-                        cardHeight = cardHeight,
-                        modifier = Modifier.widthIn(max = cardWidth).fillMaxWidth(),
+                        cardHeight = if (!rewind.rewindAvailable) coverLayout.height else cardHeight,
+                        modifier =
+                            if (!rewind.rewindAvailable) {
+                                Modifier.widthIn(max = coverLayout.width).fillMaxWidth()
+                            } else {
+                                Modifier.widthIn(max = 1120.dp).fillMaxWidth()
+                            },
                     )
                 }
             }
@@ -409,24 +490,28 @@ private fun RewindCardScrollPane(
             }
 
             // Surprise ending item
-            item {
-                EndOfListSurprise(
-                    listState = listState,
-                    itemCount = rewinds.size,
-                    cardHeight = cardHeight,
-                    modifier = Modifier.widthIn(max = cardWidth).fillMaxWidth(),
-                )
+            if (showEndOfListSurprise) {
+                item {
+                    EndOfListSurprise(
+                        listState = listState,
+                        itemCount = rewinds.size,
+                        cardHeight = cardHeight,
+                        modifier = Modifier.widthIn(max = maxWidth).fillMaxWidth(),
+                    )
+                }
             }
         }
 
-        NextCardIndicator(
-            listState = listState,
-            itemCount = rewinds.size,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(start = Spacing.lg, end = Spacing.lg, bottom = indicatorBottom, top = Spacing.lg),
-        )
+        if (showNextCardIndicator) {
+            NextCardIndicator(
+                listState = listState,
+                itemCount = rewinds.size,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(start = Spacing.lg, end = Spacing.lg, bottom = indicatorBottom, top = Spacing.lg),
+            )
+        }
     }
 }
 
@@ -464,6 +549,10 @@ fun FloatingRewindCard(
     cardHeight: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
+    if (rewind.rewindAvailable) {
+        RewindWeekScene(rewind, onOpenRewind, modifier.height(cardHeight))
+        return
+    }
     val reduceMotion by rememberSystemReduceMotion()
     val elevation by remember(listState, index, reduceMotion) {
         derivedStateOf {
@@ -946,5 +1035,6 @@ private fun RewindHistoryUiState.toPreview(): RewindPreviewUiState =
         heroImageUri = heroImageUri,
         highlightedQuote = highlightedQuote,
         dominantActivity = dominantActivity,
+        memories = memories,
         milestone = milestone,
     )

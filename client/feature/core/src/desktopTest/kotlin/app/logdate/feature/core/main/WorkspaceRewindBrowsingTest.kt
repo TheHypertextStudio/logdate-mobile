@@ -2,9 +2,15 @@ package app.logdate.feature.core.main
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import app.logdate.feature.rewind.ui.RewindScreenContent
 import app.logdate.feature.rewind.ui.overview.RewindHistoryUiState
@@ -24,10 +30,14 @@ class WorkspaceRewindBrowsingTest {
             val current = Uuid.random()
             val previous = Uuid.random()
             val date = LocalDate(2026, 9, 20)
+            val previousDate = LocalDate(2026, 9, 13)
             var opened: Uuid? = null
             val state =
                 RewindOverviewScreenUiState.Ready(
-                    pastRewinds = listOf(RewindHistoryUiState(previous, "Previous story", "Last week", date, date, "A quiet week")),
+                    pastRewinds =
+                        listOf(
+                            RewindHistoryUiState(previous, "Previous story", "Last week", previousDate, previousDate, "A quiet week"),
+                        ),
                     mostRecentRewind =
                         RewindPreviewUiState(
                             "A week outside",
@@ -46,8 +56,10 @@ class WorkspaceRewindBrowsingTest {
                     }
                 }
             }
-            onNodeWithContentDescription("More rewinds below").performClick()
-            onNodeWithText("Previous story").performClick()
+            onNode(hasScrollAction()).performScrollToNode(hasText("Previous story"))
+            onNodeWithText("Previous story").assertIsDisplayed()
+            assertEquals(null, opened, "Scrolling to a week must not open playback")
+            onAllNodesWithText("Play Rewind").onLast().performScrollTo().performClick()
             assertEquals(previous, opened)
         }
 }

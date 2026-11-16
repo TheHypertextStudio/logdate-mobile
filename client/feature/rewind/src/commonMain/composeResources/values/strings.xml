@@ -127,11 +127,16 @@
   >Save a memory this week, then come back to see your Rewind.</string>
     <string name="rewind_create_selected_week">Create Rewind</string>
     <string name="rewind_add_memory">Add a memory</string>
-    <string name="rewind_update">Update Rewind</string>
-    <string name="rewind_updating">Updating…</string>
+    <string name="rewind_recording_memory">Voice memory</string>
+    <string name="rewind_weeks">Weeks</string>
+    <string name="rewind_jump_week">Jump to week</string>
+    <string name="rewind_options">Rewind options</string>
+    <string name="rewind_open">Play Rewind</string>
+    <string name="rewind_update">Include latest memories</string>
+    <string name="rewind_updating">Including latest memories…</string>
     <string
     name="rewind_update_failed"
-  >Your saved Rewind is still here. The update couldn&apos;t be finished. Try again.</string>
+  >Couldn&apos;t include the latest memories. Your saved Rewind is still available.</string>
     <string name="rewind_current_week_label">This Week</string>
     <string name="rewind_current_week_title">This week&apos;s story</string>
     <string name="rewind_loading_message">Loading your rewinds...</string>
