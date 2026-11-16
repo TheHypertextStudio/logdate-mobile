@@ -65,6 +65,29 @@ class HistoryOwnerAdoptionDaoTest {
             }
         }
 
+    @Test
+    fun `adoption moves every page of history and rewrites each record once`() =
+        runTest {
+            val database = Room.inMemoryDatabaseBuilder<LogDateDatabase>().setDriver(BundledSQLiteDriver()).build()
+            try {
+                val records = database.historyRecordDao()
+                val ids = (1..250).map { "record-$it" }
+                ids.forEach { records.upsert(row("old", "origin", it)) }
+                val rewritten = mutableListOf<String>()
+
+                database.historyOwnerAdoptionDao().adopt("old", "new", "origin", "device") { source ->
+                    rewritten += source.id
+                    source.copy(ownerId = "new", payload = "rewritten")
+                }
+
+                assertEquals(ids.sorted(), rewritten.sorted())
+                assertTrue(ids.all { records.record("old", "origin", it) == null })
+                assertTrue(ids.all { records.record("new", "origin", it)?.payload == "rewritten" })
+            } finally {
+                database.close()
+            }
+        }
+
     private fun location(
         id: String,
         owner: String,
