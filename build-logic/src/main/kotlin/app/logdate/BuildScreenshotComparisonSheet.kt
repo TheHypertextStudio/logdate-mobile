@@ -25,7 +25,8 @@ abstract class BuildScreenshotComparisonSheet : DefaultTask() {
 
     @get:Internal abstract val outputDirectory: DirectoryProperty
 
-    @get:Input @get:Optional abstract val feature: Property<String>
+    @get:Input @get:Optional
+    abstract val feature: Property<String>
 
     init {
         doNotTrackState("Reads reference images named in the registry, which can change outside Gradle")
@@ -40,7 +41,17 @@ abstract class BuildScreenshotComparisonSheet : DefaultTask() {
                 desktopReferences = desktopReferences.get().asFile,
             )
         val byFeature = ScreenshotCoverage.parseRegistry(registry.get().asFile.readLines()).groupBy { it.feature }
-        val selected = feature.orNull?.let { name -> mapOf(name to (byFeature[name] ?: throw GradleException("No feature '$name' in the registry. Known: ${byFeature.keys.sorted()}"))) } ?: byFeature
+        val selected =
+            feature.orNull?.let { name ->
+                mapOf(
+                    name to (
+                        byFeature[name] ?: throw GradleException(
+                            "No feature '$name' in the registry. Known: ${byFeature.keys.sorted()}",
+                        )
+                    ),
+                )
+            }
+                ?: byFeature
 
         selected.forEach { (name, requirements) ->
             val tiles = ScreenshotComparisonSheet.tilesFor(requirements, roots)

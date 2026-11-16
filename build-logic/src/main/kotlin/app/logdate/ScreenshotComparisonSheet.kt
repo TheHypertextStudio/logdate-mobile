@@ -122,24 +122,37 @@ object ScreenshotComparisonSheet {
                         .orEmpty()
                         .sortedBy { it.name }
                         .map { file ->
-                            val configuration = file.name.removePrefix("${requirement.function}_").substringBeforeLast('_').substringBeforeLast('_')
+                            val configuration =
+                                file.name
+                                    .removePrefix(
+                                        "${requirement.function}_",
+                                    ).substringBeforeLast('_')
+                                    .substringBeforeLast('_')
                             SheetTile("Android ${requirement.function}: $configuration", file)
                         }
                 }
-                is ScreenshotCoverage.Requirement.DesktopScene ->
+
+                is ScreenshotCoverage.Requirement.DesktopScene -> {
                     roots.desktopReferences
                         .listFiles { file -> file.extension == "png" && file.name.startsWith("${requirement.sceneId}--") }
                         .orEmpty()
                         .sortedBy { it.name }
-                        .map { file -> SheetTile("Desktop ${requirement.sceneId}: ${file.nameWithoutExtension.substringAfter("--")}", file) }
-                is ScreenshotCoverage.Requirement.SystemCapture ->
+                        .map { file ->
+                            SheetTile("Desktop ${requirement.sceneId}: ${file.nameWithoutExtension.substringAfter("--")}", file)
+                        }
+                }
+
+                is ScreenshotCoverage.Requirement.SystemCapture -> {
                     if (requirement.path.endsWith(".png")) {
                         listOf(SheetTile("System ${requirement.path}", roots.repoRoot.resolve(requirement.path)))
                     } else {
                         emptyList()
                     }
-                is ScreenshotCoverage.Requirement.GlanceReference ->
+                }
+
+                is ScreenshotCoverage.Requirement.GlanceReference -> {
                     listOf(SheetTile("Glance ${requirement.path}", roots.repoRoot.resolve(requirement.path)))
+                }
             }
         }
 }

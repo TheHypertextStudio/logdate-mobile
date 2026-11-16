@@ -83,7 +83,11 @@ class GenerateConformanceFixturesBuildTest {
     private fun BuildResult.outcome(): TaskOutcome? = task(":embed")?.outcome
 
     private fun buildScript(): String {
-        val taskClasses = File(GenerateConformanceFixtures::class.java.protectionDomain.codeSource.location.toURI())
+        val taskClasses =
+            File(
+                GenerateConformanceFixtures::class.java.protectionDomain.codeSource.location
+                    .toURI(),
+            )
         return """
             buildscript {
                 dependencies { classpath(files("${taskClasses.invariantSeparatorsPath}")) }

@@ -80,10 +80,22 @@ object ScreenshotCoverage {
                         }
                         Requirement.AndroidPreview(feature, sourcePath, function)
                     }
-                    "desktop" -> Requirement.DesktopScene(feature, target)
-                    "system" -> Requirement.SystemCapture(feature, target)
-                    "glance" -> Requirement.GlanceReference(feature, target)
-                    else -> throw IllegalArgumentException("Unknown screenshot lane '$lane': $line")
+
+                    "desktop" -> {
+                        Requirement.DesktopScene(feature, target)
+                    }
+
+                    "system" -> {
+                        Requirement.SystemCapture(feature, target)
+                    }
+
+                    "glance" -> {
+                        Requirement.GlanceReference(feature, target)
+                    }
+
+                    else -> {
+                        throw IllegalArgumentException("Unknown screenshot lane '$lane': $line")
+                    }
                 }
             }
 
@@ -178,7 +190,8 @@ object ScreenshotCoverage {
         val annotations = annotationsBefore(source, declaration.range.first)
         if ("@$MATRIX" !in annotations) return listOf("$label must use @$MATRIX")
 
-        val required = previewNames(matrixSource, MATRIX) + if ("@$BUBBLE" in annotations) previewNames(matrixSource, BUBBLE) else emptyList()
+        val required =
+            previewNames(matrixSource, MATRIX) + if ("@$BUBBLE" in annotations) previewNames(matrixSource, BUBBLE) else emptyList()
         val referenceDirectory =
             roots.androidReferences
                 .resolve(requirement.sourcePath.substringBeforeLast('/', missingDelimiterValue = ""))
@@ -203,14 +216,21 @@ object ScreenshotCoverage {
     ): List<String> {
         val file = roots.repoRoot.resolve(requirement.path)
         return when (file.extension) {
-            "png" -> verifyPng(requirement.feature, file, requirement.path)
-            "txt" ->
+            "png" -> {
+                verifyPng(requirement.feature, file, requirement.path)
+            }
+
+            "txt" -> {
                 if (file.isFile && file.readText().isNotBlank()) {
                     emptyList()
                 } else {
                     listOf("${requirement.feature}: text evidence ${requirement.path} is missing or empty")
                 }
-            else -> listOf("${requirement.feature}: system capture ${requirement.path} must be a .png image or .txt evidence")
+            }
+
+            else -> {
+                listOf("${requirement.feature}: system capture ${requirement.path} must be a .png image or .txt evidence")
+            }
         }
     }
 
@@ -221,7 +241,14 @@ object ScreenshotCoverage {
     ): List<String> =
         when {
             !file.isFile -> listOf("$feature: $path does not exist")
-            !file.readBytes().take(pngSignature.size).toByteArray().contentEquals(pngSignature) -> listOf("$feature: $path is not a PNG image")
+
+            !file
+                .readBytes()
+                .take(
+                    pngSignature.size,
+                ).toByteArray()
+                .contentEquals(pngSignature) -> listOf("$feature: $path is not a PNG image")
+
             else -> emptyList()
         }
 

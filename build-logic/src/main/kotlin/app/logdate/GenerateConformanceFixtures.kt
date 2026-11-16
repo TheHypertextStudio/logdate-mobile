@@ -61,7 +61,11 @@ abstract class GenerateConformanceFixtures : DefaultTask() {
         val notJson = selected.filter { it.extension != "json" }
         check(notJson.isEmpty()) { "Only .json fixtures can be embedded, not ${notJson.map { it.name }}" }
 
-        val files = selected.sortedBy { it.relativeTo(base).invariantSeparatorsPath }.associate { it.relativeTo(base).invariantSeparatorsPath to it.readText() }
+        val files =
+            selected.sortedBy { it.relativeTo(base).invariantSeparatorsPath }.associate {
+                it.relativeTo(base).invariantSeparatorsPath to
+                    it.readText()
+            }
         val output = outputDirectory.get().asFile.resolve(packageName.get().replace('.', '/'))
         output.deleteRecursively()
         output.mkdirs()
