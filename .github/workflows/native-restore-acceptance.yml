@@ -103,8 +103,10 @@ on:
   workflow_dispatch:
 
 # Superseded PR runs use disposable hosted emulators and can release their runners.
+# A pull request run is grouped by its number, not its ref: an event that arrives after the pull
+# request merged reports main as its ref, and would otherwise join main's group and cancel main's run.
 concurrency:
-  group: native-restore-${{ github.ref }}
+  group: native-restore-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
