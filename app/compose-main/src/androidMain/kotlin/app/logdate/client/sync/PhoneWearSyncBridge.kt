@@ -3,6 +3,7 @@ package app.logdate.client.sync
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import app.logdate.client.domain.watch.WindowBudget
 import app.logdate.client.media.device.MediaDeviceSelectionUiState
 import app.logdate.client.media.storage.MediaFileResolver
 import app.logdate.client.media.storage.androidMediaFileResolver
@@ -73,8 +74,9 @@ class DefaultPhoneWearSyncBridge(
     private val transport: PhoneWearTransport,
     private val audioStreamOpener: PhoneAudioStreamOpener,
 ) : PhoneWearSyncBridge {
+    /** Sends the newest notes up to the watch library's item budget, never the whole library. */
     override suspend fun publishNotesToWatch(sourceNodeId: String) {
-        val notes = notesRepository.allNotesObserved.first()
+        val notes = notesRepository.observeNotesStream(WindowBudget.DEFAULT_MAX_ITEMS).first()
         for (note in notes) {
             val sent =
                 transport.putDataItem(

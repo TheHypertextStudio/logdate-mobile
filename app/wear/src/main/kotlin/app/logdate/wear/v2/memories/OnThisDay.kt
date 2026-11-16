@@ -8,6 +8,9 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.wear.v2.library.LibraryWindow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.LocalDate
 
@@ -31,14 +34,39 @@ class OnThisDayFinder(
     private val recall: suspend () -> MemoryRecallData?,
     private val notesRepository: JournalNotesRepository,
 ) {
+    /**
+     * Picks the day again when an entry arrives or leaves, and follows edits to that day's moments
+     * without reading every note on the watch.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun observe(today: LocalDate): Flow<OnThisDay?> = notesRepository.allNotesObserved.mapLatest { find(today) }
+    fun observe(today: LocalDate): Flow<OnThisDay?> =
+        notesRepository
+            .observeEntryTimestamps()
+            .distinctUntilChanged()
+            .mapLatest { recall() }
+            .distinctUntilChanged { old, new -> old?.date == new?.date }
+            .flatMapLatest { memory ->
+                if (memory == null) {
+                    flowOf(null)
+                } else {
+                    notesRepository.observeNotesForDay(memory.date).mapLatest { notes ->
+                        build(today, recall()?.takeIf { it.date == memory.date } ?: memory, notes)
+                    }
+                }
+            }
 
     suspend fun find(today: LocalDate): OnThisDay? {
         val memory = recall() ?: return null
+        return build(today, memory, notesRepository.getNotesForDay(memory.date))
+    }
+
+    private fun build(
+        today: LocalDate,
+        memory: MemoryRecallData,
+        notes: List<JournalNote>,
+    ): OnThisDay? {
         val moments =
-            notesRepository
-                .getNotesForDay(memory.date)
+            notes
                 .filter(LibraryWindow::isLibraryMoment)
                 .sortedBy(JournalNote::creationTimestamp)
         val lead = moments.firstOrNull { it is JournalNote.Audio } ?: moments.firstOrNull() ?: return null

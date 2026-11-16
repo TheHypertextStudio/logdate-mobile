@@ -92,7 +92,7 @@ class FlowViewModelTest {
     @Test
     fun `a failure reading notes shows the failed state`() =
         runTest {
-            every { notesRepository.allNotesObserved } returns flow { throw IOException("database closed") }
+            every { notesRepository.observeNotesInRange(any(), any()) } returns flow { throw IOException("database closed") }
 
             FlowViewModel(dayClock, notesRepository).uiState.test {
                 assertEquals(FlowUiState.Failed, expectMostRecentItem())
@@ -100,7 +100,11 @@ class FlowViewModelTest {
         }
 
     private fun stubWindow(vararg notes: JournalNote) {
-        every { notesRepository.allNotesObserved } returns flowOf(notes.toList())
+        every { notesRepository.observeNotesInRange(any(), any()) } answers {
+            val start = firstArg<Instant>()
+            val end = secondArg<Instant>()
+            flowOf(notes.filter { it.creationTimestamp >= start && it.creationTimestamp < end })
+        }
     }
 
     private fun at(local: LocalDateTime): Instant = local.toInstant(zone)

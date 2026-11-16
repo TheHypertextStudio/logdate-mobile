@@ -3,7 +3,6 @@ package app.logdate.client.sync.v2.window
 import app.logdate.client.domain.streak.nextStreakDayStart
 import app.logdate.client.domain.watch.WatchWindowPolicy
 import app.logdate.client.domain.watch.WatchWindowPreferences
-import app.logdate.client.domain.watch.WindowCandidate
 import app.logdate.client.domain.watch.WindowMember
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.JournalNotesRepository
@@ -148,10 +147,13 @@ class WatchWindowPublisher(
     private suspend fun publish(peer: PeerDeliveryContext): WindowPublishResult {
         val now = clock.now()
         val selection = preferences()
-        val all = notes.allNotesObserved.first().associateBy { it.uid }
-        val bodies = all.mapValues { (_, note) -> NoteEnvelopeBody.encode(note, mapper) }
-        val candidates = all.values.map { WindowCandidate(it.uid, it.creationTimestamp, bodies.getValue(it.uid).sizeBytes()) }
-        val plan = policy.choose(candidates, extras.ids(), now, zone(), dayStartHour(), selection)
+        val window =
+            selectWindow(notes.allNotesObserved.first(), policy, extras.ids(), now, zone(), dayStartHour(), selection) { note ->
+                NoteEnvelopeBody.encode(note, mapper)
+            }
+        val plan = window.plan
+        val all = window.notes
+        val bodies = window.bodies
         if (plan.dropped > 0) Napier.w("${plan.dropped} note(s) do not fit the watch's library window; the most recent are chosen")
         requireCurrent(peer)
         val previous = manifest.read(peer)
@@ -397,8 +399,6 @@ class WatchWindowPublisher(
             Napier.e("Could not publish the watch's library window; it is published again on the next change", e)
         }
     }
-
-    private fun JsonElement.sizeBytes(): Long = toString().encodeToByteArray().size.toLong()
 
     private class Counts {
         var written = 0

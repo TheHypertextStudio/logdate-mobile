@@ -7,11 +7,11 @@ import app.logdate.client.repository.rewind.RewindRepository
 import app.logdate.shared.model.Rewind
 import app.logdate.shared.model.RewindContent
 import app.logdate.wear.v2.today.TodayWindow
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -37,14 +37,14 @@ class WeeklyRewindSourceTest {
     private val walk = JournalNote.Audio(mediaRef = "v.m4a", durationMs = 30_000L, creationTimestamp = at, lastUpdated = at)
 
     init {
-        every { notesRepository.allNotesObserved } returns flowOf(emptyList())
+        every { notesRepository.observeNoteById(any()) } returns flowOf(null)
     }
 
     @Test
     fun `verified window sources show a Rewind without copying the phone Rewind database`() =
         runTest {
             every { rewinds.getAllRewinds() } returns flowOf(emptyList())
-            every { notesRepository.allNotesObserved } returns flowOf(listOf(walk))
+            every { notesRepository.observeNoteById(walk.uid) } returns flowOf(walk)
             WeeklyRewindSource(rewinds, notesRepository, windowRewind = { setOf(walk.uid) }).observe(today).test {
                 assertEquals(walk, awaitItem()?.leadMoment)
                 awaitComplete()
@@ -55,7 +55,7 @@ class WeeklyRewindSourceTest {
     fun `empty verified selection suppresses stale legacy Rewinds`() =
         runTest {
             every { rewinds.getAllRewinds() } returns flowOf(listOf(rewind("Old", LocalDate(2026, 10, 4), walk.uid)))
-            every { notesRepository.allNotesObserved } returns flowOf(listOf(walk))
+            every { notesRepository.observeNoteById(walk.uid) } returns flowOf(walk)
             WeeklyRewindSource(rewinds, notesRepository, windowRewind = { emptySet() }).observe(today).test {
                 assertNull(awaitItem())
                 awaitComplete()
@@ -66,8 +66,10 @@ class WeeklyRewindSourceTest {
     fun `an existing rewind subscription follows edits and deletes of its lead`() =
         runTest {
             val notes = MutableStateFlow<List<JournalNote>>(listOf(walk))
-            every { notesRepository.allNotesObserved } returns notes
-            coEvery { notesRepository.getNoteById(any()) } answers { notes.value.firstOrNull { it.uid == firstArg() } }
+            every { notesRepository.observeNoteById(any()) } answers {
+                val id = firstArg<Uuid>()
+                notes.map { current -> current.firstOrNull { it.uid == id } }
+            }
             every { rewinds.getAllRewinds() } returns flowOf(listOf(rewind("A quiet week", LocalDate(2026, 10, 4), walk.uid)))
             WeeklyRewindSource(rewinds, notesRepository).observe(today).test {
                 assertEquals(walk, awaitItem()?.leadMoment)
@@ -84,8 +86,7 @@ class WeeklyRewindSourceTest {
         runTest {
             val missing = Uuid.random()
             val photo = Uuid.random()
-            coEvery { notesRepository.getNoteById(missing) } returns null
-            coEvery { notesRepository.getNoteById(walk.uid) } returns walk
+            every { notesRepository.observeNoteById(walk.uid) } returns flowOf(walk)
             every { rewinds.getAllRewinds() } returns
                 flowOf(
                     listOf(
@@ -121,7 +122,6 @@ class WeeklyRewindSourceTest {
     fun `a Rewind with none of its moments on the watch has no card`() =
         runTest {
             val gone = Uuid.random()
-            coEvery { notesRepository.getNoteById(gone) } returns null
             every { rewinds.getAllRewinds() } returns flowOf(listOf(rewind("A quiet week", endedOn = LocalDate(2026, 10, 4), gone)))
 
             WeeklyRewindSource(rewinds, notesRepository).observe(today).test {

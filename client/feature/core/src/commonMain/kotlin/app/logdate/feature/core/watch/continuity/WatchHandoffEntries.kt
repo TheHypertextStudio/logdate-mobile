@@ -129,7 +129,7 @@ private suspend fun handoffArrived(
     val id = Uuid.parseOrNull(noteId) ?: return false
     if (!flags.isEnabled(FeatureFlag.WATCH_EXPERIENCE_V2)) return false
     return withTimeoutOrNull(20_000) {
-        notes.allNotesObserved.first { items -> items.any { it.uid == id } }
+        notes.observeNoteById(id).first { it != null }
         true
     } ?: false
 }
