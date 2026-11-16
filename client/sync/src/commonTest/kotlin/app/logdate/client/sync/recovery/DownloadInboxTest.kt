@@ -303,6 +303,23 @@ class DownloadInboxTest {
             }
         }
 
+        override suspend fun pruneApplied(
+            owner: String,
+            origin: String,
+            appliedBefore: Long,
+            includeDeletions: Boolean,
+        ): Int {
+            val before = rows.size
+            rows.removeAll {
+                it.ownerId == owner &&
+                    it.serverOrigin == origin &&
+                    it.state == "APPLIED" &&
+                    it.appliedAt < appliedBefore &&
+                    (includeDeletions || !it.deleted)
+            }
+            return before - rows.size
+        }
+
         override suspend fun checkpoint(
             owner: String,
             origin: String,

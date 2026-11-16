@@ -97,6 +97,22 @@ interface DownloadInboxDao {
         id: String,
     )
 
+    /**
+     * Deletes applied rows of the scope that settled before [appliedBefore], and returns how many
+     * it deleted. Deletion receipts are kept unless [includeDeletions] is set, because they are
+     * what stops an older copy of a deleted record from being applied again.
+     */
+    @Query(
+        "DELETE FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin AND state = 'APPLIED' " +
+            "AND appliedAt < :appliedBefore AND (:includeDeletions OR deleted = 0)",
+    )
+    suspend fun pruneApplied(
+        owner: String,
+        origin: String,
+        appliedBefore: Long,
+        includeDeletions: Boolean = false,
+    ): Int
+
     @Query("SELECT * FROM sync_download_checkpoints WHERE ownerId = :owner AND serverOrigin = :origin AND entityType = :type")
     suspend fun checkpoint(
         owner: String,

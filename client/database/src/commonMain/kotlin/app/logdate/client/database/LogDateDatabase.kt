@@ -54,6 +54,7 @@ import app.logdate.client.database.dao.rewind.ReflectionPromptResponseDao
 import app.logdate.client.database.dao.rewind.RewindGenerationRequestDao
 import app.logdate.client.database.dao.sync.DownloadInboxDao
 import app.logdate.client.database.dao.sync.PeerDeliveryDao
+import app.logdate.client.database.dao.sync.PendingUploadRetryDao
 import app.logdate.client.database.dao.sync.SpaceRecordStateDao
 import app.logdate.client.database.dao.sync.SyncMetadataDao
 import app.logdate.client.database.entities.AudioNoteEntity
@@ -159,6 +160,7 @@ import app.logdate.client.database.migrations.MIGRATION_57_58
 import app.logdate.client.database.migrations.MIGRATION_58_59
 import app.logdate.client.database.migrations.MIGRATION_59_60
 import app.logdate.client.database.migrations.MIGRATION_5_6
+import app.logdate.client.database.migrations.MIGRATION_60_61
 import app.logdate.client.database.migrations.MIGRATION_6_7
 import app.logdate.client.database.migrations.MIGRATION_7_8
 import app.logdate.client.database.migrations.MIGRATION_8_9
@@ -290,6 +292,8 @@ abstract class LogDateDatabase : RoomDatabase() {
 
     abstract fun downloadInboxDao(): DownloadInboxDao
 
+    abstract fun pendingUploadRetryDao(): PendingUploadRetryDao
+
     abstract fun syncMetadataDao(): SyncMetadataDao
 
     abstract fun peerDeliveryDao(): PeerDeliveryDao
@@ -337,7 +341,7 @@ abstract class LogDateDatabase : RoomDatabase() {
  * The name of the [LogDateDatabase] file.
  */
 internal const val DATABASE_NAME = "logdate"
-internal const val DATABASE_VERSION = 60
+internal const val DATABASE_VERSION = 61
 
 internal expect val roomDatabaseDispatcher: CoroutineDispatcher
 
@@ -454,4 +458,5 @@ private val DATABASE_MIGRATIONS =
         MIGRATION_57_58,
         MIGRATION_58_59,
         MIGRATION_59_60,
+        MIGRATION_60_61,
     )
