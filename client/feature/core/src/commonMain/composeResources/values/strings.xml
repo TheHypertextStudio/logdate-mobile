@@ -22,19 +22,13 @@
     <string
     name="app_update_available"
   >An update is available and can be downloaded in the background.</string>
-    <string
-    name="app_update_check_failed"
-  >Unable to check for updates right now.</string>
+    <string name="app_update_check_failed">Unable to check for updates right now.</string>
     <string name="app_update_checking">Checking for updates...</string>
     <string
     name="app_update_downloaded"
   >Update ready. Restart the app to finish installing.</string>
-    <string
-    name="app_update_downloading"
-  >Update downloading in the background.</string>
-    <string
-    name="app_update_immediate_required"
-  >A required update is available.</string>
+    <string name="app_update_downloading">Update downloading in the background.</string>
+    <string name="app_update_immediate_required">A required update is available.</string>
     <string name="app_update_manual_label">Check for app updates</string>
     <string name="app_update_restart_action">Restart to update</string>
     <string
@@ -44,9 +38,7 @@
     <string name="check_for_updates">Check for updates</string>
     <string name="app_update_prompt_available">An update is available.</string>
     <string name="app_update_prompt_update">Update</string>
-    <string
-    name="app_update_prompt_downloaded"
-  >Update downloaded. Restart to apply.</string>
+    <string name="app_update_prompt_downloaded">Update downloaded. Restart to apply.</string>
     <string name="app_update_prompt_restart">Restart</string>
 
     <!-- Settings navigation -->
@@ -56,26 +48,18 @@
     <string name="settings_group_app">App</string>
     <string name="settings_group_developer">Developer</string>
     <string name="settings_group_personal">Personal</string>
-    <string
-    name="settings_group_privacy_security"
-  >Privacy &amp; Security</string>
+    <string name="settings_group_privacy_security">Privacy &amp; Security</string>
     <string name="settings_group_data_storage">Data &amp; Storage</string>
     <string name="settings_biometric_label">Require biometrics</string>
     <string
     name="settings_biometric_description"
   >Require fingerprint or screen lock to open</string>
     <string name="settings_export_entries_label">Export data</string>
-    <string
-    name="settings_export_entries_description"
-  >Save a journal archive</string>
+    <string name="settings_export_entries_description">Save a journal archive</string>
     <string name="settings_reset_app_title">Reset app</string>
-    <string
-    name="settings_reset_app_description"
-  >Removes all data from this device</string>
+    <string name="settings_reset_app_description">Removes all data from this device</string>
     <string name="timeline_settings">Timeline</string>
-    <string
-    name="timeline_settings_description"
-  >How your days are organized</string>
+    <string name="timeline_settings_description">How your days are organized</string>
     <string name="privacy_and_security">Privacy &amp; Security</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string
@@ -84,9 +68,7 @@
     <string name="data_and_storage">Data &amp; Storage</string>
     <string name="data_management">Data Management</string>
     <string name="system_search_visibility_section">System Search</string>
-    <string
-    name="system_search_visibility_label"
-  >Show LogDate in system search</string>
+    <string name="system_search_visibility_label">Show LogDate in system search</string>
     <string
     name="system_search_visibility_description"
   >Let your launcher and other Android search surfaces show your entries and journals.</string>
@@ -115,19 +97,13 @@
     <!-- Shortcuts -->
     <string name="shortcut_label_new_note_short">New note</string>
     <string name="shortcut_label_new_note_long">Create a new note</string>
-    <string
-    name="shortcut_label_new_note_disabled"
-  >Can&apos;t create new note</string>
+    <string name="shortcut_label_new_note_disabled">Can&apos;t create new note</string>
 
     <!-- Day schedule (sleep-based day boundaries) -->
     <string name="day_schedule">When your day starts</string>
-    <string
-    name="day_schedule_summary_on"
-  >Adapting to your sleep schedule</string>
+    <string name="day_schedule_summary_on">Adapting to your sleep schedule</string>
     <string name="day_schedule_summary_off">Using a fixed time each day</string>
-    <string
-    name="day_schedule_summary_paused"
-  >Waiting for Health Connect access</string>
+    <string name="day_schedule_summary_paused">Waiting for Health Connect access</string>
     <string
     name="day_schedule_detail_description"
   >LogDate can learn from your sleep patterns to figure out where one day ends and the next begins. A late night out still counts as &quot;today&quot; until you actually go to sleep.</string>
@@ -138,9 +114,7 @@
     <string
     name="day_schedule_disabled_explanation"
   >Every day starts at your preferred time.</string>
-    <string
-    name="day_schedule_health_connected"
-  >Health Connect is providing sleep data</string>
+    <string name="day_schedule_health_connected">Health Connect is providing sleep data</string>
     <string
     name="day_schedule_health_permissions_needed"
   >LogDate needs permission to read your sleep data</string>
@@ -151,33 +125,25 @@
     name="day_schedule_health_permission_denied_detail"
   >Health Connect did not grant sleep access. Open Health Connect to grant it from there.</string>
     <string name="day_schedule_health_grant_access">Grant sleep access</string>
-    <string
-    name="day_schedule_health_open_settings"
-  >Open Health Connect settings</string>
+    <string name="day_schedule_health_open_settings">Open Health Connect settings</string>
     <string
     name="day_schedule_health_setup_required"
   >Health Connect needs to be installed or updated first</string>
     <string
     name="day_schedule_health_setup_required_detail"
   >Install or update Health Connect before LogDate can request sleep access.</string>
-    <string
-    name="day_schedule_health_set_up"
-  >Install or update Health Connect</string>
+    <string name="day_schedule_health_set_up">Install or update Health Connect</string>
     <string
     name="day_schedule_health_not_available"
   >Sleep-based day boundaries are unavailable on this device</string>
     <string
     name="day_schedule_health_not_available_detail"
   >LogDate will use your default start time instead.</string>
-    <string
-    name="day_schedule_health_checking"
-  >Checking Health Connect\u2026</string>
+    <string name="day_schedule_health_checking">Checking Health Connect\u2026</string>
     <string
     name="day_schedule_health_checking_detail"
   >Checking whether Health Connect and your sleep permissions are ready.</string>
-    <string
-    name="day_schedule_health_recovery_title"
-  >Sleep-based day boundaries are paused</string>
+    <string name="day_schedule_health_recovery_title">Sleep-based day boundaries are paused</string>
     <string
     name="day_schedule_health_recovery_permissions_detail"
   >Grant sleep access again to resume using your sleep schedule.</string>
@@ -187,9 +153,7 @@
     <string
     name="day_schedule_health_recovery_unavailable_detail"
   >This device can&apos;t use Health Connect right now. Turn this off to keep using only your default start time.</string>
-    <string
-    name="day_schedule_health_turn_off"
-  >Turn off sleep-based day boundaries</string>
+    <string name="day_schedule_health_turn_off">Turn off sleep-based day boundaries</string>
     <string name="day_schedule_fallback_time">Default start time</string>
     <string
     name="day_schedule_fallback_time_description"
@@ -208,9 +172,7 @@
     name="people_enable_description"
   >Keep a searchable directory of the people who show up in your memories.</string>
     <string name="people_browse_label">Browse people</string>
-    <string
-    name="people_browse_description"
-  >%1$d people currently in your library</string>
+    <string name="people_browse_description">%1$d people currently in your library</string>
     <string name="people_get_started">Get started</string>
     <string name="people_find_more">Find more people</string>
     <string name="people_setup_title">Find people</string>
@@ -224,9 +186,7 @@
     name="people_setup_selected_description"
   >Choose a smaller set if you only want to share specific people.</string>
     <string name="people_review_label">Review suggestions</string>
-    <string
-    name="people_review_description"
-  >%1$d people are waiting for review.</string>
+    <string name="people_review_description">%1$d people are waiting for review.</string>
     <string name="people_review_add_action">Add to people</string>
     <string name="people_review_dismiss_action">Not this person</string>
     <string
@@ -256,40 +216,24 @@
     name="people_directory_empty_state"
   >No people yet. When LogDate gets enough signal, they&apos;ll show up here.</string>
     <string name="people_directory_open_details">Open details</string>
-    <string
-    name="people_settings_update_failed"
-  >Couldn&apos;t update People settings.</string>
+    <string name="people_settings_update_failed">Couldn&apos;t update People settings.</string>
     <string name="people_import_failed">Couldn&apos;t import contacts.</string>
-    <string
-    name="people_selected_import_failed"
-  >Couldn&apos;t import selected contacts.</string>
-    <string
-    name="people_disabled_import_notice"
-  >Enable People before importing contacts.</string>
+    <string name="people_selected_import_failed">Couldn&apos;t import selected contacts.</string>
+    <string name="people_disabled_import_notice">Enable People before importing contacts.</string>
     <string name="people_import_none">No contacts were imported.</string>
     <string name="people_import_added">Imported %1$d contacts.</string>
     <string name="people_import_updated">Updated %1$d contacts.</string>
-    <string
-    name="people_import_added_and_updated"
-  >Imported %1$d contacts and updated %2$d.</string>
+    <string name="people_import_added_and_updated">Imported %1$d contacts and updated %2$d.</string>
     <string name="person_detail_loading">Loading person...</string>
-    <string
-    name="person_detail_load_failed"
-  >This person couldn&apos;t be loaded.</string>
+    <string name="person_detail_load_failed">This person couldn&apos;t be loaded.</string>
     <string name="person_origin_manual">Added manually</string>
     <string name="person_origin_inferred">Learned from your memories</string>
-    <string
-    name="person_origin_contact_selected"
-  >Imported from selected contacts</string>
-    <string
-    name="person_origin_contact_full"
-  >Imported from full contacts access</string>
+    <string name="person_origin_contact_selected">Imported from selected contacts</string>
+    <string name="person_origin_contact_full">Imported from full contacts access</string>
     <string name="person_aliases_label">Also called %1$s</string>
     <string name="person_detail_linked_entries">Memories</string>
     <string name="person_detail_linked_events">Events</string>
-    <string
-    name="person_detail_no_linked_entries"
-  >No memories linked yet.</string>
+    <string name="person_detail_no_linked_entries">No memories linked yet.</string>
     <string name="person_detail_no_linked_events">No events linked yet.</string>
     <string name="person_detail_voice_note_preview">Voice note</string>
     <string name="person_detail_photo_preview">Photo</string>
@@ -303,17 +247,11 @@
 
     <!-- Library -->
     <string name="library_settings">Your library</string>
-    <string
-    name="library_settings_description"
-  >Browse and manage your photos and videos</string>
+    <string name="library_settings_description">Browse and manage your photos and videos</string>
     <string name="library_settings_general">General</string>
     <string name="library_settings_enable">Enable Library</string>
-    <string
-    name="library_settings_tab_visible"
-  >Library tab is visible in navigation</string>
-    <string
-    name="library_settings_tab_hidden"
-  >Library tab is hidden from navigation</string>
+    <string name="library_settings_tab_visible">Library tab is visible in navigation</string>
+    <string name="library_settings_tab_hidden">Library tab is hidden from navigation</string>
 
     <!-- Common actions -->
     <string name="check">Check</string>
@@ -341,9 +279,7 @@
     name="diagnostics_local_description"
   >Review a report of sync steps and counts before sharing it. No journal content.</string>
     <string name="diagnostics_preview">Preview report</string>
-    <string
-    name="diagnostics_empty"
-  >No sync history has been recorded yet.</string>
+    <string name="diagnostics_empty">No sync history has been recorded yet.</string>
     <string
     name="diagnostics_export_description"
   >A ZIP of the same report, ready to send to support.</string>
@@ -363,16 +299,10 @@
     <string
     name="diagnostics_verbose_remaining"
   >Detailed history has about %1$d minutes left.</string>
-    <string
-    name="diagnostics_exported"
-  >Diagnostic ZIP is ready to share.</string>
-    <string
-    name="diagnostics_export_failed"
-  >Could not create the diagnostic ZIP.</string>
+    <string name="diagnostics_exported">Diagnostic ZIP is ready to share.</string>
+    <string name="diagnostics_export_failed">Could not create the diagnostic ZIP.</string>
     <string name="diagnostics_cleared">Local sync history cleared.</string>
-    <string
-    name="diagnostics_clear_failed"
-  >Could not change local diagnostic history.</string>
+    <string name="diagnostics_clear_failed">Could not change local diagnostic history.</string>
     <string name="about_logdate">About LogDate</string>
     <string name="about_logdate_description">Version and app updates</string>
     <string name="hide_developer_mode">Hide developer mode</string>
@@ -380,13 +310,9 @@
     name="developer_mode_save_failed"
   >Couldn’t save developer mode. Please try again.</string>
     <string name="developer_tools">Developer Tools</string>
-    <string
-    name="developer_tools_description"
-  >Diagnostics and technical overrides</string>
+    <string name="developer_tools_description">Diagnostics and technical overrides</string>
     <string name="feature_previews">Feature previews</string>
-    <string
-    name="feature_preview_quick_settings_tiles_title"
-  >Quick Settings tiles</string>
+    <string name="feature_preview_quick_settings_tiles_title">Quick Settings tiles</string>
     <string
     name="feature_preview_quick_settings_tiles_description"
   >Add New entry and Record voice tiles to Quick Settings.</string>
@@ -394,40 +320,28 @@
     <string
     name="feature_preview_live_updates_description"
   >Show recording, export, and sync progress in the status bar and on the lock screen.</string>
-    <string
-    name="feature_preview_quick_reply_title"
-  >Reply to capture nudges</string>
+    <string name="feature_preview_quick_reply_title">Reply to capture nudges</string>
     <string
     name="feature_preview_quick_reply_description"
   >Write or record an entry straight from a nudge notification.</string>
-    <string
-    name="feature_preview_recording_bubble_title"
-  >Recording bubble</string>
+    <string name="feature_preview_recording_bubble_title">Recording bubble</string>
     <string
     name="feature_preview_recording_bubble_description"
   >Show a running voice recording in a floating bubble over other apps.</string>
-    <string
-    name="feature_preview_lock_screen_widget_title"
-  >Lock screen capture widget</string>
+    <string name="feature_preview_lock_screen_widget_title">Lock screen capture widget</string>
     <string
     name="feature_preview_lock_screen_widget_description"
   >Start an entry from the lock screen. The widget never shows journal content.</string>
-    <string
-    name="feature_preview_app_functions_title"
-  >Assistant actions</string>
+    <string name="feature_preview_app_functions_title">Assistant actions</string>
     <string
     name="feature_preview_app_functions_description"
-  >Let assistants add entries. Searching needs system search on and LogDate unlocked.</string>
-    <string
-    name="feature_preview_editor_handoff_title"
-  >Continue on another device</string>
+  >Let Android assistants search what you share and start entries for you to finish.</string>
+    <string name="feature_preview_editor_handoff_title">Continue on another device</string>
     <string
     name="feature_preview_editor_handoff_description"
   >Pick up an unfinished entry on your other Android devices. Needs Backup on both.</string>
     <string name="developer_location">Location overrides</string>
-    <string
-    name="app_updates_description"
-  >Get the latest LogDate improvements.</string>
+    <string name="app_updates_description">Get the latest LogDate improvements.</string>
     <string name="sync_recovery_title">Sync issues</string>
     <string
     name="sync_recovery_explanation"
@@ -442,18 +356,10 @@
     <string name="sync_recovery_review">Review sync issues</string>
     <string name="sync_recovery_play">Play saved recording</string>
     <string name="sync_recovery_pause">Pause recording</string>
-    <string
-    name="sync_issue_missing_media"
-  >A media file is unavailable on this device.</string>
+    <string name="sync_issue_missing_media">A media file is unavailable on this device.</string>
     <string name="sync_issue_failed">An item couldn’t sync.</string>
     <string name="sync_issue_retry">Try syncing this item again</string>
-    <string
-    name="sync_issue_too_large"
-  >An attachment is too large to sync.</string>
-    <string
-    name="sync_issue_sign_in"
-  >Sign in again before retrying this item.</string>
-    <string
-    name="sync_issue_connection"
-  >This item couldn’t reach LogDate Cloud.</string>
+    <string name="sync_issue_too_large">An attachment is too large to sync.</string>
+    <string name="sync_issue_sign_in">Sign in again before retrying this item.</string>
+    <string name="sync_issue_connection">This item couldn’t reach LogDate Cloud.</string>
 </resources>

@@ -82,18 +82,18 @@ details are in [capture-launch-contract.md](os-integration/capture-launch-contra
 
 ## Surfaces
 
-| Surface                             | Guide                                                                                           | What it covers                                                    |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Capture launch contract             | [capture-launch-contract.md](os-integration/capture-launch-contract.md)                         | The shared intent and editor launch mode                          |
-| Launcher shortcuts and Direct Share | [launcher-shortcuts.md](os-integration/launcher-shortcuts.md)                                   | Static, dynamic, pinned, and sharing shortcuts                    |
-| Quick Settings tiles                | [quick-settings-tiles.md](os-integration/quick-settings-tiles.md)                               | New entry and Record voice tiles                                  |
-| Live Updates                        | [live-updates.md](os-integration/live-updates.md)                                               | Promoted notifications for recording and progress                 |
-| Notification quick reply            | [notification-quick-reply.md](os-integration/notification-quick-reply.md)                       | Writing an entry from a capture nudge                             |
-| Widgets                             | [widgets.md](os-integration/widgets.md)                                                         | Glance widgets on the home screen, lock screen, and hub           |
-| Bubbles                             | [bubbles.md](os-integration/bubbles.md)                                                         | App Bubbles and the recording bubble                              |
-| Keyboard, pointer, drag and drop    | [keyboard-pointer-drag-and-drop.md](os-integration/keyboard-pointer-drag-and-drop.md)           | Shortcuts, right-click, tooltips, stylus, cross-app drag and drop |
-| Large screens and desktop windowing | [large-screens-and-desktop-windowing.md](os-integration/large-screens-and-desktop-windowing.md) | Manifest attributes, windows, titles, caption bar                 |
-| AppFunctions                        | [app-functions.md](os-integration/app-functions.md)                                             | Assistant capture and consent-gated recall                        |
+| Surface                             | Guide                                                                                           | What it covers                                                          |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Capture launch contract             | [capture-launch-contract.md](os-integration/capture-launch-contract.md)                         | The shared intent and editor launch mode                                |
+| Launcher shortcuts and Direct Share | [launcher-shortcuts.md](os-integration/launcher-shortcuts.md)                                   | Static, dynamic, pinned, and sharing shortcuts                          |
+| Quick Settings tiles                | [quick-settings-tiles.md](os-integration/quick-settings-tiles.md)                               | New entry and Record voice tiles                                        |
+| Live Updates                        | [live-updates.md](os-integration/live-updates.md)                                               | Promoted notifications for recording and progress                       |
+| Notification quick reply            | [notification-quick-reply.md](os-integration/notification-quick-reply.md)                       | Writing an entry from a capture nudge                                   |
+| Widgets                             | [widgets.md](os-integration/widgets.md)                                                         | Glance widgets on the home screen, lock screen, and hub                 |
+| Bubbles                             | [bubbles.md](os-integration/bubbles.md)                                                         | App Bubbles and the recording bubble                                    |
+| Keyboard, pointer, drag and drop    | [keyboard-pointer-drag-and-drop.md](os-integration/keyboard-pointer-drag-and-drop.md)           | Shortcuts, right-click, tooltips, stylus, cross-app drag and drop       |
+| Large screens and desktop windowing | [large-screens-and-desktop-windowing.md](os-integration/large-screens-and-desktop-windowing.md) | Manifest attributes, windows, titles, caption bar                       |
+| AppFunctions                        | [app-functions.md](os-integration/app-functions.md)                                             | Search of what the person shares, and empty entries the person finishes |
 
 ## The splash screen
 

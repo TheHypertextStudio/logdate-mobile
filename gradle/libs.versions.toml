@@ -89,7 +89,7 @@ mlkit-subject-segmentation = '16.0.0-beta1'
 zxing = '3.5.4'
 googleCodeScanner = '16.1.0'
 commonsCompress = '1.28.0'
-androidxAppFunctions = '1.0.0-alpha10'
+androidxAppFunctions = '1.0.0-rc01'
 
 # Wear OS
 wearCompose = '1.7.0'

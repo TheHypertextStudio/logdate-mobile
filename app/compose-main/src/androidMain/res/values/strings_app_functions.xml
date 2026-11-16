@@ -1,5 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Shown by Android where it lists what assistants can do in LogDate. -->
-    <string name="app_functions_display_description">Save entries, list journals, and search entries you allow</string>
+    <string
+    name="app_functions_display_description"
+  >Search what you share and start new entries for you to finish</string>
 </resources>

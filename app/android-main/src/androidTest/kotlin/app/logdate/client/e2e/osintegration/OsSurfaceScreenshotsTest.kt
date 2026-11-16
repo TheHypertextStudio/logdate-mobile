@@ -15,12 +15,15 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Until
 import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.domain.assistants.DeviceAssistantAccess
 import app.logdate.client.feature.widgets.CaptureWidget
 import app.logdate.client.feature.widgets.FixedMemoryWidget
 import app.logdate.client.feature.widgets.NewEntryWidget
 import app.logdate.client.feature.widgets.OnThisDayWidget
 import app.logdate.client.feature.widgets.OnThisDayWidgetState
 import app.logdate.client.feature.widgets.shortcuts.DynamicShortcutDescriptor
+import app.logdate.client.repository.assistants.AssistantCapability
+import app.logdate.client.repository.assistants.AssistantContentScope
 import app.logdate.client.shortcuts.DynamicShortcutScheduler
 import app.logdate.client.sync.SyncForegroundNotification
 import app.logdate.feature.core.export.ExportNotificationHelper
@@ -66,12 +69,15 @@ class OsSurfaceScreenshotsTest {
 
     /**
      * Assistant actions, driven the way an assistant would through `cmd app_function`. Android 16
-     * added the command; the output is saved as text evidence next to the screenshots.
+     * added the command; the output is saved as text evidence next to the screenshots. It shows that
+     * nothing writes an entry, that each action follows what the person shared, and that reading
+     * stops while LogDate is locked.
      */
     @Test fun assistantActions() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return
         OsSurfaceCapture.prepareOnboardedApp()
-        OsSurfaceCapture.setSystemSearchVisibility(false)
+        OsSurfaceCapture.createTextEntry("Walked the long way home along the river.")
+        OsSurfaceCapture.setAndroidAssistantAccess(DeviceAssistantAccess())
         OsSurfaceCapture.enableFlags(FeatureFlag.APP_FUNCTIONS)
         OsSurfaceCapture.awaitComponentEnabled("app.logdate.client.appfunctions.LogDateAppFunctionService")
         Thread.sleep(5_000L)
@@ -101,19 +107,30 @@ class OsSurfaceScreenshotsTest {
                 .lines()
                 .filter { it.contains(functions) || it.contains(pkg) }
                 .joinToString("\n")
-        val created = execute("createTextEntry", """{"text":["Walked the long way home along the river."]}""")
-        val refused = execute("searchEntries", """{"query":["river"]}""")
+        check("#search" in listing && "#startEntry" in listing) { "LogDate's functions are not registered: $listing" }
+        check("createTextEntry" !in listing) { "An assistant can still write entries: $listing" }
+        val searchRefused = execute("search", """{"query":["river"]}""")
         val journalsRefused = execute("listJournals", "{}")
-        OsSurfaceCapture.setSystemSearchVisibility(true)
+        val startRefused = execute("startEntry", """{"voice":[true]}""")
+        OsSurfaceCapture.setAndroidAssistantAccess(
+            DeviceAssistantAccess(
+                capabilities = setOf(AssistantCapability.READ_MEMORIES, AssistantCapability.START_CAPTURE),
+                contentScope = AssistantContentScope(emptySet(), includeUnfiled = true),
+            ),
+        )
         // With the app lock on and no unlock in this process, reading stays refused.
         OsSurfaceCapture.setAppLock(true)
         Thread.sleep(1_000L)
-        val locked = execute("searchEntries", """{"query":["river"]}""")
+        val locked = execute("search", """{"query":["river"]}""")
         OsSurfaceCapture.setAppLock(false)
         Thread.sleep(1_000L)
-        val found = execute("searchEntries", """{"query":["river"]}""")
+        val found = execute("search", """{"query":["river"]}""")
         val journals = execute("listJournals", "{}")
-        check("Locked" in locked || "locked" in locked) { "A search with the app lock on was not refused: $locked" }
+        val started = execute("startEntry", """{"voice":[true]}""")
+        // The refusal names the settings page where the person can share something.
+        check("Android assistants" in searchRefused) { "A search with nothing shared was not refused: $searchRefused" }
+        check("locked" in locked) { "A search with the app lock on was not refused: $locked" }
+        check("Walked the long way home" in found) { "A shared entry was not found: $found" }
         OsSurfaceCapture.writeEvidence(
             surface = "app-functions",
             state = "assistant-actions",
@@ -122,30 +139,28 @@ class OsSurfaceScreenshotsTest {
                     appendLine("# list-app-functions (LogDate)")
                     appendLine(listing)
                     appendLine()
-                    appendLine("# createTextEntry")
-                    appendLine(created.trim())
+                    appendLine("# search with nothing shared")
+                    appendLine(searchRefused.trim())
                     appendLine()
-                    appendLine("# searchEntries with system search visibility off")
-                    appendLine(refused.trim())
-                    appendLine()
-                    appendLine("# listJournals with system search visibility off")
+                    appendLine("# listJournals with nothing shared")
                     appendLine(journalsRefused.trim())
                     appendLine()
-                    appendLine("# searchEntries with visibility on and the app lock on, never unlocked")
+                    appendLine("# startEntry with starting entries off")
+                    appendLine(startRefused.trim())
+                    appendLine()
+                    appendLine("# search with entries outside journals shared and the app lock on, never unlocked")
                     appendLine(locked.trim())
                     appendLine()
-                    appendLine("# searchEntries with system search visibility on")
+                    appendLine("# search with entries outside journals shared")
                     appendLine(found.trim())
                     appendLine()
-                    appendLine("# listJournals with system search visibility on")
+                    appendLine("# listJournals with no journal shared")
                     appendLine(journals.trim())
+                    appendLine()
+                    appendLine("# startEntry with starting entries on")
+                    appendLine(started.trim())
                 },
         )
-
-        OsSurfaceCapture.shell("am start -n $pkg/app.logdate.client.MainActivity -f 0x10000000")
-        OsSurfaceCapture.device.wait(Until.findObject(By.textContains("Walked the long way home")), 10_000L)
-            ?: OsSurfaceCapture.waitForText("Walked the long way home along the river.")
-        OsSurfaceCapture.capture(surface = "app-functions", state = "entry-from-assistant")
     }
 
     /** Android's keyboard shortcut helper (Meta+/) listing LogDate's shortcuts. */

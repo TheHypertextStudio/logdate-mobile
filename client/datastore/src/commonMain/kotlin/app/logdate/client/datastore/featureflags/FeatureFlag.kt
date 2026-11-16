@@ -78,8 +78,8 @@ enum class FeatureFlag(
     RECORDING_BUBBLE(key = "recording_bubble_enabled", defaultEnabled = false),
 
     /**
-     * LogDate's AppFunctions for on-device assistants: capture always, reading only with consent and
-     * while unlocked.
+     * LogDate's AppFunctions for on-device assistants: searching what the person shared while LogDate
+     * is unlocked, and opening a new entry for the person to finish. Assistants never write entries.
      */
     APP_FUNCTIONS(key = "app_functions_enabled", defaultEnabled = false),
 

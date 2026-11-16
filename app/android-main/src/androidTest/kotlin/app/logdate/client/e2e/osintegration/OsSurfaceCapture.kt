@@ -32,6 +32,8 @@ import app.logdate.client.ambient.AmbientPromptNotificationCoordinator
 import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import app.logdate.client.domain.assistants.DeviceAssistantAccess
+import app.logdate.client.domain.assistants.DeviceAssistantAccessStore
 import app.logdate.client.domain.notes.AddNoteUseCase
 import app.logdate.client.domain.recommendation.AmbientCaptureNudgeStyle
 import app.logdate.client.domain.recommendation.AmbientPromptCandidate
@@ -380,9 +382,9 @@ object OsSurfaceCapture {
         runBlocking { GlobalContext.get().get<LogdatePreferencesDataSource>().setShouldShowBiometric(enabled) }
     }
 
-    /** Turns LogDate's system search visibility, the consent assistants need to read entries, on or off. */
-    fun setSystemSearchVisibility(enabled: Boolean) {
-        runBlocking { GlobalContext.get().get<LogdatePreferencesDataSource>().setSystemSearchVisibilityEnabled(enabled) }
+    /** Sets what assistants on this phone may see and do, as the person would in Settings. */
+    fun setAndroidAssistantAccess(access: DeviceAssistantAccess) {
+        runBlocking { GlobalContext.get().get<DeviceAssistantAccessStore>().set(access) }
     }
 
     /**
