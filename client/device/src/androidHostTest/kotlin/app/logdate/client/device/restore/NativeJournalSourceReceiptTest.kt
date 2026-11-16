@@ -91,6 +91,116 @@ class NativeJournalSourceReceiptTest {
         }
 
     @Test
+    fun `v4 direct camera original requires inventory hash size and receipt cohort`() =
+        fixture { source, workspace ->
+            val camera =
+                File(source.root, "camera-captures/camera.mp4").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("exact camera bytes")
+                }
+            val drafts = File(source.root, "entry-drafts").apply { writeText("bound draft state") }
+            val inventory = File(source.root, "inventory.json")
+            writeNativeJournalMediaInventory(inventory, source.root, setOf("files/camera-captures/camera.mp4"))
+            writeV4Receipt(source, drafts, inventory)
+
+            val cohort = workspace.beginIncomingDelivery(Uuid.random().toString())
+            source.files.forEach { (path, file) -> capture(workspace, cohort, path, file) }
+            capture(workspace, cohort, PREFIX + "files/datastore/entry_drafts.preferences_pb", drafts)
+            capture(workspace, cohort, PREFIX + NATIVE_MEDIA_INVENTORY_PATH, inventory)
+            capture(workspace, cohort, "files/camera-captures/camera.mp4", camera)
+            workspace.finishIncomingDelivery()
+
+            val accepted = verifiedNativeJournalSources(workspace.incomingPayloads().values.flatten()).values.single()
+            val delivered = workspace.incomingPayloads().values.flatten()
+            val cameraPayload = delivered.single { it.path == "files/camera-captures/camera.mp4" }
+            assertEquals(cameraPayload.file.canonicalFile, accepted.getValue("files/camera-captures/camera.mp4").canonicalFile)
+            val wrongSize =
+                verifiedNativeJournalSources(
+                    delivered.filterNot { it === cameraPayload } + cameraPayload.copy(expectedSize = cameraPayload.expectedSize + 1),
+                ).values.single()
+            assertTrue("files/camera-captures/camera.mp4" !in wrongSize)
+
+            val wrongHash = File(source.root, "wrong-camera.mp4").apply { writeText("wrong camera bytes") }
+            val wrongHashCohort = workspace.beginIncomingDelivery(Uuid.random().toString())
+            source.files.forEach { (path, file) -> capture(workspace, wrongHashCohort, path, file) }
+            capture(workspace, wrongHashCohort, PREFIX + "files/datastore/entry_drafts.preferences_pb", drafts)
+            capture(workspace, wrongHashCohort, PREFIX + NATIVE_MEDIA_INVENTORY_PATH, inventory)
+            capture(workspace, wrongHashCohort, "files/camera-captures/camera.mp4", wrongHash)
+            workspace.finishIncomingDelivery()
+            val wrongHashSource =
+                verifiedNativeJournalSources(
+                    workspace
+                        .incomingPayloads()
+                        .values
+                        .flatten()
+                        .filter { it.cohortId == wrongHashCohort },
+                ).values.single()
+            assertTrue("source_scope.json" in wrongHashSource, "A mismatched camera original must not reject the verified journal source")
+            assertTrue("files/logdate.preferences_pb" in wrongHashSource)
+            assertTrue("database/logdate" in wrongHashSource)
+            assertTrue("files/camera-captures/camera.mp4" !in wrongHashSource)
+        }
+
+    @Test
+    fun `v4 direct camera callback from another cohort is never borrowed`() =
+        fixture { source, workspace ->
+            val camera =
+                File(source.root, "camera-captures/camera.jpg").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("selected camera bytes")
+                }
+            val drafts = File(source.root, "entry-drafts").apply { writeText("bound draft state") }
+            val inventory = File(source.root, "inventory.json")
+            writeNativeJournalMediaInventory(inventory, source.root, setOf("files/camera-captures/camera.jpg"))
+            writeV4Receipt(source, drafts, inventory)
+
+            val core = workspace.beginIncomingDelivery(Uuid.random().toString())
+            source.files.forEach { (path, file) -> capture(workspace, core, path, file) }
+            capture(workspace, core, PREFIX + "files/datastore/entry_drafts.preferences_pb", drafts)
+            capture(workspace, core, PREFIX + NATIVE_MEDIA_INVENTORY_PATH, inventory)
+            val rawCamera = workspace.beginIncomingDelivery(Uuid.random().toString())
+            capture(workspace, rawCamera, "files/camera-captures/camera.jpg", camera)
+            workspace.finishIncomingDelivery()
+
+            val accepted = verifiedNativeJournalSources(workspace.incomingPayloads().values.flatten()).values.single()
+            assertTrue("source_scope.json" in accepted, "A camera callback from another cohort must not reject the verified journal source")
+            assertTrue("files/logdate.preferences_pb" in accepted)
+            assertTrue("database/logdate" in accepted)
+            assertTrue("files/camera-captures/camera.jpg" !in accepted)
+        }
+
+    @Test
+    fun `legacy v3 inventory does not authorize a raw direct camera callback`() =
+        fixture { source, workspace ->
+            val camera =
+                File(source.root, "camera-captures/legacy.jpg").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("legacy camera bytes")
+                }
+            val inventory = File(source.root, "inventory.json")
+            writeNativeJournalMediaInventory(inventory, source.root, setOf("files/camera-captures/legacy.jpg"))
+            writeNativeJournalSourceReceipt(
+                source.receipt,
+                mutablePreferencesOf(
+                    stringPreferencesKey("identity.canonical_owner_id") to "347c6231-19f4-49fa-bd1d-58ed34b9be03",
+                    stringPreferencesKey("identity.canonical_owner_bound") to "true",
+                    stringPreferencesKey("backend_url") to "https://cloud.example",
+                ),
+                source.preferences,
+                mapOf("database/logdate" to source.database),
+                mediaInventory = inventory,
+            )
+            val cohort = workspace.beginIncomingDelivery(Uuid.random().toString())
+            source.files.forEach { (path, file) -> capture(workspace, cohort, path, file) }
+            capture(workspace, cohort, PREFIX + NATIVE_MEDIA_INVENTORY_PATH, inventory)
+            capture(workspace, cohort, "files/camera-captures/legacy.jpg", camera)
+            workspace.finishIncomingDelivery()
+
+            val accepted = verifiedNativeJournalSources(workspace.incomingPayloads().values.flatten()).values.single()
+            assertTrue("files/camera-captures/legacy.jpg" !in accepted)
+        }
+
+    @Test
     fun `interrupted delivery can use later identical complete bytes but never another revision`() =
         fixture { source, workspace ->
             val first = workspace.beginIncomingDelivery(Uuid.random().toString())
@@ -233,6 +343,23 @@ class NativeJournalSourceReceiptTest {
         path: String,
         file: File,
     ) = file.inputStream().use { workspace.captureIncomingFile(id, path, file.length(), it) }
+
+    private fun writeV4Receipt(
+        source: Source,
+        drafts: File,
+        inventory: File,
+    ) = writeNativeJournalSourceReceipt(
+        source.receipt,
+        mutablePreferencesOf(
+            stringPreferencesKey("identity.canonical_owner_id") to "347c6231-19f4-49fa-bd1d-58ed34b9be03",
+            stringPreferencesKey("identity.canonical_owner_bound") to "true",
+            stringPreferencesKey("backend_url") to "https://cloud.example",
+        ),
+        source.preferences,
+        mapOf("database/logdate" to source.database),
+        mediaInventory = inventory,
+        entryDraftsFile = drafts,
+    )
 
     private fun fixture(block: (Source, RetainedJournalWorkspace) -> Unit) {
         val root = Files.createTempDirectory("native-source-receipt-").toFile()

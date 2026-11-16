@@ -350,6 +350,13 @@ open class NativeBackupAgent : BackupAgent() {
         ) {
             return
         }
+        if (fileType == TYPE_FILE &&
+            pinDirectNativeCameraOriginal(filesDir, retainedNativeDestination(this, destination), size) {
+                ParcelFileDescriptor.AutoCloseInputStream(ParcelFileDescriptor.dup(data.fileDescriptor))
+            }
+        ) {
+            return
+        }
         val frameworkDatabase =
             listOf("logdate", "logdate-wal", "logdate-shm", "logdate-journal")
                 .any { destination.canonicalFile == getDatabasePath(it).canonicalFile }

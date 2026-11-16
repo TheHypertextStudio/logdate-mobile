@@ -54,25 +54,46 @@ class NativeJournalStagedSourceIndex(
                     it.file.canonicalFile == files.getValue(NATIVE_SOURCE_RECEIPT_PATH).canonicalFile
             }
         val receiptCohort = cohortId(receiptPayload.file)
+        val sourceReceipt = Json.decodeFromString<NativeJournalSourceReceipt>(receiptPayload.file.readText())
+        val inventory =
+            sourceReceipt.mediaInventorySha256?.let { expected ->
+                files[NATIVE_MEDIA_INVENTORY_PATH]?.let { verifyNativeJournalMediaInventory(it, expected) }
+            }
         var missingCore = false
-        val selected =
+        val selectedPayloads =
             files
                 .mapNotNull { (path, file) ->
                     val expected = nativeSnapshotChecksum(file)
                     val matching =
-                        payloads.singleOrNull {
-                            it.complete &&
-                                it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path &&
-                                cohortId(it.file) == receiptCohort &&
-                                nativeSnapshotChecksum(it.file) == expected
-                        }
+                        payloads
+                            .filter {
+                                it.complete &&
+                                    cohortId(it.file) == receiptCohort &&
+                                    (
+                                        it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path ||
+                                            (
+                                                sourceReceipt.version == 4 &&
+                                                    path.startsWith("files/camera-captures/") &&
+                                                    it.path == path &&
+                                                    inventory?.entry(path)?.let { entry ->
+                                                        entry.size == it.expectedSize &&
+                                                            entry.size == it.file.length() &&
+                                                            entry.sha256 == expected
+                                                    } == true
+                                            )
+                                    ) &&
+                                    nativeSnapshotChecksum(it.file) == expected
+                            }.let { candidates ->
+                                candidates.singleOrNull { it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path } ?: candidates.singleOrNull()
+                            }
                     if (!isStagedAuxiliaryPath(path) && matching == null) missingCore = true
-                    matching?.let { path to it.file }
+                    matching?.let { path to it }
                 }.toMap()
         if (missingCore) {
             check(hasRemembered(nativeSnapshotChecksum(receiptPayload.file))) { "Source callback is outside its receipt cohort" }
             return
         }
+        val selected = selectedPayloads.mapValues { it.value.file }
         remember(selected, selected.mapValues { receiptCohort })
     }
 
@@ -88,8 +109,29 @@ class NativeJournalStagedSourceIndex(
                 files.getValue("files/logdate.preferences_pb"),
                 files.filterKeys { it.startsWith("database/") },
             )
-        receipt.mediaInventorySha256?.let { expected ->
-            files[NATIVE_MEDIA_INVENTORY_PATH]?.let { verifyNativeJournalMediaInventory(it, expected) }
+        val receiptCohort = cohortIds.getValue(NATIVE_SOURCE_RECEIPT_PATH)
+        val inventory =
+            receipt.mediaInventorySha256?.let { expected ->
+                files[NATIVE_MEDIA_INVENTORY_PATH]?.let { verifyNativeJournalMediaInventory(it, expected) }
+            }
+        val custody = NativeJournalReplayCustody(context)
+        val sealedCohorts = mutableMapOf<String, List<NativeIncomingJournal.Payload>>()
+        files.filterKeys { it.startsWith("files/camera-captures/") }.forEach { (path, file) ->
+            val callback =
+                sealedCohorts
+                    .getOrPut(cohortIds.getValue(path)) { custody.sealedPayloadsInCohort(cohortIds.getValue(path)) }
+                    .singleOrNull { it.complete && it.file.canonicalFile == file.canonicalFile }
+            if (callback?.path == path) {
+                val entry = inventory?.entry(path)
+                check(
+                    receipt.version == 4 &&
+                        cohortIds[path] == receiptCohort &&
+                        entry != null &&
+                        entry.size == callback.expectedSize &&
+                        entry.size == file.length() &&
+                        entry.sha256 == nativeSnapshotChecksum(file),
+                ) { "Direct camera original does not match its v4 receipt cohort inventory" }
+            }
         }
         val metadata = metadataFor(files, cohortIds, receiptFile)
         val destination = File(root, metadata.receiptSha256)
@@ -112,10 +154,17 @@ class NativeJournalStagedSourceIndex(
                 setOf(
                     custody
                         .sealedPayloadsInCohort(cohortIds.getValue(path))
-                        .single { payload ->
+                        .filter { payload ->
                             payload.complete &&
-                                payload.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path &&
+                                (
+                                    payload.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path ||
+                                        (payload.path == path && path.startsWith("files/camera-captures/"))
+                                ) &&
                                 nativeSnapshotChecksum(payload.file) == hashes.getValue(path)
+                        }.let { candidates ->
+                            val file = files.getValue(path).canonicalFile
+                            candidates.singleOrNull { it.file.canonicalFile == file }
+                                ?: candidates.single { it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path }
                         }.file.canonicalPath,
                 )
             }
@@ -283,9 +332,17 @@ class NativeJournalStagedSourceIndex(
         val hashes = admitted.pathSha256
         return payloads
             .filter { payload ->
+                val path = payload.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX)
+                val directCamera =
+                    admitted.receipt.version == 4 &&
+                        path.startsWith("files/camera-captures/") &&
+                        payload.path == path &&
+                        admitted.mediaInventory?.entry(path)?.let { entry ->
+                            entry.size == payload.expectedSize && entry.size == payload.file.length() && entry.sha256 == hashes[path]
+                        } == true
                 payload.complete &&
-                    (payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) || payload.path in RAW_AUXILIARY_PATHS) &&
-                    isStagedAuxiliaryPath(payload.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX))
+                    (payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) || payload.path in RAW_AUXILIARY_PATHS || directCamera) &&
+                    isStagedAuxiliaryPath(path)
             }.mapNotNull { payload ->
                 val path = payload.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX)
                 val expected =

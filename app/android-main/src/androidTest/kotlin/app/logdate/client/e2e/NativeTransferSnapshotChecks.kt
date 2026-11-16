@@ -21,8 +21,10 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.lang.reflect.InvocationTargetException
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
@@ -130,21 +132,33 @@ internal fun verifyPendingCameraSource(context: android.content.Context) {
                 "files/camera-captures/pending-camera-transfer.mp4",
             ).associateWith { path ->
                 val source = File(context.filesDir, path.removePrefix("files/"))
-                val pinned = File(current, path)
                 assertNotNull(inventory.entry(path))
-                assertContentEquals(source.readBytes(), pinned.readBytes())
+                assertFalse(File(current, path).exists(), "Large camera originals must not be staged a second time")
                 source to source.readBytes()
             }
-        cameraSources.values.forEach { (source, _) -> source.writeText("changed after snapshot") }
-        val emitted = mutableListOf<File>()
         try {
-            snapshotClass
-                .getDeclaredMethod("backupSelectedMedia", Function1::class.java)
-                .apply { isAccessible = true }
-                .invoke(snapshot, { file: File -> emitted += file })
-            assertTrue(emitted.none { it.path.contains("/camera-captures/") }, "Pinned camera originals must not be emitted twice")
+            val emittedBeforeMutation = mutableListOf<File>()
+            val video = cameraSources.getValue("files/camera-captures/pending-camera-transfer.mp4").first
+            assertFailsWith<InvocationTargetException> {
+                snapshotClass
+                    .getDeclaredMethod("backupSelectedMedia", Function1::class.java)
+                    .apply { isAccessible = true }
+                    .invoke(snapshot, { file: File ->
+                        emittedBeforeMutation += file
+                        if (file.canonicalFile == video.canonicalFile) file.writeText("changed during emission")
+                    })
+            }
+            assertTrue(emittedBeforeMutation.any { it.canonicalFile == video.canonicalFile })
         } finally {
             cameraSources.values.forEach { (source, bytes) -> source.writeBytes(bytes) }
+        }
+        val emitted = mutableListOf<File>()
+        snapshotClass
+            .getDeclaredMethod("backupSelectedMedia", Function1::class.java)
+            .apply { isAccessible = true }
+            .invoke(snapshot, { file: File -> emitted += file })
+        cameraSources.values.forEach { (source, _) ->
+            assertEquals(1, emitted.count { it.canonicalFile == source.canonicalFile })
         }
     } finally {
         snapshotClass.getDeclaredMethod("finish").apply { isAccessible = true }.invoke(snapshot)

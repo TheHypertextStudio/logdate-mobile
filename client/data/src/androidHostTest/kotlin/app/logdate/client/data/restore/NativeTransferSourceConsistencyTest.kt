@@ -1,8 +1,11 @@
 package app.logdate.client.data.restore
 
+import app.logdate.client.device.restore.NativeJournalMediaInventory
+import java.io.File
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
 
 class NativeTransferSourceConsistencyTest {
     @Test
@@ -19,6 +22,36 @@ class NativeTransferSourceConsistencyTest {
 
             pinned.writeText("tampered")
             assertFailsWith<IllegalStateException> { requirePinnedNativeTransferFile(pinned, checksum) }
+        } finally {
+            check(root.deleteRecursively())
+        }
+    }
+
+    @Test
+    fun `direct media emission uses the selected original and aborts when it changes during transfer`() {
+        val root = Files.createTempDirectory("native-direct-camera-").toFile()
+        try {
+            val original =
+                root.resolve("camera-captures/selected.mp4").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("selected original bytes")
+                }
+            val entry =
+                NativeJournalMediaInventory.Entry(
+                    "files/camera-captures/selected.mp4",
+                    original.length(),
+                    nativeSnapshotChecksum(original),
+                )
+            var emitted: File? = null
+
+            assertFailsWith<IllegalStateException> {
+                emitVerifiedNativeMedia(original, entry) { file ->
+                    emitted = file
+                    file.writeText("changed while being emitted")
+                }
+            }
+
+            assertSame(original, emitted)
         } finally {
             check(root.deleteRecursively())
         }
