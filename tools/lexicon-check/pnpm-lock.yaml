@@ -162,6 +162,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  zod: 4.6.6
+
 importers:
 
   .:
@@ -221,8 +224,8 @@ packages:
   unicode-segmenter@0.14.5:
     resolution: {integrity: sha512-jHGmj2LUuqDcX3hqY12Ql+uhUTn8huuxNZGq7GvtF6bSybzH3aFgedYu/KTzQStEgt1Ra2F3HxadNXsNjb3m3g==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -231,7 +234,7 @@ snapshots:
       '@atproto/lex-data': 0.1.8
       '@atproto/lex-json': 0.1.7
       '@atproto/syntax': 0.7.6
-      zod: 3.25.76
+      zod: 4.6.6
 
   '@atproto/lex-cbor@0.1.7':
     dependencies:
@@ -255,7 +258,7 @@ snapshots:
       '@atproto/common-web': 0.5.14
       '@atproto/syntax': 0.7.6
       multiformats: 13.4.2
-      zod: 3.25.76
+      zod: 4.6.6
 
   '@atproto/syntax@0.7.6':
     dependencies:
@@ -272,4 +275,4 @@ snapshots:
 
   unicode-segmenter@0.14.5: {}
 
-  zod@3.25.76: {}
+  zod@4.6.6: {}

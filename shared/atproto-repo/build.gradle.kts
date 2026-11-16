@@ -39,6 +39,7 @@ val installReferenceRepoVerifier by tasks.registering(Exec::class) {
     inputs.file(referenceVerifierDir.file("install.sh")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(referenceVerifierDir.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(referenceVerifierDir.file("pnpm-lock.yaml")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(referenceVerifierDir.file("pnpm-workspace.yaml")).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(referenceVerifierDir.dir("node_modules"))
 }
 
