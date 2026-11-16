@@ -23,10 +23,20 @@ class DynamicFeaturePlugin : Plugin<Project> {
                         .getByType(org.gradle.api.artifacts.VersionCatalogsExtension::class.java)
                         .named("libs")
 
-                compileSdk = catalog.findVersion("android-compileSdk").get().toString().toInt()
+                compileSdk =
+                    catalog
+                        .findVersion("android-compileSdk")
+                        .get()
+                        .toString()
+                        .toInt()
 
                 defaultConfig {
-                    minSdk = catalog.findVersion("android-minSdk").get().toString().toInt()
+                    minSdk =
+                        catalog
+                            .findVersion("android-minSdk")
+                            .get()
+                            .toString()
+                            .toInt()
                 }
 
                 buildTypes {

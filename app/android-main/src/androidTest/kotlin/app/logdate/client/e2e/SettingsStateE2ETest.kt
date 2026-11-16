@@ -35,6 +35,7 @@ import app.logdate.client.health.HealthDataAvailability
 import app.logdate.client.health.LocalFirstHealthRepository
 import app.logdate.client.location.settings.LocationTrackingSettings
 import app.logdate.client.location.settings.LocationTrackingSettingsRepository
+import app.logdate.client.text.toUiText
 import app.logdate.feature.core.settings.account.ConnectedServer
 import app.logdate.feature.core.settings.account.ConnectedServerInfo
 import app.logdate.feature.core.settings.account.ServerHealth
@@ -57,10 +58,6 @@ import app.logdate.feature.core.settings.ui.PrivacyPreferenceState
 import app.logdate.feature.core.settings.ui.PrivacySettingsContent
 import app.logdate.feature.core.settings.ui.PrivacySettingsState
 import app.logdate.feature.core.settings.ui.devices.DeviceAction
-import app.logdate.client.text.toUiText
-import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.devices_platform_android
-import logdate.client.feature.core.generated.resources.devices_platform_ios
 import app.logdate.feature.core.settings.ui.devices.DeviceInfoUiState
 import app.logdate.feature.core.settings.ui.devices.DeviceListAvailability
 import app.logdate.feature.core.settings.ui.devices.DeviceOperationState
@@ -71,6 +68,9 @@ import app.logdate.ui.theme.LogDateTheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.devices_platform_android
+import logdate.client.feature.core.generated.resources.devices_platform_ios
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -142,8 +142,22 @@ class SettingsStateE2ETest {
     fun devicesKeepTheirRowsThroughRefreshAndScopeRenameFailureToTheDialog() {
         val devices =
             listOf(
-                DeviceInfoUiState(Uuid.parse("10000000-0000-0000-0000-000000000001"), "This emulator".toUiText(), Res.string.devices_platform_android, "Today".toUiText(), "0.1.0", true),
-                DeviceInfoUiState(Uuid.parse("10000000-0000-0000-0000-000000000002"), "Tablet".toUiText(), Res.string.devices_platform_ios, "Yesterday".toUiText(), "0.1.0", false),
+                DeviceInfoUiState(
+                    Uuid.parse("10000000-0000-0000-0000-000000000001"),
+                    "This emulator".toUiText(),
+                    Res.string.devices_platform_android,
+                    "Today".toUiText(),
+                    "0.1.0",
+                    true,
+                ),
+                DeviceInfoUiState(
+                    Uuid.parse("10000000-0000-0000-0000-000000000002"),
+                    "Tablet".toUiText(),
+                    Res.string.devices_platform_ios,
+                    "Yesterday".toUiText(),
+                    "0.1.0",
+                    false,
+                ),
             )
         var state by mutableStateOf(DevicesUiState())
         var rename by mutableStateOf(false)

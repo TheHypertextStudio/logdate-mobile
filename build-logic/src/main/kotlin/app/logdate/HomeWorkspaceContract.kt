@@ -54,7 +54,9 @@ object HomeWorkspaceContract {
                                                 "FoldableBookLayout",
                                                 "FoldableTabletopLayout",
                                             ) -> "global-layout"
+
                                         resolved.contains("adaptivePanelShape", ignoreCase = true) -> "panel-shape"
+
                                         resolved in
                                             setOf(
                                                 "JournalSearchToolbar",
@@ -63,8 +65,11 @@ object HomeWorkspaceContract {
                                                 "SearchBar",
                                                 "ExpandedFullScreenSearchBar",
                                             ) -> "destination-search"
+
                                         resolved in setOf("Surface", "Scaffold") && !withinContentComponent(call, scope) -> "outer-frame"
+
                                         resolved in setOf("background", "clip") && !withinContentComponent(call, scope) -> "raw-frame-style"
+
                                         else -> null
                                     }
                                 rule?.let { "${function.name}|$it|${source.take(call.textOffset).count { char -> char == '\n' } + 1}" }

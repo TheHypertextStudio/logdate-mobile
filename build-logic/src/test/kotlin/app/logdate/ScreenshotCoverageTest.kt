@@ -51,7 +51,10 @@ class ScreenshotCoverageTest {
             listOf(
                 ScreenshotCoverage.Requirement.AndroidPreview("privacy", "flows/flow20/Flow20_01_Privacy.kt", "S01_Privacy"),
                 ScreenshotCoverage.Requirement.DesktopScene("privacy", "privacy-settings"),
-                ScreenshotCoverage.Requirement.SystemCapture("tiles", "docs/screenshots/android-os-integration/tiles/shade--phone-api37.png"),
+                ScreenshotCoverage.Requirement.SystemCapture(
+                    "tiles",
+                    "docs/screenshots/android-os-integration/tiles/shade--phone-api37.png",
+                ),
                 ScreenshotCoverage.Requirement.GlanceReference("widget", "client/feature/android-widgets/src/test/reference/new-entry.png"),
             ),
             requirements,
