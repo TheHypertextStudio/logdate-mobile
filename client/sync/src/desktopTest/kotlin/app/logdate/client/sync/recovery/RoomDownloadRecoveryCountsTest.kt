@@ -59,6 +59,15 @@ class RoomDownloadRecoveryCountsTest {
                     DownloadRecoveryCounts(retained = 4, retryable = 3, failed = 0),
                     inbox.recoveryCounts(includePolicyDeferred = true),
                 )
+                val dao = database.downloadInboxDao()
+                assertEquals(2, dao.countDue(selected.owner, selected.origin, 1L), "Policy-held work waits for its connection")
+                assertEquals(3, dao.countDue(selected.owner, selected.origin, 1L, includePolicyDeferred = true))
+                assertEquals(
+                    2,
+                    dao.countDue(selected.owner, selected.origin, Long.MAX_VALUE),
+                    "Neither the policy hold nor the wait for an app update ends with the backoff",
+                )
+                assertEquals(3, dao.countDue(selected.owner, selected.origin, Long.MAX_VALUE, includePolicyDeferred = true))
                 database.close()
                 database = open()
                 assertEquals(

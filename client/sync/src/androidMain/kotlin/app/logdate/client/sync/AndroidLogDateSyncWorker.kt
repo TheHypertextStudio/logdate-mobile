@@ -57,6 +57,9 @@ class AndroidLogDateSyncWorker(
                         }
                     },
                     showProgress = ::showProgress,
+                    hasEligibleWork = {
+                        if (consent == null) syncManager.hasDueWork() else withMobileDataConsent(consent) { syncManager.hasDueWork() }
+                    },
                     run = run,
                 )
 
@@ -65,8 +68,14 @@ class AndroidLogDateSyncWorker(
                     val current = sessionStorage.getOriginBoundSession()?.let { UploadScope(it.session.accountId, it.origin) }
                     Result.success(mediaRecoveryCompletionOutput(syncType, result.recoveredMediaScope?.takeIf { it == current }))
                 }
-                SyncWorkerRetryPolicy.Outcome.RETRY -> Result.retry()
-                SyncWorkerRetryPolicy.Outcome.FAILURE -> Result.failure()
+
+                SyncWorkerRetryPolicy.Outcome.RETRY -> {
+                    Result.retry()
+                }
+
+                SyncWorkerRetryPolicy.Outcome.FAILURE -> {
+                    Result.failure()
+                }
             }
         } catch (e: CancellationException) {
             // WorkManager cancellation is terminal. Propagating it prevents a cancelled job from

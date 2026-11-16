@@ -21,6 +21,7 @@ import app.logdate.client.sync.cloud.FileMediaDataSource
 import app.logdate.client.sync.cloud.MediaReadException
 import app.logdate.client.sync.metadata.MediaSyncRef
 import app.logdate.client.sync.metadata.MediaSyncRefStore
+import app.logdate.client.sync.metadata.UploadScope
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.Journal
 import app.logdate.shared.model.SerializableAudioBlock
@@ -343,6 +344,28 @@ internal class SyncMediaTransfer(
         if (UnavailableMediaReferences.nativeSource(reference) == null) return note
         val mapping = mediaSyncRefStore.get(note.uid)?.takeIf { matchesLocalFile(it, reference) && isRemoteRef(it.remoteUrl) }
         return mapping?.let { note.withMediaRef(it.remoteUrl) }
+    }
+
+    /**
+     * Resolves an acknowledged original using scoped metadata only; never opens media or a socket.
+     * A natively restored note has no local original to upload again, so its recorded remote file
+     * stands in whatever [reusable] says, and the write that follows accepts or rejects it.
+     */
+    suspend fun resolveForUpload(
+        note: JournalNote,
+        expectedScope: UploadScope? = null,
+        reusable: (String) -> Boolean = { true },
+    ): JournalNote? {
+        val reference = note.mediaRefOrNull() ?: return note
+        val native = UnavailableMediaReferences.nativeSource(reference) != null
+        if (!native && !requiresUpload(reference)) return note
+        val cached = if (expectedScope == null) mediaSyncRefStore.get(note.uid) else mediaSyncRefStore.getScoped(note.uid, expectedScope)
+        if (cached != null && matchesLocalFile(cached, reference) && cached.remoteUrl.isNotBlank() &&
+            (if (native) isRemoteRef(cached.remoteUrl) else reusable(cached.remoteUrl))
+        ) {
+            return note.withMediaRef(cached.remoteUrl)
+        }
+        return note.takeUnless { native }
     }
 
     /**

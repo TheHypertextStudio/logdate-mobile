@@ -94,19 +94,53 @@ class SyncForegroundRunTest {
         }
 
     @Test
-    fun `long remote discovery retains foreground protection without upload progress`() =
+    fun `long eligible remote recovery retains foreground protection without upload progress`() =
         runTest {
             var starting = 0
             var completed = false
             withSyncForegroundRun(MutableStateFlow(status()), {
                 starting++
                 true
-            }, { error("No uploads exist") }) {
+            }, { error("No uploads exist") }, hasEligibleWork = { true }) {
                 delay(15000)
                 completed = true
             }
             assertTrue(completed)
             assertEquals(1, starting)
+        }
+
+    @Test
+    fun `late eligible work is observed after an initially empty check`() =
+        runTest {
+            var eligible = false
+            var starting = 0
+            withSyncForegroundRun(MutableStateFlow(status()), {
+                starting++
+                true
+            }, { error("No upload denominator exists") }, hasEligibleWork = { eligible }) {
+                delay(12000)
+                eligible = true
+                delay(19000)
+            }
+            assertEquals(1, starting)
+        }
+
+    @Test
+    fun `a long check with nothing eligible looks for work less and less often`() =
+        runTest {
+            var checks = 0
+            var starting = 0
+            withSyncForegroundRun(MutableStateFlow(status()), {
+                starting++
+                true
+            }, { error("No upload denominator exists") }, hasEligibleWork = {
+                checks++
+                false
+            }) {
+                delay(600_000)
+            }
+            assertEquals(0, starting)
+            assertTrue(checks in 5..12, "Each check reads every pending row; $checks ran in ten minutes")
         }
 
     @Test

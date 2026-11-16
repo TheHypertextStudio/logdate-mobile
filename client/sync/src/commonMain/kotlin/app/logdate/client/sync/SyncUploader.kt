@@ -16,6 +16,7 @@ import app.logdate.client.sync.metadata.EntityType
 import app.logdate.client.sync.metadata.FirstSyncEnqueueStore
 import app.logdate.client.sync.metadata.MediaSyncRefStore
 import app.logdate.client.sync.metadata.PendingOperation
+import app.logdate.client.sync.metadata.PendingUpload
 import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.client.sync.recovery.DownloadScope
 import app.logdate.client.sync.space.SpaceKind
@@ -169,6 +170,36 @@ internal class SyncUploader(
             afterDelete = { pending -> Uuid.parseOrNull(pending.entityId)?.let { mediaSyncRefStore.deleteScoped(it, pending.scope) } },
         )
     }
+
+    /** Counts a due operation only when its payload/metadata can transfer under the active route and policy. */
+    suspend fun isEligibleForRun(
+        type: EntityType,
+        pending: PendingUpload,
+    ): Boolean = runEligibility(type, pending) == RunEligibility.TRANSFERABLE
+
+    /**
+     * Whether a pass has anything to do for a due operation: transfer it, or move a note row that
+     * can never upload (an unreadable id, or a note no longer stored) to Sync Issues.
+     */
+    suspend fun needsPass(
+        type: EntityType,
+        pending: PendingUpload,
+    ): Boolean = runEligibility(type, pending) != RunEligibility.HELD
+
+    private suspend fun runEligibility(
+        type: EntityType,
+        pending: PendingUpload,
+    ): RunEligibility {
+        if (pending.scope != null && pending.scope != tokenRefresher.currentUploadScope()) return RunEligibility.HELD
+        if (type != EntityType.NOTE || pending.operation == PendingOperation.DELETE) return RunEligibility.TRANSFERABLE
+        val id = Uuid.parseOrNull(pending.entityId) ?: return RunEligibility.UNDELIVERABLE
+        val note = journalNotesRepository.getNoteById(id) ?: return RunEligibility.UNDELIVERABLE
+        val throughSpace = space?.activeKind(EntityType.NOTE) != null
+        val eligible = noteMediaUpload.isEligible(pending, note) { !throughSpace || SpaceMediaReference.parse(it) != null }
+        return if (eligible) RunEligibility.TRANSFERABLE else RunEligibility.HELD
+    }
+
+    private enum class RunEligibility { TRANSFERABLE, UNDELIVERABLE, HELD }
 
     suspend fun uploadContent(accessToken: String): SyncResult {
         return uploadPass("Upload content") {

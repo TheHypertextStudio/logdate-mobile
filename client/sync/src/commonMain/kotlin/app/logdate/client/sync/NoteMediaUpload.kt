@@ -16,6 +16,22 @@ internal class NoteMediaUpload(
     private val retryCoordinator: SyncRetryCoordinator,
     private val setMediaDeferredForNetwork: (Boolean) -> Unit,
 ) {
+    /** Uses the same receipt/policy decision as prepare, without starting an attempt or reading payload bytes. */
+    suspend fun isEligible(
+        pending: PendingUpload,
+        note: JournalNote,
+        reusable: (String) -> Boolean = { true },
+    ): Boolean {
+        val ready = mediaTransfer.resolveForUpload(note, pending.scope, reusable) ?: return false
+        return policyAllows(ready)
+    }
+
+    private suspend fun policyAllows(note: JournalNote): Boolean {
+        val reference = note.mediaRefOrNull()
+        if (reference == null || !mediaTransfer.requiresUpload(reference)) return true
+        return mediaSyncAllowed(dataUsagePolicy.currentMode(), tokenRefresher.currentUploadScope())
+    }
+
     /** @param reusable whether an earlier upload, named by its remote reference, can stand in for uploading again. */
     suspend fun prepare(
         pending: PendingUpload,
@@ -23,10 +39,10 @@ internal class NoteMediaUpload(
         errors: MutableList<SyncError>,
         reusable: (String) -> Boolean = { true },
     ): JournalNote? {
-        val remoteReady = mediaTransfer.resolveNativeNote(note) ?: return null
+        val remoteReady = mediaTransfer.resolveForUpload(note, pending.scope, reusable) ?: return null
         val mediaRef = remoteReady.mediaRefOrNull()
         val needsMediaUpload = mediaRef != null && mediaTransfer.requiresUpload(mediaRef)
-        if (needsMediaUpload && !mediaSyncAllowed(dataUsagePolicy.currentMode(), tokenRefresher.currentUploadScope())) {
+        if (!policyAllows(remoteReady)) {
             setMediaDeferredForNetwork(true)
             Napier.d("Deferring media upload for note — data usage policy restricts media sync")
             return null
