@@ -779,6 +779,13 @@ final class studio.hypertext.atproto.oauth.client/OAuthTokenInfo { // studio.hyp
     final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.toString|toString(){}[0]
 }
 
+final class studio.hypertext.atproto.oauth.client/ResponseTooLargeException : kotlin/Exception { // studio.hypertext.atproto.oauth.client/ResponseTooLargeException|null[0]
+    constructor <init>(kotlin/Long) // studio.hypertext.atproto.oauth.client/ResponseTooLargeException.<init>|<init>(kotlin.Long){}[0]
+
+    final val limit // studio.hypertext.atproto.oauth.client/ResponseTooLargeException.limit|{}limit[0]
+        final fun <get-limit>(): kotlin/Long // studio.hypertext.atproto.oauth.client/ResponseTooLargeException.limit.<get-limit>|<get-limit>(){}[0]
+}
+
 sealed class studio.hypertext.atproto.oauth.client/OAuthAuthorizationException : studio.hypertext.atproto.oauth.client/OAuthClientException // studio.hypertext.atproto.oauth.client/OAuthAuthorizationException|null[0]
 
 sealed class studio.hypertext.atproto.oauth.client/OAuthClientException : kotlin/IllegalStateException // studio.hypertext.atproto.oauth.client/OAuthClientException|null[0]
@@ -796,3 +803,8 @@ sealed class studio.hypertext.atproto.oauth.client/OAuthVerificationException : 
 
 final const val studio.hypertext.atproto.oauth.client/ATPROTO_SCOPE // studio.hypertext.atproto.oauth.client/ATPROTO_SCOPE|{}ATPROTO_SCOPE[0]
     final fun <get-ATPROTO_SCOPE>(): kotlin/String // studio.hypertext.atproto.oauth.client/ATPROTO_SCOPE.<get-ATPROTO_SCOPE>|<get-ATPROTO_SCOPE>(){}[0]
+final const val studio.hypertext.atproto.oauth.client/MAX_METADATA_BYTES // studio.hypertext.atproto.oauth.client/MAX_METADATA_BYTES|{}MAX_METADATA_BYTES[0]
+    final fun <get-MAX_METADATA_BYTES>(): kotlin/Long // studio.hypertext.atproto.oauth.client/MAX_METADATA_BYTES.<get-MAX_METADATA_BYTES>|<get-MAX_METADATA_BYTES>(){}[0]
+
+final fun studio.hypertext.atproto.oauth.client/protocolHttpClient(io.ktor.client/HttpClient): io.ktor.client/HttpClient // studio.hypertext.atproto.oauth.client/protocolHttpClient|protocolHttpClient(io.ktor.client.HttpClient){}[0]
+final suspend fun (io.ktor.client.statement/HttpResponse).studio.hypertext.atproto.oauth.client/bodyAsTextCapped(kotlin/Long): kotlin/String // studio.hypertext.atproto.oauth.client/bodyAsTextCapped|bodyAsTextCapped@io.ktor.client.statement.HttpResponse(kotlin.Long){}[0]

@@ -443,6 +443,12 @@ public final class studio/hypertext/atproto/oauth/client/OAuthHandleMismatchExce
 	public final fun getHandle ()Ljava/lang/String;
 }
 
+public final class studio/hypertext/atproto/oauth/client/OAuthHttpKt {
+	public static final field MAX_METADATA_BYTES J
+	public static final fun bodyAsTextCapped (Lio/ktor/client/statement/HttpResponse;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun protocolHttpClient (Lio/ktor/client/HttpClient;)Lio/ktor/client/HttpClient;
+}
+
 public final class studio/hypertext/atproto/oauth/client/OAuthIdentityResolutionException : studio/hypertext/atproto/oauth/client/OAuthResolutionException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -689,5 +695,10 @@ public final class studio/hypertext/atproto/oauth/client/OAuthTokenInfo {
 
 public abstract class studio/hypertext/atproto/oauth/client/OAuthVerificationException : studio/hypertext/atproto/oauth/client/OAuthClientException {
 	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class studio/hypertext/atproto/oauth/client/ResponseTooLargeException : java/lang/Exception {
+	public fun <init> (J)V
+	public final fun getLimit ()J
 }
 
