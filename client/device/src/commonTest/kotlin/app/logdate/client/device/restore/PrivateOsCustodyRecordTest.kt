@@ -2,6 +2,7 @@ package app.logdate.client.device.restore
 
 import app.logdate.client.device.crypto.ExistingIdentityKeySnapshot
 import app.logdate.client.device.crypto.ExistingMediaKeySource
+import app.logdate.client.device.crypto.RootlessIdentityKeyObservation
 import app.logdate.client.device.identity.ExistingCanonicalOwner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -119,6 +120,69 @@ class PrivateOsCustodyRecordTest {
             assertEquals("localCanonical", owner.getValue("kind").jsonPrimitive.content)
             assertEquals(ownerId, owner.getValue("canonicalOwnerIDRaw").jsonPrimitive.content)
             assertFalse("accountIDRaw" in owner)
+        }
+
+    @Test
+    fun `verified text only local journal carries no invented identity or media key`() =
+        runTest {
+            val record =
+                assertNotNull(
+                    PrivateOsCustodyRecord.prepareRootlessPlaintext(
+                        9,
+                        transferId,
+                        generation,
+                        ExistingCanonicalOwner(ownerId, false),
+                        "a".repeat(64),
+                        "b".repeat(64),
+                    ) { RootlessIdentityKeyObservation(null, false) },
+                )
+            val document = record.withEncodedBytes { Json.parseToJsonElement(it.decodeToString()).jsonObject }
+            assertEquals("verifiedRootlessPlaintext", document.getValue("sourceClassification").jsonPrimitive.content)
+            assertEquals(
+                "absentUnencrypted",
+                document
+                    .getValue("owner")
+                    .jsonObject
+                    .getValue("rootState")
+                    .jsonPrimitive
+                    .content,
+            )
+            assertEquals(
+                setOf("version", "purpose", "transferID", "sourceGeneration", "owner", "sourceClassification", "archive"),
+                document.keys,
+            )
+            assertNull(
+                PrivateOsCustodyRecord.prepareRootlessPlaintext(
+                    8,
+                    transferId,
+                    generation,
+                    ExistingCanonicalOwner(ownerId, false),
+                    "a".repeat(64),
+                    "b".repeat(64),
+                ) { error("Rootless observation must not run") },
+            )
+        }
+
+    @Test
+    fun `rootless media material cannot be mislabeled as plaintext`() =
+        runTest {
+            val observations =
+                listOf(
+                    RootlessIdentityKeyObservation(ByteArray(32) { 7 }, false),
+                    RootlessIdentityKeyObservation(null, true),
+                )
+            for (observation in observations) {
+                assertNull(
+                    PrivateOsCustodyRecord.prepareRootlessPlaintext(
+                        9,
+                        transferId,
+                        generation,
+                        ExistingCanonicalOwner(ownerId, false),
+                        "a".repeat(64),
+                        "b".repeat(64),
+                    ) { observation },
+                )
+            }
         }
 
     @Test

@@ -4,6 +4,7 @@ import app.logdate.client.domain.export.archive.ArchivePathAllocator
 import app.logdate.client.domain.export.archive.ArchiveSnapshot
 import app.logdate.client.domain.export.archive.MediaFileNamer
 import app.logdate.client.domain.export.archive.MediaReferences
+import app.logdate.client.domain.export.archive.MediaResolution
 import app.logdate.client.domain.export.archive.MediaResolver
 import app.logdate.client.domain.export.archive.MediaSourceOpener
 import app.logdate.client.domain.export.archive.StagingDirectoryArchiveContainer
@@ -41,10 +42,13 @@ data class NativeArchive3SnapshotInput(
     val exportedAt: String,
     val journals: List<Journal>,
     val notes: List<JournalNote>,
+    val noteSourceLocationMetadata: Map<Uuid, String> = emptyMap(),
     val journalIdsByNote: Map<Uuid, List<Uuid>>,
     val drafts: List<EditorDraft>,
     val profile: LogDateProfile,
     val places: List<Place.UserDefined>,
+    val placeSourceTimes: Map<Uuid, Pair<Long, Long>> = emptyMap(),
+    val semanticPlaces: JsonArray = JsonArray(emptyList()),
     val locationHistory: List<LocationHistoryItem>,
     val originals: List<NativeArchive3Original>,
     val unsupportedPopulatedCategories: Set<String>,
@@ -64,7 +68,16 @@ object NativeArchive3SnapshotWriter {
         container: StagingDirectoryArchiveContainer,
     ) {
         try {
-            require(input.unsupportedPopulatedCategories.isEmpty()) { "Native transfer source has unsupported content" }
+            require(input.unsupportedPopulatedCategories.isEmpty()) {
+                "Native transfer cannot retain: ${input.unsupportedPopulatedCategories.sorted().joinToString()}"
+            }
+            val noteIdCounts = input.notes.groupingBy { it.uid }.eachCount()
+            require(input.noteSourceLocationMetadata.keys.all { noteIdCounts[it] == 1 }) {
+                "Native transfer note location metadata has no matching source note"
+            }
+            require(input.places.map { it.id }.toSet() == input.placeSourceTimes.keys && input.places.size == input.placeSourceTimes.size) {
+                "Native transfer place timestamps are incomplete"
+            }
             input.validateContext()
             val sources = input.originals.associateBy { it.reference }
             require(sources.size == input.originals.size)
@@ -85,39 +98,52 @@ object NativeArchive3SnapshotWriter {
                 MediaResolver(MediaSourceOpener { reference -> sources[reference]?.open?.invoke() }, MediaFileNamer(ArchivePathAllocator()))
                     .resolve(snapshot.mediaRequests(TimeZone.UTC))
             require(!resolution.hasOmittedFiles && resolution.files.size == sources.size) { "Native original is unavailable" }
-            val media = MediaReferences(resolution)
-            val journalIds = input.journals.map { it.id }.toSet()
-            require(
-                input.journalIdsByNote.values
-                    .flatten()
-                    .all { it in journalIds },
-            )
-            val notes = archiveNotes(input, media)
-            val drafts = JsonArray(input.drafts.map { json.encodeToJsonElement(it.toArchiveDraft(media)) })
-            val profile = input.profile.toArchiveProfile()?.let { json.encodeToJsonElement(it) as JsonObject }
-            val places = JsonArray(input.places.map { json.encodeToJsonElement(it.toArchivePlace()) })
-            val samples = archiveSamples(input)
-            val source =
-                NativeArchive3ExportSource(
-                    input.exportedAt,
-                    input.journals.map(::journalRecord),
-                    notes,
-                    drafts,
-                    resolution.files.map { file ->
-                        val original = sources.getValue(file.reference)
-                        NativeArchive3MediaSource(file.path, file.type.mimeType, original.bytes, original.sha256, original.open)
-                    },
-                    places,
-                    profile,
-                    samples,
-                    input.unsupportedPopulatedCategories,
-                    input.validateContext,
-                )
-            NativeArchive3Writer.write(source, container)
+            NativeArchive3Writer.write(exportSource(input, sources, resolution), container)
         } catch (failure: Throwable) {
             runCatching { container.discard() }
             throw failure
         }
+    }
+
+    private fun exportSource(
+        input: NativeArchive3SnapshotInput,
+        sources: Map<String, NativeArchive3Original>,
+        resolution: MediaResolution,
+    ): NativeArchive3ExportSource {
+        val journalIds = input.journals.map { it.id }.toSet()
+        require(
+            input.journalIdsByNote.values
+                .flatten()
+                .all { it in journalIds },
+        )
+        val media = MediaReferences(resolution)
+        return NativeArchive3ExportSource(
+            exportedAt = input.exportedAt,
+            journals =
+                input.journals.map {
+                    NativeArchive3JournalRecord(
+                        it.id.toString(),
+                        it.title,
+                        it.description,
+                        it.isFavorited,
+                        it.created.toString(),
+                        it.lastUpdated.toString(),
+                    )
+                },
+            notes = archiveNotes(input, media),
+            drafts = JsonArray(input.drafts.map { json.encodeToJsonElement(it.toArchiveDraft(media)) }),
+            media =
+                resolution.files.map { file ->
+                    val original = sources.getValue(file.reference)
+                    NativeArchive3MediaSource(file.path, file.type.mimeType, original.bytes, original.sha256, original.open)
+                },
+            places = archivePlaces(input),
+            semanticPlaces = input.semanticPlaces,
+            profile = input.profile.toArchiveProfile()?.let { json.encodeToJsonElement(it) as JsonObject },
+            locationSamples = archiveSamples(input.locationHistory),
+            unsupportedPopulatedCategories = input.unsupportedPopulatedCategories,
+            validateContext = input.validateContext,
+        )
     }
 
     private fun archiveNotes(
@@ -129,14 +155,32 @@ object NativeArchive3SnapshotWriter {
                 val archive = note.toArchiveNote(input.journalIdsByNote[note.uid].orEmpty(), media)
                 val payload = json.encodeToJsonElement(archive) as JsonObject
                 JsonObject(
-                    payload +
-                        ("nativePrimaryJournalId" to JsonPrimitive(input.journalIdsByNote[note.uid]?.firstOrNull()?.toString())),
+                    buildMap {
+                        putAll(payload)
+                        put("nativePrimaryJournalId", JsonPrimitive(input.journalIdsByNote[note.uid]?.firstOrNull()?.toString()))
+                        input.noteSourceLocationMetadata[note.uid]?.let { put("nativeAndroidLocationMetadata", JsonPrimitive(it)) }
+                    },
                 )
             },
         )
 
-    private fun archiveSamples(input: NativeArchive3SnapshotInput): List<JsonObject> =
-        input.locationHistory.map { item ->
+    private fun archivePlaces(input: NativeArchive3SnapshotInput): JsonArray =
+        JsonArray(
+            input.places.map { place ->
+                val payload = json.encodeToJsonElement(place.toArchivePlace()) as JsonObject
+                val (createdAt, updatedAt) = input.placeSourceTimes.getValue(place.id)
+                JsonObject(
+                    payload +
+                        mapOf(
+                            "nativeCreatedAtMilliseconds" to JsonPrimitive(createdAt),
+                            "nativeUpdatedAtMilliseconds" to JsonPrimitive(updatedAt),
+                        ),
+                )
+            },
+        )
+
+    private fun archiveSamples(history: List<LocationHistoryItem>): List<JsonObject> =
+        history.map { item ->
             val projected = json.encodeToJsonElement(item.toArchiveSample()) as JsonObject
             JsonObject(
                 projected +
@@ -149,14 +193,4 @@ object NativeArchive3SnapshotWriter {
                     },
             )
         }
-
-    private fun journalRecord(journal: Journal) =
-        NativeArchive3JournalRecord(
-            journal.id.toString(),
-            journal.title,
-            journal.description,
-            journal.isFavorited,
-            journal.created.toString(),
-            journal.lastUpdated.toString(),
-        )
 }

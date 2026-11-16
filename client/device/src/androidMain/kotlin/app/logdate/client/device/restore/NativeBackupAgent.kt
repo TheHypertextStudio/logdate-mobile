@@ -12,6 +12,8 @@ import android.system.OsConstants
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import app.logdate.client.datastore.createAndroidMainDataStore
+import app.logdate.client.datastore.featureflags.DataStoreFeatureFlagStore
+import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.device.crypto.AndroidCryptoManager
 import app.logdate.client.device.crypto.AndroidIdentityKeyBackupStore
 import app.logdate.client.device.crypto.IdentityKeyManager
@@ -70,6 +72,22 @@ open class NativeBackupAgent : BackupAgent() {
     ) = Unit
 
     override fun onFullBackup(data: FullBackupDataOutput) {
+        if (data.transportFlags and FLAG_CROSS_PLATFORM_DATA_TRANSFER_IOS != 0) {
+            val enabled =
+                FeatureFlag.IOS_SYSTEM_TRANSFER.availableForLaunch &&
+                    runBlocking(Dispatchers.IO) {
+                        DataStoreFeatureFlagStore(createAndroidMainDataStore(this@NativeBackupAgent))
+                            .isEnabled(FeatureFlag.IOS_SYSTEM_TRANSFER)
+                    }
+            requireNativeIosExport(data.transportFlags, enabled)
+            runBlocking {
+                AndroidNativeRestoreDeliveryGate.withLock {
+                    requireRetainedJournalBackupReady(this@NativeBackupAgent, deviceTransfer = true)
+                    backupNativeIosTransfer(data)
+                }
+            }
+            return
+        }
         requireNativeAndroidExport(data.transportFlags)
         runBlocking {
             AndroidNativeRestoreDeliveryGate.withLock {
@@ -450,6 +468,9 @@ open class NativeBackupAgent : BackupAgent() {
     protected open fun prepareNativeJournalTransferBackup() = Unit
 
     protected open fun backupSelectedNativeMedia(data: FullBackupDataOutput) = Unit
+
+    /** The iOS payload is selected and emitted independently of Android Auto Backup traversal. */
+    protected open fun backupNativeIosTransfer(data: FullBackupDataOutput): Unit = throw IOException("Native iOS transfer is unavailable")
 
     protected open fun finishNativeJournalTransferBackup() = Unit
 

@@ -19,14 +19,15 @@ import okio.use
 
 /**
  * Lossless, verified native wire content. Owner/key authorization and atomic database application are
- * separate requirements. Public export/restore and framework callbacks do not admit this format yet.
+ * separate requirements. Public export/restore still do not admit this format.
  */
-internal class NativeArchive3Bundle private constructor(
+class NativeArchive3Bundle private constructor(
     private val resources: Map<String, Resource>,
-    val journals: List<NativeArchive3JournalRecord>,
+    internal val journals: List<NativeArchive3JournalRecord>,
     val notes: JsonArray,
     val drafts: JsonArray,
     val places: JsonArray,
+    val semanticPlaces: JsonArray,
     val profile: JsonObject?,
     val locationSamples: List<JsonObject>,
     val manifestSha256: String,
@@ -104,16 +105,7 @@ internal class NativeArchive3Bundle private constructor(
             val notes = decodeArray("notes", "notes", documents)
             val drafts = decodeArray("drafts", "drafts", documents)
             val media = decodeArray("media", "files", documents)
-            val places =
-                documents["data/places.json"]?.let {
-                    NativeArchive3SchemaValidation
-                        .document(
-                            "places",
-                            it.strictText(),
-                        ).getValue("places")
-                        .jsonArray
-                }
-                    ?: JsonArray(emptyList())
+            val (places, semanticPlaces) = readPlaces(documents)
             val profile =
                 documents["data/profile.json"]?.let {
                     NativeArchive3SchemaValidation.document("profile", it.strictText()).getValue("profile").jsonObject
@@ -124,30 +116,73 @@ internal class NativeArchive3Bundle private constructor(
                     text.dropLast(1).split('\n').map { NativeArchive3SchemaValidation.document("location-sample", it) }
                 } ?: emptyList()
             validateRecords(journals, notes, drafts, media, resources)
-            validateCounts(manifest, journals.size, notes.size, drafts.size, media.size, places.size, locationSamples.size, profile != null)
-            val mediaPaths = media.map { it.jsonObject.getValue("path").string() }.toSet()
-            val declaredOptional =
-                buildSet {
-                    if (places.isNotEmpty()) add("data/places.json")
-                    if (profile != null) add("data/profile.json")
-                    if (locationSamples.isNotEmpty()) add("data/location-history.jsonl")
-                }
-            require(paths.toSet() == fixed + schemas + mediaPaths + declaredOptional) { "Undeclared native archive resource" }
-            schemas.forEach { path ->
-                // Descriptive schemas are data only, but must be well-formed JSON objects.
-                require(Json.parseToJsonElement(documents.getValue(path).strictText()) is JsonObject)
-            }
+            validateCounts(
+                manifest,
+                journals.size,
+                notes.size,
+                drafts.size,
+                media.size,
+                places.size,
+                semanticPlaces.size,
+                locationSamples.size,
+                profile != null,
+            )
+            validateDeclaredResources(
+                paths,
+                media,
+                places.isNotEmpty() || semanticPlaces.isNotEmpty(),
+                profile != null,
+                locationSamples.isNotEmpty(),
+                documents,
+            )
             return NativeArchive3Bundle(
                 resources,
                 journals,
                 notes,
                 drafts,
                 places,
+                semanticPlaces,
                 profile,
                 locationSamples,
                 resources.getValue("manifest.json").sha256,
                 checksumData.first.sha256,
             )
+        }
+
+        private fun readPlaces(documents: Map<String, ByteArray>): Pair<JsonArray, JsonArray> {
+            val placesDocument =
+                documents["data/places.json"]?.let {
+                    NativeArchive3SchemaValidation
+                        .document(
+                            "places",
+                            it.strictText(),
+                        )
+                }
+            val places = placesDocument?.getValue("places")?.jsonArray ?: JsonArray(emptyList())
+            val semanticPlaces = placesDocument?.get("nativeAndroidSemanticPlaces")?.jsonArray ?: JsonArray(emptyList())
+            return places to semanticPlaces
+        }
+
+        private fun validateDeclaredResources(
+            paths: Set<String>,
+            media: JsonArray,
+            hasPlaces: Boolean,
+            hasProfile: Boolean,
+            hasLocationSamples: Boolean,
+            documents: Map<String, ByteArray>,
+        ) {
+            val mediaPaths = media.map { it.jsonObject.getValue("path").string() }.toSet()
+            val declaredOptional =
+                buildSet {
+                    if (hasPlaces) add("data/places.json")
+                    if (hasProfile) add("data/profile.json")
+                    if (hasLocationSamples) add("data/location-history.jsonl")
+                }
+            require(paths.toSet() == fixed + schemas + mediaPaths + declaredOptional) { "Undeclared native archive resource" }
+            schemas.forEach { path ->
+                // Descriptive schemas are data only, but must be well-formed JSON objects.
+                require(Json.parseToJsonElement(documents.getValue(path).strictText()) is JsonObject)
+            }
         }
 
         private fun collectPaths(names: Iterable<String>): Set<String> {
@@ -239,6 +274,7 @@ internal class NativeArchive3Bundle private constructor(
             drafts: Int,
             media: Int,
             places: Int,
+            semanticPlaces: Int,
             locationSamples: Int,
             hasProfile: Boolean,
         ) {
@@ -254,6 +290,7 @@ internal class NativeArchive3Bundle private constructor(
                 require(counts.getValue(key).jsonPrimitive.longOrNull == size.toLong()) { "Native archive record count mismatch" }
             }
             require(counts["hasProfile"] == JsonPrimitive(hasProfile))
+            require((counts["semanticPlaces"]?.jsonPrimitive?.longOrNull ?: 0L) == semanticPlaces.toLong())
         }
 
         private fun validateContents(manifest: JsonObject) {
@@ -274,8 +311,14 @@ internal class NativeArchive3Bundle private constructor(
                             .getValue("counts")
                             .jsonObject
                             .getValue("places")
-                            .jsonPrimitive.longOrNull !=
-                        0L
+                            .jsonPrimitive.longOrNull != 0L ||
+                        (
+                            manifest
+                                .getValue("counts")
+                                .jsonObject["semanticPlaces"]
+                                ?.jsonPrimitive
+                                ?.longOrNull ?: 0L
+                        ) != 0L
                     ) {
                         put("places", "data/places.json")
                     }

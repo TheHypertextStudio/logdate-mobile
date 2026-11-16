@@ -49,6 +49,26 @@ def included(domain, path, *, modern, transfer, encrypted=True):
 
 
 class NativeBackupPolicyTest(unittest.TestCase):
+    def test_default_build_does_not_advertise_ios_transfer(self):
+        section = (
+            ET.parse(RULES / "data_extraction_rules.xml")
+            .getroot()
+            .find("cross-platform-transfer")
+        )
+        self.assertIsNone(section)
+
+    def test_private_ios_staging_never_enters_android_backup_or_transfer(self):
+        for modern in (False, True):
+            for transfer in (False, True):
+                for path in (
+                    "logdate-os-transfer/archive/manifest.json",
+                    "logdate-os-transfer/.logdate-os-private/custody-v1.json",
+                ):
+                    with self.subTest(modern=modern, transfer=transfer, path=path):
+                        self.assertFalse(
+                            included("file", path, modern=modern, transfer=transfer)
+                        )
+
     def test_cloud_preserves_actual_owner_preferences_and_database_keys(self):
         for modern in (False, True):
             for domain, path in (

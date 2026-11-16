@@ -106,6 +106,9 @@ enum class FeatureFlag(
     /** Android Handoff for the editor, so an unfinished entry continues on another Android device. */
     EDITOR_HANDOFF(key = "editor_handoff_enabled", defaultEnabled = false),
 
+    /** Android-to-iOS system transfer; unavailable until signed provider delivery is accepted. */
+    IOS_SYSTEM_TRANSFER(key = "ios_system_transfer_enabled", defaultEnabled = false, availableForLaunch = false),
+
     /**
      * The redesigned watch experience and its phone companion: the watch app, and the phone
      * screens that set up and manage the watch.
