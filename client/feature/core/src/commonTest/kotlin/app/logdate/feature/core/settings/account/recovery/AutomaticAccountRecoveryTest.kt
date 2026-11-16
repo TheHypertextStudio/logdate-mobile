@@ -246,8 +246,14 @@ class AutomaticAccountRecoveryTest {
             }
             registerFailure?.let { return failure(it) }
             when {
-                confirmation != null -> confirmation = null
-                !askForPasskey -> return failure(IdentityRecoveryFailure.CONFIRMATION_NEEDED)
+                confirmation != null -> {
+                    confirmation = null
+                }
+
+                !askForPasskey -> {
+                    return failure(IdentityRecoveryFailure.CONFIRMATION_NEEDED)
+                }
+
                 else -> {
                     prompts++
                     promptFailure?.let { return failure(it) }

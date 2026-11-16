@@ -217,11 +217,17 @@ private fun NoteLocationCard(
     val title = location.displayName ?: stringResource(Res.string.pinned_location)
     val subtitle =
         when {
-            coordinates != null ->
+            coordinates != null -> {
                 "${coordinates.latitude.formatCoordinate()}, ${coordinates.longitude.formatCoordinate()}"
-            placeCenter != null ->
+            }
+
+            placeCenter != null -> {
                 "${placeCenter.first.formatCoordinate()}, ${placeCenter.second.formatCoordinate()}"
-            else -> ""
+            }
+
+            else -> {
+                ""
+            }
         }
 
     Card(

@@ -93,28 +93,45 @@ internal class DataSettingsFixture(
         val quotaManager =
             proxy<CloudQuotaManager> { name, _ ->
                 when (name) {
-                    "observeQuota" -> quotaFlow
-                    "observeQuotaSnapshots" ->
+                    "observeQuota" -> {
+                        quotaFlow
+                    }
+
+                    "observeQuotaSnapshots" -> {
                         quotaSnapshots ?: flow<CloudQuotaSnapshot> {
                             val account = sessionStorage.getSession()?.accountId
                             emit(CloudQuotaSnapshot.Loading(account))
                             emitAll(quotaFlow.map { CloudQuotaSnapshot.Available(account, it) })
                         }
-                    "getCurrentQuota" -> CloudStorageQuota(100, 0, emptyList())
-                    else -> error("Unexpected quota call: $name")
+                    }
+
+                    "getCurrentQuota" -> {
+                        CloudStorageQuota(100, 0, emptyList())
+                    }
+
+                    else -> {
+                        error("Unexpected quota call: $name")
+                    }
                 }
             }
         val syncManager =
             proxy<SyncManager> { name, arguments ->
                 when (name) {
-                    "getSyncStatusFlow" -> syncStatus
-                    "requestBackup" ->
+                    "getSyncStatusFlow" -> {
+                        syncStatus
+                    }
+
+                    "requestBackup" -> {
                         suspendResult(arguments) {
                             syncRequests++
                             syncFailure?.let { throw it }
                             syncAccepted.await()
                         }
-                    else -> error("Unexpected sync call: $name")
+                    }
+
+                    else -> {
+                        error("Unexpected sync call: $name")
+                    }
                 }
             }
         val preferences =

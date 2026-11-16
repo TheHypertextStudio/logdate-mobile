@@ -111,7 +111,9 @@ internal fun deviceInfo(
 internal val unavailableLinkedDevices =
     object : app.logdate.client.sync.peer.devices.LinkedDevicesRepository {
         override suspend fun available(): Boolean = false
+
         override suspend fun load() = app.logdate.client.sync.peer.devices.LinkedDevicesLoad.Unavailable
+
         override suspend fun remove(device: app.logdate.client.sync.peer.devices.LinkedDeviceSession) =
             app.logdate.client.sync.peer.devices.LinkedDeviceRemoval.Failed(
                 app.logdate.client.sync.peer.devices.LinkedDevicesFailure.SignInRequired,

@@ -69,11 +69,12 @@ fun SettingsScaffold(
     content: LazyListScope.() -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    val scrollBehavior = if (compactHeader) {
-        TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    } else {
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
-    }
+    val scrollBehavior =
+        if (compactHeader) {
+            TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+        } else {
+            TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+        }
     val navigationIcon: @Composable () -> Unit = {
         IconButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(Res.string.common_back))

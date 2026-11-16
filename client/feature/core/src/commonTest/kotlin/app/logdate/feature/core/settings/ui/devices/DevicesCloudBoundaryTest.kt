@@ -1,13 +1,13 @@
 package app.logdate.feature.core.settings.ui.devices
 
 import app.logdate.client.datastore.UserSession
-import app.logdate.client.text.toUiText
 import app.logdate.client.device.identity.DefaultDeviceManager
 import app.logdate.client.device.identity.data.AccountDeviceApi
 import app.logdate.client.device.identity.data.CloudDeviceRepository
 import app.logdate.client.device.models.DevicePlatform
 import app.logdate.client.device.storage.SecureSessionStorage
 import app.logdate.client.device.storage.SecureStorage
+import app.logdate.client.text.toUiText
 import app.logdate.shared.config.DefaultLogDateConfigRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -282,11 +282,15 @@ class DevicesCloudBoundaryTest {
                     respond("{}")
                 } else {
                     when (++lists) {
-                        1 -> respond(json)
+                        1 -> {
+                            respond(json)
+                        }
+
                         2 -> {
                             oldRequest.await()
                             respond("", HttpStatusCode.ServiceUnavailable)
                         }
+
                         else -> {
                             resumedRequest.await()
                             respond(freshJson)

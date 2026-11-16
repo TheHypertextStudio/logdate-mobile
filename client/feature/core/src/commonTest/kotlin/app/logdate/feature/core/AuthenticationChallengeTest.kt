@@ -2,9 +2,9 @@ package app.logdate.feature.core
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AuthenticationChallengeTest {
@@ -72,6 +72,7 @@ class AuthenticationChallengeTest {
         challenge.begin()
         assertFalse(challenge.consumeSuccess())
     }
+
     @Test
     fun `overlapping root prompt cannot take ownership of a sensitive challenge`() {
         val published = mutableListOf<AppAuthState>()
