@@ -44,11 +44,15 @@ fun SearchResultGroups.firstSelection(timeZone: TimeZone): SearchSelection? =
 /** Whether the result or day [selection] names is among these results. */
 fun SearchResultGroups.contains(selection: SearchSelection): Boolean =
     when (selection) {
-        is SearchSelection.Result -> (topMatches + collections).any { it.key == selection.key }
-        is SearchSelection.Day ->
+        is SearchSelection.Result -> {
+            (topMatches + collections).any { it.key == selection.key }
+        }
+
+        is SearchSelection.Day -> {
             days.firstOrNull { it.date == selection.date }?.let { day ->
                 selection.highlight == null || day.results.any { it.key == selection.highlight }
             } ?: false
+        }
     }
 
 private const val SEPARATOR = "|"
@@ -56,9 +60,15 @@ private const val SEPARATOR = "|"
 /** Writes [selection] as text so it can be saved with the screen's state; nothing selected is empty text. */
 fun encodeSearchSelection(selection: SearchSelection?): String =
     when (selection) {
-        null -> ""
-        is SearchSelection.Result -> listOf("r", selection.key.contentType.ftsValue, selection.key.uid.toString()).joinToString(SEPARATOR)
-        is SearchSelection.Day ->
+        null -> {
+            ""
+        }
+
+        is SearchSelection.Result -> {
+            listOf("r", selection.key.contentType.ftsValue, selection.key.uid.toString()).joinToString(SEPARATOR)
+        }
+
+        is SearchSelection.Day -> {
             listOf(
                 "d",
                 selection.date.toString(),
@@ -71,6 +81,7 @@ fun encodeSearchSelection(selection: SearchSelection?): String =
                     ?.toString()
                     .orEmpty(),
             ).joinToString(SEPARATOR)
+        }
     }
 
 /** Reads text written by [encodeSearchSelection]; anything else reads as nothing selected. */
@@ -78,13 +89,20 @@ fun decodeSearchSelection(text: String): SearchSelection? {
     val parts = text.split(SEPARATOR)
     return runCatching {
         when (parts.firstOrNull()) {
-            "r" -> SearchSelection.Result(keyOf(parts[1], parts[2]) ?: return null)
-            "d" ->
+            "r" -> {
+                SearchSelection.Result(keyOf(parts[1], parts[2]) ?: return null)
+            }
+
+            "d" -> {
                 SearchSelection.Day(
                     date = LocalDate.parse(parts[1]),
                     highlight = if (parts[2].isEmpty() && parts[3].isEmpty()) null else keyOf(parts[2], parts[3]) ?: return null,
                 )
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
     }.getOrNull()
 }

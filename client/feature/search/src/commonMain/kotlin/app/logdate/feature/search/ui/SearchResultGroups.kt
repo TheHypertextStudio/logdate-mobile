@@ -26,9 +26,11 @@ val SearchContentType.shape: SearchResultShape
             SearchContentType.PLACE,
             SearchContentType.JOURNAL,
             -> SearchResultShape.Entity
+
             SearchContentType.REWIND,
             SearchContentType.POSTCARD,
             -> SearchResultShape.Collection
+
             SearchContentType.TEXT_NOTE,
             SearchContentType.TRANSCRIPTION,
             SearchContentType.MEDIA_CAPTION,

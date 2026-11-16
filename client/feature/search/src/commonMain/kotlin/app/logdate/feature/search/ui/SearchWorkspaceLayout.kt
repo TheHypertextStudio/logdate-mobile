@@ -42,12 +42,14 @@ fun SearchWorkspaceLayout(
     BoxWithConstraints(modifier.then(originModifier)) {
         val panels = planSearchPanels(maxWidth, maxHeight, foldable, origin, direction)
         when (panels) {
-            SearchPanels.ResultsOnly ->
+            SearchPanels.ResultsOnly -> {
                 Column(Modifier.fillMaxSize()) {
                     narrowing(SearchNarrowingLayout.Row)
                     results(panels)
                 }
-            SearchPanels.ResultsAndPreview ->
+            }
+
+            SearchPanels.ResultsAndPreview -> {
                 AdaptiveWorkspaceLayout(
                     modifier = Modifier.fillMaxSize(),
                     focusConstraints = SearchPanelConstraints.PreviewFocus,
@@ -61,6 +63,7 @@ fun SearchWorkspaceLayout(
                     },
                     focus = { WorkspacePanel(Modifier.fillMaxSize()) { preview() } },
                 )
+            }
         }
     }
 }

@@ -223,7 +223,7 @@ private fun CollectionItem(
     val zone = TimeZone.currentSystemDefault()
     val (cover, supporting) =
         when (detail) {
-            is SearchResultDetail.Rewind ->
+            is SearchResultDetail.Rewind -> {
                 detail.coverUri to
                     stringResource(
                         Res.string.search_date_range,
@@ -236,13 +236,19 @@ private fun CollectionItem(
                             .date
                             .toReadableDateShort(),
                     )
-            is SearchResultDetail.Postcard ->
+            }
+
+            is SearchResultDetail.Postcard -> {
                 detail.coverUri to
                     detail.modifiedAt
                         .toLocalDateTime(zone)
                         .date
                         .toReadableDateShort()
-            else -> null to state.createdReadable
+            }
+
+            else -> {
+                null to state.createdReadable
+            }
         }
     ResultItem(
         result = result,
@@ -330,13 +336,21 @@ private fun SearchSelection?.isResult(result: SearchResult): Boolean = this is S
 private fun SearchContentType.tonalColors(): Pair<Color, Color> {
     val scheme = MaterialTheme.colorScheme
     return when (this) {
-        SearchContentType.JOURNAL, SearchContentType.REWIND, SearchContentType.PERSON ->
+        SearchContentType.JOURNAL, SearchContentType.REWIND, SearchContentType.PERSON -> {
             scheme.primaryContainer to scheme.onPrimaryContainer
-        SearchContentType.TRANSCRIPTION, SearchContentType.AMBIENT_SOUND, SearchContentType.PLACE ->
+        }
+
+        SearchContentType.TRANSCRIPTION, SearchContentType.AMBIENT_SOUND, SearchContentType.PLACE -> {
             scheme.tertiaryContainer to scheme.onTertiaryContainer
-        SearchContentType.MEDIA_CAPTION -> scheme.surfaceContainerHigh to scheme.onSurface
-        SearchContentType.TEXT_NOTE, SearchContentType.STICKER, SearchContentType.POSTCARD ->
+        }
+
+        SearchContentType.MEDIA_CAPTION -> {
+            scheme.surfaceContainerHigh to scheme.onSurface
+        }
+
+        SearchContentType.TEXT_NOTE, SearchContentType.STICKER, SearchContentType.POSTCARD -> {
             scheme.secondaryContainer to scheme.onSecondaryContainer
+        }
     }
 }
 
