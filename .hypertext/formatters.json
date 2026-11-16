@@ -204,6 +204,11 @@
       "reason": "A symbolic link stores a target path, not authored text."
     },
     {
+      "include": ["LICENSE"],
+      "kind": "non-formattable",
+      "reason": "Legal text, frozen observation, exact dependency/registration list, or opaque document data; preserve its consumer representation."
+    },
+    {
       "include": ["allowed-scopes.txt"],
       "kind": "non-formattable",
       "reason": "Legal text, frozen observation, exact dependency/registration list, or opaque document data; preserve its consumer representation."
