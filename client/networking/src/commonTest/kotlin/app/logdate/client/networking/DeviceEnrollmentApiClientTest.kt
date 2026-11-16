@@ -33,7 +33,7 @@ class DeviceEnrollmentApiClientTest {
                     if (request.method.value == "GET") {
                         assertEquals("/api/v1/device-enrollments/$id", request.url.encodedPath)
                         respond(
-                            """{"id":"$id","deviceName":"Willie's Mac","publicKey":"public-key","confirmationCode":"413827","expiresAt":9999999999999,"status":"pending"}""",
+                            """{"id":"$id","deviceName":"Alice's Mac","publicKey":"public-key","confirmationCode":"413827","expiresAt":9999999999999,"status":"pending"}""",
                             HttpStatusCode.OK,
                             jsonHeaders,
                         )
@@ -44,7 +44,7 @@ class DeviceEnrollmentApiClientTest {
                 }
 
             val request = client.get(id, "access")
-            assertEquals("Willie's Mac", request.deviceName)
+            assertEquals("Alice's Mac", request.deviceName)
             assertEquals("413827", request.confirmationCode)
             client.approve(id, "413827", "opaque-envelope", "access")
         }

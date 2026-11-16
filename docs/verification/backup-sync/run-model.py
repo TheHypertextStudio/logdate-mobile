@@ -7,6 +7,7 @@ import json
 import pathlib
 import re
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 
 parser = argparse.ArgumentParser()
@@ -22,6 +23,14 @@ jar = args.jar.resolve(strict=True)
 root = pathlib.Path(__file__).resolve().parent
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=True)
+
+
+def portable(text):
+    """Replace this machine's paths so a saved log reads the same wherever it was produced."""
+    text = text.replace(str(root) + "/", "").replace(str(jar), "tla2tools.jar")
+    text = text.replace(str(pathlib.Path(tempfile.gettempdir()).resolve()), "<tmp>")
+    return re.sub(r"<tmp>/tlc-\d+/", "<tmp>/", text)
+
 # Released TLC writes a trace specification only on request; newer builds write one unless told not to.
 tlc_help = subprocess.run(
     ["java", "-cp", str(jar), "tlc2.TLC", "-h"],
@@ -73,7 +82,7 @@ for case, expected in cases:
         timeout=180,
     )
     log = completed.stdout
-    (out / (case + ".log")).write_text(log)
+    (out / (case + ".log")).write_text(portable(log))
     if expected:
         passed = (
             completed.returncode != 0

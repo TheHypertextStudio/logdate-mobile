@@ -34,13 +34,13 @@ class DeviceApprovalViewModelTest {
     private val macFirstCode =
         "logdate-device-enrollment:v2:" +
             Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(
-                """{"id":"$requestId","accountId":"$accountId","deviceName":"Willie's Mac",
+                """{"id":"$requestId","accountId":"$accountId","deviceName":"Alice's Mac",
                 "publicKey":"$recipientKey","confirmationCode":"413827"}""".encodeToByteArray(),
             )
     private val phoneFirstCode =
         "logdate-device-connect:" +
             Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(
-                """{"deviceName":"Willie's Mac","publicKey":"$recipientKey","claimSecret":"claim-secret","confirmationCode":"413827"}"""
+                """{"deviceName":"Alice's Mac","publicKey":"$recipientKey","claimSecret":"claim-secret","confirmationCode":"413827"}"""
                     .encodeToByteArray(),
             )
 
@@ -55,7 +55,7 @@ class DeviceApprovalViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         api = FakeEnrollmentApi(pendingRequest())
         sessions = FakeSessionStorage(UserSession("phone-access", "phone-refresh", accountId))
-        access = FakeAccess(ApprovingAccount(accountId, "Willie"))
+        access = FakeAccess(ApprovingAccount(accountId, "Alice"))
         sealer = RecordingSealer()
         viewModel = DeviceApprovalViewModel(api, sessions, access, sealer, now = { now })
     }
@@ -68,7 +68,7 @@ class DeviceApprovalViewModelTest {
     private fun pendingRequest(
         status: String = "pending",
         expiresAt: Long = now + 60_000,
-    ) = DeviceEnrollmentRequest(requestId, "Willie's Mac", recipientKey, "413827", expiresAt, status)
+    ) = DeviceEnrollmentRequest(requestId, "Alice's Mac", recipientKey, "413827", expiresAt, status)
 
     @Test
     fun `a substituted recipient never reaches confirmation or seals keys`() =
@@ -85,12 +85,12 @@ class DeviceApprovalViewModelTest {
     fun `existing request is confirmed then approved without minting a session`() =
         runTest {
             viewModel.onCodeScanned(macFirstCode)
-            assertEquals(DeviceApprovalUiState.Confirm("Willie's Mac", "Willie", "413827"), viewModel.uiState.value)
+            assertEquals(DeviceApprovalUiState.Confirm("Alice's Mac", "Alice", "413827"), viewModel.uiState.value)
             assertEquals(listOf("get:$requestId:phone-access"), api.calls)
 
             viewModel.approve()
 
-            assertEquals(DeviceApprovalUiState.Done("Willie's Mac", connected = true), viewModel.uiState.value)
+            assertEquals(DeviceApprovalUiState.Done("Alice's Mac", connected = true), viewModel.uiState.value)
             val sealed = sealer.sealed.single()
             assertNull(sealed.session)
             assertEquals(recipientKey, sealed.recipientPublicKey)
@@ -105,14 +105,14 @@ class DeviceApprovalViewModelTest {
     fun `new device gets its own session instead of this phone's tokens`() =
         runTest {
             viewModel.onCodeScanned(phoneFirstCode)
-            assertEquals(DeviceApprovalUiState.Confirm("Willie's Mac", "Willie", "413827"), viewModel.uiState.value)
-            assertEquals("create:Willie's Mac:$recipientKey:claim-secret:413827:phone-access", api.calls.single())
+            assertEquals(DeviceApprovalUiState.Confirm("Alice's Mac", "Alice", "413827"), viewModel.uiState.value)
+            assertEquals("create:Alice's Mac:$recipientKey:claim-secret:413827:phone-access", api.calls.single())
 
             viewModel.approve()
 
-            assertEquals(DeviceApprovalUiState.Done("Willie's Mac", connected = true), viewModel.uiState.value)
+            assertEquals(DeviceApprovalUiState.Done("Alice's Mac", connected = true), viewModel.uiState.value)
             assertEquals(listOf("session:$requestId:phone-access"), api.calls.filter { it.startsWith("session") })
-            assertEquals(DeviceTransferSession("Willie", "new-device-access", "new-device-refresh"), sealer.sealed.single().session)
+            assertEquals(DeviceTransferSession("Alice", "new-device-access", "new-device-refresh"), sealer.sealed.single().session)
             assertEquals(listOf("envelope-1"), api.approvedEnvelopes)
         }
 
@@ -124,13 +124,13 @@ class DeviceApprovalViewModelTest {
 
             viewModel.approve()
             assertEquals(
-                DeviceApprovalUiState.Confirm("Willie's Mac", "Willie", "413827", DeviceApprovalFailure.ConnectionFailed),
+                DeviceApprovalUiState.Confirm("Alice's Mac", "Alice", "413827", DeviceApprovalFailure.ConnectionFailed),
                 viewModel.uiState.value,
             )
 
             viewModel.approve()
 
-            assertEquals(DeviceApprovalUiState.Done("Willie's Mac", connected = true), viewModel.uiState.value)
+            assertEquals(DeviceApprovalUiState.Done("Alice's Mac", connected = true), viewModel.uiState.value)
             assertEquals(listOf("envelope-1", "envelope-1"), api.approvedEnvelopes)
             assertEquals(1, api.calls.count { it.startsWith("session") })
             assertEquals(1, sealer.sealed.size)
@@ -143,7 +143,7 @@ class DeviceApprovalViewModelTest {
 
             viewModel.reject()
 
-            assertEquals(DeviceApprovalUiState.Done("Willie's Mac", connected = false), viewModel.uiState.value)
+            assertEquals(DeviceApprovalUiState.Done("Alice's Mac", connected = false), viewModel.uiState.value)
             assertEquals("reject:$requestId:phone-access", api.calls.last())
             assertTrue(sealer.sealed.isEmpty())
         }

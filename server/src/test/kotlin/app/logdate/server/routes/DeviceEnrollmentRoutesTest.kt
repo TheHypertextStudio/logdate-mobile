@@ -197,7 +197,7 @@ class DeviceEnrollmentRoutesTest {
             val accountToken = "Bearer ${tokens.generateAccessToken(account.toString())}"
             val otherToken = "Bearer ${tokens.generateAccessToken(other.toString())}"
             val publicKey = Base64.getUrlEncoder().withoutPadding().encodeToString(ByteArray(32) { it.toByte() })
-            val createBody = """{"deviceName":"Willie's Mac","publicKey":"$publicKey"}"""
+            val createBody = """{"deviceName":"Alice's Mac","publicKey":"$publicKey"}"""
 
             assertEquals(
                 HttpStatusCode.Unauthorized,

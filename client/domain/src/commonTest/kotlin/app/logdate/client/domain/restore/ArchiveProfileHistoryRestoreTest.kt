@@ -25,7 +25,7 @@ internal class ArchiveProfileHistoryRestoreTest : RestoreArchiveTestFixture() {
             val placeId = Uuid.random()
             val profile =
                 LogDateProfile(
-                    displayName = "Willie",
+                    displayName = "Alice",
                     bio = "Writes a lot",
                     birthday = now - 10.days,
                 )
@@ -65,7 +65,7 @@ internal class ArchiveProfileHistoryRestoreTest : RestoreArchiveTestFixture() {
 
             useCase.restore(bundle)
 
-            assertEquals("Willie", profileRepo.profile.displayName)
+            assertEquals("Alice", profileRepo.profile.displayName)
             assertEquals("Writes a lot", profileRepo.profile.bio)
             assertEquals(1, placesRepo.places.size)
             assertEquals(placeId, (placesRepo.places.first() as Place.UserDefined).id)
@@ -113,7 +113,7 @@ internal class ArchiveProfileHistoryRestoreTest : RestoreArchiveTestFixture() {
         runTest {
             val profile =
                 LogDateProfile(
-                    displayName = "Willie",
+                    displayName = "Alice",
                     bio = "Writes a lot",
                     originalBio = "Writes a lot",
                     birthday = now - 10.days,

@@ -26,7 +26,7 @@ internal object CloudSchemaDocs {
                         "deploymentKind" to "Whether this is LogDate Cloud or someone's own server.",
                         "displayName" to "Human-readable name to show for this server.",
                         "handleDomain" to
-                            "Domain under which AT Protocol handles are issued (`willie.<handleDomain>`), or `null` if identities are off.",
+                            "Domain under which AT Protocol handles are issued (`alice.<handleDomain>`), or `null` if identities are off.",
                         "passkey" to "The WebAuthn relying party to use for passkeys, or `null` if passkeys are off.",
                         "capabilities" to "Features switched on for this deployment. Hide anything not listed.",
                         "protocolFeatures" to "Additive behaviors newer servers have; older clients can ignore unknown ones.",

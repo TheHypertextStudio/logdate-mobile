@@ -81,11 +81,11 @@ class ServerDiscoveryClientTest {
                                 "apiBaseUrl": "https://journal.example.com/api/v1",
                                 "apiVersion": "v1",
                                 "deploymentKind": "SELF_HOSTED",
-                                "displayName": "Willie's LogDate",
+                                "displayName": "Alice's LogDate",
                                 "handleDomain": "journal.example.com",
                                 "passkey": {
                                   "rpId": "journal.example.com",
-                                  "rpName": "Willie's LogDate"
+                                  "rpName": "Alice's LogDate"
                                 },
                                 "capabilities": [
                                   "AUTH_PASSKEY",

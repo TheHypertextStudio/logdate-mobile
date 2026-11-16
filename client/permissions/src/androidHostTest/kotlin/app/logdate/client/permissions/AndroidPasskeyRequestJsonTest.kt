@@ -98,7 +98,7 @@ class AndroidPasskeyRequestJsonTest {
                             challenge = "Y2hhbGxlbmdl",
                             rpId = "logdate.app",
                             rpName = "LogDate",
-                            user = PasskeyUser(id = "dXNlcg", name = "willie", displayName = "Willie"),
+                            user = PasskeyUser(id = "dXNlcg", name = "alice", displayName = "Alice"),
                             excludeCredentials = listOf("f0DYSBRBUEBAjlbaF9dOng"),
                         ),
                     ),

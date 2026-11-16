@@ -29,7 +29,7 @@ internal object XrpcDocs {
             ApiTags.XRPC,
             "Resolve a handle",
             """
-            `com.atproto.identity.resolveHandle`. Resolves a handle such as `willie.logdate.app` into the DID it
+            `com.atproto.identity.resolveHandle`. Resolves a handle such as `alice.logdate.app` into the DID it
             currently points at. A handle is the human-readable name; the DID is the stable identifier
             everything else keys on, so most other methods want the DID.
             """,
@@ -46,7 +46,7 @@ internal object XrpcDocs {
             pdsError(
                 HttpStatusCode.BadRequest,
                 ErrorCase("InvalidRequest", "`handle` is missing.", "Handle is required"),
-                ErrorCase("HandleNotFound", "No account here has that handle.", "Handle not found: willie.logdate.app"),
+                ErrorCase("HandleNotFound", "No account here has that handle.", "Handle not found: alice.logdate.app"),
             )
         }
     }
@@ -103,7 +103,7 @@ internal object XrpcDocs {
             pdsError(
                 HttpStatusCode.BadRequest,
                 ErrorCase("InvalidRequest", "`repo` is missing.", "Repo is required"),
-                ErrorCase("RepoNotFound", "No repository here matches that DID or handle.", "Repo not found: willie.logdate.app"),
+                ErrorCase("RepoNotFound", "No repository here matches that DID or handle.", "Repo not found: alice.logdate.app"),
             )
         }
     }

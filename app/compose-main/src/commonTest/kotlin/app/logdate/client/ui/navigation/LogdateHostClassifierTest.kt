@@ -15,8 +15,8 @@ class LogdateHostClassifierTest {
     @Test
     fun `tenant subdomain returns the leftmost label as the handle`() {
         assertEquals(
-            LogdateHostClass.TenantClaimed("williecubed"),
-            classifyLogdateHost("williecubed.logdate.app", "logdate.app"),
+            LogdateHostClass.TenantClaimed("alice"),
+            classifyLogdateHost("alice.logdate.app", "logdate.app"),
         )
     }
 

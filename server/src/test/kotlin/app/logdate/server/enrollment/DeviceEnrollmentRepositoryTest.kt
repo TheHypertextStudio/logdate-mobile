@@ -19,7 +19,7 @@ class DeviceEnrollmentRepositoryTest {
                 DeviceEnrollment(
                     id = UUID.randomUUID(),
                     accountId = account,
-                    deviceName = "Willie's Mac",
+                    deviceName = "Alice's Mac",
                     publicKey = "base64url-public-key",
                     confirmationCode = "413827",
                     expiresAt = 1_000,

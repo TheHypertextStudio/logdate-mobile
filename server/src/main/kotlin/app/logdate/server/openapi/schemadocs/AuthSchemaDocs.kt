@@ -60,7 +60,7 @@ internal object AuthSchemaDocs {
                         "username" to "Unique, case-sensitive handle: 3–50 letters, digits and underscores.",
                         "displayName" to "Name shown in the app, 1–100 characters.",
                         "did" to "The account's AT Protocol identifier, or `null` when this deployment does not host identities.",
-                        "handle" to "The account's AT Protocol handle (for example `willie.logdate.app`), or `null`.",
+                        "handle" to "The account's AT Protocol handle (for example `alice.logdate.app`), or `null`.",
                         "bio" to "Free-text bio, or `null`.",
                         "originalBio" to "The person’s original bio text before processing, or `null`.",
                         "email" to "Email attached to the account, or `null` if none.",
@@ -560,7 +560,7 @@ internal object AuthSchemaDocs {
                     mapOf(
                         "@context" to "JSON-LD contexts; always includes `https://www.w3.org/ns/did/v1`.",
                         "id" to "The DID this document describes.",
-                        "alsoKnownAs" to "Other names for the identity, such as `at://willie.logdate.app`.",
+                        "alsoKnownAs" to "Other names for the identity, such as `at://alice.logdate.app`.",
                         "verificationMethod" to "Public keys that can sign for the identity.",
                         "service" to "Services acting for the identity, such as its personal data server.",
                     ),

@@ -261,7 +261,7 @@ internal object CloudServiceDocs {
             "Resolve a shared link",
             """
             Resolves the opaque ID from a shared LogDate link to the public URL it points at, on the owner's
-            own handle domain (for example `https://willie.logdate.app/journal/<id>`). No token needed.
+            own handle domain (for example `https://alice.logdate.app/journal/<id>`). No token needed.
 
             `kind` says whether the ID is a `journal`, a `note` or a `rewind`. Unknown IDs, and IDs whose owner
             has no handle yet, answer `404` with an empty body.

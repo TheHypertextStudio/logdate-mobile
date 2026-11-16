@@ -9,7 +9,7 @@ sealed class LogdateHostClass {
     data object Apex : LogdateHostClass()
 
     /**
-     * A tenant subdomain (e.g. `williecubed.logdate.app`) where the
+     * A tenant subdomain (e.g. `alice.logdate.app`) where the
      * leftmost label is a syntactically valid handle and not on the
      * reserved list. The handle is exposed for callers that want to
      * surface owner context (currently unused — resolvers route to the

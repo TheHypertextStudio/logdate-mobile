@@ -19,7 +19,7 @@ internal fun PeopleMetadataChip(people: List<String>) {
     // If there is only one other person, display that name.
     // If there are two people, display both names separated by "and".
     // If there are more than two people, display the first two names followed by a count of the remaining people.
-    // e.g. If there are four people (Lane, Anna, Willie, and Jake), the text should be "Lane, Anna, and 2 others".
+    // e.g. If there are four people (Lane, Anna, Alice, and Jake), the text should be "Lane, Anna, and 2 others".
     val label =
         when (people.size) {
             0 -> stringResource(Res.string.people_chip_just_you)

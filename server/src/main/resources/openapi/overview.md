@@ -24,9 +24,14 @@ curl https://cloud.logdate.app/api/v1/server/info
     "handleDomain": "logdate.app",
     "passkey": { "rpId": "logdate.app", "rpName": "LogDate" },
     "capabilities": [
-      "AUTH_PASSKEY", "SYNC_CONTENT", "SYNC_MEDIA",
-      "ATPROTO_IDENTITY", "ATPROTO_OAUTH",
-      "BILLING_SUBSCRIPTIONS", "MANAGED_QUOTA", "CLOUD_TRANSCRIPTION"
+      "AUTH_PASSKEY",
+      "SYNC_CONTENT",
+      "SYNC_MEDIA",
+      "ATPROTO_IDENTITY",
+      "ATPROTO_OAUTH",
+      "BILLING_SUBSCRIPTIONS",
+      "MANAGED_QUOTA",
+      "CLOUD_TRANSCRIPTION"
     ],
     "protocolFeatures": ["canonicalOwnerBindingV1"],
     "privacyPolicyUrl": "https://logdate.app/privacy",
@@ -57,9 +62,9 @@ curl -X POST https://cloud.logdate.app/api/v1/auth/signin/google \
   "data": {
     "account": {
       "id": "3f8a1c2e-5b7d-4e9f-a1b2-c3d4e5f60718",
-      "username": "willie",
-      "displayName": "Willie",
-      "email": "willie@example.com",
+      "username": "alice",
+      "displayName": "Alice",
+      "email": "alice@example.com",
       "emailVerified": true,
       "linkedProviders": ["google"],
       "passkeyCredentialIds": [],
@@ -82,7 +87,7 @@ From here on, every request carries the access token:
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs…
 ```
 
-**2. Save an entry.** An entry is a *content*. You choose its ID (the apps use ULIDs; any stable string works) and `PUT` it. The same request sent twice is safe: the first creates, the second updates.
+**2. Save an entry.** An entry is a _content_. You choose its ID (the apps use ULIDs; any stable string works) and `PUT` it. The same request sent twice is safe: the first creates, the second updates.
 
 ```bash
 curl -X PUT https://cloud.logdate.app/api/v1/contents/01J7Q2X4Y5Z6A7B8C9D0E1F2G3 \
@@ -140,28 +145,28 @@ Store `lastTimestamp`. Next time, send it as `since` and you will receive only w
 
 ## Concepts
 
-**Access token and refresh token.** Signing in returns two tokens. The *access token* is what you send on every request. It is a JWT, a signed string the server can verify without looking anything up, and it expires after a short time on purpose: if it leaks, the damage is bounded. The *refresh token* lives longer and has exactly one job: exchanging it at **Refresh the access token** for a new access token. When you see `401 INVALID_TOKEN`, refresh and retry once. When the refresh itself fails, sign in again. **Log out** takes the refresh token, not the access token, because revoking the refresh token is what stops new access tokens from being minted; the old access token simply expires.
+**Access token and refresh token.** Signing in returns two tokens. The _access token_ is what you send on every request. It is a JWT, a signed string the server can verify without looking anything up, and it expires after a short time on purpose: if it leaks, the damage is bounded. The _refresh token_ lives longer and has exactly one job: exchanging it at **Refresh the access token** for a new access token. When you see `401 INVALID_TOKEN`, refresh and retry once. When the refresh itself fails, sign in again. **Log out** takes the refresh token, not the access token, because revoking the refresh token is what stops new access tokens from being minted; the old access token simply expires.
 
-**Passkeys, and why there is a begin and a complete.** A passkey is a key pair stored on the person's device (or in their password manager). The server never sees the private key. To prove ownership, the server sends a random *challenge* (**begin**), the device signs it with the private key, and the client sends the signature back (**complete**). That is why every passkey flow is two calls, and why the second call must carry the `sessionToken` or `challenge` from the first. In a browser the signing step is `navigator.credentials.get()`; on Android and iOS it is the platform credential manager.
+**Passkeys, and why there is a begin and a complete.** A passkey is a key pair stored on the person's device (or in their password manager). The server never sees the private key. To prove ownership, the server sends a random _challenge_ (**begin**), the device signs it with the private key, and the client sends the signature back (**complete**). That is why every passkey flow is two calls, and why the second call must carry the `sessionToken` or `challenge` from the first. In a browser the signing step is `navigator.credentials.get()`; on Android and iOS it is the platform credential manager.
 
-**The `since` cursor.** Every write the server accepts gets a *version*: a number that only ever increases for that account, whatever the device's clock says. The change feeds take `since`, return every record whose version is greater than it, and return `lastTimestamp`, the highest version in that page. Despite the name it is a version, not a time. Send it back as the next `since`. Because versions are assigned by the server, two devices with wrong clocks still see changes in the order the server accepted them.
+**The `since` cursor.** Every write the server accepts gets a _version_: a number that only ever increases for that account, whatever the device's clock says. The change feeds take `since`, return every record whose version is greater than it, and return `lastTimestamp`, the highest version in that page. Despite the name it is a version, not a time. Send it back as the next `since`. Because versions are assigned by the server, two devices with wrong clocks still see changes in the order the server accepted them.
 
 One caveat when `hasMore` is `true`: `changes` and `deletions` are each cut to `limit` separately but share the one `lastTimestamp`, so a record with a lower version than `lastTimestamp` can still be waiting in whichever list was cut short. Use a `limit` large enough that pages are rarely full (the default is {{sync.limit.default}}), or when `hasMore` is `true` page again from the cursor you sent rather than from `lastTimestamp`.
 
-**Tombstones.** Deleting something does not remove it from the feed; it becomes a *tombstone*, a small record saying "this ID was deleted at this time" with a fresh version. Tombstones arrive in the `deletions` list of a change-feed response so every device learns about the deletion, however long it was offline. The `isDeleted` field on items in `changes` is always `false`; deletions only travel in `deletions`.
+**Tombstones.** Deleting something does not remove it from the feed; it becomes a _tombstone_, a small record saying "this ID was deleted at this time" with a fresh version. Tombstones arrive in the `deletions` list of a change-feed response so every device learns about the deletion, however long it was offline. The `isDeleted` field on items in `changes` is always `false`; deletions only travel in `deletions`.
 
 **Conflicts and `versionConstraint`.** A `PUT` always succeeds: the last write becomes the current version. A `PATCH` can ask for protection by sending `"versionConstraint": { "type": "known", "serverVersion": 1789221791530 }`, meaning "I last saw this version". If the server has moved on, it answers `409 CONFLICT` instead of overwriting, and your client can fetch the newer copy and merge. Send `{ "type": "none" }` (or leave it out) to skip the check.
 
-**Multipart uploads.** Photos, recordings and backups are sent as `multipart/form-data`, the same encoding a browser uses for a file-upload form: several named *parts* in one request, some text and one binary. `curl -F name=value -F data=@file` builds one for you. Each upload endpoint lists its parts; for media, `sizeBytes` must equal the byte length of `data` exactly, so that a truncated upload is rejected rather than stored half-finished.
+**Multipart uploads.** Photos, recordings and backups are sent as `multipart/form-data`, the same encoding a browser uses for a file-upload form: several named _parts_ in one request, some text and one binary. `curl -F name=value -F data=@file` builds one for you. Each upload endpoint lists its parts; for media, `sizeBytes` must equal the byte length of `data` exactly, so that a truncated upload is rejected rather than stored half-finished.
 
 **OAuth and DPoP (skip unless you are building an AT Protocol client).** OAuth 2.0 is how a third-party app gets permission to act on someone's data without ever seeing their password: the app sends the person to the server to approve, and receives a code it exchanges for tokens. DPoP ("Demonstrating Proof of Possession") adds one thing: the app signs each token request with its own key, so the token only works together with that key. The LogDate apps do not use either; they use **Authentication**.
 
 ## Base URLs and self-hosting
 
-| Deployment | Base URL | Notes |
-|---|---|---|
-| LogDate Cloud | `https://cloud.logdate.app` | The hosted service behind the official apps. |
-| Your own server | whatever you deploy at | Same API, same paths. `GET /api/v1/server/info` reports `"deploymentKind": "SELF_HOSTED"`. |
+| Deployment      | Base URL                    | Notes                                                                                      |
+| --------------- | --------------------------- | ------------------------------------------------------------------------------------------ |
+| LogDate Cloud   | `https://cloud.logdate.app` | The hosted service behind the official apps.                                               |
+| Your own server | whatever you deploy at      | Same API, same paths. `GET /api/v1/server/info` reports `"deploymentKind": "SELF_HOSTED"`. |
 
 Paths in this reference are relative, so the **Try it** panel talks to whichever server is serving the page. The API is versioned by path prefix: everything account- and sync-related lives under `/api/v1/`. AT Protocol endpoints keep their protocol-defined paths (`/oauth/`, `/xrpc/`, `/.well-known/`).
 
@@ -170,7 +175,7 @@ Paths in this reference are relative, so the **Try it** panel talks to whichever
 There are four ways to obtain an access token:
 
 1. **Passkey sign-up or sign-in** (`/auth/signup/passkey/*`, `/auth/signin/passkey/*`): two calls each, see Concepts.
-2. **Google sign-up or sign-in** (`/auth/signup/google`, `/auth/signin/google`): one call with a Google ID token. If exactly one existing account has the same *verified* email, both calls link the Google identity to it (sign-up additionally requires that account's ID to equal `requestedOwnerId`, otherwise `409 ACCOUNT_LINK_CONFLICT`). If more than one matches, sign-up answers `409 ACCOUNT_LINK_CONFLICT` and sign-in answers `404 ACCOUNT_NOT_FOUND_SIGNUP_REQUIRED`; sign in with a passkey instead.
+2. **Google sign-up or sign-in** (`/auth/signup/google`, `/auth/signin/google`): one call with a Google ID token. If exactly one existing account has the same _verified_ email, both calls link the Google identity to it (sign-up additionally requires that account's ID to equal `requestedOwnerId`, otherwise `409 ACCOUNT_LINK_CONFLICT`). If more than one matches, sign-up answers `409 ACCOUNT_LINK_CONFLICT` and sign-in answers `404 ACCOUNT_NOT_FOUND_SIGNUP_REQUIRED`; sign in with a passkey instead.
 3. **Restore credential** (`/auth/restore/*`): a special passkey the app registers so a person who has lost every device can still regain access. Register it while signed in; use it later without a username.
 4. **Refresh** (`/auth/token/refresh`): exchanges a refresh token for a new access token. This is the only auth call a client makes routinely.
 
@@ -182,39 +187,39 @@ Third-party AT Protocol clients use the **OAuth** section instead, and send DPoP
 
 Every error response has an HTTP status that indicates the severity and a machine-readable code that identifies the cause. Because LogDate Cloud implements several protocols, there are five envelope shapes. Which one you get depends on the section the endpoint is in, and each endpoint's response list shows the exact shape.
 
-| Section | Envelope | Example |
-|---|---|---|
-| Authentication, Account, Identity | `{ "error": { "code", "message" } }` | `{"error":{"code":"INVALID_TOKEN","message":"Invalid or expired access token"}}` |
-| Contents, Journals, Associations, Drafts, Media, Backups, Sync status | `{ "code", "message", "details", "timestamp" }` | `{"code":"CONFLICT","message":"Server has a newer version","details":{},"timestamp":"2026-09-12T14:03:11.412Z"}` |
-| Quota, Transcription | `{ "error" }` | `{"error":"missing or invalid Authorization header"}` |
-| XRPC | `{ "error", "message" }` with an AT Protocol error name | `{"error":"RecordNotFound","message":"Could not locate record"}` |
-| OAuth | `{ "error", "error_description" }` per RFC 6749 | `{"error":"invalid_grant","error_description":"Authorization code has expired"}` |
+| Section                                                               | Envelope                                                | Example                                                                                                          |
+| --------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Authentication, Account, Identity                                     | `{ "error": { "code", "message" } }`                    | `{"error":{"code":"INVALID_TOKEN","message":"Invalid or expired access token"}}`                                 |
+| Contents, Journals, Associations, Drafts, Media, Backups, Sync status | `{ "code", "message", "details", "timestamp" }`         | `{"code":"CONFLICT","message":"Server has a newer version","details":{},"timestamp":"2026-09-12T14:03:11.412Z"}` |
+| Quota, Transcription                                                  | `{ "error" }`                                           | `{"error":"missing or invalid Authorization header"}`                                                            |
+| XRPC                                                                  | `{ "error", "message" }` with an AT Protocol error name | `{"error":"RecordNotFound","message":"Could not locate record"}`                                                 |
+| OAuth                                                                 | `{ "error", "error_description" }` per RFC 6749         | `{"error":"invalid_grant","error_description":"Authorization code has expired"}`                                 |
 
 Codes that appear across the API, and what to do about them:
 
-| Code | Status | What happened | What to do |
-|---|---|---|---|
-| `INVALID_REQUEST`, `VALIDATION_ERROR` | 400 | The body was not valid JSON, or a field was missing or malformed. | Fix the request; the `message` names the field. Do not retry unchanged. |
-| `INVALID_PARAMETER` | 400 | A query or path parameter was missing or the wrong type. | Same as above. |
-| `INVALID_TOKEN`, `UNAUTHORIZED` | 401 | The access token is missing, malformed or expired. | Refresh the access token and retry once; if that fails, sign in again. |
-| `QUOTA_EXCEEDED` | 402 | The account has no room for this upload. | Show the person their usage (**Get storage quota**) and stop retrying. |
-| `NOT_FOUND` | 404 | No such record for this account. | Treat as deleted. |
-| `CONFLICT` | 409 | Your `versionConstraint` is behind the server. | Fetch the current record, merge, patch again. |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests in the window. | Wait; honor `Retry-After` when it is present. |
-| `SERVER_ERROR` | 500 | Something failed on the server. | Retry with backoff; if it persists, report it. |
-| `SERVER_MISCONFIGURED`, `*_NOT_CONFIGURED`, `*_UNAVAILABLE` | 500, 501, 503 | This deployment has the feature switched off. | Check `capabilities` on **Describe this server** and hide the feature. |
+| Code                                                        | Status        | What happened                                                     | What to do                                                              |
+| ----------------------------------------------------------- | ------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `INVALID_REQUEST`, `VALIDATION_ERROR`                       | 400           | The body was not valid JSON, or a field was missing or malformed. | Fix the request; the `message` names the field. Do not retry unchanged. |
+| `INVALID_PARAMETER`                                         | 400           | A query or path parameter was missing or the wrong type.          | Same as above.                                                          |
+| `INVALID_TOKEN`, `UNAUTHORIZED`                             | 401           | The access token is missing, malformed or expired.                | Refresh the access token and retry once; if that fails, sign in again.  |
+| `QUOTA_EXCEEDED`                                            | 402           | The account has no room for this upload.                          | Show the person their usage (**Get storage quota**) and stop retrying.  |
+| `NOT_FOUND`                                                 | 404           | No such record for this account.                                  | Treat as deleted.                                                       |
+| `CONFLICT`                                                  | 409           | Your `versionConstraint` is behind the server.                    | Fetch the current record, merge, patch again.                           |
+| `RATE_LIMIT_EXCEEDED`                                       | 429           | Too many requests in the window.                                  | Wait; honor `Retry-After` when it is present.                           |
+| `SERVER_ERROR`                                              | 500           | Something failed on the server.                                   | Retry with backoff; if it persists, report it.                          |
+| `SERVER_MISCONFIGURED`, `*_NOT_CONFIGURED`, `*_UNAVAILABLE` | 500, 501, 503 | This deployment has the feature switched off.                     | Check `capabilities` on **Describe this server** and hide the feature.  |
 
 ## Rate limits
 
 Limits exist to stop credential stuffing and misbehaving upload loops, not to meter normal use. A client that syncs every few minutes will never encounter one.
 
-| What | Limit | Counted per | On exceed |
-|---|---|---|---|
-| Sign-up (passkey and Google) | {{auth.signup}} | IP address | `429 RATE_LIMIT_EXCEEDED`, no `Retry-After` header |
-| Sign-in (passkey and Google) | {{auth.signin}} | IP address | `429 RATE_LIMIT_EXCEEDED`, no `Retry-After` header |
-| Media uploads | {{media.upload}} | account | `429` with `Retry-After` and `details.retryAfterSeconds` |
-| Backup uploads | {{backup.upload}} | account | `429` with `Retry-After` and `details.retryAfterSeconds` |
-| Transcription sessions | {{transcription.sessions}} | account | `429` with `Retry-After` |
+| What                         | Limit                      | Counted per | On exceed                                                |
+| ---------------------------- | -------------------------- | ----------- | -------------------------------------------------------- |
+| Sign-up (passkey and Google) | {{auth.signup}}            | IP address  | `429 RATE_LIMIT_EXCEEDED`, no `Retry-After` header       |
+| Sign-in (passkey and Google) | {{auth.signin}}            | IP address  | `429 RATE_LIMIT_EXCEEDED`, no `Retry-After` header       |
+| Media uploads                | {{media.upload}}           | account     | `429` with `Retry-After` and `details.retryAfterSeconds` |
+| Backup uploads               | {{backup.upload}}          | account     | `429` with `Retry-After` and `details.retryAfterSeconds` |
+| Transcription sessions       | {{transcription.sessions}} | account     | `429` with `Retry-After`                                 |
 
 Token refresh, logout, reads and deletes are not rate limited.
 

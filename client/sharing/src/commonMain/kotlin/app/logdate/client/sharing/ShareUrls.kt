@@ -8,8 +8,8 @@ internal const val LOGDATE_APEX_HOST = "logdate.app"
  * Builds the public web URL for a shared journal.
  *
  * When [ownerHandle] is the user's full ATProto handle (e.g.
- * `williecubed.logdate.app`), emits the canonical tenant-subdomain
- * shape: `https://williecubed.logdate.app/journal/<id>`. iOS Universal
+ * `alice.logdate.app`), emits the canonical tenant-subdomain
+ * shape: `https://alice.logdate.app/journal/<id>`. iOS Universal
  * Links and Android App Links claim this directly via the wildcard
  * subdomain coverage in the entitlement and intent-filter, with no
  * redirect hop, and the recipient's link-preview / OG metadata loads on

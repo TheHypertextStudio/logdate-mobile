@@ -23,7 +23,7 @@ private const val EXAMPLE_ID = "4d90d8dc-49b2-4ba1-8c20-529b80c77542"
 private const val EXAMPLE_PUBLIC_KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 private const val EXAMPLE_CODE = "413827"
 
-private val pending = EnrollmentView(EXAMPLE_ID, "Willie's Mac", EXAMPLE_PUBLIC_KEY, EXAMPLE_CODE, 1_790_793_600_000, "pending")
+private val pending = EnrollmentView(EXAMPLE_ID, "Alice's Mac", EXAMPLE_PUBLIC_KEY, EXAMPLE_CODE, 1_790_793_600_000, "pending")
 
 private fun RequestConfig.enrollmentId() {
     pathParameter<String>("id") {
@@ -74,7 +74,7 @@ internal object DeviceEnrollmentDocs {
         )
         request {
             jsonBody(
-                CreateEnrollmentRequest("Willie's Mac", EXAMPLE_PUBLIC_KEY),
+                CreateEnrollmentRequest("Alice's Mac", EXAMPLE_PUBLIC_KEY),
                 "The new device's display name and ephemeral X25519 public key, encoded as base64url. A scanned connection code also supplies its claim secret and confirmation code.",
             )
         }

@@ -43,7 +43,7 @@ class ServerInfoRoutesTest {
                         serverInfoRoutes(
                             ServerDescriptorConfig(
                                 deploymentKind = DeploymentKind.SELF_HOSTED,
-                                displayName = "Willie's LogDate",
+                                displayName = "Alice's LogDate",
                             ).toDescriptor(
                                 identityConfig =
                                     AtprotoIdentityConfig(
@@ -51,7 +51,7 @@ class ServerInfoRoutesTest {
                                         pdsServiceEndpoint = "https://journal.example.com",
                                     ),
                                 webAuthnRpId = "journal.example.com",
-                                webAuthnRpName = "Willie's LogDate",
+                                webAuthnRpName = "Alice's LogDate",
                             ),
                         )
                     }
