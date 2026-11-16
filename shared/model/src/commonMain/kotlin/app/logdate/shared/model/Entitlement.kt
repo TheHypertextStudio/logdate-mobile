@@ -11,13 +11,13 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class EntitlementResponse(
-    /** Stable public plan identifier, such as `free` or `cloud-standard`. */
+    /** Stable public plan identifier, such as `cloud` or `cloud_plus`, or `none` when the account has no plan. */
     val planId: String,
     /** Coarse plan tier used by UI copy and broad capability decisions. */
     val tier: EntitlementTierWire,
     /** Billing/subscription state that determines whether paid features are active. */
     val status: EntitlementStatusWire,
-    /** Maximum synced media storage in bytes, or null for unlimited deployments. */
+    /** Storage the plan includes, in bytes, or null for unlimited deployments. */
     val storageBytesLimit: Long?,
     /** Maximum retained backup snapshots, or null for unlimited deployments. */
     val backupCountLimit: Int?,
@@ -25,7 +25,19 @@ data class EntitlementResponse(
     val transcriptionSecondsPerMonthLimit: Long? = null,
     /** Client-safe feature flags used to reveal premium controls before calling gated endpoints. */
     val features: Map<String, Boolean> = emptyMap(),
-)
+    /**
+     * The size of one step of extra storage the plan sells past [storageBytesLimit], or null when
+     * the plan stops there. An account on such a plan may store more than the limit.
+     */
+    val extraStorageStepBytes: Long? = null,
+    /** The account has this plan at no charge because it joined during the beta. */
+    val includedWithBeta: Boolean = false,
+) {
+    companion object {
+        /** The [planId] of an account that has no plan and so may store nothing. */
+        const val NO_PLAN_ID: String = "none"
+    }
+}
 
 @Serializable
 enum class EntitlementTierWire {

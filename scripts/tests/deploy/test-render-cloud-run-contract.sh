@@ -1256,6 +1256,47 @@ jq '.env_vars.LOGDATE_OAUTH_PASSKEY_SIGN_IN_ENABLED = "yes"' \
   "$FIXTURE_DIR/staging-source.json" > "$FIXTURE_DIR/invalid-passkey-oauth.json"
 expect_failure invalid-passkey-oauth staging "$RELEASE_SHA" invalid-passkey-oauth.json \
   "LOGDATE_OAUTH_PASSKEY_SIGN_IN_ENABLED must be true or false"
+# Launching LogDate Cloud is an opt-in for every environment. It ends the beta, so it is refused
+# unless Stripe is the billing provider, and Stripe is refused without both of its secrets. Stripe
+# without the launch is how Plus is sold during the beta.
+STRIPE_SECRETS='.secret_env.STRIPE_SECRET_KEY = {"secret_id": "stripe-secret-key", "version": "1"}
+    | .secret_env.STRIPE_WEBHOOK_SECRET = {"secret_id": "stripe-webhook-secret", "version": "1"}'
+for environment in staging production; do
+  jq "$STRIPE_SECRETS"' | .env_vars.BILLING_PROVIDER = "stripe" | .env_vars.LOGDATE_CLOUD_LAUNCHED = "true"' \
+    "$FIXTURE_DIR/$environment-source.json" > "$FIXTURE_DIR/cloud-sales-$environment.json"
+  output="$TMP_DIR/cloud-sales-$environment.out.json"
+  if ! run_renderer "$environment" "$RELEASE_SHA" "cloud-sales-$environment.json" "$output" "$LOG_DIR/cloud-sales-$environment.err"; then
+    cat "$LOG_DIR/cloud-sales-$environment.err" >&2
+    fail "the launch could not be rendered for $environment"
+  fi
+  assert_equals "true" "$(jq -r '.env_vars.LOGDATE_CLOUD_LAUNCHED' "$output")"
+  assert_equals "stripe" "$(jq -r '.env_vars.BILLING_PROVIDER' "$output")"
+  assert_equals "stripe-webhook-secret" "$(jq -r '.secret_env.STRIPE_WEBHOOK_SECRET.secret_id' "$output")"
+done
+jq "$STRIPE_SECRETS"' | .env_vars.BILLING_PROVIDER = "stripe"' \
+  "$FIXTURE_DIR/staging-source.json" > "$FIXTURE_DIR/stripe-before-sales.json"
+output="$TMP_DIR/stripe-before-sales.out.json"
+if ! run_renderer staging "$RELEASE_SHA" stripe-before-sales.json "$output" "$LOG_DIR/stripe-before-sales.err"; then
+  cat "$LOG_DIR/stripe-before-sales.err" >&2
+  fail "Stripe could not be rendered before launch"
+fi
+assert_equals "null" "$(jq -r '.env_vars.LOGDATE_CLOUD_LAUNCHED' "$output")"
+jq '.env_vars.LOGDATE_CLOUD_LAUNCHED = "true"' \
+  "$FIXTURE_DIR/staging-source.json" > "$FIXTURE_DIR/cloud-sales-without-stripe.json"
+expect_failure cloud-sales-without-stripe staging "$RELEASE_SHA" cloud-sales-without-stripe.json \
+  "LOGDATE_CLOUD_LAUNCHED needs BILLING_PROVIDER to be stripe"
+jq '.env_vars.BILLING_PROVIDER = "stripe"' \
+  "$FIXTURE_DIR/staging-source.json" > "$FIXTURE_DIR/stripe-without-secrets.json"
+expect_failure stripe-without-secrets staging "$RELEASE_SHA" stripe-without-secrets.json \
+  "BILLING_PROVIDER stripe needs the STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET secrets"
+jq '.env_vars.LOGDATE_CLOUD_LAUNCHED = "yes"' \
+  "$FIXTURE_DIR/staging-source.json" > "$FIXTURE_DIR/invalid-cloud-sales.json"
+expect_failure invalid-cloud-sales staging "$RELEASE_SHA" invalid-cloud-sales.json \
+  "LOGDATE_CLOUD_LAUNCHED must be true or false"
+jq '.env_vars.BILLING_PROVIDER = "disabled"' \
+  "$FIXTURE_DIR/staging-source.json" > "$FIXTURE_DIR/billing-disabled.json"
+expect_failure billing-disabled staging "$RELEASE_SHA" billing-disabled.json \
+  "BILLING_PROVIDER does not match the first-party contract"
 # The public repository event stream is an opt-in for every environment, preserved verbatim.
 for environment in staging production; do
   for enabled in true false; do

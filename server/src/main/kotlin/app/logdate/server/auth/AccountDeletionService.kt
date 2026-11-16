@@ -3,6 +3,7 @@ package app.logdate.server.auth
 import app.logdate.server.audit.AuditCategory
 import app.logdate.server.audit.AuditKey
 import app.logdate.server.audit.AuditLogger
+import app.logdate.server.billing.CloudBillingService
 import app.logdate.server.logdate.LogDateBackupRepository
 import app.logdate.server.logdate.LogDateBlobStorage
 import app.logdate.server.logdate.LogDateMediaBlobRepository
@@ -39,6 +40,7 @@ class AccountDeletionService(
     private val blobCleanup: AccountBlobCleanup? = null,
     private val oauthGrantRevoker: OAuthGrantRevoker? = null,
     private val statusEvents: AccountStatusEvents? = null,
+    private val billing: CloudBillingService? = null,
 ) {
     data class Summary(
         val mediaBlobsDeleted: Int,
@@ -48,6 +50,9 @@ class AccountDeletionService(
 
     suspend fun deleteAccount(accountId: Uuid): Summary {
         val owner = accountId.toJavaUuid()
+        // A paid plan stops being charged before the account goes. If the billing provider can't be
+        // reached this throws and the account stays, rather than leaving a charge nobody can cancel.
+        billing?.endForDeletedAccount(owner)
         // Apps the account approved lose access before the account itself goes.
         val did = accountRepository.findById(accountId)?.did
         did?.let { oauthGrantRevoker?.revokeAllForSubject(it) }

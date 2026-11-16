@@ -9,33 +9,38 @@ import kotlinx.serialization.Serializable
  * [EntitlementResponse] — that describes what a signed-in account actually has. The catalog is
  * readable without an account so it can be shown while someone is deciding whether to create one.
  *
- * Prices deliberately do not appear here. A store returns them already formatted for the viewer's
- * locale and currency, so the store product identifiers below are the join key and the store is
- * asked for the price at display time. Sending a price string from the server would be wrong for
- * everyone outside its assumed currency.
+ * [prices] are read from the billing provider when the catalog is served, in the provider's own
+ * amounts and currency, so what is shown is what will be charged. The app formats them; it holds
+ * no prices itself.
  */
 @Serializable
 data class PlanOption(
-    /** Stable public identifier, such as `free` or `standard`. */
+    /** Stable public identifier, such as `cloud` or `cloud_plus`. */
     val id: String,
     /** Display name for the plan. */
     val name: String,
     /** Coarse tier used for UI copy and capability decisions. */
     val tier: EntitlementTierWire,
-    /** Maximum synced media storage in bytes, or null when the plan is unlimited. */
+    /** Storage the plan includes, in bytes, or null when the plan is unlimited. */
     val storageBytesLimit: Long?,
     /** Maximum retained backup snapshots, or null when the plan is unlimited. */
     val backupCountLimit: Int?,
     /** Client-safe feature flags this plan unlocks. */
     val features: Map<String, Boolean> = emptyMap(),
-    /** Google Play subscription product id, or null when the plan is not purchasable there. */
+    /** Google Play subscription product id, or null when the plan is not sold there. */
     val playProductId: String? = null,
-    /** Stripe price id, or null when the plan is not purchasable there. */
+    /** Unused: prices are read by lookup key and reported in [prices]. Kept so older clients decode. */
     val stripePriceId: String? = null,
+    /** What the plan costs for each interval it can be billed at. Empty when the provider gave none. */
+    val prices: List<PlanPrice> = emptyList(),
+    /** Storage sold past [storageBytesLimit], or null when the plan stops there. */
+    val extraStorage: ExtraStorageOffer? = null,
+    /** Whether the server will sell this plan right now. Plans can be listed before they go on sale. */
+    val onSale: Boolean = false,
 ) {
-    /** Whether this plan can be bought, as opposed to being the tier an account starts on. */
+    /** Whether this plan can be bought here and now: it is on sale and has a price to charge. */
     val isPurchasable: Boolean
-        get() = playProductId != null || stripePriceId != null
+        get() = onSale && prices.isNotEmpty()
 }
 
 /**

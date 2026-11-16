@@ -4,7 +4,7 @@ import app.logdate.server.openapi.SchemaDoc
 
 private const val SUCCESS_FLAG = "Always `true` on a successful response."
 
-/** Prose for the server-info, plans, asset-links, quota, transcription and resource schemas. */
+/** Prose for the server-info, plans, billing, asset-links, quota, transcription and resource schemas. */
 internal object CloudSchemaDocs {
     val docs: Map<String, SchemaDoc> =
         mapOf(
@@ -73,15 +73,76 @@ internal object CloudSchemaDocs {
                 SchemaDoc(
                     "A plan a person could subscribe to.",
                     mapOf(
-                        "id" to "Stable plan identifier such as `free` or `cloud-standard`.",
+                        "id" to "Stable plan identifier such as `cloud` or `cloud_plus`.",
                         "name" to "Display name.",
                         "tier" to "Coarse tier for UI copy.",
-                        "storageBytesLimit" to "Storage allowance in bytes, or `null` for unlimited.",
+                        "storageBytesLimit" to "Storage the plan includes, in bytes, or `null` for unlimited.",
                         "backupCountLimit" to "Backups the plan keeps, or `null` for unlimited.",
                         "features" to "Feature flags by name, `true` when the plan includes the feature.",
-                        "playProductId" to "Google Play subscription product ID, or `null` if not sold there. Ask Play for the price.",
-                        "stripePriceId" to "Stripe price ID, or `null` if not sold there. Ask Stripe for the price.",
+                        "playProductId" to "Google Play subscription product ID, or `null` if not sold there.",
+                        "stripePriceId" to "Always `null`. Prices are in `prices`.",
+                        "prices" to "What the plan costs for each interval it can bill at. Empty when the payment provider gave none.",
+                        "extraStorage" to "Storage sold past `storageBytesLimit`, or `null` when the plan stops there.",
+                        "onSale" to "Whether the server will sell this plan right now. Offer a purchase only when it is `true`.",
                     ),
+                ),
+            "PlanPrice" to
+                SchemaDoc(
+                    "What a plan costs for one billing interval, exactly as the payment provider charges it.",
+                    mapOf(
+                        "interval" to "How often this price bills.",
+                        "amountMinor" to "The amount in the currency's smallest unit: cents for USD.",
+                        "currency" to "ISO 4217 currency code in lower case, such as `usd`.",
+                    ),
+                ),
+            "BillingInterval" to
+                SchemaDoc(
+                    "How often a plan bills.",
+                    enumValues = mapOf("MONTH" to "Every month.", "YEAR" to "Every year."),
+                ),
+            "ExtraStorageOffer" to
+                SchemaDoc(
+                    "Storage a plan sells past what it includes, one step at a time, charged each month only while it is used.",
+                    mapOf(
+                        "stepBytes" to "The size of one step, in bytes.",
+                        "monthlyPrice" to "The monthly charge for one step, or `null` when the payment provider gave none.",
+                    ),
+                ),
+            // ---- Billing -----------------------------------------------------------------------------
+            "CloudSubscription" to
+                SchemaDoc(
+                    "An account's LogDate Cloud plan and how it is paid for.",
+                    mapOf(
+                        "planId" to "The plan the account is on, or `null` when it has none.",
+                        "status" to "Whether payments are current.",
+                        "includedWithBeta" to "The account has its current plan at no charge because it joined during the beta.",
+                        "betaMember" to "The account joined during the beta, so LogDate Cloud never costs it anything.",
+                        "freePlanId" to
+                            "The plan the account has at no charge whenever it pays for nothing, or `null`. It cannot be bought.",
+                        "interval" to "How often the plan bills, or `null` when nothing is billed.",
+                        "renewsAtEpochSeconds" to
+                            "When the plan next renews, in seconds since the epoch. `null` when nothing is billed or the plan is ending.",
+                        "endsAtEpochSeconds" to "When a cancelled plan stops, in seconds since the epoch. `null` unless it was cancelled.",
+                        "storageUsedBytes" to "Bytes the account stores now.",
+                        "storageIncludedBytes" to "Bytes the plan includes, `null` for no limit, `0` when there is no plan.",
+                        "extraStorageSteps" to "Whole steps of extra storage in use past `storageIncludedBytes`.",
+                        "purchasesAvailable" to
+                            "The server can start, change and cancel a plan right now. When `false`, show no purchase action.",
+                        "paymentDetailsAvailable" to
+                            "The account has billing details at the payment provider, so its payment page can be opened.",
+                    ),
+                ),
+            "CloudPlanSelection" to
+                SchemaDoc(
+                    "A plan and how often to bill it.",
+                    mapOf("planId" to "A plan identifier from the catalog.", "interval" to "How often to bill."),
+                ),
+            "StripeWebhookReceipt" to
+                SchemaDoc("Tells Stripe its notification was accepted.", mapOf("received" to "Always `true`.")),
+            "BillingPage" to
+                SchemaDoc(
+                    "A page at the payment provider to open in a browser.",
+                    mapOf("url" to "The page's address. It is short-lived and for this account only."),
                 ),
             // ---- Asset links ----------------------------------------------------------------------------
             "AssetLinkStatement" to
@@ -103,7 +164,8 @@ internal object CloudSchemaDocs {
                 SchemaDoc(
                     "Storage allowance and usage.",
                     mapOf(
-                        "totalBytes" to "The plan's allowance in bytes. The largest 64-bit value means unlimited.",
+                        "totalBytes" to
+                            "The plan's included storage plus any extra storage in use, in bytes. The largest 64-bit value means unlimited.",
                         "usedBytes" to "Bytes in use across media and backups.",
                         "categories" to "Per-category breakdown. Currently always empty.",
                         "isOverQuota" to "Not sent by the server today. Compute it as `usedBytes > totalBytes`.",

@@ -4,6 +4,8 @@ import app.logdate.SERVER_PORT
 import app.logdate.server.atproto.firehose.installFirehoseMaintenance
 import app.logdate.server.atproto.installRepoCollections
 import app.logdate.server.auth.handleAccountBlobCleanupCommand
+import app.logdate.server.billing.handleStripeCatalogCommand
+import app.logdate.server.billing.installStorageMetering
 import app.logdate.server.config.ProductionConfigValidator
 import app.logdate.server.config.RuntimeProfile
 import app.logdate.server.di.initializeDatabase
@@ -39,6 +41,8 @@ fun main(args: Array<String> = emptyArray()) {
 
     if (handleIdentityBackfillCommand(args)) return
     if (handleIdentityPublishingCommand(args)) return
+    if (handleStripeCatalogCommand(args)) return
+    // Last of the commands: it refuses any arguments it does not recognise.
     if (handleAccountBlobCleanupCommand(args)) return
     val profile = RuntimeProfile.fromEnvironment()
     ProductionConfigValidator.validate(profile)
@@ -95,6 +99,7 @@ fun Application.module(
     installFirehoseMaintenance()
     installSyncMaintenance(isDatabaseAvailable)
     installDiagnosticReportMaintenance()
+    installStorageMetering()
     installStoredKeyRewrap()
     installOAuthKeyRotation()
     installJsonSerialization()

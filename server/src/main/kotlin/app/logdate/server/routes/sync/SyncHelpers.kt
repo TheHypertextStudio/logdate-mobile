@@ -671,9 +671,9 @@ internal suspend fun respondRateLimited(
 }
 
 /**
- * Structured 402 Payment Required. `reason` is one of the [QuotaReason] enum values and
- * `limit`/`current` give the user-facing numbers so the client can render a specific "X of Y"
- * message without parsing the free-form body.
+ * Structured 402 Payment Required. `reason` is one of the [QuotaReason] enum values, `planId` names
+ * the plan whose limit refused the write, and `limit`/`current` give the numbers, so the client can
+ * say what is full and what to do about it without parsing the free-form body.
  */
 internal suspend fun respondQuotaExceeded(
     call: ApplicationCall,
@@ -688,6 +688,14 @@ internal suspend fun respondQuotaExceeded(
             QuotaReason.BACKUP_COUNT -> {
                 "Backup quota exceeded: ${denied.current} of ${denied.limit} backups stored."
             }
+
+            QuotaReason.EXTRA_STORAGE_UNPAID -> {
+                "Extra storage needs a current payment: ${denied.current} of ${denied.limit} included bytes in use."
+            }
+
+            QuotaReason.NO_PLAN -> {
+                "This account has no LogDate Cloud plan."
+            }
         }
     AuditLogger.emit(
         AuditCategory.SYNC_QUOTA_EXCEEDED,
@@ -695,6 +703,7 @@ internal suspend fun respondQuotaExceeded(
             "reason" to denied.reason.name,
             "limit" to denied.limit.toString(),
             "current" to denied.current.toString(),
+            "planId" to denied.planId,
         ),
     )
     call.respond(
@@ -707,6 +716,7 @@ internal suspend fun respondQuotaExceeded(
                     "reason" to denied.reason.name,
                     "limit" to denied.limit.toString(),
                     "current" to denied.current.toString(),
+                    "planId" to denied.planId,
                 ),
         ),
     )

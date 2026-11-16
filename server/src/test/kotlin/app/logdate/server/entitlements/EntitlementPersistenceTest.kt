@@ -12,7 +12,9 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.time.Clock
 
 class EntitlementPersistenceTest {
@@ -20,26 +22,128 @@ class EntitlementPersistenceTest {
     private val usageTables =
         arrayOf<Table>(LogDateBackupsTable, AccountsTable, AccountStorageUsageTable)
 
+    /** Every table [StoredEntitlementService] reads. */
+    private val entitlementTables =
+        arrayOf<Table>(PlansTable, AccountEntitlementsTable, AccountsTable)
+
     @Test
-    fun `stored service falls back to active free plan when account has no subscription row`() =
+    fun `a beta member with no subscription has the base plan at no charge`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
-                insertPlan(database, id = "free", tier = "free", storageBytes = 50_000L, backupCount = 2)
+            withDatabase(*entitlementTables) { database ->
+                val accountId = UUID.randomUUID()
+                insertLaunchPlans(database)
+                insertBetaMember(database, accountId)
 
-                val entitlement = StoredEntitlementService(database).resolve(UUID.randomUUID())
+                val entitlement = StoredEntitlementService(database).resolve(accountId)
 
-                assertEquals("free", entitlement.planId)
-                assertEquals(EntitlementTier.FREE, entitlement.tier)
+                assertEquals("cloud", entitlement.planId)
+                assertEquals(EntitlementTier.STANDARD, entitlement.tier)
                 assertEquals(EntitlementStatus.ACTIVE, entitlement.status)
-                assertEquals(50_000L, entitlement.limits.storageBytes)
-                assertEquals(2, entitlement.limits.backupCount)
+                assertEquals(50 * GIB, entitlement.limits.storageBytes)
+                assertNull(entitlement.limits.extraStorage)
+                assertTrue(entitlement.includedWithBeta)
+            }
+        }
+
+    @Test
+    fun `an account carrying the beta row from the launch migration is on the base plan at no charge`() =
+        runTest {
+            withDatabase(*entitlementTables) { database ->
+                val accountId = UUID.randomUUID()
+                insertLaunchPlans(database)
+                insertBetaMember(database, accountId)
+                insertAccountEntitlement(database, accountId, planId = "cloud", status = "active", source = "beta")
+
+                val entitlement = StoredEntitlementService(database).resolve(accountId)
+
+                assertEquals("cloud", entitlement.planId)
+                assertTrue(entitlement.includedWithBeta)
+                assertNull(entitlement.limits.extraStorage)
+            }
+        }
+
+    @Test
+    fun `an account that is not a beta member and has no subscription has no plan`() =
+        runTest {
+            withDatabase(*entitlementTables) { database ->
+                val joinedAfterLaunch = UUID.randomUUID()
+                insertLaunchPlans(database)
+                transaction(database) {
+                    AccountsTable.insert {
+                        it[id] = joinedAfterLaunch
+                        it[username] = "newcomer"
+                        it[displayName] = "Newcomer"
+                        it[createdAt] = Clock.System.now()
+                        it[cloudBetaMember] = false
+                    }
+                }
+
+                val entitlement = StoredEntitlementService(database).resolve(joinedAfterLaunch)
+
+                assertEquals(Entitlement.NO_PLAN_ID, entitlement.planId)
+                assertEquals(EntitlementStatus.CANCELLED, entitlement.status)
+                assertEquals(0L, entitlement.limits.storageBytes)
+                assertFalse(entitlement.includedWithBeta)
+            }
+        }
+
+    @Test
+    fun `a beta member whose paid subscription ended is back on the base plan at no charge`() =
+        runTest {
+            withDatabase(*entitlementTables) { database ->
+                val accountId = UUID.randomUUID()
+                insertLaunchPlans(database)
+                insertBetaMember(database, accountId)
+                insertAccountEntitlement(database, accountId, planId = "cloud_plus", status = "cancelled", source = "stripe")
+
+                val entitlement = StoredEntitlementService(database).resolve(accountId)
+
+                assertEquals("cloud", entitlement.planId)
+                assertEquals(EntitlementStatus.ACTIVE, entitlement.status)
+                assertTrue(entitlement.includedWithBeta)
+            }
+        }
+
+    @Test
+    fun `a beta member paying for Plus is on Plus, not the plan the beta includes`() =
+        runTest {
+            withDatabase(*entitlementTables) { database ->
+                val accountId = UUID.randomUUID()
+                insertLaunchPlans(database)
+                insertBetaMember(database, accountId)
+                insertAccountEntitlement(database, accountId, planId = "cloud_plus", status = "active", source = "stripe")
+
+                val entitlement = StoredEntitlementService(database).resolve(accountId)
+
+                assertEquals("cloud_plus", entitlement.planId)
+                assertEquals(250 * GIB, entitlement.limits.storageBytes)
+                assertFalse(entitlement.includedWithBeta)
+            }
+        }
+
+    @Test
+    fun `extra storage on Plus is billable only for a Stripe subscription whose payments are current`() =
+        runTest {
+            withDatabase(*entitlementTables) { database ->
+                val paying = UUID.randomUUID()
+                val pastDue = UUID.randomUUID()
+                val granted = UUID.randomUUID()
+                insertLaunchPlans(database)
+                insertAccountEntitlement(database, paying, planId = "cloud_plus", status = "active", source = "stripe")
+                insertAccountEntitlement(database, pastDue, planId = "cloud_plus", status = "past_due", source = "stripe")
+                insertAccountEntitlement(database, granted, planId = "cloud_plus", status = "active", source = "grant")
+                val service = StoredEntitlementService(database)
+
+                assertEquals(ExtraStorage(stepBytes = 50 * GIB, billable = true), service.resolve(paying).limits.extraStorage)
+                assertEquals(ExtraStorage(stepBytes = 50 * GIB, billable = false), service.resolve(pastDue).limits.extraStorage)
+                assertEquals(ExtraStorage(stepBytes = 50 * GIB, billable = false), service.resolve(granted).limits.extraStorage)
             }
         }
 
     @Test
     fun `stored service maps account plan tier status and nullable unlimited limits`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
+            withDatabase(*entitlementTables) { database ->
                 val accountId = UUID.randomUUID()
                 insertPlan(database, id = "pro", tier = "PRO", storageBytes = null, backupCount = null)
                 insertAccountEntitlement(database, accountId = accountId, planId = "pro", status = "past_due")
@@ -55,9 +159,9 @@ class EntitlementPersistenceTest {
         }
 
     @Test
-    fun `stored service maps standard unlimited grace and cancelled account states`() =
+    fun `a grace period keeps the plan and a cancelled subscription leaves no plan`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
+            withDatabase(*entitlementTables) { database ->
                 val standardAccountId = UUID.randomUUID()
                 val unlimitedAccountId = UUID.randomUUID()
                 insertPlan(database, id = "standard", tier = "standard", storageBytes = 100L, backupCount = 3)
@@ -70,15 +174,16 @@ class EntitlementPersistenceTest {
 
                 assertEquals(EntitlementTier.STANDARD, standard.tier)
                 assertEquals(EntitlementStatus.GRACE, standard.status)
-                assertEquals(EntitlementTier.UNLIMITED, unlimited.tier)
+                assertEquals(Entitlement.NO_PLAN_ID, unlimited.planId)
                 assertEquals(EntitlementStatus.CANCELLED, unlimited.status)
+                assertEquals(0L, unlimited.limits.storageBytes)
             }
         }
 
     @Test
     fun `stored service surfaces plan features for the resolved entitlement`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
+            withDatabase(*entitlementTables) { database ->
                 val accountId = UUID.randomUUID()
                 insertPlan(
                     database,
@@ -100,7 +205,7 @@ class EntitlementPersistenceTest {
     @Test
     fun `stored service falls back to empty features when plan column is malformed`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
+            withDatabase(*entitlementTables) { database ->
                 val accountId = UUID.randomUUID()
                 // Insert directly so we can poison the features column with non-JSON text.
                 transaction(database) {
@@ -127,7 +232,7 @@ class EntitlementPersistenceTest {
     @Test
     fun `stored service defaults unknown tier and status values conservatively`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
+            withDatabase(*entitlementTables) { database ->
                 val accountId = UUID.randomUUID()
                 insertPlan(database, id = "custom", tier = "custom", storageBytes = 10L, backupCount = 1)
                 insertAccountEntitlement(database, accountId = accountId, planId = "custom", status = "unexpected")
@@ -142,12 +247,12 @@ class EntitlementPersistenceTest {
     @Test
     fun `stored service denies by default when selected plan is inactive or missing`() =
         runTest {
-            withDatabase(PlansTable, AccountEntitlementsTable) { database ->
+            withDatabase(*entitlementTables) { database ->
                 val inactiveAccountId = UUID.randomUUID()
                 val missingAccountId = UUID.randomUUID()
                 insertPlan(database, id = "standard", tier = "standard", storageBytes = 100L, backupCount = 1, active = false)
                 insertAccountEntitlement(database, accountId = inactiveAccountId, planId = "standard", status = "active")
-                insertAccountEntitlement(database, accountId = missingAccountId, planId = "missing", status = "canceled")
+                insertAccountEntitlement(database, accountId = missingAccountId, planId = "missing", status = "active")
 
                 val inactivePlanEntitlement = StoredEntitlementService(database).resolve(inactiveAccountId)
                 val missingPlanEntitlement = StoredEntitlementService(database).resolve(missingAccountId)
@@ -226,6 +331,7 @@ class EntitlementPersistenceTest {
         backupCount: Int?,
         active: Boolean = true,
         features: Map<String, Boolean> = emptyMap(),
+        extraStorageStep: Long? = null,
     ) {
         transaction(database) {
             PlansTable.insert {
@@ -234,6 +340,7 @@ class EntitlementPersistenceTest {
                 it[PlansTable.tier] = tier
                 it[monthlyBytesLimit] = storageBytes
                 it[backupCountLimit] = backupCount
+                it[extraStorageStepBytes] = extraStorageStep
                 it[stripePriceId] = null
                 it[playProductId] = null
                 it[PlansTable.active] = active
@@ -246,17 +353,38 @@ class EntitlementPersistenceTest {
         }
     }
 
+    private fun insertLaunchPlans(database: Database) {
+        insertPlan(database, id = "cloud", tier = "standard", storageBytes = 50 * GIB, backupCount = null)
+        insertPlan(database, id = "cloud_plus", tier = "pro", storageBytes = 250 * GIB, backupCount = null, extraStorageStep = 50 * GIB)
+    }
+
+    private fun insertBetaMember(
+        database: Database,
+        accountId: UUID,
+    ) {
+        transaction(database) {
+            AccountsTable.insert {
+                it[id] = accountId
+                it[username] = "u${accountId.toString().take(8)}"
+                it[displayName] = "Beta member"
+                it[createdAt] = Clock.System.now()
+                it[cloudBetaMember] = true
+            }
+        }
+    }
+
     private fun insertAccountEntitlement(
         database: Database,
         accountId: UUID,
         planId: String,
         status: String,
+        source: String = "test",
     ) {
         transaction(database) {
             AccountEntitlementsTable.insert {
                 it[AccountEntitlementsTable.accountId] = accountId
                 it[AccountEntitlementsTable.planId] = planId
-                it[entitlementSource] = "test"
+                it[entitlementSource] = source
                 it[externalSubscriptionId] = null
                 it[AccountEntitlementsTable.status] = status
                 it[currentPeriodEnd] = null
@@ -312,5 +440,9 @@ class EntitlementPersistenceTest {
                 it[sizeBytes] = bytes
             }
         }
+    }
+
+    private companion object {
+        const val GIB = 1024L * 1024L * 1024L
     }
 }
