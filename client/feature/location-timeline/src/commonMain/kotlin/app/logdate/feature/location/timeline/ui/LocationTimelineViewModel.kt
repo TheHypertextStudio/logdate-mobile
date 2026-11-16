@@ -28,6 +28,7 @@ import app.logdate.shared.model.LocationAltitude
 import app.logdate.util.localTime
 import app.logdate.util.toReadableDateShort
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -52,6 +54,7 @@ import logdate.client.feature.location.timeline.generated.resources.places_sourc
 import logdate.client.feature.location.timeline.generated.resources.places_source_place
 import logdate.client.feature.location.timeline.generated.resources.places_source_saved_place
 import org.jetbrains.compose.resources.StringResource
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,6 +65,7 @@ class LocationTimelineViewModel(
     private val placeResolutionCache: PlaceResolutionCache,
     private val deleteLocationRangeUseCase: DeleteLocationRangeUseCase,
     private val captureLocationForTimelineReviewUseCase: CaptureLocationForTimelineReviewUseCase,
+    private val workContext: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     private sealed interface SectionState<out T> {
         data object Loading : SectionState<Nothing>
@@ -165,12 +169,13 @@ class LocationTimelineViewModel(
                         placesState = filterAndPlacesState.second,
                         visibleCount = visibleCount,
                     )
-                }.catch { error ->
-                    Napier.e("Failed to build location timeline", error)
-                    emit(LocationTimelineUiState.Error(error.toLocationTimelineErrorUiState()))
-                }.collect { state ->
-                    _uiState.value = state
-                }
+                }.flowOn(workContext)
+                    .catch { error ->
+                        Napier.e("Failed to build location timeline", error)
+                        emit(LocationTimelineUiState.Error(error.toLocationTimelineErrorUiState()))
+                    }.collect { state ->
+                        _uiState.value = state
+                    }
             }
     }
 
@@ -207,9 +212,12 @@ class LocationTimelineViewModel(
         val memoryPlaces = placesState.valueOrNull().orEmpty()
 
         val mappedStops = stops.map { stop -> stop.toUiModel() }
-        val mappedPlaces = memoryPlaces.map { place -> place.toUiModel(mappedStops) }
+        val visibleLimit = visibleCount.coerceAtLeast(DEFAULT_PLACE_PAGE_SIZE)
+        // Only a shown place lists its nearby stops, so places past the visible page skip that search.
+        val mappedPlaces =
+            memoryPlaces.mapIndexed { index, place -> place.toUiModel(if (index < visibleLimit) mappedStops else emptyList()) }
         val mappedCurrentLocation = currentLocation?.toCurrentLocationUiModel()
-        val visiblePlaces = mappedPlaces.take(visibleCount.coerceAtLeast(DEFAULT_PLACE_PAGE_SIZE))
+        val visiblePlaces = mappedPlaces.take(visibleLimit)
         val existingSelection = (_uiState.value as? LocationTimelineUiState.Content)?.selectedPlaceId
         val selectedPlaceId =
             visiblePlaces.firstOrNull { it.id == existingSelection }?.id
