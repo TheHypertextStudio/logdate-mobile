@@ -167,6 +167,57 @@ Rules:
 5. The first-ever Play upload must still be done manually in Play Console
    before Gradle Play Publisher can publish subsequent releases.
 
+## Native debug symbols
+
+Keep native debug symbols with the exact signed bundle they describe. The R8
+`mapping.txt` file only deobfuscates Kotlin/Java code; it does not replace native
+symbols. Uploading symbols is an artifact attachment and does not require
+rebuilding, resigning, or publishing the app.
+
+For new release builds, Android Gradle Plugin supports
+`android.buildTypes.release.ndk.debugSymbolLevel = "SYMBOL_TABLE"` to include
+available function symbols in the AAB. `FULL` additionally retains source-file
+and line information when dependencies provide it. See Android's
+[native symbols guidance](https://developer.android.com/build/include-native-symbols).
+The phone module does not currently set this option explicitly; check the AAB's
+`BUNDLE-METADATA/com.android.tools.build.debugsymbols/` entries before relying
+on automatic delivery. A standalone AGP archive, when generated, is under
+`build/outputs/native-debug-symbols/release/native-debug-symbols.zip`.
+
+For an existing bundle without embedded debug metadata:
+
+1. Inspect every module's `lib/<abi>/*.so` entries using the NDK's
+   `llvm-readelf --sections --symbols`. An ELF `.symtab` with defined function
+   symbols provides native function names; `.dynsym` alone does not provide
+   the full symbol table. Do not rename stripped files or create placeholder
+   symbols to silence a warning.
+2. Prefer retained unstripped libraries from the original build. Match their
+   ELF build IDs and loadable code to the shipped libraries. If the shipped
+   ELF itself still contains its symbol table, it can be used directly:
+   package those exact bytes as `<abi>/<library>.so` at the ZIP root. Do not
+   include an enclosing `lib/` directory or the AAB module name. Reject
+   conflicting libraries with the same ABI and filename across modules.
+3. Record the signed AAB's SHA-256, the symbols ZIP's SHA-256, per-library
+   matching evidence, and omitted libraries in the private release evidence.
+   Keep the archive outside the repository and run packaging through the
+   repository's capacity guard. Never substitute a fresh rebuild's symbols
+   just because its version name matches.
+4. In Play Console, open the selected release, find its version code under
+   **App bundles**, then choose **Manage artifact → Upload native debug
+   symbols (.zip)**. Verify the artifact reports both **ReTrace mapping file
+   and native debug symbols** after reload. Rerun the release's preview
+   validation and confirm the missing-native-symbol warning is absent.
+
+Current dependencies retain function symbol tables in `libsqliteJni.so` and
+`libdatastore_shared_counter.so` across the four Android ABIs. The AndroidX
+graphics-path and CameraX libraries, SQLCipher, ONNX Runtime, and Sherpa ONNX
+libraries arrive stripped. Recheck this inventory for each dependency update.
+Attaching the available symbols does not establish full native crash coverage:
+the stripped libraries require matching unstripped binaries or symbols from
+their publishers. Enabling `debugSymbolLevel` cannot reconstruct information
+already removed upstream. Keep that limitation in the private release record
+even when Play accepts the archive and removes its missing-file warning.
+
 ## Workflow Behavior
 
 The workflow has two publish paths:
