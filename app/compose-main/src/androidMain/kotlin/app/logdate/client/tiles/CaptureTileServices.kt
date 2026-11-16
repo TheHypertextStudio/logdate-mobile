@@ -8,10 +8,10 @@ import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import app.logdate.client.ApplicationStartupCoordinator
 import app.logdate.client.MainActivity
 import app.logdate.client.capture.ACTION_CAPTURE
 import app.logdate.client.capture.EXTRA_CAPTURE_MODE
+import app.logdate.client.launch.ApplicationStartupCoordinator
 import app.logdate.client.launch.ApplicationStartupState
 import app.logdate.client.media.audio.AudioRecordingManager
 import io.github.aakira.napier.Napier
@@ -63,9 +63,9 @@ class RecordVoiceTileService :
     private val recorder: AudioRecordingManager by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var readinessJob: Job? = null
-    private val startup get() = ApplicationStartupCoordinator.get(application)
 
     override fun onStartListening() {
+        val startup = ApplicationStartupCoordinator.start(application)
         if (startup.state.value !is ApplicationStartupState.Ready) {
             qsTile?.apply {
                 state = Tile.STATE_UNAVAILABLE
@@ -109,7 +109,7 @@ class RecordVoiceTileService :
     }
 
     override fun onClick() {
-        if (startup.state.value !is ApplicationStartupState.Ready) {
+        if (ApplicationStartupCoordinator.start(application).state.value !is ApplicationStartupState.Ready) {
             openCapture(mode = "voice")
             return
         }

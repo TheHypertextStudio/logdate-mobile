@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import app.logdate.client.ApplicationStartupCoordinator
 import app.logdate.client.database.NativeRestoreInProgressException
 import app.logdate.client.database.NewerDatabaseVersionException
 import app.logdate.client.database.encryption.DatabaseKeyRecoveryRequiredException
@@ -37,7 +36,7 @@ import studio.hypertext.logdate.R
 
 /** Attaches a responsive loading surface before resolving any storage-backed dependency. */
 internal fun FragmentActivity.whenApplicationReady(onReady: () -> Unit) {
-    val startup = ApplicationStartupCoordinator.get(application)
+    val startup = ApplicationStartupCoordinator.start(application)
     if (startup.state.value is ApplicationStartupState.Ready) {
         onReady()
         return
