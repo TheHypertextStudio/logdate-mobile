@@ -322,7 +322,6 @@ def prepare(
         )
     h.ensure_emulator_setup_complete(serial)
     h.adb(serial, "shell", "bmgr", "enable", "true")
-    h.select_local_transport(serial)
     h.adb(
         serial,
         "shell",
@@ -334,6 +333,7 @@ def prepare(
         if cloud_backup
         else "is_encrypted=true,is_device_transfer=true",
     )
+    h.select_local_transport(serial)
 
 
 def radio_state(h, serial):

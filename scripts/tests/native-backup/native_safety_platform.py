@@ -119,6 +119,39 @@ class NativePlatformSafety:
             "Transport preparation must not force a cold app launch to happen offline",
         )
 
+    def test_prepare_sets_encrypted_transport_flags_before_selection(self):
+        events = []
+
+        def adb(serial, *arguments, **kwargs):
+            events.append(arguments)
+            if arguments == ("shell", "getprop", "ro.kernel.qemu"):
+                return b"1"
+            if arguments == ("shell", "id", "-u"):
+                return b"0"
+            return b""
+
+        with (
+            patch.object(HARNESS, "adb", side_effect=adb),
+            patch.object(HARNESS, "wait_for_package_manager"),
+            patch.object(HARNESS, "ensure_emulator_setup_complete"),
+            patch.object(
+                HARNESS,
+                "select_local_transport",
+                side_effect=lambda serial: events.append("selected"),
+            ),
+        ):
+            HARNESS.prepare("emulator-5582")
+
+        parameters = (
+            "shell",
+            "settings",
+            "put",
+            "secure",
+            "backup_local_transport_parameters",
+            "is_encrypted=true,is_device_transfer=true",
+        )
+        self.assertLess(events.index(parameters), events.index("selected"))
+
     def test_resume_preparation_requires_an_existing_synthetic_package(self):
         with (
             patch.object(HARNESS, "adb", side_effect=[b"1", b""]) as adb,
