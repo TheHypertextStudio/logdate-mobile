@@ -1,12 +1,17 @@
 package app.logdate.client.datastore
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.mutablePreferencesOf
+import androidx.datastore.preferences.core.stringPreferencesKey
 import app.logdate.client.datastore.featureflags.DataStoreFeatureFlagStore
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 import java.io.File
@@ -67,41 +72,54 @@ class PlacesBetaPersistenceTest {
     }
 
     @Test
-    fun placesBetaChoiceSurvivesClosingAndReopeningTheStore() =
+    fun placesBetaChoiceSurvivesReopeningWithoutChangingLegacyHistoryOrRecording() =
         runBlocking {
-            val directory = Files.createTempDirectory("logdate-places-mode").toFile()
-            val path = directory.resolve("settings.preferences_pb").absolutePath.toPath()
-            var storeJob = Job()
-
-            fun openPreferences() =
-                DataStoreFeatureFlagStore(
-                    PreferenceDataStoreFactory.createWithPath(
-                        scope = CoroutineScope(Dispatchers.IO + storeJob),
-                        produceFile = { path },
-                    ),
-                )
-            try {
-                val firstLaunch = openPreferences()
-                assertFalse(firstLaunch.isEnabled(placesFlag))
-                firstLaunch.setEnabled(placesFlag, true)
-                assertTrue(firstLaunch.isEnabled(placesFlag))
-                storeJob.cancelAndJoin()
-
-                storeJob = Job()
-                val secondLaunch = openPreferences()
-                assertTrue(secondLaunch.isEnabled(placesFlag))
-                secondLaunch.setEnabled(placesFlag, false)
-                assertFalse(secondLaunch.isEnabled(placesFlag))
-                storeJob.cancelAndJoin()
-
-                storeJob = Job()
-                val thirdLaunch = openPreferences()
-                assertFalse(thirdLaunch.isEnabled(placesFlag))
-                thirdLaunch.setEnabled(placesFlag, true)
-                assertTrue(thirdLaunch.isEnabled(placesFlag))
-            } finally {
-                storeJob.cancelAndJoin()
-                directory.deleteRecursively()
+            val placesKey = booleanPreferencesKey("places_beta_enabled")
+            listOf(false, true).forEach { legacyHistoryEnabled ->
+                val directory = Files.createTempDirectory("logdate-places-mode").toFile()
+                val path = directory.resolve("settings.preferences_pb").absolutePath.toPath()
+                val originalPreferences =
+                    mutablePreferencesOf(
+                        booleanPreferencesKey("human_location_history_enabled") to legacyHistoryEnabled,
+                        booleanPreferencesKey("developer_mode_enabled") to false,
+                        booleanPreferencesKey("location_background_tracking_enabled") to true,
+                        longPreferencesKey("location_tracking_interval_minutes") to 7L,
+                        stringPreferencesKey("location_capture_mode") to "ACTIVE",
+                    )
+                val preserved = originalPreferences.asMap()
+                try {
+                    repeat(3) { launch ->
+                        val storeJob = Job()
+                        try {
+                            val preferences =
+                                PreferenceDataStoreFactory.createWithPath(
+                                    scope = CoroutineScope(Dispatchers.IO + storeJob),
+                                    produceFile = { path },
+                                )
+                            if (launch == 0) {
+                                preferences.updateData { originalPreferences }
+                            }
+                            val store = DataStoreFeatureFlagStore(preferences)
+                            assertEquals(launch == 1, store.isEnabled(placesFlag))
+                            when (launch) {
+                                0 -> store.setEnabled(placesFlag, true)
+                                1 -> store.setEnabled(placesFlag, false)
+                            }
+                            assertEquals(
+                                preserved,
+                                preferences.data
+                                    .first()
+                                    .asMap()
+                                    .filterKeys { it != placesKey },
+                                "Legacy history=$legacyHistoryEnabled must survive launch $launch",
+                            )
+                        } finally {
+                            storeJob.cancelAndJoin()
+                        }
+                    }
+                } finally {
+                    directory.deleteRecursively()
+                }
             }
         }
 }

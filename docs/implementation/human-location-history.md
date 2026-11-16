@@ -2,15 +2,22 @@
 
 ## Delivery state
 
-The Android experience is enabled by default through `HUMAN_LOCATION_HISTORY`
-(`human_location_history_enabled`). Disabling it keeps recorded data. Complete-day recording
-still requires explicit opt-in and preserves existing recording preferences.
+Places and location-history browsing share the `PLACES_BETA` opt-in
+(`places_beta_enabled`) in Settings > About LogDate > Labs. Existing explicit choices are
+preserved; a missing preference remains off. The previous default-true
+`HUMAN_LOCATION_HISTORY` preference does not enroll users in the beta. It remains the
+internal encrypted-history sync compatibility gate, with its stored values unchanged.
+
+Enabling the beta opens the Human history experience. Disabling it hides browsing entry
+points and open details without deleting history or memories. No data migration is needed.
+Complete-day recording still requires explicit consent and Android permissions; the beta
+does not change recording preferences, synchronization, Rewind, export, or identity recovery.
 
 Production server support shipped as `server-v2026.09.29.3` at commit `e1f3900c3`, before client
 enablement. The [production deployment](https://github.com/WillieCubed/logdate-mobile/actions/runs/36666399343)
 passed migrations, authenticated candidate checks, traffic promotion, and public durability checks.
 The canonical health endpoint reports that revision, and the new history route rejects anonymous
-requests. The enabled client is delivered through the existing Play internal-track workflow;
+requests. The client is delivered through the existing Play internal-track workflow;
 public Android promotion remains governed by `docs/launch/android-public-release.md`.
 
 The Locations destination has Your day and Your places. A day contains individually browsable

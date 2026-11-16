@@ -28,7 +28,7 @@ enum class FeatureFlag(
      */
     LIBRARY(key = "library_enabled", defaultEnabled = true),
 
-    /** Opt-in Places browsing presentation; independent of location collection and Rewind maps. */
+    /** Opt-in Places and location-history browsing; independent of recording, sync, and Rewind maps. */
     PLACES_BETA(key = "places_beta_enabled", defaultEnabled = false),
 
     /** Immersive entry overview and block focus, with a legacy presentation rollback. */
@@ -68,7 +68,7 @@ enum class FeatureFlag(
     /** Shared adaptive Home presentation; retain the preference as a presentation rollback switch. */
     HOME_WORKSPACE_V2(key = "home_workspace_v2_enabled", defaultEnabled = true),
 
-    /** Human history browsing and encrypted sync; complete-day recording still requires explicit opt-in. */
+    /** Retained internal encrypted-history sync compatibility preference; not the browsing opt-in. */
     HUMAN_LOCATION_HISTORY(key = "human_location_history_enabled", defaultEnabled = true),
 
     /**

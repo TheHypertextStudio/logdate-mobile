@@ -44,6 +44,11 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
         }
+        val desktopTest by getting
+        desktopTest.dependencies {
+            implementation(libs.compose.ui.test)
+            implementation(compose.desktop.currentOs)
+        }
         androidMain.dependencies {
             implementation(libs.google.maps.compose)
             implementation(libs.androidx.activity.compose)

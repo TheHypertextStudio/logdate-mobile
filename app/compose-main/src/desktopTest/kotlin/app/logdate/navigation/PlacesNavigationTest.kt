@@ -26,6 +26,17 @@ class PlacesNavigationTest {
     }
 
     @Test
+    fun secondaryBrowseActionsExistOnlyAfterOptInLoads() {
+        val settings = SettingsRoute()
+        val stack = mutableListOf<androidx.navigation3.runtime.NavKey>(HomeRoute, settings)
+        assertNull(placesLocationAction(null, stack))
+        assertNull(placesLocationAction(false, stack))
+        requireNotNull(placesLocationAction(true, stack)).invoke()
+        assertEquals(listOf(HomeRoute, settings, LocationTimelineRoute), stack)
+        assertEquals(listOf(HomeRoute, settings), placesBackStack(stack, false))
+    }
+
+    @Test
     fun rewindAndOtherDestinationsStayAvailable() {
         val rewind = RewindDetailRoute(Uuid.random())
         val stack = listOf(HomeRoute, rewind)

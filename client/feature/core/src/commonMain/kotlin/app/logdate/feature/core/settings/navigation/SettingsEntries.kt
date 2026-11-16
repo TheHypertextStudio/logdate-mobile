@@ -79,6 +79,7 @@ fun NavBackStack<NavKey>.navigateToSettings() {
  *   to hide it (iOS / desktop)
  * @param onNavigateToNotifications same shape as [onNavigateToWatch] but for the
  *   Notifications tile (currently unwired on every platform)
+ * @param onOpenLocationTimeline exposes history browsing only when available; capture settings remain independent
  */
 fun EntryProviderScope<NavKey>.settingsEntries(
     onBack: () -> Unit,
@@ -91,6 +92,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(
     onNavigateToNotifications: (() -> Unit)? = null,
     onNavigateTo: (NavKey) -> Unit,
     onNavigateToCategory: (NavKey) -> Unit = onNavigateTo,
+    onOpenLocationTimeline: (() -> Unit)? = null,
 ) {
     val categories =
         SettingsActivityCategories { section ->
@@ -189,7 +191,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(
     taggedEntry<LocationSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.Location, categories)) {
         LocationSettingsScreen(
             onBack = onBack,
-            onOpenLocationTimeline = {},
+            onOpenLocationTimeline = onOpenLocationTimeline,
             onNavigateToTrackingOptions = { onNavigateTo(LocationTrackingOptionsRoute) },
             onNavigateToInterval = { onNavigateTo(LocationIntervalRoute) },
         )

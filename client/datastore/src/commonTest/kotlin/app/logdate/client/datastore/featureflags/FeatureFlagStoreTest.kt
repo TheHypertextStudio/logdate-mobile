@@ -4,6 +4,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.mutablePreferencesOf
+import androidx.datastore.preferences.core.stringPreferencesKey
 import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.di.commonDatastoreModule
 import kotlinx.coroutines.flow.Flow
@@ -25,17 +28,48 @@ class FeatureFlagStoreTest {
     private val store = DataStoreFeatureFlagStore(preferences)
 
     @Test
-    fun `Places beta defaults off and does not change collection or developer settings`() =
+    fun `Places browsing uses only its saved opt-in and preserves other preferences`() =
         runTest {
-            assertFalse(store.isEnabled(FeatureFlag.PLACES_BETA))
-            val settings = LogdatePreferencesDataSource(preferences)
-            store.setEnabled(FeatureFlag.HUMAN_LOCATION_HISTORY, true)
-            store.setEnabled(FeatureFlag.PLACES_BETA, true)
-            assertTrue(store.isEnabled(FeatureFlag.PLACES_BETA))
-            assertFalse(settings.observeDeveloperModeEnabled().first())
-            store.setEnabled(FeatureFlag.PLACES_BETA, false)
-            assertFalse(store.isEnabled(FeatureFlag.PLACES_BETA))
-            assertTrue(store.isEnabled(FeatureFlag.HUMAN_LOCATION_HISTORY))
+            val placesKey = booleanPreferencesKey("places_beta_enabled")
+            val legacyHistoryKey = booleanPreferencesKey("human_location_history_enabled")
+            val storedChoices = listOf<Boolean?>(null, false, true)
+            storedChoices.forEach { placesChoice ->
+                storedChoices.forEach { legacyHistoryChoice ->
+                    val preferences = TestPreferencesDataStore()
+                    preferences.updateData {
+                        mutablePreferencesOf(
+                            booleanPreferencesKey("developer_mode_enabled") to false,
+                            booleanPreferencesKey("location_background_tracking_enabled") to true,
+                            longPreferencesKey("location_tracking_interval_minutes") to 7L,
+                            stringPreferencesKey("location_capture_mode") to "ACTIVE",
+                        ).apply {
+                            placesChoice?.let { this[placesKey] = it }
+                            legacyHistoryChoice?.let { this[legacyHistoryKey] = it }
+                        }
+                    }
+                    val snapshot = preferences.data.first().asMap()
+                    val store = DataStoreFeatureFlagStore(preferences)
+                    val case = "Places=$placesChoice, legacy history=$legacyHistoryChoice"
+
+                    assertEquals(placesChoice == true, store.isEnabled(FeatureFlag.PLACES_BETA), case)
+                    assertEquals(legacyHistoryChoice ?: true, store.isEnabled(FeatureFlag.HUMAN_LOCATION_HISTORY), case)
+                    assertEquals(snapshot, preferences.data.first().asMap(), "Reading must preserve $case")
+
+                    listOf(true, false).forEach { enabled ->
+                        store.setEnabled(FeatureFlag.PLACES_BETA, enabled)
+
+                        assertEquals(enabled, store.isEnabled(FeatureFlag.PLACES_BETA), case)
+                        assertEquals(
+                            snapshot.filterKeys { it != placesKey },
+                            preferences.data
+                                .first()
+                                .asMap()
+                                .filterKeys { it != placesKey },
+                            "Changing browsing must preserve all other preferences: $case",
+                        )
+                    }
+                }
+            }
         }
 
     @Test
