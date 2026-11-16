@@ -372,10 +372,12 @@ internal fun ResponsesConfig.quotaExceeded() =
         listOf(
             ErrorCase(
                 "QUOTA_EXCEEDED",
-                "The upload would exceed the account's plan. `details.reason` is `STORAGE_BYTES` or `BACKUP_COUNT`; " +
-                    "`details.limit` and `details.current` give the numbers. Show the person their usage and do not retry.",
-                "Storage quota exceeded: 5368709120 of 5368709120 bytes in use.",
+                "The account's plan does not allow the upload. `details.reason` says why: `STORAGE_BYTES` (the plan is full " +
+                    "and sells no more), `BACKUP_COUNT`, `EXTRA_STORAGE_UNPAID` (the plan sells more, but a payment is " +
+                    "failing) or `NO_PLAN`. `details.planId` names the plan and `details.limit` and `details.current` give " +
+                    "the numbers. Say which it is and what to do; do not retry.",
+                "Storage quota exceeded: 53687091200 of 53687091200 bytes in use.",
             ),
         ),
-        details = mapOf("reason" to "STORAGE_BYTES", "limit" to "5368709120", "current" to "5368709120"),
+        details = mapOf("reason" to "STORAGE_BYTES", "limit" to "53687091200", "current" to "53687091200", "planId" to "cloud"),
     )

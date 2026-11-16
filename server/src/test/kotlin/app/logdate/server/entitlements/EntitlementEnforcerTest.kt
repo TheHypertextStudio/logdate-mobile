@@ -141,26 +141,100 @@ class EntitlementEnforcerTest {
         }
 
     @Test
-    fun `CANCELLED status still honors whatever limits the current plan row carries`() =
+    fun `the base plan refuses an upload past its included storage and names the plan`() =
         runTest {
-            // Until a webhook moves the row to the free plan, a just-cancelled account keeps its
-            // paid quota. The enforcer doesn't do a cliff-edge downgrade on the status change.
+            val enforcer =
+                EntitlementEnforcer(
+                    entitlementService = FakeService(entitlement = cloud()),
+                    usageCalculator = StaticUsage(bytes = 50 * GIB - 10),
+                )
+
+            val denied = assertIs<QuotaCheck.Denied>(enforcer.checkMediaUpload(accountId, pendingBytes = 11))
+
+            assertEquals(QuotaReason.STORAGE_BYTES, denied.reason)
+            assertEquals(50 * GIB, denied.limit)
+            assertEquals("cloud", denied.planId)
+        }
+
+    @Test
+    fun `Plus keeps accepting uploads past its included storage while its payments are current`() =
+        runTest {
+            val enforcer =
+                EntitlementEnforcer(
+                    entitlementService = FakeService(entitlement = cloudPlus(billable = true)),
+                    usageCalculator = StaticUsage(bytes = 400 * GIB, backups = 12),
+                )
+
+            assertIs<QuotaCheck.Allowed>(enforcer.checkMediaUpload(accountId, pendingBytes = 10 * GIB))
+            assertIs<QuotaCheck.Allowed>(enforcer.checkBackupUpload(accountId, pendingBytes = 10 * GIB))
+            assertNull(enforcer.spaceQuota(accountId), "a space write past the included storage is metered, not refused")
+        }
+
+    @Test
+    fun `Plus stops growing past its included storage while a payment is failing`() =
+        runTest {
             val enforcer =
                 EntitlementEnforcer(
                     entitlementService =
-                        FakeService(
-                            entitlement =
-                                Entitlement(
-                                    planId = "standard",
-                                    tier = EntitlementTier.STANDARD,
-                                    status = EntitlementStatus.CANCELLED,
-                                    limits = EntitlementLimits(storageBytes = 1_000_000L, backupCount = 10),
-                                ),
-                        ),
-                    usageCalculator = StaticUsage(bytes = 100_000L),
+                        FakeService(entitlement = cloudPlus(billable = false).copy(status = EntitlementStatus.PAST_DUE)),
+                    usageCalculator = StaticUsage(bytes = 250 * GIB, outsideSpaces = 100 * GIB),
                 )
-            assertIs<QuotaCheck.Allowed>(enforcer.checkMediaUpload(accountId, pendingBytes = 50_000L))
+
+            val denied = assertIs<QuotaCheck.Denied>(enforcer.checkMediaUpload(accountId, pendingBytes = 1))
+
+            assertEquals(QuotaReason.EXTRA_STORAGE_UNPAID, denied.reason)
+            assertEquals(250 * GIB, denied.limit)
+            assertEquals(SpaceQuota(limitBytes = 250 * GIB, otherBytes = 100 * GIB), enforcer.spaceQuota(accountId))
         }
+
+    @Test
+    fun `Plus under its included storage accepts uploads whatever its payment state`() =
+        runTest {
+            val enforcer =
+                EntitlementEnforcer(
+                    entitlementService = FakeService(entitlement = cloudPlus(billable = false)),
+                    usageCalculator = StaticUsage(bytes = 10 * GIB),
+                )
+
+            assertIs<QuotaCheck.Allowed>(enforcer.checkMediaUpload(accountId, pendingBytes = GIB))
+        }
+
+    @Test
+    fun `an account with no plan is refused for having no plan, not for being full`() =
+        runTest {
+            val enforcer =
+                EntitlementEnforcer(
+                    entitlementService = FakeService(entitlement = Entitlement.noPlan()),
+                    usageCalculator = StaticUsage(bytes = 0L),
+                )
+
+            val media = assertIs<QuotaCheck.Denied>(enforcer.checkMediaUpload(accountId, pendingBytes = 1))
+            val backup = assertIs<QuotaCheck.Denied>(enforcer.checkBackupUpload(accountId, pendingBytes = 1))
+
+            assertEquals(QuotaReason.NO_PLAN, media.reason)
+            assertEquals(QuotaReason.NO_PLAN, backup.reason)
+        }
+
+    private fun cloud(): Entitlement =
+        Entitlement(
+            planId = "cloud",
+            tier = EntitlementTier.STANDARD,
+            status = EntitlementStatus.ACTIVE,
+            limits = EntitlementLimits(storageBytes = 50 * GIB, backupCount = null),
+        )
+
+    private fun cloudPlus(billable: Boolean): Entitlement =
+        Entitlement(
+            planId = "cloud_plus",
+            tier = EntitlementTier.PRO,
+            status = EntitlementStatus.ACTIVE,
+            limits =
+                EntitlementLimits(
+                    storageBytes = 250 * GIB,
+                    backupCount = null,
+                    extraStorage = ExtraStorage(stepBytes = 50 * GIB, billable = billable),
+                ),
+        )
 
     private fun unlimited(): Entitlement =
         Entitlement(
@@ -197,5 +271,9 @@ class EntitlementEnforcerTest {
         override suspend fun storageBytesOutsideSpaces(accountId: UUID): Long = outsideSpaces
 
         override suspend fun backupCount(accountId: UUID): Int = backups
+    }
+
+    private companion object {
+        const val GIB = 1024L * 1024L * 1024L
     }
 }

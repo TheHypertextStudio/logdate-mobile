@@ -36,6 +36,7 @@ import app.logdate.server.auth.PendingEmailVerificationRepository
 import app.logdate.server.auth.RefreshTokenRevocationRepository
 import app.logdate.server.auth.SessionManager
 import app.logdate.server.auth.TokenService
+import app.logdate.server.billing.CloudBillingService
 import app.logdate.server.config.AtprotoSessionSecret
 import app.logdate.server.config.AtprotoSigningKeyKek
 import app.logdate.server.config.AtprotoSigningKeyKekDecryptOnly
@@ -429,6 +430,7 @@ fun serverModule(isDatabaseAvailable: Boolean) =
                     },
                 oauthGrantRevoker = get<OAuthAuthorizationService>(),
                 statusEvents = getOrNull<AccountStatusEvents>(),
+                billing = getOrNull<CloudBillingService>(),
             )
         }
 

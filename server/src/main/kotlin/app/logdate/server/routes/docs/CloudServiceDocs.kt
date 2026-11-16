@@ -14,10 +14,13 @@ import app.logdate.server.routes.messageError
 import app.logdate.server.routes.ok
 import app.logdate.server.routes.publicOperation
 import app.logdate.server.routes.rateLimited
+import app.logdate.shared.model.BillingInterval
 import app.logdate.shared.model.DeploymentKind
 import app.logdate.shared.model.EntitlementTierWire
+import app.logdate.shared.model.ExtraStorageOffer
 import app.logdate.shared.model.PlanCatalogResponse
 import app.logdate.shared.model.PlanOption
+import app.logdate.shared.model.PlanPrice
 import app.logdate.shared.model.QuotaUsage
 import app.logdate.shared.model.ServerCapability
 import app.logdate.shared.model.ServerDescriptor
@@ -84,10 +87,11 @@ internal object CloudServiceDocs {
             Lists the subscription plans this deployment sells, so an app can show them before a person has
             an account. No token needed.
 
-            Prices are deliberately not included: the app store (Google Play or Stripe) returns them already
-            formatted for the viewer's locale and currency, using `playProductId` or `stripePriceId` as the
-            key. A self-hosted server with billing switched off answers an empty list, which means "this server
-            sells nothing"; hide plan selection in that case rather than treating it as an error.
+            Each plan lists what it costs in `prices`, read from the payment provider as the catalog is served,
+            in the provider's own amounts and currency. Format them for the viewer and never show a price from
+            anywhere else. `onSale` says whether the server will sell the plan right now; a plan can be listed
+            before it goes on sale. A self-hosted server with billing switched off answers an empty list, which
+            means "this server sells nothing"; hide plan selection in that case rather than treating it as an error.
             """,
         )
         response {
@@ -98,22 +102,37 @@ internal object CloudServiceDocs {
                     data =
                         listOf(
                             PlanOption(
-                                id = "free",
-                                name = "Free",
-                                tier = EntitlementTierWire.FREE,
-                                storageBytesLimit = 1_073_741_824,
-                                backupCountLimit = 1,
-                                features = mapOf("cloud_transcription_realtime" to false),
-                            ),
-                            PlanOption(
-                                id = "cloud-standard",
+                                id = "cloud",
                                 name = "LogDate Cloud",
                                 tier = EntitlementTierWire.STANDARD,
-                                storageBytesLimit = 5_368_709_120,
-                                backupCountLimit = 5,
-                                features = mapOf("cloud_transcription_realtime" to true, "cloud_transcript_refinement" to true),
-                                playProductId = "logdate_cloud_standard_monthly",
-                                stripePriceId = "price_1Q3xAbC2dEfGhIjK",
+                                storageBytesLimit = 53_687_091_200,
+                                backupCountLimit = null,
+                                features = mapOf("email_verification" to true),
+                                prices =
+                                    listOf(
+                                        PlanPrice(BillingInterval.MONTH, amountMinor = 399, currency = "usd"),
+                                        PlanPrice(BillingInterval.YEAR, amountMinor = 3999, currency = "usd"),
+                                    ),
+                                onSale = true,
+                            ),
+                            PlanOption(
+                                id = "cloud_plus",
+                                name = "LogDate Cloud Plus",
+                                tier = EntitlementTierWire.PRO,
+                                storageBytesLimit = 268_435_456_000,
+                                backupCountLimit = null,
+                                features = mapOf("email_verification" to true),
+                                prices =
+                                    listOf(
+                                        PlanPrice(BillingInterval.MONTH, amountMinor = 799, currency = "usd"),
+                                        PlanPrice(BillingInterval.YEAR, amountMinor = 7999, currency = "usd"),
+                                    ),
+                                extraStorage =
+                                    ExtraStorageOffer(
+                                        stepBytes = 53_687_091_200,
+                                        monthlyPrice = PlanPrice(BillingInterval.MONTH, amountMinor = 100, currency = "usd"),
+                                    ),
+                                onSale = true,
                             ),
                         ),
                 ),
@@ -163,9 +182,9 @@ internal object CloudServiceDocs {
             ApiTags.QUOTA,
             "Get storage quota",
             """
-            How much of the account's storage allowance is used, in bytes. `totalBytes` comes from the plan;
-            `usedBytes` counts synced media and backups. Show it as a meter, and check it before a large upload
-            to avoid a `402`.
+            How much of the account's storage is used, in bytes. `totalBytes` is what the plan includes, plus
+            any extra storage a plan that sells it is using; `usedBytes` counts everything the account stores.
+            Show it as a meter, and check it before a large upload to avoid a `402`.
 
             On a self-hosted server without billing the account is unlimited and `totalBytes` is the largest
             64-bit value. `categories` is currently always empty; the server tracks totals only.

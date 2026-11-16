@@ -17,6 +17,10 @@ import app.logdate.server.auth.RefreshTokenRevocationRepository
 import app.logdate.server.auth.SessionManager
 import app.logdate.server.auth.TokenService
 import app.logdate.server.auth.storageModes
+import app.logdate.server.billing.CloudBillingService
+import app.logdate.server.billing.StripeWebhookHandler
+import app.logdate.server.billing.cloudBillingRoutes
+import app.logdate.server.billing.stripeWebhookRoutes
 import app.logdate.server.devices.AccountDeviceRepository
 import app.logdate.server.devices.DeviceLinkService
 import app.logdate.server.enrollment.DeviceEnrollmentRepository
@@ -64,6 +68,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
+import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
 import studio.hypertext.atproto.pds.PdsBlobService
 import studio.hypertext.atproto.pds.PdsDiscoveryService
@@ -230,6 +235,8 @@ internal fun Application.accountApiRoutes() {
             accountDeviceRoutes(tokenService, accountDevices)
             accountKeyEnvelopeRoutes(tokenService, passkeys, accountKeyEnvelopes, descriptorConfig.encryptedAccountKeysEnabled)
             planRoutes(planCatalogService)
+            cloudBillingRoutes(tokenService, getKoin().getOrNull<CloudBillingService>())
+            stripeWebhookRoutes(getKoin().getOrNull<StripeWebhookHandler>())
             authV1Routes(
                 accountRepository = accountRepository,
                 identityRepository = accountIdentityRepository,

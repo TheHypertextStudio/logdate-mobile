@@ -384,14 +384,18 @@ internal object AuthSchemaDocs {
                 SchemaDoc(
                     "The account's plan and the limits that come with it.",
                     mapOf(
-                        "planId" to "Stable public plan identifier such as `free`, `cloud-standard` or `self_host_unlimited`.",
+                        "planId" to
+                            "Stable public plan identifier such as `cloud`, `cloud_plus` or `self_host_unlimited`; `none` when the account has no plan.",
                         "tier" to "Coarse tier for UI copy.",
                         "status" to "Whether the subscription is currently in good standing.",
-                        "storageBytesLimit" to "Maximum synced media and backup bytes, or `null` for unlimited.",
+                        "storageBytesLimit" to "Storage the plan includes, in bytes, or `null` for unlimited.",
                         "backupCountLimit" to "Maximum stored backups, or `null` for unlimited.",
                         "transcriptionSecondsPerMonthLimit" to
                             "Cloud transcription allowance per month in seconds, or `null` for unlimited.",
                         "features" to "Feature flags by name, `true` when the plan includes the feature.",
+                        "extraStorageStepBytes" to
+                            "The size of one step of extra storage the plan sells past `storageBytesLimit`, or `null` when it stops there.",
+                        "includedWithBeta" to "The account has this plan at no charge because it joined during the beta.",
                     ),
                 ),
             "EntitlementTierWire" to
@@ -399,9 +403,9 @@ internal object AuthSchemaDocs {
                     "Coarse plan tier.",
                     enumValues =
                         mapOf(
-                            "FREE" to "No subscription; the smallest limits.",
-                            "STANDARD" to "The standard paid plan.",
-                            "PRO" to "The larger paid plan.",
+                            "FREE" to "No plan.",
+                            "STANDARD" to "LogDate Cloud, the base plan.",
+                            "PRO" to "LogDate Cloud Plus, the larger plan.",
                             "UNLIMITED" to "No limits; used by self-hosted servers.",
                         ),
                 ),
@@ -414,7 +418,7 @@ internal object AuthSchemaDocs {
                             "PAST_DUE" to
                                 "A payment failed but the grace window is still open; treat as active and prompt the person to update payment.",
                             "GRACE" to "The store's own grace period (for example a Play hold); treat as active.",
-                            "CANCELLED" to "The subscription ended. Reads keep working; uploads fail with `402` once over the free limits.",
+                            "CANCELLED" to "There is no plan. Reads keep working; uploads fail with `402`.",
                             "SELF_HOST" to "This server runs without billing. Hide billing UI and treat the account as unlimited.",
                         ),
                 ),

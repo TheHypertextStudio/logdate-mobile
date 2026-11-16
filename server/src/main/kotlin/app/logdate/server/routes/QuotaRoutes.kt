@@ -1,6 +1,8 @@
 package app.logdate.server.routes
 
 import app.logdate.server.auth.TokenService
+import app.logdate.server.billing.extraStorageSteps
+import app.logdate.server.entitlements.EntitlementLimits
 import app.logdate.server.entitlements.EntitlementService
 import app.logdate.server.entitlements.UsageCalculator
 import app.logdate.server.routes.docs.CloudServiceDocs
@@ -42,8 +44,8 @@ fun Route.quotaRoutes(
                     ?: return@get call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "invalid subject"))
 
             val entitlement = entitlementService.resolve(accountId)
-            val totalBytes = entitlement.limits.storageBytes ?: Long.MAX_VALUE
             val usedBytes = usageCalculator.storageBytes(accountId)
+            val totalBytes = entitlement.limits.storageInUseOrIncluded(usedBytes)
             call.respond(
                 HttpStatusCode.OK,
                 QuotaUsage(
@@ -54,4 +56,15 @@ fun Route.quotaRoutes(
             )
         }
     }
+}
+
+/**
+ * The storage to report as the account's total: what its plan includes, plus every step of extra
+ * storage it is using and being billed for. An account on Plus that has grown past its included
+ * storage is within what it pays for, so it must not read as over quota.
+ */
+private fun EntitlementLimits.storageInUseOrIncluded(usedBytes: Long): Long {
+    val included = storageBytes ?: return Long.MAX_VALUE
+    val extra = extraStorage?.takeIf { it.billable } ?: return included
+    return included + extraStorageSteps(usedBytes, included, extra.stepBytes) * extra.stepBytes
 }

@@ -94,6 +94,23 @@ private val approvedNotices =
         IdentityPublishingNotices.REFUSED_NOT_PLC to "SERVER_IDENTITY_PUBLISHING_REFUSED_NOT_PLC",
         IdentityPublishingNotices.RUN_FAILED to "SERVER_IDENTITY_PUBLISHING_FAILED",
         IdentityPublishingNotices.ACCOUNT_FAILED to "SERVER_IDENTITY_PUBLISH_FAILED",
+        BillingNotices.PLAN_MISSING to "SERVER_BILLING_PLAN_MISSING",
+        BillingNotices.BASE_PLAN_MISSING to "SERVER_BILLING_BASE_PLAN_MISSING",
+        BillingNotices.PRICES_UNREADABLE to "SERVER_BILLING_PRICES_UNREADABLE",
+        BillingNotices.PROVIDER_FAILED to "SERVER_BILLING_PROVIDER_FAILED",
+        BillingNotices.METER_REPORT_FAILED to "SERVER_BILLING_METER_REPORT_FAILED",
+        BillingNotices.METER_RUN_FAILED to "SERVER_BILLING_METER_RUN_FAILED",
+        BillingNotices.METERED_PRICE_MISSING to "SERVER_BILLING_METERED_PRICE_MISSING",
+        BillingNotices.SUBSCRIPTION_UNOWNED to "SERVER_BILLING_SUBSCRIPTION_UNOWNED",
+        BillingNotices.SUBSCRIPTION_NOT_A_PLAN to "SERVER_BILLING_SUBSCRIPTION_NOT_A_PLAN",
+        BillingNotices.WEBHOOK_REJECTED to "SERVER_BILLING_WEBHOOK_REJECTED",
+        BillingNotices.WEBHOOK_NOT_APPLIED to "SERVER_BILLING_WEBHOOK_NOT_APPLIED",
+        BillingNotices.WEBHOOK_CHANGED_NOTHING to "SERVER_BILLING_WEBHOOK_CHANGED_NOTHING",
+        BillingNotices.CATALOG_READY to "SERVER_BILLING_CATALOG_READY",
+        BillingNotices.CATALOG_NOT_READY to "SERVER_BILLING_CATALOG_NOT_READY",
+        BillingNotices.CATALOG_REFUSED_USAGE to "SERVER_BILLING_CATALOG_REFUSED_USAGE",
+        BillingNotices.CATALOG_REFUSED_NO_KEY to "SERVER_BILLING_CATALOG_REFUSED_NO_KEY",
+        BillingNotices.CATALOG_FAILED to "SERVER_BILLING_CATALOG_FAILED",
     )
 
 /**
@@ -105,6 +122,7 @@ private val approvedCountMessages =
         Regex("^Identity backfill dry run: \\d+ accounts need an identity$"),
         Regex("^Identity backfill complete: \\d+ provisioned, \\d+ skipped, \\d+ failed$"),
         Regex("^Deleted the legacy copies of \\d+ moved journals$"),
+        Regex("^Reported extra storage to Stripe for \\d+ accounts$"),
     )
 
 private fun isApprovedCountMessage(message: String?): Boolean =
@@ -131,6 +149,33 @@ internal object IdentityNotices {
         skipped: Int,
         failed: Int,
     ): String = "Identity backfill complete: $provisioned provisioned, $skipped skipped, $failed failed"
+}
+
+/**
+ * Fixed log messages for billing. Production logs keep only approved messages, so each failure here
+ * stays visible as its own SERVER_BILLING_* code instead of an anonymous notice. None names an
+ * account, a customer or a subscription.
+ */
+internal object BillingNotices {
+    const val PLAN_MISSING = "An account's plan is missing or switched off; the account may store nothing"
+    const val BASE_PLAN_MISSING = "The base plan is missing or switched off; beta members have no plan"
+    const val PRICES_UNREADABLE = "Plan prices could not be read from Stripe; the last prices read stay in use"
+    const val PROVIDER_FAILED = "A billing request failed because Stripe refused it or could not be reached"
+    const val METER_REPORT_FAILED = "Reporting one account's extra storage to Stripe failed; the next pass retries it"
+    const val METER_RUN_FAILED = "Reporting extra storage to Stripe failed; the next pass retries"
+    const val METERED_PRICE_MISSING = "Stripe has no extra-storage price for a plan that sells it; a subscription is not metered"
+    const val SUBSCRIPTION_UNOWNED = "A Stripe subscription belongs to no LogDate account; it was left alone"
+    const val SUBSCRIPTION_NOT_A_PLAN = "A Stripe subscription is not for a LogDate Cloud plan; it was left alone"
+    const val WEBHOOK_REJECTED = "A Stripe webhook was rejected because it could not be verified"
+    const val WEBHOOK_NOT_APPLIED = "A Stripe webhook could not be applied because Stripe could not be read; Stripe sends it again"
+    const val WEBHOOK_CHANGED_NOTHING = "A Stripe event named a subscription that changed no account"
+    const val CATALOG_READY = "Stripe catalog: everything LogDate Cloud needs is in place"
+    const val CATALOG_NOT_READY = "Stripe catalog: something is missing or differs; the report file lists it"
+    const val CATALOG_REFUSED_USAGE = "Stripe catalog refused to start: the arguments are not valid"
+    const val CATALOG_REFUSED_NO_KEY = "Stripe catalog refused to start: STRIPE_SECRET_KEY is not set"
+    const val CATALOG_FAILED = "Stripe catalog failed: Stripe refused a request or could not be reached"
+
+    fun meterReported(accounts: Int): String = "Reported extra storage to Stripe for $accounts accounts"
 }
 
 /**

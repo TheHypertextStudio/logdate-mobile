@@ -17,6 +17,7 @@
 - [Encryption](#encryption)
 - [Media Storage](#media-storage)
 - [Sync & Maintenance](#sync--maintenance)
+- [Billing](#billing)
 - [AT Protocol](#at-protocol)
 
 ---
@@ -554,7 +555,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - Leave it off until the database migration that adds `account_storage_usage` (`V47__Add_account_storage_usage.sql`) is deployed everywhere. The migration fills each account's space total from the rows it finds, and a server revision without it doesn't keep that total, so space writes made while an older revision is still serving would be missing from the totals and the quota would let accounts store more than their plan allows.
   - Deletion markers in a personal space follow `SYNC_TOMBSTONE_RETENTION_DAYS`. Uploaded files that no record refers to are removed after one day. A device that was offline longer than the tombstone retention gets `CursorTooOld` and downloads the space again from the start.
   - Each account has three request budgets per minute: 6,000 record writes (`putRecord` and `deleteRecord`), 6,000 reads (`getRecord`, `listRepoOps` and `getBlob`), and 1,200 file uploads. A device syncing as fast as it can stays under them. Past a budget, the method answers `429 RateLimitExceeded` with a `Retry-After` header. The counts live in each server instance's memory, so with several instances an account's budget applies to each one separately.
-  - Records and files in a personal space share the account's one storage quota with media and backups, and `GET /api/v1/quota` includes them. The server keeps one running total per account for each kind of data (space, media and backups), so a quota check reads a single row however much the account stores, and checks every record write and file upload against the quota in the same database transaction that stores it, so requests sent at once can't together pass it. A record write that would go past the quota answers `402 QuotaExceeded`; replacing a record with one no larger and deleting a record never are. A file upload first holds room for its `Content-Length`, alongside any other uploads in progress, and answers `402 QuotaExceeded` before receiving anything when that room isn't free. With `BILLING_PROVIDER` unset, accounts have no quota.
+  - Records and files in a personal space share the account's one storage quota with media and backups, and `GET /api/v1/quota` includes them. The server keeps one running total per account for each kind of data (space, media and backups), so a quota check reads a single row however much the account stores, and checks every record write and file upload against the quota in the same database transaction that stores it, so requests sent at once can't together pass it. A record write that would go past the quota answers `402 QuotaExceeded`; replacing a record with one no larger and deleting a record never are. A file upload first holds room for its `Content-Length`, alongside any other uploads in progress, and answers `402 QuotaExceeded` before receiving anything when that room isn't free. With `BILLING_PROVIDER` unset, accounts have no quota. An account on a plan that sells extra storage, whose payments are current, is not refused either: its writes past the included storage are accepted and billed by the storage meter.
   - An upload must send a `Content-Length` header, or it answers `411 LengthRequired`. The server streams the body to object storage as it arrives, hashing it on the way, and only records the file once storage holds exactly the bytes it hashed, so nothing is written to the instance's disk or memory beyond a 2 MiB write buffer and a 64 KiB chunk for each upload. Each instance runs up to 8 uploads and 16 downloads at once, sized for the 512 MiB instances LogDate Cloud uses: with a heap of about 384 MiB, those 24 transfers take about 50 MiB. Further transfers answer `503 ServerBusy` with a `Retry-After` header and cost the account none of its request budget. A transfer whose client sends or accepts nothing for 20 seconds is ended (`408 UploadStalled` for uploads) and its place freed. Room held for an upload that never finishes is released 2 minutes after it was taken, which is the request timeout plus a margin.
 
 ### `LOGDATE_PERSONAL_SPACE_MIGRATION_ENABLED`
@@ -617,6 +618,68 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**:
   - Each entry must match the app's `client_id` exactly.
   - Trust only changes how the app is named and how long its refresh token lasts. It grants no extra scope.
+
+---
+
+## Billing
+
+These settings decide whether accounts have plans and storage limits, and which LogDate Cloud
+plans are on sale. The [LogDate Cloud billing runbook](../../docs/runbook/logdate-cloud-billing.md)
+describes the plans and covers setting Stripe up and opening sales.
+
+### `BILLING_PROVIDER`
+
+- **Description**: Whether accounts have plans. With it unset or `disabled`, every account is unlimited and nothing is sold, which is what a self-hosted server wants. With any other value the server reads each account's plan from the database and enforces its storage limit.
+- **Type**: `disabled`, `play`, `stripe` or `both`
+- **Default**: `disabled`
+- **Example**: `BILLING_PROVIDER=stripe`
+- **Required**: No
+- **Notes**:
+  - Only `stripe` and `both` let the server talk to Stripe, and only when `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are both set. Without Stripe the plan catalog lists the plans with nothing to buy, and every purchase request is refused with `PLANS_NOT_ON_SALE`. With Stripe, Plus is on sale at once and the base plan from launch.
+  - `play` keeps plans and limits on without Stripe.
+  - The first-party deploy contract accepts `play` and `stripe`, and accepts `stripe` only with both Stripe secrets mapped.
+
+### `LOGDATE_CLOUD_LAUNCHED`
+
+- **Description**: Whether LogDate Cloud has launched. Before launch the service is in beta: the base plan is free and not sold, and every account created is recorded as a beta member, which keeps the base plan at no charge for as long as the account exists. Launch ends the beta. From then on the base plan is sold too, and an account created has no plan, and can store nothing, until it buys one.
+- **Type**: Boolean (only the exact value `true` enables it)
+- **Default**: `false`
+- **Example**: `LOGDATE_CLOUD_LAUNCHED=true`
+- **Required**: No
+- **Notes**:
+  - LogDate Cloud Plus does not wait for launch. It can be bought as soon as the server is connected to Stripe.
+  - In production the server refuses to start with it on unless `BILLING_PROVIDER` is `stripe` or `both` and both Stripe secrets are set. A launch without Stripe would leave new accounts with no plan and no way to buy one.
+  - Turning it off again stops selling the base plan and resumes enrolling new accounts as beta members. Accounts created while it was on stay as they are.
+  - Beta membership is recorded on the account (`accounts.cloud_beta_member`) when the account is created. It is not derived from this setting later, so changing the setting never takes a membership away.
+
+### `STRIPE_SECRET_KEY`
+
+- **Description**: The Stripe API key the server uses to read prices, open checkouts, change and cancel subscriptions, and report extra storage. A restricted key works if it can read and write Customers, Checkout Sessions, Subscriptions, Prices, Billing meter events and Customer portal sessions.
+- **Type**: String
+- **Default**: None
+- **Example**: `STRIPE_SECRET_KEY=sk_test_...`
+- **Required**: Only with `BILLING_PROVIDER=stripe` or `both`
+- **Notes**:
+  - A test-mode key bills nobody. Staging uses a test-mode key.
+  - Stored in Secret Manager and never logged.
+
+### `STRIPE_WEBHOOK_SECRET`
+
+- **Description**: The signing secret of the Stripe webhook endpoint that points at `/api/v1/billing/stripe/webhook`. The server refuses any webhook whose signature this secret does not verify.
+- **Type**: String
+- **Default**: None
+- **Example**: `STRIPE_WEBHOOK_SECRET=whsec_...`
+- **Required**: Only with `BILLING_PROVIDER=stripe` or `both`
+- **Notes**:
+  - Stripe shows the secret once, when the endpoint is created. Each endpoint has its own, so staging and production differ.
+
+### `STRIPE_API_BASE_URL`
+
+- **Description**: Where the server sends Stripe API requests. Only for pointing a development server at a local stand-in for Stripe.
+- **Type**: URL
+- **Default**: `https://api.stripe.com`
+- **Example**: `STRIPE_API_BASE_URL=http://localhost:12111`
+- **Required**: No
 
 ---
 

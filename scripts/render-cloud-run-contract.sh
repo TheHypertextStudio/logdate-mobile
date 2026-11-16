@@ -630,6 +630,7 @@ try:
         "ATPROTO_RECOVERY_KEYS_ENABLED",
         "ATPROTO_FIREHOSE_ENABLED",
         "LOGDATE_OAUTH_PASSKEY_SIGN_IN_ENABLED",
+        "LOGDATE_CLOUD_LAUNCHED",
     }
     # Optional settings that carry a value rather than a switch.
     optional_value_keys = {
@@ -683,7 +684,6 @@ try:
         "LOGDATE_PUBLIC_ORIGIN": canonical_origin,
         "ATPROTO_PDS_SERVICE_URL": canonical_origin,
         "ATPROTO_HANDLE_DOMAIN": canonical_domain if environment == "staging" else "logdate.app",
-        "BILLING_PROVIDER": "play",
         "SERVER_ENCRYPTION_ENABLED": "true",
         "SYNC_MEDIA_SIGNED_URLS": "true",
         "SYNC_MEDIA_SIGNED_URL_TTL_HOURS": "1",
@@ -696,6 +696,15 @@ try:
     }
     if environment == "production":
         expected_values.update(WEBAUTHN_RP_ID="logdate.app", WEBAUTHN_ORIGIN=canonical_origin)
+
+    # Stripe sells LogDate Cloud plans: Plus as soon as it is the provider, the base plan from launch.
+    # "play" keeps entitlements on without Stripe. Launching ends the beta, so it needs Stripe to sell with
+    # (docs/runbook/logdate-cloud-billing.md).
+    billing_provider = env_vars["BILLING_PROVIDER"]
+    if billing_provider not in ("play", "stripe"):
+        fail("BILLING_PROVIDER does not match the first-party contract")
+    if env_vars.get("LOGDATE_CLOUD_LAUNCHED") == "true" and billing_provider != "stripe":
+        fail("LOGDATE_CLOUD_LAUNCHED needs BILLING_PROVIDER to be stripe")
 
     for key, expected in expected_values.items():
         if env_vars[key] != expected:
@@ -776,6 +785,8 @@ try:
         normalized_secrets[name] = {"secret_id": secret_id, "version": version}
 
     required_string(normalized_secrets["DATABASE_URL"]["secret_id"], "DATABASE_URL secret ID")
+    if billing_provider == "stripe" and not {"STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"} <= set(normalized_secrets):
+        fail("BILLING_PROVIDER stripe needs the STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET secrets")
 
     runtime_keys = {
         "allow_unauthenticated",

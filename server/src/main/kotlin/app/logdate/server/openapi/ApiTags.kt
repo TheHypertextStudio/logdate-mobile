@@ -21,6 +21,7 @@ internal object ApiTags {
     const val SYNC_STATUS = "Sync status"
     const val SPACE_MIGRATION = "Moving to a personal space"
     const val QUOTA = "Quota"
+    const val BILLING = "Plans and billing"
     const val TRANSCRIPTION = "Transcription"
     const val DIAGNOSTICS = "Diagnostics"
     const val RESOURCES = "Resources"
@@ -220,6 +221,19 @@ internal val apiTagGroups: List<ApiTagGroup> =
                     How much of the account's storage allowance is in use. Limits come from the plan the account is on.
                     On a self-hosted server without billing the quota is unlimited, and `totalBytes` is reported as the
                     largest 64-bit value rather than as a special marker.
+                    """.trimIndent(),
+                ),
+                ApiTag(
+                    ApiTags.BILLING,
+                    """
+                    Buying, changing and cancelling a LogDate Cloud plan. A plan is paid for at the payment provider's
+                    own pages, which these calls open; the server then reads the result back from the provider, so a
+                    plan changes only when a payment has.
+
+                    Every answer says whether purchases are available on this server. LogDate Cloud Plus can be bought
+                    as soon as they are. The base plan is free until launch, and accounts that join before then keep
+                    it at no charge afterwards.
+                    A self-hosted server without billing answers each of them with `404`.
                     """.trimIndent(),
                 ),
                 ApiTag(
