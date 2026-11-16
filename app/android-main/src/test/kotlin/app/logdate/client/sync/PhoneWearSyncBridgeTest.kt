@@ -51,7 +51,7 @@ class PhoneWearSyncBridgeTest {
                 )
             val transport = RecordingTransport()
 
-            every { notesRepository.allNotesObserved } returns flowOf(listOf(textNote, audioNote))
+            every { notesRepository.observeNotesStream(any()) } returns flowOf(listOf(textNote, audioNote))
 
             val bridge =
                 DefaultPhoneWearSyncBridge(
@@ -182,7 +182,7 @@ class PhoneWearSyncBridgeTest {
                     lastUpdated = Instant.fromEpochMilliseconds(1_710_000_000_000),
                     content = "Phone note",
                 )
-            every { notesRepository.allNotesObserved } returns flowOf(listOf(phoneNote))
+            every { notesRepository.observeNotesStream(any()) } returns flowOf(listOf(phoneNote))
             val bridge =
                 DefaultPhoneWearSyncBridge(
                     notesRepository = notesRepository,
