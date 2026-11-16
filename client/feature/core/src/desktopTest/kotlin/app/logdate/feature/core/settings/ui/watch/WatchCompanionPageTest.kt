@@ -270,6 +270,73 @@ class WatchCompanionPageTest {
             assertEquals(listOf("reminders", "tiles", "microphone", "diagnostics", "remove"), actions)
         }
 
+    @Test
+    fun `unknown installation offers an explicit targeted confirmation before Play`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val confirmed = mutableListOf<String>()
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = WatchStatus.Unknown("Pixel Watch", "watch-a"),
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        onConfirmMissing = { confirmed += it },
+                    )
+                }
+            }
+            onNodeWithText("Open Play").assertDoesNotExist()
+            onNodeWithText("LogDate isn’t on this watch").performClick()
+            assertTrue(confirmed.isEmpty())
+            onNodeWithText("Install LogDate on this watch?").assertExists()
+            onNodeWithText("Open Play").performClick()
+            assertEquals(listOf("watch-a"), confirmed)
+            saveScreenshot(onRoot().captureToImage(), "watch-connection-unknown-phone.png")
+        }
+
+    @Test
+    fun `known installed unresponsive watch never instructs installation at any width`() {
+        for ((width, height) in listOf(411 to 891, 1000 to 800, 1280 to 800)) {
+            runDesktopComposeUiTest(width = width, height = height) {
+                var retries = 0
+                setContent {
+                    LogDateTheme(dynamicColor = false) {
+                        WatchCompanionPage(
+                            status = WatchStatus.Unknown("Pixel Watch", "watch-a", knownInstalled = true),
+                            requestFailure = WatchRequestFailure.WATCH_DID_NOT_RESPOND,
+                            onBack = {},
+                            onAssociate = {},
+                            onInstall = {},
+                            onReminders = {},
+                            onTiles = {},
+                            onMicrophone = {},
+                            onNotifications = {},
+                            onDiagnostics = {},
+                            onRemove = {},
+                            onRetry = { retries++ },
+                        )
+                    }
+                }
+                onNodeWithText("LogDate isn’t on this watch").assertDoesNotExist()
+                onNodeWithText("Open Play").assertDoesNotExist()
+                onNodeWithText("Install on Watch").assertDoesNotExist()
+                onNodeWithTag("watch_setup_art").assertDoesNotExist()
+                onNodeWithText("Microphone").assertDoesNotExist()
+                onNodeWithText("Remove watch").assertDoesNotExist()
+                onNodeWithText("Check again").performClick()
+                assertEquals(1, retries)
+                saveScreenshot(onRoot().captureToImage(), "watch-connection-installed-$width-$height.png")
+            }
+        }
+    }
+
     private fun saveScreenshot(
         image: ImageBitmap,
         filename: String = "watch-companion-page.png",

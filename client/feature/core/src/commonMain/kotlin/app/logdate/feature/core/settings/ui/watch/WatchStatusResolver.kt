@@ -19,13 +19,44 @@ object WatchStatusResolver {
         windowDays: Int,
     ): WatchStatus? =
         when (connection) {
-            WatchConnectionState.Loading -> null
-            WatchConnectionState.NoPairedWatch -> WatchStatus.NoWatch
-            is WatchConnectionState.NeedsAssociation -> WatchStatus.SettingUp(WatchSetupStep.PairWithPhone(connection.watchName))
-            WatchConnectionState.AssociationPending -> WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone)
-            is WatchConnectionState.AppNotInstalled -> WatchStatus.NotInstalled(connection.watchName)
-            is WatchConnectionState.Connected -> installed(connection.watchName, nearby = true, peer, windowDays)
-            is WatchConnectionState.OutOfRange -> installed(connection.watchName, nearby = false, peer, windowDays)
+            WatchConnectionState.Loading -> {
+                null
+            }
+
+            WatchConnectionState.Unavailable -> {
+                WatchStatus.Unknown()
+            }
+
+            is WatchConnectionState.AppUnknown -> {
+                WatchStatus.Unknown(connection.watchName, connection.nodeId, connection.knownInstalled)
+            }
+
+            WatchConnectionState.NoPairedWatch -> {
+                WatchStatus.NoWatch
+            }
+
+            is WatchConnectionState.NeedsAssociation -> {
+                WatchStatus.SettingUp(
+                    WatchSetupStep.PairWithPhone(connection.watchName),
+                    connection.nodeId,
+                )
+            }
+
+            WatchConnectionState.AssociationPending -> {
+                WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone)
+            }
+
+            is WatchConnectionState.AppNotInstalled -> {
+                WatchStatus.NotInstalled(connection.watchName, connection.nodeId)
+            }
+
+            is WatchConnectionState.Connected -> {
+                installed(connection.watchName, nearby = true, peer, windowDays, connection.nodeId)
+            }
+
+            is WatchConnectionState.OutOfRange -> {
+                installed(connection.watchName, nearby = false, peer, windowDays, connection.nodeId)
+            }
         }
 
     private fun installed(
@@ -33,11 +64,15 @@ object WatchStatusResolver {
         nearby: Boolean,
         peer: WatchPeerSnapshot,
         windowDays: Int,
+        nodeId: String?,
     ): WatchStatus {
-        if (!peer.v2Active) return WatchStatus.Ready(watchName = watchName, nearby = nearby)
+        if (!peer.v2Active) return WatchStatus.Ready(watchName = watchName, nearby = nearby, nodeId = nodeId)
         val watch = peer.watch
         val features = peer.features
-        issue(watch, features)?.let { return WatchStatus.NeedsAttention(watchName = watchName, nearby = nearby, issue = it) }
+        issue(
+            watch,
+            features,
+        )?.let { return WatchStatus.NeedsAttention(watchName = watchName, nearby = nearby, issue = it, nodeId = nodeId) }
         return WatchStatus.Ready(
             watchName = watchName,
             nearby = nearby,
@@ -45,6 +80,7 @@ object WatchStatusResolver {
             sync = watch?.takeIf { WearFeatures.RECEIPTS in features }?.let { WatchSyncLine(waiting = it.outboxCount) },
             window = WatchWindowLine(days = windowDays).takeIf { WearFeatures.WINDOW in features },
             capabilities = features,
+            nodeId = nodeId,
         )
     }
 

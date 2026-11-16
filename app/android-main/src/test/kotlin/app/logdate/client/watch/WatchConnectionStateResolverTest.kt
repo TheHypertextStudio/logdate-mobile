@@ -105,7 +105,7 @@ class WatchConnectionStateResolverTest {
             )
 
         assertEquals(
-            WatchConnectionState.AppNotInstalled("Pixel Watch", nodeId = "watch-1"),
+            WatchConnectionState.AppUnknown("Pixel Watch", nodeId = "watch-1"),
             state,
         )
     }

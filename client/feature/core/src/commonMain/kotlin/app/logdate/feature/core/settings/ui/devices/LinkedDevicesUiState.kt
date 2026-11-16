@@ -41,6 +41,7 @@ data class LinkedDeviceUiState(
     val lastSeenFormatted: UiText,
     val pairedWatch: Boolean,
     val erasesData: Boolean,
+    val pairedWatchNodeId: String? = null,
 )
 
 /** The outcome of a removal that the list alone does not show. */

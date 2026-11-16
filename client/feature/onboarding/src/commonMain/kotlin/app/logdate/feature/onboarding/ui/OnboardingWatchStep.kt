@@ -17,6 +17,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
+import app.logdate.feature.core.settings.ui.watch.WatchStatus
+import app.logdate.feature.core.settings.ui.watch.WatchUnknownActions
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupState
 import app.logdate.ui.step.StepHeroIcon
 import app.logdate.ui.step.StepPrimaryButton
@@ -26,6 +28,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import logdate.client.feature.onboarding.generated.resources.Res
 import logdate.client.feature.onboarding.generated.resources.watch_setup_add
+import logdate.client.feature.onboarding.generated.resources.watch_setup_check
+import logdate.client.feature.onboarding.generated.resources.watch_setup_check_known
 import logdate.client.feature.onboarding.generated.resources.watch_setup_confirm
 import logdate.client.feature.onboarding.generated.resources.watch_setup_continue
 import logdate.client.feature.onboarding.generated.resources.watch_setup_description
@@ -51,7 +55,9 @@ fun OnboardingWatchStep(
     val currentOnNext by rememberUpdatedState(onNext)
     val actions = remember(viewModel) { WatchOnboardingActions(viewModel, scope) { currentOnNext() } }
     LaunchedEffect(connection) {
-        if (actions.state == null && (connection is WatchConnectionState.Connected || connection is WatchConnectionState.OutOfRange)) {
+        if ((actions.state == null || actions.state is WatchSetupState.CheckOnWatch) &&
+            (connection is WatchConnectionState.Connected || connection is WatchConnectionState.OutOfRange)
+        ) {
             actions.prepare()
         }
     }
@@ -64,6 +70,7 @@ fun OnboardingWatchStep(
         onPrimary = actions::primary,
         onSkip = actions::skip,
         saving = actions.saving,
+        onConfirmMissing = actions::confirmMissing,
     )
 }
 
@@ -88,6 +95,12 @@ internal class WatchOnboardingActions(
     fun primary() =
         launch {
             if (state == WatchSetupState.Ready) finish() else setup(advance = true)
+        }
+
+    fun confirmMissing(nodeId: String) =
+        launch {
+            viewModel.watchSetup.addAfterMissingConfirmation(nodeId).collect { state = it }
+            if (state == WatchSetupState.Ready) finish()
         }
 
     fun skip() {
@@ -140,17 +153,46 @@ internal fun OnboardingWatchStepContent(
     onPrimary: () -> Unit,
     onSkip: () -> Unit,
     saving: Boolean = false,
+    onConfirmMissing: (String) -> Unit = {},
 ) {
     val installed = connection is WatchConnectionState.Connected || connection is WatchConnectionState.OutOfRange
     val message =
         when (state) {
-            WatchSetupState.Ready -> Res.string.watch_setup_ready
-            WatchSetupState.ConfirmingOnPhone -> Res.string.watch_setup_confirm
-            WatchSetupState.OpeningPlayOnWatch -> Res.string.watch_setup_opening
-            WatchSetupState.WaitingForInstall -> Res.string.watch_setup_waiting
-            WatchSetupState.SettingUp -> Res.string.watch_setup_linking
-            WatchSetupState.Failed -> Res.string.watch_setup_failed
-            null -> Res.string.watch_setup_description
+            WatchSetupState.Ready -> {
+                Res.string.watch_setup_ready
+            }
+
+            WatchSetupState.ConfirmingOnPhone -> {
+                Res.string.watch_setup_confirm
+            }
+
+            WatchSetupState.OpeningPlayOnWatch -> {
+                Res.string.watch_setup_opening
+            }
+
+            WatchSetupState.WaitingForInstall -> {
+                Res.string.watch_setup_waiting
+            }
+
+            WatchSetupState.SettingUp -> {
+                Res.string.watch_setup_linking
+            }
+
+            WatchSetupState.Failed -> {
+                Res.string.watch_setup_failed
+            }
+
+            is WatchSetupState.CheckOnWatch -> {
+                if (state.knownInstalled) {
+                    Res.string.watch_setup_check_known
+                } else {
+                    Res.string.watch_setup_check
+                }
+            }
+
+            null -> {
+                Res.string.watch_setup_description
+            }
         }
     StepScaffold(
         title = stringResource(Res.string.watch_setup_title),
@@ -158,12 +200,21 @@ internal fun OnboardingWatchStepContent(
         onBack = onBack,
         hero = { StepHeroIcon(Icons.Rounded.Watch) },
         actions = {
-            StepPrimaryButton(
-                onClick = onPrimary,
-                text = stringResource(if (installed) Res.string.watch_setup_continue else Res.string.watch_setup_add),
-                enabled = !busy,
-                busy = busy,
-            )
+            val checking = state as? WatchSetupState.CheckOnWatch
+            if (checking != null) {
+                WatchUnknownActions(
+                    WatchStatus.Unknown(checking.watchName, checking.nodeId, checking.knownInstalled),
+                    onPrimary,
+                    onConfirmMissing,
+                )
+            } else {
+                StepPrimaryButton(
+                    onClick = onPrimary,
+                    text = stringResource(if (installed) Res.string.watch_setup_continue else Res.string.watch_setup_add),
+                    enabled = !busy,
+                    busy = busy,
+                )
+            }
             TextButton(onClick = onSkip, enabled = !saving) { Text(stringResource(Res.string.watch_setup_skip)) }
         },
         content = { if (saveFailed) Text(stringResource(Res.string.watch_setup_save_failed), color = MaterialTheme.colorScheme.error) },

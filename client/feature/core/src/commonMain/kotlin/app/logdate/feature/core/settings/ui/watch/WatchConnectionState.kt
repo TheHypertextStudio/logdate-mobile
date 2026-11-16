@@ -52,4 +52,14 @@ sealed interface WatchConnectionState {
      * Still determining the connection state.
      */
     data object Loading : WatchConnectionState
+
+    /** Discovery failed; this says nothing about pairing or installation. */
+    data object Unavailable : WatchConnectionState
+
+    /** The watch is reachable, but a missing advertisement cannot establish package absence. */
+    data class AppUnknown(
+        val watchName: String,
+        override val nodeId: String? = null,
+        val knownInstalled: Boolean = false,
+    ) : WatchConnectionState
 }

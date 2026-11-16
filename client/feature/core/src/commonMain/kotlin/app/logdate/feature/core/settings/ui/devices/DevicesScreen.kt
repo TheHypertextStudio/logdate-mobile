@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -44,21 +43,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.text.asString
-import app.logdate.client.text.toUiText
 import app.logdate.feature.core.settings.ui.watch.WatchDeviceCard
 import app.logdate.feature.core.settings.ui.watch.WatchSettingsViewModel
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.common.SettingsScaffold
+import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.device_state_load_failed
 import logdate.client.feature.core.generated.resources.device_state_refreshing
 import logdate.client.feature.core.generated.resources.device_state_retry
 import logdate.client.feature.core.generated.resources.devices
-import logdate.client.feature.core.generated.resources.devices_connected
-import logdate.client.feature.core.generated.resources.devices_platform_wear_os
-import logdate.client.feature.core.generated.resources.devices_wear_os
+import logdate.client.feature.core.generated.resources.devices_section
 import logdate.client.feature.core.generated.resources.last_active_label
 import logdate.client.feature.core.generated.resources.loading_devices
 import logdate.client.feature.core.generated.resources.sync_device_options_label
@@ -80,6 +77,14 @@ fun DevicesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val flags = koinInject<FeatureFlagStore>()
     val watchEnabled by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
+    val companionStatus: WatchStatus? =
+        if (watchEnabled && onNavigateToWatch != null) {
+            val watchModel = koinViewModel<WatchSettingsViewModel>()
+            val observed by watchModel.status.collectAsStateWithLifecycle()
+            observed
+        } else {
+            null
+        }
 
     LifecycleStartEffect(viewModel) {
         viewModel.loadDevices()
@@ -98,7 +103,7 @@ fun DevicesScreen(
         uiState = uiState,
         watchDevice =
             if (watchEnabled && onNavigateToWatch != null) {
-                { CompanionDeviceInDevices(uiState, onNavigateToWatch) }
+                { CompanionDeviceInDevices(companionStatus, onNavigateToWatch) }
             } else {
                 null
             },
@@ -139,6 +144,8 @@ fun DevicesScreen(
         onRemoveLinkedDevice = viewModel::removeLinkedDevice,
         onRetryLinkedDevices = viewModel::loadLinkedDevices,
         onDismissLinkedDeviceNotice = viewModel::dismissLinkedDeviceNotice,
+        onManagePairedWatch = onNavigateToWatch?.takeIf { watchEnabled },
+        pairedWatchStatus = companionStatus,
     )
 }
 
@@ -166,6 +173,8 @@ fun DevicesScreenContent(
     onRemoveLinkedDevice: (String) -> Unit = {},
     onRetryLinkedDevices: () -> Unit = {},
     onDismissLinkedDeviceNotice: () -> Unit = {},
+    onManagePairedWatch: (() -> Unit)? = null,
+    pairedWatchStatus: WatchStatus? = null,
 ) {
     val selectedOperation = selectedDevice?.let { uiState.operations[it.id] }
     val resetOperation = uiState.devices.firstOrNull { it.isCurrentDevice }?.let { uiState.operations[it.id] }
@@ -237,42 +246,43 @@ fun DevicesScreenContent(
                     item { DeviceLoadFailure(onRefresh) }
                 }
                 item {
-                    Text(
-                        stringResource(Res.string.devices_connected),
-                        style = MaterialTheme.typography.titleLarge,
+                    SettingsSection(
+                        title = stringResource(Res.string.devices_section),
                         modifier = Modifier.padding(horizontal = Spacing.lg),
-                    )
-                }
-                items(uiState.devices, key = { it.id }) { device ->
-                    val operation = uiState.operations[device.id]
-                    val dialogOwnsFeedback =
-                        (
-                            device.id == selectedDevice?.id &&
+                    ) {
+                        uiState.devices.forEach { device ->
+                            val operation = uiState.operations[device.id]
+                            val dialogOwnsFeedback =
                                 (
-                                    (showRenameDialog && operation?.action == DeviceAction.Rename) ||
-                                        (showDeleteDialog && operation?.action == DeviceAction.Remove)
-                                )
-                        ) ||
-                            (device.isCurrentDevice && showResetDialog && operation?.action == DeviceAction.ResetIdentity)
-                    DeviceItem(
-                        device = device,
-                        operation = operation,
-                        showOperationFeedback = !dialogOwnsFeedback,
-                        onRenameClick = { onRenameClick(device) },
-                        modifier = Modifier.padding(horizontal = Spacing.lg),
-                    )
-                }
-                watchDevice?.let { card -> item { card() } }
-                val hidePairedWatch = watchDevice != null
-                if (uiState.linked.isShown(hidePairedWatch)) {
-                    item {
-                        LinkedDevicesSection(
+                                    device.id == selectedDevice?.id &&
+                                        (
+                                            (showRenameDialog && operation?.action == DeviceAction.Rename) ||
+                                                (showDeleteDialog && operation?.action == DeviceAction.Remove)
+                                        )
+                                ) ||
+                                    (device.isCurrentDevice && showResetDialog && operation?.action == DeviceAction.ResetIdentity)
+                            DeviceItem(
+                                device = device,
+                                operation = operation,
+                                showOperationFeedback = !dialogOwnsFeedback,
+                                onRenameClick = { onRenameClick(device) },
+                            )
+                        }
+                        val pairedRowShown =
+                            (uiState.linked as? LinkedDevicesUiState.Listed)?.devices?.any {
+                                it.pairedWatch &&
+                                    it.pairedWatchNodeId != null &&
+                                    it.pairedWatchNodeId == pairedWatchStatus?.nodeId
+                            } ==
+                                true
+                        if (!pairedRowShown || onManagePairedWatch == null) watchDevice?.invoke()
+                        LinkedDeviceRows(
                             state = uiState.linked,
-                            hidePairedWatch = hidePairedWatch,
                             onRemove = onRemoveLinkedDevice,
                             onRetry = onRetryLinkedDevices,
                             onDismissNotice = onDismissLinkedDeviceNotice,
-                            modifier = Modifier.padding(horizontal = Spacing.lg),
+                            onManagePairedWatch = onManagePairedWatch,
+                            pairedWatchStatus = pairedWatchStatus,
                         )
                     }
                 }
@@ -288,23 +298,18 @@ fun DevicesScreenContent(
 
 @Composable
 private fun CompanionDeviceInDevices(
-    uiState: DevicesUiState,
+    status: WatchStatus?,
     onClick: () -> Unit,
-    model: WatchSettingsViewModel = koinViewModel(),
 ) {
-    val status by model.status.collectAsStateWithLifecycle()
     val name =
         when (val current = status) {
             is WatchStatus.Ready -> current.watchName
             is WatchStatus.NeedsAttention -> current.watchName
             is WatchStatus.NotInstalled -> current.watchName
+            is WatchStatus.Unknown -> current.watchName ?: return
             else -> return
         }
-    if (uiState.devices.any { it.platformName == Res.string.devices_platform_wear_os && it.name == name.toUiText() }) return
-    Column(Modifier.padding(horizontal = Spacing.lg)) {
-        Text(stringResource(Res.string.devices_wear_os), style = MaterialTheme.typography.labelMedium)
-        WatchDeviceCard(status, onClick)
-    }
+    WatchDeviceCard(status, onClick, deviceName = name)
 }
 
 @Composable

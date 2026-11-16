@@ -111,7 +111,13 @@ internal val androidWearSyncModule: Module =
                 peerFeatures = get<PeerStateStore>().features(PeerRole.WATCH),
             )
         }
-        single<WatchPeerSnapshotSource> { PeerStateWatchSnapshotSource(gate = get(), peerStates = get()) }
+        single<WatchPeerSnapshotSource> {
+            val peers = get<PhoneDeliveryPeers>()
+            PeerStateWatchSnapshotSource(gate = get(), peerStates = get(), accepts = { node, report ->
+                val current = peers.current(node)
+                current != null && report.linkId == current.linkId
+            })
+        }
 
         single<CoroutineDispatcher>(watchConnectionIoDispatcherQualifier) { Dispatchers.IO }
         single { WatchPresenceRegistration(androidContext(), get<FeatureFlagStore>().observe(FeatureFlag.WATCH_EXPERIENCE_V2)) }

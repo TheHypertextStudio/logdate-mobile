@@ -15,6 +15,8 @@ import logdate.client.feature.core.generated.resources.watch_association_pending
 import logdate.client.feature.core.generated.resources.watch_attention_not_sent
 import logdate.client.feature.core.generated.resources.watch_attention_set_up_again
 import logdate.client.feature.core.generated.resources.watch_connected
+import logdate.client.feature.core.generated.resources.watch_discovery_unavailable
+import logdate.client.feature.core.generated.resources.watch_installation_unknown
 import logdate.client.feature.core.generated.resources.watch_loading
 import logdate.client.feature.core.generated.resources.watch_needs_association
 import logdate.client.feature.core.generated.resources.watch_no_paired
@@ -30,10 +32,11 @@ internal fun WatchDeviceCard(
     status: WatchStatus?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    deviceName: String? = null,
 ) {
     MaterialContainer(modifier = modifier) {
         SettingsNavigationItem(
-            title = stringResource(Res.string.watch_settings),
+            title = deviceName ?: stringResource(Res.string.watch_settings),
             description = watchDeviceDescription(status),
             icon = { Icon(Icons.Default.Watch, contentDescription = null) },
             onClick = onClick,
@@ -42,10 +45,20 @@ internal fun WatchDeviceCard(
 }
 
 @Composable
-private fun watchDeviceDescription(status: WatchStatus?): String =
+internal fun watchDeviceDescription(status: WatchStatus?): String =
     when (status) {
         null -> {
             stringResource(Res.string.watch_loading)
+        }
+
+        is WatchStatus.Unknown -> {
+            stringResource(
+                if (status.watchName == null) {
+                    Res.string.watch_discovery_unavailable
+                } else {
+                    Res.string.watch_installation_unknown
+                },
+            )
         }
 
         WatchStatus.NoWatch -> {

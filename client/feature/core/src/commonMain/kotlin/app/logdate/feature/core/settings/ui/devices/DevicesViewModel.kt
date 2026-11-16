@@ -181,6 +181,7 @@ class DevicesViewModel(
             linkedAtFormatted = lastActiveText(linkedAt),
             lastSeenFormatted = lastActiveText(lastSeenAt),
             pairedWatch = pairedWatch,
+            pairedWatchNodeId = pairedWatchNodeId,
             erasesData = platform == DeviceLinkPlatform.WEAR_OS,
         )
     }

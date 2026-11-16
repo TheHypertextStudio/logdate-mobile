@@ -44,12 +44,16 @@ import app.logdate.feature.core.settings.ui.watch.WatchRequestFailureMessage
 import app.logdate.feature.core.settings.ui.watch.WatchSetupStep
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
+import app.logdate.feature.core.settings.ui.watch.WatchUnknownActions
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.watch.WatchSetupProvider
 import app.logdate.ui.watch.rememberWatchSetupLauncher
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_association_pending
 import logdate.client.feature.core.generated.resources.watch_association_pending_description
+import logdate.client.feature.core.generated.resources.watch_check_on_watch
+import logdate.client.feature.core.generated.resources.watch_discovery_unavailable
+import logdate.client.feature.core.generated.resources.watch_installation_unknown
 import logdate.client.feature.core.generated.resources.watch_loading
 import logdate.client.feature.core.generated.resources.watch_setup_associate_action
 import logdate.client.feature.core.generated.resources.watch_setup_associate_description
@@ -74,6 +78,8 @@ internal fun WatchSetupContent(
     onInstall: () -> Unit,
     setupLauncher: ((WatchSetupProvider) -> Boolean)?,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
+    onConfirmMissing: (String) -> Unit = {},
 ) {
     when (status) {
         null -> {
@@ -84,6 +90,24 @@ internal fun WatchSetupContent(
 
         WatchStatus.Unsupported -> {
             WatchSetupHero(stringResource(Res.string.watch_unsupported), null, Icons.Default.Watch, modifier) {}
+        }
+
+        is WatchStatus.Unknown -> {
+            WatchSetupHero(
+                stringResource(
+                    if (status.watchName == null) {
+                        Res.string.watch_discovery_unavailable
+                    } else {
+                        Res.string.watch_installation_unknown
+                    },
+                ),
+                stringResource(Res.string.watch_check_on_watch),
+                Icons.Default.Watch,
+                modifier,
+            ) {
+                WatchUnknownActions(status, onRetry, onConfirmMissing)
+                requestFailure?.let { WatchRequestFailureMessage(it) }
+            }
         }
 
         WatchStatus.NoWatch -> {

@@ -11,6 +11,7 @@ import app.logdate.client.sync.cloud.RefreshedSession
 import app.logdate.client.sync.cloud.SessionRefreshingAccountRepository
 import app.logdate.client.sync.peer.removal.WatchRemovalAccess
 import app.logdate.client.sync.peer.removal.WatchRemovalResult
+import app.logdate.client.sync.peer.removal.WatchRemovalTarget
 import app.logdate.shared.config.LogDateConfigRepository
 import app.logdate.shared.config.PinnedLogDateConfigRepository
 import app.logdate.shared.model.devices.LinkedDevice
@@ -33,6 +34,7 @@ data class LinkedDeviceSession(
     val lastSeenAt: Instant,
     /** The watch paired with this phone, which the Devices page already shows as its watch. */
     val pairedWatch: Boolean = false,
+    val pairedWatchNodeId: String? = null,
 )
 
 /** Why the linked devices could not be listed, or one could not be removed. */
@@ -146,8 +148,19 @@ class AccountLinkedDevicesRepository(
                 is Call.Failure -> return LinkedDevicesLoad.Failed(call.failure)
                 is Call.Success -> call.value
             }
-        val paired = pairedWatchSession()
-        return LinkedDevicesLoad.Loaded(listed.filterNot { it.current }.map { it.toSession(pairedWatch = it.id == paired) })
+        val paired = pairedWatchTarget()
+        return LinkedDevicesLoad.Loaded(
+            listed.filterNot { it.current }.map {
+                it.toSession(
+                    pairedWatch = it.id == paired?.sessionId,
+                    pairedWatchNodeId =
+                        paired?.context?.watchNode?.takeIf { _ ->
+                            it.id ==
+                                paired?.sessionId
+                        },
+                )
+            },
+        )
     }
 
     override suspend fun remove(device: LinkedDeviceSession): LinkedDeviceRemoval {
@@ -210,10 +223,10 @@ class AccountLinkedDevicesRepository(
         }
 
     /** The paired watch's session, or null when there is none or the watch connection does not answer in time. */
-    private suspend fun pairedWatchSession(): String? {
+    private suspend fun pairedWatchTarget(): WatchRemovalTarget? {
         val removal = watchRemoval ?: return null
         return try {
-            withTimeoutOrNull(PAIRED_WATCH_TIMEOUT) { removal.target() }?.sessionId
+            withTimeoutOrNull(PAIRED_WATCH_TIMEOUT) { removal.target() }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -338,15 +351,18 @@ class AccountLinkedDevicesRepository(
     }
 }
 
-private fun LinkedDevice.toSession(pairedWatch: Boolean) =
-    LinkedDeviceSession(
-        id = id,
-        name = deviceName,
-        platform = platform,
-        linkedAt = Instant.fromEpochMilliseconds(createdAt),
-        lastSeenAt = Instant.fromEpochMilliseconds(lastRefreshedAt),
-        pairedWatch = pairedWatch,
-    )
+private fun LinkedDevice.toSession(
+    pairedWatch: Boolean,
+    pairedWatchNodeId: String?,
+) = LinkedDeviceSession(
+    id = id,
+    name = deviceName,
+    platform = platform,
+    linkedAt = Instant.fromEpochMilliseconds(createdAt),
+    lastSeenAt = Instant.fromEpochMilliseconds(lastRefreshedAt),
+    pairedWatch = pairedWatch,
+    pairedWatchNodeId = pairedWatchNodeId,
+)
 
 /** The same account on the same server, whatever its current tokens are. */
 private fun OriginBoundSession.isSameAccount(other: OriginBoundSession): Boolean =

@@ -11,20 +11,31 @@ import kotlinx.coroutines.flow.Flow
  * only its name and whether it is nearby.
  */
 sealed interface WatchStatus {
+    val nodeId: String? get() = null
+
     /** This device cannot connect to a Wear OS watch at all. */
     data object Unsupported : WatchStatus
 
     /** No watch is paired with this phone. */
     data object NoWatch : WatchStatus
 
+    /** Discovery is unavailable, or a reachable watch has not reported its app installation. */
+    data class Unknown(
+        val watchName: String? = null,
+        override val nodeId: String? = null,
+        val knownInstalled: Boolean = false,
+    ) : WatchStatus
+
     /** A watch is paired, and LogDate is not installed on it. */
     data class NotInstalled(
         val watchName: String,
+        override val nodeId: String? = null,
     ) : WatchStatus
 
     /** LogDate is being linked with a paired watch. */
     data class SettingUp(
         val step: WatchSetupStep,
+        override val nodeId: String? = null,
     ) : WatchStatus
 
     /**
@@ -39,6 +50,7 @@ sealed interface WatchStatus {
         val sync: WatchSyncLine? = null,
         val window: WatchWindowLine? = null,
         val capabilities: Set<String> = emptySet(),
+        override val nodeId: String? = null,
     ) : WatchStatus
 
     /** The watch reported a problem the person needs to know about. */
@@ -46,6 +58,7 @@ sealed interface WatchStatus {
         val watchName: String,
         val nearby: Boolean,
         val issue: WatchIssue,
+        override val nodeId: String? = null,
     ) : WatchStatus
 }
 
@@ -107,4 +120,6 @@ data class WatchPeerSnapshot(
 /** Where the watch's report comes from; on Android, the peer state the Data Layer delivers. */
 fun interface WatchPeerSnapshotSource {
     fun observe(): Flow<WatchPeerSnapshot>
+
+    fun observeFor(nodeId: String): Flow<WatchPeerSnapshot> = observe()
 }

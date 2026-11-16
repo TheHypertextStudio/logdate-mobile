@@ -2,6 +2,8 @@
 
 package app.logdate.feature.core.settings.ui.devices
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Watch
 import androidx.compose.material3.Icon
@@ -17,11 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import app.logdate.client.sync.peer.devices.LinkedDevicesFailure
 import app.logdate.client.text.asString
+import app.logdate.feature.core.settings.ui.watch.WatchStatus
+import app.logdate.feature.core.settings.ui.watch.watchDeviceDescription
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.common.SimpleSettingsItem
+import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.linked_device_erases_on_next_connect
+import logdate.client.feature.core.generated.resources.linked_device_paired_phone
 import logdate.client.feature.core.generated.resources.linked_device_remove_account_changed
 import logdate.client.feature.core.generated.resources.linked_device_remove_refused
 import logdate.client.feature.core.generated.resources.linked_device_remove_sign_in
@@ -44,6 +50,7 @@ import logdate.client.feature.core.generated.resources.linked_devices_error_unre
 import logdate.client.feature.core.generated.resources.linked_devices_error_unreadable
 import logdate.client.feature.core.generated.resources.linked_devices_loading
 import logdate.client.feature.core.generated.resources.linked_devices_title
+import logdate.client.feature.core.generated.resources.watch_settings
 import logdate.client.ui.generated.resources.common_dismiss
 import logdate.client.ui.generated.resources.common_remove
 import logdate.client.ui.generated.resources.common_try_again
@@ -58,20 +65,34 @@ object LinkedDevicesTags {
 
 /**
  * The devices linked to the account with their own sessions, each with a working Remove. Nothing is
- * shown while linking is unavailable or no device is linked. The watch paired with this phone is left
- * out when [hidePairedWatch], because the page already shows it as its watch.
+ * shown while linking is unavailable or no device is linked. Paired watches retain their removal action.
  */
 @Composable
 fun LinkedDevicesSection(
     state: LinkedDevicesUiState,
-    hidePairedWatch: Boolean,
     onRemove: (String) -> Unit,
     onRetry: () -> Unit,
     onDismissNotice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (!state.isShown(hidePairedWatch)) return
-    val devices = state.shownDevices(hidePairedWatch)
+    if (!state.isShown()) return
+    SettingsSection(title = stringResource(Res.string.linked_devices_title), modifier = modifier) {
+        LinkedDeviceRows(state, onRemove, onRetry, onDismissNotice)
+    }
+}
+
+@Composable
+fun LinkedDeviceRows(
+    state: LinkedDevicesUiState,
+    onRemove: (String) -> Unit,
+    onRetry: () -> Unit,
+    onDismissNotice: () -> Unit,
+    modifier: Modifier = Modifier,
+    onManagePairedWatch: (() -> Unit)? = null,
+    pairedWatchStatus: WatchStatus? = null,
+) {
+    if (!state.isShown()) return
+    val devices = (state as? LinkedDevicesUiState.Listed)?.devices.orEmpty()
     var confirming by remember { mutableStateOf<LinkedDeviceUiState?>(null) }
     confirming?.let { device ->
         RemoveDeviceDialog(
@@ -84,7 +105,7 @@ fun LinkedDevicesSection(
             erasesData = device.erasesData,
         )
     }
-    SettingsSection(title = stringResource(Res.string.linked_devices_title), modifier = modifier.testTag(LinkedDevicesTags.SECTION)) {
+    Column(modifier.testTag(LinkedDevicesTags.SECTION), verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
         when (state) {
             LinkedDevicesUiState.Unavailable -> {}
 
@@ -107,7 +128,18 @@ fun LinkedDevicesSection(
                     )
                 }
                 devices.forEach { device ->
-                    LinkedDeviceRow(device, removingId = state.removingId, onRemove = { confirming = device })
+                    LinkedDeviceRow(
+                        device,
+                        removingId = state.removingId,
+                        onRemove = { confirming = device },
+                        onManage = onManagePairedWatch?.takeIf { device.pairedWatch },
+                        status =
+                            pairedWatchStatus?.takeIf {
+                                device.pairedWatch &&
+                                    device.pairedWatchNodeId != null &&
+                                    it.nodeId == device.pairedWatchNodeId
+                            },
+                    )
                 }
             }
         }
@@ -115,34 +147,46 @@ fun LinkedDevicesSection(
 }
 
 /** Whether the section has anything to show: a load in progress, its failure, a device or a notice. */
-fun LinkedDevicesUiState.isShown(hidePairedWatch: Boolean): Boolean =
+fun LinkedDevicesUiState.isShown(): Boolean =
     when (this) {
         LinkedDevicesUiState.Unavailable -> false
         LinkedDevicesUiState.Loading, is LinkedDevicesUiState.Failed -> true
-        is LinkedDevicesUiState.Listed -> notice != null || shownDevices(hidePairedWatch).isNotEmpty()
+        is LinkedDevicesUiState.Listed -> notice != null || devices.isNotEmpty()
     }
-
-private fun LinkedDevicesUiState.shownDevices(hidePairedWatch: Boolean): List<LinkedDeviceUiState> =
-    (this as? LinkedDevicesUiState.Listed)?.devices.orEmpty().filterNot { hidePairedWatch && it.pairedWatch }
 
 @Composable
 private fun LinkedDeviceRow(
     device: LinkedDeviceUiState,
     removingId: String?,
     onRemove: () -> Unit,
+    onManage: (() -> Unit)? = null,
+    status: WatchStatus? = null,
 ) {
     SettingsRow(
         headlineContent = { Text(device.name.asString()) },
         overlineContent = { Text(stringResource(device.platformName)) },
         supportingContent = {
-            Text(stringResource(Res.string.linked_device_times, device.linkedAtFormatted.asString(), device.lastSeenFormatted.asString()))
+            Column {
+                if (device.pairedWatch) Text(stringResource(Res.string.linked_device_paired_phone))
+                status?.let { Text(watchDeviceDescription(it)) }
+                Text(
+                    stringResource(
+                        Res.string.linked_device_times,
+                        device.linkedAtFormatted.asString(),
+                        device.lastSeenFormatted.asString(),
+                    ),
+                )
+            }
         },
         leadingContent = { Icon(Icons.Outlined.Watch, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         trailingContent = {
-            if (removingId == device.id) {
-                Text(stringResource(Res.string.linked_device_removing), style = MaterialTheme.typography.labelLarge)
-            } else {
-                TextButton(onClick = onRemove, enabled = removingId == null) { Text(stringResource(UiRes.string.common_remove)) }
+            Column {
+                onManage?.let { manage -> TextButton(onClick = manage) { Text(stringResource(Res.string.watch_settings)) } }
+                if (removingId == device.id) {
+                    Text(stringResource(Res.string.linked_device_removing), style = MaterialTheme.typography.labelLarge)
+                } else {
+                    TextButton(onClick = onRemove, enabled = removingId == null) { Text(stringResource(UiRes.string.common_remove)) }
+                }
             }
         },
         modifier = Modifier.testTag(LinkedDevicesTags.DEVICE),
