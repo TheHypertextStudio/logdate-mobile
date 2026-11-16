@@ -113,9 +113,9 @@ abstract class HistoryOwnerAdoptionDao {
     @Query(
         "INSERT OR IGNORE INTO sync_download_inbox " +
             "(ownerId, serverOrigin, entityType, entityId, version, deleted, payload, operationId, state, " +
-            "attempts, nextAttemptAt, reason) " +
+            "attempts, nextAttemptAt, reason, appliedAt) " +
             "SELECT :newOwner, serverOrigin, entityType, entityId, version, deleted, payload, operationId, " +
-            "state, attempts, nextAttemptAt, reason " +
+            "state, attempts, nextAttemptAt, reason, appliedAt " +
             "FROM sync_download_inbox WHERE ownerId = :oldOwner AND serverOrigin = :origin " +
             "AND entityType IN ('LOCAL_DELETE_NOTE', 'LOCAL_DELETE_JOURNAL', 'LOCAL_DELETE_ASSOCIATION', 'LOCAL_DELETE_TRANSCRIPTION') " +
             "AND state = 'APPLIED' AND deleted = 1 AND operationId = 'local-delete-v1' " +
