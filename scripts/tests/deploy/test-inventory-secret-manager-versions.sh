@@ -18,7 +18,7 @@ cleanup() { rm -rf "$TMP_DIR"; }
 trap cleanup EXIT
 mkdir -p "$FAKE_BIN"
 
-cat >"$FAKE_BIN/gcloud" <<'EOF'
+cat > "$FAKE_BIN/gcloud" << 'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf '%s\n' "$*" >>"$GCLOUD_COMMAND_LOG"
@@ -80,7 +80,7 @@ EOF
 chmod +x "$FAKE_BIN/gcloud"
 
 run_inventory() {
-    GCLOUD_COMMAND_LOG="$COMMAND_LOG" PATH="$FAKE_BIN:$PATH" "$SCRIPT" --environment "$1"
+  GCLOUD_COMMAND_LOG="$COMMAND_LOG" PATH="$FAKE_BIN:$PATH" "$SCRIPT" --environment "$1"
 }
 
 assert_file_exists "$SCRIPT"
@@ -111,7 +111,7 @@ assert_contains 'enabled_version=6' "$staging_output"
 assert_contains 'enabled_version=7' "$staging_output"
 assert_not_contains 'credential-value-must-not-print' "$staging_output"
 assert_not_contains 'secret_id=unexpected-project-secret' "$staging_output"
-actual_db_url_versions="$(awk '/^secret_id=logdate-db-url$/{capture=1; next} /^secret_id=/{capture=0} capture && /^enabled_version=/{print}' <<<"$staging_output")"
+actual_db_url_versions="$(awk '/^secret_id=logdate-db-url$/{capture=1; next} /^secret_id=/{capture=0} capture && /^enabled_version=/{print}' <<< "$staging_output")"
 expected_db_url_versions=$'enabled_version=1\nenabled_version=2\nenabled_version=10'
 [[ "$actual_db_url_versions" == "$expected_db_url_versions" ]] || fail 'enabled versions must be sorted numerically and deduplicated'
 pass
@@ -123,17 +123,17 @@ assert_not_contains 'authenticated_principal=' "$production_output"
 assert_not_contains '@logdate.iam.gserviceaccount.com' "$production_output"
 
 assert_fails() {
-    local failure_code="$1"
-    shift
-    set +e
-    local output
-    output="$(GCLOUD_COMMAND_LOG="$COMMAND_LOG" PATH="$FAKE_BIN:$PATH" "$@" 2>&1)"
-    local status=$?
-    set -e
-    assert_exit_code 1 "$status"
-    assert_contains "INVENTORY_FAILURE_CODE=$failure_code" "$output"
-    assert_not_contains 'credential-value-must-not-print' "$output"
-    assert_not_contains 'permission-string-and-credential-value-must-not-print' "$output"
+  local failure_code="$1"
+  shift
+  set +e
+  local output
+  output="$(GCLOUD_COMMAND_LOG="$COMMAND_LOG" PATH="$FAKE_BIN:$PATH" "$@" 2>&1)"
+  local status=$?
+  set -e
+  assert_exit_code 1 "$status"
+  assert_contains "INVENTORY_FAILURE_CODE=$failure_code" "$output"
+  assert_not_contains 'credential-value-must-not-print' "$output"
+  assert_not_contains 'permission-string-and-credential-value-must-not-print' "$output"
 }
 
 assert_fails identity_mismatch env GCLOUD_FAKE_PRINCIPAL='unexpected@example.invalid' "$SCRIPT" --environment staging
@@ -144,7 +144,7 @@ assert_fails metadata_access_denied_or_missing env GCLOUD_FAIL_VERSION=true "$SC
 assert_fails invalid_metadata env GCLOUD_EMPTY_SECRET=logdate-health-internal-token "$SCRIPT" --environment staging
 assert_fails invalid_metadata "$SCRIPT" --environment unexpected
 
-command_log="$(<"$COMMAND_LOG")"
+command_log="$(< "$COMMAND_LOG")"
 assert_not_contains 'secrets list' "$command_log"
 assert_not_contains 'get-iam-policy' "$command_log"
 assert_not_contains 'versions access' "$command_log"
@@ -181,6 +181,6 @@ assert_file_contains 'never prints an account or email address' docs/runbook/sec
 assert_file_contains 'identity_mismatch' docs/runbook/secret-manager-version-inventory.md
 # Literal Markdown code spans under test.
 # shellcheck disable=SC2016
-assert_file_contains '| GitHub Environment | `staging` | `production` |' docs/runbook/staging-production-configuration.md
+assert_file_contains_ignoring_padding '| GitHub Environment | `staging` | `production` |' docs/runbook/staging-production-configuration.md
 
 print_pass_summary 'least-privilege secret inventory checks'
