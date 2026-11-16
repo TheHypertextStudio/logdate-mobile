@@ -85,12 +85,18 @@ public object RepoCommitChanges {
     public suspend fun collectionsAt(
         store: RepoBlockStore,
         root: Cid,
-    ): Result<Set<Nsid>> =
+    ): Result<Set<Nsid>> = entriesAt(store, root).map { entries -> entries.mapTo(linkedSetOf()) { it.collection } }
+
+    /**
+     * Every record in the tree whose root is [root], as its collection, key and content identifier, in
+     * key order. Only the tree is read, not the records.
+     */
+    public suspend fun entriesAt(
+        store: RepoBlockStore,
+        root: Cid,
+    ): Result<List<MerkleSearchTreeEntry>> =
         runCatching {
-            MerkleSearchTree
-                .fromBlocks(root) { cid -> store.readBlock(cid).getOrThrow() }
-                .entries()
-                .mapTo(linkedSetOf()) { it.collection }
+            MerkleSearchTree.fromBlocks(root) { cid -> store.readBlock(cid).getOrThrow() }.entries()
         }
 
     /**

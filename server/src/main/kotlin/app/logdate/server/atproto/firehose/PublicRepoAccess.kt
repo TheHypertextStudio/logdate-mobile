@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.repo.Cid
+import studio.hypertext.atproto.repo.DagCborCodec
 import studio.hypertext.atproto.repo.DefaultRepoEngine
 import studio.hypertext.atproto.repo.RepoBlockStore
 import studio.hypertext.atproto.repo.RepoCommitChanges
@@ -21,7 +22,6 @@ import studio.hypertext.atproto.repo.RepoRecordId
 import studio.hypertext.atproto.syntax.Nsid
 import studio.hypertext.atproto.syntax.RecordKey
 import studio.hypertext.atproto.syntax.Tid
-import java.util.concurrent.ConcurrentHashMap
 
 /** One repository in a `com.atproto.sync.listRepos` page. */
 data class PublicRepoSummary(
@@ -117,8 +117,8 @@ class PublicRepoAccess(
     private val directory: PublicRepoDirectory,
 ) {
     private val reader = DefaultRepoEngine(blocks)
-    private val treeChecks = ConcurrentHashMap<AtprotoDid, Pair<Cid, Boolean>>()
-    private val blobIndexes = ConcurrentHashMap<AtprotoDid, Pair<Cid, Set<Cid>>>()
+    private val treeChecks = RecentlyUsedCache<AtprotoDid, Pair<Cid, Boolean>>(MAX_TREE_CHECKS)
+    private val blobIndexes = RecentlyUsedCache<AtprotoDid, BlobIndex>(MAX_BLOB_INDEXES)
 
     /** The standing of [did]'s account, or `null` when the server shows nothing about it. */
     suspend fun standing(did: AtprotoDid): RepoStanding? = gate.standing(did)
@@ -183,15 +183,18 @@ class PublicRepoAccess(
      * True when a public record of [did]'s repository refers to the blob [cid]. A blob that no
      * public record refers to stays private to its owner, even when it was uploaded to the same
      * account.
+     *
+     * The blobs each record refers to are remembered by the record's content identifier, so after a
+     * change only the records that are new to the tree are read.
      */
     suspend fun referencesBlob(
         did: AtprotoDid,
         cid: Cid,
     ): Boolean {
         val head = readableHead(did) ?: return false
-        val cached = blobIndexes[did]?.takeIf { it.first == head.commitCid }?.second
-        val referenced = cached ?: loadBlobReferences(did, head).also { blobIndexes[did] = head.commitCid to it }
-        return cid in referenced
+        val previous = blobIndexes[did]
+        val index = previous?.takeIf { it.commitCid == head.commitCid } ?: indexBlobs(head, previous).also { blobIndexes[did] = it }
+        return cid in index.referenced
     }
 
     /**
@@ -244,21 +247,26 @@ class PublicRepoAccess(
         return pure
     }
 
-    private suspend fun loadBlobReferences(
-        did: AtprotoDid,
+    private suspend fun indexBlobs(
         head: RepoHead,
-    ): Set<Cid> {
-        val collections = RepoCommitChanges.collectionsAt(blocks, head.root).getOrThrow().filter(policy::isPublic)
-        val references = linkedSetOf<Cid>()
-        collections.forEach { collection ->
-            var cursor: String? = null
-            do {
-                val page = reader.listRecords(did, collection, limit = PAGE_SIZE, cursor = cursor, reverse = false).getOrThrow()
-                page.records.forEach { record -> collectBlobCids(record.value, references) }
-                cursor = page.cursor
-            } while (cursor != null)
+        previous: BlobIndex?,
+    ): BlobIndex {
+        val records =
+            RepoCommitChanges
+                .entriesAt(blocks, head.root)
+                .getOrThrow()
+                .filter { policy.isPublic(it.collection) }
+                .mapTo(linkedSetOf()) { it.cid }
+        val known = previous?.byRecord.orEmpty()
+        val read = mutableMapOf<Cid, Set<Cid>>()
+        records.filterNot(known::containsKey).chunked(PAGE_SIZE).forEach { chunk ->
+            blocks.readBlocks(chunk).getOrThrow().forEachIndexed { index, block ->
+                val record = requireNotNull(block) { "Missing record block ${chunk[index]}" }
+                val blobs = linkedSetOf<Cid>().also { collectBlobCids(DagCborCodec.decode(record.bytes), it) }
+                read[chunk[index]] = blobs.ifEmpty { emptySet() }
+            }
         }
-        return references
+        return BlobIndex(head.commitCid, records.associateWith { known[it] ?: read.getValue(it) })
     }
 
     private fun collectBlobCids(
@@ -284,8 +292,39 @@ class PublicRepoAccess(
         }
     }
 
+    /** The blobs the public records of one version of a repository refer to, by record. */
+    private class BlobIndex(
+        val commitCid: Cid,
+        val byRecord: Map<Cid, Set<Cid>>,
+    ) {
+        val referenced: Set<Cid> = byRecord.values.flatMapTo(hashSetOf()) { it }
+    }
+
     private companion object {
         const val PAGE_SIZE = 100
         const val MAX_ROUNDS = 3
+        const val MAX_TREE_CHECKS = 4_096
+        const val MAX_BLOB_INDEXES = 256
     }
+}
+
+/** At most [maxEntries] values, forgetting the one used longest ago when full. Safe to share between threads. */
+internal class RecentlyUsedCache<K : Any, V : Any>(
+    private val maxEntries: Int,
+) {
+    private val entries =
+        object : LinkedHashMap<K, V>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>): Boolean = size > maxEntries
+        }
+
+    operator fun get(key: K): V? = synchronized(entries) { entries[key] }
+
+    operator fun set(
+        key: K,
+        value: V,
+    ) {
+        synchronized(entries) { entries[key] = value }
+    }
+
+    val size: Int get() = synchronized(entries) { entries.size }
 }
