@@ -552,6 +552,8 @@ dependencies {
     testImplementation(libs.kotlinx.datetime)
     testImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.mockk)
+    testImplementation(project.dependencies.platform(libs.koin.bom))
+    testImplementation(libs.koin.core)
     testImplementation(libs.compose.runtime)
     testImplementation(libs.nav3.runtime)
     testImplementation(libs.androidx.health.connect)
