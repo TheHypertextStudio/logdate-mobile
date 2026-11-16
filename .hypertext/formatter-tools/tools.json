@@ -13,6 +13,11 @@
     "@thehypertextstudio/format-config": "0.0.1"
   },
   "ruff": "0.17.2",
+  "jdk": {
+    "version": "21.0.10",
+    "implementor": "JetBrains s.r.o.",
+    "implementor_version": "JBRSDK-21.0.10+7-1163.108-nomod"
+  },
   "native_setup": [
     ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-swift"],
     ["python3", "{repo}/.hypertext/formatter-tools/native-addons.py", "setup-terraform"],
