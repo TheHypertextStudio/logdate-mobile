@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
     // TODO: Re-enable once we can figure out why Modifier is an unresolved reference
-    alias(libs.plugins.dokka)
 }
 
 val checkPrivateModalContract by tasks.registering {

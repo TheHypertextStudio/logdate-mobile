@@ -376,6 +376,8 @@ testcontainers-testcontainers = { group = 'org.testcontainers', name = 'testcont
 turbine = { group = 'app.cash.turbine', name = 'turbine', version.ref = 'turbine' }
 
 # Tooling & Plugins
+versioning-plugin = { module = 'org.jetbrains.dokka:versioning-plugin', version.ref = 'dokkaGradlePlugin' }
+
 # Gradle plugins that build-logic compiles against
 android-gradlePlugin = { module = 'com.android.tools.build:gradle', version.ref = 'agp' }
 kotlin-gradlePlugin = { module = 'org.jetbrains.kotlin:kotlin-gradle-plugin', version.ref = 'kotlin' }

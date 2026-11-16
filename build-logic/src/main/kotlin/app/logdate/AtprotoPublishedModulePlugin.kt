@@ -32,7 +32,8 @@ private const val ORG_URL = "https://thehypertext.studio"
  * of repeating the same `maven-publish`, Dokka, and signing configuration in every module.
  *
  * Applied behavior:
- * - applies `org.jetbrains.dokka`, `maven-publish`, and `signing`
+ * - applies `org.jetbrains.dokka` with its versioning plugin, `maven-publish`, and `signing`; these are
+ *   the only modules that publish API documentation
  * - applies `org.jetbrains.kotlinx.binary-compatibility-validator`, so `apiCheck` fails when the
  *   public API no longer matches the dumps checked in under the module's `api` directory
  * - sets the default artifact group to `studio.hypertext.atproto`
@@ -71,6 +72,7 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
             pluginManager.apply(KmpLibraryPlugin::class.java)
             pluginManager.apply("org.jetbrains.kotlinx.kover")
             pluginManager.apply("org.jetbrains.dokka")
+            dependencies.add("dokkaPlugin", libs.library("versioning-plugin"))
             pluginManager.apply("maven-publish")
             pluginManager.apply("signing")
             pluginManager.apply("org.jetbrains.kotlinx.binary-compatibility-validator")
