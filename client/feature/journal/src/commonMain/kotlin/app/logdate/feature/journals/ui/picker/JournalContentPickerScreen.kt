@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -40,8 +41,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -55,12 +58,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.workspace.PanelHeader
 import app.logdate.ui.workspace.WorkspacePanel
 import app.logdate.ui.workspace.WorkspaceSearchScope
 import app.logdate.util.formatDateLocalized
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.cd_back_to_journal
 import logdate.client.feature.journal.generated.resources.cd_content_picker_remove_selection
@@ -88,6 +94,8 @@ import kotlin.uuid.Uuid
 import androidx.compose.foundation.lazy.items as lazyItems
 import logdate.client.ui.generated.resources.Res as UiRes
 
+private const val LOAD_MORE_THRESHOLD = 12
+
 @Composable
 fun JournalContentPickerScreen(
     journalId: Uuid,
@@ -97,7 +105,7 @@ fun JournalContentPickerScreen(
     viewModel: JournalContentPickerViewModel = koinViewModel(),
 ) {
     LaunchedEffect(journalId) { viewModel.setJournalId(journalId) }
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(state.addedCount) {
         if (state.addedCount != null) onAdded()
     }
@@ -108,6 +116,7 @@ fun JournalContentPickerScreen(
         onToggleSelection = viewModel::toggleSelection,
         onRemoveSelection = viewModel::removeSelection,
         onAddSelected = viewModel::addSelected,
+        onLoadMore = viewModel::loadMore,
         modifier = modifier,
     )
 }
@@ -120,6 +129,7 @@ fun JournalContentPickerScreenContent(
     onToggleSelection: (Uuid) -> Unit = {},
     onRemoveSelection: (Uuid) -> Unit = {},
     onAddSelected: () -> Unit = {},
+    onLoadMore: () -> Unit = {},
     previewMedia: Map<Uuid, Painter> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
@@ -152,6 +162,7 @@ fun JournalContentPickerScreenContent(
             PickerGallery(
                 state = state,
                 onToggleSelection = onToggleSelection,
+                onLoadMore = onLoadMore,
                 previewMedia = previewMedia,
                 modifier = Modifier.weight(1f),
             )
@@ -170,10 +181,23 @@ fun JournalContentPickerScreenContent(
 private fun PickerGallery(
     state: JournalContentPickerUiState,
     onToggleSelection: (Uuid) -> Unit,
+    onLoadMore: () -> Unit,
     previewMedia: Map<Uuid, Painter>,
     modifier: Modifier = Modifier,
 ) {
-    val selectedIds = state.selectedItems.mapTo(mutableSetOf()) { it.id }
+    val selectedIds = remember(state.selectedItems) { state.selectedItems.mapTo(mutableSetOf()) { it.id } }
+    val gridState = rememberLazyStaggeredGridState()
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+    LaunchedEffect(gridState, state.canLoadMore) {
+        if (!state.canLoadMore) return@LaunchedEffect
+        snapshotFlow {
+            val layout = gridState.layoutInfo
+            val lastVisible = layout.visibleItemsInfo.lastOrNull()?.index ?: -1
+            lastVisible >= layout.totalItemsCount - LOAD_MORE_THRESHOLD
+        }.distinctUntilChanged()
+            .filter { nearEnd -> nearEnd }
+            .collect { currentOnLoadMore() }
+    }
     if (state.groups.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
@@ -192,13 +216,14 @@ private fun PickerGallery(
         val gridColumns = contentPickerGridColumnCount(maxWidth, LocalDensity.current.fontScale)
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(gridColumns),
+            state = gridState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(Spacing.lg),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             verticalItemSpacing = Spacing.md,
         ) {
             state.groups.forEach { group ->
-                item(span = StaggeredGridItemSpan.FullLine) {
+                item(key = group.date.toString(), span = StaggeredGridItemSpan.FullLine) {
                     Text(
                         text = formatDateLocalized(group.date),
                         style = MaterialTheme.typography.titleMedium,

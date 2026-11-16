@@ -2,14 +2,10 @@ package app.logdate.feature.journals.ui.detail
 
 import app.logdate.client.domain.notes.RemoveNoteUseCase
 import app.logdate.client.repository.journals.JournalNote
-import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.sharing.ShareTheme
 import app.logdate.client.sharing.SharingLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -34,14 +30,11 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalCoroutinesApi::class)
 class NoteViewerViewModelTest {
     @Test
-    fun `opens a local note without waiting for the full library`() =
+    fun `follows one note without subscribing to every note`() =
         runTest(dispatcher) {
             val at = Instant.parse("2026-10-28T12:00:00Z")
             val note = JournalNote.Text(content = "Local entry", creationTimestamp = at, lastUpdated = at)
-            val repository =
-                object : JournalNotesRepository by FakeJournalNotesRepository(listOf(note)) {
-                    override val allNotesObserved: Flow<List<JournalNote>> = flow { awaitCancellation() }
-                }
+            val repository = FakeJournalNotesRepository(listOf(note))
             val viewer =
                 NoteViewerViewModel(
                     note.uid,
@@ -52,10 +45,14 @@ class NoteViewerViewModelTest {
                     RemoveNoteUseCase(repository),
                     sharingLauncher,
                 )
+            advanceUntilIdle()
+            assertEquals("Local entry", assertIs<NoteViewerUiState.TextContent>(viewer.uiState.value).text)
 
+            repository.setNotes(listOf(note.copy(content = "Edited entry")))
             advanceUntilIdle()
 
-            assertEquals("Local entry", assertIs<NoteViewerUiState.TextContent>(viewer.uiState.value).text)
+            assertEquals("Edited entry", assertIs<NoteViewerUiState.TextContent>(viewer.uiState.value).text)
+            assertEquals(0, repository.wholeTableSubscriptions)
         }
 
     private val dispatcher = StandardTestDispatcher()

@@ -18,7 +18,10 @@ import app.logdate.ui.audio.extraction.AmplitudeExtractor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -29,7 +32,14 @@ class FakeJournalNotesRepository(
 
     var lastRemovedId: Uuid? = null
 
-    override val allNotesObserved: Flow<List<JournalNote>> = notesFlow
+    /** How many times a caller subscribed to every note instead of a bounded query. */
+    var wholeTableSubscriptions = 0
+        private set
+
+    override val allNotesObserved: Flow<List<JournalNote>> = notesFlow.onStart { wholeTableSubscriptions++ }
+
+    override fun observeNoteById(noteId: Uuid): Flow<JournalNote?> =
+        notesFlow.map { notes -> notes.firstOrNull { it.uid == noteId } }.distinctUntilChanged()
 
     override fun observeNotesInJournal(journalId: Uuid): Flow<List<JournalNote>> = flowOf(emptyList())
 
@@ -41,9 +51,15 @@ class FakeJournalNotesRepository(
     override fun observeNotesPage(
         pageSize: Int,
         offset: Int,
-    ): Flow<List<JournalNote>> = flowOf(emptyList())
+    ): Flow<List<JournalNote>> =
+        notesFlow.map { notes ->
+            notes
+                .sortedByDescending(JournalNote::creationTimestamp)
+                .drop(offset)
+                .take(pageSize)
+        }
 
-    override fun observeNotesStream(pageSize: Int): Flow<List<JournalNote>> = flowOf(emptyList())
+    override fun observeNotesStream(pageSize: Int): Flow<List<JournalNote>> = observeNotesPage(pageSize, offset = 0)
 
     override fun observeRecentNotes(limit: Int): Flow<List<JournalNote>> = notesFlow
 
