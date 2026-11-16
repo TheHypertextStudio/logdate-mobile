@@ -5,6 +5,7 @@ import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.media.AndroidManagedMediaDiscarder
 import app.logdate.client.media.AndroidManagedMediaImportSource
 import app.logdate.client.media.ManagedMediaImporter
+import app.logdate.client.media.ManagedMediaPublicationCustody
 import app.logdate.client.media.MediaManager
 import app.logdate.feature.onboarding.ui.SelectedMemoryMediaImporter
 import org.koin.android.ext.koin.androidContext
@@ -23,7 +24,13 @@ actual val onboardingPlatformModule: Module =
             val manager = get<MediaManager>()
             val context = androidContext().applicationContext
             val discarder = AndroidManagedMediaDiscarder(context, manager)
-            val importer = ManagedMediaImporter(manager, AndroidManagedMediaImportSource(context), discarder::discard)
+            val importer =
+                ManagedMediaImporter(
+                    manager,
+                    AndroidManagedMediaImportSource(context),
+                    discarder::discard,
+                    get<ManagedMediaPublicationCustody>(),
+                )
             object : SelectedMemoryMediaImporter {
                 override suspend fun import(sourceUri: String): String = importer.import(sourceUri)
 
