@@ -1,18 +1,26 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="action_onboarding_continue">Continue</string>
     <string name="about_you">About you</string>
     <string name="all_memories">All memories</string>
-    <string name="onboarding_cloud_backup_description">Your journal stays on this device until you choose to set up LogDate Cloud.</string>
+    <string
+    name="onboarding_cloud_backup_description"
+  >Your journal stays on this device until you choose to set up LogDate Cloud.</string>
     <string name="backup_and_sync">Backup &amp; Sync</string>
-    <string name="onboarding_import_memories_description">By importing your memories, you&apos;ll be able to see memories from your past.</string>
+    <string
+    name="onboarding_import_memories_description"
+  >By importing your memories, you&apos;ll be able to see memories from your past.</string>
     <string name="choose_how_youd_like_to_proceed">Choose how you&apos;d like to proceed:</string>
     <string name="choose_memories_to_import">Choose memories to import</string>
     <string name="choose_your_storage_plan">Choose Your Storage Plan:</string>
     <string name="onboarding_plan_basic_title">Basic</string>
-    <string name="onboarding_plan_basic_description">Max 10 GB of text, photos, videos, and voice notes. Photos and videos will be compressed in high quality (1080p).</string>
+    <string
+    name="onboarding_plan_basic_description"
+  >Max 10 GB of text, photos, videos, and voice notes. Photos and videos will be compressed in high quality (1080p).</string>
     <string name="onboarding_plan_premium_title">Premium Plan</string>
-    <string name="onboarding_plan_premium_description">Includes up to 2 TB of storage for text, photo, video, and voice notes.\nPhotos and videos will be stored in original quality.</string>
+    <string
+    name="onboarding_plan_premium_description"
+  >Includes up to 2 TB of storage for text, photo, video, and voice notes.\nPhotos and videos will be stored in original quality.</string>
     <string name="continue_with_memories_count">Continue with %1$d memories</string>
     <string name="continue_without_importing_memories">Continue without importing</string>
     <string name="continue_without_cloud_sync">Continue without cloud sync</string>
@@ -21,32 +29,56 @@
     <string name="deriving_encryption_keys">Deriving encryption keys...</string>
     <string name="enable">Enable</string>
     <string name="enter_recovery_phrase">Enter Recovery Phrase</string>
-    <string name="enter_your_12_word_recovery_phrase_to_restore_your_encryption_keys_and_decrypt_your_data">Enter your 12-word recovery phrase to restore your encryption keys and decrypt your data.</string>
-    <string name="i_love_coffee_hiking_and_terrible_movies">I love coffee, hiking, and terrible movies...</string>
+    <string
+    name="enter_your_12_word_recovery_phrase_to_restore_your_encryption_keys_and_decrypt_your_data"
+  >Enter your 12-word recovery phrase to restore your encryption keys and decrypt your data.</string>
+    <string
+    name="i_love_coffee_hiking_and_terrible_movies"
+  >I love coffee, hiking, and terrible movies...</string>
     <string name="journal_notifications">Journal notifications</string>
-    <string name="onboarding_cloud_sync_description">Keep your memories safe and accessible across all your devices. LogDate Cloud syncs your entries, photos, and settings securely.</string>
+    <string
+    name="onboarding_cloud_sync_description"
+  >Keep your memories safe and accessible across all your devices. LogDate Cloud syncs your entries, photos, and settings securely.</string>
     <string name="let_me_think_about_that">Let me think about that...</string>
     <string name="lets_see_what_i_think">Let&apos;s see what I think!</string>
-    <string name="lets_start_with_what_we_should_call_you">Start with the name you&apos;d like to go by</string>
+    <string
+    name="lets_start_with_what_we_should_call_you"
+  >Start with the name you&apos;d like to go by</string>
     <string name="logdate_cloud">LogDate Cloud</string>
     <string name="memories_import">Memories Import</string>
     <string name="moments_that_might_matter_most">A few photos and videos to start with</string>
     <string name="memory_access_needed">Allow photo and video access</string>
-    <string name="memory_access_needed_body">LogDate needs access to your photos and videos before it can suggest memories to import.</string>
-    <string name="memory_import_failed_body">Your selected memories couldn&apos;t be imported. Try again.</string>
-    <string name="memory_load_failed_body">Your photos and videos couldn&apos;t be loaded right now.</string>
-    <string name="memory_no_recent_items_body">No photos or videos on this device are available to import.</string>
+    <string
+    name="memory_access_needed_body"
+  >LogDate needs access to your photos and videos before it can suggest memories to import.</string>
+    <string
+    name="memory_import_failed_body"
+  >Your selected memories couldn&apos;t be imported. Try again.</string>
+    <string
+    name="memory_load_failed_body"
+  >Your photos and videos couldn&apos;t be loaded right now.</string>
+    <string
+    name="memory_no_recent_items_body"
+  >No photos or videos on this device are available to import.</string>
     <string name="memory_selection_image_placeholder">IMAGE</string>
-    <string name="account_passkey_biometric_description">No passwords to remember. Use your device&apos;s biometric authentication (Face ID, Touch ID, or fingerprint) for secure, convenient access.</string>
+    <string
+    name="account_passkey_biometric_description"
+  >No passwords to remember. Use your device&apos;s biometric authentication (Face ID, Touch ID, or fingerprint) for secure, convenient access.</string>
     <string name="now_lets_import_your_memories">Now let&apos;s import your memories</string>
     <string name="one_more_thing">One more thing…</string>
-    <string name="onboarding_import_smart_selection_description">Browse recent photos and videos, then choose what to add.</string>
+    <string
+    name="onboarding_import_smart_selection_description"
+  >Browse recent photos and videos, then choose what to add.</string>
     <string name="profile_photo">Profile photo</string>
-    <string name="ready_to_start_your_journaling_journey">Ready to start your journaling journey!</string>
+    <string
+    name="ready_to_start_your_journaling_journey"
+  >Ready to start your journaling journey!</string>
     <string name="recommended">Recommended</string>
     <string name="recover_account">Recover Account</string>
     <string name="recovery_phrase_entry_skip">Not now</string>
-    <string name="recovery_phrase_entry_skip_explanation">Your entries still sync without this. You can restore your recovery phrase later in Settings.</string>
+    <string
+    name="recovery_phrase_entry_skip_explanation"
+  >Your entries still sync without this. You can restore your recovery phrase later in Settings.</string>
     <string name="secure_with_passkeys">Secure with Passkeys</string>
     <string name="select_an_option_above_to_continue">Select an option above to continue</string>
     <string name="select_memories">Select Memories</string>
@@ -55,89 +87,150 @@
     <string name="sign_in">Sign In</string>
     <string name="tell_us_a_bit_about_yourself">A bit about you</string>
     <string name="video">Video</string>
-    <string name="onboarding_import_media_description">These photos and videos might mean something to you. Select the ones to import.</string>
-    <string name="onboarding_import_photos_description">Browse your photos and videos. You choose which ones become journal entries.</string>
-    <string name="what_makes_you_you_share_whatever_feels_right">What makes you, you? Share whatever feels right</string>
+    <string
+    name="onboarding_import_media_description"
+  >These photos and videos might mean something to you. Select the ones to import.</string>
+    <string
+    name="onboarding_import_photos_description"
+  >Browse your photos and videos. You choose which ones become journal entries.</string>
+    <string
+    name="what_makes_you_you_share_whatever_feels_right"
+  >What makes you, you? Share whatever feels right</string>
     <string name="account_username_display_name_prompt">First name or nickname</string>
     <string name="who_are_you">Who are you?</string>
-    <string name="onboarding_sync_later_hint">You can always set up cloud sync later in Settings</string>
-    <string name="onboarding_account_existing_action">I already have an account</string>
+    <string
+    name="onboarding_sync_later_hint"
+  >You can always set up cloud sync later in Settings</string>
     <string name="your_name">Your name</string>
     <string name="your_recovery_phrase">Your recovery phrase</string>
-    <string name="recovery_phrase_setup_intro">Save a copy of these 12 words in case you lose every device you’re signed in on. A new device can get your journal from one you already use, so you need them only if none is left.</string>
+    <string
+    name="recovery_phrase_setup_intro"
+  >Save a copy of these 12 words in case you lose every device you’re signed in on. A new device can get your journal from one you already use, so you need them only if none is left.</string>
     <string name="recovery_phrase_setup_saved">I’ve saved my recovery phrase</string>
     <string name="recovery_phrase_setup_later">Later</string>
     <string name="recovery_phrase_setup_copy">Copy</string>
     <string name="recovery_phrase_setup_hide">Hide</string>
     <string name="recovery_phrase_setup_show">Show recovery phrase</string>
-    <string name="onboarding_action_sign_in">Sign in to LogDate Cloud</string>
+    <string name="onboarding_action_sign_in">I already have an account</string>
     <string name="onboarding_start_write_entry">Write your first entry</string>
-    <string name="onboarding_notifications_confirmation_content">You&apos;ll now get notifications when it&apos;s time to write in your journal.</string>
+    <string
+    name="onboarding_notifications_confirmation_content"
+  >You&apos;ll now get notifications when it&apos;s time to write in your journal.</string>
     <string name="onboarding_notifications_confirmation_title">Notifications enabled</string>
     <string name="onboarding_welcome_back_description">Pick up where you left off.</string>
     <string name="onboarding_welcome_back_title">Welcome back, %1$s!</string>
     <string name="section_title_backup_sync">Backup and sync</string>
     <string name="nice_to_meet_you_name">Nice to meet you, %1$s!</string>
-    <string name="recovery_error_invalid_word_format">Recovery phrase words can only contain letters.</string>
+    <string
+    name="recovery_error_invalid_word_format"
+  >Recovery phrase words can only contain letters.</string>
     <string name="recovery_error_missing_words">Enter all 12 recovery words to continue.</string>
     <string name="recovery_setup_retry">Try again</string>
     <string name="recovery_error_unexpected">Recovery failed. Please try again.</string>
     <string name="recovery_phrase_index">%1$d.</string>
-    <string name="warning_recovery_phrase_never_share">Never share your recovery phrase with anyone</string>
+    <string
+    name="warning_recovery_phrase_never_share"
+  >Never share your recovery phrase with anyone</string>
     <string name="warning_recovery_phrase_store_safe">Store it in a safe place</string>
-    <string name="warning_recovery_phrase_store_securely">It will also be saved in this device&apos;s secure storage so you can view it later in Settings</string>
-    <string name="warning_recovery_phrase_write_on_paper">Write it down on paper - don&apos;t save digitally</string>
+    <string
+    name="warning_recovery_phrase_store_securely"
+  >It will also be saved in this device&apos;s secure storage so you can view it later in Settings</string>
+    <string
+    name="warning_recovery_phrase_write_on_paper"
+  >Write it down on paper - don&apos;t save digitally</string>
 
     <!-- Birthday screen -->
     <string name="onboarding_birthday_title">When&apos;s your birthday?</string>
-    <string name="onboarding_birthday_body">Add your birthday if you want it shown on your personal timeline. You can change or remove it later.</string>
+    <string
+    name="onboarding_birthday_body"
+  >Add your birthday if you want it shown on your personal timeline. You can change or remove it later.</string>
     <string name="onboarding_birthday_set">Set my birthday</string>
     <string name="onboarding_birthday_set_label">Birthday</string>
     <string name="onboarding_birthday_card_rewind_title">Your date, your choice</string>
-    <string name="onboarding_birthday_card_rewind_description">Your birthday is optional and stays editable in Settings.</string>
+    <string
+    name="onboarding_birthday_card_rewind_description"
+  >Your birthday is optional and stays editable in Settings.</string>
     <string name="onboarding_birthday_card_origin_title">Your story&apos;s beginning</string>
-    <string name="onboarding_birthday_card_origin_description">Your birthday marks the start of your personal timeline \u2014 the origin of your story.</string>
+    <string
+    name="onboarding_birthday_card_origin_description"
+  >Your birthday marks the start of your personal timeline \u2014 the origin of your story.</string>
     <string name="onboarding_birthday_confirm">Confirm</string>
     <string name="onboarding_birthday_cancel">Cancel</string>
 
     <!-- Recommendations screen -->
     <string name="onboarding_recommendations_title">Personalized suggestions</string>
-    <string name="onboarding_recommendations_body">LogDate learns when and how you like to capture memories, then gives you a gentle nudge at just the right moment.</string>
+    <string
+    name="onboarding_recommendations_body"
+  >LogDate learns when and how you like to capture memories, then gives you a gentle nudge at just the right moment.</string>
     <string name="onboarding_recommendations_card_drafts_title">Finish what you started</string>
-    <string name="onboarding_recommendations_card_drafts_description">Leave a draft unfinished and LogDate reminds you, so nothing gets lost.</string>
+    <string
+    name="onboarding_recommendations_card_drafts_description"
+  >Leave a draft unfinished and LogDate reminds you, so nothing gets lost.</string>
     <string name="onboarding_recommendations_card_recall_title">Remember your past</string>
-    <string name="onboarding_recommendations_card_recall_description">On this day last year, something happened. LogDate brings it back for you to rediscover.</string>
+    <string
+    name="onboarding_recommendations_card_recall_description"
+  >On this day last year, something happened. LogDate brings it back for you to rediscover.</string>
     <string name="onboarding_recommendations_keep_on">Keep suggestions on</string>
     <string name="onboarding_recommendations_turn_off">Turn off</string>
-    <string name="onboarding_recommendations_privacy">Suggestions are generated entirely on your device.</string>
+    <string
+    name="onboarding_recommendations_privacy"
+  >Suggestions are generated entirely on your device.</string>
 
     <!-- Day boundaries screen -->
     <string name="onboarding_day_boundaries_title">Keep late nights on the right day</string>
-    <string name="onboarding_day_boundaries_body">When you&apos;re up past midnight, LogDate can use your sleep data from Health Connect so an entry still lands on the day you meant.</string>
-    <string name="onboarding_day_boundaries_card_title">Your day ends when you actually sleep</string>
-    <string name="onboarding_day_boundaries_card_description">A 1 AM journal entry can still count as &quot;today&quot; if you haven&apos;t gone to bed yet.</string>
+    <string
+    name="onboarding_day_boundaries_body"
+  >When you&apos;re up past midnight, LogDate can use your sleep data from Health Connect so an entry still lands on the day you meant.</string>
+    <string
+    name="onboarding_day_boundaries_card_title"
+  >Your day ends when you actually sleep</string>
+    <string
+    name="onboarding_day_boundaries_card_description"
+  >A 1 AM journal entry can still count as &quot;today&quot; if you haven&apos;t gone to bed yet.</string>
     <string name="onboarding_day_boundaries_status_connected_title">Sleep access is ready</string>
-    <string name="onboarding_day_boundaries_status_connected_description">LogDate can use Health Connect to place late-night entries on the day you were still living.</string>
-    <string name="onboarding_day_boundaries_status_permissions_title">Use sleep data for better journaling boundaries</string>
-    <string name="onboarding_day_boundaries_status_permissions_description">Grant access to sleep sessions so LogDate can tell when one journaling day actually ends and the next begins.</string>
-    <string name="onboarding_day_boundaries_status_setup_required_title">Install or update Health Connect first</string>
-    <string name="onboarding_day_boundaries_status_setup_required_description">This device can use sleep-based day boundaries, but Health Connect needs to finish installing or updating before LogDate can request sleep access.</string>
+    <string
+    name="onboarding_day_boundaries_status_connected_description"
+  >LogDate can use Health Connect to place late-night entries on the day you were still living.</string>
+    <string
+    name="onboarding_day_boundaries_status_permissions_title"
+  >Use sleep data for better journaling boundaries</string>
+    <string
+    name="onboarding_day_boundaries_status_permissions_description"
+  >Grant access to sleep sessions so LogDate can tell when one journaling day actually ends and the next begins.</string>
+    <string
+    name="onboarding_day_boundaries_status_setup_required_title"
+  >Install or update Health Connect first</string>
+    <string
+    name="onboarding_day_boundaries_status_setup_required_description"
+  >This device can use sleep-based day boundaries, but Health Connect needs to finish installing or updating before LogDate can request sleep access.</string>
     <string name="onboarding_day_boundaries_status_checking_title">Checking Health Connect</string>
-    <string name="onboarding_day_boundaries_status_checking_description">Seeing whether sleep-based day boundaries are available on this device.</string>
-    <string name="onboarding_day_boundaries_privacy">Sleep data is only used to place your entries on the right day. LogDate isn&apos;t trying to track or coach your sleep.</string>
+    <string
+    name="onboarding_day_boundaries_status_checking_description"
+  >Seeing whether sleep-based day boundaries are available on this device.</string>
+    <string
+    name="onboarding_day_boundaries_privacy"
+  >Sleep data is only used to place your entries on the right day. LogDate isn&apos;t trying to track or coach your sleep.</string>
     <string name="onboarding_day_boundaries_enable">Use sleep for day boundaries</string>
     <string name="onboarding_day_boundaries_grant_access">Grant sleep access</string>
-    <string name="onboarding_day_boundaries_set_up_health_connect">Install or update Health Connect</string>
+    <string
+    name="onboarding_day_boundaries_set_up_health_connect"
+  >Install or update Health Connect</string>
     <string name="onboarding_day_boundaries_not_now">Not now</string>
 
     <!-- Location screen -->
     <string name="onboarding_location_title">Your places, your timeline</string>
-    <string name="onboarding_location_body">LogDate can remember the places that matter to you \u2014 the coffee shop where you had that great conversation, the park where you watched the sunset. Build a timeline of everywhere you&apos;ve been.</string>
+    <string
+    name="onboarding_location_body"
+  >LogDate can remember the places that matter to you \u2014 the coffee shop where you had that great conversation, the park where you watched the sunset. Build a timeline of everywhere you&apos;ve been.</string>
     <string name="onboarding_location_card_title">Location Timeline</string>
-    <string name="onboarding_location_card_description">See everywhere you&apos;ve been and the memories you made there, all stored privately on your device.</string>
+    <string
+    name="onboarding_location_card_description"
+  >See everywhere you&apos;ve been and the memories you made there, all stored privately on your device.</string>
     <string name="onboarding_location_enable">Enable location</string>
     <string name="onboarding_location_not_now">Not now</string>
-    <string name="onboarding_location_privacy">Your location data is stored locally on your device and is never shared without your explicit consent.</string>
+    <string
+    name="onboarding_location_privacy"
+  >Your location data is stored locally on your device and is never shared without your explicit consent.</string>
 
     <!-- Start screen -->
     <string name="onboarding_start_tagline">A place for the moments you choose to keep.</string>
@@ -148,46 +241,93 @@
     <!-- Overview screen -->
     <string name="onboarding_overview_title">Here&apos;s how this works</string>
     <string name="onboarding_overview_card_log_title">Add things to your Log</string>
-    <string name="onboarding_overview_card_log_description">Your Log is your personal timeline. Write things and add photos or even voice memos. Everything is private to you by default.</string>
+    <string
+    name="onboarding_overview_card_log_description"
+  >Your Log is your personal timeline. Write things and add photos or even voice memos. Everything is private to you by default.</string>
     <string name="onboarding_overview_card_journals_title">Make journals for your memories</string>
-    <string name="onboarding_overview_card_journals_description">Keep your entries together in journals that make sense to you.</string>
+    <string
+    name="onboarding_overview_card_journals_description"
+  >Keep your entries together in journals that make sense to you.</string>
     <string name="onboarding_overview_card_recaps_title">Get weekly recaps</string>
-    <string name="onboarding_overview_card_recaps_description">Every week, revisit moments from the entries you saved.</string>
+    <string
+    name="onboarding_overview_card_recaps_description"
+  >Every week, revisit moments from the entries you saved.</string>
 
     <!-- Completion screen -->
     <string name="first_entry_saved_title">Your first entry is saved</string>
-    <string name="first_entry_import_description">It&apos;s on your Home screen. You can bring in photos and videos from your library now, or start exploring.</string>
+    <string
+    name="first_entry_import_description"
+  >It&apos;s on your Home screen. You can back up with LogDate Cloud, bring in photos and videos, or start exploring.</string>
     <string name="first_entry_continue_home">Go to Home</string>
     <string name="first_entry_import_photos">Choose photos and videos</string>
     <string name="onboarding_completion_fire_lit">Your fire is lit</string>
-    <string name="onboarding_completion_fire_encouragement">Each day you add an entry, the fire grows. Miss a day and it burns down to embers. Miss two and it goes out.</string>
+    <string
+    name="onboarding_completion_fire_encouragement"
+  >Each day you add an entry, the fire grows. Miss a day and it burns down to embers. Miss two and it goes out.</string>
     <string name="onboarding_completion_happy_logging">Happy logging!</string>
 
     <!-- Error messages -->
-    <string name="onboarding_error_save_birthday">Your birthday couldn&apos;t be saved. Try again.</string>
-    <string name="onboarding_error_save_location">Your location preference couldn&apos;t be saved. Try again.</string>
-    <string name="onboarding_error_save_notifications">Your notification choice couldn&apos;t be saved. Try again.</string>
-    <string name="onboarding_error_save_recommendations">Your suggestions setting couldn&apos;t be saved. Try again.</string>
-    <string name="onboarding_error_save_day_boundaries">Your day boundary preference couldn&apos;t be saved. Try again.</string>
+    <string
+    name="onboarding_error_save_birthday"
+  >Your birthday couldn&apos;t be saved. Try again.</string>
+    <string
+    name="onboarding_error_save_location"
+  >Your location preference couldn&apos;t be saved. Try again.</string>
+    <string
+    name="onboarding_error_save_notifications"
+  >Your notification choice couldn&apos;t be saved. Try again.</string>
+    <string
+    name="onboarding_error_save_recommendations"
+  >Your suggestions setting couldn&apos;t be saved. Try again.</string>
+    <string
+    name="onboarding_error_save_day_boundaries"
+  >Your day boundary preference couldn&apos;t be saved. Try again.</string>
     <string name="onboarding_error_save_completion_title">Setup couldn&apos;t be saved</string>
-    <string name="onboarding_error_save_completion">Everything you entered is still here. Try again to finish setup.</string>
+    <string
+    name="onboarding_error_save_completion"
+  >Everything you entered is still here. Try again to finish setup.</string>
     <string name="action_onboarding_retry">Try again</string>
 
-    <string name="onboarding_free_cloud_explanation">Cloud is free for this release. Before backup begins, you’ll set up a way to recover your journal.</string>
+    <string
+    name="onboarding_free_cloud_explanation"
+  >Cloud is free for this release. Before backup begins, you’ll set up a way to recover your journal.</string>
 
     <!-- Notifications screen -->
     <string name="onboarding_notifications_title">Journal notifications</string>
-    <string name="onboarding_notifications_body_with_recommendations">Get daily journal prompts with LogDate. Every day, you&apos;ll get a reminder to log something in your journal.</string>
-    <string name="onboarding_notifications_body_without_recommendations">Get progress updates when exporting or restoring your data, so you always know when your memories are ready.</string>
+    <string
+    name="onboarding_notifications_body_with_recommendations"
+  >Get daily journal prompts with LogDate. Every day, you&apos;ll get a reminder to log something in your journal.</string>
+    <string
+    name="onboarding_notifications_body_without_recommendations"
+  >Get progress updates when exporting or restoring your data, so you always know when your memories are ready.</string>
     <string name="onboarding_notifications_enable">Enable</string>
     <string name="onboarding_notifications_not_now">Continue without notifications</string>
     <string name="onboarding_notifications_preview_app">LogDate</string>
     <string name="onboarding_notifications_preview_time">now</string>
     <string name="onboarding_notifications_preview_prompt_title">Time to write</string>
-    <string name="onboarding_notifications_preview_prompt_body">What made today different from yesterday?</string>
+    <string
+    name="onboarding_notifications_preview_prompt_body"
+  >What made today different from yesterday?</string>
     <string name="onboarding_notifications_preview_update_title">Your export is ready</string>
-    <string name="onboarding_notifications_preview_update_body">Your memories are packed up and ready to save.</string>
+    <string
+    name="onboarding_notifications_preview_update_body"
+  >Your memories are packed up and ready to save.</string>
 
     <!-- Shared -->
     <string name="onboarding_privacy_title">Private by default</string>
+
+    <!-- Cinematic opening and overview -->
+    <string name="onboarding_opening_title">Meet LogDate.</string>
+    <string name="onboarding_opening_description">A simple way to remember your days.</string>
+    <string name="onboarding_opening_overview_action">See how it works</string>
+    <string name="onboarding_opening_overview_title">Add it today.\nFind it later.</string>
+    <string name="onboarding_opening_overview_description">It all goes on your timeline.</string>
+    <string name="onboarding_opening_continue">Make your first entry</string>
+    <string name="onboarding_opening_back">Back</string>
+    <string
+    name="onboarding_scene_description"
+  >An example day: a photo, a thought, and a voice note become a timeline.</string>
+    <string name="onboarding_scene_month">October</string>
+    <string name="onboarding_scene_weekday">Wednesday</string>
+    <string name="onboarding_scene_thought">Coffee with Maya.\nTwo hours flew by.</string>
 </resources>

@@ -44,7 +44,8 @@ class AndroidGyroSensorProvider(
             sensorManager.registerListener(
                 listener,
                 gyroscope,
-                SensorManager.SENSOR_DELAY_NORMAL,
+                // Motion on screen follows these readings, so they have to arrive about once a frame.
+                SensorManager.SENSOR_DELAY_GAME,
             )
 
             awaitClose {

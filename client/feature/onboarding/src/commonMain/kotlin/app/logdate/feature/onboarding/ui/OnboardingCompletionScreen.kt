@@ -198,8 +198,7 @@ private fun CompletionStreakContent(onContinue: () -> Unit) {
         title = title,
         onBack = null,
         supportingText = encouragement,
-        headerAlignment = Alignment.CenterHorizontally,
-        hero = {
+        illustration = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Campfire(
                     phase = CampfirePhase.BURNING,

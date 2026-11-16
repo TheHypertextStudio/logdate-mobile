@@ -2,6 +2,11 @@
 
 package app.logdate.ui.step
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -46,8 +52,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.adaptive.FoldableBookLayout
@@ -92,21 +101,62 @@ object StepScaffoldDefaults {
     /** Minimum width of each pane when a book-posture foldable splits the screen. */
     val MinBookPaneWidth: Dp = 320.dp
 
-    /** An unfolded window at least this wide has room to put the details beside the header. */
-    val SideBySideMinWidth: Dp = 840.dp
+    /**
+     * A window at least this wide and this tall -- a tablet, an unfolded foldable, a desktop
+     * window -- shows the step in a panel in the middle of the window instead of stretching it.
+     */
+    val PanelMinWindowSize: Dp = 600.dp
+
+    /** The widest the panel grows: the content column and a comfortable margin either side. */
+    val PanelMaxWidth: Dp = 560.dp
 
     /**
-     * A window this wide but shorter than [ShortWindowMaxHeight] -- a phone in landscape -- also
-     * goes side by side, because stacking would leave the body a sliver above the actions.
+     * The tallest the panel grows. Past this, the gap between a step's content and its actions
+     * reads as a hole in the middle of the step.
+     */
+    val PanelMaxHeight: Dp = 840.dp
+
+    /** Space kept between the panel and the edges of the window. */
+    val PanelWindowMargin: Dp = 24.dp
+
+    /**
+     * A window at least [PanelMinWindowSize] wide but shorter than it -- a phone in landscape --
+     * puts the details beside the header, because stacking would leave the body a sliver above
+     * the actions.
      */
     val ShortWindowSideBySideMinWidth: Dp = 600.dp
 
-    val ShortWindowMaxHeight: Dp = 480.dp
+    /**
+     * The least height an illustration is given. A step with more above and below it than fits
+     * scrolls instead of squeezing its picture below this.
+     */
+    val IllustrationMinHeight: Dp = 120.dp
+
+    /**
+     * Room for a [StepPrimaryButton] and a [StepSecondaryButton] beneath it: 56dp, the gap, and a
+     * 48dp touch target. Every step keeps this much, whether or not it has a second action, so the
+     * main action never moves from one step to the next.
+     */
+    val ActionAreaMinHeight: Dp = 112.dp
+
+    /**
+     * Room above the title for a [StepHero]. Every step keeps it, with or without a hero, so the
+     * title is the same distance from the top on every step.
+     */
+    val HeroSlotHeight: Dp = 88.dp
 }
+
+/** The title of a step, for tests that compare where it sits from one step to the next. */
+const val STEP_TITLE_TAG = "step_title"
 
 /**
  * Full-screen layout for one step of a linear flow: a back affordance, an optional hero, a title,
- * optional supporting copy and content, and a set of actions.
+ * optional supporting copy, an optional illustration and content, and a set of actions.
+ *
+ * Two things never move from one step to the next: the title and the main action. The title is
+ * anchored below the back row and a fixed slot for the hero, and the actions are pinned to the
+ * bottom. Everything whose height varies -- supporting copy, an illustration, content -- sits
+ * between them and scrolls when it does not fit.
  *
  * The actions are a **required** parameter rather than an optional pane, and every posture this
  * scaffold can render routes through them. Omitting them is a compile error, not a screen the user
@@ -116,10 +166,14 @@ object StepScaffoldDefaults {
  *
  * Callers supply only content. Posture handling is internal to this file so that no individual
  * screen can get it wrong:
- * - **Compact:** the body is centered in the space above the actions and scrolls when it doesn't
- *   fit; the actions sit below it, never on top of it.
- * - **Wide, book posture, or a phone in landscape:** the header on one side, the content and
- *   actions on the other. A wide window with no content keeps the actions under the header.
+ * - **Phone:** the body starts at the top and scrolls when it doesn't fit; the actions sit below
+ *   it, never on top of it.
+ * - **Tablet, unfolded foldable, desktop window:** the same step, title at the top and actions at
+ *   the bottom, in a panel in the middle of the window. A step is one decision; spreading it
+ *   across a large window, or splitting it into two panes, scatters the title, the content and
+ *   the buttons that belong together.
+ * - **Book posture, or a phone in landscape:** the header on one side, the content and actions on
+ *   the other, because a hinge or a very short window leaves no room to stack them.
  * - **Tabletop posture:** the header above the hinge, the content and actions below it. Half a
  *   folded screen is too short for a header and its content together, and splitting them this way
  *   matches book posture.
@@ -133,11 +187,18 @@ object StepScaffoldDefaults {
  * @param title Headline for the step, in sentence case.
  * @param onBack Invoked by the back affordance, or `null` to omit it (for example on the first step
  *   of a flow the user cannot reverse out of).
- * @param actions Buttons for this step, stacked vertically. The primary action comes first.
+ * @param actions Buttons for this step, stacked vertically. The primary action comes first, and it
+ *   sits in the same place on every step: a step with one action leaves the space under it empty.
  * @param supportingText Optional paragraph shown beneath the title.
  * @param progress Optional position within the flow.
- * @param footer Optional low-emphasis element below the actions, such as a server switcher.
- * @param hero Optional visual shown above the title, such as [StepHeroIcon].
+ * @param footer Optional low-emphasis element just above the actions, such as a server switcher or
+ *   legal links. It sits above them so that having one does not move the actions.
+ * @param hero Optional mark shown above the title, such as [StepHeroIcon]. It is drawn in a slot
+ *   [StepScaffoldDefaults.HeroSlotHeight] tall, so it must be no taller than that.
+ * @param illustration Optional picture shown under the title and supporting text. It is measured
+ *   last and offered the height the step has left once everything else has its room, so it should
+ *   ask for the most it wants and draw itself to fit less: a tall picture then fills a tall step
+ *   and shrinks in a short one, without pushing the content out of view.
  * @param headerAlignment Alignment of the hero, title and supporting text. Content stays full width.
  * @param containerColor Fill behind the whole step. Opaque by default, like a Scaffold, so steps
  *   sliding past each other during a transition never show through one another.
@@ -153,7 +214,8 @@ fun StepScaffold(
     progress: StepProgress? = null,
     footer: (@Composable () -> Unit)? = null,
     hero: (@Composable () -> Unit)? = null,
-    headerAlignment: Alignment.Horizontal = Alignment.Start,
+    illustration: (@Composable () -> Unit)? = null,
+    headerAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     containerColor: Color = MaterialTheme.colorScheme.background,
     contentMaxWidth: Dp = StepScaffoldDefaults.ContentMaxWidth,
     foldableLayoutInfo: FoldableLayoutInfo = rememberFoldableLayoutInfo(),
@@ -168,6 +230,8 @@ fun StepScaffold(
             progress = progress,
             footer = footer,
             hero = hero,
+            illustration = illustration,
+            containerColor = containerColor,
             headerAlignment = headerAlignment,
             contentMaxWidth = contentMaxWidth,
             content = content,
@@ -230,6 +294,8 @@ private class StepSlots(
     val progress: StepProgress?,
     val footer: (@Composable () -> Unit)?,
     val hero: (@Composable () -> Unit)?,
+    val illustration: (@Composable () -> Unit)?,
+    val containerColor: Color,
     val headerAlignment: Alignment.Horizontal,
     val contentMaxWidth: Dp,
     val content: (@Composable ColumnScope.() -> Unit)?,
@@ -237,32 +303,11 @@ private class StepSlots(
 
 @Composable
 private fun StandardStep(slots: StepSlots) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-        val short = maxHeight < StepScaffoldDefaults.ShortWindowMaxHeight
-        val wide =
-            maxWidth >= StepScaffoldDefaults.SideBySideMinWidth ||
-                (maxWidth >= StepScaffoldDefaults.ShortWindowSideBySideMinWidth && short)
-
-        // With nothing but actions to put beside the header, a split would leave a lone button
-        // floating in an empty half of the window. Keep them together under the header instead --
-        // unless the window is too short, where stacking would push the actions off the bottom.
-        if (wide && !short && slots.content == null) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                StepTopBar(onBack = slots.onBack, progress = slots.progress, contentMaxWidth = slots.contentMaxWidth)
-                CenteredScrollColumn(
-                    contentMaxWidth = slots.contentMaxWidth,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                ) {
-                    StepHeader(slots)
-                    Spacer(modifier = Modifier.height(Spacing.xxl))
-                    StepActionColumn(slots)
-                }
-            }
-            return@BoxWithConstraints
-        }
-
-        if (wide) {
-            Row(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val defaults = StepScaffoldDefaults
+        val short = maxHeight < defaults.PanelMinWindowSize
+        if (short && maxWidth >= defaults.ShortWindowSideBySideMinWidth) {
+            Row(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
                 StepHeaderPane(
                     slots = slots,
                     includeContent = false,
@@ -276,28 +321,64 @@ private fun StandardStep(slots: StepSlots) {
             return@BoxWithConstraints
         }
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            StepHeaderPane(
+        if (maxWidth < defaults.PanelMinWindowSize || short) {
+            StackedStep(slots = slots, modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing))
+            return@BoxWithConstraints
+        }
+
+        // A step that paints its own backdrop keeps it: the panel is then only where the step
+        // sits, not a surface of its own.
+        val painted = slots.containerColor != Color.Transparent
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(if (painted) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent)
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(defaults.PanelWindowMargin),
+            contentAlignment = Alignment.Center,
+        ) {
+            StackedStep(
                 slots = slots,
-                includeContent = true,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            )
-            Column(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.md, bottom = Spacing.lg),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                StepActionColumn(slots)
-            }
+                        .widthIn(max = defaults.PanelMaxWidth)
+                        .heightIn(max = defaults.PanelMaxHeight)
+                        .fillMaxSize()
+                        .clip(MaterialTheme.shapes.extraLarge)
+                        .background(slots.containerColor),
+            )
+        }
+    }
+}
+
+/** The step as one column: the header and content from the top, the actions at the bottom. */
+@Composable
+private fun StackedStep(
+    slots: StepSlots,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        StepHeaderPane(
+            slots = slots,
+            includeContent = true,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.md, bottom = Spacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            StepActionColumn(slots)
         }
     }
 }
 
 /**
  * The back row pinned at the top, then the header -- and, where there is no separate detail pane,
- * the content -- centered in the remaining space and scrolling when it doesn't fit.
+ * the content -- starting at the top of the remaining space and scrolling when it doesn't fit.
  */
 @Composable
 private fun StepHeaderPane(
@@ -308,17 +389,52 @@ private fun StepHeaderPane(
     val scrollState = rememberScrollState()
     Column(modifier = modifier) {
         StepTopBar(onBack = slots.onBack, progress = slots.progress, contentMaxWidth = slots.contentMaxWidth)
-        CenteredScrollColumn(
+        TopScrollColumn(
             contentMaxWidth = slots.contentMaxWidth,
             scrollState = scrollState,
             modifier = Modifier.weight(1f).fillMaxWidth(),
-        ) {
+        ) { roomHeight ->
+            StepBody(slots = slots, includeContent = includeContent, roomHeight = roomHeight)
+        }
+    }
+}
+
+/**
+ * The header, the illustration and the content, one under the other.
+ *
+ * The illustration is measured after the other two and offered what is left of [roomHeight], so
+ * it takes up the slack in a tall step and gives way in a short one.
+ */
+@Composable
+private fun StepBody(
+    slots: StepSlots,
+    includeContent: Boolean,
+    roomHeight: Dp,
+) {
+    val content = slots.content.takeIf { includeContent }
+    Layout(
+        modifier = Modifier.fillMaxWidth(),
+        content = {
             StepHeader(slots)
-            val content = slots.content
-            if (includeContent && content != null) {
-                Spacer(modifier = Modifier.height(Spacing.xl))
-                StepContent(content)
-            }
+            Box { slots.illustration?.invoke() }
+            Box { if (content != null) StepContent(content) }
+        },
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity)
+        val gap = Spacing.xl.roundToPx()
+        val header = measurables[0].measure(loose)
+        val details = measurables[2].measure(loose)
+        val detailsBlock = if (details.height > 0) details.height + gap else 0
+        val left = roomHeight.roundToPx() - header.height - detailsBlock - gap
+        val picture =
+            measurables[1].measure(
+                loose.copy(maxHeight = left.coerceAtLeast(StepScaffoldDefaults.IllustrationMinHeight.roundToPx())),
+            )
+        val pictureBlock = if (picture.height > 0) picture.height + gap else 0
+        layout(constraints.maxWidth, header.height + pictureBlock + detailsBlock) {
+            header.placeRelative(0, 0)
+            if (picture.height > 0) picture.placeRelative((constraints.maxWidth - picture.width) / 2, header.height + gap)
+            if (details.height > 0) details.placeRelative(0, header.height + pictureBlock + gap)
         }
     }
 }
@@ -386,7 +502,8 @@ private fun ScrollingStepContent(
 
 /**
  * Back affordance at the leading edge, and progress capped to the content column and centered on it,
- * so on a wide window the bar lines up with the step instead of spanning the whole screen.
+ * so on a wide window the bar lines up with the step instead of spanning the whole screen. The row
+ * keeps its height on a step with neither, so the title does not move up on that step.
  */
 @Composable
 private fun StepTopBar(
@@ -394,8 +511,6 @@ private fun StepTopBar(
     progress: StepProgress?,
     contentMaxWidth: Dp,
 ) {
-    if (onBack == null && progress == null) return
-
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.xs, vertical = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
@@ -439,31 +554,46 @@ private val TopBarSlotSize = 48.dp
 @Composable
 private fun StepHeader(slots: StepSlots) {
     val textAlign = if (slots.headerAlignment == Alignment.CenterHorizontally) TextAlign.Center else TextAlign.Start
+    val motion = MaterialTheme.motionScheme
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = slots.headerAlignment,
     ) {
-        val hero = slots.hero
-        if (hero != null) {
-            hero()
-            Spacer(modifier = Modifier.height(Spacing.xl))
+        Box(
+            modifier = Modifier.fillMaxWidth().height(StepScaffoldDefaults.HeroSlotHeight),
+            contentAlignment = if (slots.headerAlignment == Alignment.CenterHorizontally) Alignment.BottomCenter else Alignment.BottomStart,
+        ) {
+            slots.hero?.invoke()
         }
-        Text(
-            text = slots.title,
-            style = MaterialTheme.typography.headlineLarge.copy(lineBreak = LineBreak.Heading),
-            textAlign = textAlign,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        val supportingText = slots.supportingText
-        if (supportingText != null) {
-            Spacer(modifier = Modifier.height(Spacing.md))
-            Text(
-                text = supportingText,
-                style = MaterialTheme.typography.bodyLarge.copy(lineBreak = LineBreak.Paragraph),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = textAlign,
-                modifier = Modifier.fillMaxWidth(),
-            )
+        Spacer(modifier = Modifier.height(Spacing.xl))
+        // A step that changes its words in place fades from one set to the next, and the space
+        // they need changes with them, so nothing under the header jumps.
+        AnimatedContent(
+            targetState = slots.title to slots.supportingText,
+            transitionSpec = {
+                (fadeIn(motion.defaultEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec()))
+                    .using(SizeTransform(clip = false) { _, _ -> motion.defaultSpatialSpec() })
+            },
+            label = "Step header words",
+        ) { (title, supportingText) ->
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = slots.headerAlignment) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineLarge.copy(lineBreak = LineBreak.Heading),
+                    textAlign = textAlign,
+                    modifier = Modifier.fillMaxWidth().testTag(STEP_TITLE_TAG),
+                )
+                if (supportingText != null) {
+                    Spacer(modifier = Modifier.height(Spacing.md))
+                    Text(
+                        text = supportingText,
+                        style = MaterialTheme.typography.bodyLarge.copy(lineBreak = LineBreak.Paragraph),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = textAlign,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
         }
     }
 }
@@ -482,25 +612,36 @@ private fun StepActionColumn(slots: StepSlots) {
     Column(
         modifier = Modifier.widthIn(max = slots.contentMaxWidth).fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        slots.actions(this)
         slots.footer?.invoke()
+        // The main action is the first thing in an area that always has room for a second one, so
+        // it is the same distance from the bottom on a step with one action, two, or a footer.
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(min = StepScaffoldDefaults.ActionAreaMinHeight),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            slots.actions(this)
+        }
     }
 }
 
 /**
- * A column capped at [contentMaxWidth] that centers its children vertically when they fit and
- * scrolls from the top when they don't.
+ * A column capped at [contentMaxWidth] whose content starts at the top and scrolls when it doesn't
+ * fit. Starting at the top is what keeps the title in one place: a centered column would put it
+ * higher or lower on every step, depending on how much that step holds. The content is told how
+ * much height there is before it has to scroll.
  */
 @Composable
-private fun CenteredScrollColumn(
+private fun TopScrollColumn(
     contentMaxWidth: Dp,
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable (roomHeight: Dp) -> Unit,
 ) {
     BoxWithConstraints(modifier = modifier) {
+        val roomHeight = maxHeight - Spacing.lg
         Column(
             modifier =
                 Modifier
@@ -508,14 +649,12 @@ private fun CenteredScrollColumn(
                     .fadingEdges(scrollState)
                     .verticalScroll(scrollState)
                     .heightIn(min = maxHeight)
-                    .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
+                    .padding(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
-            Column(
-                modifier = Modifier.widthIn(max = contentMaxWidth).fillMaxWidth(),
-                content = content,
-            )
+            Box(modifier = Modifier.widthIn(max = contentMaxWidth).fillMaxWidth()) {
+                content(roomHeight)
+            }
         }
     }
 }

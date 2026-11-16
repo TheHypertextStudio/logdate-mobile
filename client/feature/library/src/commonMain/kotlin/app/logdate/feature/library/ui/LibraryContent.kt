@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.library.ui.components.MediaThumbnailGrid
@@ -29,6 +31,7 @@ import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.workspace.PanelContainment
 import app.logdate.ui.workspace.WorkspacePanel
 import logdate.client.feature.library.generated.resources.Res
+import logdate.client.feature.library.generated.resources.library_empty_add_photos
 import logdate.client.feature.library.generated.resources.library_empty_body
 import logdate.client.feature.library.generated.resources.library_empty_headline
 import logdate.client.feature.library.generated.resources.library_error_body
@@ -39,6 +42,8 @@ import logdate.client.ui.generated.resources.common_try_again
 import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.Uuid
 import logdate.client.ui.generated.resources.Res as UiRes
+
+const val LIBRARY_ADD_PHOTOS_TAG = "library_add_photos"
 
 /**
  * The main content surface for the library.
@@ -53,6 +58,7 @@ fun LibraryPanel(
     onItemClick: (Uuid) -> Unit,
     onRetry: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onAddPhotos: (() -> Unit)? = null,
 ) {
     BoxWithConstraints(modifier = modifier) {
         WorkspacePanel(Modifier.fillMaxSize(), containment = PanelContainment.Collection) {
@@ -80,6 +86,7 @@ fun LibraryPanel(
                             LibraryEmptyState(
                                 headline = stringResource(Res.string.library_empty_headline),
                                 body = stringResource(Res.string.library_empty_body),
+                                onAddPhotos = onAddPhotos,
                             )
                         }
 
@@ -132,6 +139,7 @@ private fun LibraryEmptyState(
     body: String,
     onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    onAddPhotos: (() -> Unit)? = null,
 ) {
     Column(
         modifier =
@@ -172,6 +180,14 @@ private fun LibraryEmptyState(
         if (onRetry != null) {
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onRetry) { Text(stringResource(UiRes.string.common_try_again)) }
+        }
+        // An empty library is where someone looks for photos they already have, so this is where
+        // bringing them in is offered.
+        if (onAddPhotos != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+            FilledTonalButton(onClick = onAddPhotos, modifier = Modifier.testTag(LIBRARY_ADD_PHOTOS_TAG)) {
+                Text(stringResource(Res.string.library_empty_add_photos))
+            }
         }
     }
 }

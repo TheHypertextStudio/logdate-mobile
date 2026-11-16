@@ -19,6 +19,7 @@ import app.logdate.client.domain.notes.drafts.FetchMostRecentDraftUseCase
 import app.logdate.client.domain.notes.drafts.GetAllDraftsUseCase
 import app.logdate.client.domain.notes.drafts.UpdateEntryDraftUseCase
 import app.logdate.client.domain.world.LogLocationUseCase
+import app.logdate.client.repository.journals.JournalNote
 import app.logdate.feature.editor.ui.editor.delegate.ContentLoader
 import app.logdate.feature.editor.ui.editor.delegate.DraftManager
 import app.logdate.feature.editor.ui.editor.fakes.FakeActivityTimelineRepository
@@ -30,6 +31,7 @@ import app.logdate.feature.editor.ui.editor.fakes.FakeJournalRepository
 import app.logdate.feature.editor.ui.editor.fakes.FakeLocationHistoryRepository
 import app.logdate.feature.editor.ui.editor.fakes.FakeLocationTrackingSettingsRepository
 import app.logdate.feature.editor.ui.editor.fakes.FakeMediaManager
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -44,6 +46,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -109,9 +112,75 @@ class PreferredEntryLaunchTest {
             )
         }
 
-    private fun createViewModel(): EntryEditorViewModel {
+    @Test fun `a blank thought is in place the moment it is asked for`() =
+        testScope.runTest {
+            val vm = createViewModel()
+            vm.openBlankThought()
+            val state = vm.mutableEditorState.value
+            val block = state.blocks.single()
+            assertTrue(block is TextBlockUiState)
+            assertEquals(block.id, state.expandedBlockId)
+        }
+
+    @Test fun `a first entry opens for writing before saved drafts have loaded`() =
+        testScope.runTest {
+            val drafts = FakeEntryDraftRepository().apply { draftListGate = CompletableDeferred() }
+            val vm = createViewModel(drafts)
+            vm.resumeFirstEntryDraft()
+            advanceUntilIdle()
+            val state = vm.editorState.value
+            val block = state.blocks.single()
+            assertTrue(block is TextBlockUiState)
+            assertEquals(block.id, state.expandedBlockId)
+            assertFalse(state.isLoading)
+            assertTrue(state.isLoadingDrafts)
+        }
+
+    @Test fun `a first entry replaces its untouched block with a saved draft`() =
+        testScope.runTest {
+            val gate = CompletableDeferred<Unit>()
+            val drafts = FakeEntryDraftRepository().apply { draftListGate = gate }
+            val saved = drafts.createDraft(listOf(textNote("Coffee on the porch")))
+            val vm = createViewModel(drafts)
+            vm.resumeFirstEntryDraft()
+            advanceUntilIdle()
+            gate.complete(Unit)
+            advanceUntilIdle()
+            val state = vm.editorState.value
+            assertEquals(DraftState.Active(saved), state.draftState)
+            assertEquals("Coffee on the porch", (state.blocks.single() as TextBlockUiState).content)
+        }
+
+    @Test fun `a saved draft never replaces words typed while it loaded`() =
+        testScope.runTest {
+            val gate = CompletableDeferred<Unit>()
+            val drafts = FakeEntryDraftRepository().apply { draftListGate = gate }
+            drafts.createDraft(listOf(textNote("Coffee on the porch")))
+            val vm = createViewModel(drafts)
+            vm.resumeFirstEntryDraft()
+            advanceUntilIdle()
+            val opened =
+                vm.editorState.value.blocks
+                    .single() as TextBlockUiState
+            vm.updateBlock(opened.copy(content = "Typed first"))
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(
+                "Typed first",
+                (
+                    vm.editorState.value.blocks
+                        .single() as TextBlockUiState
+                ).content,
+            )
+        }
+
+    private fun textNote(content: String): JournalNote.Text {
+        val now = Clock.System.now()
+        return JournalNote.Text(creationTimestamp = now, lastUpdated = now, content = content)
+    }
+
+    private fun createViewModel(entryDraftRepository: FakeEntryDraftRepository = FakeEntryDraftRepository()): EntryEditorViewModel {
         val journalRepository = FakeJournalRepository()
-        val entryDraftRepository = FakeEntryDraftRepository()
 
         val locationProvider = FakeClientLocationProvider()
         val activityTimelineRepository = FakeActivityTimelineRepository()

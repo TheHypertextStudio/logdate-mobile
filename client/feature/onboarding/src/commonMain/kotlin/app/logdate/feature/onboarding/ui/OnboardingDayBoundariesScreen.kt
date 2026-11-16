@@ -35,8 +35,8 @@ import app.logdate.client.domain.dayboundary.HealthConnectMissingRequirement
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
 import app.logdate.client.domain.dayboundary.reduceHealthConnectGateState
 import app.logdate.client.permissions.rememberHealthConnectPermissionState
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
 import app.logdate.ui.theme.LogDateTheme
 import io.github.aakira.napier.Napier
@@ -241,7 +241,7 @@ fun OnboardingDayBoundariesContent(
         hero = { StepHeroIcon(Icons.Rounded.Bedtime) },
         headerAlignment = Alignment.CenterHorizontally,
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = stringResource(status.actionLabel),
                 onClick = onEnable,
                 busy = isSaving || isRequestInFlight,

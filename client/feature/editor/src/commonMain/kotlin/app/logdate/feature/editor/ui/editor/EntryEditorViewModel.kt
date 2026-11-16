@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.datastore.EntryStartMode
 import app.logdate.client.datastore.LogdatePreferencesDataSource
+import app.logdate.client.domain.editor.EditorData
 import app.logdate.client.domain.editor.ObserveEditorDataUseCase
 import app.logdate.client.domain.editor.SaveEntryUseCase
 import app.logdate.client.media.audio.AudioDurationResolver
@@ -21,9 +22,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -86,6 +87,8 @@ class EntryEditorViewModel(
 
     fun initializePreferredEntryMode(mode: EntryStartMode? = null) = initializePreferredEntryModeImpl(mode)
 
+    fun openBlankThought() = openBlankThoughtImpl()
+
     /**
      * Per-block finalizers bound by each block's own `AudioBlockEditor` composable, keyed by
      * block id.
@@ -132,7 +135,7 @@ class EntryEditorViewModel(
     ) {
         if (markId == detachedMarkContext) return
         initializeMarkContext(markId)
-        val loaded = editorState.first { !it.isLoading }
+        val loaded = editorState.first { !it.isLoading && !it.isLoadingDrafts }
         val current = mutableEditorState.value
         if (current.blocks.isNotEmpty() || current.draftState is DraftState.Active) return
         val draft = loaded.availableDrafts.filter { it.markId == markId }.maxByOrNull { it.updatedAt }
@@ -179,50 +182,49 @@ class EntryEditorViewModel(
         }
     }
 
-    // Combine mutable state with external data into a single editor state
-    val editorState: StateFlow<EditorState> =
-        combine(
-            mutableEditorState,
-            observeEditorData(),
-        ) { currentState, data ->
-            val todayBlockIds =
-                data.todayNotes
-                    .map { it.toDomainBlock().id }
-                    .toSet()
+    // A cold database can take over a second to answer. The editor opens on what it already holds
+    // and fills in journals, drafts and today's notes when they arrive.
+    private val editorData: StateFlow<EditorData?> =
+        observeEditorData().map<EditorData, EditorData?> { it }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-            val blocks = currentState.blocks
-            val readOnlyMap = blocks.associate { it.id to (it.id in todayBlockIds && it.id != currentState.entryEditBase?.targetId) }
+    val editorState: StateFlow<EditorState> = PresentedEditorState(mutableEditorState, editorData, ::presentEditorState)
 
-            val selectedJournalIds =
-                if (
-                    currentState.selectedJournalIds.isEmpty() &&
-                    !currentState.hasJournalSelectionChanges &&
-                    currentState.draftState == DraftState.None &&
-                    data.journals.isNotEmpty()
-                ) {
-                    listOf(data.journals.first().id)
-                } else {
-                    currentState.selectedJournalIds
-                }
+    private fun presentEditorState(
+        currentState: EditorState,
+        data: EditorData?,
+    ): EditorState {
+        if (data == null) return currentState.copy(isLoadingDrafts = true)
+        val todayBlockIds =
+            data.todayNotes
+                .map { it.toDomainBlock().id }
+                .toSet()
 
-            currentState.copy(
-                blocks = blocks,
-                readOnlyBlocks = readOnlyMap,
-                availableJournals = data.journals,
-                selectedJournalIds = selectedJournalIds,
-                availableDrafts = data.allDrafts,
-                todayNotes = data.todayNotes.filter { it.uid != currentState.entryEditBase?.targetId },
-                isLoadingDrafts = false,
-                isLoading = currentState.isLoading,
-            )
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            EditorState(
-                isLoading = true,
-                disableEmptyBlockCreation = false,
-            ),
+        val blocks = currentState.blocks
+        val readOnlyMap = blocks.associate { it.id to (it.id in todayBlockIds && it.id != currentState.entryEditBase?.targetId) }
+
+        val selectedJournalIds =
+            if (
+                currentState.selectedJournalIds.isEmpty() &&
+                !currentState.hasJournalSelectionChanges &&
+                currentState.draftState == DraftState.None &&
+                data.journals.isNotEmpty()
+            ) {
+                listOf(data.journals.first().id)
+            } else {
+                currentState.selectedJournalIds
+            }
+
+        return currentState.copy(
+            blocks = blocks,
+            readOnlyBlocks = readOnlyMap,
+            availableJournals = data.journals,
+            selectedJournalIds = selectedJournalIds,
+            availableDrafts = data.allDrafts,
+            todayNotes = data.todayNotes.filter { it.uid != currentState.entryEditBase?.targetId },
+            isLoadingDrafts = false,
+            isLoading = currentState.isLoading,
         )
+    }
 
     private var hasUserSelectedJournals = false
 

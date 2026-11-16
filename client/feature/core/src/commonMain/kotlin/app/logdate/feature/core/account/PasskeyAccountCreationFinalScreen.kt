@@ -31,10 +31,10 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,9 +56,10 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.common.AlertDialog
-import app.logdate.ui.step.StepBusyButton
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepProgress
 import app.logdate.ui.step.StepScaffold
+import app.logdate.ui.theme.FirstLaunchTheme
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.about_passkeys
@@ -117,47 +118,50 @@ fun PasskeyAccountCreationFinalContent(
 ) {
     var editingName by remember { mutableStateOf(false) }
 
-    StepScaffold(
-        title = stringResource(Res.string.account_confirm_title),
-        supportingText = stringResource(Res.string.account_confirm_subtitle),
-        // Leaving mid-ceremony would abandon a passkey the platform is already creating.
-        onBack = if (isCreatingAccount) null else onBack,
-        modifier = modifier.testTag(CLOUD_ACCOUNT_PASSKEY_ROOT_TAG),
-        progress = if (stepCount > 0) StepProgress(current = stepNumber, total = stepCount) else null,
-        headerAlignment = Alignment.CenterHorizontally,
-        actions = {
-            PasskeyLine(serverDisplayName = serverDisplayName)
-            StepBusyButton(
-                text =
-                    when {
-                        errorMessage != null -> stringResource(UiRes.string.common_try_again)
-                        else -> stringResource(Res.string.account_create_cta)
-                    },
-                onClick = onCreateAccount,
-                busy = isCreatingAccount,
-                enabled = isPasskeySupported,
-                modifier = Modifier.testTag(CLOUD_ACCOUNT_PASSKEY_CREATE_TAG),
+    FirstLaunchTheme {
+        StepScaffold(
+            title = stringResource(Res.string.account_confirm_title),
+            supportingText = stringResource(Res.string.account_confirm_subtitle),
+            // Leaving mid-ceremony would abandon a passkey the platform is already creating.
+            onBack = if (isCreatingAccount) null else onBack,
+            modifier = modifier.testTag(CLOUD_ACCOUNT_PASSKEY_ROOT_TAG),
+            progress = if (stepCount > 0) StepProgress(current = stepNumber, total = stepCount) else null,
+            headerAlignment = Alignment.CenterHorizontally,
+            // Above the actions, so the main action sits where it does on every other step.
+            footer = { PasskeyLine(serverDisplayName = serverDisplayName) },
+            actions = {
+                StepPrimaryButton(
+                    text =
+                        when {
+                            errorMessage != null -> stringResource(UiRes.string.common_try_again)
+                            else -> stringResource(Res.string.account_create_cta)
+                        },
+                    onClick = onCreateAccount,
+                    busy = isCreatingAccount,
+                    enabled = isPasskeySupported,
+                    modifier = Modifier.testTag(CLOUD_ACCOUNT_PASSKEY_CREATE_TAG),
+                )
+            },
+        ) {
+            AccountIdentityCard(
+                displayName = displayName,
+                username = username,
+                onEditName = { editingName = true },
+                onEditUsername = onEditUsername,
+                editEnabled = !isCreatingAccount,
             )
-        },
-    ) {
-        AccountIdentityCard(
-            displayName = displayName,
-            username = username,
-            onEditName = { editingName = true },
-            onEditUsername = onEditUsername,
-            editEnabled = !isCreatingAccount,
-        )
 
-        if (!isPasskeySupported) {
-            NoticeCard(
-                icon = Icons.Default.Warning,
-                title = stringResource(Res.string.passkeys_not_supported),
-                body = stringResource(Res.string.account_passkey_not_supported_description),
-            )
-        }
+            if (!isPasskeySupported) {
+                NoticeCard(
+                    icon = Icons.Default.Warning,
+                    title = stringResource(Res.string.passkeys_not_supported),
+                    body = stringResource(Res.string.account_passkey_not_supported_description),
+                )
+            }
 
-        errorMessage?.let { error ->
-            ErrorBanner(message = error, onDismiss = onClearError)
+            errorMessage?.let { error ->
+                ErrorBanner(message = error, onDismiss = onClearError)
+            }
         }
     }
 
@@ -225,12 +229,12 @@ private fun AccountIdentityCard(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm, Alignment.CenterHorizontally),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                OutlinedButton(onClick = onEditName, enabled = editEnabled) {
+                FilledTonalButton(onClick = onEditName, enabled = editEnabled) {
                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.width(ButtonDefaults.IconSpacing))
                     Text(stringResource(Res.string.account_edit_name))
                 }
-                OutlinedButton(onClick = onEditUsername, enabled = editEnabled) {
+                FilledTonalButton(onClick = onEditUsername, enabled = editEnabled) {
                     Icon(Icons.Default.AlternateEmail, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.width(ButtonDefaults.IconSpacing))
                     Text(stringResource(Res.string.account_edit_username))

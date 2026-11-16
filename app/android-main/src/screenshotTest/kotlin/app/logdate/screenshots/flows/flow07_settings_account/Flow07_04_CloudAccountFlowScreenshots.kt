@@ -2,9 +2,12 @@ package app.logdate.screenshots.flows.flow07_settings_account
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import app.logdate.feature.core.account.CloudAccountHostingContent
+import app.logdate.feature.core.account.CloudAccountPlansContent
 import app.logdate.feature.core.account.CloudAccountSignInContent
 import app.logdate.feature.core.account.CloudAccountWelcomeContent
 import app.logdate.feature.core.account.PasskeyAccountCreationFinalContent
+import app.logdate.feature.core.settings.ui.ServerPreset
 import app.logdate.feature.core.settings.ui.ServerSelectionState
 import app.logdate.screenshots.common.ScreenshotPreviewMatrix
 import app.logdate.screenshots.common.ScreenshotTestData.PHONE
@@ -21,11 +24,8 @@ fun S01_CloudAccountWelcome() {
         CloudAccountWelcomeContent(
             onContinue = {},
             onSignIn = {},
-            onSkip = {},
+            onBack = {},
             serverSelectionState = ServerSelectionState(),
-            onSelectServerPreset = {},
-            onCustomServerUrlChange = {},
-            onShowCustomServerInfo = {},
         )
     }
 }
@@ -38,12 +38,35 @@ fun S02_CloudAccountWelcomeDark() {
         CloudAccountWelcomeContent(
             onContinue = {},
             onSignIn = {},
-            onSkip = {},
+            onBack = {},
             serverSelectionState = ServerSelectionState(),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, device = PHONE)
+@Composable
+fun S02b_CloudAccountChooseServer() {
+    ScreenshotTheme {
+        CloudAccountHostingContent(
+            serverSelectionState =
+                ServerSelectionState(selectedPreset = ServerPreset.CUSTOM, customServerUrl = "https://notes.example.org"),
             onSelectServerPreset = {},
             onCustomServerUrlChange = {},
             onShowCustomServerInfo = {},
+            onDone = {},
+            onBack = {},
         )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, device = PHONE)
+@Composable
+fun S02c_CloudAccountPlans() {
+    ScreenshotTheme {
+        CloudAccountPlansContent(onDone = {}, onBack = {})
     }
 }
 

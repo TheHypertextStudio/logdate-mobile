@@ -13,12 +13,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,15 +28,20 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
+import app.logdate.ui.step.StepSecondaryButton
+import app.logdate.ui.step.StepTextField
+import app.logdate.ui.theme.FirstLaunchTheme
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.at
+import logdate.client.feature.core.generated.resources.cloud_sign_in_own_server
 import logdate.client.feature.core.generated.resources.continue_with_google
 import logdate.client.feature.core.generated.resources.privacy_policy
 import logdate.client.feature.core.generated.resources.server_domain_sign_in_hint
+import logdate.client.feature.core.generated.resources.server_sign_in_hint
 import logdate.client.feature.core.generated.resources.server_sign_in_title
 import logdate.client.feature.core.generated.resources.sign_in_help_action
 import logdate.client.feature.core.generated.resources.sign_in_with_passkey
@@ -109,72 +112,79 @@ fun CloudAccountSignInContent(
     onSignInWithGoogle: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    StepScaffold(
-        title = stringResource(Res.string.server_sign_in_title, serverDisplayName),
-        onBack = onBack,
-        modifier = modifier,
-        supportingText = stringResource(Res.string.server_domain_sign_in_hint, serverHandleDomain),
-        hero = { StepHeroIcon(Icons.Rounded.Cloud) },
-        headerAlignment = Alignment.CenterHorizontally,
-        actions = {
-            StepBusyButton(
-                text =
-                    if (errorMessage != null) {
-                        stringResource(UiRes.string.common_try_again)
-                    } else {
-                        stringResource(Res.string.sign_in_with_passkey)
-                    },
-                onClick = onSignIn,
-                busy = isSigningIn,
-            )
-            if (onSignInWithGoogle != null) {
-                OutlinedButton(
-                    onClick = onSignInWithGoogle,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isSigningIn,
-                ) {
-                    Text(stringResource(Res.string.continue_with_google))
+    // A name that already says where its account lives is not a name on the server shown here.
+    val namesItsServer = username.removePrefix("@").any { it == '@' || it == '.' }
+    FirstLaunchTheme {
+        StepScaffold(
+            title = stringResource(Res.string.server_sign_in_title),
+            onBack = onBack,
+            modifier = modifier,
+            supportingText =
+                if (namesItsServer) {
+                    stringResource(Res.string.server_sign_in_hint)
+                } else {
+                    stringResource(Res.string.server_domain_sign_in_hint, serverDisplayName)
+                },
+            hero = { StepHeroIcon(Icons.Rounded.Cloud) },
+            headerAlignment = Alignment.CenterHorizontally,
+            actions = {
+                StepPrimaryButton(
+                    text =
+                        if (errorMessage != null) {
+                            stringResource(UiRes.string.common_try_again)
+                        } else {
+                            stringResource(Res.string.sign_in_with_passkey)
+                        },
+                    onClick = onSignIn,
+                    busy = isSigningIn,
+                )
+                if (onSignInWithGoogle != null) {
+                    FilledTonalButton(
+                        onClick = onSignInWithGoogle,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSigningIn,
+                    ) {
+                        Text(stringResource(Res.string.continue_with_google))
+                    }
                 }
-            }
-            TextButton(onClick = onAccountRecovery) {
-                Text(stringResource(Res.string.sign_in_help_action))
-            }
-        },
-        footer =
-            if (onPrivacyPolicy != null || onTermsOfService != null) {
-                { LegalLinksRow(onPrivacyPolicy = onPrivacyPolicy, onTermsOfService = onTermsOfService) }
-            } else {
-                null
+                StepSecondaryButton(text = stringResource(Res.string.sign_in_help_action), onClick = onAccountRecovery)
             },
-    ) {
-        errorMessage?.let { message ->
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.large)
-                        .padding(Spacing.lg),
+            footer =
+                if (onPrivacyPolicy != null || onTermsOfService != null) {
+                    { LegalLinksRow(onPrivacyPolicy = onPrivacyPolicy, onTermsOfService = onTermsOfService) }
+                } else {
+                    null
+                },
+        ) {
+            errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.large)
+                            .padding(Spacing.lg),
+                )
+            }
+            StepTextField(
+                value = username,
+                onValueChange = onUsernameChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(Res.string.username)) },
+                placeholder = { Text(stringResource(Res.string.your_username_2)) },
+                prefix = { Text(stringResource(Res.string.at)) },
+                suffix = if (namesItsServer) null else ({ Text("@$serverHandleDomain") }),
+                supportingText = { Text(stringResource(Res.string.cloud_sign_in_own_server)) },
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done,
+                    ),
+                keyboardActions = KeyboardActions(onDone = { if (!isSigningIn) onSignIn() }),
             )
         }
-        OutlinedTextField(
-            value = username,
-            onValueChange = onUsernameChange,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(Res.string.username)) },
-            placeholder = { Text(stringResource(Res.string.your_username_2)) },
-            prefix = { Text(stringResource(Res.string.at)) },
-            suffix = { Text("@$serverHandleDomain") },
-            singleLine = true,
-            keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done,
-                ),
-            keyboardActions = KeyboardActions(onDone = { if (!isSigningIn) onSignIn() }),
-        )
     }
 }
 

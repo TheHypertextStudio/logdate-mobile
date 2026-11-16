@@ -23,8 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.permissions.rememberLocationPermissionState
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
 import app.logdate.ui.theme.LogDateTheme
 import kotlinx.coroutines.launch
@@ -114,7 +114,7 @@ fun OnboardingLocationContent(
         hero = { StepHeroIcon(Icons.Rounded.Explore) },
         headerAlignment = Alignment.CenterHorizontally,
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = stringResource(Res.string.onboarding_location_enable),
                 onClick = onEnable,
                 busy = isSaving,

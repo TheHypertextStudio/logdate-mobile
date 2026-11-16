@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.ui.common.DatePickerDialog
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
 import app.logdate.ui.theme.LogDateTheme
 import kotlinx.coroutines.launch
@@ -103,7 +103,7 @@ fun OnboardingBirthdayContent(
         hero = { StepHeroIcon(Icons.Rounded.Cake) },
         headerAlignment = Alignment.CenterHorizontally,
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = stringResource(Res.string.onboarding_birthday_set),
                 onClick = { showDatePicker = true },
                 busy = isSaving,

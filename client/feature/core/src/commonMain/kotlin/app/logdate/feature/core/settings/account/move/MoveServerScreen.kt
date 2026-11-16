@@ -41,8 +41,8 @@ import app.logdate.shared.config.DefaultLogDateConfigRepository
 import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsSection
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
@@ -189,7 +189,7 @@ private fun ChooseServerStep(
         supportingText = stringResource(Res.string.move_choose_body, state.source.name),
         hero = { StepHeroIcon(Icons.Outlined.Dns) },
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = stringResource(Res.string.move_choose_continue),
                 onClick = onCheckServer,
                 busy = state.isChecking,
@@ -241,7 +241,7 @@ private fun ReviewStep(
         onBack = onBack.takeUnless { state.isWorking },
         hero = { StepHeroIcon(Icons.Outlined.CloudSync) },
         actions = {
-            StepBusyButton(text = stringResource(Res.string.move_review_continue), onClick = onContinue, busy = state.isWorking)
+            StepPrimaryButton(text = stringResource(Res.string.move_review_continue), onClick = onContinue, busy = state.isWorking)
         },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
@@ -304,7 +304,7 @@ private fun CreateAccountStep(
         supportingText = stringResource(Res.string.move_account_body, destination),
         hero = { StepHeroIcon(Icons.Outlined.PersonAdd) },
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 text = stringResource(Res.string.move_account_create),
                 onClick = { onCreate(username) },
                 busy = state.isWorking,
@@ -402,11 +402,11 @@ private fun FinishedStep(
         actions = {
             when (cleanup) {
                 is Cleanup.Blocked -> {
-                    StepBusyButton(stringResource(Res.string.move_done_close), onClick = onKeep, busy = false)
+                    StepPrimaryButton(stringResource(Res.string.move_done_close), onClick = onKeep, busy = false)
                 }
 
                 Cleanup.NeedsSignIn -> {
-                    StepBusyButton(
+                    StepPrimaryButton(
                         stringResource(Res.string.move_done_sign_in_and_delete),
                         onClick = { confirming = onSignInAndDelete },
                         busy = false,
@@ -415,7 +415,7 @@ private fun FinishedStep(
                 }
 
                 else -> {
-                    StepBusyButton(
+                    StepPrimaryButton(
                         text = stringResource(Res.string.move_done_delete, source),
                         onClick = { confirming = onDelete },
                         busy = cleanup == Cleanup.Deleting,

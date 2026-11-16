@@ -18,8 +18,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupState
-import app.logdate.ui.step.StepBusyButton
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -158,7 +158,7 @@ internal fun OnboardingWatchStepContent(
         onBack = onBack,
         hero = { StepHeroIcon(Icons.Rounded.Watch) },
         actions = {
-            StepBusyButton(
+            StepPrimaryButton(
                 onClick = onPrimary,
                 text = stringResource(if (installed) Res.string.watch_setup_continue else Res.string.watch_setup_add),
                 enabled = !busy,

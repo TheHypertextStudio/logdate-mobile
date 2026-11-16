@@ -116,6 +116,11 @@ fun NoteEditorScreen(
         }
     }
 
+    // A first entry opens on a blank thought. Putting it in place while composing means the first
+    // frame already shows it; an effect would draw the empty page first and then replace it.
+    if (firstEntry && entryId == null && resolvedDraftId == null) {
+        remember(viewModel) { viewModel.openBlankThought() }
+    }
     // Load an existing draft or journal entry when provided
     LaunchedEffect(entryId, resolvedDraftId, firstEntry, visitContext) {
         if (resolvedDraftId != null) {

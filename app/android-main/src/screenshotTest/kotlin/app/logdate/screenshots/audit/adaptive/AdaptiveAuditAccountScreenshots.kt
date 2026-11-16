@@ -142,11 +142,8 @@ fun A98_CloudAccountWelcomeBookPosture() {
             CloudAccountWelcomeContent(
                 onContinue = {},
                 onSignIn = {},
-                onSkip = {},
+                onBack = {},
                 serverSelectionState = ServerSelectionState(),
-                onSelectServerPreset = {},
-                onCustomServerUrlChange = {},
-                onShowCustomServerInfo = {},
             )
         }
     }
@@ -161,11 +158,8 @@ fun A99_CloudAccountWelcomeTabletopPosture() {
             CloudAccountWelcomeContent(
                 onContinue = {},
                 onSignIn = {},
-                onSkip = {},
+                onBack = {},
                 serverSelectionState = ServerSelectionState(),
-                onSelectServerPreset = {},
-                onCustomServerUrlChange = {},
-                onShowCustomServerInfo = {},
             )
         }
     }

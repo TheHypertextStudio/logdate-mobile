@@ -1,35 +1,83 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Server selection -->
-    <string name="server">Server</string>
     <string name="server_address">Server Address</string>
-    <string name="server_url">Server URL</string>
-    <string name="server_sign_in_title">Sign in to %1$s</string>
-    <string name="server_domain_sign_in_hint">Use your passkey for accounts on %1$s.</string>
+    <string name="server_sign_in_title">Sign in</string>
+    <string name="server_domain_sign_in_hint">Use your %1$s passkey.</string>
+    <string name="server_sign_in_hint">Use your passkey.</string>
     <string name="logdate_cloud">LogDate Cloud</string>
-    <string name="logdate_cloud_settings_description">Use the hosted LogDate service.</string>
     <string name="keep_using_logdate_cloud">Keep using LogDate Cloud</string>
 
     <!-- Custom server setup -->
     <string name="custom_server">Custom server</string>
-    <string name="custom_server_settings_description">Connect to your own LogDate server.</string>
     <string name="double_click_to_use_a_custom_server">Double-click to use a custom server</string>
-    <string name="use_custom_server">Use custom server</string>
-    <string name="custom_server_info_title">Use a custom server</string>
+    <string name="use_custom_server">Use your own server</string>
+    <!-- LogDate Cloud welcome -->
+    <string name="cloud_welcome_title">Keep it all safe</string>
+    <string name="cloud_welcome_body">Backed up and on all your devices.</string>
+    <string name="cloud_welcome_primary">Create account</string>
+    <string name="cloud_welcome_secondary">I already have an account</string>
+    <string name="cloud_welcome_custom_body">Hosted on %1$s.</string>
+    <string name="cloud_offer_beta_title">Free during the beta</string>
+    <string name="cloud_offer_beta_body">Join now and keep it free after launch.</string>
+    <string
+    name="cloud_offer_subscription_body"
+  >Billed through your app store. Cancel anytime.</string>
+    <string name="cloud_offer_see_plans">See plans</string>
+
+    <!-- LogDate Cloud plans. Launch prices are set in docs/product-info/logdate-cloud-plans.md. -->
+    <string name="cloud_plans_title">Plans</string>
+    <string name="cloud_plans_body">LogDate Cloud is free during the beta.</string>
+    <string name="cloud_plans_done">Done</string>
+    <string name="cloud_plan_base_name">LogDate Cloud</string>
+    <string name="cloud_plan_base_status">Free in beta</string>
+    <string name="cloud_plan_base_perk_backup">Backs up everything</string>
+    <string name="cloud_plan_base_perk_sync">Syncs your devices</string>
+    <string name="cloud_plan_base_perk_free">Stays free if you join now</string>
+    <string name="cloud_plan_base_price">$3.99/month after the beta</string>
+    <string name="cloud_plan_plus_name">LogDate Cloud Plus</string>
+    <string name="cloud_plan_plus_perk_base">Everything in LogDate Cloud</string>
+    <string name="cloud_plan_plus_perk_room">More room for photos and video</string>
+    <string name="cloud_plan_plus_perk_extra">Extra space when you need it</string>
+    <string name="cloud_plan_plus_price">$7.99/month, plus $1 per extra 50 GB</string>
+
+    <!-- Where an account is hosted -->
+    <string name="cloud_hosting_row">Hosted by %1$s</string>
+    <string name="cloud_hosting_title">Hosting</string>
+    <string name="cloud_hosting_body">Most people use LogDate Cloud.</string>
+    <string name="cloud_hosting_logdate_body">Nothing to set up.</string>
+    <string name="cloud_hosting_own_title">Your own server</string>
+    <string name="cloud_hosting_own_body">If you run LogDate yourself.</string>
+    <string name="cloud_hosting_address_label">Server address</string>
+    <string name="cloud_hosting_address_help">For example, journal.example.com</string>
+    <string name="cloud_hosting_learn_more">How this works</string>
+    <string name="cloud_hosting_use_logdate">Use LogDate Cloud</string>
+    <string name="cloud_hosting_use_own">Use this server</string>
+    <string name="cloud_sign_in_own_server">Own server? Type alex@journal.example.com</string>
+    <string name="custom_server_info_title">Hosting it yourself</string>
     <string name="custom_server_info_intro_title">What this is</string>
-    <string name="custom_server_info_intro_body">A custom server is your own LogDate-compatible server. It is still LogDate, just running on a different origin.</string>
+    <string
+    name="custom_server_info_intro_body"
+  >LogDate Cloud hosts accounts by default. You can host yours on a LogDate server you run.</string>
     <string name="custom_server_info_changes_title">What changes</string>
-    <string name="custom_server_info_changes_body">Sign-in, sync, passkeys, handles, and server policies come from the server you choose.</string>
-    <string name="custom_server_info_missing_title">What may be missing</string>
-    <string name="custom_server_info_missing_body">Hosted-only features like billing or managed quotas may not exist on a custom server.</string>
+    <string
+    name="custom_server_info_changes_body"
+  >Sign-in, backup and your username go through your server.</string>
+    <string name="custom_server_info_missing_title">What you give up</string>
+    <string
+    name="custom_server_info_missing_body"
+  >LogDate Cloud plans and storage only work with LogDate Cloud.</string>
     <string name="custom_server_info_what_stays_local_title">What stays on this device</string>
-    <string name="custom_server_info_what_stays_local_body">Your local journals stay on this device, and remote state is stored separately for each server you use.</string>
-    <string name="custom_server_info_url_title">What URL to enter</string>
-    <string name="custom_server_info_url_body">Enter the server root origin only, such as https://journal.example.com. Do not include /api paths.</string>
+    <string
+    name="custom_server_info_what_stays_local_body"
+  >Everything already here. Each server keeps its own backup.</string>
+    <string name="custom_server_info_url_title">What address to enter</string>
+    <string
+    name="custom_server_info_url_body"
+  >Your server&apos;s web address, like journal.example.com.</string>
 
     <!-- Connection test -->
 
     <!-- URL examples -->
     <string name="localhost_8765">localhost:8765</string>
-    <string name="https_your_server_example_com">https://your-server.example.com</string>
 </resources>

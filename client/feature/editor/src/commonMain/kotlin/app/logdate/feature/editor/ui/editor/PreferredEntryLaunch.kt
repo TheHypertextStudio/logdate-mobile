@@ -6,6 +6,20 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.uuid.Uuid
+
+/**
+ * Puts a blank thought in an empty new entry at once. Nothing here waits, so a caller can run it
+ * before the editor draws its first frame and the empty page is never shown.
+ */
+internal fun EntryEditorViewModel.openBlankThoughtImpl() {
+    if (preferredEntryInitialized) return
+    preferredEntryInitialized = true
+    val current = mutableEditorState.value
+    if (activeLoadRequest != null || current.draftState is DraftState.Active || current.entryEditBase != null) return
+    val id = Uuid.random()
+    mutateEditorContent { it.beginEmptyCreationBlock(BlockType.TEXT, id, onlyEmptyEntry = true) }
+}
 
 internal fun EntryEditorViewModel.initializePreferredEntryModeImpl(mode: EntryStartMode?) {
     if (preferredEntryInitialized) return

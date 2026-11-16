@@ -6,6 +6,105 @@
 
 Provides a comprehensive onboarding experience for new users, guiding them through setup, feature introduction, and initial content creation. This module handles the critical first-time user experience and returning user re-engagement.
 
+## First launch
+
+A new person sees three things, in this order, and nothing else stands between them and Home.
+
+1. **The opening** (`OnboardingOpeningScreen.kt`). A date, a photo, a thought and a voice note
+   lie scattered like paper on a table, then line up on a timeline when the person asks how
+   LogDate works. Both states are one screen, so the pieces never leave the composition. The
+   pieces are flat and lit from overhead (`OnboardingObjects.kt`); turning the device shifts the
+   nearer ones further, through `rememberDeviceParallax` in `:client:ui`, and the scene holds
+   still when reduced motion is on or the device has no turn sensor. The screen uses
+   `FirstLaunchTheme` and is laid out by `StepScaffold`, like every other step.
+2. **The first entry.** "Make your first entry" opens the same editor the rest of the app uses,
+   already focused on a blank thought. It has no wording or controls of its own for first launch.
+3. **Home.** Saving that entry is what finishes onboarding. The app records that onboarding is
+   complete and opens Home with the entry on it. If that record cannot be saved, the completion
+   screen opens instead, says so and offers a retry, because opening Home with onboarding
+   unfinished would send the next launch back to the start.
+
+Someone who already has an account chooses "I already have an account" on the opening and goes
+through sign-in and `WelcomeBackScreen.kt` to Home.
+
+Cloud backup is not offered during first launch. It is set up later in Settings.
+
+### One look
+
+First launch, signing in and LogDate Cloud are where LogDate introduces itself, so they share one
+look that the rest of the app does not use. `FirstLaunchTheme` (`:client:theme`) sets it: warm
+cream paper, plum for what you tap, peach for what is being offered, bold headings, and the
+expressive button shapes and motion. Every onboarding route is registered through
+`firstLaunchEntry` in `OnboardingRoute.kt`, and the account flow wraps itself, so no step falls
+back to the device's colors.
+
+Pictures are made of one object, `PaperPiece` (`:client:ui`): a flat piece of paper lit from
+overhead. The opening scene and the LogDate Cloud picture are both built from it.
+
+Buttons are `StepPrimaryButton` and `StepSecondaryButton` (`:client:ui`). A step never builds its
+own.
+
+### LogDate Cloud
+
+LogDate Cloud is the backup and sync service, and it is a subscription. Its welcome step
+(`CloudAccountWelcomeContent`, in `:client:feature:core`) has one job: show what it does, say
+what it costs, and offer the two ways in.
+
+- The picture shows the same day on two devices.
+- The peach card is the offer (`CloudOffer`). During the beta it says LogDate Cloud is free and
+  stays free for people who join now. Once subscriptions start it shows the store's price for the
+  plan; the plan comes from the server's plan catalog and the price from the store, never from a
+  string in the app.
+- "See plans" on that card opens the plans step (`CloudAccountPlansContent`). Each plan is read
+  in the order someone decides by: its name, three short lines on what it gives, and last and
+  quietest its price. The prices and the reasoning behind them are in
+  `docs/product-info/logdate-cloud-plans.md`.
+- The welcome asks one thing: make an account, or use the one you have. It does not ask where
+  the account is hosted.
+- Signing in takes the name a person knows (`CloudAccountSignInContent`, `parseSignInName`). A
+  bare username is an account on LogDate Cloud. A name that says where its account lives,
+  `alex@journal.example.com` or a full handle such as `alex.example.com`, points the app at that
+  server before the passkey is asked for. Nobody picks a server to sign in.
+- Hosting matters only while making an account, and only to someone who runs their own LogDate
+  server. The username step names the host in one quiet line, "Hosted by LogDate Cloud", because
+  the host is part of the name being chosen. That line opens the hosting step
+  (`CloudAccountHostingContent`): LogDate Cloud, or your own server and its address. The words
+  there, "your own server" and "server address", are the ones the people who use it already have.
+
+Each step shows only what its one decision needs. Anything further appears when the person asks
+for it.
+
+The words on these steps are short and plain: a title that says what the step is for, one line
+under it, and buttons named for what they do. They do not describe who makes LogDate or how the
+service works.
+
+### Where the title and the actions go
+
+The title and the main action are in the same place on every onboarding step, so a person tapping
+through never has to find them again. `StepScaffold` in `:client:ui` is what guarantees it, and
+every step, the opening included, is laid out by it:
+
+- The title starts at the same height on every step. Above it are the back row and a slot for a
+  small mark (`StepHeroIcon`); both keep their room on a step that has neither.
+- A picture goes in the `illustration` slot, under the title and its one line, so it never pushes
+  the title down. It is given the height the step has left once everything else has its room: it
+  fills a tall step and shrinks in a short one. A picture should ask for the most it wants and
+  draw itself to fit less.
+- On a tablet, an unfolded foldable or a desktop window, the whole step sits in one panel in the
+  middle of the window, laid out exactly as on a phone. A step is one decision, so it is not
+  stretched across a large window or split into two panes. Two panes are used only where a hinge
+  or a phone held sideways leaves no room to stack.
+- The actions are pinned at the bottom, the same distance from the edge and the same width.
+- The main action comes first, in an area that always has room for a second action under it. A
+  step with only one action leaves that room empty instead of dropping the button lower.
+- A footer, such as legal links or a hint, sits above the actions, so having one does not push
+  them up.
+
+Only what is between the title and the actions changes from step to step. A new step should pass
+its words, picture and buttons to `StepScaffold` and never place them itself;
+`OnboardingOpeningLayoutTest` and `StepScaffoldLayoutTest` fail if the title or the main action
+moves.
+
 ## Architecture
 
 ```
@@ -147,6 +246,7 @@ val onboardingFeatureModule = module {
 ## TODOs
 
 ### Core Features
+
 - [ ] Add interactive feature tutorials
 - [ ] Implement onboarding analytics
 - [ ] Add personalization questionnaire
@@ -154,6 +254,7 @@ val onboardingFeatureModule = module {
 - [ ] Add multi-platform onboarding consistency
 
 ### User Experience
+
 - [ ] Implement progress tracking
 - [ ] Add skip options for power users
 - [ ] Improve animation transitions
@@ -161,6 +262,7 @@ val onboardingFeatureModule = module {
 - [ ] Implement onboarding state persistence
 
 ### Content Creation
+
 - [ ] Add more first entry templates
 - [ ] Improve media capture experience
 - [ ] Add guided journaling prompts
@@ -168,6 +270,7 @@ val onboardingFeatureModule = module {
 - [ ] Add starter journal suggestions
 
 ### Integration
+
 - [ ] Improve integration with notification system
 - [ ] Add third-party service import options
 - [ ] Implement better cloud setup guidance

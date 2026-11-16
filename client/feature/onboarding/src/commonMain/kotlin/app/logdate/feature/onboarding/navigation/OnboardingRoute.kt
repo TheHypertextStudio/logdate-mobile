@@ -2,6 +2,11 @@
 
 package app.logdate.feature.onboarding.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -9,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
@@ -38,6 +44,7 @@ import app.logdate.feature.onboarding.ui.RecoveryPhraseSetupScreen
 import app.logdate.feature.onboarding.ui.RecoveryPhraseViewModel
 import app.logdate.feature.onboarding.ui.WelcomeBackScreen
 import app.logdate.ui.navigation.taggedEntry
+import app.logdate.ui.theme.FirstLaunchTheme
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -61,24 +68,22 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
     onNavigateBack: () -> Unit,
     onWelcomeBack: () -> Unit,
     onOnboardingComplete: () -> Unit,
-    onFirstEntryReady: () -> Unit,
     onCreateFirstEntry: () -> Unit,
     onGoToItem: (route: OnboardingBaseRoute) -> Unit,
+    metadata: Map<String, Any> = emptyMap(),
 ) {
-    taggedEntry<OnboardingRoute> {
+    firstLaunchEntry<OnboardingRoute>(metadata = metadata) {
         // Marker entry — bounce immediately to the real start screen so legacy callers that
         // navigate to `OnboardingRoute` end up on `OnboardingStart`.
         LaunchedEffect(Unit) { onGoToItem(OnboardingStart) }
     }
-    taggedEntry<OnboardingStart> {
-        OnboardingInsets {
-            OnboardingStartScreen(
-                onNext = onCreateFirstEntry,
-                onSignIn = { onGoToItem(SignIn) },
-            )
-        }
+    firstLaunchEntry<OnboardingStart>(metadata = metadata) {
+        OnboardingStartScreen(
+            onNext = onCreateFirstEntry,
+            onSignIn = { onGoToItem(SignIn) },
+        )
     }
-    taggedEntry<PersonalIntro> {
+    firstLaunchEntry<PersonalIntro> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -98,7 +103,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             onBack = onNavigateBack,
         )
     }
-    taggedEntry<AppOverview> {
+    firstLaunchEntry<AppOverview> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -118,7 +123,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<MemoryImport> {
+    firstLaunchEntry<MemoryImport> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -138,7 +143,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<MemorySelection> {
+    firstLaunchEntry<MemorySelection> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -169,7 +174,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             onRefreshMemories = viewModel::refreshMemories,
         )
     }
-    taggedEntry<FirstEntryImportOffer> {
+    firstLaunchEntry<FirstEntryImportOffer>(metadata = metadata) {
         OnboardingInsets {
             FirstEntryImportOfferScreen(
                 onImport = { onGoToItem(FirstEntryMemorySelection) },
@@ -177,13 +182,13 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             )
         }
     }
-    taggedEntry<FirstEntryMemorySelection> {
+    firstLaunchEntry<FirstEntryMemorySelection>(metadata = metadata) {
         FirstEntryMemorySelectionEntry(
             onBack = onNavigateBack,
             onComplete = onOnboardingComplete,
         )
     }
-    taggedEntry<AccountCreation> {
+    firstLaunchEntry<AccountCreation>(metadata = metadata) {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -220,7 +225,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<RecoveryPhrase> {
+    firstLaunchEntry<RecoveryPhrase> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -278,7 +283,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             }
         }
     }
-    taggedEntry<BirthdayIntro> {
+    firstLaunchEntry<BirthdayIntro> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -299,7 +304,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<FeatureRecommendations> {
+    firstLaunchEntry<FeatureRecommendations> {
         val viewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by viewModel.progressSnapshot.collectAsState()
         val entryMode by viewModel.activeEntryMode.collectAsState()
@@ -357,7 +362,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<FeatureDayBoundaries> {
+    firstLaunchEntry<FeatureDayBoundaries> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -381,7 +386,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<FeatureLocationTimeline> {
+    firstLaunchEntry<FeatureLocationTimeline> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -405,7 +410,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<FeatureNotifications> {
+    firstLaunchEntry<FeatureNotifications> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val progressSnapshot by flowViewModel.progressSnapshot.collectAsState()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
@@ -425,7 +430,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             },
         )
     }
-    taggedEntry<FeatureWatch> {
+    firstLaunchEntry<FeatureWatch> {
         val flowViewModel = koinViewModel<OnboardingViewModel>()
         val entryMode by flowViewModel.activeEntryMode.collectAsState()
         OnboardingWatchStep(
@@ -434,7 +439,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             viewModel = flowViewModel,
         )
     }
-    taggedEntry<SignIn> {
+    firstLaunchEntry<SignIn>(metadata = metadata) {
         val cloudAccountViewModel = koinViewModel<CloudAccountOnboardingViewModel>()
 
         LaunchedEffect(Unit) {
@@ -445,25 +450,42 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
         CloudAccountOnboardingScreen(
             viewModel = cloudAccountViewModel,
             onAccountCreated = { onGoToItem(WelcomeBack) },
-            onSkipOnboarding = { onGoToItem(OnboardingStart) },
+            onSkipOnboarding = onNavigateBack,
             onBack = onNavigateBack,
         )
     }
-    taggedEntry<OnboardingComplete> {
+    firstLaunchEntry<OnboardingComplete>(metadata = metadata) {
         OnboardingCompletionScreen(
-            onFinish = onFirstEntryReady,
+            onFinish = onOnboardingComplete,
             finishImmediately = true,
             onRequirementsIncomplete = { step ->
                 onGoToItem(routeForStep(step))
             },
         )
     }
-    taggedEntry<WelcomeBack> {
+    firstLaunchEntry<WelcomeBack>(metadata = metadata) {
         OnboardingInsets {
             WelcomeBackScreen(
                 onFinish = onWelcomeBack,
                 onRequirementsIncomplete = { step -> onGoToItem(routeForStep(step)) },
             )
+        }
+    }
+}
+
+/**
+ * An onboarding step, drawn in LogDate's own look from edge to edge. Every step in this flow is
+ * registered through here, so none of them falls back to the device's colors.
+ */
+private inline fun <reified T : NavKey> EntryProviderScope<NavKey>.firstLaunchEntry(
+    metadata: Map<String, Any> = emptyMap(),
+    noinline content: @Composable (T) -> Unit,
+) {
+    taggedEntry<T>(metadata = metadata) { route ->
+        FirstLaunchTheme {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                content(route)
+            }
         }
     }
 }

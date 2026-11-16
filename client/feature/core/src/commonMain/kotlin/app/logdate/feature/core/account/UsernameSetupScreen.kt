@@ -21,15 +21,19 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.step.StepHeroIcon
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepProgress
 import app.logdate.ui.step.StepScaffold
+import app.logdate.ui.step.StepSecondaryButton
+import app.logdate.ui.step.StepTextField
+import app.logdate.ui.theme.FirstLaunchTheme
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.account_username_choose_screen_title
-import logdate.client.feature.core.generated.resources.account_username_domain_hint
 import logdate.client.feature.core.generated.resources.account_username_network_address_description
 import logdate.client.feature.core.generated.resources.account_username_requirements
 import logdate.client.feature.core.generated.resources.at
+import logdate.client.feature.core.generated.resources.cloud_hosting_row
 import logdate.client.feature.core.generated.resources.error_checking_username
 import logdate.client.feature.core.generated.resources.username
 import logdate.client.feature.core.generated.resources.username_available
@@ -43,6 +47,9 @@ import logdate.client.ui.generated.resources.Res as UiRes
 
 /** Username step of cloud account creation. */
 const val CLOUD_ACCOUNT_USERNAME_ROOT_TAG = "cloud_account_username_root"
+
+/** The quiet line on the username step that names the host and opens the hosting step. */
+const val CLOUD_ACCOUNT_USERNAME_HOSTING_TAG = "cloud_account_username_hosting"
 const val CLOUD_ACCOUNT_USERNAME_FIELD_TAG = "cloud_account_username_field"
 const val CLOUD_ACCOUNT_USERNAME_CONTINUE_TAG = "cloud_account_username_continue"
 
@@ -58,6 +65,8 @@ fun UsernameSetupScreen(
     usernameAvailability: UsernameAvailability = UsernameAvailability.Unknown,
     isValid: Boolean = true,
     modifier: Modifier = Modifier,
+    hostName: String? = null,
+    onChooseHosting: () -> Unit = {},
 ) {
     UsernameSetupContent(
         username = username,
@@ -70,6 +79,8 @@ fun UsernameSetupScreen(
         usernameAvailability = usernameAvailability,
         isValid = isValid,
         modifier = modifier.testTag(CLOUD_ACCOUNT_USERNAME_ROOT_TAG),
+        hostName = hostName,
+        onChooseHosting = onChooseHosting,
     )
 }
 
@@ -86,6 +97,8 @@ private fun UsernameSetupContent(
     usernameAvailability: UsernameAvailability,
     isValid: Boolean,
     modifier: Modifier = Modifier,
+    hostName: String? = null,
+    onChooseHosting: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -94,136 +107,142 @@ private fun UsernameSetupContent(
         focusRequester.requestFocus()
     }
 
-    StepScaffold(
-        title = stringResource(Res.string.account_username_choose_screen_title),
-        onBack = onBack,
-        modifier = modifier,
-        supportingText = stringResource(Res.string.account_username_network_address_description),
-        progress = if (stepCount > 0) StepProgress(current = stepNumber, total = stepCount) else null,
-        hero = { StepHeroIcon(Icons.Rounded.AlternateEmail) },
-        headerAlignment = Alignment.CenterHorizontally,
-        actions = {
-            Button(
-                onClick = onContinue,
-                enabled = isValid && username.isNotBlank() && usernameAvailability == UsernameAvailability.Available,
-                modifier = Modifier.fillMaxWidth().testTag(CLOUD_ACCOUNT_USERNAME_CONTINUE_TAG),
-            ) {
-                Text(stringResource(UiRes.string.common_continue))
-            }
-        },
-    ) {
-        OutlinedTextField(
-            value = username,
-            onValueChange = onUsernameChange,
-            label = { Text(stringResource(Res.string.username)) },
-            placeholder = { Text(stringResource(Res.string.your_username)) },
-            prefix = { Text(stringResource(Res.string.at)) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.AlternateEmail,
-                    contentDescription = null,
+    FirstLaunchTheme {
+        StepScaffold(
+            title = stringResource(Res.string.account_username_choose_screen_title),
+            onBack = onBack,
+            modifier = modifier,
+            supportingText = stringResource(Res.string.account_username_network_address_description),
+            progress = if (stepCount > 0) StepProgress(current = stepNumber, total = stepCount) else null,
+            hero = { StepHeroIcon(Icons.Rounded.AlternateEmail) },
+            headerAlignment = Alignment.CenterHorizontally,
+            // The host is part of the name being chosen, so this is where it is named and where it
+            // can be changed. It is one quiet line: almost everyone leaves it as it is.
+            footer =
+                hostName?.let { host ->
+                    {
+                        StepSecondaryButton(
+                            text = stringResource(Res.string.cloud_hosting_row, host),
+                            onClick = onChooseHosting,
+                            modifier = Modifier.testTag(CLOUD_ACCOUNT_USERNAME_HOSTING_TAG),
+                            quiet = true,
+                        )
+                    }
+                },
+            actions = {
+                StepPrimaryButton(
+                    text = stringResource(UiRes.string.common_continue),
+                    onClick = onContinue,
+                    enabled = isValid && username.isNotBlank() && usernameAvailability == UsernameAvailability.Available,
+                    modifier = Modifier.testTag(CLOUD_ACCOUNT_USERNAME_CONTINUE_TAG),
                 )
             },
-            trailingIcon = {
-                when (usernameAvailability) {
-                    UsernameAvailability.Checking -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    }
+        ) {
+            StepTextField(
+                value = username,
+                onValueChange = onUsernameChange,
+                label = { Text(stringResource(Res.string.username)) },
+                placeholder = { Text(stringResource(Res.string.your_username)) },
+                prefix = { Text(stringResource(Res.string.at)) },
+                suffix = { Text("@$handleDomain") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.AlternateEmail,
+                        contentDescription = null,
+                    )
+                },
+                trailingIcon = {
+                    when (usernameAvailability) {
+                        UsernameAvailability.Checking -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        }
 
-                    UsernameAvailability.Available -> {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = stringResource(Res.string.username_available),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-
-                    UsernameAvailability.Taken -> {
-                        Icon(
-                            imageVector = Icons.Default.Cancel,
-                            contentDescription = stringResource(Res.string.username_taken),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    UsernameAvailability.Error -> {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = stringResource(Res.string.error_checking_username),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    UsernameAvailability.Unknown -> {
-                        null
-                    }
-                }
-            },
-            supportingText = {
-                when (usernameAvailability) {
-                    UsernameAvailability.Available -> {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
+                        UsernameAvailability.Available -> {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
+                                contentDescription = stringResource(Res.string.username_available),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp),
                             )
+                        }
+
+                        UsernameAvailability.Taken -> {
+                            Icon(
+                                imageVector = Icons.Default.Cancel,
+                                contentDescription = stringResource(Res.string.username_taken),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+
+                        UsernameAvailability.Error -> {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = stringResource(Res.string.error_checking_username),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+
+                        UsernameAvailability.Unknown -> {
+                            null
+                        }
+                    }
+                },
+                supportingText = {
+                    when (usernameAvailability) {
+                        UsernameAvailability.Available -> {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Text(
+                                    text = stringResource(Res.string.username_is_available_2),
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+
+                        UsernameAvailability.Taken -> {
                             Text(
-                                text = stringResource(Res.string.username_is_available_2),
-                                color = MaterialTheme.colorScheme.primary,
+                                text = stringResource(Res.string.username_is_already_taken),
+                                color = MaterialTheme.colorScheme.error,
                             )
                         }
-                    }
 
-                    UsernameAvailability.Taken -> {
-                        Text(
-                            text = stringResource(Res.string.username_is_already_taken),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    else -> {
-                        Text(stringResource(Res.string.account_username_domain_hint, handleDomain))
-                    }
-                }
-            },
-            isError = usernameAvailability == UsernameAvailability.Taken,
-            keyboardOptions =
-                KeyboardOptions(
-                    imeAction = ImeAction.Done,
-                    capitalization = KeyboardCapitalization.None,
-                ),
-            keyboardActions =
-                KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        if (isValid && username.isNotBlank() && usernameAvailability == UsernameAvailability.Available) {
-                            onContinue()
+                        else -> {
+                            Text(stringResource(Res.string.account_username_requirements))
                         }
-                    },
-                ),
-            modifier =
-                Modifier
-                    .testTag(CLOUD_ACCOUNT_USERNAME_FIELD_TAG)
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
-        )
-
-        // The constraints that actually change what you can type, in one line.
-        // This screen previously stacked an ActivityPub explainer and a bulleted tips
-        // card beneath the field, which buried the single decision it exists for.
-        Text(
-            text = stringResource(Res.string.account_username_requirements),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+                    }
+                },
+                isError = usernameAvailability == UsernameAvailability.Taken,
+                keyboardOptions =
+                    KeyboardOptions(
+                        imeAction = ImeAction.Done,
+                        capitalization = KeyboardCapitalization.None,
+                    ),
+                keyboardActions =
+                    KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (isValid && username.isNotBlank() && usernameAvailability == UsernameAvailability.Available) {
+                                onContinue()
+                            }
+                        },
+                    ),
+                modifier =
+                    Modifier
+                        .testTag(CLOUD_ACCOUNT_USERNAME_FIELD_TAG)
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+            )
+        }
     }
 }
 
