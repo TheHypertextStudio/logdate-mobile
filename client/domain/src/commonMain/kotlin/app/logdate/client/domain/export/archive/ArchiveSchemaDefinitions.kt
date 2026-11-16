@@ -31,24 +31,30 @@ internal fun defs(vararg names: String): Map<String, JsonElement> = names.associ
 
 private fun shared(name: String): JsonElement =
     when (name) {
-        "uuid" ->
+        "uuid" -> {
             buildJsonObject {
                 put("type", "string")
                 put("pattern", UUID_PATTERN)
             }
-        "instant" ->
+        }
+
+        "instant" -> {
             buildJsonObject {
                 put("type", "string")
                 put("pattern", INSTANT_PATTERN)
             }
-        "path" ->
+        }
+
+        "path" -> {
             buildJsonObject {
                 put("type", "string")
                 put("minLength", 1)
                 put("maxLength", ArchivePath.MAX_PATH_LENGTH)
                 put("pattern", PATH_PATTERN)
             }
-        "location" ->
+        }
+
+        "location" -> {
             obj(
                 listOf("latitude", "longitude"),
                 "latitude" to number(-90.0, 90.0),
@@ -57,8 +63,15 @@ private fun shared(name: String): JsonElement =
                 "accuracyMeters" to number(0.0, null),
                 "placeName" to string(),
             )
-        "mediaRef" -> mediaRef()
-        else -> error("Unknown shared schema $name")
+        }
+
+        "mediaRef" -> {
+            mediaRef()
+        }
+
+        else -> {
+            error("Unknown shared schema $name")
+        }
     }
 
 /** A media reference: an included file has a path and type, an omitted one has a reason. */

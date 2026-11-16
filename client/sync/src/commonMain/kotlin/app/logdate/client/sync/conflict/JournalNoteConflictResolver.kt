@@ -89,10 +89,22 @@ class JournalNoteConflictResolver : ConflictResolver<JournalNote> {
                     ConflictResolution.RequiresManualResolution(local, remote, "Handwriting differs between local and remote versions.")
                 }
             }
-            is JournalNote.Text -> resolveText(local, remote as JournalNote.Text)
-            is JournalNote.Image -> resolveMedia(local, remote as JournalNote.Image, "Image")
-            is JournalNote.Video -> resolveMedia(local, remote as JournalNote.Video, "Video")
-            is JournalNote.Audio -> resolveMedia(local, remote as JournalNote.Audio, "Audio")
+
+            is JournalNote.Text -> {
+                resolveText(local, remote as JournalNote.Text)
+            }
+
+            is JournalNote.Image -> {
+                resolveMedia(local, remote as JournalNote.Image, "Image")
+            }
+
+            is JournalNote.Video -> {
+                resolveMedia(local, remote as JournalNote.Video, "Video")
+            }
+
+            is JournalNote.Audio -> {
+                resolveMedia(local, remote as JournalNote.Audio, "Audio")
+            }
         }
     }
 

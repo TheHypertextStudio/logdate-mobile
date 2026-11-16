@@ -134,8 +134,11 @@ class NativePrivacyRepairCoverageTest {
                 val item = f.payloads.first()
                 item.file.delete()
                 when (kind) {
-                    "directory" -> item.file.mkdir()
-                    "symlink" ->
+                    "directory" -> {
+                        item.file.mkdir()
+                    }
+
+                    "symlink" -> {
                         Files.createSymbolicLink(
                             item.file.toPath(),
                             f.payloads
@@ -143,6 +146,7 @@ class NativePrivacyRepairCoverageTest {
                                 .file
                                 .toPath(),
                         )
+                    }
                 }
                 assertFalse(f.covered(), kind)
             }

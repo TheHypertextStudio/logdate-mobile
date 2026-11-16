@@ -61,26 +61,32 @@ internal fun nativePrivacyPreferenceFingerprint(preferences: Preferences): Strin
                     output.writeByte(1)
                     output.writeBoolean(value)
                 }
+
                 is Int -> {
                     output.writeByte(2)
                     output.writeInt(value)
                 }
+
                 is Long -> {
                     output.writeByte(3)
                     output.writeLong(value)
                 }
+
                 is Float -> {
                     output.writeByte(4)
                     output.writeInt(value.toBits())
                 }
+
                 is Double -> {
                     output.writeByte(5)
                     output.writeLong(value.toBits())
                 }
+
                 is String -> {
                     output.writeByte(6)
                     text(value)
                 }
+
                 is Set<*> -> {
                     output.writeByte(7)
                     check(value.all { it is String })
@@ -88,12 +94,16 @@ internal fun nativePrivacyPreferenceFingerprint(preferences: Preferences): Strin
                     output.writeInt(strings.size)
                     strings.forEach(::text)
                 }
+
                 is ByteArray -> {
                     output.writeByte(8)
                     output.writeInt(value.size)
                     output.write(value)
                 }
-                else -> error("Unsupported native preference type")
+
+                else -> {
+                    error("Unsupported native preference type")
+                }
             }
         }
     }

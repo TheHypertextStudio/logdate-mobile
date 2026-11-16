@@ -6,33 +6,29 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Implementation of BatteryInfoProvider for desktop platforms.
- * 
+ *
  * Desktop platforms typically don't provide easy access to battery information
  * through a standardized API. This implementation provides reasonable defaults
  * and could be extended in the future to use platform-specific libraries for
  * more accurate battery information.
  */
 class DesktopBatteryInfoProvider : BatteryInfoProvider {
-    
     // Default to a reasonable battery state for desktop
-    private val _batteryState = MutableStateFlow(
-        BatteryState(
-            level = 100,
-            isCharging = true,
-            isPowerSaveMode = false
+    private val batteryState =
+        MutableStateFlow(
+            BatteryState(
+                level = 100,
+                isCharging = true,
+                isPowerSaveMode = false,
+            ),
         )
-    )
-    
-    override val currentBatteryState: Flow<BatteryState> = _batteryState.asStateFlow()
-    
-    override suspend fun getCurrentBatteryState(): BatteryState {
-        return _batteryState.value
-    }
-    
-    override suspend fun isPowerSaveMode(): Boolean {
-        return false
-    }
-    
+
+    override val currentBatteryState: Flow<BatteryState> = batteryState.asStateFlow()
+
+    override suspend fun getCurrentBatteryState(): BatteryState = batteryState.value
+
+    override suspend fun isPowerSaveMode(): Boolean = false
+
     override fun cleanup() {
         // No-op for desktop
     }

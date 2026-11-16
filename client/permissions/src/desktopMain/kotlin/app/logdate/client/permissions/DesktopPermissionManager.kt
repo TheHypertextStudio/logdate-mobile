@@ -6,7 +6,8 @@ package app.logdate.client.permissions
  * so this extends the ConfigurablePermissionManager with alwaysGrantPermissions=true
  * to ensure all permissions are always granted.
  */
-class DesktopPermissionManager : ConfigurablePermissionManager(
-    alwaysGrantPermissions = true,
-    permissionOverrides = emptyMap()
-)
+class DesktopPermissionManager :
+    ConfigurablePermissionManager(
+        alwaysGrantPermissions = true,
+        permissionOverrides = emptyMap(),
+    )

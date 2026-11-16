@@ -46,7 +46,9 @@ private fun <K, V> matchingSources(
     current: Map<K, V>,
     previous: Map<K, V>,
     provisional: Boolean,
-): Boolean = current.isNotEmpty() && (current == previous || provisional && current.all { (id, revision) -> previous[id] == revision })
+): Boolean =
+    current.isNotEmpty() &&
+        (current == previous || (provisional && current.all { (id, revision) -> previous[id] == revision }))
 
 private fun List<JournalNote>.summaryInputs() =
     associate { note ->

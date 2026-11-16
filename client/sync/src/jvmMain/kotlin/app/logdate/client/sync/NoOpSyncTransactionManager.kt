@@ -6,7 +6,5 @@ package app.logdate.client.sync
  * This is adequate for platforms like Desktop where SQLite transactions are handled differently.
  */
 class NoOpSyncTransactionManager : SyncTransactionManager {
-    override suspend fun <T> withTransaction(block: suspend () -> T): T {
-        return block()
-    }
+    override suspend fun <T> withTransaction(block: suspend () -> T): T = block()
 }
