@@ -101,6 +101,7 @@ private fun googleAuthErrorMessage(error: GoogleAuthError): String =
 fun CloudAccountOnboardingScreen(
     viewModel: CloudAccountOnboardingViewModel,
     onAccountCreated: () -> Unit,
+    onSignedIn: () -> Unit = onAccountCreated,
     onSkipOnboarding: () -> Unit,
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -162,15 +163,16 @@ fun CloudAccountOnboardingScreen(
     }
 
     // Handle completion and exit
-    LaunchedEffect(uiState.isAccountCreated, uiState.isSignedIn, uiState.isSkipped, uiState.isExitRequested) {
-        if (uiState.isAccountCreated || uiState.isSignedIn) {
-            onAccountCreated()
-        } else if (uiState.isSkipped) {
-            onSkipOnboarding()
-        } else if (uiState.isExitRequested) {
-            onBack()
-        }
-    }
+    CloudAccountCompletionEffect(
+        isSignedIn = uiState.isSignedIn,
+        isAccountCreated = uiState.isAccountCreated,
+        isSkipped = uiState.isSkipped,
+        isExitRequested = uiState.isExitRequested,
+        onSignedIn = onSignedIn,
+        onAccountCreated = onAccountCreated,
+        onSkipped = onSkipOnboarding,
+        onBack = onBack,
+    )
 
     // LogDateTheme supplies the background and content colour; this only has to keep the step
     // indicator and progress bar clear of the status bar, which none of these steps did.
@@ -283,6 +285,30 @@ fun CloudAccountOnboardingScreen(
                     modifier = modifier,
                 )
             }
+        }
+    }
+}
+
+@Composable
+internal fun CloudAccountCompletionEffect(
+    isSignedIn: Boolean,
+    isAccountCreated: Boolean,
+    isSkipped: Boolean,
+    isExitRequested: Boolean,
+    onSignedIn: () -> Unit,
+    onAccountCreated: () -> Unit,
+    onSkipped: () -> Unit,
+    onBack: () -> Unit,
+) {
+    LaunchedEffect(isAccountCreated, isSignedIn, isSkipped, isExitRequested) {
+        if (isSignedIn) {
+            onSignedIn()
+        } else if (isAccountCreated) {
+            onAccountCreated()
+        } else if (isSkipped) {
+            onSkipped()
+        } else if (isExitRequested) {
+            onBack()
         }
     }
 }

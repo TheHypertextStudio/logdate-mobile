@@ -27,6 +27,7 @@ import app.logdate.navigation.LogDateNavDisplay
 internal fun MainActivityContent(
     state: GlobalAppUiLoadedState,
     pendingNavKey: NavKey?,
+    hasPendingRetainedJournalRecovery: Boolean = false,
     onPendingNavKeyConsumed: () -> Unit,
     onCurrentNavKeyChanged: (NavKey?) -> Unit,
     onShowUnlockPrompt: () -> Unit,
@@ -44,6 +45,7 @@ internal fun MainActivityContent(
             onAutomaticUnlockPrompt = onAutomaticUnlockPrompt,
             onCloudSignIn = onCloudSignIn,
             pendingNavKey = pendingNavKey,
+            hasPendingRetainedJournalRecovery = hasPendingRetainedJournalRecovery,
             onPendingNavKeyConsumed = onPendingNavKeyConsumed,
             onCurrentNavKeyChanged = onCurrentNavKeyChanged,
             onShareSearchResult = onShareSearchResult,

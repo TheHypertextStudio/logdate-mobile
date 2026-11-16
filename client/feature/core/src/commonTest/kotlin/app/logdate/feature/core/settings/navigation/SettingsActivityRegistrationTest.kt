@@ -12,6 +12,23 @@ import kotlin.test.assertTrue
 
 class SettingsActivityRegistrationTest {
     @Test
+    fun dataSettingsRoutesCloudRecoveryActionsToTheSettingsNavigator() {
+        var accountCreationVisits = 0
+        var signInVisits = 0
+        val callbacks =
+            dataSettingsNavigationCallbacks(
+                onNavigateToCloudAccountCreation = { accountCreationVisits++ },
+                onNavigateToSignIn = { signInVisits++ },
+            )
+
+        callbacks.onNavigateToCloudAccountCreation()
+        callbacks.onNavigateToSignIn()
+
+        assertEquals(1, accountCreationVisits)
+        assertEquals(1, signInVisits)
+    }
+
+    @Test
     fun nestedAccountPagesKeepTheirCategoryAndExistingStateOwner() {
         val entries =
             entryProvider<NavKey> {

@@ -59,8 +59,8 @@ usable copy of a required key is lost, the encrypted content cannot be declared 
 
 ## Retained journals and a working recovery journal
 
-When no surviving key opens the existing SQLCipher database, an explicit Recover from backup
-operation retains the original database, SQLite sidecars, preferences, recovery material, and
+When no surviving key opens the existing SQLCipher database, the explicit Open recovery
+options action retains the original database, SQLite sidecars, preferences, recovery material, and
 managed originals before opening a separate working journal. Retention must be durable and
 verified before detaching canonical database files. Interrupted preparation resumes through the
 same state machine. A readable working journal does not mean the original journal was recovered.

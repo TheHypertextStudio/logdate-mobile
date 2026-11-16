@@ -62,6 +62,19 @@ fun NavBackStack<NavKey>.navigateToSettings() {
     add(SettingsRoute())
 }
 
+internal data class DataSettingsNavigationCallbacks(
+    val onNavigateToCloudAccountCreation: () -> Unit,
+    val onNavigateToSignIn: () -> Unit,
+)
+
+internal fun dataSettingsNavigationCallbacks(
+    onNavigateToCloudAccountCreation: () -> Unit,
+    onNavigateToSignIn: () -> Unit,
+) = DataSettingsNavigationCallbacks(
+    onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
+    onNavigateToSignIn = onNavigateToSignIn,
+)
+
 /**
  * Registers every entry under the Settings umbrella — overview, sub-pages, devices, location
  * sub-screens, people directory + inbox + person detail, events / calendar-sync / rewind
@@ -168,8 +181,15 @@ fun EntryProviderScope<NavKey>.settingsEntries(
         )
     }
     taggedEntry<DataSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.Backup, categories)) {
+        val cloudCallbacks =
+            dataSettingsNavigationCallbacks(
+                onNavigateToCloudAccountCreation = onNavigateToCloudAccountCreation,
+                onNavigateToSignIn = onNavigateToSignIn,
+            )
         DataSettingsScreen(
             onBack = onBack,
+            onNavigateToCloudAccountCreation = cloudCallbacks.onNavigateToCloudAccountCreation,
+            onNavigateToSignIn = cloudCallbacks.onNavigateToSignIn,
             onNavigateToRecoveryPhrase = { onNavigateTo(RecoveryPhraseEntrySettingsRoute) },
         )
     }

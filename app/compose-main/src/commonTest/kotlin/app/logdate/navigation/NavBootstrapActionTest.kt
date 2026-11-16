@@ -2,6 +2,7 @@ package app.logdate.navigation
 
 import app.logdate.feature.core.main.HomeRoute
 import app.logdate.feature.core.navigation.BaseRoute
+import app.logdate.feature.core.settings.navigation.DataSettingsRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
 import app.logdate.feature.editor.navigation.EntryEditorRoute
 import app.logdate.feature.onboarding.navigation.FirstEntryImportOffer
@@ -22,6 +23,32 @@ class NavBootstrapActionTest {
                 backStack = listOf(BaseRoute),
                 isOnboarded = true,
                 requiresUnlock = false,
+            ),
+        )
+    }
+
+    @Test
+    fun `cold start places recovery options above home without an intermediate home route`() {
+        assertEquals(
+            NavBootstrapAction.ResetTo(HomeRoute, pendingKey = DataSettingsRoute),
+            resolveNavBootstrapAction(
+                backStack = listOf(BaseRoute),
+                isOnboarded = true,
+                requiresUnlock = false,
+                pendingNavKey = DataSettingsRoute,
+            ),
+        )
+    }
+
+    @Test
+    fun `a locked cold start keeps the recovery route pending until unlock`() {
+        assertEquals(
+            NavBootstrapAction.None,
+            resolveNavBootstrapAction(
+                backStack = listOf(BaseRoute),
+                isOnboarded = true,
+                requiresUnlock = true,
+                pendingNavKey = DataSettingsRoute,
             ),
         )
     }

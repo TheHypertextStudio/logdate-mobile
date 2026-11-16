@@ -81,7 +81,7 @@ internal class StartupRecoveryTalkBackScenario(
                 val startup = applicationStartupState()
                 await { startup.value?.javaClass?.simpleName == "Failed" && appWindowHas("Finish restoring your journal") }
                 assertTrue(appWindowHas("Try again"), "A late key must be retryable without moving the journal")
-                assertTrue(appWindowHas("Recover from backup"), "A failed transfer must retain its backup recovery path")
+                assertTrue(appWindowHas("Open recovery options"), "A failed transfer must retain its isolated recovery path")
                 scenario.onActivity { assertEquals(fontScale, it.resources.configuration.fontScale) }
                 assertLockedContentHidden()
                 val initialFailure = startup.value

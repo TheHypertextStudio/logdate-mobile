@@ -62,6 +62,7 @@ fun HomeScreen(
     onOpenSearch: () -> Unit = {},
     onOpenDraft: (draftId: String) -> Unit = {},
     onImportBackup: () -> Unit = {},
+    onSignInToRestoreAccount: () -> Unit = {},
     onOpenMediaDetail: (Uuid) -> Unit = {},
     onOpenSyncSettings: () -> Unit = {},
     onEnterRecoveryPhrase: () -> Unit = {},
@@ -70,6 +71,8 @@ fun HomeScreen(
     onOpenDay: (LocalDate) -> Unit = {},
     onOpenTextNote: (Uuid) -> Unit = {},
     onOpenStreak: () -> Unit = {},
+    hasRetainedJournalRecovery: Boolean = false,
+    onOpenRecoveryOptions: () -> Unit = {},
     onWriteMark: (Uuid) -> Unit = {},
     onRecordVoice: () -> Unit = onNewEntry,
     locationContent: @Composable (Modifier) -> Unit = {},
@@ -175,6 +178,9 @@ fun HomeScreen(
         },
         status = {
             Column(Modifier.padding(horizontal = app.logdate.ui.theme.Spacing.lg)) {
+                if (hasRetainedJournalRecovery) {
+                    RetainedJournalRecoveryNotice(onOpenRecoveryOptions)
+                }
                 WatchRecordingStatus()
                 WatchReadyOnPhoneCard(onClick = onOpenWatch)
             }
@@ -215,6 +221,7 @@ fun HomeScreen(
                                     onUseSuggestion = viewModel::useActivitySuggestion,
                                     onRecordVoice = onRecordVoice,
                                     onImportBackup = onImportBackup,
+                                    onSignInToRestoreAccount = onSignInToRestoreAccount,
                                     timelineSuggestion = uiState.timelineSuggestion,
                                     birthday = birthday,
                                 )

@@ -188,11 +188,11 @@ class RetainedJournalMergeRuntimeTest {
                 val device = UiDevice.getInstance(instrumentation)
                 val evidence = File(fixtureDirectory, "retained-merge-evidence").apply { mkdirs() }
                 assertTrue(
-                    device.wait(Until.hasObject(By.text(RECOVER_FROM_BACKUP)), UI_TIMEOUT_MS),
+                    device.wait(Until.hasObject(By.text(OPEN_RECOVERY_OPTIONS)), UI_TIMEOUT_MS),
                     "Missing-key startup must offer the real recovery action",
                 )
                 RetainedJournalMergeFixtureSupport.captureScreenshot(instrumentation, evidence, "missing-key.png")
-                device.findObject(By.text(RECOVER_FROM_BACKUP)).click()
+                device.findObject(By.text(OPEN_RECOVERY_OPTIONS)).click()
                 awaitStartupReady()
                 assertRepositoryScope(state)
 
@@ -367,7 +367,7 @@ class RetainedJournalMergeRuntimeTest {
                     File(evidence, "acceptance.json"),
                     """
                     {
-                      "recoveryUiAction": "Recover from backup",
+                      "recoveryUiAction": "Open recovery options",
                       "recoveryUiPreparedSource": true,
                       "hostForceStoppedBetweenPhases": true,
                       "productionJobService": true,
@@ -462,7 +462,7 @@ class RetainedJournalMergeRuntimeTest {
         const val ARG_STAGE = "retainedJournalMergeStage"
         const val DATABASE_NAME = "logdate"
         const val DATABASE_KEY_NAME = "db_encryption_key"
-        const val RECOVER_FROM_BACKUP = "Recover from backup"
+        const val OPEN_RECOVERY_OPTIONS = "Open recovery options"
         const val STARTUP_TIMEOUT_MS = 60_000L
         const val RECONCILIATION_TIMEOUT_MS = 120_000L
         const val RETAINED_JOURNAL_JOB_ID = 0x4e4a5235

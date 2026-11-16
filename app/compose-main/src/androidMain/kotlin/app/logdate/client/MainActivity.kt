@@ -177,21 +177,20 @@ class MainActivity : FragmentActivity() {
 
         observeAppAndDatabaseState()
         enableHandoffIfSupported()
+        val hasPendingRetainedJournalRecovery =
+            retainedJournalRecoveryDestination(
+                hasRetainedJournal = retainedJournalWorkspace(this).current() != null,
+                pendingContentRecoveryId = postRestoreDetector.pendingContentRecoveryId(),
+            ) != null
         // A recreated activity receives the launch intent again; resolving it a second time
         // would overwrite the Navigation 3 back stack restored across rotation.
         if (savedInstanceState == null) {
             val recordingWindowForwarded = showRecordingWindowIfAsked(intent)
             pendingNavKey =
-                if (recordingWindowForwarded) {
-                    null
-                } else {
-                    if (retainedJournalWorkspace(this).current() != null &&
-                        postRestoreDetector.pendingContentRecoveryId() != null
-                    ) {
-                        DataSettingsRoute
-                    } else {
-                        resolveMainActivityNavKey(intent) ?: activeRecordingDestination()
-                    }
+                when {
+                    recordingWindowForwarded -> null
+                    hasPendingRetainedJournalRecovery -> DataSettingsRoute
+                    else -> resolveMainActivityNavKey(intent) ?: activeRecordingDestination()
                 }
         }
 
@@ -205,6 +204,7 @@ class MainActivity : FragmentActivity() {
                     MainActivityContent(
                         state = state,
                         pendingNavKey = pendingNavKey,
+                        hasPendingRetainedJournalRecovery = hasPendingRetainedJournalRecovery,
                         onPendingNavKeyConsumed = { pendingNavKey = null },
                         onCurrentNavKeyChanged = { currentNavKey = it },
                         onShowUnlockPrompt = viewModel::showNativeUnlockPrompt,
@@ -390,5 +390,15 @@ class MainActivity : FragmentActivity() {
         data += appKeyboardShortcutGroups(listOf(AppShortcutScope.App, AppShortcutScope.Home, AppShortcutScope.Editor))
     }
 }
+
+internal fun retainedJournalRecoveryDestination(
+    hasRetainedJournal: Boolean,
+    pendingContentRecoveryId: String?,
+): NavKey? =
+    if (hasRetainedJournal && pendingContentRecoveryId != null) {
+        DataSettingsRoute
+    } else {
+        null
+    }
 
 internal const val APP_LAUNCH_TAG = "LogDateAppLaunch"

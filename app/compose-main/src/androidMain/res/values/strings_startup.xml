@@ -1,17 +1,41 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
-    <string name="application_startup_failed_title">Couldn’t open LogDate</string>
-    <string name="application_startup_failed_message">LogDate couldn’t open your saved journal. Try opening it again.</string>
-    <string name="native_restore_startup_incomplete_message">Android’s transfer did not finish. LogDate has kept the received files untouched and has not opened the journal. Finish device setup, then try again.</string>
-    <string name="native_media_quarantine_pending_message">LogDate kept your restored journal. It couldn’t finish checking transferred media, so it hasn’t opened the journal. Tap Try again to safely continue recovery.</string>
-    <string name="native_media_quarantine_storage_message">LogDate needs more free space to finish opening your journal. Free some space, then tap Try again.</string>
+    <string
+    name="application_startup_failed_title"
+  >Couldn’t open LogDate</string>
+    <string
+    name="application_startup_failed_message"
+  >LogDate couldn’t open your saved journal. Try opening it again.</string>
+    <string
+    name="native_restore_startup_incomplete_message"
+  >Android’s transfer did not finish. LogDate has kept the received files untouched and has not opened the journal. Finish device setup, then try again.</string>
+    <string
+    name="native_media_quarantine_pending_message"
+  >LogDate kept your restored journal. It couldn’t finish checking transferred media, so it hasn’t opened the journal. Tap Try again to safely continue recovery.</string>
+    <string
+    name="native_media_quarantine_storage_message"
+  >LogDate needs more free space to finish opening your journal. Free some space, then tap Try again.</string>
     <string name="application_startup_retry">Try again</string>
-    <string name="database_update_required_title">Your journal needs an update</string>
-    <string name="database_update_required_message">This journal was saved by a newer version of LogDate. Update LogDate on this device to open it. Your journal and encryption key have been kept safe.</string>
+    <string
+    name="database_update_required_title"
+  >Your journal needs an update</string>
+    <string
+    name="database_update_required_message"
+  >This journal was saved by a newer version of LogDate. Update LogDate on this device to open it. Your journal and encryption key have been kept safe.</string>
     <string name="database_update_required_action">Update LogDate</string>
-    <string name="database_update_link_copied">Update link copied. Open it in a browser to update LogDate.</string>
-    <string name="database_key_recovery_title">Finish restoring your journal</string>
-    <string name="database_key_recovery_message">Your journal is protected, but LogDate can’t open it yet. If Android transfer just finished, try again. You can also recover from LogDate Cloud or an archive.</string>
-    <string name="native_privacy_metadata_recovery_message">Your journal is here, but its privacy settings weren’t restored. LogDate has kept it protected. Update LogDate on your original device, then repeat the Android transfer or restore a complete device backup. When it finishes, tap Try again.</string>
-    <string name="database_key_recovery_backup_action">Recover from backup</string>
+    <string
+    name="database_update_link_copied"
+  >Update link copied. Open it in a browser to update LogDate.</string>
+    <string
+    name="database_key_recovery_title"
+  >Finish restoring your journal</string>
+    <string
+    name="database_key_recovery_message"
+  >Your journal is protected, but LogDate can’t open it yet. If Android transfer just finished, try again. To sign in or use an archive, LogDate first saves this encrypted journal in a protected recovery copy and opens separate recovery options.</string>
+    <string
+    name="native_privacy_metadata_recovery_message"
+  >Your journal is here, but its privacy settings weren’t restored. LogDate has kept it protected. Update LogDate on your original device, then repeat the Android transfer or restore a complete device backup. When it finishes, tap Try again.</string>
+    <string
+    name="database_key_recovery_open_options_action"
+  >Open recovery options</string>
 </resources>
