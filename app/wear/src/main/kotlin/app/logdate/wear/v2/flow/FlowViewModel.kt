@@ -12,10 +12,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
+import kotlin.time.Instant
 
 /** What Home's moment list shows. */
 sealed interface FlowUiState {
@@ -45,15 +46,18 @@ class FlowViewModel(
             .observe()
             .flatMapLatest<TodayWindow, FlowUiState> { today ->
                 val recentStart = LibraryWindow.recentStart(today)
-                notesRepository.allNotesObserved.map { notes ->
-                    val library =
-                        notes
-                            .filter { it.creationTimestamp < today.end }
-                            .filter(LibraryWindow::isLibraryMoment)
+                combine(
+                    notesRepository.observeNotesInRange(recentStart, today.end),
+                    notesRepository.observeNotesInRange(Instant.DISTANT_PAST, recentStart),
+                ) { recent, earlier ->
                     FlowUiState.Ready(
                         timeZone = today.timeZone,
-                        moments = library.filter { it.creationTimestamp >= recentStart }.sortedByDescending(JournalNote::creationTimestamp),
-                        earlierCount = library.count { it.creationTimestamp < recentStart },
+                        moments =
+                            recent
+                                .filter { it.creationTimestamp >= recentStart && it.creationTimestamp < today.end }
+                                .filter(LibraryWindow::isLibraryMoment)
+                                .sortedByDescending(JournalNote::creationTimestamp),
+                        earlierCount = earlier.count { it.creationTimestamp < recentStart && LibraryWindow.isLibraryMoment(it) },
                     )
                 }
             }.catch { error ->

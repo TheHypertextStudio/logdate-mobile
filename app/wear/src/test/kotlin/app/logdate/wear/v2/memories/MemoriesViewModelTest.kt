@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -76,8 +77,8 @@ class MemoriesViewModelTest {
         runTest {
             val notes = MutableStateFlow<List<JournalNote>>(listOf(note))
             val repository = mockk<app.logdate.client.repository.journals.JournalNotesRepository>()
-            every { repository.allNotesObserved } returns notes
-            coEvery { repository.getNotesForDay(any()) } answers { notes.value }
+            every { repository.observeEntryTimestamps() } returns notes.map { current -> current.map(JournalNote::creationTimestamp) }
+            every { repository.observeNotesForDay(any()) } returns notes
             val lastYear = LocalDate(2025, 10, 10)
             val liveFinder =
                 OnThisDayFinder(recall = {

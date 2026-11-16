@@ -57,7 +57,7 @@ class ArchiveViewModel(
             .flatMapLatest<TodayWindow, ArchiveUiState> { today ->
                 val start = Instant.DISTANT_PAST
                 val end = LibraryWindow.recentStart(today)
-                combine(notesRepository.allNotesObserved, windowChanges.onStart { emit(Unit) }) { notes, _ ->
+                combine(notesRepository.observeNotesInRange(start, end), windowChanges.onStart { emit(Unit) }) { notes, _ ->
                     val earlier = notes.filter { it.creationTimestamp >= start && it.creationTimestamp < end }
                     val starredIds = starred()
                     val favorites =

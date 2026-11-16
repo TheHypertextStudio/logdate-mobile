@@ -14,11 +14,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
@@ -43,7 +49,8 @@ class WatchTodayPreviewViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val memory =
-        combine(notes.allNotesObserved, calendar) { _, current -> current.first }
+        combine(notes.observeEntryTimestamps().distinctUntilChanged(), calendar) { _, current -> current.first }
+            .distinctUntilChanged()
             .mapLatest<kotlinx.datetime.LocalDate, WatchMemoryPreview?> { today ->
                 recall(contentTypes = setOf(WidgetContentType.TEXT, WidgetContentType.AUDIO)).first()?.let {
                     WatchMemoryPreview(it, (today.year - it.date.year).coerceAtLeast(1))
@@ -53,13 +60,21 @@ class WatchTodayPreviewViewModel(
                 emit(null)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val summary =
-        combine(notes.allNotesObserved, calendar) { all, (today, zone) ->
-            TodaySummaryCalculator.calculate(all.filter { it.creationTimestamp.toLocalDateTime(zone).date == today }) as TodaySummary?
-        }.catch { failure ->
-            Napier.e("Could not preview today's watch tile", failure)
-            emit(null)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        calendar
+            .distinctUntilChanged()
+            .flatMapLatest { (today, zone) ->
+                notes
+                    .observeNotesInRange(today.atStartOfDayIn(zone), today.plus(1, DateTimeUnit.DAY).atStartOfDayIn(zone))
+                    .map { notes ->
+                        TodaySummaryCalculator.calculate(notes.filter { it.creationTimestamp.toLocalDateTime(zone).date == today })
+                            as TodaySummary?
+                    }
+            }.catch { failure ->
+                Napier.e("Could not preview today's watch tile", failure)
+                emit(null)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
 
 data class WatchMemoryPreview(

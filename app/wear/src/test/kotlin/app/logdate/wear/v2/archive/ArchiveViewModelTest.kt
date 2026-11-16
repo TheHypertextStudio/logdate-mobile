@@ -59,8 +59,7 @@ class ArchiveViewModelTest {
             val evening = text("Dinner on the roof", at(LocalDateTime(2026, 9, 21, 20, 0)))
             val thursday = text("Long call", at(LocalDateTime(2026, 9, 24, 21, 0)))
             val checkIn = text("#mood:ok Fine", at(LocalDateTime(2026, 9, 24, 7, 0)))
-            every { notesRepository.allNotesObserved } returns
-                flowOf(listOf(morning, checkIn, evening, thursday))
+            stubRange(listOf(morning, checkIn, evening, thursday))
 
             ArchiveViewModel(dayClock, notesRepository).uiState.test {
                 assertEquals(
@@ -80,7 +79,7 @@ class ArchiveViewModelTest {
     @Test
     fun `nothing earlier is an empty archive`() =
         runTest {
-            every { notesRepository.allNotesObserved } returns flowOf(emptyList())
+            stubRange(emptyList())
 
             ArchiveViewModel(dayClock, notesRepository).uiState.test {
                 assertEquals(ArchiveUiState.Ready(timeZone = zone, days = emptyList()), expectMostRecentItem())
@@ -94,7 +93,7 @@ class ArchiveViewModelTest {
             val ordinary = text("Long call", at(LocalDateTime(2026, 9, 24, 21, 0)))
             val changes = MutableStateFlow(0)
             var starred = setOf(favorite.uid)
-            every { notesRepository.allNotesObserved } returns flowOf(listOf(favorite, ordinary))
+            stubRange(listOf(favorite, ordinary))
 
             ArchiveViewModel(dayClock, notesRepository, starred = { starred }, windowChanges = changes.map { }).uiState.test {
                 val first = expectMostRecentItem() as ArchiveUiState.Ready
@@ -112,12 +111,20 @@ class ArchiveViewModelTest {
     @Test
     fun `a failure reading notes shows the failed state`() =
         runTest {
-            every { notesRepository.allNotesObserved } returns flow { throw IOException("database closed") }
+            every { notesRepository.observeNotesInRange(any(), any()) } returns flow { throw IOException("database closed") }
 
             ArchiveViewModel(dayClock, notesRepository).uiState.test {
                 assertEquals(ArchiveUiState.Failed, expectMostRecentItem())
             }
         }
+
+    private fun stubRange(notes: List<JournalNote>) {
+        every { notesRepository.observeNotesInRange(any(), any()) } answers {
+            val start = firstArg<Instant>()
+            val end = secondArg<Instant>()
+            flowOf(notes.filter { it.creationTimestamp >= start && it.creationTimestamp < end })
+        }
+    }
 
     private fun at(local: LocalDateTime): Instant = local.toInstant(zone)
 
