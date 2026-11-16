@@ -167,6 +167,7 @@
             <!--
                 Starts a new entry from launcher shortcuts, Quick Settings tiles, notifications,
                 assistants, and other apps. Extras: mode (text|voice|camera|video), journal_id.
+                The entry always starts empty; other apps cannot supply its text.
                 See docs/reference/android/os-integration/capture-launch-contract.md.
             -->
             <intent-filter>
@@ -234,6 +235,17 @@
             <!-- Keeps a floating or freeform editor window large enough to write in. -->
             <layout android:minWidth="280dp" android:minHeight="320dp" />
         </activity>
+
+        <!--
+            LogDate's own route for opening a new entry with text the person already wrote, such
+            as a quick reply that could not be saved. It is not exported, so no other app can start
+            an entry with its text; MainActivity keeps starting text only from this alias.
+        -->
+        <activity-alias
+      android:name="app.logdate.client.InternalCaptureActivity"
+      android:exported="false"
+      android:targetActivity="app.logdate.client.MainActivity"
+    />
 
         <!--
             Android 13 and earlier: Health Connect permission dialog sends this intent when the

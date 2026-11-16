@@ -7,10 +7,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput
-import app.logdate.client.MainActivity
-import app.logdate.client.capture.ACTION_CAPTURE
-import app.logdate.client.capture.EXTRA_CAPTURE_MODE
-import app.logdate.client.capture.EXTRA_CAPTURE_TEXT
+import app.logdate.client.capture.internalCaptureIntent
 import app.logdate.client.domain.notes.AddNoteUseCase
 import app.logdate.client.notifications.LogDateNotificationChannelKey
 import io.github.aakira.napier.Napier
@@ -133,10 +130,8 @@ class QuickReplyReceiver :
             PendingIntent.getActivity(
                 context,
                 notificationId,
-                Intent(ACTION_CAPTURE)
-                    .setClass(context, MainActivity::class.java)
-                    .putExtra(EXTRA_CAPTURE_MODE, "text")
-                    .putExtra(EXTRA_CAPTURE_TEXT, content)
+                context
+                    .internalCaptureIntent(content)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             ),
