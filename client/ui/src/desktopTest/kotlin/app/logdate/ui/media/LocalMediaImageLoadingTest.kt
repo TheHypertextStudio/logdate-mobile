@@ -60,6 +60,15 @@ class LocalMediaImageLoadingTest {
         }
 
     @Test
+    fun `local videos expose their mime type to thumbnail decoders`() =
+        runTest {
+            val mp4 = fetcherFor("logdate-media://library/capture.mp4", existing = emptySet()).fetch() as SourceFetchResult
+            val mov = fetcherFor("file:///install/old/library/clip.MOV", existing = emptySet()).fetch() as SourceFetchResult
+            assertEquals("video/mp4", mp4.mimeType)
+            assertEquals("video/quicktime", mov.mimeType)
+        }
+
+    @Test
     fun `memory cache keys are the stored strings`() {
         assertEquals("logdate-media://library/a.jpg", LocalMediaKeyer().key(LocalMediaSource("logdate-media://library/a.jpg"), options))
     }
