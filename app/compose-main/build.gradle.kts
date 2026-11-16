@@ -193,7 +193,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "LogDate"
             description = "The LogDate desktop application"
-            copyright = "© 2024 Willie Chalmers III"
+            copyright = "© 2026 Willie Chalmers III"
             packageVersion = "1.0.0"
 
             windows {
