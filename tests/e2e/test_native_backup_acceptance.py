@@ -6,6 +6,7 @@ import io
 from pathlib import Path
 import subprocess
 import tarfile
+import xml.etree.ElementTree as ET
 import tempfile
 import time
 import unittest
@@ -17,6 +18,92 @@ from native_backup_test_support import (
     D2D_SCRIPT,
     BackupPayloadFixture,
 )
+
+
+class AndroidBackupRulesContractTest(unittest.TestCase):
+    def test_legacy_and_api31_rules_include_recovery_source_and_drafts_with_cloud_encryption(
+        self,
+    ):
+        root = Path(__file__).resolve().parents[2]
+        legacy = ET.parse(
+            root / "app/android-main/src/main/res/xml/backup_rules.xml"
+        ).getroot()
+        modern = ET.parse(
+            root / "app/android-main/src/main/res/xml/data_extraction_rules.xml"
+        ).getroot()
+
+        def included(parent, domain, path, required_flags=None):
+            return any(
+                node.tag == "include"
+                and node.attrib.get("domain") == domain
+                and node.attrib.get("path") == path
+                and (
+                    required_flags is None
+                    or node.attrib.get("requireFlags") == required_flags
+                )
+                for node in parent
+            )
+
+        legacy_cloud = (
+            "clientSideEncryption",
+            (
+                ("file", "logdate.preferences_pb"),
+                ("file", "datastore/"),  # Includes pending editor drafts.
+                ("file", "db_recovery/"),
+                ("file", "identity_recovery/"),
+                ("database", "logdate"),
+                ("database", "logdate-wal"),
+                ("database", "logdate-shm"),
+            ),
+        )
+        legacy_cloud_flags, legacy_cloud_paths = legacy_cloud
+        for domain, path in legacy_cloud_paths:
+            with self.subTest(rules="legacy cloud", path=path):
+                self.assertTrue(included(legacy, domain, path, legacy_cloud_flags))
+        for domain, path in legacy_cloud_paths:
+            with self.subTest(rules="legacy device transfer", path=path):
+                self.assertTrue(
+                    included(legacy, domain, path, "deviceToDeviceTransfer")
+                )
+        self.assertTrue(
+            included(
+                legacy,
+                "file",
+                "native_journal_transfer/current/",
+                "deviceToDeviceTransfer",
+            )
+        )
+
+        cloud = modern.find("cloud-backup")
+        transfer = modern.find("device-transfer")
+        self.assertIsNotNone(cloud)
+        self.assertIsNotNone(transfer)
+        self.assertEqual("true", cloud.attrib.get("disableIfNoEncryptionCapabilities"))
+        modern_cloud_paths = legacy_cloud_paths
+        for domain, path in modern_cloud_paths:
+            with self.subTest(rules="API 31 cloud", path=path):
+                self.assertTrue(included(cloud, domain, path))
+        for domain, path in legacy_cloud_paths:
+            if domain == "database":
+                continue  # The complete database/key/prefs snapshot is beneath native_journal_transfer/current/.
+            with self.subTest(rules="API 31 device transfer", path=path):
+                self.assertTrue(included(transfer, domain, path))
+        self.assertTrue(included(transfer, "file", "native_journal_transfer/current/"))
+        for path in (
+            "db_recovery/passphrase_backup",
+            "db_recovery/working_passphrase_backup",
+            "db_recovery/passphrase_backup.part",
+            "db_recovery/working_passphrase_backup.part",
+        ):
+            self.assertTrue(
+                any(
+                    node.tag == "exclude"
+                    and node.attrib.get("domain") == "file"
+                    and node.attrib.get("path") == path
+                    for node in transfer
+                ),
+                f"API 31 device transfer must keep the root-only portable key out of the direct file walk: {path}",
+            )
 
 
 class ManagedWorkSourceGuardTest(unittest.TestCase):
