@@ -39,6 +39,7 @@ import app.logdate.client.domain.export.archive.StagingDirectoryArchiveContainer
 import app.logdate.client.domain.restore.archive3.NativeArchive3Original
 import app.logdate.client.domain.restore.archive3.NativeArchive3SnapshotInput
 import app.logdate.client.domain.restore.archive3.NativeArchive3SnapshotWriter
+import app.logdate.client.repository.journals.EntryDraft
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.mediaRefOrNull
 import app.logdate.shared.model.EditorDraft
@@ -77,7 +78,6 @@ internal class NativeJournalTransferSnapshot(
     private val ownership = NativeJournalTransferOwnership(File(context.noBackupFilesDir, "native-journal-sender-owner"), current)
     private var prepared = false
     private var selectedMedia: List<NativeJournalMediaInventory.Entry> = emptyList()
-    private var entryDraftFileChecksum: String? = null
     private var preferencesChecksum: String? = null
     private var noDatabaseSource = false
     private var noDatabasePreferencesChecksum: String? = null
@@ -85,7 +85,6 @@ internal class NativeJournalTransferSnapshot(
 
     fun prepare(includeProfileOnlySource: Boolean = false) {
         selectedMedia = emptyList()
-        entryDraftFileChecksum = null
         preferencesChecksum = null
         noDatabaseSource = false
         noDatabasePreferencesChecksum = null
@@ -193,9 +192,10 @@ internal class NativeJournalTransferSnapshot(
         syncDirectory(root)
         prepared = true
         selectedMedia = inventory.files
-        entryDraftFileChecksum = entryDraftFile.takeIf(File::exists)?.let(::nativeSnapshotChecksum)
         preferencesChecksum = selectedPreferencesChecksum
-        check(entryDraftFileChecksum == beforeDrafts) { "Entry drafts changed during native media selection" }
+        check(beforeDrafts == entryDraftFile.takeIf(File::exists)?.let(::nativeSnapshotChecksum)) {
+            "Entry drafts changed during native media selection"
+        }
         checkPinnedPreferencesUnchanged()
     }
 
@@ -237,7 +237,6 @@ internal class NativeJournalTransferSnapshot(
         prepared = false
         noDatabaseSource = false
         selectedMedia = emptyList()
-        entryDraftFileChecksum = null
         preferencesChecksum = null
         noDatabasePreferencesChecksum = null
         noDatabaseDraftChecksum = null
@@ -326,7 +325,7 @@ internal class NativeJournalTransferSnapshot(
         val prefs = pinnedPreferences.data.first()
         unsupported += NativeArchive3SourceCensus.unsupportedPreferences(prefs)
         val receipt = Json.decodeFromString<NativeJournalSourceReceipt>(checkNotNull(files[NATIVE_SOURCE_RECEIPT_PATH]).readText())
-        val drafts = archiveDrafts(prefs, receipt)
+        val drafts = archiveDrafts(prefs, receipt, files)
         val journals = database.journalDao().getAll()
         if (journals.any { it.deletedAt != null || it.coverImageUri != null }) unsupported += "journalCoversOrDeletion"
         val queries = journalNoteQueries(database)
@@ -382,7 +381,6 @@ internal class NativeJournalTransferSnapshot(
         val markerHash = nativeSnapshotChecksum(marker)
         return {
             checkPinnedPreferencesUnchanged()
-            checkEntryDraftFileUnchanged()
             requirePinnedNativeTransferFile(marker, markerHash)
             check(current.isDirectory && databaseFile.exists())
         }
@@ -391,8 +389,15 @@ internal class NativeJournalTransferSnapshot(
     private suspend fun archiveDrafts(
         prefs: Preferences,
         receipt: NativeJournalSourceReceipt,
+        files: Map<String, File>,
     ): List<EditorDraft> {
-        val entryDrafts = AndroidLocalEntryDraftStore(context).getAllDrafts()
+        val entryDraftsFile = files["files/datastore/entry_drafts.preferences_pb"]
+        val entryDrafts =
+            receipt.entryDraftsSha256?.let { expected ->
+                val pinnedFile = checkNotNull(entryDraftsFile)
+                requirePinnedNativeTransferFile(pinnedFile, expected)
+                readNativeTransferEntryDrafts(pinnedFile)
+            } ?: emptyList()
         val modernDrafts =
             NativeArchive3EditorDrafts.read(
                 prefs,
@@ -471,13 +476,6 @@ internal class NativeJournalTransferSnapshot(
                 .takeIf(File::exists)
                 ?.let(::nativeSnapshotChecksum) == expectedDrafts,
         ) { "Entry drafts changed during database-free native transfer" }
-    }
-
-    private fun checkEntryDraftFileUnchanged() {
-        val file = File(context.filesDir, "datastore/entry_drafts.preferences_pb")
-        check(file.takeIf(File::exists)?.let(::nativeSnapshotChecksum) == entryDraftFileChecksum) {
-            "Entry drafts changed during native transfer"
-        }
     }
 
     private fun exportWithAcceptedKey(
@@ -616,6 +614,20 @@ internal fun validateNativeJournalTransfer(context: Context): Map<String, File>?
         decoded.fill(0)
     }
     return files
+}
+
+internal suspend fun readNativeTransferEntryDrafts(file: File): List<EntryDraft> {
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    return try {
+        AndroidLocalEntryDraftStore(
+            PreferenceDataStoreFactory.createWithPath(
+                scope = scope,
+                produceFile = { file.path.toPath() },
+            ),
+        ).getAllDrafts()
+    } finally {
+        scope.cancel()
+    }
 }
 
 private fun copyDurably(

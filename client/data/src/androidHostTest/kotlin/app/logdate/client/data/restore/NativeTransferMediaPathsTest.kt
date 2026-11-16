@@ -1,15 +1,23 @@
 package app.logdate.client.data.restore
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
+import app.logdate.client.data.notes.drafts.AndroidLocalEntryDraftStore
 import app.logdate.client.repository.journals.EntryDraft
 import app.logdate.client.repository.journals.PendingMediaRecord
 import app.logdate.client.repository.journals.PendingMediaType
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.SerializableImageBlock
 import app.logdate.shared.model.SerializableVideoBlock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okio.Path.Companion.toPath
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.Test
@@ -133,6 +141,34 @@ class NativeTransferMediaPathsTest {
                 setOf("files/camera-captures/${source.substringAfterLast('/')}"),
                 nativeTransferMediaPaths(references, "studio.hypertext.logdate", files),
             )
+        }
+
+    @Test
+    fun `archive entry drafts are read from the pinned transfer copy`() =
+        fixture { files ->
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            try {
+                val sourceFile = File(files, "source/entry_drafts.preferences_pb").apply { parentFile!!.mkdirs() }
+                val sourceStore =
+                    AndroidLocalEntryDraftStore(
+                        PreferenceDataStoreFactory.createWithPath(scope = scope, produceFile = { sourceFile.path.toPath() }),
+                    )
+                val now = Clock.System.now()
+                val pinnedDraft = EntryDraft(Uuid.random(), emptyList(), now, now)
+                val laterDraft = EntryDraft(Uuid.random(), emptyList(), now, now)
+                runBlocking { sourceStore.saveDraft(pinnedDraft) }
+
+                val pinnedFile =
+                    File(files, "snapshot/files/datastore/entry_drafts.preferences_pb").apply {
+                        parentFile!!.mkdirs()
+                    }
+                Files.copy(sourceFile.toPath(), pinnedFile.toPath())
+                runBlocking { sourceStore.saveDraft(laterDraft) }
+
+                assertEquals(listOf(pinnedDraft), runBlocking { readNativeTransferEntryDrafts(pinnedFile) })
+            } finally {
+                scope.cancel()
+            }
         }
 
     private fun fixture(block: (File) -> Unit) {
