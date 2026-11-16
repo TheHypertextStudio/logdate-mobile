@@ -63,11 +63,9 @@ fun SettingsOverviewScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsOverviewViewModel = koinViewModel(),
     campfireViewModel: CampfireViewModel = koinViewModel(),
-    placesBetaViewModel: PlacesBetaSettingsViewModel = koinViewModel(),
     flags: FeatureFlagStore = koinInject(),
     peopleSwitch: PeopleSwitch = koinInject(),
 ) {
-    val placesBetaState by placesBetaViewModel.state.collectAsStateWithLifecycle()
     val watchRedesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
     val optionalRows = rememberOptionalSettingsRows(peopleSwitch)
     val deviceCards: (@Composable () -> Unit)? =
@@ -116,8 +114,6 @@ fun SettingsOverviewScreen(
         campfire = campfire,
         modifier = modifier,
         deviceCards = deviceCards,
-        placesBetaState = placesBetaState,
-        onSetPlacesBetaEnabled = placesBetaViewModel::setEnabled,
         showEventsSettings = optionalRows.events,
         showPeopleSettings = optionalRows.people,
     )
@@ -158,8 +154,6 @@ fun SettingsOverviewContent(
     campfire: CampfirePresentation? = null,
     modifier: Modifier = Modifier,
     deviceCards: (@Composable () -> Unit)? = null,
-    placesBetaState: PlacesBetaSettingsState = PlacesBetaSettingsState.Loading,
-    onSetPlacesBetaEnabled: (Boolean) -> Unit = {},
     showEventsSettings: Boolean = false,
     showPeopleSettings: Boolean = false,
 ) {
@@ -190,7 +184,6 @@ fun SettingsOverviewContent(
                     onNavigateToLibrarySettings = onNavigateToLibrarySettings,
                     showEventsSettings = showEventsSettings,
                     showPeopleSettings = showPeopleSettings,
-                    placesBetaSettings = { PlacesBetaSettingsItem(placesBetaState, onSetPlacesBetaEnabled) },
                 )
             }
         },
@@ -249,7 +242,6 @@ fun SettingsOverviewContent(
                         onNavigateToLibrarySettings = onNavigateToLibrarySettings,
                         showEventsSettings = showEventsSettings,
                         showPeopleSettings = showPeopleSettings,
-                        placesBetaSettings = { PlacesBetaSettingsItem(placesBetaState, onSetPlacesBetaEnabled) },
                     )
                 }
 

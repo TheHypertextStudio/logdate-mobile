@@ -70,7 +70,7 @@ class DeveloperSettingsVisibilityTest {
             onNodeWithText("Hide developer mode").performClick()
             onNodeWithText("Developer Tools").assertDoesNotExist()
             onNodeWithText("Hide developer mode").assertDoesNotExist()
-            onNodeWithText("Labs").assertDoesNotExist()
+            onNodeWithText("Labs").assertExists()
             repeat(6) { onNodeWithText("App version: 1.2.3").performClick() }
             onNodeWithText("Developer Tools").assertDoesNotExist()
             onNodeWithText("App version: 1.2.3").performClick()

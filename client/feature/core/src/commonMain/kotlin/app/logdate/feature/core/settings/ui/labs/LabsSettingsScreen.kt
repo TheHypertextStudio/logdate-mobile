@@ -12,15 +12,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.feature.core.activity.PhoneActivityLink
 import app.logdate.feature.core.activity.PhoneActivityLinkState
 import app.logdate.feature.core.activity.busy
 import app.logdate.feature.core.activity.detail
 import app.logdate.feature.core.activity.rememberPhoneActivityLink
+import app.logdate.feature.core.settings.ui.PlacesBetaSettingsItem
+import app.logdate.feature.core.settings.ui.PlacesBetaSettingsViewModel
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
@@ -38,23 +42,32 @@ import logdate.client.feature.core.generated.resources.phone_activity_link
 import logdate.client.feature.core.generated.resources.phone_activity_open_settings
 import logdate.client.feature.core.generated.resources.phone_activity_unlink
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Labs: switches for features that have not launched, for testing them in a release build.
  *
- * The Settings overview has no row for it. Tapping the version on the About page seven times turns
- * on developer mode, and the About page then shows a Labs row that opens it.
+ * The Settings overview has no row for it; the About page always shows a Labs row that opens it.
+ * Public betas such as Places are listed for everyone. The internal previews below them appear only
+ * in developer mode, which tapping the version on the About page seven times turns on.
  */
 @Composable
 fun LabsSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LabsSettingsViewModel = koinViewModel(),
+    placesBetaViewModel: PlacesBetaSettingsViewModel = koinViewModel(),
+    preferences: LogdatePreferencesDataSource = koinInject(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val placesBetaState by placesBetaViewModel.state.collectAsStateWithLifecycle()
+    val developerMode by remember(preferences) { preferences.observeDeveloperModeEnabled() }.collectAsStateWithLifecycle(false)
+
     LabsSettingsContent(
         uiState = uiState,
+        developerModeEnabled = developerMode,
+        betaSettingsContent = { PlacesBetaSettingsItem(placesBetaState, placesBetaViewModel::setEnabled) },
         onBack = onBack,
         onSetEnabled = viewModel::setEnabled,
         activityLink = rememberPhoneActivityLink(),
@@ -69,6 +82,8 @@ fun LabsSettingsContent(
     onSetEnabled: (FeatureFlag, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     activityLink: PhoneActivityLink = PhoneActivityLink(PhoneActivityLinkState.Unavailable),
+    developerModeEnabled: Boolean = false,
+    betaSettingsContent: (@Composable () -> Unit)? = null,
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -100,6 +115,8 @@ fun LabsSettingsContent(
             ) {
                 LabsFlagsSection(
                     uiState = uiState,
+                    developerModeEnabled = developerModeEnabled,
+                    betaSettingsContent = betaSettingsContent,
                     onSetEnabled = onSetEnabled,
                     activityLink = activityLink,
                     modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -117,6 +134,8 @@ fun LabsSettingsContent(
                 item {
                     LabsFlagsSection(
                         uiState = uiState,
+                        developerModeEnabled = developerModeEnabled,
+                        betaSettingsContent = betaSettingsContent,
                         onSetEnabled = onSetEnabled,
                         activityLink = activityLink,
                         modifier = Modifier.padding(horizontal = Spacing.lg),
@@ -142,10 +161,13 @@ private fun LabsFlagsSection(
     uiState: LabsUiState,
     onSetEnabled: (FeatureFlag, Boolean) -> Unit,
     activityLink: PhoneActivityLink,
+    developerModeEnabled: Boolean,
+    betaSettingsContent: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    if (uiState !is LabsUiState.Ready) return
-    if (uiState.flags.isEmpty()) {
+    val flags = if (developerModeEnabled) (uiState as? LabsUiState.Ready)?.flags.orEmpty() else emptyList()
+    if (betaSettingsContent == null && uiState !is LabsUiState.Ready) return
+    if (betaSettingsContent == null && flags.isEmpty()) {
         Text(
             text = stringResource(Res.string.labs_empty),
             style = MaterialTheme.typography.bodyMedium,
@@ -157,7 +179,8 @@ private fun LabsFlagsSection(
         title = stringResource(Res.string.labs_section_unreleased),
         modifier = modifier,
     ) {
-        uiState.flags.forEach { row ->
+        betaSettingsContent?.invoke()
+        flags.forEach { row ->
             if (row.flag == FeatureFlag.ACTIVITY_AWARENESS) {
                 PhoneActivitySettingsRows(activityLink)
                 return@forEach
