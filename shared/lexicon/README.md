@@ -15,9 +15,10 @@ The models aren't checked in. Every build generates them from `lexicons/` into
 next time anything builds. An invalid schema fails the build with a message naming the schema
 and the problem.
 
-The `app.logdate.lexicon-models` plugin from `build-logic` does this. Any Kotlin Multiplatform
-module can generate models the same way by applying it and naming its schemas in a
-`lexiconModels { }` block; see `LexiconModelsPlugin` for the options.
+The `studio.hypertext.atproto.lexicon` Gradle plugin does this. Any Kotlin JVM or Kotlin
+Multiplatform module can generate models the same way by applying it and naming its schemas in a
+`lexiconModels { }` block; see the
+[plugin's README](../atproto-lexicon-gradle-plugin/README.md) for the options.
 
 To look at the generated code, build the module and open that folder, or jump to a class from
 your IDE once Gradle has synced:
@@ -28,17 +29,17 @@ your IDE once Gradle has synced:
 
 ## How the schemas map to Kotlin
 
-| Schema | Kotlin |
-|---|---|
-| `app.logdate.journal.entry` | package `app.logdate.lexicon.app.logdate.journal`, class `Entry` |
-| a definition `#textBlock` in that document | class `EntryTextBlock` |
-| `community.lexicon.location.geo` | package `app.logdate.lexicon.community.lexicon.location`, class `Geo` |
-| a `record` | a data class with `TYPE` (its collection) and `KEY` (its record-key rule) |
+| Schema                                                      | Kotlin                                                                                                  |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `app.logdate.journal.entry`                                 | package `app.logdate.lexicon.app.logdate.journal`, class `Entry`                                        |
+| a definition `#textBlock` in that document                  | class `EntryTextBlock`                                                                                  |
+| `community.lexicon.location.geo`                            | package `app.logdate.lexicon.community.lexicon.location`, class `Geo`                                   |
+| a `record`                                                  | a data class with `TYPE` (its collection) and `KEY` (its record-key rule)                               |
 | a `space` declaration, such as `app.logdate.space.personal` | an object `Personal` with `TYPE` (the space type), `NAME`, `KEY` (its space-key rule) and `COLLECTIONS` |
-| a `permission-set`, such as `app.logdate.authFull` | an object `AuthFull` with `SCOPE`, the OAuth scope an app asks for it with |
-| a `union` | a sealed interface with one wrapper per allowed type, plus `Unknown` if the union is open |
-| `blob`, `cid-link`, `bytes` | `Blob`, `CidLink`, `Bytes` |
-| an optional field | a nullable property that defaults to `null` |
+| a `permission-set`, such as `app.logdate.authFull`          | an object `AuthFull` with `SCOPE`, the OAuth scope an app asks for it with                              |
+| a `union`                                                   | a sealed interface with one wrapper per allowed type, plus `Unknown` if the union is open               |
+| `blob`, `cid-link`, `bytes`                                 | `Blob`, `CidLink`, `Bytes`                                                                              |
+| an optional field                                           | a nullable property that defaults to `null`                                                             |
 
 `LogDateRecords.records` maps every record type's collection NSID to its serializer, for code that
 reads records whose type it only knows at runtime, such as sync.

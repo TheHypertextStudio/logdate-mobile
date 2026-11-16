@@ -13,11 +13,16 @@ and applied by the ten Kotlin Multiplatform modules: `atproto-crypto`, `atproto-
 `atproto-identity`, `atproto-xrpc`, `atproto-repo`, `atproto-plc`, `atproto-lexicon`,
 `atproto-pds`, `atproto-pds-runtime`, and `atproto-oauth-client`.
 
-Two other `shared/atproto-*` directories do not apply it:
+Three other `shared/atproto-*` directories do not apply it:
 
 - `shared/atproto-bom` is a `java-platform` project. The plugin assumes Kotlin Multiplatform
   publications, so the BOM's own `build.gradle.kts` repeats the plugin's group, version,
   repository, POM, and signing settings.
+- `shared/atproto-lexicon-gradle-plugin` is the `studio.hypertext.atproto.lexicon` Gradle plugin.
+  It is a separate Gradle build that the root build includes, because a build cannot apply a
+  plugin that one of its own modules compiles. Its `build.gradle.kts` repeats the same group,
+  version, repository, POM, and signing settings, and its tasks are addressed by build name, such
+  as `:atproto-lexicon-gradle-plugin:publishAllPublicationsToAtprotoRepository`.
 - `shared/atproto-licensing` is not a Gradle module. It holds the Apache 2.0 `LICENSE` and
   `NOTICE` that the plugin copies into each published jar.
 
@@ -182,9 +187,9 @@ Publish the current ATProto module set to Maven Local:
 ./gradlew publishAtprotoToMavenLocal :shared:atproto-bom:publishToMavenLocal
 ```
 
-`publishAtprotoToMavenLocal` covers the ten Kotlin Multiplatform modules only. The BOM needs its
-own `:shared:atproto-bom:publishToMavenLocal`, and the standalone sample imports the BOM, so it
-needs both.
+`publishAtprotoToMavenLocal` covers the ten Kotlin Multiplatform modules and the lexicon Gradle
+plugin. The BOM needs its own `:shared:atproto-bom:publishToMavenLocal`, and the standalone sample
+imports the BOM, so it needs both.
 
 This is the correct flow for:
 
@@ -208,12 +213,6 @@ directory, for example:
 The repo includes an Android Studio run configuration for the same task in
 [`Generate ATProto Dokka.run.xml`](../../.run/Generate%20ATProto%20Dokka.run.xml).
 
-Regenerate the checked-in LogDate lexicon models:
-
-```bash
-./gradlew :shared:atproto-lexicon:generateLogDateLexicons
-```
-
 Regenerate the checked-in official `com.atproto.*` lexicon models used by the
 current server surface:
 
@@ -235,7 +234,7 @@ git push origin atproto-v0.1.0
 `.github/workflows/publish-atproto.yml` fires on the tag, derives
 `ATPROTO_VERSION` from the tag name (`atproto-v0.1.0` → `0.1.0`), and runs
 `publishAllPublicationsToAtprotoRepository` for the nine Kotlin Multiplatform
-modules plus the BOM. It can also be started by hand (`workflow_dispatch`)
+modules, the BOM, and the lexicon Gradle plugin. It can also be started by hand (`workflow_dispatch`)
 with an optional `version` input, which sets `ATPROTO_VERSION` the same way.
 
 Because `ATPROTO_VERSION` takes precedence over `gradle.properties` (see

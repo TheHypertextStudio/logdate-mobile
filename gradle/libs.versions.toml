@@ -440,5 +440,5 @@ benManesVersions = { id = 'com.github.ben-manes.versions', version.ref = 'benMan
 # LogDate Conventions
 app-logdate-kmp-library = { id = 'app.logdate.kmp-library' }
 app-logdate-compose-feature = { id = 'app.logdate.compose-feature' }
-app-logdate-lexicon-models = { id = 'app.logdate.lexicon-models' }
+studio-hypertext-atproto-lexicon = { id = 'studio.hypertext.atproto.lexicon' }
 app-logdate-atproto-published-module = { id = 'app.logdate.atproto-published-module' }

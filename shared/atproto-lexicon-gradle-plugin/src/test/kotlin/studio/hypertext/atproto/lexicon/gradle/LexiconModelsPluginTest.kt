@@ -1,8 +1,9 @@
-package app.logdate
+package studio.hypertext.atproto.lexicon.gradle
 
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class LexiconModelsPluginTest {
     @Test
@@ -42,7 +43,15 @@ class LexiconModelsPluginTest {
             )
 
         assertEquals(
-            listOf("/repo/fixture.json", "/out", "app.logdate.lexicon", "--record-index", "LogDateRecords", "--schema-index", "LogDateSchemas"),
+            listOf(
+                "/repo/fixture.json",
+                "/out",
+                "app.logdate.lexicon",
+                "--record-index",
+                "LogDateRecords",
+                "--schema-index",
+                "LogDateSchemas",
+            ),
             arguments,
         )
     }
@@ -59,5 +68,13 @@ class LexiconModelsPluginTest {
             )
 
         assertEquals(listOf("/repo/fixture.json", "/out", "com.example.fixtures"), arguments)
+    }
+
+    @Test
+    fun `the default generator is the published library at the plugin's own version`() {
+        val (group, name, version) = LexiconPluginCoordinates.generator.split(':')
+
+        assertEquals("atproto-lexicon", name)
+        assertTrue(group.isNotBlank() && version.isNotBlank() && version != "null", LexiconPluginCoordinates.generator)
     }
 }

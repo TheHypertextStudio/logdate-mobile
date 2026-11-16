@@ -1,8 +1,9 @@
-package app.logdate
+package studio.hypertext.atproto.lexicon.gradle
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.api.file.ConfigurableFileCollection
@@ -18,44 +19,65 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.process.ExecOperations
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import java.io.File
+import java.util.Properties
 import javax.inject.Inject
 
 /**
- * Generates Kotlin models from lexicon schemas on every build, into a source set of a Kotlin
- * Multiplatform module. Nothing generated is checked in: a schema change reaches the code the
- * next time anything compiles, and an invalid schema fails the build.
+ * Generates Kotlin models from lexicon schemas on every build, into a source set of a Kotlin JVM or
+ * Kotlin Multiplatform project. Nothing generated is checked in: a schema change reaches the code
+ * the next time anything compiles, and an invalid schema fails the build.
  *
  * ```kotlin
- * plugins { id("app.logdate.lexicon-models") }
+ * plugins {
+ *     kotlin("jvm")
+ *     kotlin("plugin.serialization")
+ *     id("studio.hypertext.atproto.lexicon")
+ * }
  *
  * lexiconModels {
- *     schemas.from(rootProject.file("lexicons/app/logdate"))
- *     basePackage = "app.logdate.lexicon"
- *     recordIndex = "LogDateRecords"
- *     schemaIndex = "LogDateSchemas"
+ *     schemas.from("src/main/lexicons")
+ *     basePackage = "com.example.models"
+ * }
+ *
+ * dependencies {
+ *     // The generated models use this library's data types.
+ *     implementation("studio.hypertext.atproto:atproto-lexicon:<version>")
  * }
  * ```
  *
- * The generator is the JVM build of `:shared:atproto-lexicon`, which the plugin resolves for
- * itself; that module, which can't depend on itself, sets [LexiconModelsExtension.generator].
+ * The generator is the JVM build of `studio.hypertext.atproto:atproto-lexicon`. The plugin resolves
+ * the release that matches its own version from the project's repositories. To run a different
+ * build of the generator, declare it on the [GENERATOR_CONFIGURATION] configuration:
+ *
+ * ```kotlin
+ * dependencies {
+ *     lexiconGenerator(project(":shared:atproto-lexicon"))
+ * }
+ * ```
  */
 class LexiconModelsPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val extension = project.extensions.create("lexiconModels", LexiconModelsExtension::class.java)
         extension.namespaceLayout.convention(true)
-        extension.sourceSet.convention("commonMain")
-        if (project.path != GENERATOR_PROJECT) extension.generator.from(generatorClasspath(project))
+
+        val generator =
+            project.configurations.create(GENERATOR_CONFIGURATION) {
+                description = "The lexicon generator and its runtime dependencies."
+                isCanBeConsumed = false
+                isCanBeResolved = false
+                defaultDependencies { add(project.dependencies.create(LexiconPluginCoordinates.generator)) }
+            }
 
         val generate =
             project.tasks.register("generateLexiconModels", GenerateLexiconModels::class.java) {
                 group = "codegen"
-                description = "Generate Kotlin models from this module's lexicon schemas."
+                description = "Generate Kotlin models from this project's lexicon schemas."
                 schemas.from(extension.schemas)
-                generator.from(extension.generator)
                 basePackage.set(extension.basePackage)
                 namespaceLayout.set(extension.namespaceLayout)
                 recordIndex.set(extension.recordIndex)
@@ -64,30 +86,66 @@ class LexiconModelsPlugin : Plugin<Project> {
             }
 
         project.pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
-            // The source set is read once the build script has configured the extension.
-            project.afterEvaluate {
-                val kotlin = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
-                kotlin.sourceSets.getByName(extension.sourceSet.get()).kotlin.srcDir(generate.flatMap { it.outputDirectory })
-            }
+            wireKotlin(project, extension, generator, generate, defaultSourceSet = "commonMain")
+        }
+        project.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+            wireKotlin(project, extension, generator, generate, defaultSourceSet = "main")
         }
     }
 
-    private fun generatorClasspath(project: Project) =
-        project.configurations.create("lexiconGenerator") {
-            isCanBeConsumed = false
-            isCanBeResolved = true
-            attributes {
-                attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
-                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
-                attribute(Category.CATEGORY_ATTRIBUTE, project.objects.named(Category::class.java, Category.LIBRARY))
-            }
-            dependencies.add(project.dependencies.project(mapOf("path" to GENERATOR_PROJECT)))
+    private fun wireKotlin(
+        project: Project,
+        extension: LexiconModelsExtension,
+        generator: Configuration,
+        generate: TaskProvider<GenerateLexiconModels>,
+        defaultSourceSet: String,
+    ) {
+        extension.sourceSet.convention(defaultSourceSet)
+        val classpath = generatorClasspath(project, generator)
+        generate.configure { this.generator.from(classpath) }
+        // The source set is read once the build script has configured the extension.
+        project.afterEvaluate {
+            val kotlin = project.extensions.getByName("kotlin") as KotlinProjectExtension
+            kotlin.sourceSets
+                .getByName(extension.sourceSet.get())
+                .kotlin
+                .srcDir(generate.flatMap { it.outputDirectory })
         }
+    }
+
+    /** Resolves [generator] to the JVM runtime of whatever it declares. */
+    private fun generatorClasspath(
+        project: Project,
+        generator: Configuration,
+    ) = project.configurations.create("${GENERATOR_CONFIGURATION}Classpath") {
+        isCanBeConsumed = false
+        isCanBeResolved = true
+        extendsFrom(generator)
+        attributes {
+            attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
+            attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
+            attribute(Category.CATEGORY_ATTRIBUTE, project.objects.named(Category::class.java, Category.LIBRARY))
+        }
+    }
 
     companion object {
-        /** The module whose JVM build is the generator. */
-        const val GENERATOR_PROJECT = ":shared:atproto-lexicon"
+        /** The configuration that holds the generator. Empty, it resolves the published generator. */
+        const val GENERATOR_CONFIGURATION = "lexiconGenerator"
     }
+}
+
+/** The published generator this plugin runs by default, at the plugin's own version. */
+internal object LexiconPluginCoordinates {
+    private val properties =
+        Properties().apply {
+            val resource =
+                checkNotNull(LexiconPluginCoordinates::class.java.getResourceAsStream("plugin.properties")) {
+                    "The lexicon plugin was built without its coordinates"
+                }
+            resource.use(::load)
+        }
+
+    val generator: String = "${properties.getProperty("group")}:atproto-lexicon:${properties.getProperty("version")}"
 }
 
 /** Configures [LexiconModelsPlugin]. */
@@ -110,11 +168,11 @@ abstract class LexiconModelsExtension {
     /** When set, also writes an object of this name holding every schema's JSON, for checking records at runtime. */
     abstract val schemaIndex: Property<String>
 
-    /** The Kotlin source set the generated code joins. Defaults to `commonMain`. */
+    /**
+     * The Kotlin source set the generated code joins. Defaults to `commonMain` in a Kotlin
+     * Multiplatform project and `main` in a Kotlin JVM project.
+     */
     abstract val sourceSet: Property<String>
-
-    /** The generator's runtime classpath. Set automatically outside the generator's own module. */
-    abstract val generator: ConfigurableFileCollection
 }
 
 /** Runs the lexicon generator, replacing everything it wrote before. */
@@ -152,6 +210,9 @@ abstract class GenerateLexiconModels : DefaultTask() {
 
     @TaskAction
     fun generate() {
+        check(!generator.isEmpty) {
+            "No lexicon generator to run. Apply a Kotlin JVM or Kotlin Multiplatform plugin alongside studio.hypertext.atproto.lexicon."
+        }
         val output = outputDirectory.get().asFile
         // Start empty, so code for a removed schema doesn't linger.
         files.delete { delete(output) }
