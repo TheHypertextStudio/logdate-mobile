@@ -55,22 +55,5 @@
 
     <!-- Automatic place names -->
     <string name="places_near">Near %1$s</string>
-    <string name="places_near_street">Near %1$s, %2$s</string>
     <string name="places_somewhere_in">Somewhere in %1$s</string>
-    <string name="places_current_location">Current location</string>
-    <string name="places_pinned_location">Pinned location</string>
-
-    <!-- Place sources -->
-    <string name="places_source_saved_place">Saved place</string>
-    <string name="places_source_google_places">Google Places</string>
-    <string name="places_source_location">Location</string>
-    <string name="places_source_coordinates">Coordinates</string>
-    <string name="places_source_place">Place</string>
-    <string name="places_source_nearby_place">Nearby place</string>
-
-    <!-- Stop durations -->
-    <string name="places_stayed_days_hours">Stayed for %1$dd %2$dh</string>
-    <string name="places_stayed_hours_minutes">Stayed for %1$dh %2$dm</string>
-    <string name="places_stayed_minutes">Stayed for %1$dm</string>
-    <string name="places_observed_here">Observed here</string>
 </resources>

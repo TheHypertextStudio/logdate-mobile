@@ -21,7 +21,7 @@ sealed interface PlacesBetaSettingsState {
     ) : PlacesBetaSettingsState
 }
 
-/** A presentation-only opt-in, exposed in Settings without developer mode. */
+/** One opt-in for Places and history browsing, exposed in Labs without developer mode. */
 class PlacesBetaSettingsViewModel(
     private val flags: FeatureFlagStore,
 ) : ViewModel() {

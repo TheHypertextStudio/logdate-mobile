@@ -59,8 +59,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LocationSettingsScreen(
     onBack: () -> Unit,
-    onOpenLocationTimeline: () -> Unit,
-    onShowLocationTimeline: () -> Unit = onOpenLocationTimeline,
+    onOpenLocationTimeline: (() -> Unit)? = null,
+    onShowLocationTimeline: (() -> Unit)? = onOpenLocationTimeline,
     onNavigateToTrackingOptions: () -> Unit = {},
     onNavigateToInterval: () -> Unit = {},
     viewModel: LocationSettingsViewModel = koinViewModel(),
@@ -88,7 +88,7 @@ fun LocationSettingsContent(
     onBack: () -> Unit,
     onToggleBackgroundTracking: (Boolean) -> Unit,
     onSetCaptureMode: (LocationCaptureMode) -> Unit,
-    onShowLocationTimeline: () -> Unit,
+    onShowLocationTimeline: (() -> Unit)? = null,
     onNavigateToTrackingOptions: () -> Unit,
     onNavigateToInterval: () -> Unit,
     modifier: Modifier = Modifier,
@@ -111,7 +111,7 @@ fun LocationSettingsContent(
     onBack: () -> Unit,
     onToggleBackgroundTracking: (Boolean) -> Unit,
     onSetCaptureMode: (LocationCaptureMode) -> Unit,
-    onShowLocationTimeline: () -> Unit,
+    onShowLocationTimeline: (() -> Unit)?,
     onNavigateToTrackingOptions: () -> Unit,
     onNavigateToInterval: () -> Unit,
     modifier: Modifier = Modifier,
@@ -187,47 +187,49 @@ fun LocationSettingsContent(
                     }
                 }
 
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Spacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.location_timeline),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(vertical = Spacing.sm),
-                    )
-                    OutlinedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onShowLocationTimeline,
+                if (onShowLocationTimeline != null) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
                     ) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(Spacing.md),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                        Text(
+                            text = stringResource(Res.string.location_timeline),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(vertical = Spacing.sm),
+                        )
+                        OutlinedCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = onShowLocationTimeline,
                         ) {
-                            Icon(
-                                Icons.Default.Timeline,
-                                contentDescription = stringResource(Res.string.view_timeline),
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    stringResource(Res.string.view_location_timeline),
-                                    style = MaterialTheme.typography.titleSmall,
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(Spacing.md),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                            ) {
+                                Icon(
+                                    Icons.Default.Timeline,
+                                    contentDescription = stringResource(Res.string.view_timeline),
+                                    tint = MaterialTheme.colorScheme.primary,
                                 )
 
-                                Text(
-                                    stringResource(Res.string.location_timeline_description),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        stringResource(Res.string.view_location_timeline),
+                                        style = MaterialTheme.typography.titleSmall,
+                                    )
+
+                                    Text(
+                                        stringResource(Res.string.location_timeline_description),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
                         }
                     }
@@ -294,48 +296,50 @@ fun LocationSettingsContent(
                     }
                 }
 
-                item {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Spacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.location_timeline),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(vertical = Spacing.sm),
-                        )
-                        OutlinedCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = onShowLocationTimeline,
+                if (onShowLocationTimeline != null) {
+                    item {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = Spacing.lg),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
                         ) {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(Spacing.md),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                            Text(
+                                text = stringResource(Res.string.location_timeline),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(vertical = Spacing.sm),
+                            )
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = onShowLocationTimeline,
                             ) {
-                                Icon(
-                                    Icons.Default.Timeline,
-                                    contentDescription = stringResource(Res.string.view_timeline),
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        stringResource(Res.string.view_location_timeline),
-                                        style = MaterialTheme.typography.titleSmall,
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(Spacing.md),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Timeline,
+                                        contentDescription = stringResource(Res.string.view_timeline),
+                                        tint = MaterialTheme.colorScheme.primary,
                                     )
 
-                                    Text(
-                                        stringResource(Res.string.location_timeline_description),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            stringResource(Res.string.view_location_timeline),
+                                            style = MaterialTheme.typography.titleSmall,
+                                        )
+
+                                        Text(
+                                            stringResource(Res.string.location_timeline_description),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                             }
                         }

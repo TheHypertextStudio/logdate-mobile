@@ -73,7 +73,7 @@ fun NoteViewerScreen(
     onEdit: ((Uuid) -> Unit)? = null,
     journalId: Uuid? = null,
     enableSharedBounds: Boolean = journalId != null,
-    onOpenLocationTimeline: () -> Unit = {},
+    onOpenLocationTimeline: (() -> Unit)? = null,
     onNavigateToNote: (Uuid) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: NoteViewerViewModel =

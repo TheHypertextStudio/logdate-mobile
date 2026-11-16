@@ -339,6 +339,7 @@ fun LogDateNavDisplay(
                                         onShareJournal = { backStack.add(ShareJournalRoute(it)) },
                                         onMergeJournal = { backStack.add(JournalMergeRoute(it.toString())) },
                                         onJournalMerged = { backStack.completeJournalMerge(it) },
+                                        onOpenLocationTimeline = placesLocationAction(placesEnabled, backStack),
                                         onJournalRedirected = { sourceId, destinationId ->
                                             backStack.redirectJournalDetail(sourceId, destinationId)
                                         },
@@ -394,6 +395,7 @@ fun LogDateNavDisplay(
                                             },
                                         onNavigateTo = { route -> backStack.add(route) },
                                         onNavigateToCategory = { backStack.navigateToSettingsCategory(it) },
+                                        onOpenLocationTimeline = placesLocationAction(placesEnabled, backStack),
                                     )
                                     if (isWatchSupported) {
                                         watchEntries(

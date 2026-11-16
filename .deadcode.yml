@@ -77,11 +77,9 @@ entry_points:
   - 'app.logdate.di.initKoinIos'
   # Rendered only by the screenshot tests (app/android-main/src/screenshotTest and the scenes in
   # client/screenshot-scenes), which are not roots: SyncSurfaceScreenshots,
-  # Flow02_02_LocationFlowScreenshots, Flow06_02_RewindStoryScreenshots, SharedDesktopOnlyScenes and
-  # the adaptive audit screenshots.
+  # Flow06_02_RewindStoryScreenshots, SharedDesktopOnlyScenes and the adaptive audit screenshots.
   - 'app.logdate.feature.core.sync.SyncStatusButton'
   - 'app.logdate.feature.core.sync.SyncErrorBanner'
-  - 'app.logdate.feature.location.timeline.ui.LocationTimelineQuickPeekSheet'
   - 'app.logdate.feature.rewind.ui.EmptyRewindContent'
   - 'app.logdate.feature.rewind.ui.detail.RewindUpgradeChip'
   - 'app.logdate.feature.rewind.ui.overview.FirstRewindOnboardingSheetContent'

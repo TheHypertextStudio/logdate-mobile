@@ -6,13 +6,11 @@ This module is the Places destination of LogDate: a screen that shows where the 
 
 Everything lives under `app.logdate.feature.location.timeline`.
 
-| Package                  | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `di`                     | `locationTimelineFeatureModule`, the Koin module that provides `SuggestNearbyHistoryPlacesUseCase`, `HumanLocationHistoryViewModel` and `LocationTimelineViewModel`. `locationTimelineModule` is a deprecated alias for it.                                                                                                                                                                                                                     |
-| `ui`                     | `LocationTimelineScreen`, the entry point other modules call. It reads the `FeatureFlag.HUMAN_LOCATION_HISTORY` flag (enabled by default) and shows either the history workspace or the original timeline screen.                                                                                                                                                                                                                               |
-| `ui` (original timeline) | `LocationTimelineViewModel` combines the current location, recent stops and memory places into a `LocationTimelineUiState`. `LegacyLocationTimelineScreen` and `LocationTimelineContent` render it. `LocationTimelineBottomSheet.kt` holds `LocationTimelineBottomSheet` and the quick-peek sheet. `LocationTimelineMap` is an `expect` composable, and `LocationTimelineStaticMapPreview` draws a static preview where there is no native map. |
-| `ui.model`               | `LocationTimelineUiState` (`Content` or `Error`), `LocationTimelineErrorUiState` (`PermissionRequired`, `LocationServicesDisabled`, `TemporarilyUnavailable`) and the UI models for the current location, places, memory previews and stops.                                                                                                                                                                                                    |
-| `ui.history`             | The history workspace. `HumanLocationHistoryScreen` wires `HumanLocationHistoryViewModel` to `HumanLocationHistoryContent`. State types are in `HumanLocationHistoryState.kt`. `HumanHistoryMapper.kt` maps location day items and journal notes to `HistoryItemUi` and `HistoryMemoryUi`, and the remaining files are the detail, place, edit and map composables.                                                                             |
+| Package      | Contents                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `di`         | `locationTimelineFeatureModule`, the Koin module that provides `SuggestNearbyHistoryPlacesUseCase` and `HumanLocationHistoryViewModel`. `locationTimelineModule` is a deprecated alias for it.                                                                                                                                                                      |
+| `ui`         | `LocationTimelineScreen`, the entry point other modules call. It shows the history workspace only while the Places beta (`FeatureFlag.PLACES_BETA`) is on, and nothing while the saved choice is still loading or the beta is off.                                                                                                                                  |
+| `ui.history` | The history workspace. `HumanLocationHistoryScreen` wires `HumanLocationHistoryViewModel` to `HumanLocationHistoryContent`. State types are in `HumanLocationHistoryState.kt`. `HumanHistoryMapper.kt` maps location day items and journal notes to `HistoryItemUi` and `HistoryMemoryUi`, and the remaining files are the detail, place, edit and map composables. |
 
 ### The history workspace
 
@@ -34,11 +32,11 @@ Strings are Compose resources in `commonMain/composeResources/values`. The gener
 
 ## Platforms
 
-Android, iOS (`iosArm64`, `iosSimulatorArm64`) and desktop JVM (target `desktop`). The `ui` and `ui.history` packages each have `androidMain`, `iosMain` and `jvmMain` implementations of the platform pieces: `formatCoordinateValue`, `LocationTimelineMap`, `rememberHistoryRecordingAccess`, `HumanPlacePicker` and `NativeHistoryMap`. The `jvmMain` directory is added to the `desktopMain` source set.
+Android, iOS (`iosArm64`, `iosSimulatorArm64`) and desktop JVM (target `desktop`). The `ui.history` package has `androidMain`, `iosMain` and `jvmMain` implementations of the platform pieces: `rememberHistoryRecordingAccess`, `HumanPlacePicker` and `NativeHistoryMap`. The `jvmMain` directory is added to the `desktopMain` source set.
 
 ## Running the tests
 
-All tests are in `commonTest` and cover the map geometry and camera policy, the history mapper, the history state and the error mapping:
+The `commonTest` tests cover the map geometry and camera policy, the history mapper and the history state. The `desktopTest` tests check that `LocationTimelineScreen` shows the history workspace only while the Places beta is on:
 
 ```bash
 ./gradlew :client:feature:location-timeline:desktopTest
@@ -48,4 +46,4 @@ All tests are in `commonTest` and cover the map geometry and camera policy, the 
 ## Things to know
 
 - `LocationTimelineScreen` takes `onOpenNote` and `onAddMemory` callbacks. `onAddMemory` receives a `VisitMemoryContext` built from the selected visit.
-- When `HUMAN_LOCATION_HISTORY` is off, `LocationTimelineScreen` shows the original timeline screen, so changes to either presentation should keep both working.
+- `FeatureFlag.HUMAN_LOCATION_HISTORY` controls encrypted history sync only. Turning it off does not hide or change the history workspace, and turning the Places beta off hides the workspace without deleting recorded history.

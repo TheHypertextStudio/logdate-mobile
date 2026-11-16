@@ -123,17 +123,6 @@ sealed class LocationMemoryTimeFilter {
             }
         }
     }
-
-    companion object {
-        val Presets: List<LocationMemoryTimeFilter>
-            get() =
-                listOf(
-                    Last30Days,
-                    Last90Days,
-                    YearToDate,
-                    AllTime,
-                )
-    }
 }
 
 internal fun LocationMemoryTimeFilter.contains(
@@ -188,9 +177,7 @@ data class LocationMemoryPlace(
     val longitude: Double,
     val lastVisitedAt: Instant,
     val memories: List<LocationMemory>,
-) {
-    val memoryCount: Int get() = memories.size
-}
+)
 
 data class LocationMemory(
     val noteId: Uuid,
