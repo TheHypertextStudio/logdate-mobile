@@ -12,9 +12,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.jsonObject
 import studio.hypertext.atproto.identity.AtprotoDid
 import studio.hypertext.atproto.identity.DefaultIdentityResolver
 import studio.hypertext.atproto.identity.DidDocument
@@ -22,10 +20,12 @@ import studio.hypertext.atproto.identity.DidWebResolver
 import studio.hypertext.atproto.identity.Service
 import studio.hypertext.atproto.identity.VerificationMethod
 import studio.hypertext.atproto.identity.WellKnownHandleResolver
+import studio.hypertext.atproto.lexicon.data.LexiconData
 import studio.hypertext.atproto.pds.ResolveHandleResponse
 import studio.hypertext.atproto.repo.DefaultRepoEngine
 import studio.hypertext.atproto.repo.InMemoryRepoBlockStore
 import studio.hypertext.atproto.repo.RepoRecordId
+import studio.hypertext.atproto.sample.lexicon.Note
 import studio.hypertext.atproto.syntax.Handle
 import studio.hypertext.atproto.syntax.Nsid
 import studio.hypertext.atproto.syntax.RecordKey
@@ -38,14 +38,15 @@ fun main() {
     runBlocking {
         val did = AtprotoDid.require("did:web:example.com")
         val handle = Handle.require("alice.example.com")
-        val collection = Nsid.require("studio.hypertext.logdate.entry")
-        val recordKey = RecordKey.require("entry-1")
+        val collection = Nsid.require(Note.TYPE)
+        val recordKey = RecordKey.require("note-1")
+        val note = Note(text = "Hello from a standalone ATProto consumer", createdAt = "2026-01-01T00:00:00.000Z")
         val repoEngine = DefaultRepoEngine(InMemoryRepoBlockStore())
         val httpClient =
             HttpClient(
                 MockEngine { request ->
                     when {
-                        request.url.host == "example.com" && request.url.encodedPath == "/.well-known/did.json" ->
+                        request.url.host == "example.com" && request.url.encodedPath == "/.well-known/did.json" -> {
                             respond(
                                 content =
                                     json.encodeToString(
@@ -74,23 +75,28 @@ fun main() {
                                 status = HttpStatusCode.OK,
                                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        request.url.host == "alice.example.com" && request.url.encodedPath == "/.well-known/atproto-did" ->
+                        request.url.host == "alice.example.com" && request.url.encodedPath == "/.well-known/atproto-did" -> {
                             respond(
                                 content = did.toString(),
                                 status = HttpStatusCode.OK,
                                 headers = headersOf(HttpHeaders.ContentType, ContentType.Text.Plain.toString()),
                             )
+                        }
 
                         request.url.host == "example.com" &&
-                            request.url.encodedPath == "/xrpc/com.atproto.identity.resolveHandle" ->
+                            request.url.encodedPath == "/xrpc/com.atproto.identity.resolveHandle" -> {
                             respond(
                                 content = json.encodeToString(ResolveHandleResponse(did)),
                                 status = HttpStatusCode.OK,
                                 headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
                             )
+                        }
 
-                        else -> error("Unexpected request URL: ${request.url}")
+                        else -> {
+                            error("Unexpected request URL: ${request.url}")
+                        }
                     }
                 },
             ) {
@@ -112,11 +118,7 @@ fun main() {
             .createRecord(
                 repo = did,
                 collection = collection,
-                value =
-                    buildJsonObject {
-                        put("\$type", collection.toString())
-                        put("text", "Hello from a standalone ATProto consumer")
-                    },
+                value = LexiconData.json.encodeToJsonElement(Note.serializer(), note).jsonObject,
                 recordKey = recordKey,
             ).getOrThrow()
 
@@ -134,13 +136,7 @@ fun main() {
 
         check(resolvedHandle.did == did)
         check(didDocument.id == did)
-        check(
-            storedRecord
-                .value
-                .get("text")
-                ?.jsonPrimitive
-                ?.content == "Hello from a standalone ATProto consumer",
-        )
+        check(LexiconData.json.decodeFromJsonElement(Note.serializer(), storedRecord.value) == note)
 
         println("Resolved ${handle.normalized} to ${resolvedHandle.did} and loaded ${storedRecord.uri}")
     }

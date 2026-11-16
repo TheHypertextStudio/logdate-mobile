@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "2.3.21"
+    kotlin("plugin.serialization") version "2.3.21"
+    id("studio.hypertext.atproto.lexicon")
     application
 }
 
@@ -56,6 +58,15 @@ dependencies {
     implementation("studio.hypertext.atproto:atproto-repo")
     implementation("studio.hypertext.atproto:atproto-xrpc")
     implementation("studio.hypertext.atproto:atproto-pds")
+    // The models generated from src/main/lexicons use this library's data types.
+    implementation("studio.hypertext.atproto:atproto-lexicon")
+}
+
+// Generates a Kotlin model for every schema in src/main/lexicons before the sample compiles.
+lexiconModels {
+    schemas.from("src/main/lexicons")
+    basePackage = "studio.hypertext.atproto.sample.lexicon"
+    namespaceLayout = false
 }
 
 application {

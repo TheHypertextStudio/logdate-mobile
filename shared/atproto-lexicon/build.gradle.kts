@@ -2,7 +2,7 @@ import org.gradle.jvm.tasks.Jar
 
 plugins {
     alias(libs.plugins.app.logdate.atproto.published.module)
-    alias(libs.plugins.app.logdate.lexicon.models)
+    alias(libs.plugins.studio.hypertext.atproto.lexicon)
 }
 
 val atprotoIdentityLexiconInputDir = layout.projectDirectory.dir("src/commonMain/resources/com/atproto/identity")
@@ -100,12 +100,15 @@ kotlin {
 
 // Test fixtures: this module's own schemas under src/commonTest/lexicons. The build generates their
 // models before compiling the tests, which round-trip them on every platform, so a schema or
-// generator change reaches the tests with nothing to run by hand. This module is the generator, so
-// it runs its own JVM build.
+// generator change reaches the tests with nothing to run by hand.
 lexiconModels {
     schemas.from(layout.projectDirectory.dir("src/commonTest/lexicons"))
     basePackage = "studio.hypertext.atproto.lexicon.fixtures"
     namespaceLayout = false
     sourceSet = "commonTest"
-    generator.from(tasks.named("jvmJar"), configurations.named("jvmRuntimeClasspath"))
+}
+
+dependencies {
+    // This module is the generator, so it runs its own JVM build.
+    lexiconGenerator(files(tasks.named("jvmJar"), configurations.named("jvmRuntimeClasspath")))
 }

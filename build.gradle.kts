@@ -264,8 +264,9 @@ tasks.register("generateAtprotoDokka") {
 
 tasks.register("publishAtprotoToMavenLocal") {
     group = "publishing"
-    description = "Publish every ATProto module to the local Maven repository."
+    description = "Publish every ATProto module and the lexicon Gradle plugin to the local Maven repository."
     dependsOn(atprotoModulePaths.map { "$it:publishToMavenLocal" })
+    dependsOn(gradle.includedBuild("atproto-lexicon-gradle-plugin").task(":publishToMavenLocal"))
 }
 
 tasks.register("managedPhoneDebugAndroidTest") {

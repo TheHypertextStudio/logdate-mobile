@@ -1,7 +1,7 @@
 import app.logdate.GenerateConformanceFixtures
 
 plugins {
-    alias(libs.plugins.app.logdate.lexicon.models)
+    alias(libs.plugins.studio.hypertext.atproto.lexicon)
     alias(libs.plugins.app.logdate.kmp.library)
 }
 
@@ -14,6 +14,11 @@ lexiconModels {
     basePackage = "app.logdate.lexicon"
     recordIndex = "LogDateRecords"
     schemaIndex = "LogDateSchemas"
+}
+
+dependencies {
+    // Generate with this repository's generator, not the published release the plugin defaults to.
+    lexiconGenerator(projects.shared.atprotoLexicon)
 }
 
 // The conformance tests run the shared client fixtures and the lexicons they were generated from on

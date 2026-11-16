@@ -75,6 +75,7 @@ modules_from_files() {
     # exist for them.
     case "$file" in
       build-logic/*) continue ;;
+      shared/atproto-lexicon-gradle-plugin/*) continue ;;
       samples/atproto-consumer/*) continue ;;
     esac
     dir="$(dirname "$file")"

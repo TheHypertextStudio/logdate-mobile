@@ -5,6 +5,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     includeBuild("build-logic")
+    includeBuild("shared/atproto-lexicon-gradle-plugin")
     repositories {
         google {
             mavenContent {

@@ -116,6 +116,8 @@ The full module set:
 - `studio.hypertext.atproto:atproto-pds:$version`
 - `studio.hypertext.atproto:atproto-pds-runtime:$version`
 - `studio.hypertext.atproto:atproto-oauth-client:$version`
+- `studio.hypertext.atproto:atproto-lexicon-gradle-plugin:$version` (Gradle plugin
+  `studio.hypertext.atproto.lexicon`; see [Generating models from lexicons](#generating-models-from-lexicons))
 
 The repo-wide default version lives in [`gradle.properties`](../../gradle.properties) as
 `atproto.version`.
@@ -235,9 +237,9 @@ Publish locally:
 ./gradlew publishAtprotoToMavenLocal :shared:atproto-bom:publishToMavenLocal
 ```
 
-`publishAtprotoToMavenLocal` publishes the ten Kotlin Multiplatform modules but not the BOM, so
-add `:shared:atproto-bom:publishToMavenLocal` whenever a consumer, such as the standalone sample,
-imports the BOM.
+`publishAtprotoToMavenLocal` publishes the ten Kotlin Multiplatform modules and the lexicon Gradle
+plugin but not the BOM, so add `:shared:atproto-bom:publishToMavenLocal` whenever a consumer, such
+as the standalone sample, imports the BOM.
 
 Publish to a remote Maven repository by setting:
 
@@ -265,11 +267,39 @@ Regenerate the checked-in official AT Protocol lexicon models used by this repo:
 Android Studio users can run the same Dokka task through
 [`Generate ATProto Dokka.run.xml`](../../.run/Generate%20ATProto%20Dokka.run.xml).
 
+## Generating models from lexicons
+
+The `studio.hypertext.atproto.lexicon` Gradle plugin generates `@Serializable` Kotlin classes from
+your own [Lexicon](https://atproto.com/specs/lexicon) schemas on every build, in Kotlin JVM and
+Kotlin Multiplatform projects:
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.21"
+    kotlin("plugin.serialization") version "2.3.21"
+    id("studio.hypertext.atproto.lexicon") version "<version>"
+}
+
+lexiconModels {
+    schemas.from("src/main/lexicons")
+    basePackage = "com.example.models"
+}
+
+dependencies {
+    implementation("studio.hypertext.atproto:atproto-lexicon:<version>")
+}
+```
+
+The [plugin's README](../../shared/atproto-lexicon-gradle-plugin/README.md) explains every option
+and how the plugin finds its generator. The standalone sample below uses the plugin for its own
+record type.
+
 ## Standalone Sample
 
 The consumer sample in [`samples/atproto-consumer`](../../samples/atproto-consumer) is intentionally
 outside the main Gradle build. It depends on `mavenLocal()` artifacts, not project modules, so it
 verifies the published API surface the way an external JVM consumer would.
+It generates the model for its record from a lexicon schema with the lexicon Gradle plugin.
 
 The sample imports `atproto-bom`, so publish the BOM along with the modules first:
 

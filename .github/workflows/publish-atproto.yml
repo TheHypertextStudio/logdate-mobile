@@ -96,5 +96,7 @@ jobs:
             for module in "${MODULES[@]}"; do
               TASKS+=(":shared:atproto-$module:publishAllPublicationsTo$repo")
             done
+            # The lexicon Gradle plugin is its own included build, so its tasks sit under its build name.
+            TASKS+=(":atproto-lexicon-gradle-plugin:publishAllPublicationsTo$repo")
           done
           ./gradlew "${TASKS[@]}"
