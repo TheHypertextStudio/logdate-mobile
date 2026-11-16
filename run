@@ -82,7 +82,7 @@ quality|check|Run all checks (tests + lint)|./gradlew check
 quality|perf:baseline:phone|Generate phone baseline profile|./gradlew generatePhoneBaselineProfile
 quality|perf:baseline:wear|Generate Wear baseline profile|./gradlew generateWearBaselineProfile
 
-docs|docs|Generate the AT Protocol API documentation|./gradlew generateAtprotoDokka
+docs|docs|Generate the API documentation for every module|./gradlew :dokkaGenerate
 docs|docs:open|Open generated documentation|open build/dokka/html/index.html 2>/dev/null || xdg-open build/dokka/html/index.html 2>/dev/null || echo "Open build/dokka/html/index.html"
 docs|docs:performance|Open performance documentation index|open docs/performance/README.md 2>/dev/null || xdg-open docs/performance/README.md 2>/dev/null || echo "Open docs/performance/README.md"
 

@@ -85,6 +85,10 @@ subprojects {
         plugin("org.jlleitschuh.gradle.ktlint")
     }
 
+    if (hasMainSources()) {
+        apply(plugin = "org.jetbrains.dokka")
+    }
+
     configure<KtlintExtension> {
         version.set(ktlintEngineVersion)
         filter {
@@ -206,9 +210,20 @@ fun existingTaskPaths(
         findProject(path)?.tasks?.findByName(taskName)?.path
     }
 
-// The API reference merges every published AT Protocol module into one site at build/dokka/html.
+/**
+ * Empty parent projects and test-only suites have no main source set to document.
+ *
+ * `:app:compose-main` is left out for now: its lifecycle ViewModel Compose APIs resolve to
+ * JetBrains' artifact on desktop and iOS but Google's on Android, so the common metadata
+ * compilation Dokka needs can't see them, although every platform compiles.
+ */
+fun Project.hasMainSources(): Boolean =
+    path != ":app:compose-main" &&
+        file("src").listFiles().orEmpty().any { it.isDirectory && (it.name == "main" || it.name.endsWith("Main")) }
+
+// The API reference merges every module with main sources into one site at build/dokka/html.
 dependencies {
-    atprotoModulePaths.forEach { dokka(project(it)) }
+    subprojects.filter { it.hasMainSources() }.forEach { dokka(project(it.path)) }
 }
 
 tasks.register("generateAtprotoDokka") {
