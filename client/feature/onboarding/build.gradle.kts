@@ -53,6 +53,12 @@ kotlin {
             implementation(compose.desktop.currentOs)
         }
 
+        val androidHostTest by getting
+        androidHostTest.dependencies {
+            // Runs the Android onboarding graph against a real content resolver.
+            implementation(libs.robolectric)
+        }
+
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.koin.android)
