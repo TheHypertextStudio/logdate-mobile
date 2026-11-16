@@ -3,7 +3,12 @@ package app.logdate.feature.core.people.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.repository.knowledge.InferredPeopleRepository
+import app.logdate.client.util.runCatchingUnlessCancelled
+import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
@@ -25,19 +30,24 @@ class PeopleInboxViewModel(
         inferredPeopleRepository
             .observeOpenClusters()
             .mapLatest { clusters ->
-                clusters.map { cluster ->
-                    val evidence =
-                        inferredPeopleRepository
-                            .observeEvidence(cluster.uid)
-                            .first()
-                            .mapNotNull { item -> item.label }
-                            .distinct()
-                            .take(2)
-                    SuggestionUiState(
-                        id = cluster.uid,
-                        nameHint = cluster.displayNameHint,
-                        evidencePreview = evidence,
-                    )
+                coroutineScope {
+                    clusters
+                        .map { cluster ->
+                            async {
+                                val evidence =
+                                    inferredPeopleRepository
+                                        .observeEvidence(cluster.uid)
+                                        .first()
+                                        .mapNotNull { item -> item.label }
+                                        .distinct()
+                                        .take(2)
+                                SuggestionUiState(
+                                    id = cluster.uid,
+                                    nameHint = cluster.displayNameHint,
+                                    evidencePreview = evidence,
+                                )
+                            }
+                        }.awaitAll()
                 }
             }.stateIn(
                 scope = viewModelScope,
@@ -47,19 +57,22 @@ class PeopleInboxViewModel(
 
     init {
         viewModelScope.launch {
-            runCatching { inferredPeopleRepository.refresh() }
+            runCatchingUnlessCancelled { inferredPeopleRepository.refresh() }
+                .onFailure { failure -> Napier.w("Could not refresh people suggestions", failure) }
         }
     }
 
     fun confirm(clusterId: Uuid) {
         viewModelScope.launch {
-            runCatching { inferredPeopleRepository.confirmClusterAsPerson(clusterId) }
+            runCatchingUnlessCancelled { inferredPeopleRepository.confirmClusterAsPerson(clusterId) }
+                .onFailure { failure -> Napier.e("Could not confirm a suggested person", failure) }
         }
     }
 
     fun dismiss(clusterId: Uuid) {
         viewModelScope.launch {
-            runCatching { inferredPeopleRepository.rejectCluster(clusterId) }
+            runCatchingUnlessCancelled { inferredPeopleRepository.rejectCluster(clusterId) }
+                .onFailure { failure -> Napier.e("Could not dismiss a suggested person", failure) }
         }
     }
 }
