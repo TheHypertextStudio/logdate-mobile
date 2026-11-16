@@ -24,6 +24,7 @@ import app.logdate.server.auth.TokenScope
 import app.logdate.server.auth.TokenService
 import app.logdate.server.auth.bearerToken
 import app.logdate.server.clientAddress
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.devices.DeviceLinkService
 import app.logdate.server.devices.DeviceSessionGuard
 import app.logdate.server.devices.DeviceSessionRefresh
@@ -830,7 +831,7 @@ fun Route.authV1Routes(
                                 AuditCategory.AUTH_SIGNIN_PASSKEY_SUCCESS,
                                 mapOf(
                                     AuditKey.ACCOUNT_ID to account.id.toString(),
-                                    AuditKey.CREDENTIAL_ID_HASH to passkeySubject.sha256(),
+                                    AuditKey.CREDENTIAL_ID_HASH to sha256Hex(passkeySubject),
                                     AuditKey.IP_HASH to call.hashRemoteIp(),
                                     AuditKey.USER_AGENT_HASH to call.hashUserAgent(),
                                 ),
@@ -1658,7 +1659,7 @@ private suspend fun resolveGoogleAccount(
                 AuditCategory.AUTH_LINK_GOOGLE_IMPLICIT,
                 mapOf(
                     AuditKey.ACCOUNT_ID to matchedAccount.id.toString(),
-                    AuditKey.PROVIDER_SUBJECT_HASH to claims.subject.sha256(),
+                    AuditKey.PROVIDER_SUBJECT_HASH to sha256Hex(claims.subject),
                     AuditKey.IP_HASH to call.hashRemoteIp(),
                     AuditKey.USER_AGENT_HASH to call.hashUserAgent(),
                 ),
@@ -2146,19 +2147,13 @@ private suspend fun ApplicationCall.enforceRateLimit(
 
 private fun ApplicationCall.hashRemoteIp(): String? {
     val value = clientAddress().ifBlank { return null }
-    return value.sha256()
+    return sha256Hex(value)
 }
 
 private fun ApplicationCall.hashUserAgent(): String? {
     val value = request.headers[HttpHeaders.UserAgent] ?: return null
     if (value.isBlank()) return null
-    return value.sha256()
-}
-
-private fun String.sha256(): String {
-    val digest = java.security.MessageDigest.getInstance("SHA-256")
-    val hash = digest.digest(toByteArray())
-    return hash.joinToString(separator = "") { "%02x".format(it) }
+    return sha256Hex(value)
 }
 
 private fun app.logdate.server.auth.AuthMetricsSnapshot.toPrometheus(): String {

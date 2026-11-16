@@ -1,12 +1,12 @@
 package app.logdate.server.oauth
 
+import app.logdate.server.crypto.sha256
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import studio.hypertext.atproto.crypto.EcCurve
 import studio.hypertext.atproto.crypto.EcKeySupport
 import java.net.URI
 import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 import java.util.Base64
 import kotlin.math.abs
 import kotlin.time.Clock
@@ -115,15 +115,14 @@ class OAuthDpopVerifier(
     /**
      * Computes the DPoP `ath` value for [accessToken].
      */
-    fun accessTokenHash(accessToken: String): String =
-        base64UrlEncode(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(accessToken.toByteArray(StandardCharsets.UTF_8)))
+    fun accessTokenHash(accessToken: String): String = base64UrlEncode(sha256(accessToken))
 
     /**
      * Computes the RFC 7638 thumbprint for [jwk].
      */
     fun jwkThumbprint(jwk: DpopPublicJwk): String {
         val canonical = """{"crv":"${jwk.crv}","kty":"${jwk.kty}","x":"${jwk.x}","y":"${jwk.y}"}"""
-        return base64UrlEncode(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(canonical.toByteArray(StandardCharsets.UTF_8)))
+        return base64UrlEncode(sha256(canonical))
     }
 
     private fun DpopPublicJwk.toPublicKey(): java.security.PublicKey {
@@ -168,7 +167,6 @@ class OAuthDpopVerifier(
 
     private companion object {
         private const val JWT_SEGMENT_COUNT = 3
-        private const val SHA_256_ALGORITHM = "SHA-256"
     }
 }
 

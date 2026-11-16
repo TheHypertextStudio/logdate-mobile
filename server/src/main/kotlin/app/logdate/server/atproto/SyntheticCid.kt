@@ -1,9 +1,9 @@
 package app.logdate.server.atproto
 
+import app.logdate.server.crypto.sha256
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import java.security.MessageDigest
 
 /**
  * Historical synthetic CID helper kept for regression tests around deterministic encoding.
@@ -17,7 +17,7 @@ private object SyntheticCid {
         value: JsonObject,
     ): String {
         val payload = "$uri\n${json.encodeToString(JsonObject.serializer(), value)}".encodeToByteArray()
-        val digest = MessageDigest.getInstance("SHA-256").digest(payload)
+        val digest = sha256(payload)
         val cidBytes =
             encodeVarint(CID_VERSION) + encodeVarint(RAW_CODEC) + byteArrayOf(SHA256_CODE.toByte(), SHA256_SIZE.toByte()) + digest
         return "b${encodeBase32(cidBytes)}"

@@ -1,7 +1,7 @@
 package app.logdate.server.database
 
 import app.logdate.server.auth.RefreshTokenRevocationRepository
-import app.logdate.server.auth.sha256
+import app.logdate.server.crypto.sha256Hex
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.timestamp
@@ -19,7 +19,7 @@ object RevokedRefreshTokensTable : Table("revoked_refresh_tokens") {
 class PostgreSQLRefreshTokenRevocationRepository : RefreshTokenRevocationRepository {
     override suspend fun revoke(refreshToken: String): Boolean {
         if (refreshToken.isBlank()) return false
-        val tokenHash = refreshToken.sha256()
+        val tokenHash = sha256Hex(refreshToken)
         dbQuery {
             RevokedRefreshTokensTable.insertIgnore {
                 it[RevokedRefreshTokensTable.tokenHash] = tokenHash
@@ -31,7 +31,7 @@ class PostgreSQLRefreshTokenRevocationRepository : RefreshTokenRevocationReposit
 
     override suspend fun isRevoked(refreshToken: String): Boolean {
         if (refreshToken.isBlank()) return false
-        val tokenHash = refreshToken.sha256()
+        val tokenHash = sha256Hex(refreshToken)
         return dbQuery {
             RevokedRefreshTokensTable
                 .selectAll()

@@ -2,6 +2,7 @@ package app.logdate.server.oauth
 
 import app.logdate.server.config.AtprotoSigningKeyKek
 import app.logdate.server.config.AtprotoSigningKeyKekDecryptOnly
+import app.logdate.server.crypto.sha256
 import app.logdate.server.identity.AtRestKeyCipher
 import app.logdate.server.identity.AtRestKeyContext
 import kotlinx.serialization.Serializable
@@ -9,7 +10,6 @@ import java.math.BigInteger
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
-import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
@@ -226,7 +226,7 @@ class OAuthKeyService(
         y: String,
     ): String {
         val canonicalJwk = """{"crv":"P-256","kty":"EC","x":"$x","y":"$y"}"""
-        val digest = MessageDigest.getInstance(SHA_256_ALGORITHM).digest(canonicalJwk.toByteArray())
+        val digest = sha256(canonicalJwk)
         return base64Url(digest)
     }
 
@@ -253,7 +253,6 @@ class OAuthKeyService(
         private const val JWS_SIGNATURE_ALGORITHM = "SHA256withECDSAinP1363Format"
         private const val JWK_CURVE_NAME = "P-256"
         private const val P256_CURVE_NAME = "secp256r1"
-        private const val SHA_256_ALGORITHM = "SHA-256"
         private const val P256_COORDINATE_BYTES = 32
         private val DEFAULT_REFRESH_INTERVAL = 1.minutes
     }

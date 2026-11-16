@@ -1,7 +1,7 @@
 package app.logdate.server.identity
 
+import app.logdate.server.crypto.sha256
 import java.security.GeneralSecurityException
-import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.Mac
@@ -112,7 +112,6 @@ class AtRestKeyCipher(
         const val CURRENT_PREFIX = "v2:"
         private const val AES_ALGORITHM = "AES"
         private const val AES_GCM_TRANSFORMATION = "AES/GCM/NoPadding"
-        private const val SHA_256_ALGORITHM = "SHA-256"
         private const val HMAC_SHA_256_ALGORITHM = "HmacSHA256"
         private const val GCM_IV_SIZE = 12
         private const val GCM_TAG_BITS = 128
@@ -129,8 +128,7 @@ class AtRestKeyCipher(
         private fun derivedAesKey(seed: String): SecretKeySpec =
             SecretKeySpec(hkdfSha256(seed.encodeToByteArray(), HKDF_SALT, HKDF_INFO, AES_KEY_BYTES), AES_ALGORITHM)
 
-        private fun legacyAesKey(seed: String): SecretKeySpec =
-            SecretKeySpec(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(seed.toByteArray()), AES_ALGORITHM)
+        private fun legacyAesKey(seed: String): SecretKeySpec = SecretKeySpec(sha256(seed), AES_ALGORITHM)
 
         /** HKDF with SHA-256 (RFC 5869): extract a pseudorandom key from [ikm], then expand it to [length] bytes. */
         fun hkdfSha256(

@@ -2,6 +2,7 @@ package app.logdate.server.oauth
 
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
+import app.logdate.server.crypto.sha256
 import app.logdate.server.identity.AtprotoIdentityService
 import app.logdate.server.passkeys.OAUTH_AUTHORIZATION_CHALLENGE_TYPE
 import app.logdate.server.passkeys.WebAuthnPasskeyService
@@ -13,7 +14,6 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.net.URI
-import java.security.MessageDigest
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -205,8 +205,7 @@ class OAuthPasskeySignInService(
 
 /** A stable ID for [requestUri], so its challenge cannot be spent on any other request. */
 @OptIn(ExperimentalUuidApi::class)
-private fun challengeBinding(requestUri: String): Uuid =
-    Uuid.fromByteArray(MessageDigest.getInstance("SHA-256").digest(requestUri.toByteArray()).copyOf(UUID_BYTES))
+private fun challengeBinding(requestUri: String): Uuid = Uuid.fromByteArray(sha256(requestUri).copyOf(UUID_BYTES))
 
 private const val UUID_BYTES = 16
 
