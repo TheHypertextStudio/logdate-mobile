@@ -13,6 +13,10 @@ import sys
 SDK = Path("/usr/local/lib/android/sdk")
 DOTNET = Path("/usr/share/dotnet")
 MIN_FREE = 12 * 1024**3
+# Deleting the preinstalled .NET tree takes more than two minutes on some hosted images, so it
+# gets its own, longer bound; the SDK manager finishes well inside its two.
+DOTNET_REMOVAL_TIMEOUT = 600
+SDKMANAGER_TIMEOUT = 120
 IMAGE = re.compile(
     r"system-images;android-[0-9]+(?:\.[0-9]+)?;[A-Za-z0-9_]+;(?:x86_64|x86|arm64-v8a|armeabi-v7a)"
 )
@@ -110,7 +114,11 @@ def reclaim(environment, keep_image, run=subprocess.run):
     if remove_dotnet:
         real_directory(DOTNET)
     if remove_dotnet:
-        run(["sudo", "--", "rm", "-rf", "--", str(DOTNET)], check=True, timeout=120)
+        run(
+            ["sudo", "--", "rm", "-rf", "--", str(DOTNET)],
+            check=True,
+            timeout=DOTNET_REMOVAL_TIMEOUT,
+        )
     if packages or ndks:
         run(
             [
@@ -120,7 +128,7 @@ def reclaim(environment, keep_image, run=subprocess.run):
                 *ndks,
             ],
             check=True,
-            timeout=120,
+            timeout=SDKMANAGER_TIMEOUT,
         )
     return {
         "preservedImage": keep_image,

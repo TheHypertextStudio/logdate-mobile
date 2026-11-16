@@ -74,12 +74,12 @@ class NativeHostCapacityTest(unittest.TestCase):
                 for n in ["emulator", "platforms", "build-tools", "ndk"]
             )
         )
-        self.assertTrue(
-            all(
-                call.kwargs["check"] and call.kwargs["timeout"] <= 120
-                for call in run.call_args_list
-            )
+        self.assertTrue(all(call.kwargs["check"] for call in run.call_args_list))
+        self.assertEqual(
+            [HOST.DOTNET_REMOVAL_TIMEOUT, HOST.SDKMANAGER_TIMEOUT],
+            [call.kwargs["timeout"] for call in run.call_args_list],
         )
+        self.assertLessEqual(HOST.DOTNET_REMOVAL_TIMEOUT, 600)
 
     def test_local_self_hosted_and_non_linux_invocations_never_clean(self):
         for change in [
