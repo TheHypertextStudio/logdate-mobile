@@ -29,6 +29,7 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.sync.SyncManager
 import app.logdate.client.sync.SyncTransactionManager
 import app.logdate.client.sync.datalayer.v2.WearFeatures
+import app.logdate.client.sync.datalayer.v2.WearProtocolGate
 import app.logdate.client.sync.datalayer.v2.WindowReason
 import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.client.sync.peer.state.PeerRole
@@ -121,6 +122,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -369,6 +371,12 @@ val wearV2Module =
         }
         single<OutputPicker> { SystemOutputPicker(get()) }
         viewModel {
+            val peers = get<WatchDeliveryPeer>()
+            val links = get<app.logdate.wear.sync.v2.link.WatchLinkStore>()
+            val sessions = get<app.logdate.client.datastore.SessionStorage>()
+            val config = get<app.logdate.shared.config.LogDateConfigRepository>()
+            val phones = get<PhoneLinkRepository>()
+            val protocol = get<WearProtocolGate>()
             WatchSettingsViewModel(
                 syncManager = get(),
                 phoneReachability = get(),
@@ -380,6 +388,17 @@ val wearV2Module =
                 phoneHandoff = get(),
                 reminders = get(),
                 reminderPermissions = get(),
+                connectionDetails =
+                    combine(
+                        phones.observe(),
+                        links.observe(),
+                        sessions.getSessionFlow(),
+                        config.backendUrl,
+                        protocol.isV2Active(),
+                    ) { phone, _, _, _, _ ->
+                        app.logdate.wear.v2.settings
+                            .watchConnectionDetails(phone, peers.current())
+                    },
             )
         }
         single<WatchReminderPreferences> {

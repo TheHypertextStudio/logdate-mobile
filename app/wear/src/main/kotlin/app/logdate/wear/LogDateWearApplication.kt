@@ -5,6 +5,7 @@ import app.logdate.client.data.notes.StoredMediaReferenceMigrationLauncher
 import app.logdate.client.database.LogDateDatabase
 import app.logdate.client.datastore.LogDateConfigDataSource
 import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.device.restore.nativeRestoreDeliveryCompletions
 import app.logdate.client.media.audio.RecordingNotificationDecorator
 import app.logdate.client.notifications.LogDateNotificationChannelKey
 import app.logdate.client.notifications.LogDateNotificationRegistrar
@@ -19,6 +20,7 @@ import app.logdate.wear.launch.FeatureSwitch
 import app.logdate.wear.launch.WearStartup
 import app.logdate.wear.launch.WearStartupObservers
 import app.logdate.wear.launch.WearStartupState
+import app.logdate.wear.launch.restoreWearRemoval
 import app.logdate.wear.recording.OngoingRecordingDecorator
 import app.logdate.wear.recording.WearRecordingRecovery
 import app.logdate.wear.reminders.LegacyPromptAlarms
@@ -29,7 +31,6 @@ import app.logdate.wear.sync.WearDeadLetterMigration
 import app.logdate.wear.sync.v2.WatchStateMirror
 import app.logdate.wear.sync.v2.link.WatchLinkCoordinator
 import app.logdate.wear.sync.v2.media.WatchMediaPrefetchScheduler
-import app.logdate.wear.sync.v2.removal.WatchRemovalRecovery
 import app.logdate.wear.sync.v2.window.WindowReconciler
 import app.logdate.wear.v2.surfaces.SurfaceCoordinator
 import io.github.aakira.napier.DebugAntilog
@@ -38,6 +39,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
@@ -73,12 +76,10 @@ class LogDateWearApplication :
                 koin.get<LogDateDatabase>()
             },
             restoreRemoval = {
-                val recovery =
+                restoreWearRemoval(
                     org.koin.java.KoinJavaComponent
-                        .getKoin()
-                        .get<WatchRemovalRecovery>()
-                recovery.restore()
-                check(recovery.finish()) { "Watch removal is still pending" }
+                        .getKoin(),
+                )
             },
             recoverRecording = { recoverInterruptedRecordings(launchedAtMs) },
             startObservers = { startReadyObservers() },
@@ -128,6 +129,9 @@ class LogDateWearApplication :
         }
 
         startup.start()
+        startupScope.launch {
+            nativeRestoreDeliveryCompletions().drop(1).collect { startup.start() }
+        }
         startupScope.launch {
             startup.state.first { it is WearStartupState.Ready }
             startSurfaces()

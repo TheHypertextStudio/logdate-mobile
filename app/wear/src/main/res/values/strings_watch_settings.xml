@@ -1,17 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <!-- Settings at the end of the moment list, in the new watch app -->
     <plurals name="wear_settings_waiting_for_phone">
         <item quantity="one">%1$d moment waiting for your phone</item>
         <item quantity="other">%1$d moments waiting for your phone</item>
     </plurals>
-    <string name="wear_settings_waiting_for_phone_body">They’re sent when your phone is nearby</string>
+    <string
+    name="wear_settings_waiting_for_phone_body"
+  >They’re sent when your phone is nearby</string>
     <string name="wear_settings_send_failing">Some moments couldn’t reach your phone</string>
     <string name="wear_settings_send_retry">Tap to try again</string>
     <string name="wear_settings_send_retrying">Trying again…</string>
     <string name="wear_settings_backup_failing">Some moments couldn’t back up</string>
     <string name="wear_settings_needs_link">Set up this watch from your phone</string>
-    <string name="wear_settings_needs_link_body">This watch can’t sync until LogDate on your phone sets it up again</string>
+    <string
+    name="wear_settings_needs_link_body"
+  >This watch can’t sync until LogDate on your phone sets it up again</string>
     <string name="wear_settings_haptics_all">All haptics</string>
     <string name="wear_settings_haptics_all_body">Crown ticks and saves too</string>
     <string name="wear_settings_haptics_essential">Essential haptics</string>
@@ -19,9 +23,26 @@
     <string name="wear_settings_places">Places</string>
     <string name="wear_settings_places_body">Save where you are with each moment</string>
     <string name="wear_settings_more_on_phone">More on your phone</string>
-    <string name="wear_settings_more_on_phone_failed">Couldn’t reach your phone. Tap to try again.</string>
+    <string
+    name="wear_settings_more_on_phone_failed"
+  >Couldn’t reach your phone. Tap to try again.</string>
     <string name="wear_settings_reminders">Reminders</string>
     <string name="wear_settings_reminders_off">A nudge to record, at most once a day</string>
     <string name="wear_settings_reminders_workouts">After workouts and in the evening</string>
     <string name="wear_settings_reminders_evening">In the evening</string>
+    <string name="wear_connection_title">Phone and LogDate</string>
+    <string name="wear_connection_phone_reachable">%1$s is reachable</string>
+    <string name="wear_connection_phone_offline">Phone not reachable</string>
+    <string name="wear_connection_phone_unknown">Phone connection not verified</string>
+    <string name="wear_connection_phone_unsupported">Phone connection unavailable</string>
+    <string name="wear_connection_peer_verified">Verified LogDate phone link</string>
+    <string name="wear_connection_linked_phone_offline">Your linked phone is not reachable</string>
+    <string name="wear_connection_peer_unknown">LogDate phone link not verified</string>
+    <string name="wear_connection_account_linked">Linked to your LogDate account</string>
+    <string name="wear_connection_through_phone">Syncs through your phone</string>
+    <string name="wear_connection_account_unknown">LogDate account link not verified</string>
+    <plurals name="wear_connection_pending">
+        <item quantity="one">%d upload waiting</item>
+        <item quantity="other">%d uploads waiting</item>
+    </plurals>
 </resources>

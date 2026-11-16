@@ -20,10 +20,12 @@ import app.logdate.wear.v2.phone.PhoneLinkRepository
 import app.logdate.wear.v2.today.HandoffState
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,6 +43,7 @@ data class WatchSettingsUiState(
     val handoff: HandoffState = HandoffState.IDLE,
     val retrying: Boolean = false,
     val reminders: RemindersSetting = RemindersSetting(),
+    val connection: WatchConnectionDetails = WatchConnectionDetails(),
 )
 
 /** The reminders switch, and whether workout monitoring actually registered. */
@@ -65,6 +68,7 @@ class WatchSettingsViewModel(
     private val phoneHandoff: PhoneHandoff,
     private val reminders: WatchReminders,
     private val reminderPermissions: ReminderPermissions,
+    connectionDetails: Flow<WatchConnectionDetails> = flowOf(WatchConnectionDetails()),
 ) : ViewModel() {
     private val locationGranted = MutableStateFlow(permissionManager.isPermissionGranted(PermissionType.LOCATION))
     private val notificationsGranted = MutableStateFlow(reminderPermissions.notificationsGranted())
@@ -72,6 +76,10 @@ class WatchSettingsViewModel(
     private val retrying = MutableStateFlow(false)
 
     private val status = combine(syncManager.syncStatusFlow, phoneReachability.observe(), ::watchStatusOf)
+    private val connectionStatus =
+        combine(status, connectionDetails, syncManager.syncStatusFlow) { status, details, sync ->
+            status to details.copy(pending = sync.pendingUploads, lastSync = sync.lastSyncTime)
+        }
     private val places =
         combine(locationSettings.observeSettings(), locationGranted) { settings, granted -> settings.autoTrackForJournalEntries && granted }
     private val phoneSettingsNode =
@@ -85,14 +93,15 @@ class WatchSettingsViewModel(
 
     val uiState: StateFlow<WatchSettingsUiState> =
         combine(
-            status,
+            connectionStatus,
             haptics.preference,
             places,
             phoneSettingsNode,
             combine(handoff, retrying, remindersSetting, ::Triple),
         ) { syncStatus, hapticsChoice, placesOn, node, (handoffState, isRetrying, remindersState) ->
             WatchSettingsUiState(
-                status = syncStatus,
+                status = syncStatus.first,
+                connection = syncStatus.second,
                 haptics = hapticsChoice,
                 places = placesOn,
                 phoneSettingsNodeId = node,

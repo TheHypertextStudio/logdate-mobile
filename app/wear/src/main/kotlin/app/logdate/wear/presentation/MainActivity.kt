@@ -13,6 +13,7 @@ import app.logdate.wear.launch.WearExperience
 import app.logdate.wear.launch.WearExperienceGate
 import app.logdate.wear.launch.WearLaunchRequest
 import app.logdate.wear.launch.WearStartupState
+import app.logdate.wear.launch.resolveWearExperience
 import app.logdate.wear.launch.toWearLaunchRequest
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,6 +62,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        // Retry after an unlock/foreground return; start is single-flight and a no-op once ready.
+        (application as LogDateWearApplication).startup.start()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -81,7 +88,7 @@ class MainActivity : ComponentActivity() {
     private fun resolveExperience(savedInstanceState: Bundle?) {
         val restored = WearExperience.fromName(savedInstanceState?.getString(STATE_EXPERIENCE))
         lifecycleScope.launch {
-            experience.value = experienceGate.resolve(restored)
+            experience.value = resolveWearExperience(restored) { experienceGate }
         }
     }
 

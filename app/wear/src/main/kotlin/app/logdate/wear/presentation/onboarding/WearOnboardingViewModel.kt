@@ -38,7 +38,7 @@ class WearOnboardingViewModel(
                         is PhoneLink.Connected -> PhoneCheckState.Connected(link.nodeId, link.phoneName)
                         is PhoneLink.AppMissing -> PhoneCheckState.AppMissing(link.nodeId)
                         PhoneLink.Unsupported -> PhoneCheckState.Unsupported
-                        PhoneLink.NotConnected -> PhoneCheckState.NotConnected
+                        is PhoneLink.AppUnknown, PhoneLink.Unknown, PhoneLink.NotConnected -> PhoneCheckState.NotConnected
                     }
                 } catch (cancelled: CancellationException) {
                     throw cancelled

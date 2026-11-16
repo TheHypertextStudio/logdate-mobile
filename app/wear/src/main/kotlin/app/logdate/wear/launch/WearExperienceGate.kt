@@ -63,3 +63,19 @@ class WearExperienceGate(
         val FLAG_READ_TIMEOUT: Duration = 2.seconds
     }
 }
+
+/** Resolves the presentation choice after storage and removal startup has succeeded. */
+internal suspend fun resolveWearExperience(
+    restored: WearExperience?,
+    gate: () -> WearExperienceGate,
+): WearExperience {
+    if (restored != null) return restored
+    return try {
+        gate().resolve()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Napier.e("Could not construct the watch presentation preference; opening local legacy navigation", error)
+        WearExperience.V1
+    }
+}

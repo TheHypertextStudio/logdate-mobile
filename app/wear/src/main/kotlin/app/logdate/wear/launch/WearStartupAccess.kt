@@ -25,3 +25,12 @@ internal suspend fun Context.resolveWearServiceKoin(readinessTimeoutMs: Long = 1
         null
     }
 }
+
+/** The application startup removal path, shared with cold-entry regression tests. */
+internal suspend fun restoreWearRemoval(koin: org.koin.core.Koin) {
+    val marker = koin.get<app.logdate.wear.sync.v2.removal.WatchRemovalLock>().state()
+    if (marker != "wiping" && marker?.startsWith("wiping:") != true && marker?.startsWith("wiping-revoked:") != true) return
+    val recovery = koin.get<app.logdate.wear.sync.v2.removal.WatchRemovalRecovery>()
+    recovery.restore()
+    check(recovery.finish()) { "Watch removal is still pending" }
+}

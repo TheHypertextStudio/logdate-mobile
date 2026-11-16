@@ -57,11 +57,11 @@ class PhoneLinkRepositoryTest {
         }
 
     @Test
-    fun `a connected Android phone without LogDate is missing the app`() =
+    fun `a missing advertisement does not establish app absence`() =
         runTest {
             connected(node("phone-1", "Pixel 9"))
 
-            assertEquals(PhoneLink.AppMissing(nodeId = "phone-1"), repository.current())
+            assertEquals(PhoneLink.AppUnknown(nodeId = "phone-1"), repository.current())
         }
 
     @Test
@@ -89,23 +89,23 @@ class PhoneLinkRepositoryTest {
         }
 
     @Test
-    fun `a failed lookup is reported as not connected`() =
+    fun `a failed lookup stays unknown`() =
         runTest {
             every {
                 capabilityClient.getCapability(WearDataLayerClient.PHONE_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
             } returns Tasks.forException(IllegalStateException("Wearable API unavailable"))
 
-            assertEquals(PhoneLink.NotConnected, repository.current())
+            assertEquals(PhoneLink.Unknown, repository.current())
         }
 
     @Test
-    fun `a lookup Play services never answers is reported as not connected`() =
+    fun `a lookup Play services never answers stays unknown`() =
         runTest {
             every {
                 capabilityClient.getCapability(WearDataLayerClient.PHONE_CAPABILITY, CapabilityClient.FILTER_REACHABLE)
             } returns TaskCompletionSource<CapabilityInfo>().task
 
-            assertEquals(PhoneLink.NotConnected, repository(UnconfinedTestDispatcher(testScheduler)).current())
+            assertEquals(PhoneLink.Unknown, repository(UnconfinedTestDispatcher(testScheduler)).current())
         }
 
     @Test
@@ -115,7 +115,7 @@ class PhoneLinkRepositoryTest {
             every { capabilityClient.addListener(any(), WearDataLayerClient.PHONE_CAPABILITY) } returns TaskCompletionSource<Void>().task
 
             repository(UnconfinedTestDispatcher(testScheduler)).observe().test {
-                assertEquals(PhoneLink.AppMissing(nodeId = "phone-1"), awaitItem())
+                assertEquals(PhoneLink.AppUnknown(nodeId = "phone-1"), awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -126,7 +126,7 @@ class PhoneLinkRepositoryTest {
             connected(node("phone-1", "Pixel 9"))
 
             repository.observe().test {
-                assertEquals(PhoneLink.AppMissing(nodeId = "phone-1"), awaitItem())
+                assertEquals(PhoneLink.AppUnknown(nodeId = "phone-1"), awaitItem())
 
                 reachable(node("phone-1", "Pixel 9"))
                 listener.captured.onCapabilityChanged(mockk<CapabilityInfo>())
