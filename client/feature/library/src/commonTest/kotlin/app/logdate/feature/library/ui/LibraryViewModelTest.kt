@@ -50,7 +50,7 @@ class LibraryViewModelTest {
         runTest(testDispatcher) {
             val notesRepository = FakeJournalNotesRepository()
             val repository = FakeIndexedMediaRepository()
-            val viewModel = LibraryViewModel(notesRepository, repository)
+            val viewModel = LibraryViewModel(notesRepository, repository, testDispatcher)
             assertEquals(LibraryUiState.Loading, viewModel.uiState.value)
         }
 
@@ -59,7 +59,7 @@ class LibraryViewModelTest {
         runTest(testDispatcher) {
             val notesRepository = FakeJournalNotesRepository(emptyList())
             val repository = FakeIndexedMediaRepository(emptyList())
-            val viewModel = LibraryViewModel(notesRepository, repository)
+            val viewModel = LibraryViewModel(notesRepository, repository, testDispatcher)
 
             val collectJob = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -75,7 +75,7 @@ class LibraryViewModelTest {
                 object : IndexedMediaRepository by FakeIndexedMediaRepository() {
                     override fun observeAllMedia() = flow<List<IndexedMedia>> { error("database unavailable") }
                 }
-            val viewModel = LibraryViewModel(FakeJournalNotesRepository(), failingRepository)
+            val viewModel = LibraryViewModel(FakeJournalNotesRepository(), failingRepository, testDispatcher)
 
             val collectJob = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -101,7 +101,7 @@ class LibraryViewModelTest {
                     override fun observeAllMedia() =
                         if (failing) flow<List<IndexedMedia>> { error("database unavailable") } else flowOf(media)
                 }
-            val viewModel = LibraryViewModel(FakeJournalNotesRepository(), repository)
+            val viewModel = LibraryViewModel(FakeJournalNotesRepository(), repository, testDispatcher)
             val collectJob = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
             assertIs<LibraryUiState.Error>(viewModel.uiState.value)
@@ -132,7 +132,7 @@ class LibraryViewModelTest {
                     ),
                 )
             val repository = FakeIndexedMediaRepository(media)
-            val viewModel = LibraryViewModel(FakeJournalNotesRepository(emptyList()), repository)
+            val viewModel = LibraryViewModel(FakeJournalNotesRepository(emptyList()), repository, testDispatcher)
 
             val collectJob = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -161,6 +161,7 @@ class LibraryViewModelTest {
                 LibraryViewModel(
                     FakeJournalNotesRepository(notes),
                     FakeIndexedMediaRepository(emptyList()),
+                    testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -204,6 +205,7 @@ class LibraryViewModelTest {
                 LibraryViewModel(
                     FakeJournalNotesRepository(notes),
                     FakeIndexedMediaRepository(indexedMedia),
+                    testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -238,7 +240,7 @@ class LibraryViewModelTest {
                     ),
                 )
             val repository = FakeIndexedMediaRepository(media)
-            val viewModel = LibraryViewModel(FakeJournalNotesRepository(emptyList()), repository)
+            val viewModel = LibraryViewModel(FakeJournalNotesRepository(emptyList()), repository, testDispatcher)
 
             val collectJob = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -262,7 +264,7 @@ class LibraryViewModelTest {
                     ),
                 )
             val repository = FakeIndexedMediaRepository(media)
-            val viewModel = LibraryViewModel(FakeJournalNotesRepository(emptyList()), repository)
+            val viewModel = LibraryViewModel(FakeJournalNotesRepository(emptyList()), repository, testDispatcher)
 
             val collectJob = launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -291,6 +293,7 @@ class LibraryViewModelTest {
                 LibraryViewModel(
                     FakeJournalNotesRepository(notes),
                     FakeIndexedMediaRepository(emptyList()),
+                    testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }

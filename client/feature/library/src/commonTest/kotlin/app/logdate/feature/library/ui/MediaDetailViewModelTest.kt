@@ -10,6 +10,7 @@ import app.logdate.client.repository.journals.NoteCoordinates
 import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.client.repository.media.ExifMetadata
 import app.logdate.client.repository.media.IndexedMedia
+import app.logdate.client.repository.media.IndexedMediaRepository
 import app.logdate.client.repository.places.UserPlacesRepository
 import app.logdate.feature.library.fakes.FakeIndexedMediaRepository
 import app.logdate.feature.library.fakes.FakeJournalContentRepository
@@ -21,6 +22,7 @@ import app.logdate.shared.model.Location
 import app.logdate.shared.model.Place
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -33,6 +35,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -106,6 +109,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -128,6 +132,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -159,6 +164,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -193,6 +199,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -227,6 +234,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -262,6 +270,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -304,6 +313,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -341,6 +351,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -389,6 +400,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -431,6 +443,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -488,6 +501,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -582,6 +596,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val collectJob = launch { viewModel.uiState.collect {} }
@@ -640,6 +655,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val stateJob = launch { viewModel.uiState.collect {} }
@@ -695,6 +711,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val stateJob = launch { viewModel.uiState.collect {} }
@@ -739,6 +756,7 @@ class MediaDetailViewModelTest {
                     indexedMediaRepository,
                     resolveLocationUseCase,
                     remoteDisplayManager,
+                    workContext = testDispatcher,
                 )
 
             val stateJob = launch { viewModel.uiState.collect {} }
@@ -759,4 +777,82 @@ class MediaDetailViewModelTest {
             viewerJob.cancel()
             stateJob.cancel()
         }
+
+    @Test
+    fun `moving between items reuses the loaded library`() =
+        runTest(testDispatcher) {
+            val (firstMediaId, _) = twoImages()
+            val viewModel =
+                MediaDetailViewModel(
+                    firstMediaId,
+                    FakeJournalNotesRepository(emptyList()),
+                    contentRepository,
+                    indexedMediaRepository,
+                    resolveLocationUseCase,
+                    remoteDisplayManager,
+                    workContext = testDispatcher,
+                )
+            val stateJob = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            val loadedItems = viewModel.viewerState.value.mediaItems
+
+            viewModel.selectMedia(0)
+            advanceUntilIdle()
+            viewModel.selectMedia(1)
+            advanceUntilIdle()
+
+            assertSame(loadedItems, viewModel.viewerState.value.mediaItems)
+            assertEquals(1, viewModel.viewerState.value.currentIndex)
+            stateJob.cancel()
+        }
+
+    @Test
+    fun `moving on while details still load shows the newly selected item`() =
+        runTest(testDispatcher) {
+            val (firstMediaId, secondMediaId) = twoImages()
+            val slowFirstDetails =
+                object : IndexedMediaRepository by indexedMediaRepository {
+                    override suspend fun getExifMetadata(uid: Uuid): ExifMetadata? =
+                        if (uid == firstMediaId) awaitCancellation() else indexedMediaRepository.getExifMetadata(uid)
+                }
+            val viewModel =
+                MediaDetailViewModel(
+                    firstMediaId,
+                    FakeJournalNotesRepository(emptyList()),
+                    contentRepository,
+                    slowFirstDetails,
+                    resolveLocationUseCase,
+                    remoteDisplayManager,
+                    workContext = testDispatcher,
+                )
+            val stateJob = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            assertIs<MediaDetailUiState.Loading>(viewModel.uiState.value)
+
+            viewModel.selectMedia(0)
+            advanceUntilIdle()
+
+            assertEquals(secondMediaId, assertIs<MediaDetailUiState.ImageContent>(viewModel.uiState.value).mediaId)
+            stateJob.cancel()
+        }
+
+    private fun twoImages(): Pair<Uuid, Uuid> {
+        val firstMediaId = Uuid.random()
+        val secondMediaId = Uuid.random()
+        indexedMediaRepository.setMedia(
+            listOf(
+                IndexedMedia.Image(
+                    uid = firstMediaId,
+                    uri = "content://media/external/images/first",
+                    timestamp = Instant.fromEpochMilliseconds(1710000000000),
+                ),
+                IndexedMedia.Image(
+                    uid = secondMediaId,
+                    uri = "content://media/external/images/second",
+                    timestamp = Instant.fromEpochMilliseconds(1710100000000),
+                ),
+            ),
+        )
+        return firstMediaId to secondMediaId
+    }
 }
