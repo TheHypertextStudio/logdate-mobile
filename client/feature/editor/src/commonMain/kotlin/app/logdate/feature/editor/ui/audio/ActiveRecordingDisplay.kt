@@ -351,12 +351,14 @@ private fun RecordingDockHeader(
     showDuration: Boolean,
 ) {
     val selectableInputs =
-        inputSelection
-            ?.devices
-            .orEmpty()
-            .filter {
-                it.isAvailable && it.kind == MediaDeviceKind.AUDIO_INPUT && it.category != MediaDeviceCategory.SYSTEM_DEFAULT
-            }.distinctBy { it.groupKey }
+        remember(inputSelection?.devices) {
+            inputSelection
+                ?.devices
+                .orEmpty()
+                .filter {
+                    it.isAvailable && it.kind == MediaDeviceKind.AUDIO_INPUT && it.category != MediaDeviceCategory.SYSTEM_DEFAULT
+                }.distinctBy { it.groupKey }
+        }
     val canSwitch = inputSelection != null && inputSelection.isSelectionControllable && selectableInputs.size > 1
     if (!showDuration && !canSwitch && !isPaused) return
     Row(
@@ -545,7 +547,7 @@ private fun LiveTranscriptText(
     text: String,
     isRefining: Boolean,
 ) {
-    val paragraphs = text.split(Regex("\\n\\s*\\n")).map { it.trim() }.filter { it.isNotBlank() }
+    val paragraphs = remember(text) { text.split(PARAGRAPH_BREAK).map { it.trim() }.filter { it.isNotBlank() } }
     Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
         paragraphs.forEachIndexed { index, paragraph ->
             val isLatest = index == paragraphs.lastIndex
@@ -576,3 +578,5 @@ internal fun formatDuration(duration: Duration): String {
 
     return "$minutesStr:$secondsStr"
 }
+
+private val PARAGRAPH_BREAK = Regex("\\n\\s*\\n")

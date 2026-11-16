@@ -32,7 +32,8 @@ internal fun HandwritingRealEditorContent(
             }
 
             resumeSaved -> {
-                notes.allNotesObserved
+                notes
+                    .observeNotesStream(RECENT_ENTRIES_TO_RESUME)
                     .first()
                     .filterIsInstance<JournalNote.Handwriting>()
                     .maxByOrNull { it.creationTimestamp }
@@ -51,3 +52,5 @@ internal fun HandwritingRealEditorContent(
         handwritingEnabled = true,
     )
 }
+
+private const val RECENT_ENTRIES_TO_RESUME = 200
