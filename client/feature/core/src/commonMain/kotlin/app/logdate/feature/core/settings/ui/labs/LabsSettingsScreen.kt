@@ -13,10 +13,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.feature.core.settings.ui.PlacesBetaSettingsItem
+import app.logdate.feature.core.settings.ui.PlacesBetaSettingsViewModel
 import app.logdate.feature.core.settings.ui.rememberReminderSettingsAccess
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
@@ -33,24 +37,31 @@ import logdate.client.feature.core.generated.resources.labs_intro
 import logdate.client.feature.core.generated.resources.labs_section_unreleased
 import logdate.client.feature.core.generated.resources.labs_settings_title
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Labs: switches for features that have not launched, for testing them in a release build.
  *
- * Settings has no row for it; tapping the version on the About page seven times opens it.
+ * Public betas are available from About; internal previews retain developer-mode access.
  */
 @Composable
 fun LabsSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LabsSettingsViewModel = koinViewModel(),
+    placesBetaViewModel: PlacesBetaSettingsViewModel = koinViewModel(),
+    preferences: LogdatePreferencesDataSource = koinInject(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val access = rememberReminderSettingsAccess()
+    val placesBetaState by placesBetaViewModel.state.collectAsStateWithLifecycle()
+    val developerMode by remember(preferences) { preferences.observeDeveloperModeEnabled() }.collectAsStateWithLifecycle(false)
 
     LabsSettingsContent(
         uiState = uiState,
+        developerModeEnabled = developerMode,
+        betaSettingsContent = { PlacesBetaSettingsItem(placesBetaState, placesBetaViewModel::setEnabled) },
         onBack = onBack,
         onSetEnabled = { flag, enabled ->
             viewModel.setEnabled(flag, enabled)
@@ -70,6 +81,8 @@ fun LabsSettingsContent(
     modifier: Modifier = Modifier,
     activityAllowed: Boolean = true,
     onAllowActivity: () -> Unit = {},
+    developerModeEnabled: Boolean = false,
+    betaSettingsContent: (@Composable () -> Unit)? = null,
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -101,6 +114,8 @@ fun LabsSettingsContent(
             ) {
                 LabsFlagsSection(
                     uiState = uiState,
+                    developerModeEnabled = developerModeEnabled,
+                    betaSettingsContent = betaSettingsContent,
                     onSetEnabled = onSetEnabled,
                     activityAllowed = activityAllowed,
                     onAllowActivity = onAllowActivity,
@@ -119,6 +134,8 @@ fun LabsSettingsContent(
                 item {
                     LabsFlagsSection(
                         uiState = uiState,
+                        developerModeEnabled = developerModeEnabled,
+                        betaSettingsContent = betaSettingsContent,
                         onSetEnabled = onSetEnabled,
                         activityAllowed = activityAllowed,
                         onAllowActivity = onAllowActivity,
@@ -146,10 +163,13 @@ private fun LabsFlagsSection(
     onSetEnabled: (FeatureFlag, Boolean) -> Unit,
     activityAllowed: Boolean,
     onAllowActivity: () -> Unit,
+    developerModeEnabled: Boolean,
+    betaSettingsContent: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    if (uiState !is LabsUiState.Ready) return
-    if (uiState.flags.isEmpty()) {
+    val flags = if (developerModeEnabled) (uiState as? LabsUiState.Ready)?.flags.orEmpty() else emptyList()
+    if (betaSettingsContent == null && uiState !is LabsUiState.Ready) return
+    if (betaSettingsContent == null && flags.isEmpty()) {
         Text(
             text = stringResource(Res.string.labs_empty),
             style = MaterialTheme.typography.bodyMedium,
@@ -161,7 +181,8 @@ private fun LabsFlagsSection(
         title = stringResource(Res.string.labs_section_unreleased),
         modifier = modifier,
     ) {
-        uiState.flags.forEach { row ->
+        betaSettingsContent?.invoke()
+        flags.forEach { row ->
             val copy = row.flag.labsCopy() ?: return@forEach
             ToggleSettingsItem(
                 title = stringResource(copy.title),

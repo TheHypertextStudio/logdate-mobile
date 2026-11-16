@@ -144,6 +144,7 @@ private fun Labs(
     LogDateTheme(dynamicColor = false, darkTheme = false) {
         LabsSettingsContent(
             uiState = uiState,
+            developerModeEnabled = true,
             onBack = {},
             onSetEnabled = onSetEnabled,
             activityAllowed = activityAllowed,

@@ -13,11 +13,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.feature.core.settings.ui.watch.WatchDeviceCard
 import app.logdate.feature.core.settings.ui.watch.WatchSettingsViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
@@ -63,9 +63,7 @@ fun SettingsOverviewScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsOverviewViewModel = koinViewModel(),
     campfireViewModel: CampfireViewModel = koinViewModel(),
-    placesBetaViewModel: PlacesBetaSettingsViewModel = koinViewModel(),
 ) {
-    val placesBetaState by placesBetaViewModel.state.collectAsStateWithLifecycle()
     val flags = koinInject<FeatureFlagStore>()
     val watchRedesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
     val deviceCards: (@Composable () -> Unit)? =
@@ -118,8 +116,6 @@ fun SettingsOverviewScreen(
         campfire = campfire,
         modifier = modifier,
         deviceCards = deviceCards,
-        placesBetaState = placesBetaState,
-        onSetPlacesBetaEnabled = placesBetaViewModel::setEnabled,
     )
 }
 
@@ -153,8 +149,6 @@ fun SettingsOverviewContent(
     campfire: CampfirePresentation? = null,
     modifier: Modifier = Modifier,
     deviceCards: (@Composable () -> Unit)? = null,
-    placesBetaState: PlacesBetaSettingsState = PlacesBetaSettingsState.Loading,
-    onSetPlacesBetaEnabled: (Boolean) -> Unit = {},
 ) {
     FoldableBookLayout(
         modifier = modifier,
@@ -182,7 +176,6 @@ fun SettingsOverviewContent(
                     onNavigateToEventsSettings = onNavigateToEventsSettings,
                     onNavigateToPeopleSettings = onNavigateToPeopleSettings,
                     onNavigateToLibrarySettings = onNavigateToLibrarySettings,
-                    placesBetaSettings = { PlacesBetaSettingsItem(placesBetaState, onSetPlacesBetaEnabled) },
                 )
             }
         },
@@ -240,7 +233,6 @@ fun SettingsOverviewContent(
                         onNavigateToEventsSettings = onNavigateToEventsSettings,
                         onNavigateToPeopleSettings = onNavigateToPeopleSettings,
                         onNavigateToLibrarySettings = onNavigateToLibrarySettings,
-                        placesBetaSettings = { PlacesBetaSettingsItem(placesBetaState, onSetPlacesBetaEnabled) },
                     )
                 }
 
