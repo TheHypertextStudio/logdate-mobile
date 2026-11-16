@@ -12,6 +12,8 @@ import app.logdate.client.domain.recommendation.AmbientPromptTime
 import app.logdate.client.domain.recommendation.MemoriesSettings
 import app.logdate.client.sync.SyncStatus
 import app.logdate.client.text.toUiText
+import app.logdate.feature.core.activity.PhoneActivityLink
+import app.logdate.feature.core.activity.PhoneActivityLinkState
 import app.logdate.feature.core.settings.ui.AdvancedSettingsContent
 import app.logdate.feature.core.settings.ui.BirthdaySettingsContent
 import app.logdate.feature.core.settings.ui.DayBoundarySettingsContent
@@ -309,7 +311,7 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                     ),
                 onBack = {},
                 onSetEnabled = { _, _ -> },
-                activityAllowed = false,
+                activityLink = PhoneActivityLink(PhoneActivityLinkState.Denied, optedIn = true),
             )
         },
         sharedScene(SharedScreenshotSceneId.EventsSettings, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {

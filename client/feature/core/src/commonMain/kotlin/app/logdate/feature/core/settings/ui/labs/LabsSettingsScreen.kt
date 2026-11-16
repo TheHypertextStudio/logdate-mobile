@@ -10,14 +10,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
-import app.logdate.feature.core.settings.ui.rememberReminderSettingsAccess
+import app.logdate.feature.core.activity.PhoneActivityLink
+import app.logdate.feature.core.activity.PhoneActivityLinkState
+import app.logdate.feature.core.activity.busy
+import app.logdate.feature.core.activity.detail
+import app.logdate.feature.core.activity.rememberPhoneActivityLink
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
@@ -25,13 +28,15 @@ import app.logdate.ui.common.SimpleSettingsItem
 import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.labs_activity_permission_action
-import logdate.client.feature.core.generated.resources.labs_activity_permission_description
-import logdate.client.feature.core.generated.resources.labs_activity_permission_title
+import logdate.client.feature.core.generated.resources.labs_activity_awareness_description
+import logdate.client.feature.core.generated.resources.labs_activity_awareness_title
 import logdate.client.feature.core.generated.resources.labs_empty
 import logdate.client.feature.core.generated.resources.labs_intro
 import logdate.client.feature.core.generated.resources.labs_section_unreleased
 import logdate.client.feature.core.generated.resources.labs_settings_title
+import logdate.client.feature.core.generated.resources.phone_activity_link
+import logdate.client.feature.core.generated.resources.phone_activity_open_settings
+import logdate.client.feature.core.generated.resources.phone_activity_unlink
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -48,17 +53,11 @@ fun LabsSettingsScreen(
     viewModel: LabsSettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val access = rememberReminderSettingsAccess()
-
     LabsSettingsContent(
         uiState = uiState,
         onBack = onBack,
-        onSetEnabled = { flag, enabled ->
-            viewModel.setEnabled(flag, enabled)
-            if (flag == FeatureFlag.ACTIVITY_AWARENESS && enabled && !access.activityAllowed) access.resolveActivity()
-        },
-        activityAllowed = access.activityAllowed,
-        onAllowActivity = access.resolveActivity,
+        onSetEnabled = viewModel::setEnabled,
+        activityLink = rememberPhoneActivityLink(),
         modifier = modifier,
     )
 }
@@ -69,8 +68,7 @@ fun LabsSettingsContent(
     onBack: () -> Unit,
     onSetEnabled: (FeatureFlag, Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    activityAllowed: Boolean = true,
-    onAllowActivity: () -> Unit = {},
+    activityLink: PhoneActivityLink = PhoneActivityLink(PhoneActivityLinkState.Unavailable),
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -103,8 +101,7 @@ fun LabsSettingsContent(
                 LabsFlagsSection(
                     uiState = uiState,
                     onSetEnabled = onSetEnabled,
-                    activityAllowed = activityAllowed,
-                    onAllowActivity = onAllowActivity,
+                    activityLink = activityLink,
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 )
             }
@@ -121,8 +118,7 @@ fun LabsSettingsContent(
                     LabsFlagsSection(
                         uiState = uiState,
                         onSetEnabled = onSetEnabled,
-                        activityAllowed = activityAllowed,
-                        onAllowActivity = onAllowActivity,
+                        activityLink = activityLink,
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     )
                 }
@@ -145,8 +141,7 @@ private fun LabsIntro(modifier: Modifier = Modifier) {
 private fun LabsFlagsSection(
     uiState: LabsUiState,
     onSetEnabled: (FeatureFlag, Boolean) -> Unit,
-    activityAllowed: Boolean,
-    onAllowActivity: () -> Unit,
+    activityLink: PhoneActivityLink,
     modifier: Modifier = Modifier,
 ) {
     if (uiState !is LabsUiState.Ready) return
@@ -163,6 +158,10 @@ private fun LabsFlagsSection(
         modifier = modifier,
     ) {
         uiState.flags.forEach { row ->
+            if (row.flag == FeatureFlag.ACTIVITY_AWARENESS) {
+                PhoneActivitySettingsRows(activityLink)
+                return@forEach
+            }
             val copy = row.flag.labsCopy() ?: return@forEach
             ToggleSettingsItem(
                 title = stringResource(copy.title),
@@ -170,14 +169,33 @@ private fun LabsFlagsSection(
                 checked = row.enabled,
                 onCheckedChange = { enabled -> onSetEnabled(row.flag, enabled) },
             )
-            if (row.flag == FeatureFlag.ACTIVITY_AWARENESS && row.enabled && !activityAllowed) {
-                SimpleSettingsItem(
-                    title = stringResource(Res.string.labs_activity_permission_title),
-                    description = stringResource(Res.string.labs_activity_permission_description),
-                ) {
-                    TextButton(onClick = onAllowActivity) { Text(stringResource(Res.string.labs_activity_permission_action)) }
-                }
-            }
         }
+    }
+}
+
+@Composable
+private fun PhoneActivitySettingsRows(link: PhoneActivityLink) {
+    val unlink = link.state == PhoneActivityLinkState.Linked || link.state == PhoneActivityLinkState.UnlinkWriteFailed
+    val (title, action) =
+        when {
+            unlink -> Res.string.phone_activity_unlink to link.onUnlink
+            link.state == PhoneActivityLinkState.Denied -> Res.string.phone_activity_open_settings to link.onOpenSettings
+            link.state == PhoneActivityLinkState.Unavailable -> Res.string.labs_activity_awareness_title to null
+            else -> Res.string.phone_activity_link to link.onLink
+        }
+    SimpleSettingsItem(
+        title = stringResource(title),
+        description = stringResource(link.state.detail() ?: Res.string.labs_activity_awareness_description),
+        enabled = !link.state.busy,
+        onClick = action,
+        action = {},
+    )
+    if (link.optedIn && !unlink && !link.state.busy) {
+        SimpleSettingsItem(
+            title = stringResource(Res.string.phone_activity_unlink),
+            description = null,
+            onClick = link.onUnlink,
+            action = {},
+        )
     }
 }

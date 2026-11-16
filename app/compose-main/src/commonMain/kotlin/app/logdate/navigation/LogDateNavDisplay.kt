@@ -26,6 +26,7 @@ import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import app.logdate.client.datastore.featureflags.PHONE_ACTIVITY_CONSENT_STORE
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchResult
 import app.logdate.client.sensor.GyroSensorProvider
@@ -115,9 +116,12 @@ import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.provenance.LocalActivityContextVisible
 import app.logdate.ui.provenance.LocalWatchProvenanceVisible
 import app.logdate.ui.theme.LogDateTheme
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
 
 /**
  * Multiplatform Navigation 3 root. Feature entry helpers and inline [taggedEntry]
@@ -146,8 +150,12 @@ fun LogDateNavDisplay(
     val gyroSensor: GyroSensorProvider = koinInject()
     val watchExperienceEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }
         .collectAsState(initial = FeatureFlag.WATCH_EXPERIENCE_V2.defaultEnabled)
-    val activityAwarenessEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.ACTIVITY_AWARENESS) }
-        .collectAsState(initial = FeatureFlag.ACTIVITY_AWARENESS.defaultEnabled)
+    val koin = getKoin()
+    val activityAwarenessEnabled by remember(koin) {
+        koin
+            .getOrNull<FeatureFlagStore>(named(PHONE_ACTIVITY_CONSENT_STORE))
+            ?.observe(FeatureFlag.ACTIVITY_AWARENESS) ?: flowOf(false)
+    }.collectAsState(initial = false)
     val backStack = rememberNavBackStack(appNavSavedStateConfiguration, BaseRoute)
     val placesEnabled by rememberPlacesBetaNavigation(workspaceFlags, backStack, appUiState.isOnboarded, appUiState.requiresUnlock)
 

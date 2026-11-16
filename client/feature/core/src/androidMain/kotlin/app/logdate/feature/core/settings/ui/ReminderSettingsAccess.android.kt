@@ -29,16 +29,14 @@ internal actual fun rememberReminderSettingsAccess(): ReminderSettingsAccess {
     var revision by remember { mutableIntStateOf(0) }
     var notificationRequested by remember { androidx.compose.runtime.mutableStateOf(false) }
     var locationRequested by remember { androidx.compose.runtime.mutableStateOf(false) }
-    var activityRequested by remember { androidx.compose.runtime.mutableStateOf(false) }
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { revision++ }
     val location = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { revision++ }
-    val activity = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { revision++ }
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) revision++ }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-    return remember(revision, notificationRequested, locationRequested, activityRequested) {
+    return remember(revision, notificationRequested, locationRequested) {
         fun granted(permission: String) = context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
         val notificationPermission = Build.VERSION.SDK_INT < 33 || granted(Manifest.permission.POST_NOTIFICATIONS)
         val locationPermission = granted(Manifest.permission.ACCESS_FINE_LOCATION) || granted(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -82,15 +80,6 @@ internal actual fun rememberReminderSettingsAccess(): ReminderSettingsAccess {
                     location.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 } else if (!context.getSystemService(LocationManager::class.java).isLocationEnabled) {
                     context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                } else {
-                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
-                }
-            },
-            activityAllowed = granted(Manifest.permission.ACTIVITY_RECOGNITION),
-            resolveActivity = {
-                if (!activityRequested) {
-                    activityRequested = true
-                    activity.launch(Manifest.permission.ACTIVITY_RECOGNITION)
                 } else {
                     context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
                 }

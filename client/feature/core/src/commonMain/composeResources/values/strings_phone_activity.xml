@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <string name="phone_activity_offer_title">Remember what you did</string>
+    <string
+    name="phone_activity_offer_description"
+  >LogDate can suggest a memory after a walk or trip.</string>
+    <string name="phone_activity_link">Link phone activity</string>
+    <string name="phone_activity_unlink">Unlink phone activity</string>
+    <string name="phone_activity_linked">Phone activity linked</string>
+    <string name="phone_activity_open_settings">Open Settings</string>
+    <string name="phone_activity_not_now">Not now</string>
+    <string name="phone_activity_continue">Continue</string>
+    <string name="phone_activity_checking">Checking availability…</string>
+    <string name="phone_activity_connecting">Linking phone activity…</string>
+    <string
+    name="phone_activity_permission_needed"
+  >Allow physical activity so LogDate can notice when a walk or trip ends.</string>
+    <string
+    name="phone_activity_denied"
+  >Physical activity access is off. You can allow it in your device settings.</string>
+    <string name="phone_activity_unavailable">Phone activity is unavailable on this device.</string>
+    <string name="phone_activity_provider_failed">Couldn’t link phone activity. Try again.</string>
+    <string name="phone_activity_save_failed">Couldn’t save your choice. Try again.</string>
+</resources>

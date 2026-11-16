@@ -1,15 +1,22 @@
 package app.logdate.di
 
+import android.Manifest
+import android.content.pm.PackageManager
 import app.logdate.client.activity.PhoneActivityAwareness
 import app.logdate.client.datastore.KeyValueStorage
+import app.logdate.client.datastore.createAndroidPhoneActivityConsentStore
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import app.logdate.client.datastore.featureflags.PHONE_ACTIVITY_CONSENT_STORE
 import app.logdate.client.device.identity.DeviceIdProvider
+import app.logdate.client.device.restore.PostRestoreDetector
 import app.logdate.client.domain.activity.ActivityPresenter
 import app.logdate.client.domain.activity.ActivityTracker
 import app.logdate.client.domain.activity.CaptureActivitySource
 import app.logdate.client.domain.activity.CurrentCaptureActivity
 import app.logdate.client.domain.activity.KeyValueActivityLogStore
+import app.logdate.client.domain.activity.PhoneActivityRegistration
+import app.logdate.client.domain.activity.PhoneActivityRegistrationState
 import app.logdate.client.domain.activity.SuggestionOutcomes
 import app.logdate.client.domain.location.ObserveLocationStopsUseCase
 import app.logdate.client.domain.notes.drafts.FetchMostRecentDraftUseCase
@@ -42,11 +49,21 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import kotlin.time.Instant
 
 val phoneReminderSignalsModule =
     module {
+        single<FeatureFlagStore>(named(PHONE_ACTIVITY_CONSENT_STORE)) {
+            val context = androidContext()
+            val restore = PostRestoreDetector(context)
+            createAndroidPhoneActivityConsentStore(context, portable = get()) {
+                !restore.hasNativeRestoreHistory() &&
+                    !restore.shouldValidatePrivacyMetadata() &&
+                    context.checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
+            }
+        }
         single {
             val watches = get<PeerStateStore>().latest(PeerRole.WATCH).map { it?.watch }
             ActivityTracker(
@@ -56,14 +73,14 @@ val phoneReminderSignalsModule =
                 // off the wrist is set aside.
                 watchWorn = watches.map { it?.presence?.state != PresenceState.OFF_WRIST },
                 isPhone = true,
-                enabled = get<FeatureFlagStore>().observe(FeatureFlag.ACTIVITY_AWARENESS),
+                enabled = get<PhoneActivityRegistration>().state.map { it == PhoneActivityRegistrationState.Linked },
             )
         }
         single { SuggestionOutcomes(get<KeyValueStorage>()) }
         single<CaptureActivitySource> {
             CurrentCaptureActivity(
                 agreed = get<ActivityTracker>().agreed,
-                enabled = get<FeatureFlagStore>().observe(FeatureFlag.ACTIVITY_AWARENESS),
+                enabled = get<PhoneActivityRegistration>().state.map { it == PhoneActivityRegistrationState.Linked },
                 outcomes = get<SuggestionOutcomes>().outcomes,
             )
         }
@@ -78,10 +95,11 @@ val phoneReminderSignalsModule =
         single {
             PhoneActivityAwareness(
                 context = androidContext(),
-                tracker = get(),
-                enabled = get<FeatureFlagStore>().observe(FeatureFlag.ACTIVITY_AWARENESS),
+                tracker = { get() },
+                flags = get(named(PHONE_ACTIVITY_CONSENT_STORE)),
             )
         }
+        single { get<PhoneActivityAwareness>().registration }
         single<SleepRepository> { AndroidSleepRepository(androidContext()) }
         factory { WindDownTimeResolver(get()) }
         single {

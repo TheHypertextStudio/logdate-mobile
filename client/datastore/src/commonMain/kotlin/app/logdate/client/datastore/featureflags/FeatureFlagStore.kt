@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
+/** Qualified store for phone activity consent, which belongs to one Android installation. */
+const val PHONE_ACTIVITY_CONSENT_STORE = "phoneActivityConsentStore"
+
 /**
  * Reads and writes [FeatureFlag] values.
  *

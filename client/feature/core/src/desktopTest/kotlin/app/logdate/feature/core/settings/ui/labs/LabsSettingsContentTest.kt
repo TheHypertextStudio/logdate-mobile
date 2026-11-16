@@ -16,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.feature.core.activity.PhoneActivityLink
+import app.logdate.feature.core.activity.PhoneActivityLinkState
 import app.logdate.ui.theme.LogDateTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,7 +27,7 @@ private const val INTRO = "These features are unfinished."
 private const val SECTION = "Unreleased features"
 private const val EMPTY = "No unreleased features to try."
 private const val WATCH_TITLE = "Redesigned watch app"
-private const val ACTIVITY_PERMISSION_TITLE = "Allow physical activity"
+private const val ACTIVITY_LINK_ACTION = "Link phone activity"
 private const val WATCH_DESCRIPTION = "Try the new watch app and the phone screens that go with it."
 private const val PEOPLE_TITLE = "People"
 private const val PEOPLE_DESCRIPTION = "Keeps a list of the people in your entries."
@@ -128,31 +130,64 @@ class LabsSettingsContentTest {
         }
 
     @Test
-    fun `activity awareness that is on without physical activity asks for it`() =
+    fun `People keeps its switch beside the phone activity link`() =
         runDesktopComposeUiTest {
-            var asked = 0
+            val requests = mutableListOf<Pair<FeatureFlag, Boolean>>()
+            var linked = 0
+            val offered =
+                LabsUiState.Ready(
+                    listOf(
+                        LabsFlag(FeatureFlag.PEOPLE, enabled = false),
+                        LabsFlag(FeatureFlag.ACTIVITY_AWARENESS, enabled = false),
+                    ),
+                )
             setContent {
-                Labs(activityFlag(enabled = true), activityAllowed = false, onAllowActivity = { asked++ })
+                Labs(
+                    offered,
+                    activityLink = PhoneActivityLink(PhoneActivityLinkState.Off, onLink = { linked++ }),
+                    onSetEnabled = { flag, enabled -> requests += flag to enabled },
+                )
             }
+            onNodeWithText(PEOPLE_DESCRIPTION).assertIsDisplayed()
+            onAllNodes(isToggleable()).assertCountEquals(1)
 
-            onNodeWithText(ACTIVITY_PERMISSION_TITLE).assertIsDisplayed()
-            onNodeWithText("Allow").performClick()
+            onNodeWithText(PEOPLE_TITLE).performClick()
+            onNodeWithText(ACTIVITY_LINK_ACTION).performClick()
 
-            assertEquals(1, asked)
+            assertEquals(listOf(FeatureFlag.PEOPLE to true), requests)
+            assertEquals(1, linked)
         }
 
     @Test
-    fun `activity awareness asks nothing once physical activity is allowed or while it is off`() =
+    fun `the activity link uses consent rather than immediately flipping the Labs flag`() =
         runDesktopComposeUiTest {
-            var state by mutableStateOf(activityFlag(enabled = true))
-            var allowed by mutableStateOf(true)
-            setContent { Labs(state, activityAllowed = allowed) }
-            onNodeWithText(ACTIVITY_PERMISSION_TITLE).assertDoesNotExist()
+            var linked = 0
+            val flags = mutableListOf<Pair<FeatureFlag, Boolean>>()
+            setContent {
+                Labs(
+                    activityFlag(enabled = false),
+                    activityLink = PhoneActivityLink(PhoneActivityLinkState.Off, onLink = { linked++ }),
+                    onSetEnabled = { flag, enabled -> flags += flag to enabled },
+                )
+            }
 
-            state = activityFlag(enabled = false)
-            allowed = false
+            assertEquals(0, linked)
+            onNodeWithText(ACTIVITY_LINK_ACTION).performClick()
 
-            onNodeWithText(ACTIVITY_PERMISSION_TITLE).assertDoesNotExist()
+            assertEquals(1, linked)
+            assertEquals(emptyList(), flags)
+        }
+
+    @Test
+    fun `a stored activity flag does not display a successful link before provider registration`() =
+        runDesktopComposeUiTest {
+            var link by mutableStateOf(PhoneActivityLinkState.Connecting)
+            setContent { Labs(activityFlag(enabled = true), activityLink = PhoneActivityLink(link)) }
+            onNodeWithText("Unlink phone activity").assertDoesNotExist()
+
+            runOnIdle { link = PhoneActivityLinkState.Linked }
+
+            onNodeWithText("Unlink phone activity").assertIsDisplayed()
         }
 
     @Test
@@ -186,8 +221,7 @@ private fun peopleFlag(enabled: Boolean): LabsUiState = LabsUiState.Ready(listOf
 @Composable
 private fun Labs(
     uiState: LabsUiState,
-    activityAllowed: Boolean = true,
-    onAllowActivity: () -> Unit = {},
+    activityLink: PhoneActivityLink = PhoneActivityLink(PhoneActivityLinkState.Unavailable),
     onSetEnabled: (FeatureFlag, Boolean) -> Unit = { _, _ -> },
 ) {
     LogDateTheme(dynamicColor = false, darkTheme = false) {
@@ -195,8 +229,7 @@ private fun Labs(
             uiState = uiState,
             onBack = {},
             onSetEnabled = onSetEnabled,
-            activityAllowed = activityAllowed,
-            onAllowActivity = onAllowActivity,
+            activityLink = activityLink,
         )
     }
 }

@@ -15,9 +15,6 @@ data class ReminderSettingsAccess(
     val locationAllowed: Boolean,
     val resolveNotifications: () -> Unit,
     val resolveLocation: () -> Unit,
-    /** Whether LogDate may read physical activity, which activity awareness needs. */
-    val activityAllowed: Boolean = true,
-    val resolveActivity: () -> Unit = {},
 )
 
 @Composable
