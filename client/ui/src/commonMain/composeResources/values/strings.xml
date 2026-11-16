@@ -154,7 +154,6 @@
     <string name="workspace_navigation_expand">Expand navigation</string>
     <string name="workspace_navigation_collapse">Collapse navigation</string>
     <string name="workspace_journals_label">Recent journals</string>
-    <string name="workspace_journals_see_all">All journals</string>
     <!-- Provenance -->
     <string name="captured_on_watch">Captured on your watch</string>
     <string name="captured_while_moving">While moving</string>

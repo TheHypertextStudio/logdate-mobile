@@ -26,8 +26,7 @@ class WorkspaceRailJournalsTest {
     private fun journals(
         count: Int,
         onOpen: (String) -> Unit = {},
-        onSeeAll: () -> Unit = {},
-    ) = WorkspaceRailJournals(List(count) { WorkspaceRailJournal("id$it", "Journal $it") }, onOpen, onSeeAll)
+    ) = WorkspaceRailJournals(List(count) { WorkspaceRailJournal("id$it", "Journal $it") }, onOpen)
 
     private fun DesktopComposeUiTest.showRail(rail: WorkspaceRailJournals) =
         setContent {
@@ -51,28 +50,19 @@ class WorkspaceRailJournalsTest {
             assertEquals("id1", opened)
         }
 
-    @Test fun onlyTheFirstJournalsShowAndAllJournalsLeadsToTheRest() =
+    @Test fun onlyTheFirstFourJournalsShow() =
         runDesktopComposeUiTest(width = 1280, height = 800) {
-            var seeAll = 0
-            showRail(journals(9, onSeeAll = { seeAll++ }))
-            onNodeWithText("Journal ${WorkspaceRailJournals.MAX_VISIBLE - 1}").assertIsDisplayed()
-            onNodeWithText("Journal ${WorkspaceRailJournals.MAX_VISIBLE}").assertDoesNotExist()
-            onNodeWithText("All journals").performClick()
-            assertEquals(1, seeAll)
+            showRail(journals(9))
+            onNodeWithText("Journal 3").assertIsDisplayed()
+            onNodeWithText("Journal 4").assertDoesNotExist()
         }
 
     @Test fun rowsScrollWhenTheWindowIsTooShort() =
         runDesktopComposeUiTest(width = 1280, height = 500) {
-            var seeAll = 0
-            showRail(journals(9, onSeeAll = { seeAll++ }))
-            onNodeWithText("All journals").performScrollTo().performClick()
-            assertEquals(1, seeAll)
-        }
-
-    @Test fun noAllJournalsRowWhenEveryJournalFits() =
-        runDesktopComposeUiTest(width = 1280, height = 800) {
-            showRail(journals(2))
-            onNodeWithText("All journals").assertDoesNotExist()
+            var opened: String? = null
+            showRail(journals(9, onOpen = { opened = it }))
+            onNodeWithText("Journal 3").performScrollTo().performClick()
+            assertEquals("id3", opened)
         }
 
     @Test fun aCollapsedRailHasNoJournals() =
@@ -92,6 +82,6 @@ class WorkspaceRailJournalsTest {
     @Test fun noJournalsMeansNoSection() =
         runDesktopComposeUiTest(width = 1280, height = 800) {
             showRail(journals(0))
-            onNodeWithText("All journals").assertDoesNotExist()
+            onNodeWithText("Recent journals").assertDoesNotExist()
         }
 }

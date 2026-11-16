@@ -35,7 +35,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
@@ -79,7 +78,6 @@ import kotlinx.coroutines.launch
 import logdate.client.ui.generated.resources.Res
 import logdate.client.ui.generated.resources.workspace_create_label
 import logdate.client.ui.generated.resources.workspace_journals_label
-import logdate.client.ui.generated.resources.workspace_journals_see_all
 import logdate.client.ui.generated.resources.workspace_navigation_collapse
 import logdate.client.ui.generated.resources.workspace_navigation_expand
 import org.jetbrains.compose.resources.stringResource
@@ -111,15 +109,14 @@ data class WorkspaceRailJournal(
 
 /**
  * The journals an expanded, non-modal rail lists below the destinations: the first [MAX_VISIBLE] of
- * [items], then an "All journals" row when more exist.
+ * [items]; the Journals destination holds the rest.
  */
 data class WorkspaceRailJournals(
     val items: List<WorkspaceRailJournal>,
     val onOpen: (String) -> Unit,
-    val onSeeAll: () -> Unit,
 ) {
     companion object {
-        const val MAX_VISIBLE = 5
+        const val MAX_VISIBLE = 4
     }
 }
 
@@ -367,15 +364,6 @@ private fun RailJournals(journals: WorkspaceRailJournals) {
             onClick = { journals.onOpen(journal.id) },
             icon = { Icon(PlatformIcons.journal(), null) },
             label = { Text(journal.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        )
-    }
-    if (journals.items.size > WorkspaceRailJournals.MAX_VISIBLE) {
-        WideNavigationRailItem(
-            railExpanded = true,
-            selected = false,
-            onClick = journals.onSeeAll,
-            icon = { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) },
-            label = { Text(stringResource(Res.string.workspace_journals_see_all)) },
         )
     }
 }

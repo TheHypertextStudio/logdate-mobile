@@ -135,7 +135,6 @@ fun HomeScreen(
                         WorkspaceRailJournal(it.data.id.toString(), it.data.title)
                     },
                 onOpen = { onOpenJournal(Uuid.parse(it)) },
-                onSeeAll = { navigation.select(HomeRouteDestination.Journals) },
             )
         }
     HomeWorkspaceComposition(

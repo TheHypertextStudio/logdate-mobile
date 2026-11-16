@@ -102,7 +102,6 @@ internal val workspaceRailJournals =
             listOf("Daily Reflections", "Travel Log", "Recipe Notes", "Garden Journal", "Dream Log", "Reading List")
                 .mapIndexed { index, title -> WorkspaceRailJournal(index.toString(), title) },
         onOpen = {},
-        onSeeAll = {},
     )
 
 internal val workspaceDestinations =
