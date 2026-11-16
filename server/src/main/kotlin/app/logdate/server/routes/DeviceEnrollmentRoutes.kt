@@ -2,6 +2,7 @@ package app.logdate.server.routes
 
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.TokenService
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.database.toKotlinUuid
 import app.logdate.server.enrollment.DeviceEnrollment
 import app.logdate.server.enrollment.DeviceEnrollmentRepository
@@ -22,7 +23,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.route
 import kotlinx.serialization.Serializable
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.UUID
@@ -315,5 +315,4 @@ private fun Route.rejectEnrollmentRoute(
 private fun DeviceEnrollment.toView() =
     EnrollmentView(id.toString(), deviceName, publicKey, confirmationCode, expiresAt, status.name.lowercase())
 
-private fun hashClaimSecret(value: ByteArray): String =
-    MessageDigest.getInstance("SHA-256").digest(value).joinToString("") { "%02x".format(it) }
+private fun hashClaimSecret(value: ByteArray): String = sha256Hex(value)

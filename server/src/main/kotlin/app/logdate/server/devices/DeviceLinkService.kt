@@ -3,6 +3,7 @@ package app.logdate.server.devices
 import app.logdate.server.auth.AccessTokenClaims
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.TokenService
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.database.toJavaUUID
 import app.logdate.server.database.toKotlinUuid
 import app.logdate.shared.model.AccountTokens
@@ -10,7 +11,6 @@ import app.logdate.shared.model.devices.DeviceLinkCodeResponse
 import app.logdate.shared.model.devices.DeviceLinkRedeemRequest
 import app.logdate.shared.model.devices.DeviceLinkRedeemResponse
 import app.logdate.shared.model.devices.LinkedDevice
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.UUID
@@ -162,8 +162,7 @@ class DeviceLinkService(
     }
 }
 
-internal fun hashLinkCode(bytes: ByteArray): String =
-    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+internal fun hashLinkCode(bytes: ByteArray): String = sha256Hex(bytes)
 
 private fun encodeLinkCode(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 

@@ -1,5 +1,6 @@
 package app.logdate.server.auth
 
+import app.logdate.server.crypto.sha256
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.crypto.ECDSAVerifier
 import com.nimbusds.jose.crypto.RSASSAVerifier
@@ -17,7 +18,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-import java.security.MessageDigest
 import java.util.Base64
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -261,7 +261,7 @@ open class DigitalCredentialVerifier(
     private fun Map<String, JsonElement>.boolean(key: String): Boolean? = (this[key] as? JsonPrimitive)?.booleanOrNull
 
     private fun sha256Base64UrlNoPad(input: ByteArray): String {
-        val digest = MessageDigest.getInstance("SHA-256").digest(input)
+        val digest = sha256(input)
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest)
     }
 

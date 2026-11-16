@@ -1,5 +1,6 @@
 package app.logdate.server.oauth
 
+import app.logdate.server.crypto.sha256
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -15,7 +16,6 @@ import studio.hypertext.atproto.oauth.client.protocolHttpClient
 import java.io.IOException
 import java.net.URI
 import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Clock
@@ -331,7 +331,7 @@ class OAuthClientMetadataResolver(
 
     private fun OAuthClientJwk.thumbprint(): String {
         val canonical = """{"crv":"$crv","kty":"$kty","x":"$x","y":"$y"}"""
-        return base64UrlEncode(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(canonical.toByteArray(StandardCharsets.UTF_8)))
+        return base64UrlEncode(sha256(canonical))
     }
 
     private fun decodeJsonSegment(segment: String): String = String(base64UrlDecode(segment), StandardCharsets.UTF_8)
@@ -366,7 +366,6 @@ class OAuthClientMetadataResolver(
         private const val CLIENT_ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
         private const val JWT_SEGMENT_COUNT = 3
         private const val CLIENT_ASSERTION_MAX_FUTURE_SKEW_SECONDS = 60L
-        private const val SHA_256_ALGORITHM = "SHA-256"
         private const val DEFAULT_MAX_CACHED_CLIENTS = 1_024
     }
 }

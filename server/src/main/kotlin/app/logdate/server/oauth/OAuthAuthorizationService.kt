@@ -1,5 +1,6 @@
 package app.logdate.server.oauth
 
+import app.logdate.server.crypto.sha256
 import io.github.aakira.napier.Napier
 import studio.hypertext.atproto.pds.AuthorizationCodeTokenRequest
 import studio.hypertext.atproto.pds.AuthorizationDecisionRequest
@@ -10,8 +11,6 @@ import studio.hypertext.atproto.pds.PdsOAuthService
 import studio.hypertext.atproto.pds.PushedAuthorizationRequest
 import studio.hypertext.atproto.pds.PushedAuthorizationResponse
 import studio.hypertext.atproto.pds.RefreshTokenGrantRequest
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.concurrent.atomic.AtomicReference
@@ -470,7 +469,7 @@ class OAuthAuthorizationService(
         if (codeVerifier.isBlank()) {
             throw OAuthInvalidGrantException("code_verifier is required")
         }
-        val digest = MessageDigest.getInstance(SHA_256_ALGORITHM).digest(codeVerifier.toByteArray(StandardCharsets.UTF_8))
+        val digest = sha256(codeVerifier)
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest)
     }
 
@@ -540,7 +539,7 @@ class OAuthAuthorizationService(
         Base64
             .getUrlEncoder()
             .withoutPadding()
-            .encodeToString(MessageDigest.getInstance(SHA_256_ALGORITHM).digest(secret.toByteArray(StandardCharsets.UTF_8)))
+            .encodeToString(sha256(secret))
 
     private fun randomToken(): String {
         val bytes = ByteArray(TOKEN_BYTES)
@@ -558,7 +557,6 @@ class OAuthAuthorizationService(
         private val UNTRUSTED_REFRESH_TOKEN_TTL = 14.days
         private val CODE_CHALLENGE_MEMORY = 1.hours
         private const val TOKEN_BYTES = 32
-        private const val SHA_256_ALGORITHM = "SHA-256"
     }
 }
 

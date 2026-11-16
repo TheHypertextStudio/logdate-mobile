@@ -1,5 +1,6 @@
 package app.logdate.server.migration
 
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.space.MAX_SPACE_CHANGES_LIMIT
 import app.logdate.server.space.SpaceStore
 import app.logdate.shared.model.sync.SpaceMigrationDigests

@@ -2,10 +2,10 @@ package app.logdate.server.identity
 
 import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
+import app.logdate.server.crypto.sha256
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import studio.hypertext.atproto.identity.AtprotoDid
-import java.security.MessageDigest
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.uuid.ExperimentalUuidApi
@@ -254,7 +254,7 @@ class RecoveryKeyService(
             code = PlcIdentityService.IDENTITY_CHANGED,
         )
 
-    private fun digest(payload: ByteArray): String = encodeBase64Url(MessageDigest.getInstance("SHA-256").digest(payload))
+    private fun digest(payload: ByteArray): String = encodeBase64Url(sha256(payload))
 
     private fun encodeBase64Url(bytes: ByteArray): String = Base64.UrlSafe.encode(bytes).trimEnd('=')
 

@@ -7,6 +7,7 @@ import app.logdate.server.crypto.EncryptionException
 import app.logdate.server.crypto.EncryptionKeyring
 import app.logdate.server.crypto.NoOpKeyring
 import app.logdate.server.crypto.PayloadHeaderCodec
+import app.logdate.server.crypto.sha256
 import app.logdate.shared.model.diagnostics.DiagnosticReportCodec
 import app.logdate.shared.model.diagnostics.SyncDiagnosticReport
 import kotlinx.coroutines.sync.Mutex
@@ -68,7 +69,7 @@ class DiagnosticReportService(
         }
         val canonical = DiagnosticReportCodec.encode(report).encodeToByteArray()
         val reportId = Uuid.parse(report.reportId)
-        val hash = MessageDigest.getInstance("SHA-256").digest(canonical)
+        val hash = sha256(canonical)
         val encryptedFingerprint = cipher.encrypt(owner, reportId, hash, fingerprint = true)
         return store.save(
             owner,

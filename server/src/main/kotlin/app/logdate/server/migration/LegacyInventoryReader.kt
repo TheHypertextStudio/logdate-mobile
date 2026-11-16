@@ -1,5 +1,6 @@
 package app.logdate.server.migration
 
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.logdate.LogDateCollectionKind
 import app.logdate.server.logdate.LogDateCollectionsMetadataStore
 import app.logdate.server.logdate.LogDateMediaBlobRepository
@@ -8,7 +9,6 @@ import app.logdate.shared.model.sync.LegacyInventory
 import app.logdate.shared.model.sync.LegacyKindInventory
 import app.logdate.shared.model.sync.LegacyRecordKinds
 import app.logdate.shared.model.sync.SpaceMigrationDigests
-import java.security.MessageDigest
 import java.util.UUID
 
 private const val LOCATION_HISTORY_PAGE = 100
@@ -90,12 +90,5 @@ internal class LegacyInventoryReader(
         return History(live.filterValues { it }.keys.toList(), lastVersion, live.size)
     }
 }
-
-/** The lowercase hex SHA-256 of [text]. */
-internal fun sha256Hex(text: String): String =
-    MessageDigest
-        .getInstance("SHA-256")
-        .digest(text.encodeToByteArray())
-        .joinToString("") { "%02x".format(it) }
 
 private fun digestOf(ids: Collection<String>): String = sha256Hex(SpaceMigrationDigests.idsText(ids))

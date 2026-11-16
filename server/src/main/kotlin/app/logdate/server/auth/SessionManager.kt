@@ -1,5 +1,6 @@
 package app.logdate.server.auth
 
+import app.logdate.server.crypto.lowercaseHex
 import java.security.SecureRandom
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -180,6 +181,6 @@ class InMemorySessionManager : SessionManager {
     private fun generateSessionId(): String {
         val bytes = ByteArray(32)
         secureRandom.nextBytes(bytes)
-        return bytes.joinToString("") { "%02x".format(it) }
+        return lowercaseHex(bytes)
     }
 }

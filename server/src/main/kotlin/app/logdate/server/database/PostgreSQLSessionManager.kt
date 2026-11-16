@@ -4,6 +4,7 @@ import app.logdate.server.auth.DeviceInfo
 import app.logdate.server.auth.SessionManager
 import app.logdate.server.auth.SessionType
 import app.logdate.server.auth.TemporarySession
+import app.logdate.server.crypto.lowercaseHex
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.less
@@ -179,7 +180,7 @@ class PostgreSQLSessionManager : SessionManager {
     private fun generateSessionId(): String {
         val bytes = ByteArray(32)
         secureRandom.nextBytes(bytes)
-        return bytes.joinToString("") { "%02x".format(it) }
+        return lowercaseHex(bytes)
     }
 
     private fun ResultRow.toTemporarySession(): TemporarySession =

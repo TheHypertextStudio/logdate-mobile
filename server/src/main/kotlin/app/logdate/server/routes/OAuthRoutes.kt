@@ -4,6 +4,7 @@ import app.logdate.server.auth.Account
 import app.logdate.server.auth.AccountRepository
 import app.logdate.server.auth.TokenService
 import app.logdate.server.clientAddress
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.identity.AtprotoIdentityService
 import app.logdate.server.oauth.OAuthAuthorizationService
 import app.logdate.server.oauth.OAuthConfig
@@ -487,18 +488,12 @@ private suspend fun ApplicationCall.allowOAuthRequest(
     policy: RateLimitPolicy,
     refusal: String,
 ): Boolean {
-    val key = "oauth.$operation:${clientAddress().ifBlank { "unknown" }.sha256Hex()}"
+    val key = "oauth.$operation:${sha256Hex(clientAddress().ifBlank { "unknown" })}"
     if (limiter.allow(key, policy)) return true
     response.header(HttpHeaders.RetryAfter, limiter.retryAfterSeconds(key, policy).toString())
     respond(HttpStatusCode.TooManyRequests, OAuthErrorResponse("temporarily_unavailable", refusal))
     return false
 }
-
-private fun String.sha256Hex(): String =
-    java.security.MessageDigest
-        .getInstance("SHA-256")
-        .digest(toByteArray())
-        .joinToString("") { "%02x".format(it) }
 
 private suspend fun ApplicationCall.respondPasskeySignInDisabled() =
     respond(

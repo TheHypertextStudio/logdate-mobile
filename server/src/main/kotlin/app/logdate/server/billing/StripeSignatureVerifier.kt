@@ -1,5 +1,6 @@
 package app.logdate.server.billing
 
+import app.logdate.server.crypto.lowercaseHex
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -69,7 +70,7 @@ class StripeSignatureVerifier(
         mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA256"))
         val payload = "$timestamp.$rawBody"
         val bytes = mac.doFinal(payload.toByteArray(Charsets.UTF_8))
-        return bytes.joinToString("") { "%02x".format(it) }
+        return lowercaseHex(bytes)
     }
 
     /** Constant-time string compare — signature equality comparisons must not leak timing. */

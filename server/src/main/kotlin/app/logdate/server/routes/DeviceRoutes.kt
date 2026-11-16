@@ -4,8 +4,8 @@ import app.logdate.server.auth.AccessCheck
 import app.logdate.server.auth.AccessTokenClaims
 import app.logdate.server.auth.AccessTokenVerifier
 import app.logdate.server.auth.bearerToken
-import app.logdate.server.auth.sha256
 import app.logdate.server.clientAddress
+import app.logdate.server.crypto.sha256Hex
 import app.logdate.server.devices.DeviceLinkMint
 import app.logdate.server.devices.DeviceLinkRedemption
 import app.logdate.server.devices.DeviceLinkService
@@ -96,11 +96,7 @@ private fun Route.redeemLinkRoute(
 ) {
     post("/link/redeem", DeviceLinkDocs.redeemLink) {
         call.response.headers.append(HttpHeaders.CacheControl, "no-store")
-        val address =
-            call
-                .clientAddress()
-                .ifBlank { "unknown" }
-                .sha256()
+        val address = sha256Hex(call.clientAddress().ifBlank { "unknown" })
         if (!rateLimiter.allow("device-link-redeem:$address", DEVICE_LINK_REDEEM_RATE_LIMIT)) {
             return@post call.respondDeviceError(
                 HttpStatusCode.TooManyRequests,

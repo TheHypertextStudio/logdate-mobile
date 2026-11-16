@@ -1,6 +1,6 @@
 package app.logdate.server.oauth
 
-import java.security.MessageDigest
+import app.logdate.server.crypto.sha256Hex
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -30,11 +30,7 @@ interface OAuthReplayStore {
 }
 
 /** The value a replay store keeps for [key]: its SHA-256, so stored rows never contain the value itself. */
-internal fun replayKeyHash(key: String): String =
-    MessageDigest
-        .getInstance("SHA-256")
-        .digest(key.toByteArray())
-        .joinToString("") { "%02x".format(it) }
+internal fun replayKeyHash(key: String): String = sha256Hex(key)
 
 /**
  * A replay store for one process, used when the server runs without a database. It holds at most
