@@ -53,6 +53,13 @@ class RestoredAppLockEnrollmentRuntimeTest {
                 preferences.setShouldShowBiometric(true)
             }
             scenario = ActivityScenario.launch(MainActivity::class.java)
+            // The automatic launch challenge never opens system settings; enrollment starts from the person's tap.
+            val setup =
+                assertNotNull(
+                    device.wait(Until.findObject(By.text("Set up device security").enabled(true)), 30_000),
+                    "The restored app lock must offer destination security setup",
+                )
+            setup.click()
             assertTrue(
                 awaitNativeEnrollment(device),
                 "The restored app lock must offer native destination security enrollment",
