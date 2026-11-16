@@ -1,6 +1,7 @@
 package app.logdate.client.e2e.osintegration
 
 import android.app.Activity
+import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.ClipData
@@ -39,6 +40,7 @@ import app.logdate.client.domain.recommendation.AmbientCaptureNudgeStyle
 import app.logdate.client.domain.recommendation.AmbientPromptCandidate
 import app.logdate.client.domain.recommendation.AmbientPromptFamily
 import app.logdate.client.domain.recommendation.AmbientPromptPayload
+import app.logdate.client.ensureLogDateApplicationStarted
 import app.logdate.client.media.AndroidManagedMediaDiscarder
 import app.logdate.client.media.AndroidManagedMediaImportSource
 import app.logdate.client.media.ManagedMediaImporter
@@ -319,8 +321,12 @@ object OsSurfaceCapture {
         shell("pm grant $packageName android.permission.POST_NOTIFICATIONS")
     }
 
-    /** Turns on [flags] and waits for flag-gated components to follow. */
+    /**
+     * Turns on [flags] and waits for flag-gated components to follow. Components switch only once
+     * LogDate's startup has run, so this starts it the way an activity would.
+     */
     fun enableFlags(vararg flags: FeatureFlag) {
+        ensureLogDateApplicationStarted(InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as Application)
         runBlocking {
             val store = GlobalContext.get().get<FeatureFlagStore>()
             flags.forEach { store.setEnabled(it, true) }

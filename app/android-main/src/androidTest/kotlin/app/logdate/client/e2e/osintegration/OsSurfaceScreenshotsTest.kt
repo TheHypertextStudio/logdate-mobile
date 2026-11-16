@@ -101,12 +101,19 @@ class OsSurfaceScreenshotsTest {
             return OsSurfaceCapture.shellScript(command)
         }
 
-        val listing =
+        // Android indexes the functions some time after the service is enabled.
+        fun listing(): String =
             OsSurfaceCapture
                 .shellScript("cmd app_function list-app-functions")
                 .lines()
                 .filter { it.contains(functions) || it.contains(pkg) }
                 .joinToString("\n")
+        var listing = listing()
+        var attempts = 0
+        while ("#search" !in listing && attempts++ < FUNCTION_LOOKUP_ATTEMPTS) {
+            Thread.sleep(2_000L)
+            listing = listing()
+        }
         check("#search" in listing && "#startEntry" in listing) { "LogDate's functions are not registered: $listing" }
         check("createTextEntry" !in listing) { "An assistant can still write entries: $listing" }
         val searchRefused = execute("search", """{"query":["river"]}""")
@@ -157,7 +164,7 @@ class OsSurfaceScreenshotsTest {
                     appendLine("# listJournals with no journal shared")
                     appendLine(journals.trim())
                     appendLine()
-                    appendLine("# startEntry with starting entries on")
+                    appendLine("# startEntry with starting entries on (cmd prints the returned PendingIntent as {})")
                     appendLine(started.trim())
                 },
         )
