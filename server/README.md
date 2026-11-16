@@ -1,301 +1,133 @@
 # `:server`
 
-**Self-hostable backend API and services using Ktor**
+The LogDate server is a Ktor application on Netty. It stores the data that LogDate clients sync,
+keeps encrypted backups, authenticates accounts, and hosts an AT Protocol identity and repository
+for each account. The apps work without it; a person who signs in to LogDate Cloud, or a
+self-hoster who points the apps at their own server, gets sync and backup through it.
 
-## Overview
+## What the server does
 
-Ktor-based server providing API endpoints, data synchronization services, and backend functionality for the LogDate application. Designed to be easily containerizable and self-hostable, allowing users to run their own instance of LogDate Cloud with full data ownership and privacy control.
+- **Accounts and sign-in.** Accounts are created and signed in with passkeys (WebAuthn) or a Google
+  ID token, and clients hold short-lived JWT access tokens with refresh tokens. Email verification,
+  restore credentials, linked devices and watches, and a per-account key vault for encrypted data
+  live alongside sign-in.
+- **Sync.** Clients push and pull journals, entries, associations, drafts, moments, media, and
+  location history under `/api/v1`. Every record carries a server version, so a client asks what
+  changed since the last version it saw. Deletions are kept as tombstones until a maintenance job
+  purges them. Accounts created while personal spaces are enabled store their data as sealed
+  records in a personal space under `app.logdate.space.*` instead; `/api/v1/space-migration` moves
+  an account from the first storage mode to the second.
+- **Backup.** Clients upload encrypted backup archives and download them to restore on a new
+  device.
+- **Identity.** Each account has a handle and a `did:plc` identifier. The server signs and stores
+  the identity's operation log and can publish it to a PLC directory when
+  `ATPROTO_PLC_PUBLISH_ENABLED` is on.
+- **AT Protocol hosting.** The server is a personal data server for its accounts. It serves the
+  `com.atproto.server`, `com.atproto.repo`, `com.atproto.sync`, and `com.atproto.identity` XRPC
+  methods, `/.well-known` handle and DID documents, and an OAuth authorization server with PAR,
+  DPoP, and passkey approval. The repository event stream (`subscribeRepos`) runs only when
+  `ATPROTO_FIREHOSE_ENABLED` is on.
+- **Plans and quota.** Billing events from App Store Server Notifications and Stripe update an
+  account's entitlements, and quota checks gate uploads.
+- **Supporting services.** Cloud transcription sessions, Apple push notification delivery, diagnostic
+  report uploads, and audit logging.
 
-**Key Design Principles:**
-- **Self-hostable**: Complete Docker containerization for easy deployment
-- **Privacy-first**: Users maintain full control over their data
-- **Cloud-optional**: Can run entirely offline or with minimal cloud dependencies
-- **Configuration-driven**: Flexible configuration for different deployment scenarios
+The interactive API reference is served at `/docs`, with the OpenAPI document at `/openapi.json`
+and `/openapi.yaml`, and `GET /health` reports readiness. [`docs/openapi.md`](docs/openapi.md)
+explains how the reference is generated and maintained.
 
-## Architecture
+## Structure
 
-```
-Server Module
-├── REST API Endpoints
-├── Authentication & Authorization
-├── Data Synchronization
-├── Database Integration
-└── Service Layer
-```
+The code is in `src/main/kotlin/app/logdate/server`. `Application.kt` assembles the server one
+concern per line, and each package holds one area.
 
-## Key Components
+| Package                                                      | Responsibility                                                                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `routes/`                                                    | Route registration for every HTTP surface, plus the route documentation in `routes/docs/`                           |
+| `auth/`, `passkeys/`                                         | Accounts, tokens, sessions, email verification, WebAuthn, and passkey step-up                                       |
+| `oauth/`                                                     | The AT Protocol OAuth authorization server                                                                          |
+| `identity/`, `atproto/`                                      | Handles, DIDs, PLC operations, signing keys, recovery keys, hosted repositories, and the event stream               |
+| `sync/`, `logdate/`                                          | The sync repositories, backups, media, blob storage, and the repository-backed journal records                      |
+| `space/`, `migration/`, `transfer/`                          | Personal spaces and the migration of an account into one                                                            |
+| `devices/`, `enrollment/`, `accountkeys/`                    | Linked devices and their sessions, and encrypted account key envelopes                                              |
+| `crypto/`                                                    | Encryption of stored payloads                                                                                       |
+| `billing/`, `entitlements/`                                  | Billing notifications, plans, entitlements, and quota                                                               |
+| `notifications/`, `transcription/`, `diagnostics/`, `audit/` | Push delivery, transcription, diagnostic reports, and audit events                                                  |
+| `database/`, `di/`                                           | Exposed tables and repositories, the connection pool, migrations, and Koin wiring, including `DatabaseBootstrap`    |
+| `config/`, `logging/`, `ratelimit/`, `openapi/`              | Runtime profiles and production config validation, logging and error reporting, rate limits, and OpenAPI generation |
 
-### Core Server
-- `Application.kt` - Main server application entry point
-- API route definitions and handlers
-- Middleware and request/response processing
-- Database connection and management
+Persistence uses Exposed over PostgreSQL, with Flyway migrations as the schema; see
+[`DATABASE.md`](DATABASE.md). The server depends on `shared/model`, `shared/config`, `shared/space`,
+`shared/lexicon`, and the `shared/atproto-*` libraries, so the clients and the server read and write
+the same types.
 
-### Service Areas
-- User authentication and session management
-- Journal and entry synchronization
-- File upload and media management
-- Push notifications and real-time updates
-- Analytics and usage tracking
+## Run it locally
 
-## Features
-
-### REST API
-- RESTful endpoint design
-- JSON request/response handling
-- API versioning support
-- Rate limiting and throttling
-- Request validation and sanitization
-
-### Authentication
-- JWT-based authentication
-- OAuth integration (Google, Apple)
-- Session management
-- Role-based access control
-- API key management
-
-### Data Synchronization
-- Real-time data sync
-- Conflict resolution
-- Incremental sync optimization
-- Offline sync support
-- Multi-device coordination
-
-### File Management
-- Media upload and storage
-- Image processing and optimization
-- CDN integration
-- File versioning
-- Storage quota management
-
-## Development
-
-### Configuration
-
-See **[Environment Variables Documentation](docs/environment-variables.md)** for complete configuration reference.
-See the **API reference** at `/docs` on any running server (`http://localhost:8765/docs` locally) for every endpoint with examples; [`docs/openapi.md`](docs/openapi.md) explains how it is maintained. [`docs/auth-v1-api.md`](docs/auth-v1-api.md) and [`docs/sync-v1-api.md`](docs/sync-v1-api.md) keep the rules that span endpoints.
-See **[Audit Schema](docs/audit-schema.md)** for centralized audit categories and keys.
-
-**Quick start:**
-1. Copy `../local.properties.example` to `../local.properties`
-2. Fill in required values (DATABASE_URL, JWT_SECRET, etc.)
-3. For production, see [Google Cloud Production Setup](docs/google-cloud-production.md)
-
-### Running Tests
-```bash
-# Run all server tests
-./gradlew :server:test
-
-# Run specific test classes
-./gradlew :server:test --tests "app.logdate.server.passkeys.*"
-./gradlew :server:test --tests "app.logdate.server.routes.*"
-./gradlew :server:test --tests "app.logdate.server.auth.*"
-
-# Run individual test
-./gradlew :server:test --tests "app.logdate.server.passkeys.PasskeyServiceTest.generateRegistrationOptions creates valid options"
-
-# Test compilation only (useful when main code has issues)
-./gradlew :server:compileTestKotlin
-```
-
-### PostgreSQL Tests
-Most server tests use in-memory stores or H2. The tests whose names end in `PostgresTest` check
-behaviour that only a real PostgreSQL shows, such as row locks and concurrent transactions. They use
-the database named by `DATABASE_URL`, `DATABASE_USER` and `DATABASE_PASSWORD`, the same variables the
-server reads, and only one on this machine: a `DATABASE_URL` on any host other than `localhost` or
-`127.0.0.1` fails the test rather than write to it.
-
-Locally, start the development database and run the tests through `./run`, which sets those variables
-for it:
+The server needs PostgreSQL. From the repository root:
 
 ```bash
-./run dev
-./run test:server
+./run start     # PostgreSQL in Docker, on port 15432
+./run server    # Ktor server on http://localhost:8765
 ```
 
-Without `DATABASE_URL`, or when nothing answers at its address, the PostgreSQL tests are skipped and
-say why. CI's unit-test job starts a throwaway PostgreSQL container and sets the same three variables,
-so they run on every change; there, a database that doesn't answer fails them instead.
+`./run` loads the connection settings from `docs/environment/.env.example`. To run Gradle yourself,
+export them first:
 
-Many tests share that one database: each test deletes the rows it adds and never assumes the database
-is empty. A test that can't clean up after itself, or that changes the schema, wraps its body in
-`withOwnPostgresDatabase`, which creates a fresh database for the test and drops it afterwards. The
-helpers live in `src/test/kotlin/app/logdate/server/database/support/LocalTestPostgres.kt`.
-
-### Available Test Suites
-- **Passkey Tests**: WebAuthn authentication, challenge validation, credential verification
-- **Route Tests**: HTTP endpoint integration tests, request/response validation
-- **Auth Tests**: Account creation workflows, session management
-- **Security Tests**: WebAuthn compliance, security constraint validation
-
-## Dependencies
-
-### Core Dependencies
-- **Ktor Server**: Web framework
-- **Kotlinx Serialization**: JSON handling
-- **Kotlinx Coroutines**: Async processing
-- **Koin**: Dependency injection
-- **Logback**: Logging framework
-
-### Shared Modules
-- `:shared:model` - Shared data models
-- `:shared:config` - Configuration constants
-
-### Database
-- PostgreSQL or similar relational database
-- Database migration tools
-- Connection pooling
-- Query optimization
-
-### External Services
-- Cloud storage (AWS S3, Google Cloud)
-- Push notification services
-- Email service integration
-- Analytics and monitoring tools
-
-## API Architecture
-
-### Endpoint Structure
-```
-/api/v1/
-├── /server/info     # What this deployment is and can do
-├── /plans           # Plans on offer
-├── /auth            # Sign-up, sign-in, tokens, the signed-in account
-├── /identity        # AT Protocol signing keys and PLC history
-├── /contents        # Entries (sync)
-├── /journals        # Journals (sync)
-├── /associations    # Entry-to-journal links (sync)
-├── /drafts          # In-progress entries (sync)
-├── /media           # Photos, video, audio
-├── /backups         # Encrypted device backups
-├── /quota           # Storage allowance and usage
-├── /transcription   # Cloud speech-to-text sessions
-└── /resources       # Shared-link resolution
-/oauth/, /xrpc/, /.well-known/   # AT Protocol OAuth, XRPC and discovery
-```
-The full contract with examples is at `/docs`.
-
-### Request Flow
-```
-Client Request
-    ↓
-Authentication
-    ↓
-Validation
-    ↓
-Business Logic
-    ↓
-Database Operations
-    ↓
-Response Formatting
+```bash
+export DATABASE_URL="jdbc:postgresql://localhost:15432/logdate"
+export DATABASE_USER=logdate
+export DATABASE_PASSWORD=logdate
+./gradlew :server:run
 ```
 
-## Security Features
+The database user and password are always required; the server has no default password. In the
+development profile, which is the default, migrations run at startup, and a missing `JWT_SECRET`
+becomes a random secret for that process, so tokens stop working on restart. A database
+failure during startup stops the server unless `LOGDATE_ALLOW_INMEMORY_FALLBACK=true`, which runs on
+in-memory repositories that lose everything on exit; [`DATABASE.md`](DATABASE.md) has the details.
 
-### Authentication & Authorization
-- Multi-factor authentication support
-- Secure password handling
-- Token refresh mechanisms
-- Permission-based access control
-- API rate limiting
+The settings that matter most:
 
-### Data Protection
-- HTTPS enforcement
-- Data encryption at rest and in transit
-- Input validation and sanitization
-- SQL injection prevention
-- CORS configuration
+| Variable                                                        | Purpose                                                                                                                                                                                                       |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOGDATE_ENV`                                                   | `development` (default), `test`, or `production`. Production validates secrets and configuration at startup and refuses to start when they are missing or unsafe.                                             |
+| `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`            | PostgreSQL connection. `INSTANCE_CONNECTION_NAME` and `DB_NAME` select a Cloud SQL instance instead.                                                                                                          |
+| `AUTO_MIGRATE`                                                  | Whether startup applies migrations. On except in production.                                                                                                                                                  |
+| `PORT`, `HOST`                                                  | Listen address. The default port is 8765. The container images set `PORT=8080`.                                                                                                                               |
+| `JWT_SECRET`                                                    | Signs access tokens. Required in production.                                                                                                                                                                  |
+| `LOGDATE_BLOB_STORAGE_DIR`, `GCS_PROJECT_ID`, `GCS_BUCKET_NAME` | Where media and backups are stored. With none of them set, media and backups are held in memory and lost when the process exits. Production startup requires `GCS_BUCKET_NAME` or `LOGDATE_BLOB_STORAGE_DIR`. |
+| `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGIN`                             | Passkey relying party for the server's domain.                                                                                                                                                                |
+| `ATPROTO_PDS_SERVICE_URL`, `ATPROTO_HANDLE_DOMAIN`              | The public address and handle domain for hosted identities.                                                                                                                                                   |
+| `LOGDATE_PERSONAL_SPACE_ENABLED`                                | Starts new accounts on personal-space storage.                                                                                                                                                                |
 
-### Privacy Compliance
-- GDPR compliance features
-- Data anonymization tools
-- User data export/deletion
-- Audit logging
-- Privacy policy enforcement
+[`docs/environment-variables.md`](docs/environment-variables.md) lists every variable with its
+default and whether production requires it. The API documents are
+[`docs/auth-v1-api.md`](docs/auth-v1-api.md), [`docs/sync-v1-api.md`](docs/sync-v1-api.md),
+[`docs/location-history-api.md`](docs/location-history-api.md), and
+[`docs/audit-schema.md`](docs/audit-schema.md).
 
-## Deployment Options
+## Test it
 
-### Self-Hosted Deployment (Recommended)
-- **Docker Compose**: Single-file deployment for individuals
-- **Docker Swarm**: Multi-node deployment for small teams
-- **Kubernetes**: Enterprise-grade orchestration
-- **Direct Installation**: Native deployment on Linux/macOS/Windows
-
-### Cloud Deployment (Optional)
-- Google Cloud Run (recommended for managed hosting)
-- AWS ECS/Fargate
-- Azure Container Instances
-- Any container-compatible hosting provider
-
-### Containerization
-```dockerfile
-# Multi-stage build for optimized container size
-FROM gradle:7-jdk17 AS build
-FROM eclipse-temurin:17-jre-alpine AS runtime
-# Optimized for self-hosting with minimal dependencies
+```bash
+./run test:server                                # ./gradlew :server:test
+./gradlew :server:check                          # tests, OpenAPI validation, and the 90% coverage gate
+./gradlew :integration:server-client-e2e:test    # the real client against the real server
 ```
 
-### Environment Management
-- **Configuration**: Environment variables and config files
-- **Secrets**: Local file-based or external secret managers
-- **Database**: Embedded SQLite for single-user or PostgreSQL for multi-user
-- **Storage**: Local filesystem or S3-compatible storage
-- **AI Services**: Optional integration with local or cloud AI providers
+Server tests can run without PostgreSQL, using in-memory repositories and an H2 test dependency. The `*PostgresTest` suites run against
+a real PostgreSQL only when `LOGDATE_DIAGNOSTIC_TEST_DISPOSABLE=true` and
+`LOGDATE_DIAGNOSTIC_TEST_DATABASE_URL` points at a disposable database on `localhost`; otherwise they are
+skipped. `./gradlew :server:generateOpenApi` writes the OpenAPI documents to `server/build/openapi`,
+and `:server:validateOpenApi` checks them.
 
-## Monitoring & Observability
+## Deployment
 
-### Logging
-- Structured logging with Logback
-- Request/response logging
-- Error tracking and alerting
-- Performance metrics
-- Security event logging
-
-### Metrics
-- Application performance monitoring
-- Database query performance
-- API endpoint analytics
-- Resource usage tracking
-- Business metrics
-
-## TODOs
-
-### Core API Features
-- [x] Publish a complete, newcomer-friendly API reference with the self-hosted Scalar page at `/docs`
-- [ ] Add API rate limiting and throttling
-- [ ] Implement advanced authentication (OAuth, SSO)
-- [ ] Add server monitoring and metrics collection
-- [ ] Implement server-side analytics and insights
-- [ ] Add API versioning and deprecation management
-- [ ] Implement server security hardening
-- [ ] Add server deployment automation
-
-### Data & Sync
-- [ ] Implement real-time WebSocket connections
-- [ ] Add advanced conflict resolution algorithms
-- [ ] Implement server-side data validation
-- [ ] Add data backup and disaster recovery
-- [ ] Implement database performance optimization
-- [ ] Add server-side search and indexing
-- [ ] Implement data archival and retention policies
-- [ ] Add server-side caching strategies
-
-### Scalability & Performance
-- [ ] Implement horizontal scaling support
-- [ ] Add database sharding and partitioning
-- [ ] Implement CDN integration for static assets
-- [ ] Add server-side performance profiling
-- [ ] Implement load testing and capacity planning
-- [ ] Add server resource optimization
-- [ ] Implement microservices architecture migration
-- [ ] Add server-side A/B testing framework
-
-### Security & Compliance
-- [ ] Implement advanced security monitoring
-- [ ] Add penetration testing automation
-- [ ] Implement GDPR compliance automation
-- [ ] Add security audit logging
-- [ ] Implement data encryption key management
-- [ ] Add security incident response automation
-- [ ] Implement compliance reporting
-- [ ] Add privacy-preserving analytics
+The server is built into a container image from the repository's `Dockerfile` and runs on Google
+Cloud Run, with Cloud SQL for PostgreSQL and Cloud Storage for media and backups. Staging deploys
+after CI passes on `main`; production deploys from a `server-v*` tag on a commit already running in
+staging. A deploy applies the Flyway migrations as a separate step before the new revision starts,
+because production runs with `AUTO_MIGRATE=false`. The Terraform for the environments is in
+`infra/terraform`. See [Release and recovery](../docs/RELEASE.md),
+[Staging and production configuration](../docs/runbook/staging-production-configuration.md),
+[`docs/google-cloud-architecture.md`](docs/google-cloud-architecture.md), and
+[`docs/google-cloud-production.md`](docs/google-cloud-production.md).

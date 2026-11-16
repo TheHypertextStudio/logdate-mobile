@@ -1,297 +1,159 @@
-# LogDate Database Setup
+# Server database
 
-LogDate server supports both **PostgreSQL** (production) and **in-memory storage** (development/fallback).
+The LogDate server stores its data in PostgreSQL. It reaches the database through a HikariCP
+connection pool and queries it with Exposed. Flyway owns the schema: the SQL files in
+`src/main/resources/db/migration` are the only thing that creates or changes tables, and nothing at
+runtime reconciles the schema with the Exposed table definitions in
+`src/main/kotlin/app/logdate/server/database`, so a change to one needs the matching change to the
+other in the same commit.
 
-## PostgreSQL Setup (Recommended)
+The local development database is PostgreSQL 16 in Docker (`./run start`); Cloud SQL for
+PostgreSQL 16 is the deployed one.
 
-### 1. Install PostgreSQL
+## Connecting
 
-**macOS (Homebrew):**
-```bash
-brew install postgresql@16
-brew services start postgresql@16
-```
+`DatabaseConfig.createDataSource` picks the connection from the environment, in this order:
 
-**Ubuntu/Debian:**
-```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-```
+1. `DATABASE_URL`, as a JDBC URL (`jdbc:postgresql://host:5432/logdate`) or a `postgres://` or
+   `postgresql://` URL that carries the user and password.
+2. `INSTANCE_CONNECTION_NAME` with `DB_NAME`, which connects to Cloud SQL through the Cloud SQL
+   socket factory using the runtime's Application Default Credentials.
+3. Outside production only, `DB_HOST`, `DB_PORT`, and `DB_NAME`, which default to
+   `localhost:5432/logdate`.
 
-**Docker:**
-```bash
-docker run --name logdate-postgres \
-  -e POSTGRES_DB=logdate \
-  -e POSTGRES_USER=logdate \
-  -e POSTGRES_PASSWORD=logdate \
-  -p 5432:5432 \
-  -d postgres:16
-```
+The user and password come from `DATABASE_USER` and `DATABASE_PASSWORD` (or `DB_USER` and
+`DB_PASSWORD`) unless the URL embeds them. There is no default password: a missing credential stops
+startup with a message naming the variable. The pool holds at most 16 connections, matching the
+requests Cloud Run sends to one instance at a time, keeps no minimum number of idle connections, and closes idle ones after five minutes.
+[`docs/environment-variables.md`](docs/environment-variables.md) describes every variable.
 
-### 2. Create Database and User
+For local work, `./run start` starts PostgreSQL in Docker on port 15432 with the user, password,
+and database `logdate`, and `./run server` connects to it. `./run dev:reset` deletes that data and
+starts again.
 
-```sql
--- Connect to PostgreSQL as superuser
-sudo -u postgres psql
+## How migrations run
 
--- Create database and user
-CREATE DATABASE logdate;
-CREATE USER logdate WITH ENCRYPTED PASSWORD 'logdate';
-GRANT ALL PRIVILEGES ON DATABASE logdate TO logdate;
+Migrations are plain SQL files named `V<version>__<Description>.sql`. Flyway applies them in
+version order and records each one, with a checksum, in the `flyway_schema_history` table, so a
+migration runs once per database and an applied file must never be edited.
 
--- For development, you might also want:
-ALTER USER logdate CREATEDB;
+Whether the server applies them at startup depends on `AUTO_MIGRATE`:
 
--- Exit
-\q
-```
+- In development and test, it defaults to on. Starting the server brings a new or outdated database
+  up to date.
+- In production, it defaults to off. A deployment applies migrations in a separate step before the
+  new revision starts, by running the Flyway container against the same database
+  (`scripts/run-migrations.sh`, called from the Cloud Run deploy workflow). A restart then never
+  changes the schema, and two revisions that overlap during a rollout do not compete for the Flyway
+  lock.
 
-### 3. Environment Variables
+`AUTO_MIGRATE` set to `true`, `1`, or `yes` enables migrations and `false`, `0`, or `no` disables them, in either profile. Any other value uses the profile default.
 
-Set these environment variables for production:
+### The beforeMigrate script
 
-```bash
-export DATABASE_URL="jdbc:postgresql://localhost:5432/logdate"
-export DATABASE_USER="logdate"
-export DATABASE_PASSWORD="your-secure-password"
+`db/migration/beforeMigrate.sql` is a Flyway callback that runs before every `migrate`. It creates
+the four legacy sync tables, `sync_content`, `sync_journals`, `sync_associations`, and `sync_media`,
+if they do not exist.
 
-# Optional
-export JWT_SECRET="your-jwt-secret"
-export WEBAUTHN_RP_ID="your-domain.com"
-export WEBAUTHN_ORIGIN="https://your-domain.com"
-```
+The script exists because migrations V2, V3, and V4 alter those tables but no migration creates
+them. Early on, the server created them itself when it started, so every existing database already
+had them. A new, empty database has none, and migrating it would fail at V2 with
+`relation "sync_content" does not exist`. Deployments migrate before the server ever starts, so
+nothing else could create the tables first.
 
-### 4. Run the Server
+It is a callback and not a versioned migration so that it has no checksum and no entry in
+`flyway_schema_history`; adding a versioned migration would change the history of databases that
+already applied V2. Every statement is `CREATE TABLE IF NOT EXISTS`, so on an existing database
+the script changes nothing. The columns that later migrations add (`user_id`, `duration_ms`, and
+others) are deliberately left out, because their `ALTER TABLE ... ADD COLUMN` statements are not
+conditional and would fail on a table that already has the column.
 
-The server will automatically:
-1. Try to connect to PostgreSQL
-2. Run database migrations (create tables)
-3. Fall back to in-memory storage if database unavailable
+## How the schema is organized
 
-```bash
-./gradlew :server:run
-```
+The tables fall into these areas. Each name below is a table, or a family of tables with a shared
+prefix.
 
-## Database Schema
+**Accounts and sign-in.** `accounts` is the root that many other tables reference. Around it are `passkeys`, `webauthn_challenges`,
+`sessions`, `account_identities` and `account_link_events` (the sign-in methods linked to an
+account), `pending_email_verifications`, `revoked_refresh_tokens`, and `restore_credentials`.
+Columns on `accounts` carry the storage mode, moderation state, and public identity consent.
 
-The server uses [Flyway](https://flywaydb.org/) for migrations. Schema files are in:
-```
-server/src/main/resources/db/migration/
-├── V1__Initial_schema.sql
-└── (future migrations...)
-```
+**Devices and keys.** `account_devices` is the device registry. `device_enrollments`,
+`device_link_codes`, and `device_sessions` handle linking a new device or watch and the session each
+linked device holds. `account_key_vault` holds the per-account key vault, and `account_key_envelopes` extends it with the account key encrypted for each passkey, as ciphertext
+only, so clients can open end-to-end encrypted data on a new device.
 
-### Tables Created
+**Legacy sync and backup.** `sync_content`, `sync_journals`, `sync_associations`, and `sync_media`
+hold the records of accounts on the original REST sync. `logdate_backups` and `logdate_media_records`
+index backups and uploaded media, `location_history` and `location_history_versions` hold
+encrypted location history, and `diagnostic_reports` and `diagnostic_report_uploads` hold reports
+that clients submit. `journal_merge_operations` records journal merges.
 
-- **accounts** - User accounts with passkey authentication
-- **passkeys** - WebAuthn credentials linked to accounts  
-- **sessions** - Temporary authentication/registration sessions
-- **webauthn_challenges** - WebAuthn challenges for security
+**AT Protocol identity and repositories.** `signing_keys` and `hosted_plc_operations` hold each
+account's repository signing key and its PLC operation log. The `atproto_repo_*` tables (including `atproto_repo_announced`, `atproto_repo_block_links`, and `atproto_repo_events`) store
+repository blocks, commits, heads, and the sequenced event stream. `atproto_password_credentials`
+and `atproto_sessions` back AT Protocol sessions. `logdate_collection_records`,
+`logdate_collection_states`, and `logdate_atproto_blobs` index LogDate records and blobs inside
+those repositories, and `resource_routes` records which account owns each journal, note, or rewind resource.
 
-## Development Mode
+**OAuth.** The `oauth_*` tables hold the authorization server's state: authorization requests and
+codes, refresh tokens, signing keys and their rotation, used one-time values for replay protection,
+and per-subject revocation times.
 
-Without PostgreSQL, the server automatically uses in-memory storage:
-- ✅ All features work normally
-- ⚠️ Data is lost when server restarts
-- 💡 Perfect for development and testing
+**Personal spaces.** `space_records`, `space_states`, `space_blobs`, `space_record_blobs`,
+`space_blob_upload_receipts`, and `space_upload_reservations` store sealed records and their blobs.
+`space_migrations` tracks moving an account from legacy sync into a personal space.
 
-## Production Checklist
+**Plans and storage.** `plans`, `account_entitlements`, and `billing_events` hold the plan catalog
+and what each account is entitled to. `account_storage_usage` tracks bytes used, and
+`account_blob_cleanup` and `account_blob_cleanup_paths` queue the stored objects to delete after an
+account is removed. Triggers on `accounts` enqueue that cleanup, so a deletion cannot lose the
+pointers to its files.
 
-- [ ] PostgreSQL installed and running
-- [ ] Database and user created with proper permissions
-- [ ] Environment variables set securely
-- [ ] Database connection tested
-- [ ] Backups configured
-- [ ] SSL/TLS enabled for database connections
+## Adding a migration
+
+1. Find the highest version in `db/migration` and create the next file, named
+   `V<next>__Short_description.sql`. Use a version number that no other file has.
+   `MigrationVersionsTest` fails when two files share a version or a file does not match the naming
+   pattern, which Flyway would otherwise skip silently or refuse to start on.
+2. Write SQL that moves an existing database to the new shape and also builds the same shape on an
+   empty database. Never edit a migration that has been applied anywhere; add a new one.
+3. Update the Exposed table definitions in the `database` package to match, and any repository that
+   reads or writes the changed columns.
+4. Run `./gradlew :server:test --tests 'app.logdate.server.database.*'`. To exercise the migration
+   against a real database, write a `*PostgresTest` next to the existing ones and run it against a
+   disposable local PostgreSQL by setting `LOGDATE_DIAGNOSTIC_TEST_DISPOSABLE=true` and
+   `LOGDATE_DIAGNOSTIC_TEST_DATABASE_URL`.
+5. Land the migration with the code that needs it. Production applies it during the next deploy,
+   before the new revision starts, so the previous revision must keep working against the migrated
+   schema.
+
+## When the database is unavailable at startup
+
+`initializeDatabase` in `di/DatabaseBootstrap.kt` runs at startup. It builds the data source, applies
+migrations when `AUTO_MIGRATE` allows it, connects Exposed, and, in production, checks that the
+account blob cleanup table and its triggers exist. That check is the only query the bootstrap makes
+besides the migration run. What happens when any of these steps fails depends on the runtime
+profile, which `LOGDATE_ENV` selects.
+
+| Profile                                                             | Failure behavior                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `production`                                                        | The original exception is rethrown and the process exits, so Cloud Run's startup probe fails and the revision is rolled back. `LOGDATE_ALLOW_INMEMORY_FALLBACK` is ignored. Production configuration validation has already refused to start without `DATABASE_URL` or `INSTANCE_CONNECTION_NAME`. |
+| `development` (the default) and `test`                              | The server stops with an `IllegalStateException` that names `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`, and `LOGDATE_ALLOW_INMEMORY_FALLBACK`, and chains the underlying cause.                                                                                                          |
+| `development` or `test` with `LOGDATE_ALLOW_INMEMORY_FALLBACK=true` | The server logs a warning and starts on in-memory repositories. Nothing is written to disk, every record is lost when the process exits, and `/health` reports `db_connected` as `false`.                                                                                                          |
+
+The fallback exists for local work that does not need persistence and is enabled only by
+`LOGDATE_ALLOW_INMEMORY_FALLBACK=true`.
 
 ## Troubleshooting
 
-**Connection refused:**
-```bash
-# Check if PostgreSQL is running
-brew services list | grep postgres
-# or
-sudo systemctl status postgresql
-```
+**Connection refused or timed out.** Confirm the database is running (`./run status`) and that
+`DATABASE_URL` uses port 15432 for the Docker database.
 
-**Authentication failed:**
-```bash
-# Test connection manually
-psql -h localhost -U logdate -d logdate
-```
+**Authentication failed.** Check that `DATABASE_USER` and `DATABASE_PASSWORD` match the database.
+`./run` loads `logdate` and `logdate` from `docs/environment/.env.example`; a direct Gradle run needs
+them exported.
 
-**Migration errors:**
-```bash
-# Check migration status
-./gradlew flywayInfo
-
-# Repair if needed
-./gradlew flywayRepair
-```
-
-**Fall back to in-memory:**
-If you see this log message, PostgreSQL connection failed:
-```
-Database not available, using in-memory repositories
-```
-
-## Docker Development Setup
-
-### Quick Start with Docker Compose
-
-The easiest way to get started with LogDate development is using Docker Compose:
-
-```bash
-# Start PostgreSQL and Redis
-docker-compose up postgres redis
-
-# Or start everything including development tools
-docker-compose --profile tools up
-
-# Start with server (requires Dockerfile)
-docker-compose --profile full-stack up
-```
-
-### Docker Services
-
-**PostgreSQL Database:**
-- Image: `postgres:16-alpine`
-- Port: `5432`
-- Database: `logdate`
-- User/Password: `logdate/logdate`
-- Volume: `postgres_data` (persistent)
-
-**Redis Cache:**
-- Image: `redis:7-alpine`
-- Port: `6379`
-- Volume: `redis_data` (persistent)
-- Configuration: AOF persistence, 256MB memory limit
-
-**Development Tools:**
-- **PgAdmin**: `http://localhost:5050` (admin@logdate.app/admin)
-- **Redis Commander**: `http://localhost:8081`
-
-### Environment Variables
-
-Docker Compose automatically configures these environment variables:
-
-```bash
-DATABASE_URL="jdbc:postgresql://postgres:5432/logdate"
-DATABASE_USER="logdate"
-DATABASE_PASSWORD="logdate"
-REDIS_URL="redis://redis:6379"
-AUTO_MIGRATE="true"
-```
-
-## Cloud Run Production Deployment
-
-### Database Configuration
-
-For Google Cloud Run deployment, use managed services:
-
-**Cloud SQL (PostgreSQL):**
-```bash
-# Create Cloud SQL instance
-gcloud sql instances create logdate-db \
-  --database-version=POSTGRES_16 \
-  --cpu=1 \
-  --memory=4GB \
-  --region=us-central1
-
-# Create database and user
-gcloud sql databases create logdate --instance=logdate-db
-gcloud sql users create logdate --instance=logdate-db --password=SECURE_PASSWORD
-```
-
-**Memorystore (Redis):**
-```bash
-# Create Memorystore Redis instance
-gcloud redis instances create logdate-cache \
-  --size=1 \
-  --region=us-central1 \
-  --redis-version=redis_7_0
-```
-
-### Cloud Run Environment Variables
-
-Configure these environment variables in Cloud Run:
-
-```bash
-DATABASE_URL="jdbc:postgresql://CLOUD_SQL_PRIVATE_IP:5432/logdate"
-DATABASE_USER="logdate"
-DATABASE_PASSWORD="SECURE_PASSWORD"
-REDIS_URL="redis://MEMORYSTORE_IP:6379"
-
-JWT_SECRET="SECURE_JWT_SECRET"
-WEBAUTHN_RP_ID="your-domain.com"
-WEBAUTHN_ORIGIN="https://your-domain.com"
-```
-
-### Cloud Run Deployment
-
-```bash
-# Build and deploy to Cloud Run
-gcloud run deploy logdate-server \
-  --source . \
-  --region us-central1 \
-  --cpu 1 \
-  --memory 2Gi \
-  --min-instances 0 \
-  --max-instances 10 \
-  --port 8080 \
-  --allow-unauthenticated
-```
-
-## Docker Commands Reference
-
-### Development Workflow
-
-```bash
-# Start only database services
-docker-compose up postgres redis -d
-
-# Start with development tools
-docker-compose --profile tools up -d
-
-# View logs
-docker-compose logs postgres
-docker-compose logs redis
-
-# Connect to database
-docker-compose exec postgres psql -U logdate -d logdate
-
-# Connect to Redis
-docker-compose exec redis redis-cli
-
-# Stop services
-docker-compose down
-
-# Reset data (removes volumes)
-docker-compose down -v
-```
-
-### Production Build
-
-```bash
-# Build production image
-docker build --target production -t logdate-server .
-
-# Run production container
-docker run -p 8080:8080 \
-  -e DATABASE_URL="jdbc:postgresql://host:5432/logdate" \
-  -e DATABASE_USER="logdate" \
-  -e DATABASE_PASSWORD="password" \
-  logdate-server
-```
-
-## Monitoring
-
-Monitor database performance:
-- Connection pool usage
-- Query performance
-- Database size growth
-- Backup status
-
-The server logs database connection status on startup.
+**A migration fails or the history disagrees with the files.** Read `flyway_schema_history` to see
+which versions applied and whether the last one failed. On a local database with no data to keep,
+`./run dev:reset` starts from an empty database.
