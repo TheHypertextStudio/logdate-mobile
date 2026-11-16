@@ -4,7 +4,20 @@ import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.SkipQueryVerification
+import androidx.room.Transaction
+import app.logdate.client.database.INDEX_AMBIENT_SOUNDS_SQL
+import app.logdate.client.database.INDEX_JOURNALS_SQL
+import app.logdate.client.database.INDEX_MEDIA_CAPTIONS_SQL
+import app.logdate.client.database.INDEX_PLACES_SQL
+import app.logdate.client.database.INDEX_POSTCARDS_SQL
+import app.logdate.client.database.INDEX_REWINDS_SQL
+import app.logdate.client.database.INDEX_STICKERS_SQL
+import app.logdate.client.database.INDEX_TEXT_NOTES_SQL
+import app.logdate.client.database.INDEX_TRANSCRIPTIONS_SQL
+import app.logdate.client.database.SEARCH_INDEX_SCHEMA_VERSION
+import app.logdate.client.database.SEARCH_SOURCE_ROWS_EXIST_SQL
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -15,13 +28,91 @@ import kotlin.uuid.Uuid
  * Supports fuzzy matching, relevance ranking, and boolean operators.
  *
  * Note: @SkipQueryVerification is used because Room cannot validate runtime-managed FTS5
- * virtual tables at compile time. The entries_fts table is bootstrapped when the database opens.
+ * virtual tables at compile time. The entries_fts table and its triggers are created when the
+ * database opens; [rebuildIfNeeded] fills it from existing content afterwards.
  */
 @Dao
 @SkipQueryVerification
 interface SearchDao {
     @Query("SELECT generation FROM search_index_metadata WHERE id = 1")
     suspend fun getGeneration(): Long?
+
+    @Query("SELECT schemaVersion FROM search_index_metadata WHERE id = 1")
+    suspend fun getIndexSchemaVersion(): Long?
+
+    @Query("SELECT EXISTS(SELECT 1 FROM entries_fts LIMIT 1)")
+    suspend fun hasIndexedEntries(): Boolean
+
+    @Query(SEARCH_SOURCE_ROWS_EXIST_SQL)
+    suspend fun hasIndexableContent(): Boolean
+
+    @Query("DELETE FROM entries_fts")
+    suspend fun clearIndex()
+
+    @Query(INDEX_TEXT_NOTES_SQL)
+    suspend fun indexTextNotes()
+
+    @Query(INDEX_TRANSCRIPTIONS_SQL)
+    suspend fun indexTranscriptions()
+
+    @Query(INDEX_JOURNALS_SQL)
+    suspend fun indexJournals()
+
+    @Query(INDEX_MEDIA_CAPTIONS_SQL)
+    suspend fun indexMediaCaptions()
+
+    @Query(INDEX_PLACES_SQL)
+    suspend fun indexPlaces()
+
+    @Query(INDEX_REWINDS_SQL)
+    suspend fun indexRewinds()
+
+    @Query(INDEX_STICKERS_SQL)
+    suspend fun indexStickers()
+
+    @Query(INDEX_POSTCARDS_SQL)
+    suspend fun indexPostcards()
+
+    @Query(INDEX_AMBIENT_SOUNDS_SQL)
+    suspend fun indexAmbientSounds()
+
+    @Query("INSERT INTO entries_fts(entries_fts) VALUES('optimize')")
+    suspend fun optimizeIndex()
+
+    @Query(
+        "UPDATE search_index_metadata SET schemaVersion = :schemaVersion, generation = generation + 1, " +
+            "lastRebuiltAt = :rebuiltAt WHERE id = 1",
+    )
+    suspend fun markIndexRebuilt(
+        schemaVersion: Long,
+        rebuiltAt: Long,
+    )
+
+    /**
+     * Fills the search index from existing content when it was built by an older version of the
+     * index, or is empty while content exists. Writes made since the database opened are already
+     * indexed by triggers, so rebuilding replaces them with identical rows.
+     *
+     * @return true when the index was rebuilt
+     */
+    @Transaction
+    suspend fun rebuildIfNeeded(): Boolean {
+        val current = getIndexSchemaVersion() == SEARCH_INDEX_SCHEMA_VERSION
+        if (current && (hasIndexedEntries() || !hasIndexableContent())) return false
+        clearIndex()
+        indexTextNotes()
+        indexTranscriptions()
+        indexJournals()
+        indexMediaCaptions()
+        indexPlaces()
+        indexRewinds()
+        indexStickers()
+        indexPostcards()
+        indexAmbientSounds()
+        optimizeIndex()
+        markIndexRebuilt(SEARCH_INDEX_SCHEMA_VERSION, Clock.System.now().toEpochMilliseconds())
+        return true
+    }
 
     /**
      * Emits whenever the runtime-managed search index changes or is rebuilt.
@@ -49,6 +140,7 @@ interface SearchDao {
      * - Prefix search: "hel*"
      *
      * @param query The search query (will be used in FTS5 MATCH clause)
+     * @param limit Maximum number of results to return
      * @return List of search results ordered by relevance and date
      */
     @Query(
@@ -57,9 +149,13 @@ interface SearchDao {
         FROM entries_fts
         WHERE entries_fts MATCH :query
         ORDER BY bm25(entries_fts), created DESC
+        LIMIT :limit
     """,
     )
-    suspend fun search(query: String): List<SearchResultEntity>
+    suspend fun search(
+        query: String,
+        limit: Int,
+    ): List<SearchResultEntity>
 
     /**
      * Searches entries with a limit on the number of results.
@@ -95,6 +191,7 @@ interface SearchDao {
      * Markers: '[' and ']' surround matching terms in the snippet.
      *
      * @param query The search query
+     * @param limit Maximum number of results to return
      * @return List of search results with highlighted snippets
      */
     @Query(
@@ -107,9 +204,13 @@ interface SearchDao {
         FROM entries_fts
         WHERE entries_fts MATCH :query
         ORDER BY bm25(entries_fts), created DESC
+        LIMIT :limit
     """,
     )
-    suspend fun searchWithSnippets(query: String): List<SearchResultEntity>
+    suspend fun searchWithSnippets(
+        query: String,
+        limit: Int,
+    ): List<SearchResultEntity>
 
     /**
      * Searches all indexed content with FTS5 relevance ranking.
