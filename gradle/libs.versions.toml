@@ -378,6 +378,7 @@ turbine = { group = 'app.cash.turbine', name = 'turbine', version.ref = 'turbine
 # Gradle plugins that build-logic compiles against
 android-gradlePlugin = { module = 'com.android.tools.build:gradle', version.ref = 'agp' }
 kotlin-gradlePlugin = { module = 'org.jetbrains.kotlin:kotlin-gradle-plugin', version.ref = 'kotlin' }
+kotlin-serialization-gradlePlugin = { module = 'org.jetbrains.kotlin:kotlin-serialization', version.ref = 'kotlin' }
 dokka-gradlePlugin = { module = 'org.jetbrains.dokka:dokka-gradle-plugin', version.ref = 'dokkaGradlePlugin' }
 binaryCompatibilityValidator-gradlePlugin = { module = 'org.jetbrains.kotlinx:binary-compatibility-validator', version.ref = 'binaryCompatibilityValidator' }
 
@@ -418,6 +419,7 @@ buildConfig = { id = 'com.github.gmazzo.buildconfig', version.ref = 'buildConfig
 benManesVersions = { id = 'com.github.ben-manes.versions', version.ref = 'benManesVersions' }
 
 # LogDate Conventions
+app-logdate-kmp-base = { id = 'app.logdate.kmp-base' }
 app-logdate-kmp-library = { id = 'app.logdate.kmp-library' }
 app-logdate-compose-feature = { id = 'app.logdate.compose-feature' }
 studio-hypertext-atproto-lexicon = { id = 'studio.hypertext.atproto.lexicon' }

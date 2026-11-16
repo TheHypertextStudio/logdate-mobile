@@ -3,8 +3,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.app.logdate.kmp.base)
     alias(libs.plugins.dokka)
     alias(libs.plugins.buildConfig)
 }
@@ -32,16 +31,6 @@ buildConfig {
 }
 
 kotlin {
-//    androidTarget {
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_17)
-//        }
-//    }
-
-    iosArm64()
-    iosSimulatorArm64()
-
     jvm()
 
     wasmJs {
@@ -49,10 +38,6 @@ kotlin {
     }
 
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.core)

@@ -176,16 +176,6 @@ private val featureCoverageModules =
     )
 
 subprojects {
-    tasks.withType<Test>().matching { it.name == "desktopTest" }.configureEach {
-        val requiredOffscreenScreenshots =
-            project.path == ":app:compose-main" &&
-                providers.environmentVariable("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS").orNull == "true"
-        systemProperty("java.awt.headless", (!requiredOffscreenScreenshots).toString())
-        if (requiredOffscreenScreenshots) {
-            systemProperty("apple.awt.UIElement", "true")
-            systemProperty("logdate.desktopScreenshots.visible", "false")
-        }
-    }
     if (path in featureCoverageModules) {
         apply(plugin = "jacoco")
 
