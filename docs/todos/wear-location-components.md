@@ -11,7 +11,7 @@ Follow-up implementation work:
 - If Wear should not support location capture, split `client:location` so
   phone-only manifest entries are packaged only by the phone app.
 - If Wear should support location capture, implement Wear-safe equivalents for
-  `DetailedLocationTrackingService`, `OptimizedBackgroundLocationReceiver`,
+  `OptimizedBackgroundLocationReceiver`,
   `LocationTrackingBootReceiver`, `ActivityAwareLocationService`, and
   `ActivityTransitionReceiver`.
 - Add Wear unit or Robolectric coverage proving the chosen location behavior
