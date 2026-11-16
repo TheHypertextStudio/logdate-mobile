@@ -173,7 +173,7 @@ internal class NativeJournalTransferSnapshot(
         val mediaInventory = File(staging, NATIVE_MEDIA_INVENTORY_PATH)
         writeNativeJournalMediaInventory(mediaInventory, context.filesDir, selectedPaths)
         val inventory = verifyNativeJournalMediaInventory(mediaInventory, nativeSnapshotChecksum(mediaInventory))
-        pinCameraOriginals(staging, selectedPaths, inventory)
+        requireSelectedOriginalsInventoried(selectedPaths, inventory)
         val receipt = File(staging, NATIVE_SOURCE_RECEIPT_PATH)
         val pinnedPreferences = File(staging, "files/logdate.preferences_pb")
         val pinnedEntryDrafts = pinEntryDrafts(staging, entryDraftFile, beforeDrafts)
@@ -199,8 +199,7 @@ internal class NativeJournalTransferSnapshot(
         checkPinnedPreferencesUnchanged()
     }
 
-    private fun pinCameraOriginals(
-        staging: File,
+    private fun requireSelectedOriginalsInventoried(
         selectedPaths: Collection<String>,
         inventory: NativeJournalMediaInventory,
     ) {
@@ -213,15 +212,6 @@ internal class NativeJournalTransferSnapshot(
             }
             if (Files.isRegularFile(source.toPath(), LinkOption.NOFOLLOW_LINKS)) {
                 check(inventory.entry(path) != null) { "Referenced native original could not be captured" }
-                if (path.startsWith("files/camera-captures/")) {
-                    val pinned = File(staging, path)
-                    check(pinned.parentFile?.mkdirs() == true || pinned.parentFile?.isDirectory == true)
-                    Files.copy(source.toPath(), pinned.toPath(), LinkOption.NOFOLLOW_LINKS)
-                    val entry = checkNotNull(inventory.entry(path))
-                    check(pinned.length() == entry.size && nativeSnapshotChecksum(pinned) == entry.sha256) {
-                        "Referenced camera original changed while native source was pinned"
-                    }
-                }
             }
         }
     }
@@ -260,14 +250,8 @@ internal class NativeJournalTransferSnapshot(
         }
         checkPinnedPreferencesUnchanged()
         selectedMedia.forEach { entry ->
-            if (entry.path.startsWith("files/camera-captures/")) {
-                verifySelectedMediaFile(File(current, entry.path), entry)
-                return@forEach
-            }
             val file = File(context.filesDir, entry.path.removePrefix("files/"))
-            verifySelectedMediaFile(file, entry)
-            emit(file)
-            verifySelectedMediaFile(file, entry)
+            emitVerifiedNativeMedia(file, entry, emit)
         }
         checkPinnedPreferencesUnchanged()
     }
@@ -656,6 +640,16 @@ private fun verifySelectedMediaFile(
     check(file.length() == entry.size && nativeSnapshotChecksum(file) == entry.sha256) {
         "Native original changed during device transfer"
     }
+}
+
+internal fun emitVerifiedNativeMedia(
+    file: File,
+    entry: NativeJournalMediaInventory.Entry,
+    emit: (File) -> Unit,
+) {
+    verifySelectedMediaFile(file, entry)
+    emit(file)
+    verifySelectedMediaFile(file, entry)
 }
 
 internal fun requirePinnedNativeTransferFile(

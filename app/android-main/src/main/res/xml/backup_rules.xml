@@ -6,9 +6,10 @@
    Cloud backup: DataStore preferences, the database-passphrase backup, the
    identity-recovery-phrase backup, and the encrypted database (all require
    clientSideEncryption so they're encrypted in the cloud).
-   Device-to-device includes only paths in its explicit include list; live
-   temporary camera-capture output is omitted, while receipt-pinned selected
-   originals are included under native_journal_transfer/current/.
+   Device-to-device includes only paths in its explicit include list. Live
+   temporary camera-capture output is omitted; selected camera originals are
+   emitted directly from filesDir by the backup agent after the receipt inventory
+   is pinned, so a second full-size staging copy is unnecessary.
    Device-bound preferences, background jobs, and incomplete media staging are omitted.
 -->
 <full-backup-content>

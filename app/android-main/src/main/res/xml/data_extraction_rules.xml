@@ -13,10 +13,12 @@
 
    Device-to-device transfer:
      The explicit include list omits live media roots from default traversal.
-     The backup agent pins only selected camera originals and their pending
-     draft bytes under native_journal_transfer/current/. Other selected media
-     originals are emitted separately. Keystore-bound ciphertext, installation
-     state, and cloned background jobs remain excluded.
+     Pending draft bytes and the receipt inventory are pinned under
+     native_journal_transfer/current/. The backup agent emits selected camera
+     originals directly from filesDir after checking their inventory hashes and
+     sizes before and after emission. Other selected media originals are emitted
+     separately. Keystore-bound ciphertext, installation state, and cloned
+     background jobs remain excluded.
 -->
 <data-extraction-rules>
     <cloud-backup disableIfNoEncryptionCapabilities="true">

@@ -163,9 +163,20 @@ private fun nativeSourceFromReceipt(
                 inventoryData.files
                     .filter { it.path.startsWith("files/camera-captures/") }
                     .mapNotNull { entry ->
-                        selected(entry.path, entry.sha256, requireReceiptCohort = true)
-                            ?.takeIf { it.length() == entry.size }
-                            ?.let { entry.path to it }
+                        val staged =
+                            selected(entry.path, entry.sha256, requireReceiptCohort = true)
+                                ?.takeIf { it.length() == entry.size }
+                        val direct =
+                            complete
+                                .firstOrNull {
+                                    it.path == entry.path &&
+                                        it.cohortId == payload.cohortId &&
+                                        it.complete &&
+                                        it.expectedSize == entry.size &&
+                                        it.file.length() == entry.size &&
+                                        nativeSourceChecksum(it.file) == entry.sha256
+                                }?.file
+                        (staged ?: direct)?.let { entry.path to it }
                     }.toMap()
             }.orEmpty()
     val accepted =

@@ -1,6 +1,7 @@
 package app.logdate.client.device.restore
 
 import android.content.Context
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
@@ -258,6 +259,11 @@ class NativeJournalReplayCustody(
         acceptedSourceHashes: Map<String, String> = emptyMap(),
     ) {
         cleanupConsumed()
+        val sourceCameraFiles =
+            verifiedNativeJournalSources(sealedPayloads())
+                .values
+                .flatMap { source -> source.filterKeys { it.startsWith("files/camera-captures/") }.toList() }
+                .associate { (path, file) -> path to file.canonicalPath }
         val core =
             acceptedSourceHashes.filterKeys { path ->
                 path == NATIVE_SOURCE_RECEIPT_PATH || path == "files/logdate.preferences_pb" || path.startsWith("database/")
@@ -284,11 +290,17 @@ class NativeJournalReplayCustody(
                         path in STAGED_AUXILIARY_PATHS &&
                             (payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) || payload.path in RAW_STAGED_AUXILIARY) &&
                             payload.file.canonicalPath in verifiedPhysicalPaths
+                    val verifiedDirectCamera =
+                        path.startsWith("files/camera-captures/") &&
+                            payload.path == path &&
+                            sourceCameraFiles[path] == payload.file.canonicalPath &&
+                            acceptedSourceHashes[path] == retainedJournalChecksum(payload.file) &&
+                            payload.file.canonicalPath in verifiedPhysicalPaths
                     val verifiedCore =
                         fullSourcePresent &&
                             payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) &&
                             core[path] == retainedJournalChecksum(payload.file)
-                    payload.complete && (verifiedAuxiliary || verifiedCore)
+                    payload.complete && (verifiedAuxiliary || verifiedDirectCamera || verifiedCore)
                 }
             ) {
                 consume(directory)
@@ -310,43 +322,12 @@ class NativeJournalReplayCustody(
             verifiedNativeJournalSources(all).values.singleOrNull { files ->
                 files["source_scope.json"]?.let { retainedJournalChecksum(it) == receiptSha256 } == true
             } ?: return
-        val acceptedHashes = acceptedFiles.mapValues { (_, file) -> retainedJournalChecksum(file) }
-        check(
-            source.all { (path, file) ->
-                acceptedHashes[path] == retainedJournalChecksum(file)
-            },
-        ) { "Merged native source does not match accepted receipt bytes" }
-        val core =
-            acceptedHashes
-                .mapKeys { (path, _) -> if (path == "source_scope.json") NATIVE_SOURCE_RECEIPT_PATH else path }
-                .filterKeys { path ->
-                    path == NATIVE_SOURCE_RECEIPT_PATH || path == "files/logdate.preferences_pb" || path.startsWith("database/")
-                }
+        val merged = MergedSourceAcknowledgement.verify(receiptSha256, source, acceptedFiles, boundCorePhysicalPaths)
         unaccountedSources().forEach { directory ->
             val id = directory.name
             check(Uuid.parse(id).toString() == id && Files.isDirectory(directory.toPath(), LinkOption.NOFOLLOW_LINKS))
             val payloads = journal.verified(id, journal.finish(id))
-            val fullSourcePresent =
-                NATIVE_SOURCE_RECEIPT_PATH in core &&
-                    "files/logdate.preferences_pb" in core &&
-                    "database/logdate" in core &&
-                    core.all { (path, hash) ->
-                        payloads.any { payload ->
-                            payload.complete &&
-                                payload.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path &&
-                                retainedJournalChecksum(payload.file) == hash
-                        }
-                    }
-            if (payloads.isNotEmpty() &&
-                payloads.all { payload ->
-                    val path = payload.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX)
-                    val accepted = acceptedHashes[if (path == NATIVE_SOURCE_RECEIPT_PATH) "source_scope.json" else path]
-                    payload.complete &&
-                        payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) &&
-                        accepted == retainedJournalChecksum(payload.file) &&
-                        (fullSourcePresent || payload.file.canonicalPath in boundCorePhysicalPaths[path].orEmpty())
-                }
-            ) {
+            if (merged.retires(payloads)) {
                 consume(directory)
             }
         }
@@ -380,5 +361,118 @@ class NativeJournalReplayCustody(
             )
         val RAW_STAGED_AUXILIARY =
             setOf("files/db_recovery/passphrase_backup", "files/db_recovery/working_passphrase_backup", NATIVE_MEDIA_INVENTORY_PATH)
+    }
+}
+
+/** The accepted bytes of one merged source, checked against the custody payloads each cohort holds. */
+private class MergedSourceAcknowledgement(
+    private val receiptSha256: String,
+    private val sourceCameraFiles: Map<String, String>,
+    private val acceptedHashes: Map<String, String>,
+    private val sourceReceipt: NativeJournalSourceReceipt,
+    private val sourceMediaInventory: NativeJournalMediaInventory?,
+    private val core: Map<String, String>,
+    private val boundCorePhysicalPaths: Map<String, Set<String>>,
+) {
+    /** A cohort retires only when every payload it holds is an accepted byte revision of this source. */
+    fun retires(payloads: List<NativeIncomingJournal.Payload>): Boolean {
+        val fullSourcePresent = fullSourcePresent(payloads)
+        val holdsAcceptedReceipt = holdsAcceptedReceipt(payloads)
+        return payloads.isNotEmpty() &&
+            payloads.all { payload -> retiresPayload(payload, fullSourcePresent, holdsAcceptedReceipt) }
+    }
+
+    private fun fullSourcePresent(payloads: List<NativeIncomingJournal.Payload>): Boolean =
+        NATIVE_SOURCE_RECEIPT_PATH in core &&
+            "files/logdate.preferences_pb" in core &&
+            "database/logdate" in core &&
+            core.all { (path, hash) ->
+                payloads.any { payload ->
+                    payload.complete &&
+                        payload.path == NATIVE_JOURNAL_TRANSFER_PREFIX + path &&
+                        retainedJournalChecksum(payload.file) == hash
+                }
+            }
+
+    /** A repeated delivery carries the same receipt bytes in a cohort of its own. */
+    private fun holdsAcceptedReceipt(payloads: List<NativeIncomingJournal.Payload>): Boolean =
+        payloads.any {
+            it.complete &&
+                it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + NATIVE_SOURCE_RECEIPT_PATH &&
+                retainedJournalChecksum(it.file) == receiptSha256
+        }
+
+    private fun retiresPayload(
+        payload: NativeIncomingJournal.Payload,
+        fullSourcePresent: Boolean,
+        holdsAcceptedReceipt: Boolean,
+    ): Boolean {
+        val path = payload.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX)
+        val accepted = acceptedHashes[if (path == NATIVE_SOURCE_RECEIPT_PATH) "source_scope.json" else path]
+        val verifiedDirectCamera = isVerifiedDirectCamera(payload, path, accepted, holdsAcceptedReceipt)
+        return payload.complete &&
+            (
+                payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) ||
+                    sourceCameraFiles[path] == payload.file.canonicalPath ||
+                    verifiedDirectCamera
+            ) &&
+            accepted == retainedJournalChecksum(payload.file) &&
+            (fullSourcePresent || payload.file.canonicalPath in boundCorePhysicalPaths[path].orEmpty())
+    }
+
+    /** A v4 camera original transferred in place matches the source's verified media inventory. */
+    private fun isVerifiedDirectCamera(
+        payload: NativeIncomingJournal.Payload,
+        path: String,
+        accepted: String?,
+        holdsAcceptedReceipt: Boolean,
+    ): Boolean =
+        sourceReceipt.version == 4 &&
+            path.startsWith("files/camera-captures/") &&
+            payload.path == path &&
+            holdsAcceptedReceipt &&
+            sourceMediaInventory?.entry(path)?.let { entry ->
+                entry.size == payload.expectedSize &&
+                    entry.size == payload.file.length() &&
+                    entry.sha256 == accepted &&
+                    entry.sha256 == retainedJournalChecksum(payload.file)
+            } == true
+
+    companion object {
+        /** Refuses a merge whose accepted bytes differ from any file the sealed source holds. */
+        fun verify(
+            receiptSha256: String,
+            source: Map<String, File>,
+            acceptedFiles: Map<String, File>,
+            boundCorePhysicalPaths: Map<String, Set<String>>,
+        ): MergedSourceAcknowledgement {
+            val sourceCameraFiles =
+                source.filterKeys { it.startsWith("files/camera-captures/") }.mapValues { (_, file) -> file.canonicalPath }
+            val acceptedHashes = acceptedFiles.mapValues { (_, file) -> retainedJournalChecksum(file) }
+            val sourceReceipt = Json.decodeFromString<NativeJournalSourceReceipt>(source.getValue("source_scope.json").readText())
+            val sourceMediaInventory =
+                sourceReceipt.mediaInventorySha256
+                    ?.let { expected -> source[NATIVE_MEDIA_INVENTORY_PATH]?.let { verifyNativeJournalMediaInventory(it, expected) } }
+            check(
+                source.all { (path, file) ->
+                    acceptedHashes[path] == retainedJournalChecksum(file)
+                },
+            ) { "Merged native source does not match accepted receipt bytes" }
+            val core =
+                acceptedHashes
+                    .mapKeys { (path, _) -> if (path == "source_scope.json") NATIVE_SOURCE_RECEIPT_PATH else path }
+                    .filterKeys { path ->
+                        path == NATIVE_SOURCE_RECEIPT_PATH || path == "files/logdate.preferences_pb" || path.startsWith("database/")
+                    }
+            return MergedSourceAcknowledgement(
+                receiptSha256,
+                sourceCameraFiles,
+                acceptedHashes,
+                sourceReceipt,
+                sourceMediaInventory,
+                core,
+                boundCorePhysicalPaths,
+            )
+        }
     }
 }
