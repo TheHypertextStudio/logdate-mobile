@@ -1,5 +1,6 @@
 package app.logdate.client.media.audio.sherpa
 
+import app.logdate.client.media.audio.download.ModelDownloadController
 import app.logdate.client.media.audio.download.ModelDownloadStatus
 import app.logdate.client.media.audio.transcription.TranscriptAccumulator
 import app.logdate.client.media.audio.transcription.TranscriptionFailure
@@ -9,15 +10,11 @@ import app.logdate.client.media.audio.transcription.TranscriptionStartResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 /**
  * Desktop transcription service backed by Sherpa-ONNX JVM. Unlike Android,
@@ -49,11 +46,15 @@ internal class DesktopSherpaTranscriptionService(
 
     private val _transcriptionFlow = MutableSharedFlow<TranscriptionResult>(replay = 1)
 
-    private val _offlineModelDownloadStatus = MutableStateFlow<ModelDownloadStatus>(ModelDownloadStatus.Idle)
+    private val modelDownload =
+        ModelDownloadController(
+            request = modelManager.whisperDownloadRequest(),
+            scope = scope,
+            isReady = { modelManager.checkWhisperModelReady() },
+            download = { modelManager.downloadWhisperModel() },
+        )
 
-    override val offlineModelDownloadStatus: StateFlow<ModelDownloadStatus> = _offlineModelDownloadStatus.asStateFlow()
-
-    private var downloadJob: Job? = null
+    override val offlineModelDownloadStatus: StateFlow<ModelDownloadStatus> = modelDownload.status
 
     override fun getTranscriptionFlow(): SharedFlow<TranscriptionResult> = _transcriptionFlow.asSharedFlow()
 
@@ -65,24 +66,9 @@ internal class DesktopSherpaTranscriptionService(
     override val isOfflineModelAvailable: Boolean
         get() = offlineRecognizer.isAvailable
 
-    override fun startOfflineModelDownload() {
-        if (downloadJob?.isActive == true) return
-        if (isOfflineModelAvailable) {
-            _offlineModelDownloadStatus.value = ModelDownloadStatus.Completed
-            return
-        }
-        downloadJob =
-            scope.launch(Dispatchers.IO) {
-                try {
-                    modelManager.downloadWhisperModel().collect { status ->
-                        _offlineModelDownloadStatus.value = status
-                    }
-                } catch (e: Exception) {
-                    Napier.e("Desktop Whisper download crashed", e)
-                    _offlineModelDownloadStatus.value = ModelDownloadStatus.UnknownError
-                }
-            }
-    }
+    override fun checkOfflineModelAvailability() = modelDownload.checkAvailability()
+
+    override fun startOfflineModelDownload() = modelDownload.startDownload()
 
     // Desktop has no live streaming pass yet — the recording manager writes
     // a WAV file straight to disk and we transcribe after stop. The Android
@@ -161,8 +147,6 @@ internal class DesktopSherpaTranscriptionService(
     override suspend fun resetTranscription() = Unit
 
     override fun release() {
-        downloadJob?.cancel()
-        downloadJob = null
         offlineRecognizer.release()
         vadProvider.release()
     }

@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
  * Drives the voice notes settings screen. Combines the live download status
  * of both on-device audio models — Whisper for transcript refinement, CED
  * for ambient sound detection — into a single UI state the screen renders
- * as two reactive rows.
+ * across the audio settings overview and capability pages.
  */
 class VoiceNotesSettingsViewModel(
     private val transcriptionService: TranscriptionService,
@@ -38,8 +38,9 @@ class VoiceNotesSettingsViewModel(
     )
 
     data class UiState(
-        val transcription: ModelRowState = ModelRowState(ModelDownloadStatus.Idle),
-        val tagging: ModelRowState = ModelRowState(ModelDownloadStatus.Idle),
+        val transcription: ModelRowState = ModelRowState(ModelDownloadStatus.Checking),
+        val tagging: ModelRowState = ModelRowState(ModelDownloadStatus.Checking),
+        val supportsLiveTranscription: Boolean = false,
         val quietSaveAvailable: Boolean = false,
         val quietSaveEnabled: Boolean = true,
         val quietSaveWriteFailed: Boolean = false,
@@ -56,14 +57,20 @@ class VoiceNotesSettingsViewModel(
             UiState(
                 transcription = ModelRowState(transcription),
                 tagging = ModelRowState(tagging),
+                supportsLiveTranscription = transcriptionService.supportsLiveTranscription,
                 quietSaveAvailable = available,
                 quietSaveEnabled = enabled,
                 quietSaveWriteFailed = failed,
             )
         }.stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = UiState(),
+            started = SharingStarted.Eagerly,
+            initialValue =
+                UiState(
+                    transcription = ModelRowState(transcriptionService.offlineModelDownloadStatus.value),
+                    tagging = ModelRowState(audioTaggingService.modelDownloadStatus.value),
+                    supportsLiveTranscription = transcriptionService.supportsLiveTranscription,
+                ),
         )
 
     fun setQuietSaveEnabled(enabled: Boolean) {

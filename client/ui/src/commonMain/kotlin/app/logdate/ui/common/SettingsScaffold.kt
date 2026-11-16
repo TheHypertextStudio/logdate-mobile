@@ -66,6 +66,7 @@ fun SettingsScaffold(
     maxContentWidth: Dp = 600.dp,
     actions: @Composable RowScope.() -> Unit = {},
     compactHeader: Boolean = false,
+    titleMaxLines: Int = Int.MAX_VALUE,
     content: LazyListScope.() -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -101,7 +102,7 @@ fun SettingsScaffold(
                     )
                 } else {
                     LargeTopAppBar(
-                        title = { Text(title) },
+                        title = { Text(title, maxLines = titleMaxLines, overflow = TextOverflow.Ellipsis) },
                         navigationIcon = navigationIcon,
                         modifier = Modifier.padding(horizontal = sideInset),
                         scrollBehavior = scrollBehavior,
