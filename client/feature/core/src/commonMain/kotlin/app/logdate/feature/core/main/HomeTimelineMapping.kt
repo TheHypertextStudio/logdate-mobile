@@ -77,11 +77,13 @@ private fun List<Moment>.toMomentUiStates(dayPeople: List<PersonUiState>): List<
     }
 }
 
+private val daylightClassifier = DaylightClassifier()
+
 private fun Moment.toMomentUiState(
     isHero: Boolean,
     dayPeople: List<PersonUiState>,
 ): MomentUiState {
-    val timeOfDay = DaylightClassifier().classifyWithoutLocation(estimatedStart)
+    val timeOfDay = daylightClassifier.classifyWithoutLocation(estimatedStart)
     val resolvedPeople =
         people.mapNotNull { name ->
             dayPeople.find { it.name.equals(name, ignoreCase = true) }

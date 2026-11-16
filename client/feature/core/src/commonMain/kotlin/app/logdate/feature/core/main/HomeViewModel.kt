@@ -2,6 +2,9 @@
 
 package app.logdate.feature.core.main
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.datastore.LogdatePreferencesDataSource
@@ -35,6 +38,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -47,6 +51,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -70,10 +75,12 @@ class HomeViewModel(
     private val transcriptionRepository: TranscriptionRepository,
     private val libraryEnabledFlow: Flow<Boolean>,
     birthdayFlow: Flow<Instant?>,
+    private val workContext: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     companion object {
         private const val RECENT_TIMELINE_PAGE_SIZE = 50
         private const val APPEND_ERROR_MESSAGE = "Couldn't load older entries."
+        private val IN_PROGRESS_STATUSES = setOf(TranscriptionStatus.PENDING, TranscriptionStatus.IN_PROGRESS)
     }
 
     constructor(
@@ -115,31 +122,31 @@ class HomeViewModel(
     private val transcriptionCache = MutableStateFlow<Map<Uuid, TranscriptionData?>>(emptyMap())
     private val autoRequestedNoteIds = mutableSetOf<Uuid>()
 
+    /**
+     * Snapshot state, so a composable that reads one note's transcript recomposes when the cache
+     * changes without the shared [TranscriptionState] itself changing identity for every reader.
+     */
+    private var transcriptionSnapshot by mutableStateOf<Map<Uuid, TranscriptionData?>>(emptyMap())
+
+    /** One stable holder for the whole screen; its lookups read the latest transcripts. */
     val transcriptionState: StateFlow<TranscriptionState> =
-        transcriptionCache
-            .map { cache ->
-                TranscriptionState(
-                    requestTranscription = ::requestTranscription,
-                    getTranscriptionText = { noteId ->
-                        cache[noteId]
-                            ?.text
-                            ?.trim()
-                            ?.takeIf(String::isNotEmpty)
-                    },
-                    isTranscriptionInProgress = { noteId ->
-                        cache[noteId]?.status in setOf(TranscriptionStatus.PENDING, TranscriptionStatus.IN_PROGRESS)
-                    },
-                    getTranscriptionError = { noteId ->
-                        cache[noteId]
-                            ?.takeIf { it.status == TranscriptionStatus.FAILED }
-                            ?.errorMessage
-                    },
-                )
-            }.stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                TranscriptionState(requestTranscription = ::requestTranscription),
-            )
+        MutableStateFlow(
+            TranscriptionState(
+                requestTranscription = ::requestTranscription,
+                getTranscriptionText = { noteId ->
+                    transcriptionSnapshot[noteId]
+                        ?.text
+                        ?.trim()
+                        ?.takeIf(String::isNotEmpty)
+                },
+                isTranscriptionInProgress = { noteId -> transcriptionSnapshot[noteId]?.status in IN_PROGRESS_STATUSES },
+                getTranscriptionError = { noteId ->
+                    transcriptionSnapshot[noteId]
+                        ?.takeIf { it.status == TranscriptionStatus.FAILED }
+                        ?.errorMessage
+                },
+            ),
+        ).asStateFlow()
 
     /**
      * Whether the Library tab should appear in the home navigation. Backed by the `library_enabled`
@@ -164,6 +171,7 @@ class HomeViewModel(
                 .flatMapLatest(::observeVisibleTranscriptions)
                 .onEach { transcriptions ->
                     transcriptionCache.value = transcriptions
+                    transcriptionSnapshot = transcriptions
                     requestMissingVisibleTranscriptions(transcriptions)
                 }.collect {}
         }
@@ -220,14 +228,18 @@ class HomeViewModel(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
     }
 
+    /** Each day's mapped state with the inputs it came from, so unchanged days are not mapped again. */
+    private val mappedDays = HashMap<LocalDate, Pair<MappedDayInputs, TimelineDayUiState>>()
+
     private val timelineItems: StateFlow<List<TimelineDayUiState>> =
         combine(timelineFeedDays, journalMembership) { timelineDays, membershipMap ->
-            timelineDays.map { timelineDay -> timelineDay.toHomeTimelineUiState(membershipMap = membershipMap) }
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            emptyList(),
-        )
+            mapTimelineDays(timelineDays, membershipMap)
+        }.flowOn(workContext)
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                emptyList(),
+            )
 
     private val selectedDayUiState: StateFlow<TimelineDayUiState?> =
         combine(
@@ -251,14 +263,36 @@ class HomeViewModel(
 
     private val hasMoreOlderContent: StateFlow<Boolean> =
         timelineFeedDays
-            .mapLatest { timelineDays ->
-                val oldestLoadedTimestamp = timelineDays.oldestLoadedTimestamp() ?: return@mapLatest false
-                notesRepository.hasNotesBefore(oldestLoadedTimestamp)
+            .map { timelineDays -> timelineDays.oldestLoadedTimestamp() }
+            .distinctUntilChanged()
+            .mapLatest { oldestLoadedTimestamp ->
+                oldestLoadedTimestamp != null && notesRepository.hasNotesBefore(oldestLoadedTimestamp)
             }.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
                 false,
             )
+
+    /** Runs in the timeline's single collector, so the cache is never touched concurrently. */
+    private fun mapTimelineDays(
+        timelineDays: List<TimelineDay>,
+        membershipMap: Map<Uuid, List<app.logdate.shared.model.Journal>>,
+    ): List<TimelineDayUiState> =
+        timelineDays
+            .map { timelineDay ->
+                val inputs = MappedDayInputs(timelineDay, timelineDay.entries.associate { it.uid to membershipMap[it.uid] })
+                val cached = mappedDays[timelineDay.date]
+                if (cached != null && cached.first == inputs) {
+                    cached.second
+                } else {
+                    timelineDay.toHomeTimelineUiState(membershipMap = membershipMap).also { mappedDays[timelineDay.date] = inputs to it }
+                }
+            }.also { mappedDays.keys.retainAll(timelineDays.mapTo(HashSet()) { it.date }) }
+
+    private data class MappedDayInputs(
+        val day: TimelineDay,
+        val membership: Map<Uuid, List<app.logdate.shared.model.Journal>?>,
+    )
 
     /** Puts away the suggestion after an activity, or the morning start. */
     fun dismissActivitySuggestion() {

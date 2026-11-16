@@ -77,6 +77,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -396,10 +397,12 @@ class HomeViewModelTest {
                     transcriptionRepository = transcriptionRepository,
                 )
             val collectionJob = launch { viewModel.transcriptionState.collect() }
+            val holder = viewModel.transcriptionState.value
 
             viewModel.updateVisibleAudioNoteIds(setOf(audioId))
             advanceUntilIdle()
 
+            assertSame(holder, viewModel.transcriptionState.value)
             assertEquals("Remember the launch checklist", viewModel.transcriptionState.value.getTranscriptionText(audioId))
             assertFalse(viewModel.transcriptionState.value.isTranscriptionInProgress(audioId))
             assertTrue(transcriptionRepository.requestedNoteIds.isEmpty())
@@ -482,6 +485,7 @@ class HomeViewModelTest {
             transcriptionRepository = transcriptionRepository,
             libraryEnabledFlow = flowOf(false),
             birthdayFlow = birthdayFlow,
+            workContext = dispatcher,
         )
     }
 
