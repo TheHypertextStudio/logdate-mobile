@@ -233,10 +233,14 @@ class AppViewModel(
             }
         } else {
             pendingUnlock = null
-            appLockState.value =
-                AppLockState.Locked(
-                    if (result == AppAuthState.REQUIRE_PROMPT) AppUnlockState.Idle else AppUnlockState.Failed,
-                )
+            // A device without a screen lock didn't fail to verify anyone; the lock screen offers setup.
+            val challenge =
+                if (result in setOf(AppAuthState.REQUIRE_PROMPT, AppAuthState.REQUEST_ENROLLMENT)) {
+                    AppUnlockState.Idle
+                } else {
+                    AppUnlockState.Failed
+                }
+            appLockState.value = AppLockState.Locked(challenge)
         }
     }
 

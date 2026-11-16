@@ -308,6 +308,40 @@ class AppViewModelTest {
         }
 
     @Test
+    fun `an unlock that finds no device security guides setup instead of reporting a failure`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper(AppAuthState.REQUEST_ENROLLMENT)
+            val viewModel = lockedViewModel(gatekeeper)
+            advanceUntilIdle()
+
+            viewModel.onAppForegrounded()
+            advanceUntilIdle()
+            gatekeeper.complete(AppAuthState.REQUEST_ENROLLMENT)
+            advanceUntilIdle()
+
+            val state = assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value)
+            assertEquals(true, state.requiresUnlock)
+            assertEquals(AppAuthState.REQUEST_ENROLLMENT, state.authState)
+            assertEquals(AppUnlockState.Idle, state.unlockState)
+        }
+
+    @Test
+    fun `an unlock the device could not verify reports the failure`() =
+        runTest {
+            val gatekeeper = FakeBiometricGatekeeper(AppAuthState.REQUIRE_PROMPT)
+            val viewModel = lockedViewModel(gatekeeper)
+            advanceUntilIdle()
+
+            viewModel.showNativeUnlockPrompt()
+            gatekeeper.complete(AppAuthState.UNKNOWN)
+            advanceUntilIdle()
+
+            val state = assertIs<GlobalAppUiLoadedState>(viewModel.uiState.value)
+            assertEquals(true, state.requiresUnlock)
+            assertEquals(AppUnlockState.Failed, state.unlockState)
+        }
+
+    @Test
     fun `backgrounding requires a new challenge after previously successful authentication`() =
         runTest {
             val gatekeeper = FakeBiometricGatekeeper()
@@ -887,7 +921,10 @@ class AppViewModelTest {
 
         fun setState(value: AppAuthState) = publish(value)
 
-        fun completeRequest(index: Int, value: AppAuthState) {
+        fun completeRequest(
+            index: Int,
+            value: AppAuthState,
+        ) {
             completeAuthenticationChallenge(state, value, callbacks[index])
         }
 
