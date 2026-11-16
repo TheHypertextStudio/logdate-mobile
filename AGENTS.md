@@ -108,12 +108,12 @@ branch or opening a pull request.
 The full flow, including conflict handling under the hooks, is in
 [Branch and Pull Request Workflow](./docs/reference/standards/git-guidelines.md#branch-and-pull-request-workflow).
 
-## Commit policy authority
+## Commit policy
 
-Use the reviewed `.hypertext/commits.json` domain boundaries and the current Commit Message Standards.
-All commits require a registered scope and exactly `feat`, `fix`, or `chore`; old module/activity
-examples are historical. Preserve existing hooks until supported canonical composition is activated.
-A registry file or independent review alone does not authorize hook activation or protected CI changes.
+Every commit has the type `feat`, `fix` or `chore` and a scope registered in
+[`.hypertext/commits.json`](./.hypertext/commits.json). The commit-msg and pre-push hooks check
+both. [Commit scopes](./docs/reference/standards/commit-scopes.md) lists the scopes, and
+[Commit messages](./docs/reference/standards/commit-messages.md) describes the format.
 
 ## Non-Negotiable Principles
 

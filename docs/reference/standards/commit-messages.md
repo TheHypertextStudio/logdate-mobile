@@ -1,596 +1,203 @@
-# Commit Message Standards
+# Commit message standards
 
-## Current commit types
+Every commit that lands on `main` becomes a line in a changelog, so a commit message is written
+for the person who will read that changelog and, later, for whoever runs `git blame` on the code.
+The diff already shows what changed line by line. The message says what the change means.
 
-Current commits use exactly `feat`, `fix`, or `chore`, with a mandatory domain registered in [`.hypertext/commits.json`](../../../.hypertext/commits.json). The [scope reference](./commit-scopes.md) explains the registry boundaries.
-
-- `feat` introduces a capability; `fix` corrects user-observable behavior. Their titles and bodies describe the delivered user outcome. They form the product changelog after landing on main.
-- `chore` covers maintenance, tests, documentation, dependencies and refactoring, using the product domain the work supports. It needs an informative body; implementation details are appropriate for maintenance.
-- Keep implementation, relevant tests and necessary usage/migration documentation together. Several coherent commits are useful; do not split documentation or tests merely by activity.
-- Use a useful title, a blank line before the body, and terminal metadata trailers. Breaking changes require an explicit `BREAKING CHANGE:` explanation even when the title uses `!`.
-- Every contributing agent receives its documented `Co-authored-by` trailer. Set `HYPERTEXT_AGENT_COAUTHOR` on the ordinary commit command. Do not invent identities or attribute work to a human.
-- The effective committer uses the approved Studio email. Identity changes need their actual authorization; no automatic non-Studio exception, global identity rewrite or history rewrite.
-- Stage explicit reviewed paths and use a message file with ordinary Git hooks. Canonical hooks retain the product's secret scans, exact staged formatting and pre-push compile/coverage/affected-module tests.
+A message has a title, an optional body, and optional trailers:
 
 ```text
-fix(sync): Keep routine checks out of live backup updates
+type(scope): Description of the change
 
-Routine checks with nothing to upload stay ordinary. Live backup
-updates continue to show real upload progress when enabled.
+A paragraph or two in full sentences.
 
-Co-authored-by: Codex <noreply@openai.com>
+Co-authored-by: Name <name@example.com>
 ```
 
-The reviewed registry must be in the committed baseline before canonical activation. Adding its file does not activate hooks, authorize a policy digest, configure protected CI, or establish delivery. Preserve all existing gates until supported reconciliation completes. Scope additions and technical applicability require a maintainer other than their author; protected CI approval remains separate.
+The title is one line. A blank line separates it from the body, and a blank line separates the
+body from the trailers. The hooks reject a message with no blank line after the title.
 
-<details>
-<summary>Superseded historical message guidance</summary>
+## Choosing the type
 
-The following text is retained only to interpret older commits. Its extra types, examples and older scope rules are not current instructions.
+There are exactly three types: `feat`, `fix` and `chore`. Ask one question: would a person using
+the product notice the difference?
 
-# Commit Message Standards
+- `feat` is for a change that lets a person do something they could not do before.
+- `fix` is for a change that makes something work that was broken or wrong.
+- `chore` is for everything else: refactoring, tests, documentation, dependency updates, build
+  and tooling work, and performance work nobody would see.
 
-> **Authoritative reference for writing clear, maintainable commit messages in the LogDate codebase**
+Refactoring is not a type of its own here, even though Conventional Commits has one. A refactor
+that changes nothing a person can see is a `chore`. If one change contains a refactor and a new
+behavior, make two commits, with the refactor first, so each can be understood and reverted alone.
 
-Commit messages are the permanent record of why code exists. When someone reads `git log` or runs `git blame` months or years later, the commit message is the only context they have. The diff shows the mechanics; the message explains everything else.
+Keep a change together with its tests and the documentation it needs. Several small, complete
+commits are fine, but do not split a change into "code", "tests" and "docs" commits.
 
----
+## Choosing the scope
 
-## Quick Format Reference
+The scope is the part of the product the change belongs to, written in parentheses after the
+type. It is required, and it must be one of the scopes registered in
+[`.hypertext/commits.json`](../../../.hypertext/commits.json). [Commit scopes](commit-scopes.md)
+lists every scope with what it covers and what belongs elsewhere.
 
-```
-type(scope): Brief description
+Choose the scope by what the change does for a person, not by where the files are. A change to the
+backup progress indicator is `sync` even if most of the edited files are in a settings screen.
+Build, hook and tooling work is `dx`. Names such as `core`, `ui`, `docs`, `build` and `tests` are
+never valid, because they describe where code lives rather than what it is for.
 
-Optional detailed explanation...
+## Writing the title
 
-Footer annotations if needed.
-```
+The title has the form `type(scope): Description`. The type and scope are lowercase, and the
+description starts with a capital letter and does not end with a period. Write it in the
+imperative mood, as in `Show`, `Resume` or `Bound`, so that it reads as "this commit will ...".
+Keep it to about 72 characters so it fits in `git log --oneline`.
 
-**Constraints**:
+Say what actually changed. A description such as `Update code` or `WIP` is rejected, and so are a few
+similar generic placeholders, but the hook cannot judge a vague title that is merely unhelpful. Capitalize proper nouns such as Android, Kotlin,
+Gradle and Compose. Do not put project phase numbers or ticket labels in the title; they mean
+nothing to someone reading the history later.
 
-- Title: Under 72 characters (displays in `git log --oneline`)
-- Mood: Imperative ("Add feature", not "Added feature")
-- Specificity: "Fix authentication token expiry" not "Fix bug"
+To mark a breaking change, add `!` after the scope and add a paragraph that starts with
+`BREAKING CHANGE:` explaining what breaks and how to migrate.
 
----
+## Writing the body of a feat or fix
 
-## Message Anatomy
+A `feat` or `fix` is read by people who use the app and have never seen the code. The title and
+body describe the change from their side: what they can now do, or what now works. The body has no
+implementation detail, which means no class or module names, no architecture, no library names
+and no refactoring rationale. If you took out every technical word, the message should still say
+something meaningful.
 
-### Title Line (Required)
+This body describes the mechanism, so the hooks reject it. They reject it because it names a
+`ViewModel` and quotes code in backticks:
 
-**Format**: `type(scope): description`
+```text
+feat(editor): Add voice recording to the editor
 
-The first line is the **only required part** and must follow Conventional Commits format. It forces conciseness about _what_ changed, reserving detailed explanation for the body.
-
-**Why 72 characters?**
-
-- Displays completely in `git log --oneline`
-- Email clients wrap at 72 characters
-- GitHub shows truncated titles in UI
-- Readable in terminals with standard widths
-
-### Body (Optional for Trivial Changes, Required for Meaningful Changes)
-
-Separated from title by blank line, wrapped at 72 characters. This is where context lives: _why_ changes were necessary, what alternatives were considered, what trade-offs were made, what impact results.
-
-The diff shows how code changed; the body explains why.
-
-**When to include a body:**
-
-- ✅ Any commit that changes behavior (features, bug fixes, refactors)
-- ✅ Architectural decisions or significant structural changes
-- ✅ Trade-offs or alternatives considered and rejected
-- ✅ Complex bug fixes explaining root cause
-- ❌ Trivial changes (typos, link fixes, formatting) — brief title only
-
-### Footer (Optional)
-
-Special annotations tools parse, placed after body text on separate lines:
-
-- `BREAKING CHANGE: description` — Mark backwards-incompatible changes
-- `Fixes #123` or `Closes #456` — Close issues when merged
-- `Related to #789` — Reference issues without closing
-- `Co-Authored-By: Name <email>` — Credit collaborators
-
----
-
-## Commit Types
-
-| Type      | Purpose                                                                                                                   | Body Should Include                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **feat**  | New functionality added (capability that didn't exist before)                                                             | What users can now do, why it matters, how it feels — written like a changelog entry, not a code review      |
-| **fix**   | Behavior corrected (something wasn't working, now it is)                                                                  | What was broken, why it was broken, how fix addresses root cause                                             |
-| **chore** | Everything else: refactoring, tests, documentation, performance work a user wouldn't notice, dependencies, tooling and CI | What changed and why; before/after measurements for performance work; migration steps for dependency updates |
-
-These are the only three types. The studio standard (product-standards `docs/git-standards.md`) has no `refactor`, `docs`, `style`, `test`, `perf`, `ci` or `revert` type, and the commit-msg hook rejects them. A performance improvement a user notices is a `fix`.
-
----
-
-## Message Patterns: What Works and What Doesn't
-
-### Problem 1: Vague Title
-
-Reader can't tell what this commit addresses.
-
-```
-❌ feat(api): add new endpoint
-   fix(auth): fix bug
-   refactor(core): update code
+Adds a `VoiceRecorder` composable backed by a ViewModel that is
+provided through Koin.
 ```
 
-**Solution**: Be specific — title should be immediately useful in `git log`
+The same change, written for the person using it, is accepted:
 
-```
-✅ feat(api): add workspace membership management endpoint
-   fix(auth): prevent session fixation vulnerability
-   refactor(core): extract token validation to service
-```
+```text
+feat(editor): Record voice notes while you write
 
----
-
-### Problem 2: Missing Context
-
-Diff alone can't explain why a change exists.
-
-```
-❌ fix(auth): prevent session fixation vulnerability
-   (no body — future reader doesn't understand the vulnerability)
+You can now record a voice note without leaving the entry you are
+writing. The recording appears in the entry as a clip you can play
+back, and you can keep typing while it records.
 ```
 
-**Solution**: Include context in body — explain the problem, approach, and impact.
+Technical detail can also be disguised as product language. The hooks only look for certain words,
+so a message like the next one passes them, but a reviewer will ask for it to be rewritten. It
+describes how the screen is built, which nobody using the app would say:
 
-```
-✅ fix(auth): prevent session fixation vulnerability
+```text
+feat(settings): Add the Memories settings screen
 
-The session ID was being reused after authentication, allowing an
-attacker to hijack the session by setting a known session ID before
-the victim logs in.
-
-Now we regenerate the session ID immediately after successful
-authentication, following OWASP Session Management guidelines.
-
-Fixes #1234
+The screen uses the shared expandable header and the toggle rows were
+moved into the common settings module.
 ```
 
----
+The rewrite says what a person can do:
 
-### Problem 3: Feature with No Justification
+```text
+feat(settings): Choose which memories the app suggests
 
-Reader can't understand why this was needed.
-
-```
-❌ feat(api): add workspace membership management endpoint
-
-The endpoint validates emails, assigns roles, and sends notifications.
+You can now turn memory suggestions on or off from Settings, or open
+them to choose which kinds of memories the app brings back, such as
+keeping "On this day" while turning off other suggestions.
 ```
 
-**Solution**: Explain business context and architecture.
+A `fix` body says what went wrong for the person and what works now. The cause belongs in the
+body only when it helps a reader understand the symptom, and then it is described in plain terms:
 
-```
-✅ feat(api): add workspace membership management endpoint
+```text
+fix(sync): Resume interrupted backups instead of starting over
 
-Adds POST /api/workspaces/:id/members to support inviting users
-to workspaces. This was needed for the workspace collaboration
-feature launching in Q2.
-
-The endpoint handles email validation and user lookup, role
-assignment (admin, editor, viewer), email notifications for
-invitations, and duplicate member prevention.
-
-Related to #567
+A backup that was interrupted by a lost connection used to begin
+again from the first photo. It now continues where it stopped, so a
+journal with many photos finishes backing up on a weak connection.
 ```
 
----
+Features and fixes in `activitypub`, `atproto` and `dx` are the exception. Those scopes are
+registered as technical, because their users are developers, so their bodies may name protocols and
+libraries.
 
-### Problem 4: Trivial Changes Embellished Unnecessarily
+## Writing the body of a chore
 
-Not every change needs elaborate explanation.
+A `chore` has to have a body. The body explains what was done and why it matters, and it is the
+place for implementation detail, because the reader is a maintainer. Describe the situation before
+the change, what is different now, and whether any behavior changed:
 
-```
-❌ docs: update documentation links in claude command skills
+```text
+chore(timeline): Load notes one page at a time when building a day
 
-We identified several broken links across multiple files in the
-.claude/commands directory. These references were preventing users
-from navigating between documentation sections. By updating these
-paths we ensure future maintainers can find the correct documentation
-without confusion...
-```
-
-**Solution**: For truly trivial changes, brief title is sufficient.
-
-```
-✅ docs: update documentation links in claude command skills
-
-(No body needed — the diff explains the rest)
+The day view read every note for the day and then picked out the page
+it needed. It now asks the database for only the requested page, which
+keeps memory use flat for days with hundreds of notes. Behavior is
+unchanged, and a test covers a day with more than one page of notes.
 ```
 
----
+Documentation and tooling work follows the same pattern and takes the scope of the area it
+supports, or `dx` for the repository's own tooling:
 
-## Body Writing Style
+```text
+chore(dx): Explain how to choose a commit scope
 
-### Inverted Pyramid Structure
-
-Feature commits should read like news articles—**don't bury the lede**:
-
-1. **Lead with impact** — First sentence states what users can now do. Most important information comes first.
-2. **Each subsequent paragraph is less critical** — A reader who stops early still gets the key points.
-3. **Issue references go last** — Place "Resolves #XXX" at the very end (least salient position).
-
-**Structure (most → least important):**
-
-1. **Title** — The headline: what capability was added
-2. **Lede paragraph** — The key impact in 1-2 sentences
-3. **Context** — Problem being solved, user pain points addressed
-4. **Details** — What changed and how (Added/Improved/Fixed sections if needed)
-5. **Reference** — Issue link (least critical, goes last)
-
-### Full Clauses, Not Imperative Fragments
-
-The body should read like documentation, not a todo list.
-
-**Title vs. body style:**
-
-- **Title**: Imperative mood is acceptable ("add filtering to dashboard")
-- **Body**: Full clauses with subjects ("The dashboard now supports filtering" or "Users can now filter by project")
-
-```
-❌ BAD — Imperative fragments (reads like a checklist):
-Added:
-- Grid/list view toggle
-- Project filter dropdown
-- Tags filter with multi-select
-
-✅ GOOD — Full clauses (reads like documentation):
-Added:
-- The dashboard now supports a compact list view alongside the existing grid,
-  making it easier to scan large agent fleets at a glance.
-- A project filter dropdown automatically populates from active agent metadata,
-  allowing admins to narrow results without manual configuration.
+The commit standards now say that a scope names the product area a
+change serves, with the scope table linked from the first paragraph,
+so new contributors do not pick a scope from the folder they edited.
 ```
 
-Subheadings like "Added:", "Improved:", "Removed:" are fine for organizing larger commits—just ensure each item underneath is a complete sentence, not a noun phrase or imperative fragment.
+Wrap body lines at 72 characters. The commit hook rewraps long lines for you, but a message you
+write wrapped is easier to review.
 
----
+## Trailers
 
-## Writing Effective Bodies
+Trailers go in the last paragraph of the message, one `Key: value` per line. A trailer is not
+part of the prose, so it is exempt from the body rules above.
 
-### For Features
+When an AI assistant helped write the change, credit it with a `Co-authored-by` trailer that has
+the assistant's name and the address its tool publishes, in the form `Name <address>`:
 
-**`feat` commits must prioritize end-user behavior.** Write them like a changelog entry that a user of the app would read and understand. Lead with what the user can now do, not what classes were added or what internal plumbing changed.
-
-Answer: What can users do now that they couldn't before? How does the experience feel? Why does it matter?
-
-```
-❌ BAD — Sounds like a code review:
-feat(workspace): add automatic workspace backups
-
-Add WorkspaceBackupService with daily cron trigger and S3 cold
-storage integration. Uses incremental snapshots via BackupEngine.
-Wired through DI in WorkspaceModule.
-
-✅ GOOD — Sounds like a changelog:
-feat(workspace): add automatic workspace backups
-
-Workspaces are now backed up daily to cold storage. If something
-goes wrong, you can restore to any point in the last 30 days.
-Backups are incremental so they won't eat through storage quotas.
-
-Addresses the data loss concerns raised in support tickets #456
-and #789.
+```text
+Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
 ```
 
-The diff already shows the implementation details. The commit message should explain the **experience**, not the **mechanism**.
-
-#### Sneaky Tech Dumps
-
-These look like reasonable commit messages at first glance, but they describe plumbing instead of behavior. A user reading the changelog learns nothing about what changed for them.
-
-```
-❌ SNEAKY — Mentions "users" but immediately dives into internals:
-feat(timeline): show contextual suggestion cards on timeline
-
-Replace legacy OngoingEvent and SharedMemory suggestion types with
-three functional card variants: CompleteDraft navigates to the editor,
-MemoryRecall surfaces past entries with a share action via
-SharingLauncher, and EmptyDay prompts writing with nearby location.
-
-Remove GetTimelineBannerUseCase, deprecated SuggestedEntryBlock, and
-dead SharedMemory domain type. Fix people extraction bug that returned
-location names. Wire SharingLauncher through navigation with Koin DI.
-```
-
-The title is fine but the body is a laundry list of classes renamed, deleted, and rewired. Nobody outside the codebase knows what a `SharingLauncher` or `GetTimelineBannerUseCase` is. Compare:
-
-```
-✅ GOOD — Describes the same change as an experience:
-feat(timeline): show contextual suggestion cards on timeline
-
-The timeline now shows contextual suggestions that respond to what
-you've been doing. Unfinished drafts surface a card that takes you
-straight back to the editor. Past memories from the same date appear
-as shareable "on this day" cards. When there's nothing captured yet,
-a gentle prompt encourages you to start writing, showing your nearby
-location when available.
-```
-
-More examples of passable-looking tech dumps:
-
-```
-❌ SNEAKY — Uses "support" but describes architecture:
-feat(editor): support multi-format note capture
-
-Add AudioCaptureManager and VideoCaptureManager implementing the
-CaptureStrategy interface. Each format registers through the
-EditorModule DI container and is resolved at runtime based on the
-selected capture mode.
-
-✅ GOOD:
-feat(editor): capture audio and video notes
-
-You can now record audio memos and video clips directly in the
-editor alongside text and photos. Each format appears as a
-playable card in your timeline.
-```
-
-```
-❌ SNEAKY — Starts user-facing, then derails:
-feat(sharing): share memories to social platforms
-
-Implement ShareIntentBuilder with platform-specific strategies for
-Instagram Stories and the system share sheet. Uses ContentProvider
-for URI resolution and FileProvider for secure media access.
-
-✅ GOOD:
-feat(sharing): share memories to social platforms
-
-You can now share a memory to Instagram Stories or any app on your
-phone via the system share sheet. Photos and videos are included
-automatically.
-```
-
-**The test**: If you removed every class name, interface name, and module name from the body, would a sentence still say something meaningful? If not, rewrite it.
-
-#### Reframed Technical Detail
-
-A subtler variant: the message avoids class names but still describes implementation mechanics dressed up in user-facing language. The sentence is _about_ the code, not about the experience.
-
-```
-❌ REFRAMED — Technical detail wearing a user costume:
-feat(settings): add Memories settings screen
-
-All settings screens now use the expandable large title header that
-collapses as you scroll. Shared toggle and section composables have
-been extracted to the ui module so future settings screens don't
-need to redeclare them.
-```
-
-No class names appear, but "expandable large title header that collapses as you scroll" describes a UI component choice, and "shared toggle and section composables extracted to the ui module" is pure refactoring detail. A user would never say either sentence.
-
-```
-✅ GOOD — Same change, user perspective only:
-feat(settings): add Memories settings to control recommendations and recall
-
-You can now toggle recommendations on or off right from the settings
-overview, or tap through to fine-tune which types of recall the app
-uses — like turning off smart recall while keeping other suggestions
-active.
-```
-
-**The rule for `feat` and `fix` commits is absolute**: the body must contain _zero_ implementation detail — no component names, no architectural decisions, no refactoring rationale. If the change also includes refactoring or structural cleanup, those details belong in a separate `refactor` or `chore` commit, not buried in a `feat` body. Only `refactor`, `chore`, `perf`, and `docs` commits may reference internal structure.
-
-### For Bug Fixes
-
-Answer: What was broken? What caused it? How does the fix address it?
-
-```
-fix(auth): correct token refresh race condition
-
-Under high load, concurrent token refresh requests could cause
-multiple tokens to be issued for the same session. Root cause was
-missing distributed lock around the refresh operation.
-
-Now we use a Redis-based lock to serialize token refresh, ensuring
-only one refresh happens per session at a time.
-```
-
-### For Refactors
-
-Answer: Why was restructuring necessary? What benefit does it provide?
-
-```
-refactor(core): extract validation logic to shared service
-
-Validation rules were duplicated across three form components,
-making it impossible to update rules consistently. By extracting
-to a shared ValidationService, we ensure:
-
-1. Single source of truth for validation rules
-2. Easy to add new validators without touching components
-3. Testable in isolation from UI concerns
-4. Enables future rule versioning and A/B testing
-
-This also unblocks the API documentation effort waiting on
-consistent field validation specs.
-```
-
----
-
-## Special Annotations
-
-### Breaking Changes
-
-Mark explicitly with `!` and `BREAKING CHANGE:` footer:
-
-```
-feat(api)!: change authentication response format
-
-BREAKING CHANGE: The /auth/login endpoint now returns tokens in a
-nested object instead of at the root level.
-
-Before: { "accessToken": "..." }
-After: { "tokens": { "accessToken": "..." } }
-
-This aligns with OAuth2 RFC 6749 standard format and enables future
-extension with refresh tokens and token metadata.
-
-Migration: Update all API clients to access tokens.accessToken
-instead of accessToken.
-```
-
-### Issue References
-
-Connect to project management:
-
-- `Fixes #123` or `Closes #456` — Closes issue when merged
-- `Related to #789` — References without closing
-- List multiple on separate lines if relevant
-
-```
-fix(auth): handle expired session gracefully
-
-When a user's session expires mid-request, we now properly clear
-expired tokens and redirect to login instead of showing a generic
-error.
-
-Fixes #234
-Related to #567
-```
-
-### Co-Authors
-
-Credit collaborators:
-
-```
-feat(api): implement rate limiting middleware
-
-Co-Authored-By: Alice Smith <alice@example.com>
-Co-Authored-By: Bob Jones <bob@example.com>
-```
-
----
-
-## Forbidden Patterns
-
-🚨 **NEVER include project phases in commit messages.**
-
-Phase numbers (Phase 1, Phase 5, Phase 6.1) are internal project management that means nothing to someone reading git history. They pollute the permanent record with meaningless metadata.
-
-```
-❌ feat(cli-rs): implement session management (Phase 6.1)
-```
-
-**Correct approach**: Explain what the feature IS and why it exists.
-
-```
-✅ feat(cli-rs): implement session management commands
-
-Add comprehensive session management with interactive picker and
-multiple output formats. This enables users to switch between
-conversations without losing context, addressing the workflow
-interruption issues reported in support tickets.
-```
-
----
-
-## Brevity for Trivial Changes
-
-The guidance about capturing context applies to meaningful changes. For genuinely small, straightforward changes, brevity is appropriate.
-
-**When minimal commit messages are OK:**
-
-- Link path updates (documentation references, import paths)
-- Simple configuration value changes
-- Adding a single file with obvious purpose
-- Fixing typos in comments or documentation
-- Removing unused imports or dead code
-- Formatting/style fixes that don't change behavior
-- Adding a missing dependency with no code changes
-
-```
-✅ docs: fix typo in README
-
-✅ chore: bump node version to 20.x
-
-✅ refactor: remove unused UserService class
-
-✅ chore: update documentation links in claude command skills
-```
-
-**The Distinction:**
-
-- **Meaningful changes** (new features, architectural decisions, bug fixes, refactors with reasoning): Include context, explain reasoning, document full scope
-- **Trivial changes** (obvious link updates, simple additions, clear fixes): Brief title is sufficient, the diff explains everything
-
-**When in doubt, include context.** Err toward explanation when the change could have multiple interpretations or when the "why" isn't immediately obvious from the diff.
-
----
-
-## Covering Multiple Items in a Single Task
-
-**CRITICAL: When a user asks Claude to do multiple items (1, 2, 3, 4), the commit message must address ALL of them, not just the last one.**
-
-This is a common failure mode: Claude implements all four items correctly, but then writes a commit message that only describes item 4 because that was the most recent work.
-
-**Pattern**: User says "Please: 1) Add validation to UserForm, 2) Create validation utility, 3) Add tests, 4) Update types"
-
-Claude must:
-
-1. Parse all four items explicitly
-2. Implement all four (which will be correct)
-3. **Write a commit message that references all four items** and explains how they work together
-
-```
-❌ INCORRECT — Only documents the last item:
-feat(auth): add UserForm validation types
-
-Update TypeScript types to support validation metadata on form fields.
-```
-
-This completely loses items 1, 2, and 3 from the record.
-
-```
-✅ CORRECT — Documents all items with complete context:
-feat(auth): implement form validation system for UserForm
-
-Centralized form validation using new ValidationRule and ValidationError
-types to address inconsistency where different pages handled validation
-differently—some had comprehensive checks via custom validators, others
-had none.
-
-By extracting validators (validateEmail, validatePassword, etc.) into
-reusable utilities in @lovelace-ai/utils, we eliminate logic duplication
-in every form and ensure consistent error messages across the application.
-The FormState type manages validation state independently from UI
-concerns, making both easier to test and change separately.
-
-We chose a utility-based approach over component props validation
-because it allows applying the same validators across multiple forms and
-updating global validation rules in one place (e.g., password strength
-requirements).
-
-Addresses #789 where form validation wasn't consistent between pages.
-```
-
-This explains:
-
-- The problem (inconsistent validation across pages)
-- Specific technical details (ValidationRule, ValidationError, FormState types; validateEmail, validatePassword functions)
-- The reasoning (reusability, consistency, separation of concerns, centralized updates)
-- Why this approach was chosen (vs alternatives like component props)
-- What business need it addresses
-
-Balance is key: include specific names and symbols (ValidationError, validateEmail) when they're important to understanding the architecture, but focus on **why** these decisions were made and **what problem they solve**, not just listing that they were created.
-
----
-
-## Related Documentation
-
-- **[Git Guidelines](./git-guidelines.md)** — Staging safety, atomic workflow, pre-commit hooks
-- **[Commit Scopes Reference](./commit-scopes.md)** — Authoritative lookup table for scope names
-- **[Project Conventions](../../../CLAUDE.md)** — Full project conventions and standards
-
----
-
-**Remember:** Commit messages are documentation that persists longer than the code. Write them for someone reading git history years from now with no other context.
-
-</details>
+The hook checks that every `Co-authored-by` value has this form. When the environment variable
+`HYPERTEXT_AGENT_COAUTHOR` is set, as the agent tooling does, the commit must also contain that
+exact identity as a trailer, and the hook names the missing one if it is absent. Do not credit a
+person who did not contribute, and do not invent an identity.
+
+Reference an issue with `Refs: #123`, `Fixes: #123` or `Closes: #123`, or a link in the same
+position. Put references last.
+
+## What is checked
+
+Two hooks check messages, and neither depends on remembering these rules.
+
+The `commit-msg` hook runs when you commit. It first rewraps body prose to 72 columns, then
+rejects the message if any of these is true:
+
+- The title is not `feat`, `fix` or `chore`, followed by a lowercase scope in parentheses, a
+  colon, a space and a description.
+- The scope is not registered in `.hypertext/commits.json`.
+- The description is a generic placeholder such as `Update code` or `WIP`.
+- The second line is not blank.
+- A `feat` or `fix` outside the technical scopes mentions words such as `refactor`, `middleware`,
+  `OAuth`, `SQL` or `ViewModel`, quotes code in backticks, or names a source file.
+- A `chore` has no body, or only trailers.
+- The title has `!` but no `BREAKING CHANGE:` paragraph.
+- A `Co-authored-by` value is malformed, or the identity in `HYPERTEXT_AGENT_COAUTHOR` is missing.
+
+The `pre-push` hook applies the same checks to every commit you are about to publish that is not
+already on `main`, and it refuses merge commits. Fix a rejected message by amending the commit or,
+for an older commit on your branch, by rewording it during a rebase onto `origin/main`.
+
+The checks cannot tell whether a body is good. They do not look at the capital letter, the title
+length, the mood of the verb, or whether a `feat` body hides implementation detail in ordinary
+words, so those are matters for you and for review.
+
+See [Git guidelines](git-guidelines.md) for how to stage, commit and land a branch.

@@ -1,165 +1,51 @@
-# Commit Scope Reference
+# Commit scopes
 
-[`.hypertext/commits.json`](../../../.hypertext/commits.json) is the current domain registry after reviewed adoption. Each entry defines its description, includes, excludes and explicit technical applicability. Choose the feature/domain served by the complete change; module paths do not determine the scope.
+Every commit names one scope, the part of the product its change belongs to, as in
+`fix(sync): Retry an interrupted upload`. The scopes are registered in
+[`.hypertext/commits.json`](../../../.hypertext/commits.json), and the commit hooks accept only
+a scope from that file. This page lists them.
 
-Every new commit has a registered scope. Use shared `auth`, `billing`, `search`, and `notifications` for their actual capabilities. `sync` includes backup eligibility/progress and sync-queue conflict recovery. `restore` owns authenticated archive download, handoff and restoration. General notification delivery belongs to `notifications`; reminder triggers remain `reminders`. Settings include confirmed local-data erasure and exclude cloud-account deletion.
+Choose the scope by what the change does for the person using the product, wherever the files
+live. A change to the backup progress indicator is `sync` even when most of its lines are in a
+settings screen. Work on the build, the hooks, formatting and other tooling is `dx`. The
+`atproto` and `activitypub` scopes cover the protocol libraries themselves; a product feature
+built on them takes the scope of that feature.
 
-No omitted scope, activity name or generic layer/platform catchall is allowed. Maintenance uses the domain it supports. `account` and `passkeys` map to `auth` for new work. Keep historical names in the legacy list and published commits; do not rewrite them to retrofit policy.
+| Scope               | What it covers                          | Includes                                                                                                                                                  | Belongs elsewhere                                                                                 |
+| ------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `auth`              | Accounts and sign-in                    | account creation; sign-in and passkeys; account recovery                                                                                                  | profile presentation; subscription entitlements                                                   |
+| `billing`           | Subscriptions and purchases             | purchase flows; subscription entitlements                                                                                                                 | account authentication; payment-independent backup behavior                                       |
+| `editor`            | Writing journal entries                 | text editing; entry media and voice composition                                                                                                           | browsing saved entries; standalone media library                                                  |
+| `export`            | Exporting journal data                  | export archive creation; export progress and results                                                                                                      | importing archives; automatic cloud backups                                                       |
+| `restore`           | Restoring journal data                  | importing backup archives; authenticated cloud-archive download and restore handoff; archive restore validation and recovery                              | creating exports; sync-queue conflict recovery                                                    |
+| `profile`           | Personal profiles                       | profile details; avatar selection                                                                                                                         | authentication; device registration                                                               |
+| `settings`          | App preferences and local data controls | settings navigation; general preference controls; user-confirmed local-data erasure                                                                       | domain-specific preference behavior; cloud account authentication and deletion                    |
+| `journal`           | Journal collections                     | journal list and details; journal organization                                                                                                            | individual entry editing; cross-journal search                                                    |
+| `library`           | Media library                           | saved media browsing; media details and metadata                                                                                                          | entry composition; capture and playback services                                                  |
+| `location-timeline` | Places and location history             | place browsing; location-history maps and visits                                                                                                          | location capture consent; Rewind memory highlights                                                |
+| `onboarding`        | Getting started                         | first-run introduction; initial setup flow                                                                                                                | ongoing account sign-in; later preference changes                                                 |
+| `rewind`            | Revisiting memories                     | memory highlights; year-in-review experiences                                                                                                             | general timeline browsing; location collection                                                    |
+| `search`            | Finding entries and memories            | query and result behavior; search filters                                                                                                                 | general timeline presentation; entry editing                                                      |
+| `timeline`          | Entry timeline                          | chronological entry browsing; day and entry navigation                                                                                                    | journal collection management; location-history maps                                              |
+| `events`            | Events and linked memories              | event creation and details; calendar and linked entries                                                                                                   | automatic location capture; general journal organization                                          |
+| `postcards`         | Postcards                               | postcard composition; postcard collection and viewing                                                                                                     | standalone sticker collection; generic content sharing                                            |
+| `stickers`          | Personal stickers                       | sticker extraction; sticker collection                                                                                                                    | postcard layout; general media browsing                                                           |
+| `android-widget`    | Home-screen memories                    | home-screen widgets; On This Day and widget memories                                                                                                      | in-app timeline; Wear companion interactions                                                      |
+| `streaks`           | Journaling streaks                      | journaling streak tracking; campfire presentation                                                                                                         | reminder delivery; general usage diagnostics                                                      |
+| `reminders`         | Journaling reminders                    | moment-aware reminder triggers; reminder limits and choices                                                                                               | generic notification-channel behavior; backup progress indicators                                 |
+| `wear`              | Watch journaling                        | Wear companion interactions; watch-specific entry capture                                                                                                 | phone entry editor; shared reminder decision rules                                                |
+| `health-connect`    | Health context                          | Health Connect integration; health-context consent and access                                                                                             | general device permissions; location collection                                                   |
+| `intelligence`      | Suggestions and insights                | entry summarization and entity extraction; intelligent journal assistance                                                                                 | search matching; routine cloud backups                                                            |
+| `location`          | Location capture                        | location tracking and geofencing; location consent and permission behavior                                                                                | Places browsing; memory map presentation                                                          |
+| `media`             | Capturing and playing media             | photo video and audio capture; media playback and processing                                                                                              | media library browsing; entry text editing                                                        |
+| `sharing`           | Sharing journal content                 | user-directed content sharing; federated sharing experiences                                                                                              | standalone protocol libraries; backup synchronization                                             |
+| `sync`              | Cloud backups and synchronization       | automatic backup scheduling and eligibility; backup progress and foreground indicators; sync queues and conflict recovery                                 | archive export download and restoration; recording consent; generic notification channel delivery |
+| `notifications`     | Notification delivery                   | notification channels and delivery controls; notification permission and platform delivery behavior                                                       | backup progress content and eligibility; reminder trigger decisions; recording progress content   |
+| `activitypub`       | ActivityPub integration library         | reusable ActivityPub protocol support; ActivityPub client contracts                                                                                       | LogDate sharing presentation; AT Protocol libraries                                               |
+| `atproto`           | AT Protocol libraries                   | reusable AT Protocol libraries; identity repository and transport contracts                                                                               | LogDate account presentation; ActivityPub libraries                                               |
+| `dx`                | Developer experience                    | shared pinned formatters and staged commit hooks; local bootstrap and repository identity configuration; build validation and native acceptance harnesses | application features and product behavior; production service operations and billing policy       |
 
-| Scope               | Domain                                  |
-| ------------------- | --------------------------------------- |
-| `auth`              | Accounts and sign-in                    |
-| `billing`           | Subscriptions and purchases             |
-| `editor`            | Writing journal entries                 |
-| `export`            | Exporting journal data                  |
-| `restore`           | Restoring journal data                  |
-| `profile`           | Personal profiles                       |
-| `settings`          | App preferences and local data controls |
-| `journal`           | Journal collections                     |
-| `library`           | Media library                           |
-| `location-timeline` | Places and location history             |
-| `onboarding`        | Getting started                         |
-| `rewind`            | Revisiting memories                     |
-| `search`            | Finding entries and memories            |
-| `timeline`          | Entry timeline                          |
-| `events`            | Events and linked memories              |
-| `postcards`         | Postcards                               |
-| `stickers`          | Personal stickers                       |
-| `android-widget`    | Home-screen memories                    |
-| `streaks`           | Journaling streaks                      |
-| `reminders`         | Journaling reminders                    |
-| `wear`              | Watch journaling                        |
-| `health-connect`    | Health context                          |
-| `intelligence`      | Suggestions and insights                |
-| `location`          | Location capture                        |
-| `media`             | Capturing and playing media             |
-| `sharing`           | Sharing journal content                 |
-| `sync`              | Cloud backups and synchronization       |
-| `notifications`     | Notification delivery                   |
-| `activitypub`       | ActivityPub integration library         |
-| `atproto`           | AT Protocol libraries                   |
+A change that fits no scope is a reason to add one: add the entry to the registry in the same
+pull request, with its description and what it includes and excludes, and add its row here.
 
-Only the existing reusable ActivityPub and AT Protocol library domains are technical. A technical flag does not excuse implementation-heavy prose for consumer behavior. Registry changes require independent delegated-maintainer review of necessity, boundaries and technical applicability; authors cannot approve their own additions or manufacture an approval digest.
-
-<details>
-<summary>Historical module-to-scope lookup (superseded)</summary>
-
-The following lookup and examples interpret older commits only. They are not current instructions and do not override the registry.
-
-# Commit Scope Reference
-
-> **Authoritative lookup table for all module commit scopes**
-
-Zero ambiguity: Look up the exact scope for the module you're modifying. Just follow the tables below.
-
-## Feature Scopes (Primary)
-
-These are the main scopes for user-facing features. **Prefer these scopes** for most commits.
-
-| Directory                                                                              | Scope               |
-| -------------------------------------------------------------------------------------- | ------------------- |
-| `client/feature/core/` (account)                                                       | `account`           |
-| `client/feature/core/` (export)                                                        | `export`            |
-| `client/domain/` (restore)                                                             | `restore`           |
-| `client/feature/core/` (profile)                                                       | `profile`           |
-| `client/feature/core/` (settings)                                                      | `settings`          |
-| `client/feature/editor/`                                                               | `editor`            |
-| `client/feature/journal/`                                                              | `journal`           |
-| `client/feature/location-timeline/`                                                    | `location-timeline` |
-| `client/feature/onboarding/`                                                           | `onboarding`        |
-| `client/feature/rewind/`                                                               | `rewind`            |
-| `client/feature/search/`                                                               | `search`            |
-| `client/feature/timeline/`                                                             | `timeline`          |
-| `client/feature/android-widgets/`                                                      | `android-widget`    |
-| `client/domain/` (streak), streak UI in any feature                                    | `streaks`           |
-| `client/domain/` (reminders), reminder settings and delivery on the phone or the watch | `reminders`         |
-
-## Apps Scopes
-
-| Directory   | Scope    |
-| ----------- | -------- |
-| `app/wear/` | `wear`   |
-| `server/`   | `server` |
-
-## Client Library Scopes
-
-| Directory                | Scope            |
-| ------------------------ | ---------------- |
-| `client/auth/`           | `auth`           |
-| `client/billing/`        | `billing`        |
-| `client/data/`           | `data`           |
-| `client/database/`       | `database`       |
-| `client/datastore/`      | `datastore`      |
-| `client/device/`         | `device`         |
-| `client/health-connect/` | `health-connect` |
-| `client/intelligence/`   | `intelligence`   |
-| `client/location/`       | `location`       |
-| `client/media/`          | `media`          |
-| `client/networking/`     | `networking`     |
-| `client/permissions/`    | `permissions`    |
-| `client/repository/`     | `repository`     |
-| `client/sensor/`         | `sensor`         |
-| `client/sharing/`        | `sharing`        |
-| `client/sync/`           | `sync`           |
-| `client/theme/`          | `theme`          |
-| `client/ui/`             | `ui`             |
-| `client/util/`           | `util`           |
-
-## Shared Module Scopes
-
-| Directory                      | Scope     |
-| ------------------------------ | --------- |
-| `shared/atproto-bom/`          | `atproto` |
-| `shared/atproto-crypto/`       | `atproto` |
-| `shared/atproto-identity/`     | `atproto` |
-| `shared/atproto-lexicon/`      | `atproto` |
-| `shared/atproto-licensing/`    | `atproto` |
-| `shared/atproto-oauth-client/` | `atproto` |
-| `shared/atproto-pds/`          | `atproto` |
-| `shared/atproto-pds-runtime/`  | `atproto` |
-| `shared/atproto-plc/`          | `atproto` |
-| `shared/atproto-repo/`         | `atproto` |
-| `shared/atproto-syntax/`       | `atproto` |
-| `shared/atproto-xrpc/`         | `atproto` |
-
-## Cross-Cutting Changes
-
-| Scenario                                                       | Scope                          |
-| -------------------------------------------------------------- | ------------------------------ |
-| Multiple modules in different categories                       | Omit scope or use `infra`      |
-| Changes to build/tooling                                       | `build` or `infra`             |
-| Error reporting, crash monitoring, logging infra (e.g. Sentry) | `observability`                |
-| Changes affecting entire platform                              | `platform` or omit             |
-| Root-level config/docs                                         | omit scope (e.g., `docs: ...`) |
-| iOS-specific changes across modules                            | `ios`                          |
-| Android-specific changes across modules                        | `android`                      |
-| Desktop-specific changes across modules                        | `desktop`                      |
-
-## Examples
-
-```bash
-# Feature modules (preferred for user-facing changes)
-git commit -m "feat(editor): add voice recording playback controls"
-git commit -m "fix(timeline): correct date grouping for notes"
-git commit -m "refactor(onboarding): simplify permission request flow"
-
-# Client libraries (for infrastructure/data layer changes)
-git commit -m "feat(sync): implement conflict resolution for notes"
-git commit -m "fix(database): handle migration edge case"
-git commit -m "refactor(data): extract validation use cases"
-
-# Cross-cutting
-git commit -m "chore(infra): update gradle wrapper version"
-git commit -m "docs: update architecture guide"
-
-# Platform-specific
-git commit -m "fix(android): resolve permission handling on API 34"
-git commit -m "feat(ios): add haptic feedback support"
-```
-
-## Related
-
-- [Commit Message Standards](./commit-messages.md)
-- [Git Guidelines](./git-guidelines.md)
-
-</details>
+[Commit messages](commit-messages.md) describes the rest of the message format.

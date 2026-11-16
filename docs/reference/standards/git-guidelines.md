@@ -64,7 +64,7 @@ A separate independently useful improvement can be another sharing commit.
 - Type definitions used only by this commit's implementation
 - Config changes required by this commit's code
 
-When combining multiple related changes, write a commit body that explains how they fit together. See **[Writing Effective Bodies](./commit-messages.md#writing-effective-bodies)** for guidance.
+When combining multiple related changes, write a commit body that explains how they fit together. See **[Writing the body of a feat or fix](./commit-messages.md#writing-the-body-of-a-feat-or-fix)** for guidance.
 
 ### Refactoring Commits
 
@@ -78,11 +78,11 @@ Refactoring commits should:
 
 ```bash
 # ✅ CORRECT: Refactor first, then feature
-chore(auth): extract token validation to shared utility
-feat(auth): stay signed in securely across sessions
+chore(auth): Extract token validation into a shared utility
+feat(auth): Stay signed in securely across sessions
 
-# ❌ WRONG: Mixed refactor and feature
-feat(auth): add refresh tokens and refactor validation
+# ❌ WRONG: Mixed refactor and feature (and a feat title naming a refactor)
+feat(auth): Add refresh tokens and refactor validation
 ```
 
 **Why this matters:**
@@ -91,7 +91,7 @@ feat(auth): add refresh tokens and refactor validation
 - Reviewers can verify the refactor doesn't change behavior
 - Git bisect can identify exactly which commit introduced issues
 
-> **Commit type guidance**: Use `chore` with an informative body for structural changes without behavior change, `feat` for new functionality. See **[Current Commit Types](./commit-messages.md#current-commit-types)** for the complete list.
+> **Commit type guidance**: Use `chore` with an informative body for structural changes without behavior change, `feat` for new functionality. See **[Choosing the type](./commit-messages.md#choosing-the-type)** for the complete list.
 
 ---
 
@@ -130,7 +130,7 @@ git add *
 git restore --staged . && git add file1.kt file2.kt && HYPERTEXT_AGENT_COAUTHOR="Codex <noreply@openai.com>" git commit -F /tmp/reviewed-commit-message.txt
 ```
 
-> **Message format**: The example above shows the basic structure. For complete formatting rules (72-char limit, body style, footer annotations), see **[Message Anatomy](./commit-messages.md#message-anatomy)**.
+> **Message format**: The example above shows the basic structure. For complete formatting rules (title, body and trailers), see **[Writing the title](./commit-messages.md#writing-the-title)**.
 
 **Why this pattern:**
 
@@ -244,17 +244,17 @@ keep. Merge commits are disabled for this repository, and GitHub deletes the bra
 
 **🚨 THESE ACTIONS ARE FIREABLE OFFENSES:**
 
-| Forbidden                                              | Why                                                                   |
-| ------------------------------------------------------ | --------------------------------------------------------------------- |
-| `git add -A` / `git add .` / `git add *`               | Stages everything indiscriminately                                    |
-| `git reset --hard`                                     | Permanently destroys uncommitted work                                 |
-| `git push --force`                                     | Destroys commit history on remote                                     |
-| Pushing directly to `main`                             | Skips the pull request, its CI, and its review                        |
-| Merge commits (`git merge`, **Create a merge commit**) | Breaks the linear history on `main`                                   |
-| `git commit -a`                                        | Commits without proper review                                         |
-| `git commit --no-verify`                               | Bypasses critical quality enforcement                                 |
-| Dropping failing files after hooks fail                | Hides problems instead of fixing them                                 |
-| Commit titles mentioning phases                        | See **[Forbidden Patterns](./commit-messages.md#forbidden-patterns)** |
+| Forbidden                                              | Why                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------- |
+| `git add -A` / `git add .` / `git add *`               | Stages everything indiscriminately                                  |
+| `git reset --hard`                                     | Permanently destroys uncommitted work                               |
+| `git push --force`                                     | Destroys commit history on remote                                   |
+| Pushing directly to `main`                             | Skips the pull request, its CI, and its review                      |
+| Merge commits (`git merge`, **Create a merge commit**) | Breaks the linear history on `main`                                 |
+| `git commit -a`                                        | Commits without proper review                                       |
+| `git commit --no-verify`                               | Bypasses critical quality enforcement                               |
+| Dropping failing files after hooks fail                | Hides problems instead of fixing them                               |
+| Commit titles mentioning phases                        | See **[Writing the title](./commit-messages.md#writing-the-title)** |
 
 ---
 
