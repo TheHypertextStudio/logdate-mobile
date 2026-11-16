@@ -151,6 +151,7 @@ fun DataSettings() {
             onRunIntegrityCheck = {},
             onRepairIntegrity = {},
             snackbarHostState = snackbarHostState,
+            isAuthenticated = false,
         )
     }
 }

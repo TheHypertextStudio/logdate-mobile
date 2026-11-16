@@ -3,6 +3,7 @@
 package app.logdate.screenshots.shared
 
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import app.logdate.client.datastore.EntryStartMode
@@ -28,8 +29,8 @@ import app.logdate.feature.core.settings.account.delete.DeleteAccountUiState
 import app.logdate.feature.core.settings.account.hosting.HostingContent
 import app.logdate.feature.core.settings.account.hosting.HostingUiState
 import app.logdate.feature.core.settings.account.recovery.AccountRecoveryUiState
-import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseContent
 import app.logdate.feature.core.settings.account.recovery.PhraseRevealState
+import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseContent
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseUiState
 import app.logdate.feature.core.settings.account.signin.LinkedProviderRow
 import app.logdate.feature.core.settings.account.signin.PasskeyRow
@@ -47,6 +48,7 @@ import app.logdate.feature.core.settings.ui.StorageQuotaUi
 import app.logdate.feature.core.settings.ui.UserProfile
 import app.logdate.feature.core.settings.ui.VoiceNotesSettingsContent
 import app.logdate.feature.core.settings.ui.VoiceNotesSettingsViewModel
+import app.logdate.ui.platform.LocalReduceMotionOverride
 import kotlinx.datetime.LocalDate
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.data_settings_quota_category_photos
@@ -111,31 +113,34 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
             )
         },
         sharedScene(SharedScreenshotSceneId.RecoveryPhrase, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
-            RecoveryPhraseContent(
-                state =
-                    RecoveryPhraseUiState.Available(
-                        PhraseRevealState.Revealed(
-                            listOf(
-                                "orbit",
-                                "canvas",
-                                "meadow",
-                                "lantern",
-                                "harbor",
-                                "velvet",
-                                "summit",
-                                "pepper",
-                                "gravel",
-                                "whisper",
-                                "copper",
-                                "tundra",
+            // The word grid fades in; a screenshot has to capture it already shown.
+            CompositionLocalProvider(LocalReduceMotionOverride provides true) {
+                RecoveryPhraseContent(
+                    state =
+                        RecoveryPhraseUiState.Available(
+                            PhraseRevealState.Revealed(
+                                listOf(
+                                    "orbit",
+                                    "canvas",
+                                    "meadow",
+                                    "lantern",
+                                    "harbor",
+                                    "velvet",
+                                    "summit",
+                                    "pepper",
+                                    "gravel",
+                                    "whisper",
+                                    "copper",
+                                    "tundra",
+                                ),
                             ),
                         ),
-                    ),
-                onBack = {},
-                onReveal = {},
-                onHide = {},
-                onEnterPhrase = {},
-            )
+                    onBack = {},
+                    onReveal = {},
+                    onHide = {},
+                    onEnterPhrase = {},
+                )
+            }
         },
         sharedScene(
             SharedScreenshotSceneId.RecoveryPhraseConfirmed,

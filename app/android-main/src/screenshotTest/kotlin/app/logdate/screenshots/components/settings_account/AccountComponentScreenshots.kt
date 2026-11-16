@@ -29,6 +29,7 @@ import app.logdate.feature.core.settings.account.signin.SignInMethodsUiState
 import app.logdate.screenshots.common.ScreenshotTestData.PHONE
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.ui.common.formatting.LocalToday
+import app.logdate.ui.platform.LocalReduceMotionOverride
 import com.android.tools.screenshot.PreviewTest
 import kotlinx.datetime.LocalDate
 
@@ -113,32 +114,35 @@ fun SignInMethods_OnlyMethod() {
 @Composable
 fun RecoveryPhrase_Revealed() {
     ScreenshotTheme {
-        RecoveryPhraseContent(
-            state =
-                RecoveryPhraseUiState.Available(
-                    reveal =
-                        PhraseRevealState.Revealed(
-                            listOf(
-                                "orbit",
-                                "canvas",
-                                "meadow",
-                                "lantern",
-                                "harbor",
-                                "velvet",
-                                "summit",
-                                "pepper",
-                                "gravel",
-                                "whisper",
-                                "copper",
-                                "tundra",
+        // The word grid fades in; a screenshot has to capture it already shown.
+        CompositionLocalProvider(LocalReduceMotionOverride provides true) {
+            RecoveryPhraseContent(
+                state =
+                    RecoveryPhraseUiState.Available(
+                        reveal =
+                            PhraseRevealState.Revealed(
+                                listOf(
+                                    "orbit",
+                                    "canvas",
+                                    "meadow",
+                                    "lantern",
+                                    "harbor",
+                                    "velvet",
+                                    "summit",
+                                    "pepper",
+                                    "gravel",
+                                    "whisper",
+                                    "copper",
+                                    "tundra",
+                                ),
                             ),
-                        ),
-                ),
-            onBack = {},
-            onReveal = {},
-            onHide = {},
-            onEnterPhrase = {},
-        )
+                    ),
+                onBack = {},
+                onReveal = {},
+                onHide = {},
+                onEnterPhrase = {},
+            )
+        }
     }
 }
 
