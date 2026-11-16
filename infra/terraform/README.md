@@ -103,7 +103,6 @@ cloud_run_secret_env = {
   DATABASE_USER = { secret_id = "logdate-db-user" }
   DATABASE_PASSWORD = { secret_id = "logdate-db-password" }
   JWT_SECRET = { secret_id = "logdate-jwt-secret" }
-  REDIS_URL = { secret_id = "logdate-redis-url" }
 }
 
 create_secrets = true

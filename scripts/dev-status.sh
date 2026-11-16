@@ -17,8 +17,8 @@ echo ""
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
-    echo -e "${RED}❌ Docker is not running${NC}"
-    exit 1
+  echo -e "${RED}❌ Docker is not running${NC}"
+  exit 1
 fi
 
 # Show service status
@@ -32,20 +32,11 @@ echo -e "${GREEN}🏥 Service Health:${NC}"
 
 # PostgreSQL
 if docker-compose ps logdate-postgres | grep -q "Up.*healthy"; then
-    echo -e "  PostgreSQL: ${GREEN}✅ Healthy${NC} (localhost:15432)"
+  echo -e "  PostgreSQL: ${GREEN}✅ Healthy${NC} (localhost:15432)"
 elif docker-compose ps logdate-postgres | grep -q "Up"; then
-    echo -e "  PostgreSQL: ${YELLOW}⏳ Starting${NC} (localhost:15432)"
+  echo -e "  PostgreSQL: ${YELLOW}⏳ Starting${NC} (localhost:15432)"
 else
-    echo -e "  PostgreSQL: ${RED}❌ Down${NC}"
-fi
-
-# Redis  
-if docker-compose ps logdate-redis | grep -q "Up.*healthy"; then
-    echo -e "  Redis:      ${GREEN}✅ Healthy${NC} (localhost:16379)"
-elif docker-compose ps logdate-redis | grep -q "Up"; then
-    echo -e "  Redis:      ${YELLOW}⏳ Starting${NC} (localhost:16379)"
-else
-    echo -e "  Redis:      ${RED}❌ Down${NC}"
+  echo -e "  PostgreSQL: ${RED}❌ Down${NC}"
 fi
 
 # Development Tools
@@ -53,22 +44,16 @@ echo ""
 echo -e "${GREEN}🛠️  Development Tools:${NC}"
 
 if docker-compose ps logdate-pgadmin | grep -q "Up"; then
-    echo -e "  PgAdmin:        ${GREEN}✅ Running${NC} (http://localhost:15050)"
+  echo -e "  PgAdmin:        ${GREEN}✅ Running${NC} (http://localhost:15050)"
 else
-    echo -e "  PgAdmin:        ${RED}❌ Down${NC}"
-fi
-
-if docker-compose ps logdate-redis-commander | grep -q "Up"; then
-    echo -e "  Redis Commander: ${GREEN}✅ Running${NC} (http://localhost:18081)"
-else
-    echo -e "  Redis Commander: ${RED}❌ Down${NC}"
+  echo -e "  PgAdmin:        ${RED}❌ Down${NC}"
 fi
 
 # Show volumes
 echo ""
 echo -e "${GREEN}💾 Data Volumes:${NC}"
 docker volume ls | grep "logdate" | while read -r line; do
-    echo "  $line"
+  echo "  $line"
 done
 
 echo ""

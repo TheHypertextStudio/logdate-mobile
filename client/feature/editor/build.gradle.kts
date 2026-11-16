@@ -103,21 +103,3 @@ kotlin {
         }
     }
 }
-// dependencies {
-//    implementation(project(":core:data"))
-//    implementation(project(":core:ui"))
-//    implementation(project(":core:model"))
-//    implementation(project(":core:util"))
-//    implementation(project(":core:world"))
-//    implementation(project(":core:media"))
-//
-//    // Compose in logdate.compose build logic
-//    implementation(libs.androidx.hilt.navigation.compose)
-// //    implementation(libs.androidx.compose.material3.carousel)
-// //    implementation(libs.androidx.compose.material3)
-//    // TODO: Figure out what dependency is causing this hell
-//    implementation("com.google.j2objc:j2objc-annotations:3.0.0")
-// //    api(libs.guava)
-// }
-
-// TODO: Revisit Android tooling/test runtime dependencies once Compose dependency accessors are migrated.

@@ -16,10 +16,6 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            // Get latest version from https://androidx.dev/snapshots/builds/
-            url = uri("https://androidx.dev/snapshots/builds/13551459/artifacts/repository")
-        }
     }
 }
 plugins {
@@ -36,16 +32,6 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        }
-        maven {
-            url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
-        }
-        maven {
-            // Get latest version from https://androidx.dev/snapshots/builds/
-            url = uri("https://androidx.dev/snapshots/builds/13551459/artifacts/repository")
-        }
     }
 }
 
@@ -101,7 +87,6 @@ include(":client:feature:postcards")
 include(":client:feature:stickers")
 include(":client:feature:events")
 // Shared cross-platform modules
-include(":shared:activitypub")
 include(":shared:atproto-crypto")
 include(":shared:atproto-syntax")
 include(":shared:atproto-identity")

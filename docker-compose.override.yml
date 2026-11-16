@@ -8,34 +8,34 @@ services:
       target: development
     environment:
       # Development-specific environment variables
-      KTOR_DEVELOPMENT: "true"
-      LOG_LEVEL: "DEBUG"
-      
+      KTOR_DEVELOPMENT: 'true'
+      LOG_LEVEL: 'DEBUG'
+
       # Hot reload configuration
-      KOTLIN_COMPILER_DAEMON: "true"
-      
+      KOTLIN_COMPILER_DAEMON: 'true'
+
       # Development database with more verbose logging (use correct service name)
-      DATABASE_URL: "jdbc:postgresql://logdate-postgres:5432/logdate?loggerLevel=DEBUG"
-      
+      DATABASE_URL: 'jdbc:postgresql://logdate-postgres:5432/logdate?loggerLevel=DEBUG'
+
       # Disable production optimizations
-      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0 -Djava.security.egd=file:/dev/./urandom -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
-    
+      JAVA_OPTS: '-XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0 -Djava.security.egd=file:/dev/./urandom -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+
     ports:
       # Add debug port for remote debugging (unique port)
-      - "15005:5005"
-    
+      - '15005:5005'
+
     volumes:
       # Mount source code for live development
       - ./server/src:/app/server/src:ro
       - ./shared:/app/shared:ro
       - ./client/util:/app/client/util:ro
-      
+
       # Mount gradle cache for faster builds
       - logdate_gradle_cache:/home/gradle/.gradle
-    
+
     # Restart policy for development
-    restart: "no"
-    
+    restart: 'no'
+
     # Override healthcheck for faster feedback in development
     healthcheck:
       interval: 15s
@@ -46,29 +46,19 @@ services:
   logdate-postgres:
     environment:
       # Development database with more logging
-      POSTGRES_LOG_STATEMENT: "all"
-      POSTGRES_LOG_MIN_DURATION_STATEMENT: "0"
-    
+      POSTGRES_LOG_STATEMENT: 'all'
+      POSTGRES_LOG_MIN_DURATION_STATEMENT: '0'
+
     # Mount initialization scripts for development data
     volumes:
       - logdate_postgres_data:/var/lib/postgresql/data
       - ./server/src/main/resources/db/migration:/docker-entrypoint-initdb.d/migration:ro
       - ./scripts/dev-data:/docker-entrypoint-initdb.d/dev-data:ro
-    
+
     # Override healthcheck for development
     healthcheck:
       interval: 5s
       timeout: 3s
-      retries: 3
-
-  logdate-redis:
-    # Development Redis with different memory settings
-    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru --loglevel verbose
-    
-    # Override healthcheck for development
-    healthcheck:
-      interval: 5s
-      timeout: 2s
       retries: 3
 
 volumes:
