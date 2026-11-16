@@ -13,7 +13,7 @@ import kotlin.time.Instant
  * dramatically reducing cache misses from GPS micro-jitter while remaining tight enough
  * to distinguish different POIs.
  *
- * Singleton instance is shared across all callers (LocationTimelineViewModel,
+ * Singleton instance is shared across all callers (HumanLocationHistoryViewModel,
  * GetHomeRecommendationUseCase, etc.). All resolve() calls are deduplicated here.
  */
 class PlaceResolutionCache(
