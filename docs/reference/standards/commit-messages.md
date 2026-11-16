@@ -96,16 +96,13 @@ Special annotations tools parse, placed after body text on separate lines:
 
 ## Commit Types
 
-| Type         | Purpose                                                                | Body Should Include                                                                                     |
-| ------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **feat**     | New functionality added (capability that didn't exist before)          | What users can now do, why it matters, how it feels — written like a changelog entry, not a code review |
-| **fix**      | Behavior corrected (something wasn't working, now it is)               | What was broken, why it was broken, how fix addresses root cause                                        |
-| **refactor** | Code restructured without behavior change                              | Why restructuring was needed (bugs? clarity? enabling future work?)                                     |
-| **docs**     | Documentation-only changes (README, comments, API docs)                | Usually self-explanatory; explain if non-obvious                                                        |
-| **style**    | Code style changes that don't affect behavior (formatting, whitespace) | Usually no body needed; change is mechanical                                                            |
-| **test**     | Tests added or modified                                                | What scenarios now covered, why needed, testing gaps addressed                                          |
-| **chore**    | Maintenance tasks (dependencies, build tools, CI/CD)                   | Breaking changes and migration steps if updating dependencies                                           |
-| **perf**     | Performance improvements                                               | Before/after metrics when possible, bottleneck identified, approach taken                               |
+| Type      | Purpose                                                                                                                   | Body Should Include                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **feat**  | New functionality added (capability that didn't exist before)                                                             | What users can now do, why it matters, how it feels — written like a changelog entry, not a code review      |
+| **fix**   | Behavior corrected (something wasn't working, now it is)                                                                  | What was broken, why it was broken, how fix addresses root cause                                             |
+| **chore** | Everything else: refactoring, tests, documentation, performance work a user wouldn't notice, dependencies, tooling and CI | What changed and why; before/after measurements for performance work; migration steps for dependency updates |
+
+These are the only three types. The studio standard (product-standards `docs/git-standards.md`) has no `refactor`, `docs`, `style`, `test`, `perf`, `ci` or `revert` type, and the commit-msg hook rejects them. A performance improvement a user notices is a `fix`.
 
 ---
 
