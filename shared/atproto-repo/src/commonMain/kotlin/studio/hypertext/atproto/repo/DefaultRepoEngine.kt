@@ -1,6 +1,5 @@
 package studio.hypertext.atproto.repo
 
-import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
@@ -12,11 +11,18 @@ import kotlin.time.Clock
 
 /**
  * Default repo engine implementation backed by a [RepoBlockStore].
+ *
+ * @property blockStore Underlying block and head store for repository commits and MST nodes.
+ * @property clock Clock used to mint monotonic commit revision TIDs.
+ * @property signer Commit signer used to sign DAG-CBOR commit payloads.
+ * @property onClockSkew Optional callback invoked when a previous commit's revision is ahead of
+ *   [clock] by more than five seconds (`aheadMicros`).
  */
 public class DefaultRepoEngine(
     private val blockStore: RepoBlockStore,
     private val clock: Clock = Clock.System,
     private val signer: RepoCommitSigner = DigestRepoCommitSigner,
+    private val onClockSkew: ((repo: AtprotoDid, aheadMicros: Long) -> Unit)? = null,
 ) : RepoEngine {
     override suspend fun getRecord(recordId: RepoRecordId): Result<RepoRecord?> =
         runCatching {
@@ -480,10 +486,7 @@ public class DefaultRepoEngine(
         val revision = previous + 1
         val aheadMicros = Tid.fromLong(revision).timestampMicros - Tid.fromLong(clockRevision).timestampMicros
         if (aheadMicros > CLOCK_SKEW_WARNING_MICROS) {
-            Napier.w(
-                "Repo $repo: the previous commit's revision is ${aheadMicros / MICROS_PER_SECOND}s ahead of this clock; " +
-                    "continuing from it. Check this machine's clock, or the clock of whichever wrote that commit.",
-            )
+            onClockSkew?.invoke(repo, aheadMicros)
         }
         return revision
     }
