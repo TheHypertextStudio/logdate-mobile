@@ -156,6 +156,25 @@ class RepoCommitChangeTest {
         }
 
     @Test
+    fun `the entries of a tree name every record and its content identifier in key order`() =
+        runSuspend {
+            val store = InMemoryRepoBlockStore()
+            val engine = DefaultRepoEngine(store)
+            val document = engine.putRecord(recordId(documents, "3kbbb"), value("b")).getOrThrow()
+            val self = engine.putRecord(recordId(profile, "self"), value("me")).getOrThrow()
+
+            val entries = RepoCommitChanges.entriesAt(store, lastCommit(store).commit.root).getOrThrow()
+
+            assertEquals(
+                listOf(
+                    MerkleSearchTreeEntry(profile, RecordKey.require("self"), Cid.require(self.cid)),
+                    MerkleSearchTreeEntry(documents, RecordKey.require("3kbbb"), Cid.require(document.cid)),
+                ),
+                entries,
+            )
+        }
+
+    @Test
     fun `a stored commit can be loaded by its CID and a missing one is refused`() =
         runSuspend {
             val store = InMemoryRepoBlockStore()
