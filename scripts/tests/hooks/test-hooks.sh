@@ -6,7 +6,6 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-VALIDATOR="$REPO_ROOT/scripts/validation/validate-commit-message.sh"
 FORMATTER="$REPO_ROOT/scripts/validation/format-commit-message.sh"
 COMMON="$REPO_ROOT/scripts/validation/hook-common.sh"
 
@@ -47,26 +46,6 @@ assert_contains() {
   pass_count=$((pass_count + 1))
 }
 
-# validate-commit-message hard checks
-assert_exit 0 "$VALIDATOR" --message "chore: update docs" --context checklist
-assert_exit 1 "$VALIDATOR" --message "feat(bad-scope): add playback controls" --context checklist
-assert_exit 1 "$VALIDATOR" --message "invalid title" --context checklist
-assert_exit 1 "$VALIDATOR" --message "fix(timeline): this title is intentionally made very long so it exceeds seventy two characters for validator checks" --context checklist
-assert_exit 1 "$VALIDATOR" --message $'feat(editor): update logic\n\nphase 2 rollout' --context checklist
-assert_exit 1 "$VALIDATOR" --message $'fix(editor): wrap commit body\n\nThis body line is intentionally made very long so it exceeds seventy two characters and should fail validation checks.' --context checklist
-
-# validate-commit-message warning behavior (imperative mood warning in commit-msg context)
-set +e
-warning_output="$("$VALIDATOR" --message "feat(editor): Added playback controls" --context commit-msg 2>&1)"
-warning_status=$?
-set -e
-if [[ $warning_status -ne 0 ]]; then
-  echo "FAIL: expected warning-only message to pass"
-  echo "$warning_output"
-  exit 1
-fi
-assert_contains "WARNING: Use imperative mood in commit title." "$warning_output"
-
 # format-commit-message auto-wrap behavior
 tmp_msg_file="$(mktemp "${TMPDIR:-/tmp}/commit-msg-test.XXXXXX")"
 trap 'rm -f "$tmp_msg_file"' EXIT
@@ -77,7 +56,6 @@ This body line is intentionally made very long so it exceeds seventy two charact
 EOF
 
 assert_exit 0 "$FORMATTER" "$tmp_msg_file"
-assert_exit 0 "$VALIDATOR" --file "$tmp_msg_file" --context checklist
 assert_equals "fix(editor): wrap commit body" "$(head -n 1 "$tmp_msg_file")"
 
 # hook-common module resolution

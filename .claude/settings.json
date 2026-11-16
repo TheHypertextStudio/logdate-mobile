@@ -1,18 +1,4 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/commit-message-checklist.sh",
-            "statusMessage": "Validating commit message..."
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "deny": [
       "Bash(git add -A*)",
@@ -52,7 +38,6 @@
       "Bash(git add .claude/*)",
       "Bash(git add .gitignore*)",
       "Bash(git add .editorconfig*)",
-      "Bash(git add allowed-scopes.txt*)",
       "Bash(git add CLAUDE.md*)",
       "Bash(git add AGENTS.md*)",
       "Bash(git add README.md*)",

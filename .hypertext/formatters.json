@@ -215,11 +215,6 @@
       "reason": "Legal text, frozen observation, exact dependency/registration list, or opaque document data; preserve its consumer representation."
     },
     {
-      "include": ["allowed-scopes.txt"],
-      "kind": "non-formattable",
-      "reason": "Legal text, frozen observation, exact dependency/registration list, or opaque document data; preserve its consumer representation."
-    },
-    {
       "include": ["app/android-main/.gitignore"],
       "kind": "non-formattable",
       "reason": "Tool-owned dependency lock, credential/value file, or exact line protocol; preserve its semantic bytes."
