@@ -14,8 +14,10 @@ import app.logdate.client.device.restore.NativeJournalReplayCustody
 import app.logdate.client.device.restore.NativeJournalRestoreAuthority
 import app.logdate.client.device.restore.PostRestoreDetector
 import app.logdate.client.device.restore.PostRestoreType
+import app.logdate.client.device.restore.pinDirectNativeCameraOriginal
 import app.logdate.client.device.restore.verifiedNativeJournalSources
 import app.logdate.client.device.restore.verifyNativeJournalSourceReceipt
+import app.logdate.client.device.restore.writeNativeJournalMediaInventory
 import app.logdate.client.device.restore.writeNativeJournalSourceReceipt
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -37,6 +39,333 @@ import kotlin.uuid.Uuid
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], application = Application::class)
 class NativeJournalTransferRestoreTest {
+    @Test
+    fun `direct v4 camera callback is indexed and acknowledged with its exact receipt cohort`() =
+        fixture { f ->
+            val camera =
+                File(f.files, "camera-captures/selected.mp4").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("direct camera original")
+                }
+            val drafts =
+                File(f.current, "files/datastore/entry_drafts.preferences_pb").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("pending entry draft state")
+                }
+            val inventory = File(f.current, NATIVE_MEDIA_INVENTORY_PATH)
+            writeNativeJournalMediaInventory(inventory, f.files, setOf("files/camera-captures/selected.mp4"))
+            val snapshot = f.payloads()
+            writeNativeJournalSourceReceipt(
+                File(f.current, NATIVE_SOURCE_RECEIPT_PATH),
+                mutablePreferencesOf(
+                    stringPreferencesKey("identity.canonical_owner_id") to "347c6231-19f4-49fa-bd1d-58ed34b9be03",
+                    stringPreferencesKey("identity.canonical_owner_bound") to "true",
+                    stringPreferencesKey("backend_url") to "https://cloud.example",
+                ),
+                checkNotNull(snapshot["files/logdate.preferences_pb"]),
+                mapOf("database/logdate" to checkNotNull(snapshot["database/logdate"])),
+                inventory,
+                drafts,
+            )
+            val cohort = Uuid.random().toString()
+            val custody = NativeJournalReplayCustody(f.context)
+            val payloads = f.payloads()
+            val unacceptedKeyPath = "files/db_recovery/passphrase_backup"
+            (payloads - unacceptedKeyPath).forEach { (path, file) ->
+                file.inputStream().use { custody.captureInCohort(cohort, NATIVE_JOURNAL_TRANSFER_PREFIX + path, file.length(), it) }
+            }
+            val unacceptedKeyCohort = Uuid.random().toString()
+            payloads.getValue(unacceptedKeyPath).inputStream().use {
+                custody.captureInCohort(
+                    unacceptedKeyCohort,
+                    NATIVE_JOURNAL_TRANSFER_PREFIX + unacceptedKeyPath,
+                    payloads.getValue(unacceptedKeyPath).length(),
+                    it,
+                )
+            }
+            camera.inputStream().use { custody.captureInCohort(cohort, "files/camera-captures/selected.mp4", camera.length(), it) }
+
+            val accepted = verifiedNativeJournalSources(custody.sealedPayloads()).values.single()
+            val receipt = nativeSnapshotChecksum(accepted.getValue("source_scope.json"))
+            val sourceFiles = accepted.mapKeys { (path, _) -> if (path == "source_scope.json") NATIVE_SOURCE_RECEIPT_PATH else path }
+            val cameraPayload = custody.sealedPayloads().single { it.path == "files/camera-captures/selected.mp4" }
+            val index = NativeJournalStagedSourceIndex(f.context)
+            index.remember(sourceFiles)
+            index.admitAfterMerged(receipt)
+            val source = index.admittedSources().getValue(receipt)
+            assertEquals(setOf(cameraPayload.file.canonicalPath), source.stagedAuxiliaryPhysicalPaths["files/camera-captures/selected.mp4"])
+            val inventoryPayload =
+                custody.sealedPayloads().single {
+                    it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + NATIVE_MEDIA_INVENTORY_PATH
+                }
+            assertEquals(
+                setOf(cameraPayload.file.canonicalPath, inventoryPayload.file.canonicalPath),
+                index.verifiedAuxiliary(receipt, custody.sealedPayloads()).keys,
+            )
+
+            custody.acknowledgeMergedSource(receipt, accepted, source.sourceCorePhysicalPaths)
+
+            assertEquals(
+                setOf(NATIVE_JOURNAL_TRANSFER_PREFIX + unacceptedKeyPath),
+                custody.sealedPayloads().map { it.path }.toSet(),
+            )
+        }
+
+    @Test
+    fun `same cohort staged and direct v4 camera callbacks are both retired after one merge`() =
+        fixture { f ->
+            val camera =
+                File(f.files, "camera-captures/selected.mp4").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("same camera original")
+                }
+            val drafts =
+                File(f.current, "files/datastore/entry_drafts.preferences_pb").apply {
+                    check(parentFile!!.mkdirs())
+                    writeText("pending entry draft state")
+                }
+            val inventory = File(f.current, NATIVE_MEDIA_INVENTORY_PATH)
+            writeNativeJournalMediaInventory(inventory, f.files, setOf("files/camera-captures/selected.mp4"))
+            val snapshot = f.payloads()
+            writeNativeJournalSourceReceipt(
+                File(f.current, NATIVE_SOURCE_RECEIPT_PATH),
+                mutablePreferencesOf(
+                    stringPreferencesKey("identity.canonical_owner_id") to "347c6231-19f4-49fa-bd1d-58ed34b9be03",
+                    stringPreferencesKey("identity.canonical_owner_bound") to "true",
+                    stringPreferencesKey("backend_url") to "https://cloud.example",
+                ),
+                checkNotNull(snapshot["files/logdate.preferences_pb"]),
+                mapOf("database/logdate" to checkNotNull(snapshot["database/logdate"])),
+                inventory,
+                drafts,
+            )
+
+            val cohort = Uuid.random().toString()
+            val custody = NativeJournalReplayCustody(f.context)
+            val payloads = f.payloads()
+            val unacceptedKeyPath = "files/db_recovery/passphrase_backup"
+            (payloads - unacceptedKeyPath).forEach { (path, file) ->
+                file.inputStream().use { custody.captureInCohort(cohort, NATIVE_JOURNAL_TRANSFER_PREFIX + path, file.length(), it) }
+            }
+            val unacceptedKeyCohort = Uuid.random().toString()
+            payloads.getValue(unacceptedKeyPath).inputStream().use {
+                custody.captureInCohort(
+                    unacceptedKeyCohort,
+                    NATIVE_JOURNAL_TRANSFER_PREFIX + unacceptedKeyPath,
+                    payloads.getValue(unacceptedKeyPath).length(),
+                    it,
+                )
+            }
+            val stagedCamera = File(f.root, "staged-selected.mp4").apply { writeBytes(camera.readBytes()) }
+            stagedCamera.inputStream().use {
+                custody.captureInCohort(
+                    cohort,
+                    NATIVE_JOURNAL_TRANSFER_PREFIX + "files/camera-captures/selected.mp4",
+                    stagedCamera.length(),
+                    it,
+                )
+            }
+            camera.inputStream().use { custody.captureInCohort(cohort, "files/camera-captures/selected.mp4", camera.length(), it) }
+
+            val accepted = verifiedNativeJournalSources(custody.sealedPayloads()).values.single()
+            val stagedCameraPayload =
+                custody.sealedPayloads().single {
+                    it.path ==
+                        NATIVE_JOURNAL_TRANSFER_PREFIX + "files/camera-captures/selected.mp4"
+                }
+            assertEquals(stagedCameraPayload.file.canonicalFile, accepted.getValue("files/camera-captures/selected.mp4").canonicalFile)
+            val receipt = nativeSnapshotChecksum(accepted.getValue("source_scope.json"))
+            val sourceFiles = accepted.mapKeys { (path, _) -> if (path == "source_scope.json") NATIVE_SOURCE_RECEIPT_PATH else path }
+            val index = NativeJournalStagedSourceIndex(f.context)
+            index.remember(sourceFiles)
+            index.admitAfterMerged(receipt)
+            val source = index.admittedSources().getValue(receipt)
+            assertEquals(
+                setOf(stagedCameraPayload.file.canonicalPath),
+                source.stagedAuxiliaryPhysicalPaths["files/camera-captures/selected.mp4"],
+            )
+            val directCameraPayload = custody.sealedPayloads().single { it.path == "files/camera-captures/selected.mp4" }
+            val inventoryPayload =
+                custody.sealedPayloads().single {
+                    it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + NATIVE_MEDIA_INVENTORY_PATH
+                }
+            val auxiliary = index.verifiedAuxiliary(receipt, custody.sealedPayloads()).keys
+            assertEquals(setOf(stagedCameraPayload.file.canonicalPath, inventoryPayload.file.canonicalPath), auxiliary)
+            assertFalse(directCameraPayload.file.canonicalPath in auxiliary)
+
+            custody.acknowledgeMergedSource(receipt, accepted, source.sourceCorePhysicalPaths)
+
+            assertEquals(
+                setOf(NATIVE_JOURNAL_TRANSFER_PREFIX + unacceptedKeyPath),
+                custody.sealedPayloads().map { it.path }.toSet(),
+            )
+        }
+
+    @Test
+    fun `vacant receiver retains a v4 camera original delivered at its live path for reconciliation`() =
+        fixture { f ->
+            val camera = f.selectCameraOriginal()
+            val path = "files/camera-captures/selected.mp4"
+
+            assertTrue(pinDirectNativeCameraOriginal(f.files, path, camera.length()) { camera.inputStream() })
+            assertFalse(File(f.files, "camera-captures").exists(), "The live capture directory receives only imported drafts")
+
+            val restore = f.restore()
+            assertTrue(restore.restore())
+            f.complete()
+            assertTrue(restore.finish())
+            val custody = NativeJournalReplayCustody(f.context)
+            val source = verifiedNativeJournalSources(custody.sealedPayloads()).values.single()
+            assertEquals("direct camera original", source.getValue(path).readText())
+            val receipt = nativeSnapshotChecksum(source.getValue("source_scope.json"))
+            val index = NativeJournalStagedSourceIndex(f.context)
+            index.admitAfterMerged(receipt)
+            assertEquals(
+                setOf(source.getValue(path).canonicalPath),
+                index.admittedSources().getValue(receipt).stagedAuxiliaryPhysicalPaths[path],
+            )
+        }
+
+    @Test
+    fun `vacant receiver drops a live-path camera callback its receipt inventory does not prove`() {
+        val path = "files/camera-captures/selected.mp4"
+        fixture { f ->
+            val camera = f.selectCameraOriginal()
+            val pinned = File(f.current, path)
+            val truncated = File(f.root, "truncated.mp4").apply { writeText("direct camera") }
+            assertFalse(pinDirectNativeCameraOriginal(f.files, path, truncated.length()) { truncated.inputStream() })
+            val substituted = File(f.root, "substituted.mp4").apply { writeText("direct camera 0riginal") }
+            assertEquals(camera.length(), substituted.length())
+            assertTrue(pinDirectNativeCameraOriginal(f.files, path, substituted.length()) { substituted.inputStream() })
+            assertFalse(pinned.exists())
+            assertFalse(
+                pinDirectNativeCameraOriginal(f.files, "files/camera-captures/other.mp4", camera.length()) { camera.inputStream() },
+            )
+            assertFalse(pinDirectNativeCameraOriginal(f.files, "files/media/selected.mp4", camera.length()) { camera.inputStream() })
+            assertEquals(
+                listOf("native_journal_transfer"),
+                f.files
+                    .list()
+                    .orEmpty()
+                    .toList(),
+            )
+            assertEquals(listOf("current"), File(f.files, "native_journal_transfer").list().orEmpty().toList())
+
+            assertTrue(pinDirectNativeCameraOriginal(f.files, path, camera.length()) { camera.inputStream() })
+            assertEquals("direct camera original", pinned.readText())
+            assertFalse(
+                pinDirectNativeCameraOriginal(f.files, path, camera.length()) { camera.inputStream() },
+                "An original already beside the receipt is not replaced",
+            )
+        }
+        fixture { f ->
+            val camera = f.selectCameraOriginal(withDrafts = false)
+            assertFalse(pinDirectNativeCameraOriginal(f.files, path, camera.length()) { camera.inputStream() })
+            assertFalse(File(f.current, path).exists(), "A version 3 receipt does not authorize a live-path camera original")
+        }
+        fixture { f ->
+            val camera = f.selectCameraOriginal()
+            check(f.current.deleteRecursively())
+            assertFalse(pinDirectNativeCameraOriginal(f.files, path, camera.length()) { camera.inputStream() })
+            assertFalse(f.current.exists(), "A camera callback without a receipt must not create a transfer snapshot")
+        }
+    }
+
+    @Test
+    fun `direct camera callback outside its v4 receipt cohort inventory is never indexed`() {
+        val path = "files/camera-captures/selected.mp4"
+        val rejected = "Direct camera original does not match its v4 receipt cohort inventory"
+
+        fun assertRejected(
+            f: Fixture,
+            camera: File,
+            cameraInReceiptCohort: Boolean,
+        ) {
+            val cohort = Uuid.random().toString()
+            val cameraCohort = if (cameraInReceiptCohort) cohort else Uuid.random().toString()
+            val custody = NativeJournalReplayCustody(f.context)
+            f.payloads().forEach { (source, file) ->
+                file.inputStream().use { custody.captureInCohort(cohort, NATIVE_JOURNAL_TRANSFER_PREFIX + source, file.length(), it) }
+            }
+            camera.inputStream().use { custody.captureInCohort(cameraCohort, path, camera.length(), it) }
+            val delivered = custody.sealedPayloads()
+            val files = delivered.associate { it.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX) to it.file }
+            val index = NativeJournalStagedSourceIndex(f.context)
+
+            index.remember(files)
+
+            val receipt = nativeSnapshotChecksum(files.getValue(NATIVE_SOURCE_RECEIPT_PATH))
+            index.admitAfterMerged(receipt)
+            val source = index.admittedSources().getValue(receipt)
+            assertFalse(path in source.pathSha256)
+            assertFalse(path in source.stagedAuxiliaryPhysicalPaths)
+            assertEquals(
+                emptyList(),
+                index.verifiedAuxiliary(receipt, delivered).values.filter { it.canonicalFile == files.getValue(path).canonicalFile },
+            )
+            val failure =
+                assertFailsWith<IllegalStateException> {
+                    index.remember(
+                        files,
+                        delivered.associate {
+                            it.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX) to
+                                checkNotNull(it.cohortId)
+                        },
+                    )
+                }
+            assertEquals(rejected, failure.message)
+            assertFalse(path in index.admittedSources().getValue(receipt).pathSha256)
+        }
+
+        fixture { f -> assertRejected(f, f.selectCameraOriginal(), cameraInReceiptCohort = false) }
+        fixture { f -> assertRejected(f, f.selectCameraOriginal(withDrafts = false), cameraInReceiptCohort = true) }
+        fixture { f -> assertRejected(f, f.selectCameraOriginal(inventoriedSizeOffset = 1), cameraInReceiptCohort = true) }
+        fixture { f ->
+            f.selectCameraOriginal()
+            val other = File(f.root, "uninventoried.mp4").apply { writeText("another camera original") }
+            assertRejected(f, other, cameraInReceiptCohort = true)
+        }
+    }
+
+    @Test
+    fun `direct camera original delivered again in a new cohort retires both exact revisions`() =
+        fixture { f ->
+            val camera = f.selectCameraOriginal()
+            val path = "files/camera-captures/selected.mp4"
+            val custody = NativeJournalReplayCustody(f.context)
+            val index = NativeJournalStagedSourceIndex(f.context)
+            val revisions =
+                List(2) {
+                    val cohort = Uuid.random().toString()
+                    // The accepted source omits the key, which staged auxiliary acknowledgement retires separately.
+                    (f.payloads() - "files/db_recovery/passphrase_backup").forEach { (source, file) ->
+                        file.inputStream().use {
+                            custody.captureInCohort(
+                                cohort,
+                                NATIVE_JOURNAL_TRANSFER_PREFIX + source,
+                                file.length(),
+                                it,
+                            )
+                        }
+                    }
+                    camera.inputStream().use { custody.captureInCohort(cohort, path, camera.length(), it) }
+                    val delivered = custody.sealedPayloadsInCohort(cohort)
+                    index.remember(delivered.associate { it.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX) to it.file })
+                    delivered.single { it.path == path }.file.canonicalPath
+                }.toSet()
+            assertEquals(2, revisions.size)
+            val receipt = nativeSnapshotChecksum(File(f.current, NATIVE_SOURCE_RECEIPT_PATH))
+            index.admitAfterMerged(receipt)
+            val admitted = index.admittedSources().getValue(receipt)
+            assertEquals(revisions, admitted.stagedAuxiliaryPhysicalPaths[path])
+            assertTrue(index.verifiedAuxiliary(receipt, custody.sealedPayloads()).keys.containsAll(revisions))
+
+            val accepted = verifiedNativeJournalSources(custody.sealedPayloads()).values.single()
+            custody.acknowledgeMergedSource(receipt, accepted, admitted.sourceCorePhysicalPaths)
+
+            assertFalse(custody.hasInputs())
+        }
+
     @Test
     fun `missing selected key leaves the journal encrypted and completes as missing content`() =
         fixture { f ->
@@ -652,6 +981,53 @@ class NativeJournalTransferRestoreTest {
             )
             PostRestoreDetector(context).beginNativeRestoreSession()
             NativeJournalRestoreAuthority(context).begin(resumeInterrupted = false)
+        }
+
+        /** Writes a receipt that selects one sender camera original at its live path; without drafts the receipt is version 3. */
+        fun selectCameraOriginal(
+            withDrafts: Boolean = true,
+            inventoriedSizeOffset: Long = 0,
+        ): File {
+            val camera =
+                File(root, "sender/camera-captures/selected.mp4").apply {
+                    check(checkNotNull(parentFile).mkdirs())
+                    writeText("direct camera original")
+                }
+            val drafts =
+                File(current, "files/datastore/entry_drafts.preferences_pb").takeIf { withDrafts }?.apply {
+                    check(checkNotNull(parentFile).mkdirs())
+                    writeText("pending entry draft state")
+                }
+            val inventory =
+                File(current, NATIVE_MEDIA_INVENTORY_PATH).apply {
+                    writeText(
+                        Json.encodeToString(
+                            NativeJournalMediaInventory(
+                                1,
+                                listOf(
+                                    NativeJournalMediaInventory.Entry(
+                                        "files/camera-captures/selected.mp4",
+                                        camera.length() + inventoriedSizeOffset,
+                                        nativeSnapshotChecksum(camera),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    )
+                }
+            writeNativeJournalSourceReceipt(
+                File(current, NATIVE_SOURCE_RECEIPT_PATH),
+                mutablePreferencesOf(
+                    stringPreferencesKey("identity.canonical_owner_id") to "347c6231-19f4-49fa-bd1d-58ed34b9be03",
+                    stringPreferencesKey("identity.canonical_owner_bound") to "true",
+                    stringPreferencesKey("backend_url") to "https://cloud.example",
+                ),
+                File(current, "files/logdate.preferences_pb"),
+                mapOf("database/logdate" to File(current, "database/logdate")),
+                inventory,
+                drafts,
+            )
+            return camera
         }
 
         fun payloads() = current.walkTopDown().filter(File::isFile).associateBy { it.relativeTo(current).invariantSeparatorsPath }

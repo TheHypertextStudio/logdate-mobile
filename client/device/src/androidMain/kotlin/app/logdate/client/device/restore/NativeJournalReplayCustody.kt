@@ -1,6 +1,7 @@
 package app.logdate.client.device.restore
 
 import android.content.Context
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
@@ -258,6 +259,11 @@ class NativeJournalReplayCustody(
         acceptedSourceHashes: Map<String, String> = emptyMap(),
     ) {
         cleanupConsumed()
+        val sourceCameraFiles =
+            verifiedNativeJournalSources(sealedPayloads())
+                .values
+                .flatMap { source -> source.filterKeys { it.startsWith("files/camera-captures/") }.toList() }
+                .associate { (path, file) -> path to file.canonicalPath }
         val core =
             acceptedSourceHashes.filterKeys { path ->
                 path == NATIVE_SOURCE_RECEIPT_PATH || path == "files/logdate.preferences_pb" || path.startsWith("database/")
@@ -284,11 +290,17 @@ class NativeJournalReplayCustody(
                         path in STAGED_AUXILIARY_PATHS &&
                             (payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) || payload.path in RAW_STAGED_AUXILIARY) &&
                             payload.file.canonicalPath in verifiedPhysicalPaths
+                    val verifiedDirectCamera =
+                        path.startsWith("files/camera-captures/") &&
+                            payload.path == path &&
+                            sourceCameraFiles[path] == payload.file.canonicalPath &&
+                            acceptedSourceHashes[path] == retainedJournalChecksum(payload.file) &&
+                            payload.file.canonicalPath in verifiedPhysicalPaths
                     val verifiedCore =
                         fullSourcePresent &&
                             payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) &&
                             core[path] == retainedJournalChecksum(payload.file)
-                    payload.complete && (verifiedAuxiliary || verifiedCore)
+                    payload.complete && (verifiedAuxiliary || verifiedDirectCamera || verifiedCore)
                 }
             ) {
                 consume(directory)
@@ -310,7 +322,13 @@ class NativeJournalReplayCustody(
             verifiedNativeJournalSources(all).values.singleOrNull { files ->
                 files["source_scope.json"]?.let { retainedJournalChecksum(it) == receiptSha256 } == true
             } ?: return
+        val sourceCameraFiles =
+            source.filterKeys { it.startsWith("files/camera-captures/") }.mapValues { (_, file) -> file.canonicalPath }
         val acceptedHashes = acceptedFiles.mapValues { (_, file) -> retainedJournalChecksum(file) }
+        val sourceReceipt = Json.decodeFromString<NativeJournalSourceReceipt>(source.getValue("source_scope.json").readText())
+        val sourceMediaInventory =
+            sourceReceipt.mediaInventorySha256
+                ?.let { expected -> source[NATIVE_MEDIA_INVENTORY_PATH]?.let { verifyNativeJournalMediaInventory(it, expected) } }
         check(
             source.all { (path, file) ->
                 acceptedHashes[path] == retainedJournalChecksum(file)
@@ -337,12 +355,34 @@ class NativeJournalReplayCustody(
                                 retainedJournalChecksum(payload.file) == hash
                         }
                     }
+            // A repeated delivery carries the same receipt bytes in a cohort of its own.
+            val holdsAcceptedReceipt =
+                payloads.any {
+                    it.complete &&
+                        it.path == NATIVE_JOURNAL_TRANSFER_PREFIX + NATIVE_SOURCE_RECEIPT_PATH &&
+                        retainedJournalChecksum(it.file) == receiptSha256
+                }
             if (payloads.isNotEmpty() &&
                 payloads.all { payload ->
                     val path = payload.path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX)
                     val accepted = acceptedHashes[if (path == NATIVE_SOURCE_RECEIPT_PATH) "source_scope.json" else path]
+                    val verifiedDirectCamera =
+                        sourceReceipt.version == 4 &&
+                            path.startsWith("files/camera-captures/") &&
+                            payload.path == path &&
+                            holdsAcceptedReceipt &&
+                            sourceMediaInventory?.entry(path)?.let { entry ->
+                                entry.size == payload.expectedSize &&
+                                    entry.size == payload.file.length() &&
+                                    entry.sha256 == accepted &&
+                                    entry.sha256 == retainedJournalChecksum(payload.file)
+                            } == true
                     payload.complete &&
-                        payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) &&
+                        (
+                            payload.path.startsWith(NATIVE_JOURNAL_TRANSFER_PREFIX) ||
+                                sourceCameraFiles[path] == payload.file.canonicalPath ||
+                                verifiedDirectCamera
+                        ) &&
                         accepted == retainedJournalChecksum(payload.file) &&
                         (fullSourcePresent || payload.file.canonicalPath in boundCorePhysicalPaths[path].orEmpty())
                 }
