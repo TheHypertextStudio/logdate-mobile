@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -36,6 +37,136 @@ CONFIG_NAMES = {
     "rust-toolchain.toml",
     "global.json",
 }
+
+
+# Configuration that a formatter finds by searching the parent directories of the
+# file it formats, by tool. The nearest counting file ends that tool's search, so a
+# repository copy on the file's path shadows everything above the repository.
+PRETTIER_FILES = {
+    ".prettierrc",
+    ".prettierrc.json",
+    ".prettierrc.yml",
+    ".prettierrc.yaml",
+    ".prettierrc.json5",
+    ".prettierrc.js",
+    ".prettierrc.ts",
+    ".prettierrc.mjs",
+    ".prettierrc.mts",
+    ".prettierrc.cjs",
+    ".prettierrc.cts",
+    ".prettierrc.toml",
+    "prettier.config.js",
+    "prettier.config.ts",
+    "prettier.config.mjs",
+    "prettier.config.mts",
+    "prettier.config.cjs",
+    "prettier.config.cts",
+}
+NEAREST_CONFIGURATION = {
+    "Prettier": PRETTIER_FILES | {"package.json", "package.yaml"},
+    "Ruff": {"ruff.toml", ".ruff.toml", "pyproject.toml"},
+    "rustfmt": {"rustfmt.toml", ".rustfmt.toml"},
+    "clang-format": {".clang-format", "_clang-format"},
+    "swift-format": {".swift-format"},
+    "rustup": {"rust-toolchain.toml", "rust-toolchain"},
+    "the .NET SDK": {"global.json"},
+}
+# Configuration that accumulates across parent directories instead of stopping at
+# the nearest file. EditorConfig stops only at a file that declares root = true.
+MERGED_CONFIGURATION = {".editorconfig": "EditorConfig", ".swiftformat": "SwiftFormat"}
+SMALL_CONFIG = 1024 * 1024
+
+
+def _config_text(path):
+    try:
+        with path.open("rb") as stream:
+            return stream.read(SMALL_CONFIG).decode("utf-8", "replace")
+    except OSError:
+        return None
+
+
+def _counts(path):
+    """Whether a discovered file really configures its tool (unreadable counts)."""
+    if not (path.is_file() or path.is_symlink()):
+        return False
+    text = _config_text(path)
+    if text is None:
+        return True
+    if path.name == "package.json":
+        try:
+            return "prettier" in json.loads(text)
+        except (ValueError, TypeError):
+            return True
+    if path.name == "package.yaml":
+        return any(line.startswith("prettier:") for line in text.splitlines())
+    if path.name == "pyproject.toml":
+        return "[tool.ruff" in text
+    return True
+
+
+def _ends_search(path):
+    """Whether a counting file stops its tool from reading parent directories."""
+    text = _config_text(path) or ""
+    if path.name == ".editorconfig":
+        for line in text.splitlines():
+            line = line.strip()
+            if line.startswith("["):
+                return False
+            key, _, value = line.partition("=")
+            if key.strip().lower() == "root" and value.strip().lower() == "true":
+                return True
+        return False
+    if path.name in {".clang-format", "_clang-format"}:
+        return "InheritParentConfig" not in text
+    # SwiftFormat layers nested files over their parents' options.
+    return path.name != ".swiftformat"
+
+
+def external_configuration(repo, directory):
+    """Return files outside the repository a formatter would read for a staged path.
+
+    Inside the repository every configuration file on the path must be committed.
+    Above it, only files a formatter actually discovers through parent directories
+    can shape the result, and only until a repository copy ends that tool's search.
+    Gradle, pnpm, Cargo and version catalogs read their files from the project
+    itself, so their files above the repository are irrelevant. Being inside
+    another checkout of the same repository does not change this: that checkout can
+    be on another commit, so a file the formatter would read from it still counts.
+    """
+    inside = [directory]
+    while inside[-1] != repo:
+        inside.append(inside[-1].parent)
+    outside = list(repo.parents)
+    found = []
+    for tool, names in NEAREST_CONFIGURATION.items():
+        shadowed = False
+        for folder in inside:
+            for base in names:
+                candidate = folder / base
+                if _counts(candidate) and _ends_search(candidate):
+                    shadowed = True
+        if shadowed:
+            continue
+        for folder in outside:
+            matches = [
+                folder / base for base in sorted(names) if _counts(folder / base)
+            ]
+            if matches:
+                found += [(path, tool) for path in matches]
+                if any(_ends_search(path) for path in matches):
+                    break
+    for base, tool in MERGED_CONFIGURATION.items():
+        if any(
+            _counts(folder / base) and _ends_search(folder / base) for folder in inside
+        ):
+            continue
+        for folder in outside:
+            candidate = folder / base
+            if _counts(candidate):
+                found.append((candidate, tool))
+                if _ends_search(candidate):
+                    break
+    return found
 
 
 def configuration_file(name):
@@ -142,6 +273,69 @@ def validate_policy(value):
     return value
 
 
+TOOLS = ".hypertext/formatter-tools"
+PREPARE = "python3 " + TOOLS + "/setup.py"
+
+
+def prepared_runtime(repo):
+    """Return this checkout's runtime when it is bound to the current pins."""
+    tools = repo / TOOLS
+    try:
+        spec = json.loads((tools / "tools.json").read_text())
+        runtime = json.loads((tools / "runtime.json").read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(runtime, dict) or runtime.get("spec") != spec:
+        return None
+    for key in ("npm", "ruff", "java_home"):
+        # A shared cache can be reclaimed after this checkout was prepared.
+        if key in runtime and not Path(str(runtime[key])).exists():
+            return None
+    return runtime
+
+
+def prepare_tools(repo, staged, environment):
+    """Prepare a checkout's pinned formatter tools on its first commit.
+
+    A new worktree has no runtime.json. Preparation runs the checkout's own setup
+    at the committed pins, reusing the machine's shared tool caches, before the
+    index is locked. It never executes unstaged edits to its inputs.
+    """
+    tools = repo / TOOLS
+    if not (tools / "tools.json").is_file() or not (tools / "setup.py").is_file():
+        return None
+    runtime = prepared_runtime(repo)
+    if runtime is not None:
+        return runtime
+    for name in (TOOLS + "/setup.py", TOOLS + "/tools.json"):
+        if read_file(setup_files.confined(repo / name, repo)) != staged(name):
+            raise ValueError(
+                "Stage or restore formatter configuration before committing: " + name
+            )
+    output = io.BytesIO()
+    try:
+        code = runner.execute(
+            [sys.executable, str(tools / "setup.py")],
+            repo,
+            output,
+            900,
+            stdin=subprocess.DEVNULL,
+            environment={k: v for k, v in environment.items() if k != "GIT_INDEX_FILE"},
+        )
+    except (OSError, subprocess.SubprocessError):
+        code = None
+    lines = output.getvalue().decode("utf-8", "replace").strip().splitlines()
+    runtime = prepared_runtime(repo) if code == 0 else None
+    if runtime is None:
+        reason = lines[-1] if lines else "setup did not finish"
+        raise ValueError(
+            "Formatter tools are not prepared for this checkout and automatic "
+            "preparation failed: " + reason + ". Run: " + PREPARE
+        )
+    print("Prepared pinned formatter tools for this checkout.", file=sys.stderr)
+    return runtime
+
+
 def format_staged(repo):
     repo = Path(repo).resolve()
     git_executable = setup_files.trusted_git(repo)
@@ -151,12 +345,18 @@ def format_staged(repo):
     environment.update(
         GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never", SSH_ASKPASS_REQUIRE="never"
     )
-    deadline = time.monotonic() + 120
+    started = time.monotonic()
+    budget = 120
+    deadline = started + budget
+
+    def time_left():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ValueError(f"Staged formatting exceeded its {budget}-second deadline")
+        return remaining
 
     def execute(argv, data=None, env=None, allowed=(0,), timeout=30):
-        remaining = min(timeout, deadline - time.monotonic())
-        if remaining <= 0:
-            raise ValueError("Staged formatting exceeded its 120-second deadline")
+        remaining = min(timeout, time_left())
         output = io.BytesIO()
         with tempfile.TemporaryFile() as source, tempfile.TemporaryFile() as errors:
             if data is not None:
@@ -203,6 +403,17 @@ def format_staged(repo):
             allowed,
             15,
         )
+
+    def staged(name):
+        code, content = git("cat-file", "blob", ":" + name, allowed=(0, 128))
+        return content if code == 0 else None
+
+    runtime = prepare_tools(repo, staged, environment)
+    if runtime and runtime.get("java_home"):
+        # Formatters bound to the pinned JDK find it without a manual JAVA_HOME.
+        environment["JAVA_HOME"] = runtime["java_home"]
+    started = time.monotonic()
+    deadline = started + budget
 
     index = Path(os.fsdecode(git("rev-parse", "--git-path", "index")[1]).strip())
     if not index.is_absolute():
@@ -305,6 +516,23 @@ def format_staged(repo):
         if read_file(policy_path) != policy_bytes:
             raise ValueError("Working and staged formatter policies differ: " + POLICY)
         policy = validate_policy(json.loads(policy_bytes, object_pairs_hook=unique))
+        staged_timeouts = [
+            rule.get("timeout_seconds", 30)
+            for name in paths
+            if not any(
+                fnmatch.fnmatchcase(name, pattern)
+                for excluded in policy["exclude"]
+                for pattern in excluded["include"]
+            )
+            for rule in policy["formatters"]
+            if any(fnmatch.fnmatchcase(name, pattern) for pattern in rule["include"])
+        ]
+        budget = (
+            120
+            if len(staged_timeouts) <= 10
+            else min(3600, max(120, 2 * sum(staged_timeouts)))
+        )
+        deadline = started + budget
         # Interpreter entrypoints are part of the selected formatter configuration.
         # Never execute unstaged edits to an authored repository adapter.
         adapter_inputs = set()
@@ -344,32 +572,44 @@ def format_staged(repo):
 
         directories = {repo}
         for name in paths:
-            directories.update((repo / name).parent.parents)
-            directories.add((repo / name).parent)
+            parent = (repo / name).parent
+            while parent != repo:
+                directories.add(parent)
+                parent = parent.parent
         for directory in directories:
             if not directory.exists():
                 continue
             for config in directory.iterdir():
-                base = config.name
-                relative = (
-                    config.relative_to(repo).as_posix()
-                    if config.is_relative_to(repo)
-                    else base
+                name = config.relative_to(repo).as_posix()
+                if not configuration_file(name):
+                    continue
+                if not config.is_file() and not config.is_symlink():
+                    continue
+                if name not in entries or read_file(config) != blob(name):
+                    raise ValueError(
+                        "Stage or restore formatter configuration before committing: "
+                        + name
+                    )
+        for directory in sorted({(repo / name).parent for name in paths}):
+            external = external_configuration(repo, directory)
+            if external:
+                path, tool = external[0]
+                remedy = (
+                    "Declare root = true in this repository's top-level .editorconfig"
+                    if path.name == ".editorconfig"
+                    else "Commit the "
+                    + tool
+                    + " configuration this repository needs at its root"
                 )
-                if configuration_file(relative):
-                    if not config.is_file() and not config.is_symlink():
-                        continue
-                    if not config.is_relative_to(repo):
-                        raise ValueError(
-                            "External formatter configuration must be made repository-local: "
-                            + str(config)
-                        )
-                    name = config.relative_to(repo).as_posix()
-                    if name not in entries or read_file(config) != blob(name):
-                        raise ValueError(
-                            "Stage or restore formatter configuration before committing: "
-                            + name
-                        )
+                raise ValueError(
+                    "External formatter configuration must be made repository-local: "
+                    + str(path)
+                    + " is read by "
+                    + tool
+                    + " from a parent directory of this checkout. "
+                    + remedy
+                    + " so the search ends inside the repository."
+                )
 
         changes = []
         for number, name in enumerate(paths):
@@ -487,6 +727,7 @@ def format_staged(repo):
                 )
             changes.append((target, working, merged, name))
 
+        time_left()
         if pending_index is not None:
             pending, pending_bytes, pending_info, pending_candidate = pending_index
             current = pending.lstat()
@@ -502,11 +743,14 @@ def format_staged(repo):
                 "Index or working files changed during formatting; retry without discarding edits"
             )
         for target, old, new, name in changes:
+            time_left()
             if old is not None and old != new:
                 # Retain original bytes until the index transaction is published.
                 (temporary / ("backup-" + str(len(writes)))).write_bytes(old)
+                time_left()
                 writes.append((target, old, new))
                 target.write_bytes(new)
+                time_left()
         if read_file(index) != original_index:
             raise ValueError(
                 "Git index changed during formatting; preserving the concurrent index"
@@ -519,12 +763,15 @@ def format_staged(repo):
             fd = None
             output.write(candidate.read_bytes())
             output.flush()
+            time_left()
             os.fsync(output.fileno())
+            time_left()
         if not owns_lock():
             raise ValueError(
                 "Git index lock changed during formatting; retry the commit"
             )
         if pending_index is not None:
+            time_left()
             pending_fd = os.open(pending, os.O_RDWR | getattr(os, "O_NOFOLLOW", 0))
             with os.fdopen(pending_fd, "r+b") as output:
                 current = os.fstat(output.fileno())
@@ -536,11 +783,15 @@ def format_staged(repo):
                         "Git partial-commit index changed before publication"
                     )
                 pending_written = True
+                time_left()
                 output.seek(0)
                 output.write(pending_candidate.read_bytes())
                 output.truncate()
                 output.flush()
+                time_left()
                 os.fsync(output.fileno())
+                time_left()
+        time_left()
         os.replace(lock, index)
         published = True
         return [name for target, old, new, name in changes]

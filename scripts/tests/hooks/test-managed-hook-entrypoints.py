@@ -103,6 +103,15 @@ class ManagedHookEntrypointTests(unittest.TestCase):
             for path in self.repo.rglob("*")
             if path.is_file() and ".git" not in path.relative_to(self.repo).parts
         )
+        # The formatter prepares a checkout's tools on its first commit. The fixture
+        # has no real toolchain to prepare from, so it carries the source checkout's
+        # prepared runtime, which points at the same shared tool caches. The file is
+        # ignored, so it is copied after the list of paths to commit is taken.
+        prepared = ROOT / ".hypertext/formatter-tools/runtime.json"
+        if prepared.is_file():
+            shutil.copy2(
+                prepared, self.repo / ".hypertext/formatter-tools/runtime.json"
+            )
         bootstrap = self.commit(paths, VALID_MESSAGE)
         self.assertEqual(bootstrap.returncode, 0, bootstrap.stdout + bootstrap.stderr)
         self.base = self.run_command("git", "rev-parse", "HEAD").stdout.strip()

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare only pinned formatter dependencies; never run on commit."""
+"""Prepare only pinned formatter dependencies for this checkout.
+
+Shared caches hold each exact recipe once per machine, so preparing another
+worktree at the same pins reuses them. The commit engine runs this script when a
+checkout's runtime.json is missing or bound to other pins.
+"""
 
 import argparse
 import hashlib
@@ -25,6 +30,85 @@ CACHE = (
     Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
     / "hypertext-studio/formatters"
 )
+
+
+JDK_LOCATIONS = (
+    ("home", "Library/Java/JavaVirtualMachines/*/Contents/Home"),
+    ("system", "Library/Java/JavaVirtualMachines/*/Contents/Home"),
+    ("home", "Applications/*.app/Contents/jbr/Contents/Home"),
+    ("system", "Applications/*.app/Contents/jbr/Contents/Home"),
+    ("home", ".gradle/jdks/*/Contents/Home"),
+    ("home", ".gradle/jdks/*"),
+    ("home", ".jdks/*"),
+    ("home", ".sdkman/candidates/java/*"),
+    ("home", ".local/share/JetBrains/Toolbox/apps/*/jbr"),
+    ("system", "usr/lib/jvm/*"),
+    ("system", "opt/*/jbr"),
+)
+
+
+def jdk_release(home):
+    try:
+        text = (home / "release").read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return {}
+    metadata = {}
+    for line in text.splitlines():
+        key, separator, value = line.partition("=")
+        if separator:
+            metadata[key.strip()] = value.strip().strip('"')
+    return metadata
+
+
+def jdk_matches(home, pin):
+    java = home / "bin" / ("java.exe" if os.name == "nt" else "java")
+    metadata = jdk_release(home)
+    return (
+        java.is_file()
+        and os.access(java, os.X_OK)
+        and metadata.get("JAVA_VERSION") == pin["version"]
+        and metadata.get("IMPLEMENTOR")
+        == pin.get("implementor", metadata.get("IMPLEMENTOR"))
+        and metadata.get("IMPLEMENTOR_VERSION")
+        == pin.get("implementor_version", metadata.get("IMPLEMENTOR_VERSION"))
+    )
+
+
+def locate_jdk(pin, home=None, system=None, environment=None):
+    """Find the exact pinned JDK among standard installations, JAVA_HOME first."""
+    if not isinstance(pin, dict) or not isinstance(pin.get("version"), str):
+        raise ValueError("tools.json jdk needs an exact version")
+    home = Path.home() if home is None else Path(home)
+    system = Path(Path.home().anchor) if system is None else Path(system)
+    environment = os.environ if environment is None else environment
+    candidates = []
+    if environment.get("JAVA_HOME"):
+        candidates.append(Path(environment["JAVA_HOME"]).expanduser())
+    bases = {"home": home, "system": system}
+    for base, pattern in JDK_LOCATIONS:
+        candidates += sorted(bases[base].glob(pattern))
+    for candidate in candidates:
+        if candidate.is_absolute() and jdk_matches(candidate, pin):
+            # Formatters that bind the JDK require a nonsymlink JAVA_HOME.
+            return candidate.resolve()
+    wanted = " ".join(
+        value
+        for value in (
+            pin.get("implementor"),
+            pin["version"],
+            "(" + pin["implementor_version"] + ")"
+            if pin.get("implementor_version")
+            else None,
+        )
+        if value
+    )
+    raise ValueError(
+        "Pinned JDK "
+        + wanted
+        + " is not installed. Install that JDK (IntelliJ IDEA's Download JDK "
+        "places JetBrains Runtime in ~/Library/Java/JavaVirtualMachines) or set "
+        "JAVA_HOME to it, then run: python3 .hypertext/formatter-tools/setup.py"
+    )
 
 
 def prettier_version():
@@ -311,6 +395,11 @@ def main():
                 ],
                 check=True,
             )
+    environment = dict(os.environ)
+    java_home = None
+    if "jdk" in SPEC:
+        java_home = locate_jdk(SPEC["jdk"])
+        environment["JAVA_HOME"] = str(java_home)
     for command in SPEC.get("native_setup", []):
         subprocess.run(
             [
@@ -318,6 +407,7 @@ def main():
                 for v in command
             ],
             cwd=ROOT,
+            env=environment,
             check=True,
         )
     runtime = {
@@ -326,6 +416,8 @@ def main():
         "ruff": str(ruff),
         "spec": SPEC,
     }
+    if java_home:
+        runtime["java_home"] = str(java_home)
     (TOOLS / "runtime.json").write_text(json.dumps(runtime, indent=2) + "\n")
     print("Pinned commit formatters prepared.")
 
@@ -352,4 +444,7 @@ if __name__ == "__main__":
             ],
         )
     else:
-        main()
+        try:
+            main()
+        except ValueError as error:
+            raise SystemExit("Formatter preparation blocked: " + str(error))

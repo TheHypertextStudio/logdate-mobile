@@ -309,6 +309,66 @@ def git(repo, *args, identity=False):
         raise ValueError("Git inspection returned invalid UTF-8: " + args[0]) from None
 
 
+def hooks_paths(repo):
+    """Return the configured core.hooksPath values by configuration scope."""
+    values = {}
+    for line in git(repo, "config", "--list", "--show-scope").splitlines():
+        scope, _, entry = line.partition("\t")
+        key, _, value = entry.partition("=")
+        if key == "core.hookspath":
+            values[scope] = value
+    return values
+
+
+def inherited_hooks(repo):
+    """Find hooks paths that make this checkout run another checkout's .githooks.
+
+    Studio activation stores the relative path .githooks, which every worktree
+    resolves to its own checkout. Tools that create worktrees can replace it with
+    an absolute path to the primary checkout's .githooks, so the new worktree runs
+    whatever hook version the primary checkout has checked out. An absolute path to
+    any checkout of this same repository is recognized and replaced by the relative
+    form; any other hooks path still needs explicit reconciliation.
+    """
+    repo = Path(repo).resolve()
+    checkouts = [
+        Path(line[len("worktree ") :]).resolve()
+        for line in git(repo, "worktree", "list", "--porcelain").splitlines()
+        if line.startswith("worktree ")
+    ]
+    found = {}
+    for scope, value in hooks_paths(repo).items():
+        if scope not in {"local", "worktree"} or not Path(value).is_absolute():
+            continue
+        path = Path(value).resolve()
+        for checkout in checkouts:
+            if path == checkout / ".githooks":
+                found[scope] = (path, checkout != repo)
+    return found
+
+
+def use_own_hooks(repo):
+    """Point this checkout at its own .githooks; return the replaced foreign paths."""
+    repo = Path(repo).resolve()
+    found = inherited_hooks(repo)
+    for scope in found:
+        if scope == "worktree" and hooks_paths(repo).get("local") == ".githooks":
+            git(repo, "config", "--worktree", "--unset", "core.hooksPath")
+        else:
+            git(repo, "config", "--" + scope, "core.hooksPath", ".githooks")
+    return [path for path, foreign in found.values() if foreign]
+
+
+def hook_files(directory):
+    if not directory.is_dir():
+        return {}
+    return {
+        path.name: path.read_bytes()
+        for path in directory.iterdir()
+        if path.is_file() and not path.name.endswith(".sample")
+    }
+
+
 def check_hook_context(repo):
     expected = git(repo, "rev-parse", "--absolute-git-dir")
     actual = git(repo, "rev-parse", "--absolute-git-dir", identity=True)
@@ -316,6 +376,17 @@ def check_hook_context(repo):
         raise ValueError(
             "Hook repository context differs from the checkout; use the intended worktree"
         )
+    own = hook_files(Path(repo).resolve() / ".githooks")
+    for foreign in use_own_hooks(repo):
+        # Git chose this operation's hooks before this one ran. Continue only when
+        # the other checkout's hooks are byte-identical to this checkout's own.
+        if hook_files(foreign) != own:
+            raise ValueError(
+                "This worktree was running hooks from another checkout ("
+                + str(foreign)
+                + "), which differ from its own. It now uses its own .githooks; "
+                "run the same Git command again."
+            )
 
 
 def complete_history(repo):
@@ -528,12 +599,12 @@ def install_hooks(repo, root, apply=False):
     repo = Path(repo).resolve()
     if Path(git(repo, "rev-parse", "--show-toplevel")).resolve() != repo:
         raise ValueError("Git hook installation requires the checkout root")
-    configured = (
-        git(repo, "config", "--get-regexp", r"^core\.hooksPath$")
-        if git_configured(repo)
-        else ""
-    )
-    if configured and configured.split(None, 1)[-1] != ".githooks":
+    inherited = inherited_hooks(repo)
+    if any(
+        value != ".githooks"
+        for scope, value in hooks_paths(repo).items()
+        if scope not in inherited
+    ):
         raise ValueError(
             "Existing core.hooksPath needs explicit reconciliation; no hooks were replaced"
         )
@@ -564,6 +635,7 @@ def install_hooks(repo, root, apply=False):
                     stream.write(content)
             path.chmod(path.stat().st_mode | 0o111)
         git(repo, "config", "--local", "core.hooksPath", ".githooks")
+        use_own_hooks(repo)
     return {
         "applied": apply,
         "hooks": sorted(hooks),
