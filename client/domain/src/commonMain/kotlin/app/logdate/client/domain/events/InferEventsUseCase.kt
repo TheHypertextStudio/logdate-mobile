@@ -62,7 +62,7 @@ import kotlin.uuid.Uuid
  * resources.
  */
 class InferEventsUseCase(
-    private val observeLocationStops: () -> Flow<List<LocationStop>>,
+    private val observeLocationStops: (since: Instant) -> Flow<List<LocationStop>>,
     private val indexedMediaRepository: IndexedMediaRepository,
     private val notesRepository: JournalNotesRepository,
     private val placeFamiliarity: PlaceFamiliarityRepository,
@@ -93,7 +93,7 @@ class InferEventsUseCase(
             val nowInstant = now()
             val windowStart = nowInstant - window
             val stops =
-                observeLocationStops()
+                observeLocationStops(windowStart)
                     .first()
                     .filter { stop ->
                         stop.evidenceKind == LocationStopEvidenceKind.STAY &&
