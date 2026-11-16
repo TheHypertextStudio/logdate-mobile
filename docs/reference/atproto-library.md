@@ -20,7 +20,7 @@
 - `shared/atproto-xrpc`
   - Ktor-backed XRPC client primitives
 - `shared/atproto-lexicon`
-  - lexicon parsing, validation, registry lookups, checked-in LogDate and official `com.atproto.*` resources, and deterministic codegen output
+  - lexicon parsing, validation, registry lookups, checked-in official `com.atproto.*` resources, and deterministic codegen output
 - `shared/atproto-pds`
   - shared request/response models and service contracts for discovery, identity, OAuth, session, repo, blob, and sync surfaces
 - `shared/atproto-pds-runtime`
@@ -256,12 +256,6 @@ Generate API docs for every ATProto module:
 ./gradlew generateAtprotoDokka
 ```
 
-Regenerate the checked-in LogDate lexicon models:
-
-```bash
-./gradlew :shared:atproto-lexicon:generateLogDateLexicons
-```
-
 Regenerate the checked-in official AT Protocol lexicon models used by this repo:
 
 ```bash
@@ -290,7 +284,6 @@ The sample imports `atproto-bom`, so publish the BOM along with the modules firs
 - ATProto identity resolution, OAuth/PDS wire models, reusable PDS runtime services, repo CRUD plus commit/export primitives, and low-level XRPC client support
 - A confidential OAuth client (with DPoP) for signing in with accounts hosted on other AT Protocol servers
 - Server integration in this repo now consumes shared PDS and repo contracts instead of defining duplicate route DTOs
-- Checked-in LogDate lexicon JSON documents plus deterministic generated Kotlin models
 - Checked-in official `com.atproto.*` lexicon JSON documents plus deterministic generated Kotlin models for the current server/repo/identity surface
 - Publishable Maven metadata, signing hooks, Dokka-backed documentation jars, aggregate Dokka/publish tasks, and a standalone consumer sample
 - GitHub Actions release automation for hosted Maven publishing

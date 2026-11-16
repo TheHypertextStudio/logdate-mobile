@@ -111,7 +111,7 @@ private class GenerateOptions(
             return GenerateOptions(
                 inputs = positional[0].split(File.pathSeparatorChar).filter(String::isNotBlank).map(Path::of),
                 outputDir = Path.of(positional[1]),
-                packageName = positional.getOrNull(2) ?: "studio.hypertext.atproto.lexicon.generated.logdate",
+                packageName = positional.getOrNull(2) ?: "studio.hypertext.atproto.lexicon.generated",
                 namespaceLayout = namespaceLayout,
                 recordIndex = recordIndex,
                 schemaIndex = schemaIndex,
