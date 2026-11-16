@@ -1,10 +1,8 @@
 package app.logdate.client.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Update
 import app.logdate.client.database.entities.LocationLogEntity
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
@@ -42,17 +40,6 @@ interface LocationHistoryDao {
     ): List<LocationLogEntity>
 
     @Query(
-        "SELECT * FROM location_logs " +
-            "WHERE user_id = :userId AND device_id = :deviceId AND timestamp = :timestamp " +
-            "ORDER BY logged_at DESC LIMIT 1",
-    )
-    suspend fun getLocationById(
-        userId: String,
-        deviceId: String,
-        timestamp: Instant,
-    ): LocationLogEntity?
-
-    @Query(
         "SELECT * FROM location_logs WHERE user_id = :userId AND device_id = :deviceId " +
             "AND (logged_at > :afterLoggedAt OR (logged_at = :afterLoggedAt AND sample_id > :afterSampleId)) " +
             "ORDER BY logged_at, sample_id LIMIT :limit",
@@ -81,12 +68,6 @@ interface LocationHistoryDao {
     @Insert
     suspend fun addLocationLog(locationLog: LocationLogEntity)
 
-    @Update
-    suspend fun editLocationLog(locationLog: LocationLogEntity)
-
-    @Delete
-    suspend fun deleteLog(locationLog: LocationLogEntity)
-
     @Query("DELETE FROM location_logs WHERE user_id = :userId AND device_id = :deviceId AND timestamp = :timestamp")
     suspend fun deleteLocationById(
         userId: String,
@@ -99,9 +80,6 @@ interface LocationHistoryDao {
         start: Instant,
         end: Instant,
     )
-
-    @Query("DELETE FROM location_logs WHERE device_id = :deviceId")
-    suspend fun deleteLogsByDevice(deviceId: String)
 
     @Query("SELECT COUNT(*) FROM location_logs")
     suspend fun getLocationCount(): Int
