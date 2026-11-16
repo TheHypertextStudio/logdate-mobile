@@ -8,9 +8,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.SystemClock
+import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.domain.activity.ActivityKind
 import app.logdate.client.domain.activity.ActivityTracker
 import app.logdate.client.domain.activity.ActivityTransition
+import app.logdate.client.domain.activity.PhoneActivityRegistration
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityRecognitionClient
 import com.google.android.gms.location.ActivityTransitionRequest
@@ -19,15 +24,18 @@ import com.google.android.gms.location.DetectedActivity
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import com.google.android.gms.location.ActivityTransition as PlayTransition
 
@@ -67,31 +75,52 @@ internal fun activityTransitionOf(
  */
 class PhoneActivityAwareness(
     private val context: Context,
-    private val tracker: ActivityTracker,
-    private val enabled: Flow<Boolean>,
+    private val tracker: () -> ActivityTracker,
+    private val flags: FeatureFlagStore,
     private val client: ActivityRecognitionClient = ActivityRecognition.getClient(context),
 ) {
-    private val permissionChecks = MutableStateFlow(0)
+    private var job: Job? = null
+
+    val registration =
+        PhoneActivityRegistration(
+            optedIn = { flags.isEnabled(FeatureFlag.ACTIVITY_AWARENESS) },
+            available = {
+                GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS
+            },
+            permitted = ::permissionGranted,
+            register = ::register,
+            unregister = ::unregister,
+        )
 
     fun start(scope: CoroutineScope) {
-        tracker.start(scope)
-        scope.launch {
-            combine(enabled, permissionChecks) { on, _ -> on && permissionGranted() }
-                .distinctUntilChanged()
-                .collect { follow -> if (follow) register() else unregister() }
-        }
+        if (job?.isActive == true) return
+        tracker().start(scope)
+        job =
+            scope.launch {
+                val consentChanges =
+                    flags
+                        .observe(FeatureFlag.ACTIVITY_AWARENESS)
+                        .distinctUntilChanged()
+                        .map { Unit }
+                        .catch {
+                            Napier.w("Couldn't observe the phone activity choice", it)
+                            emit(Unit)
+                        }
+                combine(consentChanges, registration.refreshRequests) { _, _ -> Unit }
+                    .collect { registration.reconcile() }
+            }
     }
 
     /** Checks the permission again, for when the person may have just granted or revoked it. */
     fun onActivityResumed() {
-        permissionChecks.value++
+        registration.refresh()
     }
 
     private fun permissionGranted(): Boolean =
         context.checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
 
     @SuppressLint("MissingPermission")
-    private suspend fun register() {
+    private suspend fun register(): Boolean {
         val transitions =
             FOLLOWED.flatMap { activity ->
                 listOf(PlayTransition.ACTIVITY_TRANSITION_ENTER, PlayTransition.ACTIVITY_TRANSITION_EXIT).map { transition ->
@@ -102,32 +131,44 @@ class PhoneActivityAwareness(
                         .build()
                 }
             }
-        try {
-            client.requestActivityTransitionUpdates(ActivityTransitionRequest(transitions), pendingIntent()).await()
-            Napier.i("Following the phone's activity for activity awareness")
+        val token = checkNotNull(pendingIntent(PendingIntent.FLAG_UPDATE_CURRENT))
+        return try {
+            val registered =
+                withTimeoutOrNull(10.seconds) {
+                    client.requestActivityTransitionUpdates(ActivityTransitionRequest(transitions), token).await()
+                    true
+                } == true
+            if (!registered) token.cancel()
+            registered
         } catch (e: CancellationException) {
+            token.cancel()
             throw e
         } catch (e: Exception) {
-            Napier.e("Couldn't follow the phone's activity; reminders do not wait for walks or trips it would have seen", e)
+            token.cancel()
+            Napier.w("Couldn't follow the phone's activity", e)
+            false
         }
     }
 
     private suspend fun unregister() {
+        val token = pendingIntent(PendingIntent.FLAG_NO_CREATE) ?: return
         try {
-            client.removeActivityTransitionUpdates(pendingIntent()).await()
+            withTimeoutOrNull(5.seconds) { client.removeActivityTransitionUpdates(token).await() }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Napier.w("Couldn't stop following the phone's activity", e)
+        } finally {
+            token.cancel()
         }
     }
 
-    private fun pendingIntent(): PendingIntent =
+    private fun pendingIntent(flags: Int): PendingIntent? =
         PendingIntent.getBroadcast(
             context,
             REQUEST_CODE,
             Intent(context, PhoneActivityTransitionReceiver::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            flags or PendingIntent.FLAG_MUTABLE,
         )
 
     private companion object {
@@ -147,6 +188,7 @@ class PhoneActivityTransitionReceiver :
     BroadcastReceiver(),
     KoinComponent {
     private val tracker: ActivityTracker by inject()
+    private val registration: PhoneActivityRegistration by inject()
     private val scope: CoroutineScope by inject()
 
     override fun onReceive(
@@ -167,7 +209,11 @@ class PhoneActivityTransitionReceiver :
         val pending = goAsync()
         scope.launch {
             try {
-                transitions.forEach { tracker.accept(it) }
+                if (registration.canReceiveTransitions()) transitions.forEach { tracker.accept(it) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Napier.w("Could not check or apply the phone activity transition", e)
             } finally {
                 pending.finish()
             }

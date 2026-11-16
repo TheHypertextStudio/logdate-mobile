@@ -7,9 +7,12 @@ import app.logdate.client.datastore.SessionStorage
 import app.logdate.client.datastore.UserSession
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
+import app.logdate.client.datastore.featureflags.PHONE_ACTIVITY_CONSENT_STORE
 import app.logdate.client.device.crypto.link.BouncyCastleLinkHandshake
 import app.logdate.client.device.restore.createAndroidInstallationWatchStorage
 import app.logdate.client.domain.activity.ActivityTracker
+import app.logdate.client.domain.activity.PhoneActivityRegistration
+import app.logdate.client.domain.activity.PhoneActivityRegistrationState
 import app.logdate.client.domain.activity.toSnapshot
 import app.logdate.client.domain.reminders.LearnedReminderHours
 import app.logdate.client.domain.reminders.ReminderPostedHistory
@@ -111,6 +114,16 @@ val phoneWatchSyncV2Module =
             val peers = get<PhoneDeliveryPeers>()
             val history = get<ReminderPostedHistory>()
             val hours = get<LearnedReminderHours>()
+            val phoneActivity =
+                combine(
+                    get<FeatureFlagStore>(named(PHONE_ACTIVITY_CONSENT_STORE)).observe(FeatureFlag.ACTIVITY_AWARENESS),
+                    get<PhoneActivityRegistration>().state,
+                    get<ActivityTracker>().local,
+                ) { optedIn, link, local ->
+                    // The watch may have its own activity source. Keep the user's preference separate
+                    // from whether this phone has a currently registered source to contribute.
+                    optedIn to local.toSnapshot().takeIf { link == PhoneActivityRegistrationState.Linked }
+                }
             PhoneStatePublisher(
                 v2Enabled = get<FeatureFlagStore>().observe(FeatureFlag.WATCH_EXPERIENCE_V2),
                 channel = get(),
@@ -129,16 +142,15 @@ val phoneWatchSyncV2Module =
                         sessions.getSessionFlow(),
                         campfire(),
                         hours.observe(),
-                        get<FeatureFlagStore>().observe(FeatureFlag.ACTIVITY_AWARENESS),
-                        get<ActivityTracker>().local,
-                    ) { session, fire, waking, aware, activity ->
+                        phoneActivity,
+                    ) { session, fire, waking, (aware, activity) ->
                         PhoneStateParts(
                             cloud = cloudPresence(session),
                             dayStartHour = preferences.getPreferences().dayStartHour ?: DEFAULT_STREAK_DAY_START_HOUR,
                             campfire = fire?.toSnapshot(Clock.System.now()),
                             reminderHours = waking?.let { ReminderHours(it.wake.toSecondOfDay(), it.sleep.toSecondOfDay()) },
                             activityAwareness = aware,
-                            activity = activity.toSnapshot(),
+                            activity = activity,
                         )
                     },
             )

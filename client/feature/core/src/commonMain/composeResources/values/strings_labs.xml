@@ -14,12 +14,7 @@
     <string name="labs_activity_awareness_title">Activity awareness</string>
     <string
     name="labs_activity_awareness_description"
-  >Reminders wait while you’re on the move.</string>
-    <string name="labs_activity_permission_title">Allow physical activity</string>
-    <string
-    name="labs_activity_permission_description"
-  >Needed to tell when you’re on the move.</string>
-    <string name="labs_activity_permission_action">Allow</string>
+  >Get suggestions after a walk or trip. If reminders are on, they can wait until you stop.</string>
     <string name="labs_identity_recovery_key_title">Move with your recovery phrase</string>
     <string
     name="labs_identity_recovery_key_description"
