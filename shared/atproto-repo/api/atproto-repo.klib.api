@@ -50,6 +50,7 @@ abstract interface studio.hypertext.atproto.repo/RepoBlockStore { // studio.hype
     abstract suspend fun readHead(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.repo/RepoHead?> // studio.hypertext.atproto.repo/RepoBlockStore.readHead|readHead(studio.hypertext.atproto.identity.AtprotoDid){}[0]
     abstract suspend fun writeBlock(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/RepoBlock): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/RepoBlockStore.writeBlock|writeBlock(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.RepoBlock){}[0]
     abstract suspend fun writeHead(studio.hypertext.atproto.repo/RepoHead): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/RepoBlockStore.writeHead|writeHead(studio.hypertext.atproto.repo.RepoHead){}[0]
+    open suspend fun listRecentCommits(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Int): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit>> // studio.hypertext.atproto.repo/RepoBlockStore.listRecentCommits|listRecentCommits(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Int){}[0]
     open suspend fun readBlocks(kotlin.collections/List<studio.hypertext.atproto.repo/Cid>): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock?>> // studio.hypertext.atproto.repo/RepoBlockStore.readBlocks|readBlocks(kotlin.collections.List<studio.hypertext.atproto.repo.Cid>){}[0]
 }
 
