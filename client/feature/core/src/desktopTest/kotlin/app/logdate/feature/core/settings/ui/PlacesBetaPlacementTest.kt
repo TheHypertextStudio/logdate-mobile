@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
@@ -80,7 +81,7 @@ class PlacesBetaPlacementTest {
                 }
             }
             onNode(hasScrollAction()).performScrollToNode(hasText("Your library"))
-            onNodeWithText("Places (beta)").assertDoesNotExist()
+            onNodeWithText("Places & location history · Beta").assertDoesNotExist()
             onNode(hasScrollAction()).performScrollToNode(hasText("About LogDate"))
             onNodeWithText("About LogDate").assertIsDisplayed()
         }
@@ -103,7 +104,7 @@ class PlacesBetaPlacementTest {
                     )
                 }
             }
-            val places = onNodeWithText("Places (beta)").fetchSemanticsNode().boundsInRoot
+            val places = onNodeWithText("Places & location history · Beta").fetchSemanticsNode().boundsInRoot
             val people = onNodeWithText("People").fetchSemanticsNode().boundsInRoot
             val activity = onNodeWithText("Link phone activity").fetchSemanticsNode().boundsInRoot
             assertTrue(places.top < people.top && people.top < activity.top)
@@ -152,8 +153,9 @@ class PlacesBetaPlacementTest {
                 }
             }
         }
-        onNodeWithText("Places (beta)").assertIsDisplayed()
-        onNode(isToggleable() and hasText("Places (beta)")).assertIsOn().performClick()
+        onNodeWithText("Places & location history · Beta").performScrollTo().assertIsDisplayed()
+        onNodeWithText("Explore where you’ve been and revisit the memories connected to each place.").assertIsDisplayed()
+        onNode(isToggleable() and hasText("Places & location history · Beta")).assertIsOn().performClick()
         assertEquals(false, requested)
         onNodeWithText("Redesigned watch app").assertDoesNotExist()
         saveScreenshot(name, onRoot().captureToImage())

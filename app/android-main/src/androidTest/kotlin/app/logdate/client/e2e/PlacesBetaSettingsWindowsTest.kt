@@ -81,7 +81,7 @@ class PlacesBetaSettingsWindowsTest {
                                 val decor = activity.window.decorView
                                 matches = width == 0 || (decor.width == width && decor.height == 800)
                             }
-                            val bounds = device.findObject(By.textContains("Places (beta)"))?.visibleBounds
+                            val bounds = device.findObject(By.textContains("Places & location history · Beta"))?.visibleBounds
                             stable = if (matches && bounds != null && !bounds.isEmpty && bounds == previous) stable + 1 else 0
                             previous = bounds
                             SystemClock.sleep(100)
