@@ -143,4 +143,50 @@ class WearStartupTest {
             runCurrent()
             assertEquals(1, opens)
         }
+
+    @Test
+    fun foregroundReturnRetriesFailedLocalStorageWithoutStartingRemoteWork() =
+        runTest {
+            var opens = 0
+            var observers = 0
+            val startup =
+                WearStartup(backgroundScope, {
+                    opens++
+                    check(opens > 1)
+                }, {}, {}, { observers++ })
+            startup.start()
+            runCurrent()
+            assertIs<WearStartupState.Failed>(startup.state.value)
+            assertEquals(0, observers)
+            // MainActivity.onStart uses this same idempotent entry point after unlock/foreground return.
+            startup.start()
+            runCurrent()
+            assertIs<WearStartupState.Ready>(startup.state.value)
+            assertEquals(2, opens)
+            assertEquals(1, observers)
+        }
+
+    @Test
+    fun repeatedForegroundReturnsDuringStorageOpenRemainSingleFlight() =
+        runTest {
+            var opens = 0
+            val available = CompletableDeferred<Unit>()
+            val startup =
+                WearStartup(backgroundScope, {
+                    opens++
+                    available.await()
+                }, {}, {}, {})
+            repeat(4) {
+                startup.start()
+                runCurrent()
+            }
+            assertEquals(1, opens)
+            assertIs<WearStartupState.Loading>(startup.state.value)
+            available.complete(Unit)
+            runCurrent()
+            assertIs<WearStartupState.Ready>(startup.state.value)
+            startup.start()
+            runCurrent()
+            assertEquals(1, opens)
+        }
 }

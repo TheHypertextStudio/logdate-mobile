@@ -1,9 +1,11 @@
 package app.logdate.wear.v2.settings
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.runtime.Composable
@@ -54,6 +56,9 @@ fun TransformingLazyColumnScope.watchSettingsItems(
     actions: WatchSettingsActions,
     spec: TransformationSpec,
 ) {
+    item {
+        ConnectionDetailsCard(state.connection)
+    }
     statusItem(state, actions, spec)
     item {
         ListHeader(modifier = Modifier.transformedHeight(this, spec), transformation = SurfaceTransformation(spec)) {
@@ -289,4 +294,77 @@ private fun MoreOnPhoneButton(
             },
         label = { Text(stringResource(R.string.wear_settings_more_on_phone)) },
     )
+}
+
+@Composable
+private fun ConnectionDetailsCard(details: WatchConnectionDetails) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainer,
+                    RoundedCornerShape(20.dp),
+                ).padding(16.dp)
+                .testTag("settings_connection_details"),
+    ) {
+        Text(stringResource(R.string.wear_connection_title), style = MaterialTheme.typography.titleSmall)
+        Column {
+            Text(
+                when (val phone = details.phone) {
+                    is app.logdate.wear.v2.phone.PhoneLink.Connected -> {
+                        stringResource(
+                            R.string.wear_connection_phone_reachable,
+                            phone.phoneName,
+                        )
+                    }
+
+                    app.logdate.wear.v2.phone.PhoneLink.NotConnected -> {
+                        stringResource(R.string.wear_connection_phone_offline)
+                    }
+
+                    app.logdate.wear.v2.phone.PhoneLink.Unsupported -> {
+                        stringResource(R.string.wear_connection_phone_unsupported)
+                    }
+
+                    else -> {
+                        stringResource(R.string.wear_connection_phone_unknown)
+                    }
+                },
+            )
+            Text(
+                stringResource(
+                    when {
+                        details.verifiedPhone -> R.string.wear_connection_peer_verified
+                        details.linkedPhoneOffline -> R.string.wear_connection_linked_phone_offline
+                        else -> R.string.wear_connection_peer_unknown
+                    },
+                ),
+            )
+            Text(
+                stringResource(
+                    when {
+                        details.accountLinked -> R.string.wear_connection_account_linked
+                        details.pairedThroughPhone -> R.string.wear_connection_through_phone
+                        else -> R.string.wear_connection_account_unknown
+                    },
+                ),
+            )
+            details.pending?.let { pending ->
+                Text(pluralStringResource(R.plurals.wear_connection_pending, pending, pending))
+            }
+            val last = details.lastSync
+            Text(
+                if (last == null) {
+                    stringResource(R.string.wear_settings_never_synced)
+                } else {
+                    val relative =
+                        android.text.format.DateUtils
+                            .getRelativeTimeSpanString(last.toEpochMilliseconds())
+                            .toString()
+                    stringResource(R.string.wear_settings_last_synced, relative)
+                },
+            )
+        }
+    }
 }
