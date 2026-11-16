@@ -24,6 +24,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.runBlocking
 import java.util.Base64
 import kotlin.test.Test
@@ -31,6 +32,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -623,7 +625,7 @@ class WebAuthnPasskeyServiceBehaviorContractTest {
         }
 
     @Test
-    fun `strict authentication normalizes credential id and updates sign count`() =
+    fun `strict authentication treats an empty user handle as absent`() =
         runBlocking<Unit> {
             val repository = mockk<PasskeyRepository>()
             coEvery { repository.getCredentialIdsForUser(any()) } returns emptyList()
@@ -631,6 +633,7 @@ class WebAuthnPasskeyServiceBehaviorContractTest {
             val manager = mockk<WebAuthnManager>()
             val converter = mockk<AttestedCredentialDataConverter>()
             val authenticationData = mockk<AuthenticationData>()
+            val authenticationRequest = slot<AuthenticationRequest>()
             val authenticatorData = mockk<AuthenticatorData<AuthenticationExtensionAuthenticatorOutput>>()
             val attestedCredentialData = mockk<AttestedCredentialData>()
 
@@ -661,7 +664,7 @@ class WebAuthnPasskeyServiceBehaviorContractTest {
             coEvery { repository.getPasskeyByCredentialId(canonicalCredentialId) } returns (userId to stored)
             coEvery { repository.updateSignCount(canonicalCredentialId, 11L) } returns true
             every { converter.convert(stored.publicKey) } returns attestedCredentialData
-            every { manager.verify(any<AuthenticationRequest>(), any<AuthenticationParameters>()) } returns authenticationData
+            every { manager.verify(capture(authenticationRequest), any<AuthenticationParameters>()) } returns authenticationData
             every { authenticationData.authenticatorData } returns authenticatorData
             every { authenticatorData.signCount } returns 11L
 
@@ -679,12 +682,13 @@ class WebAuthnPasskeyServiceBehaviorContractTest {
                             clientDataJSON = encodeBase64Url("client".encodeToByteArray()),
                             authenticatorData = encodeBase64Url("auth-data".encodeToByteArray()),
                             signature = encodeBase64Url("signature".encodeToByteArray()),
-                            userHandle = encodeBase64Url("user-handle".encodeToByteArray()),
+                            userHandle = "",
                         ),
                 )
 
             val result = service.verifyAuthentication(challenge, response)
             assertTrue(result.success)
+            assertNull(authenticationRequest.captured.userHandle)
             assertEquals(userId, result.userId)
             assertEquals(canonicalCredentialId, result.credentialId)
             coVerify(exactly = 1) { repository.updateSignCount(canonicalCredentialId, 11L) }
