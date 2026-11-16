@@ -6,6 +6,7 @@ import app.logdate.client.database.dao.EventDao
 import app.logdate.client.database.dao.TextNoteDao
 import app.logdate.client.database.dao.TranscriptionDao
 import app.logdate.client.database.entities.TranscriptionStatus
+import app.logdate.client.database.entities.people.PersonEntity
 import app.logdate.shared.model.InferredPersonEvidenceSourceType
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -73,22 +74,32 @@ internal fun extractPotentialPersonNames(text: String): List<String> =
         }.distinct()
         .toList()
 
-internal fun containsWholeTerm(
-    normalizedText: String,
-    normalizedTerm: String,
-): Boolean {
-    if (normalizedTerm.isBlank()) {
-        return false
-    }
-    val regex = Regex("""(?<!\p{L})${Regex.escape(normalizedTerm)}(?!\p{L})""")
-    return regex.containsMatchIn(normalizedText)
+/**
+ * Finds a person's name or any alias as a whole word in lowercased text. The pattern is compiled
+ * once per person for a whole refresh rather than once per entry, person and term.
+ */
+internal class CanonicalPersonMatcher(
+    val person: PersonEntity,
+) {
+    private val pattern: Regex? =
+        (listOf(person.name) + person.aliases)
+            .map(::normalizePersonKey)
+            .filter(String::isNotBlank)
+            .distinct()
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(separator = "|") { Regex.escape(it) }
+            ?.let { terms -> Regex("""(?<!\p{L})(?:$terms)(?!\p{L})""") }
+
+    fun matches(normalizedText: String): Boolean = pattern?.containsMatchIn(normalizedText) == true
 }
 
 internal fun previewEvidenceLabel(text: String): String =
     text
         .trim()
-        .replace(Regex("\\s+"), " ")
+        .replace(whitespaceRun, " ")
         .take(MAX_EVIDENCE_LABEL_LENGTH)
+
+private val whitespaceRun = Regex("\\s+")
 
 private const val MAX_EVIDENCE_LABEL_LENGTH = 120
 
