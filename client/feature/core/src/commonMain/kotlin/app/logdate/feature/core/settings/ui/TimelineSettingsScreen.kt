@@ -119,8 +119,10 @@ fun TimelineSettingsContent(
                 MaterialContainer(
                     modifier = Modifier.padding(horizontal = Spacing.lg),
                 ) {
-                    Column(modifier = Modifier.padding(horizontal = Spacing.lg)) {
-                        DayScheduleReadFeedback(readState, onRetryPreferences)
+                    if (readState is DaySchedulePreferencesState.Loading || readState is DaySchedulePreferencesState.Unavailable) {
+                        Column(modifier = Modifier.padding(horizontal = Spacing.lg)) {
+                            DayScheduleReadFeedback(readState, onRetryPreferences)
+                        }
                     }
                     SettingsNavigationItem(
                         title = stringResource(Res.string.day_schedule),
@@ -147,8 +149,10 @@ fun TimelineSettingsContent(
                     MaterialContainer(
                         modifier = Modifier.padding(horizontal = Spacing.lg),
                     ) {
-                        Column(modifier = Modifier.padding(horizontal = Spacing.lg)) {
-                            DayScheduleReadFeedback(readState, onRetryPreferences)
+                        if (readState is DaySchedulePreferencesState.Loading || readState is DaySchedulePreferencesState.Unavailable) {
+                            Column(modifier = Modifier.padding(horizontal = Spacing.lg)) {
+                                DayScheduleReadFeedback(readState, onRetryPreferences)
+                            }
                         }
                         SettingsNavigationItem(
                             title = stringResource(Res.string.day_schedule),
