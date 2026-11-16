@@ -42,16 +42,17 @@ The manifest selects `backup_rules.xml` for older Android versions and `data_ext
 for Android 12 and later. The main preferences file is `files/logdate.preferences_pb`, rather than
 a file beneath `datastore/`.
 
-| Content                                                                                     | Encrypted cloud backup | Direct transfer |
-| ------------------------------------------------------------------------------------------- | ---------------------- | --------------- |
-| Main and legacy preferences                                                                 | Included               | Included        |
-| Journal database and SQLite sidecars                                                        | Included               | Included        |
-| Database passphrase recovery                                                                | Included               | Included        |
-| Phrase-derived or account-bound identity recovery and independent media keys                | Included               | Included        |
-| Committed originals and accepted camera drafts                                              | Excluded               | Included        |
-| Incomplete archive recovery records                                                         | Included               | Included        |
-| Retained source archives for incomplete recovery                                            | Excluded               | Included        |
-| Keystore-bound preferences, vendor installation state, background jobs, caches, and staging | Excluded               | Excluded        |
+| Content                                                                                                      | Encrypted cloud backup | Direct transfer |
+| ------------------------------------------------------------------------------------------------------------ | ---------------------- | --------------- |
+| Main and legacy preferences                                                                                  | Included               | Included        |
+| Journal database and SQLite sidecars                                                                         | Included               | Included        |
+| Offline draft text and metadata                                                                              | Included               | Included        |
+| Database passphrase recovery                                                                                 | Included               | Included        |
+| Phrase-derived or account-bound identity recovery and independent media keys                                 | Included               | Included        |
+| Journal-referenced originals and original media referenced by offline drafts in the pinned transfer snapshot | Excluded               | Included        |
+| Incomplete archive recovery records                                                                          | Included               | Included        |
+| Retained source archives for incomplete recovery                                                             | Excluded               | Included        |
+| Keystore-bound preferences, vendor installation state, background jobs, caches, and staging                  | Excluded               | Excluded        |
 
 Cloud backup requires client-side encryption for the portable recovery material. Android's 25 MB
 per-app cloud quota applies to the selected data as a whole: exceeding it prevents a new backup;
@@ -342,10 +343,16 @@ acknowledge native delivery markers.
 
 ## Account recovery
 
-Credential Manager Restore Credentials creates a cloud-backed restore key where possible and
-retries local-only creation specifically when cloud end-to-end encryption is unavailable. Restored credentials are requested independently
-of onboarding preferences, and transient errors remain retryable. Account recovery does not
-automatically import an archive over an intact transferred database.
+Credential Manager Restore Credentials creates a cloud-backed restore key when Android data
+backup, the user's Google account, and a secure screen lock allow encrypted cloud backup. If that
+is unavailable, LogDate retries with a device-transfer-only key; that key does not provide
+cloud credential recovery. Restore Credentials is supported on Android 9 and later with Google Play
+services core 24220000 or later and AndroidX Credentials 1.5.0 or later, so it is not an Android
+16-only capability. Restored credentials are requested independently of onboarding preferences, and
+transient errors remain retryable. The key authenticates the account; it does not decrypt the
+journal or restore missing media. An intact transferred journal can still open offline without
+account sign-in, and explicit sign-in remains available when no provider credential is delivered.
+Account recovery does not automatically import an archive over an intact transferred database.
 
 Before explicit passkey or Google authentication publishes its session, enrollment is marked
 pending for the authentication request's original server and owner. An already signed-in Android
