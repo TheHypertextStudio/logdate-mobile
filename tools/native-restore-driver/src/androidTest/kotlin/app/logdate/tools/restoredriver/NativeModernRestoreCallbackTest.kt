@@ -58,7 +58,15 @@ class NativeModernRestoreCallbackTest {
                 platformFile.writeText(platform.toString())
             }
         File(output, "modern-callback-instrumentation.log").writeText(raw)
-        assertTrue(Regex("(?m)^OK \\(${cases.size} tests\\)\\r?$").containsMatchIn(raw), "The callback suite must finish successfully")
+        val succeeded = Regex("(?m)^OK \\(${cases.size} tests\\)\\r?$").containsMatchIn(raw)
+        if (!succeeded) {
+            // A crashed suite prints only "Process crashed." Keep the end of the device log, which has the reason.
+            ParcelFileDescriptor
+                .AutoCloseInputStream(
+                    instrumentation.uiAutomation.executeShellCommand("logcat -d -t 20000 -b main,system,crash -v threadtime"),
+                ).use { input -> File(output, "modern-callback-logcat.txt").outputStream().use(input::copyTo) }
+        }
+        assertTrue(succeeded, "The callback suite must finish successfully")
         assertFalse(Regex("(?m)^INSTRUMENTATION_STATUS_CODE: *-[0-9]+").containsMatchIn(raw))
         listOf("Process crashed", "FAILURES", "INSTRUMENTATION_FAILED:", "INSTRUMENTATION_RESULT: shortMsg=").forEach {
             assertFalse(raw.contains(it), "Nested instrumentation reported failure")
