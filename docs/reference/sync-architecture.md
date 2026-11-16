@@ -534,6 +534,14 @@ Tombstones are not kept for ever. A maintenance loop on the server purges tombst
 `false`. The [Sync V1 API](../../server/docs/sync-v1-api.md) page documents the operator endpoint
 that runs a purge on demand.
 
+Every server instance starts this loop, but only one at a time runs a pass. Before a pass, an
+instance takes a lease that all instances sharing the database respect: a PostgreSQL advisory lock
+held for as long as the pass runs. An instance that finds the lease taken skips that pass, and one
+that stops in the middle of a pass frees the lease with its database session. Each instance also
+waits a random moment of up to five minutes before its first pass, so instances that start together
+don't all reach for the lease at once. When the lease can't be checked, the instance skips the pass
+and production logs record `SERVER_MAINTENANCE_LEASE_FAILED`.
+
 On the per-kind endpoints, a device that stays offline longer than the retention period never
 receives the deletions purged in the meantime, and the change feed gives no signal that its cursor is
 older than the purge cutoff. The personal-space transport detects this case and lists the whole

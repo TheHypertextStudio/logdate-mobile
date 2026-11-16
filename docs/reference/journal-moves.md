@@ -34,7 +34,9 @@ writes ends on its own 30 minutes after it starts. The legacy copy is kept for 3
 switch, and switching back is possible until then. The maintenance loop that deletes due copies runs
 with the tombstone purge, every `SYNC_TOMBSTONE_PURGE_INTERVAL_MINUTES`, and only when
 `SYNC_TOMBSTONE_PURGE_ENABLED` isn't `false` and `LOGDATE_PERSONAL_SPACE_OLD_DATA_PURGE_ENABLED`
-isn't set to anything but `true`.
+isn't set to anything but `true`. When several server instances share the database, one at a time runs
+the loop: each waits a random moment of up to five minutes after it starts, and skips a run while
+another instance is in the middle of one.
 
 On the device, a move that stops waits before trying again on its own. It tries again on the next
 sync when the device was offline or is missing items from the server, after one hour when another
@@ -135,6 +137,8 @@ of them names an account.
   deleting legacy copies; maintenance logs it when it starts.
 - `SERVER_LEGACY_COPY_CLEANUP_SKIPPED` means a move was due for cleanup but its account isn't in its
   personal space, so its copy stays.
+- `SERVER_MAINTENANCE_LEASE_FAILED` means an instance couldn't check whether another one was running
+  maintenance, so it skipped that run of the cleanup; the next interval tries again.
 - `Deleted the legacy copies of <n> moved journals` reports each run that deleted something.
 
 ## Stored state
