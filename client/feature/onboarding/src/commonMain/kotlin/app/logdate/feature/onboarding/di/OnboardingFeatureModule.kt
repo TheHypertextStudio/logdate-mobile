@@ -28,7 +28,22 @@ val onboardingFeatureModule: Module =
         }
         single<OnboardingStateResetter> { OnboardingStateResetter { get<OnboardingDeviceStateRepository>().clear() } }
         single { OnboardingCompletionCoordinator(get(), get(), get(), get(), get(), get(), get(), get()) }
-        viewModel { OnboardingViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+        viewModel {
+            val watch = get<OnboardingWatchSetup>()
+            OnboardingViewModel(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                watchSetup = watch.coordinator,
+                watchRollout = watch.enabled,
+            )
+        }
         viewModel { MemorySelectionViewModel(get(), get(), get(), get(), get()) }
         viewModel { PersonalIntroViewModel(get(), get()) }
         viewModel { WelcomeBackViewModel(get(), get(), get()) }
