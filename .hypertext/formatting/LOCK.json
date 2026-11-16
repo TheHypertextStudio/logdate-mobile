@@ -3,6 +3,6 @@
   "gate.py": "8ef91c5c444bbc78e594bba76900a731e87ca2ed1e0a65be072696915dee1123",
   "runner.py": "c1e82c995777161acde85093896472867650ba17bd8fb57e44047d0dda057087",
   "setup_files.py": "ee170d45cebbeb2961a78efba3e6f757b043c38e3ba876cdbce8d3161f2fac87",
-  "formatting.py": "51e74bf9a1bae3c05aa27c6a712b51897f2ea82ce0ebd7a06bb2e96b6f3d5d07",
-  "git_policy.py": "b9a7074c31e00b1f6119efbc0a85ac9c818f57308c0a026929ce0e6567aee4b8"
+  "formatting.py": "196839f30cd99d4383fdfcf746c466e342af3c34ecf35cdbb6b1be853c00c107",
+  "git_policy.py": "4e84aa6db5e5b95680410fbc3613d3426d2ffae83a93ff262e0c3848b33971dc"
 }

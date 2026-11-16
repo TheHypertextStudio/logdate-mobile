@@ -67,17 +67,66 @@ def prepared_path_header():
     return "#!/bin/sh\nPATH=" + value + ':"${PATH:-/usr/bin:/bin}"\nexport PATH\n'
 
 
+def checkouts():
+    """Every worktree root of this repository, primary checkout first."""
+    return [
+        Path(line[len("worktree ") :]).resolve()
+        for line in git("worktree", "list", "--porcelain").splitlines()
+        if line.startswith("worktree ")
+    ]
+
+
+def scoped(scope):
+    for line in git("config", "--list", "--show-scope").splitlines():
+        found, _, entry = line.partition("\t")
+        key, _, value = entry.partition("=")
+        if found == scope and key == "core.hookspath":
+            return value
+    return None
+
+
 try:
     gitdir = absolute(git("rev-parse", "--git-dir")).resolve()
     common = absolute(git("rev-parse", "--git-common-dir")).resolve()
-    target = gitdir / "hypertext-formatting-hooks"
+    roots = checkouts()
+    # One composed directory serves every worktree. Its wrappers name hooks inside
+    # the checkout relative to the worktree Git runs them in, so each worktree runs
+    # its own hooks and formatter even when another tool copies the absolute path.
+    target = common / "hypertext-formatting-hooks"
+    # Earlier installations composed hooks in each worktree's own Git directory.
+    linked = common / "worktrees"
+    legacy_targets = {gitdir / "hypertext-formatting-hooks"} | (
+        {path / "hypertext-formatting-hooks" for path in linked.iterdir()}
+        if linked.is_dir()
+        else set()
+    )
     current = git("config", "--get", "core.hooksPath", optional=True)
     effective = (
         absolute(current)
         if current
         else absolute(git("rev-parse", "--git-path", "hooks"))
     )
-    metadata = gitdir / "hypertext-formatting-hooks.json"
+
+    def relative_source(path):
+        """Name a hook inside any checkout of this repository relative to it."""
+        candidate = Path(path).resolve()
+        # A worktree nested in another checkout belongs to the deepest root.
+        for root in sorted(roots, key=lambda root: len(root.parts), reverse=True):
+            if candidate.is_relative_to(root) and not candidate.is_relative_to(common):
+                return candidate.relative_to(root).as_posix()
+        return str(candidate)
+
+    def same_repository_hooks(value):
+        if not value:
+            return False
+        path = absolute(value).resolve()
+        return (
+            path == target
+            or path in legacy_targets
+            or any(path == root / ".githooks" for root in roots)
+        )
+
+    metadata = common / "hypertext-formatting-hooks.json"
     if metadata.is_symlink() or target.is_symlink():
         raise ValueError("Managed hook metadata and directory must not be symlinked")
     receipt = json.loads(metadata.read_text()) if metadata.is_file() else {}
@@ -107,10 +156,10 @@ try:
         raise ValueError("Invalid composed-hook digest")
     sources = {}
     for directory in (repo / ".githooks", effective):
-        if directory.resolve() == target.resolve():
+        if directory.resolve() == target or directory.resolve() in legacy_targets:
             sources.update(
                 {
-                    name: absolute(path)
+                    name: relative_source(absolute(path))
                     for name, path in previous.items()
                     if absolute(path).is_file()
                 }
@@ -121,22 +170,14 @@ try:
         for path in directory.iterdir():
             if path.name.endswith(".sample") or not path.is_file():
                 continue
-            candidate = path.resolve()
-            # Absolute primary-checkout hooks must resolve inside this worktree.
-            if gitdir != common:
-                try:
-                    relative = candidate.relative_to(common.parent)
-                    if (repo / relative).is_file():
-                        candidate = repo / relative
-                except ValueError:
-                    pass
-            sources[path.name] = candidate
+            sources[path.name] = relative_source(path)
     precommit = sources.get("pre-commit")
     owns_formatting = bool(
-        precommit and ".hypertext/formatting/commit.py" in precommit.read_text()
+        precommit
+        and ".hypertext/formatting/commit.py" in absolute(precommit).read_text()
     )
     if precommit and not owns_formatting:
-        body = precommit.read_text()
+        body = absolute(precommit).read_text()
         if any(
             token in body
             for token in ("lint-staged", "ktlintFormat", "git add ", "--fix")
@@ -146,30 +187,48 @@ try:
                 + str(precommit)
             )
     header = prepared_path_header()
+
+    def forward(source):
+        if Path(source).is_absolute():
+            return "exec " + shlex.quote(source) + ' "$@"\n'
+        # A branch without this hook has none to run in that worktree.
+        quoted = shlex.quote(source)
+        return "[ -e " + quoted + " ] || exit 0\nexec " + quoted + ' "$@"\n'
+
+    commit = ".hypertext/formatting/commit.py"
     desired = {}
     for name, source in sources.items():
         if name != "pre-commit":
-            desired[name] = header + "exec " + shlex.quote(str(source)) + ' "$@"\n'
+            desired[name] = header + forward(source)
     body = header
     if not owns_formatting:
         body += (
-            shlex.quote(sys.executable)
+            "[ -f "
+            + commit
+            + " ] || { echo 'Commit formatting blocked: this checkout has no "
+            + commit
+            + "; run: hypertext install --repo . --formatters-only --apply' >&2; exit 1; }\n"
+            + shlex.quote(sys.executable)
             + " "
-            + shlex.quote(str(repo / ".hypertext/formatting/commit.py"))
+            + commit
             + " || exit $?\n"
         )
     if precommit:
-        body += "exec " + shlex.quote(str(precommit)) + ' "$@"\n'
+        body += forward(precommit)
     desired["pre-commit"] = body
 
     def recognized_legacy(name, content):
         if content.startswith(header):
             content = "#!/bin/sh\n" + content[len(header) :]
+        if name in desired and content == "#!/bin/sh\n" + desired[name][len(header) :]:
+            return True
         original = previous.get(name)
         forwarding = (
             "#!/bin/sh\nexec " + shlex.quote(original) + ' "$@"\n' if original else None
         )
-        if content == forwarding:
+        if content == forwarding or (
+            original and content == "#!/bin/sh\n" + forward(original)
+        ):
             return True
         if name != "pre-commit":
             return False
@@ -186,7 +245,10 @@ try:
         if (
             len(command) != 5
             or not Path(command[0]).name.lower().startswith("python")
-            or command[1] != str(repo / ".hypertext/formatting/commit.py")
+            or command[1]
+            not in {
+                str(root / ".hypertext/formatting/commit.py") for root in [repo, *roots]
+            }
             or command[2:] != ["||", "exit", "$?"]
         ):
             return False
@@ -245,11 +307,16 @@ try:
         )
         + "\n"
     )
-    if gitdir != common:
-        git("config", "--local", "extensions.worktreeConfig", "true")
-        git("config", "--worktree", "core.hooksPath", str(target))
-    else:
-        git("config", "--local", "core.hooksPath", str(target))
+    git("config", "--local", "core.hooksPath", str(target))
+    # A worktree-specific path to this repository's hooks would bypass the shared
+    # composition. Anything else is the owner's configuration and stays.
+    override = scoped("worktree")
+    if override is not None:
+        if not same_repository_hooks(override):
+            raise ValueError(
+                "Worktree core.hooksPath needs explicit reconciliation: " + override
+            )
+        git("config", "--worktree", "--unset", "core.hooksPath")
     print("Shared commit formatting installed; existing hook checks retained.")
 except (OSError, ValueError, subprocess.SubprocessError) as error:
     print("Hook installation blocked: " + str(error), file=sys.stderr)
