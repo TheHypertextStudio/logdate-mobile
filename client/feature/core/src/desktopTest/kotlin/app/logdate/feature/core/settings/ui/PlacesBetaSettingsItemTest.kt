@@ -31,11 +31,11 @@ class PlacesBetaSettingsItemTest {
                     }
                 }
             }
-            onNodeWithText("Places (beta)").performClick()
+            onNodeWithText("Places & location history · Beta").performClick()
             assertEquals(true, requested)
             runOnIdle { state = PlacesBetaSettingsState.Ready(false, saveFailed = true) }
             onNodeWithText("Couldn’t save your choice. Try again.").assertExists()
             runOnIdle { state = PlacesBetaSettingsState.Ready(false, saving = true) }
-            onNodeWithText("Places (beta)").assertIsNotEnabled()
+            onNodeWithText("Places & location history · Beta").assertIsNotEnabled()
         }
 }

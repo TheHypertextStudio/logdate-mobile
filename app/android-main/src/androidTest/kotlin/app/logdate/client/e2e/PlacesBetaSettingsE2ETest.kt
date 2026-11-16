@@ -98,9 +98,9 @@ class PlacesBetaSettingsE2ETest {
         compose.onNodeWithTag("workspace_account").performClick()
         compose.onNodeWithText("Settings").performClick()
         openLabs()
-        compose.onNodeWithText("Places (beta)").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Places & location history · Beta").performScrollTo().assertIsDisplayed()
         capture("places-beta-settings-off")
-        compose.onNodeWithText("Places (beta)").performClick()
+        compose.onNodeWithText("Places & location history · Beta").performClick()
         compose.waitUntil(10_000) { runBlocking { flags.isEnabled(FeatureFlag.PLACES_BETA) } }
         capture("places-beta-settings-on")
         leaveSettings()
@@ -110,7 +110,7 @@ class PlacesBetaSettingsE2ETest {
         compose.onNodeWithTag("workspace_account").performClick()
         compose.onNodeWithText("Settings").performClick()
         openLabs()
-        compose.onNodeWithText("Places (beta)").performScrollTo().performClick()
+        compose.onNodeWithText("Places & location history · Beta").performScrollTo().performClick()
         compose.waitUntil(10_000) { runBlocking { !flags.isEnabled(FeatureFlag.PLACES_BETA) } }
         leaveSettings()
         compose.onNodeWithText("Places").assertDoesNotExist()
@@ -126,14 +126,14 @@ class PlacesBetaSettingsE2ETest {
         compose.runOnIdle { pending = SettingsRoute() }
         compose.waitUntil(10_000) { current is SettingsRoute }
         openLabs()
-        compose.onNodeWithText("Places (beta)").performScrollTo().performClick()
+        compose.onNodeWithText("Places & location history · Beta").performScrollTo().performClick()
         compose.waitUntil(10_000) { runBlocking { !flags.isEnabled(FeatureFlag.PLACES_BETA) } }
         leaveSettings()
         compose.onNodeWithText("Places").assertDoesNotExist()
     }
 
     private fun openLabs() {
-        compose.onNodeWithText("Places (beta)").assertDoesNotExist()
+        compose.onNodeWithText("Places & location history · Beta").assertDoesNotExist()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("About LogDate"))
         compose.onNodeWithText("About LogDate").performClick()
         compose.waitUntil(10_000) { current == AdvancedSettingsRoute }
