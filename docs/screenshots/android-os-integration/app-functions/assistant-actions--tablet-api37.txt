@@ -1,13 +1,13 @@
 # list-app-functions (LogDate)
   "studio.hypertext.logdate.debug": [
       "AppFunctionStaticMetadata-studio.hypertext.logdate.debug": {
-          "app.logdate.client.appfunctions.LogDateAppFunctions#searchEntries"
+          "app.logdate.client.appfunctions.LogDateAppFunctions#search"
           "android$apps-db\/apps#studio.hypertext.logdate.debug"
           "studio.hypertext.logdate.debug"
       "AppFunctionRuntimeMetadata-studio.hypertext.logdate.debug": {
         "AppFunctionRuntimeMetadata-studio.hypertext.logdate.debug": {
-            "android$apps-db\/app_functions#studio.hypertext.logdate.debug\/app.logdate.client.appfunctions.LogDateAppFunctions\\#searchEntries"
-            "app.logdate.client.appfunctions.LogDateAppFunctions#searchEntries"
+            "android$apps-db\/app_functions#studio.hypertext.logdate.debug\/app.logdate.client.appfunctions.LogDateAppFunctions\\#search"
+            "app.logdate.client.appfunctions.LogDateAppFunctions#search"
             "studio.hypertext.logdate.debug"
       "AppFunctionComponentMetadataDocument-studio.hypertext.logdate.debug": {
           "android$apps-db\/apps#studio.hypertext.logdate.debug"
@@ -22,59 +22,55 @@
             "app.logdate.client.appfunctions.LogDateAppFunctions#listJournals"
             "studio.hypertext.logdate.debug"
       "AppFunctionStaticMetadata-studio.hypertext.logdate.debug": {
-          "app.logdate.client.appfunctions.LogDateAppFunctions#createTextEntry"
+          "app.logdate.client.appfunctions.LogDateAppFunctions#startEntry"
           "android$apps-db\/apps#studio.hypertext.logdate.debug"
           "studio.hypertext.logdate.debug"
       "AppFunctionRuntimeMetadata-studio.hypertext.logdate.debug": {
         "AppFunctionRuntimeMetadata-studio.hypertext.logdate.debug": {
-            "android$apps-db\/app_functions#studio.hypertext.logdate.debug\/app.logdate.client.appfunctions.LogDateAppFunctions\\#createTextEntry"
-            "app.logdate.client.appfunctions.LogDateAppFunctions#createTextEntry"
+            "android$apps-db\/app_functions#studio.hypertext.logdate.debug\/app.logdate.client.appfunctions.LogDateAppFunctions\\#startEntry"
+            "app.logdate.client.appfunctions.LogDateAppFunctions#startEntry"
             "studio.hypertext.logdate.debug"
 
-# createTextEntry
-{
-  "androidAppfunctionsReturnValue": [
-    {
-      "id": [
-        "12b8f398-bb15-47bb-bad1-5ac09c776651"
-      ],
-      "text": [
-        "Walked the long way home along the river."
-      ],
-      "createdAt": [
-        "2026-10-10T21:07:02.557696Z"
-      ]
-    }
-  ]
-}
+# search with nothing shared
+Error executing app function: android.app.appfunctions.AppFunctionException: The person hasn't let assistants on this phone see this in LogDate. They can choose what assistants see in LogDate Settings > Privacy & security > Android assistants. (code 1000). See logcat for more details.
 
-# searchEntries with system search visibility off
-Error executing app function: android.app.appfunctions.AppFunctionException: LogDate only lets assistants read journals and entries when the person turns on system search visibility in LogDate Settings > Privacy. (code 1000). See logcat for more details.
+# listJournals with nothing shared
+Error executing app function: android.app.appfunctions.AppFunctionException: The person hasn't let assistants on this phone see this in LogDate. They can choose what assistants see in LogDate Settings > Privacy & security > Android assistants. (code 1000). See logcat for more details.
 
-# listJournals with system search visibility off
-Error executing app function: android.app.appfunctions.AppFunctionException: LogDate only lets assistants read journals and entries when the person turns on system search visibility in LogDate Settings > Privacy. (code 1000). See logcat for more details.
+# startEntry with starting entries off
+Error executing app function: android.app.appfunctions.AppFunctionException: The person hasn't let assistants on this phone start entries in LogDate. They can turn that on in LogDate Settings > Privacy & security > Android assistants. (code 1000). See logcat for more details.
 
-# searchEntries with visibility on and the app lock on, never unlocked
+# search with entries outside journals shared and the app lock on, never unlocked
 Error executing app function: android.app.appfunctions.AppFunctionException: LogDate is locked. The person needs to open LogDate and unlock it first. (code 1000). See logcat for more details.
 
-# searchEntries with system search visibility on
+# search with entries outside journals shared
 {
   "androidAppfunctionsReturnValue": [
     {
       "id": [
-        "12b8f398-bb15-47bb-bad1-5ac09c776651"
+        "c2f86d5b-df29-49b7-b18c-0aee09991bdd"
+      ],
+      "kind": [
+        "entry"
       ],
       "text": [
         "Walked the long way home along the river."
       ],
       "createdAt": [
-        "2026-10-10T21:07:02.557Z"
+        "2026-11-16T23:17:46.696Z"
       ]
     }
   ]
 }
 
-# listJournals with system search visibility on
+# listJournals with no journal shared
 {
   "androidAppfunctionsReturnValue": []
+}
+
+# startEntry with starting entries on (cmd prints the returned PendingIntent as {})
+{
+  "androidAppfunctionsReturnValue": [
+    {}
+  ]
 }
