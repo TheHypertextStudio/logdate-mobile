@@ -5,6 +5,8 @@ import app.logdate.client.domain.account.GetCurrentEntitlementUseCase
 import app.logdate.client.domain.activity.ActivityPresenter
 import app.logdate.client.domain.activity.ActivityUiState
 import app.logdate.client.domain.activity.CaptureActivitySource
+import app.logdate.client.domain.assistants.DeviceAssistantAccessStore
+import app.logdate.client.domain.assistants.DeviceAssistantLibrary
 import app.logdate.client.domain.dayboundary.DatastoreDayBoundaryPreferences
 import app.logdate.client.domain.dayboundary.DayBoundarySettingsRepository
 import app.logdate.client.domain.dayboundary.DefaultDayBoundarySettingsRepository
@@ -109,6 +111,7 @@ import app.logdate.client.intelligence.availability.RewindAIAvailability
 import app.logdate.client.intelligence.curation.CurationConfigProvider
 import app.logdate.client.intelligence.events.EventNamingExtractor
 import app.logdate.client.media.storage.StoredMediaReferences
+import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.journals.JournalRepository
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.sync.peer.state.PeerRole
@@ -258,6 +261,10 @@ val domainModule: Module =
 
         // Onboarding
         factory { ProcessPersonalIntroductionUseCase(get(), get(), get()) }
+
+        // Assistants on this device
+        factory { DeviceAssistantAccessStore(get()) }
+        factory { DeviceAssistantLibrary(get(), get(), get<JournalNotesRepository>()::getAllJournalNoteLinks) }
 
         // Journals
         factory { GetCurrentUserJournalsUseCase(get()) }
