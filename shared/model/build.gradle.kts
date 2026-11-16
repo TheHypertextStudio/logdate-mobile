@@ -19,7 +19,6 @@ kotlin {
             api(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(projects.client.util)
         }
     }
 }
