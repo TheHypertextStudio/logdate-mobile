@@ -4,6 +4,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
 
+private val HANDWRITING_COLOR = Regex("#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?")
+
 /** Original ink in page coordinates, independent of the editor and its current viewport. */
 @Serializable
 data class HandwritingDocument(
@@ -40,7 +42,7 @@ data class HandwritingStroke(
 ) {
     init {
         require(tool in setOf("pen", "highlighter", "eraser")) { "Unsupported handwriting tool" }
-        require(Regex("#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?").matches(color)) { "Invalid handwriting color" }
+        require(HANDWRITING_COLOR.matches(color)) { "Invalid handwriting color" }
         require(width.isFinite() && width > 0f)
         require(listOf(x, y, rotation, scaleX, scaleY).all { it.isFinite() })
         require(scaleX > 0f && scaleY > 0f)

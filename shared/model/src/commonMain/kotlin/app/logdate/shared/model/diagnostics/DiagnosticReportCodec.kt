@@ -4,6 +4,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
 
+private val SERVER_BUILD = Regex("[0-9a-f]{7,64}")
+
 /** Reject unknown fields rather than allowing a newer or malicious producer to smuggle content. */
 object DiagnosticReportCodec {
     const val MAX_REPORT_BYTES = 256 * 1024
@@ -44,7 +46,7 @@ object DiagnosticReportCodec {
                 parts.size <= 4 && parts.all { it in 0..99999 }
             },
         ) { "Invalid diagnostic version" }
-        require(context.serverBuild == null || Regex("[0-9a-f]{7,64}").matches(context.serverBuild)) { "Invalid server build" }
+        require(context.serverBuild == null || SERVER_BUILD.matches(context.serverBuild)) { "Invalid server build" }
         require(context.protocols.size <= DiagnosticProtocol.entries.size && context.protocols.distinct().size == context.protocols.size) {
             "Invalid protocol versions"
         }

@@ -5,6 +5,8 @@ import io.sentry.SentryLevel
 import io.sentry.SentryOptions
 import io.sentry.protocol.Message
 
+private val TRUSTED_RELEASE = Regex("[A-Za-z0-9@._+-]{1,100}")
+
 /** Rebuild instead of redacting: future SDK fields must not bypass the allowlist. */
 internal fun sanitizedServerCrash(
     event: SentryEvent,
@@ -13,7 +15,7 @@ internal fun sanitizedServerCrash(
 ): SentryEvent =
     SentryEvent().apply {
         level = event.level ?: SentryLevel.ERROR
-        release = trustedRelease?.takeIf { it.matches(Regex("[A-Za-z0-9@._+-]{1,100}")) }
+        release = trustedRelease?.takeIf { it.matches(TRUSTED_RELEASE) }
         environment = trustedEnvironment?.takeIf { it in setOf("production", "development", "test", "staging") }
         message = Message().apply { formatted = "SERVER_UNEXPECTED_FAILURE" }
     }
