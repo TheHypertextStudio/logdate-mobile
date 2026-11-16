@@ -159,7 +159,7 @@ private suspend fun DefaultSyncManager.pendingUploadsForRun(entityType: EntityTy
     for (type in types) {
         for (pending in syncMetadataService.getPendingUploads(type)) {
             if (pending.operation == app.logdate.client.sync.metadata.PendingOperation.UPDATE && !profile.uploadsUpdates) continue
-            if (retryCoordinator.shouldAttempt(type, pending)) count++
+            if (retryCoordinator.shouldAttempt(type, pending) && uploader.isEligibleForRun(type, pending)) count++
         }
     }
     return count.takeIf { it > 0 }

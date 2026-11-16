@@ -165,6 +165,22 @@ class DownloadInboxTest {
         }
 
     @Test
+    fun `rows deferred by the network policy are due only when the connection allows them`() =
+        runTest {
+            val db = Database()
+            var clock = 1_000L
+            val inbox = DownloadInbox(db, db, { DownloadScope("owner", "origin") }, { clock })
+            inbox.stage("MEDIA_NOTE", 2, listOf(WireDownload("held", 1, false, "original")))
+            inbox.failed("MEDIA_NOTE", "held", DiagnosticReason.NETWORK_POLICY.name)
+
+            assertEquals(0, inbox.dueCount(includePolicyDeferred = true), "The deferral's own wait has not passed")
+
+            clock = db.rows.single().nextAttemptAt
+            assertEquals(0, inbox.dueCount())
+            assertEquals(1, inbox.dueCount(includePolicyDeferred = true))
+        }
+
+    @Test
     fun `rows that exhaust their attempts park and a manual backup does not retry them`() =
         runTest {
             val db = Database()
@@ -332,11 +348,14 @@ class DownloadInboxTest {
             owner: String,
             origin: String,
             now: Long,
+            includePolicyDeferred: Boolean,
         ) = rows.count {
             it.ownerId == owner &&
                 it.serverOrigin == origin &&
                 (it.state == "WAITING" || it.state == "FAILED") &&
-                it.nextAttemptAt <= now
+                it.nextAttemptAt <= now &&
+                it.reason != "UNSUPPORTED_FORMAT" &&
+                (it.reason != "NETWORK_POLICY" || includePolicyDeferred)
         }
 
         override suspend fun release(

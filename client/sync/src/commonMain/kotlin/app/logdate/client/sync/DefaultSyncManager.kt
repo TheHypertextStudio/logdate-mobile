@@ -156,13 +156,13 @@ class DefaultSyncManager(
         for (type in handledUploadTypes()) {
             if (syncMetadataService.getPendingUploads(type).any {
                     (it.operation != app.logdate.client.sync.metadata.PendingOperation.UPDATE || profile.uploadsUpdates) &&
-                        retryCoordinator.shouldAttempt(type, it)
+                        retryCoordinator.shouldAttempt(type, it) && uploader.needsPass(type, it)
                 }
             ) {
                 return true
             }
         }
-        if ((downloadInbox?.dueCount() ?: 0) > 0) return true
+        if ((downloadInbox?.dueCount(includePolicyDeferred = mediaRecoveryAllowed()) ?: 0) > 0) return true
         val token = sessionStorage.getSession()?.accessToken ?: return false
         return historyEngine?.hasPendingUploads(token) == true
     }

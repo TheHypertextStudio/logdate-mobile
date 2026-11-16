@@ -11,6 +11,8 @@ import app.logdate.client.sync.cloud.MediaFile
 import app.logdate.client.sync.cloud.MediaUploadResult
 import app.logdate.client.sync.metadata.KeyValueMediaSyncRefStore
 import app.logdate.client.sync.metadata.MediaSyncRef
+import app.logdate.client.sync.metadata.UploadScope
+import app.logdate.client.sync.space.SpaceMediaReference
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.SerializableVideoBlock
 import app.logdate.shared.model.diagnostics.DiagnosticReason
@@ -124,6 +126,27 @@ class NativeMissingMediaRecoveryTest {
             refs.upsert(mapping(note.uid).copy(localUri = original))
             val prepared = SyncMediaTransfer(media, refs, cloud).uploadIfNeeded("token", note).getOrThrow()
             assertEquals(note.copy(mediaRef = remote), prepared)
+        }
+
+    @Test
+    fun `a pending edit bound for the personal space keeps a restored note's earlier Cloud original`() =
+        runTest {
+            val original = "content://media/external/video/media/123"
+            val note =
+                JournalNote.Video(
+                    creationTimestamp = timestamp,
+                    lastUpdated = timestamp,
+                    mediaRef = UnavailableMediaReferences.nativeRestore(original),
+                    caption = "New caption",
+                )
+            refs.upsert(mapping(note.uid).copy(localUri = original))
+
+            val prepared =
+                SyncMediaTransfer(media, refs, cloud).resolveForUpload(note, UploadScope("owner", "origin")) {
+                    SpaceMediaReference.parse(it) != null
+                }
+
+            assertEquals(note.copy(mediaRef = remote), prepared, "Skipping it would leave the edit pending with nothing reported")
         }
 
     @Test

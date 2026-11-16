@@ -524,8 +524,12 @@ class DownloadInbox(
     /** Rows that have failed at least once and are not applied: retrying, or parked for a user decision. */
     suspend fun needingAttentionCount(): Int = scope().let { dao.countNeedingAttention(it.owner, it.origin) }
 
-    /** Rows a pass can retry now. Backed-off and parked rows are excluded. */
-    suspend fun dueCount(): Int = scope().let { dao.countDue(it.owner, it.origin, now()) }
+    /**
+     * Rows a pass can retry now. Backed-off and parked rows are excluded, and rows deferred by the
+     * network policy count only when [includePolicyDeferred] says the current connection allows them.
+     */
+    suspend fun dueCount(includePolicyDeferred: Boolean = false): Int =
+        scope().let { dao.countDue(it.owner, it.origin, now(), includePolicyDeferred) }
 
     companion object {
         const val MAX_ATTEMPTS = 9

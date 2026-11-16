@@ -75,13 +75,22 @@ interface DownloadInboxDao {
         origin: String,
     ): Int
 
+    /**
+     * Rows whose retry time has arrived and that this version can finish. A row whose reason is
+     * `NETWORK_POLICY` waits for a connection that may carry media, so it counts only when
+     * [includePolicyDeferred] says the current one may. A row whose reason is `UNSUPPORTED_FORMAT`
+     * waits for an app update, so it never counts.
+     */
     @Query(
-        "SELECT COUNT(*) FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin AND state IN ('WAITING', 'FAILED') AND nextAttemptAt <= :now",
+        "SELECT COUNT(*) FROM sync_download_inbox WHERE ownerId = :owner AND serverOrigin = :origin " +
+            "AND state IN ('WAITING', 'FAILED') AND nextAttemptAt <= :now " +
+            "AND reason != 'UNSUPPORTED_FORMAT' AND (reason != 'NETWORK_POLICY' OR :includePolicyDeferred)",
     )
     suspend fun countDue(
         owner: String,
         origin: String,
         now: Long,
+        includePolicyDeferred: Boolean = false,
     ): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
