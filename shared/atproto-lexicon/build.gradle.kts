@@ -5,8 +5,6 @@ plugins {
     alias(libs.plugins.app.logdate.lexicon.models)
 }
 
-val logDateLexiconInputDir = layout.projectDirectory.dir("src/commonMain/resources/studio/hypertext/logdate")
-val logDateLexiconOutputDir = layout.projectDirectory.dir("src/commonMain/kotlin/studio/hypertext/atproto/lexicon/generated/logdate")
 val atprotoIdentityLexiconInputDir = layout.projectDirectory.dir("src/commonMain/resources/com/atproto/identity")
 val atprotoIdentityLexiconOutputDir =
     layout.projectDirectory.dir("src/commonMain/kotlin/studio/hypertext/atproto/lexicon/generated/com/atproto/identity")
@@ -41,13 +39,6 @@ fun registerLexiconCodegenTask(
     mainClass.set("studio.hypertext.atproto.lexicon.GenerateLexiconsKt")
     args(inputDir.asFile.absolutePath, outputDir.asFile.absolutePath, packageName)
 }
-
-registerLexiconCodegenTask(
-    name = "generateLogDateLexicons",
-    inputDir = logDateLexiconInputDir,
-    outputDir = logDateLexiconOutputDir,
-    packageName = "studio.hypertext.atproto.lexicon.generated.logdate",
-)
 
 registerLexiconCodegenTask(
     name = "generateAtprotoIdentityLexicons",
