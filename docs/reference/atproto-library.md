@@ -1,11 +1,13 @@
 # ATProto Library
 
-`studio.hypertext.atproto` is the standalone AT Protocol library surface that LogDate now builds on. The server remains the deployment target in this repository, but protocol contracts and core runtime behavior should live in the shared modules first and be consumed by `server`, not recreated there.
+`studio.hypertext.atproto` is the standalone AT Protocol library surface that LogDate builds on. The server remains the deployment target in this repository, but protocol contracts and core runtime behavior should live in the shared modules first and be consumed by `server`, not recreated there.
 
 ## Module Map
 
 - `shared/atproto-syntax`
   - typed identifiers and parsers for DIDs, handles, NSIDs, record keys, TIDs, and AT URIs
+  - parsing is looser or stricter than the specifications in places: `Did` allows digits in the
+    method name, so do not rely on it to reject malformed input
 - `shared/atproto-identity`
   - AT Protocol DID rules, DID documents, handle resolution, `did:web`, and `did:plc`
 - `shared/atproto-crypto`
@@ -18,10 +20,17 @@
   - repo records, deterministic block storage, commits, export/import, and the canonical repo engine
   - the messages of `com.atproto.sync.subscribeRepos`: what a commit changed (`RepoCommitChanges`),
     the event types, and the frame encoding (`RepoEventFrames`)
+  - `Cid` accepts only base32 strings and checks nothing beyond the `b` prefix after trimming
+    whitespace. The DAG-CBOR codec refuses floating-point numbers but does not enforce the other
+    data-model rules, such as a record being an object that carries a string `$type`
 - `shared/atproto-xrpc`
   - Ktor-backed XRPC client primitives
 - `shared/atproto-lexicon`
-  - lexicon parsing, validation, registry lookups, checked-in official `com.atproto.*` resources, and deterministic codegen output
+  - lexicon parsing, a schema checker, registry lookups, a record validator, the `Blob`, `CidLink`
+    and `Bytes` data types, and the Kotlin code generator described under
+    [Lexicon code generation](#lexicon-code-generation)
+  - checked-in schemas and generated models for the official `com.atproto.*` methods the server
+    uses
 - `shared/atproto-pds`
   - shared request/response models and service contracts for discovery, identity, OAuth, session, repo, blob, and sync surfaces
 - `shared/atproto-pds-runtime`
@@ -53,13 +62,11 @@ dependencies {
 }
 ```
 
-### Where the artifacts live (interim)
+### Where the artifacts live
 
-While Maven Central onboarding is in progress, releases publish to the
-**GitHub Packages Maven repository on this repo**. Add the repo to your
-`settings.gradle.kts` (or top-level `build.gradle.kts`) — and crucially,
-GitHub Packages requires authentication even for public packages, so you
-also have to supply credentials:
+Releases publish to the **GitHub Packages Maven repository on this repo**. Add the repo to your
+`settings.gradle.kts` (or top-level `build.gradle.kts`). GitHub Packages requires authentication
+even for public packages, so you also have to supply credentials:
 
 ```kotlin
 // settings.gradle.kts
@@ -99,10 +106,6 @@ Set the credentials however suits your environment:
 - **CI**: use the auto-injected `GITHUB_TOKEN` if your workflow runs in
   this org or a fork; otherwise create a repo secret with a PAT scoped to
   `read:packages` and pass it as `GITHUB_TOKEN`.
-
-This auth step is the price of using GitHub Packages — public artifacts
-on Maven Central will resolve without credentials. The migration path is
-on the maintainers' side and won't change the artifact coordinates.
 
 The full module set:
 
@@ -160,8 +163,7 @@ Every write produces a commit that matches the
 - **Revision.** `rev` is a TID (timestamp identifier) made from the current time, and every
   commit's `rev` is greater than the one before it. If the clock stands still or steps back, the
   engine uses one more than the previous revision instead. The engine stores revisions as the
-  TID's 64-bit number, so repositories written when revisions were a counter (1, 2, 3, ...) carry
-  on with TIDs, which are far larger.
+  TID's 64-bit number.
 
 The JVM tests check this with the reference implementation itself. They export repositories as CAR
 files and run [`tools/atproto-repo-verify/verify.mjs`](../../tools/atproto-repo-verify/verify.mjs),
@@ -224,6 +226,196 @@ The JVM tests hand these CAR files to the reference implementation through
 [`tools/atproto-repo-verify/verify-event.mjs`](../../tools/atproto-repo-verify/verify-event.mjs),
 which checks the signature, that the blocks reach every change, that the changes are the event's
 operations, and that undoing the operations gives back the previous tree, as a relay does.
+
+## Lexicon code generation
+
+A [Lexicon](https://atproto.com/specs/lexicon) is a JSON schema for one kind of AT Protocol data: a
+record, a method, or a reusable object. `shared/atproto-lexicon` reads those schemas, checks them,
+and writes Kotlin source for them, so the shape of a record is defined once in a schema file and
+never copied by hand into a model class. The generated code is plain `kotlinx.serialization`
+classes that build for Android, iOS and the JVM.
+
+The pieces are:
+
+- [`LexiconParser`](../../shared/atproto-lexicon/src/commonMain/kotlin/studio/hypertext/atproto/lexicon/LexiconParser.kt)
+  turns a schema's JSON into a `LexiconDocument`.
+- [`LexiconValidator`](../../shared/atproto-lexicon/src/commonMain/kotlin/studio/hypertext/atproto/lexicon/LexiconValidator.kt)
+  is the schema checker. It reports problems in a schema itself, such as a reference that points
+  nowhere.
+- [`LexiconCodegen`](../../shared/atproto-lexicon/src/commonMain/kotlin/studio/hypertext/atproto/lexicon/LexiconCodegen.kt)
+  writes one Kotlin file per schema document. Its output depends only on its input, so the same
+  schemas always produce the same bytes.
+- [`LexiconRecordValidator`](../../shared/atproto-lexicon/src/commonMain/kotlin/studio/hypertext/atproto/lexicon/LexiconRecordValidator.kt)
+  checks a record's data against its schema at runtime.
+- [`LexiconData`](../../shared/atproto-lexicon/src/commonMain/kotlin/studio/hypertext/atproto/lexicon/data/LexiconData.kt)
+  holds the JSON configuration generated models use and encodes them to and from DAG-CBOR, the
+  protocol's binary record encoding.
+
+### What each kind of schema becomes
+
+Class names come from the schema's NSID. The document's last segment, in Pascal case, names its
+`main` definition, and every other definition appends its own name: `app.logdate.journal.entry`
+generates `Entry`, and its `#textBlock` definition generates `EntryTextBlock`. Each file also
+holds an object named `<Document>Lexicon` whose `ID` is the document's NSID.
+
+| Schema                                                                                               | Generated Kotlin                                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `object`, `params`                                                                                   | A `@Serializable` data class with one property per field, in alphabetical order                                                                                                                                                                                                           |
+| `record`                                                                                             | A data class for the record's fields, plus a `$type` property and a companion with `TYPE` (the collection NSID) and `KEY` (the record-key rule)                                                                                                                                           |
+| `query`, `procedure`                                                                                 | `<Document>Params`, `<Document>Input` and `<Document>Output` data classes, each only when that part is declared as an object; a `ref` input or output, or a body that is not JSON, gets no class, and the generator writes data classes only, with no client functions that call a method |
+| `space` (from the AT Protocol Spaces proposal)                                                       | An object with `TYPE`, `NAME` when the schema has one, `KEY` and `COLLECTIONS`                                                                                                                                                                                                            |
+| `permission-set`                                                                                     | An object with `SCOPE`, the OAuth scope `include:<NSID>` an app asks for it with                                                                                                                                                                                                          |
+| A named `string`, `integer`, `boolean`, `array`, `bytes`, `cid-link`, `blob` or `unknown` definition | A `typealias`, which fields that refer to it use                                                                                                                                                                                                                                          |
+| A named `union` or `ref` definition                                                                  | Nothing; a field that refers to one by name produces code that does not compile, so declare the union on the field that uses it                                                                                                                                                           |
+| `token` definition                                                                                   | Nothing; a token is a name, not a type                                                                                                                                                                                                                                                    |
+| `subscription`                                                                                       | Nothing; no model is generated for a subscription                                                                                                                                                                                                                                         |
+
+Fields map to these types:
+
+| Field type        | Kotlin type                                                       |
+| ----------------- | ----------------------------------------------------------------- |
+| `string`, `token` | `String`                                                          |
+| `boolean`         | `Boolean`                                                         |
+| `integer`         | `Long`                                                            |
+| `array`           | `List` of the item type                                           |
+| `ref`             | The class or type alias generated for the definition it points at |
+| `union`           | A sealed interface generated beside the class that uses it        |
+| `blob`            | `Blob`                                                            |
+| `cid-link`        | `CidLink`                                                         |
+| `bytes`           | `Bytes`                                                           |
+| `unknown`         | `JsonElement`                                                     |
+
+### Where generated code lives
+
+Three sets of models are generated in this repository, in two different ways.
+
+LogDate's own records are generated on every build and never checked in. The
+[`shared/lexicon`](../../shared/lexicon/README.md) module applies the `app.logdate.lexicon-models`
+Gradle plugin, which runs the generator over [`lexicons/app/logdate`](../../lexicons) and
+`lexicons/community` before compiling and writes into `build/generated/lexicon/kotlin`. A schema
+change therefore reaches the code the next time anything builds, and an invalid schema fails the
+build with a message naming the schema and the problem. Any Kotlin Multiplatform module can do the
+same by applying the plugin and listing its schemas in a `lexiconModels { }` block;
+[`LexiconModelsPlugin`](../../build-logic/src/main/kotlin/app/logdate/LexiconModelsPlugin.kt)
+documents the options.
+
+The models inside `shared/atproto-lexicon` itself are checked in, because that module is the
+generator and cannot run itself before compiling its own sources. They cover the official
+`com.atproto.*` methods the server implements, and the published library includes generated models
+only for those methods; `app.bsky` and the other `com.atproto` schemas must be generated by the
+consumer. Regenerate them with
+`generateOfficialAtprotoLexicons`; a JVM test fails when the checked-in files no longer match what
+the generator writes.
+
+The library's own tests use a third set, generated at build time into its common test sources from
+a few real LogDate and community schemas plus
+[`kitchenSink.json`](../../shared/atproto-lexicon/src/commonTest/lexicons/kitchenSink.json), a
+synthetic schema that exercises every kind LogDate's schemas do not use. Those tests run on the
+JVM, Android and iOS and check that each model survives a round trip through JSON and through
+DAG-CBOR unchanged.
+
+The generator can also be run directly. Its entry point is `GenerateLexiconsKt` in the module's
+JVM build, and it takes `<inputs> <outputDir> [packageName]` followed by any of these options:
+
+| Option                        | Effect                                                                                                                                                                                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--namespace-layout`          | Puts each document in `packageName` followed by its NSID's namespace, so `app.logdate.journal.entry` lands in `<packageName>.app.logdate.journal`. Without it every file goes in `packageName`. A whole schema family needs this, because document names such as `defs` repeat. |
+| `--record-index <ObjectName>` | Also writes an object whose `records` map gives the serializer for every record type, keyed by collection NSID, for code that learns a record's type only at runtime.                                                                                                           |
+| `--schema-index <ObjectName>` | Also writes an object holding every schema's JSON, so an app can check records at runtime on platforms that cannot read schema files.                                                                                                                                           |
+
+`inputs` is a list of schema files and directories separated by the platform's path separator.
+Every document is checked before anything is written, and generation stops at the first invalid
+one.
+
+### Decisions behind the generated code
+
+These choices are not visible from the output alone, and each has a reason.
+
+**`Blob`, `CidLink` and `Bytes` live in the schema library.** The three data-model types that
+schemas refer to are small classes in the `studio.hypertext.atproto.lexicon.data` package of
+`shared/atproto-lexicon`. Generated models import them from there, so a module that only reads and
+writes records declares one dependency, on the schema library, and never names the repository
+engine. The types are built on `Cid` and the DAG-CBOR codec from `shared/atproto-repo`, which the
+schema library exposes as a transitive dependency.
+
+**A union is a sealed interface with one wrapper per member.** For a field such as an entry's
+`blocks`, the generator writes a sealed interface named after the owning class and the field
+(`EntryBlocksItem` for the items of `Entry.blocks`), with one small data class per allowed type
+that wraps the member's own class, such as `EntryBlocksItem.TextBlock(val value: EntryTextBlock)`.
+`EntryTextBlock` does not implement the interface directly, because a shared type such as a
+location can belong to unions in many schema documents, and an interface list on that class would
+make the code for every document depend on every other document that mentions it. A member's wrapper is named after its definition, and when two members would share a name, both
+take their full class names instead.
+
+**Open unions keep members they do not recognize.** Lexicon unions are open unless a schema says
+`"closed": true`, meaning a newer version of the schema may add member types. An open union's
+generated interface has an extra `Unknown(type, value)` member that keeps the `$type` and the full
+JSON of anything this version of the code does not know, and writes it back exactly as it was
+read. A device running an older app can therefore open and save an entry that contains a block
+type added later without deleting that block. A closed union has no `Unknown` member and fails to
+decode a `$type` outside its list.
+
+**Each union has a generated serializer that reads and writes `$type`.** The protocol's rule is
+that a union member always carries a `$type` naming its schema, while an object reached through a
+plain `ref` carries none. The serializer adds `$type` on the way out and uses it to pick the
+member class on the way in. A record carries `$type` too, so a generated record class has a
+`lexiconType` property, serialized as `$type`, that defaults to the collection's NSID and is
+always written.
+
+**An optional field is nullable with a `null` default, and stays absent.** A field the schema does
+not list as required decodes when it is missing and is left out again when the record is encoded,
+so reading and re-saving a record never adds fields. A field that is required but listed as
+`nullable` has no default and is always written, as `null` when it has no value. Fields the schema
+does not describe at all are ignored on read, so a record written for a newer schema still decodes.
+They are not kept, though: unlike an unknown union member, an unknown field is gone when the model
+is encoded again.
+
+**The record-key rule is part of the model.** A record schema's `key` is parsed into
+`LexiconRecordKey`: `Tid` for timestamp identifiers, `Nsid`, `Literal` for one fixed key such as
+`self`, or `Any`. The generated class exposes it as `KEY`, so storage code can check a key before
+writing instead of finding out when another service rejects the record.
+
+**Bytes are standard base64 in JSON.** The data model writes a `bytes` value in JSON as
+`{"$bytes": "<base64>"}` using the standard alphabet. The library writes it without padding and
+accepts it with or without. `Bytes` and the DAG-CBOR codec in `shared/atproto-repo` use the same
+rule, because the URL-safe alphabet would turn a record that passes through JSON into a different
+value, and a different content identifier, from the one other AT Protocol implementations produce.
+In DAG-CBOR a `bytes` value is a native byte string and a `cid-link` is a native link.
+
+**Models encode through JSON, including to DAG-CBOR.** The serializers for `Blob`, `CidLink`,
+`Bytes` and unions work only with the JSON format. `LexiconData.encodeToDagCbor` and
+`decodeFromDagCbor` convert a model to its JSON form first and then to or from DAG-CBOR, so there
+is one definition of each type's wire shape instead of one per format.
+
+**Only the current blob form is read.** A blob is `{"$type": "blob", "ref": {"$link": …},
+"mimeType": …, "size": …}`. The data model also allows an older form with a `cid` and no size,
+found only in very old records from other apps. LogDate's records and the community schemas it
+reuses never contain it, so `Blob` rejects that form with a message that says so instead of
+guessing a size.
+
+### What the schema checker reports
+
+`LexiconValidator.validate` returns every problem it finds, each with the path of the definition
+it concerns. Beyond unsupported type names and missing array item types, it reports:
+
+- a primary type (`record`, `query`, `procedure`, `subscription`, `permission-set` or `space`)
+  defined anywhere but `main`;
+- a record without a `key`, with a key rule that is not `tid`, `nsid`, `any` or `literal:<value>`,
+  or whose `record` is not an object;
+- a `ref` with no target, or whose target is found neither in the document nor in the
+  `LexiconRegistry` of other documents passed to the checker;
+- a union member that does not resolve, or that points at anything other than an object or a
+  record;
+- a closed union with no members;
+- a blob `accept` entry that is not a MIME type, `type/*` or `*/*`;
+- a negative size or length limit, or a minimum above its maximum;
+- a `space` declaration or `permission-set` that breaks the rules for those kinds, such as a
+  permission that names a collection outside the set's own namespace.
+
+`LexiconRecordValidator` is the counterpart for data. Given a collection and a record, it checks
+required fields, types, string formats and lengths, integer ranges, allowed values, blob types and
+sizes, and union membership, and it accepts fields and open-union members the schema does not
+describe. It checks a record's `$type` against the collection only when the record has one.
 
 ## Publishing
 
@@ -372,27 +564,3 @@ The sample imports `atproto-bom`, so publish the BOM along with the modules firs
 ./gradlew publishAtprotoToMavenLocal :shared:atproto-bom:publishToMavenLocal
 ./gradlew -p samples/atproto-consumer run
 ```
-
-## Current Scope
-
-- Standalone Kotlin/KMP modules with explicit public APIs and typed value objects
-- ATProto identity resolution, OAuth/PDS wire models, reusable PDS runtime services, repo CRUD plus commit/export primitives, and low-level XRPC client support
-- A confidential OAuth client (with DPoP) for signing in with accounts hosted on other AT Protocol servers
-- Server integration in this repo now consumes shared PDS and repo contracts instead of defining duplicate route DTOs
-- Checked-in official `com.atproto.*` lexicon JSON documents plus deterministic generated Kotlin models for the current server/repo/identity surface
-- Publishable Maven metadata, signing hooks, Dokka-backed documentation jars, aggregate Dokka/publish tasks, and a standalone consumer sample
-- GitHub Actions release automation for hosted Maven publishing
-
-## Not Yet Complete
-
-- Lexicon code generation for the full protocol surface. `LexiconParser` recognizes `object`,
-  `query`, `procedure`, `params`, `string`, `boolean`, `integer`, `array`, `blob`, `token`, and
-  `ref`, and maps every other type to `UNKNOWN`. That includes `record`, `union`, `cid-link`,
-  `bytes`, and `subscription`. In practice:
-  - a definition of type `record` or `subscription` produces no Kotlin class
-  - a field of type `union`, `cid-link`, `bytes`, or `blob` becomes an untyped `JsonElement`
-- A durable standalone PDS deployment story outside this repository's `server` module
-
-The current library is a strong standalone core for syntax, identity, repo, PDS contracts/runtime,
-and hosted-PDS server consumption. The remaining work is broader protocol surface and packaging,
-not the core repo/CAR/MST implementation.

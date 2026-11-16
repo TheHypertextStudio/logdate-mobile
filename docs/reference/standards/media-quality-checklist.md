@@ -6,9 +6,8 @@
 
 ## Why this exists
 
-LogDate's competitors on Android (notably Instagram) ship media UX that ignores
-the platform: storage permissions for what should be a permission-free
-PhotoPicker, photos crammed into wrong aspect ratios with center-crop, no
+Media UX on Android often ignores the platform: storage permissions for what
+should be a permission-free PhotoPicker, photos crammed into wrong aspect ratios with center-crop, no
 EXIF rotation, blocking the main thread for metadata, custom pickers that
 re-decode everything on every recomposition. This checklist exists so we don't
 drift back into those habits.
@@ -27,7 +26,7 @@ tied to that.
 - [ ] Pass a `Size` hint via `ImageRequest.Builder.size(...)` when the layout
       gives the image a concrete pixel size. Saves decoding 12 MP source for a
       112 dp grid tile.
-- [ ] Provide a meaningful `contentDescription`. `null` is correct *only* for
+- [ ] Provide a meaningful `contentDescription`. `null` is correct _only_ for
       decorative imagery (parallax backgrounds, etc.); for photos, profile
       avatars, journal covers, etc., write a sentence TalkBack can read.
 - [ ] If you must hand-decode a bitmap (postcard export, widget rendering,
@@ -58,12 +57,12 @@ tied to that.
 
 - [ ] The in-app recent-photos grid is intentional first-party UX. Asking
       for `READ_MEDIA_IMAGES` to power it is justified. The platform critique
-      applies to *how well* we use the picker, not whether we ask for access.
+      applies to _how well_ we use the picker, not whether we ask for access.
 - [ ] On Android 14+, request `READ_MEDIA_VISUAL_USER_SELECTED` alongside
       `READ_MEDIA_IMAGES` (via `RequestMultiplePermissions`) so the user
       gets the three-way prompt (All / Select / Don't allow). Treat any of
       `{READ_MEDIA_IMAGES, READ_MEDIA_VISUAL_USER_SELECTED}` as "granted."
-- [ ] For *fallback* "Browse all" entry points that don't have a first-party
+- [ ] For _fallback_ "Browse all" entry points that don't have a first-party
       grid yet, use `PickVisualMedia` + the correct `VisualMediaType`
       (`ImageOnly` / `VideoOnly` / `ImageAndVideo`). It needs no permission,
       hides the file-browser SAF UI, and looks like the system picker.
@@ -90,8 +89,7 @@ tied to that.
 
 ## Export and sharing
 
-- [ ] Photo-bearing exports should choose JPEG quality 92, not PNG quality
-      100. PNG matters when the canvas is flat colors and crisp text; for
+- [ ] Photo-bearing exports should choose JPEG quality 92, not PNG quality 100. PNG matters when the canvas is flat colors and crisp text; for
       anything photo-heavy it bloats the file 5–10× for no visible quality.
       See `AndroidExportEngine.saveBitmapToCache(asJpeg = …)`.
 - [ ] When drawing photos onto a fixed-size destination rect, use a center-

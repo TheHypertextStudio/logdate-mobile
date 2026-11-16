@@ -606,7 +606,7 @@ These development/test-only variables provide the local PostgreSQL fallback when
   - The issuer's origin is added to the origins passkey verification accepts automatically; it does not need to be listed in `WEBAUTHN_ALLOWED_ORIGINS`.
   - The server also refuses to start when passkey verification is not strict, because the page would then accept an assertion without checking it. Set `WEBAUTHN_STRICT_VERIFICATION=true` (the production default).
   - An approved app never sees or changes the LogDate journal. With either scope it only learns which account signed in today: `transition:generic` reaches only collections open to apps, and none is open yet. Uploads are refused too. This holds whether or not the flag is on.
-  - Design: `docs/superpowers/specs/2026-10-19-passkey-atproto-sign-in-design.md`.
+  - Reference: [`docs/reference/atproto-oauth-sign-in.md`](../../docs/reference/atproto-oauth-sign-in.md).
 
 ### `LOGDATE_OAUTH_TRUSTED_CLIENT_IDS`
 
@@ -957,4 +957,4 @@ ALLOW_PASSTHROUGH_CLIENT_CIPHERTEXT=true
 - [OpenAPI](./openapi.md)
 - [Auth V1 API](./auth-v1-api.md)
 - [Sync V1 API](./sync-v1-api.md)
-- [Encryption Architecture Design](../docs/plans/2026-01-27-encryption-architecture-overhaul-design.md)
+- [Encryption](../../docs/explanation/encryption.md) and [encryption formats](../../docs/reference/encryption-formats.md)

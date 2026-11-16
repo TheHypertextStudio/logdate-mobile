@@ -16,7 +16,7 @@ and only they see it. Nothing in LogDate is public unless you deliberately publi
 This document defines how sharing works so that every feature built on it follows the same rules:
 circles, encrypted sharing, finding people you know from the Atmosphere, conversations, and safety. The
 broader direction is in
-[LogDate on the AT Protocol](../superpowers/specs/2026-10-09-logdate-atproto-interoperability-design.md).
+[AT Protocol interoperability](../explanation/atproto-interoperability.md).
 
 ## Principles
 
@@ -41,13 +41,13 @@ to a circle, removed from one, or blocked must never embarrass anyone.
 
 Sharing uses five ideas. Keeping them separate is what keeps the model simple.
 
-| Idea | What it is | Who can see it |
-|---|---|---|
-| Person | Someone in your life, as LogDate understands them from your memories. Defined in [People](./people.md). | Only you |
-| Connection | Two LogDate accounts that agreed they can share with each other. | Each person sees only their own connections |
-| Circle | A named group of your connections, such as Family. | Only you |
-| Group | A shared space around one thing, such as a wedding or a class trip, that people join by invite. | Its members |
-| Share | One thing you shared, and who you shared it with. | You and the people you shared it with |
+| Idea       | What it is                                                                                              | Who can see it                              |
+| ---------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Person     | Someone in your life, as LogDate understands them from your memories. Defined in [People](./people.md). | Only you                                    |
+| Connection | Two LogDate accounts that agreed they can share with each other.                                        | Each person sees only their own connections |
+| Circle     | A named group of your connections, such as Family.                                                      | Only you                                    |
+| Group      | A shared space around one thing, such as a wedding or a class trip, that people join by invite.         | Its members                                 |
+| Share      | One thing you shared, and who you shared it with.                                                       | You and the people you shared it with       |
 
 A **person** is not automatically a **connection**. People are private notes about the people in
 your life, whether or not they use LogDate. Someone becomes reachable once they have a LogDate
@@ -72,7 +72,7 @@ Connections are always mutual. Both people agree, and both can share. That is de
   their contact would keep sharing into nothing and believe it arrived. Telling them would
   announce the rejection. Neither is acceptable.
 
-**Nobody owes anything back.** Mutual means either of you *can* share, not that you should. A
+**Nobody owes anything back.** Mutual means either of you _can_ share, not that you should. A
 grandparent can connect, enjoy every photo and never share a thing. LogDate never prompts anyone to
 reciprocate. There's no "You haven't shared with Grandma in a while."
 
@@ -176,14 +176,14 @@ Friends, without creating them until they're used. Empty circles that were never
 
 ## What can be shared
 
-| Item | What the recipient gets |
-|---|---|
-| Entry | That entry: its text, photos, video and audio, with transcripts |
-| Day | The entries from that day you chose to include, plus the day's date and places, if you include them |
-| Journal | The journal and its entries, including entries you add later, until you stop sharing it |
-| Rewind | The Rewind story, as it was when shared |
-| Postcard | The postcard |
-| Sticker | The sticker |
+| Item     | What the recipient gets                                                                             |
+| -------- | --------------------------------------------------------------------------------------------------- |
+| Entry    | That entry: its text, photos, video and audio, with transcripts                                     |
+| Day      | The entries from that day you chose to include, plus the day's date and places, if you include them |
+| Journal  | The journal and its entries, including entries you add later, until you stop sharing it             |
+| Rewind   | The Rewind story, as it was when shared                                                             |
+| Postcard | The postcard                                                                                        |
+| Sticker  | The sticker                                                                                         |
 
 Some things are never shareable, because they are about you or about other people rather than
 moments you made:
@@ -280,13 +280,13 @@ model yet.
 
 ## Words
 
-| Say | Don't say |
-|---|---|
-| Share with… | Post, publish (except for actual publishing) |
-| Circle | Audience, group, list |
-| Connected, People you share with | Friends, followers, following |
-| Shared with you | Feed, inbox |
-| Only you can see this | Private mode, hidden |
+| Say                              | Don't say                                    |
+| -------------------------------- | -------------------------------------------- |
+| Share with…                      | Post, publish (except for actual publishing) |
+| Circle                           | Audience, group, list                        |
+| Connected, People you share with | Friends, followers, following                |
+| Shared with you                  | Feed, inbox                                  |
+| Only you can see this            | Private mode, hidden                         |
 
 The interface never uses protocol words: no DID, PDS, handle (except when finding someone by
 handle), repo, Lexicon or AT Protocol. Copy never speaks as "we", never guilts, and never
@@ -294,13 +294,13 @@ celebrates numbers.
 
 ## Pull in, never push, flow by flow
 
-| Flow | What LogDate reads | What LogDate writes elsewhere |
-|---|---|---|
-| Signing in with Bluesky | Your Atmosphere identity | Nothing |
-| Finding people you know | Who you follow, and mutual follows | Nothing |
-| Safety | Your blocks, mutes and moderation lists | Nothing |
-| Sharing with circles | Nothing | Nothing outside LogDate |
-| Publishing a story | Nothing | The one piece you chose to publish |
+| Flow                    | What LogDate reads                      | What LogDate writes elsewhere      |
+| ----------------------- | --------------------------------------- | ---------------------------------- |
+| Signing in with Bluesky | Your Atmosphere identity                | Nothing                            |
+| Finding people you know | Who you follow, and mutual follows      | Nothing                            |
+| Safety                  | Your blocks, mutes and moderation lists | Nothing                            |
+| Sharing with circles    | Nothing                                 | Nothing outside LogDate            |
+| Publishing a story      | Nothing                                 | The one piece you chose to publish |
 
 ## Not in this model yet
 
