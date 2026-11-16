@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
@@ -117,7 +118,8 @@ internal class JournalNoteQueries(
 
     /**
      * A page across the four note tables. The newest `offset + pageSize` rows of each table always
-     * contain the requested page of their union, so each table reads at most that many rows.
+     * contain the requested page of their union, and slicing the entity buckets before mapping or
+     * joining captions/transcripts bounds downstream work to [pageSize] notes.
      */
     fun observeNotesPage(
         pageSize: Int,
@@ -131,12 +133,9 @@ internal class JournalNoteQueries(
                 imageFlow = imageNoteDao.getRecentNotes(window),
                 audioFlow = audioNoteDao.getRecentNotes(window),
                 videoFlow = videoNoteDao.getRecentNotes(window),
-            ),
+            ).map { buckets -> buckets.sliceNewest(offset = offset, limit = pageSize) },
         ).map { notes ->
-            notes
-                .sortedByDescending { it.creationTimestamp }
-                .drop(offset)
-                .take(pageSize)
+            notes.sortedByDescending { it.creationTimestamp }
         }
     }
 
@@ -187,10 +186,10 @@ internal class JournalNoteQueries(
             .combine(buckets) { placeLookup, current -> current to current.toNotes(placeLookup) }
             .flatMapLatest { (current, notes) ->
                 val captioned = current.mediaIds()
-                if (captioned.isEmpty() || captioned.size > QUERY_BATCH_SIZE) {
-                    mediaCaptionDao.observeAll().map { captions -> notes.withCaptions(captions) }
-                } else {
-                    mediaCaptionDao.observeCaptions(captioned).map { captions -> notes.withCaptions(captions) }
+                when {
+                    captioned.isEmpty() -> flowOf(notes)
+                    captioned.size > QUERY_BATCH_SIZE -> mediaCaptionDao.observeAll().map { captions -> notes.withCaptions(captions) }
+                    else -> mediaCaptionDao.observeCaptions(captioned).map { captions -> notes.withCaptions(captions) }
                 }
             }.withTranscripts(transcriptionRepository)
 
@@ -219,12 +218,11 @@ internal class JournalNoteQueries(
                     imageFlow = imageNoteDao.getRecentNotes(limit),
                     audioFlow = audioNoteDao.getRecentNotes(limit),
                     videoFlow = videoNoteDao.getRecentNotes(limit),
-                ),
+                ).map { buckets -> buckets.sliceNewest(limit = limit) },
             ) { placeLookup, buckets ->
                 buckets
                     .toNotes(placeLookup)
                     .sortedByDescending { it.creationTimestamp }
-                    .take(limit)
             }.combine(mediaCaptionDao.observeAll().onStart { emit(emptyList()) }) { notes, captions ->
                 val captionMap = captions.associate { it.noteId to it.caption }
                 notes.map { note -> note.withCaption(captionMap) }
@@ -272,20 +270,30 @@ internal class JournalNoteQueries(
     suspend fun getNotesBefore(
         beforeExclusive: Instant,
         limit: Int,
-    ): List<JournalNote> =
-        NoteBuckets(
-            textNotes = textNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
-            imageNotes = imageNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
-            audioNotes = audioNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
-            videoNotes = videoNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
-        ).toNotes(notePlaceResolver.observeAll().first())
+    ): List<JournalNote> {
+        val buckets =
+            NoteBuckets(
+                textNotes = textNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
+                imageNotes = imageNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
+                audioNotes = audioNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
+                videoNotes = videoNoteDao.getRecentNotesBefore(beforeExclusive.toEpochMilliseconds(), limit),
+            ).sliceNewest(limit = limit)
+        val mediaIds = buckets.mediaIds()
+        val captions =
+            if (mediaIds.isEmpty()) {
+                emptyMap()
+            } else {
+                mediaCaptionDao.getCaptions(mediaIds).associate { it.noteId to it.caption }
+            }
+        return buckets
+            .toNotes(notePlaceResolver.observeAll().first())
             .sortedByDescending(JournalNote::creationTimestamp)
-            .take(limit)
             .map { note ->
                 note
-                    .withCaption(mapOf(note.uid to (mediaCaptionDao.getCaption(note.uid)?.caption ?: "")))
+                    .withCaption(captions)
                     .withTranscript(transcriptionRepository)
             }
+    }
 
     suspend fun hasNotesBefore(beforeExclusive: Instant): Boolean {
         val beforeTimestamp = beforeExclusive.toEpochMilliseconds()
@@ -390,6 +398,26 @@ internal class JournalNoteQueries(
         val audioNotes: List<AudioNoteEntity>,
         val videoNotes: List<VideoNoteEntity>,
     ) {
+        fun sliceNewest(
+            offset: Int = 0,
+            limit: Int,
+        ): NoteBuckets {
+            if (limit <= 0) return NoteBuckets(emptyList(), emptyList(), emptyList(), emptyList())
+            val selectedIds =
+                (textNotes + imageNotes + audioNotes + videoNotes)
+                    .sortedByDescending(GenericNoteData::created)
+                    .drop(offset)
+                    .take(limit)
+                    .mapTo(HashSet(limit)) { it.uid }
+            if (selectedIds.isEmpty()) return NoteBuckets(emptyList(), emptyList(), emptyList(), emptyList())
+            return NoteBuckets(
+                textNotes = textNotes.filter { it.uid in selectedIds },
+                imageNotes = imageNotes.filter { it.uid in selectedIds },
+                audioNotes = audioNotes.filter { it.uid in selectedIds },
+                videoNotes = videoNotes.filter { it.uid in selectedIds },
+            )
+        }
+
         fun mediaIds(): List<Uuid> = imageNotes.map { it.uid } + audioNotes.map { it.uid } + videoNotes.map { it.uid }
 
         fun placeIds(): Set<Uuid> =
