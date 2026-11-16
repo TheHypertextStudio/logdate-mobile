@@ -135,8 +135,6 @@ If no names are present, return an empty array.
                     val people =
                         parsePeopleResponse(content)
                             ?: return@withContext AIResult.Error(AIError.InvalidResponse)
-                    Napier.d(tag = "PeopleExtractor", message = "Caching response for:\n$text")
-                    Napier.d(tag = "PeopleExtractor") { "Response: ${content.trim()}" }
                     generativeAICache.putEntry(cacheRequest, content.trim())
                     AIResult.Success(people, fromCache = false)
                 }
