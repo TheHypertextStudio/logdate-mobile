@@ -70,6 +70,7 @@ private val approvedNotices =
         RepoEventNotices.PRIVATE_RECORDS_HELD_BACK to "SERVER_REPO_EVENT_PRIVATE_RECORDS_HELD_BACK",
         RepoEventNotices.TREE_UNREADABLE to "SERVER_REPO_TREE_UNREADABLE",
         RepoEventNotices.FOLLOWER_FAILED to "SERVER_REPO_EVENT_FOLLOWER_FAILED",
+        RepoEventNotices.READ_FAILED to "SERVER_REPO_EVENT_READ_FAILED",
         RepoEventNotices.PRUNE_FAILED to "SERVER_REPO_EVENT_PRUNE_FAILED",
         RepoEventNotices.CRAWL_REQUESTED to "SERVER_RELAY_CRAWL_REQUESTED",
         RepoEventNotices.CRAWL_REFUSED to "SERVER_RELAY_CRAWL_REFUSED",
@@ -206,6 +207,7 @@ internal object RepoEventNotices {
     const val PRIVATE_RECORDS_HELD_BACK = "A repository that holds private records was not announced"
     const val TREE_UNREADABLE = "A repository's record tree could not be read, so the repository was not shown"
     const val FOLLOWER_FAILED = "A follower of the repository event stream stopped after an error"
+    const val READ_FAILED = "Reading new repository events failed; followers stay connected and the read is tried again"
     const val PRUNE_FAILED = "Deleting old repository events failed; the next sweep retries"
     const val CRAWL_REQUESTED = "Asked a relay to crawl this server"
     const val CRAWL_REFUSED = "A relay refused to crawl this server"

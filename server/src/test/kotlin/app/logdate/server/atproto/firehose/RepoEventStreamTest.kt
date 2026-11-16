@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -40,12 +41,53 @@ class RepoEventStreamTest {
             )
         }
 
-    private fun stream(
+    private fun TestScope.stream(
         store: RepoEventStore,
         wakeups: MutableSharedFlow<Long> = MutableSharedFlow(),
         maxFollowers: Int = 2,
         clock: Clock = Clock.System,
-    ) = RepoEventStream(store, wakeups, pollInterval = 100.milliseconds, maxFollowers = maxFollowers, retention = 7.days, clock = clock)
+    ) = RepoEventStream(
+        store,
+        wakeups,
+        pollInterval = 100.milliseconds,
+        maxFollowers = maxFollowers,
+        retention = 7.days,
+        clock = clock,
+        scope = backgroundScope,
+    )
+
+    /**
+     * Counts the reads of the log, and fails the next [failures] of them. Asking for the newest number
+     * fails on each call whose position, counted from one, is in [failingLatestCalls].
+     */
+    private class CountingStore(
+        private val delegate: RepoEventStore = InMemoryRepoEventStore(),
+        var failures: Int = 0,
+        private val failingLatestCalls: Set<Int> = emptySet(),
+    ) : RepoEventStore by delegate {
+        var reads = 0
+        private var latestCalls = 0
+
+        override suspend fun read(
+            afterSeq: Long,
+            limit: Int,
+        ): List<StoredRepoEvent> {
+            reads++
+            if (failures > 0) {
+                failures--
+                error("database unavailable")
+            }
+            return delegate.read(afterSeq, limit)
+        }
+
+        override suspend fun latestSeq(): Long {
+            latestCalls++
+            if (latestCalls in failingLatestCalls) error("database unavailable")
+            return delegate.latestSeq()
+        }
+    }
+
+    private fun seqOf(frame: ByteArray): Long = (decode(frame) as studio.hypertext.atproto.repo.RepoAccountEvent).seq
 
     private fun decode(frame: ByteArray): RepoStreamMessage = RepoEventFrames.decode(frame)
 
@@ -193,19 +235,108 @@ class RepoEventStreamTest {
         }
 
     @Test
-    fun `followers are limited and a place is freed when one leaves`() {
-        val stream = stream(InMemoryRepoEventStore(), maxFollowers = 2)
+    fun `followers are limited and a place is freed when one leaves`() =
+        runTest {
+            val stream = stream(InMemoryRepoEventStore(), maxFollowers = 2)
 
-        val first = assertNotNull(stream.reserve())
-        val second = assertNotNull(stream.reserve())
-        assertNull(stream.reserve())
-        assertEquals(2, stream.followerCount)
+            val first = assertNotNull(stream.reserve())
+            val second = assertNotNull(stream.reserve())
+            assertNull(stream.reserve())
+            assertEquals(2, stream.followerCount)
 
-        first.close()
-        assertEquals(1, stream.followerCount)
-        assertNotNull(stream.reserve())
-        second.close()
-    }
+            first.close()
+            assertEquals(1, stream.followerCount)
+            assertNotNull(stream.reserve())
+            second.close()
+        }
+
+    @Test
+    fun `waiting followers share one read of the log`() =
+        runTest {
+            val store = CountingStore()
+            val stream = stream(store, maxFollowers = 5)
+            val received = List(5) { mutableListOf<Long>() }
+            val jobs = received.map { into -> launch { stream.frames(null).collect { into += seqOf(it) } } }
+            runCurrent()
+            val before = store.reads
+
+            advanceTimeBy(1_000.milliseconds)
+            runCurrent()
+            val idleReads = store.reads - before
+            store.append(draft())
+            advanceTimeBy(150.milliseconds)
+            runCurrent()
+
+            assertTrue(idleReads <= 11, "five idle followers polled the log $idleReads times in ten intervals")
+            assertEquals(List(5) { listOf(1L) }, received)
+            jobs.forEach { it.cancel() }
+        }
+
+    @Test
+    fun `a follower far behind reads the log until it reaches the others`() =
+        runTest {
+            val store = InMemoryRepoEventStore()
+            val stream = stream(store)
+            repeat(120) { store.append(draft()) }
+            val current = mutableListOf<Long>()
+            val behind = mutableListOf<Long>()
+            val jobs =
+                listOf(
+                    launch { stream.frames(null).collect { current += seqOf(it) } },
+                    launch { stream.frames(0).collect { behind += seqOf(it) } },
+                )
+            runCurrent()
+
+            store.append(draft())
+            advanceTimeBy(150.milliseconds)
+            runCurrent()
+
+            assertEquals(listOf(121L), current)
+            assertEquals((1L..121L).toList(), behind)
+            jobs.forEach { it.cancel() }
+        }
+
+    @Test
+    fun `a failed read of new events leaves followers connected`() =
+        runTest {
+            val store = CountingStore()
+            val stream = stream(store)
+            val received = mutableListOf<Long>()
+            val job = launch { stream.frames(null).collect { received += seqOf(it) } }
+            runCurrent()
+
+            store.failures = 1
+            advanceTimeBy(150.milliseconds)
+            runCurrent()
+            store.append(draft())
+            advanceTimeBy(300.milliseconds)
+            runCurrent()
+
+            assertTrue(job.isActive)
+            assertEquals(listOf(1L), received)
+            job.cancel()
+        }
+
+    @Test
+    fun `followers are served once the log can be read again after the reader failed to start`() =
+        runTest {
+            // The follower's own look at the newest number is the first call; the reader's start is the second.
+            val store = CountingStore(failingLatestCalls = setOf(2))
+            val stream = stream(store)
+            val received = mutableListOf<Long>()
+            val job = launch { stream.frames(null).collect { received += seqOf(it) } }
+            runCurrent()
+
+            advanceTimeBy(150.milliseconds)
+            runCurrent()
+            store.append(draft())
+            advanceTimeBy(300.milliseconds)
+            runCurrent()
+
+            assertTrue(job.isActive)
+            assertEquals(listOf(1L), received)
+            job.cancel()
+        }
 
     @Test
     fun `events older than the retention period are pruned`() =

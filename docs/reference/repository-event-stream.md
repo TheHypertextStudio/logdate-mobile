@@ -136,8 +136,10 @@ Connect to `/xrpc/com.atproto.sync.subscribeRepos` and optionally pass `cursor`:
 - A follower that stops reading gets a `ConsumerTooSlow` error frame and the connection closes.
 - The server serves 64 followers at a time and closes extra connections with `TRY_AGAIN_LATER`.
 
-Events live in the database, so every server instance serves the same log. An instance finds events
-that another one stored by looking every half second.
+Events live in the database, so every server instance serves the same log. Each instance reads new
+events once for all of its followers: it looks every half second for events another instance stored,
+and at once for the ones it stored itself. A follower that is further behind reads the log on its own
+until it catches up.
 
 On Cloud Run the stream is served by its own service. The main service talks HTTP/2 all the way to
 the container, because Cloud Run limits HTTP/1 requests to 32 MiB and recordings can be larger. Cloud
@@ -171,6 +173,7 @@ Production logs keep only approved messages. These are the codes the stream writ
 | `SERVER_REPO_EVENT_COMMIT_UNREADABLE`         | A commit could not be compared with the one before it, so the server sent `#sync` instead.                    |
 | `SERVER_REPO_EVENT_PRIVATE_RECORDS_HELD_BACK` | A repository holding a private record was not announced.                                                      |
 | `SERVER_REPO_EVENT_FOLLOWER_FAILED`           | A follower's connection stopped after an error.                                                               |
+| `SERVER_REPO_EVENT_READ_FAILED`               | Reading new events failed. Followers stay connected, and the server reads again half a second later.          |
 | `SERVER_REPO_EVENT_PRUNE_FAILED`              | Deleting events older than seven days failed. The next hourly sweep retries it.                               |
 | `SERVER_RELAY_CRAWL_REQUESTED`                | A relay accepted a crawl request.                                                                             |
 | `SERVER_RELAY_CRAWL_REFUSED`                  | A relay answered the request with an error.                                                                   |

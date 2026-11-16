@@ -3,18 +3,26 @@ package app.logdate.server.atproto.firehose
 import app.logdate.server.logging.RepoEventNotices
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
 import studio.hypertext.atproto.repo.RepoErrorMessage
 import studio.hypertext.atproto.repo.RepoEventFrames
 import studio.hypertext.atproto.repo.RepoInfoMessage
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Clock
 import kotlin.time.Duration
 
@@ -28,9 +36,11 @@ import kotlin.time.Duration
  * then everything the log has, because some of what it missed is gone. A cursor beyond the newest
  * event is an error, since the server cannot have sent it.
  *
- * Servers share one log, so a follower is served the same way whichever instance it reaches. Events
- * another instance stores are found by polling every [pollInterval]; events this instance stores wake
- * its followers at once through [wakeups].
+ * Servers share one log, so a follower is served the same way whichever instance it reaches. One
+ * reader per instance looks for new events, every [pollInterval] for those another instance stored and
+ * at once through [wakeups] for those this instance stored, and keeps the newest of them in memory.
+ * Followers that have caught up take their events from it, so the log is read once for all of them.
+ * A follower further behind reads the log itself until it catches up.
  */
 class RepoEventStream(
     private val store: RepoEventStore,
@@ -39,8 +49,14 @@ class RepoEventStream(
     private val maxFollowers: Int,
     private val retention: Duration,
     private val clock: Clock = Clock.System,
+    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) {
     private val followers = AtomicInteger(0)
+
+    /** The newest events, read while at least one follower is waiting for them. */
+    private val newest: StateFlow<RecentEvents?> =
+        flow<RecentEvents?> { readNewEvents() }
+            .stateIn(scope, SharingStarted.WhileSubscribed(READER_LINGER_MILLIS, replayExpirationMillis = 0), null)
 
     /**
      * Reserves a place for one follower, or returns `null` when [maxFollowers] are already connected.
@@ -82,14 +98,24 @@ class RepoEventStream(
                 }
                 position = cursor
             }
-            while (coroutineContext.isActive) {
-                val batch = store.read(position, BATCH_SIZE)
-                batch.forEach { event ->
+            while (currentCoroutineContext().isActive) {
+                val recent = newest.filterNotNull().first()
+                val shared = recent.after(position)
+                if (shared == null) {
+                    val batch = store.read(position, BATCH_SIZE)
+                    batch.forEach { event ->
+                        emit(event.frame)
+                        position = event.seq
+                    }
+                    // Every event up to the reader's starting point existed before it started, so a short page has them all.
+                    if (batch.size < BATCH_SIZE) position = maxOf(position, recent.floor)
+                    continue
+                }
+                shared.forEach { event ->
                     emit(event.frame)
                     position = event.seq
                 }
-                if (batch.size == BATCH_SIZE) continue
-                withTimeoutOrNull(pollInterval) { wakeups.first() }
+                if (shared.isEmpty()) newest.first { it == null || it.last > position }
             }
         }
 
@@ -109,9 +135,41 @@ class RepoEventStream(
 
     /** Runs [pruneExpired] every [interval] until the coroutine is cancelled. */
     suspend fun pruneForever(interval: Duration) {
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             pruneExpired()
             delay(interval)
+        }
+    }
+
+    /**
+     * Reads the log from the present onwards and publishes what it finds. A failed read, the first one
+     * included, is logged and tried again after [pollInterval], while the followers keep waiting.
+     */
+    private suspend fun FlowCollector<RecentEvents?>.readNewEvents() {
+        var recent = RecentEvents(floor = retrying { store.latestSeq() }, events = emptyList())
+        emit(recent)
+        while (currentCoroutineContext().isActive) {
+            val batch = retrying { store.read(recent.last, BATCH_SIZE) }
+            if (batch.isNotEmpty()) {
+                recent = recent.plus(batch, KEPT_EVENTS)
+                emit(recent)
+            }
+            if (batch.size == BATCH_SIZE) continue
+            withTimeoutOrNull(pollInterval) { wakeups.first() }
+        }
+    }
+
+    /** Runs [read] until it succeeds, logging each failure and waiting [pollInterval] before trying again. */
+    private suspend fun <T> retrying(read: suspend () -> T): T {
+        while (true) {
+            try {
+                return read()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                Napier.e(RepoEventNotices.READ_FAILED, failure)
+                delay(pollInterval)
+            }
         }
     }
 
@@ -120,5 +178,35 @@ class RepoEventStream(
 
     private companion object {
         const val BATCH_SIZE = 50
+        const val KEPT_EVENTS = 500
+        const val READER_LINGER_MILLIS = 5_000L
+    }
+}
+
+/**
+ * Every event in the log after [floor], up to the newest the reader found, oldest first. [floor] rises as
+ * the oldest are dropped to keep at most a fixed number.
+ */
+private class RecentEvents(
+    val floor: Long,
+    val events: List<StoredRepoEvent>,
+) {
+    val last: Long get() = events.lastOrNull()?.seq ?: floor
+
+    /** The events after [position], or `null` when some of them are older than these. */
+    fun after(position: Long): List<StoredRepoEvent>? {
+        if (position < floor) return null
+        val start = events.indexOfFirst { it.seq > position }
+        return if (start < 0) emptyList() else events.subList(start, events.size)
+    }
+
+    fun plus(
+        batch: List<StoredRepoEvent>,
+        keep: Int,
+    ): RecentEvents {
+        val all = events + batch
+        if (all.size <= keep) return RecentEvents(floor, all)
+        val dropped = all.size - keep
+        return RecentEvents(all[dropped - 1].seq, all.subList(dropped, all.size))
     }
 }
