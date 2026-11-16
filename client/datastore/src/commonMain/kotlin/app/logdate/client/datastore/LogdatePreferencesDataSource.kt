@@ -79,7 +79,6 @@ class LogdatePreferencesDataSource(
         // Feature flags
         val LIBRARY_ENABLED = booleanPreferencesKey("library_enabled")
         val EVENTS_ENABLED = booleanPreferencesKey("events_enabled")
-        val PEOPLE_ENABLED = booleanPreferencesKey("people_enabled")
         val PEOPLE_CONTACTS_ACCESS_MODE = stringPreferencesKey("people_contacts_access_mode")
 
         // Journal UI keys
@@ -186,20 +185,6 @@ class LogdatePreferencesDataSource(
         userPreferences.updateData { preferences ->
             preferences.toMutablePreferences().apply {
                 this[EVENTS_ENABLED] = enabled
-            }
-        }
-    }
-
-    fun observePeopleEnabled(): Flow<Boolean> =
-        userPreferences.data.map { prefs ->
-            featureAvailable(FeatureFlag.PEOPLE) &&
-                (prefs[PEOPLE_ENABLED] ?: FeatureFlag.PEOPLE.defaultEnabled)
-        }
-
-    suspend fun setPeopleEnabled(enabled: Boolean) {
-        userPreferences.updateData { preferences ->
-            preferences.toMutablePreferences().apply {
-                this[PEOPLE_ENABLED] = enabled
             }
         }
     }

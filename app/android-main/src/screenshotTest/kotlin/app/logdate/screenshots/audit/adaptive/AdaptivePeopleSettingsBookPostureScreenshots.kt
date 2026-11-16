@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.logdate.client.permissions.ContactsPermissionState
 import app.logdate.feature.core.people.ui.PeopleSettingsContent
 import app.logdate.feature.core.people.ui.PeopleSettingsViewModel
 import app.logdate.screenshots.common.ScreenshotTheme
@@ -44,25 +43,16 @@ private val bookPostureLayoutInfo =
     )
 
 /**
- * Stable fake state representing an enabled People feature on a quiet, ordinary
- * setup: a small handful of imported contacts and one cluster awaiting review.
+ * People as it looks on an Android phone with a few imported contacts and one suggested name
+ * waiting for review.
  */
-private val enabledPeopleState =
+private val peopleState =
     PeopleSettingsViewModel.UiState(
-        isPeopleEnabled = true,
-        supportsSelectedContactsPicker = true,
+        contactImportAvailable = true,
         totalPeopleCount = 12,
         pendingReviewCount = 1,
         notice = null,
         isImporting = false,
-    )
-
-private val grantedContactsPermissionState =
-    ContactsPermissionState(
-        hasPermission = true,
-        shouldShowRationale = false,
-        permissionRequested = true,
-        requestPermission = {},
     )
 
 @PreviewTest
@@ -72,14 +62,11 @@ fun A127_PeopleSettingsBookPosture() {
     provideFoldableLayoutInfo(bookPostureLayoutInfo) {
         ScreenshotTheme {
             PeopleSettingsContent(
-                uiState = enabledPeopleState,
+                uiState = peopleState,
                 onBack = {},
                 onBrowsePeople = {},
                 onOpenReviewInbox = {},
-                contactsPermissionState = grantedContactsPermissionState,
-                onPeopleEnabledChanged = {},
                 onImportAllContacts = {},
-                onImportSelectedContacts = {},
                 onDismissMessage = {},
                 modifier = Modifier.fillMaxSize(),
             )

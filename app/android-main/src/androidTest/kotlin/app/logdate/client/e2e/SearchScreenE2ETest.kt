@@ -23,6 +23,7 @@ import app.logdate.client.database.LogDateDatabase
 import app.logdate.client.database.entities.TextNoteEntity
 import app.logdate.client.database.getRoomDatabase
 import app.logdate.client.datastore.LogdatePreferencesDataSource
+import app.logdate.client.datastore.featureflags.DataStoreFeatureFlagStore
 import app.logdate.client.domain.search.ObserveRecentSearchesUseCase
 import app.logdate.client.domain.search.UniversalSearchUseCase
 import app.logdate.client.repository.search.RecentSearchesRepository
@@ -122,6 +123,7 @@ class SearchScreenE2ETest {
                     OfflineFirstSearchRepository(
                         searchDao = database.searchDao(),
                         personDao = database.personDao(),
+                        featureFlags = DataStoreFeatureFlagStore(TestPreferencesDataStore()),
                     ),
             )
         val recentSearchesRepository = InMemoryRecentSearchesRepository()

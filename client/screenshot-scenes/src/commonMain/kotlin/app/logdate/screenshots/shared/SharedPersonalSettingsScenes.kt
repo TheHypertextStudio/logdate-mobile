@@ -89,6 +89,8 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
                     userProfile = UserProfile(name = "Alex Rivera", username = "alex", isAuthenticated = true),
                     onboardedDate = Instant.DISTANT_PAST,
                     campfire = campfireSamples.first { it.size == CampfireSize.CAMPFIRE && it.loggedToday },
+                    showEventsSettings = false,
+                    showPeopleSettings = false,
                 )
             }
         },

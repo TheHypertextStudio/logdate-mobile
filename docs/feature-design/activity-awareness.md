@@ -229,9 +229,8 @@ requests it with the other reminder permissions. On the phone, turning the flag 
 it, and while it is missing the Labs row is followed by an "Allow physical activity" row that asks
 again. Without the permission the phone has no activity to track.
 
-The Labs text says what the feature does and where the data stays: "Reminders wait while you walk,
-ride or travel, and can come when you arrive. Your activity stays on your devices." Raw activity
-transitions are read on the device. An activity leaves a device in two ways, both encrypted or
+The Labs row says what the feature does in one line: "Reminders wait while you’re on the move." Raw
+activity transitions are read on the device. An activity leaves a device in two ways, both encrypted or
 between the person's own devices: the log in the state document the phone and watch exchange, and the
 `capturedDuring` value on moments, encrypted like the rest of a moment. Suggestion outcomes never
 leave the device.

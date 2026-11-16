@@ -3,6 +3,9 @@ package app.logdate.client.data.search
 import app.logdate.client.database.dao.SearchDao
 import app.logdate.client.database.dao.SearchResultEntity
 import app.logdate.client.database.dao.people.PersonDao
+import app.logdate.client.database.entities.people.PersonEntity
+import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.repository.search.SearchContentType
 import app.logdate.client.repository.search.SearchRepository
 import app.logdate.client.repository.search.SearchResult
@@ -13,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
@@ -27,11 +31,16 @@ import kotlin.uuid.Uuid
  * Uses the local [SearchDao] to perform FTS5 full-text search queries.
  * Search re-runs whenever the runtime-managed search index is rebuilt so the UI
  * can react to repair/bootstrap events without requiring new input.
+ *
+ * Results come from the search index. While People is turned on in Labs, people whose name or an
+ * alias contains every word of the query join the results; while it is off, the people directory
+ * is not read and no person is returned, so its names never reach a search surface.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OfflineFirstSearchRepository(
     private val searchDao: SearchDao,
     private val personDao: PersonDao,
+    private val featureFlags: FeatureFlagStore,
 ) : SearchRepository {
     private val correctionCache = mutableMapOf<String, String?>()
     private val correctionCacheMutex = Mutex()
@@ -129,6 +138,45 @@ class OfflineFirstSearchRepository(
         }
     }
 
+    /** Observes the people matching [query], or nothing at all while People is turned off. */
+    private fun observePeopleResults(query: String): Flow<List<SearchResult>> {
+        val tokens =
+            query
+                .trim()
+                .lowercase()
+                .split(whitespaceRun)
+                .filter(String::isNotBlank)
+        if (tokens.isEmpty()) return flowOf(emptyList())
+
+        return featureFlags
+            .observe(FeatureFlag.PEOPLE)
+            .distinctUntilChanged()
+            .flatMapLatest { peopleEnabled ->
+                if (!peopleEnabled) return@flatMapLatest flowOf(emptyList())
+                personDao.observeAll().mapLatest { people -> people.mapNotNull { person -> person.toSearchResult(tokens) } }
+            }.catch { error ->
+                Napier.e("People could not be searched", error)
+                emit(emptyList())
+            }
+    }
+
+    private fun PersonEntity.toSearchResult(tokens: List<String>): SearchResult? {
+        val haystack = (listOf(name) + aliases).joinToString(" ").lowercase()
+        if (!tokens.all(haystack::contains)) return null
+        return SearchResult(
+            uid = id,
+            content = name,
+            created = lastUpdated,
+            contentType = SearchContentType.PERSON,
+            rank = PERSON_SEARCH_RANK,
+        )
+    }
+
+    private fun mergeSearchResults(
+        fts: List<SearchResult>,
+        people: List<SearchResult>,
+    ): List<SearchResult> = (people + fts).distinctBy { "${it.contentType.ftsValue}_${it.uid}" }
+
     /** Fills the index from existing content once per process, before the first search reads it. */
     private suspend fun ensureIndexCurrent() {
         indexCheckMutex.withLock {
@@ -223,47 +271,6 @@ class OfflineFirstSearchRepository(
                     }
                 },
         )
-
-    private fun observePeopleResults(query: String): Flow<List<SearchResult>> {
-        val tokens =
-            query
-                .trim()
-                .lowercase()
-                .split(Regex("\\s+"))
-                .filter(String::isNotBlank)
-        if (tokens.isEmpty()) {
-            return flowOf(emptyList())
-        }
-
-        return personDao.observeAll().mapLatest { people ->
-            people
-                .asSequence()
-                .filter { person ->
-                    val searchHaystack =
-                        buildString {
-                            append(person.name.lowercase())
-                            if (person.aliases.isNotEmpty()) {
-                                append(' ')
-                                append(person.aliases.joinToString(" ").lowercase())
-                            }
-                        }
-                    tokens.all(searchHaystack::contains)
-                }.map { person ->
-                    SearchResult(
-                        uid = person.id,
-                        content = person.name,
-                        created = person.lastUpdated,
-                        contentType = SearchContentType.PERSON,
-                        rank = PERSON_SEARCH_RANK,
-                    )
-                }.toList()
-        }
-    }
-
-    private fun mergeSearchResults(
-        fts: List<SearchResult>,
-        people: List<SearchResult>,
-    ): List<SearchResult> = (people + fts).distinctBy { "${it.contentType.ftsValue}_${it.uid}" }
 
     private companion object {
         /** Bounds the queries that callers do not limit, so a common term cannot read the whole index. */
@@ -398,5 +405,6 @@ private fun levenshteinDistance(
     return previous[target.length]
 }
 
+private val whitespaceRun = Regex("\\s+")
 private val explicitOperatorRegex = Regex("""\b(?:AND|OR|NOT|NEAR)\b""")
 private val plainTokenRegex = Regex("""[\p{L}\p{N}]+""")

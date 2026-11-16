@@ -53,6 +53,7 @@ import app.logdate.feature.core.settings.ui.LibrarySettingsViewModel
 import app.logdate.feature.core.settings.ui.LocalDiagnosticsViewModel
 import app.logdate.feature.core.settings.ui.LocationSettingsViewModel
 import app.logdate.feature.core.settings.ui.MemoriesSettingsViewModel
+import app.logdate.feature.core.settings.ui.PeopleSwitch
 import app.logdate.feature.core.settings.ui.PlacesBetaSettingsViewModel
 import app.logdate.feature.core.settings.ui.PrivacySettingsViewModel
 import app.logdate.feature.core.settings.ui.RecoveryPhraseEntryViewModel
@@ -244,6 +245,7 @@ val coreFeatureModule: Module =
         viewModel { TimelineSettingsViewModel(get(), get(), get()) }
         viewModel { DayBoundarySettingsViewModel(get(), get(), get()) }
         viewModel { ProfileViewModel(get(), get(), get(), get(), get()) }
+        single(createdAtStart = true) { PeopleSwitch(get()) }
         viewModel { PeopleSettingsViewModel(get(), get(), get(), get(), get()) }
         viewModel { PeopleDirectoryViewModel(get(), get()) }
         viewModel { PeopleInboxViewModel(get()) }

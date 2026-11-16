@@ -45,11 +45,13 @@ enum class FeatureFlag(
     EVENTS(key = "events_enabled", defaultEnabled = false, availableForLaunch = false),
 
     /**
-     * The People slice.
+     * The people directory and its review inbox, built on the device from entries and transcripts.
      *
-     * Deferred from the first public Android release, including for previously enabled devices.
+     * Off by default and offered in Labs on Android. While it is off, Settings shows no People row
+     * or category and the People routes close as soon as they open; the directory stays stored. An
+     * installation that already stored this flag as on stays on.
      */
-    PEOPLE(key = "people_enabled", defaultEnabled = false, availableForLaunch = false),
+    PEOPLE(key = "people_enabled", defaultEnabled = false),
 
     /** Combine journal membership while retaining notes and media. */
     JOURNAL_MERGE(key = "journal_merge_enabled", defaultEnabled = true),

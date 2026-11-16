@@ -75,6 +75,39 @@ class LabsSettingsViewModelTest {
     }
 
     @Test
+    fun `People is offered on Android only`() {
+        assertTrue(FeatureFlag.PEOPLE in labsFlags(PlatformKind.Android))
+
+        PlatformKind.entries.filter { it != PlatformKind.Android }.forEach { platform ->
+            assertFalse(FeatureFlag.PEOPLE in labsFlags(platform), "$platform offers People")
+        }
+    }
+
+    @Test
+    fun `Android lists People first, then the watch app and activity awareness`() {
+        assertEquals(
+            listOf(FeatureFlag.PEOPLE, FeatureFlag.WATCH_EXPERIENCE_V2, FeatureFlag.ACTIVITY_AWARENESS),
+            labsFlags(PlatformKind.Android),
+        )
+    }
+
+    @Test
+    fun `People is off until Labs turns it on and the store then reports it on`() =
+        runTest {
+            val store = FakeFeatureFlagStore()
+            val viewModel = LabsSettingsViewModel(store, flags = listOf(FeatureFlag.PEOPLE))
+            backgroundScope.launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+            assertEquals(LabsUiState.Ready(listOf(LabsFlag(FeatureFlag.PEOPLE, enabled = false))), viewModel.uiState.value)
+
+            viewModel.setEnabled(FeatureFlag.PEOPLE, enabled = true)
+            advanceUntilIdle()
+
+            assertTrue(store.isEnabled(FeatureFlag.PEOPLE))
+            assertEquals(LabsUiState.Ready(listOf(LabsFlag(FeatureFlag.PEOPLE, enabled = true))), viewModel.uiState.value)
+        }
+
+    @Test
     fun `every flag Labs offers has a title and description`() {
         val offeredAnywhere = PlatformKind.entries.flatMap { platform -> labsFlags(platform) }.distinct()
 

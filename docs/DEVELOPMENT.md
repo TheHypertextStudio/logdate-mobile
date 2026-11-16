@@ -20,6 +20,28 @@ app restarts and starts off. Turning it off returns an open Places view to Home 
 removes Places links from the main navigation. Location recording, permission choices,
 saved places and Rewind maps are unchanged. Developer mode is not required.
 
+## People in Labs
+
+People is turned off on every installation until someone turns it on in Labs. Labs offers the
+People switch on Android only, and it is the only control that turns People on or off. To try
+People on an Android emulator:
+
+1. Open Settings, then About LogDate, and tap the app version seven times to turn on developer
+   mode.
+2. Open **Labs**, which now appears on the same screen.
+3. Turn on **People**.
+
+A People row then appears on the Settings overview, and a People category appears in the Settings
+category list on layouts that show that list. Both open the People page, which leads to the
+directory, the names waiting for review, and contact import. Names are found on the device in text
+entries and voice note transcripts. A name is suggested only after it has at least two mentions,
+and a suggested name joins the directory only when it is confirmed.
+
+Turning People off in Labs removes the row and the category, and a People page that is opened
+afterward closes at once. The directory, the suggestions and any imported contacts stay stored on
+the device and are shown again when People is turned back on. The switch is saved on the
+installation and survives app restarts, and hiding developer mode leaves it as it was.
+
 ## Toolchain
 
 LogDate is a Kotlin Multiplatform project built with Gradle. Install these before setting up:

@@ -1,8 +1,6 @@
 package app.logdate.client.database.dao.people
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import app.logdate.client.database.entities.people.InferredPersonEvidenceEntity
 import kotlinx.coroutines.flow.Flow
@@ -10,9 +8,6 @@ import kotlin.uuid.Uuid
 
 @Dao
 interface InferredPersonEvidenceDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(evidence: List<InferredPersonEvidenceEntity>)
-
     @Query("SELECT * FROM inferred_person_evidence WHERE cluster_id = :clusterId ORDER BY confidence DESC, created DESC")
     fun observeForCluster(clusterId: Uuid): Flow<List<InferredPersonEvidenceEntity>>
 

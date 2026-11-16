@@ -1,16 +1,15 @@
 package app.logdate.feature.core.people.ui
 
-import app.logdate.client.repository.knowledge.InferredPeopleRepository
 import app.logdate.shared.model.InferredPersonCluster
 import app.logdate.shared.model.InferredPersonEvidence
+import app.logdate.shared.model.InferredPersonEvidenceSourceType
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -19,16 +18,24 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
+private val epoch = Instant.fromEpochSeconds(0)
+
+/**
+ * The review inbox is where every suggested name is accepted or rejected, so a decision that could
+ * not be saved has to be said on the page instead of leaving the suggestion looking untouched.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PeopleInboxViewModelTest {
-    private val dispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     @BeforeTest
     fun setUp() {
-        Dispatchers.setMain(dispatcher)
+        Dispatchers.setMain(testDispatcher)
     }
 
     @AfterTest
@@ -37,60 +44,167 @@ class PeopleInboxViewModelTest {
     }
 
     @Test
-    fun `looks up every suggestion's evidence at the same time`() =
-        runTest(dispatcher) {
-            val at = Instant.parse("2026-10-01T00:00:00Z")
-            val clusters = listOf("Sam", "Ada", "Lee").map { InferredPersonCluster(displayNameHint = it, createdAt = at, lastUpdated = at) }
-            val repository = AllAtOnceEvidence(clusters)
-            val inbox = PeopleInboxViewModel(repository)
-            backgroundScope.launch { inbox.suggestions.collect {} }
+    fun `lists each suggested name with up to two different lines it was found in`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val store = FakePeopleStore()
+            store.clusters.value = listOf(maya)
+            store.evidence.value =
+                listOf(
+                    evidence(maya.uid, "Lunch with Maya"),
+                    evidence(maya.uid, "Lunch with Maya"),
+                    evidence(maya.uid, "Maya called"),
+                    evidence(maya.uid, "Walked with Maya"),
+                    evidence(maya.uid, label = null),
+                )
+            val viewModel = PeopleInboxViewModel(store)
+            val collectJob = viewModel.suggestions.onEach { }.launchIn(this)
 
             advanceUntilIdle()
 
-            assertEquals(listOf("Sam", "Ada", "Lee"), inbox.suggestions.value.map { it.nameHint })
             assertEquals(
-                listOf("Seen with Sam"),
-                inbox.suggestions.value
-                    .first()
-                    .evidencePreview,
+                listOf(
+                    PeopleInboxViewModel.SuggestionUiState(
+                        id = maya.uid,
+                        nameHint = "Maya",
+                        evidencePreview = listOf("Lunch with Maya", "Maya called"),
+                    ),
+                ),
+                viewModel.suggestions.value,
             )
+            assertEquals(1, store.refreshCalls)
+
+            collectJob.cancelAndJoin()
         }
 
-    /** Answers no evidence request until every cluster has asked, so one-at-a-time lookups never finish. */
-    private class AllAtOnceEvidence(
-        private val clusters: List<InferredPersonCluster>,
-    ) : InferredPeopleRepository {
-        private val requested = mutableSetOf<Uuid>()
-        private val everyoneAsked = CompletableDeferred<Unit>()
+    @Test
+    fun `adding a suggested name confirms it`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val store = FakePeopleStore()
+            store.clusters.value = listOf(maya)
+            val viewModel = PeopleInboxViewModel(store)
 
-        override fun observeOpenClusters(): Flow<List<InferredPersonCluster>> = flowOf(clusters)
+            viewModel.confirm(maya.uid)
+            advanceUntilIdle()
 
-        override fun observeEvidence(clusterId: Uuid): Flow<List<InferredPersonEvidence>> =
-            flow {
-                requested += clusterId
-                if (requested.size == clusters.size) everyoneAsked.complete(Unit)
-                everyoneAsked.await()
-                val cluster = clusters.first { it.uid == clusterId }
-                emit(
-                    listOf(
-                        InferredPersonEvidence(
-                            clusterId = clusterId,
-                            sourceType =
-                                app.logdate.shared.model.InferredPersonEvidenceSourceType.entries
-                                    .first(),
-                            sourceId = Uuid.random(),
-                            label = "Seen with ${cluster.displayNameHint}",
-                            confidence = 0.9,
-                            createdAt = cluster.createdAt,
-                        ),
-                    ),
-                )
-            }
+            assertEquals(listOf(maya.uid), store.confirmedClusters)
+            assertNull(viewModel.notice.value)
+        }
 
-        override suspend fun refresh() = Unit
+    @Test
+    fun `a name that could not be added says so`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val store = FakePeopleStore().apply { confirmFailure = IllegalStateException("write failed") }
+            store.clusters.value = listOf(maya)
+            val viewModel = PeopleInboxViewModel(store)
 
-        override suspend fun confirmClusterAsPerson(clusterId: Uuid) = Unit
+            viewModel.confirm(maya.uid)
+            advanceUntilIdle()
 
-        override suspend fun rejectCluster(clusterId: Uuid) = Unit
-    }
+            assertIs<PeopleNotice.AddSuggestionFailed>(viewModel.notice.value)
+            assertEquals(emptyList(), store.confirmedClusters)
+        }
+
+    @Test
+    fun `rejecting a suggested name rejects it`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val store = FakePeopleStore()
+            store.clusters.value = listOf(maya)
+            val viewModel = PeopleInboxViewModel(store)
+
+            viewModel.dismiss(maya.uid)
+            advanceUntilIdle()
+
+            assertEquals(listOf(maya.uid), store.rejectedClusters)
+            assertNull(viewModel.notice.value)
+        }
+
+    @Test
+    fun `a name that could not be rejected says so`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val store = FakePeopleStore().apply { rejectFailure = IllegalStateException("write failed") }
+            store.clusters.value = listOf(maya)
+            val viewModel = PeopleInboxViewModel(store)
+
+            viewModel.dismiss(maya.uid)
+            advanceUntilIdle()
+
+            assertIs<PeopleNotice.DismissSuggestionFailed>(viewModel.notice.value)
+            assertEquals(emptyList(), store.rejectedClusters)
+        }
+
+    @Test
+    fun `a failed look for names says the list may be out of date until it is dismissed`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore().apply { refreshFailure = IllegalStateException("scan failed") }
+            val viewModel = PeopleInboxViewModel(store)
+            advanceUntilIdle()
+
+            assertIs<PeopleNotice.RefreshFailed>(viewModel.notice.value)
+
+            viewModel.dismissNotice()
+
+            assertNull(viewModel.notice.value)
+        }
+
+    @Test
+    fun `a second tap while a name is being added does not add it twice`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val gate = CompletableDeferred<Unit>()
+            val store = FakePeopleStore().apply { confirmGate = gate }
+            store.clusters.value = listOf(maya)
+            val viewModel = PeopleInboxViewModel(store)
+
+            viewModel.confirm(maya.uid)
+            viewModel.confirm(maya.uid)
+            viewModel.dismiss(maya.uid)
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(listOf(maya.uid), store.confirmedClusters)
+            assertEquals(emptyList(), store.rejectedClusters)
+        }
+
+    @Test
+    fun `a new decision clears what an earlier failure said`() =
+        runTest(testDispatcher) {
+            val maya = cluster("Maya")
+            val store = FakePeopleStore().apply { confirmFailure = IllegalStateException("write failed") }
+            store.clusters.value = listOf(maya)
+            val viewModel = PeopleInboxViewModel(store)
+            viewModel.confirm(maya.uid)
+            advanceUntilIdle()
+
+            store.confirmFailure = null
+            viewModel.confirm(maya.uid)
+            advanceUntilIdle()
+
+            assertNull(viewModel.notice.value)
+            assertEquals(listOf(maya.uid), store.confirmedClusters)
+        }
+
+    private fun cluster(name: String): InferredPersonCluster =
+        InferredPersonCluster(
+            displayNameHint = name,
+            createdAt = epoch,
+            lastUpdated = epoch,
+        )
+
+    private fun evidence(
+        clusterId: Uuid,
+        label: String?,
+    ): InferredPersonEvidence =
+        InferredPersonEvidence(
+            clusterId = clusterId,
+            sourceType = InferredPersonEvidenceSourceType.ENTRY_TEXT,
+            sourceId = Uuid.random(),
+            label = label,
+            confidence = 1.0,
+            createdAt = epoch,
+        )
 }

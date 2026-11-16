@@ -122,6 +122,12 @@ class OfflineFirstPeopleRepository(
 
     override fun observeImportedPeopleCount(origin: PersonOrigin): Flow<Int> = personDao.observeCountByOrigin(origin.name)
 
+    /**
+     * Adds [contacts] to the directory, or updates the people already imported from them.
+     *
+     * A contact whose person was removed from the directory is left out, so a later import does not
+     * bring a removed person back.
+     */
     override suspend fun importContacts(
         contacts: List<DeviceContact>,
         origin: PersonOrigin,
@@ -131,12 +137,12 @@ class OfflineFirstPeopleRepository(
             var updatedCount = 0
 
             mediaClaimFence.withClaim {
+                val removedLookupKeys = personDao.getRemovedContactLookupKeys().toSet()
                 contacts.forEach { contact ->
                     val normalizedName = normalizePersonName(contact.displayName)
                     val normalizedLookupKey = normalizeOptionalText(contact.lookupKey)
-                    if (normalizedName.isBlank() || normalizedLookupKey == null) {
-                        return@forEach
-                    }
+                    if (normalizedName.isBlank() || normalizedLookupKey == null) return@forEach
+                    if (normalizedLookupKey in removedLookupKeys) return@forEach
 
                     val normalizedAliases = normalizePersonAliases(contact.aliases, normalizedName)
                     val normalizedPhotoUri = normalizeOptionalText(contact.photoUri)
@@ -144,7 +150,7 @@ class OfflineFirstPeopleRepository(
                     val now = Clock.System.now()
                     if (existing == null) {
                         personDao.insert(
-                            app.logdate.client.database.entities.people.PersonEntity(
+                            PersonEntity(
                                 id = Uuid.random(),
                                 name = normalizedName,
                                 photoUri = normalizedPhotoUri,
@@ -156,18 +162,18 @@ class OfflineFirstPeopleRepository(
                             ),
                         )
                         importedCount += 1
-                    } else {
-                        val updated =
-                            existing.copy(
-                                name = normalizedName,
-                                photoUri = normalizedPhotoUri ?: existing.photoUri,
-                                aliases = normalizePersonAliases(existing.aliases + normalizedAliases, normalizedName),
-                                origin = mergeImportedPersonOrigin(existing.origin, origin).name,
-                                lastUpdated = now,
-                            )
-                        personDao.update(updated)
-                        updatedCount += 1
+                        return@forEach
                     }
+                    personDao.update(
+                        existing.copy(
+                            name = normalizedName,
+                            photoUri = normalizedPhotoUri ?: existing.photoUri,
+                            aliases = normalizePersonAliases(existing.aliases + normalizedAliases, normalizedName),
+                            origin = mergeImportedPersonOrigin(existing.origin, origin).name,
+                            lastUpdated = now,
+                        ),
+                    )
+                    updatedCount += 1
                 }
             }
 

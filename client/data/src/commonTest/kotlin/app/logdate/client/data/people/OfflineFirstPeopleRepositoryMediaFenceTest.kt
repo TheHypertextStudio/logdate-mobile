@@ -36,6 +36,8 @@ class OfflineFirstPeopleRepositoryMediaFenceTest {
 
                     override suspend fun getByContactLookupKey(lookupKey: String): PersonEntity? = null
 
+                    override suspend fun getRemovedContactLookupKeys(): List<String> = emptyList()
+
                     override suspend fun getAll(): List<PersonEntity> = emptyList()
 
                     override fun observeCountByOrigin(origin: String): Flow<Int> = emptyFlow()
@@ -87,6 +89,8 @@ class OfflineFirstPeopleRepositoryMediaFenceTest {
                     override fun observeAll(): Flow<List<PersonEntity>> = emptyFlow()
 
                     override suspend fun getByContactLookupKey(lookupKey: String): PersonEntity? = null
+
+                    override suspend fun getRemovedContactLookupKeys(): List<String> = emptyList()
 
                     override suspend fun getAll(): List<PersonEntity> = emptyList()
 

@@ -1,34 +1,20 @@
 package app.logdate.feature.core.people.ui
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.mutablePreferencesOf
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.datastore.LogdatePreferencesDataSource
-import app.logdate.client.repository.knowledge.ContactImportSummary
 import app.logdate.client.repository.knowledge.DeviceContact
-import app.logdate.client.repository.knowledge.DeviceContactsReader
-import app.logdate.client.repository.knowledge.InferredPeopleRepository
 import app.logdate.client.repository.knowledge.PeopleContactsAccessMode
-import app.logdate.client.repository.knowledge.PeopleContactsRepository
-import app.logdate.client.repository.knowledge.PeopleRepository
 import app.logdate.shared.model.InferredPersonCluster
-import app.logdate.shared.model.InferredPersonEvidence
 import app.logdate.shared.model.Person
-import app.logdate.shared.model.PersonOrigin
+import app.logdate.ui.platform.PlatformKind
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -39,16 +25,19 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.uuid.Uuid
+import kotlin.time.Instant
+
+private val ava = DeviceContact(lookupKey = "ava", displayName = "Ava")
+private val sam = DeviceContact(lookupKey = "sam", displayName = "Sam")
 
 /**
- * Unit tests for [PeopleSettingsViewModel].
- *
- * This suite verifies the management of people-related settings, including
- * contact import permissions, access modes (full vs selected), and integration
- * with inferred people clusters.
+ * The People page in Settings has no switch of its own: Labs turns People on, and this page only
+ * counts the list, runs the contact import and reports what happened. The import has to carry on
+ * by itself once contacts access is granted and has to say where to allow access after a refusal.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PeopleSettingsViewModelTest {
@@ -58,8 +47,7 @@ class PeopleSettingsViewModelTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        preferences = LogdatePreferencesDataSource(InMemoryPreferencesDataStore(), featureAvailable = { true })
-        runBlocking { preferences.setPeopleEnabled(true) }
+        preferences = LogdatePreferencesDataSource(InMemoryPreferencesDataStore())
     }
 
     @AfterTest
@@ -68,120 +56,319 @@ class PeopleSettingsViewModelTest {
     }
 
     @Test
-    fun `reports enabled state for the internal People fixture`() =
+    fun `counts the people in the list and the names waiting for review`() =
         runTest(testDispatcher) {
-            val peopleStore = FakePeopleStore()
-            val viewModel = newViewModel(peopleStore, FakeDeviceContactsReader())
-            val collectJob = startCollecting(viewModel.uiState)
+            val store = FakePeopleStore()
+            store.people.value = listOf(Person(name = "Ava"), Person(name = "Sam"))
+            store.clusters.value = listOf(cluster("Maya"))
+            val viewModel = newViewModel(store)
+            val collectJob = startCollecting(viewModel)
 
             advanceUntilIdle()
 
-            assertTrue(viewModel.uiState.value.isPeopleEnabled)
-
-            tearDownViewModel(viewModel, collectJob)
-        }
-
-    @Test
-    fun `import all contacts is blocked while people is disabled`() =
-        runTest(testDispatcher) {
-            val peopleStore = FakePeopleStore()
-            val viewModel =
-                newViewModel(
-                    peopleStore = peopleStore,
-                    deviceContactsReader =
-                        FakeDeviceContactsReader(
-                            fullContacts = listOf(DeviceContact(lookupKey = "ava", displayName = "Ava")),
-                        ),
-                )
-            val collectJob = startCollecting(viewModel.uiState)
-
-            viewModel.setPeopleEnabled(false)
-            advanceUntilIdle()
-            viewModel.importAllContacts()
-            advanceUntilIdle()
-
-            assertEquals(0, peopleStore.importCalls)
-            assertIs<PeopleSettingsNotice.PeopleDisabled>(viewModel.uiState.value.notice)
-
-            tearDownViewModel(viewModel, collectJob)
-        }
-
-    @Test
-    fun `enabling people allows full contact import and persists access mode`() =
-        runTest(testDispatcher) {
-            val peopleStore = FakePeopleStore()
-            val viewModel =
-                newViewModel(
-                    peopleStore = peopleStore,
-                    deviceContactsReader =
-                        FakeDeviceContactsReader(
-                            fullContacts =
-                                listOf(
-                                    DeviceContact(lookupKey = "ava", displayName = "Ava"),
-                                    DeviceContact(lookupKey = "sam", displayName = "Sam"),
-                                ),
-                        ),
-                )
-            val collectJob = startCollecting(viewModel.uiState)
-
-            viewModel.setPeopleEnabled(true)
-            advanceUntilIdle()
-            viewModel.importAllContacts()
-            advanceUntilIdle()
-
-            assertTrue(viewModel.uiState.value.isPeopleEnabled)
             assertEquals(2, viewModel.uiState.value.totalPeopleCount)
-            assertEquals(PeopleContactsAccessMode.FULL.name, preferences.observePeopleContactsAccessMode().first())
-            assertIs<PeopleSettingsNotice.ContactsImported>(viewModel.uiState.value.notice)
-            assertTrue(peopleStore.refreshCalls > 0)
+            assertEquals(1, viewModel.uiState.value.pendingReviewCount)
 
             tearDownViewModel(viewModel, collectJob)
         }
 
     @Test
-    fun `selected contact import updates selected access mode`() =
+    fun `importing all contacts adds them and records full access and reports the result`() =
         runTest(testDispatcher) {
-            val peopleStore = FakePeopleStore()
-            val viewModel =
-                newViewModel(
-                    peopleStore = peopleStore,
-                    deviceContactsReader =
-                        FakeDeviceContactsReader(
-                            selectedContactsBySession =
-                                mapOf(
-                                    "session://contacts" to
-                                        listOf(DeviceContact(lookupKey = "ava", displayName = "Ava")),
-                                ),
-                            supportsSelectedContactsPicker = true,
-                        ),
-                )
-            val collectJob = startCollecting(viewModel.uiState)
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava, sam))
+            val collectJob = startCollecting(viewModel)
 
-            viewModel.setPeopleEnabled(true)
-            advanceUntilIdle()
-            viewModel.importSelectedContacts("session://contacts")
+            viewModel.importAllContacts()
             advanceUntilIdle()
 
-            assertEquals(1, viewModel.uiState.value.totalPeopleCount)
-            assertEquals(PeopleContactsAccessMode.SELECTED.name, preferences.observePeopleContactsAccessMode().first())
-            assertTrue(peopleStore.refreshCalls > 0)
+            val state = viewModel.uiState.value
+            assertEquals(2, state.totalPeopleCount)
+            assertEquals(PeopleNotice.ContactsImported(importedCount = 2, updatedCount = 0), state.notice)
+            assertFalse(state.isImporting)
+            assertEquals(PeopleContactsAccessMode.FULL.name, preferences.observePeopleContactsAccessMode().first())
+            assertEquals(1, store.refreshCalls)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `a failed import says so and adds no one`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore().apply { importFailure = IllegalStateException("contacts unavailable") }
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importAllContacts()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertIs<PeopleNotice.ImportContactsFailed>(state.notice)
+            assertEquals(0, state.totalPeopleCount)
+            assertFalse(state.isImporting)
+            assertEquals(PeopleContactsAccessMode.NONE.name, preferences.observePeopleContactsAccessMode().first())
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `an import still reports its result when looking for names afterwards fails`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore().apply { refreshFailure = IllegalStateException("scan failed") }
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importAllContacts()
+            advanceUntilIdle()
+
+            assertEquals(PeopleNotice.ContactsImported(importedCount = 1, updatedCount = 0), viewModel.uiState.value.notice)
+            assertFalse(viewModel.uiState.value.isImporting)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `contact import is neither offered nor run where it is unavailable`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava), contactImportAvailable = false)
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importAllContacts()
+            viewModel.importWhenContactsAllowed(deniedBefore = false)
+            viewModel.onContactsAccessChanged(granted = true, answered = true)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.contactImportAvailable)
+            assertEquals(0, store.importCalls)
+            assertNull(viewModel.uiState.value.notice)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `contact import is offered on Android only`() {
+        assertEquals(listOf(PlatformKind.Android), PlatformKind.entries.filter { it.supportsContactImport() })
+    }
+
+    @Test
+    fun `an import asked for without contacts access starts as soon as access is granted`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava, sam))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importWhenContactsAllowed(deniedBefore = false)
+            advanceUntilIdle()
+            assertEquals(0, store.importCalls)
+            assertNull(viewModel.uiState.value.notice)
+
+            viewModel.onContactsAccessChanged(granted = true, answered = true)
+            advanceUntilIdle()
+
+            assertEquals(1, store.importCalls)
+            assertEquals(2, viewModel.uiState.value.totalPeopleCount)
+            assertIs<PeopleNotice.ContactsImported>(viewModel.uiState.value.notice)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `a refused contacts request says where to allow access and imports nothing`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importWhenContactsAllowed(deniedBefore = false)
+            viewModel.onContactsAccessChanged(granted = false, answered = true)
+            advanceUntilIdle()
+
+            assertIs<PeopleNotice.ContactsAccessNeeded>(viewModel.uiState.value.notice)
+            assertEquals(0, store.importCalls)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `a contacts request that has not been answered yet shows nothing`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importWhenContactsAllowed(deniedBefore = false)
+            viewModel.onContactsAccessChanged(granted = false, answered = false)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.notice)
+            assertEquals(0, store.importCalls)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `asking again after a refusal says where to allow access at once and imports once it is granted`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importWhenContactsAllowed(deniedBefore = true)
+            advanceUntilIdle()
+            assertIs<PeopleNotice.ContactsAccessNeeded>(viewModel.uiState.value.notice)
+            assertEquals(0, store.importCalls)
+
+            viewModel.onContactsAccessChanged(granted = true, answered = true)
+            advanceUntilIdle()
+
+            assertEquals(1, store.importCalls)
+            assertEquals(PeopleNotice.ContactsImported(importedCount = 1, updatedCount = 0), viewModel.uiState.value.notice)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `contacts access that changes with no import waiting imports nothing`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.onContactsAccessChanged(granted = true, answered = true)
+            viewModel.onContactsAccessChanged(granted = false, answered = true)
+            advanceUntilIdle()
+
+            assertEquals(0, store.importCalls)
+            assertNull(viewModel.uiState.value.notice)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `a refusal ends the wait so a later grant does not import by itself`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importWhenContactsAllowed(deniedBefore = false)
+            viewModel.onContactsAccessChanged(granted = false, answered = true)
+            viewModel.onContactsAccessChanged(granted = true, answered = true)
+            advanceUntilIdle()
+
+            assertEquals(0, store.importCalls)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `opening the page looks for names in entries again`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore()
+            val viewModel = newViewModel(store)
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.refreshPeople()
+            advanceUntilIdle()
+
+            assertEquals(1, store.refreshCalls)
+            assertNull(viewModel.uiState.value.notice)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `a failed look for names says the list may be out of date until it is dismissed`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore().apply { refreshFailure = IllegalStateException("scan failed") }
+            val viewModel = newViewModel(store)
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.refreshPeople()
+            advanceUntilIdle()
+            assertIs<PeopleNotice.RefreshFailed>(viewModel.uiState.value.notice)
+
+            viewModel.dismissMessage()
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.notice)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `an import asked for twice while one is running runs once`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore().apply { importGate = CompletableDeferred() }
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importAllContacts()
+            viewModel.importAllContacts()
+            advanceUntilIdle()
+            assertEquals(1, store.importCalls)
+            assertTrue(viewModel.uiState.value.isImporting)
+
+            store.importGate?.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(1, store.importCalls)
+
+            tearDownViewModel(viewModel, collectJob)
+        }
+
+    @Test
+    fun `looking for names is skipped while an import runs and while another look is running`() =
+        runTest(testDispatcher) {
+            val store = FakePeopleStore().apply { importGate = CompletableDeferred() }
+            val viewModel = newViewModel(store, contacts = listOf(ava))
+            val collectJob = startCollecting(viewModel)
+
+            viewModel.importAllContacts()
+            viewModel.refreshPeople()
+            advanceUntilIdle()
+            assertEquals(0, store.refreshCalls)
+
+            store.importGate?.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(1, store.refreshCalls)
+
+            store.refreshGate = CompletableDeferred()
+            viewModel.refreshPeople()
+            viewModel.refreshPeople()
+            advanceUntilIdle()
+            assertEquals(2, store.refreshCalls)
+
+            store.refreshGate?.complete(Unit)
+            advanceUntilIdle()
+            viewModel.refreshPeople()
+            advanceUntilIdle()
+            assertEquals(3, store.refreshCalls)
 
             tearDownViewModel(viewModel, collectJob)
         }
 
     private fun newViewModel(
-        peopleStore: FakePeopleStore,
-        deviceContactsReader: FakeDeviceContactsReader,
+        store: FakePeopleStore,
+        contacts: List<DeviceContact> = emptyList(),
+        contactImportAvailable: Boolean = true,
     ): PeopleSettingsViewModel =
         PeopleSettingsViewModel(
             preferencesDataSource = preferences,
-            peopleRepository = peopleStore,
-            peopleContactsRepository = peopleStore,
-            deviceContactsReader = deviceContactsReader,
-            inferredPeopleRepository = peopleStore,
+            peopleRepository = store,
+            peopleContactsRepository = store,
+            deviceContactsReader = FakeDeviceContactsReader(fullContacts = contacts),
+            inferredPeopleRepository = store,
+            contactImportAvailable = contactImportAvailable,
         )
 
-    private fun TestScope.startCollecting(stateFlow: StateFlow<*>): Job = stateFlow.onEach { }.launchIn(this)
+    private fun cluster(name: String): InferredPersonCluster =
+        InferredPersonCluster(
+            displayNameHint = name,
+            createdAt = Instant.fromEpochSeconds(0),
+            lastUpdated = Instant.fromEpochSeconds(0),
+        )
+
+    private fun TestScope.startCollecting(viewModel: PeopleSettingsViewModel): Job = viewModel.uiState.onEach { }.launchIn(this)
 
     private suspend fun tearDownViewModel(
         viewModel: PeopleSettingsViewModel,
@@ -191,109 +378,4 @@ class PeopleSettingsViewModelTest {
         val scopeJob = viewModel.viewModelScope.coroutineContext[Job]
         scopeJob?.children?.toList()?.forEach { child -> child.cancelAndJoin() }
     }
-}
-
-private class FakePeopleStore :
-    PeopleRepository,
-    PeopleContactsRepository,
-    InferredPeopleRepository {
-    private val people = MutableStateFlow<List<Person>>(emptyList())
-    private val selectedCount = MutableStateFlow(0)
-    private val fullCount = MutableStateFlow(0)
-    private val clusters = MutableStateFlow<List<InferredPersonCluster>>(emptyList())
-
-    var importCalls: Int = 0
-    var refreshCalls: Int = 0
-
-    override suspend fun getPerson(uid: Uuid): Person = people.value.first { it.uid == uid }
-
-    override fun getAllPeople(): Flow<List<Person>> = people
-
-    override suspend fun resolvePersonByName(name: String): Person? = null
-
-    override suspend fun resolvePersonByDescription(description: String): Person? = null
-
-    override suspend fun addPerson(person: Person) = Unit
-
-    override suspend fun updatePerson(person: Person) = Unit
-
-    override suspend fun deletePerson(uid: Uuid) = Unit
-
-    override suspend fun addAliasToPerson(
-        personUid: Uuid,
-        alias: String,
-    ) = Unit
-
-    override suspend fun removeAliasFromPerson(
-        personUid: Uuid,
-        alias: String,
-    ) = Unit
-
-    override fun observeImportedPeopleCount(origin: PersonOrigin): Flow<Int> =
-        when (origin) {
-            PersonOrigin.CONTACT_SELECTED -> selectedCount
-            PersonOrigin.CONTACT_FULL -> fullCount
-            PersonOrigin.INFERRED -> MutableStateFlow(0)
-            PersonOrigin.MANUAL -> MutableStateFlow(0)
-        }
-
-    override suspend fun importContacts(
-        contacts: List<DeviceContact>,
-        origin: PersonOrigin,
-    ): ContactImportSummary {
-        importCalls += 1
-        val importedPeople =
-            contacts.map {
-                Person(
-                    name = it.displayName,
-                    origin = origin,
-                )
-            }
-        people.value = people.value + importedPeople
-        when (origin) {
-            PersonOrigin.CONTACT_SELECTED -> selectedCount.value += contacts.size
-            PersonOrigin.CONTACT_FULL -> fullCount.value += contacts.size
-            PersonOrigin.INFERRED -> Unit
-            PersonOrigin.MANUAL -> Unit
-        }
-        return ContactImportSummary(importedCount = contacts.size, updatedCount = 0)
-    }
-
-    override fun observeOpenClusters(): Flow<List<InferredPersonCluster>> = clusters
-
-    override fun observeEvidence(clusterId: Uuid): Flow<List<InferredPersonEvidence>> = MutableStateFlow(emptyList())
-
-    override suspend fun refresh() {
-        refreshCalls += 1
-    }
-
-    override suspend fun confirmClusterAsPerson(clusterId: Uuid) = Unit
-
-    override suspend fun rejectCluster(clusterId: Uuid) = Unit
-}
-
-private class FakeDeviceContactsReader(
-    private val fullContacts: List<DeviceContact> = emptyList(),
-    private val selectedContactsBySession: Map<String, List<DeviceContact>> = emptyMap(),
-    private val supportsSelectedContactsPicker: Boolean = false,
-) : DeviceContactsReader {
-    override fun supportsSelectedContactsPicker(): Boolean = supportsSelectedContactsPicker
-
-    override suspend fun readAllContacts(): List<DeviceContact> = fullContacts
-
-    override suspend fun readSelectedContacts(sessionUri: String): List<DeviceContact> = selectedContactsBySession[sessionUri].orEmpty()
-}
-
-private class InMemoryPreferencesDataStore : DataStore<Preferences> {
-    private val state = MutableStateFlow<Preferences>(mutablePreferencesOf())
-    private val mutex = Mutex()
-
-    override val data: Flow<Preferences> = state
-
-    override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences =
-        mutex.withLock {
-            val updated = transform(state.value)
-            state.value = updated
-            updated
-        }
 }

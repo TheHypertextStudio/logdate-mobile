@@ -72,6 +72,12 @@ import logdate.client.feature.core.generated.resources.watch_settings
 import logdate.client.feature.core.generated.resources.watch_settings_description
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * The Personal group of the Settings overview.
+ *
+ * @param showEventsSettings whether Events has launched; its row opens a route that closes at once otherwise
+ * @param showPeopleSettings whether People is turned on for this installation
+ */
 @Composable
 internal fun SettingsPersonalSection(
     onNavigateToProfile: () -> Unit,
@@ -83,6 +89,8 @@ internal fun SettingsPersonalSection(
     onNavigateToEventsSettings: () -> Unit,
     onNavigateToPeopleSettings: () -> Unit,
     onNavigateToLibrarySettings: () -> Unit,
+    showEventsSettings: Boolean,
+    showPeopleSettings: Boolean,
     placesBetaSettings: @Composable () -> Unit = {},
 ) {
     SettingsSection(
@@ -125,18 +133,22 @@ internal fun SettingsPersonalSection(
             icon = { Icon(Icons.Default.Replay, contentDescription = null) },
             onClick = onNavigateToRewindSettings,
         )
-        SettingsNavigationItem(
-            title = stringResource(Res.string.events_settings),
-            description = stringResource(Res.string.events_settings_description),
-            icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
-            onClick = onNavigateToEventsSettings,
-        )
-        SettingsNavigationItem(
-            title = stringResource(Res.string.people_title),
-            description = stringResource(Res.string.people_overview_description),
-            icon = { Icon(Icons.Default.Person, contentDescription = null) },
-            onClick = onNavigateToPeopleSettings,
-        )
+        if (showEventsSettings) {
+            SettingsNavigationItem(
+                title = stringResource(Res.string.events_settings),
+                description = stringResource(Res.string.events_settings_description),
+                icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                onClick = onNavigateToEventsSettings,
+            )
+        }
+        if (showPeopleSettings) {
+            SettingsNavigationItem(
+                title = stringResource(Res.string.people_title),
+                description = stringResource(Res.string.people_overview_description),
+                icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                onClick = onNavigateToPeopleSettings,
+            )
+        }
         placesBetaSettings()
         SettingsNavigationItem(
             title = stringResource(Res.string.library_settings),

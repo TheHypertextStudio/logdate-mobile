@@ -51,6 +51,7 @@ import app.logdate.feature.events.ui.calendarsync.CalendarSyncCalendarsScreen
 import app.logdate.feature.events.ui.calendarsync.CalendarSyncSettingsScreen
 import app.logdate.feature.events.ui.settings.EventsSettingsScreen
 import app.logdate.feature.journals.navigation.JournalMergeRoute
+import app.logdate.feature.journals.navigation.NoteDetailRoute
 import app.logdate.feature.rewind.ui.settings.RewindSettingsScreen
 import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.ViewModelsPerVisit
@@ -362,50 +363,43 @@ fun EntryProviderScope<NavKey>.settingsEntries(
         }
     }
     taggedEntry<PeopleSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.People, categories)) {
-        if (FeatureFlag.PEOPLE.availableForLaunch) {
+        PeopleRoute(onExit = onBack) {
             val contactsPermissionState = rememberContactsPermissionState()
             PeopleSettingsScreen(
                 onBack = onBack,
                 onBrowsePeople = { onNavigateTo(PeopleDirectoryRoute) },
                 onOpenReviewInbox = { onNavigateTo(PeopleInboxRoute) },
                 contactsPermissionState = contactsPermissionState,
-                onImportSelectedContacts = {},
             )
-        } else {
-            ExitDeferredRoute(onBack)
         }
     }
     taggedEntry<PeopleDirectoryRoute>(metadata = settingsDetailMetadata(SettingsCategory.People, categories)) {
-        if (FeatureFlag.PEOPLE.availableForLaunch) {
+        PeopleRoute(onExit = onBack) {
             PeopleDirectoryScreen(
                 onBack = onBack,
                 onOpenPerson = { onNavigateTo(PersonDetailRoute(it)) },
             )
-        } else {
-            ExitDeferredRoute(onBack)
         }
     }
     taggedEntry<PeopleInboxRoute>(metadata = settingsDetailMetadata(SettingsCategory.People, categories)) {
-        if (FeatureFlag.PEOPLE.availableForLaunch) {
+        PeopleRoute(onExit = onBack) {
             PeopleInboxScreen(onBack = onBack)
-        } else {
-            ExitDeferredRoute(onBack)
         }
     }
     taggedEntry<PersonDetailRoute>(metadata = settingsDetailMetadata(SettingsCategory.People, categories)) { route ->
-        if (FeatureFlag.PEOPLE.availableForLaunch) {
+        PeopleRoute(onExit = onBack) {
             PersonDetailScreen(
                 personId = Uuid.parse(route.personId),
                 onBack = onBack,
+                onOpenEntry = { entryId -> onNavigateTo(NoteDetailRoute(entryId)) },
             )
-        } else {
-            ExitDeferredRoute(onBack)
         }
     }
 }
 
+/** Closes a route whose feature is not available, as soon as the route opens. */
 @Composable
 @Suppress("ktlint:standard:function-naming")
-private fun ExitDeferredRoute(onBack: () -> Unit) {
+internal fun ExitDeferredRoute(onBack: () -> Unit) {
     LaunchedEffect(Unit) { onBack() }
 }

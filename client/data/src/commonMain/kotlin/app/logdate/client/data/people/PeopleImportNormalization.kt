@@ -37,7 +37,9 @@ internal fun normalizePersonKey(name: String): String =
     name
         .trim()
         .lowercase()
-        .replace(Regex("\\s+"), " ")
+        .replace(whitespaceRun, " ")
+
+private val whitespaceRun = Regex("\\s+")
 
 internal fun mergeImportedPersonOrigin(
     existingOriginName: String,

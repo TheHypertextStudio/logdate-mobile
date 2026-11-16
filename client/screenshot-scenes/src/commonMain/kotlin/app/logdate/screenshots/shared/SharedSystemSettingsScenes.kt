@@ -313,6 +313,7 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                 uiState =
                     LabsUiState.Ready(
                         listOf(
+                            LabsFlag(FeatureFlag.PEOPLE, enabled = false),
                             LabsFlag(FeatureFlag.WATCH_EXPERIENCE_V2, enabled = true),
                             LabsFlag(FeatureFlag.ACTIVITY_AWARENESS, enabled = true),
                         ),
