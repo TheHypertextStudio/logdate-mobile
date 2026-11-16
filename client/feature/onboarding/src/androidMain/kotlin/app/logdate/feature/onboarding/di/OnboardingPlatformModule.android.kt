@@ -1,5 +1,7 @@
 package app.logdate.feature.onboarding.di
 
+import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.media.AndroidManagedMediaDiscarder
 import app.logdate.client.media.AndroidManagedMediaImportSource
 import app.logdate.client.media.ManagedMediaImporter
@@ -11,6 +13,12 @@ import org.koin.dsl.module
 
 actual val onboardingPlatformModule: Module =
     module {
+        single {
+            OnboardingWatchSetup(
+                coordinator = get(),
+                enabled = get<FeatureFlagStore>().observe(FeatureFlag.WATCH_EXPERIENCE_V2),
+            )
+        }
         single<SelectedMemoryMediaImporter> {
             val manager = get<MediaManager>()
             val context = androidContext().applicationContext

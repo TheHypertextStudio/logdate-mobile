@@ -7,6 +7,7 @@ import org.koin.dsl.module
 
 actual val onboardingPlatformModule: Module =
     module {
+        single { OnboardingWatchSetup.None }
         single<SelectedMemoryMediaImporter> {
             val manager = get<MediaManager>()
             object : SelectedMemoryMediaImporter {
