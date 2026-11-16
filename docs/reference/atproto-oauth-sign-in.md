@@ -271,7 +271,15 @@ RFC 9449, the DPoP specification, and each is explained where it appears.
 
 When the nonce is missing or stale, the OAuth endpoints answer `400` with the error `use_dpop_nonce`
 and a `DPoP-Nonce` header holding the value to retry with. The `/xrpc` methods answer `401` with the
-same header but without a `WWW-Authenticate: DPoP error="use_dpop_nonce"` header.
+same header but without a `WWW-Authenticate: DPoP error="use_dpop_nonce"` header. A client that
+looks for that header before retrying, as RFC 9449 section 9 describes for resource servers, does
+not retry.
+
+Each server instance makes its own nonce when it starts and replaces it on its own timer, and it
+accepts only the one it holds. A deployment that runs several instances, or starts and stops them as
+load changes, therefore refuses a proof whose nonce came from a different instance or from before a
+restart. A client that retries with the nonce in the refusal succeeds, and one that does not
+fails intermittently.
 
 ## Scopes
 

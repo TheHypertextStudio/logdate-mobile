@@ -7,35 +7,58 @@ secrets, debugging token issues) and contributors (extending auth flows).
 
 LogDate Cloud uses JSON Web Tokens (JWT) for session management and API
 authentication. This document describes the token types, their lifecycle,
-how they're issued, validated, stored, and rotated across the server and
+how they're issued, validated, stored, refreshed and revoked, across the server and
 every client platform.
+
+How a person obtains the first token (a passkey, Google, or the restore
+credential) is described in [the auth API notes](../server/docs/auth-v1-api.md)
+and in the interactive reference at `/docs`. This page starts after that:
+what the server hands back and what happens to it.
 
 ## Token types
 
-| Type        | Lifetime   | Where it's used                                     | Where it's set                                                |
-| ----------- | ---------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| **Access**  | 1 hour     | `Authorization: Bearer <token>` on protected routes | Returned by signup-complete / signin-complete / token-refresh |
-| **Refresh** | 30 days    | Body of `POST /api/v1/auth/token/refresh`           | Returned alongside access token at signup/signin              |
-| **Session** | 15 minutes | Body of `POST /api/v1/auth/signup/passkey/complete` | Returned by `/auth/signup/passkey/begin`                      |
+| Type        | Lifetime | Where it's used                                                             | Where it's set                                                |
+| ----------- | -------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Access**  | 1 hour   | `Authorization: Bearer <token>` on protected routes                         | Returned by signup-complete / signin-complete / token-refresh |
+| **Refresh** | 30 days  | Body of `POST /api/v1/auth/token/refresh` and of `POST /api/v1/auth/logout` | Returned alongside the access token at signup/signin          |
 
-All three are HMAC-SHA256-signed JWTs (`alg: HS256`) with the same payload
-shape:
+Both are HMAC-SHA256-signed JWTs (`alg: HS256`) with the same payload shape.
+The `sessionToken` that a passkey sign-up returns from `begin` and sends back
+to `complete` is not a JWT: it is an opaque ID of a 15-minute, single-use
+record kept by `SessionManager` (in PostgreSQL, or in memory when no database is
+configured).
 
 ```json
 {
-  "sub": "<account-id-or-session-id>",
+  "sub": "<account-id>",
   "iss": "logdate.app",
   "aud": "logdate-api",
   "exp": 1735689600,
   "iat": 1735686000,
-  "type": "access" | "refresh" | "session",
-  "did": "did:plc:ewvi7nxzyoun6zhxrhs64oiz"
+  "type": "access" | "refresh",
+  "jti": "<random UUID>",
+  "did": "did:plc:ewvi7nxzyoun6zhxrhs64oiz",
+  "sid": "<device session id>",
+  "scp": "sync"
 }
 ```
 
-`did` is set on access and refresh tokens for accounts that have a
-registered AT Protocol identity; it's omitted from session tokens. The
-`iss`/`aud` pair is validated on every token check.
+- `jti` is a unique ID on every token, so two tokens minted in the same
+  second are still different strings and can be revoked separately.
+- `did` is set for accounts that have a registered AT Protocol identity and
+  omitted otherwise. The `iss`/`aud` pair is validated on every token check.
+- `sid` and `scp` appear only on **device tokens**, the tokens a linked
+  device such as a watch holds instead of a sign-in. `sid` is the device
+  session the token belongs to and `scp` is the scope, `sync`. A full-access
+  token, the kind a phone or computer gets by signing in, carries neither.
+  A token with `scp` but no `sid`, or `sid` but no `scp`, is invalid. A
+  token whose `scp` this build does not recognise is invalid.
+  [Linked device sessions](../server/docs/device-sessions-api.md) describes
+  how device tokens are issued, renewed and ended.
+
+The server reads claims only after the signature verifies, and it ignores
+claims it does not know. A later release can therefore add a claim without
+invalidating tokens that are still in circulation during a rollback.
 
 The `did` value is the account's AT Protocol DID. Hosted accounts get a
 `did:plc` by default; a server configured with `ATPROTO_HOSTED_DID_METHOD=web`
@@ -49,12 +72,12 @@ here.
 ### Signing algorithm
 
 - **Algorithm**: HS256 (HMAC with SHA-256)
-- **Key**: configurable secret (minimum 256 bits / 32 chars)
+- **Key**: configurable secret (minimum 32 characters)
 - **Implementation**: handcrafted in `JwtTokenService` using
   `javax.crypto.Mac.HmacSHA256` and `kotlinx.serialization.json` for the
   payload. No external JWT library. The surface area is small enough to
   audit; if you change anything in the signer, mirror it in
-  `validateToken`.
+  `verifiedPayload`, the one place every token type is checked.
 
 ### Security best practices
 
@@ -66,8 +89,9 @@ here.
 3. **Secure storage on client**: platform-specific secure storage
    (Keychain / Android Keystore via `EncryptedSharedPreferences`). See
    [Client-side storage](#client-side-storage).
-4. **Transport security**: HTTPS only; production refuses to start with
-   `REQUIRE_HTTPS=false`.
+4. **Transport security**: HTTPS only. With `LOGDATE_ENV=production` the
+   server redirects plain HTTP to HTTPS unless `REQUIRE_HTTPS` says
+   otherwise; see [environment variables](../server/docs/environment-variables.md).
 
 ## API endpoints
 
@@ -93,9 +117,22 @@ Content-Type: application/json
 }
 ```
 
-A `401 INVALID_REFRESH_TOKEN` response means the refresh token is itself
-invalid, expired, or wrong type — the client should clear local session
-state and force a sign-in.
+For a full-access refresh token the response carries only a new access token;
+the refresh token stays the same until it expires after 30 days. For a device
+token the response may also carry a new `refreshToken`, which the device must
+store. The server issues one only when the device session is close to the end
+of its lifetime and extends the session at the same time.
+
+The refresh endpoint answers `401` in three ways:
+
+| Code                     | Meaning                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `INVALID_REFRESH_TOKEN`  | The token is missing, malformed, expired, signed by another secret, or of the wrong type |
+| `REFRESH_TOKEN_REVOKED`  | The token was revoked by a sign-out, see [Sign-out](#sign-out)                           |
+| `DEVICE_SESSION_REVOKED` | A device token whose session was removed or has expired                                  |
+
+All three mean the credential will never work again, and the client should
+clear local session state and ask for a sign-in.
 
 ### Protected endpoint example
 
@@ -108,23 +145,34 @@ A `401 INVALID_TOKEN` response from a protected endpoint means the access
 token is invalid or expired — the client should attempt a refresh and
 retry once before bouncing the user to the auth screen.
 
+Device tokens are accepted only on the routes that opt in to the `sync` scope.
+On routes that do not accept the `sync` scope, a device token answers
+`403 DEVICE_SCOPE_DENIED` from its signature and scope alone, whether or not its
+device session is still active. `401 DEVICE_SESSION_REVOKED` comes only from
+routes that accept the scope, where the session is checked.
+
 ## Server-side implementation
 
 `server/src/main/kotlin/app/logdate/server/auth/JwtTokenService.kt` is the
-production implementation, behind a thin `TokenService` interface:
+production implementation, behind the `TokenService` interface:
 
 ```kotlin
 interface TokenService {
     fun generateAccessToken(accountId: String, did: String? = null): String
     fun generateRefreshToken(accountId: String, did: String? = null): String
+    fun generateDeviceAccessToken(accountId: String, did: String?, sessionId: String): String
+    fun generateDeviceRefreshToken(accountId: String, did: String?, sessionId: String): String
+    fun generateEnrollmentTokens(accountId: String, did: String?, enrollmentId: String, issuedAt: Instant): AccountTokens
     fun generateSessionToken(sessionId: String): String
     fun validateAccessToken(token: String): String?
     fun validateRefreshToken(token: String): String?
+    fun decodeAccessToken(token: String): AccessTokenClaims?
+    fun decodeRefreshToken(token: String): AccessTokenClaims?
     fun validateSessionToken(token: String): String?
 }
 ```
 
-A `StubTokenService` in `server/.../auth/StubTokenService.kt` is wired
+`InMemoryTokenService` in `server/.../auth/InMemoryTokenService.kt` is wired
 in for tests when token cryptography isn't the thing under test.
 
 `validate*Token` returns:
@@ -132,31 +180,32 @@ in for tests when token cryptography isn't the thing under test.
 - the `sub` claim string when the token is well-formed, signed correctly,
   not expired, and the `type`/`iss`/`aud` match the call;
 - `null` for any other reason (signature mismatch, expired, wrong type,
-  malformed). The client cannot distinguish "wrong signature" from
-  "expired" by validation result; it gets a generic 401, which is the
-  right shape — the only place the difference matters is server-side
-  debugging via Cloud Logging.
+  malformed) and, for the access and refresh variants, for every device
+  token. The client cannot distinguish "wrong signature" from "expired" by
+  validation result; it gets a generic 401, which is the right shape — the
+  only place the difference matters is server-side debugging via Cloud
+  Logging.
 
-### Library choice: handcrafted, not a third-party JWT library
+`decode*Token` returns an `AccessTokenClaims` (account, DID, device session and
+scope) for full-access and device tokens alike. `AccessTokenVerifier` uses it
+to decide whether a route accepts a token: a full-access token passes
+everywhere, and a device token passes only on routes marked as accepting the
+`sync` scope and only while its device session is still active.
 
-We considered and rejected pulling in `jjwt`, `jwt-kt`, Auth0's `java-jwt`,
-and similar JWT libraries. The argument for handcrafting:
+Tokens from `generateEnrollmentTokens` are deterministic for a given enrollment
+and issue time, so a device-approval request that is retried after a lost
+response or a server restart gets the same session back instead of a second one.
 
-- **Auditable surface**: the entire signer + verifier is ~200 lines of
-  Kotlin in `JwtTokenService`. A library brings transitive dependencies,
-  CVE exposure, and a much larger codebase to read when something goes
-  wrong.
-- **No multiplatform need**: token _generation_ and _validation_ only run
-  on the JVM (the server). The client never decodes JWT bytes — it
-  treats them as opaque. So a Kotlin Multiplatform JWT library buys
-  nothing.
-- **HMAC + JSON is small**: `javax.crypto.Mac` + `kotlinx.serialization`
-  cover the entire flow. The base64url encoding helpers fit in a few
-  lines.
+### The signer
 
-If we ever need RS256, ECDSA, JWKS rotation, or anything more exotic,
-revisit this and bring in a library — those are real engineering
-problems we shouldn't reinvent.
+`JwtTokenService` signs and verifies tokens itself, with no external JWT
+library. It is JVM-only, because the server is the only place tokens are
+generated or validated; clients treat them as opaque. It supports one
+algorithm, HS256, and one shared secret, and is built on
+`javax.crypto.Mac.HmacSHA256` and `kotlinx.serialization.json`.
+`verifiedPayload` is the single place where a token's signature, expiry, type,
+issuer and audience are checked, so a change to the signer must be mirrored
+there.
 
 ### Error handling
 
@@ -180,6 +229,16 @@ Required:
 JWT_SECRET=<32+ random characters>
 ```
 
+Outside production an unset `JWT_SECRET` makes the server generate a random
+secret for the process, so every token stops working when the process
+restarts.
+
+`JWT_SECRET` signs only these tokens. Two other secrets are separate and must
+differ from it in production: `ATPROTO_SIGNING_KEY_KEK` encrypts the hosted AT
+Protocol signing keys stored in the database, and `ATPROTO_SESSION_SECRET`
+signs AT Protocol OAuth session tokens. Rotating `JWT_SECRET` therefore affects
+neither. See [environment variables](../server/docs/environment-variables.md).
+
 Token lifetimes are NOT configurable via environment variables. They
 live as constants in `JwtTokenService.Companion`:
 
@@ -189,10 +248,7 @@ private val REFRESH_TOKEN_DURATION = 30.days
 private val SESSION_TOKEN_DURATION = 15.minutes
 ```
 
-Changing them is a code change. If we ever need them per-environment
-configurable, the right move is to read overrides from env vars in
-`fromEnvironment` rather than baking different constants into different
-images.
+Changing them is a code change.
 
 ### Generating a fresh JWT_SECRET
 
@@ -200,8 +256,8 @@ images.
 openssl rand -base64 32
 ```
 
-64 chars of base64 = 384 bits of entropy, comfortably above the 256-bit
-minimum HS256 key size.
+44 characters of base64 carry 256 bits of entropy, which is the minimum
+HS256 key size and is above the 32-character floor the server enforces.
 
 ### Rotating JWT_SECRET
 
@@ -220,150 +276,105 @@ gcloud run services update "$SERVICE" \
   --update-secrets=JWT_SECRET=logdate-jwt-secret:latest
 ```
 
-**Rotating the secret invalidates every issued token at once.** Existing
-sessions on every device will hit a refresh failure on the next API
-call and be forced to re-sign-in. Rotate during a low-traffic window
+**Rotating the secret invalidates every issued token at once**, device tokens
+included. Existing sessions on every device will hit a refresh failure on the
+next API call and be forced to re-sign-in. Rotate during a low-traffic window
 unless you're rotating because the previous secret was compromised, in
-which case sign everyone out fast is exactly the goal.
+which case signing everyone out fast is exactly the goal.
 
 ## Client-side storage
 
 `client/datastore/src/commonMain/kotlin/app/logdate/client/datastore/SessionStorage.kt`
 is the multiplatform interface every client uses. Every platform binds it
 to `SecureSessionStorage`, which keeps the session in the platform's
-encrypted store (Android Keystore, the iOS Keychain, and the device key on
-desktop).
+secure storage: `EncryptedSharedPreferences` under an Android Keystore
+master key on Android, Keychain items on iOS, and an AES-GCM-encrypted
+preferences node under the device key on desktop. The
+[encryption formats reference](./reference/encryption-formats.md#secure-storage)
+describes each store.
 
-Sessions are persisted as a `UserSession(accessToken, refreshToken,
-accountId)` serialized record.
+A session is a `UserSession(accessToken, refreshToken, accountId)`. It is
+stored as one JSON record, `session_record_v2`, and is always read together
+with the server it came from as an `OriginBoundSession`, so a session is only
+used against the server that issued it and changing the configured server
+cannot cause one server's tokens to be sent to another.
 
-### Android — using SessionStorage
-
-The Android app receives a `SessionStorage` instance via Koin and never
-talks to DataStore or `EncryptedSharedPreferences` directly:
-
-```kotlin
-class MyAndroidViewModel(
-    private val sessionStorage: SessionStorage,
-) : ViewModel() {
-
-    suspend fun storeTokens(accessToken: String, refreshToken: String, accountId: String) {
-        sessionStorage.saveSession(
-            UserSession(
-                accessToken = accessToken,
-                refreshToken = refreshToken,
-                accountId = accountId,
-            ),
-        )
-    }
-
-    suspend fun getAccessToken(): String? =
-        sessionStorage.getSession()?.accessToken
-}
-```
-
-`SecureSessionStorage` on Android keeps the session in Keystore-backed
-encrypted storage.
-
-### iOS — using SessionStorage
-
-iOS uses the same `SessionStorage` interface, with an implementation
-that writes to the iOS Keychain via `Security.framework`:
-
-```swift
-// Pseudocode — actual binding happens through the shared Kotlin
-// module, but this is the equivalent native flow.
-class TokenStore {
-    func storeAccessToken(_ token: String) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "app.logdate.tokens",
-            kSecAttrAccount as String: "access_token",
-            kSecValueData as String: token.data(using: .utf8)!,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-        ]
-        SecItemAdd(query as CFDictionary, nil)
-    }
-}
-```
-
-The `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` flag is important:
-it pins the token to the device so a backup can't carry it to a new
-device, and it requires the device to be unlocked at the moment of
-read.
+Code outside `SecureSessionStorage` never touches the secure store directly.
+It receives a `SessionStorage` through Koin and calls its session methods.
+The storage also provides guarded variants of these methods. A sign-in, a
+refresh and a sign-out each capture a snapshot first and commit only if no
+later sign-in or sign-out replaced the session in the meantime. This is what
+stops a slow refresh from reviving a session the person has just ended.
 
 ### Per-backend-URL scoping
 
-Storage keys are scoped by base-64-encoded backend URL:
-`access_token_<b64-hash>`, `refresh_token_<b64-hash>`,
-`account_id_<b64-hash>`. This is intentional — the client supports
-multiple backends (cloud, self-hosted, etc.) and switching backends
-doesn't pollute another backend's session. Switching backend URL
-effectively logs the user out from the perspective of the running app,
-which is what we want.
-
-This is undocumented in any user-visible copy; surface it in
-account-settings copy if a multi-backend UX is ever shipped.
+Storage keys are scoped by the URL-safe Base64 of the backend URL, for example
+`session_record_v2_<b64>`. The client supports multiple backends (cloud,
+self-hosted, etc.), and switching backends doesn't pollute another backend's
+session. Switching the backend URL effectively logs the user out from the
+perspective of the running app.
 
 ## Refresh flow
 
 The client manages refresh entirely on its own — there's no
-server-driven refresh hint. On any 401 from a protected route, the
+server-driven refresh hint. When an authenticated call returns 401, the
 client:
 
 1. Calls `POST /api/v1/auth/token/refresh` with the stored refresh
    token.
-2. On success, stores the new access token and retries the original
-   request.
-3. On failure (401 from refresh, network error, etc.), clears local
-   session state and bounces the user to the auth screen.
+2. On success, stores the new access token (and the new refresh token, if
+   the response carries one) and retries the original request once.
+3. If the server answers that the refresh credential is itself finished
+   (`INVALID_REFRESH_TOKEN` or `REFRESH_TOKEN_REVOKED`, and for a linked
+   device also `DEVICE_SESSION_REVOKED`), clears the local session so the
+   person is asked to sign in again.
+4. For any other failure, such as a network error or a 5xx, keeps the
+   session and reports the failure. A flaky connection must not sign anyone
+   out.
 
-The pattern is implemented inline in `DefaultPasskeyAccountRepository`
-(`getAccountInfo`, `deletePasskey`) and `DefaultSyncManager.retryWithFreshToken`
-for sync calls. Every authenticated call site needs to follow the same
-pattern.
+Two classes share this pattern. `AccountSessionRefreshCoordinator` (in
+`client/data`) wraps account calls such as reading the profile or removing a
+passkey. `SyncTokenRefresher` (in `client/sync`) wraps every upload and
+download. A new authenticated call site should go through one of them and not
+refresh on its own.
 
 ## Sign-out
 
-Sign-out is local-only today: `DefaultPasskeyAccountRepository.signOut`
-clears `SessionStorage`, the platform account manager, and the
-in-memory account state. The refresh token _remains valid on the
-server_ until its 30-day expiry — the server contract has no revoke
-endpoint yet. This is a known gap; the launch audit captures the
-trade-offs (per-account refresh-token version vs JTI denylist) and
-neither has been picked yet.
+`AccountSessionRefreshCoordinator.signOut` clears the local session first, so
+signing out always succeeds on the device, and then calls
+`POST /api/v1/auth/logout` with the refresh token. If that request fails the
+failure is logged and the local sign-out stays.
+
+The server records a SHA-256 hash of the revoked refresh token in the
+`revoked_refresh_tokens` table (an in-memory set when no database is
+configured) and checks it on every refresh. A revoked token answers
+`REFRESH_TOKEN_REVOKED` from then on. Revocation applies to the refresh token
+only. Access tokens are not checked against it, so an access token that was
+already issued keeps working until its hour is up.
 
 ## Monitoring and logging
 
-### Security events to log
+### What the server logs
 
-- **Token generation**: log `accountId`, never the token value. The
-  signature is enough to recover the account when investigating, and
-  logging the token itself is a credential leak.
-- **Token validation failures**: log the reason
-  (`signature_mismatch` / `expired` / `wrong_type` / `malformed`) so
-  patterns can be spotted in Cloud Logging without re-running the
-  validator.
-- **Refresh token usage**: log every successful refresh with
-  `accountId` + a hash of the token's `iat` so you can correlate
-  multiple refreshes against the same originating refresh token.
-- **Refresh token rejection**: log every refresh failure with the
-  reason. A spike here is the leading indicator for a leaked or
-  rotated `JWT_SECRET`.
+- **Token generation**: no token value is ever logged. A token in a log is a
+  credential leak.
+- **Token validation failures**: each cause logs its own warning, so patterns
+  can be spotted in Cloud Logging without re-running the validator: an
+  invalid format, a failed signature, a type mismatch, and an
+  issuer/audience mismatch. An expired token logs at debug level.
+- **Sign-in and sign-up**: structured audit entries, described in
+  [`audit-schema.md`](../server/docs/audit-schema.md).
 
-### Metrics to track
+A spike in signature failures is the leading indicator of a rotated or leaked
+`JWT_SECRET`.
 
-- Token generation rate (per type).
-- Token validation success vs. failure rate.
-- Refresh frequency per active account (a sudden spike implies a
-  client refresh loop bug).
-- Average elapsed time between `iat` and `exp` use — i.e. how long
-  tokens actually live in the wild before getting rotated.
+### Metrics
 
-These don't have a Prometheus surface in `JwtTokenService` today; they
-flow through `AuthMetricsRegistry` in the auth route handlers. See
-`/api/v1/auth/metrics/prometheus` and
-`/api/v1/auth/metrics`.
+`AuthMetricsRegistry` counts every auth operation (success, error, duration),
+errors by code and rate-limit hits. Token refresh is recorded as
+`auth.token.refresh`. Both endpoints require a bearer token:
+`GET /api/v1/auth/metrics` returns JSON and
+`GET /api/v1/auth/metrics/prometheus` returns Prometheus text.
 
 ## Troubleshooting
 
@@ -379,6 +390,12 @@ flow through `AuthMetricsRegistry` in the auth route handlers. See
    `base64url-decode the middle segment, look at exp`. (Decoding to
    _read_ is fine; never trust the decoded payload without verifying
    the signature.)
+4. Confirm it is the right kind of token. A refresh token sent as a bearer
+   token is rejected, and so is a device token on a route that does not accept
+   the `sync` scope.
+5. A refresh does not check that the account still exists, so a deleted
+   account can still obtain a new access token. The protected route then
+   answers `404 ACCOUNT_NOT_FOUND`.
 
 ### "JWT signature verification failed" in server logs after a deploy
 
@@ -399,9 +416,8 @@ no server fix.
 
 - **Token expired (older than 30 days)** — expected; client should
   prompt sign-in.
-- **Account no longer exists** — `account_id` in the token's `sub`
-  doesn't resolve. Verify with `SELECT * FROM accounts WHERE id =
-'<sub>'` against the database.
+- **Token revoked** — the person signed out. The code is
+  `REFRESH_TOKEN_REVOKED`.
 - **Token was issued by a different signing secret** — see the
   signature-verification troubleshooting above.
 
@@ -409,7 +425,7 @@ no server fix.
 
 `exp` and `iat` are absolute epoch seconds. If the Cloud Run
 container clock and the client clock disagree by more than the
-shortest token's lifetime (15 min for session tokens), validation
+access token's lifetime (1 hour, the shortest in use), validation
 flaps. Cloud Run uses NTP-synced clocks in practice, but a stuck
 container with a frozen clock will produce confusing "expired
 immediately on issue" errors. Restart the revision if you suspect
@@ -438,34 +454,10 @@ val accountId: String? = tokenService.validateAccessToken(accessToken)
 
 The `TokenService` interface is JVM-only — token generation and
 validation never need to run anywhere else. The client's
-`SessionStorage` interface is Kotlin Multiplatform, with implementations
-on:
-
-- **Android**: `SecureSessionStorage` (Keystore-backed).
-- **iOS**: `SecureSessionStorage` over the iOS Keychain.
-- **Desktop**: `SecureSessionStorage` over the desktop device key.
-- **Web** (future): not currently shipping; the `SessionStorage`
-  expect-class would need a `web` actual that uses
-  `IndexedDB`-with-`SubtleCrypto` or `localStorage` (latter is fine
-  given the same-origin policy and that we don't run inside a
-  third-party iframe).
+`SessionStorage` interface is Kotlin Multiplatform, with
+`SecureSessionStorage` bound on Android, iOS and desktop.
 
 The client treats JWT bytes as opaque — never decode them client-side
 to extract `accountId`. Use `getAccountInfo()` instead. Decoding
 without verifying the signature is a foot-gun if device storage is
 ever tampered with.
-
-## Debugging tips
-
-- "Token expired" doesn't surface from validation — clients see a
-  plain 401 on any authenticated call. To distinguish on the server,
-  look at `Napier.d("JWT token expired: exp=…, now=…")` in Cloud
-  Logging.
-- Signature mismatch and type mismatch (e.g. refresh used as access)
-  both log `Napier.w` events. If you see "JWT signature verification
-  failed" after deploying, the most common cause is a mid-deploy
-  rotation of `JWT_SECRET`.
-- The token bytes are opaque from the client's perspective — never
-  decode on the client to read `accountId`. Use `getAccountInfo()`
-  instead; decoding without verifying the signature is a foot-gun if
-  the storage is ever tampered with.

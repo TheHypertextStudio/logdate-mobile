@@ -1,10 +1,12 @@
 # LogDate Data Export
 
 An export is a single `.zip` file that contains a copy of what LogDate stores for a person. This document
-explains what is in it, how to read it, and how the app builds it. It describes two layouts:
+explains what is in it, how to read it, and how the app builds it. It describes three layouts:
 
 - **Format 2.1**, the current format written by the shared export pipeline. Readers also accept 2.0.
 - **Format 1.x**, the legacy import-only layout. Restore continues to read versions 1.0 through 1.2.
+- **Format 3.0**, a variant of the 2.x layout that the native Apple app writes and that Android code can
+  write and verify but no export or restore feature uses. See [Format 3.0](#format-30-native-transfer).
 
 If you only want to open an export, read [Reading an archive](#reading-an-archive). If you are
 changing what gets exported, read [Adding a new kind of data](#adding-a-new-kind-of-data).
@@ -14,14 +16,14 @@ changing what gets exported, read [Adding a new kind of data](#adding-a-new-kind
 An export is the person's data leaving the app, so it has to work without the app. Format 2.x is
 designed around these promises:
 
-| Promise | What it means in practice |
-|---|---|
-| **Self-contained** | Nothing needs the app, an account, the network, or another file. The documentation, the schemas and the checksums are inside the zip, and every link inside it points at a file that is also inside it. |
-| **Honest about completeness** | If something is not in the export, the export says so and says why. It never looks complete when it is not. |
-| **Readable by a person** | A README explains the archive in plain language. File names describe themselves. |
-| **Readable by a program** | Every data file is JSON with a published schema. Times are RFC 3339 in UTC, ids are UUIDs, text is Markdown. |
-| **Free of device internals** | No content URI, file path, original file name, sync counter or device id is ever written. A file is only ever referred to by its place inside the archive. |
-| **Verifiable** | `SHA256SUMS` lets anyone confirm that no file was damaged. |
+| Promise                       | What it means in practice                                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Self-contained**            | Nothing needs the app, an account, the network, or another file. The documentation, the schemas and the checksums are inside the zip, and every link inside it points at a file that is also inside it. |
+| **Honest about completeness** | If something is not in the export, the export says so and says why. It never looks complete when it is not.                                                                                             |
+| **Readable by a person**      | A README explains the archive in plain language. File names describe themselves.                                                                                                                        |
+| **Readable by a program**     | Every data file is JSON with a published schema. Times are RFC 3339 in UTC, ids are UUIDs, text is Markdown.                                                                                            |
+| **Free of device internals**  | No content URI, file path, original file name, sync counter or device id is ever written. A file is only ever referred to by its place inside the archive.                                              |
+| **Verifiable**                | `SHA256SUMS` lets anyone confirm that no file was damaged.                                                                                                                                              |
 
 ## Layout of a 2.x archive
 
@@ -48,9 +50,8 @@ SHA256SUMS                  Last file. A checksum for every other file.
 
 `README.txt`, `manifest.json` and `SHA256SUMS` are the only fixed names outside `data/`, `schema/` and
 `media/`.
-Readable copies of the journal (Markdown and HTML pages) are planned as a separate layer under
-`journal/`; the manifest already has a role for them, and the README describes them only when they
-are present.
+The manifest defines a `readableIndex` role for human-readable copies of the journal. The exporter
+writes none, so a program must not expect one.
 
 ### Why the files are in this order
 
@@ -173,12 +174,11 @@ export was made in, which is what the app's timeline shows too.
   `outsideDateRange`, `unreadable` (it could not be read while exporting) or `notYetSupported` (this
   version of the app does not export it yet).
 
-The README shows the same list in words. While a category is `notYetSupported`, `complete` is false,
-so an export never claims more than it contains. The kinds of data not yet exported are transcripts,
-audio sound labels, people, events, rewinds, postcards, stickers, health readings, favorites, journal
-cover photos, the profile photo, app settings and drafts from the entry editor. The last one matters:
-`drafts.json` comes from the older draft store, so drafts a person has open in the editor are not in
-the archive yet.
+The README shows the same list in words. Every category in `ArchiveCoverage.notYetSupported`
+(`ArchiveManifestBuilder.kt`) is written to `omitted` with the reason `notYetSupported`, and while any
+such category exists `complete` is false, so an export never claims more than it contains. Read that
+constant for the current list. It matters for drafts: `drafts.json` is built from the older draft
+store, so a draft that a person has open in the entry editor is not in the archive.
 
 `ExportCoverageTest` in `client/database` enforces this from the other side: every Room table must be
 classified as exported, planned, derived or bookkeeping, so a new kind of data cannot be added to the
@@ -258,14 +258,29 @@ reference that platform stored, and an `ArchiveContainer`, which puts files in a
 and the desktop launcher use `ZipStreamArchiveContainer`. If an export fails or is cancelled, the
 launcher deletes the partly written file.
 
+Each platform also decides how an export starts and where the file goes:
+
+- **Android** asks the person for a destination with the system file-save dialog, then enqueues
+  `ExportWorker` through WorkManager as a unique, expedited job (`AndroidExportLauncher`). The unique
+  job uses `ExistingWorkPolicy.REPLACE`, so starting a second export cancels one that is still running.
+  The worker promotes itself to a foreground service of type `dataSync`, which WorkManager's
+  `SystemForegroundService` declares in the app's manifest. An export that must outlive the screen
+  depends on that declaration.
+- **iOS** stages the archive in temporary files and hands the finished ZIP to the system share sheet
+  (`UIActivityViewController`).
+- **Desktop** shows a save dialog (`java.awt.FileDialog`) and appends `.zip` to a chosen name that
+  lacks it.
+
 ### Current writing behavior
 
-Format 2.1 is the only format newly written. Android and desktop stream it into a ZIP. The shared iOS client stages
+Format 2.1 is the only format the Export feature and cloud backup write. Android and desktop stream it into a ZIP. The shared iOS client stages
 entries in temporary files before assembling and sharing the ZIP, and removes staging data after
-success, cancellation or failure. LogDate Cloud uploads the same v2 ZIP bytes and stores the exact
-`manifest.json` extracted from that artifact. Cloud restore remains format-neutral, so downloaded
-1.x and 2.x backups use the shared reader. The separate native Apple client has its own importer;
-shared Kotlin validation does not establish native Apple acceptance.
+success, cancellation or failure. Cloud backup builds the same v2 ZIP, encrypts it on the device and
+uploads it with a short format-and-encryption string as its manifest; the archive's own `manifest.json`
+stays inside the encrypted payload and is not sent separately
+([Archive backup to the server](reference/sync-architecture.md#archive-backup-to-the-server)). Cloud
+restore remains format-neutral, so downloaded 1.x and 2.x backups use the shared reader. The separate native Apple client has its own importer, so
+passing shared Kotlin tests does not show that it reads an archive.
 
 ## Adding a new kind of data
 
@@ -291,6 +306,37 @@ plus a flat `media/` folder named by note id. Its main problems are the reason f
 linked by the raw path the device stored, there is no README or checksum, and the current editor's
 drafts are not included.
 
+## Format 3.0: native transfer
+
+Format 3.0 is the layout the native Apple app writes when it carries a journal, and the layout that
+Android code can write and verify. The schema, `NativeArchive3Writer`, `NativeArchive3SnapshotWriter`
+and the admission reader `NativeArchive3Bundle.read` live in `client/domain`, package
+`restore.archive3`. `NativeJournalTransferSnapshot.writeArchive3` in `client/data` can feed the writer
+from a pinned snapshot of the Android database, but no feature calls it. The Export feature, cloud
+backup and shared restore neither write nor read 3.0: a reader that supports major `2` refuses it, as
+[Versioning](#versioning) requires. The tests in `client/domain` read archives the native Apple app
+produced, kept as fixtures, so that Android agrees with its exact bytes.
+
+The layout is the 2.x one: `README.txt`, `manifest.json`, `schema/`, `data/` and `media/`, with the
+same checksum file and media inventory, and the same media-reference shape. The differences exist so
+that the receiving app can keep what the sending device knew:
+
+- The manifest's `schemaVersion` is `3.0`, `exportTimeZone` is `UTC`, and `scope.complete` is always
+  true. The writer refuses to produce an archive when a category that holds data cannot be carried,
+  instead of listing it as omitted.
+- Each note has a `nativePrimaryJournalId` (a journal ID, or `null`) and may carry the sending app's
+  own values: `nativeDateSeconds`, `nativeUpdatedAt`, `nativeText`, `nativeMediaReference`,
+  `nativeMediaRevision`, `nativeOriginalFileName`, and `nativeSourceMetadataPresent` with its
+  `sourceMedia`. A note whose creation time was never known has `createdAt` of `null` and
+  `nativeDateSeconds` instead. A draft can carry `nativeEditedText`, edited text keyed by block ID.
+- Media is written in sorted order and each file's size and SHA-256 must match what the snapshot
+  recorded, so a file that changed while being copied fails the export.
+- After writing, the writer reads the staged files back and checks them against the checksums
+  (`NativeArchive3Bundle.read`) before the archive is handed over. A failure discards the staging
+  directory.
+
+The schemas are embedded in the archive, as in 2.x.
+
 ## Checking the implementation
 
 ```bash
@@ -310,8 +356,8 @@ real archive against the schema stored in that same archive.
 shared note membership, nanosecond timestamps, independent coordinates/place identity, raw and
 structured transcription, sound tags, and nullable video metadata. It validates the resulting files
 against their embedded schemas and checks every checksum. Its PNG and four-second PCM WAV are valid
-files; its unavailable video is explicitly marked omitted. The fixture describes archive metadata
-compatibility, rather than a complete system migration.
+files; its unavailable video is explicitly marked omitted. The fixture covers archive metadata
+compatibility only; it does not move a complete journal between systems.
 
 To give another platform the actual exported bytes, choose a new, absolute output directory whose
 parent exists, then run the test locally:
@@ -325,7 +371,5 @@ LOGDATE_ARCHIVE_INTEROP_OUTPUT=/absolute/path/to/new-fixture \
 The test refuses an existing output directory. Keep the whole output together, resolve files by
 manifest role, and validate `SHA256SUMS` before consuming it. Native consumer tests should read these
 bytes, compare source metadata after database close/reopen, and retain unresolved attachments.
-Do not replace the exporter with hand-authored JSON or use success in a scalar fixture to enable
-system transfer. That route also requires complete supported categories, consistent snapshots,
-ownership and key custody, original-media publication, signed platform association, and device
-acceptance.
+Do not replace the exporter with hand-authored JSON: a fixture that no real export produced says
+nothing about what the exporter writes.

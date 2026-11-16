@@ -7,8 +7,9 @@ surfaces.
 
 The product decisions behind this work are in
 [`docs/feature-design/android-os-integration.md`](../../feature-design/android-os-integration.md).
-Progress and evidence for each surface are in
-[`docs/audits/android-os-integration-checklist.md`](../../audits/android-os-integration-checklist.md).
+Each surface guide below records the tests and captures that verify it; what that record has to
+contain is described in
+[Screenshot tests](../../testing/screenshot-tests.md#what-counts-as-verified).
 
 ## What an "OS surface" is
 
@@ -81,18 +82,18 @@ details are in [capture-launch-contract.md](os-integration/capture-launch-contra
 
 ## Surfaces
 
-| Surface | Guide | What it covers |
-| --- | --- | --- |
-| Capture launch contract | [capture-launch-contract.md](os-integration/capture-launch-contract.md) | The shared intent and editor launch mode |
-| Launcher shortcuts and Direct Share | [launcher-shortcuts.md](os-integration/launcher-shortcuts.md) | Static, dynamic, pinned, and sharing shortcuts |
-| Quick Settings tiles | [quick-settings-tiles.md](os-integration/quick-settings-tiles.md) | New entry and Record voice tiles |
-| Live Updates | [live-updates.md](os-integration/live-updates.md) | Promoted notifications for recording and progress |
-| Notification quick reply | [notification-quick-reply.md](os-integration/notification-quick-reply.md) | Writing an entry from a capture nudge |
-| Widgets | [widgets.md](os-integration/widgets.md) | Glance widgets on the home screen, lock screen, and hub |
-| Bubbles | [bubbles.md](os-integration/bubbles.md) | App Bubbles and the recording bubble |
-| Keyboard, pointer, drag and drop | [keyboard-pointer-drag-and-drop.md](os-integration/keyboard-pointer-drag-and-drop.md) | Shortcuts, right-click, tooltips, stylus, cross-app drag and drop |
-| Large screens and desktop windowing | [large-screens-and-desktop-windowing.md](os-integration/large-screens-and-desktop-windowing.md) | Manifest attributes, windows, titles, caption bar |
-| AppFunctions | [app-functions.md](os-integration/app-functions.md) | Assistant capture and consent-gated recall |
+| Surface                             | Guide                                                                                           | What it covers                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Capture launch contract             | [capture-launch-contract.md](os-integration/capture-launch-contract.md)                         | The shared intent and editor launch mode                          |
+| Launcher shortcuts and Direct Share | [launcher-shortcuts.md](os-integration/launcher-shortcuts.md)                                   | Static, dynamic, pinned, and sharing shortcuts                    |
+| Quick Settings tiles                | [quick-settings-tiles.md](os-integration/quick-settings-tiles.md)                               | New entry and Record voice tiles                                  |
+| Live Updates                        | [live-updates.md](os-integration/live-updates.md)                                               | Promoted notifications for recording and progress                 |
+| Notification quick reply            | [notification-quick-reply.md](os-integration/notification-quick-reply.md)                       | Writing an entry from a capture nudge                             |
+| Widgets                             | [widgets.md](os-integration/widgets.md)                                                         | Glance widgets on the home screen, lock screen, and hub           |
+| Bubbles                             | [bubbles.md](os-integration/bubbles.md)                                                         | App Bubbles and the recording bubble                              |
+| Keyboard, pointer, drag and drop    | [keyboard-pointer-drag-and-drop.md](os-integration/keyboard-pointer-drag-and-drop.md)           | Shortcuts, right-click, tooltips, stylus, cross-app drag and drop |
+| Large screens and desktop windowing | [large-screens-and-desktop-windowing.md](os-integration/large-screens-and-desktop-windowing.md) | Manifest attributes, windows, titles, caption bar                 |
+| AppFunctions                        | [app-functions.md](os-integration/app-functions.md)                                             | Assistant capture and consent-gated recall                        |
 
 ## The splash screen
 
@@ -103,8 +104,8 @@ calls `installSplashScreen()` before `super.onCreate`, and keeps the splash up w
 first state loads. The theme is `Theme.LogDate.Starting` in
 `app/android-main/src/main/res/values/themes.xml`: the launcher icon's brown behind its foreground.
 
-| Android 11 (compat) | Android 17 (system) |
-| --- | --- |
+| Android 11 (compat)                                                                                                                                 | Android 17 (system)                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![LogDate's splash on Android 11: the icon's two photos on a brown screen](../../screenshots/android-os-integration/splash/launch--phone-api30.png) | ![LogDate's splash on Android 17, the same icon on the same brown](../../screenshots/android-os-integration/splash/launch--phone-api37.png) |
 
 The capture (`OsSurfaceScreenshotsTest#splashScreen`) restarts the main screen in a new task and
@@ -140,10 +141,10 @@ toggler entry in the same commit.
 Every surface ships with screenshots in the same commit as the code. There are two lanes, because
 Android draws some of these surfaces itself:
 
-| Lane | What it captures | How | Where the images live |
-| --- | --- | --- | --- |
-| Lane 1 | LogDate's own Compose UI and Glance widget layouts | Compose preview screenshot tests and a host-side Glance renderer | `app/android-main/src/screenshotTestDebug/reference/`, plus the widget module's references |
-| Lane 2 | Real system UI: shortcut popups, the shade, chips, bubbles, the lock screen | `OsSurfaceScreenshotsTest` on a Gradle Managed Device with SystemUI demo mode | `docs/screenshots/android-os-integration/<surface>/` |
+| Lane   | What it captures                                                            | How                                                                           | Where the images live                                                                      |
+| ------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Lane 1 | LogDate's own Compose UI and Glance widget layouts                          | Compose preview screenshot tests and a host-side Glance renderer              | `app/android-main/src/screenshotTestDebug/reference/`, plus the widget module's references |
+| Lane 2 | Real system UI: shortcut popups, the shade, chips, bubbles, the lock screen | `OsSurfaceScreenshotsTest` on a Gradle Managed Device with SystemUI demo mode | `docs/screenshots/android-os-integration/<surface>/`                                       |
 
 The coverage registry (`config/screenshots/os-integration-coverage.txt`) lists the images each
 feature must have. `checkOsIntegrationScreenshotCoverage` fails the build when one is missing or

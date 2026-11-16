@@ -6,6 +6,24 @@
 
 Provides comprehensive media handling capabilities including image, video, and audio capture, processing, and management across all platforms. This module serves as the foundation for all media-related functionality in the application.
 
+## Managed storage
+
+Media that an entry shows is a file inside the app's own storage, never a reference into another app. This module owns
+the pieces that make that safe:
+
+- **`LocalMediaRef`, `MediaFileResolver` and `MediaDirectories`** (package `app.logdate.client.media.storage`) turn a stored
+  `logdate-media://<collection>/<path>` string into a file on each platform. Read
+  [Media References](../../docs/reference/media-references.md) before storing or opening a media reference.
+- **`MediaManager.saveMedia` and `saveMediaFromFile`** copy bytes into managed storage and return the reference to
+  store. On Android they write through `AndroidCanonicalMediaStore`, a content-addressed store with a fixed write
+  protocol. Read [Android Media Storage](../../docs/reference/android-media-storage.md) before changing how files are
+  written or deleted.
+- **`ManagedMediaImporter`** stages media that another app owns, such as a picked photo, into a private file and saves it
+  through `MediaManager`, so a saved entry never depends on the picker's short-lived grant.
+
+Deleting stored media is deliberately not implemented on Android: `deleteOwnedMedia` returns `false`, because no check
+made after one deletion can prove that another writer has not just claimed the same file.
+
 ## Guarded recovery writes
 
 Native recovery writes through `ConditionalMediaSaver` so an account or server change can reject
@@ -109,7 +127,7 @@ class MediaRepository(private val mediaManager: MediaManager) {
     suspend fun getRecentMedia(): Flow<List<MediaObject>> {
         return mediaManager.getRecentMedia()
     }
-    
+
     suspend fun getMediaForDate(date: LocalDate): Flow<List<MediaObject>> {
         val start = date.atStartOfDay().toInstant(TimeZone.currentSystemDefault())
         val end = date.plus(1, DateTimeUnit.DAY)
@@ -125,7 +143,7 @@ class MediaRepository(private val mediaManager: MediaManager) {
 class AudioNoteViewModel(private val audioRecordingManager: AudioRecordingManager) {
     private val _recordingState = MutableStateFlow(AudioRecordingState())
     val recordingState: StateFlow<AudioRecordingState> = _recordingState
-    
+
     fun startRecording() {
         viewModelScope.launch {
             val success = audioRecordingManager.startRecording()
@@ -135,14 +153,14 @@ class AudioNoteViewModel(private val audioRecordingManager: AudioRecordingManage
             }
         }
     }
-    
+
     fun stopRecording() {
         viewModelScope.launch {
             val fileUri = audioRecordingManager.stopRecording()
             // Process the recorded file
         }
     }
-    
+
     private fun collectAudioLevels() {
         viewModelScope.launch {
             audioRecordingManager.getAudioLevelFlow().collect { level ->
@@ -150,7 +168,7 @@ class AudioNoteViewModel(private val audioRecordingManager: AudioRecordingManage
             }
         }
     }
-    
+
     private fun collectDuration() {
         viewModelScope.launch {
             audioRecordingManager.getRecordingDurationFlow().collect { duration ->
@@ -174,33 +192,3 @@ val audioModule = module {
     factory<TranscriptionService> { PlatformTranscriptionService() }
 }
 ```
-
-## TODOs
-
-### Core Features
-- [ ] Add media file caching system
-- [ ] Implement media preprocessing pipeline
-- [ ] Add support for media compression
-- [ ] Implement media backup integration
-- [ ] Add media syncing capabilities
-
-### Audio Features
-- [ ] Improve audio quality options
-- [ ] Add audio filtering capabilities
-- [ ] Implement background noise reduction
-- [ ] Add audio visualization components
-- [ ] Improve transcription accuracy
-
-### Image Features
-- [ ] Add image editing capabilities
-- [ ] Implement image optimization
-- [ ] Add image metadata extraction
-- [ ] Implement image categorization
-- [ ] Add image content analysis
-
-### Video Features
-- [ ] Add video capture support
-- [ ] Implement video trimming
-- [ ] Add video thumbnail generation
-- [ ] Implement video playback controls
-- [ ] Add video metadata extraction

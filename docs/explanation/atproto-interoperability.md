@@ -169,6 +169,26 @@ can reach must not be protected by a secret someone can guess or reuse, so the s
 it. [Passkey OAuth sign-in](../reference/atproto-oauth-sign-in.md) describes the page other apps
 send people to instead.
 
+## People who already have an identity on another server
+
+A person who already has an AT Protocol identity, for example a Bluesky account, links it to their
+LogDate account and does not get a second identifier. These rules describe how that link works.
+
+LogDate's server acts as a confidential OAuth client, a client that holds its own secret key and
+runs the sign-in on the server, as a backend-for-frontend, and hands the app a LogDate session at
+the end. Private data goes to LogDate Cloud, sealed, with the linked DID as the space's owner, in
+exactly the way it does for a hosted identity. Public records go to the person's own server
+through the OAuth session, and LogDate shows no repository, event stream or handle of its own for
+that account. The identity LogDate would have hosted for the account is retired and never
+published.
+
+The OAuth session with the other server is used only to write public records, so private sync never
+depends on it, and an expired session costs only the ability to publish until the person signs in
+again. A new account that arrives through an external sign-in creates its LogDate passkey after
+that first sign-in and before any data syncs, and every later sign-in uses the passkey. LogDate
+publishes nothing for this path, because the story and publication records use the Standard.site
+schemas, which are maintained outside LogDate.
+
 ## Published stories are links, not something to follow
 
 A published story is a page with an address that the author hands to people. It is not an account
@@ -237,8 +257,15 @@ before concluding that the server is at fault.
 
 Sign-in is also not the whole of compatibility. The protocol defines more for a PDS than sign-in
 and record storage, and general-purpose apps are written against those parts: an answer from
-`getSession` for an OAuth token, stored preferences, short-lived service tokens, and forwarding of
-a request to the service that builds the app's views. The server provides none of these.
+`getSession` for an OAuth token, stored preferences, short-lived tokens for other services,
+forwarding of a request to the service that builds the app's views (the `atproto-proxy` request
+header), batched writes, handle changes, and the methods for moving an account between servers.
+The server answers only the methods listed in
+[the repository event stream reference](../reference/repository-event-stream.md) together with its
+repository, server and handle-resolution methods, and its OAuth scopes are `atproto` and
+`transition:generic`. An app that calls a method outside that set fails against a LogDate-hosted
+identity even when its OAuth sign-in works, so check the method list before suspecting the identity
+or the sign-in.
 
 ## Choices that become permanent once an identity is public
 
@@ -260,7 +287,16 @@ to change one is for a device, which holds the keys, to re-seal every record. Th
 or not anything is public.
 
 **The owner's DID is part of every sealed record.** Because the space URI and the author both
-contain the DID, an account cannot simply switch to a different DID.
+contain the DID, an account cannot simply switch to a different DID: every record would fail to
+open. The only way to change it is for a device that holds the keys to download the space, seal
+every record again under the new DID, check them, and switch, in the way a
+[move into a personal space](journal-moves.md) seals a journal.
+
+An account's owner DID therefore cannot change without re-sealing. Linking an account to an AT
+Protocol identity that another server hosts makes that identifier the owner of the personal space,
+so a device re-seals every record under it, and the hosted identity LogDate created for the account
+is not kept behind the scenes as the space's owner. The owner DID is part of the authenticated data
+of every record, which is why a hidden second owner could not be swapped out later.
 
 **A published identity's history is permanent.** The PLC directory keeps every operation,
 including the first, which names the handle and server address the account had when it was created.
@@ -273,7 +309,10 @@ published identity. The OAuth issuer is compared exactly by other apps, so chang
 session they hold. The handle domain (`ATPROTO_HANDLE_DOMAIN`) appears in other apps' caches and in
 links people have shared. The server's own DID is `did:web:` followed by the handle domain
 ([`AtprotoIdentityConfig`](../../server/src/main/kotlin/app/logdate/server/identity/AtprotoIdentityConfig.kt)),
-and it is the audience that tokens from other services are addressed to.
+and it is the audience that tokens from other services are addressed to. The server answers with
+that DID's document at `/.well-known/did.json` only for requests whose host is the handle domain
+itself, so the DID resolves only where that hostname is routed to the server and not to another
+site.
 
 **Identifier formats are chosen once.** Hosted identities are `did:plc` by default. A `did:web`
 identity, which the server can also issue, is tied to its hostname and can never move to another

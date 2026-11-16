@@ -67,7 +67,7 @@ Each module contains detailed documentation in its respective `README.md` file:
 
 - [`:app:android-main`](app/android-main/) - Android application wrapper/entry point
 - [`:app:compose-main`](app/compose-main/README.md) - Shared Compose Multiplatform app module (Android/iOS/Desktop)
-- [`:app:wear`](app/wear/README.md) - Wear OS companion, verified phone linking, and gated redesign; [internal acceptance checklist](docs/testing/wear-dogfood-checklist.md)
+- [`:app:wear`](app/wear/README.md) - Wear OS companion, verified phone linking, and gated redesign; [acceptance checklist](docs/testing/wear-dogfood-checklist.md)
 
 ### Client Infrastructure
 
@@ -131,7 +131,6 @@ Each module contains detailed documentation in its respective `README.md` file:
 - Docker and Docker Compose (for server development)
 - Android Platform-Tools (`adb`) for device/debug workflows on Android.
   - macOS install: `brew install --cask android-platform-tools`
-  - See `docs/environment/setup.md` for links to Android and Homebrew references.
 
 ### Set Up Your Machine
 

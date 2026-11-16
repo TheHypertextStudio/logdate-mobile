@@ -419,7 +419,8 @@ Some kinds avoid conflicts by construction, and those rules are part of the reco
   ([`JournalMergeUploader`](../../client/sync/src/commonMain/kotlin/app/logdate/client/sync/JournalMergeUploader.kt)).
   It writes the merged-away journal's own record again with `mergedInto` naming the surviving
   journal, and every device that reads that record applies the same merge. A merge made elsewhere
-  wins over an edit made here. The server's merge route is not used for an account in its space.
+  wins over an edit made here. The server's merge route is not used for an account in its space,
+  because the server holds only sealed records and cannot tell which journal a record belongs to.
 - **Records two devices may both create** are keyed by what they connect, so both devices write
   the same key and the second write meets the first.
 - **Location samples** are only ever added to and deleted from, so two copies of an hour are

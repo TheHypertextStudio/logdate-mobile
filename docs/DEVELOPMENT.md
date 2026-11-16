@@ -50,16 +50,31 @@ setup (`./run setup staging` and `./run setup production`) that only release mai
 ### Configuration
 
 No production credentials are needed for ordinary development. Configuration lives in files Git
-ignores:
+ignores, and each setting is read from exactly one place:
 
-- `local.properties`: `./run setup` creates it with the Android SDK location. Add
-  `GOOGLE_MAPS_API_KEY` and `OPENAI_API_KEY` yourself when you work on maps or the intelligence
-  features.
-- `.env` (copied from [`docs/environment/.env.example`](environment/.env.example)): `DATABASE_URL`,
-  `DATABASE_USER`, `DATABASE_PASSWORD`, `REDIS_URL`, and `OPENAI_API_KEY` for a server run outside
-  Docker, and `POSTGRES_*` or `REDIS_PORT` overrides for Docker Compose.
-
-[Environment setup](environment/setup.md) describes each name and its default.
+- `local.properties` holds settings that Gradle reads while building the client. `./run setup`
+  creates it with `sdk.dir`, the Android SDK location. Two optional properties are read from it:
+  `logdate.googleMapsApiKey`, the Maps and Places key the Android app needs for maps (the
+  `LOGDATE_GOOGLE_MAPS_API_KEY` environment variable and the `-Plogdate.googleMapsApiKey` Gradle
+  property take precedence, in that order), and `logdate.metaAppId`, the Meta app id for sharing.
+  Server settings placed in this file have no effect.
+- `.env` holds settings for processes that `./run` starts. `./run` first sources
+  [`docs/environment/.env.example`](environment/.env.example) and then `.env`, exporting everything,
+  so a value in `.env` wins. Copy the example to `.env` and change what you need. The server reads
+  `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` and `REDIS_URL` from its process environment,
+  so start it with `./run server`. The example's values match the Docker services that
+  `./run start` creates (PostgreSQL on port 15432 and Redis on port 16379, both with the user and
+  password `logdate`). Those container settings are fixed in `docker-compose.yml` and do not follow
+  `.env`. [Server environment variables](../server/docs/environment-variables.md) lists every server
+  setting and its default.
+- `OPENAI_API_KEY` enables the cloud features in the intelligence module. The server also reads it
+  from its environment for cloud transcription, which stays disabled while it is unset, so a server
+  started with `./run server` gets the placeholder described below. The app reads it from the
+  process environment or a JVM system property at runtime, so for the desktop app export it before
+  `./run desktop`. It is not read from `local.properties`, no build step packages it into an app, and
+  iOS never reads it. Without a key the cloud features report that they are unavailable. The example
+  file sets a placeholder value that `./run` exports; until you replace it in `.env`, requests reach
+  OpenAI with the placeholder and fail as unauthorized.
 
 ## Run
 

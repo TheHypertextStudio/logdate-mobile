@@ -141,6 +141,73 @@ tied to that.
       threat model to defend against. Treat EXIF as product data, not
       noise.
 
+## Camera, microphone, and output routes
+
+A route is the camera, microphone, or speaker that capture or playback currently uses. Android
+decides most routes: it picks the headset when one connects and sends audio to the speaker when it
+disconnects. The app can ask for a route, and sometimes it cannot force one. These rules keep the
+selector honest about which of the two is happening, and keep capture and playback working when a
+device appears or disappears.
+
+- [ ] Use the shared route model and selector, not a surface-specific one. `MediaDeviceUiState` and
+      `MediaDeviceSelectionUiState` (in `client/media`) describe devices and the current choice, and
+      `MediaDeviceSelector` and `MediaDeviceSelectorSheet` (in `client/ui`) render it. Phone, Wear,
+      inline audio cards, the immersive player, video players, and remote camera all share the
+      same notion of selected, unavailable, and system-controlled, so a user learns the control
+      once.
+- [ ] Keep the primary action dominant. The shutter, record, play, and save controls stay the
+      largest and most reachable controls on the surface. Device selection is secondary, but it is
+      visible where the user is already acting, labelled with the active device ("Back camera",
+      "USB camera", "Phone speaker").
+- [ ] Be honest when the platform owns the route. If the app cannot force a microphone or output on
+      the current API or device, keep the active-route label visible and show that the route is
+      system controlled. A selector that looks like it works but is ignored is worse than none.
+      CameraX video recording is the standing example: `withAudioEnabled()` takes no preferred
+      `AudioDeviceInfo`, so the camera's video microphone is shown as the detected,
+      system-controlled route. Audio-note recording, by contrast, passes the selection to
+      `MediaRecorder.setPreferredDevice`.
+- [ ] Leave the `systemSettingsAction` default on `MediaDeviceSelector` and
+      `MediaDeviceSelectorSheet` alone. The default is `rememberMediaRouteSettingsAction(kind)`,
+      which gives every system-controlled microphone or output sheet a working next step: the
+      Sound settings screen for input, and `MediaRouter2.showSystemOutputSwitcher()` on Android 14
+      and later for output, falling back to Sound settings. The user opened the sheet to change a
+      route, so a sheet that only explains why they cannot would strand them. Requiring each caller
+      to pass the action makes the common path the easy one to forget. Pass `null` or a different
+      action only for previews, screenshot fixtures, tests, or a surface where opening settings
+      would mislead. Cameras have no settings handoff, so the default is `null` for them.
+- [ ] Persist the preference, never the device instance. The stored value is a preferred device id
+      (`AndroidAudioRouteRepository` for input and output, `AndroidCameraDeviceSelection` for the
+      camera). When that device is missing, fall back to the first available device (normally the
+      system default) and show the unavailable-route copy naming it rather than failing: `MediaDeviceSelectionResolver` holds the fallback copy and the restore-on-return
+      behaviour, and is covered by common tests.
+- [ ] Show the route the platform actually applied. `AudioRecordingService` reapplies the preferred
+      microphone when the route list changes during a recording and reports a failure to apply it,
+      and the selector reflects the routed device rather than the requested one.
+- [ ] Never stop playback from feature cleanup. Closing a viewer must not stop audio that is
+      playing. Audio-note playback runs in `AudioPlaybackService`, a Media3 `MediaSessionService`
+      that is started before the controller plays, posts a persistent media notification, and
+      exposes pause, play, seek, and stop to the notification, the lock screen, and the app. The
+      app-wide `AudioPlaybackProvider` and the mini-player are the control surface once a viewer
+      closes. Only an explicit Stop ends playback.
+- [ ] Video continues only while it is visible. `VideoPlayerContent` keeps playing in
+      multi-window and Picture-in-Picture, tries to enter Picture-in-Picture instead of pausing
+      when the user leaves during playback, and pauses when no visible surface remains. Video never
+      continues as invisible audio-only playback, so a video surface needs no foreground media
+      service. The activities that host video declare `supportsPictureInPicture`. Foldable behavior in
+      Picture-in-Picture is covered in [Foldable quality](../../testing/foldable-quality.md).
+- [ ] Reach the same route control from every playback surface. Saved-audio editor blocks, the
+      mini-player, the immersive audio screen, current journal audio cards, current timeline
+      snippets, video players, the external-display controls on the controlling phone, and the Wear
+      day-detail output picker each expose the selector. The selector never crowds the title or transport controls; in the
+      mini-player it stacks below them on compact widths and sits inline on expanded widths.
+      The external display itself shows no route controls.
+- [ ] Wear remote camera is controlled from the watch and runs on the phone. The phone opens
+      `RemoteCameraActivity`, which uses the same capture content as the editor, publishes its
+      camera list over the Data Layer (`/logdate/camera/devices`), and reports the saved or failed
+      outcome (`/logdate/camera/capture-result`). The watch shows "Capturing" until that
+      acknowledgement arrives, and selects exact cameras with `device:<id>` rows. The watch never
+      falls back to the generic system camera intent.
+
 ## Verification
 
 For media changes, the bar for "done" is:
@@ -163,3 +230,8 @@ For media changes, the bar for "done" is:
 8. iOS + Desktop video tiles play in place with working play/pause,
    scrubber, and mute controls; navigating away pauses playback so audio
    doesn't keep going behind the user's back.
+9. For a change to a route, camera, or playback surface, run the matching emulator suites in the
+   [camera and audio emulator test matrix](../../testing/camera-audio-emulator-test-matrix.md),
+   and check by hand what an emulator cannot model: an external USB camera, a USB or Bluetooth
+   microphone, and wired, USB, or Bluetooth output. A route sheet that renders is not proof that
+   audio moved; the route has to change.

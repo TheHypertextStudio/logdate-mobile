@@ -108,8 +108,8 @@ legacy storage, and Maya's other devices follow on their next sync.
 
 Thirty days after the switch, the server's maintenance job deletes the legacy copy. It first marks
 the move as being cleaned, which closes the window for switching back, and then deletes the media
-objects, the legacy sync index, location history, media and blob records, journal merge records and
-the account's AT Protocol repository, so the account starts again with an empty public repository. No
+objects, the legacy sync index, location history, media and blob records, [journal
+merge](../feature-design/journal-merge.md) records and the account's AT Protocol repository, so the account starts again with an empty public repository. No
 relay or outside app has a copy of the old repository, because no account's DID has been published
 yet, so starting it again loses nothing anyone else depends on.
 

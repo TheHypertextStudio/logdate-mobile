@@ -169,16 +169,16 @@ Navigation is a back stack of routes
 ([`WearRoute`](../../app/wear/src/main/kotlin/app/logdate/wear/v2/navigation/WearRoute.kt)), and
 swiping right dismisses the top screen:
 
-| Route          | Screen                                                         | Reached from           |
-| -------------- | -------------------------------------------------------------- | ---------------------- |
-| `Home`         | Today                                                          | App launch             |
-| `Flow`         | Voice and text moments from the last 7 days                    | Today's Moments button |
-| `Memories`     | On this day and this week's Rewind                             | Flow                   |
-| `Archive`      | Moments older than 7 days that are on the watch, starred first | Flow's Earlier button  |
-| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone    | Flow                   |
-| `Moment(id)`   | One moment: player, transcript, place, actions                 | Any list               |
-| `CaptureSheet` | Write, Mood, Phone camera                                      | Today's +              |
-| `PhoneCamera`  | The phone's camera, driven from the watch                      | The capture sheet      |
+| Route          | Screen                                                                                                                                                | Reached from           |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `Home`         | Today                                                                                                                                                 | App launch             |
+| `Flow`         | Voice and text moments from the last 7 days                                                                                                           | Today's Moments button |
+| `Memories`     | On this day and this week's Rewind                                                                                                                    | Flow                   |
+| `Archive`      | Moments older than 7 days that are on the watch, starred first                                                                                        | Flow's Earlier button  |
+| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone (shown only when the phone advertises `phone.settingsLink.v1`, which no phone build does) | Flow                   |
+| `Moment(id)`   | One moment: player, transcript, place, actions                                                                                                        | Any list               |
+| `CaptureSheet` | Write, Mood, Phone camera                                                                                                                             | Today's +              |
+| `PhoneCamera`  | The phone's camera, driven from the watch                                                                                                             | The capture sheet      |
 
 An edge button reaches its full size only at the end of a scrolling list, so Today is a short list
 of its own and Flow, the moment list, is a second route opened by a button. While a recording runs, the recorder's own items take the place of
@@ -439,10 +439,24 @@ a connection check, and Remove watch
 The connection check runs a list of checks and offers the fix for each one it can repair, instead
 of listing tips. Onboarding has an optional watch step when a Wear OS watch is connected
 ([`OnboardingWatchStep`](../../client/feature/onboarding/src/commonMain/kotlin/app/logdate/feature/onboarding/ui/OnboardingWatchStep.kt)).
+With the redesign on, a dismissible card on Home names the watch and opens the Watch page. It
+appears once, when a connected watch has finished verified setup and the onboarding watch step
+has not handled it
+([`WatchReadyOnPhoneCard`](../../client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/settings/ui/watch/v2/WatchReadyOnPhoneCard.kt)).
 
 The phone describes the watch only from what the watch reports. A status line stays hidden until
 the watch has sent the value behind it under a feature it advertises, so an older watch, or one
-with the switch off, shows only its name and whether it is nearby.
+with the switch off, shows only its name and whether it is nearby. Each line has the feature that
+makes the watch's number mean something
+([`WatchStatusResolver`](../../client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/settings/ui/watch/WatchStatusResolver.kt)):
+
+| Feature         | What it unlocks on the Watch page                                              |
+| --------------- | ------------------------------------------------------------------------------ |
+| `receipts.v1`   | The sync line, and the warning that moments did not send                       |
+| `window.v1`     | The line that says how many days of the library the watch holds                |
+| `link.cloud.v1` | Whether the watch backs up on its own or through the phone, and "set up again" |
+
+A watch that needs attention shows that problem in place of the ordinary lines.
 
 ### Shared preferences
 

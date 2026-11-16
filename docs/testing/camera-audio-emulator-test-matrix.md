@@ -1,119 +1,117 @@
 # Camera And Audio Emulator Test Matrix
 
-This matrix covers the emulator and Gradle Managed Device paths that can validate the
-`camera-audio-adaptive-quality-checklist.md` rows without physical hardware.
+This matrix lists the emulator and Gradle Managed Device runs that verify LogDate's camera,
+microphone, and audio-output behavior without physical hardware. The rules these runs enforce are in
+the [media quality checklist](../reference/standards/media-quality-checklist.md#camera-microphone-and-output-routes).
+The device groups and the managed-device policy are in [Development](../DEVELOPMENT.md).
 
-Use this for UI/UX verification, selector state, route handoff copy, preview/state sync, and
-background-playback notification behavior. Keep real USB camera, USB microphone, wired headset,
-and Bluetooth peripheral proof as manual evidence when the emulator cannot model the device
+Use these runs for selector UI, route handoff copy, preview and state synchronization, and
+background-playback notification behavior. Real USB camera, USB microphone, wired headset, and
+Bluetooth peripheral behavior stays a manual check, because an emulator cannot model the device
 itself.
 
 ## What the emulator can prove
 
-- Camera switcher UI is visible, accessible, and stable across layouts.
-- Built-in camera switching updates the preview/state gate.
-- Wear remote camera mirrors phone camera selection and result acknowledgement.
-- Audio selector UI is visible for input/output and keeps the system-controlled route action.
-- Background playback continues while the app is not visible, and the notification/session state
-  stays synchronized.
-- Wear output routing UI can fall back to Bluetooth settings when Wear OS owns routing.
+- The camera selector is visible, accessible, and stable across compact and expanded layouts.
+- Built-in camera switching updates the preview and state gate.
+- The audio selector is visible for input and output, and system-controlled routes keep their
+  settings or output-switcher action.
+- Audio-note playback continues while the app is not visible, and the notification and media
+  session stay synchronized with the app's playback state.
+- Video stays visible in multi-window and Picture-in-Picture, and the Picture-in-Picture control is
+  reachable.
+- The Wear output picker shows the current route and falls back to Bluetooth settings when Wear OS
+  owns routing.
 
-## What still needs hardware evidence
+The Wear remote camera is covered only by host unit tests (`WearRemoteCameraViewModelTest`,
+`RemoteCameraDeviceDataMapperTest`, `RemoteCameraCaptureResultDataMapperTest`, and
+`PhoneWearSyncBridgeTest`). No managed-device run exercises the watch-to-phone flow.
 
-- A real external USB camera preview/capture matrix.
-- A real USB microphone, headset microphone, or Bluetooth microphone capture matrix.
-- A real wired, USB, or Bluetooth output device matrix on phone or Wear.
+## What needs a person with hardware
 
-## Recommended execution order
+- Preview and capture from a real external USB camera, including what happens when it is unplugged
+  and which orientation it uses.
+- Recording from a real USB, headset, or Bluetooth microphone, and that the recorder follows a
+  microphone that is plugged in or removed while recording.
+- Playback through real wired, USB, or Bluetooth output on a phone and on Wear, and through an
+  external display.
+- The Wear-to-phone remote camera flow on a real watch and phone, with built-in and external
+  cameras.
+- Tapping the media controls on the keyguard while the device is still locked.
+  `AudioPlaybackBackgroundE2ETest` wakes the device, taps the visible media controls when SystemUI
+  exposes them, and otherwise sends the notification actions; it does not assert a tap on the
+  locked keyguard itself.
 
-1. Run the shared selector UI test on managed devices:
+## Which test covers which surface
 
-```bash
-./gradlew :app:android-main:smokeDevicesGroupDebugAndroidTest \
-  -Plogdate.androidTestClass=app.logdate.client.e2e.MediaDeviceSelectorE2ETest \
-  --console=plain --no-build-cache
-```
+| Surface                                                                                                                                              | Test class                                                                            | Module and device                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
+| Shared selector: rows, selected and in-use state, external-device state, output-switcher action                                                      | `MediaDeviceSelectorE2ETest`                                                          | `:app:android-main`, phone and tablet |
+| Saved-audio block in the editor                                                                                                                      | `EditorAudioBlockE2ETest`                                                             | `:app:android-main`, phone and tablet |
+| Audio note viewer and immersive screen                                                                                                               | `AudioNoteViewerE2ETest`                                                              | `:app:android-main`, phone and tablet |
+| Mini-player                                                                                                                                          | `MiniAudioPlayerE2ETest`                                                              | `:app:android-main`, phone and tablet |
+| Inline audio card in journal detail                                                                                                                  | `JournalInlineAudioE2ETest`                                                           | `:app:android-main`, phone and tablet |
+| Timeline day-detail audio snippet                                                                                                                    | `TimelineAudioSnippetE2ETest`                                                         | `:app:android-main`, phone and tablet |
+| Background playback: Home, another app, 65 seconds locked, wake, notification and media-session actions, and visible but not focused in multi-window | `AudioPlaybackBackgroundE2ETest`                                                      | `:app:android-main`, phone and tablet |
+| Shared video player: Picture-in-Picture entry and multi-window visibility                                                                            | `VideoPlaybackVisibilityE2ETest`                                                      | `:app:android-main`, phone and tablet |
+| Editor video block, video note viewer, library video detail with presenter controls                                                                  | `EditorVideoBlockE2ETest`, `NoteViewerVideoE2ETest`, `LibraryMediaDetailVideoE2ETest` | `:app:android-main`, phone and tablet |
+| Wear day-detail output picker and Bluetooth settings fallback                                                                                        | `WearDayDetailPlaybackTest`                                                           | `:app:wear`, the Wear device          |
+| Wear playback notification channel and background synchronization                                                                                    | `WearAudioPlaybackBackgroundE2ETest`                                                  | `:app:wear`, the Wear device          |
+| Route resolution, fallback copy, and the selection models                                                                                            | `MediaDeviceSelectionUiStateTest`, `RecordingInputSelectionTest`                      | `:client:media`, host JVM             |
 
-2. Run phone audio background playback on managed devices:
+## Running them
 
-```bash
-./gradlew :app:android-main:smokeDevicesGroupDebugAndroidTest \
-  -Plogdate.androidTestClass=app.logdate.client.e2e.AudioPlaybackBackgroundE2ETest \
-  --console=plain --no-build-cache
-```
+1. Run a phone and tablet suite on the managed-device group, naming the test class with
+   `logdate.androidTestClass`. A comma separates several classes.
 
-3. Run the Wear playback route/state flow on the Wear managed device:
+   ```bash
+   ./gradlew :app:android-main:smokeDevicesGroupDebugAndroidTest \
+     -Plogdate.androidTestClass=app.logdate.client.e2e.MediaDeviceSelectorE2ETest \
+     --console=plain --no-build-cache
+   ```
 
-```bash
-./gradlew :app:wear:wearSmallRoundApi34DebugAndroidTest \
-  -Plogdate.androidTestClass=app.logdate.wear.e2e.WearDayDetailPlaybackTest \
-  --console=plain --no-build-cache
-```
+   Run `AudioPlaybackBackgroundE2ETest`, `VideoPlaybackVisibilityE2ETest`, and the other classes
+   in the table the same way. A class that holds a phone-only and a tablet-only case skips the case
+   that does not apply to the device it runs on.
 
-4. Run the pure state tests that do not need a device:
+2. Run the Wear playback route flow on the Wear managed device. The Wear module does not read
+   `logdate.androidTestClass`; select a class with the Android Gradle plugin's runner argument.
 
-```bash
-./gradlew :client:media:desktopTest \
-  :client:media:testAndroidHostTest \
-  :app:wear:testDebugUnitTest \
-  --console=plain --no-configuration-cache
-```
+   ```bash
+   ./gradlew :app:wear:wearSmallRoundApi34DebugAndroidTest \
+     -Pandroid.testInstrumentationRunnerArguments.class=app.logdate.wear.e2e.WearDayDetailPlaybackTest \
+     --console=plain --no-build-cache
+   ```
 
-5. Use an Android Emulator AVD with camera mapping enabled for camera-switcher inspection:
+   A Wear test that needs a suitable audio output is skipped when the managed device reports an
+   unsuitable one, so a skipped background-playback case does not show that playback works.
 
-- Map one camera slot to the host webcam.
-- Map the second slot to the emulator photo/video source.
-- Verify the compact selector and expanded sheet still select front/back rows correctly.
-- Verify the preview stream gate waits for a fresh false-to-true transition after switching.
+3. Run the state tests that need no device.
 
-6. Use the Wear OS emulator with Bluetooth audio emulation for output routing inspection:
+   ```bash
+   ./gradlew :client:media:desktopTest \
+     :client:media:testAndroidHostTest \
+     :app:wear:testDebugUnitTest \
+     --console=plain --no-configuration-cache
+   ```
 
-- Verify the output picker shows the current route and the Bluetooth fallback action.
-- Verify the watch UI stays readable when Wear OS owns routing or no output is available.
+4. Inspect the camera selector on an Android Emulator AVD with camera mapping enabled. This is a
+   manual check.
+   - Map one camera slot to the host webcam and the second to the emulator's photo and video
+     source.
+   - Confirm the compact selector and the expanded sheet select the front and back rows correctly.
+   - Confirm the preview waits for a fresh transition to streaming after a switch, so a stale
+     frame is never shown as the new camera.
 
-## Execution results
+5. Inspect output routing on the Wear OS emulator with Bluetooth audio emulation. This is a manual
+   check.
+   - Confirm the output picker shows the current route and the Bluetooth settings action.
+   - Confirm the watch screen stays readable when Wear OS owns routing or no output is available.
 
-Automated steps 1–4 were executed on Gradle Managed Device emulators on 2026-06-15. Steps 5–6 are
-manual emulator inspections and were not run by automation.
+## Keeping the background-playback test reliable
 
-| Step | Task / suite | Device(s) | Result |
-| --- | --- | --- | --- |
-| 1 | `MediaDeviceSelectorE2ETest` | `flagshipPhoneApi36` (Pixel 9 Pro, API 36) + `largeScreenTabletApi35` (Pixel Tablet, API 35) | Pass — 3/3 on both devices |
-| 2 | `AudioPlaybackBackgroundE2ETest` | `flagshipPhoneApi36` + `largeScreenTabletApi35` | Pass — 2/2 on both devices (see note on the clip-length fix) |
-| 3 | `WearDayDetailPlaybackTest` | `wearSmallRoundApi34` (Wear OS small round, API 34) | Pass — 14/14 |
-| 4 | `:client:media:desktopTest`, `:client:media:testAndroidHostTest`, `:app:wear:testDebugUnitTest` | Host JVM (no device) | Pass |
-| 5 | Manual AVD camera-mapping inspection | Android emulator AVD | Manual — not run by automation |
-| 6 | Manual Wear Bluetooth-routing inspection | Wear OS emulator | Manual — not run by automation |
-
-Notes:
-
-- Step 2, tablet: an earlier run had `playbackNotificationAndSessionStaySynchronizedAfterBackgroundAndLock`
-  failing **reproducibly** on the Pixel Tablet (API 35) emulator with `IllegalStateException: Timed out
-  waiting for notification pause action becomes available after wake`. Logcat analysis showed this was a
-  test-timing defect, not a tablet keyguard / notification-shade modeling gap: the 90-second silent clip
-  was too short to outlast the test's own timeline (a 65-second background sleep plus the
-  notification-shade fallback search, which runs slower on the tablet). Playback reached the end of the
-  clip and went `STOPPED` mid-test, so the media notification flipped to a "Play" action and the
-  pause-action assertion timed out. The phone passed only because its faster control-tap path finished
-  with ~16 seconds of clip to spare. The fix lengthens the clip to 300 seconds
-  (`AudioPlaybackBackgroundE2ETest.kt`), after which both devices pass 2/2. This is consistent with the
-  `T-Audio_Background_Playback` tablet `[pass]` claim in `camera-audio-adaptive-quality-checklist.md`.
-- Step 3: the `:app:wear` task does not honor `-Plogdate.androidTestClass`, so the whole Wear androidTest
-  suite ran; `WearDayDetailPlaybackTest` passed all 14 cases. Unrelated Wear suites
-  (`MoodCheckInScreenTest`, `WearRecordingScreenTest`) failed with the Wear round-emulator "Failed to
-  inject touch input" limitation and are out of scope for this matrix.
-
-## Evidence mapping
-
-- `T-Camera_Switcher`: emulator-backed proof covers selector UI, built-in camera switching, preview
-  gate behavior, and Wear phone-camera mirroring — executed via `MediaDeviceSelectorE2ETest` (phone +
-  tablet) and `WearDayDetailPlaybackTest` (Wear). Manual hardware evidence is still required for the
-  external USB camera matrix.
-- `T-Audio_Switcher`: emulator-backed proof covers selector UI, system-controlled output handoff, and
-  Wear Bluetooth fallback copy — executed via `MediaDeviceSelectorE2ETest` (phone + tablet) and
-  `WearDayDetailPlaybackTest` (Wear, output picker + Bluetooth-settings fallback). Manual hardware
-  evidence is still required for USB/Bluetooth input and output devices.
-- `T-Audio_Background_Playback`: emulator-backed proof covers background playback continuation and
-  notification/session sync — executed via `AudioPlaybackBackgroundE2ETest` (full pass on both the phone
-  and tablet emulators after the clip-length fix, see Execution results). Manual hardware evidence is
-  still required for real wired/USB/Bluetooth output devices.
+`AudioPlaybackBackgroundE2ETest` plays a generated silent clip while the test backgrounds the app,
+locks the device for 65 seconds, and wakes it. The clip has to outlast that whole timeline, including
+the slower notification-shade search on the tablet, or playback ends and the notification's action
+flips to Play before the test asserts Pause. The clip is 300 seconds; lengthen it when the test
+grows a longer wait.

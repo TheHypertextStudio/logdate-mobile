@@ -13,13 +13,13 @@ operating contracts.
 
 ## Release paths
 
-| Part | Candidate | Production | Trigger for production |
-| --- | --- | --- | --- |
-| Server | Staging on Cloud Run | Production on Cloud Run | `server-v*` tag on a commit already deployed to staging |
-| Android phone and Wear OS | Play internal testing track | Play production, in stages | Manual workflow run naming a tested `android-v*` tag |
-| iOS | TestFlight internal build | App Store review | `ios-v*` tag, after approval in the `ios-production` environment |
-| AT Protocol libraries | Local publication | GitHub Packages, and Maven Central when configured | `atproto-v*` tag |
-| Desktop | Local packages only | Not published | None |
+| Part                      | Candidate                   | Production                                         | Trigger for production                                           |
+| ------------------------- | --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------- |
+| Server                    | Staging on Cloud Run        | Production on Cloud Run                            | `server-v*` tag on a commit already deployed to staging          |
+| Android phone and Wear OS | Play internal testing track | Play production, in stages                         | Manual workflow run naming a tested `android-v*` tag             |
+| iOS                       | TestFlight internal build   | App Store review                                   | `ios-v*` tag, after approval in the `ios-production` environment |
+| AT Protocol libraries     | Local publication           | GitHub Packages, and Maven Central when configured | `atproto-v*` tag                                                 |
+| Desktop                   | Local packages only         | Not published                                      | None                                                             |
 
 ### Server
 
@@ -37,13 +37,15 @@ Before tagging, follow the server [pre-release checks](runbook/staging-productio
 The phone and watch apps share one Play listing. A maintainer runs **Publish Android to Play** with
 the `internal` stage from `main` to put a signed release bundle on the internal testing track; this
 is the release candidate. Production never rebuilds: after the candidate passes the
-[Android public release acceptance](launch/android-public-release.md) matrix, the maintainer tags
+[Android acceptance journeys](#android-acceptance-journeys), the maintainer tags
 the tested commit `android-v<major>.<minor>.<patch>` and promotes that exact Play version code
 through the `start-5`, `advance-25`, and `complete-100` stages, reviewing crash, ANR, backup,
 sign-in, and support signals for at least 24 hours at each stage.
 
 [Google Play publishing](reference/google-play-publishing.md) covers the workflow, versioning, and
-Wear OS details.
+Wear OS details. `./run build:wear:release` builds the Wear OS release bundle locally. For a
+development install on a physical watch, see the
+[Wear OS README](../app/wear/README.md#installing-on-a-physical-watch).
 
 ### iOS
 
@@ -59,8 +61,20 @@ Central when its signing secrets are configured. See [ATProto publishing](refere
 
 ### Desktop
 
-No workflow publishes the desktop app. Desktop packages built with `./run build:desktop` are local
-verification artifacts until a signed desktop release path exists.
+No workflow publishes the desktop app. `./run build:desktop` packages the app for the current
+operating system, and each platform's installer has its own Gradle task, run from the repository root:
+
+| Platform | Task                                     | Output |
+| -------- | ---------------------------------------- | ------ |
+| macOS    | `./gradlew :app:compose-main:packageDmg` | `.dmg` |
+| Linux    | `./gradlew :app:compose-main:packageDeb` | `.deb` |
+| Windows  | `./gradlew :app:compose-main:packageMsi` | `.msi` |
+
+The packaged macOS app uses the bundle identifier `studio.hypertext.apps.logdate`, the same one as
+LogDate on iOS and the native Apple app, which are alternative implementations of one app. Read
+[Apple identity and data continuity](reference/ios-build-setup.md#provider-registration-and-existing-installations)
+before replacing an existing installation or configuring signed distribution. These packages are
+local verification artifacts until a signed desktop release path exists.
 
 ## Acceptance prerequisites
 
@@ -69,12 +83,52 @@ A release candidate is accepted only when all of these hold:
 - The commit is on `main`, its pull request was merged with a rebase, and CI passed for it.
 - The candidate was observed working in its candidate environment, not only built: staging for the
   server, the Play internal track for Android, and TestFlight for iOS.
-- For Android, every row of the [acceptance matrix](launch/android-public-release.md) is closed for
-  that exact Play version code, with no open data-loss or release-blocking defect.
+- For Android, every [acceptance journey](#android-acceptance-journeys) was observed on the
+  installed Play internal artifact for that exact version code, with no open data-loss or
+  release-blocking defect, and internal crash and backup signals are stable.
 - The platform's pre-release checks pass, and for Play and the App Store, the publishing path's
   repository variable is enabled.
 
 A successful upload, build, or health check alone does not accept a release.
+
+### Android acceptance journeys
+
+Record the tested commit, Play version code, device or emulator, result, and evidence link for each
+journey. Run them on the installed internal Play artifact; a journey that was not observed blocks
+promotion.
+
+- **First use.** A fresh offline install opens the production editor, and a saved entry appears on
+  Home after a restart. An interrupted edit resumes a durable draft. No account is needed.
+- **Journal media.** Text, audio, photo, and video entries can be created, reopened, edited, deleted,
+  exported, and restored. Missing media and a denied permission show a recoverable error.
+- **Photo import.** The import is offered after the first entry. Only the selected photos become
+  dated entries with managed media copies, and a retry does not duplicate completed entries.
+- **Library.** Media from entries appears with working search, detail, empty, loading, and retry
+  states.
+- **Weekly Rewind.** A sparse, a normal, and a media-heavy week each generate on the device. Every
+  cited item exists, every emitted panel renders, refreshing works after a failure, and reduced
+  motion is respected.
+- **Cloud identity and sync.** Local use works while signed out. On two clean emulators the same
+  identity signs in, syncs every entry type and its media, retries work done offline, and resolves
+  conflicts without silently replacing data. Content from a different identity is rejected.
+- **Backup and restore.** Backup state and failures are visible. A new emulator restores every entry
+  type and its managed media. Quota and authentication failures are recoverable.
+- **Quiet Save.** The scenarios in [Quiet Save](features/quiet-save.md) work on the installed
+  candidate.
+- **Release artifact.** The Play App Signing certificate matches the Digital Asset Links document,
+  passkey sign-in completes, and authenticated production Cloud behavior works. The version code
+  tested is the one promoted.
+- **Public trust.** Accessibility, screenshots, privacy and deletion behavior, data declarations,
+  the support contact, crash and ANR reporting, and backup operations match the shipped behavior.
+- **Physical device.** A maintainer repeats the first-use, media, Cloud, restore, and Rewind
+  journeys on at least one supported phone. Automated runs use emulators and Gradle Managed Devices
+  only.
+
+Before a candidate is promoted, also run the affected multiplatform tests,
+`:integration:server-client-e2e:test`, `ktlintCheck`, an Android assembly, screenshot validation,
+and `:app:android-main:smokeDevicesGroupDebugAndroidTest` on a Gradle Managed Device. A failure
+caused by the environment stays unresolved until the check passes in CI or another valid
+environment.
 
 ## Recovery
 
@@ -93,7 +147,9 @@ gcloud run services update-traffic logdate-server --project logdate --region us-
 Then fix forward with a new `server-v*` tag that goes through staging again. A traffic rollback
 does not undo database migrations or the data the new revision wrote, because migrations run before
 the candidate and are never reversed automatically. The previous revision must still work with the
-migrated schema; if it does not, recovery is a forward fix, not a rollback.
+migrated schema; if it does not, recovery is a forward fix, not a rollback. Recovery uses the
+same reviewed workflow and contract as a normal deploy, so a manual traffic change is not
+authoritative until the equivalent state is reconciled in the committed contract.
 
 ### Android phone and Wear OS
 

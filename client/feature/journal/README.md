@@ -45,6 +45,16 @@ Journal Feature
 - `ShareJournalScreen.kt` - Journal sharing interface
 - `ShareJournalViewModel.kt` - Sharing implementation
 
+### Merging Journals
+
+- `JournalMergeRoute.kt` - Navigation entry; `completeJournalMerge` removes the merged journals' detail screens from the back stack
+- `ui/merge/JournalMergeScreen.kt` and `JournalMergeViewModel.kt` - Destination picker, review and result
+- `ui/merge/JournalMergeAvailability.kt` - Offers the action only when the `JOURNAL_MERGE` flag is on and the configured server advertises `journalMergeV1`
+
+The view model keeps the operation ID in saved state so a repeated confirmation repeats one merge.
+The merge itself is `MergeJournalsUseCase` in `:client:domain`. How it is stored, retried, sent and
+resolved on the server is in [Journal merge](../../../docs/feature-design/journal-merge.md).
+
 ### Navigation
 
 - `JournalsNavRoute.kt` - Main navigation entry point
@@ -110,7 +120,7 @@ fun JournalsOverviewScreen(
     viewModel: JournalsOverviewViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    
+
     // Journals display logic
     JournalListPanel(
         journals = state.journals,
@@ -133,7 +143,7 @@ fun JournalDetailScreen(
     viewModel: JournalDetailViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
     // Journal detail implementation
 }
 ```
@@ -170,6 +180,7 @@ val journalsFeatureModule: Module = module {
 ## TODOs
 
 ### Core Features
+
 - [ ] Implement journal templates
 - [ ] Add journal statistics and insights
 - [ ] Implement advanced search capabilities
@@ -177,6 +188,7 @@ val journalsFeatureModule: Module = module {
 - [ ] Implement journal categories/tags
 
 ### Entry Management
+
 - [ ] Add batch operations for entries
 - [ ] Implement entry templates
 - [ ] Add entry categorization
@@ -184,6 +196,7 @@ val journalsFeatureModule: Module = module {
 - [ ] Add entry highlighting and favorites
 
 ### Sharing & Collaboration
+
 - [ ] Enhance sharing permissions
 - [ ] Add collaborative editing
 - [ ] Implement comment functionality
@@ -191,6 +204,7 @@ val journalsFeatureModule: Module = module {
 - [ ] Implement notification system for shared journals
 
 ### UI Improvements
+
 - [ ] Add more journal cover styles
 - [ ] Implement customizable journal themes
 - [ ] Add animations for journal interactions

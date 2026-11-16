@@ -102,7 +102,7 @@ common/                      preview matrices, device specs, ScreenshotTheme, sh
 flows/flowNN_<area>/         user flows, one file per screen: FlowNN_MM_<Name>Screenshots.kt
   flow20_os_integration/     Android OS integration surfaces and the screens they open
 components/<area>/           shared components
-audit/adaptive/              foldable posture audits (book and tabletop)
+audit/adaptive/              foldable posture audits (book and tabletop; see Foldable quality)
 audit/workspace/             Home workspace audits
 ```
 
@@ -120,6 +120,8 @@ Apply a matrix annotation instead of listing `@Preview`s by hand. They live in
 | `@OsIntegrationPreviewMatrix`    | Phone, Phone Dark, Compact Phone, Landscape, Tablet, RTL, Large Text (200%), Dynamic Color | Every Android OS integration feature (required)                                        |
 | `@BubbleWindowPreview`           | Bubble (360×480dp)                                                                         | Added next to `@OsIntegrationPreviewMatrix` for screens that can open in an app bubble |
 
+Posture screenshots render a synthetic fold; what they cannot prove is listed in [Foldable quality](foldable-quality.md#what-an-emulator-cannot-show).
+
 Wear tests in `app/wear/src/screenshotTest/` use `@WearScreenshotPreviewMatrix` (small round and
 large round).
 
@@ -131,6 +133,18 @@ renders every shared scene automatically. Each scene lists the viewports it must
 integration scenes use `osIntegrationVariants`, which adds a compact phone, right-to-left, and 200%
 text to the standard viewports, or `osIntegrationBubbleVariants` for bubble-capable screens. See
 [`client/screenshot-scenes/README.md`](../../client/screenshot-scenes/README.md).
+
+Every user-reachable screen should have at least one deterministic scene in the desktop lane, so a
+new screen ships with its shared scene. Two kinds of screen are exempt:
+
+- Android-only platform UI that cannot render meaningfully in the shared desktop host lane, such as
+  the settings screen for Android notifications. Android screenshot tests cover these.
+- A flow whose visuals are fully represented by a smaller set of lower-level shared scenes, such as
+  the steps of an export that reuse one progress state.
+
+A screen that is exempt for either reason is covered on the Android lane, and the Android
+reference should stay as long as the platform-specific visual does. Remove an Android reference only
+when a shared scene makes it redundant.
 
 ## Android OS integration screenshots
 
@@ -229,6 +243,27 @@ That last rule keeps the reference set honest: when you rename or delete a previ
 references in the same commit. The pre-push hook runs the check. The logic lives in
 `build-logic/src/main/kotlin/app/logdate/ScreenshotCoverage.kt`, with tests in
 `build-logic/src/test/kotlin/app/logdate/ScreenshotCoverageTest.kt`.
+
+### What counts as verified
+
+A screenshot that rendered is not evidence that the surface works. An OS integration feature is
+verified when its surface guide, one of those linked from the
+[Android OS integration guide](../reference/android/os-integration.md#surfaces), records all of the
+following:
+
+1. **Tests.** The test class names and the command that runs them.
+2. **Lane 1.** The screenshot test functions in `@OsIntegrationPreviewMatrix`, or the shared
+   scene ids, for the parts the app draws.
+3. **Lane 2.** The image or text paths under `docs/screenshots/android-os-integration/`, with the
+   device and API level, for the parts Android draws.
+4. **A reviewed comparison sheet** for the feature.
+5. **The guide section itself,** with the captures embedded.
+
+Some surfaces cannot be captured on any emulator or managed device. For those, verify the layout
+with Compose screenshots that simulate the system state (for example, injected caption insets) and
+say in the guide that the evidence is a simulation, so a reader does not take it for a real
+capture. Say plainly in the guide when a state is tested but not captured, or when a surface is
+drawn outside the app window, such as the macOS menu bar.
 
 ## Guidelines for Screenshot Tests
 
