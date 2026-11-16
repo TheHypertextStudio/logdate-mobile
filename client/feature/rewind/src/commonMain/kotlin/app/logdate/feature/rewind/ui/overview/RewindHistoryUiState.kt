@@ -44,6 +44,7 @@ data class RewindHistoryUiState(
     val highlightedQuote: String? = null,
     /** The week's dominant activity, driving the type badge and the accent-color fallback. */
     val dominantActivity: ActivityType? = null,
+    val memories: List<RewindSceneMemory> = emptyList(),
 )
 
 fun List<RewindHistoryUiState>.forWeeklyLaunch(): List<RewindHistoryUiState> =

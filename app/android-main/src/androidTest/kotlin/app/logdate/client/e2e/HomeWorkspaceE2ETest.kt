@@ -19,6 +19,9 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -27,6 +30,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.unit.dp
@@ -159,10 +163,12 @@ class HomeWorkspaceE2ETest {
                 .isNotEmpty()
         }
         capture("workspace-rewind-current")
-        compose.onNodeWithContentDescription("More rewinds below").performClick()
+        compose
+            .onNode(hasScrollAction() and hasAnyDescendant(hasText("Room to wander")))
+            .performScrollToNode(hasText("A week close to home"))
         compose.onNodeWithText("A week close to home").assertIsDisplayed()
         capture("workspace-rewind-previous")
-        compose.onNodeWithText("A week close to home").performClick()
+        compose.onNodeWithText("The kitchen was full of conversation.").performClick()
         compose.runOnIdle { assertTrue(opened == previous) }
     }
 

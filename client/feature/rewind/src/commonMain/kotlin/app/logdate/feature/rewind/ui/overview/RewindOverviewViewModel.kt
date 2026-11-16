@@ -100,6 +100,7 @@ class RewindOverviewViewModel(
                             heroImageUri = summary.heroImageUri,
                             highlightedQuote = summary.highlightedQuote,
                             dominantActivity = rewind.metadata?.detectedActivities?.firstOrNull(),
+                            memories = rewind.content.toSceneMemories(),
                         )
                     }.forWeeklyLaunch()
             }.flowOn(Dispatchers.Default)
@@ -146,6 +147,7 @@ class RewindOverviewViewModel(
                                 heroImageUri = summary.heroImageUri,
                                 highlightedQuote = summary.highlightedQuote,
                                 dominantActivity = rewind.metadata?.detectedActivities?.firstOrNull(),
+                                memories = rewind.content.toSceneMemories(),
                             ),
                     )
                 }

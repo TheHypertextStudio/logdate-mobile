@@ -120,10 +120,9 @@ class CurrentWeekRewindE2ETest {
                     timeoutMillis = 30_000,
                 ) { compose.onAllNodesWithText("This week so far").fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithText("This week so far").performClick()
-                compose.waitUntil(timeoutMillis = 30_000) { compose.onAllNodesWithText("Update Rewind").fetchSemanticsNodes().isNotEmpty() }
-                compose.onNodeWithText("Update Rewind").assertIsDisplayed()
-                compose.onNodeWithText("This week's story").assertIsDisplayed()
-                compose.onNodeWithText("This week's story").performClick()
+                compose.waitUntil(timeoutMillis = 30_000) { compose.onAllNodesWithText("Play Rewind").fetchSemanticsNodes().isNotEmpty() }
+                compose.onNodeWithText("Play Rewind").assertIsDisplayed()
+                compose.onNodeWithText("Play Rewind").performClick()
                 assertEquals(initial.uid, opened)
                 val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
                 val file = File(output, "current-week-rewind-${device.displayWidth}x${device.displayHeight}.png")

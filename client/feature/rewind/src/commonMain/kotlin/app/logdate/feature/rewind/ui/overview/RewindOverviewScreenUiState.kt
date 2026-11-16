@@ -185,6 +185,7 @@ data class RewindPreviewUiState(
     val highlightedQuote: String? = null,
     /** The week's dominant activity, driving the type badge and the accent-color fallback. */
     val dominantActivity: ActivityType? = null,
+    val memories: List<RewindSceneMemory> = emptyList(),
     /** Present when this rewind marks a detected milestone — drives the rarity treatment. */
     val milestone: MilestoneSummaryUiState? = null,
 )
