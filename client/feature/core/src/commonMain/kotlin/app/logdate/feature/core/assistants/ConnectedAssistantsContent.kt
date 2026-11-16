@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Laptop
+import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.android_assistants_title
 import logdate.client.feature.core.generated.resources.assistant_can_see_and_do
 import logdate.client.feature.core.generated.resources.assistant_connected_on
 import logdate.client.feature.core.generated.resources.assistant_disconnect
@@ -60,6 +62,7 @@ import logdate.client.feature.core.generated.resources.assistants_hero_body
 import logdate.client.feature.core.generated.resources.assistants_hero_hint
 import logdate.client.feature.core.generated.resources.assistants_hero_title
 import logdate.client.feature.core.generated.resources.assistants_not_used
+import logdate.client.feature.core.generated.resources.assistants_on_this_phone
 import logdate.client.feature.core.generated.resources.assistants_title
 import logdate.client.feature.core.generated.resources.assistants_used
 import logdate.client.ui.generated.resources.common_back
@@ -69,7 +72,8 @@ import logdate.client.ui.generated.resources.Res as UiRes
 /**
  * Settings › Assistants. [anytimeAccess] is null when the protected gateway isn't available, so its switch
  * never appears for something that can't work. [anytimeFailure] is the caller's specific reason the last
- * change to anytime access did not take effect.
+ * change to anytime access did not take effect. [androidAssistants] is what assistants on this phone may
+ * see and do, or null where Android assistants aren't available.
  */
 @Composable
 fun ConnectedAssistantsContent(
@@ -82,6 +86,8 @@ fun ConnectedAssistantsContent(
     onBack: () -> Unit,
     anytimeChanging: Boolean = false,
     anytimeFailure: String? = null,
+    androidAssistants: Set<AssistantCapability>? = null,
+    onOpenAndroidAssistants: () -> Unit = {},
 ) {
     AssistantPage(navigationIcon = { BackButton(onBack) }) {
         item(key = "title") {
@@ -99,6 +105,10 @@ fun ConnectedAssistantsContent(
                 item(key = assistant.id) { ConnectedAssistantCard(assistant, onClick = { onOpenAssistant(assistant.id) }) }
             }
         }
+        androidAssistants?.let { allowed ->
+            item(key = "android-label") { AssistantSectionLabel(stringResource(Res.string.assistants_on_this_phone)) }
+            item(key = "android") { AndroidAssistantsCard(allowed, onOpenAndroidAssistants) }
+        }
         item(key = "availability") {
             AssistantsAvailability(deviceName, anytimeAccess, anytimeChanging, anytimeFailure, onAnytimeAccessChange)
         }
@@ -109,7 +119,7 @@ fun ConnectedAssistantsContent(
 }
 
 @Composable
-private fun BackButton(onBack: () -> Unit) {
+internal fun BackButton(onBack: () -> Unit) {
     IconButton(onClick = onBack) {
         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(UiRes.string.common_back))
     }
@@ -173,6 +183,35 @@ private fun ConnectedAssistantCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+            }
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AndroidAssistantsCard(
+    allowed: Set<AssistantCapability>,
+    onClick: () -> Unit,
+) {
+    Surface(onClick = onClick, shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            AssistantIconBadge(Icons.Rounded.PhoneAndroid)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Text(stringResource(Res.string.android_assistants_title), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    androidAssistantsSummary(allowed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             Icon(
                 Icons.AutoMirrored.Rounded.KeyboardArrowRight,

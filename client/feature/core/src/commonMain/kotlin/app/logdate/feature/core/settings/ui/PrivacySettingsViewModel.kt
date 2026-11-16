@@ -3,6 +3,7 @@ package app.logdate.feature.core.settings.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.datastore.LogdatePreferencesDataSource
+import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.text.toUiText
 import app.logdate.feature.core.AppAuthState
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -25,6 +27,7 @@ class PrivacySettingsViewModel(
     private val userStateRepository: UserStateRepository,
     private val biometricGatekeeper: BiometricGatekeeper,
     private val supportsSystemSearchVisibilityToggle: Boolean = false,
+    private val androidAssistants: Flow<Set<AssistantCapability>?> = flowOf(null),
 ) : ViewModel() {
     private val mutableState =
         MutableStateFlow(
@@ -39,6 +42,7 @@ class PrivacySettingsViewModel(
     init {
         observeBiometrics()
         observeSystemSearchVisibility()
+        observeAndroidAssistants()
     }
 
     fun setBiometricEnabled(
@@ -205,6 +209,18 @@ class PrivacySettingsViewModel(
                 Preference.BIOMETRICS,
                 userStateRepository.userData.map { it.securityLevel == AppSecurityLevel.BIOMETRIC },
             )
+    }
+
+    private fun observeAndroidAssistants() {
+        viewModelScope.launch {
+            try {
+                androidAssistants.collect { allowed -> mutableState.update { it.copy(androidAssistants = allowed) } }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Napier.e("Unable to read what Android assistants may see", error)
+            }
+        }
     }
 
     private fun observeSystemSearchVisibility() {

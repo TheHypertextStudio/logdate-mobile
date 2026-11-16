@@ -1,12 +1,16 @@
 package app.logdate.feature.core.di
 
+import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.device.crypto.IdentityKeyManager
 import app.logdate.client.domain.account.EmailVerificationAvailability
 import app.logdate.client.domain.account.EnqueueAllLocalDataUseCase
 import app.logdate.client.domain.account.VerifyEmailUseCase
+import app.logdate.client.domain.assistants.DeviceAssistantAccessStore
 import app.logdate.client.domain.di.accountModule
 import app.logdate.client.domain.di.domainModule
 import app.logdate.client.domain.identity.ObserveUserIdentityUseCase
+import app.logdate.client.domain.journals.GetCurrentUserJournalsUseCase
 import app.logdate.client.location.di.locationSettingsModule
 import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.repository.account.PasskeyAccountRepository
@@ -14,6 +18,7 @@ import app.logdate.client.repository.account.PasskeyConfirmations
 import app.logdate.client.sync.diagnostics.DiagnosticReportingController
 import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
+import app.logdate.feature.core.assistants.AndroidAssistantsViewModel
 import app.logdate.feature.core.export.UserDataExportViewModel
 import app.logdate.feature.core.main.HomeViewModel
 import app.logdate.feature.core.people.ui.PeopleDirectoryViewModel
@@ -59,6 +64,8 @@ import app.logdate.feature.core.settings.ui.VoiceNotesSettingsViewModel
 import app.logdate.feature.core.streak.CampfireViewModel
 import app.logdate.feature.core.sync.SyncPresentationViewModel
 import app.logdate.shared.config.LogDateConfigRepository
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
@@ -164,11 +171,26 @@ val coreFeatureModule: Module =
         viewModel { SettingsOverviewViewModel(get(), get(), get()) }
         viewModel { LibrarySettingsViewModel(get()) }
         viewModel {
+            val androidAssistants =
+                if (getOrNull<Boolean>(named("supportsAndroidAssistants")) == true) {
+                    val enabled = get<FeatureFlagStore>().observe(FeatureFlag.APP_FUNCTIONS)
+                    combine(enabled, get<DeviceAssistantAccessStore>().observe()) { on, access -> access.capabilities.takeIf { on } }
+                } else {
+                    flowOf(null)
+                }
             PrivacySettingsViewModel(
                 get(),
                 get(),
                 get(),
                 supportsSystemSearchVisibilityToggle = getOrNull(named("supportsSystemSearchVisibilityToggle")) ?: false,
+                androidAssistants = androidAssistants,
+            )
+        }
+        viewModel {
+            AndroidAssistantsViewModel(
+                access = get<DeviceAssistantAccessStore>().observe(),
+                saveAccess = get<DeviceAssistantAccessStore>()::set,
+                journals = get<GetCurrentUserJournalsUseCase>()(),
             )
         }
         viewModel { LocalDiagnosticsViewModel(get(), get(), get()) }

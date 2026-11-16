@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.permissions.rememberContactsPermissionState
+import app.logdate.feature.core.assistants.AndroidAssistantsScreen
 import app.logdate.feature.core.people.ui.PeopleDirectoryScreen
 import app.logdate.feature.core.people.ui.PeopleInboxScreen
 import app.logdate.feature.core.people.ui.PeopleSettingsScreen
@@ -178,7 +179,11 @@ fun EntryProviderScope<NavKey>.settingsEntries(
         PrivacySettingsScreen(
             onBack = onBack,
             onNavigateToLocationSettings = { onNavigateTo(LocationSettingsRoute) },
+            onNavigateToAndroidAssistants = { onNavigateTo(AndroidAssistantsSettingsRoute) },
         )
+    }
+    taggedEntry<AndroidAssistantsSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.Privacy, categories)) {
+        AndroidAssistantsScreen(onBack = onBack)
     }
     taggedEntry<DataSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.Backup, categories)) {
         val cloudCallbacks =

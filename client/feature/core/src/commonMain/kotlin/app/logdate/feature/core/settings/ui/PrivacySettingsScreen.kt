@@ -4,6 +4,7 @@ package app.logdate.feature.core.settings.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assistant
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
@@ -18,13 +19,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.logdate.feature.core.assistants.androidAssistantsSummary
 import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.android_assistants_title
 import logdate.client.feature.core.generated.resources.app_security
+import logdate.client.feature.core.generated.resources.assistants_title
 import logdate.client.feature.core.generated.resources.disable_biometric_lock_message
 import logdate.client.feature.core.generated.resources.disable_biometric_lock_title
 import logdate.client.feature.core.generated.resources.location_privacy
@@ -55,12 +59,14 @@ import logdate.client.ui.generated.resources.Res as UiRes
  *
  * @param onBack Callback for when the user presses the back button
  * @param onNavigateToLocationSettings Callback for navigating to location settings
+ * @param onNavigateToAndroidAssistants Opens what Android assistants may see and do, where available
  * @param viewModel ViewModel for the settings
  */
 @Composable
 fun PrivacySettingsScreen(
     onBack: () -> Unit,
     onNavigateToLocationSettings: () -> Unit = {},
+    onNavigateToAndroidAssistants: () -> Unit = {},
     viewModel: PrivacySettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -84,6 +90,7 @@ fun PrivacySettingsScreen(
         onRetryBiometrics = { viewModel.retryBiometrics(prompt) },
         onRetrySystemSearchVisibility = viewModel::retrySystemSearchVisibility,
         onNavigateToLocationSettings = onNavigateToLocationSettings,
+        onNavigateToAndroidAssistants = onNavigateToAndroidAssistants,
     )
 }
 
@@ -120,6 +127,7 @@ fun PrivacySettingsContent(
     onRetryBiometrics: () -> Unit = {},
     onRetrySystemSearchVisibility: () -> Unit = {},
     onNavigateToLocationSettings: () -> Unit = {},
+    onNavigateToAndroidAssistants: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showDisableBiometricsDialog by remember { mutableStateOf(false) }
@@ -162,6 +170,22 @@ fun PrivacySettingsContent(
                         state = state.systemSearchVisibility,
                         onRetry = onRetrySystemSearchVisibility,
                         onCheckedChange = onSetSystemSearchVisibilityEnabled,
+                    )
+                }
+            }
+        }
+
+        state.androidAssistants?.let { allowed ->
+            item {
+                SettingsSection(
+                    title = stringResource(Res.string.assistants_title),
+                    modifier = Modifier.padding(horizontal = Spacing.lg),
+                ) {
+                    SettingsNavigationItem(
+                        title = stringResource(Res.string.android_assistants_title),
+                        description = androidAssistantsSummary(allowed),
+                        icon = { Icon(Icons.Default.Assistant, contentDescription = null) },
+                        onClick = onNavigateToAndroidAssistants,
                     )
                 }
             }

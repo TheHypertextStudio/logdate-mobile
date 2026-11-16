@@ -1,6 +1,7 @@
 package app.logdate.feature.core.di
 
 import android.app.Activity
+import android.os.Build
 import app.logdate.client.data.account.RestoreCredentialCleanupScheduler
 import app.logdate.client.data.account.RestoreCredentialLifecycle
 import app.logdate.client.device.crypto.AndroidDeviceTransferSealer
@@ -91,6 +92,8 @@ actual val corePlatformModule: Module =
         single<DiagnosticArchiveExporter> { AndroidDiagnosticArchiveExporter(androidContext()) }
 
         single(named("supportsSystemSearchVisibilityToggle")) { true }
+        // AppFunctions, which Android assistants use, arrived in Android 16.
+        single(named("supportsAndroidAssistants")) { Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA }
         single<CloudRestoreAction> { CloudRestoreAction { get<CloudRestoreScheduler>().enqueueRestore() } }
     }
 

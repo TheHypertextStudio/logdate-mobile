@@ -1,6 +1,7 @@
 package app.logdate.feature.core.settings.ui
 
 import app.logdate.client.datastore.LogdatePreferencesDataSource
+import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.text.UiText
 import app.logdate.client.text.toUiText
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -384,16 +386,31 @@ class PrivacySettingsViewModelTest {
             )
         }
 
+    @Test
+    fun `android assistants appear only where they are available, with what they may do`() =
+        runTest {
+            assertEquals(null, buildViewModel().state.value.androidAssistants)
+            val allowed = MutableStateFlow<Set<AssistantCapability>?>(emptySet())
+            val model = buildViewModel(androidAssistants = allowed)
+            assertEquals(emptySet(), model.state.value.androidAssistants)
+            allowed.value = setOf(AssistantCapability.READ_PLACES)
+            assertEquals(setOf(AssistantCapability.READ_PLACES), model.state.value.androidAssistants)
+            allowed.value = null
+            assertEquals(null, model.state.value.androidAssistants)
+        }
+
     private fun buildViewModel(
         gatekeeper: BiometricGatekeeper = ScriptedBiometricGatekeeper(),
         userStateRepository: UserStateRepository = FakeUserStateRepository(),
         store: PrivacyPreferencesDataStore = PrivacyPreferencesDataStore(),
+        androidAssistants: Flow<Set<AssistantCapability>?> = flowOf(null),
     ): PrivacySettingsViewModel =
         PrivacySettingsViewModel(
             preferencesDataSource = LogdatePreferencesDataSource(store),
             userStateRepository = userStateRepository,
             biometricGatekeeper = gatekeeper,
             supportsSystemSearchVisibilityToggle = true,
+            androidAssistants = androidAssistants,
         )
 
     private fun PrivacyPreferenceState.operation(): PrivacyPreferenceOperation = assertIs<PrivacyPreferenceState.Available>(this).operation
