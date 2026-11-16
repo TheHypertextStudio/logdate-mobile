@@ -1,0 +1,305 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-plc>
+abstract interface studio.hypertext.atproto.plc/PlcDirectoryClient { // studio.hypertext.atproto.plc/PlcDirectoryClient|null[0]
+    abstract suspend fun export(kotlin/String? = ..., kotlin/Int? = ...): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.plc/PlcIndexedOperation>> // studio.hypertext.atproto.plc/PlcDirectoryClient.export|export(kotlin.String?;kotlin.Int?){}[0]
+    abstract suspend fun getAuditLog(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.plc/PlcIndexedOperation>> // studio.hypertext.atproto.plc/PlcDirectoryClient.getAuditLog|getAuditLog(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun getDocument(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.plc/PlcDirectoryClient.getDocument|getDocument(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun getOperationLog(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.plc/PlcLogEntry>> // studio.hypertext.atproto.plc/PlcDirectoryClient.getOperationLog|getOperationLog(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun submit(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.plc/PlcLogEntry): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.plc/PlcDirectoryClient.submit|submit(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.plc.PlcLogEntry){}[0]
+}
+
+sealed interface studio.hypertext.atproto.plc/PlcLogEntry { // studio.hypertext.atproto.plc/PlcLogEntry|null[0]
+    abstract val prev // studio.hypertext.atproto.plc/PlcLogEntry.prev|{}prev[0]
+        abstract fun <get-prev>(): kotlin/String? // studio.hypertext.atproto.plc/PlcLogEntry.prev.<get-prev>|<get-prev>(){}[0]
+    abstract val sig // studio.hypertext.atproto.plc/PlcLogEntry.sig|{}sig[0]
+        abstract fun <get-sig>(): kotlin/String? // studio.hypertext.atproto.plc/PlcLogEntry.sig.<get-sig>|<get-sig>(){}[0]
+    abstract val type // studio.hypertext.atproto.plc/PlcLogEntry.type|{}type[0]
+        abstract fun <get-type>(): kotlin/String // studio.hypertext.atproto.plc/PlcLogEntry.type.<get-type>|<get-type>(){}[0]
+    open val isSigned // studio.hypertext.atproto.plc/PlcLogEntry.isSigned|{}isSigned[0]
+        open fun <get-isSigned>(): kotlin/Boolean // studio.hypertext.atproto.plc/PlcLogEntry.isSigned.<get-isSigned>|<get-isSigned>(){}[0]
+
+    final object Companion : kotlinx.serialization.internal/SerializerFactory { // studio.hypertext.atproto.plc/PlcLogEntry.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcLogEntry> // studio.hypertext.atproto.plc/PlcLogEntry.Companion.serializer|serializer(){}[0]
+        final fun serializer(kotlin/Array<out kotlinx.serialization/KSerializer<*>>...): kotlinx.serialization/KSerializer<*> // studio.hypertext.atproto.plc/PlcLogEntry.Companion.serializer|serializer(kotlin.Array<out|kotlinx.serialization.KSerializer<*>>...){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/KtorPlcDirectoryClient : studio.hypertext.atproto.plc/PlcDirectoryClient { // studio.hypertext.atproto.plc/KtorPlcDirectoryClient|null[0]
+    constructor <init>(io.ktor.client/HttpClient, kotlin/String = ..., kotlinx.serialization.json/Json = ...) // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.<init>|<init>(io.ktor.client.HttpClient;kotlin.String;kotlinx.serialization.json.Json){}[0]
+
+    final fun auditLogUrlFor(studio.hypertext.atproto.identity/AtprotoDid): kotlin/String // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.auditLogUrlFor|auditLogUrlFor(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final fun documentUrlFor(studio.hypertext.atproto.identity/AtprotoDid): kotlin/String // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.documentUrlFor|documentUrlFor(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final fun exportUrl(kotlin/String? = ..., kotlin/Int? = ...): kotlin/String // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.exportUrl|exportUrl(kotlin.String?;kotlin.Int?){}[0]
+    final fun operationLogUrlFor(studio.hypertext.atproto.identity/AtprotoDid): kotlin/String // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.operationLogUrlFor|operationLogUrlFor(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final fun submitUrlFor(studio.hypertext.atproto.identity/AtprotoDid): kotlin/String // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.submitUrlFor|submitUrlFor(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun export(kotlin/String?, kotlin/Int?): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.plc/PlcIndexedOperation>> // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.export|export(kotlin.String?;kotlin.Int?){}[0]
+    final suspend fun getAuditLog(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.plc/PlcIndexedOperation>> // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.getAuditLog|getAuditLog(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun getDocument(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.getDocument|getDocument(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun getOperationLog(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.plc/PlcLogEntry>> // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.getOperationLog|getOperationLog(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun submit(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.plc/PlcLogEntry): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.submit|submit(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.plc.PlcLogEntry){}[0]
+
+    final object Companion { // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.Companion|null[0]
+        final const val DEFAULT_BASE_URL // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.Companion.DEFAULT_BASE_URL|{}DEFAULT_BASE_URL[0]
+            final fun <get-DEFAULT_BASE_URL>(): kotlin/String // studio.hypertext.atproto.plc/KtorPlcDirectoryClient.Companion.DEFAULT_BASE_URL.<get-DEFAULT_BASE_URL>|<get-DEFAULT_BASE_URL>(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/PlcDirectoryException : kotlin/IllegalStateException { // studio.hypertext.atproto.plc/PlcDirectoryException|null[0]
+    constructor <init>(kotlin/String, kotlin/Throwable? = ..., kotlin/Int? = ..., kotlin/String? = ...) // studio.hypertext.atproto.plc/PlcDirectoryException.<init>|<init>(kotlin.String;kotlin.Throwable?;kotlin.Int?;kotlin.String?){}[0]
+
+    final val directoryMessage // studio.hypertext.atproto.plc/PlcDirectoryException.directoryMessage|{}directoryMessage[0]
+        final fun <get-directoryMessage>(): kotlin/String? // studio.hypertext.atproto.plc/PlcDirectoryException.directoryMessage.<get-directoryMessage>|<get-directoryMessage>(){}[0]
+    final val isNotFound // studio.hypertext.atproto.plc/PlcDirectoryException.isNotFound|{}isNotFound[0]
+        final fun <get-isNotFound>(): kotlin/Boolean // studio.hypertext.atproto.plc/PlcDirectoryException.isNotFound.<get-isNotFound>|<get-isNotFound>(){}[0]
+    final val statusCode // studio.hypertext.atproto.plc/PlcDirectoryException.statusCode|{}statusCode[0]
+        final fun <get-statusCode>(): kotlin/Int? // studio.hypertext.atproto.plc/PlcDirectoryException.statusCode.<get-statusCode>|<get-statusCode>(){}[0]
+}
+
+final class studio.hypertext.atproto.plc/PlcIndexedOperation { // studio.hypertext.atproto.plc/PlcIndexedOperation|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.plc/PlcLogEntry, kotlin/String, kotlin/Boolean, kotlin/String) // studio.hypertext.atproto.plc/PlcIndexedOperation.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.plc.PlcLogEntry;kotlin.String;kotlin.Boolean;kotlin.String){}[0]
+
+    final val cid // studio.hypertext.atproto.plc/PlcIndexedOperation.cid|{}cid[0]
+        final fun <get-cid>(): kotlin/String // studio.hypertext.atproto.plc/PlcIndexedOperation.cid.<get-cid>|<get-cid>(){}[0]
+    final val createdAt // studio.hypertext.atproto.plc/PlcIndexedOperation.createdAt|{}createdAt[0]
+        final fun <get-createdAt>(): kotlin/String // studio.hypertext.atproto.plc/PlcIndexedOperation.createdAt.<get-createdAt>|<get-createdAt>(){}[0]
+    final val did // studio.hypertext.atproto.plc/PlcIndexedOperation.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.plc/PlcIndexedOperation.did.<get-did>|<get-did>(){}[0]
+    final val nullified // studio.hypertext.atproto.plc/PlcIndexedOperation.nullified|{}nullified[0]
+        final fun <get-nullified>(): kotlin/Boolean // studio.hypertext.atproto.plc/PlcIndexedOperation.nullified.<get-nullified>|<get-nullified>(){}[0]
+    final val operation // studio.hypertext.atproto.plc/PlcIndexedOperation.operation|{}operation[0]
+        final fun <get-operation>(): studio.hypertext.atproto.plc/PlcLogEntry // studio.hypertext.atproto.plc/PlcIndexedOperation.operation.<get-operation>|<get-operation>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.plc/PlcIndexedOperation.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.plc/PlcLogEntry // studio.hypertext.atproto.plc/PlcIndexedOperation.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.plc/PlcIndexedOperation.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // studio.hypertext.atproto.plc/PlcIndexedOperation.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.plc/PlcIndexedOperation.component5|component5(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.plc/PlcLogEntry = ..., kotlin/String = ..., kotlin/Boolean = ..., kotlin/String = ...): studio.hypertext.atproto.plc/PlcIndexedOperation // studio.hypertext.atproto.plc/PlcIndexedOperation.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.plc.PlcLogEntry;kotlin.String;kotlin.Boolean;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.plc/PlcIndexedOperation.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.plc/PlcIndexedOperation.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.plc/PlcIndexedOperation.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.plc/PlcIndexedOperation> { // studio.hypertext.atproto.plc/PlcIndexedOperation.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.plc/PlcIndexedOperation.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.plc/PlcIndexedOperation.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.plc/PlcIndexedOperation.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.plc/PlcIndexedOperation // studio.hypertext.atproto.plc/PlcIndexedOperation.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.plc/PlcIndexedOperation) // studio.hypertext.atproto.plc/PlcIndexedOperation.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.plc.PlcIndexedOperation){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.plc/PlcIndexedOperation.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcIndexedOperation> // studio.hypertext.atproto.plc/PlcIndexedOperation.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/PlcOperation : studio.hypertext.atproto.plc/PlcLogEntry { // studio.hypertext.atproto.plc/PlcOperation|null[0]
+    constructor <init>(kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/Map<kotlin/String, kotlin/String>) // studio.hypertext.atproto.plc/PlcOperation.<init>|<init>(kotlin.String?;kotlin.String?;kotlin.String;kotlin.collections.Map<kotlin.String,studio.hypertext.atproto.plc.PlcService>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+
+    final val alsoKnownAs // studio.hypertext.atproto.plc/PlcOperation.alsoKnownAs|{}alsoKnownAs[0]
+        final fun <get-alsoKnownAs>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcOperation.alsoKnownAs.<get-alsoKnownAs>|<get-alsoKnownAs>(){}[0]
+    final val isGenesis // studio.hypertext.atproto.plc/PlcOperation.isGenesis|{}isGenesis[0]
+        final fun <get-isGenesis>(): kotlin/Boolean // studio.hypertext.atproto.plc/PlcOperation.isGenesis.<get-isGenesis>|<get-isGenesis>(){}[0]
+    final val prev // studio.hypertext.atproto.plc/PlcOperation.prev|{}prev[0]
+        final fun <get-prev>(): kotlin/String? // studio.hypertext.atproto.plc/PlcOperation.prev.<get-prev>|<get-prev>(){}[0]
+    final val rotationKeys // studio.hypertext.atproto.plc/PlcOperation.rotationKeys|{}rotationKeys[0]
+        final fun <get-rotationKeys>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcOperation.rotationKeys.<get-rotationKeys>|<get-rotationKeys>(){}[0]
+    final val services // studio.hypertext.atproto.plc/PlcOperation.services|{}services[0]
+        final fun <get-services>(): kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService> // studio.hypertext.atproto.plc/PlcOperation.services.<get-services>|<get-services>(){}[0]
+    final val sig // studio.hypertext.atproto.plc/PlcOperation.sig|{}sig[0]
+        final fun <get-sig>(): kotlin/String? // studio.hypertext.atproto.plc/PlcOperation.sig.<get-sig>|<get-sig>(){}[0]
+    final val type // studio.hypertext.atproto.plc/PlcOperation.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.plc/PlcOperation.type.<get-type>|<get-type>(){}[0]
+    final val verificationMethods // studio.hypertext.atproto.plc/PlcOperation.verificationMethods|{}verificationMethods[0]
+        final fun <get-verificationMethods>(): kotlin.collections/Map<kotlin/String, kotlin/String> // studio.hypertext.atproto.plc/PlcOperation.verificationMethods.<get-verificationMethods>|<get-verificationMethods>(){}[0]
+
+    final fun component1(): kotlin/String? // studio.hypertext.atproto.plc/PlcOperation.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.plc/PlcOperation.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.plc/PlcOperation.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService> // studio.hypertext.atproto.plc/PlcOperation.component4|component4(){}[0]
+    final fun component5(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcOperation.component5|component5(){}[0]
+    final fun component6(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcOperation.component6|component6(){}[0]
+    final fun component7(): kotlin.collections/Map<kotlin/String, kotlin/String> // studio.hypertext.atproto.plc/PlcOperation.component7|component7(){}[0]
+    final fun copy(kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/Map<kotlin/String, kotlin/String> = ...): studio.hypertext.atproto.plc/PlcOperation // studio.hypertext.atproto.plc/PlcOperation.copy|copy(kotlin.String?;kotlin.String?;kotlin.String;kotlin.collections.Map<kotlin.String,studio.hypertext.atproto.plc.PlcService>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.plc/PlcOperation.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.plc/PlcOperation.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.plc/PlcOperation.toString|toString(){}[0]
+    final fun unsigned(): studio.hypertext.atproto.plc/PlcUnsignedOperation // studio.hypertext.atproto.plc/PlcOperation.unsigned|unsigned(){}[0]
+    final fun withSignature(kotlin/String): studio.hypertext.atproto.plc/PlcOperation // studio.hypertext.atproto.plc/PlcOperation.withSignature|withSignature(kotlin.String){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.plc/PlcOperation> { // studio.hypertext.atproto.plc/PlcOperation.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.plc/PlcOperation.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.plc/PlcOperation.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.plc/PlcOperation.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.plc/PlcOperation // studio.hypertext.atproto.plc/PlcOperation.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.plc/PlcOperation) // studio.hypertext.atproto.plc/PlcOperation.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.plc.PlcOperation){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.plc/PlcOperation.Companion|null[0]
+        final const val TYPE // studio.hypertext.atproto.plc/PlcOperation.Companion.TYPE|{}TYPE[0]
+            final fun <get-TYPE>(): kotlin/String // studio.hypertext.atproto.plc/PlcOperation.Companion.TYPE.<get-TYPE>|<get-TYPE>(){}[0]
+
+        final val $childSerializers // studio.hypertext.atproto.plc/PlcOperation.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcOperation> // studio.hypertext.atproto.plc/PlcOperation.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/PlcService { // studio.hypertext.atproto.plc/PlcService|null[0]
+    constructor <init>(kotlin/String, kotlin/String) // studio.hypertext.atproto.plc/PlcService.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val endpoint // studio.hypertext.atproto.plc/PlcService.endpoint|{}endpoint[0]
+        final fun <get-endpoint>(): kotlin/String // studio.hypertext.atproto.plc/PlcService.endpoint.<get-endpoint>|<get-endpoint>(){}[0]
+    final val type // studio.hypertext.atproto.plc/PlcService.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.plc/PlcService.type.<get-type>|<get-type>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.plc/PlcService.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.plc/PlcService.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.plc/PlcService // studio.hypertext.atproto.plc/PlcService.copy|copy(kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.plc/PlcService.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.plc/PlcService.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.plc/PlcService.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.plc/PlcService> { // studio.hypertext.atproto.plc/PlcService.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.plc/PlcService.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.plc/PlcService.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.plc/PlcService.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.plc/PlcService // studio.hypertext.atproto.plc/PlcService.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.plc/PlcService) // studio.hypertext.atproto.plc/PlcService.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.plc.PlcService){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.plc/PlcService.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcService> // studio.hypertext.atproto.plc/PlcService.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/PlcTombstone : studio.hypertext.atproto.plc/PlcLogEntry { // studio.hypertext.atproto.plc/PlcTombstone|null[0]
+    constructor <init>(kotlin/String? = ..., kotlin/String, kotlin/String = ...) // studio.hypertext.atproto.plc/PlcTombstone.<init>|<init>(kotlin.String?;kotlin.String;kotlin.String){}[0]
+
+    final val prev // studio.hypertext.atproto.plc/PlcTombstone.prev|{}prev[0]
+        final fun <get-prev>(): kotlin/String // studio.hypertext.atproto.plc/PlcTombstone.prev.<get-prev>|<get-prev>(){}[0]
+    final val sig // studio.hypertext.atproto.plc/PlcTombstone.sig|{}sig[0]
+        final fun <get-sig>(): kotlin/String? // studio.hypertext.atproto.plc/PlcTombstone.sig.<get-sig>|<get-sig>(){}[0]
+    final val type // studio.hypertext.atproto.plc/PlcTombstone.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.plc/PlcTombstone.type.<get-type>|<get-type>(){}[0]
+
+    final fun component1(): kotlin/String? // studio.hypertext.atproto.plc/PlcTombstone.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.plc/PlcTombstone.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.plc/PlcTombstone.component3|component3(){}[0]
+    final fun copy(kotlin/String? = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.plc/PlcTombstone // studio.hypertext.atproto.plc/PlcTombstone.copy|copy(kotlin.String?;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.plc/PlcTombstone.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.plc/PlcTombstone.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.plc/PlcTombstone.toString|toString(){}[0]
+    final fun unsigned(): studio.hypertext.atproto.plc/PlcUnsignedTombstone // studio.hypertext.atproto.plc/PlcTombstone.unsigned|unsigned(){}[0]
+    final fun withSignature(kotlin/String): studio.hypertext.atproto.plc/PlcTombstone // studio.hypertext.atproto.plc/PlcTombstone.withSignature|withSignature(kotlin.String){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.plc/PlcTombstone> { // studio.hypertext.atproto.plc/PlcTombstone.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.plc/PlcTombstone.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.plc/PlcTombstone.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.plc/PlcTombstone.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.plc/PlcTombstone // studio.hypertext.atproto.plc/PlcTombstone.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.plc/PlcTombstone) // studio.hypertext.atproto.plc/PlcTombstone.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.plc.PlcTombstone){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.plc/PlcTombstone.Companion|null[0]
+        final const val TYPE // studio.hypertext.atproto.plc/PlcTombstone.Companion.TYPE|{}TYPE[0]
+            final fun <get-TYPE>(): kotlin/String // studio.hypertext.atproto.plc/PlcTombstone.Companion.TYPE.<get-TYPE>|<get-TYPE>(){}[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcTombstone> // studio.hypertext.atproto.plc/PlcTombstone.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/PlcUnsignedOperation { // studio.hypertext.atproto.plc/PlcUnsignedOperation|null[0]
+    constructor <init>(kotlin/String? = ..., kotlin/String = ..., kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/Map<kotlin/String, kotlin/String>) // studio.hypertext.atproto.plc/PlcUnsignedOperation.<init>|<init>(kotlin.String?;kotlin.String;kotlin.collections.Map<kotlin.String,studio.hypertext.atproto.plc.PlcService>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+
+    final val alsoKnownAs // studio.hypertext.atproto.plc/PlcUnsignedOperation.alsoKnownAs|{}alsoKnownAs[0]
+        final fun <get-alsoKnownAs>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcUnsignedOperation.alsoKnownAs.<get-alsoKnownAs>|<get-alsoKnownAs>(){}[0]
+    final val prev // studio.hypertext.atproto.plc/PlcUnsignedOperation.prev|{}prev[0]
+        final fun <get-prev>(): kotlin/String? // studio.hypertext.atproto.plc/PlcUnsignedOperation.prev.<get-prev>|<get-prev>(){}[0]
+    final val rotationKeys // studio.hypertext.atproto.plc/PlcUnsignedOperation.rotationKeys|{}rotationKeys[0]
+        final fun <get-rotationKeys>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcUnsignedOperation.rotationKeys.<get-rotationKeys>|<get-rotationKeys>(){}[0]
+    final val services // studio.hypertext.atproto.plc/PlcUnsignedOperation.services|{}services[0]
+        final fun <get-services>(): kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService> // studio.hypertext.atproto.plc/PlcUnsignedOperation.services.<get-services>|<get-services>(){}[0]
+    final val type // studio.hypertext.atproto.plc/PlcUnsignedOperation.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedOperation.type.<get-type>|<get-type>(){}[0]
+    final val verificationMethods // studio.hypertext.atproto.plc/PlcUnsignedOperation.verificationMethods|{}verificationMethods[0]
+        final fun <get-verificationMethods>(): kotlin.collections/Map<kotlin/String, kotlin/String> // studio.hypertext.atproto.plc/PlcUnsignedOperation.verificationMethods.<get-verificationMethods>|<get-verificationMethods>(){}[0]
+
+    final fun component1(): kotlin/String? // studio.hypertext.atproto.plc/PlcUnsignedOperation.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedOperation.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService> // studio.hypertext.atproto.plc/PlcUnsignedOperation.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcUnsignedOperation.component4|component4(){}[0]
+    final fun component5(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.plc/PlcUnsignedOperation.component5|component5(){}[0]
+    final fun component6(): kotlin.collections/Map<kotlin/String, kotlin/String> // studio.hypertext.atproto.plc/PlcUnsignedOperation.component6|component6(){}[0]
+    final fun copy(kotlin/String? = ..., kotlin/String = ..., kotlin.collections/Map<kotlin/String, studio.hypertext.atproto.plc/PlcService> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/Map<kotlin/String, kotlin/String> = ...): studio.hypertext.atproto.plc/PlcUnsignedOperation // studio.hypertext.atproto.plc/PlcUnsignedOperation.copy|copy(kotlin.String?;kotlin.String;kotlin.collections.Map<kotlin.String,studio.hypertext.atproto.plc.PlcService>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.plc/PlcUnsignedOperation.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.plc/PlcUnsignedOperation.hashCode|hashCode(){}[0]
+    final fun signed(kotlin/String): studio.hypertext.atproto.plc/PlcOperation // studio.hypertext.atproto.plc/PlcUnsignedOperation.signed|signed(kotlin.String){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedOperation.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.plc/PlcUnsignedOperation> { // studio.hypertext.atproto.plc/PlcUnsignedOperation.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.plc/PlcUnsignedOperation.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.plc/PlcUnsignedOperation.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.plc/PlcUnsignedOperation.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.plc/PlcUnsignedOperation // studio.hypertext.atproto.plc/PlcUnsignedOperation.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.plc/PlcUnsignedOperation) // studio.hypertext.atproto.plc/PlcUnsignedOperation.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.plc.PlcUnsignedOperation){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.plc/PlcUnsignedOperation.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.plc/PlcUnsignedOperation.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcUnsignedOperation> // studio.hypertext.atproto.plc/PlcUnsignedOperation.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.plc/PlcUnsignedTombstone { // studio.hypertext.atproto.plc/PlcUnsignedTombstone|null[0]
+    constructor <init>(kotlin/String, kotlin/String = ...) // studio.hypertext.atproto.plc/PlcUnsignedTombstone.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val prev // studio.hypertext.atproto.plc/PlcUnsignedTombstone.prev|{}prev[0]
+        final fun <get-prev>(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedTombstone.prev.<get-prev>|<get-prev>(){}[0]
+    final val type // studio.hypertext.atproto.plc/PlcUnsignedTombstone.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedTombstone.type.<get-type>|<get-type>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedTombstone.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedTombstone.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.plc/PlcUnsignedTombstone // studio.hypertext.atproto.plc/PlcUnsignedTombstone.copy|copy(kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.plc/PlcUnsignedTombstone.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.plc/PlcUnsignedTombstone.hashCode|hashCode(){}[0]
+    final fun signed(kotlin/String): studio.hypertext.atproto.plc/PlcTombstone // studio.hypertext.atproto.plc/PlcUnsignedTombstone.signed|signed(kotlin.String){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.plc/PlcUnsignedTombstone.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.plc/PlcUnsignedTombstone> { // studio.hypertext.atproto.plc/PlcUnsignedTombstone.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.plc/PlcUnsignedTombstone.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.plc/PlcUnsignedTombstone.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.plc/PlcUnsignedTombstone.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.plc/PlcUnsignedTombstone // studio.hypertext.atproto.plc/PlcUnsignedTombstone.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.plc/PlcUnsignedTombstone) // studio.hypertext.atproto.plc/PlcUnsignedTombstone.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.plc.PlcUnsignedTombstone){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.plc/PlcUnsignedTombstone.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.plc/PlcUnsignedTombstone> // studio.hypertext.atproto.plc/PlcUnsignedTombstone.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final object studio.hypertext.atproto.plc/PlcEncoding { // studio.hypertext.atproto.plc/PlcEncoding|null[0]
+    final fun deriveDid(studio.hypertext.atproto.plc/PlcOperation): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.plc/PlcEncoding.deriveDid|deriveDid(studio.hypertext.atproto.plc.PlcOperation){}[0]
+    final fun encodeSigned(studio.hypertext.atproto.plc/PlcOperation): kotlin/ByteArray // studio.hypertext.atproto.plc/PlcEncoding.encodeSigned|encodeSigned(studio.hypertext.atproto.plc.PlcOperation){}[0]
+    final fun encodeUnsigned(studio.hypertext.atproto.plc/PlcUnsignedOperation): kotlin/ByteArray // studio.hypertext.atproto.plc/PlcEncoding.encodeUnsigned|encodeUnsigned(studio.hypertext.atproto.plc.PlcUnsignedOperation){}[0]
+    final fun operationCid(studio.hypertext.atproto.plc/PlcOperation): kotlin/String // studio.hypertext.atproto.plc/PlcEncoding.operationCid|operationCid(studio.hypertext.atproto.plc.PlcOperation){}[0]
+}
+
+final object studio.hypertext.atproto.plc/PlcOperations { // studio.hypertext.atproto.plc/PlcOperations|null[0]
+    final fun atprotoGenesis(kotlin/String, kotlin/String, kotlin/String, kotlin.collections/List<kotlin/String> = ...): studio.hypertext.atproto.plc/PlcUnsignedOperation // studio.hypertext.atproto.plc/PlcOperations.atprotoGenesis|atprotoGenesis(kotlin.String;kotlin.String;kotlin.String;kotlin.collections.List<kotlin.String>){}[0]
+    final fun atprotoUpdate(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin.collections/List<kotlin/String> = ...): studio.hypertext.atproto.plc/PlcUnsignedOperation // studio.hypertext.atproto.plc/PlcOperations.atprotoUpdate|atprotoUpdate(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.collections.List<kotlin.String>){}[0]
+}

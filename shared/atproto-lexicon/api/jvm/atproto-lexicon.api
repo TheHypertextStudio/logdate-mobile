@@ -1,0 +1,1628 @@
+public final class studio/hypertext/atproto/lexicon/GenerateLexiconsKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconBody {
+	public fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;)V
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun copy (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;)Lstudio/hypertext/atproto/lexicon/LexiconBody;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconBody;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEncoding ()Ljava/lang/String;
+	public final fun getSchema ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconCodegen {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/LexiconCodegen;
+	public final fun generate (Lstudio/hypertext/atproto/lexicon/LexiconDocument;Ljava/lang/String;)Ljava/lang/String;
+	public final fun generate (Lstudio/hypertext/atproto/lexicon/LexiconDocument;Lstudio/hypertext/atproto/lexicon/LexiconPackageLayout;)Ljava/lang/String;
+	public static synthetic fun generate$default (Lstudio/hypertext/atproto/lexicon/LexiconCodegen;Lstudio/hypertext/atproto/lexicon/LexiconDocument;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun generateRecordIndex (Ljava/util/List;Lstudio/hypertext/atproto/lexicon/LexiconPackageLayout;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public final fun generateSchemaIndex (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconDefinition {
+	public fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconBody;Lstudio/hypertext/atproto/lexicon/LexiconBody;Ljava/util/List;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;Lstudio/hypertext/atproto/lexicon/LexiconSpace;)V
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconBody;Lstudio/hypertext/atproto/lexicon/LexiconBody;Ljava/util/List;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;Lstudio/hypertext/atproto/lexicon/LexiconSpace;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun component11 ()Lstudio/hypertext/atproto/lexicon/LexiconBody;
+	public final fun component12 ()Lstudio/hypertext/atproto/lexicon/LexiconBody;
+	public final fun component13 ()Ljava/util/List;
+	public final fun component14 ()Ljava/lang/String;
+	public final fun component15 ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun component16 ()Ljava/util/List;
+	public final fun component17 ()Z
+	public final fun component18 ()Ljava/util/List;
+	public final fun component19 ()Ljava/lang/Long;
+	public final fun component2 ()Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public final fun component20 ()Ljava/lang/Long;
+	public final fun component21 ()Ljava/lang/Long;
+	public final fun component22 ()Ljava/lang/String;
+	public final fun component23 ()Ljava/lang/String;
+	public final fun component24 ()Ljava/lang/Long;
+	public final fun component25 ()Ljava/lang/Long;
+	public final fun component26 ()Ljava/lang/Long;
+	public final fun component27 ()Ljava/lang/Long;
+	public final fun component28 ()Ljava/util/List;
+	public final fun component29 ()Lkotlinx/serialization/json/JsonPrimitive;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component30 ()Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;
+	public final fun component31 ()Lstudio/hypertext/atproto/lexicon/LexiconSpace;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun component5 ()Ljava/util/Set;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun component7 ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun component8 ()Lstudio/hypertext/atproto/lexicon/LexiconReference;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconBody;Lstudio/hypertext/atproto/lexicon/LexiconBody;Ljava/util/List;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;Lstudio/hypertext/atproto/lexicon/LexiconSpace;)Lstudio/hypertext/atproto/lexicon/LexiconDefinition;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconDefinition;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconBody;Lstudio/hypertext/atproto/lexicon/LexiconBody;Ljava/util/List;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/LexiconField;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;Lstudio/hypertext/atproto/lexicon/LexiconSpace;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccept ()Ljava/util/List;
+	public final fun getClosed ()Z
+	public final fun getClosedValues ()Ljava/util/List;
+	public final fun getConstValue ()Lkotlinx/serialization/json/JsonPrimitive;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getErrors ()Ljava/util/List;
+	public final fun getFormat ()Ljava/lang/String;
+	public final fun getInput ()Lstudio/hypertext/atproto/lexicon/LexiconBody;
+	public final fun getItems ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun getKeyRule ()Ljava/lang/String;
+	public final fun getKnownValues ()Ljava/util/List;
+	public final fun getMaxGraphemes ()Ljava/lang/Long;
+	public final fun getMaxLength ()Ljava/lang/Long;
+	public final fun getMaxSize ()Ljava/lang/Long;
+	public final fun getMaximum ()Ljava/lang/Long;
+	public final fun getMinGraphemes ()Ljava/lang/Long;
+	public final fun getMinLength ()Ljava/lang/Long;
+	public final fun getMinimum ()Ljava/lang/Long;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getNullable ()Ljava/util/Set;
+	public final fun getOutput ()Lstudio/hypertext/atproto/lexicon/LexiconBody;
+	public final fun getParameters ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun getPermissionSet ()Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;
+	public final fun getProperties ()Ljava/util/Map;
+	public final fun getRecord ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun getRecordKey ()Lstudio/hypertext/atproto/lexicon/LexiconRecordKey;
+	public final fun getReference ()Lstudio/hypertext/atproto/lexicon/LexiconReference;
+	public final fun getRefs ()Ljava/util/List;
+	public final fun getRequired ()Ljava/util/Set;
+	public final fun getSpace ()Lstudio/hypertext/atproto/lexicon/LexiconSpace;
+	public final fun getType ()Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public final fun getUnsupportedType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconDocument {
+	public synthetic fun <init> (ILjava/lang/String;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy-ybmXJyE (ILjava/lang/String;Ljava/util/Map;)Lstudio/hypertext/atproto/lexicon/LexiconDocument;
+	public static synthetic fun copy-ybmXJyE$default (Lstudio/hypertext/atproto/lexicon/LexiconDocument;ILjava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconDocument;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefinitions ()Ljava/util/Map;
+	public final fun getId-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getLexicon ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconError;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconError;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconError;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconField {
+	public fun <init> (Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;ZZLjava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;)V
+	public synthetic fun <init> (Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;ZZLjava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public final fun component10 ()Z
+	public final fun component11 ()Ljava/util/List;
+	public final fun component12 ()Ljava/lang/Long;
+	public final fun component13 ()Ljava/lang/Long;
+	public final fun component14 ()Ljava/lang/Long;
+	public final fun component15 ()Ljava/lang/String;
+	public final fun component16 ()Ljava/lang/String;
+	public final fun component17 ()Ljava/lang/Long;
+	public final fun component18 ()Ljava/lang/Long;
+	public final fun component19 ()Ljava/lang/Long;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component20 ()Ljava/lang/Long;
+	public final fun component21 ()Ljava/util/List;
+	public final fun component22 ()Lkotlinx/serialization/json/JsonPrimitive;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/util/Map;
+	public final fun component6 ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun component7 ()Lstudio/hypertext/atproto/lexicon/LexiconReference;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;ZZLjava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;)Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconType;Ljava/lang/String;ZZLjava/util/Map;Lstudio/hypertext/atproto/lexicon/LexiconField;Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/util/List;Ljava/util/List;ZLjava/util/List;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/util/List;Lkotlinx/serialization/json/JsonPrimitive;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccept ()Ljava/util/List;
+	public final fun getClosed ()Z
+	public final fun getClosedValues ()Ljava/util/List;
+	public final fun getConstValue ()Lkotlinx/serialization/json/JsonPrimitive;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getFormat ()Ljava/lang/String;
+	public final fun getItems ()Lstudio/hypertext/atproto/lexicon/LexiconField;
+	public final fun getKnownValues ()Ljava/util/List;
+	public final fun getMaxGraphemes ()Ljava/lang/Long;
+	public final fun getMaxLength ()Ljava/lang/Long;
+	public final fun getMaxSize ()Ljava/lang/Long;
+	public final fun getMaximum ()Ljava/lang/Long;
+	public final fun getMinGraphemes ()Ljava/lang/Long;
+	public final fun getMinLength ()Ljava/lang/Long;
+	public final fun getMinimum ()Ljava/lang/Long;
+	public final fun getNullable ()Z
+	public final fun getProperties ()Ljava/util/Map;
+	public final fun getReference ()Lstudio/hypertext/atproto/lexicon/LexiconReference;
+	public final fun getRefs ()Ljava/util/List;
+	public final fun getRequired ()Z
+	public final fun getType ()Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public final fun getUnsupportedType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class studio/hypertext/atproto/lexicon/LexiconPackageLayout {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/LexiconPackageLayout$Companion;
+	public abstract fun packageFor-8VGzr2g (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconPackageLayout$Companion {
+	public final fun byNamespace (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconPackageLayout;
+	public final fun flat (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconPackageLayout;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconParser {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/LexiconParser;
+	public final fun parse (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconDocument;
+	public final fun parse (Lkotlinx/serialization/json/JsonObject;)Lstudio/hypertext/atproto/lexicon/LexiconDocument;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconPermission {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun boolean (Ljava/lang/String;)Ljava/lang/Boolean;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)Lstudio/hypertext/atproto/lexicon/LexiconPermission;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconPermission;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconPermission;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getParameters ()Ljava/util/Map;
+	public final fun getResource ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public final fun has (Ljava/lang/String;)Z
+	public fun hashCode ()I
+	public final fun string (Ljava/lang/String;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun values (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconPermissionSet {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconPermissionSet;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDetail ()Ljava/lang/String;
+	public final fun getDetailLang ()Ljava/util/Map;
+	public final fun getPermissions ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTitleLang ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class studio/hypertext/atproto/lexicon/LexiconRecordKey {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Companion;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRecordKey$Any : studio/hypertext/atproto/lexicon/LexiconRecordKey {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Any;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRecordKey$Companion {
+	public final fun parse (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconRecordKey;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRecordKey$Literal : studio/hypertext/atproto/lexicon/LexiconRecordKey {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Literal;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Literal;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Literal;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRecordKey$Nsid : studio/hypertext/atproto/lexicon/LexiconRecordKey {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Nsid;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRecordKey$Tid : studio/hypertext/atproto/lexicon/LexiconRecordKey {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/LexiconRecordKey$Tid;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRecordValidator {
+	public fun <init> (Lstudio/hypertext/atproto/lexicon/LexiconRegistry;)V
+	public final fun validateRecord-Y8q0p7E (Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;)Lstudio/hypertext/atproto/lexicon/LexiconValidationResult;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconReference {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/LexiconReference$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy-Y8q0p7E (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconReference;
+	public static synthetic fun copy-Y8q0p7E$default (Lstudio/hypertext/atproto/lexicon/LexiconReference;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconReference;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefinitionName ()Ljava/lang/String;
+	public final fun getDocumentId-Ocl1Fcs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconReference$Companion {
+	public final fun parse-Y8q0p7E (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconReference;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconRegistry {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Iterable;)V
+	public synthetic fun <init> (Ljava/lang/Iterable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun document-8VGzr2g (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconDocument;
+	public final fun documents ()Ljava/util/List;
+	public final fun register (Lstudio/hypertext/atproto/lexicon/LexiconDocument;)V
+	public final fun resolve (Lstudio/hypertext/atproto/lexicon/LexiconReference;)Lstudio/hypertext/atproto/lexicon/LexiconDefinition;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconSpace {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/List;)Lstudio/hypertext/atproto/lexicon/LexiconSpace;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconSpace;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconSpace;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollections ()Ljava/util/List;
+	public final fun getKey ()Lstudio/hypertext/atproto/lexicon/LexiconRecordKey;
+	public final fun getKeyRule ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getNameLang ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconType : java/lang/Enum {
+	public static final field ARRAY Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field BLOB Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field BOOLEAN Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field BYTES Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field CID_LINK Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field INTEGER Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field OBJECT Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field PARAMS Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field PERMISSION Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field PERMISSION_SET Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field PROCEDURE Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field QUERY Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field RECORD Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field REF Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field SPACE Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field STRING Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field SUBSCRIPTION Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field TOKEN Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field UNION Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field UNKNOWN Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static final field UNSUPPORTED Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun isPrimary ()Z
+	public static fun valueOf (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconType;
+	public static fun values ()[Lstudio/hypertext/atproto/lexicon/LexiconType;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconValidationIssue {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/LexiconValidationIssue;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconValidationIssue;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconValidationIssue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconValidationResult {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lstudio/hypertext/atproto/lexicon/LexiconValidationResult;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/LexiconValidationResult;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconValidationResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIssues ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isValid ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/LexiconValidator {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/LexiconValidator;
+	public final fun validate (Lstudio/hypertext/atproto/lexicon/LexiconDocument;Lstudio/hypertext/atproto/lexicon/LexiconRegistry;)Lstudio/hypertext/atproto/lexicon/LexiconValidationResult;
+	public static synthetic fun validate$default (Lstudio/hypertext/atproto/lexicon/LexiconValidator;Lstudio/hypertext/atproto/lexicon/LexiconDocument;Lstudio/hypertext/atproto/lexicon/LexiconRegistry;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/LexiconValidationResult;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/Blob {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/data/Blob$Companion;
+	public fun <init> (Lstudio/hypertext/atproto/lexicon/data/CidLink;Ljava/lang/String;J)V
+	public final fun component1 ()Lstudio/hypertext/atproto/lexicon/data/CidLink;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun copy (Lstudio/hypertext/atproto/lexicon/data/CidLink;Ljava/lang/String;J)Lstudio/hypertext/atproto/lexicon/data/Blob;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/data/Blob;Lstudio/hypertext/atproto/lexicon/data/CidLink;Ljava/lang/String;JILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/data/Blob;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getRef ()Lstudio/hypertext/atproto/lexicon/data/CidLink;
+	public final fun getSize ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/Blob$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/Bytes {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/data/Bytes$Companion;
+	public fun <init> ([B)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSize ()I
+	public fun hashCode ()I
+	public final fun toByteArray ()[B
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/Bytes$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/CidLink {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/data/CidLink$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-6Za8ImI ()Ljava/lang/String;
+	public final fun copy-CLM2Dqg (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/data/CidLink;
+	public static synthetic fun copy-CLM2Dqg$default (Lstudio/hypertext/atproto/lexicon/data/CidLink;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/data/CidLink;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/CidLink$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/LexiconData {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/data/LexiconData;
+	public final fun decodeFromDagCbor (Lkotlinx/serialization/KSerializer;[B)Ljava/lang/Object;
+	public final fun encodeToDagCbor (Lkotlinx/serialization/KSerializer;Ljava/lang/Object;)[B
+	public final fun getJson ()Lkotlinx/serialization/json/Json;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/LexiconUnionMember {
+	public final fun decode (Lkotlinx/serialization/KSerializer;)Ljava/lang/Object;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getValue ()Lkotlinx/serialization/json/JsonObject;
+}
+
+public final class studio/hypertext/atproto/lexicon/data/LexiconUnions {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/data/LexiconUnions;
+	public final fun decodeMember (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/data/LexiconUnionMember;
+	public final fun descriptor (Ljava/lang/String;)Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun encodeMember (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/Object;)V
+	public final fun encodeUnknown (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;)V
+	public final fun notAllowed (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/serialization/SerializationException;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHandle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/identity/ResolveHandleParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput$Companion;
+	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection ()Ljava/lang/String;
+	public final fun getRecord ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getRepo ()Ljava/lang/String;
+	public final fun getRkey ()Ljava/lang/String;
+	public final fun getSwapCommit ()Ljava/lang/String;
+	public final fun getValidate ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordInput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput$Companion;
+	public fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getCommit ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public final fun getUri ()Ljava/lang/String;
+	public final fun getValidationStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/CreateRecordOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getRev ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection ()Ljava/lang/String;
+	public final fun getRepo ()Ljava/lang/String;
+	public final fun getRkey ()Ljava/lang/String;
+	public final fun getSwapCommit ()Ljava/lang/String;
+	public final fun getSwapRecord ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordInput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput$Companion;
+	public fun <init> ()V
+	public fun <init> (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;)V
+	public synthetic fun <init> (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public final fun copy (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommit ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DeleteRecordOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput$Companion;
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Z)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Z)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput;Ljava/util/List;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;ZILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollections ()Ljava/util/List;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getDidDoc ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getHandleIsCorrect ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRepo ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/DescribeRepoParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getUri ()Ljava/lang/String;
+	public final fun getValue ()Lkotlinx/serialization/json/JsonElement;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getCollection ()Ljava/lang/String;
+	public final fun getRepo ()Ljava/lang/String;
+	public final fun getRkey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/GetRecordParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getRecords ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection ()Ljava/lang/String;
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getLimit ()Ljava/lang/Long;
+	public final fun getRepo ()Ljava/lang/String;
+	public final fun getReverse ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getUri ()Ljava/lang/String;
+	public final fun getValue ()Lkotlinx/serialization/json/JsonElement;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/ListRecordsRecord$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput$Companion;
+	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection ()Ljava/lang/String;
+	public final fun getRecord ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getRepo ()Ljava/lang/String;
+	public final fun getRkey ()Ljava/lang/String;
+	public final fun getSwapCommit ()Ljava/lang/String;
+	public final fun getSwapRecord ()Ljava/lang/String;
+	public final fun getValidate ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordInput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput$Companion;
+	public fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput;Ljava/lang/String;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getCommit ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/DefsCommitMeta;
+	public final fun getUri ()Ljava/lang/String;
+	public final fun getValidationStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/PutRecordOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput$Companion;
+	public fun <init> (Lstudio/hypertext/atproto/lexicon/data/Blob;)V
+	public final fun component1 ()Lstudio/hypertext/atproto/lexicon/data/Blob;
+	public final fun copy (Lstudio/hypertext/atproto/lexicon/data/Blob;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput;Lstudio/hypertext/atproto/lexicon/data/Blob;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlob ()Lstudio/hypertext/atproto/lexicon/data/Blob;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/repo/UploadBlobOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getInviteCode ()Ljava/lang/String;
+	public final fun getPassword ()Ljava/lang/String;
+	public final fun getPlcOp ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getRecoveryKey ()Ljava/lang/String;
+	public final fun getVerificationCode ()Ljava/lang/String;
+	public final fun getVerificationPhone ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountInput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessJwt ()Ljava/lang/String;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getDidDoc ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getRefreshJwt ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateAccountOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput$Companion;
+	public fun <init> (Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowTakendown ()Ljava/lang/Boolean;
+	public final fun getAuthFactorToken ()Ljava/lang/String;
+	public final fun getIdentifier ()Ljava/lang/String;
+	public final fun getPassword ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionInput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Boolean;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessJwt ()Ljava/lang/String;
+	public final fun getActive ()Ljava/lang/Boolean;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getDidDoc ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getEmailAuthFactor ()Ljava/lang/Boolean;
+	public final fun getEmailConfirmed ()Ljava/lang/Boolean;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getRefreshJwt ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/CreateSessionOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DeleteSessionLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DeleteSessionLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEmail ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPrivacyPolicy ()Ljava/lang/String;
+	public final fun getTermsOfService ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput$Companion;
+	public fun <init> (Ljava/util/List;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;Ljava/lang/String;Ljava/lang/Boolean;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/util/List;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;Ljava/lang/String;Ljava/lang/Boolean;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun component5 ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/util/List;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;Ljava/lang/String;Ljava/lang/Boolean;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;Ljava/lang/Boolean;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput;Ljava/util/List;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;Ljava/lang/String;Ljava/lang/Boolean;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;Ljava/lang/Boolean;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvailableUserDomains ()Ljava/util/List;
+	public final fun getContact ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerContact;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getInviteCodeRequired ()Ljava/lang/Boolean;
+	public final fun getLinks ()Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerLinks;
+	public final fun getPhoneVerificationRequired ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/DescribeServerOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput$Companion;
+	public fun <init> (Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Boolean;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Ljava/lang/Boolean;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getDidDoc ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getEmailAuthFactor ()Ljava/lang/Boolean;
+	public final fun getEmailConfirmed ()Ljava/lang/Boolean;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/GetSessionOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Boolean;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessJwt ()Ljava/lang/String;
+	public final fun getActive ()Ljava/lang/Boolean;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getDidDoc ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getEmailAuthFactor ()Ljava/lang/Boolean;
+	public final fun getEmailConfirmed ()Ljava/lang/Boolean;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getRefreshJwt ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/server/RefreshSessionOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getDid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetBlobParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getRev ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetLatestCommitParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getSince ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusLexicon {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusLexicon;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput$Companion;
+	public fun <init> (ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Z
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getRev ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusOutput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams {
+	public static final field Companion Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/lexicon/generated/com/atproto/sync/GetRepoStatusParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

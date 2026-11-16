@@ -1,0 +1,50 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-pds-runtime>
+abstract interface studio.hypertext.atproto.pds.runtime/PdsBlobStore { // studio.hypertext.atproto.pds.runtime/PdsBlobStore|null[0]
+    abstract suspend fun getBlob(studio.hypertext.atproto.pds/GetBlobRequest): kotlin/Result<studio.hypertext.atproto.pds/BlobDownload?> // studio.hypertext.atproto.pds.runtime/PdsBlobStore.getBlob|getBlob(studio.hypertext.atproto.pds.GetBlobRequest){}[0]
+    abstract suspend fun putBlob(studio.hypertext.atproto.pds/UploadBlobRequest): kotlin/Result<studio.hypertext.atproto.pds/BlobRef> // studio.hypertext.atproto.pds.runtime/PdsBlobStore.putBlob|putBlob(studio.hypertext.atproto.pds.UploadBlobRequest){}[0]
+}
+
+final class studio.hypertext.atproto.pds.runtime/DefaultPdsBlobService : studio.hypertext.atproto.pds/PdsBlobService { // studio.hypertext.atproto.pds.runtime/DefaultPdsBlobService|null[0]
+    constructor <init>(studio.hypertext.atproto.pds.runtime/PdsBlobStore) // studio.hypertext.atproto.pds.runtime/DefaultPdsBlobService.<init>|<init>(studio.hypertext.atproto.pds.runtime.PdsBlobStore){}[0]
+
+    final suspend fun getBlob(studio.hypertext.atproto.pds/GetBlobRequest): kotlin/Result<studio.hypertext.atproto.pds/BlobDownload?> // studio.hypertext.atproto.pds.runtime/DefaultPdsBlobService.getBlob|getBlob(studio.hypertext.atproto.pds.GetBlobRequest){}[0]
+    final suspend fun uploadBlob(studio.hypertext.atproto.pds/UploadBlobRequest): kotlin/Result<studio.hypertext.atproto.pds/UploadBlobResponse> // studio.hypertext.atproto.pds.runtime/DefaultPdsBlobService.uploadBlob|uploadBlob(studio.hypertext.atproto.pds.UploadBlobRequest){}[0]
+}
+
+final class studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService : studio.hypertext.atproto.pds/PdsRepoService { // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/RepoRecordStore) // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService.<init>|<init>(studio.hypertext.atproto.repo.RepoRecordStore){}[0]
+
+    final suspend fun createRecord(studio.hypertext.atproto.pds/CreateRecordRequest): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService.createRecord|createRecord(studio.hypertext.atproto.pds.CreateRecordRequest){}[0]
+    final suspend fun deleteRecord(studio.hypertext.atproto.pds/DeleteRecordRequest): kotlin/Result<kotlin/Boolean> // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService.deleteRecord|deleteRecord(studio.hypertext.atproto.pds.DeleteRecordRequest){}[0]
+    final suspend fun getRecord(studio.hypertext.atproto.pds/GetRecordRequest): kotlin/Result<studio.hypertext.atproto.repo/RepoRecord?> // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService.getRecord|getRecord(studio.hypertext.atproto.pds.GetRecordRequest){}[0]
+    final suspend fun listRecords(studio.hypertext.atproto.pds/ListRecordsRequest): kotlin/Result<studio.hypertext.atproto.pds/ListRecordsResponse> // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService.listRecords|listRecords(studio.hypertext.atproto.pds.ListRecordsRequest){}[0]
+    final suspend fun putRecord(studio.hypertext.atproto.pds/PutRecordRequest): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.pds.runtime/DefaultPdsRepoService.putRecord|putRecord(studio.hypertext.atproto.pds.PutRecordRequest){}[0]
+}
+
+final class studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService : studio.hypertext.atproto.pds/PdsSyncService { // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/RepoEngine) // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.<init>|<init>(studio.hypertext.atproto.repo.RepoEngine){}[0]
+
+    final suspend fun getLatestCommit(studio.hypertext.atproto.pds/GetLatestCommitRequest): kotlin/Result<studio.hypertext.atproto.pds/GetLatestCommitResponse?> // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.getLatestCommit|getLatestCommit(studio.hypertext.atproto.pds.GetLatestCommitRequest){}[0]
+    final suspend fun getRepo(studio.hypertext.atproto.pds/GetRepoRequest): kotlin/Result<studio.hypertext.atproto.pds/RepoExportResponse?> // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.getRepo|getRepo(studio.hypertext.atproto.pds.GetRepoRequest){}[0]
+    final suspend fun getRepoStatus(studio.hypertext.atproto.pds/GetRepoStatusRequest): kotlin/Result<studio.hypertext.atproto.pds/GetRepoStatusResponse?> // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.getRepoStatus|getRepoStatus(studio.hypertext.atproto.pds.GetRepoStatusRequest){}[0]
+
+    final object Companion { // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.Companion|null[0]
+        final const val CAR_CONTENT_TYPE // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.Companion.CAR_CONTENT_TYPE|{}CAR_CONTENT_TYPE[0]
+            final fun <get-CAR_CONTENT_TYPE>(): kotlin/String // studio.hypertext.atproto.pds.runtime/DefaultPdsSyncService.Companion.CAR_CONTENT_TYPE.<get-CAR_CONTENT_TYPE>|<get-CAR_CONTENT_TYPE>(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds.runtime/StaticPdsDiscoveryService : studio.hypertext.atproto.pds/PdsDiscoveryService { // studio.hypertext.atproto.pds.runtime/StaticPdsDiscoveryService|null[0]
+    constructor <init>(studio.hypertext.atproto.pds/AuthorizationServerMetadata, studio.hypertext.atproto.pds/ProtectedResourceMetadata, studio.hypertext.atproto.pds/DescribeServerResponse) // studio.hypertext.atproto.pds.runtime/StaticPdsDiscoveryService.<init>|<init>(studio.hypertext.atproto.pds.AuthorizationServerMetadata;studio.hypertext.atproto.pds.ProtectedResourceMetadata;studio.hypertext.atproto.pds.DescribeServerResponse){}[0]
+
+    final fun authorizationServerMetadata(): studio.hypertext.atproto.pds/AuthorizationServerMetadata // studio.hypertext.atproto.pds.runtime/StaticPdsDiscoveryService.authorizationServerMetadata|authorizationServerMetadata(){}[0]
+    final fun describeServer(): studio.hypertext.atproto.pds/DescribeServerResponse // studio.hypertext.atproto.pds.runtime/StaticPdsDiscoveryService.describeServer|describeServer(){}[0]
+    final fun protectedResourceMetadata(): studio.hypertext.atproto.pds/ProtectedResourceMetadata // studio.hypertext.atproto.pds.runtime/StaticPdsDiscoveryService.protectedResourceMetadata|protectedResourceMetadata(){}[0]
+}

@@ -1,0 +1,314 @@
+public final class studio/hypertext/atproto/syntax/AtUri {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/AtUri$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/AtUri;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun getAuthority-impl (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getCollection-pKktg3E (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getRecordKey-8VkW4t0 (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/AtUri$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/AtUri$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-mP6GwHc (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-3mLlHH4 (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/AtUri$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-mP6GwHc (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class studio/hypertext/atproto/syntax/AtprotoSyntaxException : java/lang/IllegalArgumentException {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class studio/hypertext/atproto/syntax/Datetime {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/Datetime$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/Datetime;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/Datetime$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/Datetime$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-9rM3WV8 (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-0lUMhqo (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Datetime$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-9rM3WV8 (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Did {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/Did$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/Did;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun getIdentifier-impl (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getMethod-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/Did$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/Did$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-Slg9POo (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-KACiNEU (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Did$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-Slg9POo (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Handle {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/Handle$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/Handle;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun getNormalized-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/Handle$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/Handle$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-uY0I9Wc (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-laisg5E (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Handle$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-uY0I9Wc (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidAtUriException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidDatetimeException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidDidException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidHandleException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidLanguageTagException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidNsidException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidRecordKeyException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/InvalidTidException : studio/hypertext/atproto/syntax/AtprotoSyntaxException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/syntax/LanguageTag {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/LanguageTag$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/LanguageTag;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/LanguageTag$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/LanguageTag$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-0h8SDvo (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-pJxlDtE (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/LanguageTag$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-0h8SDvo (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Nsid {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/Nsid$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/Nsid;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun getAuthority-impl (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun getName-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/Nsid$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/Nsid$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-_p8vcOo (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-QMXVip4 (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Nsid$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-_p8vcOo (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/RecordKey {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/RecordKey$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/RecordKey;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/RecordKey$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/RecordKey$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-gkJUObw (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-lrHcmQ4 (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/RecordKey$Companion {
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-gkJUObw (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Tid {
+	public static final field Companion Lstudio/hypertext/atproto/syntax/Tid$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/syntax/Tid;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun getClockId-impl (Ljava/lang/String;)I
+	public static final fun getTimestampMicros-impl (Ljava/lang/String;)J
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public static final fun toLong-impl (Ljava/lang/String;)J
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/syntax/Tid$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/syntax/Tid$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-LrX03EY (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-jT1GIl0 (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/syntax/Tid$Companion {
+	public final fun fromInstant-NRBwt_I (Lkotlin/time/Instant;I)Ljava/lang/String;
+	public static synthetic fun fromInstant-NRBwt_I$default (Lstudio/hypertext/atproto/syntax/Tid$Companion;Lkotlin/time/Instant;IILjava/lang/Object;)Ljava/lang/String;
+	public final fun fromLong-LrX03EY (J)Ljava/lang/String;
+	public final fun isValid (Ljava/lang/String;)Z
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-LrX03EY (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

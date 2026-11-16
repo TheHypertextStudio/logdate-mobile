@@ -1,0 +1,798 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-oauth-client>
+final enum class studio.hypertext.atproto.oauth.client/OAuthRefreshMode : kotlin/Enum<studio.hypertext.atproto.oauth.client/OAuthRefreshMode> { // studio.hypertext.atproto.oauth.client/OAuthRefreshMode|null[0]
+    enum entry AUTO // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.AUTO|null[0]
+    enum entry FORCE // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.FORCE|null[0]
+    enum entry NEVER // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.NEVER|null[0]
+
+    final val entries // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.oauth.client/OAuthRefreshMode> // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthRefreshMode // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<studio.hypertext.atproto.oauth.client/OAuthRefreshMode> // studio.hypertext.atproto.oauth.client/OAuthRefreshMode.values|values#static(){}[0]
+}
+
+abstract interface studio.hypertext.atproto.oauth.client/OAuthCrypto { // studio.hypertext.atproto.oauth.client/OAuthCrypto|null[0]
+    abstract fun generateEs256Key(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthCrypto.generateEs256Key|generateEs256Key(){}[0]
+    abstract fun randomBytes(kotlin/Int): kotlin/ByteArray // studio.hypertext.atproto.oauth.client/OAuthCrypto.randomBytes|randomBytes(kotlin.Int){}[0]
+    abstract fun sha256(kotlin/ByteArray): kotlin/ByteArray // studio.hypertext.atproto.oauth.client/OAuthCrypto.sha256|sha256(kotlin.ByteArray){}[0]
+    abstract fun signEs256(studio.hypertext.atproto.oauth.client/JsonWebKey, kotlin/ByteArray): kotlin/ByteArray // studio.hypertext.atproto.oauth.client/OAuthCrypto.signEs256|signEs256(studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.ByteArray){}[0]
+}
+
+abstract interface studio.hypertext.atproto.oauth.client/OAuthSessionLock { // studio.hypertext.atproto.oauth.client/OAuthSessionLock|null[0]
+    abstract suspend fun <#A1: kotlin/Any?> withLock(studio.hypertext.atproto.identity/AtprotoDid, kotlin.coroutines/SuspendFunction0<#A1>): #A1 // studio.hypertext.atproto.oauth.client/OAuthSessionLock.withLock|withLock(studio.hypertext.atproto.identity.AtprotoDid;kotlin.coroutines.SuspendFunction0<0:0>){0§<kotlin.Any?>}[0]
+}
+
+abstract interface studio.hypertext.atproto.oauth.client/OAuthSessionStore { // studio.hypertext.atproto.oauth.client/OAuthSessionStore|null[0]
+    abstract suspend fun delete(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/OAuthSessionStore.delete|delete(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun get(studio.hypertext.atproto.identity/AtprotoDid): studio.hypertext.atproto.oauth.client/OAuthStoredSession? // studio.hypertext.atproto.oauth.client/OAuthSessionStore.get|get(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun save(studio.hypertext.atproto.oauth.client/OAuthStoredSession) // studio.hypertext.atproto.oauth.client/OAuthSessionStore.save|save(studio.hypertext.atproto.oauth.client.OAuthStoredSession){}[0]
+}
+
+abstract interface studio.hypertext.atproto.oauth.client/OAuthStateStore { // studio.hypertext.atproto.oauth.client/OAuthStateStore|null[0]
+    abstract suspend fun save(studio.hypertext.atproto.oauth.client/OAuthAuthorizationState, kotlin.time/Instant) // studio.hypertext.atproto.oauth.client/OAuthStateStore.save|save(studio.hypertext.atproto.oauth.client.OAuthAuthorizationState;kotlin.time.Instant){}[0]
+    abstract suspend fun take(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthAuthorizationState? // studio.hypertext.atproto.oauth.client/OAuthStateStore.take|take(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/AtprotoOAuthClient : kotlin/AutoCloseable { // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient|null[0]
+    constructor <init>(studio.hypertext.atproto.oauth.client/OAuthClientConfig, studio.hypertext.atproto.identity/IdentityResolver, io.ktor.client/HttpClient, studio.hypertext.atproto.oauth.client/OAuthCrypto, studio.hypertext.atproto.oauth.client/OAuthStateStore, studio.hypertext.atproto.oauth.client/OAuthSessionStore, studio.hypertext.atproto.oauth.client/OAuthSessionLock = ..., kotlin.time/Clock = ..., kotlin/Boolean = ..., kotlin.time/Duration = ..., kotlin/Boolean = ...) // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.<init>|<init>(studio.hypertext.atproto.oauth.client.OAuthClientConfig;studio.hypertext.atproto.identity.IdentityResolver;io.ktor.client.HttpClient;studio.hypertext.atproto.oauth.client.OAuthCrypto;studio.hypertext.atproto.oauth.client.OAuthStateStore;studio.hypertext.atproto.oauth.client.OAuthSessionStore;studio.hypertext.atproto.oauth.client.OAuthSessionLock;kotlin.time.Clock;kotlin.Boolean;kotlin.time.Duration;kotlin.Boolean){}[0]
+
+    final val clientMetadata // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.clientMetadata|{}clientMetadata[0]
+        final fun <get-clientMetadata>(): studio.hypertext.atproto.oauth.client/OAuthClientMetadata // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.clientMetadata.<get-clientMetadata>|<get-clientMetadata>(){}[0]
+    final val config // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.config|{}config[0]
+        final fun <get-config>(): studio.hypertext.atproto.oauth.client/OAuthClientConfig // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.config.<get-config>|<get-config>(){}[0]
+    final val jwks // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.jwks|{}jwks[0]
+        final fun <get-jwks>(): studio.hypertext.atproto.oauth.client/JsonWebKeySet // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.jwks.<get-jwks>|<get-jwks>(){}[0]
+    final val resolver // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.resolver|{}resolver[0]
+        final fun <get-resolver>(): studio.hypertext.atproto.oauth.client/OAuthServerResolver // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.resolver.<get-resolver>|<get-resolver>(){}[0]
+
+    final fun clientMetadataJson(): kotlin/String // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.clientMetadataJson|clientMetadataJson(){}[0]
+    final fun close() // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.close|close(){}[0]
+    final suspend fun authorize(kotlin/String, studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.authorize|authorize(kotlin.String;studio.hypertext.atproto.oauth.client.OAuthAuthorizeOptions){}[0]
+    final suspend fun callback(kotlin.collections/Map<kotlin/String, kotlin/String>): studio.hypertext.atproto.oauth.client/OAuthCallbackResult // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.callback|callback(kotlin.collections.Map<kotlin.String,kotlin.String>){}[0]
+    final suspend fun restore(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.oauth.client/OAuthRefreshMode = ...): studio.hypertext.atproto.oauth.client/OAuthSession // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.restore|restore(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.oauth.client.OAuthRefreshMode){}[0]
+    final suspend fun revoke(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/AtprotoOAuthClient.revoke|revoke(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore : studio.hypertext.atproto.oauth.client/OAuthSessionStore { // studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore|null[0]
+    constructor <init>() // studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore.<init>|<init>(){}[0]
+
+    final suspend fun delete(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore.delete|delete(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun get(studio.hypertext.atproto.identity/AtprotoDid): studio.hypertext.atproto.oauth.client/OAuthStoredSession? // studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore.get|get(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun save(studio.hypertext.atproto.oauth.client/OAuthStoredSession) // studio.hypertext.atproto.oauth.client/InMemoryOAuthSessionStore.save|save(studio.hypertext.atproto.oauth.client.OAuthStoredSession){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/InMemoryOAuthStateStore : studio.hypertext.atproto.oauth.client/OAuthStateStore { // studio.hypertext.atproto.oauth.client/InMemoryOAuthStateStore|null[0]
+    constructor <init>(kotlin.time/Clock = ...) // studio.hypertext.atproto.oauth.client/InMemoryOAuthStateStore.<init>|<init>(kotlin.time.Clock){}[0]
+
+    final suspend fun save(studio.hypertext.atproto.oauth.client/OAuthAuthorizationState, kotlin.time/Instant) // studio.hypertext.atproto.oauth.client/InMemoryOAuthStateStore.save|save(studio.hypertext.atproto.oauth.client.OAuthAuthorizationState;kotlin.time.Instant){}[0]
+    final suspend fun size(): kotlin/Int // studio.hypertext.atproto.oauth.client/InMemoryOAuthStateStore.size|size(){}[0]
+    final suspend fun take(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthAuthorizationState? // studio.hypertext.atproto.oauth.client/InMemoryOAuthStateStore.take|take(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/InProcessOAuthSessionLock : studio.hypertext.atproto.oauth.client/OAuthSessionLock { // studio.hypertext.atproto.oauth.client/InProcessOAuthSessionLock|null[0]
+    constructor <init>() // studio.hypertext.atproto.oauth.client/InProcessOAuthSessionLock.<init>|<init>(){}[0]
+
+    final suspend fun <#A1: kotlin/Any?> withLock(studio.hypertext.atproto.identity/AtprotoDid, kotlin.coroutines/SuspendFunction0<#A1>): #A1 // studio.hypertext.atproto.oauth.client/InProcessOAuthSessionLock.withLock|withLock(studio.hypertext.atproto.identity.AtprotoDid;kotlin.coroutines.SuspendFunction0<0:0>){0§<kotlin.Any?>}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/JsonWebKey { // studio.hypertext.atproto.oauth.client/JsonWebKey|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // studio.hypertext.atproto.oauth.client/JsonWebKey.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+
+    final val alg // studio.hypertext.atproto.oauth.client/JsonWebKey.alg|{}alg[0]
+        final fun <get-alg>(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.alg.<get-alg>|<get-alg>(){}[0]
+    final val crv // studio.hypertext.atproto.oauth.client/JsonWebKey.crv|{}crv[0]
+        final fun <get-crv>(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.crv.<get-crv>|<get-crv>(){}[0]
+    final val d // studio.hypertext.atproto.oauth.client/JsonWebKey.d|{}d[0]
+        final fun <get-d>(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.d.<get-d>|<get-d>(){}[0]
+    final val isPrivate // studio.hypertext.atproto.oauth.client/JsonWebKey.isPrivate|{}isPrivate[0]
+        final fun <get-isPrivate>(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/JsonWebKey.isPrivate.<get-isPrivate>|<get-isPrivate>(){}[0]
+    final val kid // studio.hypertext.atproto.oauth.client/JsonWebKey.kid|{}kid[0]
+        final fun <get-kid>(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.kid.<get-kid>|<get-kid>(){}[0]
+    final val kty // studio.hypertext.atproto.oauth.client/JsonWebKey.kty|{}kty[0]
+        final fun <get-kty>(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.kty.<get-kty>|<get-kty>(){}[0]
+    final val use // studio.hypertext.atproto.oauth.client/JsonWebKey.use|{}use[0]
+        final fun <get-use>(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.use.<get-use>|<get-use>(){}[0]
+    final val x // studio.hypertext.atproto.oauth.client/JsonWebKey.x|{}x[0]
+        final fun <get-x>(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.x.<get-x>|<get-x>(){}[0]
+    final val y // studio.hypertext.atproto.oauth.client/JsonWebKey.y|{}y[0]
+        final fun <get-y>(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.y.<get-y>|<get-y>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // studio.hypertext.atproto.oauth.client/JsonWebKey.component8|component8(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/JsonWebKey.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/JsonWebKey.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/JsonWebKey.hashCode|hashCode(){}[0]
+    final fun toBarePublicJwk(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/JsonWebKey.toBarePublicJwk|toBarePublicJwk(){}[0]
+    final fun toPublicJwk(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/JsonWebKey.toPublicJwk|toPublicJwk(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKey.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/JsonWebKey> { // studio.hypertext.atproto.oauth.client/JsonWebKey.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/JsonWebKey.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/JsonWebKey.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/JsonWebKey.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/JsonWebKey.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/JsonWebKey) // studio.hypertext.atproto.oauth.client/JsonWebKey.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.JsonWebKey){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/JsonWebKey.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/JsonWebKey> // studio.hypertext.atproto.oauth.client/JsonWebKey.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/JsonWebKeySet { // studio.hypertext.atproto.oauth.client/JsonWebKeySet|null[0]
+    constructor <init>(kotlin.collections/List<studio.hypertext.atproto.oauth.client/JsonWebKey>) // studio.hypertext.atproto.oauth.client/JsonWebKeySet.<init>|<init>(kotlin.collections.List<studio.hypertext.atproto.oauth.client.JsonWebKey>){}[0]
+
+    final val keys // studio.hypertext.atproto.oauth.client/JsonWebKeySet.keys|{}keys[0]
+        final fun <get-keys>(): kotlin.collections/List<studio.hypertext.atproto.oauth.client/JsonWebKey> // studio.hypertext.atproto.oauth.client/JsonWebKeySet.keys.<get-keys>|<get-keys>(){}[0]
+
+    final fun component1(): kotlin.collections/List<studio.hypertext.atproto.oauth.client/JsonWebKey> // studio.hypertext.atproto.oauth.client/JsonWebKeySet.component1|component1(){}[0]
+    final fun copy(kotlin.collections/List<studio.hypertext.atproto.oauth.client/JsonWebKey> = ...): studio.hypertext.atproto.oauth.client/JsonWebKeySet // studio.hypertext.atproto.oauth.client/JsonWebKeySet.copy|copy(kotlin.collections.List<studio.hypertext.atproto.oauth.client.JsonWebKey>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/JsonWebKeySet.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/JsonWebKeySet.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/JsonWebKeySet.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/JsonWebKeySet> { // studio.hypertext.atproto.oauth.client/JsonWebKeySet.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/JsonWebKeySet.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/JsonWebKeySet.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/JsonWebKeySet.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/JsonWebKeySet // studio.hypertext.atproto.oauth.client/JsonWebKeySet.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/JsonWebKeySet) // studio.hypertext.atproto.oauth.client/JsonWebKeySet.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.JsonWebKeySet){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/JsonWebKeySet.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.oauth.client/JsonWebKeySet.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/JsonWebKeySet> // studio.hypertext.atproto.oauth.client/JsonWebKeySet.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException : studio.hypertext.atproto.oauth.client/OAuthAuthorizationException { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException|null[0]
+    constructor <init>(kotlin/String, kotlin/String?, kotlin/String?) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.<init>|<init>(kotlin.String;kotlin.String?;kotlin.String?){}[0]
+
+    final val appState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.appState|{}appState[0]
+        final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.appState.<get-appState>|<get-appState>(){}[0]
+    final val error // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.error|{}error[0]
+        final fun <get-error>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.error.<get-error>|<get-error>(){}[0]
+    final val errorDescription // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.errorDescription|{}errorDescription[0]
+        final fun <get-errorDescription>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationErrorException.errorDescription.<get-errorDescription>|<get-errorDescription>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.<init>|<init>(kotlin.String;kotlin.String;kotlin.String){}[0]
+
+    final val issuer // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.issuer|{}issuer[0]
+        final fun <get-issuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.issuer.<get-issuer>|<get-issuer>(){}[0]
+    final val state // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.state|{}state[0]
+        final fun <get-state>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.state.<get-state>|<get-state>(){}[0]
+    final val url // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.url|{}url[0]
+        final fun <get-url>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.url.<get-url>|<get-url>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.copy|copy(kotlin.String;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationRedirect.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String>? = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin.collections/List<kotlin/String>? = ...) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>?;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.collections.List<kotlin.String>?){}[0]
+
+    final val authorizationEndpoint // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.authorizationEndpoint|{}authorizationEndpoint[0]
+        final fun <get-authorizationEndpoint>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.authorizationEndpoint.<get-authorizationEndpoint>|<get-authorizationEndpoint>(){}[0]
+    final val authorizationResponseIssParameterSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.authorizationResponseIssParameterSupported|{}authorizationResponseIssParameterSupported[0]
+        final fun <get-authorizationResponseIssParameterSupported>(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.authorizationResponseIssParameterSupported.<get-authorizationResponseIssParameterSupported>|<get-authorizationResponseIssParameterSupported>(){}[0]
+    final val clientIdMetadataDocumentSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.clientIdMetadataDocumentSupported|{}clientIdMetadataDocumentSupported[0]
+        final fun <get-clientIdMetadataDocumentSupported>(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.clientIdMetadataDocumentSupported.<get-clientIdMetadataDocumentSupported>|<get-clientIdMetadataDocumentSupported>(){}[0]
+    final val codeChallengeMethodsSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.codeChallengeMethodsSupported|{}codeChallengeMethodsSupported[0]
+        final fun <get-codeChallengeMethodsSupported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.codeChallengeMethodsSupported.<get-codeChallengeMethodsSupported>|<get-codeChallengeMethodsSupported>(){}[0]
+    final val dpopSigningAlgValuesSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.dpopSigningAlgValuesSupported|{}dpopSigningAlgValuesSupported[0]
+        final fun <get-dpopSigningAlgValuesSupported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.dpopSigningAlgValuesSupported.<get-dpopSigningAlgValuesSupported>|<get-dpopSigningAlgValuesSupported>(){}[0]
+    final val grantTypesSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.grantTypesSupported|{}grantTypesSupported[0]
+        final fun <get-grantTypesSupported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.grantTypesSupported.<get-grantTypesSupported>|<get-grantTypesSupported>(){}[0]
+    final val issuer // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.issuer|{}issuer[0]
+        final fun <get-issuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.issuer.<get-issuer>|<get-issuer>(){}[0]
+    final val protectedResources // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.protectedResources|{}protectedResources[0]
+        final fun <get-protectedResources>(): kotlin.collections/List<kotlin/String>? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.protectedResources.<get-protectedResources>|<get-protectedResources>(){}[0]
+    final val pushedAuthorizationRequestEndpoint // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.pushedAuthorizationRequestEndpoint|{}pushedAuthorizationRequestEndpoint[0]
+        final fun <get-pushedAuthorizationRequestEndpoint>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.pushedAuthorizationRequestEndpoint.<get-pushedAuthorizationRequestEndpoint>|<get-pushedAuthorizationRequestEndpoint>(){}[0]
+    final val requirePushedAuthorizationRequests // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.requirePushedAuthorizationRequests|{}requirePushedAuthorizationRequests[0]
+        final fun <get-requirePushedAuthorizationRequests>(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.requirePushedAuthorizationRequests.<get-requirePushedAuthorizationRequests>|<get-requirePushedAuthorizationRequests>(){}[0]
+    final val responseTypesSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.responseTypesSupported|{}responseTypesSupported[0]
+        final fun <get-responseTypesSupported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.responseTypesSupported.<get-responseTypesSupported>|<get-responseTypesSupported>(){}[0]
+    final val revocationEndpoint // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.revocationEndpoint|{}revocationEndpoint[0]
+        final fun <get-revocationEndpoint>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.revocationEndpoint.<get-revocationEndpoint>|<get-revocationEndpoint>(){}[0]
+    final val scopesSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.scopesSupported|{}scopesSupported[0]
+        final fun <get-scopesSupported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.scopesSupported.<get-scopesSupported>|<get-scopesSupported>(){}[0]
+    final val tokenEndpoint // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.tokenEndpoint|{}tokenEndpoint[0]
+        final fun <get-tokenEndpoint>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.tokenEndpoint.<get-tokenEndpoint>|<get-tokenEndpoint>(){}[0]
+    final val tokenEndpointAuthMethodsSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.tokenEndpointAuthMethodsSupported|{}tokenEndpointAuthMethodsSupported[0]
+        final fun <get-tokenEndpointAuthMethodsSupported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.tokenEndpointAuthMethodsSupported.<get-tokenEndpointAuthMethodsSupported>|<get-tokenEndpointAuthMethodsSupported>(){}[0]
+    final val tokenEndpointAuthSigningAlgValuesSupported // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.tokenEndpointAuthSigningAlgValuesSupported|{}tokenEndpointAuthSigningAlgValuesSupported[0]
+        final fun <get-tokenEndpointAuthSigningAlgValuesSupported>(): kotlin.collections/List<kotlin/String>? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.tokenEndpointAuthSigningAlgValuesSupported.<get-tokenEndpointAuthSigningAlgValuesSupported>|<get-tokenEndpointAuthSigningAlgValuesSupported>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component1|component1(){}[0]
+    final fun component10(): kotlin.collections/List<kotlin/String>? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component10|component10(){}[0]
+    final fun component11(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component11|component11(){}[0]
+    final fun component12(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component12|component12(){}[0]
+    final fun component13(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component13|component13(){}[0]
+    final fun component14(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component14|component14(){}[0]
+    final fun component15(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component15|component15(){}[0]
+    final fun component16(): kotlin.collections/List<kotlin/String>? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component16|component16(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component5|component5(){}[0]
+    final fun component6(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component6|component6(){}[0]
+    final fun component7(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component7|component7(){}[0]
+    final fun component8(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component8|component8(){}[0]
+    final fun component9(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String>? = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin.collections/List<kotlin/String>? = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>?;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.collections.List<kotlin.String>?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata> { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.OAuthAuthorizationServerMetadata){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthAuthorizationState { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState|null[0]
+    constructor <init>(kotlin/String, kotlin/String, studio.hypertext.atproto.oauth.client/JsonWebKey, kotlin/String, kotlin/String, kotlin/String, studio.hypertext.atproto.identity/AtprotoDid?, kotlin/String?, kotlin.time/Instant) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.<init>|<init>(kotlin.String;kotlin.String;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid?;kotlin.String?;kotlin.time.Instant){}[0]
+
+    final val appState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.appState|{}appState[0]
+        final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.appState.<get-appState>|<get-appState>(){}[0]
+    final val clientKeyId // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.clientKeyId|{}clientKeyId[0]
+        final fun <get-clientKeyId>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.clientKeyId.<get-clientKeyId>|<get-clientKeyId>(){}[0]
+    final val createdAt // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.createdAt|{}createdAt[0]
+        final fun <get-createdAt>(): kotlin.time/Instant // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.createdAt.<get-createdAt>|<get-createdAt>(){}[0]
+    final val dpopKey // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.dpopKey|{}dpopKey[0]
+        final fun <get-dpopKey>(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.dpopKey.<get-dpopKey>|<get-dpopKey>(){}[0]
+    final val expectedDid // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.expectedDid|{}expectedDid[0]
+        final fun <get-expectedDid>(): studio.hypertext.atproto.identity/AtprotoDid? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.expectedDid.<get-expectedDid>|<get-expectedDid>(){}[0]
+    final val issuer // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.issuer|{}issuer[0]
+        final fun <get-issuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.issuer.<get-issuer>|<get-issuer>(){}[0]
+    final val pkceVerifier // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.pkceVerifier|{}pkceVerifier[0]
+        final fun <get-pkceVerifier>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.pkceVerifier.<get-pkceVerifier>|<get-pkceVerifier>(){}[0]
+    final val redirectUri // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.redirectUri|{}redirectUri[0]
+        final fun <get-redirectUri>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+    final val state // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.state|{}state[0]
+        final fun <get-state>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.state.<get-state>|<get-state>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component5|component5(){}[0]
+    final fun component6(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component6|component6(){}[0]
+    final fun component7(): studio.hypertext.atproto.identity/AtprotoDid? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component8|component8(){}[0]
+    final fun component9(): kotlin.time/Instant // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.oauth.client/JsonWebKey = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid? = ..., kotlin/String? = ..., kotlin.time/Instant = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizationState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.copy|copy(kotlin.String;kotlin.String;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid?;kotlin.String?;kotlin.time.Instant){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/OAuthAuthorizationState> { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/OAuthAuthorizationState // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/OAuthAuthorizationState) // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.OAuthAuthorizationState){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/OAuthAuthorizationState> // studio.hypertext.atproto.oauth.client/OAuthAuthorizationState.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions { // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions|null[0]
+    constructor <init>(kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.<init>|<init>(kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+
+    final val appState // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.appState|{}appState[0]
+        final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.appState.<get-appState>|<get-appState>(){}[0]
+    final val prompt // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.prompt|{}prompt[0]
+        final fun <get-prompt>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.prompt.<get-prompt>|<get-prompt>(){}[0]
+    final val redirectUri // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.redirectUri|{}redirectUri[0]
+        final fun <get-redirectUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+    final val scope // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.scope.<get-scope>|<get-scope>(){}[0]
+
+    final fun component1(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.component4|component4(){}[0]
+    final fun copy(kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.copy|copy(kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthAuthorizeOptions.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthCallbackException : studio.hypertext.atproto.oauth.client/OAuthAuthorizationException { // studio.hypertext.atproto.oauth.client/OAuthCallbackException|null[0]
+    constructor <init>(studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthCallbackException.<init>|<init>(studio.hypertext.atproto.oauth.client.OAuthCallbackException.Reason;kotlin.String){}[0]
+
+    final val reason // studio.hypertext.atproto.oauth.client/OAuthCallbackException.reason|{}reason[0]
+        final fun <get-reason>(): studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason // studio.hypertext.atproto.oauth.client/OAuthCallbackException.reason.<get-reason>|<get-reason>(){}[0]
+
+    final enum class Reason : kotlin/Enum<studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason> { // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason|null[0]
+        enum entry EXPIRED_STATE // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.EXPIRED_STATE|null[0]
+        enum entry MISSING_CODE // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.MISSING_CODE|null[0]
+        enum entry MISSING_ISSUER // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.MISSING_ISSUER|null[0]
+        enum entry MISSING_STATE // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.MISSING_STATE|null[0]
+        enum entry UNKNOWN_STATE // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.UNKNOWN_STATE|null[0]
+        enum entry UNSUPPORTED_RESPONSE // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.UNSUPPORTED_RESPONSE|null[0]
+
+        final val entries // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.entries|#static{}entries[0]
+            final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason> // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.entries.<get-entries>|<get-entries>#static(){}[0]
+
+        final fun valueOf(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.valueOf|valueOf#static(kotlin.String){}[0]
+        final fun values(): kotlin/Array<studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason> // studio.hypertext.atproto.oauth.client/OAuthCallbackException.Reason.values|values#static(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthCallbackResult { // studio.hypertext.atproto.oauth.client/OAuthCallbackResult|null[0]
+    constructor <init>(studio.hypertext.atproto.oauth.client/OAuthSession, kotlin/String?, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.<init>|<init>(studio.hypertext.atproto.oauth.client.OAuthSession;kotlin.String?;kotlin.Throwable?){}[0]
+
+    final val appState // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.appState|{}appState[0]
+        final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.appState.<get-appState>|<get-appState>(){}[0]
+    final val previousSessionRevocationFailure // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.previousSessionRevocationFailure|{}previousSessionRevocationFailure[0]
+        final fun <get-previousSessionRevocationFailure>(): kotlin/Throwable? // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.previousSessionRevocationFailure.<get-previousSessionRevocationFailure>|<get-previousSessionRevocationFailure>(){}[0]
+    final val session // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.session|{}session[0]
+        final fun <get-session>(): studio.hypertext.atproto.oauth.client/OAuthSession // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.session.<get-session>|<get-session>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.oauth.client/OAuthSession // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.component2|component2(){}[0]
+    final fun component3(): kotlin/Throwable? // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.oauth.client/OAuthSession = ..., kotlin/String? = ..., kotlin/Throwable? = ...): studio.hypertext.atproto.oauth.client/OAuthCallbackResult // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.copy|copy(studio.hypertext.atproto.oauth.client.OAuthSession;kotlin.String?;kotlin.Throwable?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthCallbackResult.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthClientConfig { // studio.hypertext.atproto.oauth.client/OAuthClientConfig|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<kotlin/String>, kotlin.collections/List<studio.hypertext.atproto.oauth.client/OAuthClientKey>, kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ...) // studio.hypertext.atproto.oauth.client/OAuthClientConfig.<init>|<init>(kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<studio.hypertext.atproto.oauth.client.OAuthClientKey>;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String){}[0]
+
+    final val applicationType // studio.hypertext.atproto.oauth.client/OAuthClientConfig.applicationType|{}applicationType[0]
+        final fun <get-applicationType>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.applicationType.<get-applicationType>|<get-applicationType>(){}[0]
+    final val clientId // studio.hypertext.atproto.oauth.client/OAuthClientConfig.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val clientName // studio.hypertext.atproto.oauth.client/OAuthClientConfig.clientName|{}clientName[0]
+        final fun <get-clientName>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.clientName.<get-clientName>|<get-clientName>(){}[0]
+    final val clientUri // studio.hypertext.atproto.oauth.client/OAuthClientConfig.clientUri|{}clientUri[0]
+        final fun <get-clientUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.clientUri.<get-clientUri>|<get-clientUri>(){}[0]
+    final val jwksUri // studio.hypertext.atproto.oauth.client/OAuthClientConfig.jwksUri|{}jwksUri[0]
+        final fun <get-jwksUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.jwksUri.<get-jwksUri>|<get-jwksUri>(){}[0]
+    final val keys // studio.hypertext.atproto.oauth.client/OAuthClientConfig.keys|{}keys[0]
+        final fun <get-keys>(): kotlin.collections/List<studio.hypertext.atproto.oauth.client/OAuthClientKey> // studio.hypertext.atproto.oauth.client/OAuthClientConfig.keys.<get-keys>|<get-keys>(){}[0]
+    final val logoUri // studio.hypertext.atproto.oauth.client/OAuthClientConfig.logoUri|{}logoUri[0]
+        final fun <get-logoUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.logoUri.<get-logoUri>|<get-logoUri>(){}[0]
+    final val policyUri // studio.hypertext.atproto.oauth.client/OAuthClientConfig.policyUri|{}policyUri[0]
+        final fun <get-policyUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.policyUri.<get-policyUri>|<get-policyUri>(){}[0]
+    final val redirectUris // studio.hypertext.atproto.oauth.client/OAuthClientConfig.redirectUris|{}redirectUris[0]
+        final fun <get-redirectUris>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientConfig.redirectUris.<get-redirectUris>|<get-redirectUris>(){}[0]
+    final val scope // studio.hypertext.atproto.oauth.client/OAuthClientConfig.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.scope.<get-scope>|<get-scope>(){}[0]
+    final val tosUri // studio.hypertext.atproto.oauth.client/OAuthClientConfig.tosUri|{}tosUri[0]
+        final fun <get-tosUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.tosUri.<get-tosUri>|<get-tosUri>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component1|component1(){}[0]
+    final fun component10(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component10|component10(){}[0]
+    final fun component11(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component11|component11(){}[0]
+    final fun component2(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<studio.hypertext.atproto.oauth.client/OAuthClientKey> // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component8|component8(){}[0]
+    final fun component9(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientConfig.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<studio.hypertext.atproto.oauth.client/OAuthClientKey> = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ...): studio.hypertext.atproto.oauth.client/OAuthClientConfig // studio.hypertext.atproto.oauth.client/OAuthClientConfig.copy|copy(kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<studio.hypertext.atproto.oauth.client.OAuthClientKey>;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthClientConfig.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthClientConfig.hashCode|hashCode(){}[0]
+    final fun toClientMetadata(): studio.hypertext.atproto.oauth.client/OAuthClientMetadata // studio.hypertext.atproto.oauth.client/OAuthClientConfig.toClientMetadata|toClientMetadata(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientConfig.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthClientKey { // studio.hypertext.atproto.oauth.client/OAuthClientKey|null[0]
+    constructor <init>(studio.hypertext.atproto.oauth.client/JsonWebKey) // studio.hypertext.atproto.oauth.client/OAuthClientKey.<init>|<init>(studio.hypertext.atproto.oauth.client.JsonWebKey){}[0]
+
+    final val kid // studio.hypertext.atproto.oauth.client/OAuthClientKey.kid|{}kid[0]
+        final fun <get-kid>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientKey.kid.<get-kid>|<get-kid>(){}[0]
+    final val privateJwk // studio.hypertext.atproto.oauth.client/OAuthClientKey.privateJwk|{}privateJwk[0]
+        final fun <get-privateJwk>(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthClientKey.privateJwk.<get-privateJwk>|<get-privateJwk>(){}[0]
+    final val publicJwk // studio.hypertext.atproto.oauth.client/OAuthClientKey.publicJwk|{}publicJwk[0]
+        final fun <get-publicJwk>(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthClientKey.publicJwk.<get-publicJwk>|<get-publicJwk>(){}[0]
+
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientKey.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthClientKeyRemovedException : studio.hypertext.atproto.oauth.client/OAuthClientException { // studio.hypertext.atproto.oauth.client/OAuthClientKeyRemovedException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthClientKeyRemovedException.<init>|<init>(kotlin.String){}[0]
+
+    final val keyId // studio.hypertext.atproto.oauth.client/OAuthClientKeyRemovedException.keyId|{}keyId[0]
+        final fun <get-keyId>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientKeyRemovedException.keyId.<get-keyId>|<get-keyId>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthClientMetadata { // studio.hypertext.atproto.oauth.client/OAuthClientMetadata|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin.collections/List<kotlin/String>, kotlin/String, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin/String, kotlin/String, kotlin/Boolean, studio.hypertext.atproto.oauth.client/JsonWebKeySet? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.<init>|<init>(kotlin.String;kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.String;kotlin.String;kotlin.Boolean;studio.hypertext.atproto.oauth.client.JsonWebKeySet?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+
+    final val applicationType // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.applicationType|{}applicationType[0]
+        final fun <get-applicationType>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.applicationType.<get-applicationType>|<get-applicationType>(){}[0]
+    final val clientId // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val clientName // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.clientName|{}clientName[0]
+        final fun <get-clientName>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.clientName.<get-clientName>|<get-clientName>(){}[0]
+    final val clientUri // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.clientUri|{}clientUri[0]
+        final fun <get-clientUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.clientUri.<get-clientUri>|<get-clientUri>(){}[0]
+    final val dpopBoundAccessTokens // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.dpopBoundAccessTokens|{}dpopBoundAccessTokens[0]
+        final fun <get-dpopBoundAccessTokens>(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.dpopBoundAccessTokens.<get-dpopBoundAccessTokens>|<get-dpopBoundAccessTokens>(){}[0]
+    final val grantTypes // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.grantTypes|{}grantTypes[0]
+        final fun <get-grantTypes>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.grantTypes.<get-grantTypes>|<get-grantTypes>(){}[0]
+    final val jwks // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.jwks|{}jwks[0]
+        final fun <get-jwks>(): studio.hypertext.atproto.oauth.client/JsonWebKeySet? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.jwks.<get-jwks>|<get-jwks>(){}[0]
+    final val jwksUri // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.jwksUri|{}jwksUri[0]
+        final fun <get-jwksUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.jwksUri.<get-jwksUri>|<get-jwksUri>(){}[0]
+    final val logoUri // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.logoUri|{}logoUri[0]
+        final fun <get-logoUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.logoUri.<get-logoUri>|<get-logoUri>(){}[0]
+    final val policyUri // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.policyUri|{}policyUri[0]
+        final fun <get-policyUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.policyUri.<get-policyUri>|<get-policyUri>(){}[0]
+    final val redirectUris // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.redirectUris|{}redirectUris[0]
+        final fun <get-redirectUris>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.redirectUris.<get-redirectUris>|<get-redirectUris>(){}[0]
+    final val responseTypes // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.responseTypes|{}responseTypes[0]
+        final fun <get-responseTypes>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.responseTypes.<get-responseTypes>|<get-responseTypes>(){}[0]
+    final val scope // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.scope.<get-scope>|<get-scope>(){}[0]
+    final val tokenEndpointAuthMethod // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.tokenEndpointAuthMethod|{}tokenEndpointAuthMethod[0]
+        final fun <get-tokenEndpointAuthMethod>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.tokenEndpointAuthMethod.<get-tokenEndpointAuthMethod>|<get-tokenEndpointAuthMethod>(){}[0]
+    final val tokenEndpointAuthSigningAlg // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.tokenEndpointAuthSigningAlg|{}tokenEndpointAuthSigningAlg[0]
+        final fun <get-tokenEndpointAuthSigningAlg>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.tokenEndpointAuthSigningAlg.<get-tokenEndpointAuthSigningAlg>|<get-tokenEndpointAuthSigningAlg>(){}[0]
+    final val tosUri // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.tosUri|{}tosUri[0]
+        final fun <get-tosUri>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.tosUri.<get-tosUri>|<get-tosUri>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component1|component1(){}[0]
+    final fun component10(): studio.hypertext.atproto.oauth.client/JsonWebKeySet? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component10|component10(){}[0]
+    final fun component11(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component11|component11(){}[0]
+    final fun component12(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component12|component12(){}[0]
+    final fun component13(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component13|component13(){}[0]
+    final fun component14(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component14|component14(){}[0]
+    final fun component15(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component15|component15(){}[0]
+    final fun component16(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component16|component16(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component4|component4(){}[0]
+    final fun component5(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component5|component5(){}[0]
+    final fun component6(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component6|component6(){}[0]
+    final fun component7(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component7|component7(){}[0]
+    final fun component8(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component8|component8(){}[0]
+    final fun component9(): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/String = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Boolean = ..., studio.hypertext.atproto.oauth.client/JsonWebKeySet? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.oauth.client/OAuthClientMetadata // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.copy|copy(kotlin.String;kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.String;kotlin.String;kotlin.Boolean;studio.hypertext.atproto.oauth.client.JsonWebKeySet?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/OAuthClientMetadata> { // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/OAuthClientMetadata // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/OAuthClientMetadata) // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.OAuthClientMetadata){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/OAuthClientMetadata> // studio.hypertext.atproto.oauth.client/OAuthClientMetadata.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException : studio.hypertext.atproto.oauth.client/OAuthAuthorizationException { // studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException|null[0]
+    constructor <init>(kotlin/String?, kotlin/String?) // studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException.<init>|<init>(kotlin.String?;kotlin.String?){}[0]
+
+    final val appState // studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException.appState|{}appState[0]
+        final fun <get-appState>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException.appState.<get-appState>|<get-appState>(){}[0]
+    final val errorDescription // studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException.errorDescription|{}errorDescription[0]
+        final fun <get-errorDescription>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthConsentDeniedException.errorDescription.<get-errorDescription>|<get-errorDescription>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthForeignOriginException : studio.hypertext.atproto.oauth.client/OAuthSessionException { // studio.hypertext.atproto.oauth.client/OAuthForeignOriginException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthForeignOriginException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.String){}[0]
+
+    final val pdsOrigin // studio.hypertext.atproto.oauth.client/OAuthForeignOriginException.pdsOrigin|{}pdsOrigin[0]
+        final fun <get-pdsOrigin>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthForeignOriginException.pdsOrigin.<get-pdsOrigin>|<get-pdsOrigin>(){}[0]
+    final val targetOrigin // studio.hypertext.atproto.oauth.client/OAuthForeignOriginException.targetOrigin|{}targetOrigin[0]
+        final fun <get-targetOrigin>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthForeignOriginException.targetOrigin.<get-targetOrigin>|<get-targetOrigin>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException : studio.hypertext.atproto.oauth.client/OAuthResolutionException { // studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException|null[0]
+    constructor <init>(kotlin/String, studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException.<init>|<init>(kotlin.String;studio.hypertext.atproto.identity.AtprotoDid){}[0]
+
+    final val did // studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException.did.<get-did>|<get-did>(){}[0]
+    final val handle // studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthHandleMismatchException.handle.<get-handle>|<get-handle>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthIdentityResolutionException : studio.hypertext.atproto.oauth.client/OAuthResolutionException { // studio.hypertext.atproto.oauth.client/OAuthIdentityResolutionException|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthIdentityResolutionException.<init>|<init>(kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+
+    final val input // studio.hypertext.atproto.oauth.client/OAuthIdentityResolutionException.input|{}input[0]
+        final fun <get-input>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthIdentityResolutionException.input.<get-input>|<get-input>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthInvalidTokenResponseException : studio.hypertext.atproto.oauth.client/OAuthVerificationException { // studio.hypertext.atproto.oauth.client/OAuthInvalidTokenResponseException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthInvalidTokenResponseException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException : studio.hypertext.atproto.oauth.client/OAuthVerificationException { // studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException|null[0]
+    constructor <init>(kotlin/String, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val actualIssuer // studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException.actualIssuer|{}actualIssuer[0]
+        final fun <get-actualIssuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException.actualIssuer.<get-actualIssuer>|<get-actualIssuer>(){}[0]
+    final val expectedIssuer // studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException.expectedIssuer|{}expectedIssuer[0]
+        final fun <get-expectedIssuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthIssuerMismatchException.expectedIssuer.<get-expectedIssuer>|<get-expectedIssuer>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthPdsNotFoundException : studio.hypertext.atproto.oauth.client/OAuthResolutionException { // studio.hypertext.atproto.oauth.client/OAuthPdsNotFoundException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthPdsNotFoundException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String){}[0]
+
+    final val did // studio.hypertext.atproto.oauth.client/OAuthPdsNotFoundException.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthPdsNotFoundException.did.<get-did>|<get-did>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata { // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<kotlin/String> = ...) // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.<init>|<init>(kotlin.String;kotlin.collections.List<kotlin.String>){}[0]
+
+    final val authorizationServers // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.authorizationServers|{}authorizationServers[0]
+        final fun <get-authorizationServers>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.authorizationServers.<get-authorizationServers>|<get-authorizationServers>(){}[0]
+    final val resource // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.resource|{}resource[0]
+        final fun <get-resource>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.resource.<get-resource>|<get-resource>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<kotlin/String> = ...): studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.copy|copy(kotlin.String;kotlin.collections.List<kotlin.String>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata> { // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata) // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.OAuthProtectedResourceMetadata){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata> // studio.hypertext.atproto.oauth.client/OAuthProtectedResourceMetadata.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity { // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Handle?, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Handle?;kotlin.String){}[0]
+
+    final val did // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.did.<get-did>|<get-did>(){}[0]
+    final val handle // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.handle|{}handle[0]
+        final fun <get-handle>(): studio.hypertext.atproto.syntax/Handle? // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.handle.<get-handle>|<get-handle>(){}[0]
+    final val pdsUrl // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.pdsUrl|{}pdsUrl[0]
+        final fun <get-pdsUrl>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.pdsUrl.<get-pdsUrl>|<get-pdsUrl>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Handle? // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Handle? = ..., kotlin/String = ...): studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Handle?;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthResolvedServer { // studio.hypertext.atproto.oauth.client/OAuthResolvedServer|null[0]
+    constructor <init>(studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity?, studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata) // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.<init>|<init>(studio.hypertext.atproto.oauth.client.OAuthResolvedIdentity?;studio.hypertext.atproto.oauth.client.OAuthAuthorizationServerMetadata){}[0]
+
+    final val identity // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.identity|{}identity[0]
+        final fun <get-identity>(): studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity? // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.identity.<get-identity>|<get-identity>(){}[0]
+    final val metadata // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.metadata|{}metadata[0]
+        final fun <get-metadata>(): studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.metadata.<get-metadata>|<get-metadata>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity? // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.component2|component2(){}[0]
+    final fun copy(studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity? = ..., studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata = ...): studio.hypertext.atproto.oauth.client/OAuthResolvedServer // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.copy|copy(studio.hypertext.atproto.oauth.client.OAuthResolvedIdentity?;studio.hypertext.atproto.oauth.client.OAuthAuthorizationServerMetadata){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthResolvedServer.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthRevocationException : studio.hypertext.atproto.oauth.client/OAuthSessionException { // studio.hypertext.atproto.oauth.client/OAuthRevocationException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Throwable) // studio.hypertext.atproto.oauth.client/OAuthRevocationException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Throwable){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthServerMetadataException : studio.hypertext.atproto.oauth.client/OAuthResolutionException { // studio.hypertext.atproto.oauth.client/OAuthServerMetadataException|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthServerMetadataException.<init>|<init>(kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+
+    final val url // studio.hypertext.atproto.oauth.client/OAuthServerMetadataException.url|{}url[0]
+        final fun <get-url>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthServerMetadataException.url.<get-url>|<get-url>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthServerResolver : kotlin/AutoCloseable { // studio.hypertext.atproto.oauth.client/OAuthServerResolver|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/IdentityResolver, io.ktor.client/HttpClient, kotlin/Boolean = ...) // studio.hypertext.atproto.oauth.client/OAuthServerResolver.<init>|<init>(studio.hypertext.atproto.identity.IdentityResolver;io.ktor.client.HttpClient;kotlin.Boolean){}[0]
+
+    final fun close() // studio.hypertext.atproto.oauth.client/OAuthServerResolver.close|close(){}[0]
+    final suspend fun authorizationServerForPds(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata // studio.hypertext.atproto.oauth.client/OAuthServerResolver.authorizationServerForPds|authorizationServerForPds(kotlin.String){}[0]
+    final suspend fun authorizationServerMetadata(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata // studio.hypertext.atproto.oauth.client/OAuthServerResolver.authorizationServerMetadata|authorizationServerMetadata(kotlin.String){}[0]
+    final suspend fun resolve(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthResolvedServer // studio.hypertext.atproto.oauth.client/OAuthServerResolver.resolve|resolve(kotlin.String){}[0]
+    final suspend fun resolveForDid(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Pair<kotlin/String, studio.hypertext.atproto.oauth.client/OAuthAuthorizationServerMetadata> // studio.hypertext.atproto.oauth.client/OAuthServerResolver.resolveForDid|resolveForDid(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun resolveIdentity(kotlin/String): studio.hypertext.atproto.oauth.client/OAuthResolvedIdentity // studio.hypertext.atproto.oauth.client/OAuthServerResolver.resolveIdentity|resolveIdentity(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthServerResponseException : studio.hypertext.atproto.oauth.client/OAuthClientException { // studio.hypertext.atproto.oauth.client/OAuthServerResponseException|null[0]
+    constructor <init>(kotlin/String, kotlin/Int?, kotlin/String?, kotlin/String?, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.<init>|<init>(kotlin.String;kotlin.Int?;kotlin.String?;kotlin.String?;kotlin.Throwable?){}[0]
+
+    final val endpoint // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.endpoint|{}endpoint[0]
+        final fun <get-endpoint>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.endpoint.<get-endpoint>|<get-endpoint>(){}[0]
+    final val error // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.error|{}error[0]
+        final fun <get-error>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.error.<get-error>|<get-error>(){}[0]
+    final val errorDescription // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.errorDescription|{}errorDescription[0]
+        final fun <get-errorDescription>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.errorDescription.<get-errorDescription>|<get-errorDescription>(){}[0]
+    final val statusCode // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.statusCode|{}statusCode[0]
+        final fun <get-statusCode>(): kotlin/Int? // studio.hypertext.atproto.oauth.client/OAuthServerResponseException.statusCode.<get-statusCode>|<get-statusCode>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthSession { // studio.hypertext.atproto.oauth.client/OAuthSession|null[0]
+    final val did // studio.hypertext.atproto.oauth.client/OAuthSession.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthSession.did.<get-did>|<get-did>(){}[0]
+
+    final fun xrpcClient(): studio.hypertext.atproto.xrpc/XrpcClient // studio.hypertext.atproto.oauth.client/OAuthSession.xrpcClient|xrpcClient(){}[0]
+    final suspend fun request(kotlin/Function1<io.ktor.client.request/HttpRequestBuilder, kotlin/Unit>): io.ktor.client.statement/HttpResponse // studio.hypertext.atproto.oauth.client/OAuthSession.request|request(kotlin.Function1<io.ktor.client.request.HttpRequestBuilder,kotlin.Unit>){}[0]
+    final suspend fun signOut() // studio.hypertext.atproto.oauth.client/OAuthSession.signOut|signOut(){}[0]
+    final suspend fun tokenInfo(studio.hypertext.atproto.oauth.client/OAuthRefreshMode = ...): studio.hypertext.atproto.oauth.client/OAuthTokenInfo // studio.hypertext.atproto.oauth.client/OAuthSession.tokenInfo|tokenInfo(studio.hypertext.atproto.oauth.client.OAuthRefreshMode){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthSessionExpiredException : studio.hypertext.atproto.oauth.client/OAuthSessionEndedException { // studio.hypertext.atproto.oauth.client/OAuthSessionExpiredException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthSessionExpiredException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthSessionNotFoundException : studio.hypertext.atproto.oauth.client/OAuthSessionException { // studio.hypertext.atproto.oauth.client/OAuthSessionNotFoundException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.oauth.client/OAuthSessionNotFoundException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthSessionRejectedException : studio.hypertext.atproto.oauth.client/OAuthSessionEndedException { // studio.hypertext.atproto.oauth.client/OAuthSessionRejectedException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.oauth.client/OAuthServerResponseException) // studio.hypertext.atproto.oauth.client/OAuthSessionRejectedException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.oauth.client.OAuthServerResponseException){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthSessionRevokedException : studio.hypertext.atproto.oauth.client/OAuthSessionEndedException { // studio.hypertext.atproto.oauth.client/OAuthSessionRevokedException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.oauth.client/OAuthSessionRevokedException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthStoredSession { // studio.hypertext.atproto.oauth.client/OAuthStoredSession|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String?, kotlin.time/Instant?, studio.hypertext.atproto.oauth.client/JsonWebKey, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthStoredSession.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.time.Instant?;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String){}[0]
+
+    final val accessToken // studio.hypertext.atproto.oauth.client/OAuthStoredSession.accessToken|{}accessToken[0]
+        final fun <get-accessToken>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.accessToken.<get-accessToken>|<get-accessToken>(){}[0]
+    final val clientKeyId // studio.hypertext.atproto.oauth.client/OAuthStoredSession.clientKeyId|{}clientKeyId[0]
+        final fun <get-clientKeyId>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.clientKeyId.<get-clientKeyId>|<get-clientKeyId>(){}[0]
+    final val did // studio.hypertext.atproto.oauth.client/OAuthStoredSession.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthStoredSession.did.<get-did>|<get-did>(){}[0]
+    final val dpopKey // studio.hypertext.atproto.oauth.client/OAuthStoredSession.dpopKey|{}dpopKey[0]
+        final fun <get-dpopKey>(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthStoredSession.dpopKey.<get-dpopKey>|<get-dpopKey>(){}[0]
+    final val expiresAt // studio.hypertext.atproto.oauth.client/OAuthStoredSession.expiresAt|{}expiresAt[0]
+        final fun <get-expiresAt>(): kotlin.time/Instant? // studio.hypertext.atproto.oauth.client/OAuthStoredSession.expiresAt.<get-expiresAt>|<get-expiresAt>(){}[0]
+    final val issuer // studio.hypertext.atproto.oauth.client/OAuthStoredSession.issuer|{}issuer[0]
+        final fun <get-issuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.issuer.<get-issuer>|<get-issuer>(){}[0]
+    final val pdsUrl // studio.hypertext.atproto.oauth.client/OAuthStoredSession.pdsUrl|{}pdsUrl[0]
+        final fun <get-pdsUrl>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.pdsUrl.<get-pdsUrl>|<get-pdsUrl>(){}[0]
+    final val refreshToken // studio.hypertext.atproto.oauth.client/OAuthStoredSession.refreshToken|{}refreshToken[0]
+        final fun <get-refreshToken>(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthStoredSession.refreshToken.<get-refreshToken>|<get-refreshToken>(){}[0]
+    final val scope // studio.hypertext.atproto.oauth.client/OAuthStoredSession.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.scope.<get-scope>|<get-scope>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component6|component6(){}[0]
+    final fun component7(): kotlin.time/Instant? // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component7|component7(){}[0]
+    final fun component8(): studio.hypertext.atproto.oauth.client/JsonWebKey // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component8|component8(){}[0]
+    final fun component9(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.component9|component9(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin.time/Instant? = ..., studio.hypertext.atproto.oauth.client/JsonWebKey = ..., kotlin/String = ...): studio.hypertext.atproto.oauth.client/OAuthStoredSession // studio.hypertext.atproto.oauth.client/OAuthStoredSession.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.time.Instant?;studio.hypertext.atproto.oauth.client.JsonWebKey;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthStoredSession.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthStoredSession.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthStoredSession.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.oauth.client/OAuthStoredSession> { // studio.hypertext.atproto.oauth.client/OAuthStoredSession.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.oauth.client/OAuthStoredSession.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.oauth.client/OAuthStoredSession.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.oauth.client/OAuthStoredSession.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.oauth.client/OAuthStoredSession // studio.hypertext.atproto.oauth.client/OAuthStoredSession.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.oauth.client/OAuthStoredSession) // studio.hypertext.atproto.oauth.client/OAuthStoredSession.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.oauth.client.OAuthStoredSession){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.oauth.client/OAuthStoredSession.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.oauth.client/OAuthStoredSession> // studio.hypertext.atproto.oauth.client/OAuthStoredSession.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException : studio.hypertext.atproto.oauth.client/OAuthVerificationException { // studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String) // studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String){}[0]
+
+    final val actualSubject // studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException.actualSubject|{}actualSubject[0]
+        final fun <get-actualSubject>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException.actualSubject.<get-actualSubject>|<get-actualSubject>(){}[0]
+    final val expectedDid // studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException.expectedDid|{}expectedDid[0]
+        final fun <get-expectedDid>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthSubjectMismatchException.expectedDid.<get-expectedDid>|<get-expectedDid>(){}[0]
+}
+
+final class studio.hypertext.atproto.oauth.client/OAuthTokenInfo { // studio.hypertext.atproto.oauth.client/OAuthTokenInfo|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/String, kotlin/String, kotlin.time/Instant?) // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.String;kotlin.String;kotlin.time.Instant?){}[0]
+
+    final val did // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.did.<get-did>|<get-did>(){}[0]
+    final val expiresAt // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.expiresAt|{}expiresAt[0]
+        final fun <get-expiresAt>(): kotlin.time/Instant? // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.expiresAt.<get-expiresAt>|<get-expiresAt>(){}[0]
+    final val issuer // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.issuer|{}issuer[0]
+        final fun <get-issuer>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.issuer.<get-issuer>|<get-issuer>(){}[0]
+    final val pdsUrl // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.pdsUrl|{}pdsUrl[0]
+        final fun <get-pdsUrl>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.pdsUrl.<get-pdsUrl>|<get-pdsUrl>(){}[0]
+    final val scope // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.scope.<get-scope>|<get-scope>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.component4|component4(){}[0]
+    final fun component5(): kotlin.time/Instant? // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.component5|component5(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin.time/Instant? = ...): studio.hypertext.atproto.oauth.client/OAuthTokenInfo // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.String;kotlin.String;kotlin.time.Instant?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.oauth.client/OAuthTokenInfo.toString|toString(){}[0]
+}
+
+sealed class studio.hypertext.atproto.oauth.client/OAuthAuthorizationException : studio.hypertext.atproto.oauth.client/OAuthClientException // studio.hypertext.atproto.oauth.client/OAuthAuthorizationException|null[0]
+
+sealed class studio.hypertext.atproto.oauth.client/OAuthClientException : kotlin/IllegalStateException // studio.hypertext.atproto.oauth.client/OAuthClientException|null[0]
+
+sealed class studio.hypertext.atproto.oauth.client/OAuthResolutionException : studio.hypertext.atproto.oauth.client/OAuthClientException // studio.hypertext.atproto.oauth.client/OAuthResolutionException|null[0]
+
+sealed class studio.hypertext.atproto.oauth.client/OAuthSessionEndedException : studio.hypertext.atproto.oauth.client/OAuthSessionException // studio.hypertext.atproto.oauth.client/OAuthSessionEndedException|null[0]
+
+sealed class studio.hypertext.atproto.oauth.client/OAuthSessionException : studio.hypertext.atproto.oauth.client/OAuthClientException { // studio.hypertext.atproto.oauth.client/OAuthSessionException|null[0]
+    final val did // studio.hypertext.atproto.oauth.client/OAuthSessionException.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.oauth.client/OAuthSessionException.did.<get-did>|<get-did>(){}[0]
+}
+
+sealed class studio.hypertext.atproto.oauth.client/OAuthVerificationException : studio.hypertext.atproto.oauth.client/OAuthClientException // studio.hypertext.atproto.oauth.client/OAuthVerificationException|null[0]
+
+final const val studio.hypertext.atproto.oauth.client/ATPROTO_SCOPE // studio.hypertext.atproto.oauth.client/ATPROTO_SCOPE|{}ATPROTO_SCOPE[0]
+    final fun <get-ATPROTO_SCOPE>(): kotlin/String // studio.hypertext.atproto.oauth.client/ATPROTO_SCOPE.<get-ATPROTO_SCOPE>|<get-ATPROTO_SCOPE>(){}[0]

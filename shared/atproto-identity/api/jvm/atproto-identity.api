@@ -1,0 +1,197 @@
+public final class studio/hypertext/atproto/identity/AtprotoDid {
+	public static final field Companion Lstudio/hypertext/atproto/identity/AtprotoDid$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/identity/AtprotoDid;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public static final fun getMethod-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getValue-oUukbkQ ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/identity/AtprotoDid$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/identity/AtprotoDid$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-M0I7FgE (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-8AFUT0w (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/AtprotoDid$Companion {
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun require-M0I7FgE (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/DefaultIdentityResolver : studio/hypertext/atproto/identity/IdentityResolver {
+	public fun <init> (Lstudio/hypertext/atproto/identity/DidResolver;Lstudio/hypertext/atproto/identity/HandleResolver;)V
+	public fun resolveDid-T8UJrtc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveDocument-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolveDocument-T8UJrtc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/identity/DidDocument {
+	public static final field Companion Lstudio/hypertext/atproto/identity/DidDocument$Companion;
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2-wh1GzKs ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy-c97gk44 (Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lstudio/hypertext/atproto/identity/DidDocument;
+	public static synthetic fun copy-c97gk44$default (Lstudio/hypertext/atproto/identity/DidDocument;Ljava/util/List;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/identity/DidDocument;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlsoKnownAs ()Ljava/util/List;
+	public final fun getContext ()Ljava/util/List;
+	public final fun getId-wh1GzKs ()Ljava/lang/String;
+	public final fun getService ()Ljava/util/List;
+	public final fun getVerificationMethod ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/identity/DidDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/identity/DidDocument$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/identity/DidDocument;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/DidDocument$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/DidDocumentMismatchException : studio/hypertext/atproto/identity/IdentityException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/identity/DidPlcResolver : studio/hypertext/atproto/identity/DidResolver {
+	public fun <init> (Lio/ktor/client/HttpClient;Lkotlinx/serialization/json/Json;)V
+	public synthetic fun <init> (Lio/ktor/client/HttpClient;Lkotlinx/serialization/json/Json;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun resolve-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun urlFor-0_H-3yA (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/identity/DidResolutionException : studio/hypertext/atproto/identity/IdentityException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract interface class studio/hypertext/atproto/identity/DidResolver {
+	public abstract fun resolve-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/identity/DidWebResolver : studio/hypertext/atproto/identity/DidResolver {
+	public fun <init> (Lio/ktor/client/HttpClient;Lkotlinx/serialization/json/Json;)V
+	public synthetic fun <init> (Lio/ktor/client/HttpClient;Lkotlinx/serialization/json/Json;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun resolve-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun urlFor-0_H-3yA (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/identity/HandleResolutionException : studio/hypertext/atproto/identity/IdentityException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract interface class studio/hypertext/atproto/identity/HandleResolver {
+	public abstract fun resolve-T8UJrtc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract class studio/hypertext/atproto/identity/IdentityException : java/lang/IllegalStateException {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract interface class studio/hypertext/atproto/identity/IdentityResolver {
+	public abstract fun resolveDid-T8UJrtc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun resolveDocument-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun resolveDocument-T8UJrtc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/identity/InvalidAtprotoDidException : studio/hypertext/atproto/identity/IdentityException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/identity/Service {
+	public static final field Companion Lstudio/hypertext/atproto/identity/Service$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/identity/Service;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/identity/Service;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/identity/Service;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getServiceEndpoint ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/identity/Service$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/identity/Service$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/identity/Service;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/identity/Service;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/Service$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/VerificationMethod {
+	public static final field Companion Lstudio/hypertext/atproto/identity/VerificationMethod$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3-wh1GzKs ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy-e3CFwEA (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/identity/VerificationMethod;
+	public static synthetic fun copy-e3CFwEA$default (Lstudio/hypertext/atproto/identity/VerificationMethod;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/identity/VerificationMethod;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getController-wh1GzKs ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPublicKeyMultibase ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/identity/VerificationMethod$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/identity/VerificationMethod$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/identity/VerificationMethod;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/identity/VerificationMethod;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/VerificationMethod$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/identity/WellKnownHandleResolver : studio/hypertext/atproto/identity/HandleResolver {
+	public fun <init> (Lio/ktor/client/HttpClient;)V
+	public fun resolve-T8UJrtc (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+

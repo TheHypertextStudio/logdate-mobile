@@ -1,0 +1,289 @@
+public final class studio/hypertext/atproto/plc/KtorPlcDirectoryClient : studio/hypertext/atproto/plc/PlcDirectoryClient {
+	public static final field Companion Lstudio/hypertext/atproto/plc/KtorPlcDirectoryClient$Companion;
+	public static final field DEFAULT_BASE_URL Ljava/lang/String;
+	public fun <init> (Lio/ktor/client/HttpClient;Ljava/lang/String;Lkotlinx/serialization/json/Json;)V
+	public synthetic fun <init> (Lio/ktor/client/HttpClient;Ljava/lang/String;Lkotlinx/serialization/json/Json;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun auditLogUrlFor-0_H-3yA (Ljava/lang/String;)Ljava/lang/String;
+	public final fun documentUrlFor-0_H-3yA (Ljava/lang/String;)Ljava/lang/String;
+	public fun export-0E7RQCE (Ljava/lang/String;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun exportUrl (Ljava/lang/String;Ljava/lang/Integer;)Ljava/lang/String;
+	public static synthetic fun exportUrl$default (Lstudio/hypertext/atproto/plc/KtorPlcDirectoryClient;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/lang/String;
+	public fun getAuditLog-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getDocument-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getOperationLog-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun operationLogUrlFor-0_H-3yA (Ljava/lang/String;)Ljava/lang/String;
+	public fun submit-2WbzVTw (Ljava/lang/String;Lstudio/hypertext/atproto/plc/PlcLogEntry;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun submitUrlFor-0_H-3yA (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/plc/KtorPlcDirectoryClient$Companion {
+}
+
+public abstract interface class studio/hypertext/atproto/plc/PlcDirectoryClient {
+	public abstract fun export-0E7RQCE (Ljava/lang/String;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun export-0E7RQCE$default (Lstudio/hypertext/atproto/plc/PlcDirectoryClient;Ljava/lang/String;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getAuditLog-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getDocument-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getOperationLog-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun submit-2WbzVTw (Ljava/lang/String;Lstudio/hypertext/atproto/plc/PlcLogEntry;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/plc/PlcDirectoryClient$DefaultImpls {
+	public static synthetic fun export-0E7RQCE$default (Lstudio/hypertext/atproto/plc/PlcDirectoryClient;Ljava/lang/String;Ljava/lang/Integer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/plc/PlcDirectoryException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Ljava/lang/Integer;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDirectoryMessage ()Ljava/lang/String;
+	public final fun getStatusCode ()Ljava/lang/Integer;
+	public final fun isNotFound ()Z
+}
+
+public final class studio/hypertext/atproto/plc/PlcEncoding {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcEncoding;
+	public final fun deriveDid-M0I7FgE (Lstudio/hypertext/atproto/plc/PlcOperation;)Ljava/lang/String;
+	public final fun encodeSigned (Lstudio/hypertext/atproto/plc/PlcOperation;)[B
+	public final fun encodeUnsigned (Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;)[B
+	public final fun operationCid (Lstudio/hypertext/atproto/plc/PlcOperation;)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/plc/PlcIndexedOperation {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcIndexedOperation$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/plc/PlcLogEntry;Ljava/lang/String;ZLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/plc/PlcLogEntry;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy-dKOndtk (Ljava/lang/String;Lstudio/hypertext/atproto/plc/PlcLogEntry;Ljava/lang/String;ZLjava/lang/String;)Lstudio/hypertext/atproto/plc/PlcIndexedOperation;
+	public static synthetic fun copy-dKOndtk$default (Lstudio/hypertext/atproto/plc/PlcIndexedOperation;Ljava/lang/String;Lstudio/hypertext/atproto/plc/PlcLogEntry;Ljava/lang/String;ZLjava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcIndexedOperation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getCreatedAt ()Ljava/lang/String;
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getNullified ()Z
+	public final fun getOperation ()Lstudio/hypertext/atproto/plc/PlcLogEntry;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/plc/PlcIndexedOperation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcIndexedOperation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/plc/PlcIndexedOperation;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/plc/PlcIndexedOperation;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcIndexedOperation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class studio/hypertext/atproto/plc/PlcLogEntry {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcLogEntry$Companion;
+	public abstract fun getPrev ()Ljava/lang/String;
+	public abstract fun getSig ()Ljava/lang/String;
+	public abstract fun getType ()Ljava/lang/String;
+	public fun isSigned ()Z
+}
+
+public final class studio/hypertext/atproto/plc/PlcLogEntry$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcLogEntry$DefaultImpls {
+	public static fun isSigned (Lstudio/hypertext/atproto/plc/PlcLogEntry;)Z
+}
+
+public final class studio/hypertext/atproto/plc/PlcOperation : studio/hypertext/atproto/plc/PlcLogEntry {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcOperation$Companion;
+	public static final field TYPE Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)Lstudio/hypertext/atproto/plc/PlcOperation;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/plc/PlcOperation;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcOperation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlsoKnownAs ()Ljava/util/List;
+	public fun getPrev ()Ljava/lang/String;
+	public final fun getRotationKeys ()Ljava/util/List;
+	public final fun getServices ()Ljava/util/Map;
+	public fun getSig ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public final fun getVerificationMethods ()Ljava/util/Map;
+	public fun hashCode ()I
+	public final fun isGenesis ()Z
+	public fun isSigned ()Z
+	public fun toString ()Ljava/lang/String;
+	public final fun unsigned ()Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public final fun withSignature (Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcOperation;
+}
+
+public final synthetic class studio/hypertext/atproto/plc/PlcOperation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcOperation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/plc/PlcOperation;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/plc/PlcOperation;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcOperation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcOperations {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcOperations;
+	public final fun atprotoGenesis (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public static synthetic fun atprotoGenesis$default (Lstudio/hypertext/atproto/plc/PlcOperations;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public final fun atprotoUpdate (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public static synthetic fun atprotoUpdate$default (Lstudio/hypertext/atproto/plc/PlcOperations;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+}
+
+public final class studio/hypertext/atproto/plc/PlcService {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcService$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcService;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/plc/PlcService;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcService;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndpoint ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/plc/PlcService$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcService$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/plc/PlcService;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/plc/PlcService;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcService$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcTombstone : studio/hypertext/atproto/plc/PlcLogEntry {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcTombstone$Companion;
+	public static final field TYPE Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcTombstone;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/plc/PlcTombstone;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcTombstone;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getPrev ()Ljava/lang/String;
+	public fun getSig ()Ljava/lang/String;
+	public fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun isSigned ()Z
+	public fun toString ()Ljava/lang/String;
+	public final fun unsigned ()Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone;
+	public final fun withSignature (Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcTombstone;
+}
+
+public final synthetic class studio/hypertext/atproto/plc/PlcTombstone$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcTombstone$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/plc/PlcTombstone;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/plc/PlcTombstone;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcTombstone$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcUnsignedOperation {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcUnsignedOperation$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlsoKnownAs ()Ljava/util/List;
+	public final fun getPrev ()Ljava/lang/String;
+	public final fun getRotationKeys ()Ljava/util/List;
+	public final fun getServices ()Ljava/util/Map;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getVerificationMethods ()Ljava/util/Map;
+	public fun hashCode ()I
+	public final fun signed (Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcOperation;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/plc/PlcUnsignedOperation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcUnsignedOperation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/plc/PlcUnsignedOperation;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcUnsignedOperation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcUnsignedTombstone {
+	public static final field Companion Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPrev ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun signed (Ljava/lang/String;)Lstudio/hypertext/atproto/plc/PlcTombstone;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/plc/PlcUnsignedTombstone$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/plc/PlcUnsignedTombstone;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/plc/PlcUnsignedTombstone$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

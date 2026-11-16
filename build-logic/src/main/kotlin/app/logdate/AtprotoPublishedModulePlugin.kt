@@ -2,6 +2,8 @@ package app.logdate
 
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import groovy.util.Node
+import kotlinx.validation.ApiValidationExtension
+import kotlinx.validation.ExperimentalBCVApi
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -31,6 +33,8 @@ private const val ORG_URL = "https://thehypertext.studio"
  *
  * Applied behavior:
  * - applies `org.jetbrains.dokka`, `maven-publish`, and `signing`
+ * - applies `org.jetbrains.kotlinx.binary-compatibility-validator`, so `apiCheck` fails when the
+ *   public API no longer matches the dumps checked in under the module's `api` directory
  * - sets the default artifact group to `studio.hypertext.atproto`
  * - sets the default artifact version to `0.1.0`
  * - registers a `dokkaHtmlJar` task and attaches it to every Maven publication as the `javadoc`
@@ -69,6 +73,7 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.dokka")
             pluginManager.apply("maven-publish")
             pluginManager.apply("signing")
+            pluginManager.apply("org.jetbrains.kotlinx.binary-compatibility-validator")
 
             extensions.configure(KotlinMultiplatformExtension::class.java) {
                 jvm()
@@ -92,6 +97,20 @@ class AtprotoPublishedModulePlugin : Plugin<Project> {
             embedLicensingInJars()
 
             configureSigning()
+            configureApiValidation()
+        }
+    }
+
+    /**
+     * Includes the iOS (klib) API in the checked-in dumps, next to the JVM one.
+     *
+     * Klib validation is still marked experimental in the validator, but without it a change that
+     * only breaks iOS consumers would pass `apiCheck`.
+     */
+    @OptIn(ExperimentalBCVApi::class)
+    private fun Project.configureApiValidation() {
+        extensions.configure(ApiValidationExtension::class.java) {
+            klib.enabled = true
         }
     }
 

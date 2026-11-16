@@ -1,0 +1,676 @@
+public final class studio/hypertext/atproto/repo/BatchRecordWrite {
+	public fun <init> (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;)V
+	public synthetic fun <init> (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lstudio/hypertext/atproto/repo/RepoRecordId;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/BatchRecordWrite;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/repo/BatchRecordWrite;Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/BatchRecordWrite;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRecordId ()Lstudio/hypertext/atproto/repo/RepoRecordId;
+	public final fun getSwapRecord ()Ljava/lang/String;
+	public final fun getValue ()Lkotlinx/serialization/json/JsonObject;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/CarArchive {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;)Lstudio/hypertext/atproto/repo/CarArchive;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/repo/CarArchive;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/CarArchive;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlocks ()Ljava/util/List;
+	public final fun getRoots ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/CarCodec {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/CarCodec;
+	public final fun read ([B)Lstudio/hypertext/atproto/repo/RepoExport;
+	public final fun readCar ([B)Lstudio/hypertext/atproto/repo/CarArchive;
+	public final fun write (Lstudio/hypertext/atproto/repo/RepoExport;)[B
+	public final fun writeCar (Ljava/util/List;Ljava/util/List;)[B
+}
+
+public final class studio/hypertext/atproto/repo/Cid {
+	public static final field Companion Lstudio/hypertext/atproto/repo/Cid$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lstudio/hypertext/atproto/repo/Cid;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public static final fun toBytes-impl (Ljava/lang/String;)[B
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/repo/Cid$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/Cid$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-aiyUzQE (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-y8CiXpQ (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/Cid$Companion {
+	public final fun fromBytes-aiyUzQE ([B)Ljava/lang/String;
+	public final fun parse-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun rawSha256-aiyUzQE ([B)Ljava/lang/String;
+	public final fun require-aiyUzQE (Ljava/lang/String;)Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public final fun sha256-_96eiz4 (I[B)Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/CidKt {
+	public static final field DAG_CBOR_CODEC I
+	public static final field RAW_CODEC I
+}
+
+public final class studio/hypertext/atproto/repo/DagCborCodec {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/DagCborCodec;
+	public final fun decode ([B)Lkotlinx/serialization/json/JsonElement;
+	public final fun decodeSequence ([B)Ljava/util/List;
+	public final fun encode (Lkotlinx/serialization/json/JsonElement;)[B
+}
+
+public final class studio/hypertext/atproto/repo/DefaultRepoEngine : studio/hypertext/atproto/repo/RepoEngine {
+	public fun <init> (Lstudio/hypertext/atproto/repo/RepoBlockStore;Lkotlin/time/Clock;Lstudio/hypertext/atproto/repo/RepoCommitSigner;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lstudio/hypertext/atproto/repo/RepoBlockStore;Lkotlin/time/Clock;Lstudio/hypertext/atproto/repo/RepoCommitSigner;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createRecord-kfCkHSQ (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteRecord-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoRecordId;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun export-zL6VYxQ (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getRecord-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getRecords-gIAlu-s (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun import-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoExport;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun listCommits-2WbzVTw (Ljava/lang/String;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun listRecords-O78n1YQ (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun loadHead-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun putRecord-BWLJW6A (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun putRecordIfAbsent-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun putRecords-gIAlu-s (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun recommit-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/DigestRepoCommitSigner : studio/hypertext/atproto/repo/RepoCommitSigner {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/DigestRepoCommitSigner;
+	public fun sign (Lstudio/hypertext/atproto/repo/RepoCommit;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun verify (Lstudio/hypertext/atproto/repo/RepoCommit;[BLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/InMemoryRepoBlockStore : studio/hypertext/atproto/repo/RepoBlockStore {
+	public fun <init> ()V
+	public fun appendCommit-2WbzVTw (Ljava/lang/String;Lstudio/hypertext/atproto/repo/SignedRepoCommit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun clearRepo-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun compareAndSwapHead-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoHead;Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun listBlocks-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun listCommits-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun readBlock-LzekkzA (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun readBlocks-gIAlu-s (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun readHead-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun writeBlock-2WbzVTw (Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoBlock;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun writeHead-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoHead;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/InvalidRepoCursorException : studio/hypertext/atproto/repo/RepoException {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getCursor ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/InvalidSwapException : studio/hypertext/atproto/repo/RepoException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getExpectedCid ()Ljava/lang/String;
+	public final fun getProvidedCid ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/MerkleSearchTree {
+	public static final field Companion Lstudio/hypertext/atproto/repo/MerkleSearchTree$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun entries-3VeHptY (Ljava/lang/String;)Ljava/util/List;
+	public static synthetic fun entries-3VeHptY$default (Lstudio/hypertext/atproto/repo/MerkleSearchTree;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/List;
+	public final fun get-aNdOkfw (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public final fun put-y8QOxs0 (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/MerkleSearchTree;
+	public final fun remove-LQWhehc (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/MerkleSearchTree;
+	public final fun rootCid-6Za8ImI ()Ljava/lang/String;
+	public final fun toJsonElement ()Lkotlinx/serialization/json/JsonArray;
+}
+
+public final class studio/hypertext/atproto/repo/MerkleSearchTree$Companion {
+	public final fun empty ()Lstudio/hypertext/atproto/repo/MerkleSearchTree;
+	public final fun fromJsonElement (Lkotlinx/serialization/json/JsonArray;)Lstudio/hypertext/atproto/repo/MerkleSearchTree;
+}
+
+public final class studio/hypertext/atproto/repo/MerkleSearchTreeEntry {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component2-OLfzzfk ()Ljava/lang/String;
+	public final fun component3-6Za8ImI ()Ljava/lang/String;
+	public final fun copy-y8QOxs0 (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/MerkleSearchTreeEntry;
+	public static synthetic fun copy-y8QOxs0$default (Lstudio/hypertext/atproto/repo/MerkleSearchTreeEntry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/MerkleSearchTreeEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getRecordKey-OLfzzfk ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoAccountEvent : studio/hypertext/atproto/repo/RepoEvent {
+	public synthetic fun <init> (JLkotlin/time/Instant;Ljava/lang/String;ZLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lkotlin/time/Instant;
+	public final fun component3-wh1GzKs ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy-sUBDPco (JLkotlin/time/Instant;Ljava/lang/String;ZLjava/lang/String;)Lstudio/hypertext/atproto/repo/RepoAccountEvent;
+	public static synthetic fun copy-sUBDPco$default (Lstudio/hypertext/atproto/repo/RepoAccountEvent;JLkotlin/time/Instant;Ljava/lang/String;ZLjava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoAccountEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public fun getSeq ()J
+	public final fun getStatus ()Ljava/lang/String;
+	public fun getTime ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoBlock {
+	public synthetic fun <init> (Ljava/lang/String;[BLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-6Za8ImI ()Ljava/lang/String;
+	public final fun component2 ()[B
+	public final fun copy-o0IyxT4 (Ljava/lang/String;[B)Lstudio/hypertext/atproto/repo/RepoBlock;
+	public static synthetic fun copy-o0IyxT4$default (Lstudio/hypertext/atproto/repo/RepoBlock;Ljava/lang/String;[BILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoBlock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class studio/hypertext/atproto/repo/RepoBlockStore {
+	public abstract fun appendCommit-2WbzVTw (Ljava/lang/String;Lstudio/hypertext/atproto/repo/SignedRepoCommit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun clearRepo-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun compareAndSwapHead-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoHead;Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun listBlocks-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun listCommits-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun readBlock-LzekkzA (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun readBlocks-gIAlu-s (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun readHead-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun writeBlock-2WbzVTw (Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoBlock;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun writeHead-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoHead;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoBlockStore$DefaultImpls {
+	public static fun readBlocks-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoBlockStore;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoCommit {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoCommit$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-6Za8ImI ()Ljava/lang/String;
+	public final fun component3-juHusts ()Ljava/lang/String;
+	public final fun component4 ()J
+	public final fun component5 ()J
+	public final fun component6 ()I
+	public final fun copy-wAHpHgw (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJI)Lstudio/hypertext/atproto/repo/RepoCommit;
+	public static synthetic fun copy-wAHpHgw$default (Lstudio/hypertext/atproto/repo/RepoCommit;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JJIILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoCommit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCreatedAtEpochMillis ()J
+	public final fun getPrev-juHusts ()Ljava/lang/String;
+	public final fun getRecordCount ()I
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getRevision ()J
+	public final fun getRoot-6Za8ImI ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/repo/RepoCommit$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoCommit$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/repo/RepoCommit;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/repo/RepoCommit;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoCommit$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoCommitChange {
+	public fun <init> (Lstudio/hypertext/atproto/repo/SignedRepoCommit;Lstudio/hypertext/atproto/repo/RepoBlock;Lstudio/hypertext/atproto/repo/SignedRepoCommit;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/Set;)V
+	public final fun getCollections ()Ljava/util/Set;
+	public final fun getCommit ()Lstudio/hypertext/atproto/repo/SignedRepoCommit;
+	public final fun getCommitBlock ()Lstudio/hypertext/atproto/repo/RepoBlock;
+	public final fun getOperations ()Ljava/util/List;
+	public final fun getPrevious ()Lstudio/hypertext/atproto/repo/SignedRepoCommit;
+	public final fun getRecordBlocks ()Ljava/util/List;
+	public final fun getTreeBlocks ()Ljava/util/List;
+	public final fun toCommitCar ()[B
+	public final fun toSyncCar ()[B
+}
+
+public final class studio/hypertext/atproto/repo/RepoCommitChanges {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoCommitChanges;
+	public final fun collectionsAt-YBMAlIg (Lstudio/hypertext/atproto/repo/RepoBlockStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun loadCommit--knXs0U (Lstudio/hypertext/atproto/repo/RepoBlockStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun read-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoBlockStore;Lstudio/hypertext/atproto/repo/SignedRepoCommit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoCommitEvent : studio/hypertext/atproto/repo/RepoEvent {
+	public synthetic fun <init> (JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[BLjava/util/List;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lkotlin/time/Instant;
+	public final fun component3-wh1GzKs ()Ljava/lang/String;
+	public final fun component4-6Za8ImI ()Ljava/lang/String;
+	public final fun component5-KkERo4U ()Ljava/lang/String;
+	public final fun component6-PzyVFZ0 ()Ljava/lang/String;
+	public final fun component7 ()[B
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9-juHusts ()Ljava/lang/String;
+	public final fun copy-zLfieUI (JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[BLjava/util/List;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoCommitEvent;
+	public static synthetic fun copy-zLfieUI$default (Lstudio/hypertext/atproto/repo/RepoCommitEvent;JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[BLjava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoCommitEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlocks ()[B
+	public final fun getCommit-6Za8ImI ()Ljava/lang/String;
+	public final fun getOps ()Ljava/util/List;
+	public final fun getPrevData-juHusts ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getRev-KkERo4U ()Ljava/lang/String;
+	public fun getSeq ()J
+	public final fun getSince-PzyVFZ0 ()Ljava/lang/String;
+	public fun getTime ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class studio/hypertext/atproto/repo/RepoCommitSigner {
+	public abstract fun sign (Lstudio/hypertext/atproto/repo/RepoCommit;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun verify (Lstudio/hypertext/atproto/repo/RepoCommit;[BLjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class studio/hypertext/atproto/repo/RepoEngine : studio/hypertext/atproto/repo/RepoRecordStore {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoEngine$Companion;
+	public static final field DEFAULT_COMMIT_LIMIT I
+	public abstract fun export-zL6VYxQ (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun export-zL6VYxQ$default (Lstudio/hypertext/atproto/repo/RepoEngine;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun import-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoExport;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun listCommits-2WbzVTw (Ljava/lang/String;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun listCommits-2WbzVTw$default (Lstudio/hypertext/atproto/repo/RepoEngine;Ljava/lang/String;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun loadHead-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoEngine$Companion {
+	public static final field DEFAULT_COMMIT_LIMIT I
+}
+
+public final class studio/hypertext/atproto/repo/RepoEngine$DefaultImpls {
+	public static synthetic fun export-zL6VYxQ$default (Lstudio/hypertext/atproto/repo/RepoEngine;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun getRecords-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoEngine;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun listCommits-2WbzVTw$default (Lstudio/hypertext/atproto/repo/RepoEngine;Ljava/lang/String;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun putRecords-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoEngine;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoErrorMessage : studio/hypertext/atproto/repo/RepoStreamMessage {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoErrorMessage;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/repo/RepoErrorMessage;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoErrorMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class studio/hypertext/atproto/repo/RepoEvent : studio/hypertext/atproto/repo/RepoStreamMessage {
+	public abstract fun getSeq ()J
+	public abstract fun getTime ()Lkotlin/time/Instant;
+}
+
+public final class studio/hypertext/atproto/repo/RepoEventFrames {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoEventFrames;
+	public final fun decode ([B)Lstudio/hypertext/atproto/repo/RepoStreamMessage;
+	public final fun encode (Lstudio/hypertext/atproto/repo/RepoStreamMessage;)[B
+}
+
+public abstract class studio/hypertext/atproto/repo/RepoException : java/lang/IllegalArgumentException {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class studio/hypertext/atproto/repo/RepoExport {
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoHead;Ljava/util/List;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/repo/RepoHead;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy-NvPWWU4 (Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoHead;Ljava/util/List;Ljava/util/List;)Lstudio/hypertext/atproto/repo/RepoExport;
+	public static synthetic fun copy-NvPWWU4$default (Lstudio/hypertext/atproto/repo/RepoExport;Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoHead;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoExport;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlocks ()Ljava/util/List;
+	public final fun getCommits ()Ljava/util/List;
+	public final fun getHead ()Lstudio/hypertext/atproto/repo/RepoHead;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoHead {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-6Za8ImI ()Ljava/lang/String;
+	public final fun component3-6Za8ImI ()Ljava/lang/String;
+	public final fun component4 ()J
+	public final fun copy-15jO70E (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;J)Lstudio/hypertext/atproto/repo/RepoHead;
+	public static synthetic fun copy-15jO70E$default (Lstudio/hypertext/atproto/repo/RepoHead;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;JILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoHead;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommitCid-6Za8ImI ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getRevision ()J
+	public final fun getRoot-6Za8ImI ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoHeadConflictException : studio/hypertext/atproto/repo/RepoException {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getExpectedRevision ()Ljava/lang/Long;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoIdentityEvent : studio/hypertext/atproto/repo/RepoEvent {
+	public synthetic fun <init> (JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lkotlin/time/Instant;
+	public final fun component3-wh1GzKs ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy-e3CFwEA (JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoIdentityEvent;
+	public static synthetic fun copy-e3CFwEA$default (Lstudio/hypertext/atproto/repo/RepoIdentityEvent;JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoIdentityEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getHandle ()Ljava/lang/String;
+	public fun getSeq ()J
+	public fun getTime ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoInfoMessage : studio/hypertext/atproto/repo/RepoStreamMessage {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoInfoMessage;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/repo/RepoInfoMessage;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoInfoMessage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoListPage {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoListPage$Companion;
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoListPage;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/repo/RepoListPage;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoListPage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getRecords ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/repo/RepoListPage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoListPage$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/repo/RepoListPage;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/repo/RepoListPage;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoListPage$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoOperation {
+	public synthetic fun <init> (Lstudio/hypertext/atproto/repo/RepoOperationAction;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lstudio/hypertext/atproto/repo/RepoOperationAction;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3-OLfzzfk ()Ljava/lang/String;
+	public final fun component4-juHusts ()Ljava/lang/String;
+	public final fun component5-juHusts ()Ljava/lang/String;
+	public final fun copy-IBCNlFI (Lstudio/hypertext/atproto/repo/RepoOperationAction;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoOperation;
+	public static synthetic fun copy-IBCNlFI$default (Lstudio/hypertext/atproto/repo/RepoOperation;Lstudio/hypertext/atproto/repo/RepoOperationAction;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoOperation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAction ()Lstudio/hypertext/atproto/repo/RepoOperationAction;
+	public final fun getCid-juHusts ()Ljava/lang/String;
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPrev-juHusts ()Ljava/lang/String;
+	public final fun getRecordKey-OLfzzfk ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoOperationAction : java/lang/Enum {
+	public static final field CREATE Lstudio/hypertext/atproto/repo/RepoOperationAction;
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoOperationAction$Companion;
+	public static final field DELETE Lstudio/hypertext/atproto/repo/RepoOperationAction;
+	public static final field UPDATE Lstudio/hypertext/atproto/repo/RepoOperationAction;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getWireName ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoOperationAction;
+	public static fun values ()[Lstudio/hypertext/atproto/repo/RepoOperationAction;
+}
+
+public final class studio/hypertext/atproto/repo/RepoOperationAction$Companion {
+	public final fun fromWireName (Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoOperationAction;
+}
+
+public final class studio/hypertext/atproto/repo/RepoRecord {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoRecord$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-rUdflOc ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun copy-YlbsfZo (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;)Lstudio/hypertext/atproto/repo/RepoRecord;
+	public static synthetic fun copy-YlbsfZo$default (Lstudio/hypertext/atproto/repo/RepoRecord;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoRecord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getUri-rUdflOc ()Ljava/lang/String;
+	public final fun getValue ()Lkotlinx/serialization/json/JsonObject;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/repo/RepoRecord$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoRecord$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/repo/RepoRecord;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/repo/RepoRecord;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoRecord$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoRecordId {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoRecordId$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3-OLfzzfk ()Ljava/lang/String;
+	public final fun copy-NpouhmA (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoRecordId;
+	public static synthetic fun copy-NpouhmA$default (Lstudio/hypertext/atproto/repo/RepoRecordId;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoRecordId;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getRecordKey-OLfzzfk ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getUri-rUdflOc ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/repo/RepoRecordId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoRecordId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/repo/RepoRecordId;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/repo/RepoRecordId;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoRecordId$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class studio/hypertext/atproto/repo/RepoRecordStore {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoRecordStore$Companion;
+	public static final field DEFAULT_PAGE_SIZE I
+	public abstract fun createRecord-kfCkHSQ (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun createRecord-kfCkHSQ$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun deleteRecord-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoRecordId;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun deleteRecord-0E7RQCE$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Lstudio/hypertext/atproto/repo/RepoRecordId;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getRecord-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getRecords-gIAlu-s (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun listRecords-O78n1YQ (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun listRecords-O78n1YQ$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun putRecord-BWLJW6A (Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun putRecord-BWLJW6A$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public fun putRecords-gIAlu-s (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoRecordStore$Companion {
+	public static final field DEFAULT_PAGE_SIZE I
+}
+
+public final class studio/hypertext/atproto/repo/RepoRecordStore$DefaultImpls {
+	public static synthetic fun createRecord-kfCkHSQ$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun deleteRecord-0E7RQCE$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Lstudio/hypertext/atproto/repo/RepoRecordId;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun getRecords-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoRecordStore;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun listRecords-O78n1YQ$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun putRecord-BWLJW6A$default (Lstudio/hypertext/atproto/repo/RepoRecordStore;Lstudio/hypertext/atproto/repo/RepoRecordId;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun putRecords-gIAlu-s (Lstudio/hypertext/atproto/repo/RepoRecordStore;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/repo/RepoSigningKeyUnavailableException : java/lang/IllegalStateException {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getReason ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+}
+
+public abstract interface class studio/hypertext/atproto/repo/RepoStreamMessage {
+}
+
+public final class studio/hypertext/atproto/repo/RepoSyncEvent : studio/hypertext/atproto/repo/RepoEvent {
+	public synthetic fun <init> (JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;[BLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lkotlin/time/Instant;
+	public final fun component3-wh1GzKs ()Ljava/lang/String;
+	public final fun component4-KkERo4U ()Ljava/lang/String;
+	public final fun component5 ()[B
+	public final fun copy-deQ_Wws (JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;[B)Lstudio/hypertext/atproto/repo/RepoSyncEvent;
+	public static synthetic fun copy-deQ_Wws$default (Lstudio/hypertext/atproto/repo/RepoSyncEvent;JLkotlin/time/Instant;Ljava/lang/String;Ljava/lang/String;[BILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoSyncEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlocks ()[B
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getRev-KkERo4U ()Ljava/lang/String;
+	public fun getSeq ()J
+	public fun getTime ()Lkotlin/time/Instant;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/RepoValidationStatus : java/lang/Enum {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoValidationStatus$Companion;
+	public static final field UNKNOWN Lstudio/hypertext/atproto/repo/RepoValidationStatus;
+	public static final field VALID Lstudio/hypertext/atproto/repo/RepoValidationStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lstudio/hypertext/atproto/repo/RepoValidationStatus;
+	public static fun values ()[Lstudio/hypertext/atproto/repo/RepoValidationStatus;
+}
+
+public final class studio/hypertext/atproto/repo/RepoValidationStatus$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoWriteResult {
+	public static final field Companion Lstudio/hypertext/atproto/repo/RepoWriteResult$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoValidationStatus;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoValidationStatus;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-rUdflOc ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lstudio/hypertext/atproto/repo/RepoValidationStatus;
+	public final fun copy-YlbsfZo (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoValidationStatus;)Lstudio/hypertext/atproto/repo/RepoWriteResult;
+	public static synthetic fun copy-YlbsfZo$default (Lstudio/hypertext/atproto/repo/RepoWriteResult;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoValidationStatus;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/RepoWriteResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getUri-rUdflOc ()Ljava/lang/String;
+	public final fun getValidationStatus ()Lstudio/hypertext/atproto/repo/RepoValidationStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/repo/RepoWriteResult$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoWriteResult$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/repo/RepoWriteResult;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/repo/RepoWriteResult;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/RepoWriteResult$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/repo/SignedRepoCommit {
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoCommit;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-6Za8ImI ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/repo/RepoCommit;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy-O-737p4 (Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoCommit;Ljava/lang/String;)Lstudio/hypertext/atproto/repo/SignedRepoCommit;
+	public static synthetic fun copy-O-737p4$default (Lstudio/hypertext/atproto/repo/SignedRepoCommit;Ljava/lang/String;Lstudio/hypertext/atproto/repo/RepoCommit;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/repo/SignedRepoCommit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public final fun getCommit ()Lstudio/hypertext/atproto/repo/RepoCommit;
+	public final fun getSignature ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/repo/UnsupportedCollectionException : studio/hypertext/atproto/repo/RepoException {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getCollection ()Ljava/lang/String;
+}
+

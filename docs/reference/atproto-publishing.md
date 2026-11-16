@@ -56,6 +56,9 @@ When applied, the plugin:
 - applies `org.jetbrains.dokka`
 - applies `maven-publish`
 - applies `signing`
+- applies `org.jetbrains.kotlinx.binary-compatibility-validator`, which adds `apiCheck` and
+  `apiDump` for the module's checked-in API listings; see
+  [Changing the public API](atproto-library.md#changing-the-public-api)
 - sets the default group to `studio.hypertext.atproto`
 - sets the default version to `0.1.0`
 - registers `dokkaHtmlJar`

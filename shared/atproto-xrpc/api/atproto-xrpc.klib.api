@@ -1,0 +1,84 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-xrpc>
+abstract interface studio.hypertext.atproto.xrpc/XrpcClient { // studio.hypertext.atproto.xrpc/XrpcClient|null[0]
+    abstract suspend fun <#A1: kotlin/Any?, #B1: kotlin/Any?> procedure(studio.hypertext.atproto.syntax/Nsid, #A1, kotlinx.serialization/SerializationStrategy<#A1>, kotlinx.serialization/DeserializationStrategy<#B1>, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit> = ...): #B1 // studio.hypertext.atproto.xrpc/XrpcClient.procedure|procedure(studio.hypertext.atproto.syntax.Nsid;0:0;kotlinx.serialization.SerializationStrategy<0:0>;kotlinx.serialization.DeserializationStrategy<0:1>;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+    abstract suspend fun <#A1: kotlin/Any?> query(studio.hypertext.atproto.syntax/Nsid, kotlinx.serialization/DeserializationStrategy<#A1>, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit> = ...): #A1 // studio.hypertext.atproto.xrpc/XrpcClient.query|query(studio.hypertext.atproto.syntax.Nsid;kotlinx.serialization.DeserializationStrategy<0:0>;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){0§<kotlin.Any?>}[0]
+    abstract suspend fun procedureRaw(studio.hypertext.atproto.syntax/Nsid, kotlin/String? = ..., kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit> = ...): kotlin/String // studio.hypertext.atproto.xrpc/XrpcClient.procedureRaw|procedureRaw(studio.hypertext.atproto.syntax.Nsid;kotlin.String?;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){}[0]
+    abstract suspend fun queryRaw(studio.hypertext.atproto.syntax/Nsid, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit> = ...): kotlin/String // studio.hypertext.atproto.xrpc/XrpcClient.queryRaw|queryRaw(studio.hypertext.atproto.syntax.Nsid;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){}[0]
+}
+
+sealed interface studio.hypertext.atproto.xrpc/XrpcAuth // studio.hypertext.atproto.xrpc/XrpcAuth|null[0]
+
+final class studio.hypertext.atproto.xrpc/BearerToken : studio.hypertext.atproto.xrpc/XrpcAuth { // studio.hypertext.atproto.xrpc/BearerToken|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.xrpc/BearerToken.<init>|<init>(kotlin.String){}[0]
+
+    final val token // studio.hypertext.atproto.xrpc/BearerToken.token|{}token[0]
+        final fun <get-token>(): kotlin/String // studio.hypertext.atproto.xrpc/BearerToken.token.<get-token>|<get-token>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.xrpc/BearerToken.component1|component1(){}[0]
+    final fun copy(kotlin/String = ...): studio.hypertext.atproto.xrpc/BearerToken // studio.hypertext.atproto.xrpc/BearerToken.copy|copy(kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.xrpc/BearerToken.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.xrpc/BearerToken.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.xrpc/BearerToken.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.xrpc/KtorXrpcClient : studio.hypertext.atproto.xrpc/XrpcClient { // studio.hypertext.atproto.xrpc/KtorXrpcClient|null[0]
+    constructor <init>(io.ktor.client/HttpClient, kotlin/String, kotlinx.serialization.json/Json = ...) // studio.hypertext.atproto.xrpc/KtorXrpcClient.<init>|<init>(io.ktor.client.HttpClient;kotlin.String;kotlinx.serialization.json.Json){}[0]
+
+    final suspend fun <#A1: kotlin/Any?, #B1: kotlin/Any?> procedure(studio.hypertext.atproto.syntax/Nsid, #A1, kotlinx.serialization/SerializationStrategy<#A1>, kotlinx.serialization/DeserializationStrategy<#B1>, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit>): #B1 // studio.hypertext.atproto.xrpc/KtorXrpcClient.procedure|procedure(studio.hypertext.atproto.syntax.Nsid;0:0;kotlinx.serialization.SerializationStrategy<0:0>;kotlinx.serialization.DeserializationStrategy<0:1>;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+    final suspend fun <#A1: kotlin/Any?> query(studio.hypertext.atproto.syntax/Nsid, kotlinx.serialization/DeserializationStrategy<#A1>, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit>): #A1 // studio.hypertext.atproto.xrpc/KtorXrpcClient.query|query(studio.hypertext.atproto.syntax.Nsid;kotlinx.serialization.DeserializationStrategy<0:0>;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){0§<kotlin.Any?>}[0]
+    final suspend fun procedureRaw(studio.hypertext.atproto.syntax/Nsid, kotlin/String?, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit>): kotlin/String // studio.hypertext.atproto.xrpc/KtorXrpcClient.procedureRaw|procedureRaw(studio.hypertext.atproto.syntax.Nsid;kotlin.String?;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){}[0]
+    final suspend fun queryRaw(studio.hypertext.atproto.syntax/Nsid, kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit>): kotlin/String // studio.hypertext.atproto.xrpc/KtorXrpcClient.queryRaw|queryRaw(studio.hypertext.atproto.syntax.Nsid;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){}[0]
+}
+
+final class studio.hypertext.atproto.xrpc/XrpcProtocolException : studio.hypertext.atproto.xrpc/XrpcException { // studio.hypertext.atproto.xrpc/XrpcProtocolException|null[0]
+    constructor <init>(kotlin/Int, kotlin/String? = ..., kotlin/String? = ..., kotlin/Long? = ...) // studio.hypertext.atproto.xrpc/XrpcProtocolException.<init>|<init>(kotlin.Int;kotlin.String?;kotlin.String?;kotlin.Long?){}[0]
+
+    final val error // studio.hypertext.atproto.xrpc/XrpcProtocolException.error|{}error[0]
+        final fun <get-error>(): kotlin/String? // studio.hypertext.atproto.xrpc/XrpcProtocolException.error.<get-error>|<get-error>(){}[0]
+    final val errorMessage // studio.hypertext.atproto.xrpc/XrpcProtocolException.errorMessage|{}errorMessage[0]
+        final fun <get-errorMessage>(): kotlin/String? // studio.hypertext.atproto.xrpc/XrpcProtocolException.errorMessage.<get-errorMessage>|<get-errorMessage>(){}[0]
+    final val retryAfterSeconds // studio.hypertext.atproto.xrpc/XrpcProtocolException.retryAfterSeconds|{}retryAfterSeconds[0]
+        final fun <get-retryAfterSeconds>(): kotlin/Long? // studio.hypertext.atproto.xrpc/XrpcProtocolException.retryAfterSeconds.<get-retryAfterSeconds>|<get-retryAfterSeconds>(){}[0]
+    final val statusCode // studio.hypertext.atproto.xrpc/XrpcProtocolException.statusCode|{}statusCode[0]
+        final fun <get-statusCode>(): kotlin/Int // studio.hypertext.atproto.xrpc/XrpcProtocolException.statusCode.<get-statusCode>|<get-statusCode>(){}[0]
+}
+
+final class studio.hypertext.atproto.xrpc/XrpcRequestBuilder { // studio.hypertext.atproto.xrpc/XrpcRequestBuilder|null[0]
+    constructor <init>() // studio.hypertext.atproto.xrpc/XrpcRequestBuilder.<init>|<init>(){}[0]
+
+    final var auth // studio.hypertext.atproto.xrpc/XrpcRequestBuilder.auth|{}auth[0]
+        final fun <get-auth>(): studio.hypertext.atproto.xrpc/XrpcAuth // studio.hypertext.atproto.xrpc/XrpcRequestBuilder.auth.<get-auth>|<get-auth>(){}[0]
+        final fun <set-auth>(studio.hypertext.atproto.xrpc/XrpcAuth) // studio.hypertext.atproto.xrpc/XrpcRequestBuilder.auth.<set-auth>|<set-auth>(studio.hypertext.atproto.xrpc.XrpcAuth){}[0]
+
+    final fun header(kotlin/String, kotlin/String) // studio.hypertext.atproto.xrpc/XrpcRequestBuilder.header|header(kotlin.String;kotlin.String){}[0]
+    final fun queryParameter(kotlin/String, kotlin/String) // studio.hypertext.atproto.xrpc/XrpcRequestBuilder.queryParameter|queryParameter(kotlin.String;kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.xrpc/XrpcSerializationException : studio.hypertext.atproto.xrpc/XrpcException { // studio.hypertext.atproto.xrpc/XrpcSerializationException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.xrpc/XrpcSerializationException.<init>|<init>(kotlin.String){}[0]
+    constructor <init>(kotlin/String, kotlin/Throwable?) // studio.hypertext.atproto.xrpc/XrpcSerializationException.<init>|<init>(kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class studio.hypertext.atproto.xrpc/XrpcTransportException : studio.hypertext.atproto.xrpc/XrpcException { // studio.hypertext.atproto.xrpc/XrpcTransportException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.xrpc/XrpcTransportException.<init>|<init>(kotlin.String){}[0]
+    constructor <init>(kotlin/String, kotlin/Throwable?) // studio.hypertext.atproto.xrpc/XrpcTransportException.<init>|<init>(kotlin.String;kotlin.Throwable?){}[0]
+}
+
+sealed class studio.hypertext.atproto.xrpc/XrpcException : kotlin/IllegalStateException // studio.hypertext.atproto.xrpc/XrpcException|null[0]
+
+final object studio.hypertext.atproto.xrpc/NoAuth : studio.hypertext.atproto.xrpc/XrpcAuth { // studio.hypertext.atproto.xrpc/NoAuth|null[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.xrpc/NoAuth.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.xrpc/NoAuth.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.xrpc/NoAuth.toString|toString(){}[0]
+}
+
+final fun studio.hypertext.atproto.xrpc/retryAfterSeconds(kotlin/String?): kotlin/Long? // studio.hypertext.atproto.xrpc/retryAfterSeconds|retryAfterSeconds(kotlin.String?){}[0]
+final suspend inline fun <#A: reified kotlin/Any?, #B: reified kotlin/Any?> (studio.hypertext.atproto.xrpc/XrpcClient).studio.hypertext.atproto.xrpc/procedure(studio.hypertext.atproto.syntax/Nsid, #A, noinline kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit> = ...): #B // studio.hypertext.atproto.xrpc/procedure|procedure@studio.hypertext.atproto.xrpc.XrpcClient(studio.hypertext.atproto.syntax.Nsid;0:0;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+final suspend inline fun <#A: reified kotlin/Any?> (studio.hypertext.atproto.xrpc/XrpcClient).studio.hypertext.atproto.xrpc/query(studio.hypertext.atproto.syntax/Nsid, noinline kotlin/Function1<studio.hypertext.atproto.xrpc/XrpcRequestBuilder, kotlin/Unit> = ...): #A // studio.hypertext.atproto.xrpc/query|query@studio.hypertext.atproto.xrpc.XrpcClient(studio.hypertext.atproto.syntax.Nsid;kotlin.Function1<studio.hypertext.atproto.xrpc.XrpcRequestBuilder,kotlin.Unit>){0§<kotlin.Any?>}[0]

@@ -1,0 +1,39 @@
+public final class studio/hypertext/atproto/pds/runtime/DefaultPdsBlobService : studio/hypertext/atproto/pds/PdsBlobService {
+	public fun <init> (Lstudio/hypertext/atproto/pds/runtime/PdsBlobStore;)V
+	public fun getBlob-gIAlu-s (Lstudio/hypertext/atproto/pds/GetBlobRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun uploadBlob-gIAlu-s (Lstudio/hypertext/atproto/pds/UploadBlobRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/pds/runtime/DefaultPdsRepoService : studio/hypertext/atproto/pds/PdsRepoService {
+	public fun <init> (Lstudio/hypertext/atproto/repo/RepoRecordStore;)V
+	public fun createRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/CreateRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun deleteRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/DeleteRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/GetRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun listRecords-gIAlu-s (Lstudio/hypertext/atproto/pds/ListRecordsRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun putRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/PutRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/pds/runtime/DefaultPdsSyncService : studio/hypertext/atproto/pds/PdsSyncService {
+	public static final field CAR_CONTENT_TYPE Ljava/lang/String;
+	public static final field Companion Lstudio/hypertext/atproto/pds/runtime/DefaultPdsSyncService$Companion;
+	public fun <init> (Lstudio/hypertext/atproto/repo/RepoEngine;)V
+	public fun getLatestCommit-gIAlu-s (Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getRepo-gIAlu-s (Lstudio/hypertext/atproto/pds/GetRepoRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getRepoStatus-gIAlu-s (Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/pds/runtime/DefaultPdsSyncService$Companion {
+}
+
+public abstract interface class studio/hypertext/atproto/pds/runtime/PdsBlobStore {
+	public abstract fun getBlob-gIAlu-s (Lstudio/hypertext/atproto/pds/GetBlobRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun putBlob-gIAlu-s (Lstudio/hypertext/atproto/pds/UploadBlobRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/pds/runtime/StaticPdsDiscoveryService : studio/hypertext/atproto/pds/PdsDiscoveryService {
+	public fun <init> (Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;Lstudio/hypertext/atproto/pds/DescribeServerResponse;)V
+	public fun authorizationServerMetadata ()Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;
+	public fun describeServer ()Lstudio/hypertext/atproto/pds/DescribeServerResponse;
+	public fun protectedResourceMetadata ()Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;
+}
+

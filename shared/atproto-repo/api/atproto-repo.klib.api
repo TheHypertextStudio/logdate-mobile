@@ -1,0 +1,743 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-repo>
+final enum class studio.hypertext.atproto.repo/RepoOperationAction : kotlin/Enum<studio.hypertext.atproto.repo/RepoOperationAction> { // studio.hypertext.atproto.repo/RepoOperationAction|null[0]
+    enum entry CREATE // studio.hypertext.atproto.repo/RepoOperationAction.CREATE|null[0]
+    enum entry DELETE // studio.hypertext.atproto.repo/RepoOperationAction.DELETE|null[0]
+    enum entry UPDATE // studio.hypertext.atproto.repo/RepoOperationAction.UPDATE|null[0]
+
+    final val entries // studio.hypertext.atproto.repo/RepoOperationAction.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.repo/RepoOperationAction> // studio.hypertext.atproto.repo/RepoOperationAction.entries.<get-entries>|<get-entries>#static(){}[0]
+    final val wireName // studio.hypertext.atproto.repo/RepoOperationAction.wireName|{}wireName[0]
+        final fun <get-wireName>(): kotlin/String // studio.hypertext.atproto.repo/RepoOperationAction.wireName.<get-wireName>|<get-wireName>(){}[0]
+
+    final fun valueOf(kotlin/String): studio.hypertext.atproto.repo/RepoOperationAction // studio.hypertext.atproto.repo/RepoOperationAction.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<studio.hypertext.atproto.repo/RepoOperationAction> // studio.hypertext.atproto.repo/RepoOperationAction.values|values#static(){}[0]
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoOperationAction.Companion|null[0]
+        final fun fromWireName(kotlin/String): studio.hypertext.atproto.repo/RepoOperationAction? // studio.hypertext.atproto.repo/RepoOperationAction.Companion.fromWireName|fromWireName(kotlin.String){}[0]
+    }
+}
+
+final enum class studio.hypertext.atproto.repo/RepoValidationStatus : kotlin/Enum<studio.hypertext.atproto.repo/RepoValidationStatus> { // studio.hypertext.atproto.repo/RepoValidationStatus|null[0]
+    enum entry UNKNOWN // studio.hypertext.atproto.repo/RepoValidationStatus.UNKNOWN|null[0]
+    enum entry VALID // studio.hypertext.atproto.repo/RepoValidationStatus.VALID|null[0]
+
+    final val entries // studio.hypertext.atproto.repo/RepoValidationStatus.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.repo/RepoValidationStatus> // studio.hypertext.atproto.repo/RepoValidationStatus.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): studio.hypertext.atproto.repo/RepoValidationStatus // studio.hypertext.atproto.repo/RepoValidationStatus.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<studio.hypertext.atproto.repo/RepoValidationStatus> // studio.hypertext.atproto.repo/RepoValidationStatus.values|values#static(){}[0]
+
+    final object Companion : kotlinx.serialization.internal/SerializerFactory { // studio.hypertext.atproto.repo/RepoValidationStatus.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/RepoValidationStatus> // studio.hypertext.atproto.repo/RepoValidationStatus.Companion.serializer|serializer(){}[0]
+        final fun serializer(kotlin/Array<out kotlinx.serialization/KSerializer<*>>...): kotlinx.serialization/KSerializer<*> // studio.hypertext.atproto.repo/RepoValidationStatus.Companion.serializer|serializer(kotlin.Array<out|kotlinx.serialization.KSerializer<*>>...){}[0]
+    }
+}
+
+abstract interface studio.hypertext.atproto.repo/RepoBlockStore { // studio.hypertext.atproto.repo/RepoBlockStore|null[0]
+    abstract suspend fun appendCommit(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/SignedRepoCommit): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/RepoBlockStore.appendCommit|appendCommit(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.SignedRepoCommit){}[0]
+    abstract suspend fun clearRepo(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/RepoBlockStore.clearRepo|clearRepo(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun compareAndSwapHead(studio.hypertext.atproto.repo/RepoHead, kotlin/Long?): kotlin/Result<kotlin/Boolean> // studio.hypertext.atproto.repo/RepoBlockStore.compareAndSwapHead|compareAndSwapHead(studio.hypertext.atproto.repo.RepoHead;kotlin.Long?){}[0]
+    abstract suspend fun listBlocks(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>> // studio.hypertext.atproto.repo/RepoBlockStore.listBlocks|listBlocks(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun listCommits(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit>> // studio.hypertext.atproto.repo/RepoBlockStore.listCommits|listCommits(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun readBlock(studio.hypertext.atproto.repo/Cid): kotlin/Result<studio.hypertext.atproto.repo/RepoBlock?> // studio.hypertext.atproto.repo/RepoBlockStore.readBlock|readBlock(studio.hypertext.atproto.repo.Cid){}[0]
+    abstract suspend fun readHead(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.repo/RepoHead?> // studio.hypertext.atproto.repo/RepoBlockStore.readHead|readHead(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun writeBlock(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/RepoBlock): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/RepoBlockStore.writeBlock|writeBlock(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.RepoBlock){}[0]
+    abstract suspend fun writeHead(studio.hypertext.atproto.repo/RepoHead): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/RepoBlockStore.writeHead|writeHead(studio.hypertext.atproto.repo.RepoHead){}[0]
+    open suspend fun readBlocks(kotlin.collections/List<studio.hypertext.atproto.repo/Cid>): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock?>> // studio.hypertext.atproto.repo/RepoBlockStore.readBlocks|readBlocks(kotlin.collections.List<studio.hypertext.atproto.repo.Cid>){}[0]
+}
+
+abstract interface studio.hypertext.atproto.repo/RepoCommitSigner { // studio.hypertext.atproto.repo/RepoCommitSigner|null[0]
+    abstract suspend fun sign(studio.hypertext.atproto.repo/RepoCommit, kotlin/ByteArray): kotlin/String // studio.hypertext.atproto.repo/RepoCommitSigner.sign|sign(studio.hypertext.atproto.repo.RepoCommit;kotlin.ByteArray){}[0]
+    abstract suspend fun verify(studio.hypertext.atproto.repo/RepoCommit, kotlin/ByteArray, kotlin/String): kotlin/Boolean // studio.hypertext.atproto.repo/RepoCommitSigner.verify|verify(studio.hypertext.atproto.repo.RepoCommit;kotlin.ByteArray;kotlin.String){}[0]
+}
+
+abstract interface studio.hypertext.atproto.repo/RepoEngine : studio.hypertext.atproto.repo/RepoRecordStore { // studio.hypertext.atproto.repo/RepoEngine|null[0]
+    abstract suspend fun export(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Tid? = ...): kotlin/Result<studio.hypertext.atproto.repo/RepoExport> // studio.hypertext.atproto.repo/RepoEngine.export|export(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Tid?){}[0]
+    abstract suspend fun import(studio.hypertext.atproto.repo/RepoExport): kotlin/Result<studio.hypertext.atproto.repo/RepoHead> // studio.hypertext.atproto.repo/RepoEngine.import|import(studio.hypertext.atproto.repo.RepoExport){}[0]
+    abstract suspend fun listCommits(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Int = ...): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit>> // studio.hypertext.atproto.repo/RepoEngine.listCommits|listCommits(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Int){}[0]
+    abstract suspend fun loadHead(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.repo/RepoHead?> // studio.hypertext.atproto.repo/RepoEngine.loadHead|loadHead(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoEngine.Companion|null[0]
+        final const val DEFAULT_COMMIT_LIMIT // studio.hypertext.atproto.repo/RepoEngine.Companion.DEFAULT_COMMIT_LIMIT|{}DEFAULT_COMMIT_LIMIT[0]
+            final fun <get-DEFAULT_COMMIT_LIMIT>(): kotlin/Int // studio.hypertext.atproto.repo/RepoEngine.Companion.DEFAULT_COMMIT_LIMIT.<get-DEFAULT_COMMIT_LIMIT>|<get-DEFAULT_COMMIT_LIMIT>(){}[0]
+    }
+}
+
+abstract interface studio.hypertext.atproto.repo/RepoRecordStore { // studio.hypertext.atproto.repo/RepoRecordStore|null[0]
+    abstract suspend fun createRecord(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, kotlinx.serialization.json/JsonObject, studio.hypertext.atproto.syntax/RecordKey? = ...): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.repo/RepoRecordStore.createRecord|createRecord(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlinx.serialization.json.JsonObject;studio.hypertext.atproto.syntax.RecordKey?){}[0]
+    abstract suspend fun deleteRecord(studio.hypertext.atproto.repo/RepoRecordId, kotlin/String? = ...): kotlin/Result<kotlin/Boolean> // studio.hypertext.atproto.repo/RepoRecordStore.deleteRecord|deleteRecord(studio.hypertext.atproto.repo.RepoRecordId;kotlin.String?){}[0]
+    abstract suspend fun getRecord(studio.hypertext.atproto.repo/RepoRecordId): kotlin/Result<studio.hypertext.atproto.repo/RepoRecord?> // studio.hypertext.atproto.repo/RepoRecordStore.getRecord|getRecord(studio.hypertext.atproto.repo.RepoRecordId){}[0]
+    abstract suspend fun listRecords(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, kotlin/Int = ..., kotlin/String? = ..., kotlin/Boolean = ...): kotlin/Result<studio.hypertext.atproto.repo/RepoListPage> // studio.hypertext.atproto.repo/RepoRecordStore.listRecords|listRecords(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlin.Int;kotlin.String?;kotlin.Boolean){}[0]
+    abstract suspend fun putRecord(studio.hypertext.atproto.repo/RepoRecordId, kotlinx.serialization.json/JsonObject, kotlin/String? = ...): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.repo/RepoRecordStore.putRecord|putRecord(studio.hypertext.atproto.repo.RepoRecordId;kotlinx.serialization.json.JsonObject;kotlin.String?){}[0]
+    open suspend fun getRecords(kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecordId>): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord?>> // studio.hypertext.atproto.repo/RepoRecordStore.getRecords|getRecords(kotlin.collections.List<studio.hypertext.atproto.repo.RepoRecordId>){}[0]
+    open suspend fun putRecords(kotlin.collections/List<studio.hypertext.atproto.repo/BatchRecordWrite>): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoWriteResult>> // studio.hypertext.atproto.repo/RepoRecordStore.putRecords|putRecords(kotlin.collections.List<studio.hypertext.atproto.repo.BatchRecordWrite>){}[0]
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoRecordStore.Companion|null[0]
+        final const val DEFAULT_PAGE_SIZE // studio.hypertext.atproto.repo/RepoRecordStore.Companion.DEFAULT_PAGE_SIZE|{}DEFAULT_PAGE_SIZE[0]
+            final fun <get-DEFAULT_PAGE_SIZE>(): kotlin/Int // studio.hypertext.atproto.repo/RepoRecordStore.Companion.DEFAULT_PAGE_SIZE.<get-DEFAULT_PAGE_SIZE>|<get-DEFAULT_PAGE_SIZE>(){}[0]
+    }
+}
+
+sealed interface studio.hypertext.atproto.repo/RepoEvent : studio.hypertext.atproto.repo/RepoStreamMessage { // studio.hypertext.atproto.repo/RepoEvent|null[0]
+    abstract val seq // studio.hypertext.atproto.repo/RepoEvent.seq|{}seq[0]
+        abstract fun <get-seq>(): kotlin/Long // studio.hypertext.atproto.repo/RepoEvent.seq.<get-seq>|<get-seq>(){}[0]
+    abstract val time // studio.hypertext.atproto.repo/RepoEvent.time|{}time[0]
+        abstract fun <get-time>(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoEvent.time.<get-time>|<get-time>(){}[0]
+}
+
+sealed interface studio.hypertext.atproto.repo/RepoStreamMessage // studio.hypertext.atproto.repo/RepoStreamMessage|null[0]
+
+final class studio.hypertext.atproto.repo/BatchRecordWrite { // studio.hypertext.atproto.repo/BatchRecordWrite|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/RepoRecordId, kotlinx.serialization.json/JsonObject, kotlin/String? = ...) // studio.hypertext.atproto.repo/BatchRecordWrite.<init>|<init>(studio.hypertext.atproto.repo.RepoRecordId;kotlinx.serialization.json.JsonObject;kotlin.String?){}[0]
+
+    final val recordId // studio.hypertext.atproto.repo/BatchRecordWrite.recordId|{}recordId[0]
+        final fun <get-recordId>(): studio.hypertext.atproto.repo/RepoRecordId // studio.hypertext.atproto.repo/BatchRecordWrite.recordId.<get-recordId>|<get-recordId>(){}[0]
+    final val swapRecord // studio.hypertext.atproto.repo/BatchRecordWrite.swapRecord|{}swapRecord[0]
+        final fun <get-swapRecord>(): kotlin/String? // studio.hypertext.atproto.repo/BatchRecordWrite.swapRecord.<get-swapRecord>|<get-swapRecord>(){}[0]
+    final val value // studio.hypertext.atproto.repo/BatchRecordWrite.value|{}value[0]
+        final fun <get-value>(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.repo/BatchRecordWrite.value.<get-value>|<get-value>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.repo/RepoRecordId // studio.hypertext.atproto.repo/BatchRecordWrite.component1|component1(){}[0]
+    final fun component2(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.repo/BatchRecordWrite.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.repo/BatchRecordWrite.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.repo/RepoRecordId = ..., kotlinx.serialization.json/JsonObject = ..., kotlin/String? = ...): studio.hypertext.atproto.repo/BatchRecordWrite // studio.hypertext.atproto.repo/BatchRecordWrite.copy|copy(studio.hypertext.atproto.repo.RepoRecordId;kotlinx.serialization.json.JsonObject;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/BatchRecordWrite.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/BatchRecordWrite.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/BatchRecordWrite.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/CarArchive { // studio.hypertext.atproto.repo/CarArchive|null[0]
+    constructor <init>(kotlin.collections/List<studio.hypertext.atproto.repo/Cid>, kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>) // studio.hypertext.atproto.repo/CarArchive.<init>|<init>(kotlin.collections.List<studio.hypertext.atproto.repo.Cid>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>){}[0]
+
+    final val blocks // studio.hypertext.atproto.repo/CarArchive.blocks|{}blocks[0]
+        final fun <get-blocks>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> // studio.hypertext.atproto.repo/CarArchive.blocks.<get-blocks>|<get-blocks>(){}[0]
+    final val roots // studio.hypertext.atproto.repo/CarArchive.roots|{}roots[0]
+        final fun <get-roots>(): kotlin.collections/List<studio.hypertext.atproto.repo/Cid> // studio.hypertext.atproto.repo/CarArchive.roots.<get-roots>|<get-roots>(){}[0]
+
+    final fun component1(): kotlin.collections/List<studio.hypertext.atproto.repo/Cid> // studio.hypertext.atproto.repo/CarArchive.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> // studio.hypertext.atproto.repo/CarArchive.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<studio.hypertext.atproto.repo/Cid> = ..., kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> = ...): studio.hypertext.atproto.repo/CarArchive // studio.hypertext.atproto.repo/CarArchive.copy|copy(kotlin.collections.List<studio.hypertext.atproto.repo.Cid>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/CarArchive.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/CarArchive.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/CarArchive.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/DefaultRepoEngine : studio.hypertext.atproto.repo/RepoEngine { // studio.hypertext.atproto.repo/DefaultRepoEngine|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/RepoBlockStore, kotlin.time/Clock = ..., studio.hypertext.atproto.repo/RepoCommitSigner = ..., kotlin/Function2<studio.hypertext.atproto.identity/AtprotoDid, kotlin/Long, kotlin/Unit>? = ...) // studio.hypertext.atproto.repo/DefaultRepoEngine.<init>|<init>(studio.hypertext.atproto.repo.RepoBlockStore;kotlin.time.Clock;studio.hypertext.atproto.repo.RepoCommitSigner;kotlin.Function2<studio.hypertext.atproto.identity.AtprotoDid,kotlin.Long,kotlin.Unit>?){}[0]
+
+    final suspend fun createRecord(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, kotlinx.serialization.json/JsonObject, studio.hypertext.atproto.syntax/RecordKey?): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.repo/DefaultRepoEngine.createRecord|createRecord(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlinx.serialization.json.JsonObject;studio.hypertext.atproto.syntax.RecordKey?){}[0]
+    final suspend fun deleteRecord(studio.hypertext.atproto.repo/RepoRecordId, kotlin/String?): kotlin/Result<kotlin/Boolean> // studio.hypertext.atproto.repo/DefaultRepoEngine.deleteRecord|deleteRecord(studio.hypertext.atproto.repo.RepoRecordId;kotlin.String?){}[0]
+    final suspend fun export(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Tid?): kotlin/Result<studio.hypertext.atproto.repo/RepoExport> // studio.hypertext.atproto.repo/DefaultRepoEngine.export|export(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Tid?){}[0]
+    final suspend fun getRecord(studio.hypertext.atproto.repo/RepoRecordId): kotlin/Result<studio.hypertext.atproto.repo/RepoRecord?> // studio.hypertext.atproto.repo/DefaultRepoEngine.getRecord|getRecord(studio.hypertext.atproto.repo.RepoRecordId){}[0]
+    final suspend fun getRecords(kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecordId>): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord?>> // studio.hypertext.atproto.repo/DefaultRepoEngine.getRecords|getRecords(kotlin.collections.List<studio.hypertext.atproto.repo.RepoRecordId>){}[0]
+    final suspend fun import(studio.hypertext.atproto.repo/RepoExport): kotlin/Result<studio.hypertext.atproto.repo/RepoHead> // studio.hypertext.atproto.repo/DefaultRepoEngine.import|import(studio.hypertext.atproto.repo.RepoExport){}[0]
+    final suspend fun listCommits(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Int): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit>> // studio.hypertext.atproto.repo/DefaultRepoEngine.listCommits|listCommits(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Int){}[0]
+    final suspend fun listRecords(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, kotlin/Int, kotlin/String?, kotlin/Boolean): kotlin/Result<studio.hypertext.atproto.repo/RepoListPage> // studio.hypertext.atproto.repo/DefaultRepoEngine.listRecords|listRecords(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlin.Int;kotlin.String?;kotlin.Boolean){}[0]
+    final suspend fun loadHead(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.repo/RepoHead?> // studio.hypertext.atproto.repo/DefaultRepoEngine.loadHead|loadHead(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun putRecord(studio.hypertext.atproto.repo/RepoRecordId, kotlinx.serialization.json/JsonObject, kotlin/String?): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.repo/DefaultRepoEngine.putRecord|putRecord(studio.hypertext.atproto.repo.RepoRecordId;kotlinx.serialization.json.JsonObject;kotlin.String?){}[0]
+    final suspend fun putRecordIfAbsent(studio.hypertext.atproto.repo/RepoRecordId, kotlinx.serialization.json/JsonObject): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.repo/DefaultRepoEngine.putRecordIfAbsent|putRecordIfAbsent(studio.hypertext.atproto.repo.RepoRecordId;kotlinx.serialization.json.JsonObject){}[0]
+    final suspend fun putRecords(kotlin.collections/List<studio.hypertext.atproto.repo/BatchRecordWrite>): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoWriteResult>> // studio.hypertext.atproto.repo/DefaultRepoEngine.putRecords|putRecords(kotlin.collections.List<studio.hypertext.atproto.repo.BatchRecordWrite>){}[0]
+    final suspend fun recommit(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.repo/RepoHead?> // studio.hypertext.atproto.repo/DefaultRepoEngine.recommit|recommit(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+}
+
+final class studio.hypertext.atproto.repo/InMemoryRepoBlockStore : studio.hypertext.atproto.repo/RepoBlockStore { // studio.hypertext.atproto.repo/InMemoryRepoBlockStore|null[0]
+    constructor <init>() // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.<init>|<init>(){}[0]
+
+    final suspend fun appendCommit(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/SignedRepoCommit): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.appendCommit|appendCommit(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.SignedRepoCommit){}[0]
+    final suspend fun clearRepo(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.clearRepo|clearRepo(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun compareAndSwapHead(studio.hypertext.atproto.repo/RepoHead, kotlin/Long?): kotlin/Result<kotlin/Boolean> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.compareAndSwapHead|compareAndSwapHead(studio.hypertext.atproto.repo.RepoHead;kotlin.Long?){}[0]
+    final suspend fun listBlocks(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.listBlocks|listBlocks(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun listCommits(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit>> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.listCommits|listCommits(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun readBlock(studio.hypertext.atproto.repo/Cid): kotlin/Result<studio.hypertext.atproto.repo/RepoBlock?> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.readBlock|readBlock(studio.hypertext.atproto.repo.Cid){}[0]
+    final suspend fun readHead(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.repo/RepoHead?> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.readHead|readHead(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun writeBlock(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/RepoBlock): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.writeBlock|writeBlock(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.RepoBlock){}[0]
+    final suspend fun writeHead(studio.hypertext.atproto.repo/RepoHead): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.repo/InMemoryRepoBlockStore.writeHead|writeHead(studio.hypertext.atproto.repo.RepoHead){}[0]
+}
+
+final class studio.hypertext.atproto.repo/InvalidRepoCursorException : studio.hypertext.atproto.repo/RepoException { // studio.hypertext.atproto.repo/InvalidRepoCursorException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.repo/InvalidRepoCursorException.<init>|<init>(kotlin.String){}[0]
+
+    final val cursor // studio.hypertext.atproto.repo/InvalidRepoCursorException.cursor|{}cursor[0]
+        final fun <get-cursor>(): kotlin/String // studio.hypertext.atproto.repo/InvalidRepoCursorException.cursor.<get-cursor>|<get-cursor>(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/InvalidSwapException : studio.hypertext.atproto.repo/RepoException { // studio.hypertext.atproto.repo/InvalidSwapException|null[0]
+    constructor <init>(kotlin/String?, kotlin/String) // studio.hypertext.atproto.repo/InvalidSwapException.<init>|<init>(kotlin.String?;kotlin.String){}[0]
+
+    final val expectedCid // studio.hypertext.atproto.repo/InvalidSwapException.expectedCid|{}expectedCid[0]
+        final fun <get-expectedCid>(): kotlin/String? // studio.hypertext.atproto.repo/InvalidSwapException.expectedCid.<get-expectedCid>|<get-expectedCid>(){}[0]
+    final val providedCid // studio.hypertext.atproto.repo/InvalidSwapException.providedCid|{}providedCid[0]
+        final fun <get-providedCid>(): kotlin/String // studio.hypertext.atproto.repo/InvalidSwapException.providedCid.<get-providedCid>|<get-providedCid>(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/MerkleSearchTree { // studio.hypertext.atproto.repo/MerkleSearchTree|null[0]
+    final fun entries(studio.hypertext.atproto.syntax/Nsid? = ...): kotlin.collections/List<studio.hypertext.atproto.repo/MerkleSearchTreeEntry> // studio.hypertext.atproto.repo/MerkleSearchTree.entries|entries(studio.hypertext.atproto.syntax.Nsid?){}[0]
+    final fun get(studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/MerkleSearchTree.get|get(studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey){}[0]
+    final fun put(studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey, studio.hypertext.atproto.repo/Cid): studio.hypertext.atproto.repo/MerkleSearchTree // studio.hypertext.atproto.repo/MerkleSearchTree.put|put(studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;studio.hypertext.atproto.repo.Cid){}[0]
+    final fun remove(studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey): studio.hypertext.atproto.repo/MerkleSearchTree // studio.hypertext.atproto.repo/MerkleSearchTree.remove|remove(studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey){}[0]
+    final fun rootCid(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/MerkleSearchTree.rootCid|rootCid(){}[0]
+    final fun toJsonElement(): kotlinx.serialization.json/JsonArray // studio.hypertext.atproto.repo/MerkleSearchTree.toJsonElement|toJsonElement(){}[0]
+
+    final object Companion { // studio.hypertext.atproto.repo/MerkleSearchTree.Companion|null[0]
+        final fun empty(): studio.hypertext.atproto.repo/MerkleSearchTree // studio.hypertext.atproto.repo/MerkleSearchTree.Companion.empty|empty(){}[0]
+        final fun fromJsonElement(kotlinx.serialization.json/JsonArray): studio.hypertext.atproto.repo/MerkleSearchTree // studio.hypertext.atproto.repo/MerkleSearchTree.Companion.fromJsonElement|fromJsonElement(kotlinx.serialization.json.JsonArray){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.repo/MerkleSearchTreeEntry { // studio.hypertext.atproto.repo/MerkleSearchTreeEntry|null[0]
+    constructor <init>(studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey, studio.hypertext.atproto.repo/Cid) // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.<init>|<init>(studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;studio.hypertext.atproto.repo.Cid){}[0]
+
+    final val cid // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.cid.<get-cid>|<get-cid>(){}[0]
+    final val collection // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.collection.<get-collection>|<get-collection>(){}[0]
+    final val recordKey // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.syntax/Nsid = ..., studio.hypertext.atproto.syntax/RecordKey = ..., studio.hypertext.atproto.repo/Cid = ...): studio.hypertext.atproto.repo/MerkleSearchTreeEntry // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.copy|copy(studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;studio.hypertext.atproto.repo.Cid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/MerkleSearchTreeEntry.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoAccountEvent : studio.hypertext.atproto.repo/RepoEvent { // studio.hypertext.atproto.repo/RepoAccountEvent|null[0]
+    constructor <init>(kotlin/Long, kotlin.time/Instant, studio.hypertext.atproto.identity/AtprotoDid, kotlin/Boolean, kotlin/String?) // studio.hypertext.atproto.repo/RepoAccountEvent.<init>|<init>(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;kotlin.Boolean;kotlin.String?){}[0]
+
+    final val active // studio.hypertext.atproto.repo/RepoAccountEvent.active|{}active[0]
+        final fun <get-active>(): kotlin/Boolean // studio.hypertext.atproto.repo/RepoAccountEvent.active.<get-active>|<get-active>(){}[0]
+    final val did // studio.hypertext.atproto.repo/RepoAccountEvent.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoAccountEvent.did.<get-did>|<get-did>(){}[0]
+    final val seq // studio.hypertext.atproto.repo/RepoAccountEvent.seq|{}seq[0]
+        final fun <get-seq>(): kotlin/Long // studio.hypertext.atproto.repo/RepoAccountEvent.seq.<get-seq>|<get-seq>(){}[0]
+    final val status // studio.hypertext.atproto.repo/RepoAccountEvent.status|{}status[0]
+        final fun <get-status>(): kotlin/String? // studio.hypertext.atproto.repo/RepoAccountEvent.status.<get-status>|<get-status>(){}[0]
+    final val time // studio.hypertext.atproto.repo/RepoAccountEvent.time|{}time[0]
+        final fun <get-time>(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoAccountEvent.time.<get-time>|<get-time>(){}[0]
+
+    final fun component1(): kotlin/Long // studio.hypertext.atproto.repo/RepoAccountEvent.component1|component1(){}[0]
+    final fun component2(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoAccountEvent.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoAccountEvent.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // studio.hypertext.atproto.repo/RepoAccountEvent.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.repo/RepoAccountEvent.component5|component5(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin.time/Instant = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/Boolean = ..., kotlin/String? = ...): studio.hypertext.atproto.repo/RepoAccountEvent // studio.hypertext.atproto.repo/RepoAccountEvent.copy|copy(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;kotlin.Boolean;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoAccountEvent.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoAccountEvent.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoAccountEvent.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoBlock { // studio.hypertext.atproto.repo/RepoBlock|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/Cid, kotlin/ByteArray) // studio.hypertext.atproto.repo/RepoBlock.<init>|<init>(studio.hypertext.atproto.repo.Cid;kotlin.ByteArray){}[0]
+
+    final val bytes // studio.hypertext.atproto.repo/RepoBlock.bytes|{}bytes[0]
+        final fun <get-bytes>(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoBlock.bytes.<get-bytes>|<get-bytes>(){}[0]
+    final val cid // studio.hypertext.atproto.repo/RepoBlock.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoBlock.cid.<get-cid>|<get-cid>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoBlock.component1|component1(){}[0]
+    final fun component2(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoBlock.component2|component2(){}[0]
+    final fun copy(studio.hypertext.atproto.repo/Cid = ..., kotlin/ByteArray = ...): studio.hypertext.atproto.repo/RepoBlock // studio.hypertext.atproto.repo/RepoBlock.copy|copy(studio.hypertext.atproto.repo.Cid;kotlin.ByteArray){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoBlock.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoBlock.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoBlock.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoCommit { // studio.hypertext.atproto.repo/RepoCommit|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/Cid, studio.hypertext.atproto.repo/Cid? = ..., kotlin/Long, kotlin/Long, kotlin/Int) // studio.hypertext.atproto.repo/RepoCommit.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.repo.Cid?;kotlin.Long;kotlin.Long;kotlin.Int){}[0]
+
+    final val createdAtEpochMillis // studio.hypertext.atproto.repo/RepoCommit.createdAtEpochMillis|{}createdAtEpochMillis[0]
+        final fun <get-createdAtEpochMillis>(): kotlin/Long // studio.hypertext.atproto.repo/RepoCommit.createdAtEpochMillis.<get-createdAtEpochMillis>|<get-createdAtEpochMillis>(){}[0]
+    final val prev // studio.hypertext.atproto.repo/RepoCommit.prev|{}prev[0]
+        final fun <get-prev>(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoCommit.prev.<get-prev>|<get-prev>(){}[0]
+    final val recordCount // studio.hypertext.atproto.repo/RepoCommit.recordCount|{}recordCount[0]
+        final fun <get-recordCount>(): kotlin/Int // studio.hypertext.atproto.repo/RepoCommit.recordCount.<get-recordCount>|<get-recordCount>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoCommit.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoCommit.repo.<get-repo>|<get-repo>(){}[0]
+    final val revision // studio.hypertext.atproto.repo/RepoCommit.revision|{}revision[0]
+        final fun <get-revision>(): kotlin/Long // studio.hypertext.atproto.repo/RepoCommit.revision.<get-revision>|<get-revision>(){}[0]
+    final val root // studio.hypertext.atproto.repo/RepoCommit.root|{}root[0]
+        final fun <get-root>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoCommit.root.<get-root>|<get-root>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoCommit.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoCommit.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoCommit.component3|component3(){}[0]
+    final fun component4(): kotlin/Long // studio.hypertext.atproto.repo/RepoCommit.component4|component4(){}[0]
+    final fun component5(): kotlin/Long // studio.hypertext.atproto.repo/RepoCommit.component5|component5(){}[0]
+    final fun component6(): kotlin/Int // studio.hypertext.atproto.repo/RepoCommit.component6|component6(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.repo/Cid = ..., studio.hypertext.atproto.repo/Cid? = ..., kotlin/Long = ..., kotlin/Long = ..., kotlin/Int = ...): studio.hypertext.atproto.repo/RepoCommit // studio.hypertext.atproto.repo/RepoCommit.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.repo.Cid?;kotlin.Long;kotlin.Long;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoCommit.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoCommit.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoCommit.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.repo/RepoCommit> { // studio.hypertext.atproto.repo/RepoCommit.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.repo/RepoCommit.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.repo/RepoCommit.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.repo/RepoCommit.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.repo/RepoCommit // studio.hypertext.atproto.repo/RepoCommit.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.repo/RepoCommit) // studio.hypertext.atproto.repo/RepoCommit.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.repo.RepoCommit){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoCommit.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/RepoCommit> // studio.hypertext.atproto.repo/RepoCommit.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.repo/RepoCommitChange { // studio.hypertext.atproto.repo/RepoCommitChange|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/SignedRepoCommit, studio.hypertext.atproto.repo/RepoBlock, studio.hypertext.atproto.repo/SignedRepoCommit?, kotlin.collections/List<studio.hypertext.atproto.repo/RepoOperation>, kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>, kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>, kotlin.collections/Set<studio.hypertext.atproto.syntax/Nsid>) // studio.hypertext.atproto.repo/RepoCommitChange.<init>|<init>(studio.hypertext.atproto.repo.SignedRepoCommit;studio.hypertext.atproto.repo.RepoBlock;studio.hypertext.atproto.repo.SignedRepoCommit?;kotlin.collections.List<studio.hypertext.atproto.repo.RepoOperation>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>;kotlin.collections.Set<studio.hypertext.atproto.syntax.Nsid>){}[0]
+
+    final val collections // studio.hypertext.atproto.repo/RepoCommitChange.collections|{}collections[0]
+        final fun <get-collections>(): kotlin.collections/Set<studio.hypertext.atproto.syntax/Nsid> // studio.hypertext.atproto.repo/RepoCommitChange.collections.<get-collections>|<get-collections>(){}[0]
+    final val commit // studio.hypertext.atproto.repo/RepoCommitChange.commit|{}commit[0]
+        final fun <get-commit>(): studio.hypertext.atproto.repo/SignedRepoCommit // studio.hypertext.atproto.repo/RepoCommitChange.commit.<get-commit>|<get-commit>(){}[0]
+    final val commitBlock // studio.hypertext.atproto.repo/RepoCommitChange.commitBlock|{}commitBlock[0]
+        final fun <get-commitBlock>(): studio.hypertext.atproto.repo/RepoBlock // studio.hypertext.atproto.repo/RepoCommitChange.commitBlock.<get-commitBlock>|<get-commitBlock>(){}[0]
+    final val operations // studio.hypertext.atproto.repo/RepoCommitChange.operations|{}operations[0]
+        final fun <get-operations>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoOperation> // studio.hypertext.atproto.repo/RepoCommitChange.operations.<get-operations>|<get-operations>(){}[0]
+    final val previous // studio.hypertext.atproto.repo/RepoCommitChange.previous|{}previous[0]
+        final fun <get-previous>(): studio.hypertext.atproto.repo/SignedRepoCommit? // studio.hypertext.atproto.repo/RepoCommitChange.previous.<get-previous>|<get-previous>(){}[0]
+    final val recordBlocks // studio.hypertext.atproto.repo/RepoCommitChange.recordBlocks|{}recordBlocks[0]
+        final fun <get-recordBlocks>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> // studio.hypertext.atproto.repo/RepoCommitChange.recordBlocks.<get-recordBlocks>|<get-recordBlocks>(){}[0]
+    final val treeBlocks // studio.hypertext.atproto.repo/RepoCommitChange.treeBlocks|{}treeBlocks[0]
+        final fun <get-treeBlocks>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> // studio.hypertext.atproto.repo/RepoCommitChange.treeBlocks.<get-treeBlocks>|<get-treeBlocks>(){}[0]
+
+    final fun toCommitCar(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoCommitChange.toCommitCar|toCommitCar(){}[0]
+    final fun toSyncCar(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoCommitChange.toSyncCar|toSyncCar(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoCommitEvent : studio.hypertext.atproto.repo/RepoEvent { // studio.hypertext.atproto.repo/RepoCommitEvent|null[0]
+    constructor <init>(kotlin/Long, kotlin.time/Instant, studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/Cid, studio.hypertext.atproto.syntax/Tid, studio.hypertext.atproto.syntax/Tid?, kotlin/ByteArray, kotlin.collections/List<studio.hypertext.atproto.repo/RepoOperation>, studio.hypertext.atproto.repo/Cid?) // studio.hypertext.atproto.repo/RepoCommitEvent.<init>|<init>(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.syntax.Tid;studio.hypertext.atproto.syntax.Tid?;kotlin.ByteArray;kotlin.collections.List<studio.hypertext.atproto.repo.RepoOperation>;studio.hypertext.atproto.repo.Cid?){}[0]
+
+    final val blocks // studio.hypertext.atproto.repo/RepoCommitEvent.blocks|{}blocks[0]
+        final fun <get-blocks>(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoCommitEvent.blocks.<get-blocks>|<get-blocks>(){}[0]
+    final val commit // studio.hypertext.atproto.repo/RepoCommitEvent.commit|{}commit[0]
+        final fun <get-commit>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoCommitEvent.commit.<get-commit>|<get-commit>(){}[0]
+    final val ops // studio.hypertext.atproto.repo/RepoCommitEvent.ops|{}ops[0]
+        final fun <get-ops>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoOperation> // studio.hypertext.atproto.repo/RepoCommitEvent.ops.<get-ops>|<get-ops>(){}[0]
+    final val prevData // studio.hypertext.atproto.repo/RepoCommitEvent.prevData|{}prevData[0]
+        final fun <get-prevData>(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoCommitEvent.prevData.<get-prevData>|<get-prevData>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoCommitEvent.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoCommitEvent.repo.<get-repo>|<get-repo>(){}[0]
+    final val rev // studio.hypertext.atproto.repo/RepoCommitEvent.rev|{}rev[0]
+        final fun <get-rev>(): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.repo/RepoCommitEvent.rev.<get-rev>|<get-rev>(){}[0]
+    final val seq // studio.hypertext.atproto.repo/RepoCommitEvent.seq|{}seq[0]
+        final fun <get-seq>(): kotlin/Long // studio.hypertext.atproto.repo/RepoCommitEvent.seq.<get-seq>|<get-seq>(){}[0]
+    final val since // studio.hypertext.atproto.repo/RepoCommitEvent.since|{}since[0]
+        final fun <get-since>(): studio.hypertext.atproto.syntax/Tid? // studio.hypertext.atproto.repo/RepoCommitEvent.since.<get-since>|<get-since>(){}[0]
+    final val time // studio.hypertext.atproto.repo/RepoCommitEvent.time|{}time[0]
+        final fun <get-time>(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoCommitEvent.time.<get-time>|<get-time>(){}[0]
+
+    final fun component1(): kotlin/Long // studio.hypertext.atproto.repo/RepoCommitEvent.component1|component1(){}[0]
+    final fun component2(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoCommitEvent.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoCommitEvent.component3|component3(){}[0]
+    final fun component4(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoCommitEvent.component4|component4(){}[0]
+    final fun component5(): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.repo/RepoCommitEvent.component5|component5(){}[0]
+    final fun component6(): studio.hypertext.atproto.syntax/Tid? // studio.hypertext.atproto.repo/RepoCommitEvent.component6|component6(){}[0]
+    final fun component7(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoCommitEvent.component7|component7(){}[0]
+    final fun component8(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoOperation> // studio.hypertext.atproto.repo/RepoCommitEvent.component8|component8(){}[0]
+    final fun component9(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoCommitEvent.component9|component9(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin.time/Instant = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.repo/Cid = ..., studio.hypertext.atproto.syntax/Tid = ..., studio.hypertext.atproto.syntax/Tid? = ..., kotlin/ByteArray = ..., kotlin.collections/List<studio.hypertext.atproto.repo/RepoOperation> = ..., studio.hypertext.atproto.repo/Cid? = ...): studio.hypertext.atproto.repo/RepoCommitEvent // studio.hypertext.atproto.repo/RepoCommitEvent.copy|copy(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.syntax.Tid;studio.hypertext.atproto.syntax.Tid?;kotlin.ByteArray;kotlin.collections.List<studio.hypertext.atproto.repo.RepoOperation>;studio.hypertext.atproto.repo.Cid?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoCommitEvent.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoCommitEvent.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoCommitEvent.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoErrorMessage : studio.hypertext.atproto.repo/RepoStreamMessage { // studio.hypertext.atproto.repo/RepoErrorMessage|null[0]
+    constructor <init>(kotlin/String, kotlin/String?) // studio.hypertext.atproto.repo/RepoErrorMessage.<init>|<init>(kotlin.String;kotlin.String?){}[0]
+
+    final val error // studio.hypertext.atproto.repo/RepoErrorMessage.error|{}error[0]
+        final fun <get-error>(): kotlin/String // studio.hypertext.atproto.repo/RepoErrorMessage.error.<get-error>|<get-error>(){}[0]
+    final val message // studio.hypertext.atproto.repo/RepoErrorMessage.message|{}message[0]
+        final fun <get-message>(): kotlin/String? // studio.hypertext.atproto.repo/RepoErrorMessage.message.<get-message>|<get-message>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.repo/RepoErrorMessage.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.repo/RepoErrorMessage.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String? = ...): studio.hypertext.atproto.repo/RepoErrorMessage // studio.hypertext.atproto.repo/RepoErrorMessage.copy|copy(kotlin.String;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoErrorMessage.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoErrorMessage.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoErrorMessage.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoExport { // studio.hypertext.atproto.repo/RepoExport|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/RepoHead, kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit>, kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>) // studio.hypertext.atproto.repo/RepoExport.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.RepoHead;kotlin.collections.List<studio.hypertext.atproto.repo.SignedRepoCommit>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>){}[0]
+
+    final val blocks // studio.hypertext.atproto.repo/RepoExport.blocks|{}blocks[0]
+        final fun <get-blocks>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> // studio.hypertext.atproto.repo/RepoExport.blocks.<get-blocks>|<get-blocks>(){}[0]
+    final val commits // studio.hypertext.atproto.repo/RepoExport.commits|{}commits[0]
+        final fun <get-commits>(): kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit> // studio.hypertext.atproto.repo/RepoExport.commits.<get-commits>|<get-commits>(){}[0]
+    final val head // studio.hypertext.atproto.repo/RepoExport.head|{}head[0]
+        final fun <get-head>(): studio.hypertext.atproto.repo/RepoHead // studio.hypertext.atproto.repo/RepoExport.head.<get-head>|<get-head>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoExport.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoExport.repo.<get-repo>|<get-repo>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoExport.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.repo/RepoHead // studio.hypertext.atproto.repo/RepoExport.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit> // studio.hypertext.atproto.repo/RepoExport.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> // studio.hypertext.atproto.repo/RepoExport.component4|component4(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.repo/RepoHead = ..., kotlin.collections/List<studio.hypertext.atproto.repo/SignedRepoCommit> = ..., kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock> = ...): studio.hypertext.atproto.repo/RepoExport // studio.hypertext.atproto.repo/RepoExport.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.RepoHead;kotlin.collections.List<studio.hypertext.atproto.repo.SignedRepoCommit>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoExport.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoExport.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoExport.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoHead { // studio.hypertext.atproto.repo/RepoHead|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/Cid, studio.hypertext.atproto.repo/Cid, kotlin/Long) // studio.hypertext.atproto.repo/RepoHead.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.repo.Cid;kotlin.Long){}[0]
+
+    final val commitCid // studio.hypertext.atproto.repo/RepoHead.commitCid|{}commitCid[0]
+        final fun <get-commitCid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoHead.commitCid.<get-commitCid>|<get-commitCid>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoHead.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoHead.repo.<get-repo>|<get-repo>(){}[0]
+    final val revision // studio.hypertext.atproto.repo/RepoHead.revision|{}revision[0]
+        final fun <get-revision>(): kotlin/Long // studio.hypertext.atproto.repo/RepoHead.revision.<get-revision>|<get-revision>(){}[0]
+    final val root // studio.hypertext.atproto.repo/RepoHead.root|{}root[0]
+        final fun <get-root>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoHead.root.<get-root>|<get-root>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoHead.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoHead.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/RepoHead.component3|component3(){}[0]
+    final fun component4(): kotlin/Long // studio.hypertext.atproto.repo/RepoHead.component4|component4(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.repo/Cid = ..., studio.hypertext.atproto.repo/Cid = ..., kotlin/Long = ...): studio.hypertext.atproto.repo/RepoHead // studio.hypertext.atproto.repo/RepoHead.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.repo.Cid;kotlin.Long){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoHead.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoHead.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoHead.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoHeadConflictException : studio.hypertext.atproto.repo/RepoException { // studio.hypertext.atproto.repo/RepoHeadConflictException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Long?) // studio.hypertext.atproto.repo/RepoHeadConflictException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Long?){}[0]
+
+    final val expectedRevision // studio.hypertext.atproto.repo/RepoHeadConflictException.expectedRevision|{}expectedRevision[0]
+        final fun <get-expectedRevision>(): kotlin/Long? // studio.hypertext.atproto.repo/RepoHeadConflictException.expectedRevision.<get-expectedRevision>|<get-expectedRevision>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoHeadConflictException.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoHeadConflictException.repo.<get-repo>|<get-repo>(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoIdentityEvent : studio.hypertext.atproto.repo/RepoEvent { // studio.hypertext.atproto.repo/RepoIdentityEvent|null[0]
+    constructor <init>(kotlin/Long, kotlin.time/Instant, studio.hypertext.atproto.identity/AtprotoDid, kotlin/String?) // studio.hypertext.atproto.repo/RepoIdentityEvent.<init>|<init>(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;kotlin.String?){}[0]
+
+    final val did // studio.hypertext.atproto.repo/RepoIdentityEvent.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoIdentityEvent.did.<get-did>|<get-did>(){}[0]
+    final val handle // studio.hypertext.atproto.repo/RepoIdentityEvent.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String? // studio.hypertext.atproto.repo/RepoIdentityEvent.handle.<get-handle>|<get-handle>(){}[0]
+    final val seq // studio.hypertext.atproto.repo/RepoIdentityEvent.seq|{}seq[0]
+        final fun <get-seq>(): kotlin/Long // studio.hypertext.atproto.repo/RepoIdentityEvent.seq.<get-seq>|<get-seq>(){}[0]
+    final val time // studio.hypertext.atproto.repo/RepoIdentityEvent.time|{}time[0]
+        final fun <get-time>(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoIdentityEvent.time.<get-time>|<get-time>(){}[0]
+
+    final fun component1(): kotlin/Long // studio.hypertext.atproto.repo/RepoIdentityEvent.component1|component1(){}[0]
+    final fun component2(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoIdentityEvent.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoIdentityEvent.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.repo/RepoIdentityEvent.component4|component4(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin.time/Instant = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/String? = ...): studio.hypertext.atproto.repo/RepoIdentityEvent // studio.hypertext.atproto.repo/RepoIdentityEvent.copy|copy(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoIdentityEvent.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoIdentityEvent.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoIdentityEvent.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoInfoMessage : studio.hypertext.atproto.repo/RepoStreamMessage { // studio.hypertext.atproto.repo/RepoInfoMessage|null[0]
+    constructor <init>(kotlin/String, kotlin/String?) // studio.hypertext.atproto.repo/RepoInfoMessage.<init>|<init>(kotlin.String;kotlin.String?){}[0]
+
+    final val message // studio.hypertext.atproto.repo/RepoInfoMessage.message|{}message[0]
+        final fun <get-message>(): kotlin/String? // studio.hypertext.atproto.repo/RepoInfoMessage.message.<get-message>|<get-message>(){}[0]
+    final val name // studio.hypertext.atproto.repo/RepoInfoMessage.name|{}name[0]
+        final fun <get-name>(): kotlin/String // studio.hypertext.atproto.repo/RepoInfoMessage.name.<get-name>|<get-name>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.repo/RepoInfoMessage.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.repo/RepoInfoMessage.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String? = ...): studio.hypertext.atproto.repo/RepoInfoMessage // studio.hypertext.atproto.repo/RepoInfoMessage.copy|copy(kotlin.String;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoInfoMessage.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoInfoMessage.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoInfoMessage.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoListPage { // studio.hypertext.atproto.repo/RepoListPage|null[0]
+    constructor <init>(kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord>, kotlin/String? = ...) // studio.hypertext.atproto.repo/RepoListPage.<init>|<init>(kotlin.collections.List<studio.hypertext.atproto.repo.RepoRecord>;kotlin.String?){}[0]
+
+    final val cursor // studio.hypertext.atproto.repo/RepoListPage.cursor|{}cursor[0]
+        final fun <get-cursor>(): kotlin/String? // studio.hypertext.atproto.repo/RepoListPage.cursor.<get-cursor>|<get-cursor>(){}[0]
+    final val records // studio.hypertext.atproto.repo/RepoListPage.records|{}records[0]
+        final fun <get-records>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord> // studio.hypertext.atproto.repo/RepoListPage.records.<get-records>|<get-records>(){}[0]
+
+    final fun component1(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord> // studio.hypertext.atproto.repo/RepoListPage.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.repo/RepoListPage.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord> = ..., kotlin/String? = ...): studio.hypertext.atproto.repo/RepoListPage // studio.hypertext.atproto.repo/RepoListPage.copy|copy(kotlin.collections.List<studio.hypertext.atproto.repo.RepoRecord>;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoListPage.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoListPage.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoListPage.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.repo/RepoListPage> { // studio.hypertext.atproto.repo/RepoListPage.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.repo/RepoListPage.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.repo/RepoListPage.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.repo/RepoListPage.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.repo/RepoListPage // studio.hypertext.atproto.repo/RepoListPage.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.repo/RepoListPage) // studio.hypertext.atproto.repo/RepoListPage.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.repo.RepoListPage){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoListPage.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.repo/RepoListPage.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/RepoListPage> // studio.hypertext.atproto.repo/RepoListPage.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.repo/RepoOperation { // studio.hypertext.atproto.repo/RepoOperation|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/RepoOperationAction, studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey, studio.hypertext.atproto.repo/Cid?, studio.hypertext.atproto.repo/Cid?) // studio.hypertext.atproto.repo/RepoOperation.<init>|<init>(studio.hypertext.atproto.repo.RepoOperationAction;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;studio.hypertext.atproto.repo.Cid?;studio.hypertext.atproto.repo.Cid?){}[0]
+
+    final val action // studio.hypertext.atproto.repo/RepoOperation.action|{}action[0]
+        final fun <get-action>(): studio.hypertext.atproto.repo/RepoOperationAction // studio.hypertext.atproto.repo/RepoOperation.action.<get-action>|<get-action>(){}[0]
+    final val cid // studio.hypertext.atproto.repo/RepoOperation.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoOperation.cid.<get-cid>|<get-cid>(){}[0]
+    final val collection // studio.hypertext.atproto.repo/RepoOperation.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.repo/RepoOperation.collection.<get-collection>|<get-collection>(){}[0]
+    final val path // studio.hypertext.atproto.repo/RepoOperation.path|{}path[0]
+        final fun <get-path>(): kotlin/String // studio.hypertext.atproto.repo/RepoOperation.path.<get-path>|<get-path>(){}[0]
+    final val prev // studio.hypertext.atproto.repo/RepoOperation.prev|{}prev[0]
+        final fun <get-prev>(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoOperation.prev.<get-prev>|<get-prev>(){}[0]
+    final val recordKey // studio.hypertext.atproto.repo/RepoOperation.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.repo/RepoOperation.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.repo/RepoOperationAction // studio.hypertext.atproto.repo/RepoOperation.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.repo/RepoOperation.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.repo/RepoOperation.component3|component3(){}[0]
+    final fun component4(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoOperation.component4|component4(){}[0]
+    final fun component5(): studio.hypertext.atproto.repo/Cid? // studio.hypertext.atproto.repo/RepoOperation.component5|component5(){}[0]
+    final fun copy(studio.hypertext.atproto.repo/RepoOperationAction = ..., studio.hypertext.atproto.syntax/Nsid = ..., studio.hypertext.atproto.syntax/RecordKey = ..., studio.hypertext.atproto.repo/Cid? = ..., studio.hypertext.atproto.repo/Cid? = ...): studio.hypertext.atproto.repo/RepoOperation // studio.hypertext.atproto.repo/RepoOperation.copy|copy(studio.hypertext.atproto.repo.RepoOperationAction;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;studio.hypertext.atproto.repo.Cid?;studio.hypertext.atproto.repo.Cid?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoOperation.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoOperation.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoOperation.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoRecord { // studio.hypertext.atproto.repo/RepoRecord|null[0]
+    constructor <init>(studio.hypertext.atproto.syntax/AtUri, kotlin/String? = ..., kotlinx.serialization.json/JsonObject) // studio.hypertext.atproto.repo/RepoRecord.<init>|<init>(studio.hypertext.atproto.syntax.AtUri;kotlin.String?;kotlinx.serialization.json.JsonObject){}[0]
+
+    final val cid // studio.hypertext.atproto.repo/RepoRecord.cid|{}cid[0]
+        final fun <get-cid>(): kotlin/String? // studio.hypertext.atproto.repo/RepoRecord.cid.<get-cid>|<get-cid>(){}[0]
+    final val uri // studio.hypertext.atproto.repo/RepoRecord.uri|{}uri[0]
+        final fun <get-uri>(): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.repo/RepoRecord.uri.<get-uri>|<get-uri>(){}[0]
+    final val value // studio.hypertext.atproto.repo/RepoRecord.value|{}value[0]
+        final fun <get-value>(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.repo/RepoRecord.value.<get-value>|<get-value>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.repo/RepoRecord.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.repo/RepoRecord.component2|component2(){}[0]
+    final fun component3(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.repo/RepoRecord.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.syntax/AtUri = ..., kotlin/String? = ..., kotlinx.serialization.json/JsonObject = ...): studio.hypertext.atproto.repo/RepoRecord // studio.hypertext.atproto.repo/RepoRecord.copy|copy(studio.hypertext.atproto.syntax.AtUri;kotlin.String?;kotlinx.serialization.json.JsonObject){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoRecord.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoRecord.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoRecord.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.repo/RepoRecord> { // studio.hypertext.atproto.repo/RepoRecord.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.repo/RepoRecord.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.repo/RepoRecord.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.repo/RepoRecord.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.repo/RepoRecord // studio.hypertext.atproto.repo/RepoRecord.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.repo/RepoRecord) // studio.hypertext.atproto.repo/RepoRecord.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.repo.RepoRecord){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoRecord.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/RepoRecord> // studio.hypertext.atproto.repo/RepoRecord.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.repo/RepoRecordId { // studio.hypertext.atproto.repo/RepoRecordId|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey) // studio.hypertext.atproto.repo/RepoRecordId.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey){}[0]
+
+    final val collection // studio.hypertext.atproto.repo/RepoRecordId.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.repo/RepoRecordId.collection.<get-collection>|<get-collection>(){}[0]
+    final val recordKey // studio.hypertext.atproto.repo/RepoRecordId.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.repo/RepoRecordId.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoRecordId.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoRecordId.repo.<get-repo>|<get-repo>(){}[0]
+    final val uri // studio.hypertext.atproto.repo/RepoRecordId.uri|{}uri[0]
+        final fun <get-uri>(): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.repo/RepoRecordId.uri.<get-uri>|<get-uri>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoRecordId.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.repo/RepoRecordId.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.repo/RepoRecordId.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Nsid = ..., studio.hypertext.atproto.syntax/RecordKey = ...): studio.hypertext.atproto.repo/RepoRecordId // studio.hypertext.atproto.repo/RepoRecordId.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoRecordId.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoRecordId.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoRecordId.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.repo/RepoRecordId> { // studio.hypertext.atproto.repo/RepoRecordId.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.repo/RepoRecordId.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.repo/RepoRecordId.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.repo/RepoRecordId.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.repo/RepoRecordId // studio.hypertext.atproto.repo/RepoRecordId.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.repo/RepoRecordId) // studio.hypertext.atproto.repo/RepoRecordId.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.repo.RepoRecordId){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoRecordId.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/RepoRecordId> // studio.hypertext.atproto.repo/RepoRecordId.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException : kotlin/IllegalStateException { // studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String) // studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String){}[0]
+
+    final val reason // studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException.reason|{}reason[0]
+        final fun <get-reason>(): kotlin/String // studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException.reason.<get-reason>|<get-reason>(){}[0]
+    final val repo // studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoSigningKeyUnavailableException.repo.<get-repo>|<get-repo>(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoSyncEvent : studio.hypertext.atproto.repo/RepoEvent { // studio.hypertext.atproto.repo/RepoSyncEvent|null[0]
+    constructor <init>(kotlin/Long, kotlin.time/Instant, studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Tid, kotlin/ByteArray) // studio.hypertext.atproto.repo/RepoSyncEvent.<init>|<init>(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Tid;kotlin.ByteArray){}[0]
+
+    final val blocks // studio.hypertext.atproto.repo/RepoSyncEvent.blocks|{}blocks[0]
+        final fun <get-blocks>(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoSyncEvent.blocks.<get-blocks>|<get-blocks>(){}[0]
+    final val did // studio.hypertext.atproto.repo/RepoSyncEvent.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoSyncEvent.did.<get-did>|<get-did>(){}[0]
+    final val rev // studio.hypertext.atproto.repo/RepoSyncEvent.rev|{}rev[0]
+        final fun <get-rev>(): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.repo/RepoSyncEvent.rev.<get-rev>|<get-rev>(){}[0]
+    final val seq // studio.hypertext.atproto.repo/RepoSyncEvent.seq|{}seq[0]
+        final fun <get-seq>(): kotlin/Long // studio.hypertext.atproto.repo/RepoSyncEvent.seq.<get-seq>|<get-seq>(){}[0]
+    final val time // studio.hypertext.atproto.repo/RepoSyncEvent.time|{}time[0]
+        final fun <get-time>(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoSyncEvent.time.<get-time>|<get-time>(){}[0]
+
+    final fun component1(): kotlin/Long // studio.hypertext.atproto.repo/RepoSyncEvent.component1|component1(){}[0]
+    final fun component2(): kotlin.time/Instant // studio.hypertext.atproto.repo/RepoSyncEvent.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.repo/RepoSyncEvent.component3|component3(){}[0]
+    final fun component4(): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.repo/RepoSyncEvent.component4|component4(){}[0]
+    final fun component5(): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoSyncEvent.component5|component5(){}[0]
+    final fun copy(kotlin/Long = ..., kotlin.time/Instant = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Tid = ..., kotlin/ByteArray = ...): studio.hypertext.atproto.repo/RepoSyncEvent // studio.hypertext.atproto.repo/RepoSyncEvent.copy|copy(kotlin.Long;kotlin.time.Instant;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Tid;kotlin.ByteArray){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoSyncEvent.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoSyncEvent.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoSyncEvent.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/RepoWriteResult { // studio.hypertext.atproto.repo/RepoWriteResult|null[0]
+    constructor <init>(studio.hypertext.atproto.syntax/AtUri, kotlin/String, studio.hypertext.atproto.repo/RepoValidationStatus = ...) // studio.hypertext.atproto.repo/RepoWriteResult.<init>|<init>(studio.hypertext.atproto.syntax.AtUri;kotlin.String;studio.hypertext.atproto.repo.RepoValidationStatus){}[0]
+
+    final val cid // studio.hypertext.atproto.repo/RepoWriteResult.cid|{}cid[0]
+        final fun <get-cid>(): kotlin/String // studio.hypertext.atproto.repo/RepoWriteResult.cid.<get-cid>|<get-cid>(){}[0]
+    final val uri // studio.hypertext.atproto.repo/RepoWriteResult.uri|{}uri[0]
+        final fun <get-uri>(): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.repo/RepoWriteResult.uri.<get-uri>|<get-uri>(){}[0]
+    final val validationStatus // studio.hypertext.atproto.repo/RepoWriteResult.validationStatus|{}validationStatus[0]
+        final fun <get-validationStatus>(): studio.hypertext.atproto.repo/RepoValidationStatus // studio.hypertext.atproto.repo/RepoWriteResult.validationStatus.<get-validationStatus>|<get-validationStatus>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.repo/RepoWriteResult.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.repo/RepoWriteResult.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.repo/RepoValidationStatus // studio.hypertext.atproto.repo/RepoWriteResult.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.syntax/AtUri = ..., kotlin/String = ..., studio.hypertext.atproto.repo/RepoValidationStatus = ...): studio.hypertext.atproto.repo/RepoWriteResult // studio.hypertext.atproto.repo/RepoWriteResult.copy|copy(studio.hypertext.atproto.syntax.AtUri;kotlin.String;studio.hypertext.atproto.repo.RepoValidationStatus){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/RepoWriteResult.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/RepoWriteResult.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/RepoWriteResult.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.repo/RepoWriteResult> { // studio.hypertext.atproto.repo/RepoWriteResult.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.repo/RepoWriteResult.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.repo/RepoWriteResult.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.repo/RepoWriteResult.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.repo/RepoWriteResult // studio.hypertext.atproto.repo/RepoWriteResult.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.repo/RepoWriteResult) // studio.hypertext.atproto.repo/RepoWriteResult.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.repo.RepoWriteResult){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.repo/RepoWriteResult.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.repo/RepoWriteResult.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.repo/RepoWriteResult.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.repo/SignedRepoCommit { // studio.hypertext.atproto.repo/SignedRepoCommit|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/Cid, studio.hypertext.atproto.repo/RepoCommit, kotlin/String) // studio.hypertext.atproto.repo/SignedRepoCommit.<init>|<init>(studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.repo.RepoCommit;kotlin.String){}[0]
+
+    final val cid // studio.hypertext.atproto.repo/SignedRepoCommit.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/SignedRepoCommit.cid.<get-cid>|<get-cid>(){}[0]
+    final val commit // studio.hypertext.atproto.repo/SignedRepoCommit.commit|{}commit[0]
+        final fun <get-commit>(): studio.hypertext.atproto.repo/RepoCommit // studio.hypertext.atproto.repo/SignedRepoCommit.commit.<get-commit>|<get-commit>(){}[0]
+    final val signature // studio.hypertext.atproto.repo/SignedRepoCommit.signature|{}signature[0]
+        final fun <get-signature>(): kotlin/String // studio.hypertext.atproto.repo/SignedRepoCommit.signature.<get-signature>|<get-signature>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/SignedRepoCommit.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.repo/RepoCommit // studio.hypertext.atproto.repo/SignedRepoCommit.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.repo/SignedRepoCommit.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.repo/Cid = ..., studio.hypertext.atproto.repo/RepoCommit = ..., kotlin/String = ...): studio.hypertext.atproto.repo/SignedRepoCommit // studio.hypertext.atproto.repo/SignedRepoCommit.copy|copy(studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.repo.RepoCommit;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/SignedRepoCommit.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/SignedRepoCommit.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/SignedRepoCommit.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.repo/UnsupportedCollectionException : studio.hypertext.atproto.repo/RepoException { // studio.hypertext.atproto.repo/UnsupportedCollectionException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.repo/UnsupportedCollectionException.<init>|<init>(kotlin.String){}[0]
+
+    final val collection // studio.hypertext.atproto.repo/UnsupportedCollectionException.collection|{}collection[0]
+        final fun <get-collection>(): kotlin/String // studio.hypertext.atproto.repo/UnsupportedCollectionException.collection.<get-collection>|<get-collection>(){}[0]
+}
+
+final value class studio.hypertext.atproto.repo/Cid { // studio.hypertext.atproto.repo/Cid|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.repo/Cid.<init>|<init>(kotlin.String){}[0]
+
+    final val value // studio.hypertext.atproto.repo/Cid.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.repo/Cid.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.repo/Cid.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.repo/Cid.hashCode|hashCode(){}[0]
+    final fun toBytes(): kotlin/ByteArray // studio.hypertext.atproto.repo/Cid.toBytes|toBytes(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.repo/Cid.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.repo/Cid> { // studio.hypertext.atproto.repo/Cid.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.repo/Cid.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.repo/Cid.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.repo/Cid.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/Cid.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.repo/Cid) // studio.hypertext.atproto.repo/Cid.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.repo.Cid){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.repo/Cid.Companion|null[0]
+        final fun fromBytes(kotlin/ByteArray): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/Cid.Companion.fromBytes|fromBytes(kotlin.ByteArray){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.repo/Cid> // studio.hypertext.atproto.repo/Cid.Companion.parse|parse(kotlin.String){}[0]
+        final fun rawSha256(kotlin/ByteArray): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/Cid.Companion.rawSha256|rawSha256(kotlin.ByteArray){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/Cid.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.repo/Cid> // studio.hypertext.atproto.repo/Cid.Companion.serializer|serializer(){}[0]
+        final fun sha256(kotlin/Int, kotlin/ByteArray): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.repo/Cid.Companion.sha256|sha256(kotlin.Int;kotlin.ByteArray){}[0]
+    }
+}
+
+sealed class studio.hypertext.atproto.repo/RepoException : kotlin/IllegalArgumentException // studio.hypertext.atproto.repo/RepoException|null[0]
+
+final object studio.hypertext.atproto.repo/CarCodec { // studio.hypertext.atproto.repo/CarCodec|null[0]
+    final fun read(kotlin/ByteArray): studio.hypertext.atproto.repo/RepoExport // studio.hypertext.atproto.repo/CarCodec.read|read(kotlin.ByteArray){}[0]
+    final fun readCar(kotlin/ByteArray): studio.hypertext.atproto.repo/CarArchive // studio.hypertext.atproto.repo/CarCodec.readCar|readCar(kotlin.ByteArray){}[0]
+    final fun write(studio.hypertext.atproto.repo/RepoExport): kotlin/ByteArray // studio.hypertext.atproto.repo/CarCodec.write|write(studio.hypertext.atproto.repo.RepoExport){}[0]
+    final fun writeCar(kotlin.collections/List<studio.hypertext.atproto.repo/Cid>, kotlin.collections/List<studio.hypertext.atproto.repo/RepoBlock>): kotlin/ByteArray // studio.hypertext.atproto.repo/CarCodec.writeCar|writeCar(kotlin.collections.List<studio.hypertext.atproto.repo.Cid>;kotlin.collections.List<studio.hypertext.atproto.repo.RepoBlock>){}[0]
+}
+
+final object studio.hypertext.atproto.repo/DagCborCodec { // studio.hypertext.atproto.repo/DagCborCodec|null[0]
+    final fun decode(kotlin/ByteArray): kotlinx.serialization.json/JsonElement // studio.hypertext.atproto.repo/DagCborCodec.decode|decode(kotlin.ByteArray){}[0]
+    final fun decodeSequence(kotlin/ByteArray): kotlin.collections/List<kotlinx.serialization.json/JsonElement> // studio.hypertext.atproto.repo/DagCborCodec.decodeSequence|decodeSequence(kotlin.ByteArray){}[0]
+    final fun encode(kotlinx.serialization.json/JsonElement): kotlin/ByteArray // studio.hypertext.atproto.repo/DagCborCodec.encode|encode(kotlinx.serialization.json.JsonElement){}[0]
+}
+
+final object studio.hypertext.atproto.repo/DigestRepoCommitSigner : studio.hypertext.atproto.repo/RepoCommitSigner { // studio.hypertext.atproto.repo/DigestRepoCommitSigner|null[0]
+    final suspend fun sign(studio.hypertext.atproto.repo/RepoCommit, kotlin/ByteArray): kotlin/String // studio.hypertext.atproto.repo/DigestRepoCommitSigner.sign|sign(studio.hypertext.atproto.repo.RepoCommit;kotlin.ByteArray){}[0]
+    final suspend fun verify(studio.hypertext.atproto.repo/RepoCommit, kotlin/ByteArray, kotlin/String): kotlin/Boolean // studio.hypertext.atproto.repo/DigestRepoCommitSigner.verify|verify(studio.hypertext.atproto.repo.RepoCommit;kotlin.ByteArray;kotlin.String){}[0]
+}
+
+final object studio.hypertext.atproto.repo/RepoCommitChanges { // studio.hypertext.atproto.repo/RepoCommitChanges|null[0]
+    final suspend fun collectionsAt(studio.hypertext.atproto.repo/RepoBlockStore, studio.hypertext.atproto.repo/Cid): kotlin/Result<kotlin.collections/Set<studio.hypertext.atproto.syntax/Nsid>> // studio.hypertext.atproto.repo/RepoCommitChanges.collectionsAt|collectionsAt(studio.hypertext.atproto.repo.RepoBlockStore;studio.hypertext.atproto.repo.Cid){}[0]
+    final suspend fun loadCommit(studio.hypertext.atproto.repo/RepoBlockStore, studio.hypertext.atproto.repo/Cid): studio.hypertext.atproto.repo/SignedRepoCommit // studio.hypertext.atproto.repo/RepoCommitChanges.loadCommit|loadCommit(studio.hypertext.atproto.repo.RepoBlockStore;studio.hypertext.atproto.repo.Cid){}[0]
+    final suspend fun read(studio.hypertext.atproto.repo/RepoBlockStore, studio.hypertext.atproto.repo/SignedRepoCommit): kotlin/Result<studio.hypertext.atproto.repo/RepoCommitChange> // studio.hypertext.atproto.repo/RepoCommitChanges.read|read(studio.hypertext.atproto.repo.RepoBlockStore;studio.hypertext.atproto.repo.SignedRepoCommit){}[0]
+}
+
+final object studio.hypertext.atproto.repo/RepoEventFrames { // studio.hypertext.atproto.repo/RepoEventFrames|null[0]
+    final fun decode(kotlin/ByteArray): studio.hypertext.atproto.repo/RepoStreamMessage // studio.hypertext.atproto.repo/RepoEventFrames.decode|decode(kotlin.ByteArray){}[0]
+    final fun encode(studio.hypertext.atproto.repo/RepoStreamMessage): kotlin/ByteArray // studio.hypertext.atproto.repo/RepoEventFrames.encode|encode(studio.hypertext.atproto.repo.RepoStreamMessage){}[0]
+}
+
+final const val studio.hypertext.atproto.repo/DAG_CBOR_CODEC // studio.hypertext.atproto.repo/DAG_CBOR_CODEC|{}DAG_CBOR_CODEC[0]
+    final fun <get-DAG_CBOR_CODEC>(): kotlin/Int // studio.hypertext.atproto.repo/DAG_CBOR_CODEC.<get-DAG_CBOR_CODEC>|<get-DAG_CBOR_CODEC>(){}[0]
+final const val studio.hypertext.atproto.repo/RAW_CODEC // studio.hypertext.atproto.repo/RAW_CODEC|{}RAW_CODEC[0]
+    final fun <get-RAW_CODEC>(): kotlin/Int // studio.hypertext.atproto.repo/RAW_CODEC.<get-RAW_CODEC>|<get-RAW_CODEC>(){}[0]
