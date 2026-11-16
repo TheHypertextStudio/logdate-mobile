@@ -60,9 +60,13 @@ FROM gcr.io/distroless/java17-debian12:nonroot AS production
 
 WORKDIR /app
 
-# Copy built application with locked-down permissions
-COPY --link --chown=nonroot:nonroot --chmod=0444 \
-    --from=build /workspace/server/build/libs/logdate-server-all.jar /app/logdate-server.jar
+# Copy built application with locked-down permissions. 65532 is the distroless image's nonroot
+# user and group; BuildKit cannot look names up for a --link copy, so they are given as numbers.
+COPY --link \
+    --chown=65532:65532 \
+    --chmod=0444 \
+    --from=build \
+    /workspace/server/build/libs/logdate-server-all.jar /app/logdate-server.jar
 
 # Production JVM optimizations for Cloud Run
 ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:G1HeapRegionSize=16m -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom -Djava.io.tmpdir=/tmp"
