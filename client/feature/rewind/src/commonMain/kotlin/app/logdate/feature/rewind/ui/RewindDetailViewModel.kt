@@ -34,18 +34,27 @@ import app.logdate.shared.model.WeatherCategory
 import app.logdate.shared.model.WeatherContext
 import app.logdate.ui.audio.WaveformStorage
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Month
@@ -138,7 +147,6 @@ class RewindDetailViewModel(
     private val preferences: LogdatePreferencesDataSource,
     private val audioPlaybackManager: AudioPlaybackManager,
     private val waveformStorage: WaveformStorage,
-//    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val rewindIdState = MutableStateFlow<Uuid?>(null)
     private val latestRewind = MutableStateFlow<Rewind?>(null)
@@ -189,8 +197,6 @@ class RewindDetailViewModel(
      */
     val deletePromptVisible: StateFlow<Boolean> = deletePromptVisibleFlow.asStateFlow()
 
-//    private val rewindData = savedStateHandle.toRoute<RewindDetailRoute>()
-
     val uiState: StateFlow<RewindDetailUiState> =
         rewindIdState
             .flatMapLatest { rewindId ->
@@ -202,31 +208,62 @@ class RewindDetailViewModel(
                     // typed replies the user has saved against its prompts, and the global
                     // toggle that decides whether reply chrome should appear at all. Combine
                     // them so the panel list rebuilds the moment any of them change.
-                    combine(
-                        getRewindUseCase(rewindId),
-                        observeReflectionPromptResponses(rewindId),
-                        preferences.observeRewindReflectionRepliesEnabled(),
-                    ) { rewind, responses, repliesEnabled ->
-                        // Cache the raw rewind so stats summary share can read its metadata
-                        // without re-fetching.
-                        latestRewind.value = rewind
-                        val panels = transformRewindToStoryPanels(rewind, responses, repliesEnabled)
+                    val rewindFlow = getRewindUseCase(rewindId)
+                    val panels =
+                        combine(
+                            rewindFlow,
+                            observeReflectionPromptResponses(rewindId),
+                            preferences.observeRewindReflectionRepliesEnabled(),
+                        ) { rewind, responses, repliesEnabled ->
+                            // Cache the raw rewind so stats summary share can read its metadata
+                            // without re-fetching.
+                            latestRewind.value = rewind
+                            val panels = transformRewindToStoryPanels(rewind, responses, repliesEnabled)
 
-                        if (panels.isEmpty()) {
-                            RewindDetailUiState.Error.EmptyContent
-                        } else {
-                            RewindDetailUiState.Success(panels = panels)
+                            if (panels.isEmpty()) {
+                                RewindDetailUiState.Error.EmptyContent
+                            } else {
+                                RewindDetailUiState.Success(panels = panels)
+                            }
+                        }.flowOn(Dispatchers.Default)
+                    combine(panels, rewindFlow.cachedWaveforms()) { state, waveforms -> state.withWaveforms(waveforms) }
+                        .catch { e ->
+                            Napier.e("Error loading rewind", e)
+                            emit(RewindDetailUiState.Error.LoadingFailed)
                         }
-                    }.catch { e ->
-                        Napier.e("Error loading rewind", e)
-                        emit(RewindDetailUiState.Error.LoadingFailed)
-                    }
                 }
             }.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5000),
                 RewindDetailUiState.Loading,
             )
+
+    /**
+     * Reads the cached waveform of each recording in the Rewind together, after its panels already
+     * show, so opening a Rewind never waits on waveform storage.
+     */
+    private fun Flow<Rewind>.cachedWaveforms(): Flow<Map<String, List<Float>>> =
+        map { rewind -> rewind.content.filterIsInstance<RewindContent.AudioNote>().mapTo(LinkedHashSet()) { it.uri } }
+            .distinctUntilChanged()
+            .transformLatest { uris ->
+                emit(emptyMap())
+                if (uris.isEmpty()) return@transformLatest
+                val loaded =
+                    coroutineScope {
+                        uris.map { uri -> async { uri to loadWaveform(uri) } }.awaitAll()
+                    }
+                emit(loaded.mapNotNull { (uri, amplitudes) -> amplitudes?.let { uri to it } }.toMap())
+            }.flowOn(Dispatchers.Default)
+
+    private suspend fun loadWaveform(uri: String): List<Float>? =
+        try {
+            waveformStorage.load(uri)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            Napier.w("Could not read a cached Rewind waveform", failure)
+            null
+        }
 
     /**
      * Loads rewind data for the specified ID and records that the user opened it.
@@ -490,7 +527,6 @@ class RewindDetailViewModel(
                             durationMs = content.durationMs,
                             transcriptionText = content.transcriptionText,
                             dateFormatted = formatTimestamp(content.timestamp),
-                            cachedAmplitudes = runCatching { waveformStorage.load(content.uri) }.getOrNull(),
                         )
                     }
 
@@ -835,4 +871,14 @@ class RewindDetailViewModel(
         const val PROMPT_SEED_OFFSET = 0x9C0D
         const val MAP_SEED_OFFSET = 0x3F8C
     }
+}
+
+internal fun RewindDetailUiState.withWaveforms(waveforms: Map<String, List<Float>>): RewindDetailUiState {
+    if (this !is RewindDetailUiState.Success || waveforms.isEmpty()) return this
+    return copy(
+        panels =
+            panels.map { panel ->
+                if (panel is AudioNoteRewindPanelUiState) panel.copy(cachedAmplitudes = waveforms[panel.uri]) else panel
+            },
+    )
 }
