@@ -1,0 +1,130 @@
+{
+  "lexicon": 1,
+  "id": "com.example.journal.entry",
+  "description": "A record made of ordered blocks, so generated code covers an open union inside an array.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "any",
+      "record": {
+        "type": "object",
+        "required": ["blocks", "createdAt"],
+        "properties": {
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "union",
+              "refs": ["#textBlock", "#imageBlock", "#videoBlock", "#audioBlock"]
+            },
+            "maxLength": 200
+          },
+          "location": {
+            "type": "ref",
+            "ref": "com.example.defs#location"
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "datetime"
+          }
+        }
+      }
+    },
+    "textBlock": {
+      "type": "object",
+      "required": ["id", "text"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1000000,
+          "maxGraphemes": 100000
+        },
+        "format": {
+          "type": "string",
+          "maxLength": 32,
+          "knownValues": ["markdown", "plain"]
+        }
+      }
+    },
+    "imageBlock": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "media": {
+          "type": "ref",
+          "ref": "com.example.defs#media"
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 1000000,
+          "maxGraphemes": 100000
+        }
+      }
+    },
+    "videoBlock": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "media": {
+          "type": "ref",
+          "ref": "com.example.defs#media"
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 1000000,
+          "maxGraphemes": 100000
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "audioBlock": {
+      "type": "object",
+      "required": ["id", "durationMs"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "media": {
+          "type": "ref",
+          "ref": "com.example.defs#media"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 1000000,
+          "maxGraphemes": 100000
+        },
+        "transcript": {
+          "type": "ref",
+          "ref": "com.example.defs#recordRef"
+        }
+      }
+    }
+  }
+}

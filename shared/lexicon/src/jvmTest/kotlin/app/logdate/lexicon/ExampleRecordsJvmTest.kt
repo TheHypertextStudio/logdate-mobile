@@ -2,9 +2,12 @@ package app.logdate.lexicon
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import studio.hypertext.atproto.lexicon.data.LexiconData
+import studio.hypertext.atproto.syntax.Nsid
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.extension
@@ -16,8 +19,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The example records the schema lint validates are real LogDate data. Each must decode into its
- * generated model and encode back unchanged, through JSON and DAG-CBOR.
+ * The example records the schema lint validates are real LogDate data. Each must pass the record
+ * validator, decode into its generated model and encode back unchanged, through JSON and DAG-CBOR.
  */
 class ExampleRecordsJvmTest {
     @Test
@@ -42,6 +45,29 @@ class ExampleRecordsJvmTest {
                 decoded,
                 LexiconData.decodeFromDagCbor(serializer, LexiconData.encodeToDagCbor(serializer, decoded)),
                 "${path.name}: DAG-CBOR round trip",
+            )
+        }
+    }
+
+    @Test
+    fun `every example record passes the record validator and a corrupted copy fails`() {
+        val examples = jsonFiles(repositoryRoot().resolve("tools/lexicon-check/examples"))
+        assertTrue(examples.isNotEmpty())
+
+        examples.forEach { path ->
+            val example = Json.parseToJsonElement(path.readText()).jsonObject
+            val collection = Nsid.require(example.getValue("collection").jsonPrimitive.content)
+            val record = example.getValue("record").jsonObject
+
+            assertEquals(emptyList(), LogDateLexicons.validator.validateRecord(collection, record).issues, path.name)
+
+            val corrupted = JsonObject(record + ("\$type" to JsonPrimitive("app.logdate.not.this")))
+            assertTrue(
+                LogDateLexicons.validator
+                    .validateRecord(collection, corrupted)
+                    .issues
+                    .isNotEmpty(),
+                "${path.name} with a wrong \$type",
             )
         }
     }

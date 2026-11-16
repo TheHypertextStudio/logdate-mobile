@@ -1,0 +1,25 @@
+{
+  "lexicon": 1,
+  "id": "com.example.location.geo",
+  "defs": {
+    "main": {
+      "type": "object",
+      "description": "A WGS84 coordinate, with decimal values written as strings.",
+      "required": ["latitude", "longitude"],
+      "properties": {
+        "latitude": {
+          "type": "string"
+        },
+        "longitude": {
+          "type": "string"
+        },
+        "altitude": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

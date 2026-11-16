@@ -1,0 +1,83 @@
+{
+  "lexicon": 1,
+  "id": "com.example.defs",
+  "description": "Definitions other fixture schemas refer to, so generated code covers references across documents.",
+  "defs": {
+    "recordRef": {
+      "type": "object",
+      "description": "A reference to another record by type and key.",
+      "required": ["collection", "rkey"],
+      "properties": {
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string",
+          "format": "record-key"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "description": "A stored file and what is known about it.",
+      "required": ["blob", "mimeType"],
+      "properties": {
+        "blob": {
+          "type": "blob",
+          "maxSize": 2000000000
+        },
+        "mimeType": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alt": {
+          "type": "string",
+          "maxLength": 20000,
+          "maxGraphemes": 2000
+        },
+        "aspectRatio": {
+          "type": "ref",
+          "ref": "#aspectRatio"
+        }
+      }
+    },
+    "aspectRatio": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "description": "Coordinates, a saved place, or both.",
+      "properties": {
+        "geo": {
+          "type": "ref",
+          "ref": "com.example.location.geo"
+        },
+        "accuracyCentimeters": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "place": {
+          "type": "ref",
+          "ref": "com.example.defs#recordRef",
+          "description": "A reference to a definition in this document, written with the full NSID."
+        }
+      }
+    }
+  }
+}
