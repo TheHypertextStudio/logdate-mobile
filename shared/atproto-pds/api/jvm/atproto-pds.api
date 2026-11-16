@@ -1,0 +1,1375 @@
+public final class studio/hypertext/atproto/pds/AuthorizationCodeTokenRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientAssertion ()Ljava/lang/String;
+	public final fun getClientAssertionType ()Ljava/lang/String;
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getCodeVerifier ()Ljava/lang/String;
+	public final fun getDpopProof ()Ljava/lang/String;
+	public final fun getHtu ()Ljava/lang/String;
+	public final fun getRedirectUri ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/AuthorizationCodeTokenRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationCodeTokenRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationDecisionRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApproved ()Z
+	public final fun getRequestUri ()Ljava/lang/String;
+	public final fun getSubjectDid ()Ljava/lang/String;
+	public final fun getSubjectHandle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/AuthorizationDecisionRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationDecisionRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationPrompt {
+	public static final field Companion Lstudio/hypertext/atproto/pds/AuthorizationPrompt$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/AuthorizationPrompt;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/AuthorizationPrompt;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/AuthorizationPrompt;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getClientName ()Ljava/lang/String;
+	public final fun getLoginHint ()Ljava/lang/String;
+	public final fun getRedirectUri ()Ljava/lang/String;
+	public final fun getRequestUri ()Ljava/lang/String;
+	public final fun getScope ()Ljava/lang/String;
+	public final fun getState ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/AuthorizationPrompt$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/AuthorizationPrompt$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/AuthorizationPrompt;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/AuthorizationPrompt;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationPrompt$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationPromptResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getClientName ()Ljava/lang/String;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getLoginHint ()Ljava/lang/String;
+	public final fun getRedirectUri ()Ljava/lang/String;
+	public final fun getScope ()Ljava/lang/String;
+	public final fun getState ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/AuthorizationPromptResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/AuthorizationPromptResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationPromptResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationServerMetadata {
+	public static final field Companion Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZZZZ)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/util/List;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Ljava/util/List;
+	public final fun component14 ()Z
+	public final fun component15 ()Z
+	public final fun component16 ()Z
+	public final fun component17 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZZZZ)Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ZZZZILjava/lang/Object;)Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthorization_endpoint ()Ljava/lang/String;
+	public final fun getAuthorization_response_iss_parameter_supported ()Z
+	public final fun getClient_id_metadata_document_supported ()Z
+	public final fun getCode_challenge_methods_supported ()Ljava/util/List;
+	public final fun getDpop_signing_alg_values_supported ()Ljava/util/List;
+	public final fun getGrant_types_supported ()Ljava/util/List;
+	public final fun getIssuer ()Ljava/lang/String;
+	public final fun getJwks_uri ()Ljava/lang/String;
+	public final fun getPushed_authorization_request_endpoint ()Ljava/lang/String;
+	public final fun getRequire_pushed_authorization_requests ()Z
+	public final fun getRequire_request_uri_registration ()Z
+	public final fun getResponse_types_supported ()Ljava/util/List;
+	public final fun getRevocation_endpoint ()Ljava/lang/String;
+	public final fun getScopes_supported ()Ljava/util/List;
+	public final fun getToken_endpoint ()Ljava/lang/String;
+	public final fun getToken_endpoint_auth_methods_supported ()Ljava/util/List;
+	public final fun getToken_endpoint_auth_signing_alg_values_supported ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/AuthorizationServerMetadata$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/AuthorizationServerMetadata$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/BlobDownload {
+	public fun <init> (Ljava/lang/String;[B)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()[B
+	public final fun copy (Ljava/lang/String;[B)Lstudio/hypertext/atproto/pds/BlobDownload;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/BlobDownload;Ljava/lang/String;[BILjava/lang/Object;)Lstudio/hypertext/atproto/pds/BlobDownload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public final fun getContentType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/pds/BlobRef {
+	public static final field Companion Lstudio/hypertext/atproto/pds/BlobRef$Companion;
+	public static final field TYPE Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/pds/CidLink;Ljava/lang/String;J)V
+	public synthetic fun <init> (Ljava/lang/String;Lstudio/hypertext/atproto/pds/CidLink;Ljava/lang/String;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lstudio/hypertext/atproto/pds/CidLink;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()J
+	public final fun copy (Ljava/lang/String;Lstudio/hypertext/atproto/pds/CidLink;Ljava/lang/String;J)Lstudio/hypertext/atproto/pds/BlobRef;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/BlobRef;Ljava/lang/String;Lstudio/hypertext/atproto/pds/CidLink;Ljava/lang/String;JILjava/lang/Object;)Lstudio/hypertext/atproto/pds/BlobRef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMimeType ()Ljava/lang/String;
+	public final fun getRef ()Lstudio/hypertext/atproto/pds/CidLink;
+	public final fun getSize ()J
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/BlobRef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/BlobRef$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/BlobRef;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/BlobRef;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/BlobRef$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CidLink {
+	public static final field Companion Lstudio/hypertext/atproto/pds/CidLink$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-6Za8ImI ()Ljava/lang/String;
+	public final fun copy-CLM2Dqg (Ljava/lang/String;)Lstudio/hypertext/atproto/pds/CidLink;
+	public static synthetic fun copy-CLM2Dqg$default (Lstudio/hypertext/atproto/pds/CidLink;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/CidLink;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/CidLink$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/CidLink$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/CidLink;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/CidLink;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CidLink$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CreateAccountRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/CreateAccountRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/CreateAccountRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/CreateAccountRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/CreateAccountRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getInviteCode ()Ljava/lang/String;
+	public final fun getPassword ()Ljava/lang/String;
+	public final fun getPlcOp ()Ljava/lang/String;
+	public final fun getRecoveryKey ()Ljava/lang/String;
+	public final fun getVerificationCode ()Ljava/lang/String;
+	public final fun getVerificationPhone ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/CreateAccountRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/CreateAccountRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/CreateAccountRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/CreateAccountRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CreateAccountRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CreateRecordRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/CreateRecordRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component4-8VkW4t0 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy-puAehXo (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/CreateRecordRequest;
+	public static synthetic fun copy-puAehXo$default (Lstudio/hypertext/atproto/pds/CreateRecordRequest;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/CreateRecordRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getRecord ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getRecordKey-8VkW4t0 ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getSwapCommit ()Ljava/lang/String;
+	public final fun getValidate ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/CreateRecordRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/CreateRecordRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/CreateRecordRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/CreateRecordRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CreateRecordRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CreateSessionRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/CreateSessionRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)Lstudio/hypertext/atproto/pds/CreateSessionRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/CreateSessionRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/CreateSessionRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowTakendown ()Ljava/lang/Boolean;
+	public final fun getAuthFactorToken ()Ljava/lang/String;
+	public final fun getIdentifier ()Ljava/lang/String;
+	public final fun getPassword ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/CreateSessionRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/CreateSessionRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/CreateSessionRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/CreateSessionRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/CreateSessionRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/DeleteRecordRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/DeleteRecordRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3-OLfzzfk ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy-1kMTNB0 (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/DeleteRecordRequest;
+	public static synthetic fun copy-1kMTNB0$default (Lstudio/hypertext/atproto/pds/DeleteRecordRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/DeleteRecordRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getRecordKey-OLfzzfk ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getSwapCommit ()Ljava/lang/String;
+	public final fun getSwapRecord ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/DeleteRecordRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/DeleteRecordRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/DeleteRecordRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/DeleteRecordRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/DeleteRecordRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/DescribeRepoResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/DescribeRepoResponse$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/util/List;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-wh1GzKs ()Ljava/lang/String;
+	public final fun component3 ()Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Z
+	public final fun copy-c97gk44 (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/util/List;Z)Lstudio/hypertext/atproto/pds/DescribeRepoResponse;
+	public static synthetic fun copy-c97gk44$default (Lstudio/hypertext/atproto/pds/DescribeRepoResponse;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/util/List;ZILjava/lang/Object;)Lstudio/hypertext/atproto/pds/DescribeRepoResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollections ()Ljava/util/List;
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getDidDoc ()Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getHandleIsCorrect ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/DescribeRepoResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/DescribeRepoResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/DescribeRepoResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/DescribeRepoResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/DescribeRepoResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/DescribeServerResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/DescribeServerResponse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;ZZ)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/util/List;ZZ)Lstudio/hypertext/atproto/pds/DescribeServerResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/DescribeServerResponse;Ljava/lang/String;Ljava/util/List;ZZILjava/lang/Object;)Lstudio/hypertext/atproto/pds/DescribeServerResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvailableUserDomains ()Ljava/util/List;
+	public final fun getDid ()Ljava/lang/String;
+	public final fun getInviteCodeRequired ()Z
+	public final fun getPhoneVerificationRequired ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/DescribeServerResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/DescribeServerResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/DescribeServerResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/DescribeServerResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/DescribeServerResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/EmptyPdsResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/EmptyPdsResponse$Companion;
+	public fun <init> ()V
+}
+
+public final synthetic class studio/hypertext/atproto/pds/EmptyPdsResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/EmptyPdsResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/EmptyPdsResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/EmptyPdsResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/EmptyPdsResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetBlobRequest {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-6Za8ImI ()Ljava/lang/String;
+	public final fun copy-Q8iBkWU (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetBlobRequest;
+	public static synthetic fun copy-Q8iBkWU$default (Lstudio/hypertext/atproto/pds/GetBlobRequest;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetBlobRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/pds/GetLatestCommitRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/GetLatestCommitRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun copy-0_H-3yA (Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;
+	public static synthetic fun copy-0_H-3yA$default (Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/GetLatestCommitRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/GetLatestCommitRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetLatestCommitRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetLatestCommitResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/GetLatestCommitResponse$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-6Za8ImI ()Ljava/lang/String;
+	public final fun component2-KkERo4U ()Ljava/lang/String;
+	public final fun copy-gYl7dPs (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetLatestCommitResponse;
+	public static synthetic fun copy-gYl7dPs$default (Lstudio/hypertext/atproto/pds/GetLatestCommitResponse;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetLatestCommitResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid-6Za8ImI ()Ljava/lang/String;
+	public final fun getRev-KkERo4U ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/GetLatestCommitResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/GetLatestCommitResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/GetLatestCommitResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/GetLatestCommitResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetLatestCommitResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRecordRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/GetRecordRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3-OLfzzfk ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy-dkUBxus (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetRecordRequest;
+	public static synthetic fun copy-dkUBxus$default (Lstudio/hypertext/atproto/pds/GetRecordRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetRecordRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCid ()Ljava/lang/String;
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getRecordKey-OLfzzfk ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/GetRecordRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/GetRecordRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/GetRecordRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/GetRecordRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRecordRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRepoRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/GetRepoRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-PzyVFZ0 ()Ljava/lang/String;
+	public final fun copy-B1nha3k (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetRepoRequest;
+	public static synthetic fun copy-B1nha3k$default (Lstudio/hypertext/atproto/pds/GetRepoRequest;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetRepoRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getSince-PzyVFZ0 ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/GetRepoRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/GetRepoRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/GetRepoRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/GetRepoRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRepoRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRepoStatusRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/GetRepoStatusRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun copy-0_H-3yA (Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;
+	public static synthetic fun copy-0_H-3yA$default (Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/GetRepoStatusRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/GetRepoStatusRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRepoStatusRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRepoStatusResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/GetRepoStatusResponse$Companion;
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4-PzyVFZ0 ()Ljava/lang/String;
+	public final fun copy-Ap6AIOM (Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/GetRepoStatusResponse;
+	public static synthetic fun copy-Ap6AIOM$default (Lstudio/hypertext/atproto/pds/GetRepoStatusResponse;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/GetRepoStatusResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getRev-PzyVFZ0 ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/GetRepoStatusResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/GetRepoStatusResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/GetRepoStatusResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/GetRepoStatusResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/GetRepoStatusResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/ListRecordsRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/ListRecordsRequest$Companion;
+	public static final field DEFAULT_PAGE_SIZE I
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun copy-vO43NGw (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Z)Lstudio/hypertext/atproto/pds/ListRecordsRequest;
+	public static synthetic fun copy-vO43NGw$default (Lstudio/hypertext/atproto/pds/ListRecordsRequest;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ZILjava/lang/Object;)Lstudio/hypertext/atproto/pds/ListRecordsRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getLimit ()I
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getReverse ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/ListRecordsRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/ListRecordsRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/ListRecordsRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/ListRecordsRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/ListRecordsRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/ListRecordsResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/ListRecordsResponse$Companion;
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/ListRecordsResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/ListRecordsResponse;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/ListRecordsResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCursor ()Ljava/lang/String;
+	public final fun getRecords ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/ListRecordsResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/ListRecordsResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/ListRecordsResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/ListRecordsResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/ListRecordsResponse$Companion {
+	public final fun fromPage (Lstudio/hypertext/atproto/repo/RepoListPage;)Lstudio/hypertext/atproto/pds/ListRecordsResponse;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/OAuthErrorResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/OAuthErrorResponse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/OAuthErrorResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/OAuthErrorResponse;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/OAuthErrorResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/String;
+	public final fun getErrorDescription ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/OAuthErrorResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/OAuthErrorResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/OAuthErrorResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/OAuthErrorResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/OAuthErrorResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/OAuthRevokeRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/OAuthRevokeRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/OAuthRevokeRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/OAuthRevokeRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/OAuthRevokeRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientAssertion ()Ljava/lang/String;
+	public final fun getClientAssertionType ()Ljava/lang/String;
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getDpopProof ()Ljava/lang/String;
+	public final fun getHtu ()Ljava/lang/String;
+	public final fun getRefreshToken ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/OAuthRevokeRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/OAuthRevokeRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/OAuthRevokeRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/OAuthRevokeRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/OAuthRevokeRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/OAuthTokenResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/OAuthTokenResponse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/OAuthTokenResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/OAuthTokenResponse;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/OAuthTokenResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccess_token ()Ljava/lang/String;
+	public final fun getExpires_in ()J
+	public final fun getRefresh_token ()Ljava/lang/String;
+	public final fun getScope ()Ljava/lang/String;
+	public final fun getSub ()Ljava/lang/String;
+	public final fun getToken_type ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/OAuthTokenResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/OAuthTokenResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/OAuthTokenResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/OAuthTokenResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/OAuthTokenResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsBlobService {
+	public abstract fun getBlob-gIAlu-s (Lstudio/hypertext/atproto/pds/GetBlobRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun uploadBlob-gIAlu-s (Lstudio/hypertext/atproto/pds/UploadBlobRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsDiscoveryService {
+	public abstract fun authorizationServerMetadata ()Lstudio/hypertext/atproto/pds/AuthorizationServerMetadata;
+	public abstract fun describeServer ()Lstudio/hypertext/atproto/pds/DescribeServerResponse;
+	public abstract fun protectedResourceMetadata ()Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;
+}
+
+public final class studio/hypertext/atproto/pds/PdsErrorResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/PdsErrorResponse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/PdsErrorResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/PdsErrorResponse;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/PdsErrorResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/PdsErrorResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/PdsErrorResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/PdsErrorResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/PdsErrorResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PdsErrorResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class studio/hypertext/atproto/pds/PdsException : java/lang/IllegalArgumentException {
+	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getError ()Ljava/lang/String;
+	public final fun getStatusCode ()I
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsIdentityService {
+	public abstract fun describeRepo-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun didDocument-8B7oYw4 (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun resolveHandle-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/pds/PdsInvalidRequestException : studio/hypertext/atproto/pds/PdsException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsOAuthService {
+	public abstract fun completeAuthorization-IoAF18A (Lstudio/hypertext/atproto/pds/AuthorizationDecisionRequest;)Ljava/lang/Object;
+	public abstract fun createPushedAuthorizationRequest-gIAlu-s (Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun exchangeAuthorizationCode-gIAlu-s (Lstudio/hypertext/atproto/pds/AuthorizationCodeTokenRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun exchangeRefreshToken-gIAlu-s (Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun loadAuthorizationPrompt-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
+	public abstract fun nonce ()Ljava/lang/String;
+	public abstract fun revokeRefreshToken-gIAlu-s (Lstudio/hypertext/atproto/pds/OAuthRevokeRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsRepoService {
+	public abstract fun createRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/CreateRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/DeleteRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/GetRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun listRecords-gIAlu-s (Lstudio/hypertext/atproto/pds/ListRecordsRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun putRecord-gIAlu-s (Lstudio/hypertext/atproto/pds/PutRecordRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsSessionService {
+	public abstract fun createAccount-gIAlu-s (Lstudio/hypertext/atproto/pds/CreateAccountRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun createSession-gIAlu-s (Lstudio/hypertext/atproto/pds/CreateSessionRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteSession-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getSession-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun refreshSession-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class studio/hypertext/atproto/pds/PdsSyncService {
+	public abstract fun getLatestCommit-gIAlu-s (Lstudio/hypertext/atproto/pds/GetLatestCommitRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getRepo-gIAlu-s (Lstudio/hypertext/atproto/pds/GetRepoRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getRepoStatus-gIAlu-s (Lstudio/hypertext/atproto/pds/GetRepoStatusRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class studio/hypertext/atproto/pds/PdsUnsupportedException : studio/hypertext/atproto/pds/PdsException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class studio/hypertext/atproto/pds/ProtectedResourceMetadata {
+	public static final field Companion Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthorization_servers ()Ljava/util/List;
+	public final fun getResource ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/ProtectedResourceMetadata$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/ProtectedResourceMetadata;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/ProtectedResourceMetadata$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PushedAuthorizationBody {
+	public static final field Companion Lstudio/hypertext/atproto/pds/PushedAuthorizationBody$Companion;
+	public fun <init> (Ljava/lang/String;J)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun copy (Ljava/lang/String;J)Lstudio/hypertext/atproto/pds/PushedAuthorizationBody;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/PushedAuthorizationBody;Ljava/lang/String;JILjava/lang/Object;)Lstudio/hypertext/atproto/pds/PushedAuthorizationBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExpiresInSeconds ()J
+	public final fun getRequestUri ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/PushedAuthorizationBody$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/PushedAuthorizationBody$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/PushedAuthorizationBody;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/PushedAuthorizationBody;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PushedAuthorizationBody$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PushedAuthorizationRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientAssertion ()Ljava/lang/String;
+	public final fun getClientAssertionType ()Ljava/lang/String;
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getCodeChallenge ()Ljava/lang/String;
+	public final fun getCodeChallengeMethod ()Ljava/lang/String;
+	public final fun getDpopProof ()Ljava/lang/String;
+	public final fun getHtu ()Ljava/lang/String;
+	public final fun getLoginHint ()Ljava/lang/String;
+	public final fun getRedirectUri ()Ljava/lang/String;
+	public final fun getResponseType ()Ljava/lang/String;
+	public final fun getScope ()Ljava/lang/String;
+	public final fun getState ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/PushedAuthorizationRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/PushedAuthorizationRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PushedAuthorizationRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PushedAuthorizationResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse$Companion;
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;JLjava/lang/String;)Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse;Ljava/lang/String;JLjava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDpopNonce ()Ljava/lang/String;
+	public final fun getExpiresInSeconds ()J
+	public final fun getRequestUri ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/PushedAuthorizationResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/PushedAuthorizationResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PushedAuthorizationResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PutRecordRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/PutRecordRequest$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2-Ocl1Fcs ()Ljava/lang/String;
+	public final fun component3-OLfzzfk ()Ljava/lang/String;
+	public final fun component4 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy-PUTv5pc (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/PutRecordRequest;
+	public static synthetic fun copy-PUTv5pc$default (Lstudio/hypertext/atproto/pds/PutRecordRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/PutRecordRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCollection-Ocl1Fcs ()Ljava/lang/String;
+	public final fun getRecord ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getRecordKey-OLfzzfk ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public final fun getSwapCommit ()Ljava/lang/String;
+	public final fun getSwapRecord ()Ljava/lang/String;
+	public final fun getValidate ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/PutRecordRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/PutRecordRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/PutRecordRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/PutRecordRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/PutRecordRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/RefreshTokenGrantRequest {
+	public static final field Companion Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClientAssertion ()Ljava/lang/String;
+	public final fun getClientAssertionType ()Ljava/lang/String;
+	public final fun getClientId ()Ljava/lang/String;
+	public final fun getDpopProof ()Ljava/lang/String;
+	public final fun getHtu ()Ljava/lang/String;
+	public final fun getRefreshToken ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/RefreshTokenGrantRequest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/RefreshTokenGrantRequest;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/RefreshTokenGrantRequest$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/RepoExportResponse {
+	public fun <init> (Ljava/lang/String;[B)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()[B
+	public final fun copy (Ljava/lang/String;[B)Lstudio/hypertext/atproto/pds/RepoExportResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/RepoExportResponse;Ljava/lang/String;[BILjava/lang/Object;)Lstudio/hypertext/atproto/pds/RepoExportResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public final fun getContentType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/pds/ResolveHandleResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/ResolveHandleResponse$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun copy-0_H-3yA (Ljava/lang/String;)Lstudio/hypertext/atproto/pds/ResolveHandleResponse;
+	public static synthetic fun copy-0_H-3yA$default (Lstudio/hypertext/atproto/pds/ResolveHandleResponse;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/ResolveHandleResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/ResolveHandleResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/ResolveHandleResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/ResolveHandleResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/ResolveHandleResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/ResolveHandleResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/SessionInfoResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/SessionInfoResponse$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-wh1GzKs ()Ljava/lang/String;
+	public final fun component3 ()Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy-oL5L1bs (Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/SessionInfoResponse;
+	public static synthetic fun copy-oL5L1bs$default (Lstudio/hypertext/atproto/pds/SessionInfoResponse;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/SessionInfoResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActive ()Ljava/lang/Boolean;
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getDidDoc ()Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getEmailAuthFactor ()Ljava/lang/Boolean;
+	public final fun getEmailConfirmed ()Ljava/lang/Boolean;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/SessionInfoResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/SessionInfoResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/SessionInfoResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/SessionInfoResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/SessionInfoResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/SessionResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/SessionResponse$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4-wh1GzKs ()Ljava/lang/String;
+	public final fun component5 ()Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/Boolean;
+	public final fun component8 ()Ljava/lang/Boolean;
+	public final fun component9 ()Ljava/lang/Boolean;
+	public final fun copy-hGQpEao (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;)Lstudio/hypertext/atproto/pds/SessionResponse;
+	public static synthetic fun copy-hGQpEao$default (Lstudio/hypertext/atproto/pds/SessionResponse;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lstudio/hypertext/atproto/identity/DidDocument;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/SessionResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessJwt ()Ljava/lang/String;
+	public final fun getActive ()Ljava/lang/Boolean;
+	public final fun getDid-wh1GzKs ()Ljava/lang/String;
+	public final fun getDidDoc ()Lstudio/hypertext/atproto/identity/DidDocument;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getEmailAuthFactor ()Ljava/lang/Boolean;
+	public final fun getEmailConfirmed ()Ljava/lang/Boolean;
+	public final fun getHandle ()Ljava/lang/String;
+	public final fun getRefreshJwt ()Ljava/lang/String;
+	public final fun getStatus ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/SessionResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/SessionResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/SessionResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/SessionResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/SessionResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/UploadBlobRequest {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;[BLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-wh1GzKs ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()[B
+	public final fun copy-jUM6dN0 (Ljava/lang/String;Ljava/lang/String;[B)Lstudio/hypertext/atproto/pds/UploadBlobRequest;
+	public static synthetic fun copy-jUM6dN0$default (Lstudio/hypertext/atproto/pds/UploadBlobRequest;Ljava/lang/String;Ljava/lang/String;[BILjava/lang/Object;)Lstudio/hypertext/atproto/pds/UploadBlobRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public final fun getContentType ()Ljava/lang/String;
+	public final fun getRepo-wh1GzKs ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class studio/hypertext/atproto/pds/UploadBlobResponse {
+	public static final field Companion Lstudio/hypertext/atproto/pds/UploadBlobResponse$Companion;
+	public fun <init> (Lstudio/hypertext/atproto/pds/BlobRef;)V
+	public final fun component1 ()Lstudio/hypertext/atproto/pds/BlobRef;
+	public final fun copy (Lstudio/hypertext/atproto/pds/BlobRef;)Lstudio/hypertext/atproto/pds/UploadBlobResponse;
+	public static synthetic fun copy$default (Lstudio/hypertext/atproto/pds/UploadBlobResponse;Lstudio/hypertext/atproto/pds/BlobRef;ILjava/lang/Object;)Lstudio/hypertext/atproto/pds/UploadBlobResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlob ()Lstudio/hypertext/atproto/pds/BlobRef;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class studio/hypertext/atproto/pds/UploadBlobResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lstudio/hypertext/atproto/pds/UploadBlobResponse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lstudio/hypertext/atproto/pds/UploadBlobResponse;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lstudio/hypertext/atproto/pds/UploadBlobResponse;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class studio/hypertext/atproto/pds/UploadBlobResponse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

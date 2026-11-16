@@ -1,0 +1,88 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-crypto>
+final enum class studio.hypertext.atproto.crypto/EcCurve : kotlin/Enum<studio.hypertext.atproto.crypto/EcCurve> { // studio.hypertext.atproto.crypto/EcCurve|null[0]
+    enum entry K256 // studio.hypertext.atproto.crypto/EcCurve.K256|null[0]
+    enum entry P256 // studio.hypertext.atproto.crypto/EcCurve.P256|null[0]
+
+    final val entries // studio.hypertext.atproto.crypto/EcCurve.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<studio.hypertext.atproto.crypto/EcCurve> // studio.hypertext.atproto.crypto/EcCurve.entries.<get-entries>|<get-entries>#static(){}[0]
+    final val jwkCurveName // studio.hypertext.atproto.crypto/EcCurve.jwkCurveName|{}jwkCurveName[0]
+        final fun <get-jwkCurveName>(): kotlin/String // studio.hypertext.atproto.crypto/EcCurve.jwkCurveName.<get-jwkCurveName>|<get-jwkCurveName>(){}[0]
+    final val jwsAlgorithm // studio.hypertext.atproto.crypto/EcCurve.jwsAlgorithm|{}jwsAlgorithm[0]
+        final fun <get-jwsAlgorithm>(): kotlin/String // studio.hypertext.atproto.crypto/EcCurve.jwsAlgorithm.<get-jwsAlgorithm>|<get-jwsAlgorithm>(){}[0]
+    final val signingKeyAlgorithm // studio.hypertext.atproto.crypto/EcCurve.signingKeyAlgorithm|{}signingKeyAlgorithm[0]
+        final fun <get-signingKeyAlgorithm>(): kotlin/String // studio.hypertext.atproto.crypto/EcCurve.signingKeyAlgorithm.<get-signingKeyAlgorithm>|<get-signingKeyAlgorithm>(){}[0]
+
+    final fun valueOf(kotlin/String): studio.hypertext.atproto.crypto/EcCurve // studio.hypertext.atproto.crypto/EcCurve.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<studio.hypertext.atproto.crypto/EcCurve> // studio.hypertext.atproto.crypto/EcCurve.values|values#static(){}[0]
+
+    final object Companion { // studio.hypertext.atproto.crypto/EcCurve.Companion|null[0]
+        final fun fromJwkCurveName(kotlin/String): studio.hypertext.atproto.crypto/EcCurve? // studio.hypertext.atproto.crypto/EcCurve.Companion.fromJwkCurveName|fromJwkCurveName(kotlin.String){}[0]
+        final fun fromSigningKeyAlgorithm(kotlin/String): studio.hypertext.atproto.crypto/EcCurve? // studio.hypertext.atproto.crypto/EcCurve.Companion.fromSigningKeyAlgorithm|fromSigningKeyAlgorithm(kotlin.String){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.crypto/EcPrivateKey { // studio.hypertext.atproto.crypto/EcPrivateKey|null[0]
+    final val curve // studio.hypertext.atproto.crypto/EcPrivateKey.curve|{}curve[0]
+        final fun <get-curve>(): studio.hypertext.atproto.crypto/EcCurve // studio.hypertext.atproto.crypto/EcPrivateKey.curve.<get-curve>|<get-curve>(){}[0]
+    final val publicKey // studio.hypertext.atproto.crypto/EcPrivateKey.publicKey|{}publicKey[0]
+        final fun <get-publicKey>(): studio.hypertext.atproto.crypto/EcPublicKey // studio.hypertext.atproto.crypto/EcPrivateKey.publicKey.<get-publicKey>|<get-publicKey>(){}[0]
+
+    final fun signSha256(kotlin/ByteArray): kotlin/ByteArray // studio.hypertext.atproto.crypto/EcPrivateKey.signSha256|signSha256(kotlin.ByteArray){}[0]
+    final fun toByteArray(): kotlin/ByteArray // studio.hypertext.atproto.crypto/EcPrivateKey.toByteArray|toByteArray(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.crypto/EcPrivateKey.toString|toString(){}[0]
+
+    final object Companion { // studio.hypertext.atproto.crypto/EcPrivateKey.Companion|null[0]
+        final fun fromByteArray(studio.hypertext.atproto.crypto/EcCurve, kotlin/ByteArray): studio.hypertext.atproto.crypto/EcPrivateKey // studio.hypertext.atproto.crypto/EcPrivateKey.Companion.fromByteArray|fromByteArray(studio.hypertext.atproto.crypto.EcCurve;kotlin.ByteArray){}[0]
+        final fun generate(studio.hypertext.atproto.crypto/EcCurve): studio.hypertext.atproto.crypto/EcPrivateKey // studio.hypertext.atproto.crypto/EcPrivateKey.Companion.generate|generate(studio.hypertext.atproto.crypto.EcCurve){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.crypto/EcPublicKey { // studio.hypertext.atproto.crypto/EcPublicKey|null[0]
+    final val curve // studio.hypertext.atproto.crypto/EcPublicKey.curve|{}curve[0]
+        final fun <get-curve>(): studio.hypertext.atproto.crypto/EcCurve // studio.hypertext.atproto.crypto/EcPublicKey.curve.<get-curve>|<get-curve>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.crypto/EcPublicKey.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.crypto/EcPublicKey.hashCode|hashCode(){}[0]
+    final fun toCompressedByteArray(): kotlin/ByteArray // studio.hypertext.atproto.crypto/EcPublicKey.toCompressedByteArray|toCompressedByteArray(){}[0]
+    final fun toMultikey(): kotlin/String // studio.hypertext.atproto.crypto/EcPublicKey.toMultikey|toMultikey(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.crypto/EcPublicKey.toString|toString(){}[0]
+    final fun toUncompressedByteArray(): kotlin/ByteArray // studio.hypertext.atproto.crypto/EcPublicKey.toUncompressedByteArray|toUncompressedByteArray(){}[0]
+    final fun verifySha256(kotlin/ByteArray, kotlin/ByteArray, kotlin/Boolean = ...): kotlin/Boolean // studio.hypertext.atproto.crypto/EcPublicKey.verifySha256|verifySha256(kotlin.ByteArray;kotlin.ByteArray;kotlin.Boolean){}[0]
+
+    final object Companion { // studio.hypertext.atproto.crypto/EcPublicKey.Companion|null[0]
+        final fun fromCompressedByteArray(studio.hypertext.atproto.crypto/EcCurve, kotlin/ByteArray): studio.hypertext.atproto.crypto/EcPublicKey // studio.hypertext.atproto.crypto/EcPublicKey.Companion.fromCompressedByteArray|fromCompressedByteArray(studio.hypertext.atproto.crypto.EcCurve;kotlin.ByteArray){}[0]
+        final fun fromJwkCoordinates(studio.hypertext.atproto.crypto/EcCurve, kotlin/ByteArray, kotlin/ByteArray): studio.hypertext.atproto.crypto/EcPublicKey // studio.hypertext.atproto.crypto/EcPublicKey.Companion.fromJwkCoordinates|fromJwkCoordinates(studio.hypertext.atproto.crypto.EcCurve;kotlin.ByteArray;kotlin.ByteArray){}[0]
+        final fun fromMultikey(kotlin/String): studio.hypertext.atproto.crypto/EcPublicKey // studio.hypertext.atproto.crypto/EcPublicKey.Companion.fromMultikey|fromMultikey(kotlin.String){}[0]
+    }
+}
+
+final object studio.hypertext.atproto.crypto/Base58Btc { // studio.hypertext.atproto.crypto/Base58Btc|null[0]
+    final fun decode(kotlin/String): kotlin/ByteArray // studio.hypertext.atproto.crypto/Base58Btc.decode|decode(kotlin.String){}[0]
+    final fun encode(kotlin/ByteArray): kotlin/String // studio.hypertext.atproto.crypto/Base58Btc.encode|encode(kotlin.ByteArray){}[0]
+}
+
+final object studio.hypertext.atproto.crypto/EcSignatures { // studio.hypertext.atproto.crypto/EcSignatures|null[0]
+    final fun hasLowS(studio.hypertext.atproto.crypto/EcCurve, kotlin/ByteArray): kotlin/Boolean // studio.hypertext.atproto.crypto/EcSignatures.hasLowS|hasLowS(studio.hypertext.atproto.crypto.EcCurve;kotlin.ByteArray){}[0]
+}
+
+final object studio.hypertext.atproto.crypto/Multikey { // studio.hypertext.atproto.crypto/Multikey|null[0]
+    final val ed25519PublicKeyPrefix // studio.hypertext.atproto.crypto/Multikey.ed25519PublicKeyPrefix|{}ed25519PublicKeyPrefix[0]
+        final fun <get-ed25519PublicKeyPrefix>(): kotlin/ByteArray // studio.hypertext.atproto.crypto/Multikey.ed25519PublicKeyPrefix.<get-ed25519PublicKeyPrefix>|<get-ed25519PublicKeyPrefix>(){}[0]
+    final val k256PublicKeyPrefix // studio.hypertext.atproto.crypto/Multikey.k256PublicKeyPrefix|{}k256PublicKeyPrefix[0]
+        final fun <get-k256PublicKeyPrefix>(): kotlin/ByteArray // studio.hypertext.atproto.crypto/Multikey.k256PublicKeyPrefix.<get-k256PublicKeyPrefix>|<get-k256PublicKeyPrefix>(){}[0]
+    final val p256PublicKeyPrefix // studio.hypertext.atproto.crypto/Multikey.p256PublicKeyPrefix|{}p256PublicKeyPrefix[0]
+        final fun <get-p256PublicKeyPrefix>(): kotlin/ByteArray // studio.hypertext.atproto.crypto/Multikey.p256PublicKeyPrefix.<get-p256PublicKeyPrefix>|<get-p256PublicKeyPrefix>(){}[0]
+
+    final fun curve(kotlin/String): studio.hypertext.atproto.crypto/EcCurve? // studio.hypertext.atproto.crypto/Multikey.curve|curve(kotlin.String){}[0]
+    final fun decode(kotlin/String): kotlin/ByteArray // studio.hypertext.atproto.crypto/Multikey.decode|decode(kotlin.String){}[0]
+    final fun encode(kotlin/ByteArray, kotlin/ByteArray): kotlin/String // studio.hypertext.atproto.crypto/Multikey.encode|encode(kotlin.ByteArray;kotlin.ByteArray){}[0]
+    final fun encodeK256PublicKey(kotlin/ByteArray): kotlin/String // studio.hypertext.atproto.crypto/Multikey.encodeK256PublicKey|encodeK256PublicKey(kotlin.ByteArray){}[0]
+    final fun encodeP256PublicKey(kotlin/ByteArray): kotlin/String // studio.hypertext.atproto.crypto/Multikey.encodeP256PublicKey|encodeP256PublicKey(kotlin.ByteArray){}[0]
+}

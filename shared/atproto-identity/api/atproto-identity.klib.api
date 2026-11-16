@@ -1,0 +1,202 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-identity>
+abstract interface studio.hypertext.atproto.identity/DidResolver { // studio.hypertext.atproto.identity/DidResolver|null[0]
+    abstract suspend fun resolve(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/DidResolver.resolve|resolve(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+}
+
+abstract interface studio.hypertext.atproto.identity/HandleResolver { // studio.hypertext.atproto.identity/HandleResolver|null[0]
+    abstract suspend fun resolve(studio.hypertext.atproto.syntax/Handle): kotlin/Result<studio.hypertext.atproto.identity/AtprotoDid> // studio.hypertext.atproto.identity/HandleResolver.resolve|resolve(studio.hypertext.atproto.syntax.Handle){}[0]
+}
+
+abstract interface studio.hypertext.atproto.identity/IdentityResolver { // studio.hypertext.atproto.identity/IdentityResolver|null[0]
+    abstract suspend fun resolveDid(studio.hypertext.atproto.syntax/Handle): kotlin/Result<studio.hypertext.atproto.identity/AtprotoDid> // studio.hypertext.atproto.identity/IdentityResolver.resolveDid|resolveDid(studio.hypertext.atproto.syntax.Handle){}[0]
+    abstract suspend fun resolveDocument(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/IdentityResolver.resolveDocument|resolveDocument(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun resolveDocument(studio.hypertext.atproto.syntax/Handle): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/IdentityResolver.resolveDocument|resolveDocument(studio.hypertext.atproto.syntax.Handle){}[0]
+}
+
+final class studio.hypertext.atproto.identity/DefaultIdentityResolver : studio.hypertext.atproto.identity/IdentityResolver { // studio.hypertext.atproto.identity/DefaultIdentityResolver|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/DidResolver, studio.hypertext.atproto.identity/HandleResolver) // studio.hypertext.atproto.identity/DefaultIdentityResolver.<init>|<init>(studio.hypertext.atproto.identity.DidResolver;studio.hypertext.atproto.identity.HandleResolver){}[0]
+
+    final suspend fun resolveDid(studio.hypertext.atproto.syntax/Handle): kotlin/Result<studio.hypertext.atproto.identity/AtprotoDid> // studio.hypertext.atproto.identity/DefaultIdentityResolver.resolveDid|resolveDid(studio.hypertext.atproto.syntax.Handle){}[0]
+    final suspend fun resolveDocument(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/DefaultIdentityResolver.resolveDocument|resolveDocument(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun resolveDocument(studio.hypertext.atproto.syntax/Handle): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/DefaultIdentityResolver.resolveDocument|resolveDocument(studio.hypertext.atproto.syntax.Handle){}[0]
+}
+
+final class studio.hypertext.atproto.identity/DidDocument { // studio.hypertext.atproto.identity/DidDocument|null[0]
+    constructor <init>(kotlin.collections/List<kotlin/String> = ..., studio.hypertext.atproto.identity/AtprotoDid, kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<studio.hypertext.atproto.identity/VerificationMethod> = ..., kotlin.collections/List<studio.hypertext.atproto.identity/Service> = ...) // studio.hypertext.atproto.identity/DidDocument.<init>|<init>(kotlin.collections.List<kotlin.String>;studio.hypertext.atproto.identity.AtprotoDid;kotlin.collections.List<kotlin.String>;kotlin.collections.List<studio.hypertext.atproto.identity.VerificationMethod>;kotlin.collections.List<studio.hypertext.atproto.identity.Service>){}[0]
+
+    final val alsoKnownAs // studio.hypertext.atproto.identity/DidDocument.alsoKnownAs|{}alsoKnownAs[0]
+        final fun <get-alsoKnownAs>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.identity/DidDocument.alsoKnownAs.<get-alsoKnownAs>|<get-alsoKnownAs>(){}[0]
+    final val context // studio.hypertext.atproto.identity/DidDocument.context|{}context[0]
+        final fun <get-context>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.identity/DidDocument.context.<get-context>|<get-context>(){}[0]
+    final val id // studio.hypertext.atproto.identity/DidDocument.id|{}id[0]
+        final fun <get-id>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.identity/DidDocument.id.<get-id>|<get-id>(){}[0]
+    final val service // studio.hypertext.atproto.identity/DidDocument.service|{}service[0]
+        final fun <get-service>(): kotlin.collections/List<studio.hypertext.atproto.identity/Service> // studio.hypertext.atproto.identity/DidDocument.service.<get-service>|<get-service>(){}[0]
+    final val verificationMethod // studio.hypertext.atproto.identity/DidDocument.verificationMethod|{}verificationMethod[0]
+        final fun <get-verificationMethod>(): kotlin.collections/List<studio.hypertext.atproto.identity/VerificationMethod> // studio.hypertext.atproto.identity/DidDocument.verificationMethod.<get-verificationMethod>|<get-verificationMethod>(){}[0]
+
+    final fun component1(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.identity/DidDocument.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.identity/DidDocument.component2|component2(){}[0]
+    final fun component3(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.identity/DidDocument.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<studio.hypertext.atproto.identity/VerificationMethod> // studio.hypertext.atproto.identity/DidDocument.component4|component4(){}[0]
+    final fun component5(): kotlin.collections/List<studio.hypertext.atproto.identity/Service> // studio.hypertext.atproto.identity/DidDocument.component5|component5(){}[0]
+    final fun copy(kotlin.collections/List<kotlin/String> = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<studio.hypertext.atproto.identity/VerificationMethod> = ..., kotlin.collections/List<studio.hypertext.atproto.identity/Service> = ...): studio.hypertext.atproto.identity/DidDocument // studio.hypertext.atproto.identity/DidDocument.copy|copy(kotlin.collections.List<kotlin.String>;studio.hypertext.atproto.identity.AtprotoDid;kotlin.collections.List<kotlin.String>;kotlin.collections.List<studio.hypertext.atproto.identity.VerificationMethod>;kotlin.collections.List<studio.hypertext.atproto.identity.Service>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.identity/DidDocument.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.identity/DidDocument.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.identity/DidDocument.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.identity/DidDocument> { // studio.hypertext.atproto.identity/DidDocument.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.identity/DidDocument.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.identity/DidDocument.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.identity/DidDocument.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.identity/DidDocument // studio.hypertext.atproto.identity/DidDocument.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.identity/DidDocument) // studio.hypertext.atproto.identity/DidDocument.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.identity.DidDocument){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.identity/DidDocument.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.identity/DidDocument.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/DidDocument.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.identity/DidDocumentMismatchException : studio.hypertext.atproto.identity/IdentityException { // studio.hypertext.atproto.identity/DidDocumentMismatchException|null[0]
+    constructor <init>(kotlin/String, kotlin/String) // studio.hypertext.atproto.identity/DidDocumentMismatchException.<init>|<init>(kotlin.String;kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.identity/DidPlcResolver : studio.hypertext.atproto.identity/DidResolver { // studio.hypertext.atproto.identity/DidPlcResolver|null[0]
+    constructor <init>(io.ktor.client/HttpClient, kotlinx.serialization.json/Json = ...) // studio.hypertext.atproto.identity/DidPlcResolver.<init>|<init>(io.ktor.client.HttpClient;kotlinx.serialization.json.Json){}[0]
+
+    final fun urlFor(studio.hypertext.atproto.identity/AtprotoDid): kotlin/String // studio.hypertext.atproto.identity/DidPlcResolver.urlFor|urlFor(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun resolve(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/DidPlcResolver.resolve|resolve(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+}
+
+final class studio.hypertext.atproto.identity/DidResolutionException : studio.hypertext.atproto.identity/IdentityException { // studio.hypertext.atproto.identity/DidResolutionException|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.identity/DidResolutionException.<init>|<init>(kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class studio.hypertext.atproto.identity/DidWebResolver : studio.hypertext.atproto.identity/DidResolver { // studio.hypertext.atproto.identity/DidWebResolver|null[0]
+    constructor <init>(io.ktor.client/HttpClient, kotlinx.serialization.json/Json = ...) // studio.hypertext.atproto.identity/DidWebResolver.<init>|<init>(io.ktor.client.HttpClient;kotlinx.serialization.json.Json){}[0]
+
+    final fun urlFor(studio.hypertext.atproto.identity/AtprotoDid): kotlin/String // studio.hypertext.atproto.identity/DidWebResolver.urlFor|urlFor(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final suspend fun resolve(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument> // studio.hypertext.atproto.identity/DidWebResolver.resolve|resolve(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+}
+
+final class studio.hypertext.atproto.identity/HandleResolutionException : studio.hypertext.atproto.identity/IdentityException { // studio.hypertext.atproto.identity/HandleResolutionException|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Throwable? = ...) // studio.hypertext.atproto.identity/HandleResolutionException.<init>|<init>(kotlin.String;kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class studio.hypertext.atproto.identity/InvalidAtprotoDidException : studio.hypertext.atproto.identity/IdentityException { // studio.hypertext.atproto.identity/InvalidAtprotoDidException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.identity/InvalidAtprotoDidException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.identity/Service { // studio.hypertext.atproto.identity/Service|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String) // studio.hypertext.atproto.identity/Service.<init>|<init>(kotlin.String;kotlin.String;kotlin.String){}[0]
+
+    final val id // studio.hypertext.atproto.identity/Service.id|{}id[0]
+        final fun <get-id>(): kotlin/String // studio.hypertext.atproto.identity/Service.id.<get-id>|<get-id>(){}[0]
+    final val serviceEndpoint // studio.hypertext.atproto.identity/Service.serviceEndpoint|{}serviceEndpoint[0]
+        final fun <get-serviceEndpoint>(): kotlin/String // studio.hypertext.atproto.identity/Service.serviceEndpoint.<get-serviceEndpoint>|<get-serviceEndpoint>(){}[0]
+    final val type // studio.hypertext.atproto.identity/Service.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.identity/Service.type.<get-type>|<get-type>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.identity/Service.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.identity/Service.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.identity/Service.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.identity/Service // studio.hypertext.atproto.identity/Service.copy|copy(kotlin.String;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.identity/Service.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.identity/Service.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.identity/Service.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.identity/Service> { // studio.hypertext.atproto.identity/Service.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.identity/Service.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.identity/Service.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.identity/Service.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.identity/Service // studio.hypertext.atproto.identity/Service.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.identity/Service) // studio.hypertext.atproto.identity/Service.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.identity.Service){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.identity/Service.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.identity/Service> // studio.hypertext.atproto.identity/Service.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.identity/VerificationMethod { // studio.hypertext.atproto.identity/VerificationMethod|null[0]
+    constructor <init>(kotlin/String, kotlin/String, studio.hypertext.atproto.identity/AtprotoDid, kotlin/String? = ...) // studio.hypertext.atproto.identity/VerificationMethod.<init>|<init>(kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;kotlin.String?){}[0]
+
+    final val controller // studio.hypertext.atproto.identity/VerificationMethod.controller|{}controller[0]
+        final fun <get-controller>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.identity/VerificationMethod.controller.<get-controller>|<get-controller>(){}[0]
+    final val id // studio.hypertext.atproto.identity/VerificationMethod.id|{}id[0]
+        final fun <get-id>(): kotlin/String // studio.hypertext.atproto.identity/VerificationMethod.id.<get-id>|<get-id>(){}[0]
+    final val publicKeyMultibase // studio.hypertext.atproto.identity/VerificationMethod.publicKeyMultibase|{}publicKeyMultibase[0]
+        final fun <get-publicKeyMultibase>(): kotlin/String? // studio.hypertext.atproto.identity/VerificationMethod.publicKeyMultibase.<get-publicKeyMultibase>|<get-publicKeyMultibase>(){}[0]
+    final val type // studio.hypertext.atproto.identity/VerificationMethod.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.identity/VerificationMethod.type.<get-type>|<get-type>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.identity/VerificationMethod.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.identity/VerificationMethod.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.identity/VerificationMethod.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.identity/VerificationMethod.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/String? = ...): studio.hypertext.atproto.identity/VerificationMethod // studio.hypertext.atproto.identity/VerificationMethod.copy|copy(kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.identity/VerificationMethod.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.identity/VerificationMethod.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.identity/VerificationMethod.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.identity/VerificationMethod> { // studio.hypertext.atproto.identity/VerificationMethod.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.identity/VerificationMethod.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.identity/VerificationMethod.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.identity/VerificationMethod.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.identity/VerificationMethod // studio.hypertext.atproto.identity/VerificationMethod.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.identity/VerificationMethod) // studio.hypertext.atproto.identity/VerificationMethod.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.identity.VerificationMethod){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.identity/VerificationMethod.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.identity/VerificationMethod> // studio.hypertext.atproto.identity/VerificationMethod.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.identity/WellKnownHandleResolver : studio.hypertext.atproto.identity/HandleResolver { // studio.hypertext.atproto.identity/WellKnownHandleResolver|null[0]
+    constructor <init>(io.ktor.client/HttpClient) // studio.hypertext.atproto.identity/WellKnownHandleResolver.<init>|<init>(io.ktor.client.HttpClient){}[0]
+
+    final suspend fun resolve(studio.hypertext.atproto.syntax/Handle): kotlin/Result<studio.hypertext.atproto.identity/AtprotoDid> // studio.hypertext.atproto.identity/WellKnownHandleResolver.resolve|resolve(studio.hypertext.atproto.syntax.Handle){}[0]
+}
+
+final value class studio.hypertext.atproto.identity/AtprotoDid { // studio.hypertext.atproto.identity/AtprotoDid|null[0]
+    constructor <init>(studio.hypertext.atproto.syntax/Did) // studio.hypertext.atproto.identity/AtprotoDid.<init>|<init>(studio.hypertext.atproto.syntax.Did){}[0]
+
+    final val method // studio.hypertext.atproto.identity/AtprotoDid.method|{}method[0]
+        final fun <get-method>(): kotlin/String // studio.hypertext.atproto.identity/AtprotoDid.method.<get-method>|<get-method>(){}[0]
+    final val value // studio.hypertext.atproto.identity/AtprotoDid.value|{}value[0]
+        final fun <get-value>(): studio.hypertext.atproto.syntax/Did // studio.hypertext.atproto.identity/AtprotoDid.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.identity/AtprotoDid.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.identity/AtprotoDid.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.identity/AtprotoDid.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.identity/AtprotoDid> { // studio.hypertext.atproto.identity/AtprotoDid.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.identity/AtprotoDid.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.identity/AtprotoDid.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.identity/AtprotoDid.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.identity/AtprotoDid.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.identity/AtprotoDid.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.identity/AtprotoDid.Companion|null[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.identity/AtprotoDid> // studio.hypertext.atproto.identity/AtprotoDid.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.identity/AtprotoDid.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.identity/AtprotoDid> // studio.hypertext.atproto.identity/AtprotoDid.Companion.serializer|serializer(){}[0]
+    }
+}
+
+sealed class studio.hypertext.atproto.identity/IdentityException : kotlin/IllegalStateException // studio.hypertext.atproto.identity/IdentityException|null[0]

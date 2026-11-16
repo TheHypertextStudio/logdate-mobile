@@ -1,0 +1,280 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-syntax>
+final class studio.hypertext.atproto.syntax/InvalidAtUriException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidAtUriException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidAtUriException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidDatetimeException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidDatetimeException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidDatetimeException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidDidException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidDidException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidDidException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidHandleException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidHandleException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidHandleException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidLanguageTagException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidLanguageTagException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidLanguageTagException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidNsidException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidNsidException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidNsidException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidRecordKeyException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidRecordKeyException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidRecordKeyException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.syntax/InvalidTidException : studio.hypertext.atproto.syntax/AtprotoSyntaxException { // studio.hypertext.atproto.syntax/InvalidTidException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/InvalidTidException.<init>|<init>(kotlin.String){}[0]
+}
+
+final value class studio.hypertext.atproto.syntax/AtUri { // studio.hypertext.atproto.syntax/AtUri|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/AtUri.<init>|<init>(kotlin.String){}[0]
+
+    final val authority // studio.hypertext.atproto.syntax/AtUri.authority|{}authority[0]
+        final fun <get-authority>(): kotlin/String // studio.hypertext.atproto.syntax/AtUri.authority.<get-authority>|<get-authority>(){}[0]
+    final val collection // studio.hypertext.atproto.syntax/AtUri.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid? // studio.hypertext.atproto.syntax/AtUri.collection.<get-collection>|<get-collection>(){}[0]
+    final val recordKey // studio.hypertext.atproto.syntax/AtUri.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey? // studio.hypertext.atproto.syntax/AtUri.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+    final val value // studio.hypertext.atproto.syntax/AtUri.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/AtUri.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/AtUri.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/AtUri.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/AtUri.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/AtUri> { // studio.hypertext.atproto.syntax/AtUri.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/AtUri.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/AtUri.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/AtUri.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.syntax/AtUri.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/AtUri) // studio.hypertext.atproto.syntax/AtUri.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.AtUri){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/AtUri.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/AtUri.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/AtUri> // studio.hypertext.atproto.syntax/AtUri.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/AtUri // studio.hypertext.atproto.syntax/AtUri.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/AtUri> // studio.hypertext.atproto.syntax/AtUri.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/Datetime { // studio.hypertext.atproto.syntax/Datetime|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/Datetime.<init>|<init>(kotlin.String){}[0]
+
+    final val value // studio.hypertext.atproto.syntax/Datetime.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/Datetime.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/Datetime.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/Datetime.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/Datetime.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/Datetime> { // studio.hypertext.atproto.syntax/Datetime.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/Datetime.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/Datetime.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/Datetime.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/Datetime // studio.hypertext.atproto.syntax/Datetime.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/Datetime) // studio.hypertext.atproto.syntax/Datetime.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.Datetime){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/Datetime.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/Datetime.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/Datetime> // studio.hypertext.atproto.syntax/Datetime.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/Datetime // studio.hypertext.atproto.syntax/Datetime.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/Datetime> // studio.hypertext.atproto.syntax/Datetime.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/Did { // studio.hypertext.atproto.syntax/Did|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/Did.<init>|<init>(kotlin.String){}[0]
+
+    final val identifier // studio.hypertext.atproto.syntax/Did.identifier|{}identifier[0]
+        final fun <get-identifier>(): kotlin/String // studio.hypertext.atproto.syntax/Did.identifier.<get-identifier>|<get-identifier>(){}[0]
+    final val method // studio.hypertext.atproto.syntax/Did.method|{}method[0]
+        final fun <get-method>(): kotlin/String // studio.hypertext.atproto.syntax/Did.method.<get-method>|<get-method>(){}[0]
+    final val value // studio.hypertext.atproto.syntax/Did.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/Did.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/Did.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/Did.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/Did.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/Did> { // studio.hypertext.atproto.syntax/Did.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/Did.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/Did.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/Did.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/Did // studio.hypertext.atproto.syntax/Did.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/Did) // studio.hypertext.atproto.syntax/Did.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.Did){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/Did.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/Did.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/Did> // studio.hypertext.atproto.syntax/Did.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/Did // studio.hypertext.atproto.syntax/Did.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/Did> // studio.hypertext.atproto.syntax/Did.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/Handle { // studio.hypertext.atproto.syntax/Handle|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/Handle.<init>|<init>(kotlin.String){}[0]
+
+    final val normalized // studio.hypertext.atproto.syntax/Handle.normalized|{}normalized[0]
+        final fun <get-normalized>(): kotlin/String // studio.hypertext.atproto.syntax/Handle.normalized.<get-normalized>|<get-normalized>(){}[0]
+    final val value // studio.hypertext.atproto.syntax/Handle.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/Handle.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/Handle.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/Handle.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/Handle.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/Handle> { // studio.hypertext.atproto.syntax/Handle.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/Handle.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/Handle.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/Handle.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/Handle // studio.hypertext.atproto.syntax/Handle.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/Handle) // studio.hypertext.atproto.syntax/Handle.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.Handle){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/Handle.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/Handle.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/Handle> // studio.hypertext.atproto.syntax/Handle.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/Handle // studio.hypertext.atproto.syntax/Handle.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/Handle> // studio.hypertext.atproto.syntax/Handle.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/LanguageTag { // studio.hypertext.atproto.syntax/LanguageTag|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/LanguageTag.<init>|<init>(kotlin.String){}[0]
+
+    final val value // studio.hypertext.atproto.syntax/LanguageTag.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/LanguageTag.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/LanguageTag.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/LanguageTag.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/LanguageTag.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/LanguageTag> { // studio.hypertext.atproto.syntax/LanguageTag.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/LanguageTag.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/LanguageTag.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/LanguageTag.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/LanguageTag // studio.hypertext.atproto.syntax/LanguageTag.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/LanguageTag) // studio.hypertext.atproto.syntax/LanguageTag.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.LanguageTag){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/LanguageTag.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/LanguageTag.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/LanguageTag> // studio.hypertext.atproto.syntax/LanguageTag.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/LanguageTag // studio.hypertext.atproto.syntax/LanguageTag.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/LanguageTag> // studio.hypertext.atproto.syntax/LanguageTag.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/Nsid { // studio.hypertext.atproto.syntax/Nsid|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/Nsid.<init>|<init>(kotlin.String){}[0]
+
+    final val authority // studio.hypertext.atproto.syntax/Nsid.authority|{}authority[0]
+        final fun <get-authority>(): kotlin/String // studio.hypertext.atproto.syntax/Nsid.authority.<get-authority>|<get-authority>(){}[0]
+    final val name // studio.hypertext.atproto.syntax/Nsid.name|{}name[0]
+        final fun <get-name>(): kotlin/String // studio.hypertext.atproto.syntax/Nsid.name.<get-name>|<get-name>(){}[0]
+    final val value // studio.hypertext.atproto.syntax/Nsid.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/Nsid.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/Nsid.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/Nsid.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/Nsid.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/Nsid> { // studio.hypertext.atproto.syntax/Nsid.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/Nsid.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/Nsid.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/Nsid.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.syntax/Nsid.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/Nsid) // studio.hypertext.atproto.syntax/Nsid.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.Nsid){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/Nsid.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/Nsid.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/Nsid> // studio.hypertext.atproto.syntax/Nsid.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.syntax/Nsid.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/Nsid> // studio.hypertext.atproto.syntax/Nsid.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/RecordKey { // studio.hypertext.atproto.syntax/RecordKey|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/RecordKey.<init>|<init>(kotlin.String){}[0]
+
+    final val value // studio.hypertext.atproto.syntax/RecordKey.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/RecordKey.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/RecordKey.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/RecordKey.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/RecordKey.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/RecordKey> { // studio.hypertext.atproto.syntax/RecordKey.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/RecordKey.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/RecordKey.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/RecordKey.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.syntax/RecordKey.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/RecordKey) // studio.hypertext.atproto.syntax/RecordKey.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.RecordKey){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/RecordKey.Companion|null[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/RecordKey.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/RecordKey> // studio.hypertext.atproto.syntax/RecordKey.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.syntax/RecordKey.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/RecordKey> // studio.hypertext.atproto.syntax/RecordKey.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final value class studio.hypertext.atproto.syntax/Tid { // studio.hypertext.atproto.syntax/Tid|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.syntax/Tid.<init>|<init>(kotlin.String){}[0]
+
+    final val clockId // studio.hypertext.atproto.syntax/Tid.clockId|{}clockId[0]
+        final fun <get-clockId>(): kotlin/Int // studio.hypertext.atproto.syntax/Tid.clockId.<get-clockId>|<get-clockId>(){}[0]
+    final val timestampMicros // studio.hypertext.atproto.syntax/Tid.timestampMicros|{}timestampMicros[0]
+        final fun <get-timestampMicros>(): kotlin/Long // studio.hypertext.atproto.syntax/Tid.timestampMicros.<get-timestampMicros>|<get-timestampMicros>(){}[0]
+    final val value // studio.hypertext.atproto.syntax/Tid.value|{}value[0]
+        final fun <get-value>(): kotlin/String // studio.hypertext.atproto.syntax/Tid.value.<get-value>|<get-value>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.syntax/Tid.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.syntax/Tid.hashCode|hashCode(){}[0]
+    final fun toLong(): kotlin/Long // studio.hypertext.atproto.syntax/Tid.toLong|toLong(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.syntax/Tid.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.syntax/Tid> { // studio.hypertext.atproto.syntax/Tid.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.syntax/Tid.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.syntax/Tid.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.syntax/Tid.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.syntax/Tid.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.syntax/Tid) // studio.hypertext.atproto.syntax/Tid.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.syntax.Tid){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.syntax/Tid.Companion|null[0]
+        final fun fromInstant(kotlin.time/Instant, kotlin/Int = ...): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.syntax/Tid.Companion.fromInstant|fromInstant(kotlin.time.Instant;kotlin.Int){}[0]
+        final fun fromLong(kotlin/Long): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.syntax/Tid.Companion.fromLong|fromLong(kotlin.Long){}[0]
+        final fun isValid(kotlin/String): kotlin/Boolean // studio.hypertext.atproto.syntax/Tid.Companion.isValid|isValid(kotlin.String){}[0]
+        final fun parse(kotlin/String): kotlin/Result<studio.hypertext.atproto.syntax/Tid> // studio.hypertext.atproto.syntax/Tid.Companion.parse|parse(kotlin.String){}[0]
+        final fun require(kotlin/String): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.syntax/Tid.Companion.require|require(kotlin.String){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.syntax/Tid> // studio.hypertext.atproto.syntax/Tid.Companion.serializer|serializer(){}[0]
+    }
+}
+
+sealed class studio.hypertext.atproto.syntax/AtprotoSyntaxException : kotlin/IllegalArgumentException // studio.hypertext.atproto.syntax/AtprotoSyntaxException|null[0]

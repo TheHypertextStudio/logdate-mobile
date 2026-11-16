@@ -1,0 +1,1490 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <studio.hypertext.atproto:atproto-pds>
+abstract interface studio.hypertext.atproto.pds/PdsBlobService { // studio.hypertext.atproto.pds/PdsBlobService|null[0]
+    abstract suspend fun getBlob(studio.hypertext.atproto.pds/GetBlobRequest): kotlin/Result<studio.hypertext.atproto.pds/BlobDownload?> // studio.hypertext.atproto.pds/PdsBlobService.getBlob|getBlob(studio.hypertext.atproto.pds.GetBlobRequest){}[0]
+    abstract suspend fun uploadBlob(studio.hypertext.atproto.pds/UploadBlobRequest): kotlin/Result<studio.hypertext.atproto.pds/UploadBlobResponse> // studio.hypertext.atproto.pds/PdsBlobService.uploadBlob|uploadBlob(studio.hypertext.atproto.pds.UploadBlobRequest){}[0]
+}
+
+abstract interface studio.hypertext.atproto.pds/PdsDiscoveryService { // studio.hypertext.atproto.pds/PdsDiscoveryService|null[0]
+    abstract fun authorizationServerMetadata(): studio.hypertext.atproto.pds/AuthorizationServerMetadata // studio.hypertext.atproto.pds/PdsDiscoveryService.authorizationServerMetadata|authorizationServerMetadata(){}[0]
+    abstract fun describeServer(): studio.hypertext.atproto.pds/DescribeServerResponse // studio.hypertext.atproto.pds/PdsDiscoveryService.describeServer|describeServer(){}[0]
+    abstract fun protectedResourceMetadata(): studio.hypertext.atproto.pds/ProtectedResourceMetadata // studio.hypertext.atproto.pds/PdsDiscoveryService.protectedResourceMetadata|protectedResourceMetadata(){}[0]
+}
+
+abstract interface studio.hypertext.atproto.pds/PdsIdentityService { // studio.hypertext.atproto.pds/PdsIdentityService|null[0]
+    abstract suspend fun describeRepo(kotlin/String): kotlin/Result<studio.hypertext.atproto.pds/DescribeRepoResponse?> // studio.hypertext.atproto.pds/PdsIdentityService.describeRepo|describeRepo(kotlin.String){}[0]
+    abstract suspend fun didDocument(studio.hypertext.atproto.identity/AtprotoDid): kotlin/Result<studio.hypertext.atproto.identity/DidDocument?> // studio.hypertext.atproto.pds/PdsIdentityService.didDocument|didDocument(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    abstract suspend fun resolveHandle(kotlin/String): kotlin/Result<studio.hypertext.atproto.pds/ResolveHandleResponse?> // studio.hypertext.atproto.pds/PdsIdentityService.resolveHandle|resolveHandle(kotlin.String){}[0]
+}
+
+abstract interface studio.hypertext.atproto.pds/PdsOAuthService { // studio.hypertext.atproto.pds/PdsOAuthService|null[0]
+    abstract fun completeAuthorization(studio.hypertext.atproto.pds/AuthorizationDecisionRequest): kotlin/Result<kotlin/String> // studio.hypertext.atproto.pds/PdsOAuthService.completeAuthorization|completeAuthorization(studio.hypertext.atproto.pds.AuthorizationDecisionRequest){}[0]
+    abstract fun loadAuthorizationPrompt(kotlin/String): kotlin/Result<studio.hypertext.atproto.pds/AuthorizationPrompt> // studio.hypertext.atproto.pds/PdsOAuthService.loadAuthorizationPrompt|loadAuthorizationPrompt(kotlin.String){}[0]
+    abstract fun nonce(): kotlin/String // studio.hypertext.atproto.pds/PdsOAuthService.nonce|nonce(){}[0]
+    abstract suspend fun createPushedAuthorizationRequest(studio.hypertext.atproto.pds/PushedAuthorizationRequest): kotlin/Result<studio.hypertext.atproto.pds/PushedAuthorizationResponse> // studio.hypertext.atproto.pds/PdsOAuthService.createPushedAuthorizationRequest|createPushedAuthorizationRequest(studio.hypertext.atproto.pds.PushedAuthorizationRequest){}[0]
+    abstract suspend fun exchangeAuthorizationCode(studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest): kotlin/Result<studio.hypertext.atproto.pds/OAuthTokenResponse> // studio.hypertext.atproto.pds/PdsOAuthService.exchangeAuthorizationCode|exchangeAuthorizationCode(studio.hypertext.atproto.pds.AuthorizationCodeTokenRequest){}[0]
+    abstract suspend fun exchangeRefreshToken(studio.hypertext.atproto.pds/RefreshTokenGrantRequest): kotlin/Result<studio.hypertext.atproto.pds/OAuthTokenResponse> // studio.hypertext.atproto.pds/PdsOAuthService.exchangeRefreshToken|exchangeRefreshToken(studio.hypertext.atproto.pds.RefreshTokenGrantRequest){}[0]
+    abstract suspend fun revokeRefreshToken(studio.hypertext.atproto.pds/OAuthRevokeRequest): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.pds/PdsOAuthService.revokeRefreshToken|revokeRefreshToken(studio.hypertext.atproto.pds.OAuthRevokeRequest){}[0]
+}
+
+abstract interface studio.hypertext.atproto.pds/PdsRepoService { // studio.hypertext.atproto.pds/PdsRepoService|null[0]
+    abstract suspend fun createRecord(studio.hypertext.atproto.pds/CreateRecordRequest): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.pds/PdsRepoService.createRecord|createRecord(studio.hypertext.atproto.pds.CreateRecordRequest){}[0]
+    abstract suspend fun deleteRecord(studio.hypertext.atproto.pds/DeleteRecordRequest): kotlin/Result<kotlin/Boolean> // studio.hypertext.atproto.pds/PdsRepoService.deleteRecord|deleteRecord(studio.hypertext.atproto.pds.DeleteRecordRequest){}[0]
+    abstract suspend fun getRecord(studio.hypertext.atproto.pds/GetRecordRequest): kotlin/Result<studio.hypertext.atproto.repo/RepoRecord?> // studio.hypertext.atproto.pds/PdsRepoService.getRecord|getRecord(studio.hypertext.atproto.pds.GetRecordRequest){}[0]
+    abstract suspend fun listRecords(studio.hypertext.atproto.pds/ListRecordsRequest): kotlin/Result<studio.hypertext.atproto.pds/ListRecordsResponse> // studio.hypertext.atproto.pds/PdsRepoService.listRecords|listRecords(studio.hypertext.atproto.pds.ListRecordsRequest){}[0]
+    abstract suspend fun putRecord(studio.hypertext.atproto.pds/PutRecordRequest): kotlin/Result<studio.hypertext.atproto.repo/RepoWriteResult> // studio.hypertext.atproto.pds/PdsRepoService.putRecord|putRecord(studio.hypertext.atproto.pds.PutRecordRequest){}[0]
+}
+
+abstract interface studio.hypertext.atproto.pds/PdsSessionService { // studio.hypertext.atproto.pds/PdsSessionService|null[0]
+    abstract suspend fun createAccount(studio.hypertext.atproto.pds/CreateAccountRequest): kotlin/Result<studio.hypertext.atproto.pds/SessionResponse> // studio.hypertext.atproto.pds/PdsSessionService.createAccount|createAccount(studio.hypertext.atproto.pds.CreateAccountRequest){}[0]
+    abstract suspend fun createSession(studio.hypertext.atproto.pds/CreateSessionRequest): kotlin/Result<studio.hypertext.atproto.pds/SessionResponse> // studio.hypertext.atproto.pds/PdsSessionService.createSession|createSession(studio.hypertext.atproto.pds.CreateSessionRequest){}[0]
+    abstract suspend fun deleteSession(kotlin/String): kotlin/Result<kotlin/Unit> // studio.hypertext.atproto.pds/PdsSessionService.deleteSession|deleteSession(kotlin.String){}[0]
+    abstract suspend fun getSession(kotlin/String): kotlin/Result<studio.hypertext.atproto.pds/SessionInfoResponse> // studio.hypertext.atproto.pds/PdsSessionService.getSession|getSession(kotlin.String){}[0]
+    abstract suspend fun refreshSession(kotlin/String): kotlin/Result<studio.hypertext.atproto.pds/SessionResponse> // studio.hypertext.atproto.pds/PdsSessionService.refreshSession|refreshSession(kotlin.String){}[0]
+}
+
+abstract interface studio.hypertext.atproto.pds/PdsSyncService { // studio.hypertext.atproto.pds/PdsSyncService|null[0]
+    abstract suspend fun getLatestCommit(studio.hypertext.atproto.pds/GetLatestCommitRequest): kotlin/Result<studio.hypertext.atproto.pds/GetLatestCommitResponse?> // studio.hypertext.atproto.pds/PdsSyncService.getLatestCommit|getLatestCommit(studio.hypertext.atproto.pds.GetLatestCommitRequest){}[0]
+    abstract suspend fun getRepo(studio.hypertext.atproto.pds/GetRepoRequest): kotlin/Result<studio.hypertext.atproto.pds/RepoExportResponse?> // studio.hypertext.atproto.pds/PdsSyncService.getRepo|getRepo(studio.hypertext.atproto.pds.GetRepoRequest){}[0]
+    abstract suspend fun getRepoStatus(studio.hypertext.atproto.pds/GetRepoStatusRequest): kotlin/Result<studio.hypertext.atproto.pds/GetRepoStatusResponse?> // studio.hypertext.atproto.pds/PdsSyncService.getRepoStatus|getRepoStatus(studio.hypertext.atproto.pds.GetRepoStatusRequest){}[0]
+}
+
+final class studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest { // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+
+    final val clientAssertion // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.clientAssertion|{}clientAssertion[0]
+        final fun <get-clientAssertion>(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.clientAssertion.<get-clientAssertion>|<get-clientAssertion>(){}[0]
+    final val clientAssertionType // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.clientAssertionType|{}clientAssertionType[0]
+        final fun <get-clientAssertionType>(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.clientAssertionType.<get-clientAssertionType>|<get-clientAssertionType>(){}[0]
+    final val clientId // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val code // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.code|{}code[0]
+        final fun <get-code>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.code.<get-code>|<get-code>(){}[0]
+    final val codeVerifier // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.codeVerifier|{}codeVerifier[0]
+        final fun <get-codeVerifier>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.codeVerifier.<get-codeVerifier>|<get-codeVerifier>(){}[0]
+    final val dpopProof // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.dpopProof|{}dpopProof[0]
+        final fun <get-dpopProof>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.dpopProof.<get-dpopProof>|<get-dpopProof>(){}[0]
+    final val htu // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.htu|{}htu[0]
+        final fun <get-htu>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.htu.<get-htu>|<get-htu>(){}[0]
+    final val redirectUri // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.redirectUri|{}redirectUri[0]
+        final fun <get-redirectUri>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component6|component6(){}[0]
+    final fun component7(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component7|component7(){}[0]
+    final fun component8(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.component8|component8(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest> { // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest) // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.AuthorizationCodeTokenRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest> // studio.hypertext.atproto.pds/AuthorizationCodeTokenRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/AuthorizationDecisionRequest { // studio.hypertext.atproto.pds/AuthorizationDecisionRequest|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/Boolean) // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.Boolean){}[0]
+
+    final val approved // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.approved|{}approved[0]
+        final fun <get-approved>(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.approved.<get-approved>|<get-approved>(){}[0]
+    final val requestUri // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.requestUri|{}requestUri[0]
+        final fun <get-requestUri>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.requestUri.<get-requestUri>|<get-requestUri>(){}[0]
+    final val subjectDid // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.subjectDid|{}subjectDid[0]
+        final fun <get-subjectDid>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.subjectDid.<get-subjectDid>|<get-subjectDid>(){}[0]
+    final val subjectHandle // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.subjectHandle|{}subjectHandle[0]
+        final fun <get-subjectHandle>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.subjectHandle.<get-subjectHandle>|<get-subjectHandle>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/Boolean = ...): studio.hypertext.atproto.pds/AuthorizationDecisionRequest // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/AuthorizationDecisionRequest> { // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/AuthorizationDecisionRequest // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/AuthorizationDecisionRequest) // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.AuthorizationDecisionRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/AuthorizationDecisionRequest> // studio.hypertext.atproto.pds/AuthorizationDecisionRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/AuthorizationPrompt { // studio.hypertext.atproto.pds/AuthorizationPrompt|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String?, kotlin/String?) // studio.hypertext.atproto.pds/AuthorizationPrompt.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?){}[0]
+
+    final val clientId // studio.hypertext.atproto.pds/AuthorizationPrompt.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val clientName // studio.hypertext.atproto.pds/AuthorizationPrompt.clientName|{}clientName[0]
+        final fun <get-clientName>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.clientName.<get-clientName>|<get-clientName>(){}[0]
+    final val loginHint // studio.hypertext.atproto.pds/AuthorizationPrompt.loginHint|{}loginHint[0]
+        final fun <get-loginHint>(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPrompt.loginHint.<get-loginHint>|<get-loginHint>(){}[0]
+    final val redirectUri // studio.hypertext.atproto.pds/AuthorizationPrompt.redirectUri|{}redirectUri[0]
+        final fun <get-redirectUri>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+    final val requestUri // studio.hypertext.atproto.pds/AuthorizationPrompt.requestUri|{}requestUri[0]
+        final fun <get-requestUri>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.requestUri.<get-requestUri>|<get-requestUri>(){}[0]
+    final val scope // studio.hypertext.atproto.pds/AuthorizationPrompt.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.scope.<get-scope>|<get-scope>(){}[0]
+    final val state // studio.hypertext.atproto.pds/AuthorizationPrompt.state|{}state[0]
+        final fun <get-state>(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPrompt.state.<get-state>|<get-state>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPrompt.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPrompt.component7|component7(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/AuthorizationPrompt // studio.hypertext.atproto.pds/AuthorizationPrompt.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationPrompt.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/AuthorizationPrompt.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPrompt.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/AuthorizationPrompt> { // studio.hypertext.atproto.pds/AuthorizationPrompt.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/AuthorizationPrompt.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/AuthorizationPrompt.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/AuthorizationPrompt.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/AuthorizationPrompt // studio.hypertext.atproto.pds/AuthorizationPrompt.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/AuthorizationPrompt) // studio.hypertext.atproto.pds/AuthorizationPrompt.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.AuthorizationPrompt){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/AuthorizationPrompt.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/AuthorizationPrompt> // studio.hypertext.atproto.pds/AuthorizationPrompt.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/AuthorizationPromptResponse { // studio.hypertext.atproto.pds/AuthorizationPromptResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String?, kotlin/String?, kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/AuthorizationPromptResponse.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+
+    final val clientId // studio.hypertext.atproto.pds/AuthorizationPromptResponse.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val clientName // studio.hypertext.atproto.pds/AuthorizationPromptResponse.clientName|{}clientName[0]
+        final fun <get-clientName>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.clientName.<get-clientName>|<get-clientName>(){}[0]
+    final val did // studio.hypertext.atproto.pds/AuthorizationPromptResponse.did|{}did[0]
+        final fun <get-did>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.did.<get-did>|<get-did>(){}[0]
+    final val handle // studio.hypertext.atproto.pds/AuthorizationPromptResponse.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.handle.<get-handle>|<get-handle>(){}[0]
+    final val loginHint // studio.hypertext.atproto.pds/AuthorizationPromptResponse.loginHint|{}loginHint[0]
+        final fun <get-loginHint>(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPromptResponse.loginHint.<get-loginHint>|<get-loginHint>(){}[0]
+    final val redirectUri // studio.hypertext.atproto.pds/AuthorizationPromptResponse.redirectUri|{}redirectUri[0]
+        final fun <get-redirectUri>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+    final val scope // studio.hypertext.atproto.pds/AuthorizationPromptResponse.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.scope.<get-scope>|<get-scope>(){}[0]
+    final val state // studio.hypertext.atproto.pds/AuthorizationPromptResponse.state|{}state[0]
+        final fun <get-state>(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPromptResponse.state.<get-state>|<get-state>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component6|component6(){}[0]
+    final fun component7(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component7|component7(){}[0]
+    final fun component8(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.component8|component8(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/AuthorizationPromptResponse // studio.hypertext.atproto.pds/AuthorizationPromptResponse.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationPromptResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/AuthorizationPromptResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationPromptResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/AuthorizationPromptResponse> { // studio.hypertext.atproto.pds/AuthorizationPromptResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/AuthorizationPromptResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/AuthorizationPromptResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/AuthorizationPromptResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/AuthorizationPromptResponse // studio.hypertext.atproto.pds/AuthorizationPromptResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/AuthorizationPromptResponse) // studio.hypertext.atproto.pds/AuthorizationPromptResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.AuthorizationPromptResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/AuthorizationPromptResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/AuthorizationPromptResponse> // studio.hypertext.atproto.pds/AuthorizationPromptResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/AuthorizationServerMetadata { // studio.hypertext.atproto.pds/AuthorizationServerMetadata|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin.collections/List<kotlin/String>, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean = ..., kotlin/Boolean) // studio.hypertext.atproto.pds/AuthorizationServerMetadata.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val authorization_endpoint // studio.hypertext.atproto.pds/AuthorizationServerMetadata.authorization_endpoint|{}authorization_endpoint[0]
+        final fun <get-authorization_endpoint>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.authorization_endpoint.<get-authorization_endpoint>|<get-authorization_endpoint>(){}[0]
+    final val authorization_response_iss_parameter_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.authorization_response_iss_parameter_supported|{}authorization_response_iss_parameter_supported[0]
+        final fun <get-authorization_response_iss_parameter_supported>(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.authorization_response_iss_parameter_supported.<get-authorization_response_iss_parameter_supported>|<get-authorization_response_iss_parameter_supported>(){}[0]
+    final val client_id_metadata_document_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.client_id_metadata_document_supported|{}client_id_metadata_document_supported[0]
+        final fun <get-client_id_metadata_document_supported>(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.client_id_metadata_document_supported.<get-client_id_metadata_document_supported>|<get-client_id_metadata_document_supported>(){}[0]
+    final val code_challenge_methods_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.code_challenge_methods_supported|{}code_challenge_methods_supported[0]
+        final fun <get-code_challenge_methods_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.code_challenge_methods_supported.<get-code_challenge_methods_supported>|<get-code_challenge_methods_supported>(){}[0]
+    final val dpop_signing_alg_values_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.dpop_signing_alg_values_supported|{}dpop_signing_alg_values_supported[0]
+        final fun <get-dpop_signing_alg_values_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.dpop_signing_alg_values_supported.<get-dpop_signing_alg_values_supported>|<get-dpop_signing_alg_values_supported>(){}[0]
+    final val grant_types_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.grant_types_supported|{}grant_types_supported[0]
+        final fun <get-grant_types_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.grant_types_supported.<get-grant_types_supported>|<get-grant_types_supported>(){}[0]
+    final val issuer // studio.hypertext.atproto.pds/AuthorizationServerMetadata.issuer|{}issuer[0]
+        final fun <get-issuer>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.issuer.<get-issuer>|<get-issuer>(){}[0]
+    final val jwks_uri // studio.hypertext.atproto.pds/AuthorizationServerMetadata.jwks_uri|{}jwks_uri[0]
+        final fun <get-jwks_uri>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.jwks_uri.<get-jwks_uri>|<get-jwks_uri>(){}[0]
+    final val pushed_authorization_request_endpoint // studio.hypertext.atproto.pds/AuthorizationServerMetadata.pushed_authorization_request_endpoint|{}pushed_authorization_request_endpoint[0]
+        final fun <get-pushed_authorization_request_endpoint>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.pushed_authorization_request_endpoint.<get-pushed_authorization_request_endpoint>|<get-pushed_authorization_request_endpoint>(){}[0]
+    final val require_pushed_authorization_requests // studio.hypertext.atproto.pds/AuthorizationServerMetadata.require_pushed_authorization_requests|{}require_pushed_authorization_requests[0]
+        final fun <get-require_pushed_authorization_requests>(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.require_pushed_authorization_requests.<get-require_pushed_authorization_requests>|<get-require_pushed_authorization_requests>(){}[0]
+    final val require_request_uri_registration // studio.hypertext.atproto.pds/AuthorizationServerMetadata.require_request_uri_registration|{}require_request_uri_registration[0]
+        final fun <get-require_request_uri_registration>(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.require_request_uri_registration.<get-require_request_uri_registration>|<get-require_request_uri_registration>(){}[0]
+    final val response_types_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.response_types_supported|{}response_types_supported[0]
+        final fun <get-response_types_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.response_types_supported.<get-response_types_supported>|<get-response_types_supported>(){}[0]
+    final val revocation_endpoint // studio.hypertext.atproto.pds/AuthorizationServerMetadata.revocation_endpoint|{}revocation_endpoint[0]
+        final fun <get-revocation_endpoint>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.revocation_endpoint.<get-revocation_endpoint>|<get-revocation_endpoint>(){}[0]
+    final val scopes_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.scopes_supported|{}scopes_supported[0]
+        final fun <get-scopes_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.scopes_supported.<get-scopes_supported>|<get-scopes_supported>(){}[0]
+    final val token_endpoint // studio.hypertext.atproto.pds/AuthorizationServerMetadata.token_endpoint|{}token_endpoint[0]
+        final fun <get-token_endpoint>(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.token_endpoint.<get-token_endpoint>|<get-token_endpoint>(){}[0]
+    final val token_endpoint_auth_methods_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.token_endpoint_auth_methods_supported|{}token_endpoint_auth_methods_supported[0]
+        final fun <get-token_endpoint_auth_methods_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.token_endpoint_auth_methods_supported.<get-token_endpoint_auth_methods_supported>|<get-token_endpoint_auth_methods_supported>(){}[0]
+    final val token_endpoint_auth_signing_alg_values_supported // studio.hypertext.atproto.pds/AuthorizationServerMetadata.token_endpoint_auth_signing_alg_values_supported|{}token_endpoint_auth_signing_alg_values_supported[0]
+        final fun <get-token_endpoint_auth_signing_alg_values_supported>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.token_endpoint_auth_signing_alg_values_supported.<get-token_endpoint_auth_signing_alg_values_supported>|<get-token_endpoint_auth_signing_alg_values_supported>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component1|component1(){}[0]
+    final fun component10(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component10|component10(){}[0]
+    final fun component11(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component11|component11(){}[0]
+    final fun component12(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component12|component12(){}[0]
+    final fun component13(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component13|component13(){}[0]
+    final fun component14(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component14|component14(){}[0]
+    final fun component15(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component15|component15(){}[0]
+    final fun component16(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component16|component16(){}[0]
+    final fun component17(): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component17|component17(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component5|component5(){}[0]
+    final fun component6(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component6|component6(){}[0]
+    final fun component7(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component7|component7(){}[0]
+    final fun component8(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component8|component8(){}[0]
+    final fun component9(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): studio.hypertext.atproto.pds/AuthorizationServerMetadata // studio.hypertext.atproto.pds/AuthorizationServerMetadata.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/AuthorizationServerMetadata.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/AuthorizationServerMetadata.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/AuthorizationServerMetadata.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/AuthorizationServerMetadata> { // studio.hypertext.atproto.pds/AuthorizationServerMetadata.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/AuthorizationServerMetadata.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/AuthorizationServerMetadata.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/AuthorizationServerMetadata // studio.hypertext.atproto.pds/AuthorizationServerMetadata.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/AuthorizationServerMetadata) // studio.hypertext.atproto.pds/AuthorizationServerMetadata.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.AuthorizationServerMetadata){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/AuthorizationServerMetadata.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.pds/AuthorizationServerMetadata.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/AuthorizationServerMetadata> // studio.hypertext.atproto.pds/AuthorizationServerMetadata.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/BlobDownload { // studio.hypertext.atproto.pds/BlobDownload|null[0]
+    constructor <init>(kotlin/String, kotlin/ByteArray) // studio.hypertext.atproto.pds/BlobDownload.<init>|<init>(kotlin.String;kotlin.ByteArray){}[0]
+
+    final val bytes // studio.hypertext.atproto.pds/BlobDownload.bytes|{}bytes[0]
+        final fun <get-bytes>(): kotlin/ByteArray // studio.hypertext.atproto.pds/BlobDownload.bytes.<get-bytes>|<get-bytes>(){}[0]
+    final val contentType // studio.hypertext.atproto.pds/BlobDownload.contentType|{}contentType[0]
+        final fun <get-contentType>(): kotlin/String // studio.hypertext.atproto.pds/BlobDownload.contentType.<get-contentType>|<get-contentType>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/BlobDownload.component1|component1(){}[0]
+    final fun component2(): kotlin/ByteArray // studio.hypertext.atproto.pds/BlobDownload.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/ByteArray = ...): studio.hypertext.atproto.pds/BlobDownload // studio.hypertext.atproto.pds/BlobDownload.copy|copy(kotlin.String;kotlin.ByteArray){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/BlobDownload.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/BlobDownload.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/BlobDownload.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.pds/BlobRef { // studio.hypertext.atproto.pds/BlobRef|null[0]
+    constructor <init>(kotlin/String = ..., studio.hypertext.atproto.pds/CidLink, kotlin/String, kotlin/Long) // studio.hypertext.atproto.pds/BlobRef.<init>|<init>(kotlin.String;studio.hypertext.atproto.pds.CidLink;kotlin.String;kotlin.Long){}[0]
+
+    final val mimeType // studio.hypertext.atproto.pds/BlobRef.mimeType|{}mimeType[0]
+        final fun <get-mimeType>(): kotlin/String // studio.hypertext.atproto.pds/BlobRef.mimeType.<get-mimeType>|<get-mimeType>(){}[0]
+    final val ref // studio.hypertext.atproto.pds/BlobRef.ref|{}ref[0]
+        final fun <get-ref>(): studio.hypertext.atproto.pds/CidLink // studio.hypertext.atproto.pds/BlobRef.ref.<get-ref>|<get-ref>(){}[0]
+    final val size // studio.hypertext.atproto.pds/BlobRef.size|{}size[0]
+        final fun <get-size>(): kotlin/Long // studio.hypertext.atproto.pds/BlobRef.size.<get-size>|<get-size>(){}[0]
+    final val type // studio.hypertext.atproto.pds/BlobRef.type|{}type[0]
+        final fun <get-type>(): kotlin/String // studio.hypertext.atproto.pds/BlobRef.type.<get-type>|<get-type>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/BlobRef.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.pds/CidLink // studio.hypertext.atproto.pds/BlobRef.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/BlobRef.component3|component3(){}[0]
+    final fun component4(): kotlin/Long // studio.hypertext.atproto.pds/BlobRef.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., studio.hypertext.atproto.pds/CidLink = ..., kotlin/String = ..., kotlin/Long = ...): studio.hypertext.atproto.pds/BlobRef // studio.hypertext.atproto.pds/BlobRef.copy|copy(kotlin.String;studio.hypertext.atproto.pds.CidLink;kotlin.String;kotlin.Long){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/BlobRef.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/BlobRef.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/BlobRef.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/BlobRef> { // studio.hypertext.atproto.pds/BlobRef.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/BlobRef.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/BlobRef.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/BlobRef.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/BlobRef // studio.hypertext.atproto.pds/BlobRef.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/BlobRef) // studio.hypertext.atproto.pds/BlobRef.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.BlobRef){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/BlobRef.Companion|null[0]
+        final const val TYPE // studio.hypertext.atproto.pds/BlobRef.Companion.TYPE|{}TYPE[0]
+            final fun <get-TYPE>(): kotlin/String // studio.hypertext.atproto.pds/BlobRef.Companion.TYPE.<get-TYPE>|<get-TYPE>(){}[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/BlobRef> // studio.hypertext.atproto.pds/BlobRef.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/CidLink { // studio.hypertext.atproto.pds/CidLink|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/Cid) // studio.hypertext.atproto.pds/CidLink.<init>|<init>(studio.hypertext.atproto.repo.Cid){}[0]
+
+    final val cid // studio.hypertext.atproto.pds/CidLink.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.pds/CidLink.cid.<get-cid>|<get-cid>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.pds/CidLink.component1|component1(){}[0]
+    final fun copy(studio.hypertext.atproto.repo/Cid = ...): studio.hypertext.atproto.pds/CidLink // studio.hypertext.atproto.pds/CidLink.copy|copy(studio.hypertext.atproto.repo.Cid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/CidLink.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/CidLink.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/CidLink.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/CidLink> { // studio.hypertext.atproto.pds/CidLink.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/CidLink.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/CidLink.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/CidLink.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/CidLink // studio.hypertext.atproto.pds/CidLink.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/CidLink) // studio.hypertext.atproto.pds/CidLink.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.CidLink){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/CidLink.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/CidLink> // studio.hypertext.atproto.pds/CidLink.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/CreateAccountRequest { // studio.hypertext.atproto.pds/CreateAccountRequest|null[0]
+    constructor <init>(kotlin/String? = ..., kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...) // studio.hypertext.atproto.pds/CreateAccountRequest.<init>|<init>(kotlin.String?;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+
+    final val did // studio.hypertext.atproto.pds/CreateAccountRequest.did|{}did[0]
+        final fun <get-did>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.did.<get-did>|<get-did>(){}[0]
+    final val email // studio.hypertext.atproto.pds/CreateAccountRequest.email|{}email[0]
+        final fun <get-email>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.email.<get-email>|<get-email>(){}[0]
+    final val handle // studio.hypertext.atproto.pds/CreateAccountRequest.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String // studio.hypertext.atproto.pds/CreateAccountRequest.handle.<get-handle>|<get-handle>(){}[0]
+    final val inviteCode // studio.hypertext.atproto.pds/CreateAccountRequest.inviteCode|{}inviteCode[0]
+        final fun <get-inviteCode>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.inviteCode.<get-inviteCode>|<get-inviteCode>(){}[0]
+    final val password // studio.hypertext.atproto.pds/CreateAccountRequest.password|{}password[0]
+        final fun <get-password>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.password.<get-password>|<get-password>(){}[0]
+    final val plcOp // studio.hypertext.atproto.pds/CreateAccountRequest.plcOp|{}plcOp[0]
+        final fun <get-plcOp>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.plcOp.<get-plcOp>|<get-plcOp>(){}[0]
+    final val recoveryKey // studio.hypertext.atproto.pds/CreateAccountRequest.recoveryKey|{}recoveryKey[0]
+        final fun <get-recoveryKey>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.recoveryKey.<get-recoveryKey>|<get-recoveryKey>(){}[0]
+    final val verificationCode // studio.hypertext.atproto.pds/CreateAccountRequest.verificationCode|{}verificationCode[0]
+        final fun <get-verificationCode>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.verificationCode.<get-verificationCode>|<get-verificationCode>(){}[0]
+    final val verificationPhone // studio.hypertext.atproto.pds/CreateAccountRequest.verificationPhone|{}verificationPhone[0]
+        final fun <get-verificationPhone>(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.verificationPhone.<get-verificationPhone>|<get-verificationPhone>(){}[0]
+
+    final fun component1(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/CreateAccountRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component8|component8(){}[0]
+    final fun component9(): kotlin/String? // studio.hypertext.atproto.pds/CreateAccountRequest.component9|component9(){}[0]
+    final fun copy(kotlin/String? = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/CreateAccountRequest // studio.hypertext.atproto.pds/CreateAccountRequest.copy|copy(kotlin.String?;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/CreateAccountRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/CreateAccountRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/CreateAccountRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/CreateAccountRequest> { // studio.hypertext.atproto.pds/CreateAccountRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/CreateAccountRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/CreateAccountRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/CreateAccountRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/CreateAccountRequest // studio.hypertext.atproto.pds/CreateAccountRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/CreateAccountRequest) // studio.hypertext.atproto.pds/CreateAccountRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.CreateAccountRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/CreateAccountRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/CreateAccountRequest> // studio.hypertext.atproto.pds/CreateAccountRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/CreateRecordRequest { // studio.hypertext.atproto.pds/CreateRecordRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, kotlinx.serialization.json/JsonObject, studio.hypertext.atproto.syntax/RecordKey? = ..., kotlin/Boolean? = ..., kotlin/String? = ...) // studio.hypertext.atproto.pds/CreateRecordRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlinx.serialization.json.JsonObject;studio.hypertext.atproto.syntax.RecordKey?;kotlin.Boolean?;kotlin.String?){}[0]
+
+    final val collection // studio.hypertext.atproto.pds/CreateRecordRequest.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/CreateRecordRequest.collection.<get-collection>|<get-collection>(){}[0]
+    final val record // studio.hypertext.atproto.pds/CreateRecordRequest.record|{}record[0]
+        final fun <get-record>(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.pds/CreateRecordRequest.record.<get-record>|<get-record>(){}[0]
+    final val recordKey // studio.hypertext.atproto.pds/CreateRecordRequest.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey? // studio.hypertext.atproto.pds/CreateRecordRequest.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+    final val repo // studio.hypertext.atproto.pds/CreateRecordRequest.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/CreateRecordRequest.repo.<get-repo>|<get-repo>(){}[0]
+    final val swapCommit // studio.hypertext.atproto.pds/CreateRecordRequest.swapCommit|{}swapCommit[0]
+        final fun <get-swapCommit>(): kotlin/String? // studio.hypertext.atproto.pds/CreateRecordRequest.swapCommit.<get-swapCommit>|<get-swapCommit>(){}[0]
+    final val validate // studio.hypertext.atproto.pds/CreateRecordRequest.validate|{}validate[0]
+        final fun <get-validate>(): kotlin/Boolean? // studio.hypertext.atproto.pds/CreateRecordRequest.validate.<get-validate>|<get-validate>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/CreateRecordRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/CreateRecordRequest.component2|component2(){}[0]
+    final fun component3(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.pds/CreateRecordRequest.component3|component3(){}[0]
+    final fun component4(): studio.hypertext.atproto.syntax/RecordKey? // studio.hypertext.atproto.pds/CreateRecordRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean? // studio.hypertext.atproto.pds/CreateRecordRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/CreateRecordRequest.component6|component6(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Nsid = ..., kotlinx.serialization.json/JsonObject = ..., studio.hypertext.atproto.syntax/RecordKey? = ..., kotlin/Boolean? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/CreateRecordRequest // studio.hypertext.atproto.pds/CreateRecordRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlinx.serialization.json.JsonObject;studio.hypertext.atproto.syntax.RecordKey?;kotlin.Boolean?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/CreateRecordRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/CreateRecordRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/CreateRecordRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/CreateRecordRequest> { // studio.hypertext.atproto.pds/CreateRecordRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/CreateRecordRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/CreateRecordRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/CreateRecordRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/CreateRecordRequest // studio.hypertext.atproto.pds/CreateRecordRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/CreateRecordRequest) // studio.hypertext.atproto.pds/CreateRecordRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.CreateRecordRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/CreateRecordRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/CreateRecordRequest> // studio.hypertext.atproto.pds/CreateRecordRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/CreateSessionRequest { // studio.hypertext.atproto.pds/CreateSessionRequest|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/Boolean? = ...) // studio.hypertext.atproto.pds/CreateSessionRequest.<init>|<init>(kotlin.String;kotlin.String;kotlin.String?;kotlin.Boolean?){}[0]
+
+    final val allowTakendown // studio.hypertext.atproto.pds/CreateSessionRequest.allowTakendown|{}allowTakendown[0]
+        final fun <get-allowTakendown>(): kotlin/Boolean? // studio.hypertext.atproto.pds/CreateSessionRequest.allowTakendown.<get-allowTakendown>|<get-allowTakendown>(){}[0]
+    final val authFactorToken // studio.hypertext.atproto.pds/CreateSessionRequest.authFactorToken|{}authFactorToken[0]
+        final fun <get-authFactorToken>(): kotlin/String? // studio.hypertext.atproto.pds/CreateSessionRequest.authFactorToken.<get-authFactorToken>|<get-authFactorToken>(){}[0]
+    final val identifier // studio.hypertext.atproto.pds/CreateSessionRequest.identifier|{}identifier[0]
+        final fun <get-identifier>(): kotlin/String // studio.hypertext.atproto.pds/CreateSessionRequest.identifier.<get-identifier>|<get-identifier>(){}[0]
+    final val password // studio.hypertext.atproto.pds/CreateSessionRequest.password|{}password[0]
+        final fun <get-password>(): kotlin/String // studio.hypertext.atproto.pds/CreateSessionRequest.password.<get-password>|<get-password>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/CreateSessionRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/CreateSessionRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.pds/CreateSessionRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean? // studio.hypertext.atproto.pds/CreateSessionRequest.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/Boolean? = ...): studio.hypertext.atproto.pds/CreateSessionRequest // studio.hypertext.atproto.pds/CreateSessionRequest.copy|copy(kotlin.String;kotlin.String;kotlin.String?;kotlin.Boolean?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/CreateSessionRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/CreateSessionRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/CreateSessionRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/CreateSessionRequest> { // studio.hypertext.atproto.pds/CreateSessionRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/CreateSessionRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/CreateSessionRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/CreateSessionRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/CreateSessionRequest // studio.hypertext.atproto.pds/CreateSessionRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/CreateSessionRequest) // studio.hypertext.atproto.pds/CreateSessionRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.CreateSessionRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/CreateSessionRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/CreateSessionRequest> // studio.hypertext.atproto.pds/CreateSessionRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/DeleteRecordRequest { // studio.hypertext.atproto.pds/DeleteRecordRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey, kotlin/String? = ..., kotlin/String? = ...) // studio.hypertext.atproto.pds/DeleteRecordRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;kotlin.String?;kotlin.String?){}[0]
+
+    final val collection // studio.hypertext.atproto.pds/DeleteRecordRequest.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/DeleteRecordRequest.collection.<get-collection>|<get-collection>(){}[0]
+    final val recordKey // studio.hypertext.atproto.pds/DeleteRecordRequest.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.pds/DeleteRecordRequest.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+    final val repo // studio.hypertext.atproto.pds/DeleteRecordRequest.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/DeleteRecordRequest.repo.<get-repo>|<get-repo>(){}[0]
+    final val swapCommit // studio.hypertext.atproto.pds/DeleteRecordRequest.swapCommit|{}swapCommit[0]
+        final fun <get-swapCommit>(): kotlin/String? // studio.hypertext.atproto.pds/DeleteRecordRequest.swapCommit.<get-swapCommit>|<get-swapCommit>(){}[0]
+    final val swapRecord // studio.hypertext.atproto.pds/DeleteRecordRequest.swapRecord|{}swapRecord[0]
+        final fun <get-swapRecord>(): kotlin/String? // studio.hypertext.atproto.pds/DeleteRecordRequest.swapRecord.<get-swapRecord>|<get-swapRecord>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/DeleteRecordRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/DeleteRecordRequest.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.pds/DeleteRecordRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/DeleteRecordRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/String? // studio.hypertext.atproto.pds/DeleteRecordRequest.component5|component5(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Nsid = ..., studio.hypertext.atproto.syntax/RecordKey = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/DeleteRecordRequest // studio.hypertext.atproto.pds/DeleteRecordRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/DeleteRecordRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/DeleteRecordRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/DeleteRecordRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/DeleteRecordRequest> { // studio.hypertext.atproto.pds/DeleteRecordRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/DeleteRecordRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/DeleteRecordRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/DeleteRecordRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/DeleteRecordRequest // studio.hypertext.atproto.pds/DeleteRecordRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/DeleteRecordRequest) // studio.hypertext.atproto.pds/DeleteRecordRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.DeleteRecordRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/DeleteRecordRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/DeleteRecordRequest> // studio.hypertext.atproto.pds/DeleteRecordRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/DescribeRepoResponse { // studio.hypertext.atproto.pds/DescribeRepoResponse|null[0]
+    constructor <init>(kotlin/String, studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.identity/DidDocument, kotlin.collections/List<studio.hypertext.atproto.syntax/Nsid>, kotlin/Boolean) // studio.hypertext.atproto.pds/DescribeRepoResponse.<init>|<init>(kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.identity.DidDocument;kotlin.collections.List<studio.hypertext.atproto.syntax.Nsid>;kotlin.Boolean){}[0]
+
+    final val collections // studio.hypertext.atproto.pds/DescribeRepoResponse.collections|{}collections[0]
+        final fun <get-collections>(): kotlin.collections/List<studio.hypertext.atproto.syntax/Nsid> // studio.hypertext.atproto.pds/DescribeRepoResponse.collections.<get-collections>|<get-collections>(){}[0]
+    final val did // studio.hypertext.atproto.pds/DescribeRepoResponse.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/DescribeRepoResponse.did.<get-did>|<get-did>(){}[0]
+    final val didDoc // studio.hypertext.atproto.pds/DescribeRepoResponse.didDoc|{}didDoc[0]
+        final fun <get-didDoc>(): studio.hypertext.atproto.identity/DidDocument // studio.hypertext.atproto.pds/DescribeRepoResponse.didDoc.<get-didDoc>|<get-didDoc>(){}[0]
+    final val handle // studio.hypertext.atproto.pds/DescribeRepoResponse.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String // studio.hypertext.atproto.pds/DescribeRepoResponse.handle.<get-handle>|<get-handle>(){}[0]
+    final val handleIsCorrect // studio.hypertext.atproto.pds/DescribeRepoResponse.handleIsCorrect|{}handleIsCorrect[0]
+        final fun <get-handleIsCorrect>(): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeRepoResponse.handleIsCorrect.<get-handleIsCorrect>|<get-handleIsCorrect>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/DescribeRepoResponse.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/DescribeRepoResponse.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/DidDocument // studio.hypertext.atproto.pds/DescribeRepoResponse.component3|component3(){}[0]
+    final fun component4(): kotlin.collections/List<studio.hypertext.atproto.syntax/Nsid> // studio.hypertext.atproto.pds/DescribeRepoResponse.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeRepoResponse.component5|component5(){}[0]
+    final fun copy(kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.identity/DidDocument = ..., kotlin.collections/List<studio.hypertext.atproto.syntax/Nsid> = ..., kotlin/Boolean = ...): studio.hypertext.atproto.pds/DescribeRepoResponse // studio.hypertext.atproto.pds/DescribeRepoResponse.copy|copy(kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.identity.DidDocument;kotlin.collections.List<studio.hypertext.atproto.syntax.Nsid>;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeRepoResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/DescribeRepoResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/DescribeRepoResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/DescribeRepoResponse> { // studio.hypertext.atproto.pds/DescribeRepoResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/DescribeRepoResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/DescribeRepoResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/DescribeRepoResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/DescribeRepoResponse // studio.hypertext.atproto.pds/DescribeRepoResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/DescribeRepoResponse) // studio.hypertext.atproto.pds/DescribeRepoResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.DescribeRepoResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/DescribeRepoResponse.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.pds/DescribeRepoResponse.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/DescribeRepoResponse> // studio.hypertext.atproto.pds/DescribeRepoResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/DescribeServerResponse { // studio.hypertext.atproto.pds/DescribeServerResponse|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<kotlin/String>, kotlin/Boolean, kotlin/Boolean) // studio.hypertext.atproto.pds/DescribeServerResponse.<init>|<init>(kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val availableUserDomains // studio.hypertext.atproto.pds/DescribeServerResponse.availableUserDomains|{}availableUserDomains[0]
+        final fun <get-availableUserDomains>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/DescribeServerResponse.availableUserDomains.<get-availableUserDomains>|<get-availableUserDomains>(){}[0]
+    final val did // studio.hypertext.atproto.pds/DescribeServerResponse.did|{}did[0]
+        final fun <get-did>(): kotlin/String // studio.hypertext.atproto.pds/DescribeServerResponse.did.<get-did>|<get-did>(){}[0]
+    final val inviteCodeRequired // studio.hypertext.atproto.pds/DescribeServerResponse.inviteCodeRequired|{}inviteCodeRequired[0]
+        final fun <get-inviteCodeRequired>(): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeServerResponse.inviteCodeRequired.<get-inviteCodeRequired>|<get-inviteCodeRequired>(){}[0]
+    final val phoneVerificationRequired // studio.hypertext.atproto.pds/DescribeServerResponse.phoneVerificationRequired|{}phoneVerificationRequired[0]
+        final fun <get-phoneVerificationRequired>(): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeServerResponse.phoneVerificationRequired.<get-phoneVerificationRequired>|<get-phoneVerificationRequired>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/DescribeServerResponse.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/DescribeServerResponse.component2|component2(){}[0]
+    final fun component3(): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeServerResponse.component3|component3(){}[0]
+    final fun component4(): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeServerResponse.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<kotlin/String> = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): studio.hypertext.atproto.pds/DescribeServerResponse // studio.hypertext.atproto.pds/DescribeServerResponse.copy|copy(kotlin.String;kotlin.collections.List<kotlin.String>;kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/DescribeServerResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/DescribeServerResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/DescribeServerResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/DescribeServerResponse> { // studio.hypertext.atproto.pds/DescribeServerResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/DescribeServerResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/DescribeServerResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/DescribeServerResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/DescribeServerResponse // studio.hypertext.atproto.pds/DescribeServerResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/DescribeServerResponse) // studio.hypertext.atproto.pds/DescribeServerResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.DescribeServerResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/DescribeServerResponse.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.pds/DescribeServerResponse.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/DescribeServerResponse> // studio.hypertext.atproto.pds/DescribeServerResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/EmptyPdsResponse { // studio.hypertext.atproto.pds/EmptyPdsResponse|null[0]
+    constructor <init>() // studio.hypertext.atproto.pds/EmptyPdsResponse.<init>|<init>(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/EmptyPdsResponse> { // studio.hypertext.atproto.pds/EmptyPdsResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/EmptyPdsResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/EmptyPdsResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/EmptyPdsResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/EmptyPdsResponse // studio.hypertext.atproto.pds/EmptyPdsResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/EmptyPdsResponse) // studio.hypertext.atproto.pds/EmptyPdsResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.EmptyPdsResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/EmptyPdsResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/EmptyPdsResponse> // studio.hypertext.atproto.pds/EmptyPdsResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/GetBlobRequest { // studio.hypertext.atproto.pds/GetBlobRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.repo/Cid) // studio.hypertext.atproto.pds/GetBlobRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid){}[0]
+
+    final val cid // studio.hypertext.atproto.pds/GetBlobRequest.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.pds/GetBlobRequest.cid.<get-cid>|<get-cid>(){}[0]
+    final val did // studio.hypertext.atproto.pds/GetBlobRequest.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetBlobRequest.did.<get-did>|<get-did>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetBlobRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.pds/GetBlobRequest.component2|component2(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.repo/Cid = ...): studio.hypertext.atproto.pds/GetBlobRequest // studio.hypertext.atproto.pds/GetBlobRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.repo.Cid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetBlobRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetBlobRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetBlobRequest.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.pds/GetLatestCommitRequest { // studio.hypertext.atproto.pds/GetLatestCommitRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.pds/GetLatestCommitRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+
+    final val did // studio.hypertext.atproto.pds/GetLatestCommitRequest.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetLatestCommitRequest.did.<get-did>|<get-did>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetLatestCommitRequest.component1|component1(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ...): studio.hypertext.atproto.pds/GetLatestCommitRequest // studio.hypertext.atproto.pds/GetLatestCommitRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetLatestCommitRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetLatestCommitRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetLatestCommitRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/GetLatestCommitRequest> { // studio.hypertext.atproto.pds/GetLatestCommitRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/GetLatestCommitRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/GetLatestCommitRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/GetLatestCommitRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/GetLatestCommitRequest // studio.hypertext.atproto.pds/GetLatestCommitRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/GetLatestCommitRequest) // studio.hypertext.atproto.pds/GetLatestCommitRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.GetLatestCommitRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/GetLatestCommitRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/GetLatestCommitRequest> // studio.hypertext.atproto.pds/GetLatestCommitRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/GetLatestCommitResponse { // studio.hypertext.atproto.pds/GetLatestCommitResponse|null[0]
+    constructor <init>(studio.hypertext.atproto.repo/Cid, studio.hypertext.atproto.syntax/Tid) // studio.hypertext.atproto.pds/GetLatestCommitResponse.<init>|<init>(studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.syntax.Tid){}[0]
+
+    final val cid // studio.hypertext.atproto.pds/GetLatestCommitResponse.cid|{}cid[0]
+        final fun <get-cid>(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.pds/GetLatestCommitResponse.cid.<get-cid>|<get-cid>(){}[0]
+    final val rev // studio.hypertext.atproto.pds/GetLatestCommitResponse.rev|{}rev[0]
+        final fun <get-rev>(): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.pds/GetLatestCommitResponse.rev.<get-rev>|<get-rev>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.repo/Cid // studio.hypertext.atproto.pds/GetLatestCommitResponse.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Tid // studio.hypertext.atproto.pds/GetLatestCommitResponse.component2|component2(){}[0]
+    final fun copy(studio.hypertext.atproto.repo/Cid = ..., studio.hypertext.atproto.syntax/Tid = ...): studio.hypertext.atproto.pds/GetLatestCommitResponse // studio.hypertext.atproto.pds/GetLatestCommitResponse.copy|copy(studio.hypertext.atproto.repo.Cid;studio.hypertext.atproto.syntax.Tid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetLatestCommitResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetLatestCommitResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetLatestCommitResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/GetLatestCommitResponse> { // studio.hypertext.atproto.pds/GetLatestCommitResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/GetLatestCommitResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/GetLatestCommitResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/GetLatestCommitResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/GetLatestCommitResponse // studio.hypertext.atproto.pds/GetLatestCommitResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/GetLatestCommitResponse) // studio.hypertext.atproto.pds/GetLatestCommitResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.GetLatestCommitResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/GetLatestCommitResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/GetLatestCommitResponse> // studio.hypertext.atproto.pds/GetLatestCommitResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/GetRecordRequest { // studio.hypertext.atproto.pds/GetRecordRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey, kotlin/String? = ...) // studio.hypertext.atproto.pds/GetRecordRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;kotlin.String?){}[0]
+
+    final val cid // studio.hypertext.atproto.pds/GetRecordRequest.cid|{}cid[0]
+        final fun <get-cid>(): kotlin/String? // studio.hypertext.atproto.pds/GetRecordRequest.cid.<get-cid>|<get-cid>(){}[0]
+    final val collection // studio.hypertext.atproto.pds/GetRecordRequest.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/GetRecordRequest.collection.<get-collection>|<get-collection>(){}[0]
+    final val recordKey // studio.hypertext.atproto.pds/GetRecordRequest.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.pds/GetRecordRequest.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+    final val repo // studio.hypertext.atproto.pds/GetRecordRequest.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRecordRequest.repo.<get-repo>|<get-repo>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRecordRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/GetRecordRequest.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.pds/GetRecordRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/GetRecordRequest.component4|component4(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Nsid = ..., studio.hypertext.atproto.syntax/RecordKey = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/GetRecordRequest // studio.hypertext.atproto.pds/GetRecordRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetRecordRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetRecordRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetRecordRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/GetRecordRequest> { // studio.hypertext.atproto.pds/GetRecordRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/GetRecordRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/GetRecordRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/GetRecordRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/GetRecordRequest // studio.hypertext.atproto.pds/GetRecordRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/GetRecordRequest) // studio.hypertext.atproto.pds/GetRecordRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.GetRecordRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/GetRecordRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/GetRecordRequest> // studio.hypertext.atproto.pds/GetRecordRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/GetRepoRequest { // studio.hypertext.atproto.pds/GetRepoRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Tid? = ...) // studio.hypertext.atproto.pds/GetRepoRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Tid?){}[0]
+
+    final val did // studio.hypertext.atproto.pds/GetRepoRequest.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRepoRequest.did.<get-did>|<get-did>(){}[0]
+    final val since // studio.hypertext.atproto.pds/GetRepoRequest.since|{}since[0]
+        final fun <get-since>(): studio.hypertext.atproto.syntax/Tid? // studio.hypertext.atproto.pds/GetRepoRequest.since.<get-since>|<get-since>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRepoRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Tid? // studio.hypertext.atproto.pds/GetRepoRequest.component2|component2(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Tid? = ...): studio.hypertext.atproto.pds/GetRepoRequest // studio.hypertext.atproto.pds/GetRepoRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Tid?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetRepoRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetRepoRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetRepoRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/GetRepoRequest> { // studio.hypertext.atproto.pds/GetRepoRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/GetRepoRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/GetRepoRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/GetRepoRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/GetRepoRequest // studio.hypertext.atproto.pds/GetRepoRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/GetRepoRequest) // studio.hypertext.atproto.pds/GetRepoRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.GetRepoRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/GetRepoRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/GetRepoRequest> // studio.hypertext.atproto.pds/GetRepoRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/GetRepoStatusRequest { // studio.hypertext.atproto.pds/GetRepoStatusRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.pds/GetRepoStatusRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+
+    final val did // studio.hypertext.atproto.pds/GetRepoStatusRequest.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRepoStatusRequest.did.<get-did>|<get-did>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRepoStatusRequest.component1|component1(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ...): studio.hypertext.atproto.pds/GetRepoStatusRequest // studio.hypertext.atproto.pds/GetRepoStatusRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetRepoStatusRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetRepoStatusRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetRepoStatusRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/GetRepoStatusRequest> { // studio.hypertext.atproto.pds/GetRepoStatusRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/GetRepoStatusRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/GetRepoStatusRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/GetRepoStatusRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/GetRepoStatusRequest // studio.hypertext.atproto.pds/GetRepoStatusRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/GetRepoStatusRequest) // studio.hypertext.atproto.pds/GetRepoStatusRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.GetRepoStatusRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/GetRepoStatusRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/GetRepoStatusRequest> // studio.hypertext.atproto.pds/GetRepoStatusRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/GetRepoStatusResponse { // studio.hypertext.atproto.pds/GetRepoStatusResponse|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/Boolean, kotlin/String? = ..., studio.hypertext.atproto.syntax/Tid? = ...) // studio.hypertext.atproto.pds/GetRepoStatusResponse.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Boolean;kotlin.String?;studio.hypertext.atproto.syntax.Tid?){}[0]
+
+    final val active // studio.hypertext.atproto.pds/GetRepoStatusResponse.active|{}active[0]
+        final fun <get-active>(): kotlin/Boolean // studio.hypertext.atproto.pds/GetRepoStatusResponse.active.<get-active>|<get-active>(){}[0]
+    final val did // studio.hypertext.atproto.pds/GetRepoStatusResponse.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRepoStatusResponse.did.<get-did>|<get-did>(){}[0]
+    final val rev // studio.hypertext.atproto.pds/GetRepoStatusResponse.rev|{}rev[0]
+        final fun <get-rev>(): studio.hypertext.atproto.syntax/Tid? // studio.hypertext.atproto.pds/GetRepoStatusResponse.rev.<get-rev>|<get-rev>(){}[0]
+    final val status // studio.hypertext.atproto.pds/GetRepoStatusResponse.status|{}status[0]
+        final fun <get-status>(): kotlin/String? // studio.hypertext.atproto.pds/GetRepoStatusResponse.status.<get-status>|<get-status>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/GetRepoStatusResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // studio.hypertext.atproto.pds/GetRepoStatusResponse.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.pds/GetRepoStatusResponse.component3|component3(){}[0]
+    final fun component4(): studio.hypertext.atproto.syntax/Tid? // studio.hypertext.atproto.pds/GetRepoStatusResponse.component4|component4(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/Boolean = ..., kotlin/String? = ..., studio.hypertext.atproto.syntax/Tid? = ...): studio.hypertext.atproto.pds/GetRepoStatusResponse // studio.hypertext.atproto.pds/GetRepoStatusResponse.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;kotlin.Boolean;kotlin.String?;studio.hypertext.atproto.syntax.Tid?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/GetRepoStatusResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/GetRepoStatusResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/GetRepoStatusResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/GetRepoStatusResponse> { // studio.hypertext.atproto.pds/GetRepoStatusResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/GetRepoStatusResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/GetRepoStatusResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/GetRepoStatusResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/GetRepoStatusResponse // studio.hypertext.atproto.pds/GetRepoStatusResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/GetRepoStatusResponse) // studio.hypertext.atproto.pds/GetRepoStatusResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.GetRepoStatusResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/GetRepoStatusResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/GetRepoStatusResponse> // studio.hypertext.atproto.pds/GetRepoStatusResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/ListRecordsRequest { // studio.hypertext.atproto.pds/ListRecordsRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, kotlin/Int = ..., kotlin/String? = ..., kotlin/Boolean = ...) // studio.hypertext.atproto.pds/ListRecordsRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlin.Int;kotlin.String?;kotlin.Boolean){}[0]
+
+    final val collection // studio.hypertext.atproto.pds/ListRecordsRequest.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/ListRecordsRequest.collection.<get-collection>|<get-collection>(){}[0]
+    final val cursor // studio.hypertext.atproto.pds/ListRecordsRequest.cursor|{}cursor[0]
+        final fun <get-cursor>(): kotlin/String? // studio.hypertext.atproto.pds/ListRecordsRequest.cursor.<get-cursor>|<get-cursor>(){}[0]
+    final val limit // studio.hypertext.atproto.pds/ListRecordsRequest.limit|{}limit[0]
+        final fun <get-limit>(): kotlin/Int // studio.hypertext.atproto.pds/ListRecordsRequest.limit.<get-limit>|<get-limit>(){}[0]
+    final val repo // studio.hypertext.atproto.pds/ListRecordsRequest.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/ListRecordsRequest.repo.<get-repo>|<get-repo>(){}[0]
+    final val reverse // studio.hypertext.atproto.pds/ListRecordsRequest.reverse|{}reverse[0]
+        final fun <get-reverse>(): kotlin/Boolean // studio.hypertext.atproto.pds/ListRecordsRequest.reverse.<get-reverse>|<get-reverse>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/ListRecordsRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/ListRecordsRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // studio.hypertext.atproto.pds/ListRecordsRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/ListRecordsRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean // studio.hypertext.atproto.pds/ListRecordsRequest.component5|component5(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Nsid = ..., kotlin/Int = ..., kotlin/String? = ..., kotlin/Boolean = ...): studio.hypertext.atproto.pds/ListRecordsRequest // studio.hypertext.atproto.pds/ListRecordsRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;kotlin.Int;kotlin.String?;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/ListRecordsRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/ListRecordsRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/ListRecordsRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/ListRecordsRequest> { // studio.hypertext.atproto.pds/ListRecordsRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/ListRecordsRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/ListRecordsRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/ListRecordsRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/ListRecordsRequest // studio.hypertext.atproto.pds/ListRecordsRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/ListRecordsRequest) // studio.hypertext.atproto.pds/ListRecordsRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.ListRecordsRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/ListRecordsRequest.Companion|null[0]
+        final const val DEFAULT_PAGE_SIZE // studio.hypertext.atproto.pds/ListRecordsRequest.Companion.DEFAULT_PAGE_SIZE|{}DEFAULT_PAGE_SIZE[0]
+            final fun <get-DEFAULT_PAGE_SIZE>(): kotlin/Int // studio.hypertext.atproto.pds/ListRecordsRequest.Companion.DEFAULT_PAGE_SIZE.<get-DEFAULT_PAGE_SIZE>|<get-DEFAULT_PAGE_SIZE>(){}[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/ListRecordsRequest> // studio.hypertext.atproto.pds/ListRecordsRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/ListRecordsResponse { // studio.hypertext.atproto.pds/ListRecordsResponse|null[0]
+    constructor <init>(kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord>, kotlin/String? = ...) // studio.hypertext.atproto.pds/ListRecordsResponse.<init>|<init>(kotlin.collections.List<studio.hypertext.atproto.repo.RepoRecord>;kotlin.String?){}[0]
+
+    final val cursor // studio.hypertext.atproto.pds/ListRecordsResponse.cursor|{}cursor[0]
+        final fun <get-cursor>(): kotlin/String? // studio.hypertext.atproto.pds/ListRecordsResponse.cursor.<get-cursor>|<get-cursor>(){}[0]
+    final val records // studio.hypertext.atproto.pds/ListRecordsResponse.records|{}records[0]
+        final fun <get-records>(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord> // studio.hypertext.atproto.pds/ListRecordsResponse.records.<get-records>|<get-records>(){}[0]
+
+    final fun component1(): kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord> // studio.hypertext.atproto.pds/ListRecordsResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/String? // studio.hypertext.atproto.pds/ListRecordsResponse.component2|component2(){}[0]
+    final fun copy(kotlin.collections/List<studio.hypertext.atproto.repo/RepoRecord> = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/ListRecordsResponse // studio.hypertext.atproto.pds/ListRecordsResponse.copy|copy(kotlin.collections.List<studio.hypertext.atproto.repo.RepoRecord>;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/ListRecordsResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/ListRecordsResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/ListRecordsResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/ListRecordsResponse> { // studio.hypertext.atproto.pds/ListRecordsResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/ListRecordsResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/ListRecordsResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/ListRecordsResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/ListRecordsResponse // studio.hypertext.atproto.pds/ListRecordsResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/ListRecordsResponse) // studio.hypertext.atproto.pds/ListRecordsResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.ListRecordsResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/ListRecordsResponse.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.pds/ListRecordsResponse.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun fromPage(studio.hypertext.atproto.repo/RepoListPage): studio.hypertext.atproto.pds/ListRecordsResponse // studio.hypertext.atproto.pds/ListRecordsResponse.Companion.fromPage|fromPage(studio.hypertext.atproto.repo.RepoListPage){}[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/ListRecordsResponse> // studio.hypertext.atproto.pds/ListRecordsResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/OAuthErrorResponse { // studio.hypertext.atproto.pds/OAuthErrorResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/OAuthErrorResponse.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val error // studio.hypertext.atproto.pds/OAuthErrorResponse.error|{}error[0]
+        final fun <get-error>(): kotlin/String // studio.hypertext.atproto.pds/OAuthErrorResponse.error.<get-error>|<get-error>(){}[0]
+    final val errorDescription // studio.hypertext.atproto.pds/OAuthErrorResponse.errorDescription|{}errorDescription[0]
+        final fun <get-errorDescription>(): kotlin/String // studio.hypertext.atproto.pds/OAuthErrorResponse.errorDescription.<get-errorDescription>|<get-errorDescription>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/OAuthErrorResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/OAuthErrorResponse.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/OAuthErrorResponse // studio.hypertext.atproto.pds/OAuthErrorResponse.copy|copy(kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/OAuthErrorResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/OAuthErrorResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/OAuthErrorResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/OAuthErrorResponse> { // studio.hypertext.atproto.pds/OAuthErrorResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/OAuthErrorResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/OAuthErrorResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/OAuthErrorResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/OAuthErrorResponse // studio.hypertext.atproto.pds/OAuthErrorResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/OAuthErrorResponse) // studio.hypertext.atproto.pds/OAuthErrorResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.OAuthErrorResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/OAuthErrorResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/OAuthErrorResponse> // studio.hypertext.atproto.pds/OAuthErrorResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/OAuthRevokeRequest { // studio.hypertext.atproto.pds/OAuthRevokeRequest|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/OAuthRevokeRequest.<init>|<init>(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+
+    final val clientAssertion // studio.hypertext.atproto.pds/OAuthRevokeRequest.clientAssertion|{}clientAssertion[0]
+        final fun <get-clientAssertion>(): kotlin/String? // studio.hypertext.atproto.pds/OAuthRevokeRequest.clientAssertion.<get-clientAssertion>|<get-clientAssertion>(){}[0]
+    final val clientAssertionType // studio.hypertext.atproto.pds/OAuthRevokeRequest.clientAssertionType|{}clientAssertionType[0]
+        final fun <get-clientAssertionType>(): kotlin/String? // studio.hypertext.atproto.pds/OAuthRevokeRequest.clientAssertionType.<get-clientAssertionType>|<get-clientAssertionType>(){}[0]
+    final val clientId // studio.hypertext.atproto.pds/OAuthRevokeRequest.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val dpopProof // studio.hypertext.atproto.pds/OAuthRevokeRequest.dpopProof|{}dpopProof[0]
+        final fun <get-dpopProof>(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.dpopProof.<get-dpopProof>|<get-dpopProof>(){}[0]
+    final val htu // studio.hypertext.atproto.pds/OAuthRevokeRequest.htu|{}htu[0]
+        final fun <get-htu>(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.htu.<get-htu>|<get-htu>(){}[0]
+    final val refreshToken // studio.hypertext.atproto.pds/OAuthRevokeRequest.refreshToken|{}refreshToken[0]
+        final fun <get-refreshToken>(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.refreshToken.<get-refreshToken>|<get-refreshToken>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.pds/OAuthRevokeRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/OAuthRevokeRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.component6|component6(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/OAuthRevokeRequest // studio.hypertext.atproto.pds/OAuthRevokeRequest.copy|copy(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/OAuthRevokeRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/OAuthRevokeRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/OAuthRevokeRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/OAuthRevokeRequest> { // studio.hypertext.atproto.pds/OAuthRevokeRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/OAuthRevokeRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/OAuthRevokeRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/OAuthRevokeRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/OAuthRevokeRequest // studio.hypertext.atproto.pds/OAuthRevokeRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/OAuthRevokeRequest) // studio.hypertext.atproto.pds/OAuthRevokeRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.OAuthRevokeRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/OAuthRevokeRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/OAuthRevokeRequest> // studio.hypertext.atproto.pds/OAuthRevokeRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/OAuthTokenResponse { // studio.hypertext.atproto.pds/OAuthTokenResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Long, kotlin/String, kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/OAuthTokenResponse.<init>|<init>(kotlin.String;kotlin.String;kotlin.Long;kotlin.String;kotlin.String;kotlin.String){}[0]
+
+    final val access_token // studio.hypertext.atproto.pds/OAuthTokenResponse.access_token|{}access_token[0]
+        final fun <get-access_token>(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.access_token.<get-access_token>|<get-access_token>(){}[0]
+    final val expires_in // studio.hypertext.atproto.pds/OAuthTokenResponse.expires_in|{}expires_in[0]
+        final fun <get-expires_in>(): kotlin/Long // studio.hypertext.atproto.pds/OAuthTokenResponse.expires_in.<get-expires_in>|<get-expires_in>(){}[0]
+    final val refresh_token // studio.hypertext.atproto.pds/OAuthTokenResponse.refresh_token|{}refresh_token[0]
+        final fun <get-refresh_token>(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.refresh_token.<get-refresh_token>|<get-refresh_token>(){}[0]
+    final val scope // studio.hypertext.atproto.pds/OAuthTokenResponse.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.scope.<get-scope>|<get-scope>(){}[0]
+    final val sub // studio.hypertext.atproto.pds/OAuthTokenResponse.sub|{}sub[0]
+        final fun <get-sub>(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.sub.<get-sub>|<get-sub>(){}[0]
+    final val token_type // studio.hypertext.atproto.pds/OAuthTokenResponse.token_type|{}token_type[0]
+        final fun <get-token_type>(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.token_type.<get-token_type>|<get-token_type>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.component2|component2(){}[0]
+    final fun component3(): kotlin/Long // studio.hypertext.atproto.pds/OAuthTokenResponse.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.component5|component5(){}[0]
+    final fun component6(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.component6|component6(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/Long = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/OAuthTokenResponse // studio.hypertext.atproto.pds/OAuthTokenResponse.copy|copy(kotlin.String;kotlin.String;kotlin.Long;kotlin.String;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/OAuthTokenResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/OAuthTokenResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/OAuthTokenResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/OAuthTokenResponse> { // studio.hypertext.atproto.pds/OAuthTokenResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/OAuthTokenResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/OAuthTokenResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/OAuthTokenResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/OAuthTokenResponse // studio.hypertext.atproto.pds/OAuthTokenResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/OAuthTokenResponse) // studio.hypertext.atproto.pds/OAuthTokenResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.OAuthTokenResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/OAuthTokenResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/OAuthTokenResponse> // studio.hypertext.atproto.pds/OAuthTokenResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/PdsErrorResponse { // studio.hypertext.atproto.pds/PdsErrorResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/PdsErrorResponse.<init>|<init>(kotlin.String;kotlin.String){}[0]
+
+    final val error // studio.hypertext.atproto.pds/PdsErrorResponse.error|{}error[0]
+        final fun <get-error>(): kotlin/String // studio.hypertext.atproto.pds/PdsErrorResponse.error.<get-error>|<get-error>(){}[0]
+    final val message // studio.hypertext.atproto.pds/PdsErrorResponse.message|{}message[0]
+        final fun <get-message>(): kotlin/String // studio.hypertext.atproto.pds/PdsErrorResponse.message.<get-message>|<get-message>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/PdsErrorResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/PdsErrorResponse.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/PdsErrorResponse // studio.hypertext.atproto.pds/PdsErrorResponse.copy|copy(kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/PdsErrorResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/PdsErrorResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/PdsErrorResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/PdsErrorResponse> { // studio.hypertext.atproto.pds/PdsErrorResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/PdsErrorResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/PdsErrorResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/PdsErrorResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/PdsErrorResponse // studio.hypertext.atproto.pds/PdsErrorResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/PdsErrorResponse) // studio.hypertext.atproto.pds/PdsErrorResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.PdsErrorResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/PdsErrorResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/PdsErrorResponse> // studio.hypertext.atproto.pds/PdsErrorResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/PdsInvalidRequestException : studio.hypertext.atproto.pds/PdsException { // studio.hypertext.atproto.pds/PdsInvalidRequestException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.pds/PdsInvalidRequestException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.pds/PdsUnsupportedException : studio.hypertext.atproto.pds/PdsException { // studio.hypertext.atproto.pds/PdsUnsupportedException|null[0]
+    constructor <init>(kotlin/String) // studio.hypertext.atproto.pds/PdsUnsupportedException.<init>|<init>(kotlin.String){}[0]
+}
+
+final class studio.hypertext.atproto.pds/ProtectedResourceMetadata { // studio.hypertext.atproto.pds/ProtectedResourceMetadata|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<kotlin/String>) // studio.hypertext.atproto.pds/ProtectedResourceMetadata.<init>|<init>(kotlin.String;kotlin.collections.List<kotlin.String>){}[0]
+
+    final val authorization_servers // studio.hypertext.atproto.pds/ProtectedResourceMetadata.authorization_servers|{}authorization_servers[0]
+        final fun <get-authorization_servers>(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/ProtectedResourceMetadata.authorization_servers.<get-authorization_servers>|<get-authorization_servers>(){}[0]
+    final val resource // studio.hypertext.atproto.pds/ProtectedResourceMetadata.resource|{}resource[0]
+        final fun <get-resource>(): kotlin/String // studio.hypertext.atproto.pds/ProtectedResourceMetadata.resource.<get-resource>|<get-resource>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/ProtectedResourceMetadata.component1|component1(){}[0]
+    final fun component2(): kotlin.collections/List<kotlin/String> // studio.hypertext.atproto.pds/ProtectedResourceMetadata.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin.collections/List<kotlin/String> = ...): studio.hypertext.atproto.pds/ProtectedResourceMetadata // studio.hypertext.atproto.pds/ProtectedResourceMetadata.copy|copy(kotlin.String;kotlin.collections.List<kotlin.String>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/ProtectedResourceMetadata.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/ProtectedResourceMetadata.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/ProtectedResourceMetadata.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/ProtectedResourceMetadata> { // studio.hypertext.atproto.pds/ProtectedResourceMetadata.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/ProtectedResourceMetadata.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/ProtectedResourceMetadata.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/ProtectedResourceMetadata.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/ProtectedResourceMetadata // studio.hypertext.atproto.pds/ProtectedResourceMetadata.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/ProtectedResourceMetadata) // studio.hypertext.atproto.pds/ProtectedResourceMetadata.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.ProtectedResourceMetadata){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/ProtectedResourceMetadata.Companion|null[0]
+        final val $childSerializers // studio.hypertext.atproto.pds/ProtectedResourceMetadata.Companion.$childSerializers|{}$childSerializers[0]
+
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/ProtectedResourceMetadata> // studio.hypertext.atproto.pds/ProtectedResourceMetadata.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/PushedAuthorizationBody { // studio.hypertext.atproto.pds/PushedAuthorizationBody|null[0]
+    constructor <init>(kotlin/String, kotlin/Long) // studio.hypertext.atproto.pds/PushedAuthorizationBody.<init>|<init>(kotlin.String;kotlin.Long){}[0]
+
+    final val expiresInSeconds // studio.hypertext.atproto.pds/PushedAuthorizationBody.expiresInSeconds|{}expiresInSeconds[0]
+        final fun <get-expiresInSeconds>(): kotlin/Long // studio.hypertext.atproto.pds/PushedAuthorizationBody.expiresInSeconds.<get-expiresInSeconds>|<get-expiresInSeconds>(){}[0]
+    final val requestUri // studio.hypertext.atproto.pds/PushedAuthorizationBody.requestUri|{}requestUri[0]
+        final fun <get-requestUri>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationBody.requestUri.<get-requestUri>|<get-requestUri>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationBody.component1|component1(){}[0]
+    final fun component2(): kotlin/Long // studio.hypertext.atproto.pds/PushedAuthorizationBody.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Long = ...): studio.hypertext.atproto.pds/PushedAuthorizationBody // studio.hypertext.atproto.pds/PushedAuthorizationBody.copy|copy(kotlin.String;kotlin.Long){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/PushedAuthorizationBody.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/PushedAuthorizationBody.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationBody.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/PushedAuthorizationBody> { // studio.hypertext.atproto.pds/PushedAuthorizationBody.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/PushedAuthorizationBody.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/PushedAuthorizationBody.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/PushedAuthorizationBody.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/PushedAuthorizationBody // studio.hypertext.atproto.pds/PushedAuthorizationBody.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/PushedAuthorizationBody) // studio.hypertext.atproto.pds/PushedAuthorizationBody.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.PushedAuthorizationBody){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/PushedAuthorizationBody.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/PushedAuthorizationBody> // studio.hypertext.atproto.pds/PushedAuthorizationBody.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/PushedAuthorizationRequest { // studio.hypertext.atproto.pds/PushedAuthorizationRequest|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/PushedAuthorizationRequest.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+
+    final val clientAssertion // studio.hypertext.atproto.pds/PushedAuthorizationRequest.clientAssertion|{}clientAssertion[0]
+        final fun <get-clientAssertion>(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.clientAssertion.<get-clientAssertion>|<get-clientAssertion>(){}[0]
+    final val clientAssertionType // studio.hypertext.atproto.pds/PushedAuthorizationRequest.clientAssertionType|{}clientAssertionType[0]
+        final fun <get-clientAssertionType>(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.clientAssertionType.<get-clientAssertionType>|<get-clientAssertionType>(){}[0]
+    final val clientId // studio.hypertext.atproto.pds/PushedAuthorizationRequest.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val codeChallenge // studio.hypertext.atproto.pds/PushedAuthorizationRequest.codeChallenge|{}codeChallenge[0]
+        final fun <get-codeChallenge>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.codeChallenge.<get-codeChallenge>|<get-codeChallenge>(){}[0]
+    final val codeChallengeMethod // studio.hypertext.atproto.pds/PushedAuthorizationRequest.codeChallengeMethod|{}codeChallengeMethod[0]
+        final fun <get-codeChallengeMethod>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.codeChallengeMethod.<get-codeChallengeMethod>|<get-codeChallengeMethod>(){}[0]
+    final val dpopProof // studio.hypertext.atproto.pds/PushedAuthorizationRequest.dpopProof|{}dpopProof[0]
+        final fun <get-dpopProof>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.dpopProof.<get-dpopProof>|<get-dpopProof>(){}[0]
+    final val htu // studio.hypertext.atproto.pds/PushedAuthorizationRequest.htu|{}htu[0]
+        final fun <get-htu>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.htu.<get-htu>|<get-htu>(){}[0]
+    final val loginHint // studio.hypertext.atproto.pds/PushedAuthorizationRequest.loginHint|{}loginHint[0]
+        final fun <get-loginHint>(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.loginHint.<get-loginHint>|<get-loginHint>(){}[0]
+    final val redirectUri // studio.hypertext.atproto.pds/PushedAuthorizationRequest.redirectUri|{}redirectUri[0]
+        final fun <get-redirectUri>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.redirectUri.<get-redirectUri>|<get-redirectUri>(){}[0]
+    final val responseType // studio.hypertext.atproto.pds/PushedAuthorizationRequest.responseType|{}responseType[0]
+        final fun <get-responseType>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.responseType.<get-responseType>|<get-responseType>(){}[0]
+    final val scope // studio.hypertext.atproto.pds/PushedAuthorizationRequest.scope|{}scope[0]
+        final fun <get-scope>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.scope.<get-scope>|<get-scope>(){}[0]
+    final val state // studio.hypertext.atproto.pds/PushedAuthorizationRequest.state|{}state[0]
+        final fun <get-state>(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.state.<get-state>|<get-state>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component1|component1(){}[0]
+    final fun component10(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component10|component10(){}[0]
+    final fun component11(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component11|component11(){}[0]
+    final fun component12(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component12|component12(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component8|component8(){}[0]
+    final fun component9(): kotlin/String? // studio.hypertext.atproto.pds/PushedAuthorizationRequest.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/PushedAuthorizationRequest // studio.hypertext.atproto.pds/PushedAuthorizationRequest.copy|copy(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/PushedAuthorizationRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/PushedAuthorizationRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/PushedAuthorizationRequest> { // studio.hypertext.atproto.pds/PushedAuthorizationRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/PushedAuthorizationRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/PushedAuthorizationRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/PushedAuthorizationRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/PushedAuthorizationRequest // studio.hypertext.atproto.pds/PushedAuthorizationRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/PushedAuthorizationRequest) // studio.hypertext.atproto.pds/PushedAuthorizationRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.PushedAuthorizationRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/PushedAuthorizationRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/PushedAuthorizationRequest> // studio.hypertext.atproto.pds/PushedAuthorizationRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/PushedAuthorizationResponse { // studio.hypertext.atproto.pds/PushedAuthorizationResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/Long, kotlin/String) // studio.hypertext.atproto.pds/PushedAuthorizationResponse.<init>|<init>(kotlin.String;kotlin.Long;kotlin.String){}[0]
+
+    final val dpopNonce // studio.hypertext.atproto.pds/PushedAuthorizationResponse.dpopNonce|{}dpopNonce[0]
+        final fun <get-dpopNonce>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationResponse.dpopNonce.<get-dpopNonce>|<get-dpopNonce>(){}[0]
+    final val expiresInSeconds // studio.hypertext.atproto.pds/PushedAuthorizationResponse.expiresInSeconds|{}expiresInSeconds[0]
+        final fun <get-expiresInSeconds>(): kotlin/Long // studio.hypertext.atproto.pds/PushedAuthorizationResponse.expiresInSeconds.<get-expiresInSeconds>|<get-expiresInSeconds>(){}[0]
+    final val requestUri // studio.hypertext.atproto.pds/PushedAuthorizationResponse.requestUri|{}requestUri[0]
+        final fun <get-requestUri>(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationResponse.requestUri.<get-requestUri>|<get-requestUri>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/Long // studio.hypertext.atproto.pds/PushedAuthorizationResponse.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationResponse.component3|component3(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Long = ..., kotlin/String = ...): studio.hypertext.atproto.pds/PushedAuthorizationResponse // studio.hypertext.atproto.pds/PushedAuthorizationResponse.copy|copy(kotlin.String;kotlin.Long;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/PushedAuthorizationResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/PushedAuthorizationResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/PushedAuthorizationResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/PushedAuthorizationResponse> { // studio.hypertext.atproto.pds/PushedAuthorizationResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/PushedAuthorizationResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/PushedAuthorizationResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/PushedAuthorizationResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/PushedAuthorizationResponse // studio.hypertext.atproto.pds/PushedAuthorizationResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/PushedAuthorizationResponse) // studio.hypertext.atproto.pds/PushedAuthorizationResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.PushedAuthorizationResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/PushedAuthorizationResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/PushedAuthorizationResponse> // studio.hypertext.atproto.pds/PushedAuthorizationResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/PutRecordRequest { // studio.hypertext.atproto.pds/PutRecordRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.syntax/Nsid, studio.hypertext.atproto.syntax/RecordKey, kotlinx.serialization.json/JsonObject, kotlin/Boolean? = ..., kotlin/String? = ..., kotlin/String? = ...) // studio.hypertext.atproto.pds/PutRecordRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;kotlinx.serialization.json.JsonObject;kotlin.Boolean?;kotlin.String?;kotlin.String?){}[0]
+
+    final val collection // studio.hypertext.atproto.pds/PutRecordRequest.collection|{}collection[0]
+        final fun <get-collection>(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/PutRecordRequest.collection.<get-collection>|<get-collection>(){}[0]
+    final val record // studio.hypertext.atproto.pds/PutRecordRequest.record|{}record[0]
+        final fun <get-record>(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.pds/PutRecordRequest.record.<get-record>|<get-record>(){}[0]
+    final val recordKey // studio.hypertext.atproto.pds/PutRecordRequest.recordKey|{}recordKey[0]
+        final fun <get-recordKey>(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.pds/PutRecordRequest.recordKey.<get-recordKey>|<get-recordKey>(){}[0]
+    final val repo // studio.hypertext.atproto.pds/PutRecordRequest.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/PutRecordRequest.repo.<get-repo>|<get-repo>(){}[0]
+    final val swapCommit // studio.hypertext.atproto.pds/PutRecordRequest.swapCommit|{}swapCommit[0]
+        final fun <get-swapCommit>(): kotlin/String? // studio.hypertext.atproto.pds/PutRecordRequest.swapCommit.<get-swapCommit>|<get-swapCommit>(){}[0]
+    final val swapRecord // studio.hypertext.atproto.pds/PutRecordRequest.swapRecord|{}swapRecord[0]
+        final fun <get-swapRecord>(): kotlin/String? // studio.hypertext.atproto.pds/PutRecordRequest.swapRecord.<get-swapRecord>|<get-swapRecord>(){}[0]
+    final val validate // studio.hypertext.atproto.pds/PutRecordRequest.validate|{}validate[0]
+        final fun <get-validate>(): kotlin/Boolean? // studio.hypertext.atproto.pds/PutRecordRequest.validate.<get-validate>|<get-validate>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/PutRecordRequest.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.syntax/Nsid // studio.hypertext.atproto.pds/PutRecordRequest.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.syntax/RecordKey // studio.hypertext.atproto.pds/PutRecordRequest.component3|component3(){}[0]
+    final fun component4(): kotlinx.serialization.json/JsonObject // studio.hypertext.atproto.pds/PutRecordRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean? // studio.hypertext.atproto.pds/PutRecordRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/PutRecordRequest.component6|component6(){}[0]
+    final fun component7(): kotlin/String? // studio.hypertext.atproto.pds/PutRecordRequest.component7|component7(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.syntax/Nsid = ..., studio.hypertext.atproto.syntax/RecordKey = ..., kotlinx.serialization.json/JsonObject = ..., kotlin/Boolean? = ..., kotlin/String? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/PutRecordRequest // studio.hypertext.atproto.pds/PutRecordRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.syntax.Nsid;studio.hypertext.atproto.syntax.RecordKey;kotlinx.serialization.json.JsonObject;kotlin.Boolean?;kotlin.String?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/PutRecordRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/PutRecordRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/PutRecordRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/PutRecordRequest> { // studio.hypertext.atproto.pds/PutRecordRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/PutRecordRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/PutRecordRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/PutRecordRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/PutRecordRequest // studio.hypertext.atproto.pds/PutRecordRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/PutRecordRequest) // studio.hypertext.atproto.pds/PutRecordRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.PutRecordRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/PutRecordRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/PutRecordRequest> // studio.hypertext.atproto.pds/PutRecordRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/RefreshTokenGrantRequest { // studio.hypertext.atproto.pds/RefreshTokenGrantRequest|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String? = ..., kotlin/String? = ..., kotlin/String, kotlin/String) // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.<init>|<init>(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+
+    final val clientAssertion // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.clientAssertion|{}clientAssertion[0]
+        final fun <get-clientAssertion>(): kotlin/String? // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.clientAssertion.<get-clientAssertion>|<get-clientAssertion>(){}[0]
+    final val clientAssertionType // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.clientAssertionType|{}clientAssertionType[0]
+        final fun <get-clientAssertionType>(): kotlin/String? // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.clientAssertionType.<get-clientAssertionType>|<get-clientAssertionType>(){}[0]
+    final val clientId // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.clientId|{}clientId[0]
+        final fun <get-clientId>(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.clientId.<get-clientId>|<get-clientId>(){}[0]
+    final val dpopProof // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.dpopProof|{}dpopProof[0]
+        final fun <get-dpopProof>(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.dpopProof.<get-dpopProof>|<get-dpopProof>(){}[0]
+    final val htu // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.htu|{}htu[0]
+        final fun <get-htu>(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.htu.<get-htu>|<get-htu>(){}[0]
+    final val refreshToken // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.refreshToken|{}refreshToken[0]
+        final fun <get-refreshToken>(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.refreshToken.<get-refreshToken>|<get-refreshToken>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/String? // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.component4|component4(){}[0]
+    final fun component5(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.component5|component5(){}[0]
+    final fun component6(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.component6|component6(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String? = ..., kotlin/String? = ..., kotlin/String = ..., kotlin/String = ...): studio.hypertext.atproto.pds/RefreshTokenGrantRequest // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.copy|copy(kotlin.String;kotlin.String;kotlin.String?;kotlin.String?;kotlin.String;kotlin.String){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/RefreshTokenGrantRequest> { // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/RefreshTokenGrantRequest // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/RefreshTokenGrantRequest) // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.RefreshTokenGrantRequest){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/RefreshTokenGrantRequest> // studio.hypertext.atproto.pds/RefreshTokenGrantRequest.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/RepoExportResponse { // studio.hypertext.atproto.pds/RepoExportResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/ByteArray) // studio.hypertext.atproto.pds/RepoExportResponse.<init>|<init>(kotlin.String;kotlin.ByteArray){}[0]
+
+    final val bytes // studio.hypertext.atproto.pds/RepoExportResponse.bytes|{}bytes[0]
+        final fun <get-bytes>(): kotlin/ByteArray // studio.hypertext.atproto.pds/RepoExportResponse.bytes.<get-bytes>|<get-bytes>(){}[0]
+    final val contentType // studio.hypertext.atproto.pds/RepoExportResponse.contentType|{}contentType[0]
+        final fun <get-contentType>(): kotlin/String // studio.hypertext.atproto.pds/RepoExportResponse.contentType.<get-contentType>|<get-contentType>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/RepoExportResponse.component1|component1(){}[0]
+    final fun component2(): kotlin/ByteArray // studio.hypertext.atproto.pds/RepoExportResponse.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/ByteArray = ...): studio.hypertext.atproto.pds/RepoExportResponse // studio.hypertext.atproto.pds/RepoExportResponse.copy|copy(kotlin.String;kotlin.ByteArray){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/RepoExportResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/RepoExportResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/RepoExportResponse.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.pds/ResolveHandleResponse { // studio.hypertext.atproto.pds/ResolveHandleResponse|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid) // studio.hypertext.atproto.pds/ResolveHandleResponse.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+
+    final val did // studio.hypertext.atproto.pds/ResolveHandleResponse.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/ResolveHandleResponse.did.<get-did>|<get-did>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/ResolveHandleResponse.component1|component1(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ...): studio.hypertext.atproto.pds/ResolveHandleResponse // studio.hypertext.atproto.pds/ResolveHandleResponse.copy|copy(studio.hypertext.atproto.identity.AtprotoDid){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/ResolveHandleResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/ResolveHandleResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/ResolveHandleResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/ResolveHandleResponse> { // studio.hypertext.atproto.pds/ResolveHandleResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/ResolveHandleResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/ResolveHandleResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/ResolveHandleResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/ResolveHandleResponse // studio.hypertext.atproto.pds/ResolveHandleResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/ResolveHandleResponse) // studio.hypertext.atproto.pds/ResolveHandleResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.ResolveHandleResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/ResolveHandleResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/ResolveHandleResponse> // studio.hypertext.atproto.pds/ResolveHandleResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/SessionInfoResponse { // studio.hypertext.atproto.pds/SessionInfoResponse|null[0]
+    constructor <init>(kotlin/String, studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.identity/DidDocument? = ..., kotlin/String? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/String? = ...) // studio.hypertext.atproto.pds/SessionInfoResponse.<init>|<init>(kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.identity.DidDocument?;kotlin.String?;kotlin.Boolean?;kotlin.Boolean?;kotlin.Boolean?;kotlin.String?){}[0]
+
+    final val active // studio.hypertext.atproto.pds/SessionInfoResponse.active|{}active[0]
+        final fun <get-active>(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionInfoResponse.active.<get-active>|<get-active>(){}[0]
+    final val did // studio.hypertext.atproto.pds/SessionInfoResponse.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/SessionInfoResponse.did.<get-did>|<get-did>(){}[0]
+    final val didDoc // studio.hypertext.atproto.pds/SessionInfoResponse.didDoc|{}didDoc[0]
+        final fun <get-didDoc>(): studio.hypertext.atproto.identity/DidDocument? // studio.hypertext.atproto.pds/SessionInfoResponse.didDoc.<get-didDoc>|<get-didDoc>(){}[0]
+    final val email // studio.hypertext.atproto.pds/SessionInfoResponse.email|{}email[0]
+        final fun <get-email>(): kotlin/String? // studio.hypertext.atproto.pds/SessionInfoResponse.email.<get-email>|<get-email>(){}[0]
+    final val emailAuthFactor // studio.hypertext.atproto.pds/SessionInfoResponse.emailAuthFactor|{}emailAuthFactor[0]
+        final fun <get-emailAuthFactor>(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionInfoResponse.emailAuthFactor.<get-emailAuthFactor>|<get-emailAuthFactor>(){}[0]
+    final val emailConfirmed // studio.hypertext.atproto.pds/SessionInfoResponse.emailConfirmed|{}emailConfirmed[0]
+        final fun <get-emailConfirmed>(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionInfoResponse.emailConfirmed.<get-emailConfirmed>|<get-emailConfirmed>(){}[0]
+    final val handle // studio.hypertext.atproto.pds/SessionInfoResponse.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String // studio.hypertext.atproto.pds/SessionInfoResponse.handle.<get-handle>|<get-handle>(){}[0]
+    final val status // studio.hypertext.atproto.pds/SessionInfoResponse.status|{}status[0]
+        final fun <get-status>(): kotlin/String? // studio.hypertext.atproto.pds/SessionInfoResponse.status.<get-status>|<get-status>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/SessionInfoResponse.component1|component1(){}[0]
+    final fun component2(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/SessionInfoResponse.component2|component2(){}[0]
+    final fun component3(): studio.hypertext.atproto.identity/DidDocument? // studio.hypertext.atproto.pds/SessionInfoResponse.component3|component3(){}[0]
+    final fun component4(): kotlin/String? // studio.hypertext.atproto.pds/SessionInfoResponse.component4|component4(){}[0]
+    final fun component5(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionInfoResponse.component5|component5(){}[0]
+    final fun component6(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionInfoResponse.component6|component6(){}[0]
+    final fun component7(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionInfoResponse.component7|component7(){}[0]
+    final fun component8(): kotlin/String? // studio.hypertext.atproto.pds/SessionInfoResponse.component8|component8(){}[0]
+    final fun copy(kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.identity/DidDocument? = ..., kotlin/String? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/SessionInfoResponse // studio.hypertext.atproto.pds/SessionInfoResponse.copy|copy(kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.identity.DidDocument?;kotlin.String?;kotlin.Boolean?;kotlin.Boolean?;kotlin.Boolean?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/SessionInfoResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/SessionInfoResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/SessionInfoResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/SessionInfoResponse> { // studio.hypertext.atproto.pds/SessionInfoResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/SessionInfoResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/SessionInfoResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/SessionInfoResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/SessionInfoResponse // studio.hypertext.atproto.pds/SessionInfoResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/SessionInfoResponse) // studio.hypertext.atproto.pds/SessionInfoResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.SessionInfoResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/SessionInfoResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/SessionInfoResponse> // studio.hypertext.atproto.pds/SessionInfoResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/SessionResponse { // studio.hypertext.atproto.pds/SessionResponse|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/String, studio.hypertext.atproto.identity/AtprotoDid, studio.hypertext.atproto.identity/DidDocument? = ..., kotlin/String? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/String? = ...) // studio.hypertext.atproto.pds/SessionResponse.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.identity.DidDocument?;kotlin.String?;kotlin.Boolean?;kotlin.Boolean?;kotlin.Boolean?;kotlin.String?){}[0]
+
+    final val accessJwt // studio.hypertext.atproto.pds/SessionResponse.accessJwt|{}accessJwt[0]
+        final fun <get-accessJwt>(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.accessJwt.<get-accessJwt>|<get-accessJwt>(){}[0]
+    final val active // studio.hypertext.atproto.pds/SessionResponse.active|{}active[0]
+        final fun <get-active>(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionResponse.active.<get-active>|<get-active>(){}[0]
+    final val did // studio.hypertext.atproto.pds/SessionResponse.did|{}did[0]
+        final fun <get-did>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/SessionResponse.did.<get-did>|<get-did>(){}[0]
+    final val didDoc // studio.hypertext.atproto.pds/SessionResponse.didDoc|{}didDoc[0]
+        final fun <get-didDoc>(): studio.hypertext.atproto.identity/DidDocument? // studio.hypertext.atproto.pds/SessionResponse.didDoc.<get-didDoc>|<get-didDoc>(){}[0]
+    final val email // studio.hypertext.atproto.pds/SessionResponse.email|{}email[0]
+        final fun <get-email>(): kotlin/String? // studio.hypertext.atproto.pds/SessionResponse.email.<get-email>|<get-email>(){}[0]
+    final val emailAuthFactor // studio.hypertext.atproto.pds/SessionResponse.emailAuthFactor|{}emailAuthFactor[0]
+        final fun <get-emailAuthFactor>(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionResponse.emailAuthFactor.<get-emailAuthFactor>|<get-emailAuthFactor>(){}[0]
+    final val emailConfirmed // studio.hypertext.atproto.pds/SessionResponse.emailConfirmed|{}emailConfirmed[0]
+        final fun <get-emailConfirmed>(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionResponse.emailConfirmed.<get-emailConfirmed>|<get-emailConfirmed>(){}[0]
+    final val handle // studio.hypertext.atproto.pds/SessionResponse.handle|{}handle[0]
+        final fun <get-handle>(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.handle.<get-handle>|<get-handle>(){}[0]
+    final val refreshJwt // studio.hypertext.atproto.pds/SessionResponse.refreshJwt|{}refreshJwt[0]
+        final fun <get-refreshJwt>(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.refreshJwt.<get-refreshJwt>|<get-refreshJwt>(){}[0]
+    final val status // studio.hypertext.atproto.pds/SessionResponse.status|{}status[0]
+        final fun <get-status>(): kotlin/String? // studio.hypertext.atproto.pds/SessionResponse.status.<get-status>|<get-status>(){}[0]
+
+    final fun component1(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.component1|component1(){}[0]
+    final fun component10(): kotlin/String? // studio.hypertext.atproto.pds/SessionResponse.component10|component10(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.component2|component2(){}[0]
+    final fun component3(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.component3|component3(){}[0]
+    final fun component4(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/SessionResponse.component4|component4(){}[0]
+    final fun component5(): studio.hypertext.atproto.identity/DidDocument? // studio.hypertext.atproto.pds/SessionResponse.component5|component5(){}[0]
+    final fun component6(): kotlin/String? // studio.hypertext.atproto.pds/SessionResponse.component6|component6(){}[0]
+    final fun component7(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionResponse.component7|component7(){}[0]
+    final fun component8(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionResponse.component8|component8(){}[0]
+    final fun component9(): kotlin/Boolean? // studio.hypertext.atproto.pds/SessionResponse.component9|component9(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., studio.hypertext.atproto.identity/AtprotoDid = ..., studio.hypertext.atproto.identity/DidDocument? = ..., kotlin/String? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/Boolean? = ..., kotlin/String? = ...): studio.hypertext.atproto.pds/SessionResponse // studio.hypertext.atproto.pds/SessionResponse.copy|copy(kotlin.String;kotlin.String;kotlin.String;studio.hypertext.atproto.identity.AtprotoDid;studio.hypertext.atproto.identity.DidDocument?;kotlin.String?;kotlin.Boolean?;kotlin.Boolean?;kotlin.Boolean?;kotlin.String?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/SessionResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/SessionResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/SessionResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/SessionResponse> { // studio.hypertext.atproto.pds/SessionResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/SessionResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/SessionResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/SessionResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/SessionResponse // studio.hypertext.atproto.pds/SessionResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/SessionResponse) // studio.hypertext.atproto.pds/SessionResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.SessionResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/SessionResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/SessionResponse> // studio.hypertext.atproto.pds/SessionResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+final class studio.hypertext.atproto.pds/UploadBlobRequest { // studio.hypertext.atproto.pds/UploadBlobRequest|null[0]
+    constructor <init>(studio.hypertext.atproto.identity/AtprotoDid, kotlin/String, kotlin/ByteArray) // studio.hypertext.atproto.pds/UploadBlobRequest.<init>|<init>(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.ByteArray){}[0]
+
+    final val bytes // studio.hypertext.atproto.pds/UploadBlobRequest.bytes|{}bytes[0]
+        final fun <get-bytes>(): kotlin/ByteArray // studio.hypertext.atproto.pds/UploadBlobRequest.bytes.<get-bytes>|<get-bytes>(){}[0]
+    final val contentType // studio.hypertext.atproto.pds/UploadBlobRequest.contentType|{}contentType[0]
+        final fun <get-contentType>(): kotlin/String // studio.hypertext.atproto.pds/UploadBlobRequest.contentType.<get-contentType>|<get-contentType>(){}[0]
+    final val repo // studio.hypertext.atproto.pds/UploadBlobRequest.repo|{}repo[0]
+        final fun <get-repo>(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/UploadBlobRequest.repo.<get-repo>|<get-repo>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.identity/AtprotoDid // studio.hypertext.atproto.pds/UploadBlobRequest.component1|component1(){}[0]
+    final fun component2(): kotlin/String // studio.hypertext.atproto.pds/UploadBlobRequest.component2|component2(){}[0]
+    final fun component3(): kotlin/ByteArray // studio.hypertext.atproto.pds/UploadBlobRequest.component3|component3(){}[0]
+    final fun copy(studio.hypertext.atproto.identity/AtprotoDid = ..., kotlin/String = ..., kotlin/ByteArray = ...): studio.hypertext.atproto.pds/UploadBlobRequest // studio.hypertext.atproto.pds/UploadBlobRequest.copy|copy(studio.hypertext.atproto.identity.AtprotoDid;kotlin.String;kotlin.ByteArray){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/UploadBlobRequest.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/UploadBlobRequest.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/UploadBlobRequest.toString|toString(){}[0]
+}
+
+final class studio.hypertext.atproto.pds/UploadBlobResponse { // studio.hypertext.atproto.pds/UploadBlobResponse|null[0]
+    constructor <init>(studio.hypertext.atproto.pds/BlobRef) // studio.hypertext.atproto.pds/UploadBlobResponse.<init>|<init>(studio.hypertext.atproto.pds.BlobRef){}[0]
+
+    final val blob // studio.hypertext.atproto.pds/UploadBlobResponse.blob|{}blob[0]
+        final fun <get-blob>(): studio.hypertext.atproto.pds/BlobRef // studio.hypertext.atproto.pds/UploadBlobResponse.blob.<get-blob>|<get-blob>(){}[0]
+
+    final fun component1(): studio.hypertext.atproto.pds/BlobRef // studio.hypertext.atproto.pds/UploadBlobResponse.component1|component1(){}[0]
+    final fun copy(studio.hypertext.atproto.pds/BlobRef = ...): studio.hypertext.atproto.pds/UploadBlobResponse // studio.hypertext.atproto.pds/UploadBlobResponse.copy|copy(studio.hypertext.atproto.pds.BlobRef){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // studio.hypertext.atproto.pds/UploadBlobResponse.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // studio.hypertext.atproto.pds/UploadBlobResponse.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // studio.hypertext.atproto.pds/UploadBlobResponse.toString|toString(){}[0]
+
+    final object $serializer : kotlinx.serialization.internal/GeneratedSerializer<studio.hypertext.atproto.pds/UploadBlobResponse> { // studio.hypertext.atproto.pds/UploadBlobResponse.$serializer|null[0]
+        final val descriptor // studio.hypertext.atproto.pds/UploadBlobResponse.$serializer.descriptor|{}descriptor[0]
+            final fun <get-descriptor>(): kotlinx.serialization.descriptors/SerialDescriptor // studio.hypertext.atproto.pds/UploadBlobResponse.$serializer.descriptor.<get-descriptor>|<get-descriptor>(){}[0]
+
+        final fun childSerializers(): kotlin/Array<kotlinx.serialization/KSerializer<*>> // studio.hypertext.atproto.pds/UploadBlobResponse.$serializer.childSerializers|childSerializers(){}[0]
+        final fun deserialize(kotlinx.serialization.encoding/Decoder): studio.hypertext.atproto.pds/UploadBlobResponse // studio.hypertext.atproto.pds/UploadBlobResponse.$serializer.deserialize|deserialize(kotlinx.serialization.encoding.Decoder){}[0]
+        final fun serialize(kotlinx.serialization.encoding/Encoder, studio.hypertext.atproto.pds/UploadBlobResponse) // studio.hypertext.atproto.pds/UploadBlobResponse.$serializer.serialize|serialize(kotlinx.serialization.encoding.Encoder;studio.hypertext.atproto.pds.UploadBlobResponse){}[0]
+    }
+
+    final object Companion { // studio.hypertext.atproto.pds/UploadBlobResponse.Companion|null[0]
+        final fun serializer(): kotlinx.serialization/KSerializer<studio.hypertext.atproto.pds/UploadBlobResponse> // studio.hypertext.atproto.pds/UploadBlobResponse.Companion.serializer|serializer(){}[0]
+    }
+}
+
+sealed class studio.hypertext.atproto.pds/PdsException : kotlin/IllegalArgumentException { // studio.hypertext.atproto.pds/PdsException|null[0]
+    final val error // studio.hypertext.atproto.pds/PdsException.error|{}error[0]
+        final fun <get-error>(): kotlin/String // studio.hypertext.atproto.pds/PdsException.error.<get-error>|<get-error>(){}[0]
+    final val statusCode // studio.hypertext.atproto.pds/PdsException.statusCode|{}statusCode[0]
+        final fun <get-statusCode>(): kotlin/Int // studio.hypertext.atproto.pds/PdsException.statusCode.<get-statusCode>|<get-statusCode>(){}[0]
+}

@@ -5535,6 +5535,11 @@
       ],
       "kind": "binary",
       "reason": "Binary screenshot reference PNG images; the shared staged formatter rejects text masquerading as a binary image."
+    },
+    {
+      "include": ["shared/atproto-*/api/*.api"],
+      "kind": "generated",
+      "reason": "Public API listings written by binary-compatibility-validator's apiDump; apiCheck compares them byte for byte with what the compiler produces."
     }
   ]
 }

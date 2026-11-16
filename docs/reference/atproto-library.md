@@ -336,6 +336,29 @@ The [plugin's README](../../shared/atproto-lexicon-gradle-plugin/README.md) expl
 and how the plugin finds its generator. The standalone sample below uses the plugin for its own
 record type.
 
+## Changing the public API
+
+Each published module keeps a text listing of its public API in its `api` directory: one file for
+the JVM and one for iOS (`.klib.api`). The listings are checked in, and `apiCheck` compares them
+with the code, so a change to anything public shows up in review as a diff to these files and
+cannot slip in unnoticed. `./gradlew check` includes `apiCheck`, and CI runs it on every change.
+
+CI runs on Linux, which cannot compile for iOS. There the check compares the JVM listing in full
+and takes the iOS listing as it is checked in. A Mac compiles both, so run `./gradlew apiCheck` on
+a Mac before changing anything public in `iosMain` or common code.
+
+When `apiCheck` fails, decide whether the change is intended. If it is, regenerate the listings
+and commit them with the change:
+
+```bash
+./gradlew apiDump
+```
+
+Removing or changing a declaration that already shipped breaks consumers compiled against the old
+version, so prefer adding alongside and deprecating the old declaration. The listings cover the
+JVM and iOS builds; Android compiles the same shared code as the JVM, plus any `androidMain`
+sources, which the listings do not track separately.
+
 ## Standalone Sample
 
 The consumer sample in [`samples/atproto-consumer`](../../samples/atproto-consumer) is intentionally

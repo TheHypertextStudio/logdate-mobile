@@ -248,6 +248,9 @@ jobs:
       - name: Run lint
         run: ./gradlew lint detekt
 
+      - name: Check the published AT Protocol API
+        run: ./gradlew apiCheck
+
   scripts:
     name: Script tests
     permissions:
