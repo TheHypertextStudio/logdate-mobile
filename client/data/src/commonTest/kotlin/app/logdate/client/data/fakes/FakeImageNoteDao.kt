@@ -82,8 +82,6 @@ class FakeImageNoteDao : ImageNoteDao {
         updateFlow()
     }
 
-    override suspend fun countByContentUri(contentUri: String): Int = notes.values.count { it.contentUri == contentUri }
-
     override suspend fun localFileContentUris(): List<NoteContentUri> =
         notes.values
             .filter { it.contentUri.startsWith("file:") || it.contentUri.startsWith("/") || it.contentUri.getOrNull(1) == ':' }
