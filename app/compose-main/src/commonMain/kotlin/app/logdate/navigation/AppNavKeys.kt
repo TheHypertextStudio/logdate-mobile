@@ -10,6 +10,7 @@ import app.logdate.feature.core.navigation.BaseRoute
 import app.logdate.feature.core.profile.navigation.ProfileRoute
 import app.logdate.feature.core.settings.navigation.AccountSettingsRoute
 import app.logdate.feature.core.settings.navigation.AdvancedSettingsRoute
+import app.logdate.feature.core.settings.navigation.AndroidAssistantsSettingsRoute
 import app.logdate.feature.core.settings.navigation.BirthdaySettingsRoute
 import app.logdate.feature.core.settings.navigation.CalendarSyncActivityRoute
 import app.logdate.feature.core.settings.navigation.CalendarSyncCalendarsRoute
@@ -149,6 +150,7 @@ val appNavSavedStateConfiguration: SavedStateConfiguration =
                     subclass(MoveServerRoute::class, MoveServerRoute.serializer())
                     subclass(DeleteAccountRoute::class, DeleteAccountRoute.serializer())
                     subclass(PrivacySettingsRoute::class, PrivacySettingsRoute.serializer())
+                    subclass(AndroidAssistantsSettingsRoute::class, AndroidAssistantsSettingsRoute.serializer())
                     subclass(DataSettingsRoute::class, DataSettingsRoute.serializer())
                     subclass(LocationSettingsRoute::class, LocationSettingsRoute.serializer())
                     subclass(LocationTrackingOptionsRoute::class, LocationTrackingOptionsRoute.serializer())

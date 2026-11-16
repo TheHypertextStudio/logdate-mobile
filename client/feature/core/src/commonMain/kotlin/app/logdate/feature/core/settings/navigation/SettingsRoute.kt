@@ -35,6 +35,10 @@ data object DeleteAccountRoute : NavKey
 @Serializable
 data object PrivacySettingsRoute : NavKey
 
+/** What assistants on this phone, through Android's AppFunctions, may see and do. */
+@Serializable
+data object AndroidAssistantsSettingsRoute : NavKey
+
 @Serializable
 data object DataSettingsRoute : NavKey
 

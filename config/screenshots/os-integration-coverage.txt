@@ -78,6 +78,9 @@ capture-widget|system|docs/screenshots/android-os-integration/widgets/capture-wi
 capture-widget|system|docs/screenshots/android-os-integration/widgets/capture-widget-hub--tablet-api37.png
 capture-widget|system|docs/screenshots/android-os-integration/widgets/capture-widget-hub-write--tablet-api37.png
 
+# What Android assistants may see and do, in Settings › Privacy & security.
+android-assistants|android|app/logdate/screenshots/components/settings_account/AndroidAssistantScreenshots.kt#AndroidAssistants
+
 # Assistant actions: Android's registry and calls through cmd app_function, and the saved entry.
 app-functions|system|docs/screenshots/android-os-integration/app-functions/assistant-actions--phone-api37.txt
 app-functions|system|docs/screenshots/android-os-integration/app-functions/entry-from-assistant--phone-api37.png

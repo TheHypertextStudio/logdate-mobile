@@ -66,7 +66,7 @@ fun NavKey.settingsCategory(): SettingsCategory? =
 
         LibrarySettingsRoute -> SettingsCategory.Library
 
-        PrivacySettingsRoute -> SettingsCategory.Privacy
+        PrivacySettingsRoute, AndroidAssistantsSettingsRoute -> SettingsCategory.Privacy
 
         is DevicesRoute -> SettingsCategory.Devices
 

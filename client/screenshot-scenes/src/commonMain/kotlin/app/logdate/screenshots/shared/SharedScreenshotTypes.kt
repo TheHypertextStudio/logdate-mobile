@@ -67,6 +67,7 @@ enum class SharedScreenshotSceneId(
     ConnectedAssistantsEmpty("connected-assistants-empty"),
     ConnectedAssistant("connected-assistant"),
     AssistantConnect("assistant-connect"),
+    AndroidAssistants("android-assistants"),
     JournalStoragePaused("journal-storage-paused"),
     JournalStorageSealed("journal-storage-sealed"),
     SyncUpdateRequired("sync-update-required"),

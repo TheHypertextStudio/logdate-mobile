@@ -13,6 +13,7 @@ import app.logdate.client.domain.recommendation.RecallMode
 import app.logdate.client.domain.recommendation.WidgetContentType
 import app.logdate.client.media.audio.download.ModelDownloadStatus
 import app.logdate.client.repository.account.LinkedSignInProvider
+import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.feature.core.export.ExportState
 import app.logdate.feature.core.restore.RestoreState
 import app.logdate.feature.core.settings.account.AccountContent
@@ -41,7 +42,9 @@ import app.logdate.feature.core.settings.ui.DefaultCaptureModeState
 import app.logdate.feature.core.settings.ui.IntegrityState
 import app.logdate.feature.core.settings.ui.MemoriesSettingsContent
 import app.logdate.feature.core.settings.ui.MemoriesWidgetInstallUiState
+import app.logdate.feature.core.settings.ui.PrivacyPreferenceState
 import app.logdate.feature.core.settings.ui.PrivacySettingsContent
+import app.logdate.feature.core.settings.ui.PrivacySettingsState
 import app.logdate.feature.core.settings.ui.SettingsOverviewContent
 import app.logdate.feature.core.settings.ui.StorageCategory
 import app.logdate.feature.core.settings.ui.StorageQuotaUi
@@ -107,13 +110,15 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
         },
         sharedScene(SharedScreenshotSceneId.PrivacySettings, ScreenshotSceneGroup.SETTINGS, osIntegrationVariants) {
             PrivacySettingsContent(
+                state =
+                    PrivacySettingsState(
+                        biometrics = PrivacyPreferenceState.Available(enabled = true),
+                        systemSearchVisibility = PrivacyPreferenceState.Available(enabled = true),
+                        showSystemSearchVisibilityToggle = true,
+                        androidAssistants = setOf(AssistantCapability.READ_MEMORIES, AssistantCapability.START_CAPTURE),
+                    ),
                 onBack = {},
                 onSetBiometricsEnabled = {},
-                onSetSystemSearchVisibilityEnabled = {},
-                isBiometricsEnabled = true,
-                isSystemSearchVisibilityEnabled = true,
-                showSystemSearchVisibilityToggle = true,
-                onNavigateToLocationSettings = {},
             )
         },
         sharedScene(SharedScreenshotSceneId.RecoveryPhrase, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {

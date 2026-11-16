@@ -1,9 +1,13 @@
 package app.logdate.feature.core.settings.ui
 
+import app.logdate.client.repository.assistants.AssistantCapability
+
 data class PrivacySettingsState(
     val biometrics: PrivacyPreferenceState = PrivacyPreferenceState.Loading,
     val systemSearchVisibility: PrivacyPreferenceState = PrivacyPreferenceState.Loading,
     val showSystemSearchVisibilityToggle: Boolean = false,
+    /** What Android assistants may see and do, or null where they aren't available. */
+    val androidAssistants: Set<AssistantCapability>? = null,
 )
 
 sealed interface PrivacyPreferenceState {
