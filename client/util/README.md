@@ -1,6 +1,6 @@
 # LogDate Utilities Module
 
-This module provides common utility functions and extensions used throughout the LogDate application. It offers cross-platform implementations for common tasks related to dates, times, UUIDs, and other foundational operations.
+This module provides common utility functions and extensions used throughout the LogDate application. It offers cross-platform implementations for common tasks related to dates, times and coroutine dispatchers.
 
 ## Features
 
@@ -10,12 +10,6 @@ This module provides common utility functions and extensions used throughout the
 - **Time Calculations**: Functions for calculating time differences, week numbers, and relative dates
 - **ISO 8601 Compliance**: Week calculations following the ISO standard
 - **Locale Awareness**: Date formatting respecting device locale settings
-
-### UUID Serialization
-
-- **Kotlin UUID Serialization**: Serialization support for Kotlin's new Uuid type
-- **JSON Compatibility**: Integration with kotlinx.serialization for JSON encoding/decoding
-- **Cross-Platform Support**: Works consistently across all platforms
 
 ## Usage Examples
 
@@ -54,30 +48,6 @@ val dateTime = LocalDateTime(2025, 6, 15, 0, 0)
 val weekNum = dateTime.weekOfYear // 24
 ```
 
-### UUID Serialization
-
-```kotlin
-import app.logdate.util.UuidSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlin.uuid.Uuid
-
-// Use in serializable data classes
-@Serializable
-data class MyData(
-    @Serializable(with = UuidSerializer::class)
-    val id: Uuid,
-    val name: String
-)
-
-// Serialize
-val data = MyData(Uuid.random(), "Example")
-val json = Json.encodeToString(data)
-
-// Deserialize
-val parsed = Json.decodeFromString<MyData>(json)
-```
-
 ## Platform-Specific Implementations
 
 This module uses Kotlin Multiplatform's expect/actual pattern to provide optimal implementations for:
@@ -95,10 +65,9 @@ The module includes thorough tests for all utilities to ensure consistent behavi
 
 - Date/time formatting tests
 - Week calculation tests
-- UUID serialization/deserialization tests
 
 Run tests with:
 
 ```bash
-./gradlew :client:util:test
+./gradlew :client:util:jvmTest
 ```
