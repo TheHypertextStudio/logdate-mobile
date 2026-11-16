@@ -49,12 +49,22 @@ class RepoCommitSpecTest {
     fun `revisions always increase even when the clock stands still or goes backwards`() =
         runSuspend {
             val clock = MutableClock(Instant.parse("2026-10-18T12:00:00Z"))
-            val engine = DefaultRepoEngine(InMemoryRepoBlockStore(), clock)
+            val skewEvents = mutableListOf<Pair<AtprotoDid, Long>>()
+            val engine =
+                DefaultRepoEngine(
+                    blockStore = InMemoryRepoBlockStore(),
+                    clock = clock,
+                    onClockSkew = { skewedRepo, aheadMicros -> skewEvents += skewedRepo to aheadMicros },
+                )
 
             engine.putRecord(recordId("entry-1"), entry("one")).getOrThrow()
             engine.putRecord(recordId("entry-2"), entry("two")).getOrThrow()
+            assertTrue(skewEvents.isEmpty(), "Same-timestamp commits should not report clock skew")
             clock.now = clock.now - 10.minutes
             engine.deleteRecord(recordId("entry-1")).getOrThrow()
+            assertEquals(1, skewEvents.size)
+            assertEquals(repo, skewEvents.single().first)
+            assertTrue(skewEvents.single().second >= 10.minutes.inWholeMicroseconds)
 
             val revisions =
                 engine
