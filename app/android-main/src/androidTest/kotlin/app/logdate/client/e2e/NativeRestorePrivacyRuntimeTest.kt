@@ -146,8 +146,8 @@ class NativeRestorePrivacyRuntimeTest {
         val application = context.applicationContext
         val field = application.javaClass.declaredFields.firstOrNull { it.name == "startup" }
         if (field != null) return assertNotNull(field.apply { isAccessible = true }.get(application))
-        val coordinator = Class.forName("app.logdate.client.ApplicationStartupCoordinator")
-        val startups = coordinator.getDeclaredField("fallbackStartups").apply { isAccessible = true }.get(null) as Map<*, *>
+        val coordinator = Class.forName("app.logdate.client.launch.ApplicationStartupCoordinator")
+        val startups = coordinator.getDeclaredField("retainedApplicationStartups").apply { isAccessible = true }.get(null) as Map<*, *>
         return synchronized(startups) { assertNotNull(startups[application]) }
     }
 

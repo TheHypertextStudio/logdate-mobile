@@ -38,41 +38,10 @@ internal class ApplicationStartup(
         if (state.value is ApplicationStartupState.Ready) return
         val currentJob = job
         if (currentJob?.isActive == true) {
-            if (state.value is ApplicationStartupState.Failed && retryAfter !== currentJob) {
-                retryAfter = currentJob
-                mutableState.value = ApplicationStartupState.Loading
-                currentJob.invokeOnCompletion { retryWhenFinished(currentJob) }
-            }
+            retryWhenFailedAttemptEnds(currentJob)
             return
         }
-        mutableState.value = ApplicationStartupState.Loading
-        val attempt =
-            scope
-                .launch(start = CoroutineStart.LAZY) {
-                    try {
-                        initialize()
-                        mutableState.value = ApplicationStartupState.Ready
-                        startDeviceWork?.let { start ->
-                            // Device observers own installation work; their dependency graph must
-                            // not hold validated local content behind optional service startup.
-                            scope.launch {
-                                try {
-                                    start()
-                                } catch (cancelled: CancellationException) {
-                                    throw cancelled
-                                } catch (_: Exception) {
-                                    Napier.w("Device-owned startup work could not start; journal access remains available")
-                                }
-                            }
-                        }
-                    } catch (cancelled: CancellationException) {
-                        throw cancelled
-                    } catch (error: Exception) {
-                        mutableState.value = ApplicationStartupState.Failed(error)
-                    }
-                }
-        job = attempt
-        attempt.start()
+        launchAttempt { initialize() }
     }
 
     /** Retention is explicit and runs only after the failed initializer has released its handles. */
@@ -80,37 +49,21 @@ internal class ApplicationStartup(
     fun recoverRetainedJournal(prepare: suspend () -> Unit) {
         if (state.value !is ApplicationStartupState.Failed) return
         val previous = job
+        launchAttempt {
+            previous?.join()
+            prepare()
+            initialize()
+        }
+    }
+
+    suspend fun awaitReady(): Boolean = state.first { it !is ApplicationStartupState.Loading } is ApplicationStartupState.Ready
+
+    /** An attempt can report failure before its job finishes; retry once that job has ended. */
+    private fun retryWhenFailedAttemptEnds(currentJob: Job) {
+        if (state.value !is ApplicationStartupState.Failed || retryAfter === currentJob) return
+        retryAfter = currentJob
         mutableState.value = ApplicationStartupState.Loading
-        val attempt =
-            scope.launch(start = CoroutineStart.LAZY) {
-                previous?.join()
-                try {
-                    prepare()
-                    initialize()
-                    mutableState.value = ApplicationStartupState.Ready
-                    startDeviceWork?.let { start ->
-                        scope.launch {
-                            try {
-                                start()
-                            } catch (
-                                cancelled: CancellationException,
-                            ) {
-                                throw cancelled
-                            } catch (_: Exception) {
-                                Napier.w("Device-owned work remains available to retry")
-                            }
-                        }
-                    }
-                } catch (
-                    cancelled: CancellationException,
-                ) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    mutableState.value = ApplicationStartupState.Failed(error)
-                }
-            }
-        job = attempt
-        attempt.start()
+        currentJob.invokeOnCompletion { retryWhenFinished(currentJob) }
     }
 
     @Synchronized
@@ -120,7 +73,42 @@ internal class ApplicationStartup(
         if (job === previous && state.value !is ApplicationStartupState.Ready) start()
     }
 
-    suspend fun awaitReady(): Boolean = state.first { it !is ApplicationStartupState.Loading } is ApplicationStartupState.Ready
+    private fun launchAttempt(open: suspend () -> Unit) {
+        mutableState.value = ApplicationStartupState.Loading
+        val attempt =
+            scope.launch(start = CoroutineStart.LAZY) {
+                try {
+                    open()
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Napier.e("Application storage initialization failed", error, tag = APP_STARTUP_TAG)
+                    mutableState.value = ApplicationStartupState.Failed(error)
+                    return@launch
+                }
+                mutableState.value = ApplicationStartupState.Ready
+                launchDeviceWork()
+            }
+        job = attempt
+        attempt.start()
+    }
+
+    /**
+     * Device observers own installation work. Their dependency graph must not hold validated local
+     * content behind optional service startup, so a failure here leaves the journal open.
+     */
+    private fun launchDeviceWork() {
+        val start = startDeviceWork ?: return
+        scope.launch {
+            try {
+                start()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                Napier.w("Device-owned startup work could not start; journal access remains available")
+            }
+        }
+    }
 }
 
 /** Keeps a native restore completion token pending until startup reaches a terminal state. */

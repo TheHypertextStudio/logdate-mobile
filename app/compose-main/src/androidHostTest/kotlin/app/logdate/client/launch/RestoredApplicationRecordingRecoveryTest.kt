@@ -1,7 +1,6 @@
 package app.logdate.client.launch
 
 import android.app.Application
-import app.logdate.client.ApplicationStartupCoordinator
 import app.logdate.client.database.LogDateDatabase
 import app.logdate.client.media.audio.CrashSafeRecording
 import kotlinx.coroutines.Dispatchers
@@ -65,13 +64,13 @@ class RestoredApplicationRecordingRecoveryTest {
             }
             Dispatchers.setMain(UnconfinedTestDispatcher())
             try {
-                val startup = ApplicationStartupCoordinator.get(application)
+                val startup = ApplicationStartupCoordinator.start(application)
                 assertFalse(withTimeout(5_000) { startup.awaitReady() })
                 assertTrue(databaseReached, "Startup must reach the deliberate database failure")
                 assertTrue(final.isFile, "Recording recovery did not reach the database boundary: ${startup.state.value}")
                 assertContentEquals(audio, final.readBytes())
                 assertFalse(staged.exists())
-                val retry = ApplicationStartupCoordinator.get(application)
+                val retry = ApplicationStartupCoordinator.start(application)
                 assertSame(startup, retry)
                 assertFalse(withTimeout(5_000) { retry.awaitReady() })
                 assertContentEquals(audio, final.readBytes())

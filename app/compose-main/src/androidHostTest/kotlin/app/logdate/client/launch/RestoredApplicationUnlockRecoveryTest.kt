@@ -4,7 +4,6 @@ import android.app.Application
 import android.app.job.JobScheduler
 import android.content.Intent
 import android.os.UserManager
-import app.logdate.client.ApplicationStartupCoordinator
 import app.logdate.client.database.LogDateDatabase
 import app.logdate.client.device.restore.PostRestoreDetector
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +88,7 @@ class RestoredApplicationUnlockRecoveryTest {
             platform.setUserUnlocked(false)
             var startup: ApplicationStartup? = null
             try {
-                val active = ApplicationStartupCoordinator.get(application)
+                val active = ApplicationStartupCoordinator.start(application)
                 startup = active
                 withTimeout(5_000) {
                     while (
