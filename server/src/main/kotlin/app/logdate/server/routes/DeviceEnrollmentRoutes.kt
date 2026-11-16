@@ -32,6 +32,7 @@ import kotlin.uuid.ExperimentalUuidApi
 private const val ENROLLMENT_LIFETIME_MS = 5 * 60 * 1_000L
 private const val MAX_ENVELOPE_LENGTH = 4_096
 private val random = SecureRandom()
+private val CONFIRMATION_CODE = Regex("[0-9]{6}")
 
 @Serializable
 internal data class CreateEnrollmentRequest(
@@ -111,7 +112,7 @@ private fun Route.createEnrollmentRoute(
                     (
                         claimSecret?.size != 32 ||
                             Base64.getUrlEncoder().withoutPadding().encodeToString(claimSecret) != request.claimSecret ||
-                            request.confirmationCode?.matches(Regex("[0-9]{6}")) != true
+                            request.confirmationCode?.matches(CONFIRMATION_CODE) != true
                     )
             ) ||
             (request.claimSecret == null && request.confirmationCode != null)
@@ -250,7 +251,7 @@ private fun Route.approveEnrollmentRoute(
                 ?: return@post call.respond(HttpStatusCode.BadRequest, error("INVALID_ENROLLMENT", "Invalid request ID"))
         val request = call.receive<ApproveEnrollmentRequest>()
         if (
-            !request.confirmationCode.matches(Regex("[0-9]{6}")) ||
+            !request.confirmationCode.matches(CONFIRMATION_CODE) ||
             request.encryptedEnvelope.isEmpty() ||
             request.encryptedEnvelope.length > MAX_ENVELOPE_LENGTH
         ) {

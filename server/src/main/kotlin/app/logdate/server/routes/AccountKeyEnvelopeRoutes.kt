@@ -66,12 +66,14 @@ internal fun Route.accountKeyEnvelopeRoutes(
     }
 }
 
+private val CREDENTIAL_ID = Regex("[A-Za-z0-9_-]{1,2048}")
+
 private suspend fun ownsCredential(
     passkeys: PasskeyRepository,
     owner: UUID,
     credentialId: String?,
 ): Boolean {
-    if (credentialId == null || !credentialId.matches(Regex("[A-Za-z0-9_-]{1,2048}"))) return false
+    if (credentialId == null || !credentialId.matches(CREDENTIAL_ID)) return false
     return passkeys.getPasskeyByCredentialId(credentialId)?.first == owner.toKotlinUuid()
 }
 

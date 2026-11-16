@@ -69,7 +69,9 @@ fun diagnosticCode(event: SyncDiagnosticEvent): DiagnosticCode =
         else -> DiagnosticCode.PHASE_TRANSITION
     }
 
+private val DIAGNOSTIC_VERSION = Regex("[0-9]{1,5}(\\.[0-9]{1,5}){0,3}")
+
 fun diagnosticVersion(value: String?): List<Int> {
-    if (value == null || !Regex("[0-9]{1,5}(\\.[0-9]{1,5}){0,3}").matches(value)) return emptyList()
+    if (value == null || !DIAGNOSTIC_VERSION.matches(value)) return emptyList()
     return value.split('.').map { it.toInt() }
 }
