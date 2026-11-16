@@ -67,7 +67,17 @@ actual val corePlatformModule: Module =
         single { AndroidRestoreLauncher(androidContext()) }
         single<RestoreLauncher> { get<AndroidRestoreLauncher>() }
         workerOf(::RestoreWorker)
-        workerOf(::CloudRestoreWorker)
+        // Constructed explicitly: workerOf would ask Koin for the two optional function parameters,
+        // which only tests pass, and fail to create the worker.
+        worker {
+            CloudRestoreWorker(
+                context = get(),
+                params = get(),
+                cloudBackupDataSource = get(),
+                sessionStorage = get(),
+                cloudArchiveCipher = get(),
+            )
+        }
         single<RestoreCredentialCleanupScheduler> { AndroidRestoreCredentialCleanupScheduler(androidContext()) }
         worker {
             RestoreCredentialCleanupWorker(
