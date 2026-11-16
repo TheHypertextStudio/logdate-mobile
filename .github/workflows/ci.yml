@@ -156,11 +156,17 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+
       - name: Run iOS and Wasm tests
         # The test targets the unit-test job leaves out. Linux compiles every iOS main and
         # test source set but cannot link or run iOS binaries, so the iOS test tasks skip
         # after compiling, as they did in the unit-test job. Wasm tests run in a browser.
-        run: ./gradlew iosSimulatorArm64Test wasmJsTest --continue
+        # The step limit is below the job limit so a hang ends as a failure that still
+        # uploads its diagnostics, instead of a cancellation that loses the log.
+        timeout-minutes: 20
+        run: scripts/ci/with-resource-log.sh ./gradlew iosSimulatorArm64Test wasmJsTest --continue
 
       - name: Upload multiplatform test reports
         if: ${{ failure() }}
@@ -171,6 +177,18 @@ jobs:
           path: |
             **/build/test-results/**
             **/build/reports/tests
+
+      - name: Upload runner diagnostics
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: multiplatform-runner-diagnostics
+          if-no-files-found: warn
+          retention-days: 3
+          path: |
+            ${{ runner.temp }}/ci-diagnostics
+            ~/.gradle/daemon/*/daemon-*.out.log
+            **/hs_err_pid*.log
 
   e2e-tests:
     name: Server / client e2e
@@ -331,10 +349,27 @@ jobs:
       # The shipped artifact is the shrunk one. Building it here is what catches R8
       # configuration regressions - stripped serializers, renamed JNI classes - which no
       # debug build or unit test can surface. Debug signing keeps this non-publishable.
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+
       - name: Build shrunk release artifact
+        # Ends as a logged failure, not a lost cancellation, if the build hangs.
+        timeout-minutes: 30
         run: |
-          ./gradlew :app:android-main:assembleRelease \
+          scripts/ci/with-resource-log.sh ./gradlew :app:android-main:assembleRelease \
             -Plogdate.allowDebugReleaseSigning=true
+
+      - name: Upload runner diagnostics
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: android-release-runner-diagnostics
+          if-no-files-found: warn
+          retention-days: 3
+          path: |
+            ${{ runner.temp }}/ci-diagnostics
+            ~/.gradle/daemon/*/daemon-*.out.log
+            **/hs_err_pid*.log
 
       - name: Upload R8 mapping
         if: always()

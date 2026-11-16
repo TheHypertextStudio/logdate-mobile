@@ -1,0 +1,44 @@
+name: Fit Gradle to the runner
+description: |
+  Size the Gradle daemon, the Kotlin compile daemon and the worker count for a hosted
+  Linux runner (4 CPUs, 16 GB). The repository defaults suit a developer Mac: an 8 GB
+  Gradle daemon plus a 6 GB Kotlin daemon is 14 GB of heap before the Kotlin/Native
+  compilers, test workers, headless Chrome and the kernel take their share. A runner that
+  runs out of memory is shut down with no error from Gradle. Run this after
+  gradle/actions/setup-gradle; the user-level properties file wins over gradle.properties,
+  so local builds keep the larger defaults.
+
+inputs:
+  gradle-heap:
+    description: Maximum heap of the Gradle daemon, which also hosts R8 and the test launcher.
+    required: false
+    default: 5g
+  kotlin-heap:
+    description: Maximum heap of the Kotlin compile daemon.
+    required: false
+    default: 3g
+  max-workers:
+    description: Most Gradle tasks that run at once, which bounds concurrent compilers and browsers.
+    required: false
+    default: '3'
+
+runs:
+  using: composite
+  steps:
+    - name: Write CI Gradle properties
+      shell: bash
+      env:
+        GRADLE_HEAP: ${{ inputs.gradle-heap }}
+        KOTLIN_HEAP: ${{ inputs.kotlin-heap }}
+        MAX_WORKERS: ${{ inputs.max-workers }}
+      run: |
+        gradle_home="${GRADLE_USER_HOME:-$HOME/.gradle}"
+        mkdir -p "$gradle_home"
+        {
+          echo "org.gradle.jvmargs=-Xmx${GRADLE_HEAP} -XX:MaxMetaspaceSize=1536M -Dfile.encoding=UTF-8 --enable-native-access=ALL-UNNAMED"
+          echo "kotlin.daemon.jvmargs=-Xmx${KOTLIN_HEAP}"
+          echo "org.gradle.workers.max=${MAX_WORKERS}"
+        } >> "$gradle_home/gradle.properties"
+        echo "::group::CI Gradle properties"
+        cat "$gradle_home/gradle.properties"
+        echo "::endgroup::"
