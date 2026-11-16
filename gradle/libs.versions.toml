@@ -275,6 +275,7 @@ androidx-credentials = { group = 'androidx.credentials', name = 'credentials', v
 androidx-credentials-play-services = { group = 'androidx.credentials', name = 'credentials-play-services-auth', version.ref = 'androidxCredentials' }
 androidx-security-crypto = { group = 'androidx.security', name = 'security-crypto', version.ref = 'androidx-security-crypto' }
 bouncycastle-bcprov = { group = 'org.bouncycastle', name = 'bcprov-jdk18on', version.ref = 'bouncycastle' }
+cryptography-provider-openssl3-prebuilt = { module = 'dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt', version.ref = 'cryptographyKotlin' }
 cryptography-provider-optimal = { module = 'dev.whyoleg.cryptography:cryptography-provider-optimal', version.ref = 'cryptographyKotlin' }
 jwtKt = { group = 'com.appstractive', name = 'jwt-kt', version.ref = 'jwtKt' }
 nimbus-jose-jwt = { module = 'com.nimbusds:nimbus-jose-jwt', version.ref = 'nimbusJoseJwt' }

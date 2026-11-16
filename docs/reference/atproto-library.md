@@ -9,8 +9,9 @@
 - `shared/atproto-identity`
   - AT Protocol DID rules, DID documents, handle resolution, `did:web`, and `did:plc`
 - `shared/atproto-crypto`
-  - base58btc and multikey encoding, P-256 and K-256 curve definitions, and JVM-only EC key
-    generation, signing, verification, and JWK public-key decoding
+  - base58btc and multikey encoding, P-256 and K-256 curve definitions, and EC key generation,
+    low-S signing, verification, and JWK public-key decoding on every platform; see
+    [Signing keys](#signing-keys)
 - `shared/atproto-plc`
   - PLC directory models and client/runtime behavior
 - `shared/atproto-repo`
@@ -266,6 +267,47 @@ Regenerate the checked-in official AT Protocol lexicon models used by this repo:
 
 Android Studio users can run the same Dokka task through
 [`Generate ATProto Dokka.run.xml`](../../.run/Generate%20ATProto%20Dokka.run.xml).
+
+## Signing keys
+
+`EcPrivateKey` and `EcPublicKey` in `atproto-crypto` generate keys, sign, and verify on the JVM,
+Android, and iOS, for both curves the AT Protocol uses: P-256 and K-256 (secp256k1).
+
+```kotlin
+val privateKey = EcPrivateKey.generate(EcCurve.K256)
+val signature = privateKey.signSha256(payload)
+
+// What goes in a DID document's publicKeyMultibase.
+val multikey = privateKey.publicKey.toMultikey()
+
+val valid = EcPublicKey.fromMultikey(multikey).verifySha256(payload, signature)
+```
+
+A private key is its 32-byte scalar (`toByteArray()` and `EcPrivateKey.fromByteArray`), and a public
+key is its 33-byte compressed point, so a key stored on one platform works on another. Storing the
+scalar safely, in the Keychain or the Android Keystore for example, is the caller's job.
+
+Signatures are always "low-S", the one form of an ECDSA signature the AT Protocol accepts, and
+`verifySha256` refuses the other form unless `allowHighS = true`. Pass that only when checking
+JOSE signatures such as JWTs and DPoP proofs, which allow both.
+
+Each platform uses an established cryptography library for the curve arithmetic, and the choice has
+consequences worth knowing:
+
+- **JVM and Android use BouncyCastle** directly, not through `java.security`. Android ships a
+  cut-down provider under BouncyCastle's name without secp256k1, so the `java.security` route
+  fails there for K-256. Signatures are deterministic (RFC 6979): the same key and payload always
+  give the same bytes, and no random number generator can weaken a signature.
+- **iOS uses OpenSSL**, linked statically into the app through
+  [cryptography-kotlin](https://github.com/whyoleg/cryptography-kotlin). Apple's CryptoKit and
+  Security frameworks have P-256 but not secp256k1, so one library covers both curves. This adds
+  OpenSSL's `libcrypto` to the app binary, a few megabytes before dead-code stripping. Signatures
+  use a random nonce from OpenSSL's generator, so the same payload signs to different bytes each
+  time. They verify everywhere, but code that compares signature bytes across platforms will not
+  hold on iOS.
+
+On the JVM, `EcKeySupport` keeps the `java.security` key types for code that stores keys as PKCS#8,
+and converts them with `toEcPrivateKey` and `toEcPublicKey`.
 
 ## Generating models from lexicons
 
