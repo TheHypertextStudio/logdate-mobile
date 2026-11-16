@@ -67,7 +67,6 @@ These are the main scopes for user-facing features. **Prefer these scopes** for 
 | `client/feature/journal/`                                                              | `journal`           |
 | `client/feature/location-timeline/`                                                    | `location-timeline` |
 | `client/feature/onboarding/`                                                           | `onboarding`        |
-| `client/feature/passkeys/`                                                             | `passkeys`          |
 | `client/feature/rewind/`                                                               | `rewind`            |
 | `client/feature/search/`                                                               | `search`            |
 | `client/feature/timeline/`                                                             | `timeline`          |

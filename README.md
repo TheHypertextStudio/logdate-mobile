@@ -424,8 +424,8 @@ Please read each module's README for specific contribution guidelines. General p
 
 ## License
 
-The repository has no license file for the LogDate app, so no open-source license is granted for its
-code. The standalone AT Protocol libraries are licensed under the Apache License 2.0; see
+LogDate is released under the MIT License; see [`LICENSE`](LICENSE). The standalone AT Protocol
+libraries under `shared/atproto-*` are licensed separately under the Apache License 2.0; see
 [`shared/atproto-licensing`](shared/atproto-licensing/).
 
 ## Acknowledgments

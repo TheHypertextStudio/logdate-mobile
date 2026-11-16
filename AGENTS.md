@@ -218,7 +218,8 @@ repository.
 
 - **Logging**: Napier only. Never `System.out`, `println`, or `Log.d`.
 - **UUIDs**: `kotlin.uuid.Uuid` with `Uuid.random()`, not Java's UUID.
-- **Dates**: `kotlinx.datetime.Instant`.
+- **Dates**: `kotlin.time.Instant` for points in time; `kotlinx.datetime` for calendar types such as
+  `LocalDate` and `TimeZone`.
 - **Serialization**: `kotlinx.serialization`.
 - **DI**: Constructor injection with Koin.
 - **State**: Sealed classes/interfaces for UI state.
