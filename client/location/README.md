@@ -126,7 +126,7 @@ attempt is dropped.
 
 ## Dependencies
 
-- `:shared:model`, `:client:database`, `:client:logdate-datastore`, `:client:permissions`,
+- `:shared:model`, `:client:database`, `:client:datastore`, `:client:permissions`,
   `:client:repository` and `:client:device`.
 - Android: Play Services location, maps and Places, WorkManager, and `:client:notifications` for
   the recording notification.

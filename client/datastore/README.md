@@ -1,4 +1,4 @@
-# `:client:logdate-datastore`
+# `:client:datastore`
 
 **Key-value preferences storage using DataStore**
 
@@ -19,11 +19,13 @@ DataStore Module
 ## Key Components
 
 ### Core Components
+
 - `DataStore.kt` - Common DataStore interface
 - `LogdatePreferencesDataSource.kt` - Preferences management
 - `DatastoreModule.kt` - DI configuration
 
 ### Platform Implementations
+
 - `DataStore.android.kt` - Android-specific implementation
 - `DataStore.ios.kt` - iOS-specific implementation
 - `DataStore.jvm.kt` - Desktop/JVM implementation
@@ -31,12 +33,14 @@ DataStore Module
 ## Features
 
 ### Preferences Management
+
 - Type-safe preference access
 - Reactive preference updates via Flow
 - Platform-specific storage locations
 - Automatic preference serialization
 
 ### Supported Data Types
+
 - Primitive types (String, Int, Boolean, etc.)
 - Enum preferences
 - Complex objects via serialization

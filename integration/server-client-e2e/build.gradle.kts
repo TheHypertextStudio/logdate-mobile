@@ -12,7 +12,7 @@ dependencies {
     testImplementation(projects.client.device)
     testImplementation(projects.client.media)
     testImplementation(projects.client.repository)
-    testImplementation(projects.client.logdateDatastore)
+    testImplementation(projects.client.datastore)
     testImplementation(libs.sqlite.bundled)
     testImplementation(libs.exposed.jdbc)
     testImplementation(projects.shared.config)

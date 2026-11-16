@@ -22,7 +22,7 @@ kotlin {
             implementation(projects.client.repository)
             implementation(projects.client.domain)
             implementation(projects.client.device)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
             implementation(projects.client.billing)
             implementation(projects.client.media)
             implementation(projects.client.intelligence)
@@ -43,7 +43,7 @@ kotlin {
 
         commonTest.dependencies {
             implementation(projects.client.healthConnect)
-            implementation(projects.client.logdateDatastore)
+            implementation(projects.client.datastore)
         }
 
         val desktopTest by getting

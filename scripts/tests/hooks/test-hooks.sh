@@ -97,7 +97,7 @@ assert_exit 1 large_task_list_has_no_partial_match
 resolved="$(modules_from_files $'client/feature/timeline/src/main/kotlin/Foo.kt\nclient/feature/timeline/src/main/kotlin/Bar.kt\nclient/repository/src/commonMain/kotlin/Baz.kt\nclient/datastore/src/commonMain/kotlin/Qux.kt')"
 assert_contains "^:client:feature:timeline$" "$resolved"
 assert_contains "^:client:repository$" "$resolved"
-assert_contains "^:client:logdate-datastore$" "$resolved"
+assert_contains "^:client:datastore$" "$resolved"
 
 fetch_calls_total=0
 fetch_module_tasks() {
