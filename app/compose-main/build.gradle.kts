@@ -1,18 +1,12 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
-
 import org.gradle.api.tasks.testing.Test
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.app.logdate.kmp.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.dokka)
     alias(libs.plugins.buildConfig)
-    alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.ksp)
 }
 
@@ -20,21 +14,9 @@ kotlin {
     android {
         // TODO: Migrate to app.logdate.mobile once we have ability to migrate
         namespace = "studio.hypertext.logdate"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        withHostTestBuilder {}
         androidResources {
             enable = true
             noCompress += listOf("cvr")
-        }
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -55,10 +37,6 @@ kotlin {
         val desktopMain by getting
         val desktopTest by getting
 
-        all {
-            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
-            compilerOptions.freeCompilerArgs.set(listOf("-Xexpect-actual-classes"))
-        }
         commonMain.dependencies {
             // Project dependencies
             implementation(projects.client.feature.core)
@@ -285,6 +263,11 @@ tasks.named<Test>("desktopTest") {
     systemProperty("logdate.desktopScreenshots.diffDir", desktopScreenshotDiffDir.get().asFile.absolutePath)
     desktopScreenshotSceneFilter?.let {
         systemProperty("logdate.desktopScreenshots.sceneFilter", it)
+    }
+    // A run that requires the screenshots renders them on a hidden window instead of headless.
+    if (providers.environmentVariable("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS").orNull == "true") {
+        systemProperty("java.awt.headless", "false")
+        systemProperty("logdate.desktopScreenshots.visible", "false")
     }
 }
 

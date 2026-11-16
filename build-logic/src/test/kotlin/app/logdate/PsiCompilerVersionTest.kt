@@ -49,6 +49,7 @@ class PsiCompilerVersionTest {
             GradleRunner
                 .create()
                 .withProjectDir(project)
+                .withTestKitDir(File(System.getProperty("logdate.testKitDir")))
                 .withPluginClasspath()
                 .withArguments("printParsers", "--stacktrace")
                 .build()
