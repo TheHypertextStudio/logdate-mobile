@@ -45,7 +45,15 @@ class LocalMediaFetcher(
         val path = checkNotNull(mediaFiles.filePath(source.reference)) { "Not a local media file: ${source.reference}" }
         return SourceFetchResult(
             source = ImageSource(file = path.toPath(), fileSystem = options.fileSystem),
-            mimeType = null,
+            mimeType =
+                when (path.substringAfterLast('.', "").lowercase()) {
+                    "mp4", "m4v" -> "video/mp4"
+                    "mov" -> "video/quicktime"
+                    "webm" -> "video/webm"
+                    "3gp", "3gpp" -> "video/3gpp"
+                    "mkv" -> "video/x-matroska"
+                    else -> null
+                },
             dataSource = DataSource.DISK,
         )
     }
