@@ -9,6 +9,7 @@ data class JournalContentPickerUiState(
     val journalTitle: String = "",
     val query: String = "",
     val groups: List<JournalContentPickerDateGroup> = emptyList(),
+    val canLoadMore: Boolean = false,
     val selectedItems: List<JournalContentPickerItem> = emptyList(),
     val isAdding: Boolean = false,
     val addError: StringResource? = null,

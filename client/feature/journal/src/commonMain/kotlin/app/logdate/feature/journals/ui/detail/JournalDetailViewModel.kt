@@ -8,6 +8,7 @@ import app.logdate.client.domain.timeline.GetJournalMembershipUseCase
 import app.logdate.client.repository.journals.JournalContentRepository
 import app.logdate.client.repository.journals.JournalRepository
 import app.logdate.client.repository.search.SearchResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,10 +18,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 import kotlin.uuid.Uuid
 
 /**
@@ -33,6 +36,7 @@ class JournalDetailViewModel(
     private val getJournalMembership: GetJournalMembershipUseCase,
     private val searchInJournal: SearchInJournalUseCase,
     savedStateHandle: SavedStateHandle,
+    private val workContext: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     // Simple MutableStateFlow to store the journal ID
     private val journalIdState = MutableStateFlow<Uuid?>(null)
@@ -85,26 +89,14 @@ class JournalDetailViewModel(
                     return@flatMapLatest flowOf(JournalDetailUiState.Loading)
                 }
 
-                repository
-                    .observeJournalById(journalId)
-                    .combine(journalContentsState) { journal, notes ->
-                        journal to notes
-                    }.combine(sortOrderState) { journalToNotes, sortOrder ->
-                        Triple(journalToNotes.first, journalToNotes.second, sortOrder)
-                    }.flatMapLatest { (journal, notes, sortOrder) ->
-                        val noteIds = notes.map { it.uid }.toSet()
+                // Membership follows the set of notes, and a sort toggle only reorders what is already mapped.
+                val entries =
+                    journalContentsState.flatMapLatest { notes ->
+                        val noteIds = notes.mapTo(HashSet()) { it.uid }
                         if (noteIds.isEmpty()) {
-                            return@flatMapLatest flowOf(
-                                JournalDetailUiState.Success(
-                                    journal.id,
-                                    journal.title,
-                                    emptyList(),
-                                    sortOrder,
-                                ),
-                            )
-                        }
-                        getJournalMembership(noteIds).map { membershipMap ->
-                            val displayData =
+                            flowOf(emptyList())
+                        } else {
+                            getJournalMembership(noteIds).map { membershipMap ->
                                 notes.map { note ->
                                     val otherJournals =
                                         membershipMap[note.uid]
@@ -113,19 +105,17 @@ class JournalDetailViewModel(
                                             .map { JournalReference(it.id, it.title) }
                                     note.toEntryDisplayData(otherJournals)
                                 }
-                            val sortedEntries =
-                                when (sortOrder) {
-                                    SortOrder.NEWEST_FIRST -> displayData.sortedByDescending { it.timestamp }
-                                    SortOrder.OLDEST_FIRST -> displayData.sortedBy { it.timestamp }
-                                }
-                            JournalDetailUiState.Success(
-                                journal.id,
-                                journal.title,
-                                sortedEntries,
-                                sortOrder,
-                            )
+                            }
                         }
                     }
+                combine(repository.observeJournalById(journalId), entries, sortOrderState) { journal, displayData, sortOrder ->
+                    val sortedEntries =
+                        when (sortOrder) {
+                            SortOrder.NEWEST_FIRST -> displayData.sortedByDescending { it.timestamp }
+                            SortOrder.OLDEST_FIRST -> displayData.sortedBy { it.timestamp }
+                        }
+                    JournalDetailUiState.Success(journal.id, journal.title, sortedEntries, sortOrder)
+                }.flowOn(workContext)
             }.catch { e ->
                 emit(
                     JournalDetailUiState.Error(

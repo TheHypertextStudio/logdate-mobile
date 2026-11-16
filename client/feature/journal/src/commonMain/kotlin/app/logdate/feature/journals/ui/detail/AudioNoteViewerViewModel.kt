@@ -92,14 +92,14 @@ class AudioNoteViewerViewModel(
 
     private fun observeNote() {
         viewModelScope.launch {
-            notesRepository.allNotesObserved
+            notesRepository
+                .observeNoteById(noteId)
                 .catch { error ->
                     _uiState.value =
                         AudioNoteViewerUiState.Error(
                             Res.string.audio_note_viewer_error_load_failed.toUiText(error.message.toString()),
                         )
-                }.collect { notes ->
-                    val note = notes.find { it.uid == noteId }
+                }.collect { note ->
                     if (note == null) {
                         _uiState.value = AudioNoteViewerUiState.Error(Res.string.audio_note_viewer_error_not_found.toUiText())
                     } else {

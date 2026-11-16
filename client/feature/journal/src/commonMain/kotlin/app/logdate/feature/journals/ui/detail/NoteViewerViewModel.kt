@@ -12,8 +12,6 @@ import app.logdate.client.sharing.SharingLauncher
 import app.logdate.client.text.UiText
 import app.logdate.client.text.toUiText
 import app.logdate.shared.model.Journal
-import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -82,21 +80,14 @@ class NoteViewerViewModel(
 
     private fun observeNote() {
         viewModelScope.launch {
-            try {
-                notesRepository.getNoteById(noteId)?.let(::updateForNote)
-            } catch (failure: CancellationException) {
-                throw failure
-            } catch (failure: Exception) {
-                Napier.w("Direct local note read failed; observing retained entries", failure)
-            }
-            notesRepository.allNotesObserved
+            notesRepository
+                .observeNoteById(noteId)
                 .catch { error ->
                     _uiState.value =
                         NoteViewerUiState.Error(
                             Res.string.note_viewer_error_load_failed.toUiText(error.message.toString()),
                         )
-                }.collect { notes ->
-                    val note = notes.find { it.uid == noteId }
+                }.collect { note ->
                     if (note == null) {
                         _uiState.value = NoteViewerUiState.Error(Res.string.note_viewer_error_not_found.toUiText())
                     } else {

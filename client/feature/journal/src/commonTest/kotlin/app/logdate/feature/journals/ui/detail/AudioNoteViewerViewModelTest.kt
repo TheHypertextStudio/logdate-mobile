@@ -45,7 +45,7 @@ class AudioNoteViewerViewModelTest {
     }
 
     @Test
-    fun `audio note loads context`() =
+    fun `audio note loads context without subscribing to every note`() =
         runTest(dispatcher) {
             val noteId = Uuid.random()
             val now = Instant.parse("2025-01-01T00:00:00Z")
@@ -83,6 +83,7 @@ class AudioNoteViewerViewModelTest {
             assertEquals("audio://test", content.mediaRef)
             assertEquals(5000L, content.durationMs)
             assertNotNull(content.context)
+            assertEquals(0, repository.wholeTableSubscriptions)
         }
 
     @Test

@@ -26,7 +26,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -39,6 +41,7 @@ class JournalContentPickerViewModelTest {
     private val olderAudio = noteAudio("2026-10-03T18:00:00Z")
     private val currentMember = noteVideo("2026-10-02T18:00:00Z")
     private lateinit var contentRepository: PickerJournalContentRepository
+    private lateinit var notesRepository: FakeJournalNotesRepository
     private lateinit var searchRepository: PickerSearchRepository
     private lateinit var viewModel: JournalContentPickerViewModel
 
@@ -47,18 +50,19 @@ class JournalContentPickerViewModelTest {
         Dispatchers.setMain(dispatcher)
         contentRepository = PickerJournalContentRepository(mapOf(journal.id to listOf(currentMember)))
         searchRepository = PickerSearchRepository(listOf(searchResult(matchingPhoto)))
-        viewModel =
-            JournalContentPickerViewModel(
-                journalRepository = FakeDetailJournalRepository(listOf(journal)),
-                journalNotesRepository =
-                    FakeJournalNotesRepository(
-                        listOf(newestText, matchingPhoto, olderAudio, currentMember),
-                    ),
-                journalContentRepository = contentRepository,
-                searchRepository = searchRepository,
-            )
+        notesRepository = FakeJournalNotesRepository(listOf(newestText, matchingPhoto, olderAudio, currentMember))
+        viewModel = pickerViewModel(notesRepository)
         viewModel.setJournalId(journal.id)
     }
+
+    private fun pickerViewModel(notes: FakeJournalNotesRepository) =
+        JournalContentPickerViewModel(
+            journalRepository = FakeDetailJournalRepository(listOf(journal)),
+            journalNotesRepository = notes,
+            journalContentRepository = contentRepository,
+            searchRepository = searchRepository,
+            workContext = dispatcher,
+        )
 
     @AfterTest
     fun tearDown() {
@@ -107,6 +111,47 @@ class JournalContentPickerViewModelTest {
                 viewModel.uiState.value.selectedItems
                     .isEmpty(),
             )
+        }
+
+    @Test
+    fun `browses one page at a time without subscribing to every note`() =
+        runTest(dispatcher) {
+            val start = Instant.parse("2026-01-01T00:00:00Z")
+            val history = (0 until 150).map { day -> noteText("Day $day", (start + day.days).toString()) }
+            val notes = FakeJournalNotesRepository(history)
+            val picker = pickerViewModel(notes).apply { setJournalId(journal.id) }
+            backgroundScope.launch { picker.uiState.collect {} }
+            advanceUntilIdle()
+
+            val firstPage =
+                picker.uiState.value.groups
+                    .flatMap { it.items }
+            assertEquals(60, firstPage.size)
+            assertEquals(history.last().uid, firstPage.first().id)
+            assertTrue(picker.uiState.value.canLoadMore)
+
+            picker.loadMore()
+            picker.loadMore()
+            advanceUntilIdle()
+            assertEquals(
+                120,
+                picker.uiState.value.groups
+                    .sumOf { it.items.size },
+            )
+
+            picker.loadMore()
+            advanceUntilIdle()
+            assertEquals(
+                150,
+                picker.uiState.value.groups
+                    .sumOf { it.items.size },
+            )
+            assertFalse(picker.uiState.value.canLoadMore)
+
+            picker.updateSearchQuery("sunset")
+            advanceUntilIdle()
+            assertFalse(picker.uiState.value.canLoadMore)
+            assertEquals(0, notes.wholeTableSubscriptions)
         }
 
     @Test
