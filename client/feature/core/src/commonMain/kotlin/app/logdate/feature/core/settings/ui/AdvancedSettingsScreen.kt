@@ -116,12 +116,6 @@ fun AdvancedSettingsContent(
                         icon = { Icon(Icons.Outlined.Code, contentDescription = null) },
                         onClick = onNavigateToDeveloperTools,
                     )
-                    SettingsNavigationItem(
-                        title = stringResource(Res.string.labs_settings_title),
-                        description = stringResource(Res.string.labs_settings_description),
-                        icon = { Icon(Icons.Outlined.Science, contentDescription = null) },
-                        onClick = onNavigateToLabs,
-                    )
                     SettingsRow(
                         headlineContent = { Text(stringResource(Res.string.hide_developer_mode)) },
                         leadingContent = { Icon(Icons.Outlined.VisibilityOff, contentDescription = null) },
@@ -132,6 +126,12 @@ fun AdvancedSettingsContent(
                             },
                     )
                 }
+                SettingsNavigationItem(
+                    title = stringResource(Res.string.labs_settings_title),
+                    description = stringResource(Res.string.labs_settings_description),
+                    icon = { Icon(Icons.Outlined.Science, contentDescription = null) },
+                    onClick = onNavigateToLabs,
+                )
                 if (developerModeSaveFailed) {
                     Text(
                         stringResource(Res.string.developer_mode_save_failed),

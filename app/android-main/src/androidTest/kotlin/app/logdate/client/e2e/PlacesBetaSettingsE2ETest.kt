@@ -6,11 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation3.runtime.NavKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -22,6 +25,8 @@ import app.logdate.client.location.settings.LocationTrackingSettingsRepository
 import app.logdate.client.ui.navigation.LocationTimelineRoute
 import app.logdate.feature.core.GlobalAppUiLoadedState
 import app.logdate.feature.core.main.HomeRoute
+import app.logdate.feature.core.settings.navigation.AdvancedSettingsRoute
+import app.logdate.feature.core.settings.navigation.LabsSettingsRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
 import app.logdate.navigation.LogDateNavDisplay
 import app.logdate.ui.theme.LogDateTheme
@@ -92,22 +97,22 @@ class PlacesBetaSettingsE2ETest {
     private fun verifyHomeToggle() {
         compose.onNodeWithTag("workspace_account").performClick()
         compose.onNodeWithText("Settings").performClick()
+        openLabs()
         compose.onNodeWithText("Places (beta)").performScrollTo().assertIsDisplayed()
         capture("places-beta-settings-off")
         compose.onNodeWithText("Places (beta)").performClick()
         compose.waitUntil(10_000) { runBlocking { flags.isEnabled(FeatureFlag.PLACES_BETA) } }
         capture("places-beta-settings-on")
-        device.pressBack()
-        compose.waitUntil(10_000) { current == HomeRoute }
+        leaveSettings()
         compose.onNodeWithText("Places").performClick()
         capture("places-beta-home-on")
 
         compose.onNodeWithTag("workspace_account").performClick()
         compose.onNodeWithText("Settings").performClick()
+        openLabs()
         compose.onNodeWithText("Places (beta)").performScrollTo().performClick()
         compose.waitUntil(10_000) { runBlocking { !flags.isEnabled(FeatureFlag.PLACES_BETA) } }
-        device.pressBack()
-        compose.waitUntil(10_000) { current == HomeRoute }
+        leaveSettings()
         compose.onNodeWithText("Places").assertDoesNotExist()
         compose.onNodeWithText("Timeline").assertIsDisplayed()
         compose.onNodeWithText("Rewind").assertIsDisplayed()
@@ -120,11 +125,28 @@ class PlacesBetaSettingsE2ETest {
         compose.waitUntil(10_000) { current == LocationTimelineRoute }
         compose.runOnIdle { pending = SettingsRoute() }
         compose.waitUntil(10_000) { current is SettingsRoute }
+        openLabs()
         compose.onNodeWithText("Places (beta)").performScrollTo().performClick()
         compose.waitUntil(10_000) { runBlocking { !flags.isEnabled(FeatureFlag.PLACES_BETA) } }
-        device.pressBack()
-        compose.waitUntil(10_000) { current == HomeRoute }
+        leaveSettings()
         compose.onNodeWithText("Places").assertDoesNotExist()
+    }
+
+    private fun openLabs() {
+        compose.onNodeWithText("Places (beta)").assertDoesNotExist()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("About LogDate"))
+        compose.onNodeWithText("About LogDate").performClick()
+        compose.waitUntil(10_000) { current == AdvancedSettingsRoute }
+        compose.onNodeWithText("Labs").performScrollTo().performClick()
+        compose.waitUntil(10_000) { current == LabsSettingsRoute }
+    }
+
+    private fun leaveSettings() {
+        repeat(3) {
+            device.pressBack()
+            compose.waitForIdle()
+        }
+        compose.waitUntil(10_000) { current == HomeRoute }
     }
 
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())

@@ -15,35 +15,26 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * A tester has to be able to open Labs on any build, including one whose version the platform
- * cannot report, so the version row in About LogDate counts taps in both states.
+ * Labs remains discoverable from About without enabling developer mode.
  */
 @OptIn(ExperimentalTestApi::class)
 class AboutLabsEntryTest {
     @Test
-    fun `the seventh tap on the installed version shows Labs`() =
+    fun `Labs opens without tapping the installed version`() =
         runDesktopComposeUiTest {
             var labsOpened = 0
             setContent { About(AppUpdateUiState(currentVersionName = "1.4.0"), onOpenLabs = { labsOpened += 1 }) }
 
-            repeat(6) { onNodeWithText("App version: 1.4.0").performClick() }
-            onNodeWithText("Labs").assertDoesNotExist()
-
-            onNodeWithText("App version: 1.4.0").performClick()
             onNodeWithText("Labs").assertExists().performClick()
             assertEquals(1, labsOpened)
         }
 
     @Test
-    fun `the seventh tap shows Labs when the version is not available`() =
+    fun `Labs opens when the version is not available`() =
         runDesktopComposeUiTest {
             var labsOpened = 0
             setContent { About(AppUpdateUiState(), onOpenLabs = { labsOpened += 1 }) }
 
-            repeat(6) { onNodeWithText("App version: unknown").performClick() }
-            onNodeWithText("Labs").assertDoesNotExist()
-
-            onNodeWithText("App version: unknown").performClick()
             onNodeWithText("Labs").assertExists().performClick()
             assertEquals(1, labsOpened)
         }
