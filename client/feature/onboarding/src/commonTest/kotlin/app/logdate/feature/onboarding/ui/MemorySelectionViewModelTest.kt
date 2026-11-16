@@ -1,10 +1,6 @@
 package app.logdate.feature.onboarding.ui
 
 import androidx.lifecycle.SavedStateHandle
-import app.logdate.client.intelligence.AIResult
-import app.logdate.client.intelligence.generativeai.GenerativeAIChatClient
-import app.logdate.client.intelligence.generativeai.GenerativeAIRequest
-import app.logdate.client.intelligence.generativeai.GenerativeAIResponse
 import app.logdate.client.media.MediaManager
 import app.logdate.client.media.MediaObject
 import app.logdate.client.media.MediaPayload
@@ -370,10 +366,10 @@ class MemorySelectionViewModelTest {
     private fun createViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): MemorySelectionViewModel =
         MemorySelectionViewModel(
             mediaManager = fakeMediaManager,
-            aiClient = FakeGenerativeAIChatClient(),
             savedStateHandle = savedStateHandle,
             notesRepository = notes,
             mediaImporter = importer,
+            workContext = testDispatcher,
         )
 
     private fun sampleImage(id: String): MediaObject.Image =
@@ -506,12 +502,4 @@ private class FakeMediaManager : MediaManager {
         fileName: String,
         mimeType: String,
     ): String = error("Not used in test")
-}
-
-private class FakeGenerativeAIChatClient : GenerativeAIChatClient {
-    override val providerId: String = "fake"
-    override val defaultModel: String? = "fake-model"
-
-    override suspend fun submit(request: GenerativeAIRequest): AIResult<GenerativeAIResponse> =
-        AIResult.Success(GenerativeAIResponse(content = "ok"))
 }

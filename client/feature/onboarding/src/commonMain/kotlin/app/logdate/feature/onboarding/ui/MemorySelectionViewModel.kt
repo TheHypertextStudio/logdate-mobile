@@ -3,13 +3,13 @@ package app.logdate.feature.onboarding.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.logdate.client.intelligence.generativeai.GenerativeAIChatClient
 import app.logdate.client.media.MediaManager
 import app.logdate.client.media.MediaObject
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.JournalNotesRepository
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -30,10 +31,10 @@ private const val MEMORY_NOTE_IDS_KEY = "memory_selection_note_ids"
  */
 class MemorySelectionViewModel(
     private val mediaManager: MediaManager,
-    private val aiClient: GenerativeAIChatClient,
     private val savedStateHandle: SavedStateHandle,
     private val notesRepository: JournalNotesRepository,
     private val mediaImporter: SelectedMemoryMediaImporter,
+    private val workContext: CoroutineContext = Dispatchers.Default,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(savedStateHandle.restoreUiState())
     val uiState: StateFlow<MemorySelectionUiState> = _uiState.asStateFlow()
@@ -100,7 +101,9 @@ class MemorySelectionViewModel(
         loadInitialMemories()
     }
 
-    private suspend fun loadAvailableMemories(): List<MediaObject> {
+    private suspend fun loadAvailableMemories(): List<MediaObject> = withContext(workContext) { readAvailableMemories() }
+
+    private suspend fun readAvailableMemories(): List<MediaObject> {
         val libraryMemories =
             mediaManager
                 .queryMediaByDate(
