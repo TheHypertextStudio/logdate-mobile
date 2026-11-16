@@ -12,13 +12,6 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <application>
-        <service
-      android:name=".tracking.DetailedLocationTrackingService"
-      android:enabled="true"
-      android:exported="false"
-      android:foregroundServiceType="location"
-    />
-
         <receiver
       android:name=".tracking.OptimizedBackgroundLocationReceiver"
       android:enabled="true"

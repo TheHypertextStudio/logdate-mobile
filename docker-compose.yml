@@ -1,6 +1,6 @@
 # LogDate Development Environment
 # This Docker Compose setup provides a local development environment for the LogDate server
-# with PostgreSQL database and Redis cache/session storage.
+# with a PostgreSQL database.
 
 services:
   logdate-postgres:
@@ -11,33 +11,16 @@ services:
       POSTGRES_USER: logdate
       POSTGRES_PASSWORD: logdate
       # Optimize for development
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
     ports:
-      - "15432:5432"  # Use unique port to avoid conflicts
+      - '15432:5432' # Use unique port to avoid conflicts
     volumes:
       - logdate_postgres_data:/var/lib/postgresql/data
       - ./server/src/main/resources/db/migration:/docker-entrypoint-initdb.d/migration:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U logdate -d logdate"]
+      test: ['CMD-SHELL', 'pg_isready -U logdate -d logdate']
       interval: 10s
       timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - logdate-network
-
-  logdate-redis:
-    image: redis:7-alpine
-    container_name: logdate-dev-redis
-    ports:
-      - "16379:6379"  # Use unique port to avoid conflicts
-    volumes:
-      - logdate_redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
       retries: 5
     restart: unless-stopped
     networks:
@@ -52,37 +35,32 @@ services:
     container_name: logdate-dev-server
     environment:
       # Database Configuration (use internal service names)
-      DATABASE_URL: "jdbc:postgresql://logdate-postgres:5432/logdate"
-      DATABASE_USER: "logdate"
-      DATABASE_PASSWORD: "logdate"
-      AUTO_MIGRATE: "true"
-      
+      DATABASE_URL: 'jdbc:postgresql://logdate-postgres:5432/logdate'
+      DATABASE_USER: 'logdate'
+      DATABASE_PASSWORD: 'logdate'
+      AUTO_MIGRATE: 'true'
+
       # Server Configuration
-      PORT: "8080"
-      HOST: "0.0.0.0"
-      
-      # Redis Configuration (use internal service name)
-      REDIS_URL: "redis://logdate-redis:6379"
-      
+      PORT: '8080'
+      HOST: '0.0.0.0'
+
       # JWT Configuration (development keys)
-      JWT_SECRET: "dev-secret-change-in-production-very-long-key-for-security"
+      JWT_SECRET: 'dev-secret-change-in-production-very-long-key-for-security'
       # Matches JWT_SECRET because local signing keys created before this variable existed were
       # encrypted with it.
-      ATPROTO_SIGNING_KEY_KEK: "dev-secret-change-in-production-very-long-key-for-security"
-      ATPROTO_SESSION_SECRET: "dev-atproto-session-secret-change-in-production-long-key"
-      
+      ATPROTO_SIGNING_KEY_KEK: 'dev-secret-change-in-production-very-long-key-for-security'
+      ATPROTO_SESSION_SECRET: 'dev-atproto-session-secret-change-in-production-long-key'
+
       # WebAuthn Configuration (development)
-      WEBAUTHN_RP_ID: "localhost"
-      WEBAUTHN_ORIGIN: "http://localhost:18080"
-      
+      WEBAUTHN_RP_ID: 'localhost'
+      WEBAUTHN_ORIGIN: 'http://localhost:18080'
+
       # Development settings
-      KTOR_DEVELOPMENT: "true"
+      KTOR_DEVELOPMENT: 'true'
     ports:
-      - "18080:8080"  # Use unique port to avoid conflicts
+      - '18080:8080' # Use unique port to avoid conflicts
     depends_on:
       logdate-postgres:
-        condition: service_healthy
-      logdate-redis:
         condition: service_healthy
     volumes:
       # Mount source code for hot reload (development only)
@@ -102,9 +80,9 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@logdate.app
       PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "15050:80"  # Use unique port to avoid conflicts
+      - '15050:80' # Use unique port to avoid conflicts
     depends_on:
       - logdate-postgres
     volumes:
@@ -115,28 +93,10 @@ services:
     profiles:
       - tools
 
-  logdate-redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: logdate-dev-redis-commander
-    environment:
-      REDIS_HOSTS: "logdate:logdate-redis:6379"
-    ports:
-      - "18081:8081"  # Use unique port to avoid conflicts
-    depends_on:
-      - logdate-redis
-    restart: unless-stopped
-    networks:
-      - logdate-network
-    profiles:
-      - tools
-
 volumes:
   logdate_postgres_data:
     driver: local
     name: logdate_postgres_data
-  logdate_redis_data:
-    driver: local
-    name: logdate_redis_data
   logdate_pgadmin_data:
     driver: local
     name: logdate_pgadmin_data

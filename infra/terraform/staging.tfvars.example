@@ -31,7 +31,6 @@ cloud_run_secret_env = {
   # Signs hosted AT Protocol session tokens. A new value signs out every AT Protocol client
   # session; the LogDate apps are unaffected.
   ATPROTO_SESSION_SECRET   = { secret_id = "logdate-atproto-session-secret", version = "1" }
-  REDIS_URL         = { secret_id = "logdate-redis-url", version = "1" }
   SERVER_ENCRYPTION_KEY    = { secret_id = "logdate-server-encryption-key", version = "1" }
   SERVER_ENCRYPTION_KEY_ID = { secret_id = "logdate-server-encryption-key-id", version = "1" }
   HEALTH_INTERNAL_TOKEN    = { secret_id = "logdate-health-internal-token", version = "1" }

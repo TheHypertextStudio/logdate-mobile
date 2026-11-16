@@ -50,14 +50,6 @@ This document outlines the recommended Google Cloud services for hosting LogDate
   - Signed URLs for secure direct uploads
   - Versioning and retention policies
 
-### Caching & Session Management
-
-- **Cloud Memorystore (Redis)**: Session and cache layer
-  - Sub-millisecond latency
-  - High availability with replication
-  - Automatic failover
-  - VPC-native security
-
 ## AI/Intelligence Services
 
 ### Content Analysis

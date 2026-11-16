@@ -37,7 +37,6 @@ kotlin {
             // Core dependencies
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.androidx.paging.common)
-//            implementation(libs.androidx.paging.compose)
             implementation(libs.material3.adaptive.navigation)
             // External dependencies
             implementation(libs.coil.compose)
@@ -49,7 +48,6 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.google.maps.compose)
             implementation(libs.accompanist.permissions)
-//    implementation(libs.firebase.vertexai)
         }
     }
 }

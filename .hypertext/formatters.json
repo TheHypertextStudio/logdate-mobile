@@ -3855,11 +3855,6 @@
       "reason": "Already-published migration checksum contract; create a new migration instead of changing historical bytes."
     },
     {
-      "include": ["shared/activitypub/.gitignore"],
-      "kind": "non-formattable",
-      "reason": "Tool-owned dependency lock, credential/value file, or exact line protocol; preserve its semantic bytes."
-    },
-    {
       "include": [
         "shared/atproto-lexicon/src/jvmTest/resources/official-lexicons/bluesky-social-atproto/LICENSE-APACHE.txt"
       ],

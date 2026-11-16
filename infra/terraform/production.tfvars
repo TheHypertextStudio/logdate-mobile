@@ -115,9 +115,6 @@ cloud_run_secret_env = {
   # Cloud Run fails the revision if it tries to mount an empty container.
   # Provisioning steps: docs/observability/sentry.md.
   #   SENTRY_DSN             = { secret_id = "logdate-sentry-dsn", version = "1" }
-  # Opt-in only — add entries below and drop a matching key into
-  # infra/terraform/production.env to configure Redis:
-  #   REDIS_URL              = { secret_id = "logdate-redis-url" }
 }
 
 # Secret containers Terraform manages even when they aren't wired into

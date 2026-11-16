@@ -86,7 +86,7 @@ certificate set than another. The renderer prints nothing when a rule below is b
   and `AUTO_MIGRATE` is `false`.
 - Every secret binding carries an exact positive version number. Required secrets
   cover the database, JWT signing, hosted AT Protocol keys, server-side encryption,
-  and the internal health token; Sentry, Google sign-in, Redis, billing, and
+  and the internal health token; Sentry, Google sign-in, billing, and
   decrypt-only key bindings are optional.
 - The runtime listens on port 8080, probes `/health`, and allows at least one instance
   at maximum scale, never fewer than its minimum.
@@ -216,8 +216,8 @@ cleanup records its progress there, so a second run resumes an interrupted clean
 
 ## Server Safety Rules
 
-- Do not share database URLs, JWT secrets, health tokens, Redis URLs, Sentry
-  DSNs, or media buckets between staging and production.
+- Do not share database URLs, JWT secrets, health tokens, Sentry DSNs, or media
+  buckets between staging and production.
 - Do not change production `AUTO_MIGRATE=false` without a reviewed rollback
   plan. Production migrations should be explicit and observable.
 - Do not set staging `webauthn_rp_id` to `logdate.app`. Staging uses

@@ -17,7 +17,6 @@
 - [Encryption](#encryption)
 - [Media Storage](#media-storage)
 - [Sync & Maintenance](#sync--maintenance)
-- [Redis (Optional)](#redis-optional)
 - [AT Protocol](#at-protocol)
 
 ---
@@ -618,19 +617,6 @@ These development/test-only variables provide the local PostgreSQL fallback when
 - **Notes**:
   - Each entry must match the app's `client_id` exactly.
   - Trust only changes how the app is named and how long its refresh token lasts. It grants no extra scope.
-
----
-
-## Redis (Optional)
-
-### `REDIS_URL`
-
-- **Description**: Redis connection URL for caching/session storage
-- **Type**: String (Redis URL)
-- **Default**: None
-- **Example**: `REDIS_URL=redis://localhost:6379`
-- **Required**: No
-- **Notes**: Currently not actively used, reserved for future caching features
 
 ---
 

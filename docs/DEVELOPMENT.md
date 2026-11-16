@@ -29,7 +29,7 @@ LogDate is a Kotlin Multiplatform project built with Gradle. Install these befor
   `gradle/gradle-daemon-jvm.properties`.
 - **Android Studio** (latest stable) with the Android SDK, emulator, and platform tools (`adb`).
   On macOS, `brew install --cask android-platform-tools` installs `adb` on its own.
-- **Docker and Docker Compose** for the local PostgreSQL and Redis the server uses.
+- **Docker and Docker Compose** for the local PostgreSQL the server uses.
 - **Xcode**, only for iOS work.
 - **Node.js and pnpm**, only for `./run lint:lexicons`, `./run lint:conformance` and
   `./run conformance:update`.
@@ -61,11 +61,10 @@ ignores, and each setting is read from exactly one place:
 - `.env` holds settings for processes that `./run` starts. `./run` first sources
   [`docs/environment/.env.example`](environment/.env.example) and then `.env`, exporting everything,
   so a value in `.env` wins. Copy the example to `.env` and change what you need. The server reads
-  `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` and `REDIS_URL` from its process environment,
-  so start it with `./run server`. The example's values match the Docker services that
-  `./run start` creates (PostgreSQL on port 15432 and Redis on port 16379, both with the user and
-  password `logdate`). Those container settings are fixed in `docker-compose.yml` and do not follow
-  `.env`. [Server environment variables](../server/docs/environment-variables.md) lists every server
+  `DATABASE_URL`, `DATABASE_USER` and `DATABASE_PASSWORD` from its process environment,
+  so start it with `./run server`. The example's values match the PostgreSQL container that
+  `./run start` creates, on port 15432 with the user and password `logdate`. Those container
+  settings are fixed in `docker-compose.yml` and do not follow `.env`. [Server environment variables](../server/docs/environment-variables.md) lists every server
   setting and its default.
 - `OPENAI_API_KEY` enables the cloud features in the intelligence module. The server also reads it
   from its environment for cloud transcription, which stays disabled while it is unset, so a server
@@ -83,7 +82,7 @@ Start the local services first, then run the part of LogDate you are working on.
 ### Start the development services
 
 ```bash
-./run start     # PostgreSQL, Redis, and dev tools in Docker
+./run start     # PostgreSQL and dev tools in Docker
 ./run status    # show what is running
 ./run stop      # stop them; data is kept
 ```

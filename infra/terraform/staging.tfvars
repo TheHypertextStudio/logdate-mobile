@@ -76,8 +76,6 @@ cloud_run_secret_env = {
   # Cloud Run fails the revision if it tries to mount an empty container.
   # Provisioning steps: docs/observability/sentry.md.
   #   SENTRY_DSN              = { secret_id = "logdate-sentry-dsn", version = "1" }
-  # Opt-in only — populate the secret container then add an entry here:
-  #   REDIS_URL              = { secret_id = "logdate-redis-url" }
 }
 
 secret_ids = [

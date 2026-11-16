@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="location_recording_notification_title">Recording your day</string>
-    <string name="location_history_notification_title">Location history is on</string>
     <string name="location_recording_paused_title">Location recording paused</string>
-    <string name="location_recording_paused_text">Resume when you want to record your day again.</string>
+    <string
+    name="location_recording_paused_text"
+  >Resume when you want to record your day again.</string>
     <string name="location_recording_action_pause">Pause</string>
     <string name="location_recording_action_resume">Resume</string>
 </resources>
