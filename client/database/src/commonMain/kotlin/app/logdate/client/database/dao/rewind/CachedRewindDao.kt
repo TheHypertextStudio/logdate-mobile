@@ -231,6 +231,36 @@ interface CachedRewindDao {
         return RewindContent(textContent, imageContent, videoContent)
     }
 
+    @Query(
+        "SELECT * FROM rewind_text_content WHERE ${RewindConstants.COLUMN_REWIND_ID} IN (:rewindIds) ORDER BY timestamp ASC",
+    )
+    suspend fun getTextContentForRewinds(rewindIds: List<Uuid>): List<RewindTextContentEntity>
+
+    @Query(
+        "SELECT * FROM rewind_image_content WHERE ${RewindConstants.COLUMN_REWIND_ID} IN (:rewindIds) ORDER BY timestamp ASC",
+    )
+    suspend fun getImageContentForRewinds(rewindIds: List<Uuid>): List<RewindImageContentEntity>
+
+    @Query(
+        "SELECT * FROM rewind_video_content WHERE ${RewindConstants.COLUMN_REWIND_ID} IN (:rewindIds) ORDER BY timestamp ASC",
+    )
+    suspend fun getVideoContentForRewinds(rewindIds: List<Uuid>): List<RewindVideoContentEntity>
+
+    /**
+     * Reads the content of every rewind in [rewindIds] with one query per content table, keyed by
+     * rewind. A rewind without content maps to empty lists.
+     */
+    @Transaction
+    suspend fun getContentForRewinds(rewindIds: List<Uuid>): Map<Uuid, RewindContent> {
+        if (rewindIds.isEmpty()) return emptyMap()
+        val text = rewindIds.chunked(CONTENT_BATCH_SIZE).flatMap { getTextContentForRewinds(it) }.groupBy { it.rewindId }
+        val images = rewindIds.chunked(CONTENT_BATCH_SIZE).flatMap { getImageContentForRewinds(it) }.groupBy { it.rewindId }
+        val videos = rewindIds.chunked(CONTENT_BATCH_SIZE).flatMap { getVideoContentForRewinds(it) }.groupBy { it.rewindId }
+        return rewindIds.associateWith { id ->
+            RewindContent(text[id].orEmpty(), images[id].orEmpty(), videos[id].orEmpty())
+        }
+    }
+
     /**
      * Helper method to insert all content for a rewind.
      * This splits the content into the appropriate tables based on type.
@@ -285,6 +315,9 @@ interface CachedRewindDao {
         insertRewindContent(textContent, imageContent, videoContent)
     }
 }
+
+/** Stays well under SQLite's bound-parameter limit. */
+private const val CONTENT_BATCH_SIZE = 500
 
 /**
  * Helper data class to hold all content for a rewind.
