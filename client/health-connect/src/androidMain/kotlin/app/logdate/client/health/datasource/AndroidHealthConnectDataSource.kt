@@ -246,7 +246,7 @@ class AndroidHealthConnectDataSource(
      * Health Connect. This check fires once at startup so the problem is immediately visible in
      * logs rather than discovered via a user report.
      *
-     * See docs/health-connect-refactoring.md § "Android Manifest Requirements" for the XML
+     * See "Android manifest requirements" in this module's README.md for the XML
      * snippets that resolve each error.
      */
     private fun warnIfManifestRequirementsMissing() {

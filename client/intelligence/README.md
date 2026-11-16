@@ -1,228 +1,151 @@
 # `:client:intelligence`
 
-**AI and machine learning features for intelligent journaling**
+**Derived features built from a person's entries: summaries, people, moments, events and Rewind**
 
 ## Overview
 
-Provides intelligent features like entry summarization, people extraction, and content analysis using AI services. Enhances the journaling experience with automatic insights and content understanding.
+This module reads what a person has written, photographed and recorded and derives something from
+it: a one-line summary of an entry, the people an entry mentions, the moments and events inside a
+day, and the story and curated media of a week or a year (Rewind). Some of that work asks a cloud
+language model. The module is built around one fact: a cloud model is sometimes unreachable, not
+allowed or not configured, and the app has to behave well anyway. Every call therefore returns a
+typed result instead of throwing, and a result that was computed once is cached so it keeps
+working offline.
 
-## Architecture
+The module returns derived data to its callers. It does not create journal entries.
 
-```
-Intelligence Module
-├── AI Service Clients
-├── Content Analysis
-├── Entity Extraction
-├── Summarization Engine
-└── Platform Integrations
-```
+## Components
 
-## Key Components
+| Area                  | Types                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Results               | `AIResult`, `AIError`, `AIUnavailableReason`                                                                      |
+| Model client          | `GenerativeAIChatClient`, `OpenAiClient`, `NoOpGenerativeAIChatClient`                                            |
+| Extractors            | `EntrySummarizer`, `PeopleExtractor`, `MomentExtractor`, `EventNamingExtractor`                                   |
+| Narrative             | `WeekNarrativeSynthesizer`, `YearNarrativeSynthesizer`, `RewindSequencer`, `AnnualRewindSequencer`                |
+| Rewind generation     | `RewindStrategySelector` choosing `FullLLMRewindStrategy`, `QuotesOnlyLLMRewindStrategy` or `LocalRewindStrategy` |
+| Rewind media curation | `RewindMediaCurator` and its filter, scoring, bucketing and diversity stages                                      |
+| Milestones            | `MilestoneDetector`, `LocationChangeMilestoneDetector`                                                            |
+| Weather               | `HistoricalWeatherProvider`, `OpenMeteoHistoricalWeatherProvider`                                                 |
+| Cache                 | `GenerativeAICache`, `OfflineGenerativeAICache`, `AICacheLocalDataSource`                                         |
+| Structured output     | `StructuredAIExtractor`, `JsonStructuredOutputParser`                                                             |
 
-### Core Intelligence
-- `EntrySummarizer.kt` - Entry content summarization
-- `PeopleExtractor.kt` - People and entity extraction
-- `OpenAiClient.kt` - OpenAI API integration
-- `ClientsModule.kt` - AI service dependency injection
+Koin wires them in `intelligenceModule`, which includes `clientsModule`, a platform `cacheModule`
+and a platform `curationModule`.
 
-### Analysis Features
-- Natural language processing
-- Content categorization
-- Sentiment analysis (planned)
-- Topic extraction (planned)
+## Results instead of exceptions
 
-## Features
+Every public call returns an `AIResult<T>`:
 
-### Content Summarization
-- Automatic entry summarization
-- Key point extraction
-- Context-aware summaries
-- Multiple summary lengths
+- `Success(value, fromCache)`: the value, and whether it came from the cache.
+- `Unavailable(reason)`: the call was not made. The reasons are `NoNetwork`, `DataSaverActive`,
+  `ProviderDisabled`, `MissingCredentials` and `InputTooLarge`. This is an expected state, not a
+  failure, and callers show a quiet fallback or nothing at all. The code produces `NoNetwork`,
+  `DataSaverActive`, `MissingCredentials` and `InputTooLarge`.
+- `Error(error, throwable)`: the call was made and failed. `AIError` is `Network`, `Timeout`,
+  `RateLimited`, `ProviderUnavailable`, `InvalidResponse`, `UnsupportedModel`, `Unauthorized` or
+  `Unknown`. The error type is the source of truth; UI code maps it to its own wording. The code
+  produces `Unauthorized`, `RateLimited`, `ProviderUnavailable`, `InvalidResponse` and `Unknown`;
+  transport failures and timeouts arrive as `Unknown`.
 
-### Entity Extraction
-- People mentioned in entries
-- Location identification
-- Event recognition
-- Relationship mapping
-
-### Content Analysis
-- Writing pattern recognition
-- Mood detection from text
-- Topic classification
-- Habit identification
-
-## Dependencies
-
-### External AI Services
-- **OpenAI API**: GPT models for text processing
-- **Local ML Models**: On-device processing (planned)
-
-### Core Dependencies
-- `:client:networking` - API communication
-- **Kotlinx Coroutines**: Async operations
-- **Kotlinx Serialization**: API serialization
-
-## Usage Examples
-
-### Entry Summarization
 ```kotlin
-val summarizer = EntrySummarizer(cache, openAiClient, networkMonitor)
-val result = summarizer.summarize(
-    summaryId = "entry-123",
-    text = "Long journal entry text...",
-    useCached = true
-)
-val summary = when (result) {
+val summary = when (val result = summarizer.summarize(summaryId = "entry-123", text = text)) {
     is AIResult.Success -> result.value
     is AIResult.Unavailable -> null
     is AIResult.Error -> null
 }
 ```
 
-### People Extraction
-```kotlin
-val extractor = PeopleExtractor(cache, openAiClient, networkMonitor)
-val result = extractor.extractPeople(
-    documentId = "entry-123",
-    text = "Had lunch with Alice and Bob today."
-)
-val people = when (result) {
-    is AIResult.Success -> result.value
-    is AIResult.Unavailable -> emptyList()
-    is AIResult.Error -> emptyList()
-}
-```
+Before it calls a model, each extractor works through the same checks in this order, and the first
+that applies decides the result:
 
-### Structured Output Support
-- OpenAI requests can include JSON schema response formats for stronger parsing guarantees.
-- People extraction and narrative synthesis use structured output schemas to improve reliability.
-- Map `AIResult.Error` to user-friendly copy in UI layers; error types are the source of truth.
+1. **Input size.** Text longer than `MAX_AI_INPUT_CHARACTERS` (100,000) is `Unavailable(InputTooLarge)`.
+2. **Cache.** A valid cached result is returned as `Success(fromCache = true)` unless the caller
+   passed `useCached = false`. This is why a result that was computed once still works offline.
+3. **Network.** No connection is `Unavailable(NoNetwork)`.
+4. **Data usage.** A data usage mode that disallows AI calls is `Unavailable(DataSaverActive)`.
+5. **Credentials.** With no API key the injected client is `NoOpGenerativeAIChatClient`, which
+   answers `Unavailable(MissingCredentials)`.
 
-## Platform Considerations
+Rewind chooses its strategy before any call. `RewindAIAvailability` reports a tier, and the tier
+comes from the person's entitlement (`EntitlementRewindAIAvailability` in `:client:domain`), so a
+signed-in person with a key can still get the local Rewind. `FULL` runs the model-written narrative
+and falls back to a `LocalRewindStrategy` when the call comes back unavailable. `QUOTES_ONLY`
+currently produces the local Rewind and labels it with the quotes-only tier; it makes no model call.
+`NONE` uses local heuristics alone. Rewind is always produced.
 
-### Privacy-First Approach
-- Optional AI features (user consent required)
-- Local processing when possible
-- Data anonymization for cloud processing
-- No persistent storage of AI service data
+## The model client
 
-### Performance Optimization
-- Intelligent batching of requests
-- Result caching for repeated analysis
-- Background processing for non-critical features
-- Rate limiting compliance
+`GenerativeAIChatClient` takes a `GenerativeAIRequest` (messages, optional model, temperature and
+response format) and returns an `AIResult<GenerativeAIResponse>`. `OpenAiClient` is the only
+implementation. It calls the OpenAI chat completions API directly from the device, uses model
+`gpt-4.1-mini-2025-04-14` and temperature 0.7 unless the request says otherwise, and maps failures:
+HTTP 401 and 403 to `Unauthorized`, 429 to `RateLimited`, 5xx to `ProviderUnavailable`, any other
+status or exception to `Unknown`, and an empty reply or an unusable JSON schema to
+`InvalidResponse`.
+
+**The API key** is read at runtime from the `OPENAI_API_KEY` environment variable or JVM system
+property of the running process on Android and desktop. The iOS loader returns nothing. No build
+step copies a key into a packaged app. `local.properties` is not read for this key at runtime. A
+process without the key logs a warning at startup and gets the no-op client. See
+[Encryption](../../docs/explanation/encryption.md) for exactly what each feature sends to the
+model.
+
+## Structured output
+
+Features that need data rather than prose ask the model for JSON that matches a schema, using the
+`json_schema` response format. `StructuredAIExtractor` is the shared base: it runs the size,
+cache, network and data usage checks, submits the prompt with the schema, parses the reply,
+writes the cache and translates every failure into an `AIResult`. A subclass supplies the system
+prompt, schema, parser and version markers. `MomentExtractor` and `EventNamingExtractor` use it.
+
+`JsonStructuredOutputParser` decodes a reply and reports `Success`, `Empty` or `Invalid`. With
+`allowEmbeddedJson` it also accepts a reply that wraps the JSON object in other text, which the
+week narrative uses. A reply that does not parse becomes `Error(InvalidResponse)`, and
+`StructuredAIExtractor` does not cache it.
+
+## The cache
+
+`OfflineGenerativeAICache` has two layers: an in-memory LRU of up to 100 entries or 1 MiB, and a
+persistent store of up to 500 entries or 10 MiB. Writes go to both. Reads check memory first and
+promote persistent hits into memory.
+
+**Keys.** A key hashes the content type (`summary`, `people`, `narrative`, `onboarding`,
+`moments` or `events`), the provider, the model, the prompt version, the schema version, the
+template id and the input text with whitespace trimmed and collapsed. Changing any of those, for
+example the model or a prompt version, produces a different key, so stale results are never served
+for new settings; they age out instead. Each entry also stores those fields, a hash of the input and
+an expiry time, and a read rejects and deletes an entry whose expiry has passed or whose stored
+fields do not match the request.
+
+**Lifetime.** The time to live is set per feature: 30 days for summaries, people and the week
+narrative, 90 days for the year narrative and 7 days for structured extractors by default. Every
+write also removes expired entries, and if the persistent store is over its limits it evicts the
+oldest entries first.
+
+**Failure handling.** Cache errors are logged and never fail the request. A file that cannot be
+decoded is deleted. `purge()` clears both layers.
+
+**Storage.** The persistent layer writes one JSON file per entry, named after the sanitized key,
+in an `ai_cache` directory under the app cache directory on Android, under the Caches directory on
+iOS, and in `logdate_ai_cache` under the system temp directory on desktop. The codec has hooks for
+compression and encryption, and both are currently no-ops, so entries are stored as plain JSON. The
+cached text is derived from the person's entries, so treat the directory as private. Android and iOS may clear their cache directories at any
+time, which only costs a recomputation.
+
+## Platform differences
+
+The API key loader and the two platform Koin modules (`cacheModule` and `curationModule`) are
+`expect` declarations in common code with an implementation per platform (Android, iOS, JVM). The
+cache data source and the Rewind media signal extractor are interfaces that each platform
+implements. Everything else is common code.
 
 ## Testing
 
-### Test Coverage
-The intelligence module has comprehensive unit tests covering all core functionality:
-
-#### EntrySummarizer Tests (`EntrySummarizerTest.kt`)
-- **10 test cases** covering:
-  - Summary generation with various text inputs
-  - Caching behavior (cache hits, misses, forced refresh)
-  - Error handling and fallback responses
-  - AI client integration and prompt validation
-  - Edge cases (empty text, null responses, long text)
-
-#### PeopleExtractor Tests (`PeopleExtractorTest.kt`)
-- **13 test cases** covering:
-  - Name extraction from various text formats
-  - Complex names (titles, compound names, international names)
-  - Caching and response processing
-  - Edge cases (empty input, whitespace handling)
-  - System prompt validation
-
-#### OpenAI Client Tests (`OpenAiClientTest.kt`)
-- **10 test cases** covering:
-  - Data structure serialization and conversion
-  - Message format transformation
-  - Request/response object validation
-  - Type-safe API integration
-
-#### Text Processing Accuracy (`TextProcessingAccuracyTest.kt`)
-- **8 integration test scenarios** with realistic journal content:
-  - Daily life entries with social interactions
-  - Work meetings and professional contexts
-  - Family gatherings and relationships
-  - Travel entries with international names
-  - Medical appointments with titles
-  - Large social events with many people
-  - Emotional entries requiring context preservation
-  - Achievement entries capturing positive sentiment
-
-### Test Infrastructure
-
-#### Fake Implementations
-- **`FakeGenerativeAICache`**: Complete cache simulation with call tracking
-- **`FakeGenerativeAIChatClient`**: Configurable AI client for deterministic testing
-- **Features**: Error simulation, response customization, call verification
-
-#### Testing Patterns
-- **Coroutine Testing**: Uses `StandardTestDispatcher` for deterministic async behavior
-- **Response Mocking**: Configurable AI responses for different test scenarios
-- **Edge Case Coverage**: Empty inputs, malformed responses, network errors
-- **Integration Testing**: End-to-end workflows with realistic data
-
-### Running Tests
-
 ```bash
-# Run all intelligence module tests
-./gradlew :client:intelligence:test
-
-# Test output shows comprehensive coverage
-# 43 tests completed successfully
+./gradlew :client:intelligence:jvmTest
 ```
 
-### Test Data Quality
-
-The tests use realistic journal entry scenarios including:
-- **Professional Context**: "Today's quarterly review meeting was intense..."
-- **Family Events**: "Sunday dinner at Grandma's house was wonderful..."
-- **Travel Experiences**: "First day in Tokyo was incredible!"
-- **Medical Appointments**: "Had my annual checkup with Dr. Sarah Mitchell..."
-- **Social Gatherings**: "Birthday party for Rachel was a blast!"
-
-Each scenario validates:
-- **Accuracy**: Correct extraction of people's names and relationships
-- **Context Preservation**: Maintaining important contextual information
-- **Edge Cases**: Handling of various text formats and edge conditions
-- **Performance**: Efficient processing and caching behavior
-
-### Test Quality Metrics
-- **Unit Test Coverage**: All public APIs tested
-- **Integration Coverage**: Realistic end-to-end workflows
-- **Error Coverage**: Network failures, malformed responses, edge cases
-- **Performance Testing**: Caching efficiency and response handling
-
-## TODOs
-
-### Core AI Features
-- [ ] Implement local AI models for offline operation
-- [ ] Add sentiment analysis for mood tracking
-- [ ] Implement topic extraction and categorization
-- [ ] Add writing style analysis and suggestions
-- [ ] Implement habit detection from entry patterns
-- [ ] Add mood tracking intelligence
-- [ ] Implement location-based insights
-- [ ] Add personalized content recommendations
-
-### Advanced Intelligence
-- [ ] Implement conversational AI for entry prompts
-- [ ] Add predictive text and auto-completion
-- [ ] Implement smart entry templates
-- [ ] Add writing coach and improvement suggestions
-- [ ] Implement content quality scoring
-- [ ] Add automated tagging and categorization
-- [ ] Implement relationship network analysis
-- [ ] Add goal tracking and progress insights
-
-### Performance & Privacy
-- [ ] Implement on-device model deployment
-- [ ] Add federated learning capabilities
-- [ ] Implement differential privacy
-- [ ] Add AI model version management
-- [ ] Implement intelligent caching strategies
-- [ ] Add AI service failover mechanisms
-- [ ] Implement usage analytics and optimization
-- [ ] Add AI ethics and bias monitoring
+Tests use `FakeGenerativeAICache` and `FakeGenerativeAIChatClient` from the `fakes` package, so no
+test touches the network. They cover the extractors, the cache and its key strategy, the OpenAI
+request and response mapping, structured output parsing, the narrative synthesizers, Rewind
+strategies and curation, and a set of realistic journal texts for people extraction.

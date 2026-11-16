@@ -319,6 +319,10 @@ Each request times out after 10 seconds. A refusal is a `LinkRefused` with one o
 Nothing in the exchange is ever written to a data item. Data items are stored by Play services and
 copied to every paired node, while a request exists only for its round trip.
 
+`BouncyCastleLinkHandshakeTest` pins the key agreement and key derivation against the RFC 7748
+(X25519) and RFC 5869 (HKDF) test vectors, and checks that a changed ciphertext, initialization
+vector or transcript fails to open the bundle.
+
 ### The link identity
 
 The Base64 of the transcript hash is the _link id_. It is public: it contains no key material. Both

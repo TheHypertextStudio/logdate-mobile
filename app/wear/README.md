@@ -194,7 +194,7 @@ moment by its note ID as a string, because the back stack is restored after proc
 | `Flow`         | Voice and text moments of the last 7 days, with Memories, Settings and Earlier                                                                                                             | `v2/flow`                   | Today's Moments button |
 | `Memories`     | On this day and this week's Rewind                                                                                                                                                         | `v2/memories`               | Flow                   |
 | `Archive`      | Older moments on the watch, starred first, then by day                                                                                                                                     | `v2/archive`                | Flow's Earlier         |
-| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone                                                                                                                                | `v2/settings`               | Flow                   |
+| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone (only when the phone advertises `phone.settingsLink.v1`, which no phone build does)                                            | `v2/settings`               | Flow                   |
 | `Moment(id)`   | Player with crown scrubbing; transcript, place and actions one swipe up                                                                                                                    | `v2/moments`, `v2/playback` | Any list               |
 | `CaptureSheet` | Write, Mood, Phone camera                                                                                                                                                                  | `v2/capture`                | Today's +              |
 | `PhoneCamera`  | The remote camera screen, reused from `presentation/camera`                                                                                                                                | `presentation/camera`       | The capture sheet      |
@@ -295,7 +295,11 @@ are absent until the flag turns them on. Four rules apply to every surface:
 
 [`SurfaceUpdater`](src/main/kotlin/app/logdate/wear/v2/surfaces/SurfaceUpdater.kt) redraws the new
 experience's surfaces at once after a capture, edit or deletion made on the watch and when the day
-changes, and at most once every 5 minutes for changes that arrive through sync.
+changes, and at most once every 5 minutes for changes that arrive through sync. The updater does
+nothing until the surface coordinator has read the flag, so when a Data Layer event is what starts
+the process, the first sync-driven refresh can arrive too early and is skipped. The system's own
+update periods then apply (the campfire complication every 6 hours, the On this day complication
+every hour), and the next capture refreshes every surface.
 
 ## Reminders
 
@@ -312,10 +316,26 @@ watch by excluding their tag from notification bridging. The walk, ride and trip
 awareness; see [the flag section](#two-experiences-and-the-switch-between-them).
 [Reminders](../../docs/explanation/wear-companion.md#reminders) in the explanation has the rules.
 
-The phone does not collect workouts through Health Connect, and it declares no exercise permission
-or Play health declaration. Compatible watches have a separate passive workout trigger subject to
-capability, consent, and permissions. See the
-[release decision](../../docs/testing/wear-workout-reminder-release-decision.md).
+Watch reminders post on the `MOMENT_REMINDERS` notification channel (id `moment_reminders`,
+notification ID 4005) under the tag `logdate.reminder`. The watch applies its bridging exclusion for
+that tag at every application start, whether or not the new experience is on, so a reminder the
+phone posts for itself never also rings on the watch.
+
+The watch manifest is not gated by the flag. It always declares `ACTIVITY_RECOGNITION`,
+`RECEIVE_BOOT_COMPLETED`, `BODY_SENSORS` (up to API 35) and `health.READ_HEART_RATE`, so the store
+listing for the watch shows them whether or not the new experience is on. The app asks for each at
+the moment a feature needs it: activity recognition when Reminders is turned on, heart rate at the
+first mark.
+
+The phone does not collect workouts through Health Connect. Reading exercise sessions there needs
+the `android.permission.health.READ_EXERCISE` permission and a Health Connect declaration for the
+store listing, and the phone manifest declares only `READ_SLEEP`. Sleep access does not authorize
+reading workouts, so enabling reminders or granting sleep access never starts a workout read. The
+phone's Reminders settings say that phone workout reminders are not included and point to activity
+access on a compatible watch, and `PhoneReminderSignalsModule` supplies no workout reader to the
+phone's reminder snapshot. Compatible watches have a separate passive workout trigger, subject to
+capability, consent and permissions, and the phone's settings text is not evidence that a given
+watch supports it.
 
 The workout trigger is a Health Services passive listener,
 [`WorkoutEndListenerService`](src/main/kotlin/app/logdate/wear/reminders/WorkoutEndListenerService.kt).
@@ -324,6 +344,9 @@ A registration can be lost when the watch restarts or the app updates, so
 it after `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED` while reminders are on. That is why the watch
 requests `RECEIVE_BOOT_COMPLETED`. The receiver only hands the work to WorkManager, because Health
 Services can take longer to accept a registration than a broadcast receiver is allowed to run.
+A watch whose Health Services does not report the exercise and passive activity states
+declines the registration, so no workout reminder fires there. The
+evening check does not depend on it and still runs.
 
 Alarms survive app updates, so
 [`LegacyPromptAlarms`](src/main/kotlin/app/logdate/wear/reminders/LegacyPromptAlarms.kt) cancels

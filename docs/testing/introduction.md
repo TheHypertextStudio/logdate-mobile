@@ -31,6 +31,7 @@ class MyUseCaseTest {
 ```
 
 Run it:
+
 ```bash
 ./gradlew :module:test
 ```
@@ -53,11 +54,13 @@ fun MyScreenPreview() {
 ```
 
 Generate baselines:
+
 ```bash
 ./gradlew :app:android-main:updateDebugScreenshotTest
 ```
 
 Validate:
+
 ```bash
 ./gradlew :app:android-main:validateDebugScreenshotTest
 ```
@@ -87,6 +90,7 @@ Learn how to write specific test types:
 ## Reference: Test Types
 
 ### Unit Tests
+
 - **Purpose**: Test individual functions and classes in isolation
 - **Technology**: JUnit, Kotlin Test, Mockk
 - **Location**: `src/commonTest/kotlin/` or `src/*/Test/kotlin/`
@@ -95,6 +99,7 @@ Learn how to write specific test types:
 - **Scope**: Functions, classes, use cases
 
 ### Integration Tests
+
 - **Purpose**: Test interactions between components and with real data sources
 - **Technology**: Room testing, MockWebServer, real HTTP clients
 - **Location**: `src/*/Test/kotlin/` directories
@@ -103,6 +108,7 @@ Learn how to write specific test types:
 - **Scope**: Database operations, API interactions, repository implementations
 
 ### UI/Compose Tests
+
 - **Purpose**: Test UI components and user interactions
 - **Technology**: Compose Testing, Mockk
 - **Location**: `src/androidTest/kotlin/`
@@ -111,6 +117,7 @@ Learn how to write specific test types:
 - **Scope**: Component rendering, interactions, state updates
 
 ### Screenshot Tests
+
 - **Purpose**: Visual regression testing for key screens
 - **Technology**: Google Compose Preview Screenshot Testing
 - **Location**: `src/screenshotTest/kotlin/`
@@ -120,6 +127,7 @@ Learn how to write specific test types:
 - **Scope**: Visual appearance, light/dark themes, multiple sizes
 
 ### End-to-End Tests (Rare)
+
 - **Purpose**: Full user workflows from app launch to data persistence
 - **Technology**: Espresso, Compose Testing, real backend
 - **Location**: Integration test suites
@@ -128,6 +136,7 @@ Learn how to write specific test types:
 - **Scope**: Complete workflows, data persistence, cross-feature interactions
 
 ### Benchmarks
+
 - **Purpose**: Measure startup, frame timing, interaction latency, and hot-path CPU/allocation cost
 - **Technology**: Macrobenchmark, Baseline Profiles, Microbenchmark, Perfetto, Android vitals
 - **Location**: `benchmark/` modules and `docs/performance/`
@@ -262,7 +271,9 @@ Example fakes available in `src/*/Test/kotlin/fakes/` directories
 ## Reference: Kotlin Multiplatform Testing
 
 ### Shared Tests
+
 Run on all platforms using Kotlin's testing infrastructure:
+
 ```kotlin
 // src/commonTest/kotlin/ - runs on Android, iOS, Desktop
 @Test
@@ -270,7 +281,9 @@ fun sharedLogicWorks() { }
 ```
 
 ### Platform-Specific Tests
+
 For platform-specific behavior:
+
 ```kotlin
 // src/androidTest/kotlin/
 @Test
@@ -285,12 +298,12 @@ func iosSpecificFeature() { }
 
 Tests run automatically on pull requests and main branch:
 
-| Stage | Tests | Command |
-|-------|-------|---------|
-| **Pull Request** | Unit + Integration | `./gradlew test` |
-| **Pull Request** | Phone screenshots | `:app:android-main:validateDebugScreenshotTest` |
-| **Pull Request** | Wear OS screenshots | `:app:wear:validateDebugScreenshotTest` |
-| **Main Branch** | Full suite | All tests + coverage checks |
+| Stage            | Tests               | Command                                         |
+| ---------------- | ------------------- | ----------------------------------------------- |
+| **Pull Request** | Unit + Integration  | `./gradlew test`                                |
+| **Pull Request** | Phone screenshots   | `:app:android-main:validateDebugScreenshotTest` |
+| **Pull Request** | Wear OS screenshots | `:app:wear:validateDebugScreenshotTest`         |
+| **Main Branch**  | Full suite          | All tests + coverage checks                     |
 
 Configuration: `.github/workflows/ci.yml`
 
@@ -315,6 +328,7 @@ Configuration: `.github/workflows/ci.yml`
 ### Coverage Goals
 
 Target coverage by layer:
+
 - **Domain (Use Cases)**: 80%+
 - **Data (Repositories)**: 70%+
 - **UI (ViewModels)**: 60%+
@@ -334,4 +348,4 @@ Target coverage by layer:
 - [Integration Tests Guide](./integration-tests.md) - Database and API testing
 - [UI Tests Guide](./ui-tests.md) - Compose component testing
 - [Screenshot Tests Guide](./screenshot-tests.md) - Visual regression testing
-- [E2E Test Journeys](../e2e-test-journeys.md) - Critical user paths
+- [E2E Test Index](./e2e-test-index.md) - Critical user paths and the tests that cover them

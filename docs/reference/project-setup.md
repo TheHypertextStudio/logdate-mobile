@@ -30,59 +30,66 @@ Console, print exactly what to do and wait for Enter before checking again.
 
 At the end you get a summary:
 
-| Mark | Meaning |
-|---|---|
-| ✓ ok | Already correct |
-| ↻ applied | Was wrong; setup fixed it and confirmed the fix |
-| ✗ drift / failed | Wrong, and not fixed (with `--check`, or because the fix failed) |
-| ✋ manual / blocked | Needs a person, or waits on a step that does |
+| Mark                | Meaning                                                          |
+| ------------------- | ---------------------------------------------------------------- |
+| ✓ ok                | Already correct                                                  |
+| ↻ applied           | Was wrong; setup fixed it and confirmed the fix                  |
+| ✗ drift / failed    | Wrong, and not fixed (with `--check`, or because the fix failed) |
+| ✋ manual / blocked | Needs a person, or waits on a step that does                     |
 
 The exit status is `0` when everything is ok, `1` when something is wrong, and
 `3` when only manual actions remain.
 
 ## Options
 
-| Option | Effect |
-|---|---|
-| `--check` | Report drift without changing anything. |
-| `--only a,b` | Run only these steps, e.g. `--only hooks,local-properties`. |
-| `--skip a,b` | Run everything except these steps. |
-| `--list` | Show the steps for the target and exit. |
-| `--non-interactive` | Never prompt or wait. Manual steps are reported and skipped. CI uses this. |
-| `--enable-play-production` | Also turn on promotion to the Play production track. Off unless you ask. |
+| Option                     | Effect                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--check`                  | Report drift without changing anything.                                                                                                                      |
+| `--only a,b`               | Run only these steps, e.g. `--only hooks,local-properties`.                                                                                                  |
+| `--skip a,b`               | Run everything except these steps.                                                                                                                           |
+| `--list`                   | Show the steps for the target and exit.                                                                                                                      |
+| `--non-interactive`        | Never prompt or wait. Manual steps are reported and skipped. CI uses this, running `./run setup --only test-deps --non-interactive` before the script tests. |
+| `--enable-play-production` | Also turn on promotion to the Play production track. Off unless you ask.                                                                                     |
 
 ## Steps
 
 ### Every machine (`./run setup`)
 
-| Step | Makes sure that… |
-|---|---|
-| `tools` | git, Java, jq, and Node.js are installed (plus gh, gcloud, curl, and keytool for environments). |
-| `auth` | For environments: you are logged in to `gh` and `gcloud`. Setup never logs in for you. |
-| `hooks` | Git runs the repository's hooks in `.githooks`, which validate commit messages. |
-| `local-properties` | `local.properties` exists and points Gradle at your Android SDK. In a `git worktree` it is copied from the main checkout. |
-| `firebase-configs` | The real `google-services.json` files are in place. Without them Gradle writes a stub, and crash reporting silently does nothing. |
-| `test-deps` | The passkey verifier's Python venv, Node.js 22 or newer, and the Node packages of the lexicon checker and the repository verifier are installed, so `scripts/tests/run-all.sh` and the `atproto-repo` JVM tests can run. Without pnpm, the version each tool pins runs through npx. |
+| Step               | Makes sure that…                                                                                                                                                                                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tools`            | git, Java, jq, and Node.js are installed (plus gh, gcloud, curl, and keytool for environments).                                                                                                                                                                                     |
+| `auth`             | For environments: you are logged in to `gh` and `gcloud`. Setup never logs in for you.                                                                                                                                                                                              |
+| `hooks`            | Git runs the repository's hooks in `.githooks`, which validate commit messages.                                                                                                                                                                                                     |
+| `local-properties` | `local.properties` exists and points Gradle at your Android SDK. In a `git worktree` it is copied from the main checkout.                                                                                                                                                           |
+| `firebase-configs` | The real `google-services.json` files are in place. Without them Gradle writes a stub, and crash reporting silently does nothing.                                                                                                                                                   |
+| `test-deps`        | The passkey verifier's Python venv, Node.js 22 or newer, and the Node packages of the lexicon checker and the repository verifier are installed, so `scripts/tests/run-all.sh` and the `atproto-repo` JVM tests can run. Without pnpm, the version each tool pins runs through npx. |
 
 ### An environment (`./run setup staging|production`)
 
-| Step | Makes sure that… |
-|---|---|
-| `gh-environment` | The GitHub environment exists, and only the branches and tags in its definition file can deploy with it. There's no approval click, but pull requests can never read its secrets. |
-| `signing-keys` | The environment's upload keystore is in `~/.logdate-signing`, readable only by you, and its certificate matches `infra/android-signing/<env>-signer-evidence.json`. |
-| `firebase-apps` | Firebase has an Android app for every package the builds use, with the signing certificates registered. |
-| `firebase-ci-config` | CI's copy of the Firebase config matches yours. |
+| Step                 | Makes sure that…                                                                                                                                                                                                                                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gh-environment`     | The GitHub environment exists with no required reviewer, and only the branches and tags in its definition file can deploy with it. Production allows `main`, `android-v*`, and `server-v*`; staging allows `main`. Pull requests can never read the environment's secrets. |
+| `signing-keys`       | The environment's upload keystore is in `~/.logdate-signing`, readable only by you, and its certificate matches `infra/android-signing/<env>-signer-evidence.json`.                                                                                                        |
+| `firebase-apps`      | Firebase has an Android app for every package the builds use, with the signing certificates registered.                                                                                                                                                                    |
+| `firebase-ci-config` | CI's copy of the Firebase config matches yours.                                                                                                                                                                                                                            |
 
 ### Google Play (`./run setup production`)
 
-| Step | Makes sure that… |
-|---|---|
+| Step                   | Makes sure that…                                                                                                                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `play-service-account` | The `play-publisher` service account exists and the Play API is enabled. It has no key: GitHub Actions impersonates it through Workload Identity Federation, and setup's own checks impersonate it as your `gcloud` account. |
-| `play-access` | That account can publish the app. **Manual once:** invite its email in Play Console. |
-| `play-keystore` | The `production` GitHub environment holds the upload keystore and its passwords. |
-| `play-release-tag` | An `android-v<x.y.z>` tag exists, which version codes are derived from. Asks before pushing one. |
-| `play-first-bundle` | Play has at least one bundle. **Manual once:** setup builds and verifies it, and you upload it. |
-| `play-publishing` | The publish workflow is allowed to upload to the internal testing track ("dogfood"), and with `--enable-play-production` to promote to production. Nothing publishes until someone dispatches it. |
+| `play-access`          | That account can publish the app. **Manual once:** invite its email in Play Console.                                                                                                                                         |
+| `play-keystore`        | The `production` GitHub environment holds the upload keystore and its passwords.                                                                                                                                             |
+| `play-release-tag`     | An `android-v<x.y.z>` tag exists, which version codes are derived from. Asks before pushing one.                                                                                                                             |
+| `play-first-bundle`    | Play has at least one bundle. **Manual once:** setup builds and verifies it, and you upload it.                                                                                                                              |
+| `play-publishing`      | The publish workflow is allowed to upload to the internal testing track ("dogfood"), and with `--enable-play-production` to promote to production. Nothing publishes until someone dispatches it.                            |
+
+### Why the environments have no reviewer
+
+A required-reviewer rule makes every deploy wait for someone to click approve. With one maintainer,
+that gate only paused every dogfood publish. What keeps a change from reaching the secrets is the deployment-ref list: a job
+can use the environment only when it runs from one of the listed refs, and a pull request never
+does. `gh-environment` reports a reviewer rule as drift and removes it.
 
 ## How releases flow once setup is done
 
@@ -98,7 +105,7 @@ what that run does.
 - **Production:** dispatch a production stage with `candidate_tag` set to a
   tested `android-v*` tag (such as `android-v1.2.0`) and
   `candidate_version_code` set to that build's exact Play version code. The
-  run *promotes* that internal build; it is never rebuilt, so what you tested
+  run _promotes_ that internal build; it is never rebuilt, so what you tested
   is what ships. The stages move one release through a staged rollout:
   `start-5` starts it at 5%, `advance-25` raises it to 25%, `complete-100`
   finishes it, `halt` stops it, and `resume-5` or `resume-25` restarts a
@@ -128,14 +135,14 @@ Several steps handle keys and passwords, so they follow three rules:
 
 ## Where things live
 
-| Path | What it holds |
-|---|---|
-| `scripts/setup/main.sh` | The entrypoint: options, and which steps each target runs. |
-| `scripts/setup/runner.sh` | Runs steps: check, apply, re-check, summary. |
-| `scripts/setup/steps/<id>.sh` | One file per step. |
+| Path                                    | What it holds                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| `scripts/setup/main.sh`                 | The entrypoint: options, and which steps each target runs.                           |
+| `scripts/setup/runner.sh`               | Runs steps: check, apply, re-check, summary.                                         |
+| `scripts/setup/steps/<id>.sh`           | One file per step.                                                                   |
 | `scripts/setup/environments/<env>.conf` | Per-environment constants: projects, app ids, backend URL, allowed refs. No secrets. |
-| `scripts/lib/common.sh` | Logging and prompt helpers shared by scripts. |
-| `scripts/lib/google-api.sh` | Firebase and Play REST calls using your `gcloud` login. |
+| `scripts/lib/common.sh`                 | Logging and prompt helpers shared by scripts.                                        |
+| `scripts/lib/google-api.sh`             | Firebase and Play REST calls using your `gcloud` login.                              |
 
 ## Adding a step
 
@@ -153,8 +160,9 @@ Several steps handle keys and passwords, so they follow three rules:
 4. Test it with a fake CLI, as `scripts/tests/setup/test-setup-gh-environment.sh`
    does, and run `./scripts/tests/run-all.sh`.
 
-## Not covered yet
+## Scripts outside `./run setup`
 
-Server infrastructure on Google Cloud (`./run deploy:bootstrap`,
-`./run deploy:production`), iOS signing, Sentry, and OAuth clients still have
-their own scripts. They will move into `./run setup` in a later round.
+Server infrastructure on Google Cloud has its own commands: `./run deploy:setup`,
+`./run deploy:bootstrap`, and `./run deploy:production`. iOS signing
+(`scripts/install-ios-signing.sh`) and the Sentry DSN (`scripts/set-sentry-dsn.sh`) are separate
+scripts too. `./run setup` neither runs nor checks any of them.

@@ -530,6 +530,12 @@ finds the head moved, retries, sees the key present and reports `412`. On Postgr
 write and the index row are committed in one database transaction, so a failure between them leaves
 neither behind.
 
+That transaction runs once.
+[`PostgreSQLRepoBlockStore.write`](../src/main/kotlin/app/logdate/server/database/PostgreSQLRepoBlockStore.kt)
+limits it to a single attempt, so a failed write is reported to the caller and the database layer
+never replays it. When the transaction fails, the store also clears its cache of recently read
+repository blocks, so a block the rolled-back write placed there is never served afterwards.
+
 The index row and the record are committed together. An index row visible to the change feed before
 its record exists would let another device page past a change it cannot yet read.
 

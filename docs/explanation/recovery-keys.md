@@ -462,10 +462,22 @@ server would refuse. The rule is in
 ## How the app talks about it
 
 People are never shown the vocabulary on this page. The app's text does not say DID, PLC, rotation
-key, `did:key` or operation, and the app never speaks as "we". It talks about the recovery phrase,
-the passkey, the account and the server, and it describes the outcome a person cares about: the
-phrase can move the account. Every failure message says what failed and what to do next. The strings
-are in
+key, `did:key` or operation, and it never speaks as "we". It says "your identity" with the
+person's handle, "the server that hosts your account" by its name, and "your recovery phrase",
+"your recovery key" and "your passkey". It describes the outcome a person cares about, that the
+phrase can move the account, and claims only what the current behavior supports. Every failure
+message says what failed, that nothing was changed, and what to do next.
+
+The Recovery key page never opens phrase entry. Entering a phrase replaces the phrase that unlocks
+the device's journal, so a page that offered it could lock the person out of their own entries.
+When the phrase cannot be read, the recovery key cannot be derived from it, or the phrase has not
+been confirmed, the page says which of these failed and offers only Try again.
+
+A page reached while the feature is unavailable, for example from a restored back stack, shows that
+recovery keys are not available here and offers no action. The screen for replacing or recovering
+states what will happen before anything is sent.
+
+The strings are in
 [`strings_account_recovery.xml`](../../client/feature/core/src/commonMain/composeResources/values/strings_account_recovery.xml).
 
 ## How the behavior is tested

@@ -296,7 +296,7 @@ Gradle plugin, which runs the generator over [`lexicons/app/logdate`](../../lexi
 change therefore reaches the code the next time anything builds, and an invalid schema fails the
 build with a message naming the schema and the problem. Any Kotlin Multiplatform module can do the
 same by applying the plugin and listing its schemas in a `lexiconModels { }` block;
-[`LexiconModelsPlugin`](../../build-logic/src/main/kotlin/app/logdate/LexiconModelsPlugin.kt)
+[`LexiconModelsPlugin`](../../shared/atproto-lexicon-gradle-plugin/src/main/kotlin/studio/hypertext/atproto/lexicon/gradle/LexiconModelsPlugin.kt)
 documents the options.
 
 The models inside `shared/atproto-lexicon` itself are checked in, because that module is the

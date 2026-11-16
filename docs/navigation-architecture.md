@@ -1,245 +1,156 @@
-# Navigation Architecture in LogDate
+# Navigation architecture
 
-## Overview
+LogDate has one navigation graph, written once in shared code and used unchanged by the Android,
+iOS and desktop apps. It is built on Navigation 3, the library in which the app owns the back stack
+as a plain list and describes each destination with an entry. This page explains the pieces of that
+graph, how a feature adds a screen to it, and the conventions that keep the screens independent of
+the navigation machinery. The Navigation 3 artifacts are the `jetbrains-navigation3` entries in
+`gradle/libs.versions.toml`. The Wear OS app has its own, separate navigation.
 
-LogDate implements two different navigation systems across its multiplatform codebase:
+All of the shared graph lives in `app/compose-main/src/commonMain/kotlin/app/logdate/navigation/`.
+The Android activity, the desktop window and the iOS view controller each call the same composable,
+`LogDateNavDisplay`.
 
-1. **Navigation 3 (Navigation Compose 3)** - Used in the Android main Compose app
-2. **Jetpack Navigation 2** - Used for shared code across all platforms
+## The concepts
 
-This dual approach allows us to leverage Navigation 3's advanced features for Android while maintaining multiplatform compatibility through the mature Navigation 2 system. This document explains both systems, their implementation, and how they coexist in the codebase.
+- A **route** (a `NavKey`) is a small serializable value that names a destination and carries its
+  arguments, such as `JournalDetailsRoute(journalId)`. The back stack is a list of routes.
+- An **entry** says what to show for a route. Entries are registered in one `entryProvider`.
+- A **scene** is how one or more entries are laid out together. The default scene shows only the top
+  entry; a **scene strategy** can choose a richer scene, such as two panes, from the entries at the
+  top of the stack.
+- A **decorator** wraps every entry's content, for behaviour that applies to all screens, such as
+  keeping saved state or framing content.
+- **Metadata** is a map attached to an entry at registration. The scene strategies and decorators
+  read it to learn what kind of screen an entry is.
 
-## Navigation 3 (Android-Specific)
+## Routes
 
-### Implementation
+Routes are `@Serializable` data classes (or objects) defined in the feature that owns the screen,
+in its `navigation` package, and they implement `NavKey`. Two rules apply to them:
 
-Navigation 3 is implemented in the Android-specific code in the main Compose app:
+- **Arguments are strings and primitives, not `Uuid`s.** Saved-state serialization on iOS cannot
+  handle `Uuid`, so `EntryEditorRoute` carries `entryId: String?` and the entry parses it.
+- **Every route must be registered in `appNavSavedStateConfiguration`** (`AppNavKeys.kt`). Compose
+  Multiplatform's Navigation 3 cannot discover `NavKey` subclasses by reflection on iOS, so the
+  polymorphic serializer lists each one. A route missing from the list works until the back stack is
+  saved and restored, then fails.
 
-```
-app/compose-main/src/androidMain/kotlin/app/logdate/navigation/
-```
+The back stack is created with `rememberNavBackStack(appNavSavedStateConfiguration, BaseRoute)`, so
+it survives rotation, theme changes and process death.
 
-Key components include:
-- `MainNavigationRoot.kt` - Entry point for Navigation 3 implementation
-- `MainAppNavigator.kt` - Central navigator that manages the back stack
-- Custom "scenes" like `HomeScene.kt` and specialized panes
-- Route definitions in the `routes/` directory
+## Registering screens
 
-### Key Features of Navigation 3
-
-1. **Keys-Based Navigation**
-   - Navigation is modeled as a stack of "keys" (NavKey) representing destinations
-   - Direct manipulation of the back stack for more precise navigation control
-   - Serializable keys for state preservation across configuration changes
-
-2. **Scene-Based Layout System**
-   - Scenes represent cohesive UI units that can display multiple navigation entries
-   - SceneStrategy determines how navigation entries are organized in the UI
-   - Support for complex, adaptive layouts that respond to screen size
-
-3. **Adaptive UI Support**
-   - Seamless switching between single-pane and multi-pane layouts
-   - `HomeScene` implementation that adapts to device size:
-     - Small screens: Bottom navigation + single content pane
-     - Medium screens: Side navigation rail + single content pane
-     - Large screens: Side navigation rail + two content panes (main + detail)
-
-4. **Flexible Entry Management**
-   - NavEntry contains both content and metadata
-   - EntryProviderBuilder maps keys to content
-   - Support for shared elements and complex transitions
-
-### Navigation 3 Pattern in LogDate
+A feature exposes its screens as extension functions on `EntryProviderScope<NavKey>` that take the
+navigation actions as callbacks:
 
 ```kotlin
-// 1. Define route keys (in routes/core/ directory)
-object TimelineListRoute : NavKey
-data class TimelineDetail(val day: LocalDate) : NavKey
-
-// 2. Define navigation actions (in route files)
-fun MainAppNavigator.openTimelineDetail(day: LocalDate) {
-    backStack.add(TimelineDetail(day))
-}
-
-// 3. Define entry providers (in route files)
-fun EntryProviderBuilder<NavKey>.timelineRoutes(...) {
-    entry<TimelineListRoute>(
-        metadata = HomeScene.homeScene()
-    ) { _ ->
-        TimelinePaneScreen(...)
-    }
-    entry<TimelineDetail> { route ->
-        TimelineDetailScreen(...)
-    }
-}
-
-// 4. Use the navigator in UI components
-onOpenDay = { day ->
-    mainAppNavigator.openTimelineDetail(day)
-}
-```
-
-## Jetpack Navigation 2 (Multiplatform)
-
-### Implementation
-
-Jetpack Navigation 2 is used in multiplatform code:
-
-```
-client/feature/*/src/commonMain/kotlin/app/logdate/feature/*/navigation/
-```
-
-Key implementation patterns:
-- Route data classes with `@Serializable` annotation
-- Navigation extension functions on `NavController`
-- `NavGraphBuilder` extension functions for defining destinations
-
-### Key Features of Navigation 2
-
-1. **Mature, Stable API**
-   - Well-documented with extensive community resources
-   - Production-ready with predictable behavior
-
-2. **Multiplatform Support**
-   - Works across Android, iOS, and Desktop targets
-   - Consistent navigation patterns across platforms
-
-3. **Composable-Based Navigation**
-   - NavHost and composable() for defining navigation graphs
-   - Type-safe route navigation with animated transitions
-   - Deep linking support
-
-### Navigation 2 Pattern in LogDate
-
-```kotlin
-// 1. Define route data classes
-@Serializable
-data class JournalDetailsRoute(val journalId: String)
-
-// 2. Define navigation extension functions
-fun NavController.navigateToJournalDetails(journalId: String) {
-    navigate(JournalDetailsRoute(journalId))
-}
-
-// 3. Define destination builders
-fun NavGraphBuilder.journalDetailsDestination(
-    onGoBack: () -> Unit,
-    onEditJournal: (String) -> Unit
+fun EntryProviderScope<NavKey>.editorEntry(
+    onNavigateBack: () -> Unit,
+    onEntrySaved: (EntryEditorRoute) -> Unit,
+    metadata: Map<String, Any> = emptyMap(),
 ) {
-    composable<JournalDetailsRoute> { backStackEntry ->
-        val journalId = backStackEntry.arguments?.journalId
-        JournalDetailScreen(
-            journalId = journalId,
-            onBack = onGoBack,
-            onEditJournal = { onEditJournal(journalId) }
-        )
+    taggedEntry<EntryEditorRoute>(metadata = metadata + ViewModelsPerVisit) { route ->
+        // ...
     }
-}
-
-// 4. Use in NavHost
-NavHost(navController, startDestination = BaseRoute) {
-    journalDetailsDestination(
-        onGoBack = { navController.popBackStack() },
-        onEditJournal = { /* handle edit */ }
-    )
 }
 ```
 
-## Integration Strategy
+`LogDateNavDisplay` calls each of these and supplies callbacks that change the back stack, for
+example `onNavigateBack = { backStack.removeLastOrNull() }`. The feature therefore never learns the
+shape of the surrounding stack, and the screen composables below it take plain callbacks rather than
+a navigator. This is what lets a screen be previewed, tested and reused without any navigation setup.
 
-### How the Two Systems Coexist
+Use `taggedEntry<T>` from `client/ui` instead of the library's `entry<T>`. It also records the route
+class in the entry's metadata, which scene strategies need because Navigation 3 does not expose an
+entry's key.
 
-1. **Platform-Specific Entry Points**
-   - Android: `MainNavigationRoot.kt` using Navigation 3
-   - Other platforms: `LogDateNavHost.kt` using Navigation 2
+Helpers that change the stack are extension functions beside the route, for example
+`navigateToNoteDetail` (which does nothing if that note is already on top), `replaceNoteDetail` and
+`redirectJournalDetail` (which swap a stack element in place). Write new helpers on
+`MutableList<NavKey>`: `NavBackStack` is one, and a plain list lets tests exercise the helper without
+Compose. Some older helpers, such as `navigateToEditor`, are written on `NavBackStack` instead.
 
-2. **Shared UI Components**
-   - UI screens are implemented once and used by both navigation systems
-   - View models are shared across platforms
-   - Navigation parameters are normalized between systems
+## Starting the app
 
-3. **Feature Modules**
-   - Each feature module implements both navigation approaches
-   - Common UI code in `commonMain` sources
-   - Platform-specific navigation in respective source sets
+The stack starts as `BaseRoute`, a blank placeholder, because onboarding and lock state are not
+known yet. When they resolve, `resolveNavBootstrapAction` decides whether to replace the stack:
 
-### Navigation Consistency Guidelines
+- Not onboarded: reset to `OnboardingStart`, unless the top is already an onboarding route or the
+  first-entry editor.
+- Onboarded but locked: leave the stack alone; the lock screen covers it.
+- Onboarded and unlocked: reset to `HomeRoute` only if the stack is still on `BaseRoute` or is
+  stranded on an onboarding route. A stack the person has actually navigated is never discarded, and
+  neither are the final onboarding screens.
 
-To maintain consistency across both systems:
+Launch intents, deep links and app shortcuts reach the stack through `pendingNavKey`, the
+`DeepLinkBus` (open journal, note, rewind or location timeline) and `AppShortcutRequests`. None of
+them opens a screen while the app is locked or onboarding is unfinished.
 
-1. **Route Naming**
-   - Use consistent route naming conventions
-   - Mirror route parameters between systems
+## Choosing a layout: activity presentation
 
-2. **UI Component Design**
-   - Design screens to be navigation-system agnostic
-   - Use callbacks for navigation rather than direct dependencies
+Whether a destination opens beside the screen it came from is decided by metadata, not by the
+screen. `ActivityPresentation` (in `client/ui`) classifies an entry:
 
-3. **View Model Approach**
-   - View models should not depend on navigation implementation
-   - Pass navigation callbacks from the navigation layer
+| Presentation                              | Meaning                                                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `Replacement`                             | The default. The screen replaces the one below it.                                                        |
+| `Home`                                    | The Home workspace.                                                                                       |
+| `Collection(context)`                     | A list that can open details, such as the journals overview.                                              |
+| `Detail(context, childContext)`           | A detail of a collection with the same `context`. `childContext` names what this detail can open in turn. |
+| `SettingsRoot`, `SettingsDetail(section)` | The settings list and one settings page.                                                                  |
 
-## Decision Rationale
+Attach it with `ActivityPresentation.Collection("journals").asMetadata()`.
 
-### Why Navigation 3 for Android?
+`RelatedContentSceneStrategy` shows two panes when the top entry is a `Detail` whose `context`
+matches the entry beneath it (that entry's `Collection.context`, or its `Detail.childContext`) and
+the window is wide enough. A journal's details therefore open beside the journals list, and a note
+opened from a journal opens beside that journal, while an unrelated screen never joins a scene.
+`SettingsActivitySceneStrategy` does the same for settings, pairing the settings list with the
+selected page. The strategies are tried in that order, settings first.
 
-1. **Adaptive Layouts**
-   - Superior support for multi-pane layouts and different screen sizes
-   - Scene-based approach perfect for tablet and foldable experiences
+"Wide enough" is computed by `activitySceneGeometry`. The window must be at least 480dp tall and
+848dp wide, both scaled up by the font scale so that large text collapses to one pane sooner. When a
+vertical hinge splits the window, the two panes together must reach 848dp. A horizontal fold never
+produces two panes, and neither does a separating hinge without a usable split.
 
-2. **Flexibility**
-   - Direct back stack manipulation for complex navigation patterns
-   - Better support for shared element transitions and animations
+Panel framing, surfaces and spacing inside these scenes are the subject of
+[Adaptive Home workspace](./reference/architecture/home-workspace.md). `rememberWorkspaceRouteDecorator`
+wraps `Collection` and `Detail` entries in `ActivityRouteFrame` so they receive the same safe insets
+as Home content.
 
-3. **Performance**
-   - More efficient for complex navigation graphs
-   - Better handling of deep linking and back navigation
+## ViewModels belong to a visit
 
-### Why Keep Navigation 2 for Multiplatform?
+By default a ViewModel obtained inside an entry belongs to the activity, so it outlives the screen
+and shows its previous state the next time the screen opens. Entries that should start fresh add the
+`ViewModelsPerVisit` metadata. `rememberPerVisitViewModelsDecorator` then gives the entry its own
+ViewModel store, which survives configuration changes and is cleared when the entry leaves the back
+stack. The editor, note viewer and the account pages in settings use it.
 
-1. **Maturity**
-   - Stable API with production-ready implementation
-   - Comprehensive documentation and community resources
+Screens that are steps of one flow do the opposite on purpose. Every onboarding step asks for the
+same `OnboardingViewModel`, so the flow shares one instance for as long as the activity lives.
 
-2. **Multiplatform Support**
-   - Works on all target platforms, not just Android
-   - Well-integrated with KMP toolchain
+## Back navigation and gating
 
-3. **Migration Path**
-   - Allows gradual migration as Navigation 3 matures
-   - Maintains compatibility with existing code
+- The back action pops the last entry: `onBack = { backStack.removeLastOrNull() }`. On iOS an edge
+  swipe also goes back whenever the stack has more than one entry.
+- Entries for capabilities that may be unavailable are registered conditionally. The Watch pages
+  exist only where `isWatchSupported` is true (Android). When `FeatureFlag.EVENTS` is not available
+  for launch, the event detail route is registered as an entry that pops itself, so a stale
+  restored stack cannot strand the person on it. The location timeline route renders only when the
+  Places destination is enabled.
+- The decorators wrapped around every entry, in order, keep saveable state per entry, apply
+  per-visit ViewModels, expose the entry's animated-visibility scope for shared-element transitions
+  (the editor's creation transition uses it), and apply the workspace frame.
 
-## Future Direction
+## Adding a screen
 
-As Navigation 3 matures and potentially gains multiplatform support, our strategy will evolve:
-
-1. **Short-term (Current)**
-   - Use Navigation 3 for Android-specific UI
-   - Use Navigation 2 for multiplatform shared code
-   - Maintain consistency between implementations
-
-2. **Mid-term**
-   - Refine the Android Navigation 3 implementation
-   - Improve integration between the two systems
-   - Extend adaptive layout patterns to more features
-
-3. **Long-term**
-   - Evaluate Migration to Navigation 3 for all platforms if it gains multiplatform support
-   - Otherwise, maintain the dual approach with consistent patterns
-
-## Best Practices for LogDate Contributors
-
-1. **When adding a new screen**
-   - Implement the UI component in `commonMain`
-   - Add Navigation 2 route in the feature's navigation package
-   - Add Navigation 3 entry in the appropriate routes file for Android
-
-2. **When modifying navigation logic**
-   - Update both Navigation 2 and Navigation 3 implementations
-   - Test on both small and large screens
-   - Maintain consistent parameter passing
-
-3. **When working with adaptive layouts**
-   - Follow the patterns in `HomeScene` for new scenes
-   - Consider both single-pane and multi-pane experiences
-   - Test on different screen sizes and orientations
+1. Define a `@Serializable` route in the feature's `navigation` package, with string arguments.
+2. Write an `EntryProviderScope<NavKey>` extension that registers it with `taggedEntry`, taking
+   callbacks for everything that leaves the screen. Add `ActivityPresentation` metadata if it should
+   open beside a list, and `ViewModelsPerVisit` if it must start fresh.
+3. Add the route to the polymorphic list in `AppNavKeys.kt`.
+4. Call the extension from `LogDateNavDisplay`, wiring its callbacks to the back stack.
+5. Keep the screen composable free of the back stack, and test the stack changes with a plain list:
+   the helpers are extensions on `MutableList<NavKey>`, so `NavBootstrapActionTest` and
+   `HomeEntryCreationAdmissionTest` need no Compose or Android.

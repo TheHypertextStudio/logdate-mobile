@@ -324,6 +324,12 @@ operations. The server lists the account's own signing key as a rotation key, af
 recovery key when one is registered. The DID is the hash of that signed operation, and the operation
 is stored in the server's own log, `hosted_plc_operations`.
 
+The key that signs an account's repository commits is therefore also the server's rotation key for
+that identity. This is a trade-off. A leak of that one key, which the server uses on every write,
+lets its holder rewrite the identity as well as the repository.
+The person's recovery key, listed first, is what lets them overrule a change made with it once the
+identity is published.
+
 ### Wrapping with the key-encryption key
 
 A private key is never written to the database in the clear. It is wrapped, meaning encrypted under

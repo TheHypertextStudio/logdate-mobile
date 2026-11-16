@@ -106,7 +106,7 @@ for the phone app. Its `publish_wear` option can be disabled for a phone-only
 internal release. Quiet Save remains unavailable on Wear OS and other platforms.
 
 An internal upload begins release acceptance. Promotion to production requires the
-existing [Android release acceptance](../launch/android-public-release.md), including
+existing [Android release acceptance](../RELEASE.md#android-acceptance-journeys), including
 retained-data and recovery checks against the installed Play candidate.
 
 The internal publishing workflow reads the Play internal track after uploading and

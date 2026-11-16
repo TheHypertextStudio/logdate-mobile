@@ -16,8 +16,8 @@ file:/data/user/0/studio.hypertext.logdate/files/media/objects/sha256/9f/9f86d08
 file:///Users/me/.logdate/media/1f2e-IMG_0001.jpg                                            (desktop)
 ```
 
-An absolute path describes where the operating system put the app's storage *at the moment the file was
-written*. That location is not permanent:
+An absolute path describes where the operating system put the app's storage _at the moment the file was
+written_. That location is not permanent:
 
 - **iOS** gives the app a new container directory, with a new UUID in its path, when a backup is restored to
   another phone, when the app is reinstalled, and after some system updates. The files move with the
@@ -69,27 +69,27 @@ LocalMediaRef.parse(ref.toString())      // the same LocalMediaRef again
 
 ### A reference names a file in this install
 
-A `logdate-media://` reference is portable across *locations*, not across *devices*. The same string on two
+A `logdate-media://` reference is portable across _locations_, not across _devices_. The same string on two
 phones names whatever file each phone keeps at that path, which may differ or not exist. Sync, export and
 the watch transfer bytes and keep their own mapping from a local reference to a remote copy; they never
 assume another device can open this device's reference.
 
 ## Collections
 
-| Collection   | What it holds                                                                                          |
-|--------------|--------------------------------------------------------------------------------------------------------|
-| `library`    | Photos and videos LogDate keeps for entries: imported, captured, downloaded by sync, or restored.       |
-| `recordings` | Voice recordings LogDate captured on this device or received from a paired watch.                      |
+| Collection   | What it holds                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| `library`    | Photos and videos LogDate keeps for entries: imported, captured, downloaded by sync, or restored. |
+| `recordings` | Voice recordings LogDate captured on this device or received from a paired watch.                 |
 
 Both collections are durable: the operating system must not delete them to free space. Caches (thumbnails,
 waveforms, image caches) are never referenced by a stored string, so they have no collection.
 
 Where each platform keeps them:
 
-| Collection   | Android phone and Wear  | iOS                                       | Desktop                  |
-|--------------|-------------------------|-------------------------------------------|--------------------------|
-| `library`    | `filesDir/media`        | `Documents/media`                         | `~/.logdate/media`       |
-| `recordings` | `filesDir/audio_notes`  | `Library/Application Support/audio_notes` | `~/.logdate/audio_notes` |
+| Collection   | Android phone and Wear | iOS                                       | Desktop                  |
+| ------------ | ---------------------- | ----------------------------------------- | ------------------------ |
+| `library`    | `filesDir/media`       | `Documents/media`                         | `~/.logdate/media`       |
+| `recordings` | `filesDir/audio_notes` | `Library/Application Support/audio_notes` | `~/.logdate/audio_notes` |
 
 Paths inside a collection are chosen by the platform that wrote the file. Android's library is
 content-addressed (`objects/sha256/<first two hex digits>/<sha256>.<ext>`), while iOS and desktop name
@@ -111,12 +111,12 @@ class AudioDurationReader(private val mediaFiles: MediaFileResolver) {
 `MediaFileResolver.filePath` accepts any stored string, not only `logdate-media://` references, so readers
 call it first and handle `null` as "not a local file":
 
-| Stored string                                           | `filePath` returns                                    |
-|---------------------------------------------------------|-------------------------------------------------------|
-| `logdate-media://library/a.jpg`                         | `<library directory>/a.jpg`                           |
-| `file:` URI or absolute path in this install            | that path                                             |
-| `file:` URI or absolute path from an earlier install    | the same file in this install, if it is there         |
-| `ph://…`, `content://…`, `https://…`, anything else      | `null`                                                |
+| Stored string                                        | `filePath` returns                            |
+| ---------------------------------------------------- | --------------------------------------------- |
+| `logdate-media://library/a.jpg`                      | `<library directory>/a.jpg`                   |
+| `file:` URI or absolute path in this install         | that path                                     |
+| `file:` URI or absolute path from an earlier install | the same file in this install, if it is there |
+| `ph://…`, `content://…`, `https://…`, anything else  | `null`                                        |
 
 `MediaReference.parse(string)` gives the same classification as a value (`Owned`, `LocalFile` or
 `External`) for code that needs to branch on the kind of reference.
@@ -139,11 +139,11 @@ interface MediaDirectories {
 }
 ```
 
-| Platform | Implementation            | Directories from                                                   | Earlier installs it recognizes                               |
-|----------|---------------------------|--------------------------------------------------------------------|--------------------------------------------------------------|
-| iOS      | `IosMediaDirectories`     | `NSFileManager.URLForDirectory`                                    | any `…/Containers/Data/Application/<id>/…` container          |
-| Android  | `AndroidMediaDirectories` | `Context.filesDir`                                                 | `/data/data/<package>/…`, `/data/user/<n>/<package>/…`        |
-| Desktop  | `DesktopMediaDirectories` | `user.home`                                                        | any `<home>/.logdate/…`                                      |
+| Platform | Implementation            | Directories from                | Earlier installs it recognizes                         |
+| -------- | ------------------------- | ------------------------------- | ------------------------------------------------------ |
+| iOS      | `IosMediaDirectories`     | `NSFileManager.URLForDirectory` | any `…/Containers/Data/Application/<id>/…` container   |
+| Android  | `AndroidMediaDirectories` | `Context.filesDir`              | `/data/data/<package>/…`, `/data/user/<n>/<package>/…` |
+| Desktop  | `DesktopMediaDirectories` | `user.home`                     | any `<home>/.logdate/…`                                |
 
 Every implementation must pass the shared contract suite, `MediaDirectoriesContract` in `:client:media`
 `commonTest`, which each platform's test source set runs against its own implementation. The contract
@@ -182,8 +182,8 @@ so an orphaned original is not sent to another device.
 
 The canonical store's publication lock ends when an object is durable, before its caller commits a Room or DataStore
 reference. A collector that checks for zero references in that interval could unlink the object immediately before
-the new reference is saved. A future collector and every producer must hold one cross-process claim fence from the
-start of publication through durable claim commit, and the collector must hold it through its final check and unlink.
+the new reference is saved. Every producer must therefore hold one cross-process claim fence from the
+start of publication through durable claim commit, and a collector must hold it through its final check and unlink.
 That final check must read the durable Room and DataStore claims rather than a process-local flow snapshot.
 
 `MediaReclamationJournal` can durably record a possible orphan before a repository releases a claim. Its Android
@@ -223,6 +223,10 @@ has finished. It updates a row only while the row still holds the value it read,
 upload, because the media itself has not changed. A transcript is bound to the media reference of its audio note,
 so rewriting an audio note's reference rebinds its transcript too. Rows whose file is missing keep their original
 string. If the migration fails, it logs the error and tries again the next time the app starts.
+
+The migration rewrites only references that spell a local file path. A `content://` reference to an item in the device
+photo library is left as it is: it keeps working while that item exists in the library, and it is not copied into the
+app's own collection.
 
 Earlier iOS builds also stored media outside every collection:
 

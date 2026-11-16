@@ -793,21 +793,72 @@ a conflict resolver. [Personal space sync](personal-space-sync.md) describes the
 [Private storage](../explanation/private-storage.md) explains why it exists. Moving an existing
 account from one store to the other is covered in the [journal moves reference](journal-moves.md).
 
+## Archive backup to the server
+
+Record-by-record sync keeps a device and a server in step. An Android device can also upload a
+whole-journal archive, a snapshot a person can restore from after losing the device. The two do not
+share state: the archive is built from the repositories, not from the outbox, and restoring it does
+not touch cursors or the inbox. The archive is the same ZIP that a person's own export produces,
+described in [LogDate data export](../data-export-specification.md).
+
+**Backing up.** `CloudBackupWorker` runs once every 24 hours (`CloudBackupScheduler`) and when the
+person asks, and needs a network connection. One backup runs at a time, guarded in the process and
+by a lock file. Each attempt:
+
+1. captures the signed-in session together with the server it belongs to, the same binding as every
+   other request ([Requests are bound to an account and a server](#requests-are-bound-to-an-account-and-a-server)),
+   and stops if the device has no encryption identity that is usable for that account;
+2. exports the archive to a private file, unless an earlier encrypted archive for the same account,
+   identity and source data (`sourceFingerprint`) is still cached, in which case a retry reuses it;
+3. fails for good, without retrying and without uploading, when the export records any omission with
+   the reason `unreadable` (a whole category or a single media file), because an archive that quietly
+   left data out would look like a complete backup;
+4. checks that `manifest.json` is present, encrypts the archive into a second file, and checks the
+   session and identity again before and after encrypting;
+5. uploads the encrypted file with the device ID to `POST /api/v1/backups`, then discards the cache.
+
+The attempts are bounded; after the last one the work fails instead of retrying.
+
+**Encryption.** The archive is sealed on the device with a 256-bit AES-GCM key that
+`KeyDerivation` derives from the identity key for the purpose `cloud_archive`
+(`CloudArchiveCipher`). It is written in the chunked `LDCB2` format, in authenticated 1 MiB
+chunks that include their position and an authenticated end marker, so a large archive is never in
+memory and a truncated or reordered file fails to decrypt. [Encryption formats](encryption-formats.md)
+specifies the layout. The identity key is the root key from which every content key is derived, and the
+recovery phrase reproduces it ([From recovery phrase to identity key](encryption-formats.md#from-recovery-phrase-to-identity-key)),
+so a replacement device that regains the identity key can decrypt the archive. The upload carries a short manifest string naming the format
+(`logdate-cloud-backup`) and the encryption, which the server stores and returns without reading.
+
+**On the server.** `SyncBackupRoutes.kt` serves the backup routes under `/api/v1/backups`, each for
+a signed-in caller. An upload is refused when the caller's plan has no room for it (`QuotaCheck`),
+when the caller has started more than six uploads in an hour, or when the instance has no free
+buffered transfer slot, because backups pass through temporary files that Cloud Run keeps in memory.
+The server encrypts the bytes again with its own key, bound to the owner and the backup ID
+(`EncryptionService.processBackupUpload`), stores them as a blob, and records the device, manifest,
+size and time. If recording fails, the blob is deleted again. `GET /api/v1/backups` lists a caller's
+backups, `GET /api/v1/backups/{backupId}` describes one, `GET /api/v1/backups/{backupId}/binary`
+streams the bytes, and `DELETE /api/v1/backups/{backupId}` removes one. Old backups are pruned by the
+purge operation in the [Sync V1 API](../../server/docs/sync-v1-api.md).
+
+**Restoring.** `CloudRestoreWorker` lists the caller's backups and takes the newest by creation time.
+An empty list completes the work without restoring anything. Otherwise it downloads the encrypted
+file, decrypts all of it to a private file (a failed decryption deletes the partial output), and queues
+`RestoreWorker` with drafts and media included and an already filled-in profile preserved. The
+restore worker deletes the downloaded archive afterwards. The binding is checked after each request,
+so a restore that began under one account never writes into another. Archives sealed in the older
+single-operation `LDCB1` format restore too, and so do plain ZIP files that the server's own
+encryption alone protected.
+
 ## Other features called backup
 
-- **Encrypted archive backup to the server (Android).** `CloudBackupWorker` uploads a whole archive
-  of the journal once every 24 hours and on request, to the server's `/api/v1/backups` routes, and
-  `CloudRestoreWorker` restores from one. The archive is encrypted on the device into a file, in
-  authenticated 1 MiB AES-GCM chunks (`CloudArchiveCipher`), and streamed to and from the server, so
-  a large archive never sits in memory. The server also encrypts the archive bytes it stores and
-  returns them only through an authenticated download. Archives in the single-operation
-  format also restore, and so do ZIP archives that were not sealed on the device and were protected
-  only by the server's own encryption. This is a snapshot for disaster
-  recovery and is independent of the record-by-record sync on this page.
+- **Encrypted archive backup to the server (Android).** A whole-journal snapshot for disaster
+  recovery, independent of the record-by-record sync on this page. It is described under
+  [Archive backup to the server](#archive-backup-to-the-server).
 - **Export to a file.** `ExportUserDataUseCase` in
   [`client/domain`](../../client/domain/src/commonMain/kotlin/app/logdate/client/domain/export/ExportUserDataUseCase.kt)
   writes a portable archive the person keeps, and the restore pipeline beside it reads one back.
-  It reads from the repositories and involves no account or server.
+  It reads from the repositories and involves no account or server. The format is specified in
+  [LogDate data export](../data-export-specification.md).
 - **Android system backup and device transfer.**
   [Native Android backup and restore](native-android-backup.md) covers what Android's own backup
   includes and how the app recovers on a replacement device.

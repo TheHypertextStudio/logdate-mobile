@@ -100,6 +100,41 @@ For comprehensive device behavior verification using adb shell commands, use the
 
 See: `tests/e2e/test-multi-window-editor.sh` for details on testing actual window behavior, task recents, and multi-window integration.
 
+**Test Coverage**:
+
+- `open entry in new window` - existing entry loading
+- `create new blank editor window` - new entry creation
+- `create editor window with initial content` - initial text and attachments
+- `open different entry types in separate windows` - several note types
+- `editor activity is in separate task` - task isolation
+- `editor activity supports split screen` - split-screen support
+- `editor window handles configuration changes` - rotation and foldable support
+
+**How multi-window editing works**:
+
+Each editor window is its own `EditorActivity` task. The manifest declares it with
+`documentLaunchMode="always"`, `taskAffinity=".editor"` and `resizeableActivity="true"`, and
+`EditorActivity.createIntent` adds `FLAG_ACTIVITY_NEW_TASK`, `FLAG_ACTIVITY_NEW_DOCUMENT` and
+`FLAG_ACTIVITY_MULTIPLE_TASK`, so every launch produces a separate window that appears separately in
+recents. The intent extras are `entry_id`, `journal_id`, `initial_text`, `attachments` and
+`initial_journal_ids`. `EditorManager` opens an entry or a blank editor in a new window; passing the
+launching activity as `adjacentTo` adds `FLAG_ACTIVITY_LAUNCH_ADJACENT` so the window opens beside it
+in split screen, where Android has room (a launch from the application context has no window to sit
+beside and opens full screen). The minimum SDK is 30, so every supported device has multi-window.
+
+The journey the suite protects, end to end: open an existing entry in a new window; create
+additional blank editor windows; edit and save in each window and confirm each keeps its own content
+and its own auto-save; close one window and confirm the others stay open; place two editors
+side by side in split screen and save in both. Windows must also follow rotation and foldable
+posture changes without losing text, which `FoldableMultiInstanceEditorE2ETest` covers by publishing
+a book posture to the primary editor and then launching a second, separately seeded window that must
+run in its own task.
+
+**Related Documentation**:
+
+- [EditorActivity.kt](../../app/compose-main/src/androidMain/kotlin/app/logdate/client/EditorActivity.kt) - Implementation
+- [EditorManager.kt](../../app/compose-main/src/androidMain/kotlin/app/logdate/client/editor/EditorManager.kt) - Window management
+
 ### 2. Share UX E2E Tests
 
 **Files**:
@@ -135,21 +170,30 @@ See: `tests/e2e/test-multi-window-editor.sh` for details on testing actual windo
 - `ShareReceiverE2ETest` - 1 test
 - `SharingEntryPointsE2ETest` - 2 tests
 
-**Test Coverage**:
+### 3. User journey coverage
 
-- ✅ testOpenEntryInNewWindow - Existing entry loading
-- ✅ testCreateNewBlankEditorWindow - New entry creation
-- ✅ testCreateEditorWindowWithInitialContent - Initial text/attachments
-- ✅ testOpenDifferentEntryTypesInSeparateWindows - Various note types
-- ✅ testEditorActivityIsInSeparateTask - Task isolation
-- ✅ testEditorActivitySupportsSplitScreen - Split-screen support
-- ✅ testEditorWindowHandlesConfigurationChanges - Rotation/foldable support
+The client suite follows the journeys a person takes through the app. Each row names the journey,
+its critical path, and the tests that exercise it.
 
-**Related Documentation**:
+| Journey                      | Critical path                                                                                                                                                                                                                                          | Tests                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| First launch and onboarding  | Launch on `BaseRoute`, move into onboarding, complete each step (introduction, overview, memory import and selection, backup account, birthday, recommendations, location, notifications), land on Home; the current step survives activity recreation | `OnboardingJourneyE2ETest`; `PlatformSyncJourneyE2ETest` (account created during onboarding registers on the server) |
+| Writing and keeping an entry | Write in the editor, save as draft or publish, reopen the draft; drafts survive store and activity recreation; publishing deletes the draft                                                                                                            | `DraftsE2ETest`, `AndroidDraftPersistenceE2ETest`, `MainActivityRecreationE2ETest`, `EntryFocusDraftJourneyTest`     |
+| Journals                     | Filter, sort and search the journal list; merge two journals                                                                                                                                                                                           | `JournalFilterBarE2ETest`, `JournalSearchToolbarE2ETest`, `JournalMergeE2ETest`                                      |
+| Timeline and Home            | Move between Home destinations and back; the timeline renders retained entries offline before slow optional metadata arrives; inline audio snippets and transcripts                                                                                    | `HomeWorkspaceE2ETest`, `TimelineLocalLoadingE2ETest`, `TimelineAudioSnippetE2ETest`, `TimelineTranscriptE2ETest`    |
+| Rewind                       | Rewind the current week's first memory without waiting for the next week; immersive, map and scene presentations                                                                                                                                       | `CurrentWeekRewindE2ETest`, `RewindImmersiveE2ETest`, `RewindGeographicMapE2ETest`, `RewindScenePresentationE2ETest` |
+| Settings                     | Settings feedback (snackbar results) follows its lifecycle; the recovery phrase page                                                                                                                                                                   | `SettingsStateE2ETest`, `SettingsFeedbackLifecycleTest`, `RecoveryPhraseSettingsE2ETest`                             |
+| Sharing                      | Share content into LogDate and share out from the timeline and library                                                                                                                                                                                 | The share UX suite above                                                                                             |
+| Several editor windows       | See section 1                                                                                                                                                                                                                                          | `MultiWindowEditorE2ETest`, `FoldableMultiInstanceEditorE2ETest`                                                     |
 
-- [E2E Test Journeys](../e2e-test-journeys.md#55-multi-window-editor-journey) - Full user journey
-- [EditorActivity.kt](../../app/compose-main/src/androidMain/kotlin/app/logdate/client/EditorActivity.kt) - Implementation
-- [EditorManager.kt](../../app/compose-main/src/androidMain/kotlin/app/logdate/client/editor/EditorManager.kt) - Window management
+The tests find screens by `testTag` through the Compose test rule, and drive real activities or
+composition roots; the suite has no screen-object ("robot") layer. Use predictable fixture data and clean up
+after each test so tests do not depend on order.
+
+A journey test checks more than what is on screen. Verify the visible UI state, the stored data
+(for example that a draft row exists or has been deleted), the navigation state (which route is on
+top after Back or recreation), and that data shown on one screen agrees with what another screen
+shows for the same entry.
 
 ---
 
@@ -409,7 +453,7 @@ To add a new e2e test:
 
 3. **Add to this index**: Document commands and requirements
 
-4. **Document in ../e2e-test-journeys.md**: Add user journey if applicable
+4. **Add to the journey coverage table**: List the test against its journey if it exercises one
 
 5. **Include terminal commands**: In doc comments for easy reference
 
@@ -427,6 +471,5 @@ To add a new e2e test:
 
 - [E2E Organization Standard](./e2e-test-organization.md) - Test categorization, shell script standards, and guidelines
 - [Testing Strategy](./introduction.md) - Complete testing guide
-- [E2E Test Journeys](../e2e-test-journeys.md) - User workflows being tested
-- [Build Commands](../../CLAUDE.md#build-commands) - Project build docs
+- [Build Commands](../DEVELOPMENT.md) - Project build docs
 - [Android Testing Guide](https://developer.android.com/training/testing) - Official Android docs

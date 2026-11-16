@@ -10,7 +10,8 @@ The automated path is intentionally narrow:
 
 - publish the Android app bundle (`.aab`) only
 - publish **internal** track builds only when manually dispatched from `main`
-- promote **production** releases only by manual dispatch for a tested `android-v*` tag
+- promote **production** releases only by manual dispatch, in stages, for a tested `android-v*` tag
+  (pushing the tag publishes nothing; it only names the tested commit)
 - read the publishing secrets from the `production` GitHub Environment, which
   only `main` and release tags may use
 - stay disabled until maintainers explicitly enable each path
@@ -31,8 +32,9 @@ and watch. Only that built bundle defaults to the redesigned Watch experience; a
 turned it off explicitly in Labs keeps their choice. Ordinary builds retain the flag's
 declared default of off. Internal and production tracks remain separate.
 
-Production is the same bundle, promoted from internal testing by an explicit
-workflow dispatch that names its tested `android-v*` tag. Nothing is rebuilt for production.
+Production is the same bundle, promoted from internal testing by explicit
+workflow dispatches that name its tested `android-v*` tag and version code. Nothing is
+rebuilt for production.
 
 The workflow lives in [`publish-android-play.yml`](../../.github/workflows/publish-android-play.yml).
 
@@ -65,7 +67,7 @@ internal publish from `main`, which defeats continuous dogfooding. The
 | ------------------------- | ----------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Play Developer API access | none (variable `LOGDATE_PLAY_SERVICE_ACCOUNT`)        | Internal + production                    | Keyless. Both jobs authenticate through Workload Identity Federation as this service account, and Gradle Play Publisher uses the resulting application-default credentials.                        |
 | Firebase debug config     | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_DEBUG_BASE64`   | CI, screenshot tests, local debug parity | Base64 of `app/android-main/google-services.json`. Materialized by [`setup-firebase-configs`](../../.github/actions/setup-firebase-configs/action.yml) with `android-flavor: debug` (default).     |
-| Firebase release config   | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_RELEASE_BASE64` | Internal + production Play publishing    | Base64 of `app/android-main/src/release/google-services.json`. Materialized by [`setup-firebase-configs`](../../.github/actions/setup-firebase-configs/action.yml) with `android-flavor: release`. |
+| Firebase release config   | `LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_RELEASE_BASE64` | Internal Play publishing                 | Base64 of `app/android-main/src/release/google-services.json`. Materialized by [`setup-firebase-configs`](../../.github/actions/setup-firebase-configs/action.yml) with `android-flavor: release`. |
 | Release keystore file     | `LOGDATE_RELEASE_STORE_BASE64`                        | Internal                                 | Base64-encoded `.jks` or `.keystore` file content.                                                                                                                                                 |
 | Release keystore password | `LOGDATE_RELEASE_STORE_PASSWORD`                      | Internal                                 | Passed into the existing Android release signing config.                                                                                                                                           |
 | Release key alias         | `LOGDATE_RELEASE_KEY_ALIAS`                           | Internal                                 | Passed into the existing Android release signing config.                                                                                                                                           |
@@ -188,43 +190,69 @@ The workflow has two publish paths:
     to `gradle.properties` can never retarget Play builds
   - `-Plogdate.watchExperienceDefault=true`, so the internal phone and watch
     open the redesigned companion by default
+  - `-Plogdate.quietSaveDefault=true`, so the internal phone starts with
+    [Quiet Save](../features/quiet-save.md) on unless the person turned it off
   - `LOGDATE_PLAY_TRACK=internal`
   - `LOGDATE_VERSION_NAME=<derived>` (Play assigns the `versionCode`)
   - `--release-name "<internal release name with short SHA>"`
 
+- After publishing, reads the internal track and requires exactly one completed
+  release whose name contains the commit's short SHA; that release's version
+  code is the one to test and later promote.
 - Uploads the release bundle (`.aab`) as a workflow artifact
   (`android-release-bundle-internal-<sha>`, 7-day retention) for QA pickup.
 
 ### Production track
 
-- Runs only for a manual production-stage dispatch naming a tested
-  `android-v<major>.<minor>.<patch>` tag
-- Requires `LOGDATE_PLAY_PRODUCTION_PUBLISH_ENABLED=true`
-- Runs in the `production` Environment, which only release tags and `main` may use
-- Materializes the **release** Firebase config
-- Promotes the already-tested internal release with:
+Production actions run only from a manual dispatch whose `stage` is not `internal`,
+need `LOGDATE_PLAY_PRODUCTION_PUBLISH_ENABLED=true`, and run in the `production`
+Environment, which only release tags and `main` may use. Runs share one concurrency
+group, so two actions never race on the track.
 
-  ```bash
-  ./gradlew :app:android-main:promoteReleaseArtifact \
-    --from-track internal \
-    --promote-track production \
-    --version-code <from resolve-play-internal-release.sh> \
-    --release-name "<tag release name with short SHA>" \
-    --release-status completed
-  ```
+Every production action takes the same three inputs:
 
-- After successful promotion, creates a draft GitHub Release tied to the
-  triggering tag with auto-generated notes from commit history. The matching
-  `.aab` lives in the internal-track workflow artifact (7-day retention);
-  attach it to the release manually if you want it persisted longer.
+| Input                    | Meaning                                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `candidate_tag`          | The tested tag, `android-v<major>.<minor>.<patch>`. The workflow checks out that tag.                                   |
+| `candidate_version_code` | The exact version code Play assigned to the internal release built from the tag's commit.                               |
+| `gate_evidence`          | A link to the record of the acceptance journeys and, after the first stage, the review of the previous stage's signals. |
 
-The production path is intentionally lighter than the internal one:
+The workflow requires all three, then asks the Play API for an internal release whose
+name contains the tagged commit's short SHA and that version code, and fails if there
+is none. It never rebuilds and never needs the keystore. Production changes only the
+track and rollout fraction of the artifact that was already tested. The evidence input
+records a maintainer's decision: the workflow cannot read the record behind the link or
+confirm that the observation period passed.
 
-- it does **not** rebuild the app bundle
-- it does **not** require the keystore
+`scripts/check-play-rollout-transition.sh` reads the production track and allows each
+stage only from the matching state of that version code:
 
-That optimization is safe only because the production job promotes the
-exact internal artifact already tested for the tagged commit.
+| Stage          | Required state of the version on production                   | Result                                                                                |
+| -------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `start-5`      | Not on production, and no other release in progress or halted | In progress at 5%; a draft GitHub Release is created for the tag with generated notes |
+| `advance-25`   | In progress at 5%                                             | In progress at 25%                                                                    |
+| `complete-100` | In progress at 25%                                            | Completed, at 100%                                                                    |
+| `halt`         | In progress at 5% or 25%                                      | Halted at the same fraction                                                           |
+| `resume-5`     | Halted at 5%                                                  | In progress at 5%                                                                     |
+| `resume-25`    | Halted at 25%                                                 | In progress at 25%                                                                    |
+
+Operate a release in this order:
+
+1. Record the acceptance journeys' results and the internal version code, then tag
+   the tested commit.
+2. Run `start-5`. Review crash, ANR, backup, sign-in, and support signals for at
+   least 24 hours, and add the timestamped review to the record.
+3. If healthy, run `advance-25` with the same tag, version code, and the updated
+   record. Review again for at least 24 hours at 25%, then run `complete-100`.
+4. On a data-loss, restore, sign-in, or material stability regression, run `halt`.
+   New installations of the release stop; devices that already updated keep it. Record
+   the incident and the recovery action before using `resume-5` or `resume-25`. A fix
+   that needs a new bundle starts over with a new internal release, acceptance pass,
+   version code, and tag.
+
+The internal bundle is the only one built; the matching `.aab` lives in the
+internal-track workflow artifact (7-day retention), so attach it to the GitHub Release
+manually if you want it kept longer.
 
 ## Wear OS
 
@@ -246,8 +274,6 @@ not be published.
 
 The `publish-internal` job publishes the phone bundle, then, when
 `LOGDATE_PLAY_WEAR_PUBLISH_ENABLED` is `true`, the watch bundle to the `wear:internal` track.
-The authenticated Play API confirmed this alias for LogDate on October 11, 2026
-([track inspection](https://github.com/WillieCubed/logdate-mobile/actions/runs/38191150146)).
 `WearPlayTrack` in `build-logic` adds the `wear:` prefix to the phone track alias.
 Beta and production are `wear:beta` and `wear:production`. The two publishes run one after the other in one
 job because Play assigns both apps version codes from a single sequence, and two uploads racing for
