@@ -1,147 +1,44 @@
 # `:client:billing`
 
-**Subscription and billing integration for LogDate Cloud**
+This module lets the app offer, start and manage a LogDate Cloud backup subscription through each platform's own store. It defines one interface, `SubscriptionBiller`, and one implementation per platform: Google Play Billing on Android, StoreKit on iOS, and a browser hand-off on desktop. The Android app, the onboarding feature and the screenshot scenes use it to show plans and begin a purchase.
 
-## Overview
+## What it contains
 
-Provides the subscription and billing functionality specifically for LogDate Cloud services. This module handles in-app purchases, subscription management, and billing operations across different platforms using platform-specific implementations.
+| Type                          | Package                                | What it does                                                                                                                                                                                                          |
+| ----------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SubscriptionBiller`          | `app.logdate.client.billing`           | The interface the app codes against. It exposes `isSubscribed` and `availablePlans` as flows, plus `purchasePlan` and `cancelPlan`.                                                                                   |
+| `LogDateBackupPlanOption`     | `app.logdate.client.billing.model`     | An enum with `BASIC` and `STANDARD`. Each entry carries the store product identifier in `sku`. The plan name, description and price are words for the screen, so the UI maps each option to its own string resources. |
+| `PlayStoreSubscriptionBiller` | `app.logdate.client.billing` (Android) | Connects a Play `BillingClient`, lists the subscription products that exist in Play, launches the purchase flow, acknowledges purchases, and reports a subscription when Play returns a purchased subscription.       |
+| `ForegroundActivityTracker`   | `app.logdate.client.billing` (Android) | Remembers the resumed `Activity`. Play Billing has to be launched from an Activity, and the biller is created with the application context.                                                                           |
+| `IosSubscriptionBiller`       | `app.logdate.client.billing` (iOS)     | Loads StoreKit products for the non-free plans, adds payments to the `SKPaymentQueue`, and marks the user subscribed when a transaction is purchased or restored.                                                     |
+| `DesktopSubscriptionBiller`   | `app.logdate.client.billing` (JVM)     | Opens the checkout page in the system browser for a paid plan and the account management page for cancellation.                                                                                                       |
+| `billingModule`               | `app.logdate.client.di`                | An `expect` Koin module. Each platform's `actual` binds `SubscriptionBiller` to that platform's implementation.                                                                                                       |
 
-This module is designed exclusively for first-party LogDate Cloud implementation and is not intended for third-party integrations.
+`BASIC` is the free tier on every platform: `purchasePlan(BASIC)` starts no store transaction. On Android, `availablePlans` always includes `BASIC` and includes `STANDARD` only when its SKU is configured in Play.
 
-## Architecture
+Cancellation is handled by the store, not by the app. `cancelPlan` opens the Play subscriptions page on Android, Apple's subscription management page on iOS, and the management URL on desktop.
 
-```
-Billing Module
-├── Subscription Interface
-├── Plan Definitions
-└── Platform Implementations
-```
+## Desktop configuration
 
-## Key Components
+`DesktopSubscriptionBiller` builds the checkout address from the `LOGDATE_BILLING_CHECKOUT_URL` environment variable and appends `?plan=<sku>`. It opens the address from `LOGDATE_BILLING_MANAGEMENT_URL` for cancellation. When a variable is unset or blank, it uses `https://logdate.app/billing/checkout` and `https://logdate.app/account/billing`.
 
-### Core Components
+## How it fits with other modules
 
-- `SubscriptionBiller.kt` - Main billing interface
-- `LogDateBackupPlanOption.kt` - Plan definitions and their store product SKUs (the UI supplies each plan's name, description and price)
-- `StubSubscriptionBiller.kt` - Testing implementation
+The module has no dependencies on other LogDate modules. It uses Kotlin coroutines, Napier and Koin in common code, plus the Play Billing KTX library and Koin Android on Android. The Android app (`app/android-main`), `:client:feature:onboarding` and `:client:screenshot-scenes` depend on it.
 
-### Platform Implementations
+## Platforms
 
-- `PlayStoreSubscriptionBiller.kt` - Google Play Store implementation
-- (Future iOS implementation)
+Android, JVM (desktop) and iOS (`iosArm64` and `iosSimulatorArm64`, added by the shared KMP library convention plugin).
 
-## Features
+## Running the tests
 
-### Subscription Management
+The tests live in the `jvmTest` source set and cover `DesktopSubscriptionBiller`: a paid plan opens the configured checkout URL, `BASIC` opens nothing and reports unsubscribed, and cancellation opens the management URL.
 
-- **Plan Options**: Tiered subscription plans
-- **Purchase Flow**: Platform-specific purchase handling
-- **Subscription Status**: Active subscription tracking
-- **Plan Management**: Subscription upgrades/downgrades
-- **Cancellation**: Subscription cancellation handling
-
-### LogDate Cloud Plans
-
-- **Basic Plan**: Free tier with limited storage
-- **Standard Plan**: Premium tier with expanded storage
-- (Future additional tiers)
-
-### Platform Integration
-
-- **Google Play Billing**: Android implementation
-- **StoreKit Integration**: (Future iOS implementation)
-- **Web Payments**: (Future web implementation)
-
-## Dependencies
-
-### Core Dependencies
-
-- **Kotlinx Coroutines**: Asynchronous operations
-- **Koin**: Dependency injection
-
-### Android Dependencies
-
-- **Google Play Billing**: In-app purchase and subscription handling
-
-## Usage Patterns
-
-### Subscription Checking
-
-```kotlin
-class SubscriptionViewModel(private val subscriptionBiller: SubscriptionBiller) {
-    val isSubscribed: StateFlow<Boolean> = subscriptionBiller.isSubscribed
-        .stateIn(viewModelScope, SharingStarted.Lazily, false)
-    
-    val availablePlans: StateFlow<List<LogDateBackupPlanOption>> = subscriptionBiller.availablePlans
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-}
+```bash
+./gradlew :client:billing:jvmTest
 ```
 
-### Purchase Flow
+## Things to know
 
-```kotlin
-suspend fun purchaseSubscription(plan: LogDateBackupPlanOption) {
-    try {
-        subscriptionBiller.purchasePlan(plan)
-        // Handle successful purchase
-    } catch (e: Exception) {
-        // Handle purchase failure
-    }
-}
-
-suspend fun cancelSubscription() {
-    try {
-        subscriptionBiller.cancelPlan()
-        // Handle successful cancellation
-    } catch (e: Exception) {
-        // Handle cancellation failure
-    }
-}
-```
-
-### Platform-Specific Implementation
-
-```kotlin
-// Android implementation using Google Play Billing
-class PlayStoreSubscriptionBiller(
-    context: Context,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : SubscriptionBiller {
-    // Implementation details using Google Play Billing Library
-}
-
-// iOS implementation (future)
-class AppleStoreSubscriptionBiller : SubscriptionBiller {
-    // Implementation details using StoreKit
-}
-```
-
-## TODOs
-
-### Core Features
-- [ ] Complete Google Play Billing implementation
-- [ ] Add iOS StoreKit implementation
-- [ ] Implement subscription status caching
-- [ ] Add offline subscription verification
-- [ ] Implement purchase flow error handling
-
-### Plan Management
-- [ ] Support additional subscription tiers
-- [ ] Add quota display based on subscription
-- [ ] Implement subscription upgrade/downgrade UI
-- [ ] Add subscription renewal notifications
-- [ ] Support promotional codes and offers
-
-### User Experience
-- [ ] Implement subscription benefits explainer
-- [ ] Add graceful degradation during billing service outages
-- [ ] Create streamlined purchase flow
-- [ ] Implement subscription management UI
-- [ ] Add transaction history viewer
-
-### Platform Integration
-- [ ] Complete Play Store subscription testing
-- [ ] Add TestFlight subscription testing
-- [ ] Implement sandbox environment detection
-- [ ] Add proper error handling for declined transactions
-- [ ] Support subscription restore functionality
+- `IosSubscriptionBiller` throws an error from `purchasePlan` when the plan's SKU is not among the products StoreKit returned, so a SKU missing from App Store Connect shows up as a failed purchase.
+- `PlayStoreSubscriptionBiller` throws when no foreground `Activity` is available, because Play Billing cannot start without one.

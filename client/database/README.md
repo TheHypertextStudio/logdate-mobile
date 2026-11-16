@@ -1,257 +1,51 @@
 # `:client:database`
 
-**Local database implementation using Room with multiplatform support**
+This module defines LogDate's on-device Room database: the schema, the data access objects, the type converters, every schema migration, and the code that opens the database safely on each platform. It holds the journals, notes, location history, rewinds, people, places, transcripts, the full-text search index and the sync outbox. [`:client:data`](../data/README.md) wraps the DAOs in repository implementations, and [`:client:sync`](../sync), `:client:location`, `:client:feature:core`, the three app modules and `:integration:server-client-e2e` depend on it as well.
 
-## Overview
+## What it contains
 
-Provides local data persistence using Room database with support for complex queries, migrations, and cross-platform compatibility. This module stores journals, notes, drafts, user data, and metadata locally with efficient querying and data integrity features.
+Everything is under `app.logdate.client.database`.
 
-## Current Database Schema Version
+| Package      | Contents                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (root)       | `LogDateDatabase`, the Room database (version 62, `DATABASE_VERSION`, with exported schemas), `LogDateDatabaseConstructor`, `databaseModule` (an `expect` Koin module) and `daosModule`, which exposes each DAO as a Koin singleton                                                                                                                                                                      |
+| `entities`   | Room entities. Notes are split by kind (`TextNoteEntity`, `ImageNoteEntity`, `AudioNoteEntity`, `VideoNoteEntity`), next to `JournalEntity`, `LocationLogEntity`, `HistoryRecordEntity`, `PlaceEntity`, `UserPlaceEntity`, `TranscriptionEntity`, `EventEntity`, `StickerEntity`, `PostcardEntity` and others. Sub-packages group `journals`, `media`, `moments`, `people`, `rewind` and `sync` entities |
+| `dao`        | One DAO interface per area, for example `JournalDao`, `JournalNotesDao`, `TextNoteDao`, `LocationHistoryDao`, `SearchDao`, `TranscriptionDao`, `PlaceDao`. Sub-packages hold `journals` (`JournalContentDao`, `JournalMergeDao`), `maintenance` (`IntegrityDao`), `media`, `moments`, `people`, `rewind` and `sync` (`SyncMetadataDao`, `DownloadInboxDao`, `PeerDeliveryDao`, `SpaceRecordStateDao`)    |
+| `converters` | Room type converters: `TimestampConverter`, `UuidConverter`, `DurationConverter`, `StringListConverter`, `LocationDataConverter`, `MediaDimensionsConverter`                                                                                                                                                                                                                                             |
+| `migrations` | One file per version step from `MIGRATION_12_13` to `MIGRATION_61_62`, plus `AppDatabaseMigrations.kt` for the earlier steps                                                                                                                                                                                                                                                                             |
+| `encryption` | `generateDatabaseKey`, an `expect` function with a per-platform implementation, and on Android the passphrase storage described below                                                                                                                                                                                                                                                                    |
 
-**Version 10** (see `schemas/` directory for migration history)
+`SearchIndexBootstrapper` maintains an FTS5 virtual table (`entries_fts`) through SQL triggers defined in `SearchIndexContentTriggers.kt` and `SearchIndexContextTriggers.kt`. The triggers watch the note tables and the tables for journals, media captions, transcriptions, audio tags, places, postcards, rewinds and stickers. The bootstrapper creates the index and refreshes the triggers when the search index schema version differs from the one in the code. `SearchDao.rebuildIfNeeded` refills the index from existing content when an older version built it or when it is empty while content exists. If the SQLite build has no FTS5, it logs a warning and leaves search disabled instead of failing.
 
-## Architecture
+`NewerDatabaseVersionException` is thrown when the journal on disk was written by a newer app version than this build supports. The files and keys are left untouched.
 
-```
-Database Module
-├── LogDateDatabase (Room Database)
-├── DAOs (Data Access Objects)
-├── Entities (Room Entities)
-├── Converters (Type Converters)
-├── Migrations (Schema Migrations)
-└── Platform-specific Implementations
-```
+## Schema and migrations
 
-## Key Components
+Room exports each schema version as JSON into `schemas/app.logdate.client.database.LogDateDatabase/`, configured by `schemaDirectory` in `build.gradle.kts`. A change to an entity needs a new `DATABASE_VERSION`, a matching `MIGRATION_<from>_<to>` file in `migrations`, and the exported JSON for the new version. The migration tests in `jvmTest` run against the bundled SQLite driver.
 
-### Database Core
-- `LogDateDatabase.kt` - Main Room database definition
-- `LogDateDatabaseConstructor.kt` - Database instantiation logic
-- `DatabaseModule.kt` - Dependency injection configuration
+## Platform storage
 
-### Data Access Objects (DAOs)
-- `JournalDao.kt` - Journal CRUD operations
-- `TextNoteDao.kt` - Text note operations
-- `ImageNoteDao.kt` - Image note operations
-- `JournalNotesDao.kt` - Journal-note relationship operations
-- `UserDevicesDao.kt` - User device tracking
-- `UserMediaDao.kt` - Media metadata operations
-- `LocationHistoryDao.kt` - Location tracking data
-- `JournalContentDao.kt` - Journal content operations
-- `CachedRewindDao.kt` - Rewind data caching
+Each platform opens the database differently.
 
-### Entities
-- `JournalEntity.kt` - Journal data structure
-- `TextNoteEntity.kt` - Text note data structure
-- `ImageNoteEntity.kt` - Image note data structure
-- `JournalWithNotes.kt` - Journal with related notes
-- `GenericNoteData.kt` - Common note properties
-- `UserDeviceEntity.kt` - Device information
-- `LocationLogEntity.kt` - Location history
-- `MediaImageEntity.kt` - Media file metadata
-- `JournalContentEntityLink.kt` - Content relationships
+- **Android** opens the database with SQLCipher (`sqlcipher-android`). The passphrase is stored in secure storage, with a recovery copy written by `PassphraseBackupStore` under `filesDir/db_recovery/` so a restored device can still open the journal. Installs that predate encryption have their plaintext database migrated to SQLCipher, and the original files are moved to timestamped backups first. The source set also contains the helpers that the native backup and transfer code in `:client:data` relies on: `openRetainedDatabaseCopy`, `captureNativeJournalDatabaseSnapshot`, `verifyNativePrivacyBeforeDatabaseOpen` and `requirePortableCloudBackupKey`.
+- **Desktop (JVM)** keeps the database under the user's home directory. `DesktopDatabaseVault` decrypts a sealed copy at launch and `scheduleDatabaseEncryption` seals the closed database when the app exits. A sealed copy that cannot be decrypted stops startup with `EncryptedDatabaseUnavailableException` and is never replaced.
+- **iOS** creates the database in the user's documents directory.
 
-### Type Converters
-- `TimestampConverter.kt` - DateTime to/from database conversion
-- `UuidConverter.kt` - UUID to/from String conversion
+## How it fits with other modules
 
-### Migrations
-- `AppDatabaseMigrations.kt` - Database schema migration definitions
+The module depends on `:client:device`, `room-runtime`, `sqlite-bundled`, Koin and Napier. It exposes `room-runtime` and kotlinx-datetime to its consumers through `api`. Room's compiler runs through KSP for the Android, JVM and both iOS targets.
 
-## Platform Support
+## Platforms
 
-- **Android**: Native Room implementation
-- **iOS**: Room with SQLite driver
-- **JVM/Desktop**: Room with SQLite driver
+Android, JVM (`jvm()`), `iosArm64` and `iosSimulatorArm64`.
 
-## Dependencies
+## Tests
 
-### Core Dependencies
-- **Room Runtime**: Database framework
-- **SQLite Bundled**: Embedded SQLite engine
-- **Kotlinx DateTime**: Date/time handling
-- **Koin**: Dependency injection
-- **Napier**: Logging
-
-### Build Dependencies
-- **Room Compiler**: Code generation (KSP)
-- **KSP**: Kotlin Symbol Processing
-
-## Database Features
-
-### Data Integrity
-- Foreign key constraints
-- NOT NULL constraints where appropriate
-- Unique constraints for business rules
-- Cascading deletes for related data
-
-### Performance Optimizations
-- Proper indexing on frequently queried columns
-- Efficient query patterns
-- Pagination support for large datasets
-- Lazy loading for related entities
-
-### Advanced Features
-- Full-text search capabilities (planned)
-- Complex relationship queries
-- Aggregation and statistical queries
-- Data archival and cleanup
-
-## Schema Design
-
-### Core Tables
-- **journals** - User journals with metadata
-- **text_notes** - Text-based journal entries
-- **image_notes** - Image-based journal entries
-- **journal_content_links** - Many-to-many relationships
-- **user_devices** - Device registration and sync
-- **location_history** - Location tracking data
-- **media_images** - Media file metadata
-- **cached_rewinds** - Precomputed rewind data
-
-### Key Relationships
-- One-to-many: Journal → Notes
-- Many-to-many: Journals ↔ Content via link tables
-- One-to-many: User → Devices
-- One-to-many: User → Location History
-
-## Usage Patterns
-
-### Repository Pattern
-```kotlin
-// DAOs are injected into repository implementations
-class OfflineFirstJournalRepository(
-    private val journalDao: JournalDao,
-    private val notesDao: JournalNotesDao
-) : JournalRepository
-```
-
-### Query Optimization
-```kotlin
-// Efficient pagination
-@Query("SELECT * FROM journals ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
-suspend fun getJournalsPaginated(limit: Int, offset: Int): List<JournalEntity>
-```
-
-## Migration Strategy
-
-### Versioning
-- Each schema change increments the database version
-- Migrations are provided for each version increment
-- Backward compatibility is maintained where possible
-
-### Migration Testing
-- Automated migration tests verify data integrity
-- Test migrations with production-like data volumes
-- Rollback strategies for failed migrations
-- Individual migration tests for each version (5→6, 6→7, 7→8, 8→9, 9→10)
-- Complete migration chain testing (5→10) for full data integrity
-- Real database instance testing on Android platform
-
-## Performance Considerations
-
-### Indexing Strategy
-- Primary keys on all entities
-- Foreign key indexes for relationships
-- Composite indexes for common query patterns
-- Full-text search indexes (planned)
-
-### Query Optimization
-- Avoid N+1 query problems with joins
-- Use `@Relation` for efficient related data loading
-- Implement pagination for large result sets
-- Cache frequently accessed data
-
-## Testing
-
-### Test Structure
-The database module includes comprehensive testing across different test source sets:
-
-#### CommonTest (`src/commonTest/`)
-- **Structural Tests**: Database configuration, schema validation, entity structure
-- **Migration Definition Tests**: Verify migration definitions are properly configured
-- **Type Converter Tests**: Test data conversion logic
-- **Limitations**: Cannot test actual DAO operations (requires platform-specific SQLite instances)
-
-#### AndroidDeviceTest (`src/androidDeviceTest/`)
-- **DAO Integration Tests**: Full CRUD operations with real Room database instances
-- **Migration Integration Tests**: Data integrity verification across database versions
-- **Database Performance Tests**: Query performance and optimization validation
-- **Full Database Lifecycle Tests**: Complete database operations with real data
-
-### Running Tests
-
-#### Common Tests (Structure/Configuration)
 ```bash
-./gradlew :client:database:test
+./gradlew :client:database:jvmTest
+./gradlew :client:database:testAndroidHostTest
 ```
 
-#### Android Instrumented Tests (Full DAO Functionality)
-```bash
-./gradlew :client:database:connectedAndroidTest
-```
+`jvmTest` holds the migration tests and the DAO tests that run against SQLite on the JVM, including the desktop vault. `commonTest` contains structural checks of the entities, DAO interfaces and configuration, and these run as part of `jvmTest`. `testAndroidHostTest` runs the Android host tests for the passphrase recovery, the privacy preflight, the journal fence, the cloud backup key and database startup recovery.
 
-#### All Tests
-```bash
-./gradlew :client:database:test :client:database:connectedAndroidTest
-```
-
-### Test Coverage
-- **DAO Operations**: All CRUD operations, complex queries, relationships
-- **Migration Testing**: Every migration path (5→6, 6→7, 7→8, 8→9, 9→10, 5→10)
-- **Data Integrity**: User data preservation across schema changes
-- **Error Handling**: Database operation failures, constraint violations
-- **Performance**: Query efficiency, large dataset handling
-- **Relationships**: Foreign key constraints, cascading operations
-
-### Critical Testing Focus
-Database tests prioritize **data integrity** since the module handles user data that must be preserved across app updates and database migrations. All migration paths are thoroughly tested to ensure zero data loss.
-
-## TODOs
-
-### Core Features
-- [ ] Implement full-text search indexing
-- [ ] Add database backup/restore functionality
-- [x] Implement database encryption for sensitive data
-- [ ] Add database performance monitoring
-- [ ] Optimize query performance with additional indexes
-- [ ] Implement database integrity checks
-- [ ] Add database size management and archival
-- [ ] Implement proper cascading deletes
-
-### Advanced Features
-- [ ] Add database compression for large entries
-- [ ] Implement database partitioning for performance
-- [ ] Add database analytics and metrics
-- [ ] Implement database replication for redundancy
-- [ ] Add database export/import functionality
-- [ ] Implement database versioning for sync
-- [ ] Add database maintenance routines
-- [ ] Implement database security auditing
-
-### Development & Testing
-- [x] Add comprehensive database testing
-- [x] Implement database migration testing automation
-- [ ] Add database performance benchmarks
-- [ ] Create database debugging tools
-- [ ] Add database documentation generation
-- [ ] Implement database mock implementations
-- [x] Add database integration tests
-- [ ] Create database development utilities
-
-## Security Considerations
-
-- Sensitive data encryption at rest (Android SQLCipher, iOS file protection, desktop encrypted file)
-- Proper SQL injection prevention via Room
-- Access control through repository pattern
-- Data sanitization for user inputs
-- Audit trails for data modifications
-
-## Maintenance
-
-### Regular Tasks
-- Monitor database size growth
-- Analyze query performance
-- Review and optimize slow queries
-- Clean up orphaned data
-- Archive old data based on retention policies
+The `androidDeviceTest` source set contains instrumented tests (`DatabaseIntegrationTest`, `DatabaseMigrationIntegrationTest`) that need an Android device. Run device tests only on Gradle Managed Devices, as described under [Devices](../../docs/DEVELOPMENT.md#devices) in the development guide.

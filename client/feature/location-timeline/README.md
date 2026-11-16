@@ -1,172 +1,51 @@
 # `:client:feature:location-timeline`
 
-**Location history tracking and visualization**
+This module is the Places destination of LogDate: a screen that shows where the user has been, which memories belong to each place, and lets them correct what was recorded. It is a Compose Multiplatform feature module. `:app:compose-main` hosts the screen and registers the module's Koin definitions, and the Android instrumented and screenshot test sources in `:app:android-main` use its composables directly.
 
-## Overview
+## What it contains
 
-Provides location timeline tracking and visualization capabilities, showing users their movement history with contextual information about places visited and time spent at each location.
+Everything lives under `app.logdate.feature.location.timeline`.
 
-## Architecture
+| Package                  | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `di`                     | `locationTimelineFeatureModule`, the Koin module that provides `SuggestNearbyHistoryPlacesUseCase`, `HumanLocationHistoryViewModel` and `LocationTimelineViewModel`. `locationTimelineModule` is a deprecated alias for it.                                                                                                                                                                                                                     |
+| `ui`                     | `LocationTimelineScreen`, the entry point other modules call. It reads the `FeatureFlag.HUMAN_LOCATION_HISTORY` flag (enabled by default) and shows either the history workspace or the original timeline screen.                                                                                                                                                                                                                               |
+| `ui` (original timeline) | `LocationTimelineViewModel` combines the current location, recent stops and memory places into a `LocationTimelineUiState`. `LegacyLocationTimelineScreen` and `LocationTimelineContent` render it. `LocationTimelineBottomSheet.kt` holds `LocationTimelineBottomSheet` and the quick-peek sheet. `LocationTimelineMap` is an `expect` composable, and `LocationTimelineStaticMapPreview` draws a static preview where there is no native map. |
+| `ui.model`               | `LocationTimelineUiState` (`Content` or `Error`), `LocationTimelineErrorUiState` (`PermissionRequired`, `LocationServicesDisabled`, `TemporarilyUnavailable`) and the UI models for the current location, places, memory previews and stops.                                                                                                                                                                                                    |
+| `ui.history`             | The history workspace. `HumanLocationHistoryScreen` wires `HumanLocationHistoryViewModel` to `HumanLocationHistoryContent`. State types are in `HumanLocationHistoryState.kt`. `HumanHistoryMapper.kt` maps location day items and journal notes to `HistoryItemUi` and `HistoryMemoryUi`, and the remaining files are the detail, place, edit and map composables.                                                                             |
 
-```
-Location Timeline Feature
-├── Timeline UI
-├── Location History Management
-├── Place Resolution
-└── Permission Handling
-```
+### The history workspace
 
-## Key Components
+The workspace has two tabs, `HistoryTab.Day` and `HistoryTab.Places`. The Day tab lists the visits, journeys and gaps of one date (`HistoryItemKind`), shows them on a map, and can replay the day one item at a time. The Places tab lists places from the last 30 or 90 days, with a search field and an optional map.
 
-### Core Components
+`HumanLocationHistoryViewModel` reads from `LocationHistoryService` and `LocationTrackingSettingsRepository`, and resolves place names through `PlaceResolutionCache`. It keeps the selected date, item, tab and source in a `SavedStateHandle`. The corrections a user can make are the `HistoryEditAction` values: change place, change activity, change time, add a visit, add a memory, link a memory and delete. Each one except add a memory is applied through `LocationHistoryService`; add a memory calls the screen's `onAddMemory` callback. When a change fails to save, the view model keeps the action so `retry()` can run it again.
 
-- `LocationTimelineScreen.kt` - Main location history interface
-- `LocationTimelineViewModel.kt` - Location timeline state management
-- `LocationTimelineUiState.kt` - UI state representation
-- `LocationTimelineModule.kt` - Dependency injection
+The view model also exposes whether background recording is enabled, and the screen asks `rememberHistoryRecordingAccess()` whether the device can record. If recording was interrupted or cannot start, the workspace shows a recovery message with an action to resolve it.
 
-### UI Components
+### Maps
 
-- `LocationTimelineCard` - Individual location entry display
-- `CurrentLocationCard` - Current location visualization
-- `EmptyLocationTimeline` - Empty state handling
-- `LocationPermissionRequiredScreen` - Permission request interface
+`HumanHistoryMap` delegates to `NativeHistoryMap`, an `expect` composable that receives the day's items, the selected item and the camera callbacks. On Android it is a Google Maps Compose map when `rememberGoogleMapsEnabled()` is true, and a "Map unavailable" panel otherwise. On iOS and desktop it reports that it is not ready and shows a "Map unavailable on this device" panel. In Compose previews (`LocalInspectionMode`) `HumanHistoryMap` instead draws the day's markers and paths on a Compose `Canvas` using `historyMapGeometry` and `historyMapProjection`. `HistoryCameraPolicy.kt` decides when the map camera fits the day or follows the selected item.
 
-## Features
+## How it fits with other modules
 
-### Location Timeline
+The module depends on `:shared:model`, `:shared:config`, `:client:device`, `:client:datastore`, `:client:domain`, `:client:ui`, `:client:awareness`, `:client:repository`, `:client:location`, `:client:permissions` and `:client:util`. On Android it also uses `google.maps.compose` and `androidx.activity.compose`, and its manifest declares the Maps API key meta-data and an optional `org.apache.http.legacy` library.
 
-- **Location History**: Chronological display of visited locations
-- **Current Location**: Real-time location tracking and display
-- **Place Recognition**: Automatic resolution of coordinates to place names
-- **Stay Duration**: Time spent at each location
-- **Address Display**: Detailed address information for each location
-- **Timeline Navigation**: Scrollable history of locations
+Strings are Compose resources in `commonMain/composeResources/values`. The generated resource class is public, in the package `logdate.client.feature.location.timeline.generated.resources`.
 
-### Location Management
+## Platforms
 
-- **History Tracking**: Automatic tracking of significant location changes
-- **Location Deletion**: Ability to remove individual location entries
-- **Permission Management**: Proper handling of location permissions
-- **Error Handling**: Graceful handling of location service failures
-- **Empty States**: User guidance when no history is available
+Android, iOS (`iosArm64`, `iosSimulatorArm64`) and desktop JVM (target `desktop`). The `ui` and `ui.history` packages each have `androidMain`, `iosMain` and `jvmMain` implementations of the platform pieces: `formatCoordinateValue`, `LocationTimelineMap`, `rememberHistoryRecordingAccess`, `HumanPlacePicker` and `NativeHistoryMap`. The `jvmMain` directory is added to the `desktopMain` source set.
 
-### Privacy Features
+## Running the tests
 
-- **Permission Controls**: Clear permission requesting and handling
-- **Data Control**: User ability to delete location entries
-- **Transparent UI**: Clear indication of location data usage
-- **Location Resolution**: On-device place name resolution
+All tests are in `commonTest` and cover the map geometry and camera policy, the history mapper, the history state and the error mapping:
 
-## Dependencies
-
-### Core Dependencies
-
-- `:client:domain` - Business logic
-- `:client:ui` - Shared UI components
-- `:client:repository` - Data access
-- `:client:location` - Location services
-- `:client:permissions` - Permission handling
-- **Compose Multiplatform**: UI framework
-- **Material 3**: Design components
-- **Kotlinx DateTime**: Date and time handling
-
-## Usage Patterns
-
-### Location Timeline Display
-
-```kotlin
-@Composable
-fun LocationTimelineScreen(
-    modifier: Modifier = Modifier,
-    viewModel: LocationTimelineViewModel = koinViewModel()
-) {
-    val locationPermissionState = rememberLocationPermissionState()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
-    // Permission handling
-    if (!locationPermissionState.hasPermission) {
-        LocationPermissionRequiredScreen(
-            onPermissionGranted = { viewModel.refreshData() },
-            modifier = modifier
-        )
-        return
-    }
-    
-    // Timeline content display
-    LocationTimelineContent(
-        uiState = uiState,
-        onDeleteLocation = viewModel::deleteLocationEntry,
-        modifier = Modifier.fillMaxSize()
-    )
-}
+```bash
+./gradlew :client:feature:location-timeline:desktopTest
+./gradlew :client:feature:location-timeline:testAndroidHostTest
 ```
 
-### Location Card Implementation
+## Things to know
 
-```kotlin
-@Composable
-private fun LocationTimelineCard(
-    locationItem: LocationTimelineItem,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Location icon
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = locationItem.placeName)
-                Text(text = locationItem.address)
-                Text(text = locationItem.timeAgo)
-                
-                if (locationItem.duration != null) {
-                    Text(text = "Stayed for ${locationItem.duration}")
-                }
-            }
-            
-            // Delete button
-        }
-    }
-}
-```
-
-## Dependency Injection
-
-```kotlin
-val locationTimelineModule = module {
-    viewModel { LocationTimelineViewModel(get(), get(), get()) }
-    
-    // Additional location timeline dependencies
-}
-```
-
-## TODOs
-
-### Core Features
-- [ ] Add map visualization of location history
-- [ ] Implement timeline filtering capabilities
-- [ ] Add search functionality for locations
-- [ ] Implement location categorization
-- [ ] Add location statistics and insights
-
-### Location Quality Improvements
-- [ ] Improve place name resolution accuracy
-- [ ] Add user-defined place naming
-- [ ] Implement favorite/important locations
-- [ ] Add visit frequency tracking
-- [ ] Improve duration calculation for stays
-
-### Privacy Enhancements
-- [ ] Add location history export capability
-- [ ] Implement bulk deletion options
-- [ ] Add location data retention controls
-- [ ] Implement location privacy dashboard
-- [ ] Add granular location tracking preferences
-
-### UI Improvements
-- [ ] Add timeline grouping by day/week/month
-- [ ] Implement map-timeline integration
-- [ ] Add location details expanded view
-- [ ] Improve location card visualization
-- [ ] Add animations for timeline interactions
+- `LocationTimelineScreen` takes `onOpenNote` and `onAddMemory` callbacks. `onAddMemory` receives a `VisitMemoryContext` built from the selected visit.
+- When `HUMAN_LOCATION_HISTORY` is off, `LocationTimelineScreen` shows the original timeline screen, so changes to either presentation should keep both working.

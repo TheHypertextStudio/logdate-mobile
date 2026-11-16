@@ -1,174 +1,45 @@
 # `:client:sensor`
 
-**Device sensor access and system monitoring**
+This module exposes the device's battery state, network data-saver state and gyroscope as small Kotlin interfaces with a Koin binding per platform. The app shells and the UI module read these values to adapt behaviour to the device, for example to tilt a visual with the phone's gyroscope.
 
-## Overview
+## What it contains
 
-Provides cross-platform access to device sensors and system information such as battery status, network conditions, and device motion. This module offers a consistent API for monitoring device state across Android, iOS, and desktop platforms.
+| Package                             | Main types                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.logdate.client.sensor`         | `GyroSensorProvider` exposes a `SharedFlow<GyroOffset>` and a `cleanup()`. `GyroOffset` holds `x` and `y` as floats. `UnavailableGyroSensorProvider` is the implementation for platforms with no gyroscope; it never emits.                                                                                                      |
+| `app.logdate.client.sensor.battery` | `BatteryInfoProvider` offers a `currentBatteryState` flow, `getCurrentBatteryState()`, `isPowerSaveMode()` and `cleanup()`. `BatteryState` carries `level` (0 to 100), `isCharging` and `isPowerSaveMode`. `StaticBatteryInfoProvider` reports a full, charging battery and lets tests set another state with `setBatteryState`. |
+| `app.logdate.client.sensor.network` | Platform implementations of `NetworkSaverModeProvider`, described below.                                                                                                                                                                                                                                                         |
+| `app.logdate.client.sensor.di`      | `sensorModule`, an `expect` Koin module with one `actual` per platform. It binds `GyroSensorProvider`, `BatteryInfoProvider` and `NetworkSaverModeProvider`.                                                                                                                                                                     |
 
-## Architecture
+The `NetworkSaverModeProvider` interface, `NetworkSaverState` and `NetworkConnectionType` are defined in `:client:networking`, so that module can consume them without depending on this one. This module supplies the implementations.
 
-```
-Sensor Module
-├── Sensor Interfaces
-├── Sensor Data Models
-└── Platform-Specific Implementations
-```
+Per platform:
 
-## Key Components
+- Android: `AndroidGyroSensorProvider` (the `Sensor.TYPE_GYROSCOPE` sensor), `AndroidBatteryInfoProvider` (`BatteryManager` and `PowerManager`) and `AndroidNetworkSaverModeProvider` (`ConnectivityManager`).
+- iOS: `IosGyroSensorProvider` (`CMMotionManager`), `IosBatteryInfoProvider` (`UIDevice` and `NSProcessInfo`) and `IosNetworkSaverModeProvider`.
+- JVM: `JvmBatteryInfoProvider` reports a default full battery, `JvmNetworkSaverModeProvider` reports no data saver and derives the connection type from whether a non-loopback network interface is up, and the gyroscope binding is `UnavailableGyroSensorProvider`.
 
-### Core Components
+## How it fits with other modules
 
-- `BatteryInfoProvider.kt` - Battery status monitoring interface
-- `BatteryState.kt` - Battery state data model
-- `NetworkSaverModeProvider.kt` - Network data saver mode interface
-- `NetworkSaverState.kt` - Network data saver mode state model
-- `GyroSensorProvider.kt` - Gyroscope sensor interface
-- `GyroOffset.kt` - Gyroscope data model
+The module depends on `:client:networking`, Kotlin coroutines and Koin; the Android source set adds `kotlinx-coroutines-android` and `koin-android`. `:app:compose-main`, `:app:wear` and `:client:ui` declare a dependency on it in their build files.
 
-## Features
+## Platforms
 
-### Battery Monitoring
+Android, iOS (`iosArm64`, `iosSimulatorArm64`) and JVM.
 
-- **Battery Level**: Real-time battery level readings
-- **Charging Status**: Monitor charging state changes
-- **Power Save Mode**: Track power saving mode (Low Power Mode on iOS)
-- **Resource Cleanup**: Proper release of battery monitoring resources
+## Android network policy
 
-### Network Monitoring
+`AndroidNetworkSaverModeProvider` follows Android's default network, which is the route ordinary LogDate requests use. The capabilities delivered to its network callback decide the connection type, metering and validation state. Code in the callbacks must not reread the synchronous connectivity getters, because Android can still return the previous network at that moment. A newly available default network stays restricted until its own capabilities arrive, and delayed events for the previous network cannot replace it.
 
-- **Data Saver Mode**: Track system data saver mode (Android)
-- **Connection Type**: Monitor connection type (WiFi, cellular, etc.)
-- **Event Streaming**: Reactive data flow with Kotlin Flow
+Data Saver broadcasts and explicit state reads refresh the app's background restriction separately. Once callback state exists, these reads keep its network capabilities. Synchronous network reads are only the startup fallback before the callbacks arrive.
 
-### Motion Sensors
+A test of this behaviour has to deliver callback events while the getters stay stale; a test that only calls `getCurrentDataSaverState()` misses the race. `AndroidNetworkPolicyCallbackTest` covers it.
 
-- **Gyroscope Data**: Real-time gyroscope readings where available
-- **Sensor Lifecycle**: Proper resource management
-- **Event Streaming**: Reactive data flow with Flow
-- **Error Handling**: Graceful handling of sensor unavailability
+## Running the tests
 
-### Android network policy
-
-`AndroidNetworkSaverModeProvider` follows Android's default network, which is the route ordinary
-LogDate requests use. Capabilities delivered to that callback own the connection type, metering,
-and validation state. Do not reread synchronous connectivity getters inside callbacks: Android can
-still return the previous network. A newly available default remains restricted until its own
-capabilities arrive; delayed events for the previous network cannot replace it.
-
-Data Saver broadcasts and explicit state reads refresh the app's background restriction separately.
-After callback state exists, these reads preserve its network capabilities. Synchronous network
-reads are only the startup fallback before callbacks arrive. Tests must exercise callback events
-while getters remain stale; a test that calls only `getCurrentDataSaverState()` misses this race.
-The callback regressions live in `AndroidNetworkPolicyCallbackTest`.
-
-## Platform Support
-
-| Feature                | Android | iOS     | Desktop |
-|------------------------|---------|---------|---------|
-| Battery Level          | ✅      | ✅      | ⚠️ Stub  |
-| Charging Status        | ✅      | ✅      | ⚠️ Stub  |
-| Power Save Mode        | ✅      | ✅      | ⚠️ Stub  |
-| Data Saver Mode        | ✅      | ⚠️ N/A   | ⚠️ Stub  |
-| Network Connection Type| ✅      | ⚠️ Partial| ⚠️ Stub  |
-| Gyroscope              | ✅      | ✅      | ⚠️ Stub  |
-
-_⚠️ Note: On Desktop, stub implementations provide a consistent API but no actual sensor data. iOS has no direct equivalent to Android's Data Saver Mode._
-
-### Platform Integration
-
-- **Android Integration**: Native Android sensor framework and system services
-- **iOS Integration**: UIDevice and NSProcessInfo for device monitoring
-- **Desktop Support**: Currently uses stub implementations that provide consistent behavior but no actual sensor data (desktop computers typically lack motion sensors and have different power management)
-
-## Usage Examples
-
-### Battery Monitoring
-
-```kotlin
-// Get battery info provider from DI
-val batteryInfoProvider = get<BatteryInfoProvider>()
-
-// Collect battery updates
-coroutineScope.launch {
-    batteryInfoProvider.currentBatteryState.collect { state ->
-        Napier.d("Battery level: ${state.level}%")
-        Napier.d("Charging: ${state.isCharging}")
-        Napier.d("Power save mode: ${state.isPowerSaveMode}")
-    }
-}
-
-// Get current state directly
-coroutineScope.launch {
-    val currentState = batteryInfoProvider.getCurrentBatteryState()
-    Napier.d("Current battery level: ${currentState.level}%")
-}
-
-// Clean up when done
-batteryInfoProvider.cleanup()
+```bash
+./gradlew :client:sensor:jvmTest
+./gradlew :client:sensor:testAndroidHostTest
 ```
 
-### Network Data Saver Mode
-
-```kotlin
-// Get network saver provider from DI
-val networkSaverProvider = get<NetworkSaverModeProvider>()
-
-// Monitor data saver mode
-coroutineScope.launch {
-    networkSaverProvider.dataSaverModeState.collect { state ->
-        if (state.isDataSaverEnabled) {
-            // Adjust app behavior for data saving
-            Napier.d("Data saver enabled, connection: ${state.connectionType}")
-        } else {
-            Napier.d("Normal data usage, connection: ${state.connectionType}")
-        }
-    }
-}
-
-// Clean up when done
-networkSaverProvider.cleanup()
-```
-
-## TODOs
-
-### Core Sensor Features
-- [ ] Add accelerometer sensor support
-- [ ] Implement magnetometer access
-- [ ] Add ambient light sensor support
-- [ ] Implement proximity sensor access
-- [ ] Add step counter integration
-
-### Data Processing
-- [ ] Add sensor data filtering
-- [ ] Implement sensor fusion algorithms
-- [ ] Add motion detection capabilities
-- [ ] Implement gesture recognition
-- [ ] Add orientation detection
-
-#### Android network policy
-
-`AndroidNetworkSaverModeProvider` follows Android's default network, which is the route ordinary
-LogDate requests use. Capabilities delivered to that callback own the connection type, metering,
-and validation state. Do not reread synchronous connectivity getters inside callbacks: Android can
-still return the previous network. A newly available default remains restricted until its own
-capabilities arrive; delayed events for the previous network cannot replace it.
-
-Data Saver broadcasts and explicit state reads refresh the app's background restriction separately.
-After callback state exists, these reads preserve its network capabilities. Synchronous network
-reads are only the startup fallback before callbacks arrive. Tests must exercise callback events
-while getters remain stale; a test that calls only `getCurrentDataSaverState()` misses this race.
-The callback regressions live in `AndroidNetworkPolicyCallbackTest`.
-
-## Platform Support
-- [ ] Implement native desktop APIs for battery and sensor data where available (JNA/JNI on Windows/Linux/macOS)
-- [ ] Add watchOS sensor integration
-- [ ] Add sensor mocking for testing
-- [ ] Implement sensor data recording/playback
-
-### Advanced Features
-- [ ] Add sensor calibration utilities
-- [ ] Implement battery-efficient sensor polling
-- [ ] Add sensor data aggregation
-- [ ] Implement sensor-based activity recognition
-- [ ] Add sensor data visualization components
+The JVM tests cover the JVM battery and network providers. The Android host tests cover the network provider, including the callback regressions. Tests that need a real device live in the `androidDeviceTest` source set and cover the Android battery and network providers.

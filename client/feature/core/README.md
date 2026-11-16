@@ -1,201 +1,48 @@
 # `:client:feature:core`
 
-**Core application features and main navigation structure**
+This module is LogDate's app shell and settings. It holds the Home screen that hosts the main destinations, the app-wide launch and unlock state, cloud account sign-up and sign-in, the whole Settings area, and the export, backup and restore flows. `:app:compose-main` wires it into navigation, `:app:android-main` uses it in its unit, instrumentation and screenshot test source sets, and `:client:feature:onboarding`, `:client:feature:android-widgets` and `:client:screenshot-scenes` also depend on it.
 
-## Overview
+## What it contains
 
-Provides the main application structure, navigation, and essential features like home screen, settings, account management, and user preferences. This module serves as the foundation for the app's UI and user flow.
+Everything lives under `app.logdate.feature.core`.
 
-## Architecture
+| Package                                              | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (root)                                               | `AppViewModel` combines user data, network state, the app lock and the biometric state into `GlobalAppUiState`. `BiometricGatekeeper` is the platform boundary for system authentication, and `AuthenticationChallenge` owns one native prompt until it finishes.                                                                                                                                                                                                                                                                                                                                             |
+| `main`                                               | `HomeScreen` and `HomeWorkspaceComposition` host the home destinations listed in `HomeRouteDestination` (Timeline, `LocationHistory` shown as Places, Journals, Library, Rewind). `HomeViewModel` builds the timeline state and requests transcripts for the voice recordings that are visible in it, `HomeTimelineMapping.kt` converts domain days into UI state, `QuietSaveReturnEffect` shows a snackbar for an unacknowledged quiet-saved voice draft when the `QUIET_SAVE` flag is on, and `rememberWatchPlaybackHandoff` connects audio playback to the watch playback companion.                       |
+| `navigation`                                         | `BaseRoute`, the initial back-stack entry used while the app resolves its launch state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `account`                                            | Cloud account creation and sign-in: `CloudAccountOnboardingViewModel`, the welcome, username, display name and email verification steps, and `CloudAccountSetupRoute`.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `settings`                                           | Every settings destination. `settings/navigation` has the route keys (`SettingsRoute`, `PrivacySettingsRoute`, `DataSettingsRoute` and the rest) and their entries. `settings/ui` has one screen and view model per destination, with subpackages `devices` (linked devices and device approval), `watch` (Wear OS pairing and status, and `watch/v2` for the companion pages), and `labs`. `settings/account` has the account screen, sign-in methods, recovery phrase, hosting, server move, and account deletion. `settings/updates` has the `AppUpdateController` interface and its update prompt policy. |
+| `export`                                             | `ExportLauncher`, `UserDataExportViewModel`, export options and progress UI, and the cloud backup request and retry rules.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `restore`                                            | `RestoreLauncher`, `UserDataRestoreViewModel`, restore progress and result UI, and the readiness rules for resuming archive media recovery.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `sync`                                               | `SyncPresentation`, the UI-only projection of sync state, and `observeSyncPresentation`, which maps the sync engine's status and auth state onto it. Also the sync issue and deletion recovery screens.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `people`, `profile`, `streak`, `watch`, `assistants` | The people directory, inbox and person detail screens, the profile screen, `CampfireViewModel` for the journaling streak, the watch handoff route, and the connected assistants screens.                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `di`                                                 | `coreFeatureModule` and the platform, account, devices, labs and watch settings modules.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
-```
-Core Feature Module
-├── Main Application Structure
-├── Account Management
-├── Settings
-├── Home Experience
-└── Platform Integrations
-```
+`corePlatformModule` is an `expect val`. Android binds `AndroidBiometricGatekeeper`, `AndroidExportLauncher` and `AndroidRestoreLauncher`. Desktop binds `NoOpBiometricGatekeeper`, `DesktopExportLauncher` and `DesktopRestoreLauncher`, and iOS binds `IosBiometricGatekeeper`, `IosExportLauncher` and `IosRestoreLauncher`. Desktop and iOS also bind `UnsupportedAppUpdateController` for `AppUpdateController`.
 
-## Key Components
+The Android source set also contains the background work for export, cloud backup and restore: `ExportWorker`, `CloudBackupWorker`, `CloudBackupScheduler`, `RestoreWorker`, `CloudRestoreWorker` and the archive media recovery classes in `restore`.
 
-### Main Application
+## How it fits with other modules
 
-- `HomeScreen.kt` - Main app navigation hub
-- `AppViewModel.kt` - Application-wide state management
-- `HomeRouteDestination.kt` - Navigation destinations
-- `HomeViewModel.kt` - Home screen business logic
+The build file lists dependencies on `:shared:model`, `:shared:config`, `:client:ui`, `:client:awareness`, `:client:util`, `:client:repository`, `:client:domain`, `:client:data`, `:client:datastore`, `:client:database`, `:client:networking`, `:client:permissions`, `:client:device`, `:client:sync`, `:client:sharing`, `:client:media`, `:client:health-connect`, `:client:location`, and the feature modules `:client:feature:timeline`, `:client:feature:rewind`, `:client:feature:journal` and `:client:feature:events`. Android additionally uses `:client:notifications`, CameraX, AndroidX Biometric, WorkManager and the Google code scanner.
 
-### Account & Authentication
+Home composes the other features instead of reimplementing them: it renders the Journals overview from `:client:feature:journal`, the Rewind overview from `:client:feature:rewind`, and the marked moment entry from `:client:feature:timeline`.
 
-- `CloudAccountOnboardingScreen.kt` - Cloud account setup
-- `BiometricGatekeeper.kt` - Device biometric security
+## Platforms
 
-### Settings System
+The module targets Android, desktop (`jvm("desktop")`), `iosArm64` and `iosSimulatorArm64`. It has `androidMain`, `desktopMain` and `iosMain` source sets next to `commonMain`. Compose resources are generated into `logdate.client.feature.core.generated.resources`.
 
-- `SettingsOverviewScreen.kt` - Main settings screen
-- `settings/account/` - Account: who is signed in, ways to sign in, recovery phrase, hosting,
-  sign-out, and account deletion, one screen and view model each
-- `PrivacySettingsViewModel.kt` - Privacy and security settings
-- `DataSettingsViewModel.kt` - Data, sync, export/restore
-- `AdvancedSettingsViewModel.kt` - Manual app update checks
-- `DangerZoneSettingsViewModel.kt` - Destructive actions
-- `PrivacySettingsScreen.kt` - Privacy controls
-- `DataSettingsScreen.kt` - Data management
-- `DevicesScreen.kt` - Connected device management
-- `settings/ui/labs/` - Labs page: switches for unreleased feature flags, shown in About LogDate after tapping the version
-  seven times. A new flag that is off by default needs wording in `LabsFlagCopy.kt`, and `labsFlags` lists the watch
-  switch on Android only
+## Running the tests
 
-### Platform Integration
+- `./gradlew :client:feature:core:desktopTest` runs `commonTest` and the Compose UI tests in `desktopTest` on the JVM.
+- `./gradlew :client:feature:core:testAndroidHostTest` runs the Android-only tests in `androidHostTest`, which cover the archive recovery store, the cloud backup attempt store and Android authentication availability.
+- `./gradlew :client:feature:core:checkSettingsUiContract` checks that settings screens follow the shared composition rules. This module applies the `app.logdate.settings-ui` plugin that registers it.
 
-- `CoreFeatureModule.kt` - Dependency injection
-- `ExportLauncher.kt` - Platform-specific export functions
-- `BiometricGatekeeper.kt` - Platform biometric integration
+## Things to know before changing it
 
-## Features
-
-### Home Experience
-
-- **Multi-Tab Navigation**: Timeline, journals, rewind, and location tabs
-- **Floating Action Button**: Context-aware for creating new content
-- **Timeline View**: Chronological display of user activity
-- **Unified Navigation**: Consistent experience across all platforms
-
-### Account Management
-
-- **Passkey Authentication**: Modern, secure login without passwords
-- **Cloud Account Creation**: Seamless onboarding for new users
-- **Profile Management**: User identity and preferences
-- **Multiple Device Support**: Synchronization across devices
-
-### Settings & Preferences
-
-- **Comprehensive Settings**: Organized by category
-- **Account Management**: User profile and credentials
-- **Privacy Controls**: Data sharing and visibility options
-- **Device Management**: Connected device oversight
-- **Data Export**: Platform-specific data export capabilities
-- **Danger Zone**: Account deletion and data reset options
-
-### Security
-
-- **Biometric Authentication**: Platform-specific biometric security
-- **Secure Storage**: Protected preferences and settings
-- **Access Controls**: Feature-level permission management
-- **Privacy Features**: Data protection and control
-
-## Dependencies
-
-### Core Dependencies
-
-- `:client:domain` - Business logic
-- `:client:ui` - Shared UI components
-- `:client:repository` - Data access
-- `:client:permissions` - Permission handling
-- `:client:datastore` - Preferences storage
-- **Compose Multiplatform**: UI framework
-- **Material 3 Adaptive**: Responsive design components
-
-### Feature Dependencies
-
-- `:client:feature:timeline` - Timeline functionality
-- `:client:feature:rewind` - Rewind features
-- `:client:feature:journal` - Journal management
-- `:client:feature:location-timeline` - Location history
-
-## Usage Patterns
-
-### Navigation Structure
-
-```kotlin
-@Composable
-fun HomeScreen(
-    onNewEntry: () -> Unit,
-    onOpenJournal: JournalClickCallback,
-    onCreateJournal: () -> Unit,
-    onOpenSettings: () -> Unit = {},
-    viewModel: HomeViewModel = koinViewModel(),
-) {
-    HomeScaffoldWrapper {
-        // Content based on current destination
-    }
-}
-```
-
-### Settings Integration
-
-Settings screens take navigation callbacks and resolve their own view models:
-
-```kotlin
-AccountScreen(
-    destinations =
-        AccountDestinations(
-            onBack = { /* ... */ },
-            onProfile = { /* ... */ },
-            onSignInMethods = { /* ... */ },
-            onRecoveryPhrase = { /* ... */ },
-            onHosting = { /* ... */ },
-            onDeleteAccount = { /* ... */ },
-            onSignIn = { /* ... */ },
-            onCreateAccount = { /* ... */ },
-        ),
-)
-```
-
-## Dependency Injection
-
-```kotlin
-// In CoreFeatureModule.kt
-actual val coreFeatureModule: Module = module {
-    includes(domainModule)
-    includes(devicesModule)
-
-    single<BiometricGatekeeper> { AndroidBiometricGatekeeper() }
-    single<ExportLauncher> { AndroidExportLauncher(androidContext()) }
-    single<RestoreLauncher> { AndroidRestoreLauncher(androidContext()) }
-
-    viewModel { AppViewModel(get(), get(), get()) }
-    viewModel { SettingsOverviewViewModel(get(), get(), get()) }
-    viewModel { PrivacySettingsViewModel(get(), get(), get(), get(), get()) }
-    viewModel { DataSettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { AdvancedSettingsViewModel(get()) }
-    viewModel { DangerZoneSettingsViewModel(get()) }
-    viewModel { HomeViewModel(get(), get(), get()) }  // GetStreamingTimelineUseCase + dependencies
-    viewModel { CloudAccountOnboardingViewModel(get(), get(), get()) }
-}
-```
-
-## TODOs
-
-### Core Features
-
-- [ ] Add comprehensive documentation for all components
-- [ ] Implement deep linking support
-- [ ] Add comprehensive accessibility features
-- [ ] Improve tablet and large screen support
-- [ ] Add support for theme customization
-
-### Account Features
-
-- [ ] Enhance passkey management
-- [ ] Implement account recovery options
-- [ ] Add multi-account support
-- [ ] Improve device synchronization
-- [ ] Add account security audit features
-
-### Settings Improvements
-
-- [ ] Add preference migration utilities
-- [ ] Implement backup/restore for settings
-- [ ] Add more granular privacy controls
-- [ ] Improve export format options
-- [ ] Add import functionality
-
-### User Experience
-
-- [ ] Improve onboarding flow
-- [ ] Add contextual help throughout the app
-- [ ] Implement user feedback collection
-- [ ] Add usage analytics settings
-- [ ] Improve performance monitoring
+- Settings screens emit their rows directly inside `SettingsSection` and use the shared row wrappers. [Settings UI composition](../../../docs/reference/standards/settings-ui.md) explains the rules that `checkSettingsUiContract` enforces.
+- `settings/ui/labs` is the Labs page, reached in About LogDate by tapping the version seven times. It lists a feature flag only if the flag is off by default, available for launch, and has wording in `LabsFlagCopy.kt`. A new flag that is off by default needs an entry in `labsCopy()` before it appears. `labsFlags` shows the watch and activity awareness switches on Android only.
+- `AppViewModel` owns the app lock lifecycle. `BiometricGatekeeper` reports each request's result separately, and its last provider result is diagnostic only.
+- `observeSyncPresentation` returns `SyncPresentation.Hidden` whenever there is no signed-in session, so the sync chip and banner never show without an account.
+- `AutomaticAccountRecovery` registers the recovery phrase's key on the signed-in identity using the confirmation from the latest passkey sign-in, so no second prompt appears.
