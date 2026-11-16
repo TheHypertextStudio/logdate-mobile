@@ -177,8 +177,9 @@ requires that:
 On Android, deleting a note or draft does not currently unlink its managed original.
 `AndroidMediaManager.deleteOwnedMedia` and `AndroidMediaCleaner` remain disabled because a reference check after
 one deletion is not exclusive ownership: Room notes and covers, DataStore drafts, recording checkpoints, and
-restore work can acquire a claim concurrently. The native transfer snapshot selects files named by live records,
-so an orphaned original is not sent to another device.
+restore work can acquire a claim concurrently. The pinned native transfer snapshot selects files named by live
+journal and draft records. Retained source archives also transfer and may contain originals from earlier journal
+states, so a file orphaned from live records can still appear inside one of those archives.
 
 The canonical store's publication lock ends when an object is durable, before its caller commits a Room or DataStore
 reference. A collector that checks for zero references in that interval could unlink the object immediately before

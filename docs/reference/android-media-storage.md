@@ -91,7 +91,7 @@ snapshot, before unlinking. The user's original photo-library items are never de
 
 Objects from aborted imports and deleted notes therefore stay on the device. The
 backup rules keep the live media roots out of cloud backup and out of the default device-transfer traversal; during a
-direct device transfer the native backup agent sends only the originals that live records name, so an orphaned original
+direct device transfer the native backup agent sends only the originals that live records and drafts name, so an orphaned original
 is not copied to another phone (see [Native Android backup](./native-android-backup.md)). Cloud backup excludes original
 media. Do not promise physical erasure or bounded local retention based only on live entries.
 
