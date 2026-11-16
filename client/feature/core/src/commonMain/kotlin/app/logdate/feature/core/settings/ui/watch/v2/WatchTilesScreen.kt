@@ -162,13 +162,29 @@ private fun WatchSurfaceGallery(
                         },
                     latest =
                         when (val note = it.latestMoment) {
-                            is app.logdate.client.repository.journals.JournalNote.Text -> note.content.take(30)
-                            is app.logdate.client.repository.journals.JournalNote.Handwriting ->
+                            is app.logdate.client.repository.journals.JournalNote.Text -> {
+                                note.content.take(30)
+                            }
+
+                            is app.logdate.client.repository.journals.JournalNote.Handwriting -> {
                                 stringResource(Res.string.watch_v2_handwriting)
-                            is app.logdate.client.repository.journals.JournalNote.Audio -> stringResource(Res.string.watch_v2_voice)
-                            is app.logdate.client.repository.journals.JournalNote.Image -> stringResource(Res.string.watch_v2_photo)
-                            is app.logdate.client.repository.journals.JournalNote.Video -> stringResource(Res.string.watch_v2_video)
-                            null -> null
+                            }
+
+                            is app.logdate.client.repository.journals.JournalNote.Audio -> {
+                                stringResource(Res.string.watch_v2_voice)
+                            }
+
+                            is app.logdate.client.repository.journals.JournalNote.Image -> {
+                                stringResource(Res.string.watch_v2_photo)
+                            }
+
+                            is app.logdate.client.repository.journals.JournalNote.Video -> {
+                                stringResource(Res.string.watch_v2_video)
+                            }
+
+                            null -> {
+                                null
+                            }
                         },
                     record = stringResource(Res.string.watch_v2_record),
                 )

@@ -65,16 +65,26 @@ class IdentityAccountRecovery(
         val registered = identity.getIdentityStatus().getOrElse { return Result.failure(it) }.plcRecoveryDidKey
         val result =
             when {
-                registered == null -> identity.registerRecoveryKey(phrase, askForPasskey)
-                status(phrase).getOrElse { return Result.failure(it) } == AccountRecoveryStatus.READY -> return Result.success(Unit)
-                !askForPasskey ->
+                registered == null -> {
+                    identity.registerRecoveryKey(phrase, askForPasskey)
+                }
+
+                status(phrase).getOrElse { return Result.failure(it) } == AccountRecoveryStatus.READY -> {
+                    return Result.success(Unit)
+                }
+
+                !askForPasskey -> {
                     return Result.failure(
                         IdentityRecoveryException(
                             IdentityRecoveryFailure.CONFIRMATION_NEEDED,
                             "Replacing the recovery key needs a passkey confirmation",
                         ),
                     )
-                else -> identity.replaceRecoveryKey(phrase)
+                }
+
+                else -> {
+                    identity.replaceRecoveryKey(phrase)
+                }
             }
         return result.map { }
     }

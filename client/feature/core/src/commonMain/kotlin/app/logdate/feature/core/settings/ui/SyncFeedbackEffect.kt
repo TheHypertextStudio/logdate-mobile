@@ -40,8 +40,14 @@ internal fun SyncFeedbackEffect(
                             )
                         if (result == SnackbarResult.ActionPerformed) navigateToSignIn()
                     }
-                    SyncFeedback.Started -> snackbarHostState.showSnackbar(getString(Res.string.sync_feedback_started))
-                    SyncFeedback.Failed -> snackbarHostState.showSnackbar(getString(Res.string.data_state_sync_request_failed))
+
+                    SyncFeedback.Started -> {
+                        snackbarHostState.showSnackbar(getString(Res.string.sync_feedback_started))
+                    }
+
+                    SyncFeedback.Failed -> {
+                        snackbarHostState.showSnackbar(getString(Res.string.data_state_sync_request_failed))
+                    }
                 }
                 viewModel.acknowledgeSyncFeedback(delivery.id)
             }

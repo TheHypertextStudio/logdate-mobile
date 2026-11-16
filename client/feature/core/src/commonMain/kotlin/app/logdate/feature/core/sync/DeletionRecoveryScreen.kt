@@ -294,6 +294,7 @@ private fun RecoveryNotePreview(note: JournalNote) {
                     unreadable = note.unreadableContent != null,
                 )
             }
+
             is JournalNote.Text -> {
                 Text(note.content, style = MaterialTheme.typography.bodyLarge)
             }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import app.logdate.ui.common.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.common.ToggleSettingsItem
 import app.logdate.ui.platform.rememberSystemReduceMotion
@@ -89,18 +89,27 @@ internal fun AutomaticDiagnosticReportingContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             when (state.availability) {
-                is ReportingAvailability.Loading -> Text(stringResource(Res.string.diagnostic_state_loading))
-                is ReportingAvailability.Unavailable ->
+                is ReportingAvailability.Loading -> {
+                    Text(stringResource(Res.string.diagnostic_state_loading))
+                }
+
+                is ReportingAvailability.Unavailable -> {
                     ReportingFailure(
                         stringResource(Res.string.diagnostic_state_read_failed),
                         !state.isBusy,
                         onRefresh,
                     )
-                ReportingAvailability.NotLoaded ->
+                }
+
+                ReportingAvailability.NotLoaded -> {
                     TextButton(
                         onClick = onRefresh,
                     ) { Text(stringResource(Res.string.diagnostic_state_check)) }
-                is ReportingAvailability.Available -> Unit
+                }
+
+                is ReportingAvailability.Available -> {
+                    Unit
+                }
             }
             state.settings?.let { settings ->
                 settings.destination?.let { Text(stringResource(Res.string.diagnostic_reporting_destination, it)) }
@@ -113,8 +122,14 @@ internal fun AutomaticDiagnosticReportingContent(
                         onCheckedChange = onSetEnabled,
                     )
                     when (val toggle = state.toggle) {
-                        ReportingToggleOperation.Preparing -> Text(stringResource(Res.string.diagnostic_state_toggle_preparing))
-                        is ReportingToggleOperation.Saving -> Text(stringResource(Res.string.diagnostic_state_toggle_saving))
+                        ReportingToggleOperation.Preparing -> {
+                            Text(stringResource(Res.string.diagnostic_state_toggle_preparing))
+                        }
+
+                        is ReportingToggleOperation.Saving -> {
+                            Text(stringResource(Res.string.diagnostic_state_toggle_saving))
+                        }
+
                         is ReportingToggleOperation.Failed -> {
                             val message =
                                 when (toggle.reason) {
@@ -124,7 +139,10 @@ internal fun AutomaticDiagnosticReportingContent(
                                 }
                             ReportingFailure(stringResource(message), !state.isBusy, onRetryToggle)
                         }
-                        else -> Unit
+
+                        else -> {
+                            Unit
+                        }
                     }
                     if (settings.pendingReports > 0) Text(stringResource(Res.string.diagnostic_reporting_pending, settings.pendingReports))
                     TextButton(enabled = settings.available && !state.isBusy, onClick = onRequestDelete) {
@@ -137,7 +155,7 @@ internal fun AutomaticDiagnosticReportingContent(
                         Text(stringResource(label))
                     }
                     when (val deletion = state.deletion) {
-                        is ReportingDeleteOperation.Failed ->
+                        is ReportingDeleteOperation.Failed -> {
                             ReportingFailure(
                                 stringResource(
                                     if (deletion.reason ==
@@ -151,8 +169,15 @@ internal fun AutomaticDiagnosticReportingContent(
                                 !state.isBusy,
                                 onRetryDelete,
                             )
-                        ReportingDeleteOperation.Deleted -> Text(stringResource(Res.string.diagnostic_reporting_deleted))
-                        else -> Unit
+                        }
+
+                        ReportingDeleteOperation.Deleted -> {
+                            Text(stringResource(Res.string.diagnostic_reporting_deleted))
+                        }
+
+                        else -> {
+                            Unit
+                        }
                     }
                 } else {
                     Text(stringResource(Res.string.diagnostic_reporting_unavailable))

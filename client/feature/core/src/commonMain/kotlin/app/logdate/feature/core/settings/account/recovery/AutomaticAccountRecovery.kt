@@ -84,10 +84,14 @@ class AutomaticAccountRecovery(
             _state.value =
                 when (val next = outcome.toState()) {
                     // The passkey was spent on this try, so trying again without one would only ask again.
-                    is AccountRecoveryUiState.Retrying ->
+                    is AccountRecoveryUiState.Retrying -> {
                         next.failure?.let(AccountRecoveryUiState::SetupFailed)
                             ?: AccountRecoveryUiState.CheckFailed
-                    else -> next
+                    }
+
+                    else -> {
+                        next
+                    }
                 }
         }
     }
@@ -140,7 +144,9 @@ class AutomaticAccountRecovery(
                     IdentityRecoveryFailure.CONFIRMATION_NEEDED,
                     IdentityRecoveryFailure.STEP_UP_CANCELLED,
                     -> AccountRecoveryUiState.NeedsSetup
+
                     in TRANSIENT_FAILURES -> AccountRecoveryUiState.Retrying(failure)
+
                     else -> AccountRecoveryUiState.SetupFailed(failure)
                 }
             },

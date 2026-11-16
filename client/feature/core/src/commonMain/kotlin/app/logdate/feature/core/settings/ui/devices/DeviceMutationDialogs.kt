@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import app.logdate.ui.common.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.device_name
@@ -96,7 +96,12 @@ fun RemoveDeviceDialog(
         title = { Text(stringResource(Res.string.sync_device_remove_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Text(stringResource(if (erasesData) Res.string.remove_linked_watch_confirmation else Res.string.remove_device_confirmation, deviceName))
+                Text(
+                    stringResource(
+                        if (erasesData) Res.string.remove_linked_watch_confirmation else Res.string.remove_device_confirmation,
+                        deviceName,
+                    ),
+                )
                 DeviceOperationFeedback(operation)
             }
         },
