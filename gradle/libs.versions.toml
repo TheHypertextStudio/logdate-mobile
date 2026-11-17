@@ -85,7 +85,6 @@ playFeatureDelivery = '2.1.0'
 billingKtx = '8.3.0'
 accompanist = '0.37.3'
 firebase-bom = '34.13.0'
-mlkit-subject-segmentation = '16.0.0-beta1'
 zxing = '3.5.4'
 googleCodeScanner = '16.1.0'
 commonsCompress = '1.28.0'
@@ -297,7 +296,6 @@ media3-common = { group = 'androidx.media3', name = 'media3-common', version.ref
 media3-exoplayer = { group = 'androidx.media3', name = 'media3-exoplayer', version.ref = 'media3' }
 media3-session = { group = 'androidx.media3', name = 'media3-session', version.ref = 'media3' }
 media3-ui = { group = 'androidx.media3', name = 'media3-ui', version.ref = 'media3' }
-mlkit-subject-segmentation = { group = 'com.google.android.gms', name = 'play-services-mlkit-subject-segmentation', version.ref = 'mlkit-subject-segmentation' }
 play-app-update-ktx = { group = 'com.google.android.play', name = 'app-update-ktx', version.ref = 'playAppUpdate' }
 play-feature-delivery-ktx = { group = 'com.google.android.play', name = 'feature-delivery-ktx', version.ref = 'playFeatureDelivery' }
 play-services-location = { group = 'com.google.android.gms', name = 'play-services-location', version.ref = 'playServicesLocation' }

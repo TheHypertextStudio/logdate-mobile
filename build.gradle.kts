@@ -207,7 +207,6 @@ val universalScreenshotHostModules =
         ":client:feature:postcards",
         ":client:feature:rewind",
         ":client:feature:search",
-        ":client:feature:stickers",
         ":client:feature:timeline",
         ":client:media",
         ":client:permissions",

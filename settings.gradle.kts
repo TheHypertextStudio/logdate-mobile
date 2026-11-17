@@ -73,7 +73,6 @@ include(":client:feature:android-widgets")
 include(":client:feature:remotedisplay")
 include(":client:feature:speechrecognition")
 include(":client:feature:postcards")
-include(":client:feature:stickers")
 include(":client:feature:events")
 // Shared cross-platform modules
 include(":shared:atproto-crypto")
