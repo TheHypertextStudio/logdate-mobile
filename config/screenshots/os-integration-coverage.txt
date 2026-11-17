@@ -80,6 +80,7 @@ capture-widget|system|docs/screenshots/android-os-integration/widgets/capture-wi
 
 # What Android assistants may see and do, in Settings › Privacy & security.
 android-assistants|android|app/logdate/screenshots/components/settings_account/AndroidAssistantScreenshots.kt#AndroidAssistants
+android-assistants|desktop|android-assistants
 
 # Assistant actions: Android's registry, and searches and new entries through cmd app_function.
 app-functions|system|docs/screenshots/android-os-integration/app-functions/assistant-actions--phone-api37.txt
