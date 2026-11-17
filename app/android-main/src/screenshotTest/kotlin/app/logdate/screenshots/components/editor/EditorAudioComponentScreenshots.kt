@@ -11,7 +11,6 @@ import app.logdate.feature.editor.ui.audio.AudioTranscriptionUi
 import app.logdate.feature.editor.ui.audio.AudioUiState
 import app.logdate.feature.editor.ui.audio.EmptyAudioBlockContent
 import app.logdate.feature.editor.ui.audio.expansion.ImmersiveAudioScreen
-import app.logdate.feature.editor.ui.content.EmptyEditorStateContent
 import app.logdate.feature.editor.ui.editor.RecordingState
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTestData.PHONE
@@ -33,36 +32,6 @@ private val mockPalette =
     )
 
 private val mockCreatedAt = Instant.fromEpochMilliseconds(1_740_000_000_000L)
-
-// ─── Empty Editor ───────────────────────────────────────────────────────────────
-
-@PreviewTest
-@Preview(showBackground = true, device = PHONE)
-@Composable
-fun Editor_Empty() {
-    ScreenshotTheme {
-        EmptyEditorStateContent(
-            onStartTextBlock = {},
-            onStartPhotoBlock = {},
-            onStartAudioBlock = {},
-            onStartCameraBlock = {},
-        )
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, device = PHONE, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun Editor_Empty_Dark() {
-    ScreenshotTheme(darkTheme = true) {
-        EmptyEditorStateContent(
-            onStartTextBlock = {},
-            onStartPhotoBlock = {},
-            onStartAudioBlock = {},
-            onStartCameraBlock = {},
-        )
-    }
-}
 
 // ─── Audio Block States ─────────────────────────────────────────────────────────
 

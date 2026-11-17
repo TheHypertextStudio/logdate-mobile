@@ -30,7 +30,13 @@ import app.logdate.client.repository.journals.JournalNote
 import app.logdate.feature.editor.ui.LocalAnimatedVisibilityScope
 import app.logdate.feature.editor.ui.LocalSharedTransitionScope
 import app.logdate.feature.editor.ui.audio.AudioPlaybackComponent
+import app.logdate.feature.editor.ui.editor.AudioBlockUiState
 import app.logdate.feature.editor.ui.editor.BlockType
+import app.logdate.feature.editor.ui.editor.CameraBlockUiState
+import app.logdate.feature.editor.ui.editor.EntryBlockUiState
+import app.logdate.feature.editor.ui.editor.HandwritingBlockUiState
+import app.logdate.feature.editor.ui.editor.ImageBlockUiState
+import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import app.logdate.feature.editor.ui.layout.EditorBlockMinHeight
 import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.entry_start_earlier_today
@@ -39,6 +45,25 @@ import logdate.client.feature.editor.generated.resources.memory_photo
 import logdate.client.feature.editor.generated.resources.memory_video
 import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.Uuid
+
+/** The ids the start content gives the block each of its choices creates, so a choice can grow into its block. */
+internal data class EmptyEditorPickerTileIds(
+    val textId: Uuid? = null,
+    val audioId: Uuid? = null,
+    val cameraId: Uuid? = null,
+    val photoId: Uuid? = null,
+    val handwritingId: Uuid? = null,
+)
+
+internal fun matchingPickerTileIdsFor(block: EntryBlockUiState?): EmptyEditorPickerTileIds =
+    when (block) {
+        is TextBlockUiState -> EmptyEditorPickerTileIds(textId = block.id)
+        is AudioBlockUiState -> EmptyEditorPickerTileIds(audioId = block.id)
+        is CameraBlockUiState -> EmptyEditorPickerTileIds(cameraId = block.id)
+        is ImageBlockUiState -> EmptyEditorPickerTileIds(photoId = block.id)
+        is HandwritingBlockUiState -> EmptyEditorPickerTileIds(handwritingId = block.id)
+        else -> EmptyEditorPickerTileIds()
+    }
 
 @Composable
 internal fun EntryStartContent(

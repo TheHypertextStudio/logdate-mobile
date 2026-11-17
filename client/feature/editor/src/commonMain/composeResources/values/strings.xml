@@ -15,7 +15,6 @@
     <string name="audio_recording">Audio Recording</string>
     <string name="audio_waveform">Audio waveform</string>
     <string name="editor_action_add_image">Add Image</string>
-    <string name="editor_action_add_photo_gallery">Add photo from gallery</string>
     <string name="editor_action_add_text">Add Text</string>
     <string name="editor_action_add_video">Add Video</string>
     <string name="allow_access">Allow Access</string>
@@ -79,7 +78,6 @@
     <string name="enter_picture_in_picture">Enter picture-in-picture</string>
     <string name="photo">Photo</string>
     <string name="photo_library">Photo Library</string>
-    <string name="photo_or_video">Photo or video</string>
     <string
     name="pick_from_your_library_or_browse_all_your_photos"
   >Pick from your library or browse all your photos.</string>
@@ -111,7 +109,6 @@
     name="partial_photo_access_message"
   >You shared a few photos with LogDate. Manage which ones any time.</string>
     <string name="start_recording">Start Recording</string>
-    <string name="start_text_entry">Start text entry</string>
     <string
     name="start_writing_to_create_your_first_draft"
   >Start writing to create your first draft.</string>
@@ -181,7 +178,6 @@
     <string
     name="would_you_like_to_save_your_changes_as_a_draft"
   >Would you like to save your changes as a draft?</string>
-    <string name="write_something">Write something</string>
     <string
     name="editor_audio_post_grant_description"
   >You can record audio notes after granting permission</string>
