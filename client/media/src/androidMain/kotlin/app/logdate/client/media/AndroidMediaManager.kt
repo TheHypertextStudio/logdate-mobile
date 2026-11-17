@@ -31,14 +31,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.asSource
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.net.URLConnection
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
-import kotlin.uuid.Uuid
 
 class AndroidMediaManager(
     private val contentResolver: ContentResolver,
@@ -753,19 +750,6 @@ class AndroidMediaManager(
             timestamp = timestamp,
         )
 
-    private suspend fun publishBytesToMediaStore(
-        bytes: ByteArray,
-        fileName: String,
-        mimeType: String,
-        timestamp: Instant,
-    ): String =
-        publishStreamToMediaStore(
-            openInputStream = { java.io.ByteArrayInputStream(bytes) },
-            fileName = fileName,
-            mimeType = mimeType,
-            timestamp = timestamp,
-        )
-
     private suspend fun publishFileToMediaStore(
         sourceFile: File,
         fileName: String,
@@ -878,129 +862,6 @@ class AndroidMediaManager(
         } else {
             contentResolver.openInputStream(uri) ?: throw IllegalArgumentException("Invalid URI: $uri")
         }
-
-    private fun persistAudioStream(
-        inputStream: InputStream,
-        fileName: String,
-        mimeType: String,
-    ): String =
-        inputStream.use { input ->
-            val directory =
-                File(filesDir, "audio_notes").apply {
-                    check(isDirectory || mkdirs()) { "Unable to create private audio directory: $absolutePath" }
-                }
-            removeStaleAudioTemporaryFiles(directory)
-
-            val destinationPrefix = "${Uuid.random()}-"
-            val destinationName =
-                destinationPrefix +
-                    normalizeAudioFileName(
-                        fileName = fileName,
-                        mimeType = mimeType,
-                        maxBytes = MAX_AUDIO_DESTINATION_NAME_BYTES - destinationPrefix.toByteArray(Charsets.UTF_8).size,
-                    )
-            val destination = File(directory, destinationName)
-            val temporary = File(directory, ".${destination.name}.tmp")
-
-            try {
-                FileOutputStream(temporary).use { output ->
-                    input.copyTo(output)
-                    output.fd.sync()
-                }
-                check(temporary.renameTo(destination)) {
-                    "Unable to finalize private audio file: ${destination.absolutePath}"
-                }
-                Uri.fromFile(destination).toString()
-            } catch (error: Exception) {
-                temporary.delete()
-                throw error
-            }
-        }
-
-    private fun normalizeAudioFileName(
-        fileName: String,
-        mimeType: String,
-        maxBytes: Int,
-    ): String {
-        val sanitizedName = sanitizeFileName(fileName).ifBlank { "audio" }
-        val stem =
-            sanitizedName
-                .substringBeforeLast('.', missingDelimiterValue = sanitizedName)
-                .ifBlank { "audio" }
-        val suffix = ".${requireAudioFileExtension(mimeType)}"
-        val stemByteBudget = maxBytes - suffix.toByteArray(Charsets.UTF_8).size
-        check(stemByteBudget > 0) { "Audio file extension exceeds the private storage filename budget" }
-        return stem.truncateUtf8(stemByteBudget).ifBlank { "audio" } + suffix
-    }
-
-    private fun requireAudioFileExtension(mimeType: String): String =
-        when (mimeType) {
-            "audio/aac" -> "aac"
-            "audio/amr" -> "amr"
-            "audio/flac" -> "flac"
-            "audio/midi" -> "mid"
-            "audio/mp4" -> "m4a"
-            "audio/mpeg" -> "mp3"
-            "audio/ogg" -> "ogg"
-            "audio/opus" -> "opus"
-            "audio/wav" -> "wav"
-            "audio/webm" -> "webm"
-            "audio/3gpp" -> "3gp"
-            "audio/3gpp2" -> "3g2"
-            else -> throw IllegalArgumentException("Unsupported audio type for private storage: $mimeType")
-        }
-
-    private fun String.truncateUtf8(maxBytes: Int): String {
-        if (toByteArray(Charsets.UTF_8).size <= maxBytes) {
-            return this
-        }
-
-        val result = StringBuilder()
-        var index = 0
-        var byteCount = 0
-        while (index < length) {
-            val codePoint = Character.codePointAt(this, index)
-            val codePointText = String(Character.toChars(codePoint))
-            val codePointBytes = codePointText.toByteArray(Charsets.UTF_8).size
-            if (byteCount + codePointBytes > maxBytes) {
-                break
-            }
-            result.append(codePointText)
-            byteCount += codePointBytes
-            index += Character.charCount(codePoint)
-        }
-        return result.toString()
-    }
-
-    private fun removeStaleAudioTemporaryFiles(directory: File) {
-        val staleBefore = Clock.System.now().toEpochMilliseconds() - AUDIO_TEMP_MAX_AGE_MILLIS
-        directory
-            .listFiles()
-            ?.asSequence()
-            ?.filter { file -> file.isFile && file.lastModified() in 1..staleBefore && file.isManagedAudioTemporaryFile() }
-            ?.forEach { staleFile ->
-                runCatching { staleFile.delete() }
-                    .onSuccess { deleted ->
-                        if (!deleted) {
-                            Napier.w("Unable to remove stale private audio temporary file: ${staleFile.absolutePath}")
-                        }
-                    }.onFailure { error ->
-                        Napier.w("Unable to remove stale private audio temporary file: ${staleFile.absolutePath}", error)
-                    }
-            }
-    }
-
-    private fun File.isManagedAudioTemporaryFile(): Boolean {
-        if (!name.startsWith('.') || !name.endsWith(".tmp") || name.length <= AUDIO_TEMP_UUID_END_INDEX) {
-            return false
-        }
-        if (name.getOrNull(AUDIO_TEMP_UUID_END_INDEX) != '-') {
-            return false
-        }
-        return runCatching {
-            Uuid.parse(name.substring(AUDIO_TEMP_UUID_START_INDEX, AUDIO_TEMP_UUID_END_INDEX))
-        }.isSuccess
-    }
 
     private fun mediaStoreTargetForMimeType(mimeType: String): MediaStoreTarget? =
         when {
@@ -1292,13 +1153,6 @@ class AndroidMediaManager(
                     else -> normalized
                 }
             }
-
-    private companion object {
-        const val MAX_AUDIO_DESTINATION_NAME_BYTES = 250
-        const val AUDIO_TEMP_MAX_AGE_MILLIS = 24L * 60L * 60L * 1_000L
-        const val AUDIO_TEMP_UUID_START_INDEX = 1
-        const val AUDIO_TEMP_UUID_END_INDEX = 37
-    }
 
     /**
      * Resolves a video's duration when the source is a file:// URI. Falls back
