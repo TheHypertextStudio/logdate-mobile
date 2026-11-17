@@ -55,7 +55,6 @@ import app.logdate.client.database.dao.rewind.ReflectionPromptResponseDao
 import app.logdate.client.database.dao.rewind.RewindGenerationRequestDao
 import app.logdate.client.database.dao.sync.DownloadInboxDao
 import app.logdate.client.database.dao.sync.PeerDeliveryDao
-import app.logdate.client.database.dao.sync.PendingUploadRetryDao
 import app.logdate.client.database.dao.sync.SpaceRecordStateDao
 import app.logdate.client.database.dao.sync.SyncMetadataDao
 import app.logdate.client.database.entities.AudioNoteEntity
@@ -295,8 +294,6 @@ abstract class LogDateDatabase : RoomDatabase() {
     abstract fun searchDetailsDao(): SearchDetailsDao
 
     abstract fun downloadInboxDao(): DownloadInboxDao
-
-    abstract fun pendingUploadRetryDao(): PendingUploadRetryDao
 
     abstract fun syncMetadataDao(): SyncMetadataDao
 

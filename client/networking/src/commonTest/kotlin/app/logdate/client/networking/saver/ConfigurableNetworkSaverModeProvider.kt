@@ -4,7 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * No-op [NetworkSaverModeProvider] for platforms or tests that don't support data saver detection.
+ * A [NetworkSaverModeProvider] whose connection and data saver state each test sets with
+ * [setNetworkSaverState]. It starts on Wi-Fi with data saver off.
  */
 class ConfigurableNetworkSaverModeProvider : NetworkSaverModeProvider {
     private val mutableState =

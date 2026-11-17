@@ -6,7 +6,6 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import app.logdate.client.database.entities.sync.DownloadInboxEntity
-import app.logdate.client.database.entities.sync.PendingUploadEntity
 import app.logdate.client.database.migrations.MIGRATION_60_61
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
@@ -14,7 +13,6 @@ import java.nio.file.Path
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Validates migration 61, which stores upload retry state on the queue and indexes the download inbox. */
@@ -100,43 +98,6 @@ class SyncRetryStateMigrationJvmTest {
     }
 
     @Test
-    fun `retry state belongs to the queued operation`() =
-        runBlocking {
-            val database = openDatabase()
-            try {
-                val queue = database.syncMetadataDao()
-                val retries = database.pendingUploadRetryDao()
-                queue.insertPending(pending(operationId = "op-1"))
-
-                assertEquals(0, retries.beginAttempt("owner", "https://sync", "NOTE", "note-1", "op-1"))
-                assertEquals(1, retries.beginAttempt("owner", "https://sync", "NOTE", "note-1", "op-1"))
-                assertEquals(1, retries.setNextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-1", 5_000))
-                assertEquals(5_000, retries.nextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-1"))
-                assertEquals(emptyList(), retries.duePending("owner", "https://sync", "NOTE", now = 4_999, limit = 10))
-                val due = retries.duePending("owner", "https://sync", "NOTE", now = 5_000, limit = 10)
-                assertEquals(listOf("note-1"), due.map { it.entityId })
-
-                queue.insertPending(pending(operationId = "op-2"))
-
-                assertEquals(0, retries.setNextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-1", 9_000))
-                assertEquals(0, retries.beginAttempt("owner", "https://sync", "NOTE", "note-1", "op-1"))
-                assertNull(retries.nextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-2"))
-                assertEquals(0, retries.beginAttempt("owner", "https://sync", "NOTE", "note-1", "op-2"))
-                retries.endAttempt("owner", "https://sync", "NOTE", "note-1", "op-2")
-                assertEquals(0, retries.beginAttempt("owner", "https://sync", "NOTE", "note-1", "op-2"))
-
-                retries.setNextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-2", 9_000)
-                assertEquals(1, retries.releaseScheduledRetries("owner", "https://sync"))
-                assertEquals(0, retries.nextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-2"))
-                retries.clearRetry("owner", "https://sync", "NOTE", "note-1", "op-2")
-                assertNull(retries.nextAttemptAt("owner", "https://sync", "NOTE", "note-1", "op-2"))
-                assertEquals(0, retries.beginAttempt("owner", "https://sync", "NOTE", "note-1", "op-2"))
-            } finally {
-                database.close()
-            }
-        }
-
-    @Test
     fun `pruning removes old applied receipts and keeps deletions and unsettled work`() =
         runBlocking {
             val database = openDatabase()
@@ -163,17 +124,6 @@ class SyncRetryStateMigrationJvmTest {
         }
 
     private fun openDatabase(): LogDateDatabase = Room.inMemoryDatabaseBuilder<LogDateDatabase>().setDriver(BundledSQLiteDriver()).build()
-
-    private fun pending(operationId: String) =
-        PendingUploadEntity(
-            ownerId = "owner",
-            serverOrigin = "https://sync",
-            entityType = "NOTE",
-            entityId = "note-1",
-            operation = "UPDATE",
-            createdAt = 1_000,
-            operationId = operationId,
-        )
 
     private fun inboxRow(
         id: String,

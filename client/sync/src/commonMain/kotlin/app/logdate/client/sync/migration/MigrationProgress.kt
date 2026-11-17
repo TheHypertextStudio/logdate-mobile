@@ -32,12 +32,6 @@ data class MigrationProgress(
     val lastProcessedId: String? = null,
 ) {
     /**
-     * The percentage of migration completion, from 0 to 100.
-     */
-    val percentComplete: Int
-        get() = if (totalItems > 0) (itemsProcessed * 100) / totalItems else 0
-
-    /**
      * Whether the migration is complete.
      */
     val isComplete: Boolean

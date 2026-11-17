@@ -2,7 +2,6 @@ package app.logdate.client.networking
 
 import app.logdate.shared.config.LogDateConfigRepository
 import app.logdate.shared.model.devices.DeviceLinkCodeResponse
-import app.logdate.shared.model.devices.DeviceLinkErrorCodes
 import app.logdate.shared.model.devices.DeviceLinkPlatform
 import app.logdate.shared.model.devices.DeviceLinkRedeemRequest
 import app.logdate.shared.model.devices.DeviceLinkRedeemResponse
@@ -28,10 +27,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class DeviceLinkApiException(
     val status: Int,
     val code: String? = null,
-) : Exception("Device link request failed (HTTP $status${code?.let { ", $it" } ?: ""})") {
-    /** The device's session was removed: it must stop syncing and wait for a new link from the phone. */
-    val isSessionRevoked: Boolean get() = code == DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED
-}
+) : Exception("Device link request failed (HTTP $status${code?.let { ", $it" } ?: ""})")
 
 /** `/auth/devices`: a phone links, lists and removes devices; a linked device redeems a code and can unlink itself. */
 interface DeviceLinkApiClientContract {

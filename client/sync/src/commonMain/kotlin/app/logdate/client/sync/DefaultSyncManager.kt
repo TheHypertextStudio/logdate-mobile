@@ -352,8 +352,6 @@ class DefaultSyncManager(
         )
     }
 
-    suspend fun isLocationHistorySyncEnabled(): Boolean = historyEngine?.isEnabled() == true
-
     /** Null where the profile does not queue what is already on the device, as with the first sync's sweep. */
     internal val legacyBackfill =
         LegacyLocalBackfill(

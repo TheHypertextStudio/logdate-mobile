@@ -420,32 +420,6 @@ class AndroidSyncManager(
         Napier.i("Disabled background sync")
     }
 
-    /**
-     * Schedules upload-only sync for immediate changes.
-     */
-    fun scheduleUploadSync() {
-        schedulePartialSync(AndroidLogDateSyncWorker.SYNC_TYPE_UPLOAD)
-    }
-
-    /**
-     * Schedules download-only sync for pulling remote changes.
-     */
-    fun scheduleDownloadSync() {
-        schedulePartialSync(AndroidLogDateSyncWorker.SYNC_TYPE_DOWNLOAD)
-    }
-
-    private fun schedulePartialSync(syncType: String) {
-        scope.launch {
-            try {
-                immediateScheduleMutex.withLock { scheduleImmediateSync(syncType).await() }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                Napier.w("Could not persist partial sync request: ${error::class.simpleName}")
-            }
-        }
-    }
-
     override suspend fun uploadPendingChanges(): SyncResult = defaultSyncManager.uploadPendingChanges()
 
     override suspend fun <T> whilePaused(block: suspend () -> T): T = defaultSyncManager.whilePaused(block)
