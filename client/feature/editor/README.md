@@ -339,7 +339,7 @@ settles. A page's stored height grows to keep ink written below the initial page
 
 The debug manifest alone registers `HandwritingPrototypeActivity`, which hosts isolated editor
 scenes for design work. Install a debug build on an emulator (never a physical phone) and start it
-with a boolean extra: `entry_start` for the overview and focus study, `entry_stories` for the capture
-bar study, or `real_editor` for the real editor, optionally with `resume_draft` or `resume_saved` to
-reopen the latest draft or the newest saved handwriting note. With no extra it opens the standalone
-canvas. The standalone scenes keep local state and do not touch journal data.
+with a boolean extra: `entry_start` for the entry page as the app shows it, `entry_stories` for the
+capture bar study, or `real_editor` for the real editor, optionally with `resume_draft` or
+`resume_saved` to reopen the latest draft or the newest saved handwriting note. With no extra it
+opens the standalone canvas. The standalone scenes keep local state and do not touch journal data.

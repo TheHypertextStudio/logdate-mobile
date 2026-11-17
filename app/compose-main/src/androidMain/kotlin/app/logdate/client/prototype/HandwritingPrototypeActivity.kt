@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
-import app.logdate.feature.editor.ui.handwriting.EntryStartPrototype
+import app.logdate.feature.editor.ui.handwriting.EntryPageScene
 import app.logdate.feature.editor.ui.handwriting.StoriesEntryPrototype
 import app.logdate.ui.theme.LogDateTheme
 
@@ -17,7 +17,7 @@ class HandwritingPrototypeActivity : ComponentActivity() {
         if (intent.getBooleanExtra("entry_stories", false)) {
             setContent { LogDateTheme { StoriesEntryPrototype(onExit = ::finish) } }
         } else if (intent.getBooleanExtra("entry_start", false)) {
-            setContent { LogDateTheme { EntryStartPrototype(onExit = ::finish) } }
+            setContent { LogDateTheme { EntryPageScene(onExit = ::finish) } }
         } else if (intent.getBooleanExtra("real_editor", false)) {
             setContent {
                 LogDateTheme {
