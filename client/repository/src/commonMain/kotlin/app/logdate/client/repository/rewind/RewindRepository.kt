@@ -2,7 +2,6 @@ package app.logdate.client.repository.rewind
 
 import app.logdate.shared.model.Rewind
 import kotlinx.coroutines.flow.Flow
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -31,11 +30,6 @@ interface RewindRepository {
         start: Instant,
         end: Instant,
     ): Flow<Rewind?>
-
-    /**
-     * Retrieves a rewind using data between the given date to the current instant.
-     */
-    fun getRewindAfter(date: Instant): Flow<Rewind?> = getRewindBetween(date, Clock.System.now())
 
     /**
      * Checks if a Rewind is available for the given time period.
