@@ -17,7 +17,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -33,10 +32,8 @@ import androidx.compose.ui.semantics.semantics
 import app.logdate.client.datastore.EntryStartMode
 import app.logdate.feature.editor.ui.blocks.EntryMemorySequence
 import app.logdate.feature.editor.ui.content.EditorStartContextLayout
-import app.logdate.feature.editor.ui.content.EmptyEditorStateContent
 import app.logdate.feature.editor.ui.content.EntryStartContent
 import app.logdate.feature.editor.ui.content.matchingPickerTileIdsFor
-import app.logdate.feature.editor.ui.editor.BlockType
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.LocalEditorInputTokens
 import app.logdate.feature.editor.ui.editor.delegate.PendingAudioResolver
@@ -44,7 +41,6 @@ import app.logdate.feature.editor.ui.layout.EditorFocus
 import app.logdate.feature.editor.ui.layout.editorFocus
 import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.ui.platform.rememberSystemReduceMotion
-import app.logdate.ui.theme.Spacing
 import kotlin.uuid.Uuid
 
 /**
@@ -234,36 +230,15 @@ fun MainEditorContent(
                                     overviewContent(uiState)
                                 } else {
                                     EditorStartContextLayout(entryContext) { pickerModifier ->
-                                        if (expandAnySelectedBlock) {
-                                            EntryStartContent(
-                                                notes = todayNotes,
-                                                onCreateBlock = { type, id -> uiState.onCreateBlock(type, id) },
-                                                onOpenEntry = onOpenEntry,
-                                                tileIds = pickerTileIds,
-                                                handwritingEnabled = uiState.allowHandwritingCreation,
-                                                defaultMode = defaultStartMode,
-                                                modifier = pickerModifier,
-                                            )
-                                        } else {
-                                            EmptyEditorStateContent(
-                                                onStartTextBlock = { id -> uiState.onCreateBlock(BlockType.TEXT, id) },
-                                                onStartPhotoBlock = { id -> uiState.onCreateBlock(BlockType.IMAGE, id) },
-                                                onStartAudioBlock = { id -> uiState.onCreateBlock(BlockType.AUDIO, id) },
-                                                onStartCameraBlock = { id -> uiState.onCreateBlock(BlockType.CAMERA, id) },
-                                                onStartHandwritingBlock =
-                                                    if (uiState.allowHandwritingCreation) {
-                                                        { id -> uiState.onCreateBlock(BlockType.HANDWRITING, id) }
-                                                    } else {
-                                                        null
-                                                    },
-                                                retainConsumedTileIds = true,
-                                                textTileId = pickerTileIds.textId,
-                                                photoTileId = pickerTileIds.photoId,
-                                                audioTileId = pickerTileIds.audioId,
-                                                cameraTileId = pickerTileIds.cameraId,
-                                                modifier = pickerModifier.padding(start = Spacing.sm, top = Spacing.sm, end = Spacing.sm),
-                                            )
-                                        }
+                                        EntryStartContent(
+                                            notes = todayNotes,
+                                            onCreateBlock = { type, id -> uiState.onCreateBlock(type, id) },
+                                            onOpenEntry = onOpenEntry,
+                                            tileIds = pickerTileIds,
+                                            handwritingEnabled = uiState.allowHandwritingCreation,
+                                            defaultMode = defaultStartMode,
+                                            modifier = pickerModifier,
+                                        )
                                     }
                                 }
                             }

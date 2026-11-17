@@ -8,7 +8,6 @@ import app.logdate.client.repository.journals.JournalNote
 import app.logdate.feature.editor.ui.MainEditorContent
 import app.logdate.feature.editor.ui.common.NoteEditorToolbar
 import app.logdate.feature.editor.ui.content.EditorBottomContent
-import app.logdate.feature.editor.ui.content.EmptyEditorStateContent
 import app.logdate.feature.editor.ui.dialog.DraftsBottomSheet
 import app.logdate.feature.editor.ui.editor.BlockType
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
@@ -60,22 +59,6 @@ private val sampleDrafts =
             updatedAt = editorCreatedAt,
         ),
     )
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@BubbleWindowPreview
-@Composable
-fun S01_EntryEditorEmpty() {
-    EditorRouteFrame {
-        EmptyEditorStateContent(
-            onStartTextBlock = {},
-            onStartPhotoBlock = {},
-            onStartAudioBlock = {},
-            onStartCameraBlock = {},
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
 
 @PreviewTest
 @ScreenshotPreviewMatrix

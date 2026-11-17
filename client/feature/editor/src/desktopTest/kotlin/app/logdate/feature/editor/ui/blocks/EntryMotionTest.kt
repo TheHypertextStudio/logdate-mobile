@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -27,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import app.logdate.feature.editor.ui.LocalSharedTransitionScope
 import app.logdate.feature.editor.ui.MainEditorContent
 import app.logdate.feature.editor.ui.editor.EntryBlockUiState
-import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.ui.theme.LogDateTheme
@@ -40,116 +38,6 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalTestApi::class, ExperimentalSharedTransitionApi::class)
 class EntryMotionTest {
-    @Test
-    fun `writing tile morphs into a card instead of appearing at its final width`() =
-        runSkikoComposeUiTest(size = Size(390f, 780f)) {
-            var blocks by mutableStateOf<List<EntryBlockUiState>>(emptyList())
-            var selected by mutableStateOf<Uuid?>(null)
-            mainClock.autoAdvance = false
-            setContent {
-                LogDateTheme(dynamicColor = false, darkTheme = false) {
-                    MainEditorContent(
-                        uiState =
-                            BlocksUiState(
-                                blocks = blocks,
-                                expandedBlockId = selected,
-                                availableJournals = emptyList(),
-                                selectedJournalIds = emptyList(),
-                                onBlockFocused = { selected = it },
-                                onJournalSelectionChanged = {},
-                                onUpdateBlock = {},
-                                onCreateBlock = { _, id ->
-                                    TextBlockUiState(id = id).also {
-                                        blocks = blocks + it
-                                        selected = id
-                                    }
-                                },
-                                onDeleteBlock = {},
-                            ),
-                        shouldReturnToPickerOnBack = blocks.size == 1,
-                        onDismissExpanded = {},
-                    )
-                }
-            }
-            waitForIdle()
-            val tile = onNodeWithContentDescription("Start text entry")
-            val start = tile.getUnclippedBoundsInRoot()
-            screenshot("entry-picker-before.png")
-            tile.performClick()
-            mainClock.advanceTimeBy(240)
-            waitForIdle()
-            val card = onNodeWithTag("memory_block_${blocks.single().id}")
-            val middle = card.getUnclippedBoundsInRoot()
-            val middlePixels = onRoot().captureToImage().toPixelMap()
-            val middleWidth = (0 until middlePixels.width).count { middlePixels[it, 48].toArgb() != middlePixels[0, 48].toArgb() }
-            screenshot("entry-picker-mid.png")
-            mainClock.advanceTimeBy(1000)
-            waitForIdle()
-            val finish = card.getUnclippedBoundsInRoot()
-            screenshot("entry-picker-after.png")
-            val finalPixels = onRoot().captureToImage().toPixelMap()
-            val finalWidth = (0 until finalPixels.width).count { finalPixels[it, 48].toArgb() != finalPixels[0, 48].toArgb() }
-            assertTrue(
-                middleWidth in 1 until finalWidth - 8,
-                "Rendered card jumped to full width: $middleWidth -> $finalWidth ($middle -> $finish, tile $start)",
-            )
-        }
-
-    @Test
-    fun `photo tile morphs into its card instead of appearing at its final width`() =
-        runSkikoComposeUiTest(size = Size(390f, 780f)) {
-            var blocks by mutableStateOf<List<EntryBlockUiState>>(emptyList())
-            var selected by mutableStateOf<Uuid?>(null)
-            mainClock.autoAdvance = false
-            setContent {
-                LogDateTheme(dynamicColor = false, darkTheme = false) {
-                    MainEditorContent(
-                        uiState =
-                            BlocksUiState(
-                                blocks = blocks,
-                                expandedBlockId = selected,
-                                availableJournals = emptyList(),
-                                selectedJournalIds = emptyList(),
-                                onBlockFocused = { selected = it },
-                                onJournalSelectionChanged = {},
-                                onUpdateBlock = {},
-                                onCreateBlock = { _, id ->
-                                    ImageBlockUiState(id = id, uri = "file:///motion-photo.png").also {
-                                        blocks = blocks + it
-                                        selected = id
-                                    }
-                                },
-                                onDeleteBlock = {},
-                            ),
-                        shouldReturnToPickerOnBack = blocks.size == 1,
-                        onDismissExpanded = {},
-                    )
-                }
-            }
-            waitForIdle()
-            val tile = onNodeWithContentDescription("Add photo from gallery")
-            val start = tile.getUnclippedBoundsInRoot()
-            screenshot("entry-photo-picker-before.png")
-            tile.performClick()
-            mainClock.advanceTimeBy(240)
-            waitForIdle()
-            val card = onNodeWithTag("memory_block_${blocks.single().id}")
-            val middle = card.getUnclippedBoundsInRoot()
-            val middlePixels = onRoot().captureToImage().toPixelMap()
-            val middleWidth = (0 until middlePixels.width).count { middlePixels[it, 48].toArgb() != middlePixels[0, 48].toArgb() }
-            screenshot("entry-photo-picker-mid.png")
-            mainClock.advanceTimeBy(1000)
-            waitForIdle()
-            val finish = card.getUnclippedBoundsInRoot()
-            screenshot("entry-photo-picker-after.png")
-            val finalPixels = onRoot().captureToImage().toPixelMap()
-            val finalWidth = (0 until finalPixels.width).count { finalPixels[it, 48].toArgb() != finalPixels[0, 48].toArgb() }
-            assertTrue(
-                middleWidth in 1 until finalWidth - 8,
-                "Rendered card jumped to full width: $middleWidth -> $finalWidth ($middle -> $finish, tile $start)",
-            )
-        }
-
     @Test
     fun `adding another writing block morphs from its Add choice`() =
         runSkikoComposeUiTest(size = Size(390f, 780f)) {

@@ -16,7 +16,6 @@ import app.logdate.feature.editor.ui.camera.CaptureMode
 import app.logdate.feature.editor.ui.camera.CapturedMediaType
 import app.logdate.feature.editor.ui.common.NoteEditorToolbar
 import app.logdate.feature.editor.ui.content.EditorBottomContent
-import app.logdate.feature.editor.ui.content.EmptyEditorStateContent
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.RecordingState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
@@ -76,20 +75,6 @@ private val mockPalette =
     )
 
 private val mockCreatedAt = Instant.fromEpochMilliseconds(1_740_000_000_000L)
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@Composable
-fun EditorMode_Picker() {
-    ScreenshotTheme {
-        EmptyEditorStateContent(
-            onStartTextBlock = {},
-            onStartPhotoBlock = {},
-            onStartAudioBlock = {},
-            onStartCameraBlock = {},
-        )
-    }
-}
 
 @PreviewTest
 @ScreenshotPreviewMatrix

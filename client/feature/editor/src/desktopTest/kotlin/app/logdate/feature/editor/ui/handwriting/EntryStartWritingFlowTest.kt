@@ -40,14 +40,4 @@ class EntryStartWritingFlowTest {
             onNodeWithTag("earlier_today").assertExists()
             onNodeWithTag("handwriting_preview", useUnmergedTree = true).assertExists()
         }
-
-    @Test
-    fun `type action creates a text block beside read only day context`() =
-        runDesktopComposeUiTest(width = 360, height = 800) {
-            setContent { LogDateTheme(dynamicColor = false) { EntryStartPrototype() } }
-            onNodeWithTag("editor_start_text_block").performClick()
-            onNodeWithTag("editor_block_list").assertExists()
-            onNodeWithTag("earlier_today").assertExists()
-            onNodeWithTag("handwriting_preview", useUnmergedTree = true).assertDoesNotExist()
-        }
 }
