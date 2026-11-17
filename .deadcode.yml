@@ -75,6 +75,26 @@ entry_points:
   - 'app.logdate.HandleApnsRegistrationFailed'
   - 'app.logdate.HandleSilentPushSync'
   - 'app.logdate.di.initKoinIos'
+  # Rendered only by the screenshot tests (app/android-main/src/screenshotTest and the scenes in
+  # client/screenshot-scenes), which are not roots: SyncSurfaceScreenshots,
+  # Flow02_02_LocationFlowScreenshots, Flow06_02_RewindStoryScreenshots, SharedDesktopOnlyScenes and
+  # the adaptive audit screenshots.
+  - 'app.logdate.feature.core.sync.SyncStatusButton'
+  - 'app.logdate.feature.core.sync.SyncErrorBanner'
+  - 'app.logdate.feature.location.timeline.ui.LocationTimelineQuickPeekSheet'
+  - 'app.logdate.feature.rewind.ui.EmptyRewindContent'
+  - 'app.logdate.feature.rewind.ui.detail.RewindUpgradeChip'
+  - 'app.logdate.feature.rewind.ui.overview.FirstRewindOnboardingSheetContent'
+  - 'app.logdate.feature.rewind.ui.past.PastRewindsScreen'
+  - 'app.logdate.feature.onboarding.ui.OnboardingStartScreenContent'
+  # Connected assistants (the CONNECTED_ASSISTANTS flag) has no route until its gateway exists;
+  # ConnectedAssistantScreenshotScenes renders these screens.
+  - 'app.logdate.feature.core.assistants.AssistantConnectContent'
+  - 'app.logdate.feature.core.assistants.ConnectedAssistantsContent'
+  - 'app.logdate.feature.core.assistants.ConnectedAssistantContent'
+  # First-run setup reuses the phone activity linking offer when activity awareness moves there;
+  # PhoneActivityOnboardingOfferTest renders it until then.
+  - 'app.logdate.feature.core.activity.PhoneActivityOnboardingOffer'
 retain_patterns:
   # SearchDeadCode 0.21.0 reports a parameter with "debug" in its name as debug-only code, even when
   # the function reads it; selectOnboardingTestFixture in app/compose-main reads this one.

@@ -47,11 +47,6 @@ class LogDateApplicationState {
     var exitCascadeInFlight: Boolean by mutableStateOf(false)
         private set
 
-    fun openNoteEditor() {
-        if (exitCascadeInFlight || shouldExitApplication) return
-        _editorWindows.add(EntryEditorWindowState(this))
-    }
-
     /**
      * Closes a single window. Returns true when the window actually closed (or, for the main
      * window, when an orderly application exit was kicked off); false when
