@@ -16,7 +16,7 @@ import app.logdate.server.logdate.InMemoryLogDateBlobStorage
 import app.logdate.server.logdate.InMemoryLogDateCollectionsMetadataStore
 import app.logdate.server.logdate.InMemoryLogDateMediaRepository
 import app.logdate.server.logdate.RepoBackedLogDateCollectionsRepository
-import app.logdate.server.routes.repoEventStreamRoutes
+import app.logdate.server.routes.installRepoEventStream
 import app.logdate.server.routes.xrpcRoutes
 import app.logdate.server.serverJson
 import app.logdate.shared.model.AccountStorageMode
@@ -37,7 +37,6 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.server.websocket.WebSockets
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import studio.hypertext.atproto.identity.AtprotoDid
@@ -155,11 +154,13 @@ internal class FirehoseHarness(
 
     fun bearer(account: Account): String = tokens.generateAccessToken(account.id.toString())
 
-    /** Installs JSON, WebSockets and the repository and stream routes into a test application. */
+    /**
+     * Installs JSON, the repository routes and the stream into a test application, with the same
+     * WebSocket settings the server uses.
+     */
     fun install(test: ApplicationTestBuilder) {
         test.application {
             install(ContentNegotiation) { json(serverJson) }
-            install(WebSockets)
             routing {
                 xrpcRoutes(
                     identityService = identity,
@@ -170,8 +171,8 @@ internal class FirehoseHarness(
                     blobService = blobService,
                     publicRepos = access,
                 )
-                repoEventStreamRoutes(stream, access)
             }
+            installRepoEventStream(stream, access)
         }
     }
 

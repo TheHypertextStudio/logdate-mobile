@@ -7,9 +7,15 @@ import app.logdate.server.routes.docs.XrpcRepoDocs
 import io.github.aakira.napier.Napier
 import io.github.smiley4.ktoropenapi.get
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.routing
 import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.pingPeriod
+import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
@@ -34,8 +40,38 @@ private val SEND_TIMEOUT = 30.seconds
 /**
  * The largest frame a follower may send. Followers only read; any message from one closes the
  * connection, and this keeps the server from buffering a large frame before it can do so.
+ *
+ * The limit is part of the WebSockets plugin configuration rather than set from the route handler.
+ * Ktor starts reading frames as soon as the connection upgrades, before the handler runs, so a
+ * limit set from the handler can arrive after an oversized frame was already read. The limit
+ * applies only to frames the server receives, never to the events it sends.
  */
 private const val FOLLOWER_MAX_FRAME_BYTES = 1_024L
+
+/** How often the server pings a follower to check that it is still connected. */
+private val PING_PERIOD = 20.seconds
+
+/** How long the server waits for a follower to answer a ping before closing the connection. */
+private val PING_TIMEOUT = 60.seconds
+
+/**
+ * Installs the WebSockets plugin with the follower limits and serves the repository event stream.
+ *
+ * The plugin is application-wide, so these settings, including the 1 KiB incoming frame limit,
+ * apply to every WebSocket route on the server. A WebSocket route added alongside the stream
+ * inherits them.
+ */
+internal fun Application.installRepoEventStream(
+    stream: RepoEventStream,
+    access: PublicRepoAccess,
+) {
+    install(WebSockets) {
+        pingPeriod = PING_PERIOD
+        timeout = PING_TIMEOUT
+        maxFrameSize = FOLLOWER_MAX_FRAME_BYTES
+    }
+    routing { repoEventStreamRoutes(stream, access) }
+}
 
 /**
  * `com.atproto.sync.subscribeRepos` and `com.atproto.sync.listRepos`, the two methods a relay uses
@@ -43,7 +79,7 @@ private const val FOLLOWER_MAX_FRAME_BYTES = 1_024L
  * shows, and the stream carries only what the event log holds, which the sequencer filled with
  * public repositories only.
  */
-internal fun Route.repoEventStreamRoutes(
+private fun Route.repoEventStreamRoutes(
     stream: RepoEventStream,
     access: PublicRepoAccess,
 ) {
@@ -78,7 +114,6 @@ internal fun Route.repoEventStreamRoutes(
 }
 
 private suspend fun DefaultWebSocketServerSession.follow(stream: RepoEventStream) {
-    maxFrameSize = FOLLOWER_MAX_FRAME_BYTES
     val cursorText = call.request.queryParameters["cursor"]
     val cursor = cursorText?.toLongOrNull()?.takeIf { it >= 0 }
     if (cursorText != null && cursor == null) {
