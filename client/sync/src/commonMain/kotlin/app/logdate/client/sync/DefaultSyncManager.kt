@@ -324,7 +324,7 @@ class DefaultSyncManager(
             entityType = EntityType.ASSOCIATION,
             quotaContext = "association sync",
             disabledOrUnauthenticated = ::disabledOrUnauthenticatedResult,
-            download = { _, since -> downloader.downloadAssociations(since) },
+            download = downloader::downloadAssociations,
             upload = uploader::uploadAssociations,
         )
 
@@ -336,7 +336,7 @@ class DefaultSyncManager(
             disabledOrUnauthenticated = {
                 if (!isEnabled || !tokenRefresher.isAuthenticated()) SyncResult(success = false) else null
             },
-            download = { _, since -> downloader.downloadDrafts(since) },
+            download = downloader::downloadDrafts,
             upload = uploader::uploadDrafts,
             updatesGlobalSyncState = false,
             onException = { e ->

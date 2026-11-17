@@ -134,6 +134,7 @@ internal class DraftDownloader(
             tokenRefresher
                 .withFreshToken(
                     { token -> cloudDraftDataSource.getDraftChanges(token, cursor, SyncDownloader.SYNC_PAGE_SIZE) },
+                    "getDraftChanges",
                 ).getOrThrow()
         checkScope(downloadScope)
         reportFetchFailure(errors)

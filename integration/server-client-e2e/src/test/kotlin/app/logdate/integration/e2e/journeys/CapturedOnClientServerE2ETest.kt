@@ -24,6 +24,7 @@ class CapturedOnClientServerE2ETest {
                         .data.tokens.accessToken
                 apiClient
                     .uploadContent(
+                        token,
                         ContentUploadRequest(
                             id = "watch-capture",
                             type = "AUDIO",

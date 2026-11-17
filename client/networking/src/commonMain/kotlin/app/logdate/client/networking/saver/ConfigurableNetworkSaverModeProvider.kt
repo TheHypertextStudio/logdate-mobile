@@ -17,8 +17,6 @@ class ConfigurableNetworkSaverModeProvider : NetworkSaverModeProvider {
 
     override val dataSaverModeState: Flow<NetworkSaverState> = mutableState
 
-    // State hook of this shared commonMain test double, called by DefaultDataUsagePolicyTest and client/sync BackgroundDataBlockedStatusTest
-    @Suppress("unused")
     fun setNetworkSaverState(state: NetworkSaverState) {
         mutableState.value = state
     }

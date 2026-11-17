@@ -204,7 +204,7 @@ internal class MomentUploader(
     ): T {
         ensureScope(pending)
         check(config.enabled()) { "Moment sync is held" }
-        return tokens.withFreshToken(send, pending.scope).getOrThrow().also { ensureScope(pending) }
+        return tokens.withFreshToken(send, "uploadMoment", pending.scope).getOrThrow().also { ensureScope(pending) }
     }
 
     private fun ensureScope(pending: PendingUpload) {

@@ -225,7 +225,7 @@ internal class MigrationMediaPreparer(
     private suspend fun <T> withToken(
         operation: String,
         block: suspend (String) -> Result<T>,
-    ): Result<T> = tokens.withFreshToken(block, expectedScope = scope)
+    ): Result<T> = tokens.withFreshToken(block, operation, expectedScope = scope)
 
     private fun unavailable(
         error: Throwable,

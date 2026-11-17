@@ -86,6 +86,7 @@ internal class AssociationDownloader(
                             { token ->
                                 cloudAssociationDataSource.getAssociationChanges(token, cursor, SyncDownloader.SYNC_PAGE_SIZE)
                             },
+                            "getAssociationChanges",
                         ).getOrThrow()
                 applyPage(page, selected, tally)
                 if (tally.errors.isNotEmpty() && downloadInbox == null) break

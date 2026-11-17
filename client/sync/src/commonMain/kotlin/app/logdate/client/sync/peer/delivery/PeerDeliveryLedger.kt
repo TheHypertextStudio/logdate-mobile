@@ -186,6 +186,19 @@ class PeerDeliveryLedger(
         entityId: String,
     ) = mutationMutex.withLock { dao.delete(scope, direction.name, entityType.name, entityId) }
 
+    /** Removes the rows of [entityType] whose record is no longer in [keep]; returns how many went. */
+    suspend fun forgetAllExcept(
+        scope: String,
+        direction: DeliveryDirection,
+        entityType: EntityType,
+        keep: Set<String>,
+    ): Int =
+        mutationMutex.withLock {
+            val stale = dao.all(scope, direction.name).filter { it.entityType == entityType.name && it.entityId !in keep }
+            stale.forEach { dao.delete(it.peerScope, it.direction, it.entityType, it.entityId) }
+            stale.size
+        }
+
     suspend fun inState(
         scope: String,
         direction: DeliveryDirection,
@@ -196,6 +209,11 @@ class PeerDeliveryLedger(
         scope: String,
         direction: DeliveryDirection,
     ): Flow<List<PeerDelivery>> = dao.observeAll(scope, direction.name).map { rows -> rows.mapNotNull { it.toDelivery() } }
+
+    suspend fun earliestDue(
+        scope: String,
+        direction: DeliveryDirection,
+    ): Long? = dao.earliestNextAttempt(scope, direction.name)
 
     private fun DeliveryState.canMoveTo(next: DeliveryState): Boolean =
         when (this) {

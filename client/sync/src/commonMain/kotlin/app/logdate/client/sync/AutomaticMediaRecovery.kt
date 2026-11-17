@@ -94,7 +94,7 @@ class AutomaticMediaRecovery(
                     candidate.second?.let { mapping -> retainMapping(mapping, entityId, draftId, kind, unavailableReference, scope) }
                     candidate.first
                 }
-            }, scope)
+            }, "automatic media recovery", scope)
         return attempt.getOrNull()?.let { AutomaticMediaRecoveryResult.Available(it) }
             ?: AutomaticMediaRecoveryResult.Pending(
                 when (val error = attempt.exceptionOrNull()) {

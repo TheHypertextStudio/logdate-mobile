@@ -53,6 +53,7 @@ internal class NoteMediaUpload(
             val mediaUpload =
                 tokenRefresher.withFreshToken(
                     { token -> mediaTransfer.uploadIfNeeded(token, remoteReady, reusable) },
+                    "uploadNoteMedia",
                     expectedScope = pending.scope,
                 )
             if (mediaUpload.isFailure) {

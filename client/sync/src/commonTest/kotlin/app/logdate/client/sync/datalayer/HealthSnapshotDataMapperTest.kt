@@ -166,6 +166,13 @@ class HealthSnapshotDataMapperTest {
         assertFalse(HealthSnapshotDataMapper.isHealthPath("/logdate/journals/some-id"))
     }
 
+    @Test
+    fun `health id from path extracts correct uuid`() {
+        val path = "/logdate/health/550e8400-e29b-41d4-a716-446655440000"
+        val extracted = HealthSnapshotDataMapper.healthIdFromPath(path)
+        assertEquals(fixedUuid, extracted)
+    }
+
     // =======================================================================
     // Batch serialization
     // =======================================================================

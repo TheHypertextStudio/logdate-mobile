@@ -348,6 +348,7 @@ class PasskeyAtprotoSignInE2ETest {
     private suspend fun ServerClientE2EHarness.seedJournal(token: String) {
         apiClient
             .uploadContent(
+                token,
                 ContentUploadRequest(
                     id = ENTRY_ID,
                     type = "TEXT",

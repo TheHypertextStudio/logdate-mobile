@@ -37,7 +37,11 @@ internal class SyncTokenRefresher(
 
     fun currentRequestScope(): UploadScope? = if (cloudAccountRepository is CloudRequestLocationProvider) currentUploadScope() else null
 
-    suspend fun <T> withFreshToken(operation: suspend (accessToken: String) -> Result<T>): Result<T> {
+    suspend fun <T> withFreshToken(
+        operation: suspend (accessToken: String) -> Result<T>,
+        operationName: String,
+        expectedScope: UploadScope? = null,
+    ): Result<T> {
         val locationProvider = cloudAccountRepository as? CloudRequestLocationProvider
         val binding = captureBinding(locationProvider).getOrElse { return Result.failure(it) }
         val currentSession = binding?.session ?: sessionStorage.getSession()

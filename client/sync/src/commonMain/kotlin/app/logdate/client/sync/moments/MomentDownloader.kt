@@ -175,6 +175,7 @@ internal class MomentDownloader(
                 tokens
                     .withFreshToken(
                         { token -> config.cloud.changes(token, cursor, SyncDownloader.SYNC_PAGE_SIZE) },
+                        "getMomentChanges",
                         request,
                     ).getOrThrow()
             ensureScope(selected, request)

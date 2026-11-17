@@ -35,6 +35,7 @@ class SyncClientServerErrorMatrixE2ETest {
 
                 val uploadWithInvalidToken =
                     apiClient.uploadContent(
+                        accessToken = "bad",
                         content =
                             ContentUploadRequest(
                                 id = "content-err",
@@ -50,6 +51,7 @@ class SyncClientServerErrorMatrixE2ETest {
 
                 val uploadContent =
                     apiClient.uploadContent(
+                        accessToken = accessToken,
                         content =
                             ContentUploadRequest(
                                 id = "content-err",

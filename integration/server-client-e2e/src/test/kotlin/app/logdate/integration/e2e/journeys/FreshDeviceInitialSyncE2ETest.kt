@@ -52,6 +52,7 @@ class FreshDeviceInitialSyncE2ETest {
                 contentIds.forEachIndexed { i, contentId ->
                     apiClient
                         .uploadContent(
+                            accessToken = accessToken,
                             content =
                                 ContentUploadRequest(
                                     id = contentId,
@@ -68,6 +69,7 @@ class FreshDeviceInitialSyncE2ETest {
                     val journalId = journalIds.first()
                     apiClient
                         .uploadAssociations(
+                            accessToken = accessToken,
                             associations =
                                 AssociationUploadRequest(
                                     associations =

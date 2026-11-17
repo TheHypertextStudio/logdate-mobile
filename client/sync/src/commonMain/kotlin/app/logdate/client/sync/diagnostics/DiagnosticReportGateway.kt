@@ -67,6 +67,7 @@ internal class DiagnosticReportGateway(
             }
             tokens
                 .withFreshToken(
+                    operationName = "diagnostic report",
                     expectedScope = scope,
                     operation = { token ->
                         try {
