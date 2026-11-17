@@ -29,7 +29,6 @@ import kotlin.time.Clock
 
 @Composable
 fun WearTimelineScreen(
-    onNavigateBack: () -> Unit,
     onNavigateToDay: (LocalDate) -> Unit,
     viewModel: WearTimelineViewModel = koinViewModel(),
 ) {

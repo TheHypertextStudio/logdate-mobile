@@ -93,9 +93,7 @@ fun FlowPage(
                 }
             }
             when (state) {
-                FlowUiState.Loading -> {
-                    Unit
-                }
+                FlowUiState.Loading -> {}
 
                 FlowUiState.Failed -> {
                     item { FlowMessage(stringResource(R.string.wear_flow_failed)) }

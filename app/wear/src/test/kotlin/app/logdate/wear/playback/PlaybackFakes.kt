@@ -8,12 +8,7 @@ import kotlin.uuid.Uuid
 
 internal class FakeOutputs : WearAudioOutputs {
     val state = MutableStateFlow<AudioOutputState>(AudioOutputState.SpeakerOnly)
-    var bluetoothSettingsOpened = 0
     override val outputState: StateFlow<AudioOutputState> = state
-
-    override fun launchBluetoothSettings() {
-        bluetoothSettingsOpened++
-    }
 }
 
 internal class FakeResolver : WearSyncedAudioResolver {

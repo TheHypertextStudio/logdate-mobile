@@ -98,9 +98,7 @@ private fun TransformingLazyColumnScope.statusItem(
     spec: TransformationSpec,
 ) {
     when (val status = state.status) {
-        WatchStatus.Healthy -> {
-            Unit
-        }
+        WatchStatus.Healthy -> {}
 
         is WatchStatus.WaitingForPhone -> {
             item { WaitingForPhone(status.pending) }

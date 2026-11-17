@@ -65,9 +65,7 @@ internal fun WearVoiceMemoriesContent(
                 }
             }
             when {
-                !state.isLoaded -> {
-                    Unit
-                }
+                !state.isLoaded -> {}
 
                 state.memories.isEmpty() -> {
                     item(key = "empty") { EmptyMemories(Modifier.transformedHeight(this, spec)) }

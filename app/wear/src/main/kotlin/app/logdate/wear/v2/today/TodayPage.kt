@@ -232,9 +232,7 @@ private fun TodayList(
             return@TransformingLazyColumn
         }
         when (state) {
-            TodayUiState.Loading -> {
-                Unit
-            }
+            TodayUiState.Loading -> {}
 
             TodayUiState.Failed -> {
                 item { CenteredText(stringResource(R.string.wear_today_failed)) }

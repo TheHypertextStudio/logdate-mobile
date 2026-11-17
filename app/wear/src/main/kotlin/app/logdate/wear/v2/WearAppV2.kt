@@ -34,7 +34,6 @@ import app.logdate.wear.v2.ambient.WatchAmbientScope
 import app.logdate.wear.v2.archive.ArchiveScreen
 import app.logdate.wear.v2.archive.ArchiveViewModel
 import app.logdate.wear.v2.capture.CaptureConfirmation
-import app.logdate.wear.v2.capture.CaptureSheet
 import app.logdate.wear.v2.capture.CaptureSheetViewModel
 import app.logdate.wear.v2.capture.rememberRemoteTextInput
 import app.logdate.wear.v2.continuity.WatchPlaybackHandoff
@@ -73,6 +72,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import app.logdate.wear.v2.capture.CaptureSheet as CaptureSheetScreen
 
 object WearAppV2Tags {
     const val SHELL = "wear_app_v2_shell"
@@ -400,7 +400,7 @@ private fun CaptureSheetEntry(
     val viewModel = koinViewModel<CaptureSheetViewModel>()
     val state by viewModel.uiState.collectAsState()
     val write = rememberRemoteTextInput(onText = viewModel::saveText)
-    CaptureSheet(
+    CaptureSheetScreen(
         state = state,
         onWrite = write,
         onToggleFeelings = viewModel::toggleFeelings,

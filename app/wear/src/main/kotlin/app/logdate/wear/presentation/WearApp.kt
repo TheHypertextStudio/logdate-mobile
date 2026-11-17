@@ -141,7 +141,6 @@ fun WearApp(
                     entry<WearTimelineRoute> {
                         val timelineViewModel = koinViewModel<WearTimelineViewModel>()
                         WearTimelineScreen(
-                            onNavigateBack = navigateBack,
                             onNavigateToDay = { date ->
                                 timelineViewModel.selectDay(date)
                                 backStack.add(WearTimelineDayDetailRoute(date))
@@ -167,7 +166,7 @@ fun WearApp(
                         )
                     }
                     entry<WearSettingsRoute> {
-                        WearSettingsScreen(onNavigateBack = navigateBack)
+                        WearSettingsScreen()
                     }
                 },
         )

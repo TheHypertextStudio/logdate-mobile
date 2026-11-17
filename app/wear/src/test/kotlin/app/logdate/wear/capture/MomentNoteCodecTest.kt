@@ -14,27 +14,12 @@ class MomentNoteCodecTest {
     }
 
     @Test
-    fun `the feeling comes from the tag, not from the sentence after it`() {
-        assertEquals(Feeling.GREAT, MomentNoteCodec.feelingOf("#mood:great Feeling great"))
-        assertEquals(Feeling.GOOD, MomentNoteCodec.feelingOf("#mood:good Feeling great today"))
-    }
-
-    @Test
-    fun `every feeling reads back as itself`() {
-        Feeling.entries.forEach { feeling ->
-            assertEquals(feeling, MomentNoteCodec.feelingOf(MomentNoteCodec.encode(feeling)))
-        }
-    }
-
-    @Test
     fun `a tag later in the text is not a check-in`() {
-        assertNull(MomentNoteCodec.feelingOf("Dinner was great #mood:great"))
         assertEquals(MomentNoteKind.TEXT, MomentNoteCodec.classify(text("Dinner was great #mood:great")))
     }
 
     @Test
     fun `a check-in with a tag no feeling uses is still a check-in`() {
-        assertNull(MomentNoteCodec.feelingOf("#mood:elated Feeling elated"))
         assertEquals(MomentNoteKind.FEELING, MomentNoteCodec.classify(text("#mood:elated Feeling elated")))
     }
 

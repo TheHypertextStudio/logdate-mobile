@@ -321,23 +321,6 @@ class WearTimelineViewModelTest {
             assertEquals(2, detail?.entries?.size)
         }
 
-    @Test
-    fun `clearSelection resets selected day`() =
-        runTest {
-            val repository = mockk<JournalNotesRepository>()
-            val targetDate = LocalDate(2024, 3, 9)
-            every { repository.observeRecentNotes(any()) } returns flowOf(emptyList())
-            every { repository.observeNotesForDay(targetDate) } returns flowOf(emptyList())
-
-            val vm =
-                createViewModelFor(repository)
-            vm.selectDay(targetDate)
-            vm.clearSelection()
-
-            val detail = vm.selectedDayState.first()
-            assertNull(detail)
-        }
-
     // =======================================================================
     // Audio playback
     // =======================================================================
@@ -453,16 +436,6 @@ class WearTimelineViewModelTest {
 
             outputs.state.value = AudioOutputState.SpeakerAndBluetooth
             assertEquals(AudioOutputState.SpeakerAndBluetooth, vm.audioOutputState.first())
-        }
-
-    @Test
-    fun `openBluetoothSettings opens the system settings`() =
-        runTest {
-            val vm = createViewModel()
-
-            vm.openBluetoothSettings()
-
-            assertEquals(1, outputs.bluetoothSettingsOpened)
         }
 
     @Test

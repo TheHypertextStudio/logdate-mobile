@@ -82,8 +82,6 @@ class WearMemoryPlayerViewModel(
 
     fun onSkipForward() = player.seekBy(SKIP_MS)
 
-    fun onOpenBluetoothSettings() = player.openBluetoothSettings()
-
     override fun onCleared() {
         close()
         super.onCleared()

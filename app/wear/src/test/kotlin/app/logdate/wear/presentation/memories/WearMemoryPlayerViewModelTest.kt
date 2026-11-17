@@ -191,14 +191,6 @@ class WearMemoryPlayerViewModelTest {
         }
 
     @Test
-    fun `bluetooth settings open from the player`() =
-        runTest {
-            openedViewModel().onOpenBluetoothSettings()
-
-            assertEquals(1, outputs.bluetoothSettingsOpened)
-        }
-
-    @Test
     fun `closing the player stops playback and clears the screen`() =
         runTest {
             val viewModel = openedViewModel()

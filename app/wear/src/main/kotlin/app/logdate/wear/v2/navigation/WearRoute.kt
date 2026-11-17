@@ -32,10 +32,6 @@ sealed interface WearRoute : NavKey {
     @Serializable
     data object CaptureSheet : WearRoute
 
-    /** Where audio plays: the watch, headphones or the phone. */
-    @Serializable
-    data object PlayOn : WearRoute
-
     /** The rest of the library window, past the last 7 days. */
     @Serializable
     data object Archive : WearRoute
