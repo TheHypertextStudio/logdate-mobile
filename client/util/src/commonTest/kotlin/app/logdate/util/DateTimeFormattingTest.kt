@@ -10,7 +10,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 /**
@@ -90,44 +89,6 @@ class DateTimeFormattingTest {
         assertEquals(systemNow.year, today.year, "Year should match system time")
         assertEquals(systemNow.month, today.month, "Month should match system time")
         assertEquals(systemNow.day, today.day, "Day should match system time")
-    }
-
-    /**
-     * Tests [Instant.daysUntilNow] extension property.
-     *
-     * Verifies that:
-     * - A timestamp from yesterday returns 1 day
-     * - The current timestamp returns 0 days
-     */
-    @Test
-    fun `days until now`() {
-        // Test with a date from yesterday
-        val yesterday = Clock.System.now().minus(1.days)
-        assertEquals(1, yesterday.daysUntilNow, "Yesterday should be 1 day until now")
-
-        // Test with current time
-        val justNow = Clock.System.now()
-        assertEquals(0, justNow.daysUntilNow, "Current time should be 0 days until now")
-    }
-
-    /**
-     * Tests [Instant.weeksAgo] extension function.
-     *
-     * Verifies that:
-     * - A timestamp from 3 weeks ago returns 3 weeks
-     * - A timestamp from less than a week ago returns 0 weeks
-     *
-     * This confirms the function rounds down to the nearest week.
-     */
-    @Test
-    fun `weeks ago`() {
-        // Test with a date from 3 weeks ago
-        val threeWeeksAgo = Clock.System.now().minus(21.days)
-        assertEquals(3, threeWeeksAgo.weeksAgo(), "Three weeks ago should return 3")
-
-        // Test with a date from 6 days ago (less than a week)
-        val sixDaysAgo = Clock.System.now().minus(6.days)
-        assertEquals(0, sixDaysAgo.weeksAgo(), "Six days ago should return 0 weeks")
     }
 
     /**

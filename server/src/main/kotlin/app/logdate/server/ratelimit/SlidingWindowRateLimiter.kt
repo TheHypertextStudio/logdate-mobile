@@ -77,6 +77,7 @@ class SlidingWindowRateLimiter {
     }
 
     /** How many keys have requests in memory. */
+    @Suppress("unused") // Kept: SlidingWindowRateLimiterTest proves with it that the sweep keeps memory bounded
     internal fun trackedKeys(): Int = requestsByKey.size
 
     private fun sweep(nowEpochMillis: Long) {

@@ -291,6 +291,7 @@ private fun validatedEvent(message: String?): String? {
 }
 
 /** Includes framework/library logs in the same stdout privacy boundary. */
+@Suppress("unused") // Kept: logback.xml loads it by class name as the safeEvent conversion rule
 class SafeServerMessageConverter : ClassicConverter() {
     override fun convert(event: ILoggingEvent): String {
         if (event.loggerName == SERVER_LOG_NAME) {
