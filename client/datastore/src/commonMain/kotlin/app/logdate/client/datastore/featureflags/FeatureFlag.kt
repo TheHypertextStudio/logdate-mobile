@@ -152,15 +152,4 @@ enum class FeatureFlag(
      * previous search presentation.
      */
     ADAPTIVE_SEARCH(key = "adaptive_search_enabled", defaultEnabled = false),
-    ;
-
-    companion object {
-        /**
-         * Finds a flag by its stored [key], or `null` if no flag owns it.
-         *
-         * Useful for debug tooling that reads flags back out of storage; production code should
-         * name the flag it means.
-         */
-        fun forKey(key: String): FeatureFlag? = entries.firstOrNull { it.key == key }
-    }
 }

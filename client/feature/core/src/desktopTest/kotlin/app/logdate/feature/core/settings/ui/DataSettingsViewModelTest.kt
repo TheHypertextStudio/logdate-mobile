@@ -74,7 +74,7 @@ class DataSettingsViewModelTest {
             assertEquals(1, fixture.syncRequests)
             fixture.syncAccepted.complete(Unit)
             runCurrent()
-            assertEquals(SyncFeedback.Started, viewModel.syncFeedback.value)
+            assertEquals(SyncFeedback.Started, viewModel.syncFeedbackDelivery.value?.feedback)
         }
 
     @Test
