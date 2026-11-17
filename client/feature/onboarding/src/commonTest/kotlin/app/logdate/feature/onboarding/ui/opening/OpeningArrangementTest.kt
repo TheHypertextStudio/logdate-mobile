@@ -38,7 +38,7 @@ class OpeningArrangementTest {
     }
 
     @Test
-    fun `a tablet on its side fills both sides of the step with large pieces, and no more than it needs`() {
+    fun `a tablet on its side fills both sides of the step with large pieces and no more than it needs`() {
         val scene = arrangeOpening(TABLET_WIDE, TABLET_WIDE_WORDS, TABLET_WIDE_ACTIONS)
 
         assertTrue(scene.pieces.size in 12..17, "${scene.pieces.size} pieces on a wide tablet")
@@ -89,7 +89,7 @@ class OpeningArrangementTest {
     }
 
     @Test
-    fun `tidied, every screen has one page and today's four pieces stand on it without touching`() {
+    fun `once tidied every screen has one page and today's four pieces stand on it without touching`() {
         SCREENS.forEach { (canvas, words, actions) ->
             val scene = arrangeOpening(canvas, words, actions)
             val page = assertNotNull(scene.page, "no page for today on $canvas").bounds
@@ -114,7 +114,7 @@ class OpeningArrangementTest {
     }
 
     @Test
-    fun `tidied, a piece in the page's way leaves and the rest of the table stays`() {
+    fun `once tidied a piece in the page's way leaves and the rest of the table stays`() {
         SCREENS.forEach { (canvas, words, actions) ->
             val scene = arrangeOpening(canvas, words, actions)
             val page = assertNotNull(scene.page).bounds
@@ -152,7 +152,7 @@ class OpeningArrangementTest {
     }
 
     @Test
-    fun `only a photo lies where the system draws its clock, and the table keeps every piece`() {
+    fun `only a photo lies where the system draws its clock and the table keeps every piece`() {
         (SCREENS + Triple(PHONE, Rect(16f, 184f, 374f, 690f), PHONE_ACTIONS)).forEach { (canvas, words, actions) ->
             listOf(24f, 52f).forEach { bar ->
                 val scene = arrangeOpening(canvas, words, actions, systemTop = bar)

@@ -7,6 +7,7 @@ MODULE_TASKS_CACHE_KEYS=()
 MODULE_TASKS_CACHE_VALUES=()
 RESOLVED_TEST_TASKS=()
 UNRESOLVED_TEST_MODULES=()
+RESOLVED_NATIVE_COMPILE_TASKS=()
 PROJECT_DIR_OVERRIDE_PATHS=()
 PROJECT_DIR_OVERRIDE_MODULES=()
 PROJECT_DIR_OVERRIDES_LOADED=0
@@ -205,11 +206,35 @@ resolve_test_tasks_for_modules() {
     case "$module" in
       :shared:atproto-bom) continue ;;
     esac
+    # Load the task list in this shell, so later lookups reuse it; the resolver runs in a subshell.
+    module_tasks_cache_get_or_load "$module" > /dev/null
     if resolved_task="$(resolve_test_task_for_module "$module" "$coverage_mode")"; then
       RESOLVED_TEST_TASKS+=("$resolved_task")
     else
       UNRESOLVED_TEST_MODULES+=("$module")
     fi
+  done
+}
+
+# Kotlin/Native and Kotlin/Wasm reject code that the JVM compiler accepts, such as a comma in a
+# backticked test name. Compiling the tests of each module that has those targets finds it on a
+# machine that only builds and tests for the JVM.
+resolve_native_compile_tasks_for_modules() {
+  local module=""
+  local task=""
+  local module_tasks=""
+
+  RESOLVED_NATIVE_COMPILE_TASKS=()
+
+  for module in "$@"; do
+    [[ -z "$module" ]] && continue
+    module_tasks_cache_get_or_load "$module" > /dev/null
+    module_tasks="$(module_tasks_cache_get_or_load "$module")"
+    for task in compileTestKotlinIosSimulatorArm64 compileTestKotlinWasmJs; do
+      if module_has_task "$module_tasks" "$task"; then
+        RESOLVED_NATIVE_COMPILE_TASKS+=("${module}:${task}")
+      fi
+    done
   done
 }
 

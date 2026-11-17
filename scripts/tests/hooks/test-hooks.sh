@@ -117,6 +117,30 @@ EOF
     :client:legacy-android)
       echo 'testAndroid - Runs Android target tests.'
       ;;
+    :client:shared-with-ios)
+      cat << 'EOF'
+Verification tasks
+------------------
+desktopTest - Runs desktop tests.
+
+Other tasks
+-----------
+compileTestKotlinIosSimulatorArm64 - Compiles a klibrary from the 'test' compilation in target 'iosSimulatorArm64'.
+compileTestKotlinIosSimulatorArm64Extra
+EOF
+      ;;
+    :client:shared-with-wasm)
+      cat << 'EOF'
+Verification tasks
+------------------
+jvmTest - Runs JVM tests.
+
+Other tasks
+-----------
+compileTestKotlinIosSimulatorArm64 - Compiles a klibrary from the 'test' compilation in target 'iosSimulatorArm64'.
+compileTestKotlinWasmJs - Compiles a klibrary from the 'test' compilation in target 'wasmJs'.
+EOF
+      ;;
     :client:device-only)
       cat << 'EOF'
 connectedDebugAndroidTest - Runs device tests.
@@ -176,6 +200,18 @@ assert_contains "^:unknown:module$" "$unresolved_list"
 assert_contains "^:client:feature:timeline$" "$unresolved_list"
 assert_contains "^:client:legacy-android$" "$unresolved_list"
 assert_contains "^:client:device-only$" "$unresolved_list"
+
+# Modules with iOS or Wasm targets also compile their tests for those targets; others add nothing.
+MODULE_TASKS_CACHE_KEYS=()
+MODULE_TASKS_CACHE_VALUES=()
+resolve_test_tasks_for_modules "balanced" ":client:permissions" ":client:shared-with-ios" ":client:shared-with-wasm"
+fetch_calls_before_native_lookup="$fetch_calls_total"
+resolve_native_compile_tasks_for_modules ":client:permissions" ":client:shared-with-ios" ":client:shared-with-wasm"
+assert_equals "$fetch_calls_before_native_lookup" "$fetch_calls_total"
+assert_equals $':client:shared-with-ios:compileTestKotlinIosSimulatorArm64\n:client:shared-with-wasm:compileTestKotlinIosSimulatorArm64\n:client:shared-with-wasm:compileTestKotlinWasmJs' \
+  "$(printf '%s\n' "${RESOLVED_NATIVE_COMPILE_TASKS[@]}")"
+resolve_native_compile_tasks_for_modules ":client:permissions"
+assert_equals 0 "${#RESOLVED_NATIVE_COMPILE_TASKS[@]}"
 
 # Probe the product hook's first subprocess without opening a window or invoking Gradle.
 probe_dir="$(mktemp -d "${TMPDIR:-/tmp}/hook-headless-test.XXXXXX")"

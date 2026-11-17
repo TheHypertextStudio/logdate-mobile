@@ -152,7 +152,9 @@ from `./run setup production`; see [Release and recovery](RELEASE.md).
 ## Test
 
 Run the tests for the modules you changed, plus any suite whose contract your change touches. The
-pre-push hook re-runs the tests for affected modules before code leaves your machine.
+pre-push hook re-runs the tests for affected modules before code leaves your machine. It also
+compiles their tests for iOS and Wasm, because Kotlin/Native and Kotlin/Wasm reject some code that
+the JVM compiler accepts, such as a comma in a backticked test name.
 
 ```bash
 ./gradlew :client:feature:timeline:test :client:repository:test   # tests for the modules you changed
