@@ -215,7 +215,6 @@ class EntitlementPersistenceTest {
                         it[tier] = "free"
                         it[monthlyBytesLimit] = 10L
                         it[backupCountLimit] = 1
-                        it[stripePriceId] = null
                         it[playProductId] = null
                         it[active] = true
                         it[features] = "not-json"
@@ -341,7 +340,6 @@ class EntitlementPersistenceTest {
                 it[monthlyBytesLimit] = storageBytes
                 it[backupCountLimit] = backupCount
                 it[extraStorageStepBytes] = extraStorageStep
-                it[stripePriceId] = null
                 it[playProductId] = null
                 it[PlansTable.active] = active
                 it[PlansTable.features] =

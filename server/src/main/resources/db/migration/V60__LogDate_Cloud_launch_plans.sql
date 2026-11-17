@@ -1,4 +1,4 @@
--- V57: The two LogDate Cloud launch plans, and the record of who joined during the beta.
+-- V60: The two LogDate Cloud launch plans, and the record of who joined during the beta.
 --
 -- The catalog seeded in V16 (`free` at 1 GB, `standard` at 100 GB, `pro` with no limit) was a
 -- placeholder. LogDate Cloud launches with two plans:

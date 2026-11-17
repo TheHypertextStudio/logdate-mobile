@@ -59,7 +59,6 @@ private fun insertPlan(
             it[monthlyBytesLimit] = includedBytes
             it[backupCountLimit] = null
             it[features] = "{}"
-            it[stripePriceId] = null
             it[playProductId] = null
             it[extraStorageStepBytes] = extraStorageStep
             it[active] = true
