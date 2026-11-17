@@ -30,6 +30,9 @@ import app.logdate.feature.editor.ui.handwriting.HandwritingCanvas
 import app.logdate.feature.editor.ui.image.ImageBlockPreview
 import app.logdate.feature.editor.ui.layout.EditorBlockCornerRadius
 import app.logdate.ui.common.MarkdownPreviewText
+import app.logdate.ui.common.parseMarkdownDocument
+import app.logdate.ui.notes.NoteMediaKind
+import app.logdate.ui.notes.ProportionalNoteMedia
 import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.ink_preview_description
 import org.jetbrains.compose.resources.stringResource
@@ -74,15 +77,10 @@ internal fun EntryContextPreview(
                     }
 
                     is CameraBlockUiState -> {
-                        if (block.uri != null) {
-                            if (block.mediaType == CapturedMediaType.VIDEO) {
-                                MarkdownPreviewText(
-                                    block.caption.ifBlank { memoryBlockLabel(block) },
-                                    Modifier.padding(24.dp),
-                                )
-                            } else {
-                                ImageBlockPreview(ImageBlockUiState(id = block.id, uri = block.uri), wrapToImage = true)
-                            }
+                        if (block.mediaType == CapturedMediaType.VIDEO) {
+                            ContextVideo(block.uri, block.caption)
+                        } else if (block.uri != null) {
+                            ImageBlockPreview(ImageBlockUiState(id = block.id, uri = block.uri), wrapToImage = true)
                         }
                     }
 
@@ -101,15 +99,30 @@ internal fun EntryContextPreview(
                     }
 
                     is VideoBlockUiState -> {
-                        MarkdownPreviewText(
-                            block.caption.ifBlank {
-                                memoryBlockLabel(block)
-                            },
-                            Modifier.padding(24.dp),
-                        )
+                        ContextVideo(block.uri, block.caption)
                     }
                 }
             }
         }
+    }
+}
+
+/** A video in passive context: its frame and its caption, never a label standing in for either. */
+@Suppress("ktlint:standard:function-naming")
+@Composable
+private fun ContextVideo(
+    uri: String?,
+    caption: String,
+) {
+    Column {
+        if (uri != null) {
+            ProportionalNoteMedia(
+                mediaRef = uri,
+                kind = NoteMediaKind.Video,
+                contentDescription = parseMarkdownDocument(caption).plainText.ifBlank { null },
+                maxHeight = 320.dp,
+            )
+        }
+        if (caption.isNotBlank()) MarkdownPreviewText(caption, Modifier.padding(24.dp))
     }
 }

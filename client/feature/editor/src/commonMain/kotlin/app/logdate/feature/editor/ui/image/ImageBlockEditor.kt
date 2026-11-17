@@ -26,12 +26,13 @@ import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.shared.model.PhotoPresentation
 import app.logdate.ui.common.MarkdownText
 import app.logdate.ui.common.parseMarkdownDocument
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
+import app.logdate.ui.notes.NoteMediaImage
+import app.logdate.ui.notes.NoteMediaKind
 import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.delete_image
+import logdate.client.ui.generated.resources.note_block_photo
 import org.jetbrains.compose.resources.stringResource
+import logdate.client.ui.generated.resources.Res as UiRes
 
 /**
  * A component that handles image display and editing within the editor.
@@ -141,29 +142,41 @@ internal fun ImageBlockPreview(
     onAspectRatioLoaded: (Float) -> Unit = {},
 ) {
     var loadedRatio by remember(block.uri) { mutableFloatStateOf(0f) }
-    val description = remember(block.caption) { parseMarkdownDocument(block.caption).plainText.ifBlank { "Image" } }
+    val fallbackDescription = stringResource(UiRes.string.note_block_photo)
+    val description =
+        remember(block.caption, fallbackDescription) {
+            parseMarkdownDocument(block.caption).plainText.ifBlank { fallbackDescription }
+        }
     val intrinsic = painter?.intrinsicSize
     val ratio = if (intrinsic != null) intrinsic.width / intrinsic.height else loadedRatio
-    val imageModifier = if (wrapToImage && ratio.isFinite() && ratio > 0f) modifier.aspectRatio(ratio) else modifier
+    // Until the photo has loaded, a wrapped preview holds a 4:3 loading surface instead of
+    // collapsing to nothing.
+    val wrapRatio = if (ratio.isFinite() && ratio > 0f) ratio else LOADING_RATIO
+    val imageModifier = if (wrapToImage) modifier.aspectRatio(wrapRatio) else modifier
     if (painter != null) {
         Image(painter, description, imageModifier, contentScale = contentScale)
-    } else {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalPlatformContext.current).data(block.uri).build(),
+    } else if (block.uri != null) {
+        // A block with no photo yet (an uncaptured camera block) has nothing to preview; only a
+        // chosen photo that can't be read is a failure.
+        NoteMediaImage(
+            mediaRef = block.uri,
+            kind = NoteMediaKind.Photo,
             contentDescription = description,
-            contentScale = contentScale,
             modifier = imageModifier,
-            onSuccess = { state ->
-                val size = state.painter.intrinsicSize
-                val ratio = size.width / size.height
-                if (ratio.isFinite() && ratio > 0f && loadedRatio == 0f) {
-                    loadedRatio = ratio
-                    onAspectRatioLoaded(ratio)
+            contentScale = contentScale,
+            onLoaded = { loaded ->
+                val size = loaded.intrinsicSize
+                val loadedValue = size.width / size.height
+                if (loadedValue.isFinite() && loadedValue > 0f && loadedRatio == 0f) {
+                    loadedRatio = loadedValue
+                    onAspectRatioLoaded(loadedValue)
                 }
             },
         )
     }
 }
+
+private const val LOADING_RATIO = 4f / 3f
 
 @Suppress("ktlint:standard:function-naming")
 @Composable

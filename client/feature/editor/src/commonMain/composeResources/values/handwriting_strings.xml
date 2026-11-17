@@ -2,7 +2,6 @@
     <string name="ink_handwrite_action">Handwrite</string>
     <string name="ink_read_preview_description">Original handwriting. Open to view.</string>
     <string name="ink_add">Add handwriting</string>
-    <string name="ink_title">Handwriting</string>
     <string name="ink_entry">New entry</string>
     <string name="ink_back">Back to entry</string>
     <string name="ink_original">Keep it in your own hand</string>

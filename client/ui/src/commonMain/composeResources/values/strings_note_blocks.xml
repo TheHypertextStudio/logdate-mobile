@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="note_block_photo">Photo</string>
+    <string name="note_block_video">Video</string>
+    <string name="note_block_photo_unavailable">This photo couldn&apos;t be loaded</string>
+    <string name="note_block_video_unavailable">This video couldn&apos;t be loaded</string>
+    <string name="note_block_loading">Loading</string>
+    <string name="note_block_voice_note_length">Voice note, %1$s</string>
+</resources>

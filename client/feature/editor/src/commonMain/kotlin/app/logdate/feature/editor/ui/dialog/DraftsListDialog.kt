@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.journals.EntryDraft
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.ui.common.SwipeToAction
+import app.logdate.ui.notes.NoteThumbnail
+import app.logdate.ui.notes.noteWords
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.platform.PlatformSheet
 import app.logdate.ui.theme.Spacing
@@ -43,14 +45,10 @@ import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.clear_all
 import logdate.client.feature.editor.generated.resources.draft_item_count
 import logdate.client.feature.editor.generated.resources.empty_draft
-import logdate.client.feature.editor.generated.resources.ink_add
 import logdate.client.feature.editor.generated.resources.loading_drafts
 import logdate.client.feature.editor.generated.resources.no_drafts_found
-import logdate.client.feature.editor.generated.resources.photo
 import logdate.client.feature.editor.generated.resources.previous_drafts
-import logdate.client.feature.editor.generated.resources.record_audio
 import logdate.client.feature.editor.generated.resources.start_writing_to_create_your_first_draft
-import logdate.client.feature.editor.generated.resources.video
 import logdate.client.ui.generated.resources.common_delete
 import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.Uuid
@@ -261,46 +259,41 @@ private fun DraftListItemContent(
     draft: EntryDraft,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    // The draft's first piece of media, shown as itself, and its first words. Only a draft with
+    // nothing to show (no media and no words) falls back to a label.
+    val leadingMedia = draft.notes.firstOrNull { it !is JournalNote.Text }
+    val previewText = draft.notes.firstNotNullOfOrNull { it.noteWords() }
+    Row(
         modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        val previewText =
-            draft.notes.firstOrNull()?.let { note ->
-                when (note) {
-                    is JournalNote.Text -> note.content
-                    is JournalNote.Handwriting -> stringResource(Res.string.ink_add)
-                    is JournalNote.Image -> stringResource(Res.string.photo)
-                    is JournalNote.Video -> stringResource(Res.string.video)
-                    is JournalNote.Audio -> stringResource(Res.string.record_audio)
-                }
-            } ?: stringResource(Res.string.empty_draft)
-
-        Text(
-            text = previewText,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = draft.updatedAt.toReadableDateTimeShort(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            if (draft.notes.size > 1) {
-                Spacer(modifier = Modifier.width(8.dp))
+        leadingMedia?.let { NoteThumbnail(it, size = 48.dp) }
+        Column(modifier = Modifier.weight(1f)) {
+            if (previewText != null || leadingMedia == null) {
                 Text(
-                    text = stringResource(Res.string.draft_item_count, draft.notes.size),
+                    text = previewText ?: stringResource(Res.string.empty_draft),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = draft.updatedAt.toReadableDateTimeShort(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (draft.notes.size > 1) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(Res.string.draft_item_count, draft.notes.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
