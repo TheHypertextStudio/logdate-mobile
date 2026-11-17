@@ -23,7 +23,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.activity.PhoneActivityAwareness
-import app.logdate.client.database.DatabaseRecoveryController
 import app.logdate.client.database.DatabaseStartupMonitor
 import app.logdate.client.database.DatabaseStartupState
 import app.logdate.client.datastore.SessionStorage
@@ -98,7 +97,6 @@ class MainActivity : FragmentActivity() {
     private val homeScreenPins: HomeScreenPins by inject()
     private val recorder: AudioRecordingManager by inject()
     private val recordingWindows: RecordingWindowTracker by inject()
-    private val databaseRecoveryController: DatabaseRecoveryController by inject()
     private val postRestoreDetector: PostRestoreDetector by inject()
     private val playInAppUpdateController: PlayInAppUpdateController by inject()
     private val watchCompanionAssociationManager: WatchCompanionAssociationManager by inject()

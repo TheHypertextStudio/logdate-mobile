@@ -102,9 +102,7 @@ class PlayInAppUpdateController(
                     Napier.w("Play in-app update install state ended unexpectedly: ${state.installStatus()}")
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         }
     private val _uiState =

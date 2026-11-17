@@ -32,8 +32,6 @@ class PhoneReceiptBook(
 ) {
     fun cloudPresence(): CloudPresence = if (sessions.getSession() == null) CloudPresence.NO_ACCOUNT else CloudPresence.SIGNED_IN
 
-    fun accountScope(): Pair<String, String>? = sessions.getOriginBoundSession()?.let { it.origin to it.session.accountId }
-
     /** Null when the phone has no copy of that version yet, so the watch sends it again. */
     suspend fun receiptFor(query: ReceiptQuery): Receipt? {
         if (query.operationId != null || query.removed) return null

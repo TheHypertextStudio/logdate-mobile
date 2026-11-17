@@ -110,7 +110,12 @@ class WatchNoteIngestor(
 
     private val noteLocks = HashMap<Uuid, NoteLock>()
 
-    /** How many notes currently have a lock, which is zero once nothing is being ingested. */
+    /**
+     * How many notes currently have a lock, which is zero once nothing is being ingested.
+     *
+     * Read by WatchNoteIngestorTest to prove a note's lock is released when its ingestion ends.
+     */
+    @Suppress("unused")
     val activeNoteLockCount: Int get() = synchronized(noteLocks) { noteLocks.size }
 
     /** A note's lock lives only while someone holds or waits for it, so the map never outgrows the work in flight. */

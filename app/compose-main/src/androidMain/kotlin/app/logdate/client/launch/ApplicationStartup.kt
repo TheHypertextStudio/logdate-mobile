@@ -146,9 +146,7 @@ internal fun observeNativeRestoreDeliveryCompletions(
                         }
                     }
 
-                    ApplicationStartupState.Loading -> {
-                        Unit
-                    }
+                    ApplicationStartupState.Loading -> {}
                 }
             }
     }

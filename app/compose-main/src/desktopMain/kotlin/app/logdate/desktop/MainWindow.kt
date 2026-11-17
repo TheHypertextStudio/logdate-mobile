@@ -103,7 +103,6 @@ internal fun MainWindow(
             }
         }
         MainWindowContent(
-            onOpenEditor = onOpenEditor,
             shortcutRequests = shortcutRequests,
         )
     }
@@ -115,7 +114,6 @@ internal fun MainWindow(
 @Suppress("ktlint:standard:function-naming")
 @Composable
 private fun MainWindowContent(
-    onOpenEditor: () -> Unit,
     shortcutRequests: AppShortcutRequests,
     viewModel: AppViewModel = koinViewModel(),
 ) {

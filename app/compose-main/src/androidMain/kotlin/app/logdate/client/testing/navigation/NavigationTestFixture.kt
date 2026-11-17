@@ -23,12 +23,6 @@ enum class NavigationTestDestination {
 
 private const val NAVIGATION_TEST_DESTINATION_EXTRA = "app.logdate.client.testing.navigation.TEST_DESTINATION"
 
-/** Writes a test-only starting destination into the launch intent. */
-fun Intent.putNavigationTestDestination(destination: NavigationTestDestination): Intent =
-    apply {
-        putExtra(NAVIGATION_TEST_DESTINATION_EXTRA, destination.name)
-    }
-
 /** Maps the test-only destination extra to the matching navigation key. */
 fun Intent.readNavigationTestDestination(): NavKey? =
     when (getStringExtra(NAVIGATION_TEST_DESTINATION_EXTRA) ?: ActivityLaunchTestOverrides.navigationDestination?.name) {

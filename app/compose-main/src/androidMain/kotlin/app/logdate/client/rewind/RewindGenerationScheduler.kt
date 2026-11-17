@@ -49,30 +49,6 @@ class RewindGenerationScheduler(
         Napier.d("Scheduled periodic rewind generation")
     }
 
-    /**
-     * Schedules the once-a-year "Year in Review" generation.
-     *
-     * Targets a window inside the first week of January so the prior year's data has
-     * fully settled. Uses [ExistingWorkPolicy.KEEP] so re-calling on subsequent app
-     * launches inside that window doesn't reschedule.
-     */
-    fun scheduleAnnualGeneration() {
-        val request =
-            OneTimeWorkRequestBuilder<AnnualRewindGenerationWorker>()
-                .setInitialDelay(
-                    calculateAnnualInitialDelay(),
-                    TimeUnit.MILLISECONDS,
-                ).build()
-
-        workManager.enqueueUniqueWork(
-            AnnualRewindGenerationWorker.WORK_NAME,
-            ExistingWorkPolicy.KEEP,
-            request,
-        )
-
-        Napier.d("Scheduled annual rewind generation")
-    }
-
     fun disableAnnualGeneration() {
         workManager.cancelUniqueWork(AnnualRewindGenerationWorker.WORK_NAME)
     }
@@ -112,32 +88,6 @@ class RewindGenerationScheduler(
                 set(Calendar.MILLISECOND, 0)
                 if (timeInMillis <= now.timeInMillis) {
                     add(Calendar.WEEK_OF_YEAR, 1)
-                }
-            }
-        return target.timeInMillis - now.timeInMillis
-    }
-
-    /**
-     * Calculates initial delay to target the next January 7 at 10 AM local time.
-     *
-     * Picked far enough into January that the prior year's last week is fully
-     * captured. Re-using the same January 7 anchor each year is intentional —
-     * [ExistingWorkPolicy.KEEP] means scheduling more than once in the window is a
-     * no-op, so the user can launch the app any time in early January without
-     * losing their Year in Review.
-     */
-    private fun calculateAnnualInitialDelay(): Long {
-        val now = Calendar.getInstance()
-        val target =
-            Calendar.getInstance().apply {
-                set(Calendar.MONTH, Calendar.JANUARY)
-                set(Calendar.DAY_OF_MONTH, 7)
-                set(Calendar.HOUR_OF_DAY, 10)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                if (timeInMillis <= now.timeInMillis) {
-                    add(Calendar.YEAR, 1)
                 }
             }
         return target.timeInMillis - now.timeInMillis

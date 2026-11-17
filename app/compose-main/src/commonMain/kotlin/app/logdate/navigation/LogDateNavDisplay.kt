@@ -267,7 +267,6 @@ fun LogDateNavDisplay(
                                             onSignInToRestoreAccount = {
                                                 backStack.add(CloudAccountSetupRoute(startOnSignIn = true))
                                             },
-                                            onOpenMediaDetail = { backStack.add(MediaDetailRoute(it)) },
                                             onOpenSyncSettings = { backStack.add(SyncSettingsRoute) },
                                             onEnterRecoveryPhrase = { backStack.add(RecoveryPhraseEntrySettingsRoute) },
                                             onOpenWatch = { backStack.add(WatchSettingsRoute) },
@@ -301,7 +300,6 @@ fun LogDateNavDisplay(
                                                     onAddMemory = { backStack.add(EntryEditorRoute(visitContext = it)) },
                                                     onOpenNote = { backStack.navigateToNoteDetail(it) },
                                                     modifier = modifier,
-                                                    embeddedInHome = true,
                                                 )
                                             },
                                         )

@@ -10,7 +10,6 @@ import app.logdate.feature.editor.ui.common.NoteEditorToolbar
 import app.logdate.feature.editor.ui.content.EditorBottomContent
 import app.logdate.feature.editor.ui.content.EmptyEditorStateContent
 import app.logdate.feature.editor.ui.dialog.DraftsBottomSheet
-import app.logdate.feature.editor.ui.dialog.alert.ExitConfirmationDialog
 import app.logdate.feature.editor.ui.editor.BlockType
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
@@ -89,25 +88,6 @@ fun S02_EntryEditorListMixedContent() {
             shouldReturnToPickerOnBack = false,
             onDismissExpanded = {},
             modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@Composable
-fun S04_EntryEditorExitDialog() {
-    EditorRouteFrame {
-        MainEditorContent(
-            uiState = previewListUiState(),
-            shouldReturnToPickerOnBack = false,
-            onDismissExpanded = {},
-            modifier = Modifier.fillMaxSize(),
-        )
-        ExitConfirmationDialog(
-            onDismiss = {},
-            onSaveAsDraft = {},
-            onDiscardAndExit = {},
         )
     }
 }

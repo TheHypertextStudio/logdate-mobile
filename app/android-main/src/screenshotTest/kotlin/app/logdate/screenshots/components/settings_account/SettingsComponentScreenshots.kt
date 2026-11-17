@@ -147,9 +147,6 @@ fun DataSettings() {
             onCancelRestore = {},
             onRetryRestore = {},
             onDismissRestore = {},
-            integrityState = IntegrityState(),
-            onRunIntegrityCheck = {},
-            onRepairIntegrity = {},
             snackbarHostState = snackbarHostState,
             isAuthenticated = false,
         )
