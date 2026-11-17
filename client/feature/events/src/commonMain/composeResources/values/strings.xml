@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Accessibility -->
-    <string name="cd_event_linked_photo">Photo linked to this event</string>
     <string name="cd_event_linked_note_detach">Detach</string>
 
     <!-- Events hub (settings entry that gathers everything event-related) -->

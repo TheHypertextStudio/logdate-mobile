@@ -4,9 +4,4 @@
     <string name="event_detail_error_detach_capture">Couldn't detach that capture</string>
     <string name="event_detail_error_save">Couldn't save event</string>
     <string name="event_detail_error_delete">Couldn't delete event</string>
-    <string name="event_note_headline_text">Text note</string>
-    <string name="event_note_headline_photo">Photo</string>
-    <string name="event_note_headline_video">Video</string>
-    <string name="event_note_headline_voice_memo">Voice memo</string>
-    <string name="event_note_headline_handwriting">Handwriting</string>
 </resources>

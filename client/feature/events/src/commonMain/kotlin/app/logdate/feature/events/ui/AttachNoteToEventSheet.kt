@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_EXPANDED_LOWER_BOUND
 import app.logdate.client.repository.journals.JournalNote
-import app.logdate.client.text.asString
 import app.logdate.ui.common.AlertDialog
+import app.logdate.ui.notes.NoteThumbnail
 import app.logdate.ui.platform.PlatformSheet
 import app.logdate.ui.theme.Spacing
 import app.logdate.util.toReadableDateTimeShort
@@ -114,9 +114,12 @@ private fun AttachNoteList(
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         items(attachableNotes, key = { it.uid }) { note ->
+            val date = note.creationTimestamp.toReadableDateTimeShort()
+            val headline = note.headline()
             ListItem(
-                headlineContent = { Text(note.headline().asString()) },
-                supportingContent = { Text(note.creationTimestamp.toReadableDateTimeShort()) },
+                leadingContent = { NoteThumbnail(note, size = 48.dp) },
+                headlineContent = { Text(headline ?: date, maxLines = 2) },
+                supportingContent = headline?.let { { Text(date) } },
                 modifier =
                     Modifier
                         .fillMaxWidth()
