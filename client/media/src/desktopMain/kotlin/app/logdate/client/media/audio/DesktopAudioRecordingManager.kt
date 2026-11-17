@@ -80,9 +80,7 @@ class DesktopAudioRecordingManager(
                         // Just wait for the text
                     }
 
-                    TranscriptionResult.Cancelled -> {
-                        Unit
-                    }
+                    TranscriptionResult.Cancelled -> {}
                 }
             }
         }

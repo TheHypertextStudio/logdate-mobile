@@ -6,9 +6,7 @@ import app.logdate.client.billing.model.LogDateBackupPlanOption
 import io.github.aakira.napier.Napier
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import platform.Foundation.NSURL
 import platform.StoreKit.SKPayment
 import platform.StoreKit.SKPaymentQueue
@@ -37,12 +35,7 @@ private const val MANAGE_SUBSCRIPTIONS_URL = "https://apps.apple.com/account/sub
  * permit programmatic cancellation, so [cancelPlan] opens the system-managed URL instead.
  */
 class IosSubscriptionBiller : SubscriptionBiller {
-    private val _isSubscribed = MutableStateFlow(false)
-    private val _availablePlans = MutableStateFlow(LogDateBackupPlanOption.entries.toList())
     private val loadedProducts = MutableStateFlow<Map<String, SKProduct>>(emptyMap())
-
-    override val isSubscribed: Flow<Boolean> = _isSubscribed.asStateFlow()
-    override val availablePlans: Flow<List<LogDateBackupPlanOption>> = _availablePlans.asStateFlow()
 
     private val storeKitDelegate = StoreKitDelegate()
 
@@ -52,11 +45,8 @@ class IosSubscriptionBiller : SubscriptionBiller {
     }
 
     override suspend fun purchasePlan(plan: LogDateBackupPlanOption) {
-        if (plan.sku.isBlank() || plan == LogDateBackupPlanOption.BASIC) {
-            // Basic is the free tier — no StoreKit transaction needed.
-            _isSubscribed.value = false
-            return
-        }
+        // Basic is the free tier — no StoreKit transaction needed.
+        if (plan.sku.isBlank() || plan == LogDateBackupPlanOption.BASIC) return
         val product =
             loadedProducts.value[plan.sku]
                 ?: error(
@@ -117,7 +107,6 @@ class IosSubscriptionBiller : SubscriptionBiller {
                     SKPaymentTransactionState.SKPaymentTransactionStatePurchased,
                     SKPaymentTransactionState.SKPaymentTransactionStateRestored,
                     -> {
-                        _isSubscribed.value = true
                         queue.finishTransaction(transaction)
                     }
 
@@ -128,9 +117,7 @@ class IosSubscriptionBiller : SubscriptionBiller {
                         queue.finishTransaction(transaction)
                     }
 
-                    else -> {
-                        Unit
-                    } // purchasing / deferred — wait for the next callback
+                    else -> {} // purchasing / deferred — wait for the next callback
                 }
             }
         }

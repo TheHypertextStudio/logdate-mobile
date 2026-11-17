@@ -35,11 +35,6 @@ data class TimeOfDay(
         return copy(hour = if (newHour < 0) newHour + 24 else newHour)
     }
 
-    /**
-     * Returns a new TimeOfDay that is the specified number of hours later.
-     */
-    fun plusHours(hours: Int): TimeOfDay = copy(hour = (hour + hours) % 24)
-
     override fun toString(): String =
         "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}"
 

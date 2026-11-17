@@ -19,7 +19,6 @@ import app.logdate.shared.model.StoryBeat
 import app.logdate.shared.model.WeekNarrative
 import app.logdate.shared.model.WeekStatsSnapshot
 import io.github.aakira.napier.Napier
-import kotlin.uuid.Uuid
 
 /**
  * Pure-local Rewind generator. Runs without any network call — every piece comes from
@@ -117,8 +116,6 @@ class LocalRewindStrategy(
         val detectedBeats =
             storyBeatDetector.detect(
                 textEntries = input.textEntries,
-                periodStart = input.periodStart,
-                periodEnd = input.periodEnd,
                 media = input.media,
                 audio = input.audioEntries,
                 locationHistory = input.locationHistory,
@@ -206,9 +203,6 @@ class LocalRewindStrategy(
         if (sampled.lastOrNull() != asPoints.last()) sampled.add(asPoints.last())
         return sampled
     }
-
-    @Suppress("unused")
-    private fun unused() = Uuid.random()
 
     private companion object {
         const val STRATEGY_NAME = "local-heuristic"

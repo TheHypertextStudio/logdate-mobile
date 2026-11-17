@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="notification_group_capture_playback">Capture &amp; playback</string>
     <string name="notification_group_background_services">Background services</string>
@@ -7,28 +7,50 @@
     <string name="notification_group_import_export">Import &amp; export</string>
 
     <string name="notification_channel_audio_recording_name">Audio recording</string>
-    <string name="notification_channel_audio_recording_description">Shows recording controls while you capture audio.</string>
+    <string
+    name="notification_channel_audio_recording_description"
+  >Shows recording controls while you capture audio.</string>
     <string name="notification_channel_floating_recorder_name">Floating recorder</string>
-    <string name="notification_channel_floating_recorder_description">Shows a running voice recording as a bubble over other apps.</string>
+    <string
+    name="notification_channel_floating_recorder_description"
+  >Shows a running voice recording as a bubble over other apps.</string>
     <string name="notification_channel_audio_playback_name">Audio playback</string>
-    <string name="notification_channel_audio_playback_description">Shows playback controls while you listen to saved audio notes.</string>
+    <string
+    name="notification_channel_audio_playback_description"
+  >Shows playback controls while you listen to saved audio notes.</string>
     <string name="notification_channel_location_history_name">Location history</string>
-    <string name="notification_channel_location_history_description">Keeps location history tracking running in the background.</string>
+    <string
+    name="notification_channel_location_history_description"
+  >Keeps location history tracking running in the background.</string>
     <string name="notification_channel_capture_nudges_name">Capture nudges</string>
-    <string name="notification_channel_capture_nudges_description">Timely prompts to write while something is still fresh.</string>
+    <string
+    name="notification_channel_capture_nudges_description"
+  >Timely prompts to write while something is still fresh.</string>
     <string name="notification_channel_draft_rescue_name">Draft rescue</string>
-    <string name="notification_channel_draft_rescue_description">Reminders to finish entries you already started.</string>
+    <string
+    name="notification_channel_draft_rescue_description"
+  >Reminders to finish entries you already started.</string>
     <string name="notification_channel_memory_recall_name">Memory recall</string>
-    <string name="notification_channel_memory_recall_description">Prompts to revisit meaningful older entries.</string>
+    <string
+    name="notification_channel_memory_recall_description"
+  >Prompts to revisit meaningful older entries.</string>
     <string name="notification_channel_rewind_ready_name">Rewind ready</string>
-    <string name="notification_channel_rewind_ready_description">Lets you know when a new weekly Rewind is ready to watch.</string>
+    <string
+    name="notification_channel_rewind_ready_description"
+  >Lets you know when a new weekly Rewind is ready to watch.</string>
 
     <string name="notification_rewind_ready_title">Your weekly Rewind is ready</string>
-    <string name="notification_rewind_ready_body">%1$s is waiting for you. Tap to watch the story.</string>
-    <string name="notification_rewind_ready_body_generic">A new weekly Rewind is waiting for you. Tap to watch the story.</string>
+    <string
+    name="notification_rewind_ready_body"
+  >%1$s is waiting for you. Tap to watch the story.</string>
+    <string
+    name="notification_rewind_ready_body_generic"
+  >A new weekly Rewind is waiting for you. Tap to watch the story.</string>
     <string name="notification_rewind_ready_action_watch">Watch</string>
     <string name="notification_channel_watch_sync_name">Watch sync</string>
-    <string name="notification_channel_watch_sync_description">Alerts when entries arrive from your watch.</string>
+    <string
+    name="notification_channel_watch_sync_description"
+  >Alerts when entries arrive from your watch.</string>
     <string name="notification_watch_note_audio_title">Voice note from your watch</string>
     <string name="notification_watch_note_handwriting_title">Handwriting from your watch</string>
     <string name="notification_watch_note_text_title">Note from your watch</string>
@@ -36,39 +58,70 @@
     <string name="notification_watch_note_video_title">Video from your watch</string>
     <string name="notification_watch_note_open_body">Tap to open it in the editor</string>
     <string name="notification_channel_data_export_name">Data export</string>
-    <string name="notification_channel_data_export_description">Shows progress while exporting your LogDate data.</string>
+    <string
+    name="notification_channel_data_export_description"
+  >Shows progress while exporting your LogDate data.</string>
     <string name="notification_channel_data_restore_name">Data restore</string>
-    <string name="notification_channel_data_restore_description">Shows progress while restoring your LogDate data.</string>
-
-    <string name="notification_settings_title">Notifications</string>
-    <string name="notification_settings_android_section">Android settings</string>
-    <string name="notification_settings_app_title">All LogDate notifications</string>
-    <string name="notification_settings_app_description">Open Android notification settings for LogDate.</string>
+    <string
+    name="notification_channel_data_restore_description"
+  >Shows progress while restoring your LogDate data.</string>
 
     <string name="ambient_prompt_capture_morning_title">Start today’s story</string>
-    <string name="ambient_prompt_capture_morning_body">Write a quick note before the day gets away from you.</string>
+    <string
+    name="ambient_prompt_capture_morning_body"
+  >Write a quick note before the day gets away from you.</string>
     <string name="ambient_prompt_capture_evening_title">Reflect on today</string>
-    <string name="ambient_prompt_capture_evening_body">Capture what stood out before the day fades.</string>
+    <string
+    name="ambient_prompt_capture_evening_body"
+  >Capture what stood out before the day fades.</string>
     <string name="ambient_prompt_capture_novel_place_title">Write about %1$s</string>
-    <string name="ambient_prompt_capture_novel_place_body">You spent time somewhere new today. Capture what made it memorable.</string>
-    <string name="ambient_prompt_capture_novel_place_body_fallback">Something about today seems worth writing down while it’s still fresh.</string>
+    <string
+    name="ambient_prompt_capture_novel_place_body"
+  >You spent time somewhere new today. Capture what made it memorable.</string>
+    <string
+    name="ambient_prompt_capture_novel_place_body_fallback"
+  >Something about today seems worth writing down while it’s still fresh.</string>
     <string name="ambient_prompt_draft_rescue_title">Finish your draft</string>
-    <string name="ambient_prompt_draft_rescue_body">You already started writing. Pick it back up before the details fade.</string>
+    <string
+    name="ambient_prompt_draft_rescue_body"
+  >You already started writing. Pick it back up before the details fade.</string>
     <string name="ambient_prompt_memory_recall_title">Revisit a memory</string>
-    <string name="ambient_prompt_memory_recall_body">Open an older entry worth revisiting today.</string>
-    <string name="ambient_prompt_event_nudge_body">Starts at %1$s. Tap to capture something for it.</string>
-    <string name="ambient_prompt_event_nudge_all_day_body">All day on %1$s. Tap to capture something for it.</string>
+    <string
+    name="ambient_prompt_memory_recall_body"
+  >Open an older entry worth revisiting today.</string>
+    <string
+    name="ambient_prompt_event_nudge_body"
+  >Starts at %1$s. Tap to capture something for it.</string>
+    <string
+    name="ambient_prompt_event_nudge_all_day_body"
+  >All day on %1$s. Tap to capture something for it.</string>
     <string name="notification_channel_cloud_sync_name">Backup</string>
-    <string name="notification_channel_cloud_sync_description">Shows backup checks and progress while your memories are backed up.</string>
+    <string
+    name="notification_channel_cloud_sync_description"
+  >Shows backup checks and progress while your memories are backed up.</string>
     <string name="notification_channel_moment_reminders_name">Reminders</string>
-    <string name="notification_channel_moment_reminders_description">A reminder to record a moment, at most once a day.</string>
+    <string
+    name="notification_channel_moment_reminders_description"
+  >A reminder to record a moment, at most once a day.</string>
     <string name="notification_watch_paired_title">LogDate is set up on %1$s</string>
-    <string name="notification_watch_paired_body">Your watch and this phone now share your moments.</string>
-    <string name="notification_watch_linked_body">Your watch now backs up to your LogDate account on its own.</string>
-    <string name="notification_watch_other_account_title">%1$s is set up for another LogDate account</string>
-    <string name="notification_watch_other_account_body">Erase LogDate on the watch to set it up with this phone.</string>
+    <string
+    name="notification_watch_paired_body"
+  >Your watch and this phone now share your moments.</string>
+    <string
+    name="notification_watch_linked_body"
+  >Your watch now backs up to your LogDate account on its own.</string>
+    <string
+    name="notification_watch_other_account_title"
+  >%1$s is set up for another LogDate account</string>
+    <string
+    name="notification_watch_other_account_body"
+  >Erase LogDate on the watch to set it up with this phone.</string>
     <string name="notification_watch_device_limit_title">Backup is not set up on %1$s</string>
-    <string name="notification_watch_device_limit_body">This account has the most linked devices it can have. Remove one in Settings, then Devices.</string>
+    <string
+    name="notification_watch_device_limit_body"
+  >This account has the most linked devices it can have. Remove one in Settings, then Devices.</string>
     <string name="notification_watch_key_conflict_title">%1$s needs to be linked again</string>
-    <string name="notification_watch_key_conflict_body">Your watch has a different encryption key. Sync your watch before removing and setting it up again.</string>
+    <string
+    name="notification_watch_key_conflict_body"
+  >Your watch has a different encryption key. Sync your watch before removing and setting it up again.</string>
 </resources>

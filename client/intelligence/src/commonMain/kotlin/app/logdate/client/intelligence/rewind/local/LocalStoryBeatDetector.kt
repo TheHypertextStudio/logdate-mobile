@@ -38,14 +38,10 @@ class LocalStoryBeatDetector(
      *   shows visits to >=2 places more than [LOCATION_SPLIT_DISTANCE_METERS] apart,
      *   the detector subdivides that day into multiple beats — so trip days don't
      *   flatten into one undifferentiated entry.
-     * @param periodStart inclusive start of the period.
-     * @param periodEnd exclusive end of the period.
      * @return 0–[maxBeats] story beats. Empty when no text, media, or audio exists.
      */
     fun detect(
         textEntries: List<JournalNote.Text>,
-        periodStart: Instant,
-        periodEnd: Instant,
         media: List<IndexedMedia> = emptyList(),
         audio: List<AudioEntryWithTranscript> = emptyList(),
         locationHistory: List<LocationHistoryItem> = emptyList(),

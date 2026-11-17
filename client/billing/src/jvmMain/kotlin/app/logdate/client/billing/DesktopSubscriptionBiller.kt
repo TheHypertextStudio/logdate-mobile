@@ -2,9 +2,6 @@ package app.logdate.client.billing
 
 import app.logdate.client.billing.model.LogDateBackupPlanOption
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.awt.Desktop
 import java.net.URI
 
@@ -21,18 +18,8 @@ class DesktopSubscriptionBiller(
     },
     private val browserLauncher: (String) -> Unit = ::openInBrowser,
 ) : SubscriptionBiller {
-    private val subscribed = MutableStateFlow(false)
-
-    override val isSubscribed: Flow<Boolean> = subscribed.asStateFlow()
-
-    override val availablePlans: Flow<List<LogDateBackupPlanOption>> =
-        MutableStateFlow(LogDateBackupPlanOption.entries.toList()).asStateFlow()
-
     override suspend fun purchasePlan(plan: LogDateBackupPlanOption) {
-        if (plan == LogDateBackupPlanOption.BASIC) {
-            subscribed.value = false
-            return
-        }
+        if (plan == LogDateBackupPlanOption.BASIC) return
         browserLauncher(checkoutUrlProvider(plan))
     }
 

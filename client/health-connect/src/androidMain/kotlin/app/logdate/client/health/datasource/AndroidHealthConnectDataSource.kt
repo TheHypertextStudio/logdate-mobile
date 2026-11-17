@@ -9,7 +9,6 @@ import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import app.logdate.client.health.HealthDataAvailability
-import app.logdate.client.health.SleepSessionConstants
 import app.logdate.client.health.model.SleepSession
 import app.logdate.client.health.model.SleepStage
 import app.logdate.client.health.model.SleepStageType
@@ -312,15 +311,6 @@ class AndroidHealthConnectDataSource(
             )
         }
     }
-
-    private fun mapSleepStageType(stage: String): SleepStageType =
-        when (stage) {
-            "${SleepSessionConstants.STAGE_TYPE_AWAKE}" -> SleepStageType.AWAKE
-            "${SleepSessionConstants.STAGE_TYPE_DEEP}" -> SleepStageType.DEEP
-            "${SleepSessionConstants.STAGE_TYPE_LIGHT}" -> SleepStageType.LIGHT
-            "${SleepSessionConstants.STAGE_TYPE_REM}" -> SleepStageType.REM
-            else -> SleepStageType.UNKNOWN
-        }
 }
 
 private fun Instant.toJavaTimeInstant(): java.time.Instant = java.time.Instant.ofEpochSecond(epochSeconds, nanosecondsOfSecond.toLong())

@@ -22,13 +22,6 @@ class StaticBatteryInfoProvider : BatteryInfoProvider {
 
     override suspend fun isPowerSaveMode(): Boolean = batteryStateFlow.value.isPowerSaveMode
 
-    /**
-     * Set a custom battery state for testing purposes.
-     */
-    fun setBatteryState(batteryState: BatteryState) {
-        batteryStateFlow.value = batteryState
-    }
-
     override fun cleanup() {
     }
 }

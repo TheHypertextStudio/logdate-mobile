@@ -15,7 +15,12 @@ open class InMemoryMediaManager :
     private val deletedOwnedMedia = mutableSetOf<String>()
     private val payloads = mutableMapOf<String, MediaPayload>()
 
-    /** The URIs [deleteOwnedMedia] was asked to remove, in call order. */
+    /**
+     * The URIs [deleteOwnedMedia] was asked to remove, in call order.
+     *
+     * Assertion hook for StoredMediaReferencePersistenceTest (client/data desktopTest) on this commonMain test double
+     */
+    @Suppress("unused")
     val deletedOwnedMediaUris: Set<String> get() = deletedOwnedMedia
 
     override suspend fun getMedia(uri: String): MediaObject =

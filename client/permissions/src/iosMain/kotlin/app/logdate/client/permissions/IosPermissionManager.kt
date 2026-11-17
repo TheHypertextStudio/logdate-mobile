@@ -169,9 +169,6 @@ class IosPermissionManager(
 
     override fun shouldShowRationale(type: PermissionType): Boolean = false
 
-    /** Refreshes the cached notification status. Public for use by Compose hooks. */
-    suspend fun refreshNotificationStatus(): PermissionStatus = refreshNotificationStatusInternal()
-
     private fun currentStatus(type: PermissionType): PermissionStatus =
         when (type) {
             PermissionType.LOCATION -> mapLocationStatus(CLLocationManager().authorizationStatus)
