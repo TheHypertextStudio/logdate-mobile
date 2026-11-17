@@ -189,6 +189,9 @@ and new dead code fails the check instead of piling up.
 searchdeadcode . --profile ci --unused-extras=false --write-only-dao=false --write-only-prefs=false
 ```
 
+Every push runs part of this too: the pre-push check compiles with the compiler's checks, runs
+detekt on the modules the push changes, and runs SearchDeadCode across the repository.
+
 Each layer looks at the code from a different place, so each finds something the others miss:
 
 - **The Kotlin compiler** fails every compilation, tests included, on unused local variables,
