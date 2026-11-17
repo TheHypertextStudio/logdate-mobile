@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Resources that are read without a reference Android Lint or the resource shrinker can follow:
+
+    - android_wear_capabilities: Google Play services reads this array by name to tell the watch
+      that the phone app is installed.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@array/android_wear_capabilities" />
