@@ -13,6 +13,8 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -21,8 +23,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -39,6 +39,7 @@ import app.logdate.client.ambient.EXTRA_AMBIENT_PROMPT_TARGET
 import app.logdate.client.media.audio.AndroidAudioRecordingManager
 import app.logdate.client.media.audio.AudioRecordingManager
 import app.logdate.client.media.audio.AudioRecordingService
+import app.logdate.client.media.audio.CrashSafeRecording
 import app.logdate.client.media.device.AudioRouteRepository
 import app.logdate.client.media.device.MediaDeviceCategory
 import app.logdate.client.repository.journals.EntryDraftRepository
@@ -60,9 +61,12 @@ import org.koin.core.context.GlobalContext
 import org.koin.dsl.module
 import java.io.File
 
-// The names of the entry page's choices that start a recording and a piece of writing.
+// What the entry page's controls are called.
 private const val VOICE = "Voice"
 private const val WRITE = "Write"
+private const val ADD_TO_ENTRY = "Add to entry"
+private const val RETURN_TO_ENTRY = "Return to entry"
+private const val SAVE_ENTRY = "Save entry"
 
 /** Exercises the real microphone and recording service on the API 35 managed emulator. */
 @RunWith(AndroidJUnit4::class)
@@ -95,7 +99,7 @@ class RecordingBackgroundLifecycleE2ETest {
             assertTrue("The real service must still be recording in the background", manager.isRecording)
             assertRecordingNotificationPresent()
             val checkpoint = recordingDurationMillis(manager)
-            val recordedFile = File(checkNotNull(manager.currentRecordingPath))
+            val recordedFile = inFlightRecording(checkNotNull(manager.currentRecordingPath))
             val recordedSize = recordedFile.length()
             composeRule.waitUntil(timeoutMillis = 10_000) {
                 recordingDurationMillis(manager) >= checkpoint + 1_000 && recordedFile.length() > recordedSize
@@ -152,7 +156,7 @@ class RecordingBackgroundLifecycleE2ETest {
                 capture("recording-microphone-switched")
                 val manager = GlobalContext.get().get<AudioRecordingManager>()
                 val checkpoint = recordingDurationMillis(manager)
-                val recordedFile = File(checkNotNull(manager.currentRecordingPath))
+                val recordedFile = inFlightRecording(checkNotNull(manager.currentRecordingPath))
                 val recordedSize = recordedFile.length()
                 composeRule.waitUntil(timeoutMillis = 10_000) {
                     recordingDurationMillis(manager) >= checkpoint + 1_000 && recordedFile.length() > recordedSize
@@ -170,10 +174,10 @@ class RecordingBackgroundLifecycleE2ETest {
     @Test
     fun recordingAnchorsItsBlockAndKeepsExistingTextAsPassiveContext() {
         verifyRecordingContinuity("focused-entry", includeExistingText = true) {
-            val list = composeRule.onNodeWithTag("editor_block_list").fetchSemanticsNode()
-            assertFalse("A focused recording must not expose a scroll action", list.config.contains(SemanticsActions.ScrollBy))
-            composeRule.onNodeWithTag("add_to_entry").assertDoesNotExist()
-            composeRule.onNodeWithTag("editor_save_button").assertIsDisplayed().assertIsNotEnabled()
+            val page = composeRule.onNodeWithTag("entry_page_scroll").fetchSemanticsNode()
+            assertFalse("A focused recording must not expose a scroll action", page.config.contains(SemanticsActions.ScrollBy))
+            composeRule.onNodeWithText(ADD_TO_ENTRY).assertIsNotEnabled()
+            composeRule.onNodeWithContentDescription(SAVE_ENTRY).assertIsDisplayed().assertIsNotEnabled()
             val contextNodes = composeRule.onAllNodesWithTag("editor_passive_context").fetchSemanticsNodes()
             if (contextNodes.isNotEmpty()) {
                 composeRule.onNodeWithText("Before this recording.").assertIsDisplayed()
@@ -182,9 +186,8 @@ class RecordingBackgroundLifecycleE2ETest {
             }
             capture("recording-focused-entry-anchored")
         }
-        composeRule.onNodeWithTag("editor_block_list").performScrollToIndex(2)
-        composeRule.onNodeWithTag("add_to_entry").assertIsDisplayed()
-        composeRule.onNodeWithTag("editor_block_list").performScrollToIndex(0)
+        returnToEntry()
+        waitForAddToEntry()
         composeRule.onNodeWithText("Before this recording.").assertIsDisplayed()
         capture("recording-focused-entry-text-restored")
     }
@@ -230,9 +233,11 @@ class RecordingBackgroundLifecycleE2ETest {
                 waitForTag("editor_text_input")
                 composeRule.onNodeWithTag("editor_text_input").performTextInput("Before this recording.")
                 Espresso.closeSoftKeyboard()
-                composeRule.onNodeWithTag("add_to_entry").performScrollTo().performClick()
-                waitForTag("add_memory_AUDIO")
-                composeRule.onNodeWithTag("add_memory_AUDIO").performScrollTo().performClick()
+                returnToEntry()
+                waitForAddToEntry()
+                composeRule.onNodeWithText(ADD_TO_ENTRY).performClick()
+                waitForChoice(VOICE)
+                composeRule.onNodeWithContentDescription(VOICE).performClick()
             } else {
                 composeRule.onNodeWithContentDescription(VOICE).performClick()
             }
@@ -290,6 +295,8 @@ class RecordingBackgroundLifecycleE2ETest {
                     useUnmergedTree = true,
                 ).assertIsDisplayed()
             if (composeRule.onAllNodesWithTag("completed_audio_transcript").fetchSemanticsNodes().isEmpty()) {
+                returnToEntry()
+                waitForAddToEntry()
                 val bounds = composeRule.onNodeWithTag("memory_block_$owner").getUnclippedBoundsInRoot()
                 assertTrue("A completed recording without transcript must collapse to its controls", bounds.bottom - bounds.top < 240.dp)
             }
@@ -324,6 +331,27 @@ class RecordingBackgroundLifecycleE2ETest {
     private fun waitForChoice(name: String) {
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithContentDescription(name).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /** The file capture is writing now. The final file exists only once the recording has ended. */
+    private fun inFlightRecording(finalPath: String): File {
+        val final = File(finalPath)
+        return CrashSafeRecording.inFlightFile(final, isolateForBackup = true).takeIf { it.isFile }
+            ?: CrashSafeRecording.inFlightFile(final)
+    }
+
+    /** Leaves the piece that is open for the entry it belongs to, where there is one to leave. */
+    private fun returnToEntry() {
+        if (composeRule.onAllNodesWithContentDescription(RETURN_TO_ENTRY).fetchSemanticsNodes().isNotEmpty()) {
+            composeRule.onNodeWithContentDescription(RETURN_TO_ENTRY).performClick()
+        }
+    }
+
+    /** Waits until the entry offers to add something, which it does only while nothing is open. */
+    private fun waitForAddToEntry() {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodes(hasText(ADD_TO_ENTRY) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

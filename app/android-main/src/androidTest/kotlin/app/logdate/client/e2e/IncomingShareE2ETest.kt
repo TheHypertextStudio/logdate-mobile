@@ -13,7 +13,6 @@ import app.logdate.client.MainActivity
 import app.logdate.client.media.MediaManager
 import app.logdate.client.media.MediaObject
 import app.logdate.client.media.MediaPayload
-import app.logdate.di.appModule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
@@ -24,10 +23,7 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.junit.runners.model.Statement
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
@@ -340,12 +336,7 @@ private class IncomingShareKoinOverrideRule(
         object : Statement() {
             override fun evaluate() {
                 val context = ApplicationProvider.getApplicationContext<Context>()
-                if (GlobalContext.getOrNull() == null) {
-                    startKoin {
-                        androidContext(context)
-                        modules(appModule)
-                    }
-                }
+                startKoinIfAppHasNot(context)
                 loadKoinModules(module)
                 base.evaluate()
             }

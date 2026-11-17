@@ -10,7 +10,6 @@ import app.logdate.client.media.audio.AudioPlaybackManager
 import app.logdate.client.media.audio.AudioPlaybackMetadata
 import app.logdate.client.media.audio.AudioPlaybackStatus
 import app.logdate.client.media.audio.AudioPlaybackStatusProvider
-import app.logdate.di.appModule
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Rule
@@ -20,10 +19,7 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.junit.runners.model.Statement
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.time.Duration.Companion.seconds
@@ -107,12 +103,7 @@ private class AudioPlaybackKoinRule(
         object : Statement() {
             override fun evaluate() {
                 val context = ApplicationProvider.getApplicationContext<Context>()
-                if (GlobalContext.getOrNull() == null) {
-                    startKoin {
-                        androidContext(context)
-                        modules(appModule)
-                    }
-                }
+                startKoinIfAppHasNot(context)
                 loadKoinModules(module)
                 base.evaluate()
             }
