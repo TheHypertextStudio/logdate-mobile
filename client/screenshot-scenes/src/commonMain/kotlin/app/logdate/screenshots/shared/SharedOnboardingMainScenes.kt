@@ -33,6 +33,7 @@ internal val catalogOnboardingMainScenes: List<SharedScreenshotSceneSpec> =
                     showLanding = false,
                     onGetStarted = {},
                     onSignIn = {},
+                    animateContent = false,
                 )
             }
         },

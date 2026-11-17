@@ -26,6 +26,8 @@ import app.logdate.feature.core.settings.ui.LocalDiagnosticsState
 import app.logdate.feature.core.settings.ui.LocationIntervalContent
 import app.logdate.feature.core.settings.ui.LocationSettingsContent
 import app.logdate.feature.core.settings.ui.LocationTrackingOptionsContent
+import app.logdate.feature.core.settings.ui.PlacesBetaSettingsItem
+import app.logdate.feature.core.settings.ui.PlacesBetaSettingsState
 import app.logdate.feature.core.settings.ui.RecommendationSettingsContent
 import app.logdate.feature.core.settings.ui.StorageQuotaUi
 import app.logdate.feature.core.settings.ui.SyncSettingsContent
@@ -312,6 +314,8 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                 onBack = {},
                 onSetEnabled = { _, _ -> },
                 activityLink = PhoneActivityLink(PhoneActivityLinkState.Denied, optedIn = true),
+                developerModeEnabled = true,
+                betaSettingsContent = { PlacesBetaSettingsItem(PlacesBetaSettingsState.Ready(enabled = true)) {} },
             )
         },
         sharedScene(SharedScreenshotSceneId.EventsSettings, ScreenshotSceneGroup.SETTINGS, standardMatrixVariants) {
