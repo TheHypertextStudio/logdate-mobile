@@ -143,7 +143,7 @@ internal fun FocusedEditorBlockContent(
                         onPersistCameraCaptureTarget = uiState.onPersistCameraCaptureTarget,
                         modifier =
                             Modifier.fillMaxSize().then(
-                                if (floatingChrome && !(liveBlock is CameraBlockUiState && liveBlock.uri == null)) {
+                                if (floatingChrome && !FocusedBlockChromePolicy.ownsWindowInsets(liveBlock)) {
                                     val clearance =
                                         FocusedBlockChromePolicy.clearanceFor(
                                             block = liveBlock,

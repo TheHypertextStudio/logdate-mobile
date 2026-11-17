@@ -17,8 +17,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.editor.ui.LocalSharedTransitionScope
 import app.logdate.feature.editor.ui.editor.AudioBlockUiState
+import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EntryBlockUiState
+import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
+import app.logdate.feature.editor.ui.editor.VideoBlockUiState
 
 internal val LocalEntryChromeHeight = compositionLocalOf { 64.dp }
 
@@ -51,8 +54,9 @@ internal object FocusedBlockChromePolicy {
         block: EntryBlockUiState,
         chromeHeight: Dp,
     ): Dp =
-        when (block) {
-            is TextBlockUiState, is AudioBlockUiState -> chromeHeight
+        when {
+            block is TextBlockUiState || block is AudioBlockUiState -> chromeHeight
+            block.isChoosingMedia() -> chromeHeight
             else -> 0.dp
         }
 
@@ -66,8 +70,17 @@ internal object FocusedBlockChromePolicy {
         when {
             block is TextBlockUiState -> dockReserve
             block is AudioBlockUiState && block.uri == null -> dockReserve
+            block.isChoosingMedia() -> dockReserve
             else -> 0.dp
         }
+
+    /**
+     * Whether [block] draws to the window edges and places its own controls inside the safe area
+     * when focused. Only the live camera viewfinder does; every other focused block, including
+     * the photo picker and a chosen photo or video with its caption and delete controls, gets the
+     * editor's safe insets (system bars, cutouts, keyboard) from its container.
+     */
+    fun ownsWindowInsets(block: EntryBlockUiState): Boolean = block is CameraBlockUiState && block.uri == null
 
     /**
      * Resolves both top and bottom clearances for [block].
@@ -82,6 +95,13 @@ internal object FocusedBlockChromePolicy {
             bottom = bottomClearance(block, dockReserve),
         )
 }
+
+/**
+ * A photo or video block still offering its picker. Its content is controls, so it keeps clear of
+ * system bars and editor chrome like text and audio do, rather than painting edge to edge.
+ */
+internal fun EntryBlockUiState.isChoosingMedia(): Boolean =
+    (this is ImageBlockUiState && uri == null) || (this is VideoBlockUiState && uri == null)
 
 /** Apply after painting the owning surface; shared by writing and recording's inner layout. */
 @Composable
