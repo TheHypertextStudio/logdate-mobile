@@ -24,7 +24,7 @@ internal class ServerAccountRefresher(
     suspend fun refresh(): Result<ServerReportedAccount> {
         val bound = sessions.getOriginBoundSession() ?: return Result.failure(ServerAccountUnavailableException("No one is signed in"))
         val account =
-            tokens.withFreshToken({ token -> api.getAccountInfo(token) }, "read the account").getOrElse { error ->
+            tokens.withFreshToken({ token -> api.getAccountInfo(token) }).getOrElse { error ->
                 if (error is CancellationException) throw error
                 return Result.failure(ServerAccountUnavailableException("The account could not be read from the server", error))
             }

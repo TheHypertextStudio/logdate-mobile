@@ -114,9 +114,7 @@ internal class LocationHistorySpaceSync(
                     )
                 }
 
-                HistoryRoute.NotSyncedHere -> {
-                    Unit
-                }
+                HistoryRoute.NotSyncedHere -> {}
 
                 HistoryRoute.Unroutable -> {
                     unroutable++

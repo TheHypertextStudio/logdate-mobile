@@ -69,7 +69,6 @@ internal class JournalUploader(
         val result =
             tokenRefresher.withFreshToken(
                 { token -> cloudJournalDataSource.deleteJournal(token, journalId) },
-                "deleteJournal($journalId)",
                 expectedScope = pending.scope,
             )
         if (result.isSuccess) {
@@ -120,7 +119,6 @@ internal class JournalUploader(
         val created =
             tokenRefresher.withFreshToken(
                 { token -> cloudJournalDataSource.createJournalIfAbsent(token, journal) },
-                "createJournalIfAbsent(${journal.id})",
                 expectedScope = pending.scope,
             )
         return conditionalCreates.settle(
@@ -146,7 +144,6 @@ internal class JournalUploader(
         if (pending.operation == PendingOperation.CREATE) {
             tokenRefresher.withFreshToken(
                 { token -> cloudJournalDataSource.uploadJournal(token, journal) },
-                "uploadJournal(${journal.id})",
                 expectedScope = pending.scope,
             )
         } else {
@@ -160,7 +157,6 @@ internal class JournalUploader(
                         ),
                     )
                 },
-                "updateJournal(${journal.id})",
                 expectedScope = pending.scope,
             )
         }

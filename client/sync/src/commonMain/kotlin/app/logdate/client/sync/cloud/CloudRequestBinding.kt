@@ -16,8 +16,6 @@ internal class CloudRequestBinding(
     val authorizedAccessToken: String = session.accessToken,
 ) : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<CloudRequestBinding>
-
-    fun withAccessToken(token: String): CloudRequestBinding = CloudRequestBinding(location, session, token)
 }
 
 /** Implemented by repositories that can bind refresh and retry to one server location. */

@@ -128,7 +128,6 @@ internal class AssociationUploader(
                         cloudAssociationDataSource.uploadAssociations(token, batch.associations)
                     }
                 },
-                "uploadAssociations(${batch.associations.size} items)",
                 expectedScope = pendingById.getValue(batch.ids.first()).scope,
             )
         if (result.isFailure) {
@@ -155,7 +154,6 @@ internal class AssociationUploader(
         val result =
             tokenRefresher.withFreshToken(
                 { token -> cloudAssociationDataSource.deleteAssociations(token, batch.associations) },
-                "deleteAssociations(${batch.associations.size} items)",
                 expectedScope = pendingById.getValue(batch.ids.first()).scope,
             )
         if (result.isFailure) {

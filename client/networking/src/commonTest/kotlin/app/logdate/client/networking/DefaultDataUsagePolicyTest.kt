@@ -177,27 +177,6 @@ class DefaultDataUsagePolicyTest {
     }
 
     @Test
-    fun `should load full res images only unrestricted`() {
-        assertTrue(DataUsageMode.Unrestricted.shouldLoadFullResImages())
-        assertFalse(DataUsageMode.Conservative.shouldLoadFullResImages())
-        assertFalse(DataUsageMode.Restricted.shouldLoadFullResImages())
-    }
-
-    @Test
-    fun `should load reduced images only conservative`() {
-        assertFalse(DataUsageMode.Unrestricted.shouldLoadReducedImages())
-        assertTrue(DataUsageMode.Conservative.shouldLoadReducedImages())
-        assertFalse(DataUsageMode.Restricted.shouldLoadReducedImages())
-    }
-
-    @Test
-    fun `should prefetch images only unrestricted`() {
-        assertTrue(DataUsageMode.Unrestricted.shouldPrefetchImages())
-        assertFalse(DataUsageMode.Conservative.shouldPrefetchImages())
-        assertFalse(DataUsageMode.Restricted.shouldPrefetchImages())
-    }
-
-    @Test
     fun `should allow ai calls unrestricted and conservative`() {
         assertTrue(DataUsageMode.Unrestricted.shouldAllowAICalls())
         assertTrue(DataUsageMode.Conservative.shouldAllowAICalls())

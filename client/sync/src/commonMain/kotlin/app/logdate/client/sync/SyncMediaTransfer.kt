@@ -246,9 +246,7 @@ internal class SyncMediaTransfer(
                         block.copy(uri = recoverAsset(block.id, "camera", block.uri))
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         }
         val updated = draft.copy(blocks = blocks)

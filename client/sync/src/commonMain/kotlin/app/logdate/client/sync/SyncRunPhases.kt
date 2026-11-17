@@ -19,7 +19,6 @@ import kotlin.time.Instant
  *
  */
 internal suspend fun DefaultSyncManager.runFullSyncPhase(
-    operationName: String,
     exceptionLabel: String,
     body: suspend (accessToken: String) -> SyncResult,
 ): SyncResult =
@@ -78,7 +77,6 @@ private suspend fun DefaultSyncManager.accountStorageBlocked(): SyncResult? {
 
 internal suspend fun DefaultSyncManager.runPendingUploads(): SyncResult =
     runFullSyncPhase(
-        operationName = "Upload",
         exceptionLabel = "Upload failed",
     ) { accessToken ->
         statusPublisher.beginRun(pendingUploadsForRun())
@@ -88,9 +86,9 @@ internal suspend fun DefaultSyncManager.runPendingUploads(): SyncResult =
         // write wins -- the earlier record survives as an orphaned block but is no longer
         // reachable, so it silently disappears. Running them in parallel bought nothing
         // (they contend on one repo) and cost entries.
-        val journalResult = uploader.uploadJournals(accessToken)
+        val journalResult = uploader.uploadJournals()
         if (readinessGate.reason.value != null) return@runFullSyncPhase journalResult
-        val contentResult = uploader.uploadContent(accessToken)
+        val contentResult = uploader.uploadContent()
         if (readinessGate.reason.value != null) return@runFullSyncPhase contentResult
         val mergeResult =
             if (journalResult.success && contentResult.success) {
@@ -99,9 +97,9 @@ internal suspend fun DefaultSyncManager.runPendingUploads(): SyncResult =
                 SyncResult(success = false)
             }
         if (readinessGate.reason.value != null) return@runFullSyncPhase mergeResult
-        val associationResult = uploader.uploadAssociations(accessToken)
+        val associationResult = uploader.uploadAssociations()
         if (readinessGate.reason.value != null) return@runFullSyncPhase associationResult
-        val draftResult = if (profile.syncsDrafts) uploader.uploadDrafts(accessToken) else SyncResult(success = true)
+        val draftResult = if (profile.syncsDrafts) uploader.uploadDrafts() else SyncResult(success = true)
         if (readinessGate.reason.value != null) return@runFullSyncPhase draftResult
         val historyResult = uploadLocationHistory(accessToken)
         if (readinessGate.reason.value != null) return@runFullSyncPhase historyResult
@@ -125,7 +123,7 @@ internal suspend fun DefaultSyncManager.runPendingUploads(): SyncResult =
         val success = errors.isEmpty()
         if (success) {
             lastErrorFlow.value = null
-            statusPublisher.refreshObservedQuotaFromServer("pending upload")
+            statusPublisher.refreshObservedQuotaFromServer()
         } else {
             lastErrorFlow.value = errors.mostSevere()
         }
@@ -214,7 +212,7 @@ private suspend fun DefaultSyncManager.fetchRemoteDownloads(accessToken: String)
                 if (readinessGate.reason.value ==
                     null
                 ) {
-                    downloader.downloadAssociations(accessToken, associationSince)
+                    downloader.downloadAssociations(associationSince)
                 } else {
                     SyncResult(success = false)
                 }
@@ -234,7 +232,6 @@ private suspend fun DefaultSyncManager.fetchRemoteDownloads(accessToken: String)
 
 internal suspend fun DefaultSyncManager.runRemoteDownload(): SyncResult =
     runFullSyncPhase(
-        operationName = "Download",
         exceptionLabel = "Download failed",
     ) { accessToken ->
         sessionStorage.getOriginBoundSession()?.let {
@@ -270,7 +267,7 @@ internal suspend fun DefaultSyncManager.runRemoteDownload(): SyncResult =
         val success = errors.isEmpty()
         if (success) {
             lastErrorFlow.value = null
-            statusPublisher.refreshObservedQuotaFromServer("remote download")
+            statusPublisher.refreshObservedQuotaFromServer()
         } else {
             lastErrorFlow.value = errors.mostSevere()
         }
@@ -311,7 +308,7 @@ internal suspend fun DefaultSyncManager.syncEntityType(
     quotaContext: String,
     disabledOrUnauthenticated: suspend () -> SyncResult?,
     download: suspend (accessToken: String, since: Instant) -> SyncResult,
-    upload: suspend (accessToken: String) -> SyncResult,
+    upload: suspend () -> SyncResult,
     updatesGlobalSyncState: Boolean = true,
     onException: (suspend (Exception) -> SyncResult)? = null,
 ): SyncResult =
@@ -340,13 +337,13 @@ internal suspend fun DefaultSyncManager.syncEntityType(
             if (readinessGate.reason.value != null) return@withLock downloadResult
 
             statusPublisher.beginRun(pendingUploadsForRun(entityType))
-            val uploadResult = upload(accessToken)
+            val uploadResult = upload()
 
             val success = uploadResult.success && downloadResult.success
             if (updatesGlobalSyncState) {
                 if (success) {
                     lastErrorFlow.value = null
-                    statusPublisher.refreshObservedQuotaFromServer(quotaContext)
+                    statusPublisher.refreshObservedQuotaFromServer()
                 } else {
                     lastErrorFlow.value = (downloadResult.errors + uploadResult.errors).mostSevere()
                 }

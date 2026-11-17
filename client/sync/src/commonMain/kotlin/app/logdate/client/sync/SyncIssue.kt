@@ -74,9 +74,7 @@ fun SyncStatus.issue(): SyncIssue? {
             return SyncIssue.Failure.LocalData
         }
 
-        null -> {
-            Unit
-        }
+        null -> {}
     }
     if (!queueReadable) return SyncIssue.Failure.LocalData
     if (lastError?.type == SyncErrorType.KEY_RECOVERY_ERROR) return SyncIssue.Failure.KeyRecovery

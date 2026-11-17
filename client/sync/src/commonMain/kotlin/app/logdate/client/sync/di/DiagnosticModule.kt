@@ -43,7 +43,6 @@ internal val diagnosticCoreModule =
                 nowMillis = { Clock.System.now().toEpochMilliseconds() },
                 ready = {
                     sessions.hasValidSession()
-                    Unit
                 },
                 send = { scope, report -> get<DiagnosticReportGateway>().send(scope, report) },
                 deleteUploaded = { scope -> get<DiagnosticReportGateway>().deleteAll(scope) },
