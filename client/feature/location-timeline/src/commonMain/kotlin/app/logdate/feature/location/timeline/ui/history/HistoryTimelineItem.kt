@@ -33,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.logdate.client.text.asString
 import app.logdate.ui.audio.MomentAudioCard
+import app.logdate.ui.handwriting.HandwritingPreview
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_add_memory
 import logdate.client.feature.location.timeline.generated.resources.history_details
@@ -244,6 +246,8 @@ internal fun HistoryMemoryPreview(
         ) {
             if (memory.thumbnailUri != null) {
                 HistoryMemoryThumbnail(memory.thumbnailUri, memory.kind == HistoryMemoryKind.Video)
+            } else if (memory.handwriting != null && !memory.handwritingUnreadable) {
+                HandwritingPreview(memory.handwriting, Modifier.size(64.dp).clip(MaterialTheme.shapes.small))
             } else {
                 Icon(
                     when (memory.kind) {
