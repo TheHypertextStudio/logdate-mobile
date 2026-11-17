@@ -22,7 +22,7 @@ internal class WaveformAmplitudeBuckets(
 
     fun snapshot(final: Boolean = false): List<Float> =
         sumSquares.indices.map { index ->
-            if (counts[index] == 0L || !final && index >= highestBucket) {
+            if (counts[index] == 0L || (!final && index >= highestBucket)) {
                 0f
             } else {
                 // A fixed PCM scale keeps early geometry independent of later loud samples.
