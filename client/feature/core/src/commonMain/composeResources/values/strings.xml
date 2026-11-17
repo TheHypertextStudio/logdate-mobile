@@ -232,10 +232,6 @@
     <string
     name="person_detail_no_linked_events"
   >No events are linked to this person yet.</string>
-    <string name="person_detail_handwriting_preview">Handwriting</string>
-    <string name="person_detail_voice_note_preview">Voice note</string>
-    <string name="person_detail_photo_preview">Photo</string>
-    <string name="person_detail_video_preview">Video</string>
     <string name="person_remove_action">Remove from people</string>
     <string name="person_remove_dialog_title">Remove %1$s?</string>
     <string
