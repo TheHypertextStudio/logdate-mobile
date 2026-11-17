@@ -35,8 +35,8 @@ The arrow between Repository and Data points upward on purpose: `client/data` de
 interfaces and implements them, while `client/domain` depends only on the interfaces. Gradle
 enforces this. `client/domain` has no dependency on `client/data` or `client/database`, so a use
 case cannot name a concrete repository even by accident. Most feature modules are the same. The
-exceptions are `client/feature/core`, `client/feature/postcards` and `client/feature/stickers`,
-which also depend on `client/database`; treat that as a reason to keep their concrete bindings in
+exceptions are `client/feature/core` and `client/feature/postcards`, which also depend on
+`client/database`; treat that as a reason to keep their concrete bindings in
 their own Koin modules, not as a model for new features.
 
 `client/domain` also depends on the sync, media, location, device, networking and similar client
@@ -82,7 +82,7 @@ app module in `app/compose-main` (`app.logdate.di`) assembles everything:
   platform.
 - `defaultModules`, in common code, is the set of feature modules every platform includes: core,
   account, onboarding, editor, timeline, rewind, journals, library, location timeline, search,
-  postcards, stickers and events. When a new feature gets a Koin module, add it to this set.
+  postcards and events. When a new feature gets a Koin module, add it to this set.
 - Android adds modules that only exist there: workers, ambient mode, shortcuts, Wear sync,
   widgets, windowing and the platform coordinators and schedulers.
 
