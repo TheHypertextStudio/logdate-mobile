@@ -143,9 +143,7 @@ class AndroidSyncManager(
                 disableBackgroundSync()
             }
 
-            PeriodicSyncScheduleChange.Unchanged -> {
-                Unit
-            }
+            PeriodicSyncScheduleChange.Unchanged -> {}
         }
     }
 

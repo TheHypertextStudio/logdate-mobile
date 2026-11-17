@@ -80,9 +80,7 @@ internal class SpaceJournalMigration(
                 return publish(JournalMoveState.NotOffered)
             }
 
-            SpaceRoute.Legacy -> {
-                Unit
-            }
+            SpaceRoute.Legacy -> {}
         }
         // A server that stopped offering moves still lets a moved journal switch back, but starts no new move.
         if (!env.deps.serverOffersMove()) return publish(JournalMoveState.NotOffered)

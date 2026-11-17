@@ -91,7 +91,6 @@ internal class JournalMergeUploader(
                     tokenRefresher
                         .withFreshToken(
                             { token -> api.mergeJournals(token, operation.sourceId.toString(), request) },
-                            "mergeJournals",
                             UploadScope(operation.scope.ownerId, operation.scope.serverOrigin),
                         ).getOrThrow()
                 check(response.operationId == request.operationId && response.sourceId == operation.sourceId.toString()) {

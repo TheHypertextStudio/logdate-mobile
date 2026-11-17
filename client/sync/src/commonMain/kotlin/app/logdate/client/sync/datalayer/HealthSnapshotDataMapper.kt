@@ -42,10 +42,5 @@ class HealthSnapshotDataMapper(
         fun healthPath(snapshotId: Uuid): String = "$HEALTH_PATH_PREFIX/$snapshotId"
 
         fun isHealthPath(path: String): Boolean = path.startsWith(HEALTH_PATH_PREFIX)
-
-        fun healthIdFromPath(path: String): Uuid {
-            val segment = path.removePrefix("$HEALTH_PATH_PREFIX/")
-            return Uuid.parse(segment)
-        }
     }
 }

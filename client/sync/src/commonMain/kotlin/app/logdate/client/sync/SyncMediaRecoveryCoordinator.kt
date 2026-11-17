@@ -60,9 +60,7 @@ internal class SyncMediaRecoveryCoordinator(
                     ).recover(accessToken)
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
         app.logdate.client.sync.recovery
             .NativeMediaRecovery(

@@ -58,7 +58,6 @@ internal class SpaceClient(
     ): Result<T> =
         tokenRefresher.withFreshToken(
             { token -> spaceCall { homes.open(access.scope.serverOrigin, token).block() } },
-            operation,
             expectedScope = access.requestScope,
         )
 }

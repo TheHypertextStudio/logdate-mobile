@@ -134,7 +134,6 @@ internal class DraftDownloader(
             tokenRefresher
                 .withFreshToken(
                     { token -> cloudDraftDataSource.getDraftChanges(token, cursor, SyncDownloader.SYNC_PAGE_SIZE) },
-                    "getDraftChanges",
                 ).getOrThrow()
         checkScope(downloadScope)
         reportFetchFailure(errors)
@@ -366,7 +365,6 @@ internal class DraftDownloader(
     ) {
         try {
             checkScope(downloadScope)
-            val existingDraft = journalRepository.getDraft(draftId)
             val version = page.result.deletionVersions[draftId] ?: page.stagedRows[draftId.toString()]?.version ?: 0L
             val pending = syncMetadataService.getPendingUploads(EntityType.DRAFT).firstOrNull { it.entityId == draftId.toString() }
             if (pending != null && pending.operation != PendingOperation.DELETE) {
