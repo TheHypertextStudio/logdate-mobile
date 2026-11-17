@@ -1,6 +1,9 @@
 package app.logdate.feature.core.settings.ui.watch
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
@@ -58,6 +61,43 @@ class WatchCompanionPageTest {
             val action = onNodeWithText("Open Play").fetchSemanticsNode().boundsInRoot
             assertTrue(action.left >= 0f && action.right <= 320f, "Setup action overflows compact width: $action")
             saveScreenshot(onRoot().captureToImage(), "watch-setup-compact-large-text.png")
+        }
+
+    @Test fun `linking a watch shows progress, then the reason and one retry when it fails`() =
+        runDesktopComposeUiTest(width = 411, height = 900) {
+            var step by mutableStateOf(WatchSetupStep.Linking("Pixel Watch"))
+            var retries = 0
+            setContent {
+                LogDateTheme(dynamicColor = false, darkTheme = false) {
+                    WatchCompanionPage(
+                        status = WatchStatus.SettingUp(step, "node"),
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = { retries++ },
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                    )
+                }
+            }
+            onNodeWithText("Connecting to Pixel Watch").assertExists()
+            onNodeWithText("Continue on phone").assertDoesNotExist()
+            onNodeWithText("Try again").assertDoesNotExist()
+
+            step = WatchSetupStep.Linking("Pixel Watch", WatchLinkProblem.ANOTHER_ACCOUNT)
+            waitForIdle()
+            onNodeWithText("Pixel Watch uses another account").assertExists()
+            onNodeWithText("Try again").performClick()
+            assertEquals(1, retries)
+
+            step = WatchSetupStep.Linking("Pixel Watch", WatchLinkProblem.REMOVED)
+            waitForIdle()
+            onNodeWithText("Set up again").performClick()
+            assertEquals(2, retries)
         }
 
     @Test fun `without a paired watch the page offers setup and no watch settings`() =

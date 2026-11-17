@@ -280,6 +280,39 @@ class PhoneLinkInitiatorTest {
         }
 
     @Test
+    fun `asking to set up the watch again retries at once instead of waiting`() =
+        runTest {
+            watch.reachable = false
+            val initiator = initiator()
+            initiator.reconcile(emptyMap())
+            assertEquals(PhoneLinkFailure.WATCH_UNREACHABLE, store.get(WATCH)?.failure)
+            watch.reachable = true
+
+            initiator.reconcile(emptyMap())
+            assertEquals(1, watch.requests.size)
+            store.retryNow(WATCH)
+            initiator.reconcile(emptyMap())
+
+            assertEquals(3, watch.requests.size)
+            assertNull(store.get(WATCH)?.failure)
+            assertEquals(listOf("linked Pixel Watch 3 PAIR"), notifier.events)
+        }
+
+    @Test
+    fun `retrying a working link changes nothing`() =
+        runTest {
+            val initiator = initiator()
+            initiator.reconcile(emptyMap())
+            val linked = store.get(WATCH)
+
+            store.retryNow(WATCH)
+            initiator.reconcile(emptyMap())
+
+            assertEquals(linked, store.get(WATCH))
+            assertEquals(2, watch.requests.size)
+        }
+
+    @Test
     fun `a watch set up for another account is recorded and shown once`() =
         runTest {
             watch.refuseOffersWith = LinkRefusal.BOUND_TO_ANOTHER_ACCOUNT

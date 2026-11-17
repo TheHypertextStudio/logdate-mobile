@@ -238,6 +238,17 @@ class PhoneWatchLinkStore(
             choices.remove("watch.removed.$nodeId")
         }
 
+    /**
+     * Ends the wait after a failed attempt, so the next reconciliation links [nodeId] again at once. The
+     * person asked to set the watch up, and a retry they ask for must not sit behind a wait of up to six hours.
+     */
+    suspend fun retryNow(nodeId: String) =
+        mutex.withLock {
+            val record = decode(storage.getStringOrThrow(KEY))[nodeId] ?: return@withLock
+            if (record.failure == null || record.nextAttemptAt == 0L) return@withLock
+            updateUnderLock(nodeId) { record.copy(nextAttemptAt = 0L) }
+        }
+
     suspend fun forget(nodeId: String) =
         mutex.withLock {
             generations[nodeId] = (generations[nodeId] ?: 0L) + 1

@@ -37,7 +37,8 @@ object WatchStatusResolver {
 
             is WatchConnectionState.NeedsAssociation -> {
                 WatchStatus.SettingUp(
-                    WatchSetupStep.PairWithPhone(connection.watchName),
+                    connection.linking?.let { WatchSetupStep.Linking(connection.watchName, it.problem) }
+                        ?: WatchSetupStep.PairWithPhone(connection.watchName),
                     connection.nodeId,
                 )
             }

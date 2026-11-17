@@ -30,6 +30,28 @@
     <string name="watch_setup_associate_title">Connect %1$s</string>
     <string name="watch_setup_associate_description">Let LogDate connect to your watch.</string>
     <string name="watch_setup_associate_action">Continue on phone</string>
+    <string name="watch_linking_title">Connecting to %1$s</string>
+    <string name="watch_linking_description">Keep your watch nearby. This takes a few seconds.</string>
+    <string name="watch_linking_retrying_title">Still connecting to %1$s</string>
+    <string
+    name="watch_linking_retrying_description"
+  >LogDate keeps trying by itself. If this lasts, open LogDate on your watch, then try again.</string>
+    <string name="watch_linking_another_account_title">%1$s uses another account</string>
+    <string
+    name="watch_linking_another_account_description"
+  >Remove LogDate&apos;s data on the watch, or sign in to that account on this phone, then try again.</string>
+    <string name="watch_linking_device_limit_title">Your account is at its device limit</string>
+    <string
+    name="watch_linking_device_limit_description"
+  >Remove a device you no longer use from your account, then try again.</string>
+    <string name="watch_linking_set_up_again_title">%1$s couldn&apos;t finish setting up</string>
+    <string name="watch_linking_set_up_again_description">Open LogDate on your watch, then try again.</string>
+    <string name="watch_linking_removed_title">LogDate is off on %1$s</string>
+    <string
+    name="watch_linking_removed_description"
+  >You removed this watch. Set it up again to capture moments from your wrist.</string>
+    <string name="watch_linking_try_again">Try again</string>
+    <string name="watch_linking_set_up_again_action">Set up again</string>
     <string name="watch_setup_install_title">LogDate on %1$s</string>
     <string
     name="watch_setup_install_description"

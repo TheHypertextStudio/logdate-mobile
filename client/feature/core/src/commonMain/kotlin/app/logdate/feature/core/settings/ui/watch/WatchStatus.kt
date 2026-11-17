@@ -70,6 +70,16 @@ sealed interface WatchSetupStep {
 
     /** The system pairing prompt is open on this phone. */
     data object ConfirmOnPhone : WatchSetupStep
+
+    /**
+     * LogDate is linking [watchName] by itself, with no prompt for the person.
+     *
+     * @property problem Null while linking is under way; otherwise why it has not worked yet.
+     */
+    data class Linking(
+        val watchName: String,
+        val problem: WatchLinkProblem? = null,
+    ) : WatchSetupStep
 }
 
 enum class WatchLinkLine {

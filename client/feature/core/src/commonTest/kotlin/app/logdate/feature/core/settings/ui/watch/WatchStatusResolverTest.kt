@@ -46,6 +46,18 @@ class WatchStatusResolverTest {
     }
 
     @Test
+    fun `a watch LogDate links by itself never asks for the system pairing prompt`() {
+        assertEquals(
+            WatchStatus.SettingUp(WatchSetupStep.Linking(NAME), "node"),
+            resolve(WatchConnectionState.NeedsAssociation(NAME, "node", WatchLinking())),
+        )
+        assertEquals(
+            WatchStatus.SettingUp(WatchSetupStep.Linking(NAME, WatchLinkProblem.DEVICE_LIMIT), "node"),
+            resolve(WatchConnectionState.NeedsAssociation(NAME, "node", WatchLinking(WatchLinkProblem.DEVICE_LIMIT))),
+        )
+    }
+
+    @Test
     fun `a watch without LogDate is not installed`() {
         assertEquals(WatchStatus.NotInstalled(NAME), resolve(WatchConnectionState.AppNotInstalled(NAME)))
     }

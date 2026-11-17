@@ -38,14 +38,18 @@ import app.logdate.client.watch.DefaultWatchCompanionAssociationManager
 import app.logdate.client.watch.WatchAssociationRequestFactory
 import app.logdate.client.watch.WatchCompanionAssociationManager
 import app.logdate.client.watch.presence.WatchPresenceRegistration
+import app.logdate.client.watch.toWatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.PeerStateWatchSnapshotSource
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
+import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
+import app.logdate.feature.core.settings.ui.watch.WatchLinking
 import app.logdate.feature.core.settings.ui.watch.WatchPeerSnapshotSource
 import app.logdate.feature.core.settings.ui.watch.v2.DefaultWatchSetupCoordinator
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticsAccess
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupCoordinator
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import org.koin.android.ext.koin.androidContext
@@ -161,9 +165,26 @@ internal val androidWearSyncModule: Module =
                     ) { enabled, links, _, _ ->
                         if (enabled) links.keys.filter { get<PhoneDeliveryPeers>().current(it) != null }.toSet() else null
                     },
+                linkStatus = { node ->
+                    val links = get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>()
+                    WatchLinking(
+                        if (links.removalSuppressed(node)) {
+                            WatchLinkProblem.REMOVED
+                        } else {
+                            links.get(node)?.failure?.toWatchLinkProblem()
+                        },
+                    )
+                },
+                retryWatch = { node ->
+                    get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>().retryNow(node)
+                    get<app.logdate.client.sync.v2.link.PhoneLinkInitiator>().reconcileNow()
+                },
+                linkingScope = get<CoroutineScope>(),
                 prepareWatch = { node ->
                     get<app.logdate.client.sync.v2.PhoneStatePublisher>().refresh()
-                    get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>().allowRelink(node)
+                    val links = get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>()
+                    links.allowRelink(node)
+                    links.retryNow(node)
                     get<app.logdate.client.sync.v2.link.PhoneLinkInitiator>().reconcileNow()
                 },
             )

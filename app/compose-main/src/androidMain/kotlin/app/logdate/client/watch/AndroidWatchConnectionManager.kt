@@ -8,6 +8,8 @@ import app.logdate.client.sync.WatchMessageSender
 import app.logdate.client.sync.datalayer.WearAudioRequestPaths
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
+import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
+import app.logdate.feature.core.settings.ui.watch.WatchLinking
 import app.logdate.feature.core.settings.ui.watch.WatchRequestFailure
 import app.logdate.feature.core.settings.ui.watch.WatchRequestResult
 import com.google.android.gms.wearable.CapabilityClient
@@ -17,6 +19,7 @@ import com.google.android.gms.wearable.Wearable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -69,10 +72,14 @@ class AndroidWatchConnectionManager(
     private val linkIntent: (String) -> Intent = ::watchLinkIntent,
     private val prepareWatch: suspend (String) -> Unit = {},
     private val verifiedAppNodes: Flow<Set<String>?> = flowOf(null),
+    private val linkStatus: suspend (String) -> WatchLinking = { WatchLinking() },
+    private val retryWatch: suspend (String) -> Unit = {},
+    private val linkingScope: CoroutineScope? = null,
 ) : WatchConnectionManager {
     private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val snapshots = Mutex()
     private val knownAppNodes = ConcurrentHashMap<String, WatchNodeSnapshot>()
+    private val retriedNodes = ConcurrentHashMap.newKeySet<String>()
 
     override suspend fun refresh() {
         refreshes.emit(Unit)
@@ -85,11 +92,43 @@ class AndroidWatchConnectionManager(
             verifiedAppNodes,
         ) { associationState, transportSnapshot, appNodes ->
             if (appNodes != null) {
-                resolveWearAppConnection(transportSnapshot, appNodes)
+                withLinkStatus(resolveWearAppConnection(transportSnapshot, appNodes))
             } else {
                 resolveWatchConnectionState(associationState, transportSnapshot)
             }
         }
+
+    /**
+     * Says how linking a watch that has LogDate is going, and links it at once the first time the phone
+     * sees it unlinked, instead of leaving it behind a wait from an earlier failure. A watch the person
+     * removed stays removed until they set it up again.
+     */
+    private suspend fun withLinkStatus(state: WatchConnectionState): WatchConnectionState {
+        if (state !is WatchConnectionState.NeedsAssociation || state.linking == null) return state
+        val node = state.nodeId ?: return state
+        val linking =
+            try {
+                linkStatus(node)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Napier.w("Could not read how linking ${state.watchName} is going", e)
+                WatchLinking()
+            }
+        if (linking.problem != WatchLinkProblem.REMOVED && retriedNodes.add(node)) {
+            linkingScope?.launch {
+                try {
+                    retryWatch(node)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    retriedNodes.remove(node)
+                    Napier.w("Could not start linking ${state.watchName}; the phone tries again on the next change", e)
+                }
+            }
+        }
+        return state.copy(linking = linking)
+    }
 
     override suspend fun prepareSetup(nodeId: String?) {
         nodeId?.let { prepareWatch(it) }
@@ -97,8 +136,9 @@ class AndroidWatchConnectionManager(
 
     override suspend fun beginAssociation() {
         if (verifiedAppNodes.first() != null) {
-            val node = nodeClient.connectedNodes.await().singleOrNull() ?: return
-            prepareWatch(node.id)
+            // Every watch running LogDate, not only a lone connected node: a second node made this return silently.
+            val watches = connectedWatches() ?: return
+            watches.withApp.ifEmpty { watches.withoutApp }.forEach { prepareWatch(it.id) }
         } else {
             associationManager.beginAssociation()
         }
