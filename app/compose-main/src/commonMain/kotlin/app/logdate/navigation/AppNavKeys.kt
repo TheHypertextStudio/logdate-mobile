@@ -48,6 +48,7 @@ import app.logdate.feature.core.settings.navigation.RewindSettingsRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
 import app.logdate.feature.core.settings.navigation.SignInMethodsRoute
 import app.logdate.feature.core.settings.navigation.SoundRecognitionSettingsRoute
+import app.logdate.feature.core.settings.navigation.StorageCleanupRoute
 import app.logdate.feature.core.settings.navigation.StreakSettingsRoute
 import app.logdate.feature.core.settings.navigation.SyncSettingsRoute
 import app.logdate.feature.core.settings.navigation.TimelineSettingsRoute
@@ -151,6 +152,7 @@ val appNavSavedStateConfiguration: SavedStateConfiguration =
                     subclass(RecoveryPhraseEntrySettingsRoute::class, RecoveryPhraseEntrySettingsRoute.serializer())
                     subclass(HostingRoute::class, HostingRoute.serializer())
                     subclass(CloudPlanRoute::class, CloudPlanRoute.serializer())
+                    subclass(StorageCleanupRoute::class, StorageCleanupRoute.serializer())
                     subclass(MoveServerRoute::class, MoveServerRoute.serializer())
                     subclass(DeleteAccountRoute::class, DeleteAccountRoute.serializer())
                     subclass(PrivacySettingsRoute::class, PrivacySettingsRoute.serializer())

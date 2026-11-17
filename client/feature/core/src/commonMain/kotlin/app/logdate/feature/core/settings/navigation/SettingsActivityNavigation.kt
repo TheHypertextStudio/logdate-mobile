@@ -45,7 +45,7 @@ fun settingsDetailMetadata(
 fun NavKey.settingsCategory(): SettingsCategory? =
     when (this) {
         AccountSettingsRoute, SignInMethodsRoute, RecoveryPhraseRoute, HostingRoute,
-        MoveServerRoute, DeleteAccountRoute, RecoveryPhraseEntrySettingsRoute, CloudPlanRoute,
+        MoveServerRoute, DeleteAccountRoute, RecoveryPhraseEntrySettingsRoute, CloudPlanRoute, is StorageCleanupRoute,
         -> SettingsCategory.Account
 
         MemoriesSettingsRoute, RecommendationSettingsRoute -> SettingsCategory.Memories

@@ -57,13 +57,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.account.CloudPlanProblem
-import app.logdate.feature.core.settings.ui.StorageCategory
-import app.logdate.feature.core.settings.ui.StorageKindAction
+import app.logdate.client.domain.storage.StoredKind
 import app.logdate.feature.core.settings.ui.StorageUsageCard
 import app.logdate.feature.core.settings.ui.formatByteSize
 import app.logdate.feature.core.settings.ui.toStorageQuotaUi
 import app.logdate.shared.model.BillingInterval
-import app.logdate.shared.model.CloudObjectType
 import app.logdate.shared.model.EntitlementStatusWire
 import app.logdate.shared.model.PlanOption
 import app.logdate.ui.common.MaterialCard
@@ -137,9 +135,6 @@ import logdate.client.feature.core.generated.resources.cloud_plan_switch_confirm
 import logdate.client.feature.core.generated.resources.cloud_plan_switch_title
 import logdate.client.feature.core.generated.resources.cloud_plan_title
 import logdate.client.feature.core.generated.resources.cloud_plan_try_again
-import logdate.client.feature.core.generated.resources.storage_review_entries
-import logdate.client.feature.core.generated.resources.storage_review_library
-import logdate.client.feature.core.generated.resources.storage_review_recordings
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
@@ -160,6 +155,7 @@ fun cloudPlanActionTag(planId: String): String = "cloud_plan_action_$planId"
 fun CloudPlanScreen(
     onBack: () -> Unit,
     onReview: ((StorageReview) -> Unit)? = null,
+    onCleanUp: ((StoredKind) -> Unit)? = null,
     viewModel: CloudPlanViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -175,6 +171,7 @@ fun CloudPlanScreen(
         state = state,
         onBack = onBack,
         onReview = onReview,
+        onCleanUp = onCleanUp,
         actions =
             CloudPlanActions(
                 onRetry = viewModel::load,
@@ -188,14 +185,6 @@ fun CloudPlanScreen(
                 onDismissProblem = viewModel::dismissProblem,
             ),
     )
-}
-
-/** A kind of stored thing the app has somewhere to look through. */
-enum class StorageReview {
-    Photos,
-    Videos,
-    Recordings,
-    WrittenEntries,
 }
 
 /** What the Plan screen can ask for. */
@@ -231,6 +220,7 @@ fun CloudPlanContent(
     onBack: () -> Unit,
     actions: CloudPlanActions = CloudPlanActions(),
     onReview: ((StorageReview) -> Unit)? = null,
+    onCleanUp: ((StoredKind) -> Unit)? = null,
 ) {
     var pending by remember { mutableStateOf<PendingChange?>(null) }
 
@@ -254,7 +244,7 @@ fun CloudPlanContent(
 
             is CloudPlanUiState.Ready -> {
                 val subscription = state.subscription
-                item { StorageInUse(state, onReview) }
+                item { StorageInUse(state, onReview, onCleanUp) }
                 if (subscription.includedWithBeta) {
                     item { BetaMoment() }
                 }
@@ -391,6 +381,7 @@ private fun UnavailablePlan(
 private fun StorageInUse(
     state: CloudPlanUiState.Ready,
     onReview: ((StorageReview) -> Unit)?,
+    onCleanUp: ((StoredKind) -> Unit)?,
 ) {
     val subscription = state.subscription
     val plan = state.plans.firstOrNull { it.id == subscription.planId }
@@ -443,27 +434,9 @@ private fun StorageInUse(
                     ?.categories
                     .orEmpty(),
             modifier = Modifier.testTag(CLOUD_PLAN_STORAGE_TAG),
-            actionFor = { category -> reviewAction(category, onReview) },
+            actionFor = { category -> reviewAction(category, onReview, onCleanUp) },
         )
     }
-}
-
-/** Where in the app a kind of stored thing can be looked through, if anywhere. */
-@Composable
-private fun reviewAction(
-    category: StorageCategory,
-    onReview: ((StorageReview) -> Unit)?,
-): StorageKindAction? {
-    if (onReview == null) return null
-    val (review, label) =
-        when (category.type) {
-            CloudObjectType.IMAGE_NOTES -> StorageReview.Photos to Res.string.storage_review_library
-            CloudObjectType.VIDEO_NOTES -> StorageReview.Videos to Res.string.storage_review_library
-            CloudObjectType.VOICE_NOTES -> StorageReview.Recordings to Res.string.storage_review_recordings
-            CloudObjectType.TEXT_NOTES -> StorageReview.WrittenEntries to Res.string.storage_review_entries
-            else -> return null
-        }
-    return StorageKindAction(label = stringResource(label), onClick = { onReview(review) })
 }
 
 /**

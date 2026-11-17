@@ -27,6 +27,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import app.logdate.client.domain.account.CloudPlanProblem
+import app.logdate.client.domain.storage.StoredKind
 import app.logdate.feature.core.settings.ui.STORAGE_USAGE_DETAILS_TAG
 import app.logdate.feature.core.settings.ui.STORAGE_USAGE_SHAPES_TAG
 import app.logdate.feature.core.settings.ui.STORAGE_USAGE_TOGGLE_TAG
@@ -200,6 +201,33 @@ class CloudPlanContentTest {
             onNodeWithText("Search recordings").performClick()
 
             assertEquals(listOf(StorageReview.Photos, StorageReview.Recordings), calls.reviewed)
+        }
+
+    @Test
+    fun withTheCleanUpPageAChosenKindOpensIt() =
+        runDesktopComposeUiTest(width = 411, height = 1100) {
+            val opened = mutableListOf<StoredKind>()
+            val reviewed = mutableListOf<StorageReview>()
+            setContent {
+                LogDateTheme(darkTheme = false, dynamicColor = false) {
+                    CloudPlanContent(
+                        state = ready(CloudPlanFixtures.betaOnBase(purchasesAvailable = true)),
+                        onBack = {},
+                        onReview = { reviewed += it },
+                        onCleanUp = { opened += it },
+                    )
+                }
+            }
+
+            onNodeWithTag(STORAGE_USAGE_SHAPES_TAG).performTouchInput { click(percentOffset(0.15f, 0.5f)) }
+            onNodeWithText("Open Library").assertDoesNotExist()
+            onNodeWithText("Clean up photos").performClick()
+
+            onNodeWithTag(storageCategoryTag(2)).performClick()
+            onNodeWithText("Clean up recordings").performClick()
+
+            assertEquals(listOf(StoredKind.Photos, StoredKind.Recordings), opened)
+            assertTrue(reviewed.isEmpty())
         }
 
     @Test

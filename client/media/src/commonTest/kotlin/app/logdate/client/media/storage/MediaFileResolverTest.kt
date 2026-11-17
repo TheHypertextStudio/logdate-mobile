@@ -1,5 +1,10 @@
 package app.logdate.client.media.storage
 
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -117,6 +122,27 @@ class MediaFileResolverTest {
 
         assertEquals("ph://ABC/L0/001", resolver.storedReference("ph://ABC/L0/001"))
         assertEquals("https://cloud.logdate.app/media/abc", resolver.storedReference("https://cloud.logdate.app/media/abc"))
+    }
+
+    @Test
+    fun `a file on this device reports how many bytes it takes`() {
+        val file = Path(SystemTemporaryDirectory, "media-file-size-${Random.nextLong()}.bin")
+        SystemFileSystem.sink(file).buffered().use { it.write(ByteArray(1_234)) }
+        try {
+            val resolver = MediaFileResolver(directories)
+
+            assertEquals(1_234, resolver.fileSize(file.toString()))
+        } finally {
+            SystemFileSystem.delete(file)
+        }
+    }
+
+    @Test
+    fun `a file that is not on this device has no size`() {
+        val resolver = MediaFileResolver(directories)
+
+        assertNull(resolver.fileSize("logdate-media://library/objects/sha256/00/missing.jpg"))
+        assertNull(resolver.fileSize("https://cloud.logdate.app/media/abc"))
     }
 
     private fun resolverWithFiles(vararg existing: String): MediaFileResolver {

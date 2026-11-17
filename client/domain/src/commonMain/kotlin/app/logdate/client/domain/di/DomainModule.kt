@@ -92,6 +92,9 @@ import app.logdate.client.domain.search.SearchEntriesUseCase
 import app.logdate.client.domain.search.SearchInJournalUseCase
 import app.logdate.client.domain.search.SearchJournalsUseCase
 import app.logdate.client.domain.search.UniversalSearchUseCase
+import app.logdate.client.domain.storage.DeleteStoredItemsUseCase
+import app.logdate.client.domain.storage.ObserveStoredItemsUseCase
+import app.logdate.client.domain.storage.StoredMediaSizes
 import app.logdate.client.domain.streak.CalculateStreakUseCase
 import app.logdate.client.domain.streak.ObserveCampfireUseCase
 import app.logdate.client.domain.streak.ObserveStreakUseCase
@@ -111,6 +114,7 @@ import app.logdate.client.domain.watch.WatchPreferencesRepository
 import app.logdate.client.intelligence.availability.RewindAIAvailability
 import app.logdate.client.intelligence.curation.CurationConfigProvider
 import app.logdate.client.intelligence.events.EventNamingExtractor
+import app.logdate.client.media.storage.MediaFileResolver
 import app.logdate.client.media.storage.StoredMediaReferences
 import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.journals.JournalRepository
@@ -159,6 +163,9 @@ val domainModule: Module =
         factory { FetchNotesForDayUseCase(get()) }
         factory { HasNotesForTodayUseCase(get()) }
         factory { RemoveNoteUseCase(get()) }
+        factory<StoredMediaSizes> { get<MediaFileResolver>().let { resolver -> StoredMediaSizes(resolver::fileSize) } }
+        factory { ObserveStoredItemsUseCase(get(), get()) }
+        factory { DeleteStoredItemsUseCase(get()) }
 
         // Drafts
         factory { CleanupExpiredDraftsUseCase(get()) }

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <!-- Settings > Account > Storage > one kind of stored thing: delete large ones to free space. -->
+    <string name="storage_cleanup_title_photos">Photos</string>
+    <string name="storage_cleanup_title_videos">Videos</string>
+    <string name="storage_cleanup_title_recordings">Recordings</string>
+    <string name="storage_cleanup_title_entries">Written entries</string>
+
+    <!-- The buttons on the Storage screen that open this page -->
+    <string name="storage_cleanup_open_photos">Clean up photos</string>
+    <string name="storage_cleanup_open_videos">Clean up videos</string>
+    <string name="storage_cleanup_open_recordings">Clean up recordings</string>
+    <string name="storage_cleanup_open_entries">Clean up entries</string>
+
+    <!-- How many there are, under the room they take -->
+    <plurals name="storage_cleanup_count_photos">
+        <item quantity="one">1 photo</item>
+        <item quantity="other">%1$d photos, largest first</item>
+    </plurals>
+    <plurals name="storage_cleanup_count_videos">
+        <item quantity="one">1 video</item>
+        <item quantity="other">%1$d videos, largest first</item>
+    </plurals>
+    <plurals name="storage_cleanup_count_recordings">
+        <item quantity="one">1 recording</item>
+        <item quantity="other">%1$d recordings, largest first</item>
+    </plurals>
+    <plurals name="storage_cleanup_count_entries">
+        <item quantity="one">1 entry</item>
+        <item quantity="other">%1$d entries, largest first</item>
+    </plurals>
+
+    <string name="storage_cleanup_empty_photos">No photos</string>
+    <string name="storage_cleanup_empty_videos">No videos</string>
+    <string name="storage_cleanup_empty_recordings">No recordings</string>
+    <string name="storage_cleanup_empty_entries">No written entries</string>
+
+    <!-- One item -->
+    <string name="storage_cleanup_size_unknown">Not downloaded</string>
+    <string name="storage_cleanup_detail">%1$s · %2$s</string>
+    <string name="storage_cleanup_item_description">%1$s, %2$s</string>
+
+    <!-- What is chosen, and deleting it -->
+    <plurals name="storage_cleanup_selected">
+        <item quantity="one">1 selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="storage_cleanup_clear_selection">Clear selection</string>
+    <string name="storage_cleanup_delete">Delete</string>
+    <string name="storage_cleanup_cancel">Cancel</string>
+    <plurals name="storage_cleanup_confirm_photos">
+        <item quantity="one">Delete 1 photo?</item>
+        <item quantity="other">Delete %1$d photos?</item>
+    </plurals>
+    <plurals name="storage_cleanup_confirm_videos">
+        <item quantity="one">Delete 1 video?</item>
+        <item quantity="other">Delete %1$d videos?</item>
+    </plurals>
+    <plurals name="storage_cleanup_confirm_recordings">
+        <item quantity="one">Delete 1 recording?</item>
+        <item quantity="other">Delete %1$d recordings?</item>
+    </plurals>
+    <plurals name="storage_cleanup_confirm_entries">
+        <item quantity="one">Delete 1 entry?</item>
+        <item quantity="other">Delete %1$d entries?</item>
+    </plurals>
+    <plurals name="storage_cleanup_confirm_body">
+        <item
+      quantity="one"
+    >This frees %1$s. It’s removed from every device and can’t be undone.</item>
+        <item
+      quantity="other"
+    >This frees %1$s. They’re removed from every device and can’t be undone.</item>
+    </plurals>
+    <plurals name="storage_cleanup_confirm_body_unsized">
+        <item quantity="one">It’s removed from every device and can’t be undone.</item>
+        <item quantity="other">They’re removed from every device and can’t be undone.</item>
+    </plurals>
+
+    <!-- What a deletion did -->
+    <string name="storage_cleanup_freed">%1$s freed</string>
+    <plurals name="storage_cleanup_deleted">
+        <item quantity="one">1 deleted</item>
+        <item quantity="other">%1$d deleted</item>
+    </plurals>
+    <plurals name="storage_cleanup_failed">
+        <item quantity="one">1 couldn’t be deleted</item>
+        <item quantity="other">%1$d couldn’t be deleted</item>
+    </plurals>
+</resources>
