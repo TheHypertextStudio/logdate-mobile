@@ -19,6 +19,7 @@ kotlin {
             // Project dependencies
             implementation(projects.shared.model)
             implementation(projects.client.ui)
+            implementation(projects.client.util)
             implementation(projects.client.repository)
             implementation(projects.client.domain)
             implementation(projects.client.device)

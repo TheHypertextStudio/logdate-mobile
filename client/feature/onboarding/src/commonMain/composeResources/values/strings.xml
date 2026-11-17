@@ -320,16 +320,18 @@
 
     <!-- Cinematic opening and overview -->
     <string name="onboarding_opening_title">Meet LogDate.</string>
-    <string name="onboarding_opening_description">A simple way to remember your days.</string>
+    <string name="onboarding_opening_description">A home for your memories.</string>
     <string name="onboarding_opening_overview_action">See how it works</string>
     <string name="onboarding_opening_overview_title">Add it today.\nFind it later.</string>
-    <string name="onboarding_opening_overview_description">It all goes on your timeline.</string>
-    <string name="onboarding_opening_continue">Make your first entry</string>
+    <string name="onboarding_opening_overview_description">It all goes under its day.</string>
+    <string name="onboarding_opening_continue">Add your first memory</string>
     <string name="onboarding_opening_back">Back</string>
     <string
     name="onboarding_scene_description"
-  >An example day: a photo, a thought, and a voice note become a timeline.</string>
-    <string name="onboarding_scene_month">October</string>
-    <string name="onboarding_scene_weekday">Wednesday</string>
+  >An example of a few days: photos, notes, a voice note and a drawing spread out, with today's date on today's.</string>
+    <string name="onboarding_scene_today">Today</string>
     <string name="onboarding_scene_thought">Coffee with Maya.\nTwo hours flew by.</string>
+    <string name="onboarding_scene_note_nana">Nana turned 80.</string>
+    <string name="onboarding_scene_note_long_way">Took the long way home.</string>
+    <string name="onboarding_scene_voice_wish">“Make a wish!”</string>
 </resources>

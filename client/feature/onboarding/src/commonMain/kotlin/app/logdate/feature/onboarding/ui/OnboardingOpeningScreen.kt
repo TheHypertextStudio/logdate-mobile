@@ -5,16 +5,13 @@ package app.logdate.feature.onboarding.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
+import app.logdate.feature.onboarding.ui.opening.OpeningScene
 import app.logdate.ui.motion.rememberDeviceParallax
 import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
@@ -31,15 +28,14 @@ import logdate.client.feature.onboarding.generated.resources.onboarding_opening_
 import logdate.client.feature.onboarding.generated.resources.onboarding_opening_title
 import org.jetbrains.compose.resources.stringResource
 
-internal const val ONBOARDING_OPENING_SCENE_TAG = "onboarding_opening_scene"
-
 /**
- * Opening and overview share their scene and state, so the objects never leave the composition.
+ * The first screen of the app, and the timeline it turns into.
  *
- * The screen is laid out by [StepScaffold], the same as every other onboarding step. That is what
- * keeps its actions where the next step's actions are: pinned at the bottom, the same distance
- * from the edge, the same width, the main action first. Only the scene and the words above them
- * change between the two states, and only they move.
+ * Both are one step, laid out by [StepScaffold] like every other onboarding step, which is what
+ * keeps the title and the actions where the next step has them. What makes it the opening is the
+ * scene around them: [OpeningScene] fills the whole screen with the things LogDate keeps, and the
+ * same pieces stay on the table when [overview] lines them up by day, so nothing is swapped out
+ * between the two.
  */
 @Composable
 internal fun OnboardingOpeningScreen(
@@ -53,7 +49,7 @@ internal fun OnboardingOpeningScreen(
 ) {
     FirstLaunchTheme {
         val colors = MaterialTheme.colorScheme
-        val parallax by rememberDeviceParallax(enabled = animateScene)
+        val parallax = rememberDeviceParallax(enabled = animateScene)
         Box(
             modifier =
                 modifier
@@ -73,12 +69,7 @@ internal fun OnboardingOpeningScreen(
                     ),
                 onBack = null,
                 containerColor = Color.Transparent,
-                illustration = {
-                    // The most the scene wants; the step gives it less where there is less room.
-                    Box(Modifier.fillMaxWidth().height(SCENE_MAX_HEIGHT).testTag(ONBOARDING_OPENING_SCENE_TAG)) {
-                        OnboardingObjects(overview = overview, animateScene = animateScene, parallax = parallax)
-                    }
-                },
+                scene = { bounds -> OpeningScene(bounds, tidied = overview, animate = animateScene, parallax = { parallax.value }) },
                 actions = { if (showControls) OpeningActions(overview, onContinue, onBack, onSignIn) },
             )
         }
@@ -103,5 +94,3 @@ private fun OpeningActions(
         modifier = Modifier.testTag(if (overview) "onboarding_overview_back" else ONBOARDING_START_FROM_BACKUP_TAG),
     )
 }
-
-private val SCENE_MAX_HEIGHT = 400.dp

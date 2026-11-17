@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import app.logdate.ui.common.PlatformBackHandler
 import app.logdate.ui.theme.LogDateTheme
 
 const val ONBOARDING_START_ROOT_TAG = "onboarding_start_root"
@@ -22,6 +23,8 @@ fun OnboardingStartScreen(
     modifier: Modifier = Modifier,
 ) {
     var overview by rememberSaveable { mutableStateOf(false) }
+    // Back from the timeline returns to the table, the same as the Back button under it.
+    PlatformBackHandler(enabled = overview) { overview = false }
     OnboardingOpeningScreen(
         overview = overview,
         onContinue = { if (overview) onNext() else overview = true },

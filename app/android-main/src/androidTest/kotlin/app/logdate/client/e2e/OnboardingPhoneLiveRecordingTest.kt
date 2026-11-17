@@ -65,10 +65,16 @@ class OnboardingPhoneLiveRecordingTest {
     @Test(timeout = 180_000)
     fun recordLiveOnboardingPhoneFlow() =
         record("onboarding-phone-live-device.mp4") { device ->
-            // The floating objects drift on their own.
-            SystemClock.sleep(3_000)
+            // The table has been dealt and today's date has landed on it.
+            SystemClock.sleep(2_400)
 
-            // The objects settle onto the timeline over 1.1 seconds.
+            // Today's photo is picked up from the middle of the pile and thrown up and across. It stays where it stops.
+            val width = device.displayWidth
+            val height = device.displayHeight
+            device.swipe(width * 3 / 10, height * 48 / 100, width * 62 / 100, height * 38 / 100, 14)
+            SystemClock.sleep(2_000)
+
+            // Today's pile lines up on one page, and the thrown photo goes back with it.
             device.tap(By.text(SEE_HOW_IT_WORKS))
             SystemClock.sleep(2_800)
 
@@ -141,9 +147,12 @@ class OnboardingPhoneLiveRecordingTest {
         val settings = LIVE_SETTINGS.mapValues { (key, _) -> device.executeShellCommand("settings get $key").trim() }
         try {
             LIVE_SETTINGS.forEach { (key, value) -> device.executeShellCommand("settings put $key $value") }
-            ActivityScenario.launch(MainActivity::class.java).use {
-                device.await(By.text(SEE_HOW_IT_WORKS), 25_000)
-                ManagedOnboardingRecording(device, output, fileName).use { journey(device) }
+            // Recording starts before the app does, so the film opens on the table being dealt.
+            ManagedOnboardingRecording(device, output, fileName).use {
+                ActivityScenario.launch(MainActivity::class.java).use {
+                    device.await(By.text(SEE_HOW_IT_WORKS), 25_000)
+                    journey(device)
+                }
             }
         } finally {
             settings.forEach { (key, previous) ->
@@ -169,7 +178,7 @@ class OnboardingPhoneLiveRecordingTest {
     // a change to the copy has to be made here too.
     private companion object {
         const val SEE_HOW_IT_WORKS = "See how it works"
-        const val MAKE_FIRST_ENTRY = "Make your first entry"
+        const val MAKE_FIRST_ENTRY = "Add your first memory"
         const val SIGN_IN_TO_CLOUD = "I already have an account"
         const val SIGN_IN_WITH_PASSKEY = "Sign in with passkey"
         const val SAVE_ENTRY = "Save entry"

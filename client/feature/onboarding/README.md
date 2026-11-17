@@ -10,14 +10,13 @@ Provides a comprehensive onboarding experience for new users, guiding them throu
 
 A new person sees three things, in this order, and nothing else stands between them and Home.
 
-1. **The opening** (`OnboardingOpeningScreen.kt`). A date, a photo, a thought and a voice note
-   lie scattered like paper on a table, then line up on a timeline when the person asks how
-   LogDate works. Both states are one screen, so the pieces never leave the composition. The
-   pieces are flat and lit from overhead (`OnboardingObjects.kt`); turning the device shifts the
-   nearer ones further, through `rememberDeviceParallax` in `:client:ui`, and the scene holds
-   still when reduced motion is on or the device has no turn sensor. The screen uses
-   `FirstLaunchTheme` and is laid out by `StepScaffold`, like every other step.
-2. **The first entry.** "Make your first entry" opens the same editor the rest of the app uses,
+1. **The opening** (`OnboardingOpeningScreen.kt`). A few days of someone's life lie across the
+   whole screen: photos, notes, a voice note, a drawing, and today's date on today's pile. They
+   come in from every side, the date lands last, and from then on each piece can be picked up,
+   moved and thrown. When the person asks how LogDate works, today's pile lines up on one page,
+   laid out the way LogDate shows a day. Both states are one screen and one set of pieces. See
+   [The opening scene](#the-opening-scene).
+2. **The first memory.** "Add your first memory" opens the same editor the rest of the app uses,
    already focused on a blank thought. It has no wording or controls of its own for first launch.
 3. **Home.** Saving that entry is what finishes onboarding. The app records that onboarding is
    complete and opens Home with the entry on it. If that record cannot be saved, the completion
@@ -29,6 +28,52 @@ through sign-in and `WelcomeBackScreen.kt` to Home.
 
 Cloud backup is not offered during first launch. It is set up later in Settings.
 
+### The opening scene
+
+The scene is not a picture with a size of its own. `StepScaffold` tells it where the step's words
+and actions are on this screen, and `arrangeOpening` (`ui/opening/OpeningArrangement.kt`) fills
+the room around them: today's pile between the words and the actions, a few more pieces hanging
+off the top and bottom edges, and, where the screen is wider than the step, more down each side.
+A larger screen gets more pieces and larger ones, never more empty margin, but never so many
+that the pile stops being what the eye lands on: a phone shows seven and a tablet about fifteen.
+
+The pieces are an example, listed in `OpeningPieces.kt`: today's photo, words and voice note
+with today's date on them, and other days' memories around the edges. There is one date on the
+screen and it is the real one, read from `LocalToday`. Times on the pieces are written by the
+same formatter as the rest of the app.
+
+When the table is tidied, `fileToday` (`ui/opening/OpeningDay.kt`) lines today's pile up on one
+page. The page reads like a day in the app: "Today" and the date at its head, then the photo,
+the words and the voice note. There is one page on a screen of any size; it changes shape to
+show the photo as large as the room allows. A piece lying where the page will be gets out of its
+way, and the rest of the table stays as it is.
+
+Both functions are plain geometry with no Compose state, so `OpeningArrangementTest` holds them
+to these rules on a phone, a small phone, an unfolded phone and a tablet either way up: how many
+pieces, how much of the screen they reach, and that nothing ever lies over the words or the
+actions.
+
+`OpeningScene.kt` draws the arrangement and `OpeningTable.kt` moves it. Each piece is a
+`PaperPiece` whose position is read while it is drawn, so the whole table can move at once
+without the scene being recomposed. A piece that is let go keeps the speed it was thrown with
+and stays where it stops, except that it never rests over the words or the actions, or mostly
+off the screen. A piece still in flight cannot be picked up, so it never takes a tap meant for a
+button it is crossing. Turning the device moves the nearer pieces further, through
+`rememberDeviceParallax` in `:client:ui`. With reduced motion on, nothing moves by itself and
+the pieces are simply where they belong.
+
+The photos are free to use without credit. Their sources are recorded here so they can be traced:
+
+| File                            | Photo                                    | By                                                      | Licence       |
+| ------------------------------- | ---------------------------------------- | ------------------------------------------------------- | ------------- |
+| `onboarding_scene_concert.jpg`  | Crowd People                             | Anthony Delanoix, StockSnap                             | CC0           |
+| `onboarding_scene_pizza.jpg`    | Homemade Pizza                           | Burst, StockSnap                                        | CC0           |
+| `onboarding_scene_hike.jpg`     | Backbone Trail                           | Santa Monica Mountains National Recreation Area, Flickr | Public domain |
+| `onboarding_scene_record.jpg`   | Record Player Limited Edition Pink Vinyl | John K Thorne, Flickr                                   | CC0           |
+| `onboarding_scene_beach.jpg`    | Junction                                 | romainguy, Flickr                                       | CC0           |
+| `onboarding_scene_roadtrip.jpg` | The Hills Have Vanes                     | cogdogblog, Flickr                                      | CC0           |
+| `onboarding_scene_rain.jpg`     | Rain bokeh                               | freestocks.org, Flickr                                  | CC0           |
+
 ### One look
 
 First launch, signing in and LogDate Cloud are where LogDate introduces itself, so they share one
@@ -39,7 +84,9 @@ expressive button shapes and motion. Every onboarding route is registered throug
 back to the device's colors.
 
 Pictures are made of one object, `PaperPiece` (`:client:ui`): a flat piece of paper lit from
-overhead. The opening scene and the LogDate Cloud picture are both built from it.
+overhead. The opening scene and the LogDate Cloud picture are both built from it. Nothing is
+tilted in three dimensions: a tilted card skews its text and needs drawn-on thickness and gloss
+to explain the angle, which reads as plastic.
 
 Buttons are `StepPrimaryButton` and `StepSecondaryButton` (`:client:ui`). A step never builds its
 own.
@@ -90,6 +137,11 @@ every step, the opening included, is laid out by it:
   the title down. It is given the height the step has left once everything else has its room: it
   fills a tall step and shrinks in a short one. A picture should ask for the most it wants and
   draw itself to fit less.
+- A step that is about a picture more than a form passes a `scene` instead. It is drawn across
+  the whole window, in front of the step, and is told where the words and the actions are so it
+  can fill the room around them. The opening is the one step that does. The scene is laid out
+  in the same pass as the step (`StepScene.kt`), so it is there in the first frame, and a touch
+  that lands on nothing in the scene reaches the step underneath, so the actions stay usable.
 - On a tablet, an unfolded foldable or a desktop window, the whole step sits in one panel in the
   middle of the window, laid out exactly as on a phone. A step is one decision, so it is not
   stretched across a large window or split into two panes. Two panes are used only where a hinge

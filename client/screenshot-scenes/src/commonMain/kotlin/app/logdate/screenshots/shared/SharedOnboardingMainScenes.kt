@@ -2,6 +2,8 @@
 
 package app.logdate.screenshots.shared
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import app.logdate.client.domain.dayboundary.HealthConnectGateKind
 import app.logdate.client.domain.dayboundary.HealthConnectGateState
 import app.logdate.feature.onboarding.ui.CloudAccountSetupContent
@@ -20,23 +22,29 @@ import app.logdate.feature.onboarding.ui.PersonalIntroContent
 import app.logdate.feature.onboarding.ui.PersonalIntroStep
 import app.logdate.feature.onboarding.ui.PersonalIntroUiState
 import app.logdate.feature.onboarding.ui.WelcomeBackScreenContent
+import app.logdate.ui.common.formatting.LocalToday
+import kotlinx.datetime.LocalDate
 
 internal val catalogOnboardingMainScenes: List<SharedScreenshotSceneSpec> =
     listOf(
         sharedScene(SharedScreenshotSceneId.OnboardingStartSplash, ScreenshotSceneGroup.ONBOARDING, standardMatrixVariants) {
-            OnboardingStartScreenContent(
-                showLanding = false,
-                onGetStarted = {},
-                onSignIn = {},
-            )
+            OnTheOpeningsDay {
+                OnboardingStartScreenContent(
+                    showLanding = false,
+                    onGetStarted = {},
+                    onSignIn = {},
+                )
+            }
         },
         sharedScene(SharedScreenshotSceneId.OnboardingStartLanding, ScreenshotSceneGroup.ONBOARDING, standardMatrixVariants) {
-            OnboardingStartScreenContent(
-                showLanding = true,
-                onGetStarted = {},
-                onSignIn = {},
-                animateContent = false,
-            )
+            OnTheOpeningsDay {
+                OnboardingStartScreenContent(
+                    showLanding = true,
+                    onGetStarted = {},
+                    onSignIn = {},
+                    animateContent = false,
+                )
+            }
         },
         sharedScene(SharedScreenshotSceneId.PersonalIntroName, ScreenshotSceneGroup.ONBOARDING, onboardingStepVariants) {
             PersonalIntroContent(
@@ -159,3 +167,12 @@ internal val catalogOnboardingMainScenes: List<SharedScreenshotSceneSpec> =
             WelcomeBackScreenContent(name = "Alex")
         },
     )
+
+/**
+ * The opening shows today's date on its table. A reference recorded on one day has to match on
+ * every other, so these scenes are given a day of their own instead of the day they are run on.
+ */
+@Composable
+private fun OnTheOpeningsDay(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalToday provides LocalDate(2026, 5, 5), content = content)
+}
