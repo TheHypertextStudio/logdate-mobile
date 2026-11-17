@@ -385,13 +385,6 @@ class HomeViewModel(
     }
 
     /**
-     * Clears the current day selection.
-     */
-    fun clearSelection() {
-        selectedDayFlow.value = null
-    }
-
-    /**
      * Attaches a note to an event from the timeline drag-and-drop gesture. The drop
      * payload is plain text, so [noteIdString] and [eventIdString] are the parsed UUID
      * strings — anything that doesn't parse is silently ignored (the drop came from a
