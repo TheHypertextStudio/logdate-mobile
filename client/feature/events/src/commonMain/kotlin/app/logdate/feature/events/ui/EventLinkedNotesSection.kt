@@ -2,12 +2,9 @@
 
 package app.logdate.feature.events.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,18 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.journals.JournalNote
-import app.logdate.client.text.asString
+import app.logdate.ui.notes.NoteThumbnail
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
 import app.logdate.util.toReadableDateTimeShort
-import coil3.compose.AsyncImage
 import logdate.client.feature.events.generated.resources.Res
 import logdate.client.feature.events.generated.resources.cd_event_linked_note_detach
-import logdate.client.feature.events.generated.resources.cd_event_linked_photo
 import logdate.client.feature.events.generated.resources.event_attach_capture_title
 import logdate.client.feature.events.generated.resources.event_detail_attached_heading
 import logdate.client.feature.events.generated.resources.event_detail_attached_heading_count
@@ -113,88 +105,26 @@ private fun LinkedNoteCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            NotePreview(note)
+            NoteThumbnail(note, shape = RoundedCornerShape(Spacing.sm))
             Column(modifier = Modifier.weight(1f)) {
+                val date = note.creationTimestamp.toReadableDateTimeShort()
+                val headline = note.headline()
                 Text(
-                    text = note.headline().asString(),
+                    text = headline ?: date,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2,
                 )
-                Text(
-                    text = note.creationTimestamp.toReadableDateTimeShort(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (headline != null) {
+                    Text(
+                        text = date,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             IconButton(onClick = onUnlink) {
                 Icon(painter = PlatformIcons.close(), contentDescription = stringResource(Res.string.cd_event_linked_note_detach))
             }
-        }
-    }
-}
-
-@Composable
-private fun NotePreview(note: JournalNote) {
-    val previewSize = 56.dp
-    val shape = RoundedCornerShape(Spacing.sm)
-    when (note) {
-        is JournalNote.Handwriting -> {
-            app.logdate.ui.handwriting
-                .HandwritingPreview(note.document, Modifier.size(previewSize).clip(shape), unreadable = note.unreadableContent != null)
-        }
-
-        is JournalNote.Image -> {
-            AsyncImage(
-                model = note.mediaRef,
-                contentDescription = stringResource(Res.string.cd_event_linked_photo),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(previewSize).clip(shape),
-            )
-        }
-
-        is JournalNote.Video -> {
-            Box(
-                modifier =
-                    Modifier
-                        .size(previewSize)
-                        .clip(shape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = PlatformIcons.playCircle(),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        is JournalNote.Audio -> {
-            Box(
-                modifier =
-                    Modifier
-                        .size(previewSize)
-                        .clip(shape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = PlatformIcons.audioFile(),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        is JournalNote.Text -> {
-            Box(
-                modifier =
-                    Modifier
-                        .size(previewSize)
-                        .aspectRatio(1f)
-                        .clip(shape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            )
         }
     }
 }
