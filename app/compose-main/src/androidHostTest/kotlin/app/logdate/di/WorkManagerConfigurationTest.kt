@@ -1,5 +1,7 @@
 package app.logdate.di
 
+import androidx.work.Configuration
+import app.logdate.client.LogDateApplication
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,11 +18,41 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [30])
 class WorkManagerConfigurationTest {
+    @Test
+    fun `a worker asked for before the app has started Koin waits for it`() {
+        val started = AtomicBoolean(false)
+        val starter = Thread { Thread.sleep(150).also { started.set(true) } }
+        starter.start()
+
+        val waited = awaitKoinStarted(started::get, timeoutMillis = 5_000)
+
+        starter.join()
+        assertTrue(waited, "The worker was not held until Koin started")
+        assertTrue(started.get())
+    }
+
+    @Test
+    fun `a worker is not held past the time startup is given`() {
+        val waited = awaitKoinStarted({ false }, timeoutMillis = 100)
+
+        assertFalse(waited, "A worker must not wait forever for a startup that never comes")
+    }
+
+    @Test
+    fun `the application hands WorkManager its configuration when a job arrives before startup`() {
+        assertTrue(
+            Configuration.Provider::class.java.isAssignableFrom(LogDateApplication::class.java),
+            "Without this a scheduled job that starts the process finds WorkManager uninitialized and crashes it",
+        )
+    }
+
     @Test
     fun `resumed workers waiting for storage leave configuration startup runnable`() =
         runBlocking {

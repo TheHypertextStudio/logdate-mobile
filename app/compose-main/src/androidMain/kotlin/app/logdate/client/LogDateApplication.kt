@@ -2,6 +2,7 @@ package app.logdate.client
 
 import android.app.Application
 import android.content.Context
+import androidx.work.Configuration
 import app.logdate.client.data.restore.discardAbandonedNativeIosTransfer
 import app.logdate.client.data.restore.resumeNativeAccountRecovery
 import app.logdate.client.data.restore.resumeRetainedJournalReconciliation
@@ -18,6 +19,7 @@ import app.logdate.client.launch.initializeLoggingAndKoin
 import app.logdate.client.launch.installStrictModeIfDebuggable
 import app.logdate.client.launch.observeNativeRestoreDeliveryCompletions
 import app.logdate.client.launch.openJournalStorage
+import app.logdate.di.logDateWorkManagerConfiguration
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import io.github.aakira.napier.Napier
@@ -37,6 +39,7 @@ import org.koin.core.context.GlobalContext
 class LogDateApplication :
     Application(),
     KoinComponent,
+    Configuration.Provider,
     SingletonImageLoader.Factory {
     private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var dependenciesInitialized = false
@@ -47,6 +50,14 @@ class LogDateApplication :
             withContext(Dispatchers.Main.immediate) { initializeUnlockedApplication() }
             openJournalStorage()
         }
+
+    /**
+     * Lets WorkManager set itself up the moment it is first needed. Android can start this process
+     * to run a scheduled job and create the job's service before [onCreate]'s startup has reached
+     * Koin, and WorkManager crashes the process if it is not set up by then.
+     */
+    override val workManagerConfiguration: Configuration
+        get() = logDateWorkManagerConfiguration()
 
     override fun newImageLoader(context: Context): ImageLoader = createLogDateImageLoader(context, getKoin())
 
