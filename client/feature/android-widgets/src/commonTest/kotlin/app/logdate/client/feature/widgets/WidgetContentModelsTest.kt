@@ -43,6 +43,21 @@ class WidgetContentModelsTest {
     }
 
     @Test
+    fun `chosen video entry shows a frame from its clip`() {
+        val note =
+            JournalNote.Video(
+                creationTimestamp = Instant.parse("2025-04-12T12:00:00Z"),
+                lastUpdated = Instant.parse("2025-04-12T12:00:00Z"),
+                mediaRef = "logdate-media://videos/walk.mp4",
+            )
+
+        val content = note.toChosenEntryContent()
+
+        assertEquals("logdate-media://videos/walk.mp4", content.imageUri)
+        assertEquals(WidgetEntryKind.VIDEO, content.kind)
+    }
+
+    @Test
     fun `audio entry uses its transcript as the displayed content`() {
         val note =
             JournalNote.Audio(
