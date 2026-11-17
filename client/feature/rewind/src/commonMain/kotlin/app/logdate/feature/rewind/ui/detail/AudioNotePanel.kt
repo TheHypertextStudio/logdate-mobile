@@ -35,12 +35,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.audio.AudioWaveformComponent
+import app.logdate.ui.audio.rememberAudioContext
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.timeline.newstuff.TimelineTranscriptPreview
 import logdate.client.feature.rewind.generated.resources.Res
 import logdate.client.feature.rewind.generated.resources.rewind_pause_audio
 import logdate.client.feature.rewind.generated.resources.rewind_play_audio
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 private val AUDIO_PANEL_BACKGROUND = Color(0xFF1A1A1A)
@@ -57,8 +59,9 @@ private val AUDIO_PANEL_BACKGROUND = Color(0xFF1A1A1A)
  * @param durationMs Recording length in milliseconds
  * @param transcriptionText The transcript, or null if not yet available
  * @param dateFormatted Formatted date string showing when the recording was made
- * @param cachedAmplitudes Cached waveform amplitudes, or null when uncached — the
- *   waveform draws a flat placeholder line in that case rather than blocking the panel
+ * @param recordedAt When the recording was made
+ * @param cachedAmplitudes Cached waveform amplitudes, or null when uncached. An uncached
+ *   recording's waveform is read from the file while the panel shows, rather than drawn flat
  * @param isPlaying Whether this panel's recording is the one currently playing
  * @param playbackProgress Playback progress (0.0–1.0) while [isPlaying] is true
  * @param onTogglePlayback Invoked when the user taps the play/pause control
@@ -71,6 +74,7 @@ fun AudioNotePanel(
     durationMs: Long,
     transcriptionText: String?,
     dateFormatted: String,
+    recordedAt: Instant,
     cachedAmplitudes: List<Float>?,
     isPlaying: Boolean,
     playbackProgress: Float,
@@ -78,6 +82,9 @@ fun AudioNotePanel(
     modifier: Modifier = Modifier,
 ) {
     val hasTranscript = !transcriptionText.isNullOrBlank()
+    // Read the waveform from the recording only when the rewind didn't carry one.
+    val extracted = if (cachedAmplitudes.isNullOrEmpty()) rememberAudioContext(uri, durationMs, recordedAt)?.amplitudes else null
+    val amplitudes = cachedAmplitudes?.takeIf { it.isNotEmpty() } ?: extracted.orEmpty()
     RewindMemoryStage(modifier) { availableHeight ->
         RewindMemoryFrame(
             sourceId.toString(),
@@ -143,7 +150,7 @@ fun AudioNotePanel(
                         }
                     }
                     AudioWaveformComponent(
-                        audioLevels = cachedAmplitudes.orEmpty(),
+                        audioLevels = amplitudes,
                         waveformColor = if (isPlaying) Color.White else Color.White.copy(alpha = 0.6f),
                         minHeight = 56.dp,
                         modifier = Modifier.weight(1f).height(56.dp),

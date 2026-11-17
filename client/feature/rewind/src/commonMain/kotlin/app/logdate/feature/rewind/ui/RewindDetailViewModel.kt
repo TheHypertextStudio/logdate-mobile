@@ -132,7 +132,7 @@ import kotlin.uuid.Uuid
  * @param audioPlaybackManager Plays back audio-note panels; at most one plays at a time
  * @param waveformStorage Reads cached waveform amplitudes for audio-note panels, keyed
  *   by audio URI. Misses (older recordings, or storage never populated) resolve to
- *   null — the panel falls back to a placeholder waveform rather than blocking.
+ *   null, and the panel reads the waveform from the recording itself.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RewindDetailViewModel(

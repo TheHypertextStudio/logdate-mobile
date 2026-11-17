@@ -177,6 +177,7 @@ fun RewindStoryContent(
                 durationMs = panel.durationMs,
                 transcriptionText = panel.transcriptionText,
                 dateFormatted = panel.dateFormatted.asString(),
+                recordedAt = panel.timestamp,
                 cachedAmplitudes = panel.cachedAmplitudes,
                 isPlaying = audioPlaybackState.playingSourceId == panel.sourceId,
                 playbackProgress = if (audioPlaybackState.playingSourceId == panel.sourceId) audioPlaybackState.progress else 0f,
