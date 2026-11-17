@@ -49,8 +49,8 @@ class InferMomentsUseCaseTest {
     @Test
     fun `unchanged source notes keep their moment identity across refresh`() {
         val notes = listOf(textNote("Retained entry", morningTime))
-        val first = inferMomentsHeuristically(date, notes, emptyList())
-        val refreshed = inferMomentsHeuristically(date, notes, emptyList())
+        val first = inferMomentsHeuristically(notes, emptyList())
+        val refreshed = inferMomentsHeuristically(notes, emptyList())
         assertEquals(first.map { it.id }, refreshed.map { it.id })
     }
 

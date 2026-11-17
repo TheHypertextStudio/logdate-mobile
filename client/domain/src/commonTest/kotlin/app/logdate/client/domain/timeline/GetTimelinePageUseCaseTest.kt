@@ -255,7 +255,7 @@ private val PageTimelineDayBuilder =
             date = date,
             events = events,
             placesVisited = places,
-            moments = inferMomentsHeuristically(date, entries, places),
+            moments = inferMomentsHeuristically(entries, places),
             parts = extractDayParts(entries),
             entries = entries.sortedByDescending { it.creationTimestamp },
         )

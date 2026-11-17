@@ -173,7 +173,6 @@ class OfflineFirstLocationHistoryRepository(
         runCatchingUnlessCancelled {
             locationHistoryDao.deleteLogsWithinRange(startTime, endTime)
             activityDao?.deleteBetween(startTime, endTime)
-            Unit
         }
 
     override suspend fun getLocationCount(): Int = locationHistoryDao.getLocationCount()

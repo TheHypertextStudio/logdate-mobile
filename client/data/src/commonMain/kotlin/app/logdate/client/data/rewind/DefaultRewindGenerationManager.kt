@@ -134,37 +134,6 @@ class DefaultRewindGenerationManager(
             false
         }
 
-    /**
-     * Updates a completed request with the generated rewind ID.
-     *
-     * @param id The unique identifier of the request
-     * @param rewindId The ID of the generated rewind
-     * @return True if the update was successful, false otherwise
-     */
-    suspend fun completeWithRewindId(
-        id: Uuid,
-        rewindId: Uuid,
-    ): Boolean =
-        try {
-            val updated = requestDao.updateWithRewindId(id, rewindId)
-            updated > 0
-        } catch (e: Exception) {
-            Napier.e("Failed to complete rewind generation request with rewind ID", e)
-            false
-        }
-
-    // These additional methods are useful for the internal implementation but aren't part of the interface
-
-    fun observeGenerationRequests(): Flow<List<RewindGenerationRequest>> =
-        requestDao.getAllRequests().map { entities ->
-            entities.map { it.toModel() }
-        }
-
-    fun observeActiveRequests(): Flow<List<RewindGenerationRequest>> =
-        requestDao.getActiveRequests().map { entities ->
-            entities.map { it.toModel() }
-        }
-
     // Helper extension function to convert entity to model
     private fun RewindGenerationRequestEntity.toModel(): RewindGenerationRequest =
         RewindGenerationRequest(

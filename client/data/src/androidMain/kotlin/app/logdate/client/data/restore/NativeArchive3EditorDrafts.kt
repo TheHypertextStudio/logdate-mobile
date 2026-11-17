@@ -26,9 +26,7 @@ internal object NativeArchive3EditorDrafts {
                     selected += Json.decodeFromString<List<EditorDraft>>(value)
                 }
 
-                name == "editor_drafts_legacy_owner" || name.endsWith("_legacy_copied") -> {
-                    Unit
-                }
+                name == "editor_drafts_legacy_owner" || name.endsWith("_legacy_copied") -> {}
 
                 name == "editor_drafts" || name == "editor_drafts_anonymous" || name.startsWith("editor_drafts_scope_") -> {
                     check(value is String)

@@ -1,19 +1,12 @@
 package app.logdate.client.database
 
-import android.content.Context
 import app.logdate.client.database.encryption.DatabaseKeyRecoveryRequiredException
-import app.logdate.client.database.encryption.DatabasePassphraseProvider
 import app.logdate.client.device.restore.NativeRestoreDeliveryGate
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 sealed interface DatabaseStartupState {
     data object Initializing : DatabaseStartupState
@@ -96,38 +89,6 @@ class DatabaseStartupMonitor {
     }
 }
 
-class DatabaseRecoveryController(
-    private val context: Context,
-    private val passphraseProvider: DatabasePassphraseProvider,
-    private val startupMonitor: DatabaseStartupMonitor,
-) {
-    suspend fun quarantineAndResetEncryptedStorage(): Result<File> =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                val appContext = context.applicationContext
-                val dbFile = appContext.getDatabasePath(DATABASE_NAME)
-                val backupBase =
-                    File(
-                        dbFile.parentFile,
-                        "$DATABASE_NAME.recovery-backup-${System.currentTimeMillis()}",
-                    )
-
-                Napier.w("Reset requested. Quarantining current encrypted DB before clearing key.", tag = DB_RECOVERY_TAG)
-                moveIfExists(dbFile, backupBase)
-                moveIfExists(File("${dbFile.absolutePath}-wal"), File("${backupBase.absolutePath}-wal"))
-                moveIfExists(File("${dbFile.absolutePath}-shm"), File("${backupBase.absolutePath}-shm"))
-                moveIfExists(File("${dbFile.absolutePath}-journal"), File("${backupBase.absolutePath}-journal"))
-
-                passphraseProvider.clearPassphrase()
-                startupMonitor.markReady()
-
-                Napier.w("Encrypted DB/key reset complete. Backup preserved at ${backupBase.absolutePath}", tag = DB_RECOVERY_TAG)
-
-                backupBase
-            }
-        }
-}
-
 private fun classifyRecoveryReason(message: String): String {
     val normalized = message.lowercase()
     return when {
@@ -147,24 +108,6 @@ private fun Throwable.rootCause(): Throwable {
         current = current.cause!!
     }
     return current
-}
-
-private fun moveIfExists(
-    source: File,
-    target: File,
-) {
-    if (!source.exists()) {
-        return
-    }
-    moveReplacing(source, target)
-}
-
-private fun moveReplacing(
-    source: File,
-    target: File,
-) {
-    target.parentFile?.mkdirs()
-    Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
 }
 
 private const val DB_RECOVERY_TAG = "LogDateDbRecovery"

@@ -151,9 +151,7 @@ internal class JournalNoteRecoveryPersistence(
             }
         check(count == 1) { "Note changed during archive recovery" }
         when (note) {
-            is JournalNote.Text, is JournalNote.Handwriting -> {
-                Unit
-            }
+            is JournalNote.Text, is JournalNote.Handwriting -> {}
 
             is JournalNote.Image -> {
                 mediaCaptionDao.upsertCaption(MediaCaptionEntity(note.uid, note.caption))

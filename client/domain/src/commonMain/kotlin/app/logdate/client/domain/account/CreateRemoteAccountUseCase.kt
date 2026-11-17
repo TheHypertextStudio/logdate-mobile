@@ -76,9 +76,6 @@ class CreateRemoteAccountUseCase(
                 val createResult = accountRepository.createAccountWithPasskey(request)
 
                 if (createResult.isSuccess) {
-                    // Create a CloudAccount from the result
-                    val account = createResult.getOrThrow()
-
                     // Create a proper CloudAccount with meaningful data
                     val now = Clock.System.now()
                     val accountId = Uuid.random()

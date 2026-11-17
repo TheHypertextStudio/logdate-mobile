@@ -40,9 +40,7 @@ internal fun nativeTransferMediaPaths(
                     selected?.let { add("files/$it") }
                 }
 
-                is MediaReference.External -> {
-                    Unit
-                }
+                is MediaReference.External -> {}
             }
         }
     }

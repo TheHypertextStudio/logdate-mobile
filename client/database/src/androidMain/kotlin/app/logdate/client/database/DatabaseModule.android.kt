@@ -30,7 +30,6 @@ actual val databaseModule: Module =
             }
         }
         single { DatabaseStartupMonitor() }
-        single { DatabaseRecoveryController(androidContext(), get(), get()) }
         single {
             val context = androidContext()
             val startupMonitor: DatabaseStartupMonitor = get()

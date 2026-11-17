@@ -169,7 +169,7 @@ class GetStreamingTimelineUseCase(
             people = emptyList(),
             events = events.overlapping(entries),
             placesVisited = places,
-            moments = inferMomentsHeuristically(date, entries, places),
+            moments = inferMomentsHeuristically(entries, places),
             parts = extractDayParts(entries),
             entries = entries.sortedByDescending { it.creationTimestamp },
             isRecentWindow = true,

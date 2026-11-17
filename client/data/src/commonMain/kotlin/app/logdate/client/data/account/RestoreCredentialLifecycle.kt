@@ -91,6 +91,8 @@ class RestoreCredentialLifecycle(
         check(isCurrent()) { "Sign-out identity changed" }
     }
 
+    // RestoreCredentialLifecycleTest and RestoreCredentialCleanupRuntimeTest read cleanup tickets with it; tests are not roots.
+    @Suppress("unused")
     suspend fun pendingCleanupId(): String? = providerMutex.withLock { readState().tickets.lastOrNull()?.id }
 
     /** Reconciles the persist/enqueue boundary, including cleanup recorded by an earlier process. */

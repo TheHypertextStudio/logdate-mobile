@@ -56,11 +56,5 @@ class HasLogDateCloudAccountUseCase(
         data class HasAccount(
             val account: app.logdate.shared.model.LogDateAccount,
         ) : AccountStatus()
-
-        /**
-         * Convenience property to check if user has any account
-         */
-        val hasAccount: Boolean
-            get() = this is HasAccount || this is HasAccountLoading
     }
 }
