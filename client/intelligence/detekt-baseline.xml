@@ -16,6 +16,5 @@
     >LongMethod:WeekNarrativeSynthesizer.kt:WeekNarrativeSynthesizer$private suspend fun synthesizeNarrative: AIResult&lt;WeekNarrative></ID>
     <ID
     >LongMethod:YearNarrativeSynthesizer.kt:YearNarrativeSynthesizer$suspend fun synthesize: AIResult&lt;YearNarrative></ID>
-    <ID>UnusedParameter:LocalYearNarrative.kt:year: Int</ID>
   </CurrentIssues>
 </SmellBaseline>

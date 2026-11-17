@@ -453,15 +453,9 @@ internal class SyncDownloader(
         return true
     }
 
-    suspend fun downloadDrafts(
-        accessToken: String,
-        since: Instant,
-    ): SyncResult = draftDownloader.download(since)
+    suspend fun downloadDrafts(since: Instant): SyncResult = draftDownloader.download(since)
 
-    suspend fun downloadAssociations(
-        accessToken: String,
-        since: Instant,
-    ): SyncResult = associationDownloader.download(since)
+    suspend fun downloadAssociations(since: Instant): SyncResult = associationDownloader.download(since)
 
     companion object {
         /**

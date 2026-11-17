@@ -2,6 +2,5 @@
 <SmellBaseline>
   <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>UnusedParameter:PostcardViewerScreen.kt:onPhotoTap: (CanvasElement.Photo) -> Unit</ID>
   </CurrentIssues>
 </SmellBaseline>

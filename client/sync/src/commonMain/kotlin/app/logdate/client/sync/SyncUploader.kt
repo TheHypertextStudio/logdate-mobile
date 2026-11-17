@@ -133,7 +133,7 @@ internal class SyncUploader(
             }
         }
 
-    suspend fun uploadJournals(accessToken: String): SyncResult =
+    suspend fun uploadJournals(): SyncResult =
         uploadPass("Upload journals") {
             val spaceKind = space?.activeKind(EntityType.JOURNAL)
             if (spaceKind != null) uploadJournalsToSpace(space, spaceKind) else journalUploader.uploadPending()
@@ -201,7 +201,7 @@ internal class SyncUploader(
 
     private enum class RunEligibility { TRANSFERABLE, UNDELIVERABLE, HELD }
 
-    suspend fun uploadContent(accessToken: String): SyncResult {
+    suspend fun uploadContent(): SyncResult {
         return uploadPass("Upload content") {
             var uploadedCount = 0
             val errors = mutableListOf<SyncError>()
@@ -419,7 +419,7 @@ internal class SyncUploader(
         }
     }
 
-    suspend fun uploadAssociations(accessToken: String): SyncResult =
+    suspend fun uploadAssociations(): SyncResult =
         uploadPass("Upload associations") {
             val spaceKind = space?.activeKind(EntityType.ASSOCIATION)
             if (spaceKind != null) space.uploadKind(spaceKind, profile.uploadsUpdates) else associationUploader.uploadPending()
@@ -439,7 +439,7 @@ internal class SyncUploader(
         )
     }
 
-    suspend fun uploadDrafts(accessToken: String): SyncResult =
+    suspend fun uploadDrafts(): SyncResult =
         uploadPass("Upload drafts") {
             val drafts = journalRepository.getAllDraftsForSync()
             val spaceKind = space?.activeKind(EntityType.DRAFT)
