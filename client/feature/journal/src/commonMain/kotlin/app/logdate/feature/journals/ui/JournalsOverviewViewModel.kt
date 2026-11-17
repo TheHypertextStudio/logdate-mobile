@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.uuid.Uuid
 
 /**
  * ViewModel for the journals overview screen.
@@ -88,15 +87,6 @@ class JournalsOverviewViewModel(
                 EntrySearchSnapshot(SearchQuery.Empty, emptyList()),
             )
 
-    /**
-     * Entry-level search results for the expanded search overlay.
-     * Limited to 5 as previews; the user can navigate to global search for full results.
-     */
-    val entrySearchResults: StateFlow<List<SearchResult>> =
-        latestEntrySearchState
-            .map { it.results }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
     val uiState: StateFlow<JournalsOverviewUiState> =
         combine(
             repository.allJournalsObserved,
@@ -147,12 +137,6 @@ class JournalsOverviewViewModel(
 
     fun setSortOption(option: JournalSortOption) {
         sortOptionState.value = option
-    }
-
-    fun removeJournal(journalId: Uuid) {
-        viewModelScope.launch {
-            repository.delete(journalId)
-        }
     }
 
     private fun applySorting(
