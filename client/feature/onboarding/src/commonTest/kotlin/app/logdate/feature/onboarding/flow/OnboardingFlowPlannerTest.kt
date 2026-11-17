@@ -50,7 +50,7 @@ class OnboardingFlowPlannerTest {
                 OnboardingStep.NOTIFICATIONS,
                 OnboardingStep.COMPLETE,
             ),
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.FRESH,
                 snapshot = snapshot,
             ),
@@ -65,7 +65,7 @@ class OnboardingFlowPlannerTest {
         val snapshot = OnboardingProgressSnapshot()
 
         assertFalse(
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.FRESH,
                 snapshot = snapshot,
             ).contains(OnboardingStep.RECOVERY_PHRASE),
@@ -84,7 +84,7 @@ class OnboardingFlowPlannerTest {
             )
 
         assertFalse(
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.FRESH,
                 snapshot = snapshot,
             ).contains(OnboardingStep.DAY_BOUNDARIES),
@@ -110,7 +110,7 @@ class OnboardingFlowPlannerTest {
                 OnboardingStep.NOTIFICATIONS,
                 OnboardingStep.WELCOME_BACK,
             ),
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = snapshot,
             ),
@@ -132,10 +132,10 @@ class OnboardingFlowPlannerTest {
 
         assertEquals(
             OnboardingStep.WELCOME_BACK,
-            firstOnboardingStep(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = snapshot,
-            ),
+            ).first(),
         )
     }
 
@@ -145,10 +145,10 @@ class OnboardingFlowPlannerTest {
 
         assertEquals(
             OnboardingStep.PERSONAL_INTRO,
-            firstOnboardingStep(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = snapshot,
-            ),
+            ).first(),
         )
     }
 
@@ -228,7 +228,7 @@ class OnboardingFlowPlannerTest {
                 OnboardingStep.NOTIFICATIONS,
                 OnboardingStep.WELCOME_BACK,
             ),
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = snapshot,
             ),
@@ -250,13 +250,13 @@ class OnboardingFlowPlannerTest {
             )
 
         assertFalse(
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = skipped,
             ).contains(OnboardingStep.ACCOUNT),
         )
         assertTrue(
-            onboardingStepsFor(
+            plannedSteps(
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = neverVisited,
             ).contains(OnboardingStep.ACCOUNT),
@@ -274,4 +274,16 @@ class OnboardingFlowPlannerTest {
             ).firstIncompleteRequiredOnboardingStep(),
         )
     }
+
+    private fun plannedSteps(
+        entryMode: OnboardingEntryMode,
+        snapshot: OnboardingProgressSnapshot,
+    ): List<OnboardingStep> =
+        generateSequence(
+            if (snapshot.hasPersonalIntro) {
+                nextOnboardingStepAfter(OnboardingStep.PERSONAL_INTRO, entryMode, snapshot)
+            } else {
+                OnboardingStep.PERSONAL_INTRO
+            },
+        ) { step -> nextOnboardingStepAfter(step, entryMode, snapshot) }.toList()
 }

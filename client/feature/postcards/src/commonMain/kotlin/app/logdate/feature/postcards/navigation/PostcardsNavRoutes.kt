@@ -1,7 +1,6 @@
 package app.logdate.feature.postcards.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.postcards.ui.CanvasEditorScreen
 import app.logdate.feature.postcards.ui.PostcardViewerScreen
@@ -33,21 +32,6 @@ data class PostcardViewerRoute(
     val postcardId: String,
 ) : NavKey {
     constructor(postcardId: Uuid) : this(postcardId.toString())
-}
-
-/** Pushes the Postcards collection. */
-fun NavBackStack<NavKey>.navigateToPostcardsCollection() {
-    add(PostcardsCollectionRoute)
-}
-
-/** Pushes the Postcard editor (new or existing). */
-fun NavBackStack<NavKey>.navigateToPostcardEditor(postcardId: Uuid? = null) {
-    add(PostcardEditorRoute(postcardId))
-}
-
-/** Pushes the Postcard viewer. */
-fun NavBackStack<NavKey>.navigateToPostcardViewer(postcardId: Uuid) {
-    add(PostcardViewerRoute(postcardId))
 }
 
 /** Registers the Postcards collection entry. */

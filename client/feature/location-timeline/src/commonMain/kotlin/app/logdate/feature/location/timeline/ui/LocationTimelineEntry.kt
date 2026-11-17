@@ -19,7 +19,6 @@ fun LocationTimelineScreen(
     modifier: Modifier = Modifier,
     onOpenNote: (Uuid) -> Unit = {},
     onAddMemory: (VisitMemoryContext) -> Unit = {},
-    embeddedInHome: Boolean = false,
     viewModel: LocationTimelineViewModel? = null,
 ) {
     val flags = koinInject<FeatureFlagStore>()

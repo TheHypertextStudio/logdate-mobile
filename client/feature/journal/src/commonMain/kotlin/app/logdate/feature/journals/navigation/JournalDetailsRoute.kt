@@ -4,7 +4,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.repository.journals.JournalRepository
 import app.logdate.feature.journals.ui.detail.JournalDetailScreen
@@ -24,11 +23,6 @@ data class JournalDetailsRoute(
     val mergedSourceTitle: String? = null,
 ) : NavKey {
     constructor(journalId: Uuid) : this(journalId.toString())
-}
-
-/** Pushes the journal detail screen for the given id. */
-fun NavBackStack<NavKey>.navigateToJournal(journalId: Uuid) {
-    add(JournalDetailsRoute(journalId))
 }
 
 /** Registers the journal detail entry. */

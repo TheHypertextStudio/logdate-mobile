@@ -156,9 +156,7 @@ internal fun HistoryEditDialog(
                     )
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
             if (action == HistoryEditAction.ChangePlace || action == HistoryEditAction.AddVisit) {
                 OutlinedTextField(name, { name = it }, label = { Text(stringResource(Res.string.history_place_name)) })

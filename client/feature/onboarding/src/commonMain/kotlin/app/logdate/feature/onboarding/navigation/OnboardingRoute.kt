@@ -52,7 +52,7 @@ import app.logdate.feature.core.account.OnboardingStep as CloudAccountEntryStep
 
 /**
  * Registers every onboarding entry. Internal step-to-step navigation is computed by this
- * orchestrator (using [nextOnboardingStepAfter] / [firstOnboardingStep]); the host only
+ * orchestrator (using [nextOnboardingStepAfter]); the host only
  * supplies callbacks for transitions that exit the onboarding flow.
  *
  * @param onNavigateBack pop the current onboarding entry

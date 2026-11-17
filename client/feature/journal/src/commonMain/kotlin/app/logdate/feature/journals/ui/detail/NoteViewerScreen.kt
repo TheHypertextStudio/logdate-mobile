@@ -179,7 +179,6 @@ fun NoteViewerScreen(
 
     if (showAddToJournal) {
         AddToJournalPicker(
-            noteId = noteId,
             currentJournalId = journalId,
             journals = allJournals,
             memberJournalIds = memberJournalIds,

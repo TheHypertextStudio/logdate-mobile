@@ -70,6 +70,8 @@ class WidgetInstanceSettings(
 
     fun usePhotoPrompt(id: Int): Boolean = preferences.getBoolean("$id.usePhotoPrompt", true)
 
+    // AndroidTest WidgetInstanceSettingsTest checks whether a choice was stored; tests are not roots
+    @Suppress("unused")
     fun hasPhotoPromptChoice(id: Int): Boolean = preferences.contains("$id.usePhotoPrompt")
 
     fun photoShape(id: Int): PhotoWidgetShape =
@@ -96,6 +98,8 @@ class WidgetInstanceSettings(
         }
     }
 
+    // App/android-main androidTest widget restore tests seed per-widget choices with it; tests are not roots
+    @Suppress("unused")
     fun saveRecall(
         id: Int,
         mode: RecallMode,
@@ -105,21 +109,29 @@ class WidgetInstanceSettings(
             values.copy(strings = values.strings + mapOf("recallMode" to mode.name, "contentTypes" to types.joinToString(",") { it.name }))
         }
 
+    // App/android-main androidTest widget restore tests seed per-widget choices with it; tests are not roots
+    @Suppress("unused")
     fun saveChosenNote(
         id: Int,
         noteId: String,
     ): Boolean = update(id) { it.copy(strings = it.strings + ("chosenNoteId" to noteId)) }
 
+    // App/android-main androidTest widget restore tests seed per-widget choices with it; tests are not roots
+    @Suppress("unused")
     fun saveUsePhotoPrompt(
         id: Int,
         enabled: Boolean,
     ): Boolean = update(id) { it.copy(flags = it.flags + ("usePhotoPrompt" to enabled)) }
 
+    // App/android-main androidTest widget restore tests seed per-widget choices with it; tests are not roots
+    @Suppress("unused")
     fun savePhotoShape(
         id: Int,
         shape: PhotoWidgetShape,
     ): Boolean = update(id) { it.copy(strings = it.strings + ("photoShape" to shape.name)) }
 
+    // App/android-main androidTest widget restore tests seed per-widget choices with it; tests are not roots
+    @Suppress("unused")
     fun savePhotoPrompt(
         id: Int,
         enabled: Boolean,

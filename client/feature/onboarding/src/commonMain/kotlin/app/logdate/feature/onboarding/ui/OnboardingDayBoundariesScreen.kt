@@ -150,9 +150,7 @@ fun OnboardingDayBoundariesScreen(
                 pendingEnableAfterPermission = false
             }
 
-            DayBoundariesPostPermissionAction.NONE -> {
-                Unit
-            }
+            DayBoundariesPostPermissionAction.NONE -> {}
         }
     }
 
@@ -174,9 +172,7 @@ fun OnboardingDayBoundariesScreen(
                     onSetUpHealthConnect()
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         },
         onSkip = {

@@ -95,7 +95,6 @@ fun PostcardsCollectionScreen(
         }
 
     val multiSelect = rememberMultiSelectState()
-    val allIds = postcards.map { it.id.toString() }
 
     Scaffold(
         topBar = {

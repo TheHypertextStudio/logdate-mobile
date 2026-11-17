@@ -54,14 +54,6 @@ sealed class PersonalIntroStep {
 }
 
 /**
- * Data class for the LLM processing request.
- */
-data class LlmProcessingRequest(
-    val userName: String,
-    val userBio: String,
-)
-
-/**
  * Represents the result of LLM processing.
  */
 sealed class LlmProcessingResult {

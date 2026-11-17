@@ -300,9 +300,3 @@ data class RewindPanelBackgroundSpec(
     val color: Long? = null,
     val uri: String? = null,
 )
-
-/**
- * Whether the panel should use a background image.
- */
-val RewindPanelBackgroundSpec.useBackgroundImage
-    get() = uri != null

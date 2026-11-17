@@ -555,12 +555,3 @@ private fun ShareJournalCard(
         }
     }
 }
-
-/**
- * Data class for journal sharing information.
- *
- * @param journalId String ID of the journal to share
- */
-data class JournalShareData(
-    val journalId: String,
-)

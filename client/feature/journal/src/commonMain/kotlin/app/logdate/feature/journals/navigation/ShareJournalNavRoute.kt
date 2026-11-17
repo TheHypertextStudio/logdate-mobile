@@ -1,7 +1,6 @@
 package app.logdate.feature.journals.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.journals.ui.share.ShareJournalScreen
 import app.logdate.ui.navigation.taggedEntry
@@ -17,11 +16,6 @@ data class ShareJournalRoute(
     val journalId: String,
 ) : NavKey {
     constructor(journalId: Uuid) : this(journalId.toString())
-}
-
-/** Pushes the share-journal flow for the given journal. */
-fun NavBackStack<NavKey>.navigateToShareJournal(journalId: Uuid) {
-    add(ShareJournalRoute(journalId))
 }
 
 /** Registers the share-journal entry. */

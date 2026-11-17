@@ -96,13 +96,6 @@ data class MediaViewerState(
 )
 
 /**
- * UI state for compact-screen viewer chrome.
- */
-data class MediaViewerChromeState(
-    val isVisible: Boolean = true,
-)
-
-/**
  * A media item in the presenter navigation strip.
  *
  * Kept as a typealias so the existing presenter concept stays readable while viewer and presenter

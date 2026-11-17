@@ -58,7 +58,6 @@ import kotlin.uuid.Uuid
  * @param selectedElementId The ID of the currently selected element, or null.
  * @param viewportOffset The viewport pan offset driving photo parallax, read when layers draw.
  * @param onElementTap Callback when an element is tapped (for selection).
- * @param onPhotoTap Callback when a photo element is tapped (for intertextuality navigation).
  */
 @Composable
 fun CanvasRenderer(
@@ -68,7 +67,6 @@ fun CanvasRenderer(
     stickerUriMap: Map<Uuid, String> = emptyMap(),
     viewportOffset: () -> Offset = { Offset.Zero },
     onElementTap: ((Uuid) -> Unit)? = null,
-    onPhotoTap: ((CanvasElement.Photo) -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         // Background

@@ -52,8 +52,6 @@ internal class WidgetSetupSaveRecovery<T : Any>(
         restart()
     }
 
-    fun retryNow() = restart()
-
     fun cancel() {
         authorized.set(null)
         attempt = null
