@@ -1,7 +1,6 @@
 package app.logdate.feature.journals.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.repository.journals.JournalMergeOperation
 import app.logdate.feature.journals.ui.JournalsOverviewScreen
@@ -13,11 +12,6 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data object JournalsOverviewRoute : NavKey
-
-/** Pushes the journals overview list. */
-fun NavBackStack<NavKey>.navigateToJournalsOverview() {
-    add(JournalsOverviewRoute)
-}
 
 /** Registers the journals overview entry. */
 fun EntryProviderScope<NavKey>.journalsOverviewEntry(
