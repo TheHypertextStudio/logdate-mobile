@@ -387,7 +387,7 @@ class PrivacySettingsViewModelTest {
         }
 
     @Test
-    fun `android assistants appear only where they are available, with what they may do`() =
+    fun `android assistants appear only where they are available with what they may do`() =
         runTest {
             assertEquals(null, buildViewModel().state.value.androidAssistants)
             val allowed = MutableStateFlow<Set<AssistantCapability>?>(emptySet())

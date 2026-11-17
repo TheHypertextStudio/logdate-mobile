@@ -84,7 +84,7 @@ class LabsSettingsViewModelTest {
     }
 
     @Test
-    fun `Android lists People first, then the watch app and activity awareness`() {
+    fun `Android lists People first and then the watch app and activity awareness`() {
         assertEquals(
             listOf(FeatureFlag.PEOPLE, FeatureFlag.WATCH_EXPERIENCE_V2, FeatureFlag.ACTIVITY_AWARENESS),
             labsFlags(PlatformKind.Android),

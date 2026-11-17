@@ -44,7 +44,7 @@ class AndroidAssistantsViewModelTest {
     }
 
     @Test
-    fun `everything starts off, with the person's journals to choose from`() =
+    fun `everything starts off with the person's journals to choose from`() =
         runTest {
             val state = model.state.filterNotNull().first()
             assertEquals(listOf(AssistantJournalOption(travel.id, "Travel")), state.journals)
