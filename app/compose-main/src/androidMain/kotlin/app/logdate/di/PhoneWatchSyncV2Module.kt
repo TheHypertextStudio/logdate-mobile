@@ -259,7 +259,6 @@ val phoneWatchSyncV2Module =
                     rejection =
                         RecordRejection { kind, id ->
                             receipts.reject(peer, kind, id, operation)
-                            Unit
                         },
                     mapper = mapper,
                     operationId = operation,

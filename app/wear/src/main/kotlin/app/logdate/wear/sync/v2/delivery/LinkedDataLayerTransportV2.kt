@@ -63,7 +63,7 @@ class LinkedDataLayerTransportV2(
             if (record.kind != RecordKind.NOTE || record.linkId != peer.linkId) return@attempt false
             val phone = selectedPhone() ?: return@attempt false
             val channel = channels.openChannel(phone.id, channelPath).await()
-            var closed = false
+            var closed: Boolean
             val sent =
                 try {
                     if (peers.isCurrent(peer)) transfer(channel, localFilePath) else false

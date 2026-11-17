@@ -184,9 +184,7 @@ private fun UsernameSetupContent(
                             )
                         }
 
-                        UsernameAvailability.Unknown -> {
-                            null
-                        }
+                        UsernameAvailability.Unknown -> {}
                     }
                 },
                 supportingText = {

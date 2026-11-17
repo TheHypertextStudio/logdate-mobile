@@ -150,7 +150,7 @@ class JournalSettingsViewModel(
      */
     fun saveJournalChanges(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            val journalId = journalIdState.value ?: return@launch
+            if (journalIdState.value == null) return@launch
             val currentState = uiState.value
 
             // Only save if we have unsaved changes

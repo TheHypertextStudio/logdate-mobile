@@ -87,9 +87,7 @@ fun RewindMemoryFrame(
                         CircularProgressIndicator(color = Color.White)
                     }
 
-                    RewindMemoryLoadState.Ready -> {
-                        Unit
-                    }
+                    RewindMemoryLoadState.Ready -> {}
 
                     RewindMemoryLoadState.Unavailable -> {
                         Text(

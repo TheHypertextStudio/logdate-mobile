@@ -266,7 +266,6 @@ internal fun RetainedEditorDocument(
                         val visible = if (focusedId == block.id || progress > 0f) 1f else 1f - maximumProgress
                         if (visible > 0f && !state.earlierExpanded) {
                             val measure = continuity.host.measure(block.id)
-                            val expanded = focusedId == block.id
                             val x =
                                 if (lookahead) {
                                     interpolate(writingLeft + gutter, 0, progress)

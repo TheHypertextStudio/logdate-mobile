@@ -121,7 +121,7 @@ class PhoneMediaReaderTest {
             val reader = PhoneMediaReader(source, { valid })
             reader.open(identity.copy(sha256 = "0".repeat(64)), 0)
             assertFailsWith<IOException> {
-                while (reader.read(ByteArray(8192), 0, 8192) != -1) Unit
+                while (reader.read(ByteArray(8192), 0, 8192) != -1) continue
             }
             reader.close()
         }

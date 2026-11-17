@@ -155,7 +155,6 @@ class AndroidAudioPlaybackManagerTest {
                 )
             every { controller.play() } answers {
                 events += "play"
-                Unit
             }
 
             manager.startPlayback(

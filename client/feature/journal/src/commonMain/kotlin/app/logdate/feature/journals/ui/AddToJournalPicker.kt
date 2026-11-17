@@ -159,7 +159,6 @@ private fun JournalPickerContent(
             LazyColumn {
                 items(journals, key = { it.id }) { journal ->
                     val isMember = journal.id in memberJournalIds
-                    val coverColor = remember(journal.id) { deriveCoverColor(journal.id) }
 
                     Row(
                         modifier =

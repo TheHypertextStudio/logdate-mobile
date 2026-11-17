@@ -163,12 +163,10 @@ fun EntryEditorContent(
 
                 activeCamera || activeHandwriting || editorState.expandedBlockId != null -> {
                     viewModel.dismissExpandedBlockOrClearSingleEmpty()
-                    Unit
                 }
 
                 shouldReturnToPickerOnBack -> {
                     viewModel.clearSingleEmptyBlock()
-                    Unit
                 }
 
                 !editorState.canExitWithoutSaving -> {

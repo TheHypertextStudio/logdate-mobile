@@ -69,7 +69,6 @@ internal fun DayScheduleReadFeedback(
         }
 
         else -> {
-            Unit
         }
     }
 }
@@ -89,7 +88,6 @@ internal fun DaySettingFeedback(
         }
 
         DaySettingWriteState.Idle -> {
-            Unit
         }
     }
 }

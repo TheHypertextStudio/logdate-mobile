@@ -467,7 +467,7 @@ class PhoneLinkInitiatorTest {
             val changes = MutableStateFlow(0)
             bundleSource =
                 object : LinkBundleSource {
-                    override fun changes(): Flow<Unit> = changes.map { Unit }
+                    override fun changes(): Flow<Unit> = changes.map { }
 
                     override suspend fun plan(watchFeatures: Set<String>) = LinkPlan(LinkMode.PAIR)
 

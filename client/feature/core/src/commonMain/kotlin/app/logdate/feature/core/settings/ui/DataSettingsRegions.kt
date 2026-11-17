@@ -53,7 +53,6 @@ internal fun QuotaSettingsRegion(
         if (availability == null || availability.quota != null) QuotaUsageBlock(quotaUsage)
         when (availability) {
             null, is QuotaAvailability.Available -> {
-                Unit
             }
 
             is QuotaAvailability.Loading -> {

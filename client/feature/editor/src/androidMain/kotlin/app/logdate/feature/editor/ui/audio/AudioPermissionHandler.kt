@@ -47,8 +47,6 @@ import org.koin.compose.koinInject
 actual fun AudioPermissionWrapper(content: @Composable () -> Unit) {
     // Get permission manager from Koin
     val permissionManager: PermissionManager = koinInject()
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     // Track permission state
     var permissionState by remember {

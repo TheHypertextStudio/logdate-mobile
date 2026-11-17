@@ -108,7 +108,6 @@ internal fun AutomaticDiagnosticReportingContent(
                 }
 
                 is ReportingAvailability.Available -> {
-                    Unit
                 }
             }
             state.settings?.let { settings ->
@@ -141,7 +140,6 @@ internal fun AutomaticDiagnosticReportingContent(
                         }
 
                         else -> {
-                            Unit
                         }
                     }
                     if (settings.pendingReports > 0) Text(stringResource(Res.string.diagnostic_reporting_pending, settings.pendingReports))
