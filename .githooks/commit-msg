@@ -1,3 +1,4 @@
 #!/bin/sh
 # Hypertext Studio managed Git hook v1
-exec python3 .hypertext/git-hook.py commit-msg "$1"
+if [ -x .hypertext/git-product/commit-msg ]; then .hypertext/git-product/commit-msg "$1" || exit; fi
+exec hypertext verify --repo "$PWD" --git-message "$1"

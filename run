@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# >>> Hypertext Studio: ./run format >>>
+if [ "${1-}" = format ]; then
+  shift
+  case $0 in */*) here=${0%/*} ;; *) here=. ;; esac
+  exec python3 "$here/.hypertext/format.py" "$@"
+fi
+# <<< Hypertext Studio: ./run format <<<
 # run - Interactive entrypoint for LogDate development
 #
 # Usage:
