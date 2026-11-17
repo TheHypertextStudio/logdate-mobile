@@ -10,11 +10,13 @@ object SharedScreenshotCatalog {
     val settingsScenes: List<SharedScreenshotSceneSpec> =
         personalSettingsScenes + quietSaveScenes + systemSettingsScenes + nativeBackupScenes + journalStorageScenes +
             settingsRowScenes + connectedAssistantScenes + androidAssistantScenes
+    val editorScenes: List<SharedScreenshotSceneSpec> = entryPageScenes
     val searchScenes: List<SharedScreenshotSceneSpec> = catalogSearchScenes
     val desktopOnlyScenes: List<SharedScreenshotSceneSpec> = catalogDesktopOnlyScenes
     val allScenes: List<SharedScreenshotSceneSpec> =
         onboardingMainScenes +
             onboardingExtendedScenes +
+            editorScenes +
             settingsScenes +
             watchSettingsScenes +
             searchScenes +

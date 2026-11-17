@@ -146,6 +146,16 @@ A screen that is exempt for either reason is covered on the Android lane, and th
 reference should stay as long as the platform-specific visual does. Remove an Android reference only
 when a shared scene makes it redundant.
 
+A scene must draw the screen through the code the app shows it with, not through a stand-in built
+from the screen's parts. A stand-in keeps rendering after the app has moved on, and its reference
+then shows a screen nobody gets. The editor's entry page is drawn through `EntryPageScene`, a host
+in the editor module that holds an entry in memory and saves nothing.
+
+Some screens cannot be drawn by the Android preview lane at all. It renders a single frame, so
+anything a screen places from a position it learns one frame later is missing from the picture. The
+entry page places its row of ways to add something that way, so its references come from the desktop
+lane only, which renders until the picture is stable.
+
 ## Android OS integration screenshots
 
 Every feature in the Native Android integration program
