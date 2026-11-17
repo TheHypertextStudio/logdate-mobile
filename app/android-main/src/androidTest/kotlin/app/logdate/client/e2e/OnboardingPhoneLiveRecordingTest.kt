@@ -78,10 +78,10 @@ class OnboardingPhoneLiveRecordingTest {
             device.tap(By.text(SEE_HOW_IT_WORKS))
             SystemClock.sleep(2_800)
 
-            // The editor slides in on its empty page, which offers the four ways to start.
+            // The editor slides in on its empty page, which offers every way to start in a row.
             device.tap(By.text(MAKE_FIRST_ENTRY))
             SystemClock.sleep(1_800)
-            device.tap(By.text(WRITE_SOMETHING))
+            device.tap(By.desc(WRITE))
             SystemClock.sleep(700)
             device.tap(device.await(TEXT_FIELD))
             for (word in "Evening walk along the water.".split(" ")) {
@@ -181,7 +181,7 @@ class OnboardingPhoneLiveRecordingTest {
     private companion object {
         const val SEE_HOW_IT_WORKS = "See how it works"
         const val MAKE_FIRST_ENTRY = "Add your first memory"
-        const val WRITE_SOMETHING = "Write something"
+        const val WRITE = "Write"
         const val SIGN_IN_TO_CLOUD = "I already have an account"
         const val SIGN_IN_WITH_PASSKEY = "Sign in with passkey"
         const val SAVE_ENTRY = "Save entry"

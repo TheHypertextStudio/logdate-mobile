@@ -17,10 +17,10 @@ A new person sees three things, in this order, and nothing else stands between t
    laid out the way LogDate shows a day. Both states are one screen and one set of pieces. See
    [The opening scene](#the-opening-scene).
 2. **The first memory.** "Add your first memory" opens the same editor the rest of the app uses,
-   on its empty page, which offers the four ways to start one: write, record, capture, or choose
-   a photo. A first memory is not started as text for the person, because the opening has just
-   shown that a memory can be written, spoken or pictured. The editor has no wording or controls
-   of its own for first launch.
+   on its empty page, which offers every way to start one in a row: write, handwrite, capture,
+   record, or choose a photo. A first memory is not started as text for the person, because the
+   opening has just shown that a memory can be written, spoken or pictured. The editor has no
+   wording or controls of its own for first launch.
 3. **Home.** Saving that entry is what finishes onboarding. The app records that onboarding is
    complete and opens Home with the entry on it. If that record cannot be saved, the completion
    screen opens instead, says so and offers a retry, because opening Home with onboarding
