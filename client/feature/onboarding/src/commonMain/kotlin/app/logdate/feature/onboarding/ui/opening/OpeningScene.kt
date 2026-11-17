@@ -102,7 +102,8 @@ internal fun OpeningScene(
     val canvas = Size(bounds.size.width / density.density, bounds.size.height / density.density)
     val words = bounds.words.inDp(density.density)
     val actions = if (bounds.actions.isEmpty) Rect.Zero else bounds.actions.inDp(density.density)
-    val arrangement = remember(canvas, words, actions) { arrangeOpening(canvas, words, actions) }
+    val systemTop = bounds.systemTop / density.density
+    val arrangement = remember(canvas, words, actions, systemTop) { arrangeOpening(canvas, words, actions, systemTop) }
 
     val scope = rememberCoroutineScope()
     val haptics = LocalLogDateHaptics.current

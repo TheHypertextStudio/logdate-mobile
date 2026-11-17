@@ -57,14 +57,18 @@ internal data class OpeningArrangement(
  * and larger ones, but never so many that the pile stops being what the eye lands on. [actions]
  * is empty where the scene does not reach them.
  *
+ * [systemTop] is how far down the system draws its own bar over the scene. A photo reads with a
+ * clock over its corner and still hangs off the top. Anything else starts below the bar.
+ *
  * Tidied, today's pile lines up on one page: see [fileToday].
  */
 internal fun arrangeOpening(
     canvas: Size,
     words: Rect,
     actions: Rect,
+    systemTop: Float = 0f,
 ): OpeningArrangement {
-    val room = roomAround(canvas, words, actions)
+    val room = roomAround(canvas, words, actions, systemTop)
     val keepClear = listOfNotNull(words.inflate(KEEP_CLEAR), actions.takeUnless { it.isEmpty }?.inflate(KEEP_CLEAR))
     val pile = PILES.maxBy { it.scaleIn(room.stage) }
     val pileScale = pile.scaleIn(room.stage).coerceIn(PILE_SMALLEST, PILE_LARGEST)
@@ -79,7 +83,7 @@ internal fun arrangeOpening(
             Loose(OpeningCatalog.todayNote, inPile(pile.note), depth = 1f),
             Loose(OpeningCatalog.todayStamp, inPile(pile.stamp), depth = 1f),
         )
-    val more = dealInto(placesFor(room, pile, pileCentre, pileScale))
+    val more = dealInto(placesFor(room, pile, pileCentre, pileScale), systemTop)
     val day = fileToday(room.stage)
     val inTheWay = day?.page?.bounds?.inflate(PAGE_CLEAR)
     return OpeningArrangement(
@@ -87,7 +91,7 @@ internal fun arrangeOpening(
         pieces =
             (more + today)
                 .map { lying ->
-                    val pose = lying.pose.clearOf(lying.piece, keepClear)
+                    val pose = lying.pose.belowBar(lying.piece, systemTop).clearOf(lying.piece, keepClear)
                     val box = Rect(pose.center, 0f).inflate(pose.halfWidth(lying.piece), pose.halfHeight(lying.piece))
                     PlacedPiece(
                         lying.piece,
@@ -126,6 +130,7 @@ private fun roomAround(
     canvas: Size,
     words: Rect,
     actions: Rect,
+    systemTop: Float,
 ): Room {
     val reachesActions = !actions.isEmpty
     val half = max(words.width, if (reachesActions) actions.width else 0f) / 2f + COLUMN_MARGIN
@@ -144,7 +149,7 @@ private fun roomAround(
     if (between.height < STAGE_SHORTEST && above.height > between.height) {
         return Room(
             above = Rect(left, 0f, right, 0f),
-            stage = Rect(left, TOP_OF_STAGE_ABOVE, right, above.bottom),
+            stage = Rect(left, systemTop + TOP_OF_STAGE_ABOVE, right, above.bottom),
             below = below,
             start = start,
             end = end,
@@ -346,14 +351,21 @@ private fun side(
  * Puts a piece in each place until the places or the pieces run out, in the order the catalog
  * brings them out. A place that asks for a piece by name gets it. Otherwise a place gets the next
  * piece of the kind it is best given, or failing that the next piece of any kind, and a place
- * that hangs off an edge is never given a one-line piece, which would be cut where it cannot be read.
+ * that hangs off an edge is never given a one-line piece, which would be cut where it cannot be read,
+ * nor a piece that would have to be drawn too small to read to start below the system's bar.
  */
-private fun dealInto(places: List<Place>): List<Loose> {
+private fun dealInto(
+    places: List<Place>,
+    systemTop: Float,
+): List<Loose> {
     val left = OpeningCatalog.more.toMutableList()
     val asked = places.mapNotNull { it.wants }.toSet()
 
     fun take(place: Place): OpeningPiece? {
-        fun fits(piece: OpeningPiece) = piece.id !in asked && (place.hang == Hang.None || piece.height > ONE_LINE_TALLEST)
+        fun fits(piece: OpeningPiece) =
+            piece.id !in asked &&
+                (place.hang == Hang.None || piece.height > ONE_LINE_TALLEST) &&
+                (place.scaleBelowBar(piece, systemTop) ?: 1f) >= BELOW_BAR_SMALLEST
         val index =
             if (place.wants != null) {
                 left.indexOfFirst { it.id == place.wants }
@@ -362,15 +374,32 @@ private fun dealInto(places: List<Place>): List<Loose> {
             }
         return if (index >= 0) left.removeAt(index) else null
     }
-    return places.mapNotNull { place -> take(place)?.let { Loose(it, place.fit(it), place.depth) } }
+    return places.mapNotNull { place -> take(place)?.let { Loose(it, place.fit(it, systemTop), place.depth) } }
+}
+
+/**
+ * How large [piece] can be drawn in a place at the top and still lie wholly between the system's
+ * bar and the bottom of its room, or nothing where the question does not arise: there is no bar,
+ * the place is not at the top, or the piece is a photo, which hangs off the top as it always does.
+ */
+private fun Place.scaleBelowBar(
+    piece: OpeningPiece,
+    systemTop: Float,
+): Float? {
+    val region = within
+    if (hang != Hang.Top || region == null || systemTop <= 0f || piece.content is PrintContent) return null
+    return min(scale, (region.bottom - systemTop) / (PiecePose(centre, rotation, 1f).halfHeight(piece) * 2f))
 }
 
 /** Where a piece lies in this place. A hanging piece sits partly over its edge, and never grows past the room behind it. */
-private fun Place.fit(piece: OpeningPiece): PiecePose {
+private fun Place.fit(
+    piece: OpeningPiece,
+    systemTop: Float,
+): PiecePose {
     val region = within ?: return PiecePose(centre, rotation, scale)
     return when (hang) {
         Hang.Top, Hang.Bottom -> {
-            val fitted = min(scale, region.height / (piece.height * (1f - OVERHANG)))
+            val fitted = scaleBelowBar(piece, systemTop) ?: min(scale, region.height / (piece.height * (1f - OVERHANG)))
             val reach = piece.height * fitted * (0.5f - OVERHANG)
             PiecePose(Offset(centre.x, if (hang == Hang.Top) centre.y + reach else centre.y - reach), rotation, fitted)
         }
@@ -385,6 +414,15 @@ private fun Place.fit(piece: OpeningPiece): PiecePose {
             PiecePose(centre, rotation, scale)
         }
     }
+}
+
+/** Moves a piece that is not a photo down until the system's bar is not drawn over it. */
+private fun PiecePose.belowBar(
+    piece: OpeningPiece,
+    systemTop: Float,
+): PiecePose {
+    val under = systemTop - (center.y - halfHeight(piece))
+    return if (piece.content is PrintContent || under <= 0f) this else copy(center = center + Offset(0f, under))
 }
 
 /** Moves a piece the shortest way off the words and the actions, so nothing lies over them. */
@@ -440,9 +478,12 @@ private const val STAGE_BELOW_WORDS = 18f
 private const val STAGE_ABOVE_ACTIONS = 26f
 
 // Today goes above the words where the room between the words and the actions is shorter than
-// this, starting far enough down to clear the status bar.
+// this, starting this far under the top of the screen or the system's bar.
 private const val STAGE_SHORTEST = 150f
 private const val TOP_OF_STAGE_ABOVE = 28f
+
+// The smallest a piece is drawn to start below the system's bar. Smaller, its words cannot be read.
+private const val BELOW_BAR_SMALLEST = 0.62f
 
 // How far today's pile may run past the sides of the stage, and the smallest and largest it is drawn.
 private const val PILE_BLEED = 32f
