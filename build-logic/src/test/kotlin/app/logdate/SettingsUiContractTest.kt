@@ -90,6 +90,16 @@ class SettingsUiContractTest {
     }
 
     @Test
+    fun `a settings grid outside a settings package uses shared rows too`() {
+        val source =
+            """
+            package app.logdate.feature.library.ui
+            fun Cleanup() { SettingsGridScaffold { item { Switch() } } }
+            """.trimIndent()
+        assertEquals(listOf(2), SettingsUiContract.inspect(source))
+    }
+
+    @Test
     fun `boolean and choice controls use the shared functional wrappers`() {
         val source =
             """

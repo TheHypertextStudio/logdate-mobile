@@ -57,7 +57,7 @@ object SettingsUiContract {
                         .asString()
                         .split('.')
                         .contains("settings") ||
-                    calls.any { name(it) == "SettingsScaffold" || name(it) == "SettingsSection" }
+                    calls.any { name(it) in setOf("SettingsScaffold", "SettingsGridScaffold", "SettingsSection") }
             val duplicatedRows =
                 if (settingsImplementation) {
                     calls.filter { name(it) in setOf("ListItem", "Switch", "RadioButton") }
