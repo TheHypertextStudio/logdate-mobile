@@ -474,9 +474,7 @@ internal fun MomentMediaGrid(
     onOpenNote: (Uuid) -> Unit = {},
 ) {
     when (media.size) {
-        0 -> {
-            Unit
-        }
+        0 -> {}
 
         1 -> {
             TimelineMediaTile(

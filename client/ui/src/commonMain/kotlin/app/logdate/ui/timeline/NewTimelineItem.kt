@@ -123,7 +123,6 @@ fun NewTimelineItem(
 fun TextTimelineDetailItem(
     text: String,
     timestamp: Instant,
-    show: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     Card(

@@ -34,16 +34,18 @@ internal fun WorkspaceCreateAction(
     val modifier =
         (if (createEntryTransition && active) Modifier.entryCreationBounds(sourceId, sourceShape = shape) else Modifier)
             .then(if (!enabled) Modifier.semantics { disabled() } else Modifier)
-    val click = {
-        if (!enabled) {
-            Unit
-        } else if (createEntryTransition) {
-            source.launch(sourceId, launcher, shape, onClick)
-        } else {
-            onClick()
-            true
+    val click: () -> Unit = {
+        when {
+            !enabled -> {}
+
+            createEntryTransition -> {
+                source.launch(sourceId, launcher, shape, onClick)
+            }
+
+            else -> {
+                onClick()
+            }
         }
-        ; Unit
     }
     if (extended != null) {
         ExtendedFloatingActionButton(

@@ -10,19 +10,11 @@ import kotlin.test.assertTrue
  */
 class LogDateMotionTest {
     @Test
-    fun `standard barely overshoots at a medium-low stiffness`() {
-        val spec = LogDateMotion.standard<Float>()
-
-        assertEquals(0.9f, spec.dampingRatio)
-        assertEquals(400f, spec.stiffness)
-    }
-
-    @Test
-    fun `quick never overshoots and is stiffer than standard`() {
+    fun `quick never overshoots and is stiffer than expressive`() {
         val quick = LogDateMotion.quick<Float>()
 
         assertEquals(1f, quick.dampingRatio)
-        assertTrue(quick.stiffness > LogDateMotion.standard<Float>().stiffness)
+        assertTrue(quick.stiffness > LogDateMotion.expressive<Float>().stiffness)
     }
 
     @Test
@@ -30,6 +22,6 @@ class LogDateMotionTest {
         val expressive = LogDateMotion.expressive<Float>()
 
         assertEquals(0.75f, expressive.dampingRatio)
-        assertTrue(expressive.dampingRatio < LogDateMotion.standard<Float>().dampingRatio)
+        assertTrue(expressive.dampingRatio < LogDateMotion.quick<Float>().dampingRatio)
     }
 }
