@@ -140,9 +140,11 @@ class MediaRepository(private val mediaManager: MediaManager) {
 ### Audio Recording
 
 ```kotlin
+data class RecordingUiState(val audioLevel: Float = 0f, val duration: Duration = Duration.ZERO)
+
 class AudioNoteViewModel(private val audioRecordingManager: AudioRecordingManager) {
-    private val _recordingState = MutableStateFlow(AudioRecordingState())
-    val recordingState: StateFlow<AudioRecordingState> = _recordingState
+    private val _recordingState = MutableStateFlow(RecordingUiState())
+    val recordingState: StateFlow<RecordingUiState> = _recordingState
 
     fun startRecording() {
         viewModelScope.launch {

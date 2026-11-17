@@ -102,6 +102,6 @@ creation snaps instead of animating, and editor back gestures stop scrubbing. A 
 
 ## Where the shell moves independently
 
-The navigation rail and bottom navigation bar animate in and out themselves (`ResponsiveScaffold`), by sliding and fading in
+The navigation rail and bottom navigation bar animate in and out themselves, by sliding and fading in
 the direction of their edge. This motion is separate from route transitions, so when a route override changes how a screen
 enters, check that it does not fight the shell as the bars appear or disappear.
