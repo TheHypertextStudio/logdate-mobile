@@ -248,13 +248,14 @@ val desktopScreenshotActualDir = layout.buildDirectory.dir("reports/desktopScree
 val desktopScreenshotDiffDir = layout.buildDirectory.dir("reports/desktopScreenshotTest/diff")
 val desktopScreenshotSceneFilter = providers.systemProperty("logdate.desktopScreenshots.sceneFilter").orNull
 
-tasks.named<Test>("desktopTest") {
-    // Reference pixels and their rasterization host matter even when compiled UI is unchanged.
-    inputs.dir(desktopScreenshotReferenceDir).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.property(
-        "desktopScreenshotRenderHost",
-        "${System.getProperty("os.name")} ${System.getProperty("os.version").substringBefore('.')}",
-    )
+val requireDesktopScreenshots = providers.environmentVariable("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS").orNull == "true"
+
+/**
+ * Where the shared screenshot scenes render and compare, for both the comparing and the recording
+ * task. A run that requires the screenshots renders them on a hidden window instead of headless, so
+ * recording works under the same switch as comparing.
+ */
+fun Test.configureDesktopScreenshots() {
     systemProperty("skiko.renderApi", "SOFTWARE_COMPAT")
     systemProperty("apple.awt.UIElement", "true")
     systemProperty("logdate.desktopScreenshots.referenceDir", desktopScreenshotReferenceDir.asFile.absolutePath)
@@ -263,11 +264,20 @@ tasks.named<Test>("desktopTest") {
     desktopScreenshotSceneFilter?.let {
         systemProperty("logdate.desktopScreenshots.sceneFilter", it)
     }
-    // A run that requires the screenshots renders them on a hidden window instead of headless.
-    if (providers.environmentVariable("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS").orNull == "true") {
+    if (requireDesktopScreenshots) {
         systemProperty("java.awt.headless", "false")
         systemProperty("logdate.desktopScreenshots.visible", "false")
     }
+}
+
+tasks.named<Test>("desktopTest") {
+    // Reference pixels and their rasterization host matter even when compiled UI is unchanged.
+    inputs.dir(desktopScreenshotReferenceDir).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.property(
+        "desktopScreenshotRenderHost",
+        "${System.getProperty("os.name")} ${System.getProperty("os.version").substringBefore('.')}",
+    )
+    configureDesktopScreenshots()
 }
 
 tasks.register("validateDesktopScreenshotTest") {
@@ -284,14 +294,7 @@ tasks.register<Test>("updateDesktopScreenshotTest") {
     testClassesDirs = desktopTest.testClassesDirs
     classpath = desktopTest.classpath
     workingDir = desktopTest.workingDir
-    systemProperty("skiko.renderApi", "SOFTWARE_COMPAT")
-    systemProperty("apple.awt.UIElement", "true")
-    systemProperty("logdate.desktopScreenshots.referenceDir", desktopScreenshotReferenceDir.asFile.absolutePath)
-    systemProperty("logdate.desktopScreenshots.actualDir", desktopScreenshotActualDir.get().asFile.absolutePath)
-    systemProperty("logdate.desktopScreenshots.diffDir", desktopScreenshotDiffDir.get().asFile.absolutePath)
+    configureDesktopScreenshots()
     systemProperty("logdate.desktopScreenshots.update", "true")
-    desktopScreenshotSceneFilter?.let {
-        systemProperty("logdate.desktopScreenshots.sceneFilter", it)
-    }
     outputs.upToDateWhen { false }
 }
