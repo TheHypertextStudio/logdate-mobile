@@ -131,7 +131,12 @@ open class LogDateReleaseExtension(
             .orElse("studio.hypertext.logdate")
             .get()
 
-    /** Debug builds install beside a release build instead of replacing it. */
+    /**
+     * Debug builds install beside a release build instead of replacing it.
+     *
+     * Read by the app/android-main and app/wear build scripts, which SearchDeadCode does not parse.
+     */
+    @Suppress("unused")
     val debugApplicationIdSuffix: String = ".debug"
 
     /**
@@ -145,7 +150,12 @@ open class LogDateReleaseExtension(
     /** The Play track to publish to: `internal` unless `LOGDATE_PLAY_TRACK` or `logdate.play.track` says otherwise. */
     val playTrack: String = envOrProperty("LOGDATE_PLAY_TRACK", "logdate.play.track") ?: "internal"
 
-    /** The same track on the Wear OS form factor, with its registered form-factor prefix. */
+    /**
+     * The same track on the Wear OS form factor, with its registered form-factor prefix.
+     *
+     * Read by app/wear/build.gradle.kts, which SearchDeadCode does not parse.
+     */
+    @Suppress("unused")
     val wearPlayTrack: String get() = WearPlayTrack.forTrack(playTrack)
 
     /** The upload key, when this machine has all of it; see [ReleaseSigningResolver] for the sources. */
@@ -167,7 +177,10 @@ open class LogDateReleaseExtension(
     /**
      * Whether this build publishes to Play. Play then assigns the version code, which means asking Play
      * during the build, so plain builds skip that and need no Play credentials.
+     *
+     * Read by the app/android-main and app/wear build scripts, which SearchDeadCode does not parse.
      */
+    @Suppress("unused")
     val playPublishRequested: Boolean =
         project.gradle.startParameter.taskNames
             .any { it.contains("publish", ignoreCase = true) || it.contains("promote", ignoreCase = true) }

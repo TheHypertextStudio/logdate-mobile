@@ -186,9 +186,7 @@ public object LexiconCodegen {
                     }
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         }
 
