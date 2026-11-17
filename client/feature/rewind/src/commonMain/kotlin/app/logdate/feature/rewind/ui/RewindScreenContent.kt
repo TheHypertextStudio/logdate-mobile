@@ -30,7 +30,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +69,7 @@ import app.logdate.feature.rewind.ui.overview.RewindHistoryUiState
 import app.logdate.feature.rewind.ui.overview.RewindOverviewPeriod
 import app.logdate.feature.rewind.ui.overview.RewindOverviewScreenUiState
 import app.logdate.feature.rewind.ui.overview.RewindPreviewUiState
+import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.common.formatting.LocalToday
 import app.logdate.ui.content.ImageScrimOverlay
 import app.logdate.ui.platform.PlatformIcons
