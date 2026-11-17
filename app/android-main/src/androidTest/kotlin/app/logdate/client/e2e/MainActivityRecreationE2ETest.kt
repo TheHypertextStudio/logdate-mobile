@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -41,7 +42,11 @@ class MainActivityRecreationE2ETest {
 
     @Test
     fun `entry editor remains open across activity recreation`() {
-        composeRule.onNodeWithContentDescription("Start text entry").performClick()
+        // The row of ways to add something comes in once the entry has loaded.
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithContentDescription("Write").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription("Write").performClick()
         waitForTag("editor_text_input")
 
         composeRule.onNodeWithTag("editor_text_input").performTextInput("Keep me in the editor")

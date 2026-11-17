@@ -2,7 +2,7 @@ package app.logdate.client.e2e
 
 import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -90,7 +90,7 @@ class DraftsE2ETest {
         assertEquals("Exactly one durable draft should exist before publish", 1, fakeDraftRepository.currentDrafts.size)
 
         // Save the entry
-        composeRule.onNodeWithTag("editor_save_button").performClick()
+        composeRule.onNodeWithContentDescription(SAVE_ENTRY).performClick()
 
         // Wait for save to complete and draft to be cleaned up
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -119,7 +119,7 @@ class DraftsE2ETest {
         }
 
         // Exercise the real confirmation action and wait for host navigation.
-        composeRule.onNodeWithContentDescription("Back").performClick()
+        closeEntry()
         composeRule.onNodeWithTag("exit_dialog_save_draft").assertIsDisplayed().performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             activity.isFinishing
@@ -154,8 +154,11 @@ class DraftsE2ETest {
                 fakeDraftRepository.currentDrafts.size,
             )
 
-            composeRule.onNodeWithContentDescription("Back").performClick()
-            composeRule.mainClock.advanceTimeByFrame()
+            // Each step is given less time than the debounce, so leaving is what saves the draft.
+            composeRule.onNodeWithContentDescription(RETURN_TO_ENTRY).performClick()
+            composeRule.mainClock.advanceTimeBy(LEAVING_STEP_MILLIS)
+            composeRule.onNodeWithContentDescription(CLOSE).performClick()
+            composeRule.mainClock.advanceTimeBy(LEAVING_STEP_MILLIS)
             composeRule.onNodeWithText("Save Draft").assertIsDisplayed().performClick()
         } finally {
             composeRule.mainClock.autoAdvance = true
@@ -199,12 +202,9 @@ class DraftsE2ETest {
         composeRule.activityRule.scenario.recreate()
 
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule
-                .onAllNodesWithTag("editor_text_input")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+            composeRule.onAllNodesWithText(content).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag("editor_text_input").assertTextEquals(content)
+        composeRule.onNodeWithText(content).assertIsDisplayed()
     }
 
     /** Test: Write content → auto-save → back → Discard → navigate only after durable deletion. */
@@ -222,7 +222,7 @@ class DraftsE2ETest {
                 ?.content == "Discard this exact draft"
         }
 
-        composeRule.onNodeWithContentDescription("Back").performClick()
+        closeEntry()
         composeRule.onNodeWithTag("exit_dialog_discard").assertIsDisplayed().performClick()
 
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -262,13 +262,15 @@ class DraftsE2ETest {
         composeRule.onNodeWithText(draftContent, substring = true).performClick()
         composeRule.waitForIdle()
 
-        // Verify text content was loaded into the editor
-        composeRule
-            .onNodeWithTag("editor_text_input")
-            .assertTextEquals(draftContent)
+        // The draft's words are on the entry page.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("drafts_empty_state").fetchSemanticsNodes().isEmpty() &&
+                composeRule.onAllNodesWithContentDescription(SAVE_ENTRY).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(draftContent, substring = true).assertIsDisplayed()
 
         // Save the entry
-        composeRule.onNodeWithTag("editor_save_button").performClick()
+        composeRule.onNodeWithContentDescription(SAVE_ENTRY).performClick()
 
         // Wait for draft to be cleaned up
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -279,40 +281,71 @@ class DraftsE2ETest {
         assertTrue("Draft should be deleted after publishing", fakeDraftRepository.currentDrafts.isEmpty())
     }
 
-    /**
-     * Test: Open drafts dialog when no drafts exist → empty state shown.
-     */
+    /** Test: with no drafts, the entry's options do not offer to open them. */
     @Test
-    fun `open drafts dialog empty state shown`() {
-        // Ensure no drafts exist
-        assertTrue("The empty-state test must start without drafts", fakeDraftRepository.currentDrafts.isEmpty())
+    fun `no drafts means the entry does not offer to open them`() {
+        assertTrue("This test must start without drafts", fakeDraftRepository.currentDrafts.isEmpty())
 
-        openDraftsDialog()
+        openEntryOptions()
 
-        // Verify empty state is displayed
-        composeRule.onNodeWithTag("drafts_empty_state").assertIsDisplayed()
+        composeRule.onNodeWithTag("entry_open_drafts").assertIsNotEnabled()
+    }
+
+    /** Opens the entry's options, which the entry shows only while no piece of it is open. */
+    private fun openEntryOptions() {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithContentDescription(RETURN_TO_ENTRY).fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithContentDescription(ENTRY_OPTIONS).fetchSemanticsNodes().isNotEmpty()
+        }
+        if (composeRule.onAllNodesWithContentDescription(ENTRY_OPTIONS).fetchSemanticsNodes().isEmpty()) {
+            composeRule.onNodeWithContentDescription(RETURN_TO_ENTRY).performClick()
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithContentDescription(ENTRY_OPTIONS).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription(ENTRY_OPTIONS).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("entry_open_drafts").fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private fun openDraftsDialog() {
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule
-                .onAllNodesWithContentDescription("More options")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
-        }
-        composeRule.onNodeWithContentDescription("More options").performClick()
-        composeRule.onNodeWithText("Manage drafts").performClick()
+        openEntryOptions()
+        composeRule.onNodeWithTag("entry_open_drafts").performClick()
         composeRule.waitForIdle()
     }
 
+    /** Starts a piece of writing from the entry page's row, which comes in once the entry has loaded. */
     private fun startTextEntry() {
-        composeRule.onNodeWithContentDescription("Start text entry").performClick()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithContentDescription(WRITE).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription(WRITE).performClick()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule
                 .onAllNodesWithTag("editor_text_input")
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
+    }
+
+    /** Leaves the piece of writing that is open, then asks to close the entry it belongs to. */
+    private fun closeEntry() {
+        composeRule.onNodeWithContentDescription(RETURN_TO_ENTRY).performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithContentDescription(CLOSE).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription(CLOSE).performClick()
+    }
+
+    private companion object {
+        // What the entry page's controls are called.
+        const val WRITE = "Write"
+        const val SAVE_ENTRY = "Save entry"
+        const val RETURN_TO_ENTRY = "Return to entry"
+        const val CLOSE = "Close"
+        const val ENTRY_OPTIONS = "Entry options"
+        const val LEAVING_STEP_MILLIS = 400L
     }
 }
 
