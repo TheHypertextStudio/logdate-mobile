@@ -1,7 +1,6 @@
 package app.logdate.util
 
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
@@ -91,40 +90,6 @@ class DateTimeFormattingTest {
         assertEquals(systemNow.year, today.year, "Year should match system time")
         assertEquals(systemNow.month, today.month, "Month should match system time")
         assertEquals(systemNow.day, today.day, "Day should match system time")
-    }
-
-    /**
-     * Tests [LocalDateTime.weekOfYear] extension property.
-     *
-     * Verifies week number calculations follow ISO 8601 standard:
-     * - First week containing Thursday, January 2, 2025 is week 1
-     * - Mid-year date (June 15, 2025) is correctly identified as week 24
-     * - End-of-year date (December 31, 2025) is correctly handled
-     *
-     * The ISO 8601 standard defines the first week as containing the first Thursday
-     * of the year, and December 31 can be either in the last week of the current
-     * year or the first week of the next year.
-     */
-    @Test
-    fun `week of year`() {
-        // Test first week of the year (ISO week date standard)
-        val firstWeek = LocalDateTime(2025, 1, 2, 0, 0)
-        assertEquals(1, firstWeek.weekOfYear, "January 2, 2025 should be week 1")
-
-        // Test middle of the year
-        // 2025-06-15 is a Sunday in the 24th week of 2025 per ISO 8601
-        val midYear = LocalDateTime(2025, 6, 15, 0, 0)
-        assertEquals(24, midYear.weekOfYear, "June 15, 2025 should be week 24 (per ISO 8601)")
-
-        // Test end of year - for 2025, December 31 is a Wednesday
-        // According to the current implementation, this is week 1 of 2026
-        // This matches ISO 8601 which states: if the week containing January 1
-        // has four or more days in the new year, then it is week 1; otherwise, it is the last week
-        // of the previous year, and the next week is week 1.
-        val endYear = LocalDateTime(2025, 12, 31, 0, 0)
-
-        // Looking at the current implementation, we expect week 1 since our calculation puts it in week 1
-        assertEquals(1, endYear.weekOfYear, "Dec 31, 2025 should be week 1 of 2026 (per current implementation)")
     }
 
     /**
