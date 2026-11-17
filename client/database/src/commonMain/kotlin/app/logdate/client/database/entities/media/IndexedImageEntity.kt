@@ -33,9 +33,3 @@ data class IndexedImageEntity(
     @Embedded(prefix = "location_")
     override val location: LocationData?,
 ) : BaseIndexedMediaEntity()
-
-/**
- * Extension property to check if this image has location data.
- */
-val IndexedImageEntity.hasLocationData: Boolean
-    get() = location != null

@@ -174,14 +174,6 @@ interface TranscriptionService {
     suspend fun warmUp() {}
 
     /**
-     * Whether the higher-accuracy offline model (Whisper, etc.) is present on
-     * device. When false, transcription falls back to the streaming pass only
-     * and the refinement step is skipped.
-     */
-    val isOfflineModelAvailable: Boolean
-        get() = false
-
-    /**
      * Live status of the offline model download. View models observe this
      * directly to render a download banner or progress indicator. Default
      * sits at [ModelDownloadStatus.NotSupported] for implementations that

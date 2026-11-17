@@ -38,9 +38,3 @@ data class IndexedVideoEntity(
      */
     val duration: Duration,
 ) : BaseIndexedMediaEntity()
-
-/**
- * Extension property to check if this video has location data.
- */
-val IndexedVideoEntity.hasLocationData: Boolean
-    get() = location != null

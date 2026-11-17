@@ -366,9 +366,6 @@ class SherpaOnnxTranscriptionService(
 
     override val supportsFileTranscription: Boolean = true
 
-    override val isOfflineModelAvailable: Boolean
-        get() = offlineRecognizerProvider.isAvailable
-
     private val modelManager by lazy { SherpaOnnxModelManager(context) }
 
     private val modelDownload =

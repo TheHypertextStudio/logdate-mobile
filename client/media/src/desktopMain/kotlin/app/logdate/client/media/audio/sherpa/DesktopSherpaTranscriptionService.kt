@@ -63,9 +63,6 @@ internal class DesktopSherpaTranscriptionService(
         vadProvider.ensureInitialized()
     }
 
-    override val isOfflineModelAvailable: Boolean
-        get() = offlineRecognizer.isAvailable
-
     override fun checkOfflineModelAvailability() = modelDownload.checkAvailability()
 
     override fun startOfflineModelDownload() = modelDownload.startDownload()
