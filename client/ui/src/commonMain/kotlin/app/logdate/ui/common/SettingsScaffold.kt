@@ -15,6 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,7 +60,6 @@ import org.jetbrains.compose.resources.stringResource
  * @param topBarColors Optional custom colors for the [LargeTopAppBar].
  * @param content Items to display inside the [LazyColumn].
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScaffold(
     title: String,
@@ -68,6 +72,92 @@ fun SettingsScaffold(
     compactHeader: Boolean = false,
     titleMaxLines: Int = Int.MAX_VALUE,
     content: LazyListScope.() -> Unit,
+) {
+    SettingsScaffoldFrame(
+        title = title,
+        onBack = onBack,
+        modifier = modifier,
+        snackbarHostState = snackbarHostState,
+        topBarColors = topBarColors,
+        maxContentWidth = maxContentWidth,
+        actions = actions,
+        compactHeader = compactHeader,
+        titleMaxLines = titleMaxLines,
+    ) { paddingValues, contentPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().consumeWindowInsets(paddingValues),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * [SettingsScaffold] for a settings page that is a grid of things, such as photos to choose from.
+ *
+ * It has the same collapsing header, width limit and insets, and lays [content] out in [columns]
+ * with [itemSpacing] between cells and the standard side margin. [bottomBar] sits over the bottom
+ * of the page, and the grid leaves room for it.
+ */
+@Composable
+fun SettingsGridScaffold(
+    title: String,
+    onBack: () -> Unit,
+    columns: GridCells,
+    modifier: Modifier = Modifier,
+    maxContentWidth: Dp = 600.dp,
+    itemSpacing: Dp = Spacing.sm,
+    state: LazyGridState = rememberLazyGridState(),
+    bottomBar: @Composable () -> Unit = {},
+    content: LazyGridScope.() -> Unit,
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    SettingsScaffoldFrame(
+        title = title,
+        onBack = onBack,
+        modifier = modifier,
+        maxContentWidth = maxContentWidth,
+        bottomBar = bottomBar,
+    ) { paddingValues, contentPadding ->
+        LazyVerticalGrid(
+            columns = columns,
+            state = state,
+            modifier = Modifier.fillMaxWidth().consumeWindowInsets(paddingValues),
+            contentPadding =
+                PaddingValues(
+                    start = contentPadding.calculateStartPadding(layoutDirection) + Spacing.lg,
+                    end = contentPadding.calculateEndPadding(layoutDirection) + Spacing.lg,
+                    top = contentPadding.calculateTopPadding(),
+                    bottom = contentPadding.calculateBottomPadding() + Spacing.lg,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+            verticalArrangement = Arrangement.spacedBy(itemSpacing),
+        ) {
+            content()
+        }
+    }
+}
+
+/**
+ * The header, width limit and insets every settings page shares. [body] gets the scaffold's own
+ * padding, to consume, and the padding its scrolling content starts from.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScaffoldFrame(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState? = null,
+    topBarColors: TopAppBarColors? = null,
+    maxContentWidth: Dp = 600.dp,
+    actions: @Composable RowScope.() -> Unit = {},
+    compactHeader: Boolean = false,
+    titleMaxLines: Int = Int.MAX_VALUE,
+    bottomBar: @Composable () -> Unit = {},
+    body: @Composable (paddingValues: PaddingValues, contentPadding: PaddingValues) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val scrollBehavior =
@@ -112,6 +202,7 @@ fun SettingsScaffold(
                 }
             }
         },
+        bottomBar = bottomBar,
         snackbarHost = {
             if (snackbarHostState != null) {
                 SnackbarHost(snackbarHostState)
@@ -119,22 +210,18 @@ fun SettingsScaffold(
         },
     ) { paddingValues ->
         DefaultSettingsContentContainer(maxWidth = maxContentWidth) {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().consumeWindowInsets(paddingValues),
+            body(
+                paddingValues,
                 // Add a margin on top of the scaffold inset so the first item keeps breathing
                 // room below the top bar — including when it is fully collapsed and would
                 // otherwise sit flush against the content.
-                contentPadding =
-                    PaddingValues(
-                        start = paddingValues.calculateStartPadding(layoutDirection),
-                        end = paddingValues.calculateEndPadding(layoutDirection),
-                        top = paddingValues.calculateTopPadding() + Spacing.md,
-                        bottom = paddingValues.calculateBottomPadding(),
-                    ),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-            ) {
-                content()
-            }
+                PaddingValues(
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    top = paddingValues.calculateTopPadding() + Spacing.md,
+                    bottom = paddingValues.calculateBottomPadding(),
+                ),
+            )
         }
     }
 }

@@ -9,6 +9,7 @@ for actions and preferences; explanatory content uses ordinary text layouts.
 | Content                   | Component                  | Interaction                                                                                        |
 | ------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------- |
 | Settings destination      | `SettingsScaffold`         | Owns page title, back action, scrolling and insets                                                 |
+| Grid of things to choose  | `SettingsGridScaffold`     | The same header, width limit and insets around a grid, with a bar over the bottom of the page      |
 | Related rows              | `SettingsSection`          | Owns heading, container shape and spacing between rows                                             |
 | Opens another screen      | `SettingsNavigationItem`   | Whole row is clickable; supplies the trailing chevron                                              |
 | Specialized compound row  | `SettingsRow`              | Shared layout and text roles; use only when an ordinary wrapper cannot express independent actions |
