@@ -20,6 +20,8 @@
     name="labs_activity_permission_description"
   >Needed to tell when you’re on the move.</string>
     <string name="labs_activity_permission_action">Allow</string>
+    <string name="labs_cloud_plans_title">LogDate Cloud storage</string>
+    <string name="labs_cloud_plans_description">See your storage and get more space.</string>
     <string name="labs_identity_recovery_key_title">Move with your recovery phrase</string>
     <string
     name="labs_identity_recovery_key_description"

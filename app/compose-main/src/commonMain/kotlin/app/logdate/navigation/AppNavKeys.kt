@@ -16,6 +16,7 @@ import app.logdate.feature.core.settings.navigation.CalendarSyncActivityRoute
 import app.logdate.feature.core.settings.navigation.CalendarSyncCalendarsRoute
 import app.logdate.feature.core.settings.navigation.CalendarSyncSettingsRoute
 import app.logdate.feature.core.settings.navigation.ClearDataSettingsRoute
+import app.logdate.feature.core.settings.navigation.CloudPlanRoute
 import app.logdate.feature.core.settings.navigation.DataSettingsRoute
 import app.logdate.feature.core.settings.navigation.DayBoundarySettingsRoute
 import app.logdate.feature.core.settings.navigation.DeleteAccountRoute
@@ -149,6 +150,7 @@ val appNavSavedStateConfiguration: SavedStateConfiguration =
                     subclass(RecoveryPhraseRoute::class, RecoveryPhraseRoute.serializer())
                     subclass(RecoveryPhraseEntrySettingsRoute::class, RecoveryPhraseEntrySettingsRoute.serializer())
                     subclass(HostingRoute::class, HostingRoute.serializer())
+                    subclass(CloudPlanRoute::class, CloudPlanRoute.serializer())
                     subclass(MoveServerRoute::class, MoveServerRoute.serializer())
                     subclass(DeleteAccountRoute::class, DeleteAccountRoute.serializer())
                     subclass(PrivacySettingsRoute::class, PrivacySettingsRoute.serializer())

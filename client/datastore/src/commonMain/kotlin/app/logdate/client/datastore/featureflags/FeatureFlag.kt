@@ -142,6 +142,16 @@ enum class FeatureFlag(
      * server supports it and this device can confirm with a passkey.
      */
     IDENTITY_RECOVERY_KEY(key = "identity_recovery_key_enabled", defaultEnabled = true),
+
+    /**
+     * The LogDate Cloud plan in Account settings: the plan and storage an account has, and buying,
+     * changing and cancelling a plan where the server sells one.
+     *
+     * Off by default until the screen has been tried against a server that sells plans. It only
+     * ever offers what the connected server says it can do, so on a server that sells nothing it
+     * shows the plan and nothing to buy.
+     */
+    CLOUD_PLANS(key = "cloud_plans_enabled", defaultEnabled = false),
     ;
 
     companion object {

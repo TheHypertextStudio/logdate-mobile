@@ -44,7 +44,9 @@ import app.logdate.feature.core.navigation.BaseRoute
 import app.logdate.feature.core.profile.navigation.ProfileRoute
 import app.logdate.feature.core.profile.navigation.profileEntry
 import app.logdate.feature.core.requiresUnlock
+import app.logdate.feature.core.settings.account.plan.StorageReview
 import app.logdate.feature.core.settings.navigation.BirthdaySettingsRoute
+import app.logdate.feature.core.settings.navigation.CloudPlanRoute
 import app.logdate.feature.core.settings.navigation.DataSettingsRoute
 import app.logdate.feature.core.settings.navigation.ExportSettingsRoute
 import app.logdate.feature.core.settings.navigation.RecoveryPhraseEntrySettingsRoute
@@ -81,6 +83,7 @@ import app.logdate.feature.journals.navigation.redirectJournalDetail
 import app.logdate.feature.journals.navigation.replaceNoteDetail
 import app.logdate.feature.journals.navigation.selectJournal
 import app.logdate.feature.journals.navigation.selectJournalNote
+import app.logdate.feature.library.navigation.LibraryOverviewRoute
 import app.logdate.feature.library.navigation.MediaDetailRoute
 import app.logdate.feature.library.navigation.libraryEntries
 import app.logdate.feature.library.ui.LibraryScreen
@@ -148,6 +151,8 @@ fun LogDateNavDisplay(
         .collectAsState(initial = FeatureFlag.WATCH_EXPERIENCE_V2.defaultEnabled)
     val activityAwarenessEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.ACTIVITY_AWARENESS) }
         .collectAsState(initial = FeatureFlag.ACTIVITY_AWARENESS.defaultEnabled)
+    val cloudPlansEnabled by remember(workspaceFlags) { workspaceFlags.observe(FeatureFlag.CLOUD_PLANS) }
+        .collectAsState(initial = FeatureFlag.CLOUD_PLANS.defaultEnabled)
     val backStack = rememberNavBackStack(appNavSavedStateConfiguration, BaseRoute)
     val placesEnabled by rememberPlacesBetaNavigation(workspaceFlags, backStack, appUiState.isOnboarded, appUiState.requiresUnlock)
 
@@ -268,6 +273,7 @@ fun LogDateNavDisplay(
                                                 backStack.add(CloudAccountSetupRoute(startOnSignIn = true))
                                             },
                                             onOpenSyncSettings = { backStack.add(SyncSettingsRoute) },
+                                            onManageStorage = { backStack.add(if (cloudPlansEnabled) CloudPlanRoute else SettingsRoute()) },
                                             onEnterRecoveryPhrase = { backStack.add(RecoveryPhraseEntrySettingsRoute) },
                                             onOpenWatch = { backStack.add(WatchSettingsRoute) },
                                             onOpenSyncIssues = { backStack.add(SyncIssuesRoute) },
@@ -381,6 +387,23 @@ fun LogDateNavDisplay(
                                             },
                                         onNavigateTo = { route -> backStack.add(route) },
                                         onNavigateToCategory = { backStack.navigateToSettingsCategory(it) },
+                                        onReviewStorage = { kind ->
+                                            backStack.add(
+                                                when (kind) {
+                                                    StorageReview.Photos, StorageReview.Videos -> {
+                                                        LibraryOverviewRoute
+                                                    }
+
+                                                    StorageReview.Recordings -> {
+                                                        SearchRoute(typeFtsValues = listOf(SearchContentType.TRANSCRIPTION.ftsValue))
+                                                    }
+
+                                                    StorageReview.WrittenEntries -> {
+                                                        SearchRoute(typeFtsValues = listOf(SearchContentType.TEXT_NOTE.ftsValue))
+                                                    }
+                                                },
+                                            )
+                                        },
                                     )
                                     if (isWatchSupported) {
                                         watchEntries(
