@@ -705,7 +705,7 @@ app/logdate/screenshots/EditorScreenshotsKt/EditorEmpty_dark.png
 
 ## Desktop Screenshot Operations
 
-Desktop screenshot validation for `app/compose-main` uses hidden offscreen Swing surfaces. Set `LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true` to run real rendering and comparisons through the desktop test task. Regular desktop unit tests stay headless. Required screenshot validation fails when a display surface or a matching reference host is unavailable; the CI runner matches `render-host.txt`.
+Desktop screenshot validation for `app/compose-main` uses hidden offscreen Swing surfaces. Set `LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true` to render on a hidden window instead of headless, both when comparing through the desktop test task and when recording through the update task. Regular desktop unit tests stay headless. Required screenshot validation fails when a display surface or a matching reference host is unavailable; the CI runner matches `render-host.txt`.
 
 Core tasks:
 
@@ -718,7 +718,7 @@ LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:c
 LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:compose-main:validateDesktopScreenshotTest
 
 # Refresh committed desktop baselines
-./gradlew :app:compose-main:updateDesktopScreenshotTest
+LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS=true TZ=America/Los_Angeles ./gradlew :app:compose-main:updateDesktopScreenshotTest
 ```
 
 Default behavior:
