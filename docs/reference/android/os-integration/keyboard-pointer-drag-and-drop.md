@@ -91,7 +91,8 @@ A photo copied in another app and pasted from the text menu on a phone:
 | ![A new entry with the text menu open over its empty text field, showing Paste](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/paste-menu--phone-api37.png) | ![The entry with the pasted photo of a dog wrapped in a blanket](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/paste-menu-photo--phone-api37.png) |
 
 Gboard suggests a copied image only to a field that accepts images. Tapping its suggestion sends
-the photo the same way it sends a GIF or sticker:
+the photo the same way it sends a GIF or sticker. The photo opens in the entry and the keyboard
+closes, so the photo and its caption are in view; tapping the caption brings the keyboard back:
 
 | The keyboard's suggestion                                                                                                                                                                                | Once sent                                                                                                                                                          |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

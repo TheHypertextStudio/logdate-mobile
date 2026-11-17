@@ -5,13 +5,27 @@ import app.logdate.feature.editor.ui.editor.AudioBlockUiState
 import app.logdate.feature.editor.ui.editor.AudioCaptureState
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
+import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class EditorFocusPresentationTest {
+    @Test
+    fun `a photo that is the open piece is the one the keyboard gives way to`() {
+        val text = TextBlockUiState()
+        val photo = ImageBlockUiState(uri = "file:///photo.jpg")
+        val choosing = ImageBlockUiState()
+
+        assertEquals(photo.id, openPhotoId(listOf(text, photo), photo.id))
+        assertNull(openPhotoId(listOf(text, photo), text.id), "writing keeps its keyboard")
+        assertNull(openPhotoId(listOf(text, choosing), choosing.id), "choosing a photo is not a photo yet")
+        assertNull(openPhotoId(listOf(text, photo), null), "nothing is open")
+    }
+
     @Test
     fun `recording owner takes precedence over another selected block`() {
         val text = TextBlockUiState()

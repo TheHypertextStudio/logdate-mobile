@@ -66,6 +66,7 @@ import app.logdate.feature.editor.ui.handwriting.rememberEntryPageState
 import app.logdate.feature.editor.ui.handwriting.rememberHandwritingBlockPresentations
 import app.logdate.feature.editor.ui.layout.EditorFocus
 import app.logdate.feature.editor.ui.layout.editorFocus
+import app.logdate.feature.editor.ui.layout.openPhotoId
 import app.logdate.feature.editor.ui.state.rememberBlocksUiState
 import app.logdate.feature.editor.ui.text.LocalEditorTextInputSession
 import app.logdate.feature.editor.ui.text.editorTextInputSession
@@ -130,6 +131,18 @@ fun EntryEditorContent(
             focusManager.clearFocus()
             keyboard?.hide()
         }
+    }
+    // A photo that takes over from a piece being typed into leaves that piece's keyboard up with
+    // nothing to type into. A photo that was already open when this was composed is left alone, so
+    // a caption being typed keeps its keyboard when the window is recreated.
+    val openPhoto = openPhotoId(editorState.blocks, editorState.expandedBlockId)
+    var settledPhoto by remember { mutableStateOf(openPhoto) }
+    LaunchedEffect(openPhoto) {
+        if (openPhoto != null && openPhoto != settledPhoto) {
+            focusManager.clearFocus()
+            keyboard?.hide()
+        }
+        settledPhoto = openPhoto
     }
     val uiState =
         rememberBlocksUiState(
