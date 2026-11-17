@@ -308,7 +308,8 @@ private fun TextStyle.fittingWord(
 /**
  * A two-line settings row that navigates to a sub-screen on tap. Has a leading icon
  * slot, headline, supporting description, and a trailing chevron so the affordance
- * reads "tap to drill in" — the standard pattern for a settings hub.
+ * reads "tap to drill in" — the standard pattern for a settings hub. An optional
+ * [overline] labels the row the way neighboring rows in the same list are labeled.
  */
 @Composable
 fun SettingsNavigationItem(
@@ -319,6 +320,7 @@ fun SettingsNavigationItem(
     enabled: Boolean = LocalSettingsEnabled.current,
     onClickLabel: String? = null,
     destructive: Boolean = false,
+    overline: String? = null,
 ) {
     SettingsRow(
         enabled = enabled,
@@ -329,6 +331,7 @@ fun SettingsNavigationItem(
             )
         },
         supportingContent = { Text(description) },
+        overlineContent = overline?.let { { Text(it) } },
         leadingContent = icon,
         trailingContent = {
             Icon(

@@ -24,6 +24,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.devices_fallback_name
 import logdate.client.feature.core.generated.resources.devices_last_active_unknown
@@ -35,10 +40,14 @@ import logdate.client.feature.core.generated.resources.devices_platform_unknown
 import logdate.client.feature.core.generated.resources.devices_platform_wear_os
 import logdate.client.feature.core.generated.resources.devices_platform_web
 import logdate.client.feature.core.generated.resources.devices_platform_windows
+import logdate.client.ui.generated.resources.date_formatting_today
+import logdate.client.ui.generated.resources.date_formatting_yesterday
 import org.jetbrains.compose.resources.StringResource
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import logdate.client.ui.generated.resources.Res as UiRes
 
 /**
  * ViewModel for managing devices screen.
@@ -180,7 +189,6 @@ class DevicesViewModel(
             id = id,
             name = deviceName(name, platformName),
             platformName = platformName,
-            linkedAtFormatted = lastActiveText(linkedAt),
             lastSeenFormatted = lastActiveText(lastSeenAt),
             pairedWatch = pairedWatch,
             pairedWatchNodeId = pairedWatchNodeId,
@@ -387,8 +395,20 @@ class DevicesViewModel(
         safeDeviceDisplayName(name, "").takeIf { it.isNotBlank() }?.toUiText()
             ?: Res.string.devices_fallback_name.toUiText(platformName.toUiText())
 
-    private fun lastActiveText(timestamp: Instant): UiText =
-        formatDeviceLastActive(timestamp)?.toUiText() ?: Res.string.devices_last_active_unknown.toUiText()
+    /**
+     * When a device was last active, as a relative day: Today, Yesterday, or the date. Every device
+     * row, account and linked alike, uses this so the list reads the same throughout.
+     */
+    private fun lastActiveText(timestamp: Instant): UiText {
+        val date = formatDeviceLastActive(timestamp) ?: return Res.string.devices_last_active_unknown.toUiText()
+        val zone = TimeZone.currentSystemDefault()
+        val today = Clock.System.todayIn(zone)
+        return when (timestamp.toLocalDateTime(zone).date) {
+            today -> UiRes.string.date_formatting_today.toUiText()
+            today.minus(1, DateTimeUnit.DAY) -> UiRes.string.date_formatting_yesterday.toUiText()
+            else -> date.toUiText()
+        }
+    }
 
     private fun getPlatformName(platform: DevicePlatform): StringResource =
         when (platform) {

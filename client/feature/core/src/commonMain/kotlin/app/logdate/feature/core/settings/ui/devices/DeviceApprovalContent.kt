@@ -2,28 +2,15 @@
 
 package app.logdate.feature.core.settings.ui.devices
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
-import app.logdate.ui.theme.Spacing
+import app.logdate.ui.common.MaterialContainer
+import app.logdate.ui.common.SettingsNavigationItem
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.connect_device_description
 import logdate.client.feature.core.generated.resources.connect_device_error_account_mismatch
@@ -72,48 +59,22 @@ internal val DeviceApprovalFailure.message: StringResource
             DeviceApprovalFailure.ServerError -> Res.string.connect_device_error_server
         }
 
+/**
+ * The scanner action as a single settings row, so it shares the row layout of the device list
+ * above it. The page title already names the group, so the row has no section heading.
+ */
 @Composable
 internal fun ConnectDeviceCard(
     onClick: () -> Unit,
     enabled: Boolean,
 ) {
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.fillMaxWidth().testTag("connect-device-action"),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(Spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.QrCodeScanner,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                Text(stringResource(Res.string.connect_device_title), style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(Res.string.connect_device_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
-            }
-        }
+    MaterialContainer(modifier = Modifier.testTag("connect-device-action")) {
+        SettingsNavigationItem(
+            title = stringResource(Res.string.connect_device_title),
+            description = stringResource(Res.string.connect_device_description),
+            icon = { Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            onClick = onClick,
+            enabled = enabled,
+        )
     }
 }

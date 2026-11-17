@@ -22,10 +22,18 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.minus
+import kotlinx.datetime.todayIn
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.devices_fallback_name
 import logdate.client.feature.core.generated.resources.devices_platform_android
 import logdate.client.feature.core.generated.resources.devices_platform_wear_os
+import logdate.client.ui.generated.resources.date_formatting_today
+import logdate.client.ui.generated.resources.date_formatting_yesterday
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -37,8 +45,11 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import logdate.client.ui.generated.resources.Res as UiRes
 
 /**
  * Unit tests for [DevicesViewModel].
@@ -402,6 +413,29 @@ class DevicesViewModelTest {
         }
 
     @Test
+    fun `a device active today or yesterday says so instead of the date`() =
+        testScope.runTest {
+            val zone = TimeZone.currentSystemDefault()
+            val today = Clock.System.todayIn(zone)
+
+            fun noonOf(date: LocalDate) = date.atStartOfDayIn(zone) + 12.hours
+            linked.answers +=
+                LinkedDevicesLoad.Loaded(
+                    listOf(
+                        linkedWatch.copy(id = "today", lastSeenAt = noonOf(today)),
+                        linkedWatch.copy(id = "yesterday", lastSeenAt = noonOf(today.minus(1, DateTimeUnit.DAY))),
+                    ),
+                )
+
+            viewModel.loadDevices()
+            advanceUntilIdle()
+
+            val devices = (viewModel.uiState.value.linked as LinkedDevicesUiState.Listed).devices
+            assertEquals(UiRes.string.date_formatting_today.toUiText(), devices.single { it.id == "today" }.lastSeenFormatted)
+            assertEquals(UiRes.string.date_formatting_yesterday.toUiText(), devices.single { it.id == "yesterday" }.lastSeenFormatted)
+        }
+
+    @Test
     fun `an account without linked devices lists none`() =
         testScope.runTest {
             linked.answers += LinkedDevicesLoad.Loaded(emptyList())
@@ -578,7 +612,6 @@ class DevicesViewModelTest {
             id = "watch-session",
             name = "Pixel Watch 3".toUiText(),
             platformName = Res.string.devices_platform_wear_os,
-            linkedAtFormatted = formatDeviceLastActive(linkedWatch.linkedAt)!!.toUiText(),
             lastSeenFormatted = formatDeviceLastActive(linkedWatch.lastSeenAt)!!.toUiText(),
             pairedWatch = false,
             erasesData = true,

@@ -35,13 +35,30 @@ internal fun WatchDeviceCard(
     deviceName: String? = null,
 ) {
     MaterialContainer(modifier = modifier) {
-        SettingsNavigationItem(
-            title = deviceName ?: stringResource(Res.string.watch_settings),
-            description = watchDeviceDescription(status),
-            icon = { Icon(Icons.Default.Watch, contentDescription = null) },
-            onClick = onClick,
-        )
+        WatchDeviceRow(status, onClick, deviceName)
     }
+}
+
+/**
+ * The watch as one row of a list that already provides the container, such as the Devices list,
+ * with its status as the single supporting line. A list of devices passes its own platform
+ * [overline] and [icon] so the watch reads like the rows around it.
+ */
+@Composable
+internal fun WatchDeviceRow(
+    status: WatchStatus?,
+    onClick: () -> Unit,
+    deviceName: String? = null,
+    overline: String? = null,
+    icon: @Composable () -> Unit = { Icon(Icons.Default.Watch, contentDescription = null) },
+) {
+    SettingsNavigationItem(
+        title = deviceName ?: stringResource(Res.string.watch_settings),
+        description = watchDeviceDescription(status),
+        icon = icon,
+        onClick = onClick,
+        overline = overline,
+    )
 }
 
 @Composable
