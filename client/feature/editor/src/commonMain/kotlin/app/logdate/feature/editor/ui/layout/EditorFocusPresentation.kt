@@ -10,6 +10,7 @@ import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.EntryBlockUiState
 import app.logdate.feature.editor.ui.editor.HandwritingBlockUiState
+import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import kotlin.uuid.Uuid
 
 sealed interface EditorFocus {
@@ -47,6 +48,18 @@ internal fun editorFocus(
     if (selected is HandwritingBlockUiState) return EditorFocus.Drawing(selected.id)
     return if (selected is CameraBlockUiState && selected.uri == null) EditorFocus.Camera(selected.id) else EditorFocus.Editing(selected.id)
 }
+
+/**
+ * The photo that is the open piece, if one is.
+ *
+ * A photo that becomes the open piece takes over from whatever was being typed into: one sent from
+ * the keyboard, or pasted. The keyboard that piece left up then belongs to nothing, and on a short
+ * window it covers the photo's caption.
+ */
+internal fun openPhotoId(
+    blocks: List<EntryBlockUiState>,
+    selectedId: Uuid?,
+): Uuid? = (blocks.firstOrNull { it.id == selectedId } as? ImageBlockUiState)?.takeIf { it.uri != null }?.id
 
 @Immutable
 internal data class EditorFocusPresentation(
