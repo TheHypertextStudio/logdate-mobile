@@ -89,17 +89,19 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * Each concern lives in its own `MainActivity<Concern>.kt` file; `onCreate` only sequences them.
  */
 class MainActivity : FragmentActivity() {
-    private val biometricGatekeeper: BiometricGatekeeper by inject()
-    private val activityProvider: ActivityProvider by inject()
-    private val androidExportLauncher: AndroidExportLauncher by inject()
-    private val androidRestoreLauncher: AndroidRestoreLauncher by inject()
+    private val biometricGatekeeper = inject<BiometricGatekeeper>()
+    private val activityProviderDependency = inject<ActivityProvider>()
+    private val activityProvider by activityProviderDependency
+    private val androidExportLauncher = inject<AndroidExportLauncher>()
+    private val androidRestoreLauncher = inject<AndroidRestoreLauncher>()
     private val databaseStartupMonitor: DatabaseStartupMonitor by inject()
     private val homeScreenPins: HomeScreenPins by inject()
     private val recorder: AudioRecordingManager by inject()
     private val recordingWindows: RecordingWindowTracker by inject()
     private val postRestoreDetector: PostRestoreDetector by inject()
-    private val playInAppUpdateController: PlayInAppUpdateController by inject()
-    private val watchCompanionAssociationManager: WatchCompanionAssociationManager by inject()
+    private val playInAppUpdateControllerDependency = inject<PlayInAppUpdateController>()
+    private val playInAppUpdateController by playInAppUpdateControllerDependency
+    private val watchCompanionAssociationManager = inject<WatchCompanionAssociationManager>()
     private val locationTrackingManager: LocationTrackingManager by inject()
     private val activityAwareness: PhoneActivityAwareness by inject()
     private val profileRepository: ProfileRepository by inject()
@@ -130,10 +132,10 @@ class MainActivity : FragmentActivity() {
         MainActivityLaunchers(
             activity = this,
             biometricGatekeeper = biometricGatekeeper,
-            activityProvider = activityProvider,
+            activityProvider = activityProviderDependency,
             androidExportLauncher = androidExportLauncher,
             androidRestoreLauncher = androidRestoreLauncher,
-            playInAppUpdateController = playInAppUpdateController,
+            playInAppUpdateController = playInAppUpdateControllerDependency,
             watchCompanionAssociationManager = watchCompanionAssociationManager,
         )
 
