@@ -151,6 +151,27 @@ class OpeningArrangementTest {
         scene.page?.let { assertTrue(!it.bounds.overlaps(words), "today's page lies over the words: ${it.bounds}") }
     }
 
+    @Test
+    fun `only a photo lies where the system draws its clock, and the table keeps every piece`() {
+        (SCREENS + Triple(PHONE, Rect(16f, 184f, 374f, 690f), PHONE_ACTIONS)).forEach { (canvas, words, actions) ->
+            listOf(24f, 52f).forEach { bar ->
+                val scene = arrangeOpening(canvas, words, actions, systemTop = bar)
+
+                scene.pieces.filter { it.piece.content !is PrintContent }.forEach { placed ->
+                    val box = placed.box(placed.loose)
+                    assertTrue(box.top >= bar, "${placed.piece.id} lies under a $bar bar on $canvas")
+                    assertTrue(!box.overlaps(words), "${placed.piece.id} lies over the words under a $bar bar on $canvas")
+                }
+                val without = arrangeOpening(canvas, words, actions).pieces.size
+                assertTrue(scene.pieces.size >= without, "a $bar bar leaves ${scene.pieces.size} of $without pieces on $canvas")
+            }
+        }
+        val phone = arrangeOpening(PHONE, PHONE_WORDS, PHONE_ACTIONS, systemTop = 24f)
+        assertTrue(phone.pieces.any { it.piece.content is PrintContent && it.box(it.loose).top < 0f }, "no photo hangs off the top")
+        val note = phone.pieces.first { it.piece.id == "note-nana" }
+        assertTrue(note.loose.scale >= 0.7f, "the note under the bar is drawn at ${note.loose.scale}")
+    }
+
     // The room a piece takes on the screen, turned as it lies.
     private fun PlacedPiece.box(pose: PiecePose) =
         Rect(

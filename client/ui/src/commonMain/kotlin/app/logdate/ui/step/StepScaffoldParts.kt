@@ -72,7 +72,7 @@ internal fun StepHeaderPane(
     val scrollState = rememberScrollState()
     if (hostsScene && slots.scene != null) {
         // The step is split in two here, so the scene has this side of it to itself.
-        StepWithScene(scene = slots.scene, reachesActions = false, modifier = modifier) {
+        StepWithScene(scene = slots.scene, reachesActions = false, fillsWindow = false, modifier = modifier) {
             StepHeaderPane(slots = slots, includeContent = includeContent, modifier = Modifier.fillMaxSize())
         }
         return

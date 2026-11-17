@@ -4,7 +4,9 @@ package app.logdate.ui.step
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
@@ -26,13 +28,15 @@ import kotlin.math.min
  * Everything is in pixels, in the scene's own coordinates: [size] is the room the scene has, which
  * is the whole window where the step is one column, and the header's side of it where a hinge or
  * a short window splits the step in two. [actions] is empty in that second case, because the
- * actions are somewhere the scene does not reach.
+ * actions are somewhere the scene does not reach. [systemTop] is how far down from the top of the
+ * scene the system draws its own bar over it, which is nothing where the scene starts below the bar.
  */
 @Immutable
 data class StepSceneBounds(
     val size: Size,
     val words: Rect,
     val actions: Rect,
+    val systemTop: Float = 0f,
 )
 
 /**
@@ -46,11 +50,13 @@ data class StepSceneBounds(
  * preview, would show the step with no scene at all.
  *
  * @param reachesActions whether the step's actions are inside [step], and so within the scene's reach.
+ * @param fillsWindow whether this is the whole window, so that the system's bars are drawn over the scene.
  */
 @Composable
 internal fun StepWithScene(
     scene: (@Composable BoxScope.(StepSceneBounds) -> Unit)?,
     reachesActions: Boolean,
+    fillsWindow: Boolean,
     modifier: Modifier = Modifier,
     step: @Composable BoxScope.() -> Unit,
 ) {
@@ -58,14 +64,16 @@ internal fun StepWithScene(
         Box(modifier, content = step)
         return
     }
+    val safeDrawing = WindowInsets.safeDrawing
     SubcomposeLayout(modifier) { constraints ->
+        val systemTop = if (fillsWindow) safeDrawing.getTop(this).toFloat() else 0f
         val body = subcompose(SceneSlot.Step) { Box(Modifier.fillMaxSize(), content = step) }.first().measure(constraints)
         val words = body.between(WordsTop, WordsBottom, WordsStart, WordsEnd)
         val actions = if (reachesActions) body.between(ActionsTop, ActionsBottom, ActionsStart, ActionsEnd) else null
         // A scene is drawn around the words, so a step that has not said where they are has none.
         val layer =
             words?.let {
-                val bounds = StepSceneBounds(Size(body.width.toFloat(), body.height.toFloat()), it, actions ?: Rect.Zero)
+                val bounds = StepSceneBounds(Size(body.width.toFloat(), body.height.toFloat()), it, actions ?: Rect.Zero, systemTop)
                 subcompose(SceneSlot.Scene) { Box(Modifier.fillMaxSize()) { scene(bounds) } }
                     .first()
                     .measure(Constraints.fixed(body.width, body.height))

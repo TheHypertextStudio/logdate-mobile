@@ -303,7 +303,7 @@ private fun StandardStep(slots: StepSlots) {
         }
 
         if (maxWidth < defaults.PanelMinWindowSize || short) {
-            StepWithScene(scene = slots.scene, reachesActions = true, modifier = Modifier.fillMaxSize()) {
+            StepWithScene(scene = slots.scene, reachesActions = true, fillsWindow = true, modifier = Modifier.fillMaxSize()) {
                 StackedStep(slots = slots, modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing))
             }
             return@BoxWithConstraints
@@ -312,7 +312,7 @@ private fun StandardStep(slots: StepSlots) {
         // A step that paints its own backdrop keeps it: the panel is then only where the step
         // sits, not a surface of its own.
         val painted = slots.containerColor != Color.Transparent
-        StepWithScene(scene = slots.scene, reachesActions = true, modifier = Modifier.fillMaxSize()) {
+        StepWithScene(scene = slots.scene, reachesActions = true, fillsWindow = true, modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier =
                     Modifier

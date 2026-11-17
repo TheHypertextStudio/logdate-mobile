@@ -39,6 +39,8 @@ the room around them: today's pile between the words and the actions, a few more
 off the top and bottom edges, and, where the screen is wider than the step, more down each side.
 A larger screen gets more pieces and larger ones, never more empty margin, but never so many
 that the pile stops being what the eye lands on: a phone shows seven and a tablet about fifteen.
+`StepScaffold` also says how far down the system draws its status bar over the scene. A photo
+still hangs off the top under the clock, and anything with words on it starts below the bar.
 
 The pieces are an example, listed in `OpeningPieces.kt`: today's photo, words and voice note
 with today's date on them, and other days' memories around the edges. There is one date on the
