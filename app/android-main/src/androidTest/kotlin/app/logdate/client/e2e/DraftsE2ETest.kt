@@ -248,7 +248,7 @@ class DraftsE2ETest {
     fun `load draft and publish draft is deleted after save`() {
         // Pre-seed a draft
         val draftContent = "Previously saved draft content"
-        val draftId = fakeDraftRepository.seedDraft(draftContent)
+        fakeDraftRepository.seedDraft(draftContent)
 
         openDraftsDialog()
 

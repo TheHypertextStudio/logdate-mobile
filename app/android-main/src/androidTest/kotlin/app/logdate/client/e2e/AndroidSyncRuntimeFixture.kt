@@ -79,7 +79,6 @@ internal class AccountTransitionFixture(
         val attempts = AtomicInteger()
         coEvery { defaultManager.releaseUploadBackoff() } coAnswers {
             if (attempts.incrementAndGet() == 1) throw IOException("Synthetic recovery checkpoint storage interruption")
-            Unit
         }
         return attempts
     }
