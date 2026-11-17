@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.R
-import app.logdate.feature.editor.ui.MainEditorContent
 import app.logdate.feature.editor.ui.audio.ActiveRecordingDisplay
 import app.logdate.feature.editor.ui.audio.AudioRecordingControls
 import app.logdate.feature.editor.ui.camera.CameraAspectRatio
@@ -14,8 +13,6 @@ import app.logdate.feature.editor.ui.camera.CameraCapturePreviewContent
 import app.logdate.feature.editor.ui.camera.CameraCapturePreviewState
 import app.logdate.feature.editor.ui.camera.CaptureMode
 import app.logdate.feature.editor.ui.camera.CapturedMediaType
-import app.logdate.feature.editor.ui.common.NoteEditorToolbar
-import app.logdate.feature.editor.ui.content.EditorBottomContent
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.RecordingState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
@@ -25,7 +22,6 @@ import app.logdate.feature.editor.ui.image.ImagePickerPreviewContent
 import app.logdate.feature.editor.ui.image.ImagePickerPreviewState
 import app.logdate.feature.editor.ui.layout.ImmersiveEditorLayout
 import app.logdate.feature.editor.ui.media.ManagedMediaSelectionState
-import app.logdate.feature.editor.ui.state.BlocksUiState
 import app.logdate.feature.editor.ui.text.TextBlockContent
 import app.logdate.feature.editor.ui.video.VideoBlockEditor
 import app.logdate.feature.editor.ui.video.VideoPickerPreviewContent
@@ -40,7 +36,6 @@ import com.android.tools.screenshot.PreviewTest
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
-import kotlin.uuid.Uuid
 
 private const val SAMPLE_IMAGE_URI =
     "file:///android_asset/sample_note_photo.jpg"
@@ -505,20 +500,10 @@ fun EditorMode_VideoFocused() {
     }
 }
 
-@PreviewTest
-@Preview(showBackground = true, device = PHONE)
-@Composable
-fun EditorMode_ListMixedContent() {
-    ScreenshotTheme {
-        MainEditorContent(
-            uiState = previewListUiState(),
-            shouldReturnToPickerOnBack = false,
-            onDismissExpanded = {},
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
+/**
+ * The room a focused block editor is laid out in, with nothing drawn around it. These scenes show
+ * one editor each, so they carry no top bar or journal control of their own.
+ */
 @Composable
 private fun EditorModeFrame(
     isImmersiveBlockActive: Boolean = false,
@@ -527,52 +512,9 @@ private fun EditorModeFrame(
     ScreenshotTheme {
         ImmersiveEditorLayout(
             isImmersiveBlockActive = isImmersiveBlockActive,
-            topBarContent = {
-                NoteEditorToolbar(
-                    onBack = {},
-                    onSave = {},
-                    onShowDrafts = {},
-                    actionsVisible = !isImmersiveBlockActive,
-                )
-            },
+            topBarContent = {},
             editorContent = content,
-            bottomContent = {
-                EditorBottomContent(
-                    availableJournals = ScreenshotTestData.sampleJournals,
-                    selectedJournalIds = listOf(ScreenshotTestData.sampleJournal.id),
-                    onJournalSelectionChanged = {},
-                    journalSelectorExpanded = false,
-                    onJournalSelectorExpandedChange = {},
-                )
-            },
+            bottomContent = {},
         )
     }
 }
-
-private fun previewListUiState() =
-    BlocksUiState(
-        blocks =
-            listOf(
-                TextBlockUiState(
-                    id = Uuid.parse("00000000-0000-0000-0000-000000000101"),
-                    content = "Wrapped the gallery picker in a calmer in-editor surface.",
-                ),
-                ImageBlockUiState(
-                    id = Uuid.parse("00000000-0000-0000-0000-000000000102"),
-                    uri = SAMPLE_IMAGE_URI,
-                    caption = "Workspace",
-                ),
-                TextBlockUiState(
-                    id = Uuid.parse("00000000-0000-0000-0000-000000000103"),
-                    content = "Need to tighten the camera review controls next.",
-                ),
-            ),
-        expandedBlockId = null,
-        availableJournals = ScreenshotTestData.sampleJournals,
-        selectedJournalIds = listOf(ScreenshotTestData.sampleJournal.id),
-        onBlockFocused = {},
-        onJournalSelectionChanged = {},
-        onUpdateBlock = {},
-        onCreateBlock = { _, _ -> error("Not used in screenshots") },
-        onDeleteBlock = {},
-    )
