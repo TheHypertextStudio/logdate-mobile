@@ -40,21 +40,7 @@ import logdate.client.feature.onboarding.generated.resources.section_title_backu
 import logdate.client.ui.generated.resources.common_back
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import logdate.client.ui.generated.resources.Res as UiRes
-
-@Composable
-fun BackupSyncScreen(
-    onBack: () -> Unit,
-    useCompactLayout: Boolean = false,
-    viewModel: OnboardingViewModel = koinViewModel(),
-) {
-    BackupSyncScreenContent(
-        useCompactLayout = useCompactLayout,
-        onBack = onBack,
-        onPlanSelected = viewModel::selectPlan,
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

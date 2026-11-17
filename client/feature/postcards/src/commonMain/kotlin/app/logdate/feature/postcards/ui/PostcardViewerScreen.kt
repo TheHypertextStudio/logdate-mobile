@@ -172,7 +172,6 @@ fun PostcardViewerContent(
             document = document,
             stickerUriMap = stickerUriMap,
             viewportOffset = { viewportState.offset },
-            onPhotoTap = onPhotoTap,
         )
     }
 }

@@ -2,9 +2,6 @@
 
 package app.logdate.feature.onboarding.navigation
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
@@ -67,9 +64,3 @@ data object FirstEntryMemorySelection : OnboardingBaseRoute
 
 @Serializable
 data object WelcomeBack : OnboardingBaseRoute
-
-/** Pushes the onboarding flow onto the back stack, starting from [OnboardingStart]. */
-fun NavBackStack<NavKey>.startOnboarding() {
-    clear()
-    add(OnboardingStart)
-}

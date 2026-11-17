@@ -74,7 +74,10 @@ private val CaptureWidgetButton.circle: Int
  * distinct. An intent resolved by its action alone would then have to match an intent filter that
  * declares that data, and the capture filter declares none, so Android would find no activity. Naming
  * the main window directly skips filter matching, as the other widgets' launches already do.
+ *
+ * CaptureWidgetContent calls it inside nested Glance click lambdas, which SearchDeadCode does not follow.
  */
+@Suppress(names = ["unused"])
 fun captureWidgetIntent(
     context: Context,
     button: CaptureWidgetButton,

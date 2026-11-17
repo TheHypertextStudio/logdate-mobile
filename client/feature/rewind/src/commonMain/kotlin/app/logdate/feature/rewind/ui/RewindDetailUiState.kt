@@ -40,11 +40,6 @@ sealed interface RewindDetailUiState {
          * Error when the rewind could not be loaded due to a general error.
          */
         data object LoadingFailed : Error
-
-        /**
-         * Error when the rewind could not be found.
-         */
-        data object RewindNotFound : Error
     }
 }
 

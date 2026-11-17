@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import app.logdate.ui.common.focusableWithRing
 import app.logdate.ui.theme.LogDateTheme
 import app.logdate.ui.theme.Spacing
-import coil3.Uri
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -68,8 +67,6 @@ import kotlin.uuid.Uuid
  * @param id Unique identifier for the rewind
  * @param label Short descriptive label for the time period
  * @param title Main title describing the rewind theme or highlights
- * @param start Start date of the rewind period
- * @param end End date of the rewind period
  * @param onOpenRewind Callback invoked when the card is tapped
  * @param modifier Modifier for customizing card appearance and behavior
  * @param isReady Whether the rewind is fully processed and viewable
@@ -79,8 +76,6 @@ internal fun RewindCard(
     id: Uuid,
     label: String,
     title: String,
-    start: LocalDate,
-    end: LocalDate,
     onOpenRewind: RewindOpenCallback, // TODO: Make generic id-less callback
     modifier: Modifier = Modifier,
     isReady: Boolean = false,
@@ -136,8 +131,6 @@ private fun RewindCardPreview() {
             label = "Rewind 2024#01",
             title = "Just another week",
             onOpenRewind = { },
-            start = LocalDate(2024, 11, 4),
-            end = LocalDate(2024, 11, 4),
         )
     }
 }
@@ -230,79 +223,6 @@ fun RewindCardPlaceholder(modifier: Modifier = Modifier) {
 private fun RewindCardPlaceholderPreview() {
     LogDateTheme {
         RewindCardPlaceholder()
-    }
-}
-
-/**
- * Types of content blocks that can appear within a rewind card.
- *
- * These enum values represent different kinds of rich content that could be displayed
- * in the future rewind card implementations.
- */
-enum class RewindBlockType {
-    /** Image content block for photos and visual memories */
-    Image,
-
-    /** Location content block for places visited during the rewind period */
-    Place,
-}
-
-/**
- * Sealed class hierarchy for different types of content blocks within rewind cards.
- *
- * This extensible design allows for future enhancement of rewind cards with rich media
- * content, location information, and other contextual elements.
- *
- * ## Future Implementation:
- * These blocks are intended for the LazyHorizontalGrid section of rewind cards,
- * providing thumbnail previews of the week's content.
- *
- * @param type The category of content this block represents
- */
-sealed class RewindCardBlock(
-    val type: RewindBlockType,
-) {
-    /**
-     * A content block representing an image from the rewind period.
-     *
-     * @param uri The URI reference to the image content
-     */
-    data class ImageBlock(
-        val uri: Uri,
-    ) : RewindCardBlock(RewindBlockType.Image)
-
-    /**
-     * A content block representing a significant location from the rewind period.
-     *
-     * @param place The name or description of the location
-     */
-    data class PlaceBlock(
-        val place: String,
-    ) : RewindCardBlock(RewindBlockType.Place)
-}
-
-/**
- * Composable for rendering individual content blocks within rewind cards.
- *
- * This is a placeholder implementation for future rich content display within
- * the rewind card's horizontal grid section.
- *
- * ## Future Implementation:
- * - **ImageBlock**: Thumbnail with rounded corners and overlay effects
- * - **PlaceBlock**: Location chip with icon and place name
- *
- * @param block The content block data to render
- */
-@Composable
-fun GridItem(block: RewindCardBlock) {
-    when (block) {
-        is RewindCardBlock.ImageBlock -> {
-            // TODO: Implement image thumbnail with loading states
-        }
-
-        is RewindCardBlock.PlaceBlock -> {
-            // TODO: Implement location chip with place name and icon
-        }
     }
 }
 

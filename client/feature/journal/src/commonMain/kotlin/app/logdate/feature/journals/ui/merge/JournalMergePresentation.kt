@@ -33,9 +33,7 @@ internal fun JournalMergePresentation(
                 lastPreview = stage.preview
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
     }
     val complete = stage as? JournalMergeStage.Complete

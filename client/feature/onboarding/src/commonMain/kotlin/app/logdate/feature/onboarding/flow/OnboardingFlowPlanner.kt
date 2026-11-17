@@ -48,18 +48,6 @@ data class OnboardingProgressSnapshot(
     val healthConnectStatus: HealthConnectStatus = HealthConnectStatus.CHECKING,
 )
 
-fun onboardingStepsFor(
-    entryMode: OnboardingEntryMode,
-    snapshot: OnboardingProgressSnapshot,
-): List<OnboardingStep> =
-    onboardingStepOrderFor(entryMode, snapshot.healthConnectStatus)
-        .filter { step -> shouldIncludeStep(step, snapshot) }
-
-fun firstOnboardingStep(
-    entryMode: OnboardingEntryMode,
-    snapshot: OnboardingProgressSnapshot,
-): OnboardingStep = onboardingStepsFor(entryMode, snapshot).first()
-
 fun nextOnboardingStepAfter(
     currentStep: OnboardingStep,
     entryMode: OnboardingEntryMode,

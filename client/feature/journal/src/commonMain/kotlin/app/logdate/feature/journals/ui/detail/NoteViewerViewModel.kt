@@ -204,9 +204,7 @@ class NoteViewerViewModel(
                 sharingLauncher.shareContent(mediaUris = listOf(state.mediaRef), chooserTitle = chooserTitle)
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
     }
 }

@@ -19,13 +19,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.text.asString
 import app.logdate.feature.location.timeline.ui.model.CurrentLocationUiModel
 import app.logdate.feature.location.timeline.ui.model.LocationPlaceUiModel
@@ -43,27 +41,6 @@ import logdate.client.feature.location.timeline.generated.resources.no_location_
 import logdate.client.feature.location.timeline.generated.resources.open_full_location_timeline
 import logdate.client.feature.location.timeline.generated.resources.recent_memories
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LocationTimelineBottomSheet(
-    onDismissRequest: () -> Unit,
-    onOpenFullTimeline: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: LocationTimelineViewModel = koinViewModel(),
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LocationTimelineQuickPeekSheet(
-        uiState = uiState,
-        onDismissRequest = onDismissRequest,
-        onOpenFullTimeline = onOpenFullTimeline,
-        onSelectPlace = viewModel::selectPlace,
-        onRetry = viewModel::retry,
-        modifier = modifier,
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

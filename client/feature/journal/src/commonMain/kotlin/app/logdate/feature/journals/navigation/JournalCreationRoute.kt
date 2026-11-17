@@ -1,7 +1,6 @@
 package app.logdate.feature.journals.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.journals.ui.creation.JournalCreationScreen
 import app.logdate.ui.navigation.taggedEntry
@@ -12,11 +11,6 @@ import kotlin.uuid.Uuid
 data class JournalCreationRoute(
     val journalTitle: String = "",
 ) : NavKey
-
-/** Pushes the journal creation screen. */
-fun NavBackStack<NavKey>.navigateToJournalCreation() {
-    add(JournalCreationRoute())
-}
 
 /** Registers the journal creation entry. */
 fun EntryProviderScope<NavKey>.journalCreationEntry(

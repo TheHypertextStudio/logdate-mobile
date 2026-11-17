@@ -42,7 +42,6 @@ import logdate.client.ui.generated.resources.Res as UiRes
  * The caller provides the note ID; the picker loads journals and handles the
  * content association via [JournalContentRepository].
  *
- * @param noteId The note to add to journals.
  * @param currentJournalId The journal the note is currently being viewed in (excluded from the list).
  * @param journals All available journals.
  * @param memberJournalIds IDs of journals this note already belongs to.
@@ -52,7 +51,6 @@ import logdate.client.ui.generated.resources.Res as UiRes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddToJournalPicker(
-    noteId: Uuid,
     currentJournalId: Uuid? = null,
     journals: List<Journal>,
     memberJournalIds: Set<Uuid>,
