@@ -10,8 +10,9 @@ import logdate.client.feature.core.generated.resources.places_beta_save_failed
 import logdate.client.feature.core.generated.resources.places_beta_title
 import org.jetbrains.compose.resources.stringResource
 
+/** The Labs row that turns the Places and location history beta on or off. */
 @Composable
-internal fun PlacesBetaSettingsItem(
+fun PlacesBetaSettingsItem(
     state: PlacesBetaSettingsState,
     onSetEnabled: (Boolean) -> Unit,
 ) {
