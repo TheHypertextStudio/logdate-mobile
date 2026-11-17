@@ -5,7 +5,6 @@ package app.logdate.ui.platform
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -33,7 +32,6 @@ import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
@@ -51,7 +49,6 @@ import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.VideoFile
@@ -181,8 +178,6 @@ actual object PlatformIcons {
 
     @Composable actual fun expandMore(): Painter = rememberSfSymbol("chevron.down", Icons.Filled.ExpandMore)
 
-    @Composable actual fun locationOff(): Painter = rememberSfSymbol("location.slash", Icons.Filled.LocationOff)
-
     @Composable actual fun stop(): Painter = rememberSfSymbol("stop.fill", Icons.Filled.Stop)
 
     @Composable actual fun forward10(): Painter = rememberSfSymbol("goforward.10", Icons.Filled.Forward10)
@@ -212,14 +207,6 @@ actual object PlatformIcons {
     @Composable actual fun filterOff(): Painter = rememberSfSymbol("line.3.horizontal.decrease.circle.slash", Icons.Filled.FilterAltOff)
 
     @Composable actual fun copy(): Painter = rememberSfSymbol("doc.on.doc", Icons.Filled.ContentCopy)
-
-    @Composable actual fun syncProblem(): Painter =
-        rememberSfSymbol(
-            "exclamationmark.arrow.triangle.2.circlepath",
-            Icons.Filled.SyncProblem,
-        )
-
-    @Composable actual fun chevronRight(): Painter = rememberSfSymbol("chevron.right", Icons.AutoMirrored.Filled.KeyboardArrowRight)
 
     @Composable actual fun checkCircle(): Painter = rememberSfSymbol("checkmark.circle.fill", Icons.Filled.CheckCircle)
 
