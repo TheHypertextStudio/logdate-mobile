@@ -300,7 +300,7 @@ public class DefaultRepoEngine(
                 commits.filter { commit ->
                     since == null || commit.commit.revision > since.toLong()
                 }
-            val currentBlocks = reachableBlocks(repo, snapshot.tree, head.commitCid)
+            val currentBlocks = reachableBlocks(snapshot.tree, head.commitCid)
             val previousBlockIds =
                 if (since == null) {
                     emptySet()
@@ -308,7 +308,7 @@ public class DefaultRepoEngine(
                     val previousCommit = commits.lastOrNull { commit -> commit.commit.revision == since.toLong() }
                     previousCommit?.let { commit ->
                         val previousTree = MerkleSearchTree.fromBlocks(commit.commit.root) { cid -> blockStore.readBlock(cid).getOrThrow() }
-                        reachableBlocks(repo, previousTree, commit.cid).mapTo(linkedSetOf(), RepoBlock::cid)
+                        reachableBlocks(previousTree, commit.cid).mapTo(linkedSetOf(), RepoBlock::cid)
                     } ?: emptySet()
                 }
             val blocks = linkedMapOf<Cid, RepoBlock>()
@@ -498,7 +498,6 @@ public class DefaultRepoEngine(
     )
 
     private suspend fun reachableBlocks(
-        repo: AtprotoDid,
         tree: MerkleSearchTree,
         commitCid: Cid,
     ): List<RepoBlock> {

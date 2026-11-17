@@ -343,9 +343,7 @@ public object LexiconValidator {
                     field.properties.forEach { (name, property) -> checkField("$path.$name", property) }
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         }
 

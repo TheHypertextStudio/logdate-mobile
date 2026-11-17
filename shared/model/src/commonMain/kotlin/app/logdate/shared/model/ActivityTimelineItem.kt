@@ -4,17 +4,6 @@ import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-sealed interface ActivityUpdate {
-    data class NoteUpdate(
-        val noteId: String,
-        val content: String,
-    ) : ActivityUpdate
-
-    data class LocationUpdate(
-        val location: Place,
-    ) : ActivityUpdate
-}
-
 /**
  * A single activity in a timeline.
  *
