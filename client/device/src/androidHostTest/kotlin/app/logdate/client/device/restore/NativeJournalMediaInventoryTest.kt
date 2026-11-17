@@ -212,13 +212,12 @@ class NativeJournalMediaInventoryTest {
         }
 
     @Test
-    fun `only the v3 receipt's exact complete inventory is admitted with its source`() =
+    fun `the v3 receipt's inventory is admitted with its source`() =
         fixture { root ->
             val files = File(root, "files")
             write(files, "user_media/photo.jpg", "original".encodeToByteArray())
             val inventory = File(root, NATIVE_MEDIA_INVENTORY_PATH)
             writeNativeJournalMediaInventory(inventory, files)
-            val wrong = File(root, "wrong-inventory").apply { writeText("{}") }
             val preferencesFile = File(root, "preferences").apply { writeText("preferences") }
             val database = File(root, "database").apply { writeText("encrypted journal") }
             val receipt = File(root, "receipt")
@@ -243,11 +242,7 @@ class NativeJournalMediaInventoryTest {
                     payload("files/logdate.preferences_pb", preferencesFile),
                     payload("database/logdate", database),
                 )
-            val receiptHash = sha256(receipt.readBytes())
-            assertTrue(verifiedNativeJournalMediaInventories(core).isEmpty())
-            assertTrue(verifiedNativeJournalMediaInventories(core + payload(NATIVE_MEDIA_INVENTORY_PATH, wrong)).isEmpty())
             val delivered = core + payload(NATIVE_MEDIA_INVENTORY_PATH, inventory)
-            assertEquals("files/user_media/photo.jpg", verifiedNativeJournalMediaInventories(delivered)[receiptHash]?.files?.single()?.path)
             assertEquals(inventory, verifiedNativeJournalSources(delivered).values.single()[NATIVE_MEDIA_INVENTORY_PATH])
         }
 

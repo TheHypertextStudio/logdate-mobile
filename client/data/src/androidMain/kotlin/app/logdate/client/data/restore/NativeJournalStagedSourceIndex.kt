@@ -1,7 +1,6 @@
 package app.logdate.client.data.restore
 
 import android.content.Context
-import app.logdate.client.datastore.createAndroidMainDataStore
 import app.logdate.client.device.restore.NATIVE_JOURNAL_TRANSFER_PREFIX
 import app.logdate.client.device.restore.NATIVE_MEDIA_INVENTORY_PATH
 import app.logdate.client.device.restore.NATIVE_SOURCE_RECEIPT_PATH
@@ -11,8 +10,6 @@ import app.logdate.client.device.restore.NativeJournalReplayCustody
 import app.logdate.client.device.restore.NativeJournalSourceReceipt
 import app.logdate.client.device.restore.verifyNativeJournalMediaInventory
 import app.logdate.client.device.restore.verifyNativeJournalSourceReceipt
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -274,28 +271,6 @@ class NativeJournalStagedSourceIndex(
                 check(File(directory, "admitted").readText() == directory.name)
                 directory.name to read(directory)
             }
-
-    fun admittedMediaInventories(): List<NativeJournalMediaInventory> = admittedSources().values.mapNotNull(Record::mediaInventory)
-
-    /** A Backup settings retry is local only when the retained callback and current account scope still agree. */
-    fun isRecoverableAuxiliary(payload: NativeIncomingJournal.Payload): Boolean =
-        runCatching {
-            runBlocking {
-                val preferences = createAndroidMainDataStore(context).data.first()
-                val current = RetainedJournalSourceScope.from(preferences) ?: return@runBlocking false
-                admittedSources().any { (receipt, record) ->
-                    val source =
-                        normalizeBackendOrigin(record.receipt.backendOrigin)?.let { origin ->
-                            RetainedJournalSourceScope(
-                                record.receipt.canonicalOwnerId,
-                                record.receipt.canonicalOwnerBound == "true",
-                                origin,
-                            )
-                        }
-                    source?.matchesCurrent(current) == true && verifiedAuxiliary(receipt, listOf(payload)).isNotEmpty()
-                }
-            }
-        }.getOrDefault(false)
 
     fun hasRemembered(receiptSha256: String): Boolean =
         directory(receiptSha256).takeIf(File::exists)?.let {

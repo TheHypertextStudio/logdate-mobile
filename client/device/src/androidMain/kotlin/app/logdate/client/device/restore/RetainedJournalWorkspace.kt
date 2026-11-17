@@ -207,6 +207,7 @@ class RetainedJournalWorkspace(
             session.incomingCohorts.mapValues { (id, hash) -> incoming.verified(id, hash) }
         }
 
+    @Suppress("unused") // Kept: the androidTest restore suites check that a delivery stays in verified custody with it
     fun coherentIncomingPayloads(): Map<String, Map<String, NativeIncomingJournal.Payload>> =
         synchronized(lock) {
             val session = current() ?: return@synchronized emptyMap()

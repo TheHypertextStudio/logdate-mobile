@@ -99,18 +99,6 @@ fun verifiedNativeJournalSources(payloads: Iterable<NativeIncomingJournal.Payloa
     }
 }
 
-/** An inventory is usable only when its exact bytes belong to a verified v3 source receipt. */
-fun verifiedNativeJournalMediaInventories(payloads: Iterable<NativeIncomingJournal.Payload>): Map<String, NativeJournalMediaInventory> =
-    verifiedNativeJournalSources(payloads)
-        .values
-        .mapNotNull { files ->
-            val receiptFile = files["source_scope.json"] ?: return@mapNotNull null
-            val inventoryFile = files[NATIVE_MEDIA_INVENTORY_PATH] ?: return@mapNotNull null
-            val expected = readNativeJournalSourceReceipt(receiptFile).mediaInventorySha256 ?: return@mapNotNull null
-            val inventory = verifyNativeJournalMediaInventory(inventoryFile, expected)
-            nativeSourceChecksum(receiptFile) to inventory
-        }.toMap()
-
 /** Only the explicitly declared immutable native subtree can normalize another path's domain. */
 fun nativeJournalLogicalPath(path: String): String = path.removePrefix(NATIVE_JOURNAL_TRANSFER_PREFIX)
 
