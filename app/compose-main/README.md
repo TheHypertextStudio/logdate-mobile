@@ -26,7 +26,7 @@ Code lives under `app.logdate`. The packages below are the main ones.
 
 ### Desktop (`desktopMain`)
 
-`main.kt` starts the Compose `application` with Koin. `app.logdate.desktop` holds `LogDateApplication`, `LogDateApplicationState` (one main window plus any number of editor windows), `MainWindow`, `EntryEditorWindow` in `EditorWindow.kt` (with a fullscreen immersive mode on F11), the menu shortcuts in `AppShortcutMenu.kt`, `DesktopWindowPreferences` (window geometry kept in `java.util.prefs`) and `DesktopNotification` (in `app.logdate.desktop.notification`). `AppModule.desktop.kt` supplies the desktop `appModule`.
+`main.kt` starts the Compose `application` with Koin. `app.logdate.desktop` holds `LogDateApplication`, `LogDateApplicationState` (one main window plus any number of editor windows), `MainWindow`, `EntryEditorWindow` in `EditorWindow.kt` (with a fullscreen immersive mode on F11), the menu shortcuts in `AppShortcutMenu.kt`, `DesktopWindowPreferences` (window geometry saved in `java.util.prefs`). `AppModule.desktop.kt` supplies the desktop `appModule`.
 
 ### iOS (`iosMain`)
 
