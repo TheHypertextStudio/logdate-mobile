@@ -270,6 +270,7 @@ public final class studio/hypertext/atproto/repo/RepoCommitChange {
 public final class studio/hypertext/atproto/repo/RepoCommitChanges {
 	public static final field INSTANCE Lstudio/hypertext/atproto/repo/RepoCommitChanges;
 	public final fun collectionsAt-YBMAlIg (Lstudio/hypertext/atproto/repo/RepoBlockStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun entriesAt-YBMAlIg (Lstudio/hypertext/atproto/repo/RepoBlockStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun loadCommit--knXs0U (Lstudio/hypertext/atproto/repo/RepoBlockStore;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun read-0E7RQCE (Lstudio/hypertext/atproto/repo/RepoBlockStore;Lstudio/hypertext/atproto/repo/SignedRepoCommit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
