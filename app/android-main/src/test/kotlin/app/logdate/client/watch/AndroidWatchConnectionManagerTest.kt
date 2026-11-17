@@ -2,9 +2,13 @@ package app.logdate.client.watch
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import app.logdate.client.sync.WatchMessageSender
 import app.logdate.client.sync.datalayer.WearAudioRequestPaths
+import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
+import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
+import app.logdate.feature.core.settings.ui.watch.WatchLinking
 import app.logdate.feature.core.settings.ui.watch.WatchRequestFailure
 import app.logdate.feature.core.settings.ui.watch.WatchRequestResult
 import com.google.android.gms.tasks.Tasks
@@ -15,13 +19,23 @@ import com.google.android.gms.wearable.NodeClient
 import com.google.common.util.concurrent.ListenableFuture
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import java.util.concurrent.ExecutionException
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * "Open LogDate on watch" sent an ACTION_MAIN intent, which RemoteActivityHelper refuses before
@@ -172,10 +186,93 @@ class AndroidWatchConnectionManagerTest {
         every { capabilityClient.getCapability("logdate_watch_app", CapabilityClient.FILTER_ALL) } returns Tasks.forResult(withApp)
     }
 
-    private fun manager() =
+    @Test
+    fun `setting up prepares the watch running LogDate even beside another connected node`() =
+        runTest {
+            connected(withoutLogDate, withLogDate)
+            val prepared = mutableListOf<String>()
+
+            manager(verifiedAppNodes = flowOf(emptySet()), prepareWatch = { prepared += it }).beginAssociation()
+
+            assertEquals(listOf("watch-with-logdate"), prepared)
+        }
+
+    @Test
+    fun `a watch with LogDate that is not linked yet is linked at once and says why it is waiting`() =
+        runTest {
+            connected(withLogDate)
+            listening()
+            val retried = mutableListOf<String>()
+            val manager =
+                manager(
+                    verifiedAppNodes = flowOf(emptySet()),
+                    linkStatus = { WatchLinking(WatchLinkProblem.RETRYING) },
+                    retryWatch = { retried += it },
+                    linkingScope = backgroundScope,
+                )
+
+            val first = manager.observeConnectionState().first()
+            val again = manager.observeConnectionState().first()
+            runCurrent()
+
+            val expected =
+                WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-with-logdate", WatchLinking(WatchLinkProblem.RETRYING))
+            assertEquals(expected, first)
+            assertEquals(expected, again)
+            assertEquals(listOf("watch-with-logdate"), retried)
+        }
+
+    @Test
+    fun `a watch the person removed is not linked again until they ask`() =
+        runTest {
+            connected(withLogDate)
+            listening()
+            val retried = mutableListOf<String>()
+            val manager =
+                manager(
+                    verifiedAppNodes = flowOf(emptySet()),
+                    linkStatus = { WatchLinking(WatchLinkProblem.REMOVED) },
+                    retryWatch = { retried += it },
+                    linkingScope = backgroundScope,
+                )
+
+            val state = manager.observeConnectionState().first()
+            runCurrent()
+
+            assertEquals(WatchLinking(WatchLinkProblem.REMOVED), (state as WatchConnectionState.NeedsAssociation).linking)
+            assertTrue(retried.isEmpty())
+        }
+
+    private fun listening() {
+        mockkStatic(Uri::class)
+        every { Uri.parse(any()) } returns mockk()
+        every { capabilityClient.addListener(any(), any<Uri>(), any()) } returns Tasks.forResult(null)
+        every { capabilityClient.removeListener(any()) } returns Tasks.forResult(true)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        unmockkStatic(Uri::class)
+    }
+
+    private fun manager(
+        verifiedAppNodes: Flow<Set<String>?> = flowOf(null),
+        prepareWatch: suspend (String) -> Unit = {},
+        linkStatus: suspend (String) -> WatchLinking = { WatchLinking() },
+        retryWatch: suspend (String) -> Unit = {},
+        linkingScope: CoroutineScope? = null,
+    ) =
         AndroidWatchConnectionManager(
             context = mockk<Context> { every { packageName } returns "studio.hypertext.logdate" },
-            associationManager = mockk(relaxed = true),
+            associationManager =
+                mockk(relaxed = true) {
+                    every { observeAssociationState() } returns MutableStateFlow(WatchAssociationSnapshot.Unsupported)
+                },
+            verifiedAppNodes = verifiedAppNodes,
+            prepareWatch = prepareWatch,
+            linkStatus = linkStatus,
+            retryWatch = retryWatch,
+            linkingScope = linkingScope,
             ioDispatcher = Dispatchers.Unconfined,
             nodeClient = nodeClient,
             capabilityClient = capabilityClient,

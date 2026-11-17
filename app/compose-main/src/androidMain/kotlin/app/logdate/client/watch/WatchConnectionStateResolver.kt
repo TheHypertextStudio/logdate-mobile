@@ -1,6 +1,9 @@
 package app.logdate.client.watch
 
+import app.logdate.client.sync.v2.link.PhoneLinkFailure
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
+import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
+import app.logdate.feature.core.settings.ui.watch.WatchLinking
 
 private const val FALLBACK_WATCH_NAME = "Wear OS watch"
 
@@ -151,5 +154,15 @@ fun resolveWearAppConnection(
             },
         )
     }
-    return WatchConnectionState.NeedsAssociation(watch.displayName, watch.id)
+    // LogDate links a watch that has the app by itself; the system's pairing prompt is never needed.
+    return WatchConnectionState.NeedsAssociation(watch.displayName, watch.id, WatchLinking())
 }
+
+/** What the Watch page can say about a failed link, in terms of what the person can do about it. */
+fun PhoneLinkFailure.toWatchLinkProblem(): WatchLinkProblem =
+    when (this) {
+        PhoneLinkFailure.WATCH_BOUND_TO_ANOTHER_ACCOUNT -> WatchLinkProblem.ANOTHER_ACCOUNT
+        PhoneLinkFailure.DEVICE_LIMIT_REACHED -> WatchLinkProblem.DEVICE_LIMIT
+        PhoneLinkFailure.WATCH_KEY_CONFLICT, PhoneLinkFailure.WATCH_INSTALL_FAILED -> WatchLinkProblem.SET_UP_AGAIN
+        else -> WatchLinkProblem.RETRYING
+    }

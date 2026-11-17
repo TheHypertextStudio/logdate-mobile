@@ -74,13 +74,11 @@ internal fun watchDeviceDescription(status: WatchStatus?): String =
         }
 
         is WatchStatus.SettingUp -> {
-            stringResource(
-                if (status.step is WatchSetupStep.PairWithPhone) {
-                    Res.string.watch_needs_association
-                } else {
-                    Res.string.watch_association_pending
-                },
-            )
+            when (val step = status.step) {
+                is WatchSetupStep.PairWithPhone -> stringResource(Res.string.watch_needs_association)
+                WatchSetupStep.ConfirmOnPhone -> stringResource(Res.string.watch_association_pending)
+                is WatchSetupStep.Linking -> watchLinkingCopy(step).title
+            }
         }
 
         is WatchStatus.NeedsAttention -> {

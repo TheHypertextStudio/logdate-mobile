@@ -45,6 +45,7 @@ import app.logdate.feature.core.settings.ui.watch.WatchSetupStep
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
 import app.logdate.feature.core.settings.ui.watch.WatchUnknownActions
+import app.logdate.feature.core.settings.ui.watch.watchLinkingCopy
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.watch.WatchSetupProvider
 import app.logdate.ui.watch.rememberWatchSetupLauncher
@@ -142,6 +143,17 @@ internal fun WatchSetupContent(
                         Icons.Default.Watch,
                         modifier,
                     ) { CircularProgressIndicator() }
+                }
+
+                is WatchSetupStep.Linking -> {
+                    val copy = watchLinkingCopy(step)
+                    WatchSetupHero(copy.title, copy.description, Icons.Default.Watch, modifier) {
+                        if (copy.action == null) {
+                            CircularProgressIndicator(Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                        } else {
+                            Button(onClick = onAssociate) { Text(copy.action) }
+                        }
+                    }
                 }
             }
         }

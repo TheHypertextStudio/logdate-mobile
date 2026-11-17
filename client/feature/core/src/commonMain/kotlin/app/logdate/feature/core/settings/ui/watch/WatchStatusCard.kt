@@ -212,6 +212,22 @@ private fun SettingUpStatus(
                 )
             }
         }
+
+        is WatchSetupStep.Linking -> {
+            val copy = watchLinkingCopy(step)
+            CenteredStatus(
+                icon = Icons.Default.Watch,
+                iconTint = MaterialTheme.colorScheme.primary,
+                title = copy.title,
+                description = copy.description,
+            ) {
+                if (copy.action == null) {
+                    CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                } else {
+                    Button(onClick = onBeginAssociation) { Text(copy.action) }
+                }
+            }
+        }
     }
 }
 
