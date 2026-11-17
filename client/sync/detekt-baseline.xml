@@ -1,15 +1,12 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LargeClass:LogDateCloudApiClient.kt:LogDateCloudApiClient : CloudApiClient</ID>
-    <ID>LongMethod:DefaultCloudAccountRepository.kt:DefaultCloudAccountRepository$private suspend fun migrateLegacyKeysIfNeeded</ID>
-    <ID>LongMethod:SyncDownloadEngine.kt:SyncDownloadEngine$suspend fun &lt;T : Any> download: SyncResult</ID>
-    <ID>LongMethod:SyncDownloader.kt:SyncDownloader$suspend fun downloadAssociations: SyncResult</ID>
-    <ID>LongMethod:SyncDownloader.kt:SyncDownloader$suspend fun downloadDrafts: SyncResult</ID>
-    <ID>LongMethod:SyncUploader.kt:SyncUploader$suspend fun uploadAssociations: SyncResult</ID>
+    <ID
+    >LongMethod:SyncDownloadEngine.kt:SyncDownloadEngine$suspend fun &lt;T : Any> download: SyncResult</ID>
     <ID>LongMethod:SyncUploader.kt:SyncUploader$suspend fun uploadContent: SyncResult</ID>
-    <ID>LongMethod:SyncUploader.kt:SyncUploader$suspend fun uploadDrafts: SyncResult</ID>
-    <ID>LongMethod:SyncUploader.kt:SyncUploader$suspend fun uploadJournals: SyncResult</ID>
+    <ID>UnusedParameter:MigrationMediaPreparer.kt:MigrationMediaPreparer$operation: String</ID>
+    <ID>UnusedParameter:SpaceMigrationSettle.kt:operation: String</ID>
+    <ID>UnusedParameter:SpaceSync.kt:SpaceClient$operation: String</ID>
   </CurrentIssues>
 </SmellBaseline>

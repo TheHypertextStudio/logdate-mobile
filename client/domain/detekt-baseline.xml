@@ -5,8 +5,6 @@
     <ID
     >LongMethod:DefaultMemoriesSettingsRepository.kt:DefaultMemoriesSettingsRepository$override fun observeSettings: Flow&lt;MemoriesSettings></ID>
     <ID
-    >LongMethod:ExportUserDataUseCase.kt:ExportUserDataUseCase$fun exportUserData: Flow&lt;ExportProgress></ID>
-    <ID
     >LongMethod:GenerateAmbientPromptCandidatesUseCase.kt:GenerateAmbientPromptCandidatesUseCase$suspend operator fun invoke: List&lt;AmbientPromptCandidate></ID>
     <ID
     >LongMethod:GenerateAnnualRewindUseCase.kt:GenerateAnnualRewindUseCase$suspend operator fun invoke: GenerateBasicRewindResult</ID>

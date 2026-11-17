@@ -1,12 +1,8 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LongMethod:DesktopExportLauncher.kt:DesktopExportLauncher$override fun startExport</ID>
-    <ID>LongMethod:DesktopExportLauncher.kt:DesktopExportLauncher$private fun addMediaEntry: MediaEntryOutcome</ID>
-    <ID>LongMethod:ExportWorker.kt:ExportWorker$override suspend fun doWork: Result</ID>
-    <ID>LongMethod:IosExportLauncher.kt:IosExportLauncher$@OptIn(ExperimentalForeignApi::class) override fun startExport</ID>
-    <ID>LongMethod:RestoreWorker.kt:RestoreWorker$override suspend fun doWork: Result</ID>
     <ID>LongMethod:SettingsEntries.kt:fun EntryProviderScope&lt;NavKey>.settingsEntries</ID>
+    <ID>UnusedParameter:DataSettingsScreen.kt:onBrowseFile: (String) -> Unit = {}</ID>
   </CurrentIssues>
 </SmellBaseline>

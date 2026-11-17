@@ -1,11 +1,10 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LargeClass:SearchIndexBootstrapper.kt:SearchIndexBootstrapper</ID>
-    <ID>LongMethod:AppDatabaseMigrations.kt:&lt;no name provided>$@OptIn(kotlin.uuid.ExperimentalUuidApi::class) override fun migrate</ID>
+    <ID
+    >LongMethod:AppDatabaseMigrations.kt:&lt;no name provided>$@OptIn(kotlin.uuid.ExperimentalUuidApi::class) override fun migrate</ID>
     <ID>LongMethod:AppDatabaseMigrations.kt:&lt;no name provided>$override fun migrate</ID>
-    <ID>LongMethod:Database.android.kt:fun migratePlaintextDatabaseIfNeeded</ID>
     <ID>LongMethod:MIGRATION_12_13.kt:&lt;no name provided>$override fun migrate</ID>
     <ID>LongMethod:MIGRATION_13_14.kt:&lt;no name provided>$override fun migrate</ID>
     <ID>LongMethod:MIGRATION_14_15.kt:&lt;no name provided>$override fun migrate</ID>

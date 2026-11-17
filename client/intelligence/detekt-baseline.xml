@@ -1,13 +1,21 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LongMethod:AnnualRewindSequencer.kt:AnnualRewindSequencer$fun sequence: List&lt;RewindContent></ID>
-    <ID>LongMethod:FullLLMRewindStrategy.kt:FullLLMRewindStrategy$override suspend fun produce: RewindStrategyOutput</ID>
-    <ID>LongMethod:PeopleExtractor.kt:PeopleExtractor$suspend fun extractPeople: AIResult&lt;List&lt;Person>></ID>
-    <ID>LongMethod:RewindSequencer.kt:RewindSequencer$private fun createBeatPanels: List&lt;RewindContent></ID>
-    <ID>LongMethod:StructuredAIExtractor.kt:StructuredAIExtractor$suspend fun extract: AIResult&lt;Output></ID>
-    <ID>LongMethod:WeekNarrativeSynthesizer.kt:WeekNarrativeSynthesizer$private suspend fun synthesizeNarrative: AIResult&lt;WeekNarrative></ID>
-    <ID>LongMethod:YearNarrativeSynthesizer.kt:YearNarrativeSynthesizer$suspend fun synthesize: AIResult&lt;YearNarrative></ID>
+    <ID
+    >LongMethod:AnnualRewindSequencer.kt:AnnualRewindSequencer$fun sequence: List&lt;RewindContent></ID>
+    <ID
+    >LongMethod:FullLLMRewindStrategy.kt:FullLLMRewindStrategy$override suspend fun produce: RewindStrategyOutput</ID>
+    <ID
+    >LongMethod:PeopleExtractor.kt:PeopleExtractor$suspend fun extractPeople: AIResult&lt;List&lt;Person>></ID>
+    <ID
+    >LongMethod:RewindSequencer.kt:RewindSequencer$private fun createBeatPanels: List&lt;RewindContent></ID>
+    <ID
+    >LongMethod:StructuredAIExtractor.kt:StructuredAIExtractor$suspend fun extract: AIResult&lt;Output></ID>
+    <ID
+    >LongMethod:WeekNarrativeSynthesizer.kt:WeekNarrativeSynthesizer$private suspend fun synthesizeNarrative: AIResult&lt;WeekNarrative></ID>
+    <ID
+    >LongMethod:YearNarrativeSynthesizer.kt:YearNarrativeSynthesizer$suspend fun synthesize: AIResult&lt;YearNarrative></ID>
+    <ID>UnusedParameter:LocalYearNarrative.kt:year: Int</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -1,12 +1,8 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LongMethod:OfflineFirstPeopleGraphRepository.kt:OfflineFirstPeopleGraphRepository$override suspend fun refresh</ID>
-    <ID>LongMethod:OfflineFirstRewindRepository.kt:OfflineFirstRewindRepository$private fun RewindTextContentEntity.toDomainModel: RewindContent</ID>
-    <ID>LongMethod:OfflineFirstTranscriptionRepository.kt:OfflineFirstTranscriptionRepository$override suspend fun updateTranscriptDocument: Boolean</ID>
-    <ID>LongMethod:PasskeyAccountRepository.kt:DefaultPasskeyAccountRepository$override suspend fun authenticateWithPasskey: Result&lt;LogDateAccount></ID>
-    <ID>LongMethod:PasskeyAccountRepository.kt:DefaultPasskeyAccountRepository$override suspend fun createAccountWithPasskey: Result&lt;LogDateAccount></ID>
-    <ID>LongMethod:PasskeyAccountRepository.kt:DefaultPasskeyAccountRepository$override suspend fun signInWithRestoreKey: Result&lt;LogDateAccount></ID>
+    <ID
+    >LongMethod:OfflineFirstRewindRepository.kt:OfflineFirstRewindRepository$private fun RewindTextContentEntity.toDomainModel: RewindContent</ID>
   </CurrentIssues>
 </SmellBaseline>

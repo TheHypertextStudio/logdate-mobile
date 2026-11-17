@@ -74,11 +74,12 @@ quality|lint|Run Android lint|./gradlew lint
 quality|lint:check|Check Kotlin code style|./gradlew ktlintCheck
 quality|lint:format|Auto-format Kotlin code|./gradlew ktlintFormat
 quality|lint:modules|Verify ktlint task coverage for all modules|./scripts/verify-ktlint-task-coverage.sh
-quality|lint:complexity|Check function and class size limits|./gradlew detekt
+quality|lint:complexity|Check function and class size limits and unused declarations|./gradlew detekt
+quality|lint:deadcode|Find dead code: detekt, Android Lint, Dependency Analysis and SearchDeadCode|./gradlew detekt :app:android-main:lint :app:wear:lint buildHealth && searchdeadcode . --profile ci --unused-extras=false --write-only-dao=false --write-only-prefs=false
 quality|lint:lexicons|Validate the LogDate lexicon schemas and their example records|pnpm --dir tools/lexicon-check install --frozen-lockfile --silent && node tools/lexicon-check/check.mjs
 quality|lint:conformance|Check the shared client conformance fixtures against the lexicons|pnpm --dir tools/lexicon-check install --frozen-lockfile --silent && node tools/lexicon-check/conformance.mjs
 quality|conformance:update|Regenerate the shared client conformance fixtures from the lexicons|pnpm --dir tools/lexicon-check install --frozen-lockfile --silent && node tools/lexicon-check/conformance.mjs --write
-quality|check|Run all checks (tests + lint)|./gradlew check
+quality|check|Run all checks (tests + lint)|./gradlew check && ./run lint:deadcode
 quality|perf:baseline:phone|Generate phone baseline profile|./gradlew generatePhoneBaselineProfile
 quality|perf:baseline:wear|Generate Wear baseline profile|./gradlew generateWearBaselineProfile
 
