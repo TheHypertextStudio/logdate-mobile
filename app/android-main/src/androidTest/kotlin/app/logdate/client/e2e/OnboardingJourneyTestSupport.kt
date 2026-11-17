@@ -26,7 +26,6 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.profile.ProfileRepository
 import app.logdate.client.repository.streak.StreakSettingsRepository
 import app.logdate.client.repository.user.UserStateRepository
-import app.logdate.di.appModule
 import app.logdate.feature.onboarding.flow.OnboardingDeviceStateRepository
 import app.logdate.shared.model.LogDateAccount
 import app.logdate.shared.model.profile.LogDateProfile
@@ -39,10 +38,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
@@ -156,12 +152,7 @@ internal class OnboardingKoinModuleOverrideRule(
         object : Statement() {
             override fun evaluate() {
                 val context = ApplicationProvider.getApplicationContext<Context>()
-                if (GlobalContext.getOrNull() == null) {
-                    startKoin {
-                        androidContext(context)
-                        modules(appModule)
-                    }
-                }
+                startKoinIfAppHasNot(context)
                 loadKoinModules(module)
                 base.evaluate()
             }

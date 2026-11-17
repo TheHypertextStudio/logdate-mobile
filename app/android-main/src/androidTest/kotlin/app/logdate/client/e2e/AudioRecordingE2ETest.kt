@@ -32,7 +32,6 @@ import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.transcription.TranscriptionData
 import app.logdate.client.repository.transcription.TranscriptionRepository
 import app.logdate.client.repository.transcription.TranscriptionStatus
-import app.logdate.di.appModule
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,10 +46,7 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.junit.runners.model.Statement
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
@@ -145,12 +141,7 @@ private class KoinModuleOverrideRule(
         object : Statement() {
             override fun evaluate() {
                 val context = ApplicationProvider.getApplicationContext<Context>()
-                if (GlobalContext.getOrNull() == null) {
-                    startKoin {
-                        androidContext(context)
-                        modules(appModule)
-                    }
-                }
+                startKoinIfAppHasNot(context)
                 loadKoinModules(module)
                 base.evaluate()
             }
