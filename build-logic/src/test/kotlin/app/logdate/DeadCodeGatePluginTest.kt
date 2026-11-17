@@ -67,10 +67,17 @@ class DeadCodeGatePluginTest {
             .withArguments(*arguments, "--stacktrace")
 
     @Test
-    fun `an unused local fails the compilation that declares it`() {
-        val output = runner(":service:compileKotlin").buildAndFail().output
+    fun `an unused local fails the compilation that declares it when compiler errors are on`() {
+        val output = runner(":service:compileKotlin", "-Plogdate.deadCode.compilerErrors=true").buildAndFail().output
 
         assertContains(output, Regex("""e: \S+/Greeting\.kt:2:9 Variable is unused\."""))
+    }
+
+    @Test
+    fun `an unused local is reported as a warning by default`() {
+        val output = runner(":service:compileKotlin").build().output
+
+        assertContains(output, Regex("""w: \S+/Greeting\.kt:2:9 Variable is unused\."""))
     }
 
     @Test
