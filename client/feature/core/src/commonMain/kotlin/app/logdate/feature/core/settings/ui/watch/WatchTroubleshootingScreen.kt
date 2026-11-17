@@ -5,12 +5,8 @@ package app.logdate.feature.core.settings.ui.watch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,7 +15,6 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
+import app.logdate.ui.common.SimpleSettingsItem
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_troubleshooting
@@ -133,6 +129,10 @@ fun WatchTroubleshootingContent(
     )
 }
 
+/**
+ * The watch app actions as rows of one settings section. A failed request is explained below the
+ * section rather than inside it, where the container's rounded corners would cut into the text.
+ */
 @Composable
 private fun WatchTroubleshootingActions(
     connectionState: WatchConnectionState,
@@ -141,57 +141,40 @@ private fun WatchTroubleshootingActions(
     onInstallOnWatch: () -> Unit,
     onOpenOnWatch: () -> Unit,
 ) {
-    SettingsSection(
-        title = stringResource(Res.string.watch_troubleshooting_watch_app),
+    Column(
         modifier = Modifier.padding(horizontal = Spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-        ) {
-            OutlinedButton(
+        SettingsSection(title = stringResource(Res.string.watch_troubleshooting_watch_app)) {
+            SimpleSettingsItem(
+                title = stringResource(Res.string.watch_troubleshooting_pair),
+                description = null,
                 onClick = onBeginAssociation,
-                modifier = Modifier.fillMaxWidth(),
                 enabled =
                     connectionState is WatchConnectionState.NeedsAssociation ||
                         connectionState is WatchConnectionState.NoPairedWatch,
-            ) {
-                Icon(
-                    Icons.Default.Info,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(Spacing.sm))
-                Text(stringResource(Res.string.watch_troubleshooting_pair))
-            }
+                leadingContent = { Icon(Icons.Default.Info, contentDescription = null) },
+                action = {},
+            )
             if (connectionState is WatchConnectionState.AppNotInstalled) {
-                OutlinedButton(
+                SimpleSettingsItem(
+                    title = stringResource(Res.string.watch_troubleshooting_install),
+                    description = null,
                     onClick = onInstallOnWatch,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(
-                        Icons.Default.Download,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(Spacing.sm))
-                    Text(stringResource(Res.string.watch_troubleshooting_install))
-                }
-            }
-            OutlinedButton(
-                onClick = onOpenOnWatch,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = connectionState is WatchConnectionState.Connected || connectionState is WatchConnectionState.AppUnknown,
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    leadingContent = { Icon(Icons.Default.Download, contentDescription = null) },
+                    action = {},
                 )
-                Spacer(Modifier.width(Spacing.sm))
-                Text(stringResource(Res.string.watch_troubleshooting_open))
             }
-            requestFailure?.let { WatchRequestFailureMessage(it) }
+            SimpleSettingsItem(
+                title = stringResource(Res.string.watch_troubleshooting_open),
+                description = null,
+                onClick = onOpenOnWatch,
+                enabled = connectionState is WatchConnectionState.Connected || connectionState is WatchConnectionState.AppUnknown,
+                leadingContent = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
+                action = {},
+            )
         }
+        requestFailure?.let { WatchRequestFailureMessage(it) }
     }
 }
 
