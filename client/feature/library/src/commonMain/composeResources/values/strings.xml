@@ -6,7 +6,6 @@
     <string name="cd_library_audio">Audio recording from %1$s</string>
     <string name="cd_library_photo_full">Photo</string>
     <string name="cd_library_video_badge">Video</string>
-    <string name="cd_library_audio_badge">Audio</string>
     <string name="library_postcards">Postcards</string>
     <string name="library_audio_recording">Audio recording</string>
     <string name="library_stop_presenting">Stop Presenting</string>
