@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonObject
 /**
  * Historical synthetic CID helper kept for regression tests around deterministic encoding.
  */
+@Suppress("unused") // Kept by the owner's decision for billing PR #240; SyntheticCidTest and AtprotoInternalsTest reach it by reflection
 private object SyntheticCid {
     private val json = Json { explicitNulls = true }
     private val base32Alphabet = "abcdefghijklmnopqrstuvwxyz234567".toCharArray()

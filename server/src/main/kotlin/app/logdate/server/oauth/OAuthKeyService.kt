@@ -62,6 +62,7 @@ class OAuthKeyService(
     /**
      * Returns the active ES256 public key as a JWK.
      */
+    @Suppress("unused") // Kept: OAuthKeyServiceTest and OAuthKeyRotationTest compare the active key across restarts and rotations with it
     fun currentJwk(): JsonWebKey = current().active.jwk
 
     /**

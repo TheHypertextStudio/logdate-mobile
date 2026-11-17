@@ -46,6 +46,7 @@ class OAuthClientMetadataResolver(
     private val cache = ConcurrentHashMap<String, CachedClientMetadata>()
 
     /** How many client metadata documents are cached right now. */
+    @Suppress("unused") // Kept: OAuthClientDocumentFetchTest proves with it that expired documents leave the bounded cache
     internal fun cachedClientCount(): Int = cache.size
 
     /**

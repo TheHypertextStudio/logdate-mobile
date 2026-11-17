@@ -164,9 +164,3 @@ enum class SearchContentType(
         fun fromFtsValue(value: String): SearchContentType = entries.find { it.ftsValue == value } ?: TEXT_NOTE
     }
 }
-
-/**
- * Legacy type alias for backward compatibility.
- */
-@Deprecated("Use SearchContentType instead", ReplaceWith("SearchContentType"))
-typealias SearchResultType = SearchContentType

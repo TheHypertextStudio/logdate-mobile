@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.daysUntil
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
@@ -137,32 +136,6 @@ val Instant.localTime: String
             },
         )
     }
-
-/**
- * Returns the number of calendar days between this [Instant] and the current time.
- */
-val Instant.daysUntilNow: Int
-    get() {
-        val timeZone = TimeZone.currentSystemDefault()
-        val startDate = toLocalDateTime(timeZone).date
-        val endDate =
-            Clock.System
-                .now()
-                .toLocalDateTime(timeZone)
-                .date
-        return startDate.daysUntil(endDate)
-    }
-
-/**
- * Returns the number of weeks between this [Instant] and the current time.
- *
- * Rounds down to the nearest week.
- */
-fun Instant.weeksAgo(): Int {
-    val now = Clock.System.now()
-    val days = (now.epochSeconds - this.epochSeconds) / (60 * 60 * 24)
-    return (days / 7).toInt()
-}
 
 /**
  * Returns a formatted time string for this [Instant] based on the current system time zone and locale.
