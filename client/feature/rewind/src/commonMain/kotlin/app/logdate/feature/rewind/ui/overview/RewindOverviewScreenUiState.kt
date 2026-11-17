@@ -1,7 +1,6 @@
 package app.logdate.feature.rewind.ui.overview
 
 import app.logdate.shared.model.ActivityType
-import app.logdate.shared.model.ActivityUpdate
 import kotlinx.datetime.LocalDate
 import kotlin.uuid.Uuid
 
@@ -150,7 +149,6 @@ sealed interface RewindOverviewScreenUiState {
  * @param title Main headline describing the rewind theme or highlights
  * @param start Start date of the rewind period (inclusive)
  * @param end End date of the rewind period (inclusive)
- * @param activities Future: Rich content blocks for photo/location previews
  * @param rewindAvailable Whether the rewind is fully processed and viewable
  */
 data class RewindPreviewUiState(
@@ -163,8 +161,6 @@ data class RewindPreviewUiState(
     val title: String,
     val start: LocalDate,
     val end: LocalDate,
-    // TODO: Include activities
-    val activities: List<ActivityUiState> = listOf(),
     /** Whether this week's rewind is ready to be viewed. */
     val rewindAvailable: Boolean = false,
     /** Whether this rewind has been viewed at least once. */
@@ -187,27 +183,4 @@ data class RewindPreviewUiState(
     val dominantActivity: ActivityType? = null,
     /** Present when this rewind marks a detected milestone — drives the rarity treatment. */
     val milestone: MilestoneSummaryUiState? = null,
-)
-
-/**
- * UI state representing activity data within a rewind preview.
- *
- * This data class is currently a placeholder for future rich content display
- * within rewind cards. It will eventually power the LazyHorizontalGrid section
- * showing thumbnails and highlights from the week.
- *
- * ## Future Implementation:
- * - Photo thumbnails from the week's entries
- * - Location highlights and travel summaries
- * - Activity type indicators (work, social, travel, etc.)
- * - Mood or sentiment visualization
- *
- * ## Current Status:
- * Not yet used in the UI rendering pipeline. The activities list in
- * RewindPreviewUiState remains empty until this feature is implemented.
- *
- * @param updates List of activity update events from the domain layer
- */
-data class ActivityUiState(
-    val updates: List<ActivityUpdate>,
 )

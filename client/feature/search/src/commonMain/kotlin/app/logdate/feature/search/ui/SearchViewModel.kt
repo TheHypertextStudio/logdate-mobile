@@ -143,13 +143,6 @@ class SearchViewModel(
         }
     }
 
-    /**
-     * Clears the current search query.
-     */
-    fun clearSearch() {
-        queryState.update { SearchQuery.Empty }
-    }
-
     /** Removes a single entry from the recent-searches list. */
     fun removeRecentSearch(query: String) {
         viewModelScope.launch {

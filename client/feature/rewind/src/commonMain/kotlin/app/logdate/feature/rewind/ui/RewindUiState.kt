@@ -14,10 +14,6 @@ sealed interface RewindUiState {
     data object Loading : RewindUiState
 }
 
-data class RewindListUiState(
-    val items: List<RewindData>,
-)
-
 data class RewindData(
     val id: Uuid,
     val title: String,
