@@ -36,6 +36,7 @@ import io.ktor.server.testing.testApplication
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.nio.file.Path
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -177,8 +178,8 @@ class SyncMediaAndBackupLifecycleTest {
             val userId = UUID.randomUUID()
             val auth = "Bearer ${tokenService.generateAccessToken(userId.toString())}"
 
-            every { encryptionService.processMediaUpload(any(), any(), any(), any()) } throws IllegalStateException("enc media")
-            every { encryptionService.processBackupUpload(any(), any(), any(), any(), any()) } throws
+            every { encryptionService.processMediaUpload(any()) } throws IllegalStateException("enc media")
+            every { encryptionService.processBackupUpload(any<Path>(), any<Path>(), any()) } throws
                 IllegalStateException("enc backup")
             every { encryptionService.processMediaDownload(any(), any()) } answers { firstArg() }
             every { encryptionService.processBackupDownload(any(), any()) } answers { firstArg() }
@@ -452,10 +453,10 @@ class SyncMediaAndBackupLifecycleTest {
             val payload = byteArrayOf(4, 5, 6, 7)
 
             every {
-                encryptionService.processMediaUpload(any(), any(), any(), any())
+                encryptionService.processMediaUpload(any())
             } returns ProcessedPayload(data = payload, encrypted = true)
             every { encryptionService.processMediaDownload(any(), any()) } answers { firstArg() }
-            every { encryptionService.processBackupUpload(any(), any(), any()) } returns ProcessedPayload(byteArrayOf(1), true)
+            every { encryptionService.processBackupUpload(any<ByteArray>()) } returns ProcessedPayload(byteArrayOf(1), true)
             every { encryptionService.processBackupDownload(any(), any()) } returns byteArrayOf(1)
             every { storage.putBlob(match { it.namespace == LogDateBlobNamespace.MEDIA }) } returns "users/u/media/m1/photo.jpg"
 

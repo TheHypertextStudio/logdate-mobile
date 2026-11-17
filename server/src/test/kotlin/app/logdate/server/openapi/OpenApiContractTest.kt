@@ -240,9 +240,7 @@ class OpenApiContractTest {
                         element.forEach(::collect)
                     }
 
-                    else -> {
-                        Unit
-                    }
+                    else -> {}
                 }
             }
             collect(document)

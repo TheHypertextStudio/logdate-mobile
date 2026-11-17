@@ -3,7 +3,6 @@ package app.logdate.server.identity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -95,8 +94,6 @@ class AtprotoIdentityConfigTest {
         val config = AtprotoIdentityConfig.fromEnvironment(plcDirectoryUrl = "http://127.0.0.1:2582/")
 
         assertEquals("http://127.0.0.1:2582", config.normalizedPlcDirectoryUrl)
-        assertFalse(config.targetsPublicPlcDirectory)
-        assertTrue(AtprotoIdentityConfig().targetsPublicPlcDirectory)
         assertFailsWith<IllegalArgumentException> {
             AtprotoIdentityConfig.fromEnvironment(plcDirectoryUrl = "http://plc.example.com")
         }

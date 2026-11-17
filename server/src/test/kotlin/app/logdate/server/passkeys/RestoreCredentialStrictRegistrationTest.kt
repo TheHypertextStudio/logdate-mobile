@@ -111,7 +111,6 @@ class RestoreCredentialStrictRegistrationTest {
             val registrationData = mockk<RegistrationData>()
             val attestationObject = mockk<AttestationObject>()
             val authenticatorData = mockk<AuthenticatorData<RegistrationExtensionAuthenticatorOutput>>()
-            val attestedCredentialData = mockk<AttestedCredentialData>()
 
             val service = RestoreCredentialService(restoreCredentialRepository = repository, strictVerificationEnabled = true)
             setPrivateField(service, "webAuthnManager", manager)

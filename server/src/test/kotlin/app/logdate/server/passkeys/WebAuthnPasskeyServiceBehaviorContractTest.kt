@@ -296,7 +296,7 @@ class WebAuthnPasskeyServiceBehaviorContractTest {
             assertFalse(noAttestation.success)
             assertContains(noAttestation.error.orEmpty(), "Attestation object is missing")
 
-            val options2 = service.generateRegistrationOptions(userId, "strict4", "Strict4")
+            service.generateRegistrationOptions(userId, "strict4", "Strict4")
             every { registrationData.attestationObject } returns attestationObject
             every { attestationObject.authenticatorData } returns authenticatorData
             val options3 = service.generateRegistrationOptions(userId, "strict5", "Strict5")
