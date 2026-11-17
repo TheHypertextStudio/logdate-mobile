@@ -73,7 +73,12 @@ sealed interface CloudOffer {
 
 const val CLOUD_OFFER_TAG = "cloud_offer"
 
-/** The offer, set on peach so it reads as what is being offered and not as another paragraph. */
+/**
+ * The offer, set on peach so it reads as what is being offered and not as another paragraph.
+ *
+ * Its text is inset as far as the other cards on these steps, and no further, so the one-line offer
+ * stays on one line on a phone even in a wide font.
+ */
 @Composable
 internal fun CloudOfferCard(
     offer: CloudOffer,
@@ -87,7 +92,7 @@ internal fun CloudOfferCard(
                 .fillMaxWidth()
                 .testTag(CLOUD_OFFER_TAG)
                 .background(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.shapes.extraLarge)
-                .padding(horizontal = Spacing.xl, vertical = Spacing.lg),
+                .padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         Text(
@@ -186,7 +191,8 @@ const val CLOUD_PLANS_DONE_TAG = "cloud_plans_done"
 /**
  * One plan, in the order someone decides by: which plan it is, what it gives, and last and
  * quietest what it costs. [status] is a short note beside the name, such as that the plan is free
- * for now.
+ * for now. Like the offer on the welcome step, the text is inset only as far as the other cards on
+ * these steps, which leaves the longest price room to stay on one line.
  */
 @Composable
 private fun CloudPlan(
@@ -205,7 +211,7 @@ private fun CloudPlan(
             Modifier
                 .fillMaxWidth()
                 .background(if (highlighted) colors.tertiaryContainer else colors.surfaceContainerLowest, shape)
-                .padding(Spacing.xl),
+                .padding(horizontal = Spacing.lg, vertical = Spacing.xl),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         FlowRow(
