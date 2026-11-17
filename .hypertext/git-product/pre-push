@@ -4,7 +4,7 @@
 # Checks:
 # 1. Commit message re-validation (catches --no-verify bypasses)
 # 2. Full compile check
-# 3. Tests for affected modules
+# 3. Tests for affected modules, and their iOS and Wasm test compilation
 # 4. Dead code: detekt on affected modules and SearchDeadCode across the repository
 
 set -euo pipefail
@@ -100,6 +100,19 @@ if [[ -n "$kt_files" ]]; then
 
       if ! ./gradlew --no-daemon "${RESOLVED_TEST_TASKS[@]}" --quiet 2>&1; then
         errors+=("TESTS: Tests failed for affected modules. Fix test failures before pushing.")
+      fi
+    fi
+
+    # The JVM tests above pass code that Kotlin/Native and Kotlin/Wasm reject, such as a comma in
+    # a backticked test name, so the affected modules' tests also compile for those targets.
+    resolve_native_compile_tasks_for_modules "${modules[@]}"
+    if [[ ${#RESOLVED_NATIVE_COMPILE_TASKS[@]} -gt 0 ]]; then
+      echo "Compiling affected modules' tests for iOS and Wasm:"
+      for task in "${RESOLVED_NATIVE_COMPILE_TASKS[@]}"; do
+        echo "  $task"
+      done
+      if ! ./gradlew --no-daemon "${RESOLVED_NATIVE_COMPILE_TASKS[@]}" --quiet 2>&1; then
+        errors+=("NATIVE: Affected modules' tests do not compile for iOS or Wasm, which reject some code the JVM accepts (such as a comma in a test name). Run './gradlew <module>:compileTestKotlinIosSimulatorArm64' for details.")
       fi
     fi
 

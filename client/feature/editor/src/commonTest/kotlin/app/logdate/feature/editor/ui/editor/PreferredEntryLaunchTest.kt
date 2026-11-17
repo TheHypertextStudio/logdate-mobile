@@ -112,7 +112,7 @@ class PreferredEntryLaunchTest {
             )
         }
 
-    @Test fun `a first entry opens on the empty editor, which offers every way to start`() =
+    @Test fun `a first entry opens on the empty editor that offers every way to start`() =
         testScope.runTest {
             val drafts = FakeEntryDraftRepository().apply { draftListGate = CompletableDeferred() }
             val vm = createViewModel(drafts)
