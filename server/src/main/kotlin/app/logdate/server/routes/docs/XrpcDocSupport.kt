@@ -61,7 +61,6 @@ internal val repoNotFound =
         "No repository with that DID is hosted here, or it is not yours. The two cases answer identically.",
         "Unknown repo: did:plc:…",
     )
-internal val accountTakedown = ErrorCase("AccountTakedown", "The account has been deactivated by the operator.", "Account is not active")
 
 internal fun ResponsesConfig.notConfigured() = pdsError(HttpStatusCode.NotImplemented, unsupported)
 

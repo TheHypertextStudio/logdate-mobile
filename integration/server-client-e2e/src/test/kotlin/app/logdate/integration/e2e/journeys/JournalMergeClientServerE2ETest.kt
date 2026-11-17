@@ -42,7 +42,6 @@ class JournalMergeClientServerE2ETest {
                 for (note in listOf(remoteOnly, submitted, late)) {
                     apiClient
                         .uploadContent(
-                            token,
                             ContentUploadRequest(
                                 id = note,
                                 type = "TEXT",
@@ -282,7 +281,6 @@ class JournalMergeClientServerE2ETest {
         contentId: String,
     ) {
         uploadAssociations(
-            token,
             AssociationUploadRequest(
                 listOf(Association(journalId = journalId, contentId = contentId, createdAt = 1L, deviceId = DeviceId("device-a"))),
             ),

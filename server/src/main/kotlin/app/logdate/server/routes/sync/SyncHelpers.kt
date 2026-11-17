@@ -175,9 +175,7 @@ internal suspend fun ApplicationCall.receiveMediaMultipartUpload(maxDataBytes: L
                 }
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
         part.dispose()
     }

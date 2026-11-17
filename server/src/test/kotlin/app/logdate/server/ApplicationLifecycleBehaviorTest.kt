@@ -8,7 +8,6 @@ import app.logdate.server.sync.SyncMetricsRegistry
 import app.logdate.server.sync.SyncPurgeResult
 import app.logdate.server.sync.SyncRepository
 import io.ktor.client.request.get
-import io.ktor.server.application.Application
 import io.ktor.server.testing.testApplication
 import io.mockk.unmockkAll
 import kotlinx.coroutines.CompletableDeferred
@@ -91,8 +90,7 @@ class ApplicationLifecycleBehaviorTest {
     @Test
     fun `sync maintenance returns null when disabled`() =
         testApplication {
-            lateinit var app: Application
-            application { app = this }
+            application {}
             client.get("/")
             val metrics = SyncMetricsRegistry()
             val repository = InMemorySyncRepository()
@@ -109,8 +107,7 @@ class ApplicationLifecycleBehaviorTest {
     @Test
     fun `sync maintenance runs purge and records success metrics`() =
         testApplication {
-            lateinit var app: Application
-            application { app = this }
+            application {}
             client.get("/")
             val metrics = SyncMetricsRegistry()
             val started = CompletableDeferred<Unit>()
@@ -158,8 +155,7 @@ class ApplicationLifecycleBehaviorTest {
     @Test
     fun `sync maintenance records failed purge attempts`() =
         testApplication {
-            lateinit var app: Application
-            application { app = this }
+            application {}
             client.get("/")
             val metrics = SyncMetricsRegistry()
             val started = CompletableDeferred<Unit>()
@@ -207,8 +203,7 @@ class ApplicationLifecycleBehaviorTest {
     @Test
     fun `sync maintenance can be cancelled immediately`() =
         testApplication {
-            lateinit var app: Application
-            application { app = this }
+            application {}
             client.get("/")
             val metrics = SyncMetricsRegistry()
             val repository = InMemorySyncRepository()

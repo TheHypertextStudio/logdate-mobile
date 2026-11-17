@@ -16,7 +16,12 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.UUID
 
-/** The account column of V37's journal merge history, which legacy sync alone uses. */
+/**
+ * The account column of V37's journal merge history, which legacy sync alone uses.
+ *
+ * Erase() deletes through it; SearchDeadCode 0.21.0 misses uses inside nested Exposed lambdas.
+ */
+@Suppress("unused")
 private object JournalMergeOperationsTable : Table("journal_merge_operations") {
     val accountId = javaUUID("account_id")
 }

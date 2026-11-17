@@ -146,12 +146,7 @@ internal fun Route.syncMediaRoutes(
 
                 val encryptedPayload =
                     runCatching {
-                        encryptionService.processMediaUpload(
-                            req.data,
-                            userId.toString(),
-                            mediaId,
-                            req.contentId,
-                        )
+                        encryptionService.processMediaUpload(req.data)
                     }.getOrElse { error ->
                         if (error is CancellationException) throw error
                         Napier.e("Media encryption failed")

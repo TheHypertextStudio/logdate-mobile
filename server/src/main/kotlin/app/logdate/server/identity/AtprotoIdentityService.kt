@@ -346,7 +346,6 @@ class AtprotoIdentityService(
         val nextSigningKeyDidKey = didKeyFor(preparedKey.publicKeyMultibase)
         val preparedOperation =
             plcIdentityService.prepareHostedRecoveryImport(
-                accountId = ensured.id,
                 did = AtprotoDid.require(currentDid),
                 handle = currentHandle,
                 recoveryDidKey = recoveryDidKey,
@@ -393,7 +392,6 @@ class AtprotoIdentityService(
         val preparedKey = signingKeyService.prepareImportedKey(ensured.id, exportedKey, passphrase)
         val preparedOperation =
             plcIdentityService.prepareHostedRecoveryImport(
-                accountId = ensured.id,
                 did = AtprotoDid.require(currentDid),
                 handle = currentHandle,
                 recoveryDidKey = recoveryDidKey,
@@ -559,8 +557,6 @@ class AtprotoIdentityService(
                     ),
                 ),
         )
-
-    fun defaultHandleFor(username: String): String = "${managedHandleLabel(username)}.${config.normalizedHandleDomain}"
 
     private fun handleFromDid(did: String): String? {
         if (!did.startsWith("did:web:")) {

@@ -40,7 +40,6 @@ class SyncClientServerJourneyE2ETest {
 
                 val uploadContent =
                     apiClient.uploadContent(
-                        accessToken = accessToken,
                         content =
                             ContentUploadRequest(
                                 id = "content-1",
@@ -106,7 +105,6 @@ class SyncClientServerJourneyE2ETest {
 
                 val associationUpload =
                     apiClient.uploadAssociations(
-                        accessToken = accessToken,
                         associations =
                             AssociationUploadRequest(
                                 associations =

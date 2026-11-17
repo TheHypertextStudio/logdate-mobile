@@ -44,11 +44,6 @@ internal enum class LogDateCollectionKind(
         storageName = "moment",
         nsid = Nsid.require("studio.hypertext.logdate.moment"),
     ),
-    ;
-
-    companion object {
-        fun fromNsid(nsid: Nsid): LogDateCollectionKind? = entries.firstOrNull { it.nsid == nsid }
-    }
 }
 
 internal fun entryRecordId(
@@ -355,13 +350,6 @@ internal fun JsonObject.toLogDateDraft(
         encryptedBlocksVersion = this["encryptedBlocksVersion"]?.jsonPrimitive?.intOrNull,
         encryptedBlocks = stringValue("encryptedBlocks"),
     )
-
-internal fun draftToRecord(draft: LogDateDraft): JsonObject = draft.toRepoJson()
-
-internal fun recordToDraft(
-    id: String,
-    record: JsonObject,
-): LogDateDraft = record.toLogDateDraft(RecordKey(id), record.longValue("lastUpdated") ?: 0L)
 
 internal const val DEFAULT_CONTENT_TYPE: String = "TEXT"
 internal const val DEFAULT_DURATION_MS: Long = 0L

@@ -75,12 +75,7 @@ class PayloadCodec(
         const val BUFFER_SIZE = 64 * 1024
     }
 
-    fun encryptMedia(
-        plaintext: ByteArray,
-        userId: String,
-        mediaId: String,
-        contentId: String,
-    ): ByteArray {
+    fun encryptMedia(plaintext: ByteArray): ByteArray {
         val activeKey = keyring.getActiveKey()
         val iv = cipher.generateIV()
 
@@ -98,11 +93,7 @@ class PayloadCodec(
         return cipher.decrypt(ciphertext, key.keyBytes, header.iv, null)
     }
 
-    fun encryptBackup(
-        plaintext: ByteArray,
-        userId: String,
-        backupId: String,
-    ): ByteArray {
+    fun encryptBackup(plaintext: ByteArray): ByteArray {
         val activeKey = keyring.getActiveKey()
         val iv = cipher.generateIV()
 

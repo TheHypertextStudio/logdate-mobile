@@ -235,7 +235,6 @@ class PostgreSQLRepoBlockStore :
                         it[recordCount] = commit.commit.recordCount
                         it[signature] = commit.signature
                     }
-                    Unit
                 }
             }
         }

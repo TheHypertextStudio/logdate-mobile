@@ -22,7 +22,7 @@ class BackupFileStreamingTest {
         val restored = Files.createTempFile("backup-gigabyte-restored-", ".bin")
         try {
             RandomAccessFile(plain.toFile(), "rw").use { it.setLength(1024L * 1024 * 1024) }
-            service.processBackupUpload(plain, encrypted, "user", "backup")
+            service.processBackupUpload(plain, encrypted)
             service.processBackupDownload(encrypted, restored, true)
             kotlin.test.assertEquals(Files.size(plain), Files.size(restored))
             assertContentEquals(digest(plain), digest(restored))
@@ -40,7 +40,7 @@ class BackupFileStreamingTest {
         val restored = Files.createTempFile("backup-large-restored-", ".bin")
         try {
             RandomAccessFile(plain.toFile(), "rw").use { it.setLength(100L * 1024 * 1024) }
-            service.processBackupUpload(plain, encrypted, "user", "backup")
+            service.processBackupUpload(plain, encrypted)
             service.processBackupDownload(encrypted, restored, true)
             kotlin.test.assertEquals(Files.size(plain), Files.size(restored))
             kotlin.test.assertContentEquals(digest(plain), digest(restored))
@@ -72,12 +72,12 @@ class BackupFileStreamingTest {
         try {
             val data = ByteArray(256 * 1024) { it.toByte() }
             Files.write(plain, data)
-            service.processBackupUpload(plain, encrypted, "user", "backup")
+            service.processBackupUpload(plain, encrypted)
             assertContentEquals(data, service.processBackupDownload(Files.readAllBytes(encrypted), true))
             service.processBackupDownload(encrypted, restored, true)
             assertContentEquals(data, Files.readAllBytes(restored))
 
-            Files.write(encrypted, service.processBackupUpload(data, "user", "backup").data)
+            Files.write(encrypted, service.processBackupUpload(data).data)
             service.processBackupDownload(encrypted, restored, true)
             assertContentEquals(data, Files.readAllBytes(restored))
         } finally {
@@ -94,7 +94,7 @@ class BackupFileStreamingTest {
         val restored = Files.createTempFile("backup-restored-", ".zip")
         try {
             Files.write(plain, ByteArray(128 * 1024) { it.toByte() })
-            service.processBackupUpload(plain, encrypted, "user", "backup")
+            service.processBackupUpload(plain, encrypted)
             val corrupted = Files.readAllBytes(encrypted)
             corrupted[corrupted.lastIndex] = (corrupted.last().toInt() xor 1).toByte()
             Files.write(encrypted, corrupted)
@@ -116,7 +116,7 @@ class BackupFileStreamingTest {
             RandomAccessFile(plain.toFile(), "rw").use { it.setLength(100L * 1024 * 1024) }
             var chunks = 0
             assertFailsWith<kotlin.coroutines.cancellation.CancellationException> {
-                service.processBackupUpload(plain, encrypted, "user", "backup") {
+                service.processBackupUpload(plain, encrypted) {
                     if (++chunks == 4) throw kotlin.coroutines.cancellation.CancellationException("cancelled")
                 }
             }

@@ -85,7 +85,7 @@ class AtprotoContentRecordStoreTest {
 
             assertEquals(
                 listOf(
-                    AtprotoContentRecordStore.contentCollection,
+                    LogDateRepoStore.contentCollection,
                     LogDateRepoStore.entryCollection,
                 ),
                 store.collectionsForDid(account.did),
@@ -116,11 +116,11 @@ class AtprotoContentRecordStoreTest {
                 store
                     .createRecord(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         recordKey = RecordKey.require("entry-1"),
                         value =
                             buildJsonObject {
-                                put("\$type", AtprotoContentRecordStore.contentCollection.toString())
+                                put("\$type", LogDateRepoStore.contentCollection.toString())
                                 put("type", "TEXT")
                                 put("content", "hello")
                                 put("createdAt", 10L)
@@ -134,7 +134,7 @@ class AtprotoContentRecordStoreTest {
             val recordId =
                 RepoRecordId(
                     repo = repoDid,
-                    collection = AtprotoContentRecordStore.contentCollection,
+                    collection = LogDateRepoStore.contentCollection,
                     recordKey = RecordKey.require("entry-1"),
                 )
             val fetched = store.getRecord(recordId).getOrThrow()
@@ -146,7 +146,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .listRecords(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                     ).getOrThrow()
             assertEquals(1, listed.records.size)
             assertEquals(
@@ -185,7 +185,7 @@ class AtprotoContentRecordStoreTest {
             val recordId =
                 RepoRecordId(
                     repo = repoDid,
-                    collection = AtprotoContentRecordStore.contentCollection,
+                    collection = LogDateRepoStore.contentCollection,
                     recordKey = RecordKey.require("entry-2"),
                 )
             val firstWrite =
@@ -275,7 +275,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .listRecords(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         cursor = "not-a-number",
                     ).getOrThrow()
             assertTrue(opaqueCursorPage.records.isEmpty())
@@ -354,7 +354,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .listRecords(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         limit = 2,
                         reverse = true,
                     ).getOrThrow()
@@ -366,7 +366,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .listRecords(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         limit = 2,
                         cursor = reversePage.cursor,
                         reverse = true,
@@ -378,7 +378,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .createRecord(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         recordKey = null,
                         value =
                             buildJsonObject {
@@ -414,7 +414,7 @@ class AtprotoContentRecordStoreTest {
             store
                 .createRecord(
                     repo = repoDid,
-                    collection = AtprotoContentRecordStore.contentCollection,
+                    collection = LogDateRepoStore.contentCollection,
                     recordKey = RecordKey.require("entry-1"),
                     value =
                         buildJsonObject {
@@ -425,7 +425,7 @@ class AtprotoContentRecordStoreTest {
             store
                 .createRecord(
                     repo = repoDid,
-                    collection = AtprotoContentRecordStore.contentCollection,
+                    collection = LogDateRepoStore.contentCollection,
                     recordKey = RecordKey.require("entry-2"),
                     value =
                         buildJsonObject {
@@ -437,7 +437,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .createRecord(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         recordKey = RecordKey.require("entry-3"),
                         value =
                             buildJsonObject {
@@ -450,7 +450,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .listRecords(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         limit = 2,
                     ).getOrThrow()
             assertEquals(listOf("entry-1", "entry-2"), firstPage.records.map { it.uri.recordKey.toString() })
@@ -460,7 +460,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .listRecords(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         limit = 2,
                         cursor = firstPage.cursor,
                     ).getOrThrow()
@@ -472,7 +472,7 @@ class AtprotoContentRecordStoreTest {
                         recordId =
                             RepoRecordId(
                                 repo = repoDid,
-                                collection = AtprotoContentRecordStore.contentCollection,
+                                collection = LogDateRepoStore.contentCollection,
                                 recordKey = RecordKey.require("entry-3"),
                             ),
                         swapRecord = "bafk-invalid",
@@ -503,7 +503,7 @@ class AtprotoContentRecordStoreTest {
                     repo =
                         studio.hypertext.atproto.identity.AtprotoDid
                             .require(account.did!!),
-                    collection = AtprotoContentRecordStore.contentCollection,
+                    collection = LogDateRepoStore.contentCollection,
                     recordKey = RecordKey.require("entry-keep"),
                 )
 
@@ -552,7 +552,7 @@ class AtprotoContentRecordStoreTest {
                     repo =
                         studio.hypertext.atproto.identity.AtprotoDid
                             .require("did:web:missing.logdate.app"),
-                    collection = AtprotoContentRecordStore.contentCollection,
+                    collection = LogDateRepoStore.contentCollection,
                     recordKey = RecordKey.require("entry-keep"),
                 )
             assertFailsWith<IllegalArgumentException> {
@@ -588,7 +588,7 @@ class AtprotoContentRecordStoreTest {
                 store
                     .createRecord(
                         repo = repoDid,
-                        collection = AtprotoContentRecordStore.contentCollection,
+                        collection = LogDateRepoStore.contentCollection,
                         value =
                             buildJsonObject {
                                 put("type", "TEXT")
@@ -641,7 +641,7 @@ class AtprotoContentRecordStoreTest {
         return CanonicalStoreContext(
             collectionsRepository = collectionsRepository,
             store =
-                AtprotoContentRecordStore(
+                LogDateRepoStore(
                     collectionsRepository = collectionsRepository,
                     identityService = identityService,
                     signingKeyService = signingKeyService,
@@ -668,5 +668,5 @@ class AtprotoContentRecordStoreTest {
 
 private data class CanonicalStoreContext(
     val collectionsRepository: RepoBackedLogDateCollectionsRepository,
-    val store: AtprotoContentRecordStore,
+    val store: LogDateRepoStore,
 )

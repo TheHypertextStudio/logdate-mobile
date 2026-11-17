@@ -14,9 +14,3 @@ fun Uuid.toJavaUUID(): UUID = UUID.fromString(this.toString())
 
 @OptIn(ExperimentalUuidApi::class)
 fun UUID.toKotlinUuid(): Uuid = Uuid.parse(this.toString())
-
-@OptIn(ExperimentalUuidApi::class)
-fun Uuid?.toJavaUUIDOrNull(): UUID? = this?.toJavaUUID()
-
-@OptIn(ExperimentalUuidApi::class)
-fun UUID?.toKotlinUuidOrNull(): Uuid? = this?.toKotlinUuid()

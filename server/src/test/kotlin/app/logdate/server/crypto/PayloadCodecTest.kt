@@ -35,7 +35,7 @@ class PayloadCodecTest {
     @Test
     fun `media encryption produces LDSM1 prefix`() {
         val plaintext = "test data".toByteArray()
-        val encrypted = codec.encryptMedia(plaintext, "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia(plaintext)
 
         assertTrue(encrypted.size > plaintext.size)
         val prefix = encrypted.copyOfRange(0, 5)
@@ -45,7 +45,7 @@ class PayloadCodecTest {
     @Test
     fun `media encryption and decryption roundtrip`() {
         val plaintext = "test secret data".toByteArray()
-        val encrypted = codec.encryptMedia(plaintext, "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia(plaintext)
         val decrypted = codec.decryptMedia(encrypted)
 
         assertEquals(String(plaintext, Charsets.UTF_8), String(decrypted, Charsets.UTF_8))
@@ -54,7 +54,7 @@ class PayloadCodecTest {
     @Test
     fun `backup encryption produces LDBK1 prefix`() {
         val plaintext = "backup data".toByteArray()
-        val encrypted = codec.encryptBackup(plaintext, "user1", "backup1")
+        val encrypted = codec.encryptBackup(plaintext)
 
         assertTrue(encrypted.size > plaintext.size)
         val prefix = encrypted.copyOfRange(0, 5)
@@ -64,7 +64,7 @@ class PayloadCodecTest {
     @Test
     fun `backup encryption and decryption roundtrip`() {
         val plaintext = "backup secret data".toByteArray()
-        val encrypted = codec.encryptBackup(plaintext, "user1", "backup1")
+        val encrypted = codec.encryptBackup(plaintext)
         val decrypted = codec.decryptBackup(encrypted)
 
         assertEquals(String(plaintext, Charsets.UTF_8), String(decrypted, Charsets.UTF_8))
@@ -72,7 +72,7 @@ class PayloadCodecTest {
 
     @Test
     fun `decryption with wrong key fails`() {
-        val encrypted = codec.encryptMedia("test".toByteArray(), "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia("test".toByteArray())
 
         val wrongKeyring =
             object : EncryptionKeyring {
@@ -91,7 +91,7 @@ class PayloadCodecTest {
 
     @Test
     fun `decryption with missing key throws exception`() {
-        val encrypted = codec.encryptMedia("test".toByteArray(), "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia("test".toByteArray())
 
         val emptyKeyring =
             object : EncryptionKeyring {
@@ -107,7 +107,7 @@ class PayloadCodecTest {
             }
         assertTrue(exception.message?.contains("Key not found") == true)
 
-        val encryptedBackup = codec.encryptBackup("backup".toByteArray(), "user1", "backup1")
+        val encryptedBackup = codec.encryptBackup("backup".toByteArray())
         val backupException =
             assertFailsWith<EncryptionException> {
                 emptyCodec.decryptBackup(encryptedBackup)
@@ -118,7 +118,7 @@ class PayloadCodecTest {
     @Test
     fun `payload includes version and keyId`() {
         val plaintext = "test".toByteArray()
-        val encrypted = codec.encryptMedia(plaintext, "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia(plaintext)
 
         assertEquals(0x01.toByte(), encrypted[5])
 
@@ -129,7 +129,7 @@ class PayloadCodecTest {
     @Test
     fun `empty plaintext encrypts successfully`() {
         val plaintext = ByteArray(0)
-        val encrypted = codec.encryptMedia(plaintext, "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia(plaintext)
         val decrypted = codec.decryptMedia(encrypted)
 
         assertEquals(0, decrypted.size)
@@ -138,7 +138,7 @@ class PayloadCodecTest {
     @Test
     fun `large payload encrypts successfully`() {
         val plaintext = ByteArray(1024 * 1024) { it.toByte() }
-        val encrypted = codec.encryptMedia(plaintext, "user1", "media1", "content1")
+        val encrypted = codec.encryptMedia(plaintext)
         val decrypted = codec.decryptMedia(encrypted)
 
         assertTrue(plaintext.contentEquals(decrypted))
