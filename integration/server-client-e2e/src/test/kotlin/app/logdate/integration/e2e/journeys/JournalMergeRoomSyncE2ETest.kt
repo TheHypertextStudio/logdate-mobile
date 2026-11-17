@@ -86,7 +86,6 @@ class JournalMergeRoomSyncE2ETest {
                     ).getOrThrow()
                 apiClient
                     .uploadAssociations(
-                        token,
                         AssociationUploadRequest(
                             listOf(
                                 Association(

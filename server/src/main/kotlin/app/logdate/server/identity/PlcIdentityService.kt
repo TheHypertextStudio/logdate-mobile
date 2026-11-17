@@ -306,7 +306,6 @@ class PlcIdentityService(
      * identity's latest operation, which must list the recovery key as a rotation key.
      */
     suspend fun prepareHostedRecoveryImport(
-        accountId: Uuid,
         did: AtprotoDid,
         handle: String,
         recoveryDidKey: String,

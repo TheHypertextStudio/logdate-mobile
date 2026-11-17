@@ -99,8 +99,6 @@ internal fun Route.syncBackupRoutes(
                                     .processBackupUpload(
                                         req.path,
                                         encryptedFile,
-                                        userId.toString(),
-                                        backupId.toString(),
                                         checkActive,
                                     )
                             } catch (cancellation: CancellationException) {

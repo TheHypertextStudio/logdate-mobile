@@ -139,7 +139,7 @@ class RepoEventStreamRoutesTest {
     @Test
     fun `a cursor that is not a number is refused`() =
         testApplication {
-            val h = FirehoseHarness().also { it.install(this) }
+            FirehoseHarness().install(this)
 
             socketClient().webSocket("$subscribe?cursor=yesterday") {
                 assertEquals("InvalidRequest", assertIs<RepoErrorMessage>(next()).error)
@@ -149,7 +149,7 @@ class RepoEventStreamRoutesTest {
     @Test
     fun `a follower beyond the limit is turned away`() =
         testApplication {
-            val h = FirehoseHarness(maxFollowers = 1).also { it.install(this) }
+            FirehoseHarness(maxFollowers = 1).install(this)
             val client = socketClient()
 
             client.webSocket(subscribe) {

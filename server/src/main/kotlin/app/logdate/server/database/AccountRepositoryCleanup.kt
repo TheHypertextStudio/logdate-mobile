@@ -19,6 +19,8 @@ import java.util.UUID
  * no remaining repository links to it.
  */
 internal fun deleteAccountRepositories(accountId: UUID) {
+    // Read below; SearchDeadCode 0.21.0 misreads these locals as unreachable properties.
+    @Suppress(names = ["unused"])
     val repoDids =
         buildSet {
             add(syntheticRepoDid(accountId))
@@ -34,6 +36,8 @@ internal fun deleteAccountRepositories(accountId: UUID) {
     LogDateCollectionRecordsTable.deleteWhere { LogDateCollectionRecordsTable.userId eq accountId }
     LogDateCollectionStatesTable.deleteWhere { LogDateCollectionStatesTable.userId eq accountId }
 
+    // Read below; SearchDeadCode 0.21.0 misreads these locals as unreachable properties.
+    @Suppress(names = ["unused"])
     val linkedCids =
         AtprotoRepoBlockLinksTable
             .select(AtprotoRepoBlockLinksTable.cid)
@@ -43,11 +47,16 @@ internal fun deleteAccountRepositories(accountId: UUID) {
     AtprotoRepoCommitsTable.deleteWhere { AtprotoRepoCommitsTable.repoDid inList repoDids }
     AtprotoRepoBlockLinksTable.deleteWhere { AtprotoRepoBlockLinksTable.repoDid inList repoDids }
     linkedCids.chunked(CID_BATCH_SIZE).forEach { batch ->
+        // Read below; SearchDeadCode 0.21.0 misreads these locals as unreachable properties.
+        @Suppress(names = ["unused"])
         val stillLinked =
             AtprotoRepoBlockLinksTable
                 .select(AtprotoRepoBlockLinksTable.cid)
                 .where { AtprotoRepoBlockLinksTable.cid inList batch }
                 .mapTo(mutableSetOf()) { it[AtprotoRepoBlockLinksTable.cid] }
+
+        // Read below; SearchDeadCode 0.21.0 misreads these locals as unreachable properties.
+        @Suppress(names = ["unused"])
         val orphaned = batch - stillLinked
         if (orphaned.isNotEmpty()) {
             AtprotoRepoBlocksTable.deleteWhere { AtprotoRepoBlocksTable.cid inList orphaned }

@@ -246,9 +246,7 @@ class IdentityPublishingService(
                 )
             }
 
-            IdentityPublishAction.NONE -> {
-                Unit
-            }
+            IdentityPublishAction.NONE -> {}
         }
         return account
     }

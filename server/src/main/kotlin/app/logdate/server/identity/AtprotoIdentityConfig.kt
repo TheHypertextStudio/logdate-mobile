@@ -39,9 +39,6 @@ data class AtprotoIdentityConfig(
     val serverDid: String = "did:web:$normalizedHandleDomain"
     val normalizedPlcDirectoryUrl: String = plcDirectoryUrl.trim().removeSuffix("/")
 
-    /** Whether operations go to the public PLC directory, where nothing published can be taken back. */
-    val targetsPublicPlcDirectory: Boolean = normalizedPlcDirectoryUrl.equals(PUBLIC_PLC_DIRECTORY_URL, ignoreCase = true)
-
     /** Whether hosted accounts get `did:plc` identities whose operations reach the PLC directory. */
     val publishesPlcOperations: Boolean =
         hostedAccountDidMethod == HostedAccountDidMethod.PLC && publishHostedPlcOperations

@@ -70,7 +70,12 @@ class RepoEventStream(
         return FollowerReservation { followers.decrementAndGet() }
     }
 
-    /** How many followers are connected now. */
+    /**
+     * How many followers are connected now.
+     *
+     * Read by RepoEventStreamTest and RepoEventStreamRoutesTest to assert follower slots and wait for a socket to connect or leave.
+     */
+    @Suppress("unused")
     val followerCount: Int get() = followers.get()
 
     /**

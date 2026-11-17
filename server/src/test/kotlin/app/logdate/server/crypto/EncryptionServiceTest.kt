@@ -31,7 +31,7 @@ class EncryptionServiceTest {
             )
         val service = EncryptionService(policy = policy, codec = PayloadCodec(NoOpKeyring))
 
-        val processed = service.processMediaUpload("plain".toByteArray(), "user", "media", "content")
+        val processed = service.processMediaUpload("plain".toByteArray())
         assertFalse(processed.encrypted)
     }
 
@@ -47,7 +47,7 @@ class EncryptionServiceTest {
 
         val error =
             assertFailsWith<EncryptionPolicyException> {
-                service.processMediaUpload("plain".toByteArray(), "user", "media", "content")
+                service.processMediaUpload("plain".toByteArray())
             }
         assertEquals("E2EE required: plaintext not allowed", error.message)
     }
@@ -63,7 +63,7 @@ class EncryptionServiceTest {
         val service = EncryptionService(policy = policy, codec = PayloadCodec(NoOpKeyring))
         val payload = "backup-plain".toByteArray()
 
-        val uploaded = service.processBackupUpload(payload, "user", "backup")
+        val uploaded = service.processBackupUpload(payload)
         assertTrue(uploaded.encrypted)
 
         val passthrough = service.processBackupDownload(uploaded.data, shouldDecrypt = false)

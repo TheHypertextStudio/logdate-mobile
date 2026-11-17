@@ -286,9 +286,7 @@ class PublicRepoAccess(
                 element.forEach { collectBlobCids(it, into) }
             }
 
-            is JsonPrimitive -> {
-                Unit
-            }
+            is JsonPrimitive -> {}
         }
     }
 

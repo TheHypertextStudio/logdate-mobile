@@ -109,7 +109,6 @@ class RecoveryKeyService(
         val nextKey = signingKeyService.prepareKey(accountId)
         val prepared =
             plcIdentityService.prepareHostedRecoveryImport(
-                accountId = accountId,
                 did = target.did,
                 handle = target.handle,
                 recoveryDidKey = recoveryDidKey,
@@ -151,7 +150,6 @@ class RecoveryKeyService(
                 if (head.cid != opened.prevCid) throw identityChanged()
                 val prepared =
                     plcIdentityService.prepareHostedRecoveryImport(
-                        accountId = accountId,
                         did = target.did,
                         handle = target.handle,
                         recoveryDidKey = recoveryDidKey,

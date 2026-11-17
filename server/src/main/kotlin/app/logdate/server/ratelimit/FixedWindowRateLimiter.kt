@@ -56,7 +56,12 @@ class FixedWindowRateLimiter {
         return (waitMs + 999) / 1000
     }
 
-    /** How many keys have a window in memory. */
+    /**
+     * How many keys have a window in memory.
+     *
+     * Read by FixedWindowRateLimiterTest to prove the sweep keeps the number of in-memory windows bounded.
+     */
+    @Suppress("unused")
     internal fun trackedKeys(): Int = windows.size
 
     private fun sweep(nowEpochMillis: Long) {

@@ -216,10 +216,9 @@ class ConditionalCreatePostgresTest {
                     val config = AtprotoIdentityConfig(handleDomain = "logdate.test", pdsServiceEndpoint = "https://logdate.test")
                     val identity = AtprotoIdentityService(accounts, signing, config)
                     val username = "race_${owner.toHexString().take(8)}"
-                    val account =
-                        identity.ensureIdentity(
-                            accounts.save(Account(id = owner, username = username, displayName = "Race", createdAt = Clock.System.now())),
-                        )
+                    identity.ensureIdentity(
+                        accounts.save(Account(id = owner, username = username, displayName = "Race", createdAt = Clock.System.now())),
+                    )
                     insertTestAccountRow(ownerId)
                     val repository =
                         RepoBackedLogDateCollectionsRepository(

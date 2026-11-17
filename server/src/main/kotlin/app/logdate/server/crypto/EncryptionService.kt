@@ -11,8 +11,6 @@ class EncryptionService(
     fun processBackupUpload(
         input: Path,
         output: Path,
-        userId: String,
-        backupId: String,
         checkActive: () -> Unit = {},
     ): Boolean {
         val prefix = Files.newInputStream(input).use { it.readNBytes(5) }
@@ -70,15 +68,10 @@ class EncryptionService(
         }
     }
 
-    fun processMediaUpload(
-        payload: ByteArray,
-        userId: String,
-        mediaId: String,
-        contentId: String,
-    ): ProcessedPayload {
+    fun processMediaUpload(payload: ByteArray): ProcessedPayload {
         val decision = policy.evaluate(payload)
         return applyUploadDecision(decision, payload) {
-            codec.encryptMedia(payload, userId, mediaId, contentId)
+            codec.encryptMedia(payload)
         }
     }
 
@@ -94,14 +87,10 @@ class EncryptionService(
         }
     }
 
-    fun processBackupUpload(
-        payload: ByteArray,
-        userId: String,
-        backupId: String,
-    ): ProcessedPayload {
+    fun processBackupUpload(payload: ByteArray): ProcessedPayload {
         val decision = policy.evaluate(payload)
         return applyUploadDecision(decision, payload) {
-            codec.encryptBackup(payload, userId, backupId)
+            codec.encryptBackup(payload)
         }
     }
 

@@ -141,18 +141,6 @@ object DatabaseConfig {
         }
     }
 
-    fun createTestDataSource(): DataSource =
-        createDataSource(
-            host = "localhost",
-            port = 5432,
-            database = "logdate_test",
-            username = "logdate",
-            password = "logdate",
-            databaseUrl = null,
-            instanceConnectionName = null,
-            profile = RuntimeProfile.TEST,
-        )
-
     private fun buildCloudSqlConfig(
         database: String,
         username: String,
