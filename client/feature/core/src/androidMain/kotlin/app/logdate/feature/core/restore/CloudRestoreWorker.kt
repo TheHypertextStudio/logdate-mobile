@@ -62,9 +62,7 @@ class CloudRestoreWorker(
         files: CloudRestoreFiles,
     ): Result {
         when (workState.validation()) {
-            NativeRestoreWorkState.Validation.CURRENT -> {
-                Unit
-            }
+            NativeRestoreWorkState.Validation.CURRENT -> {}
 
             NativeRestoreWorkState.Validation.STALE -> {
                 resolveExistingArchiveOwnership(files)

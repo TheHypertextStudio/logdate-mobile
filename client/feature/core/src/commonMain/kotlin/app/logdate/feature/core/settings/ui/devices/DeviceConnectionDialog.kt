@@ -99,9 +99,7 @@ internal fun DeviceConnectionDialog(
                     TextButton(onClick = onDismiss) { Text(stringResource(Res.string.connect_device_done)) }
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         },
     )
@@ -166,9 +164,7 @@ private fun ConnectionDetails(state: DeviceApprovalUiState) {
                 Text(stringResource(state.reason.message))
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
     }
 }

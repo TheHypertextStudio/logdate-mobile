@@ -141,9 +141,7 @@ internal fun WatchSetupContent(
             }
         }
 
-        is WatchStatus.Ready, is WatchStatus.NeedsAttention -> {
-            Unit
-        }
+        is WatchStatus.Ready, is WatchStatus.NeedsAttention -> {}
     }
 }
 

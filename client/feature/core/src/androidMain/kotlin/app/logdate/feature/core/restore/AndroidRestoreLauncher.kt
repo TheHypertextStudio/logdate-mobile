@@ -410,9 +410,7 @@ class AndroidRestoreLauncher(
     fun onRestoreSourceSelected(uri: Uri?) {
         synchronized(workCompletionLock) {
             when (val result = pickerRequests.consumeResult()) {
-                ArchivePickerResult.Ignored -> {
-                    Unit
-                }
+                ArchivePickerResult.Ignored -> {}
 
                 is ArchivePickerResult.Launch -> {
                     launchArchivePicker(result.request)

@@ -114,11 +114,6 @@ fun DevicesScreen(
             newDeviceName = deviceNames[device.id].orEmpty()
             showRenameDialog = true
         },
-        onRemoveClick = { device ->
-            viewModel.clearOperation(device.id)
-            selectedDevice = device
-            showDeleteDialog = true
-        },
         onRenameConfirm = {
             viewModel.renameDevice(newDeviceName)
         },
@@ -127,10 +122,6 @@ fun DevicesScreen(
         },
         onResetDeviceId = {
             viewModel.resetDeviceId()
-        },
-        onShowResetDialog = {
-            uiState.devices.firstOrNull { it.isCurrentDevice }?.let { viewModel.clearOperation(it.id) }
-            showResetDialog = true
         },
         onDismissRenameDialog = {
             showRenameDialog = false
@@ -162,11 +153,9 @@ fun DevicesScreenContent(
     newDeviceName: String = selectedDevice?.name?.asString().orEmpty(),
     onNewDeviceNameChange: (String) -> Unit = {},
     onRenameClick: (DeviceInfoUiState) -> Unit = {},
-    onRemoveClick: (DeviceInfoUiState) -> Unit = {},
     onRenameConfirm: () -> Unit = {},
     onRemoveConfirm: () -> Unit = {},
     onResetDeviceId: () -> Unit = {},
-    onShowResetDialog: () -> Unit = {},
     onDismissRenameDialog: () -> Unit = {},
     onDismissDeleteDialog: () -> Unit = {},
     onDismissResetDialog: () -> Unit = {},

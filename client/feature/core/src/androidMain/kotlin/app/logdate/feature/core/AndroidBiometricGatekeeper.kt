@@ -50,9 +50,7 @@ class AndroidBiometricGatekeeper : BiometricGatekeeper {
                     _authState.value = AppAuthState.REQUIRE_PROMPT
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> {}
             }
         }
 

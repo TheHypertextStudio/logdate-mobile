@@ -70,9 +70,7 @@ internal fun NativeBackupSettingsSection(
             icon = Icons.Rounded.Devices,
         )
         when (status.custodyStatus) {
-            NativeRestoreCustodyStatus.CLEAR -> {
-                Unit
-            }
+            NativeRestoreCustodyStatus.CLEAR -> {}
 
             NativeRestoreCustodyStatus.RECOVERING -> {
                 MaterialContainer {

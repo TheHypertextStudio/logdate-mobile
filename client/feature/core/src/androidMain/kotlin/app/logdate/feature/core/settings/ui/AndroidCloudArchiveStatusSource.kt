@@ -130,11 +130,6 @@ class AndroidCloudArchiveStatusSource(
     override suspend fun requestBackup() = scheduler.enqueueImmediateBackup()
 }
 
-internal fun archiveWorkState(
-    immediate: List<WorkInfo>,
-    periodic: List<WorkInfo>,
-): ArchiveWorkState = archiveWorkSelection(immediate, periodic)?.state ?: ArchiveWorkState.IDLE
-
 private fun archiveWorkSelection(
     immediate: List<WorkInfo>,
     periodic: List<WorkInfo>,
