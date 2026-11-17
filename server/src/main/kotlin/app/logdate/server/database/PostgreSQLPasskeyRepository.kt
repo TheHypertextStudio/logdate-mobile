@@ -160,67 +160,10 @@ class PostgreSQLPasskeyRepository : PasskeyRepository {
 
     suspend fun findActiveByAccountId(accountId: Uuid): List<PasskeyInfo> = getPasskeysForUser(accountId)
 
-    suspend fun updateLastUsed(credentialId: String): Boolean =
-        dbQuery {
-            val updatedRows =
-                PasskeysTable.update({ PasskeysTable.credentialId eq credentialId }) {
-                    it[lastUsedAt] = Clock.System.now()
-                }
-            updatedRows > 0
-        }
-
     suspend fun deletePasskey(passkeyId: Uuid): Boolean =
         dbQuery {
             val deletedRows = PasskeysTable.deleteWhere { id eq passkeyId.toJavaUUID() }
             deletedRows > 0
-        }
-
-    suspend fun getCredentialIdsForAccount(accountId: Uuid): List<String> = getCredentialIdsForUser(accountId)
-
-    /**
-     * Save a passkey with additional WebAuthn data (public key, sign count, etc.)
-     * This is used by the WebAuthn service to store cryptographic data.
-     */
-    suspend fun saveWithWebAuthnData(
-        accountId: Uuid,
-        passkey: PasskeyInfo,
-        publicKey: String,
-        signCount: Long,
-        webauthnData: String = "{}",
-    ): PasskeyInfo =
-        dbQuery {
-            PasskeysTable.insert {
-                it[id] = passkey.id.toJavaUUID()
-                it[this.accountId] = accountId.toJavaUUID()
-                it[credentialId] = passkey.credentialId
-                it[this.publicKey] = publicKey
-                it[this.signCount] = signCount
-                it[nickname] = passkey.nickname
-                it[deviceType] = passkey.deviceType
-                it[createdAt] = passkey.createdAt
-                it[lastUsedAt] = passkey.lastUsedAt
-                it[isActive] = passkey.isActive
-                it[this.webauthnData] = webauthnData
-            }
-            passkey
-        }
-
-    /**
-     * Get the stored public key and sign count for a credential
-     */
-    suspend fun getWebAuthnData(credentialId: String): Triple<String, Long, String>? =
-        dbQuery {
-            PasskeysTable
-                .selectAll()
-                .where { PasskeysTable.credentialId eq credentialId }
-                .singleOrNull()
-                ?.let { row ->
-                    Triple(
-                        row[PasskeysTable.publicKey],
-                        row[PasskeysTable.signCount],
-                        row[PasskeysTable.webauthnData],
-                    )
-                }
         }
 
     private fun ResultRow.toPasskeyInfo(): PasskeyInfo =

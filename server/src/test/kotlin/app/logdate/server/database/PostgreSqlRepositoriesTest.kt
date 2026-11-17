@@ -434,32 +434,14 @@ class PostgreSqlRepositoriesTest {
             assertNotNull(repository.findById(info.id))
             assertEquals(1, repository.findByAccountId(accountId).size)
             assertEquals(1, repository.findActiveByAccountId(accountId).size)
-            assertEquals(listOf("cred-a"), repository.getCredentialIdsForAccount(accountId))
-            assertTrue(repository.updateLastUsed("cred-a"))
 
             // Cover decode fallback path by storing non-base64 public key.
             val plainInfo = samplePasskeyInfo("cred-b")
-            repository.saveWithWebAuthnData(
-                accountId = accountId,
-                passkey = plainInfo,
-                publicKey = "@@not-base64@@",
-                signCount = 5,
-                webauthnData = "{\"uv\":true}",
-            )
-            repository.saveWithWebAuthnData(
-                accountId = accountId,
-                passkey = samplePasskeyInfo("cred-c"),
-                publicKey = "@@also-not-base64@@",
-                signCount = 3,
-            )
+            insertPasskeyRow(accountId, plainInfo, publicKey = "@@not-base64@@", signCount = 5)
             val plainStored = repository.getPasskeyByCredentialId("cred-b")
             assertNotNull(plainStored)
             assertTrue(plainStored.second.publicKey.contentEquals("@@not-base64@@".toByteArray()))
-
-            val webAuthnData = repository.getWebAuthnData("cred-b")
-            assertNotNull(webAuthnData)
-            assertEquals("@@not-base64@@", webAuthnData.first)
-            assertEquals(5L, webAuthnData.second)
+            assertEquals(5L, plainStored.second.signCount)
 
             assertFalse(repository.deactivatePasskey("cred-a", Uuid.random()))
             assertTrue(repository.deactivatePasskey("cred-a", accountId))
@@ -679,6 +661,25 @@ class PostgreSqlRepositoriesTest {
     private fun withSessionTables(block: suspend () -> Unit) {
         withH2Database(SessionsTable) {
             runBlocking { block() }
+        }
+    }
+
+    /** Stores a passkey row as written, including a public key the repository would not encode. */
+    private fun insertPasskeyRow(
+        accountId: Uuid,
+        passkey: PasskeyInfo,
+        publicKey: String,
+        signCount: Long,
+    ) {
+        transaction {
+            PasskeysTable.insert {
+                it[id] = passkey.id.toJavaUuid()
+                it[this.accountId] = accountId.toJavaUuid()
+                it[credentialId] = passkey.credentialId
+                it[this.publicKey] = publicKey
+                it[this.signCount] = signCount
+                it[createdAt] = passkey.createdAt
+            }
         }
     }
 

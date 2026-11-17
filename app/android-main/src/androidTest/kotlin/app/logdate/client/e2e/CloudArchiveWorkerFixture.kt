@@ -41,7 +41,6 @@ abstract class CloudArchiveWorkerFixture {
     protected val archiveCipher = CloudArchiveCipher { ByteArray(32) { 7 } }
     protected val verifiedIdentity =
         mockk<IdentityKeyManager> {
-            coEvery { isRecoveryPhraseVerified() } returns true
             coEvery { hasIdentityKey() } returns true
             coEvery { canUseForAccount(any()) } returns true
             coEvery { getIdentityKey() } returns ByteArray(32) { 7 }

@@ -27,8 +27,6 @@ class IdentityKeyManager(
     private val mintPolicy: IdentityMintPolicy = IdentityMintPolicy.ALLOWED,
     private val expectedAccountOwner: (suspend () -> String?)? = null,
 ) {
-    suspend fun isRecoveryPhraseVerified(): Boolean = hasIdentityKey() && secureStorage.getString(KEY_RECOVERY_VERIFIED) == "true"
-
     suspend fun verifyRecoveryPhrase(words: List<String>): Boolean =
         identityMutex.withLock {
             val storedWords = getStoredRecoveryPhrase()?.words ?: return@withLock false
