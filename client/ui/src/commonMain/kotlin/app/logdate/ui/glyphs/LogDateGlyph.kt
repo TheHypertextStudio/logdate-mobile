@@ -13,7 +13,8 @@ import org.jetbrains.compose.resources.vectorResource
 
 /**
  * The glyphs the phone and the watch share. Each is a 24 by 24 vector in `composeResources/drawable`
- * named [fileName]; the watch also ships a white copy, `ic_<fileName>`, for tiles and complications.
+ * named [fileName]. A glyph the watch draws outside Compose, in a notification or complication, also
+ * ships there as a white Android drawable, `ic_<fileName>`.
  */
 enum class LogDateGlyph(
     val fileName: String,

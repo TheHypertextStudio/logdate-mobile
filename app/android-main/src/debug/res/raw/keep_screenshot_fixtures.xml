@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The screenshot tests draw sample_note_photo. Lint does not count references from test sources, and
+    the photo lives in the debug source set so release builds never ship it.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/sample_note_photo" />

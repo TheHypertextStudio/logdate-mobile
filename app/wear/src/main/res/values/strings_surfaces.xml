@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Tiles and complications of the new watch app -->
-    <string name="wear_surface_today_title">Today</string>
-    <string name="wear_surface_today_empty">Nothing recorded yet today</string>
-    <plurals name="wear_surface_today_moments">
-        <item quantity="one">%1$d moment today</item>
-        <item quantity="other">%1$d moments today</item>
-    </plurals>
-    <string name="wear_surface_record">Record</string>
     <string name="wear_surface_on_this_day_empty">Nothing from this day in past years</string>
     <!-- Read aloud for the On this day complication: how long ago, then the day's summary or first moment -->
     <string name="wear_surface_on_this_day_description">On this day, %1$s: %2$s</string>
