@@ -149,14 +149,11 @@ class BackupOverviewRenderTest {
             syncStatus = sync,
             cloudArchiveStatus = archive,
             isAuthenticated = true,
-            onSyncNow = {},
             onArchiveBackupNow = onBackupNow,
             onReviewSavedEdits = onReview,
             nativeBackupStatus = nativeStatus,
             onExportArchive = onOpenArchive,
             onNavigateToSignIn = {},
-            quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 GB", formattedUsed = "0 B"),
-            isQuotaAvailable = true,
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

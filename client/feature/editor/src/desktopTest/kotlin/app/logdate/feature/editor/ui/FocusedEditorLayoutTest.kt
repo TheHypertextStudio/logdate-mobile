@@ -1,7 +1,9 @@
 package app.logdate.feature.editor.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -21,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import app.logdate.feature.editor.ui.image.ImageBlockEditor
-import app.logdate.feature.editor.ui.layout.EntryEditorSurface
 import app.logdate.feature.editor.ui.layout.FocusedBlockLayout
 import app.logdate.feature.editor.ui.text.TextBlockContent
 import app.logdate.shared.model.PhotoPresentation
@@ -126,7 +127,7 @@ class FocusedEditorLayoutTest {
         runDesktopComposeUiTest(width = 360, height = 800) {
             setContent {
                 MaterialTheme {
-                    EntryEditorSurface(wrapContentHeight = true) {
+                    Column(Modifier.fillMaxWidth()) {
                         ImageBlockEditor(
                             ImageBlockUiState(uri = "sample", caption = "Our campsite", presentation = PhotoPresentation.Framed),
                             {},
@@ -146,7 +147,7 @@ class FocusedEditorLayoutTest {
         runDesktopComposeUiTest(width = 360, height = 800) {
             setContent {
                 MaterialTheme {
-                    EntryEditorSurface(wrapContentHeight = true) {
+                    Column(Modifier.fillMaxWidth()) {
                         ImageBlockEditor(
                             ImageBlockUiState(uri = "sample", caption = "Our campsite", presentation = PhotoPresentation.EdgeToEdge),
                             {},

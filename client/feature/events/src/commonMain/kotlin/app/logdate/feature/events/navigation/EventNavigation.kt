@@ -1,7 +1,6 @@
 package app.logdate.feature.events.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.events.ui.EventDetailScreen
 import app.logdate.ui.navigation.taggedEntry
@@ -13,11 +12,6 @@ data class EventDetailRoute(
     val eventId: String,
 ) : NavKey {
     constructor(eventId: Uuid) : this(eventId.toString())
-}
-
-/** Pushes the event detail viewer for the given event id. */
-fun NavBackStack<NavKey>.navigateToEventDetail(eventId: Uuid) {
-    add(EventDetailRoute(eventId))
 }
 
 /** Registers the event detail entry. */

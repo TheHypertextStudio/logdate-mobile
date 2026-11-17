@@ -40,11 +40,8 @@ class AutomaticSyncSettingsTest {
                         syncStatus = SyncStatus(true, null, 1, false, true, pausedReason = SyncPausedReason.NEEDS_RECOVERY_PHRASE),
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.NEEDS_RECOVERY),
                         isAuthenticated = true,
-                        onSyncNow = {},
                         onNavigateToSignIn = {},
                         onNavigateToRecoveryPhrase = { phraseEntries++ },
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }
@@ -73,11 +70,8 @@ class AutomaticSyncSettingsTest {
                             syncStatus = SyncStatus(true, null, 0, false, false),
                             cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.NEEDS_RECOVERY),
                             isAuthenticated = true,
-                            onSyncNow = {},
                             onNavigateToSignIn = {},
                             onNavigateToRecoveryPhrase = { phraseEntries++ },
-                            quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
-                            isQuotaAvailable = false,
                             snackbarHostState = SnackbarHostState(),
                         )
                     }
@@ -100,10 +94,7 @@ class AutomaticSyncSettingsTest {
                         syncStatus = SyncStatus(true, null, 3, true, false, pendingDownloads = 2),
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.COMPLETE, 123L),
                         isAuthenticated = true,
-                        onSyncNow = {},
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }
@@ -122,10 +113,7 @@ class AutomaticSyncSettingsTest {
                         syncStatus = SyncStatus(true, null, 1, false, false, pausedReason = SyncPausedReason.OFFLINE),
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.RETRYING),
                         isAuthenticated = true,
-                        onSyncNow = {},
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 GB", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }
@@ -148,11 +136,8 @@ class AutomaticSyncSettingsTest {
                         syncStatus = SyncStatus(true, null, 0, false, false),
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.FAILED),
                         isAuthenticated = true,
-                        onSyncNow = {},
                         onArchiveBackupNow = { retryRequests++ },
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 GB", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }
@@ -176,11 +161,8 @@ class AutomaticSyncSettingsTest {
                         syncStatus = SyncStatus(true, null, 1, false, false, pausedReason = SyncPausedReason.MEDIA_WAITING_FOR_WIFI),
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.RETRYING),
                         isAuthenticated = true,
-                        onSyncNow = {},
                         onSyncUsingMobileData = { requests++ },
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 GB", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }
@@ -204,10 +186,7 @@ class AutomaticSyncSettingsTest {
                         cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.FAILED),
                         isAuthenticated = true,
                         archiveRequest = ArchiveRequestState.Requesting,
-                        onSyncNow = {},
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }
@@ -226,10 +205,7 @@ class AutomaticSyncSettingsTest {
                         onBack = {},
                         syncStatus = null,
                         isAuthenticated = null,
-                        onSyncNow = {},
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 B", formattedUsed = "0 B"),
-                        isQuotaAvailable = false,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }

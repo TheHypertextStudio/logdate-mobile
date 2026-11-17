@@ -29,6 +29,9 @@ class IosDiagnosticArchiveExporter(
 ) : DiagnosticArchiveExporter {
     private val directory = "${NSTemporaryDirectory().trimEnd('/')}/sync-diagnostic-reports".toPath()
     private val maintenance = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    // The initializer registers the activation observer that prunes expired reports; this holds its token
+    @Suppress("unused")
     private val activationObserver =
         NSNotificationCenter.defaultCenter.addObserverForName(
             name = UIApplicationDidBecomeActiveNotification,
