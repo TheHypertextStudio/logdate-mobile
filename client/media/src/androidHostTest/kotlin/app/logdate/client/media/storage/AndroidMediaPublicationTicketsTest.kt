@@ -23,8 +23,8 @@ class AndroidMediaPublicationTicketsTest {
                     )
 
                 assertTrue(!target.exists())
-                assertEquals(reference, AndroidMediaPublicationTickets(root).pendingFor(reference).single().reference)
-                assertEquals(ticket.id, AndroidMediaPublicationTickets(root).pendingFor(reference).single().id)
+                assertEquals(reference, AndroidMediaPublicationTickets(root).pending().single { it.reference == reference }.reference)
+                assertEquals(ticket.id, AndroidMediaPublicationTickets(root).pending().single { it.reference == reference }.id)
             } finally {
                 root.deleteRecursively()
             }
@@ -42,12 +42,27 @@ class AndroidMediaPublicationTicketsTest {
                 AndroidMediaPublicationTickets(root).publish(second.id, reference)
 
                 val afterRestart = AndroidMediaPublicationTickets(root)
-                assertEquals(setOf(first.id, second.id), afterRestart.pendingFor(reference).map { it.id }.toSet())
-                val destinations = afterRestart.pendingFor(reference).map { it.destination }.toSet()
+                assertEquals(
+                    setOf(first.id, second.id),
+                    afterRestart
+                        .pending()
+                        .filter { it.reference == reference }
+                        .map { it.id }
+                        .toSet(),
+                )
+                val destinations =
+                    afterRestart
+                        .pending()
+                        .filter { it.reference == reference }
+                        .map { it.destination }
+                        .toSet()
                 assertEquals(setOf("entry-draft/first/photo", "entry-draft/second/photo"), destinations)
 
                 afterRestart.acknowledge(first.id, reference)
-                assertEquals(listOf(second.id), AndroidMediaPublicationTickets(root).pendingFor(reference).map { it.id })
+                assertEquals(
+                    listOf(second.id),
+                    AndroidMediaPublicationTickets(root).pending().filter { it.reference == reference }.map { it.id },
+                )
             } finally {
                 root.deleteRecursively()
             }
@@ -61,7 +76,7 @@ class AndroidMediaPublicationTicketsTest {
                 val reserved = AndroidMediaPublicationTickets(root).reserve("entry-draft/first/photo", "/staged/capture.jpg")
                 val afterRestart = AndroidMediaPublicationTickets(root)
                 assertEquals(reserved, afterRestart.pending().single())
-                assertTrue(afterRestart.pendingFor("file:///private/media/objects/sha256/ab/photo.jpg").isEmpty())
+                assertTrue(afterRestart.pending().none { it.reference == "file:///private/media/objects/sha256/ab/photo.jpg" })
             } finally {
                 root.deleteRecursively()
             }

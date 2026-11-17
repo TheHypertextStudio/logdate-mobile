@@ -83,14 +83,6 @@ class AndroidMediaPublicationTickets(
 
     suspend fun pending(): List<AndroidMediaPublicationTicket> = locked(::readPending)
 
-    suspend fun pendingFor(reference: String): List<AndroidMediaPublicationTicket> =
-        locked {
-            readPending().filter {
-                it.reference ==
-                    reference
-            }
-        }
-
     private fun readPending(): List<AndroidMediaPublicationTicket> =
         checkNotNull(directory.listFiles()) { "Could not read media publication tickets" }
             .filter { it.name.endsWith(TICKET_SUFFIX) }

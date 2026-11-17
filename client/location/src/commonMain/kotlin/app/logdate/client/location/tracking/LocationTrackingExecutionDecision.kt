@@ -51,22 +51,3 @@ internal fun shouldRecordPeriodicSample(
     settings.captureMode != LocationCaptureMode.ACTIVE ||
         lastStreamFixAt == null ||
         now - lastStreamFixAt > settings.minimumPersistIntervalMinutes.minutes
-
-internal class ForegroundActivityCounter {
-    private var resumedActivityCount = 0
-
-    fun onActivityResumed(): Boolean {
-        resumedActivityCount += 1
-        return resumedActivityCount == 1
-    }
-
-    fun onActivityPaused() {
-        resumedActivityCount = (resumedActivityCount - 1).coerceAtLeast(0)
-    }
-
-    fun hasForegroundActivities(): Boolean = resumedActivityCount > 0
-
-    fun reset() {
-        resumedActivityCount = 0
-    }
-}

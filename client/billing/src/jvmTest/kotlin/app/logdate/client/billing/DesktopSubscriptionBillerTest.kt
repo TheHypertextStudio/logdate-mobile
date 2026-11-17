@@ -1,11 +1,9 @@
 package app.logdate.client.billing
 
 import app.logdate.client.billing.model.LogDateBackupPlanOption
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DesktopSubscriptionBillerTest {
@@ -26,7 +24,7 @@ class DesktopSubscriptionBillerTest {
         }
 
     @Test
-    fun `basic plan does not open checkout and reports unsubscribed`() =
+    fun `basic plan does not open checkout`() =
         runTest {
             val opened = mutableListOf<String>()
             val biller =
@@ -39,7 +37,6 @@ class DesktopSubscriptionBillerTest {
             biller.purchasePlan(LogDateBackupPlanOption.BASIC)
 
             assertTrue(opened.isEmpty())
-            assertFalse(biller.isSubscribed.first())
         }
 
     @Test

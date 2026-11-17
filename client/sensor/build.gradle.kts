@@ -42,6 +42,7 @@ kotlin {
         }
         findByName("androidDeviceTest")?.dependencies {
             implementation(libs.kotlin.test.junit)
+            implementation(libs.kotlinx.coroutines.test)
             implementation(libs.androidx.test.core)
             implementation(libs.androidx.test.runner)
             implementation(libs.androidx.test.ext.junit)

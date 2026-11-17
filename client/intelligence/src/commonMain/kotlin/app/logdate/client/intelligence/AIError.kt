@@ -11,8 +11,6 @@ sealed interface AIError {
 
     data object InvalidResponse : AIError
 
-    data object UnsupportedModel : AIError
-
     data object Unauthorized : AIError
 
     data object Unknown : AIError

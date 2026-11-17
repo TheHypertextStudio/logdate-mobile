@@ -6,10 +6,8 @@ import android.app.NotificationChannel
 import android.app.NotificationChannelGroup
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.provider.Settings
 import androidx.core.content.ContextCompat
 
 data class AndroidLogDateNotificationGroupSpec(
@@ -276,23 +274,4 @@ class LogDateNotificationRegistrar(
                 setAllowBubbles(true)
             }
         }
-}
-
-fun Context.openAppNotificationSettings() {
-    val intent =
-        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-    startActivity(intent)
-}
-
-fun Context.openChannelNotificationSettings(channelKey: LogDateNotificationChannelKey) {
-    val intent =
-        Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            putExtra(Settings.EXTRA_CHANNEL_ID, channelKey.id)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-    startActivity(intent)
 }

@@ -19,14 +19,10 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
-import com.android.billingclient.api.queryPurchasesAsync
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -46,24 +42,6 @@ class PlayStoreSubscriptionBiller
          * application, so it is tracked separately rather than unwrapped.
          */
         private val foregroundActivityTracker = trackerFor(context)
-        override val isSubscribed: Flow<Boolean>
-            get() =
-                flow {
-                    ensureConnected()
-                    emit(queryActiveSubscriptionPurchases().isNotEmpty())
-                }
-
-        override val availablePlans: Flow<List<LogDateBackupPlanOption>>
-            get() =
-                flow {
-                    ensureConnected()
-                    val validProductIds = querySubscriptionProductDetails().map { it.productId }.toSet()
-                    emit(
-                        LogDateBackupPlanOption.entries.filter { plan ->
-                            plan == LogDateBackupPlanOption.BASIC || plan.sku in validProductIds
-                        },
-                    )
-                }
 
         override suspend fun purchasePlan(plan: LogDateBackupPlanOption) =
             withContext(ioDispatcher) {
@@ -187,23 +165,5 @@ class PlayStoreSubscriptionBiller
                 )
             }
             return result.productDetailsList.orEmpty()
-        }
-
-        private suspend fun queryActiveSubscriptionPurchases(): List<Purchase> {
-            val result =
-                billingClient.queryPurchasesAsync(
-                    QueryPurchasesParams
-                        .newBuilder()
-                        .setProductType(ProductType.SUBS)
-                        .build(),
-                )
-            if (result.billingResult.responseCode != BillingResponseCode.OK) {
-                throw IllegalStateException(
-                    "Failed to query Play Billing purchases: ${result.billingResult.debugMessage}",
-                )
-            }
-            return result.purchasesList.orEmpty().filter { purchase ->
-                purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-            }
         }
     }

@@ -68,7 +68,7 @@ class LocalStoryBeatDetectorTest {
 
     @Test
     fun `returns empty list when there are no entries`() {
-        val beats = detector.detect(emptyList(), day0, day0 + 7.days)
+        val beats = detector.detect(emptyList())
         assertEquals(emptyList(), beats)
     }
 
@@ -80,7 +80,7 @@ class LocalStoryBeatDetectorTest {
                 textEntry("project deadline finally done — relief.", at = day0 + 1.days + 2.hours),
                 textEntry("quiet evening, just reading.", at = day0 + 3.days + 4.hours),
             )
-        val beats = detector.detect(entries, day0, day0 + 7.days)
+        val beats = detector.detect(entries)
         assertEquals(3, beats.size)
     }
 
@@ -88,7 +88,7 @@ class LocalStoryBeatDetectorTest {
     fun `beat carries the day's entries as evidence ids`() {
         val mondayEntry = textEntry("had a great dinner with friends.", at = day0 + 1.hours)
         val wednesdayEntry = textEntry("project deadline crunch.", at = day0 + 2.days + 4.hours)
-        val beats = detector.detect(listOf(mondayEntry, wednesdayEntry), day0, day0 + 7.days)
+        val beats = detector.detect(listOf(mondayEntry, wednesdayEntry))
         assertEquals(2, beats.size)
         // Each beat references only its day's entry uid.
         assertTrue(beats[0].evidenceIds.contains(mondayEntry.uid.toString()))
@@ -105,7 +105,7 @@ class LocalStoryBeatDetectorTest {
             (0..9).map { dayIdx ->
                 textEntry("entry on day $dayIdx", at = day0 + dayIdx.days + 1.hours)
             }
-        val beats = detector.detect(entries, day0, day0 + 10.days)
+        val beats = detector.detect(entries)
         assertTrue(beats.size <= 6, "expected ≤6 beats, got ${beats.size}")
     }
 
@@ -126,8 +126,6 @@ class LocalStoryBeatDetectorTest {
         val beats =
             detector.detect(
                 textEntries = entries,
-                periodStart = day0,
-                periodEnd = day0 + 2.days,
                 locationHistory = locations,
             )
         assertEquals(1, beats.size)
@@ -150,8 +148,6 @@ class LocalStoryBeatDetectorTest {
         val beats =
             detector.detect(
                 textEntries = listOf(morningEntry, afternoonEntry),
-                periodStart = day0,
-                periodEnd = day0 + 2.days,
                 locationHistory = locations,
             )
         assertEquals(2, beats.size)
@@ -173,7 +169,7 @@ class LocalStoryBeatDetectorTest {
                 locationPoint(day0 + 7.hours, 37.6040, -122.5000),
             )
 
-        val beats = detector.detect(listOf(early, between, late), day0, day0 + 1.days, locationHistory = locations)
+        val beats = detector.detect(listOf(early, between, late), locationHistory = locations)
 
         assertEquals(3, beats.flatMap { it.evidenceIds }.distinct().size)
         assertEquals(
@@ -201,8 +197,6 @@ class LocalStoryBeatDetectorTest {
         val beats =
             detector.detect(
                 textEntries = entries,
-                periodStart = day0,
-                periodEnd = day0 + 7.days,
                 locationHistory = locations,
             )
         assertTrue(beats.size <= 6, "expected ≤6 beats, got ${beats.size}")
@@ -220,7 +214,7 @@ class LocalStoryBeatDetectorTest {
                 "I felt completely overwhelmed and exhausted; everything went wrong.",
                 at = day0 + 2.days + 1.hours,
             )
-        val beats = detector.detect(listOf(happy, rough), day0, day0 + 5.days)
+        val beats = detector.detect(listOf(happy, rough))
         assertEquals(2, beats.size)
         assertEquals("joyful", beats[0].emotionalWeight)
         assertEquals("heavy", beats[1].emotionalWeight)
@@ -232,8 +226,6 @@ class LocalStoryBeatDetectorTest {
         val beats =
             detector.detect(
                 textEntries = emptyList(),
-                periodStart = day0,
-                periodEnd = day0 + 2.days,
                 audio = listOf(audio),
             )
         // An audio-only week must not vanish — it's still a real moment, transcript or not.
@@ -251,8 +243,6 @@ class LocalStoryBeatDetectorTest {
         val beats =
             detector.detect(
                 textEntries = emptyList(),
-                periodStart = day0,
-                periodEnd = day0 + 2.days,
                 audio = listOf(audio),
             )
         assertEquals(1, beats.size)

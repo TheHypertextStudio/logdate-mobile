@@ -73,22 +73,4 @@ open class ConfigurablePermissionManager(
         // for first-denial flows where rationale should be shown.
         return !alwaysGrantPermissions && type !in permissionOverrides
     }
-
-    /**
-     * For testing: Set the status of a specific permission
-     */
-    fun setPermissionGranted(
-        type: PermissionType,
-        granted: Boolean,
-    ) {
-        val mutableOverrides = permissionOverrides.toMutableMap()
-        mutableOverrides[type] = granted
-
-        // Update the status map if it contains this permission
-        val currentMap = permissionStatusMap.value.toMutableMap()
-        if (currentMap.containsKey(type)) {
-            currentMap[type] = if (granted) PermissionStatus.GRANTED else PermissionStatus.DENIED
-            permissionStatusMap.value = currentMap
-        }
-    }
 }

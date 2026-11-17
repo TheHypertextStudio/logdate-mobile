@@ -191,23 +191,6 @@ internal class HistoryPreferences(
     }
 
     /**
-     * Observes the most recent event inference worker run summary so the settings screen can
-     * show "Last run / events created / last error" without standing up a new repository.
-     */
-    fun observeEventInferenceStats(): Flow<EventInferenceStats> =
-        userPreferences.data.map { prefs ->
-            EventInferenceStats(
-                lastRunAt =
-                    prefs[EVENT_INFERENCE_LAST_RUN_AT]?.let { millis ->
-                        if (millis == 0L) null else Instant.fromEpochMilliseconds(millis)
-                    },
-                lastCreatedCount = prefs[EVENT_INFERENCE_LAST_CREATED_COUNT] ?: 0,
-                recentCreatedCount = prefs[EVENT_INFERENCE_RECENT_CREATED_COUNT] ?: 0,
-                lastErrorKind = prefs[EVENT_INFERENCE_LAST_ERROR_KIND],
-            )
-        }
-
-    /**
      * Records the result of one event inference worker run. Atomic — the recent rolling
      * total is incremented inside the same `updateData` block as the per-run stats so two
      * concurrent worker runs (immediate + periodic) can't lose increments to a stale read.
@@ -276,23 +259,6 @@ internal class HistoryPreferences(
             }
         }
     }
-
-    /**
-     * Most recent device calendar import worker run. Surfaced verbatim by the calendar
-     * sync settings status card; the worker writes via [recordDeviceCalendarSyncRun].
-     */
-    fun observeDeviceCalendarSyncStats(): Flow<DeviceCalendarSyncStats> =
-        userPreferences.data.map { prefs ->
-            DeviceCalendarSyncStats(
-                lastRunAt =
-                    prefs[DEVICE_CALENDAR_SYNC_LAST_RUN_AT]?.let { millis ->
-                        if (millis == 0L) null else Instant.fromEpochMilliseconds(millis)
-                    },
-                lastCreatedCount = prefs[DEVICE_CALENDAR_SYNC_LAST_CREATED_COUNT] ?: 0,
-                lastUpdatedCount = prefs[DEVICE_CALENDAR_SYNC_LAST_UPDATED_COUNT] ?: 0,
-                lastErrorKind = prefs[DEVICE_CALENDAR_SYNC_LAST_ERROR_KIND],
-            )
-        }
 
     /**
      * Records the result of one calendar import worker run. [errorKind] is the

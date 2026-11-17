@@ -43,7 +43,7 @@ suspend fun buildLocalYearNarrative(
     resolveText: suspend (UiText) -> String = { text -> text.resolve() },
 ): YearNarrative {
     val themes = aggregateTopThemes(weeklyRewinds, max = MAX_YEAR_THEMES)
-    val chapters = buildQuarterChapters(year, weeklyRewinds, resolveText)
+    val chapters = buildQuarterChapters(weeklyRewinds, resolveText)
     val topTheme = themes.firstOrNull()
     val weekCount = weeklyRewinds.size
     val overall =
@@ -78,7 +78,6 @@ private fun aggregateTopThemes(
         .map { it.key }
 
 private suspend fun buildQuarterChapters(
-    year: Int,
     weeklyRewinds: List<Rewind>,
     resolveText: suspend (UiText) -> String,
 ): List<YearChapter> {

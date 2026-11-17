@@ -188,40 +188,6 @@ class AndroidAudioNotificationHandler(
     }
 
     /**
-     * Shows the recording notification
-     */
-    fun showRecordingNotification() {
-        try {
-            val notification = createRecordingNotification()
-            notificationManager.notify(NOTIFICATION_ID, notification)
-        } catch (e: Exception) {
-            Napier.e("Failed to show recording notification", e)
-        }
-    }
-
-    /**
-     * Dismisses the recording notification
-     */
-    fun dismissRecordingNotification() {
-        try {
-            notificationManager.cancel(NOTIFICATION_ID)
-        } catch (e: Exception) {
-            Napier.e("Failed to dismiss recording notification", e)
-        }
-    }
-
-    /**
-     * Updates an existing notification with new content
-     */
-    fun updateNotification(notification: Notification) {
-        try {
-            notificationManager.notify(NOTIFICATION_ID, notification)
-        } catch (e: Exception) {
-            Napier.e("Failed to update recording notification", e)
-        }
-    }
-
-    /**
      * Updates notification to reflect current recording state
      */
     fun updateRecordingNotification(

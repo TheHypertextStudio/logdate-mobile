@@ -99,10 +99,9 @@ class ManagedMediaImporter(
         require(sourceUri.isNotBlank()) { "Source URI cannot be blank" }
         val stagedMedia = source.stage(sourceUri)
         var ownedManagedUri: String? = null
-        var ticketId: String? = null
 
         return try {
-            ticketId = publicationCustody.reserve("unassigned-managed-import", stagedMedia)
+            val ticketId = publicationCustody.reserve("unassigned-managed-import", stagedMedia)
             val managedUri =
                 mediaManager.saveMediaFromFile(
                     sourceFilePath = stagedMedia.sourceFilePath,
@@ -112,7 +111,7 @@ class ManagedMediaImporter(
             check(managedUri.isNotBlank()) { "Managed media URI cannot be blank" }
             check(managedUri != sourceUri) { "Managed media import returned the source URI" }
             ownedManagedUri = managedUri
-            publicationCustody.publish(checkNotNull(ticketId), managedUri)
+            publicationCustody.publish(ticketId, managedUri)
             currentCoroutineContext().ensureActive()
             managedUri
         } catch (primaryFailure: Throwable) {

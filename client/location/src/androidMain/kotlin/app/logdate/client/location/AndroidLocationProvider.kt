@@ -1,26 +1,18 @@
 package app.logdate.client.location
 
 import android.content.Context
-import android.os.Looper
 import androidx.core.location.LocationCompat
 import app.logdate.client.location.tracking.observedAt
 import app.logdate.shared.model.AltitudeUnit
 import app.logdate.shared.model.Location
 import app.logdate.shared.model.LocationAltitude
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationAvailability
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -43,17 +35,6 @@ class AndroidLocationProvider(
 
     private val _currentLocation = MutableSharedFlow<Location>(replay = 1)
     override val currentLocation: SharedFlow<Location> = _currentLocation.asSharedFlow()
-
-    private val locationRequest =
-        LocationRequest
-            .Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 60_000L)
-            .setWaitForAccurateLocation(false)
-            .setMinUpdateIntervalMillis(30_000L)
-            .setMaxUpdateDelayMillis(120_000L)
-            .build()
-
-    private var locationCallback: LocationCallback? = null
-    private var isLocationUpdatesActive = false
 
     init {
         tryEmitLastKnownLocation()
@@ -99,90 +80,6 @@ class AndroidLocationProvider(
             getCurrentLocation()
         }
     }
-
-    /**
-     * Starts continuous location updates for personal location logging.
-     *
-     * Must be called explicitly by the component that owns this provider's lifecycle.
-     * Updates are not started automatically on construction to avoid unnecessary
-     * GPS activation.
-     */
-    fun startLocationUpdates() {
-        if (!hasLocationPermission() || isLocationUpdatesActive) return
-
-        locationCallback =
-            object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-                    locationResult.lastLocation?.let { androidLocation ->
-                        val location = androidLocation.toLogDateLocation()
-                        _currentLocation.tryEmit(location)
-                    }
-                }
-
-                override fun onLocationAvailability(locationAvailability: LocationAvailability) {
-                    if (!locationAvailability.isLocationAvailable) {
-                        // Handle location unavailable state
-                    }
-                }
-            }
-
-        try {
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback!!,
-                Looper.getMainLooper(),
-            )
-            isLocationUpdatesActive = true
-        } catch (e: SecurityException) {
-            // Permission not granted
-        }
-    }
-
-    /**
-     * Stops location updates to preserve battery.
-     */
-    fun stopLocationUpdates() {
-        locationCallback?.let { callback ->
-            fusedLocationClient.removeLocationUpdates(callback)
-            isLocationUpdatesActive = false
-        }
-    }
-
-    /**
-     * Provides a flow of continuous location updates for monitoring.
-     */
-    fun getLocationUpdates(): Flow<Location> =
-        callbackFlow {
-            if (!hasLocationPermission()) {
-                close(SecurityException("Location permission not granted"))
-                return@callbackFlow
-            }
-
-            val callback =
-                object : LocationCallback() {
-                    override fun onLocationResult(locationResult: LocationResult) {
-                        locationResult.lastLocation?.let { androidLocation ->
-                            val location = androidLocation.toLogDateLocation()
-                            trySend(location)
-                        }
-                    }
-                }
-
-            try {
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    callback,
-                    Looper.getMainLooper(),
-                )
-            } catch (e: SecurityException) {
-                close(e)
-                return@callbackFlow
-            }
-
-            awaitClose {
-                fusedLocationClient.removeLocationUpdates(callback)
-            }
-        }
 
     override fun hasLocationPermission(): Boolean =
         permissionManager.isPermissionGranted(app.logdate.client.permissions.PermissionType.LOCATION)

@@ -115,8 +115,6 @@ class TextProcessingAccuracyTest {
                     "Alex Chen",
                     "Lisa Rodriguez",
                 )
-            val expectedSummary =
-                "You attended an important quarterly meeting with leadership and had a productive follow-up with your manager."
 
             fakeAIClient.setResponseFor(journalText, expectedPeople)
 
@@ -158,8 +156,6 @@ class TextProcessingAccuracyTest {
                     "Mom",
                     "Aunt Susan",
                 )
-            val expectedSummary =
-                "You enjoyed a heartwarming family gathering filled with good food, stories, and quality time with multiple generations."
 
             fakeAIClient.setResponseFor(journalText, expectedPeople)
 
@@ -192,7 +188,6 @@ class TextProcessingAccuracyTest {
                 """.trimIndent()
 
             val expectedPeople = jsonResponse("Hiroshi", "Yuki", "Maria", "Klaus")
-            val expectedSummary = "You had an amazing first day in Tokyo, meeting locals and fellow travelers while exploring the city."
 
             fakeAIClient.setResponseFor(journalText, expectedPeople)
 
@@ -223,8 +218,6 @@ class TextProcessingAccuracyTest {
                 """.trimIndent()
 
             val expectedPeople = jsonResponse("Dr. Sarah Mitchell", "Amy Johnson", "Dr. Chen", "Maria")
-            val expectedSummary =
-                "You completed your annual medical checkup with positive results and scheduled appropriate follow-up care."
 
             fakeAIClient.setResponseFor(journalText, expectedPeople)
 
