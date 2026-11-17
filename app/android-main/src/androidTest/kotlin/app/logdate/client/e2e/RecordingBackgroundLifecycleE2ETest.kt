@@ -14,6 +14,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -58,6 +59,10 @@ import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 import org.koin.dsl.module
 import java.io.File
+
+// The names of the entry page's choices that start a recording and a piece of writing.
+private const val VOICE = "Voice"
+private const val WRITE = "Write"
 
 /** Exercises the real microphone and recording service on the API 35 managed emulator. */
 @RunWith(AndroidJUnit4::class)
@@ -218,10 +223,10 @@ class RecordingBackgroundLifecycleE2ETest {
         assertTrue("This test requires the production recording manager", manager is AndroidAudioRecordingManager)
         try {
             assertFalse("A previous recording must not own the test microphone", manager.isRecording)
-            waitForTag("editor_start_audio_block")
+            waitForChoice(VOICE)
             capture("recording-$label-empty-editor")
             if (includeExistingText) {
-                composeRule.onNodeWithContentDescription("Start text entry").performClick()
+                composeRule.onNodeWithContentDescription(WRITE).performClick()
                 waitForTag("editor_text_input")
                 composeRule.onNodeWithTag("editor_text_input").performTextInput("Before this recording.")
                 Espresso.closeSoftKeyboard()
@@ -229,7 +234,7 @@ class RecordingBackgroundLifecycleE2ETest {
                 waitForTag("add_memory_AUDIO")
                 composeRule.onNodeWithTag("add_memory_AUDIO").performScrollTo().performClick()
             } else {
-                composeRule.onNodeWithTag("editor_start_audio_block").performClick()
+                composeRule.onNodeWithContentDescription(VOICE).performClick()
             }
             waitForTag("audio_record_start_button")
             composeRule.onNodeWithTag("audio_record_start_button").performClick()
@@ -314,6 +319,13 @@ class RecordingBackgroundLifecycleE2ETest {
 
     private fun recordingDurationMillis(manager: AudioRecordingManager): Long =
         runBlocking { withTimeout(1_000) { manager.getRecordingDurationFlow().first().inWholeMilliseconds } }
+
+    /** Waits for one of the entry page's ways to add something, which are named by what they say. */
+    private fun waitForChoice(name: String) {
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithContentDescription(name).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
 
     private fun waitForTag(tag: String) {
         composeRule.waitUntil(timeoutMillis = 10_000) {

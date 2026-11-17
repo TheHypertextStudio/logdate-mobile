@@ -1,16 +1,20 @@
 package app.logdate.client.e2e
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import app.logdate.client.EditorActivity
 import app.logdate.client.media.audio.AudioPlaybackManager
 import app.logdate.client.media.audio.AudioPlaybackMetadata
@@ -49,10 +53,14 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import java.io.File
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
+
+// The name of the entry page's choice that starts a recording.
+private const val VOICE = "Voice"
 
 /**
  * Instrumented tests for the audio recording experience within the editor.
@@ -65,10 +73,21 @@ import kotlin.uuid.Uuid
  */
 @RunWith(AndroidJUnit4::class)
 class AudioRecordingE2ETest {
+    // A real recording for the fake recorder to hand over. The editor reads the finished file, so a
+    // path with nothing at it leaves the recording being recovered and never shows its length.
+    private val recording: File =
+        InstrumentationRegistry.getInstrumentation().let { instrumentation ->
+            File(instrumentation.targetContext.filesDir, "audio-recording-e2e.m4a").also { file ->
+                instrumentation.context.assets.open("recovery/completed-recording.m4a").use { input ->
+                    file.outputStream().use(input::copyTo)
+                }
+            }
+        }
+
     private val fakeRecordingManager =
         FakeAudioRecordingManager(
-            outputUri = "file:///test/audio.m4a",
-            recordingDuration = 5.seconds,
+            outputUri = Uri.fromFile(recording).toString(),
+            recordingDuration = 1.seconds,
         )
 
     private val testModule =
@@ -89,7 +108,11 @@ class AudioRecordingE2ETest {
 
     @Test
     fun `record audio shows duration in block`() {
-        composeRule.onNodeWithTag("editor_start_audio_block").performClick()
+        // The row of ways to add something comes in once the entry has loaded.
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithContentDescription(VOICE).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription(VOICE).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithTag("audio_record_start_button").fetchSemanticsNodes().isNotEmpty() ||
                 composeRule.onAllNodesWithText("Finish").fetchSemanticsNodes().isNotEmpty()
@@ -108,7 +131,7 @@ class AudioRecordingE2ETest {
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithTag("audio_block_duration").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag("audio_block_duration").assertTextEquals("00:05")
+        composeRule.onNodeWithTag("audio_block_duration").assertTextEquals("00:01")
     }
 }
 
