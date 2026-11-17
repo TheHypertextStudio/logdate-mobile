@@ -1,3 +1,7 @@
 #!/bin/sh
 # Hypertext Studio managed Git hook v1
-exec python3 .hypertext/git-hook.py pre-push "$1" "$2"
+refs=$(cat; echo .)
+printf %s "${refs%.}" | hypertext verify --repo "$PWD" --git-prepush --git-remote "$1" --git-remote-url "$2" || exit
+if [ -x .hypertext/git-product/pre-push ]; then
+  printf %s "${refs%.}" | exec .hypertext/git-product/pre-push "$@"
+fi

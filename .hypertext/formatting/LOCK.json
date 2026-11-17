@@ -1,8 +1,0 @@
-{
-  "__init__.py": "f75ebdeda1fcaf7b046d31e7beed78933f20c43eea0856f80b78d4bd94bda49e",
-  "gate.py": "8ef91c5c444bbc78e594bba76900a731e87ca2ed1e0a65be072696915dee1123",
-  "runner.py": "c1e82c995777161acde85093896472867650ba17bd8fb57e44047d0dda057087",
-  "setup_files.py": "ee170d45cebbeb2961a78efba3e6f757b043c38e3ba876cdbce8d3161f2fac87",
-  "formatting.py": "196839f30cd99d4383fdfcf746c466e342af3c34ecf35cdbb6b1be853c00c107",
-  "git_policy.py": "4e84aa6db5e5b95680410fbc3613d3426d2ffae83a93ff262e0c3848b33971dc"
-}

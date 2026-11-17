@@ -1,0 +1,3 @@
+#!/bin/sh
+# Hypertext Studio managed Git hook v1
+exec ./run format --post-commit

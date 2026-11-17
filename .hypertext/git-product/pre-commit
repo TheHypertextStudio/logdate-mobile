@@ -4,7 +4,8 @@
 # Checks:
 # 1. Sensitive file guard (reject secrets, keystores, credentials)
 # 2. Sensitive content scan in staged additions
-# 3. Native formatting of the exact staged snapshot
+#
+# The Studio pre-commit hook formats staged files with ./run format --staged after these checks.
 
 set -euo pipefail
 
@@ -68,14 +69,6 @@ if [[ ${#secret_hits[@]} -gt 0 ]]; then
   while IFS= read -r f; do
     [[ -n "$f" ]] && errors+=("  - $f")
   done <<< "$secret_hits_sorted"
-fi
-
-# ============================================================================
-# 3. Format the exact staged snapshot without re-staging working-tree edits
-# ============================================================================
-
-if ! python3 .hypertext/formatting/commit.py; then
-  errors+=("FORMATTING: Staged formatting failed; resolve the reported conflict or tool setup issue.")
 fi
 
 if [[ ${#errors[@]} -gt 0 ]]; then

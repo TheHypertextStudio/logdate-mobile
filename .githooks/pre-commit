@@ -1,3 +1,5 @@
 #!/bin/sh
 # Hypertext Studio managed Git hook v1
-exec python3 .hypertext/git-hook.py pre-commit
+if [ -x .hypertext/git-product/pre-commit ]; then .hypertext/git-product/pre-commit || exit; fi
+hypertext verify --repo "$PWD" --git-precommit || exit
+exec ./run format --staged
