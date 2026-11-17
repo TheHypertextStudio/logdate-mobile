@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -64,6 +63,7 @@ import app.logdate.feature.core.settings.ui.toStorageQuotaUi
 import app.logdate.shared.model.BillingInterval
 import app.logdate.shared.model.EntitlementStatusWire
 import app.logdate.shared.model.PlanOption
+import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.MaterialCard
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsNavigationItem

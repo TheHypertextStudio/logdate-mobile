@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
@@ -44,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.domain.storage.StoredItem
 import app.logdate.client.domain.storage.StoredKind
 import app.logdate.feature.core.settings.ui.formatByteSize
+import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SettingsGridScaffold
 import app.logdate.ui.platform.LocalLogDateHaptics
 import app.logdate.ui.theme.Spacing
