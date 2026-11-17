@@ -91,7 +91,7 @@ class HistoryRecordStoreTest {
             val file = Files.createTempFile("history-batch", ".db")
             var database = getRoomDatabase(Room.databaseBuilder<LogDateDatabase>(file.toString()))
             try {
-                var store = RoomHistoryRecordStore(database.historyRecordDao())
+                var store: RoomHistoryRecordStore
                 var samples = OfflineFirstLocationHistoryRepository(database.locationHistoryDao())
                 val point =
                     LocationLogRecord(

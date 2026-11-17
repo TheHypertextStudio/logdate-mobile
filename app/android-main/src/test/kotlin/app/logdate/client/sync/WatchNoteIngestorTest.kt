@@ -51,7 +51,6 @@ class WatchNoteIngestorTest {
             }
             coEvery { repository.removeById(any()) } answers {
                 stored.remove(firstArg<Uuid>())
-                Unit
             }
         }
     private val ingestor =

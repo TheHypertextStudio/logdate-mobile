@@ -256,7 +256,7 @@ class CloudLinkBundleSourceTest {
         var available = true
         val signals = MutableStateFlow(0)
 
-        override fun changes() = signals.map { Unit }
+        override fun changes() = signals.map { }
 
         var allowed = true
 

@@ -19,6 +19,7 @@ import okio.Path.Companion.toPath
 import java.io.File
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 
 /** A shareable ZIP stays in private cache and has a durable expiry worker. */
@@ -59,7 +60,7 @@ class AndroidDiagnosticArchiveExporter(
 ) : DiagnosticArchiveExporter {
     override suspend fun export(bundle: DiagnosticReportBundle): Boolean {
         var prepared: File? = null
-        var shared = false
+        val shared = AtomicBoolean(false)
         try {
             val file =
                 withContext(Dispatchers.IO) {
@@ -81,7 +82,7 @@ class AndroidDiagnosticArchiveExporter(
                 } ?: return false
             return withContext(Dispatchers.Main) {
                 try {
-                    launchShare(file).also { shared = it }
+                    launchShare(file).also { shared.set(it) }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
@@ -90,7 +91,7 @@ class AndroidDiagnosticArchiveExporter(
                 }
             }
         } catch (cancelled: CancellationException) {
-            if (!shared) prepared?.delete()
+            if (!shared.get()) prepared?.delete()
             throw cancelled
         }
     }

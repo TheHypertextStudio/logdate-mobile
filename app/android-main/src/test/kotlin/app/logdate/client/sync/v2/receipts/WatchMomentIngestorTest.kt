@@ -107,7 +107,6 @@ class WatchMomentIngestorTest {
         coEvery { peers.isCurrent(any()) } answers { current == firstArg<PeerDeliveryContext>() }
         coEvery { outbox.enqueuePending(any(), EntityType.MOMENT, any()) } answers {
             queued[firstArg()] = thirdArg()
-            Unit
         }
         coEvery { outbox.hasPending(EntityType.MOMENT, any()) } answers { secondArg<String>() in queued }
     }

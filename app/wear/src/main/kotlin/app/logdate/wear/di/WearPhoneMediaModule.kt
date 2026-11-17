@@ -95,7 +95,6 @@ val wearPhoneMediaModule =
                 },
                 download = { note, peer, allowed ->
                     media.download(note, peer, allowed)
-                    Unit
                 },
                 media = get<StoredMediaReferences>(),
             )

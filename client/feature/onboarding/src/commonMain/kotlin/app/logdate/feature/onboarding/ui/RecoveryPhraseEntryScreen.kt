@@ -29,7 +29,6 @@ fun RecoveryPhraseEntryScreen(
     onError: (String) -> Unit = {},
     onSkip: (() -> Unit)? = null,
 ) {
-    val coroutineScope = rememberCoroutineScope()
     var phraseWords by rememberSaveable { mutableStateOf(List(12) { "" }) }
     var isRecovering by remember { mutableStateOf(false) }
     var errorMessageRes by remember { mutableStateOf<StringResource?>(null) }

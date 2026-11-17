@@ -51,10 +51,10 @@ class DraftCustodyTransactionTest {
                 val source = scoped.copy(blocks = listOf(custodyBlock("Accepted conflicting source")))
                 storage.putStringOrThrow("editor_drafts_anonymous", Json.encodeToString(listOf(source)))
                 metadata.enqueuePendingForScope(scoped.id.toString(), EntityType.DRAFT, PendingOperation.UPDATE, UploadScope(OWNER, ORIGIN))
-                var recoveredId: String? = null
+                val recoveredIds = mutableListOf<String>()
                 assertFailsWith<IllegalStateException> {
                     transactions.withTransaction {
-                        recoveredId =
+                        recoveredIds +=
                             repository
                                 .getAllDraftsForSync()
                                 .single { it.id != scoped.id }
@@ -66,7 +66,7 @@ class DraftCustodyTransactionTest {
                 assertTrue(storage.getStringOrThrow("editor_drafts_anonymous").orEmpty().contains(source.id.toString()))
                 assertEquals(1, metadata.getPendingUploads(EntityType.DRAFT).size)
                 assertEquals(2, repository.getAllDraftsForSync().size)
-                assertTrue(metadata.getPendingUploads(EntityType.DRAFT).any { it.entityId == recoveredId })
+                assertTrue(metadata.getPendingUploads(EntityType.DRAFT).any { it.entityId == recoveredIds.single() })
                 assertTrue(marker.hasEnqueuedDraftScope(OWNER, ORIGIN))
                 assertTrue(ArchiveDraftStorageState.decode(Json, storage.getStringOrThrow("editor_drafts_anonymous")).drafts.isEmpty())
             } finally {

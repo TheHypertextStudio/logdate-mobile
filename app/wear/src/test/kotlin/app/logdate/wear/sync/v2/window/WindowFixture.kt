@@ -62,7 +62,6 @@ class WindowFixture {
             coEvery { deleteFromSync(any()) } answers {
                 stored.remove(firstArg<Uuid>())
                 afterWrite()
-                Unit
             }
         }
     val outbox =

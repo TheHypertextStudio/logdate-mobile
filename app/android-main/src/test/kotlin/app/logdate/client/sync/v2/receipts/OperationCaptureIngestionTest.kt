@@ -128,7 +128,6 @@ class OperationCaptureIngestionTest {
         coEvery { notes.getNoteById(any()) } answers { stored[firstArg()] }
         coEvery { notes.deleteFromSync(any()) } answers {
             stored.remove(firstArg())
-            Unit
         }
         coEvery { notes.create(any<JournalNote>()) } answers {
             val note = firstArg<JournalNote>()

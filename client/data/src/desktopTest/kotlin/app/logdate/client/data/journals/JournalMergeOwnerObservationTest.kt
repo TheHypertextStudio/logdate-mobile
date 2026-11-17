@@ -88,7 +88,7 @@ class JournalMergeOwnerObservationTest {
                             database.historyOwnerAdoptionDao().adopt(old, new, origin, device) { it }
                             // Force the Room invalidation to be consumed while the old owner is still bound.
                             withTimeout(3000) {
-                                while (emissions.receive().isNotEmpty()) Unit
+                                while (emissions.receive().isNotEmpty()) continue
                             }
                             assertEquals("offline", owner.getCanonicalOwnerId())
                         },

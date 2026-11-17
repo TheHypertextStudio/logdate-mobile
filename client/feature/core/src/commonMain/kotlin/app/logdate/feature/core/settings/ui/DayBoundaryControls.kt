@@ -135,7 +135,6 @@ internal fun HealthConnectGateCard(
                             HealthConnectGateKind.UNAVAILABLE,
                             HealthConnectGateKind.READY,
                             -> {
-                                Unit
                             }
                         }
                     },

@@ -37,8 +37,8 @@ val phoneReminderSchedulingModule =
             ReminderSignalObserver(
                 enabled = enabled,
                 placesEnabled = reminderPlaceAvailability(enabled, shared.observe(SharedPreferenceKey.CapturePlaces), permissions),
-                markChanges = { marks.observeOpenMarks().distinctUntilChanged().map { Unit } },
-                locationChanges = { locations.observeLastLocation().distinctUntilChanged().map { Unit } },
+                markChanges = { marks.observeOpenMarks().distinctUntilChanged().map { } },
+                locationChanges = { locations.observeLastLocation().distinctUntilChanged().map { } },
                 enqueue = scheduler::enqueueMomentEvaluation,
                 scope = get(),
             )

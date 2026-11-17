@@ -20,7 +20,7 @@ class SelectionTransformTest {
     @Test
     fun `select element sets selected id`() {
         val elementId = Uuid.random()
-        var selectedId: Uuid? = null
+        var selectedId: Uuid?
 
         // Simulate onElementTap callback
         selectedId = elementId
@@ -29,8 +29,7 @@ class SelectionTransformTest {
 
     @Test
     fun `deselect clears selected id`() {
-        var selectedId: Uuid? = Uuid.random()
-        selectedId = null
+        val selectedId: Uuid? = null
         assertNull(selectedId)
     }
 
