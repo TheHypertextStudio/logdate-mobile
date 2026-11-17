@@ -108,7 +108,6 @@ internal fun AudioModelProgress(
         }
 
         else -> {
-            Unit
         }
     }
 }
