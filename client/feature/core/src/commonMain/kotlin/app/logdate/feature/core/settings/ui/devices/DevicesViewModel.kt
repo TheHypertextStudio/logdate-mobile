@@ -205,9 +205,7 @@ class DevicesViewModel(
             hasObservedScope = true
         }
         when (observation) {
-            is DeviceListObservation.Scoped -> {
-                Unit
-            }
+            is DeviceListObservation.Scoped -> {}
 
             is DeviceListObservation.Available -> {
                 showDevices(observation.devices, currentDevice, DeviceRefreshState.Idle, confirmed = true)

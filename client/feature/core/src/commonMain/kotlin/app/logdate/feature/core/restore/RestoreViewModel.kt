@@ -142,9 +142,7 @@ class UserDataRestoreViewModel(
                         }
                     }
 
-                    RestoreProgressInfo.Idle -> {
-                        Unit
-                    }
+                    RestoreProgressInfo.Idle -> {}
                 }
             }
         }

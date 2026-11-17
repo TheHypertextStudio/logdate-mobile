@@ -3,7 +3,6 @@ package app.logdate.feature.core.settings.navigation
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.core.settings.ui.SettingsCategoryNavigationScreen
 import app.logdate.feature.core.settings.ui.watch.WatchNotificationSettingsScreen
@@ -15,11 +14,6 @@ import app.logdate.feature.core.settings.ui.watch.v2.WatchMicrophoneScreen
 import app.logdate.feature.core.settings.ui.watch.v2.WatchTilesScreen
 import app.logdate.ui.navigation.taggedEntry
 import org.koin.compose.viewmodel.koinViewModel
-
-/** Pushes the watch settings overview onto the back stack. */
-fun NavBackStack<NavKey>.navigateToWatchSettings() {
-    add(WatchSettingsRoute)
-}
 
 /**
  * Registers the Watch Settings overview and Troubleshooting entries. Only call this on

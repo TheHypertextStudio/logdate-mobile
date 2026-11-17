@@ -132,9 +132,7 @@ fun RecoveryPhraseScreen(
                         viewModel.onScreenInactive()
                     }
 
-                    else -> {
-                        Unit
-                    }
+                    else -> {}
                 }
             }
         lifecycle.addObserver(observer)

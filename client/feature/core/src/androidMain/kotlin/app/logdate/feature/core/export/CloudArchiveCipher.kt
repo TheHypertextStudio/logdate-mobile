@@ -116,7 +116,7 @@ class CloudArchiveCipher(
             BufferedInputStream(FileInputStream(source), BUFFER_SIZE).use { input ->
                 val prefix = input.readExactly(PREFIX_V1.size)
                 if (prefix.contentEquals(PREFIX_V2)) {
-                    decryptChunked(input, prefix, destination)
+                    decryptChunked(input, destination)
                     return
                 }
                 if (!prefix.contentEquals(PREFIX_V1)) {
@@ -176,7 +176,6 @@ class CloudArchiveCipher(
 
     private suspend fun decryptChunked(
         input: BufferedInputStream,
-        header: ByteArray,
         destination: File,
     ) {
         val noncePrefix = input.readExactly(NONCE_PREFIX_SIZE)

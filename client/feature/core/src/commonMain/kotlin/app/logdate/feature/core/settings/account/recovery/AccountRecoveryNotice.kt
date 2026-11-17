@@ -46,9 +46,7 @@ internal fun AccountRecoveryNotice(
     onRetry: () -> Unit,
 ) {
     when (state) {
-        AccountRecoveryUiState.Checking -> {
-            Unit
-        }
+        AccountRecoveryUiState.Checking -> {}
 
         AccountRecoveryUiState.Ready -> {
             DoneLine(stringResource(Res.string.account_recovery_ready))

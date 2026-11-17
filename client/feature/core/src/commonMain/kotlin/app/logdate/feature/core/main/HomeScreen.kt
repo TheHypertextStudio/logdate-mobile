@@ -63,7 +63,6 @@ fun HomeScreen(
     onOpenDraft: (draftId: String) -> Unit = {},
     onImportBackup: () -> Unit = {},
     onSignInToRestoreAccount: () -> Unit = {},
-    onOpenMediaDetail: (Uuid) -> Unit = {},
     onOpenSyncSettings: () -> Unit = {},
     onEnterRecoveryPhrase: () -> Unit = {},
     onOpenWatch: () -> Unit = {},

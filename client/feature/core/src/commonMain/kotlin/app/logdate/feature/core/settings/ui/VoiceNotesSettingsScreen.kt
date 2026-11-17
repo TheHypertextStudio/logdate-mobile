@@ -232,9 +232,7 @@ private fun ModelProgress(status: ModelDownloadStatus) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        else -> {
-            Unit
-        }
+        else -> {}
     }
 }
 

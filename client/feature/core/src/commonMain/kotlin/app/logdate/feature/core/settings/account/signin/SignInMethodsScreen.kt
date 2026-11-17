@@ -193,9 +193,7 @@ fun SignInMethodsContent(
                         item { LoadFailed(refresh.reason, onRetry) }
                     }
 
-                    SignInMethodsRefreshState.Idle -> {
-                        Unit
-                    }
+                    SignInMethodsRefreshState.Idle -> {}
                 }
                 item {
                     Text(

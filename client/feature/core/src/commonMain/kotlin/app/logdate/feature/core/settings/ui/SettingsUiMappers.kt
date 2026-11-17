@@ -25,14 +25,3 @@ fun CloudStorageQuota?.orDefault(): CloudStorageQuota =
         usedBytes = 0L,
         categories = emptyList(),
     )
-
-fun LogDateAccount.toUserProfile(): UserProfile =
-    UserProfile(
-        name = displayName.ifEmpty { "No display name" },
-        username = username.ifEmpty { "" },
-        isEditable = username.isNotEmpty(),
-        isAuthenticated = username.isNotEmpty() && passkeyCredentialIds.isNotEmpty(),
-        email = email,
-        emailVerified = emailVerified,
-        emailVerifiedAt = emailVerifiedAt,
-    )

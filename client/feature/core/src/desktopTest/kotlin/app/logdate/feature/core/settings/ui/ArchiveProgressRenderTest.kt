@@ -65,10 +65,7 @@ class ArchiveProgressRenderTest {
                                 progress = CloudArchiveProgress(stage, fraction),
                             ),
                         isAuthenticated = true,
-                        onSyncNow = {},
                         onNavigateToSignIn = {},
-                        quotaUsage = StorageQuotaUi(100, 0, 0f, formattedTotal = "100 GB", formattedUsed = "0 B"),
-                        isQuotaAvailable = true,
                         snackbarHostState = SnackbarHostState(),
                     )
                 }

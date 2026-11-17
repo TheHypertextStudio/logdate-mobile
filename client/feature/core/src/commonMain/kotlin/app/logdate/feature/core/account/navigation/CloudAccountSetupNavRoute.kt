@@ -2,7 +2,6 @@ package app.logdate.feature.core.account.navigation
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.core.account.CloudAccountOnboardingScreen
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
@@ -21,11 +20,6 @@ import org.koin.compose.viewmodel.koinViewModel
 data class CloudAccountSetupRoute(
     val startOnSignIn: Boolean = false,
 ) : NavKey
-
-/** Pushes the cloud account setup flow. */
-fun NavBackStack<NavKey>.navigateToCloudAccountSetup(startOnSignIn: Boolean = false) {
-    add(CloudAccountSetupRoute(startOnSignIn = startOnSignIn))
-}
 
 /** Registers the cloud account setup entry. */
 fun EntryProviderScope<NavKey>.cloudAccountSetupEntry(

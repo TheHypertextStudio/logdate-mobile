@@ -69,8 +69,6 @@ class LocationSettingsViewModel(
 
     fun updateTrackingInterval(intervalMinutes: Long) = save(LocationSettingsChange.Interval(intervalMinutes.coerceAtLeast(2)))
 
-    fun toggleActiveTracking(enabled: Boolean) = setCaptureMode(if (enabled) LocationCaptureMode.ACTIVE else LocationCaptureMode.PASSIVE)
-
     fun setCaptureMode(mode: LocationCaptureMode) = save(LocationSettingsChange.CaptureMode(mode))
 
     fun toggleServerAssist(enabled: Boolean) = save(LocationSettingsChange.ServerAssist(enabled))

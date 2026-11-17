@@ -86,9 +86,7 @@ fun LinkedDevicesSection(
     }
     SettingsSection(title = stringResource(Res.string.linked_devices_title), modifier = modifier.testTag(LinkedDevicesTags.SECTION)) {
         when (state) {
-            LinkedDevicesUiState.Unavailable -> {
-                Unit
-            }
+            LinkedDevicesUiState.Unavailable -> {}
 
             LinkedDevicesUiState.Loading -> {
                 SimpleSettingsItem(title = stringResource(Res.string.linked_devices_loading), description = null, action = {})

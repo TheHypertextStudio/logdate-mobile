@@ -120,13 +120,6 @@ private fun getCategoryColor(categoryName: String): Color =
         else -> Color(0xFF9E9E9E) // Gray
     }
 
-// CloudStorageQuota?.orDefault() is defined in SettingsUiMappers.kt
-
-/**
- * Maps a CloudStorageQuota to a QuotaUsageUi model for the DataSettingsScreen.
- */
-fun CloudStorageQuota.toQuotaUsageUi(): StorageQuotaUi = orDefault().toStorageQuotaUi()
-
 /*
  * Formats byte size to human-readable string (e.g., "1.5 GB").
  */

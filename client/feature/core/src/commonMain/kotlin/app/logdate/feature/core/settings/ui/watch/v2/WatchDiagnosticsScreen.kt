@@ -69,9 +69,7 @@ fun WatchDiagnosticsContent(
             }
         }
         when (val current = state) {
-            WatchDiagnosticsState.Checking -> {
-                Unit
-            }
+            WatchDiagnosticsState.Checking -> {}
 
             WatchDiagnosticsState.NeedsWatch -> {
                 item {

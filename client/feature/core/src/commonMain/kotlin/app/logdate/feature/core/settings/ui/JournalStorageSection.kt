@@ -99,9 +99,7 @@ fun JournalStorageSection(
     }
     SettingsSection(title = stringResource(Res.string.journal_storage_title), modifier = modifier.testTag(JournalStorageTags.SECTION)) {
         when (state) {
-            JournalMoveState.NotOffered -> {
-                Unit
-            }
+            JournalMoveState.NotOffered -> {}
 
             JournalMoveState.WaitingForSync -> {
                 SimpleSettingsItem(

@@ -122,9 +122,7 @@ class AndroidExportLauncher(
                         completionCallback?.invoke(ExportOutcome.Cancelled)
                     }
 
-                    else -> {
-                        Unit
-                    }
+                    else -> {}
                 }
             }
 
