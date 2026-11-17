@@ -48,12 +48,28 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.adaptive.FoldableBookLayout
+import app.logdate.ui.notes.NoteThumbnail
+import app.logdate.ui.notes.noteWords
 import app.logdate.ui.platform.PlatformSheet
 import app.logdate.ui.platform.rememberLogDateHaptics
 import app.logdate.ui.theme.Spacing
 import app.logdate.util.toReadableDateTimeShort
-import logdate.client.feature.journal.generated.resources.*
 import logdate.client.feature.journal.generated.resources.Res
+import logdate.client.feature.journal.generated.resources.add_a_title
+import logdate.client.feature.journal.generated.resources.add_media_description
+import logdate.client.feature.journal.generated.resources.add_media_label
+import logdate.client.feature.journal.generated.resources.add_memories
+import logdate.client.feature.journal.generated.resources.add_text_notes_description
+import logdate.client.feature.journal.generated.resources.add_text_notes_label
+import logdate.client.feature.journal.generated.resources.description
+import logdate.client.feature.journal.generated.resources.finish
+import logdate.client.feature.journal.generated.resources.media_selection_count
+import logdate.client.feature.journal.generated.resources.new_journal
+import logdate.client.feature.journal.generated.resources.no_entries_in_this_journal_yet
+import logdate.client.feature.journal.generated.resources.note_stack_add
+import logdate.client.feature.journal.generated.resources.notes_selected
+import logdate.client.feature.journal.generated.resources.select_notes
+import logdate.client.feature.journal.generated.resources.what_is_this_for
 import logdate.client.ui.generated.resources.common_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -440,20 +456,16 @@ private fun NotePickerBottomSheet(
                                 checked = note.id in selectedNoteIds,
                                 onCheckedChange = { onToggleSelection(note.id) },
                             )
+                            NoteThumbnail(note.note, size = 48.dp)
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text =
-                                        note.textPreview?.ifBlank { null }
-                                            ?: when (note.type) {
-                                                NotePreviewType.IMAGE -> stringResource(Res.string.image)
-                                                NotePreviewType.VIDEO -> stringResource(Res.string.video)
-                                                NotePreviewType.AUDIO -> stringResource(Res.string.note_type_voice_memo)
-                                                NotePreviewType.TEXT -> ""
-                                            },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                note.note.noteWords()?.let { words ->
+                                    Text(
+                                        text = words,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                                 Text(
                                     text = note.timestamp.toReadableDateTimeShort(),
                                     style = MaterialTheme.typography.labelSmall,

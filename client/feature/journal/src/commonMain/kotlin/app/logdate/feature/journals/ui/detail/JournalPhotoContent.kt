@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,18 +17,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.logdate.shared.model.PhotoPresentation
-import coil3.compose.AsyncImage
+import app.logdate.ui.notes.NoteMediaImage
+import app.logdate.ui.notes.NoteMediaKind
+import app.logdate.ui.notes.ProportionalNoteMedia
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
 internal fun JournalPhotoContent(entry: EntryDisplayData.ImageEntry) {
     if (entry.presentation == PhotoPresentation.Framed) {
         Column(Modifier.fillMaxWidth().background(Color.White).padding(12.dp)) {
-            AsyncImage(
-                model = entry.mediaRef,
+            ProportionalNoteMedia(
+                mediaRef = entry.mediaRef,
+                kind = NoteMediaKind.Photo,
                 contentDescription = entry.caption,
+                maxHeight = 420.dp,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp, max = 420.dp),
             )
             if (entry.caption.isNotBlank()) {
                 Text(
@@ -42,10 +44,10 @@ internal fun JournalPhotoContent(entry: EntryDisplayData.ImageEntry) {
         }
     } else {
         Box(Modifier.fillMaxWidth().aspectRatio(4f / 3f)) {
-            AsyncImage(
-                model = entry.mediaRef,
+            NoteMediaImage(
+                mediaRef = entry.mediaRef,
+                kind = NoteMediaKind.Photo,
                 contentDescription = entry.caption,
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
             if (entry.caption.isNotBlank()) {
