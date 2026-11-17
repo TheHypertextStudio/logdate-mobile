@@ -28,6 +28,13 @@ class MediaFileResolver(
             is MediaReference.External -> null
         }
 
+    /**
+     * How many bytes the file [reference] names takes on this device, or `null` when it names no
+     * local file or the file is not here.
+     */
+    fun fileSize(reference: String): Long? =
+        filePath(reference)?.let { path -> SystemFileSystem.metadataOrNull(Path(path))?.takeIf { it.isRegularFile }?.size }
+
     /** The absolute path of [ref] in this install. */
     fun filePath(ref: LocalMediaRef): String = "${directories.directory(ref.collection)}/${ref.path}"
 

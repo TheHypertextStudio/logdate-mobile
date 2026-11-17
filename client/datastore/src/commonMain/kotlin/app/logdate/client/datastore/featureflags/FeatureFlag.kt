@@ -152,6 +152,16 @@ enum class FeatureFlag(
      * shows the plan and nothing to buy.
      */
     CLOUD_PLANS(key = "cloud_plans_enabled", defaultEnabled = false),
+
+    /**
+     * A page per kind of stored thing (photos, videos, recordings, written entries) that lists them
+     * largest first and deletes several at once, opened from the Storage screen behind
+     * [CLOUD_PLANS].
+     *
+     * Off by default until it has been used on a real library. While it is off, the Storage screen
+     * opens the Library and search instead.
+     */
+    STORAGE_CLEANUP(key = "storage_cleanup_enabled", defaultEnabled = false),
     ;
 
     companion object {

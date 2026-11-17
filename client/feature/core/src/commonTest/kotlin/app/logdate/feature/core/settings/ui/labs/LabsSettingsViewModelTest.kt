@@ -86,7 +86,13 @@ class LabsSettingsViewModelTest {
     @Test
     fun `Android lists People first then the watch app and activity awareness and LogDate Cloud storage`() {
         assertEquals(
-            listOf(FeatureFlag.PEOPLE, FeatureFlag.WATCH_EXPERIENCE_V2, FeatureFlag.ACTIVITY_AWARENESS, FeatureFlag.CLOUD_PLANS),
+            listOf(
+                FeatureFlag.PEOPLE,
+                FeatureFlag.WATCH_EXPERIENCE_V2,
+                FeatureFlag.ACTIVITY_AWARENESS,
+                FeatureFlag.CLOUD_PLANS,
+                FeatureFlag.STORAGE_CLEANUP,
+            ),
             labsFlags(PlatformKind.Android),
         )
     }

@@ -1,6 +1,7 @@
 package app.logdate.feature.core.settings.navigation
 
 import androidx.navigation3.runtime.NavKey
+import app.logdate.client.domain.storage.StoredKind
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,6 +30,12 @@ data object HostingRoute : NavKey
 /** The LogDate Cloud plan and how it is paid for. */
 @Serializable
 data object CloudPlanRoute : NavKey
+
+/** Everything of one kind that is stored, to choose from and delete. */
+@Serializable
+data class StorageCleanupRoute(
+    val kind: StoredKind,
+) : NavKey
 
 @Serializable
 data object MoveServerRoute : NavKey

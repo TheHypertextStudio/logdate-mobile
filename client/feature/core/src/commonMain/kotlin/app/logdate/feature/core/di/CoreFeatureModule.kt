@@ -13,6 +13,9 @@ import app.logdate.client.domain.di.domainModule
 import app.logdate.client.domain.identity.ObserveUserIdentityUseCase
 import app.logdate.client.domain.journals.GetCurrentUserJournalsUseCase
 import app.logdate.client.domain.quota.ObserveCloudQuotaUseCase
+import app.logdate.client.domain.storage.DeleteStoredItemsUseCase
+import app.logdate.client.domain.storage.ObserveStoredItemsUseCase
+import app.logdate.client.domain.storage.StoredKind
 import app.logdate.client.location.di.locationSettingsModule
 import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.repository.account.PasskeyAccountRepository
@@ -40,6 +43,7 @@ import app.logdate.feature.core.settings.account.move.MoveServerViewModel
 import app.logdate.feature.core.settings.account.move.ServerMove
 import app.logdate.feature.core.settings.account.move.ServerMoveStore
 import app.logdate.feature.core.settings.account.plan.CloudPlanViewModel
+import app.logdate.feature.core.settings.account.plan.cleanup.StorageCleanupViewModel
 import app.logdate.feature.core.settings.account.recovery.AutomaticAccountRecovery
 import app.logdate.feature.core.settings.account.recovery.IdentityAccountRecovery
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseViewModel
@@ -138,6 +142,13 @@ val coreFeatureModule: Module =
             )
         }
         viewModel { CloudPlanViewModel(billing = get(), storageUse = get<ObserveCloudQuotaUseCase>()()) }
+        viewModel { (kind: StoredKind) ->
+            StorageCleanupViewModel(
+                kind = kind,
+                observeItems = get<ObserveStoredItemsUseCase>()::invoke,
+                deleteItems = get<DeleteStoredItemsUseCase>()::invoke,
+            )
+        }
         viewModel {
             HostingViewModel(
                 connectedServer = get(),

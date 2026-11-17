@@ -10,6 +10,8 @@ import logdate.client.feature.core.generated.resources.labs_identity_recovery_ke
 import logdate.client.feature.core.generated.resources.labs_identity_recovery_key_title
 import logdate.client.feature.core.generated.resources.labs_people_description
 import logdate.client.feature.core.generated.resources.labs_people_title
+import logdate.client.feature.core.generated.resources.labs_storage_cleanup_description
+import logdate.client.feature.core.generated.resources.labs_storage_cleanup_title
 import logdate.client.feature.core.generated.resources.labs_watch_experience_description
 import logdate.client.feature.core.generated.resources.labs_watch_experience_title
 import org.jetbrains.compose.resources.StringResource
@@ -62,6 +64,13 @@ internal fun FeatureFlag.labsCopy(): LabsFlagCopy? =
             LabsFlagCopy(
                 title = Res.string.labs_cloud_plans_title,
                 description = Res.string.labs_cloud_plans_description,
+            )
+        }
+
+        FeatureFlag.STORAGE_CLEANUP -> {
+            LabsFlagCopy(
+                title = Res.string.labs_storage_cleanup_title,
+                description = Res.string.labs_storage_cleanup_description,
             )
         }
 

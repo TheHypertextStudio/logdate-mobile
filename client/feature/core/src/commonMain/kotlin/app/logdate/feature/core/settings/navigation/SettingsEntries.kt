@@ -2,10 +2,14 @@ package app.logdate.feature.core.settings.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.permissions.rememberContactsPermissionState
 import app.logdate.feature.core.assistants.AndroidAssistantsScreen
 import app.logdate.feature.core.people.ui.PeopleDirectoryScreen
@@ -19,6 +23,7 @@ import app.logdate.feature.core.settings.account.hosting.HostingScreen
 import app.logdate.feature.core.settings.account.move.MoveServerScreen
 import app.logdate.feature.core.settings.account.plan.CloudPlanScreen
 import app.logdate.feature.core.settings.account.plan.StorageReview
+import app.logdate.feature.core.settings.account.plan.cleanup.StorageCleanupScreen
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseScreen
 import app.logdate.feature.core.settings.account.signin.SignInMethodsScreen
 import app.logdate.feature.core.settings.ui.AdvancedSettingsScreen
@@ -61,6 +66,7 @@ import app.logdate.ui.navigation.ActivityPresentation
 import app.logdate.ui.navigation.ViewModelsPerVisit
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
+import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
 
 /** Navigates to the settings overview. */
@@ -177,7 +183,20 @@ fun EntryProviderScope<NavKey>.settingsEntries(
         HostingScreen(onBack = onBack, onMoveAccount = { onNavigateTo(MoveServerRoute) })
     }
     taggedEntry<CloudPlanRoute>(metadata = settingsDetailMetadata(SettingsCategory.Account, categories) + ViewModelsPerVisit) {
-        CloudPlanScreen(onBack = onBack, onReview = onReviewStorage)
+        // The clean-up page replaces the Library and search as where a kind of stored thing opens.
+        val flags = koinInject<FeatureFlagStore>()
+        val cleanUp by remember(flags) { flags.observe(FeatureFlag.STORAGE_CLEANUP) }
+            .collectAsStateWithLifecycle(FeatureFlag.STORAGE_CLEANUP.defaultEnabled)
+        CloudPlanScreen(
+            onBack = onBack,
+            onReview = onReviewStorage,
+            onCleanUp = if (cleanUp) ({ kind -> onNavigateTo(StorageCleanupRoute(kind)) }) else null,
+        )
+    }
+    taggedEntry<StorageCleanupRoute>(
+        metadata = settingsDetailMetadata(SettingsCategory.Account, categories) + ViewModelsPerVisit,
+    ) { route ->
+        StorageCleanupScreen(kind = route.kind, onBack = onBack)
     }
     taggedEntry<MoveServerRoute>(metadata = settingsDetailMetadata(SettingsCategory.Account, categories) + ViewModelsPerVisit) {
         MoveServerScreen(onClose = onBack)

@@ -22,6 +22,10 @@
     <string name="labs_activity_permission_action">Allow</string>
     <string name="labs_cloud_plans_title">LogDate Cloud storage</string>
     <string name="labs_cloud_plans_description">See your storage and get more space.</string>
+    <string name="labs_storage_cleanup_title">Storage clean-up</string>
+    <string
+    name="labs_storage_cleanup_description"
+  >Delete your largest items to free space.</string>
     <string name="labs_identity_recovery_key_title">Move with your recovery phrase</string>
     <string
     name="labs_identity_recovery_key_description"
