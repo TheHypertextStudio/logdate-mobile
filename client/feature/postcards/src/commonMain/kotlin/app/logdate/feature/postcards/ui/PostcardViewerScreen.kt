@@ -172,6 +172,12 @@ fun PostcardViewerContent(
             document = document,
             stickerUriMap = stickerUriMap,
             viewportOffset = { viewportState.offset },
+            onElementTap = { id ->
+                document.elements
+                    .filterIsInstance<CanvasElement.Photo>()
+                    .firstOrNull { it.id == id }
+                    ?.let(onPhotoTap)
+            },
         )
     }
 }
