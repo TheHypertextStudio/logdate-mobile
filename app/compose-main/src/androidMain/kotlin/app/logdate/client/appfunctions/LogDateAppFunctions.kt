@@ -99,6 +99,7 @@ abstract class LogDateAppFunctions :
      * @param voice True to start recording a voice note; false to open a new written entry.
      * @return The way to open LogDate to the new entry.
      */
+    @Suppress("unused") // Kept: Android calls AppFunctions through the generated @AppFunctionDeclaration registry
     @AppFunctionDeclaration(isDescribedByKDoc = true)
     suspend fun startEntry(voice: Boolean): AssistantEntryStart =
         withContext(Dispatchers.IO) {

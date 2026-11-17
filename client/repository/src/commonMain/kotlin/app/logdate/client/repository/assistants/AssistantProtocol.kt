@@ -108,6 +108,7 @@ data class AssistantOperationFailure(
     val reason: AssistantOperationError,
 )
 
+@Suppress(names = ["unused"]) // Kept: the connected-assistants gateway (CONNECTED_ASSISTANTS flag) decodes and encodes its requests with it; that gateway is not built yet
 object AssistantProtocol {
     private val json =
         Json {
