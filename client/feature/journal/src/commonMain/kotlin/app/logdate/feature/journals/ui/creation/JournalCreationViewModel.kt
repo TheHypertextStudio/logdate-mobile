@@ -46,21 +46,7 @@ class JournalCreationViewModel(
                 notes.map { note ->
                     RecentNoteItem(
                         id = note.uid,
-                        textPreview =
-                            when (note) {
-                                is JournalNote.Handwriting -> "Handwriting"
-                                is JournalNote.Text -> note.content.take(100)
-                                is JournalNote.Image -> note.caption
-                                is JournalNote.Video -> note.caption
-                                is JournalNote.Audio -> null
-                            },
-                        type =
-                            when (note) {
-                                is JournalNote.Text, is JournalNote.Handwriting -> NotePreviewType.TEXT
-                                is JournalNote.Image -> NotePreviewType.IMAGE
-                                is JournalNote.Video -> NotePreviewType.VIDEO
-                                is JournalNote.Audio -> NotePreviewType.AUDIO
-                            },
+                        note = note,
                         timestamp = note.creationTimestamp,
                     )
                 }
@@ -123,14 +109,7 @@ data class JournalCreationUiState(
  */
 data class RecentNoteItem(
     val id: Uuid,
-    val textPreview: String?,
-    val type: NotePreviewType,
+    /** The note itself, so the picker shows its photo, ink, recording or words. */
+    val note: JournalNote,
     val timestamp: kotlin.time.Instant,
 )
-
-enum class NotePreviewType {
-    TEXT,
-    IMAGE,
-    VIDEO,
-    AUDIO,
-}

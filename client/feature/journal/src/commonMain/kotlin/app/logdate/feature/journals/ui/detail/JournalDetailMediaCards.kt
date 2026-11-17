@@ -23,11 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.editor.audio.AudioLabelResolver
@@ -54,8 +49,9 @@ import app.logdate.ui.common.AspectRatios
 import app.logdate.ui.common.MarkdownPreviewText
 import app.logdate.ui.common.MarkdownText
 import app.logdate.ui.media.MediaDeviceSelector
+import app.logdate.ui.notes.NoteMediaImage
+import app.logdate.ui.notes.NoteMediaKind
 import app.logdate.ui.theme.Spacing
-import coil3.compose.AsyncImage
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.audio_output
 import logdate.client.feature.journal.generated.resources.video_note
@@ -153,31 +149,11 @@ internal fun VideoEntryCard(
                     .aspectRatio(AspectRatios.RATIO_16_9)
                     .clip(RoundedCornerShape(Spacing.sm)),
         ) {
-            AsyncImage(
-                model = entry.mediaRef,
-                contentDescription = stringResource(Res.string.video_note),
+            NoteMediaImage(
+                mediaRef = entry.mediaRef,
+                kind = NoteMediaKind.Video,
+                contentDescription = entry.caption.ifBlank { stringResource(Res.string.video_note) },
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-            // Play indicator overlay
-            Icon(
-                Icons.Rounded.PlayArrow,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .align(Alignment.Center)
-                        .size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-            )
-            Icon(
-                Icons.Rounded.Videocam,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(Spacing.sm)
-                        .size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )
         }
         if (entry.caption.isNotBlank()) {

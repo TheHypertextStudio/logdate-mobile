@@ -4,26 +4,20 @@ package app.logdate.feature.journals.ui.detail
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import app.logdate.ui.notes.NoteMediaImage
+import app.logdate.ui.notes.NoteMediaKind
 import app.logdate.ui.theme.Spacing
-import coil3.compose.AsyncImage
 import logdate.client.feature.journal.generated.resources.Res
 import logdate.client.feature.journal.generated.resources.image_note
 import logdate.client.feature.journal.generated.resources.video_note
@@ -55,15 +49,17 @@ fun JournalGalleryGrid(
         ) { entry ->
             when (entry) {
                 is EntryDisplayData.ImageEntry -> {
-                    ImageThumbnail(
+                    GalleryThumbnail(
                         mediaRef = entry.mediaRef,
+                        kind = NoteMediaKind.Photo,
                         onClick = { onOpenEntry(entry.id) },
                     )
                 }
 
                 is EntryDisplayData.VideoEntry -> {
-                    VideoThumbnail(
+                    GalleryThumbnail(
                         mediaRef = entry.mediaRef,
+                        kind = NoteMediaKind.Video,
                         onClick = { onOpenEntry(entry.id) },
                     )
                 }
@@ -76,55 +72,23 @@ fun JournalGalleryGrid(
     }
 }
 
+/** A photo, or a video's frame, as a square gallery cell. */
 @Composable
-private fun ImageThumbnail(
+private fun GalleryThumbnail(
     mediaRef: String,
+    kind: NoteMediaKind,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    NoteMediaImage(
+        mediaRef = mediaRef,
+        kind = kind,
+        contentDescription = stringResource(if (kind == NoteMediaKind.Video) Res.string.video_note else Res.string.image_note),
         modifier =
             modifier
                 .aspectRatio(1f)
                 .clip(MaterialTheme.shapes.extraSmall)
                 .clickable(onClick = onClick),
-    ) {
-        AsyncImage(
-            model = mediaRef,
-            contentDescription = stringResource(Res.string.image_note),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@Composable
-private fun VideoThumbnail(
-    mediaRef: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .aspectRatio(1f)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .clickable(onClick = onClick),
-    ) {
-        AsyncImage(
-            model = mediaRef,
-            contentDescription = stringResource(Res.string.video_note),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        Icon(
-            Icons.Default.PlayArrow,
-            contentDescription = null,
-            modifier =
-                Modifier
-                    .align(Alignment.Center)
-                    .size(32.dp),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-        )
-    }
+        compact = true,
+    )
 }

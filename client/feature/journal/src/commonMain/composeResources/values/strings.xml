@@ -49,7 +49,6 @@
     <string name="journal_insights_recordings">%1$d recordings</string>
     <string name="suggestion_create_journal">Create journal</string>
     <string name="media_selection_count">%1$d media selected</string>
-    <string name="note_type_voice_memo">Voice memo</string>
     <string name="cd_previous_entry">Previous entry</string>
     <string name="cd_next_entry">Next entry</string>
     <string name="tab_timeline">Timeline</string>
@@ -62,7 +61,6 @@
     <string name="error">Error</string>
     <string name="failed_to_load_journal">Failed to load journal</string>
     <string name="finish">Finish</string>
-    <string name="image">Image</string>
     <string name="image_note">Image note</string>
     <string name="cd_journal_photo_from_date">Photo from %1$s</string>
     <string name="journal_entries">Journal Entries</string>
@@ -106,7 +104,6 @@
     <string
     name="share_journal_private_description"
   >Only you can see what’s inside this journal.</string>
-    <string name="video">Video</string>
     <string name="video_note">Video note</string>
     <string name="what_is_this_for">What is this for?</string>
     <string
