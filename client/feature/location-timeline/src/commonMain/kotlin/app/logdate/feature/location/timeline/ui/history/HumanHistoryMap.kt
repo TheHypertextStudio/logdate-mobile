@@ -80,13 +80,6 @@ private fun valid(
     longitude: Double,
 ) = latitude.isFinite() && longitude.isFinite() && latitude in -90.0..90.0 && longitude in -180.0..180.0
 
-internal fun mapPoint(
-    coordinate: HistoryCoordinate,
-    all: List<HistoryCoordinate>,
-    width: Float,
-    height: Float,
-): Offset = historyMapProjection(all, width, height).project(coordinate)
-
 internal data class HistoryMapProjection(
     val width: Float,
     val height: Float,
