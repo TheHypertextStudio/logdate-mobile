@@ -15,6 +15,8 @@
     <string
     name="labs_activity_awareness_description"
   >Get suggestions after a walk or trip. If reminders are on, they can wait until you stop.</string>
+    <string name="labs_cloud_plans_title">LogDate Cloud storage</string>
+    <string name="labs_cloud_plans_description">See your storage and get more space.</string>
     <string name="labs_identity_recovery_key_title">Move with your recovery phrase</string>
     <string
     name="labs_identity_recovery_key_description"

@@ -152,4 +152,14 @@ enum class FeatureFlag(
      * previous search presentation.
      */
     ADAPTIVE_SEARCH(key = "adaptive_search_enabled", defaultEnabled = false),
+
+    /**
+     * The LogDate Cloud plan in Account settings: the plan and storage an account has, and buying,
+     * changing and cancelling a plan where the server sells one.
+     *
+     * Off by default until the screen has been tried against a server that sells plans. It only
+     * ever offers what the connected server says it can do, so on a server that sells nothing it
+     * shows the plan and nothing to buy.
+     */
+    CLOUD_PLANS(key = "cloud_plans_enabled", defaultEnabled = false),
 }

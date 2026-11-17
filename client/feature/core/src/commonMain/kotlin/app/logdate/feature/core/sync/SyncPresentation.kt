@@ -1,6 +1,8 @@
 package app.logdate.feature.core.sync
 
 import app.logdate.client.sync.BackupRequestState
+import app.logdate.shared.model.EntitlementResponse
+import app.logdate.shared.model.EntitlementStatusWire
 
 /**
  * UI-only projection of the sync pipeline state. Composables in this package render against
@@ -64,9 +66,13 @@ sealed class SyncPresentation {
      */
     data object AuthError : SyncPresentation()
 
-    /** Quota / storage limit hit. Banner with a "Manage storage" action. */
+    /**
+     * The server refused to store more. Banner with an action that leads to the plan. [cause] says
+     * which limit refused it, once that is known; until then it reads as a full plan.
+     */
     data class StorageError(
         val pendingCount: Int,
+        val cause: StorageRefusal = StorageRefusal.Full(),
     ) : SyncPresentation()
 
     /** A specific attachment cannot upload until the person replaces it with a smaller file. */
@@ -95,6 +101,30 @@ sealed class SyncPresentation {
      * user needs to enter their recovery phrase again before anything else can happen.
      */
     data object NeedsRecovery : SyncPresentation()
+}
+
+/** Why the server will not store more for this account. */
+sealed interface StorageRefusal {
+    /** The plan's storage is used up. [includedBytes] is how much the plan holds, when known. */
+    data class Full(
+        val includedBytes: Long? = null,
+    ) : StorageRefusal
+
+    /** The account has no plan, so nothing can be stored until it picks one. */
+    data object NoPlan : StorageRefusal
+
+    /** The plan sells more storage, but a payment is failing, so it cannot grow. */
+    data object PaymentDue : StorageRefusal
+
+    companion object {
+        /** What an account's plan says about why it cannot store more. */
+        fun of(entitlement: EntitlementResponse): StorageRefusal =
+            when {
+                entitlement.planId == EntitlementResponse.NO_PLAN_ID -> NoPlan
+                entitlement.extraStorageStepBytes != null && entitlement.status == EntitlementStatusWire.PAST_DUE -> PaymentDue
+                else -> Full(includedBytes = entitlement.storageBytesLimit)
+            }
+    }
 }
 
 /** What the user can do with a [SyncPresentation] surface. */

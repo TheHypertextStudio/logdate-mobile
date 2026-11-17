@@ -1,6 +1,7 @@
 package app.logdate.feature.core.settings.ui
 
 import androidx.compose.ui.graphics.Color
+import app.logdate.shared.model.CloudObjectType
 import app.logdate.shared.model.CloudStorageQuota
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.data_settings_quota_category_attachments
@@ -40,6 +41,8 @@ data class StorageCategory(
     val formattedUsed: String,
     // Derived properties for easier use in UI
     val sizeInMB: Float = usedBytes / (1024f * 1024f),
+    /** Which kind of stored thing this is, when the server named one the app knows. */
+    val type: CloudObjectType? = null,
 )
 
 /**
@@ -65,6 +68,7 @@ fun CloudStorageQuota.toStorageQuotaUi(): StorageQuotaUi {
                     usagePercentage = if (usedBytes > 0) category.sizeBytes.toFloat() / usedBytes.toFloat() else 0f,
                     color = getCategoryColor(category.category.name),
                     formattedUsed = formatByteSize(category.sizeBytes),
+                    type = category.category,
                 )
             },
         formattedTotal = formatByteSize(totalBytes),

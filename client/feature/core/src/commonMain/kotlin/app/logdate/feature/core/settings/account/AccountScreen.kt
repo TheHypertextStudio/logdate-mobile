@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.outlined.Password
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.logdate.client.datastore.featureflags.FeatureFlag
+import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.repository.account.LinkedSignInProvider
 import app.logdate.feature.core.settings.ui.EmailVerificationBottomSheet
 import app.logdate.ui.adaptive.FoldableBookLayout
@@ -81,6 +84,8 @@ import logdate.client.feature.core.generated.resources.account_signed_out_create
 import logdate.client.feature.core.generated.resources.account_signed_out_sign_in
 import logdate.client.feature.core.generated.resources.account_signed_out_title
 import logdate.client.feature.core.generated.resources.account_title
+import logdate.client.feature.core.generated.resources.cloud_plan_row_description
+import logdate.client.feature.core.generated.resources.cloud_plan_title
 import logdate.client.feature.core.generated.resources.sign_in_methods_detail_pair
 import logdate.client.feature.core.generated.resources.sign_in_methods_google
 import logdate.client.feature.core.generated.resources.sign_in_methods_other_provider
@@ -91,6 +96,7 @@ import logdate.client.ui.generated.resources.common_cancel
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import logdate.client.ui.generated.resources.Res as UiRes
 
@@ -104,6 +110,7 @@ data class AccountDestinations(
     val onDeleteAccount: () -> Unit,
     val onSignIn: () -> Unit,
     val onCreateAccount: () -> Unit,
+    val onPlan: () -> Unit = {},
 )
 
 @Composable
@@ -115,6 +122,8 @@ fun AccountScreen(
     val emailVerification by viewModel.emailVerification.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showEmailVerification by remember { mutableStateOf(false) }
+    val flags = koinInject<FeatureFlagStore>()
+    val cloudPlans by remember(flags) { flags.observe(FeatureFlag.CLOUD_PLANS) }.collectAsStateWithLifecycle(false)
 
     // Coming back from a subpage, such as after adding a passkey, reloads what may have changed there.
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -133,6 +142,7 @@ fun AccountScreen(
         onOpenEmailVerification = { showEmailVerification = true },
         onSignOut = viewModel::signOut,
         snackbarHostState = snackbarHostState,
+        showPlan = cloudPlans,
     )
 
     if (showEmailVerification) {
@@ -155,6 +165,8 @@ fun AccountContent(
     onOpenEmailVerification: () -> Unit,
     onSignOut: () -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    /** Whether to offer the LogDate Cloud plan. It is only ever shown for an account on LogDate Cloud. */
+    showPlan: Boolean = false,
 ) {
     var confirmSignOut by remember { mutableStateOf(false) }
 
@@ -199,7 +211,7 @@ fun AccountContent(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.lg),
                         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
                     ) {
-                        HostingAndSessionSections(state, destinations, onSignOut = { confirmSignOut = true })
+                        HostingAndSessionSections(state, destinations, showPlan = showPlan, onSignOut = { confirmSignOut = true })
                     }
                 },
                 standardContent = {
@@ -208,7 +220,7 @@ fun AccountContent(
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
                                 SignInAndRecoverySection(state, destinations, onOpenEmailVerification)
-                                HostingAndSessionSections(state, destinations, onSignOut = { confirmSignOut = true })
+                                HostingAndSessionSections(state, destinations, showPlan = showPlan, onSignOut = { confirmSignOut = true })
                             }
                         }
                     }
@@ -344,6 +356,7 @@ private fun SignInAndRecoverySection(
 private fun HostingAndSessionSections(
     state: AccountUiState.SignedIn,
     destinations: AccountDestinations,
+    showPlan: Boolean,
     onSignOut: () -> Unit,
 ) {
     SettingsSection(
@@ -356,6 +369,15 @@ private fun HostingAndSessionSections(
             icon = { Icon(Icons.Outlined.Cloud, contentDescription = null) },
             onClick = destinations.onHosting,
         )
+        // Plans belong to LogDate Cloud. Another provider's terms are its own.
+        if (showPlan && state.server.isLogDateCloud) {
+            SettingsNavigationItem(
+                title = stringResource(Res.string.cloud_plan_title),
+                description = stringResource(Res.string.cloud_plan_row_description),
+                icon = { Icon(Icons.Outlined.Storage, contentDescription = null) },
+                onClick = destinations.onPlan,
+            )
+        }
     }
 
     MaterialContainer(modifier = Modifier.padding(horizontal = Spacing.lg)) {

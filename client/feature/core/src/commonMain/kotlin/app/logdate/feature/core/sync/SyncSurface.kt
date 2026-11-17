@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.logdate.client.sync.BackupRequestState
+import app.logdate.feature.core.settings.ui.formatByteSize
 import app.logdate.ui.common.BannerContent
 import app.logdate.ui.common.MessageBanner
 import logdate.client.feature.core.generated.resources.Res
@@ -50,9 +51,14 @@ import logdate.client.feature.core.generated.resources.sync_account_media_too_la
 import logdate.client.feature.core.generated.resources.sync_account_storage_unsupported
 import logdate.client.feature.core.generated.resources.sync_banner_conflicts
 import logdate.client.feature.core.generated.resources.sync_banner_enter_recovery_phrase
+import logdate.client.feature.core.generated.resources.sync_banner_fix_payment
 import logdate.client.feature.core.generated.resources.sync_banner_manage
 import logdate.client.feature.core.generated.resources.sync_banner_needs_recovery
+import logdate.client.feature.core.generated.resources.sync_banner_no_plan
+import logdate.client.feature.core.generated.resources.sync_banner_payment_due
+import logdate.client.feature.core.generated.resources.sync_banner_plan_full
 import logdate.client.feature.core.generated.resources.sync_banner_review
+import logdate.client.feature.core.generated.resources.sync_banner_see_plans
 import logdate.client.feature.core.generated.resources.sync_banner_session_expired
 import logdate.client.feature.core.generated.resources.sync_banner_storage_full
 import logdate.client.feature.core.generated.resources.sync_banner_storage_full_items
@@ -331,16 +337,18 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
 
         is SyncPresentation.StorageError -> {
             BannerVisual(
-                message =
-                    if (pendingCount > 0) {
-                        pluralStringResource(Res.plurals.sync_banner_storage_full_items, pendingCount, pendingCount)
-                    } else {
-                        stringResource(Res.string.sync_banner_storage_full)
-                    },
+                message = storageRefusalMessage(cause, pendingCount),
                 icon = Icons.Filled.Storage,
                 containerColor = scheme.errorContainer,
                 contentColor = scheme.onErrorContainer,
-                action = stringResource(Res.string.sync_banner_manage) to SyncAction.ManageStorage,
+                action =
+                    stringResource(
+                        when (cause) {
+                            is StorageRefusal.Full -> Res.string.sync_banner_manage
+                            StorageRefusal.NoPlan -> Res.string.sync_banner_see_plans
+                            StorageRefusal.PaymentDue -> Res.string.sync_banner_fix_payment
+                        },
+                    ) to SyncAction.ManageStorage,
                 dismissible = true,
             )
         }
@@ -387,3 +395,28 @@ private fun RotatingSyncIcon(tint: Color) {
                 .graphicsLayer { rotationZ = rotation },
     )
 }
+
+/** What a storage refusal says: which limit was hit, in the plan's own numbers when they are known. */
+@Composable
+private fun storageRefusalMessage(
+    cause: StorageRefusal,
+    pendingCount: Int,
+): String =
+    when (cause) {
+        is StorageRefusal.Full -> {
+            val included = cause.includedBytes
+            when {
+                included != null && included > 0 -> stringResource(Res.string.sync_banner_plan_full, formatByteSize(included))
+                pendingCount > 0 -> pluralStringResource(Res.plurals.sync_banner_storage_full_items, pendingCount, pendingCount)
+                else -> stringResource(Res.string.sync_banner_storage_full)
+            }
+        }
+
+        StorageRefusal.NoPlan -> {
+            stringResource(Res.string.sync_banner_no_plan)
+        }
+
+        StorageRefusal.PaymentDue -> {
+            stringResource(Res.string.sync_banner_payment_due)
+        }
+    }
