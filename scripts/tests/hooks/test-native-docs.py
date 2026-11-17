@@ -19,18 +19,6 @@ class SecretDocumentationTests(unittest.TestCase):
                 ROOT / "scripts/validation/sensitive-content.sh",
                 common.with_name("sensitive-content.sh"),
             )
-            # Exercise the complete tracked formatter path along with the native secret guards.
-            shutil.copytree(
-                ROOT / ".hypertext/formatting", root / ".hypertext/formatting"
-            )
-            shutil.copytree(
-                ROOT / ".hypertext/formatter-tools",
-                root / ".hypertext/formatter-tools",
-                ignore=shutil.ignore_patterns("__pycache__", "bin"),
-            )
-            shutil.copyfile(
-                ROOT / ".hypertext/formatters.json", root / ".hypertext/formatters.json"
-            )
 
             def stage(file):
                 name = str(file.relative_to(root))
@@ -55,9 +43,8 @@ class SecretDocumentationTests(unittest.TestCase):
                     check=True,
                 )
 
-            for file in (root / ".hypertext").rglob("*"):
-                if file.is_file():
-                    stage(file)
+            for file in common.parent.iterdir():
+                stage(file)
             document = root / path
             document.parent.mkdir(parents=True, exist_ok=True)
             document.write_text("Company signing instructions.\n")

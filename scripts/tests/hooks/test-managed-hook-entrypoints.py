@@ -1,10 +1,15 @@
-"""Exercise the tracked hook entrypoints without a plugin install or app build.
+"""Exercise the tracked hook entrypoints in a fixture checkout, without an app build.
 
-Only excluded .gitignore content changes after fixture bootstrap, so the real
-staged formatter runs without downloading tools. Product push checks execute a
-recording gradlew fixture; the product wrappers and their pinned hashes are real.
+The entrypoints run LogDate's own checks in .hypertext/git-product and the Studio's
+shared validator, `hypertext verify`, which comes from the Studio command on the
+PATH rather than from this repository. A recording stand-in takes its place here,
+so these tests cover what the repository owns: the order of the stages, that each
+failure stops the hook, and that both push checks receive the same ref transaction.
+The product stages and their scripts are the real ones. Product push checks run a
+recording gradlew fixture.
 """
 
+import json
 import os
 from pathlib import Path
 import shlex
@@ -15,24 +20,42 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
-COAUTHOR = "Co-authored-by: Codex <noreply@openai.com>"
 VALID_MESSAGE = (
     "chore(dx): keep managed hooks available in each checkout\n\n"
-    "Use repository-owned checks so commits do not depend on a plugin cache.\n\n"
-    + COAUTHOR
-    + "\n"
+    "Use repository-owned checks so commits do not depend on a plugin cache.\n"
 )
+SHARED_VALIDATOR = """#!{python}
+import json, os, sys
+calls = os.path.join(os.environ["FIXTURE_STATE"], "hypertext-calls")
+call = {{"arguments": sys.argv[1:]}}
+if "--git-prepush" in sys.argv:
+    call["input"] = sys.stdin.buffer.read().hex()
+with open(calls, "a") as stream:
+    stream.write(json.dumps(call) + "\\n")
+failing = os.environ.get("FIXTURE_FAIL_SHARED_CHECK")
+if failing and failing in sys.argv:
+    print("shared validator rejected " + failing, file=sys.stderr)
+    sys.exit(1)
+"""
 
 
 class ManagedHookEntrypointTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="managed-hook-fixture-")
         self.addCleanup(self.temporary.cleanup)
-        self.repo = Path(self.temporary.name)
+        self.repo = Path(self.temporary.name) / "checkout"
+        self.state = Path(self.temporary.name) / "state"
+        self.repo.mkdir()
+        self.state.mkdir()
+        tools = Path(self.temporary.name) / "bin"
+        tools.mkdir()
+        validator = tools / "hypertext"
+        validator.write_text(SHARED_VALIDATOR.format(python=sys.executable))
+        validator.chmod(0o755)
         self.environment = {
             key: value
             for key, value in os.environ.items()
-            if not key.startswith(("GIT_", "HYPERTEXT_"))
+            if not key.startswith(("GIT_", "HYPERTEXT_", "FIXTURE_"))
         }
         self.environment.update(
             {
@@ -40,10 +63,10 @@ class ManagedHookEntrypointTests(unittest.TestCase):
                 "GIT_CONFIG_GLOBAL": os.devnull,
                 "GIT_TERMINAL_PROMPT": "0",
                 "PYTHONDONTWRITEBYTECODE": "1",
-                "HYPERTEXT_AGENT_COAUTHOR": "Codex <noreply@openai.com>",
-                "PATH": str(Path(sys.executable).parent)
-                + os.pathsep
-                + os.environ["PATH"],
+                "FIXTURE_STATE": str(self.state),
+                "PATH": os.pathsep.join(
+                    [str(tools), str(Path(sys.executable).parent), os.environ["PATH"]]
+                ),
             }
         )
         self.run_command("git", "init", "-q", "--initial-branch=main", ".")
@@ -51,47 +74,26 @@ class ManagedHookEntrypointTests(unittest.TestCase):
         self.run_command("git", "config", "user.email", "fixture@hypertext.studio")
         self.run_command("git", "config", "commit.gpgsign", "false")
         self.message = self.repo / ".git/fixture-message"
-        self.message.write_text(VALID_MESSAGE)
-        # Seed one tracked path before installing hooks: restore --staged .
-        # rejects an empty tree. All tested staging uses the atomic chain below.
-        seed = "# Fixture bootstrap\n"
-        bootstrap = (
-            "commit refs/heads/main\n"
-            "committer Hook Fixture <fixture@hypertext.studio> 0 +0000\n"
-            f"data {len(VALID_MESSAGE.encode())}\n{VALID_MESSAGE}\n"
-            f"M 100644 inline .gitignore\ndata {len(seed.encode())}\n{seed}\n\n"
-        )
-        self.run_command("git", "fast-import", "--quiet", input=bootstrap)
-        source_directories = (
-            ".githooks",
-            ".hypertext/formatting",
-            ".hypertext/formatter-tools",
-            ".hypertext/git-product",
-            "scripts/validation",
-        )
         tracked = subprocess.check_output(
-            ["git", "-C", str(ROOT), "ls-files", "-z", "--", *source_directories],
+            [
+                "git",
+                "-C",
+                str(ROOT),
+                "ls-files",
+                "-z",
+                "--",
+                ".githooks",
+                ".hypertext",
+                "scripts/validation",
+                "run",
+                ".gitignore",
+            ],
             text=True,
         ).split("\0")
         for relative in filter(None, tracked):
-            if Path(relative).suffix in {".jar", ".class", ".pyc"}:
-                continue
-            source = ROOT / relative
-            if not source.is_file():
-                continue
             destination = self.repo / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, destination)
-        for name in (
-            ".hypertext/commits.json",
-            ".hypertext/git-hooks.json",
-            ".hypertext/formatters.json",
-            ".gitignore",
-        ):
-            shutil.copy2(ROOT / name, self.repo / name)
-        driver = ROOT / ".hypertext/git-hook.py"
-        if driver.exists():
-            shutil.copy2(driver, self.repo / ".hypertext/git-hook.py")
+            shutil.copy2(ROOT / relative, destination)
         (self.repo / "gradlew").write_text(
             "#!/bin/sh\n"
             'printf "%s|%s\\n" "$JAVA_TOOL_OPTIONS" "$*" >> .git/gradle-invocations\n'
@@ -103,34 +105,31 @@ class ManagedHookEntrypointTests(unittest.TestCase):
             for path in self.repo.rglob("*")
             if path.is_file() and ".git" not in path.relative_to(self.repo).parts
         )
-        # The formatter prepares a checkout's tools on its first commit. The fixture
-        # has no real toolchain to prepare from, so it carries the source checkout's
-        # prepared runtime, which points at the same shared tool caches. The file is
-        # ignored, so it is copied after the list of paths to commit is taken.
-        prepared = ROOT / ".hypertext/formatter-tools/runtime.json"
-        if prepared.is_file():
-            shutil.copy2(
-                prepared, self.repo / ".hypertext/formatter-tools/runtime.json"
-            )
-        bootstrap = self.commit(paths, VALID_MESSAGE)
-        self.assertEqual(bootstrap.returncode, 0, bootstrap.stdout + bootstrap.stderr)
-        self.base = self.run_command("git", "rev-parse", "HEAD").stdout.strip()
+        # The checkout is committed before the hooks are installed. Its first commit stages
+        # directly: restore --staged . rejects a repository with no commits yet.
+        self.message.write_text(VALID_MESSAGE)
+        self.run_command("git", "add", "--", *paths)
+        self.run_command("git", "commit", "-q", "-F", str(self.message))
+        self.base = self.head()
         self.run_command("git", "update-ref", "refs/remotes/origin/main", self.base)
         self.run_command("git", "config", "core.hooksPath", ".githooks")
 
-    def run_command(self, *arguments, check=True, input=None):
+    def run_command(self, *arguments, check=True, input=None, failing=None):
+        environment = dict(self.environment)
+        if failing:
+            environment["FIXTURE_FAIL_SHARED_CHECK"] = failing
         return subprocess.run(
             arguments,
             cwd=self.repo,
-            env=self.environment,
+            env=environment,
             input=input,
-            text=True,
+            text=not isinstance(input, bytes),
             capture_output=True,
             check=check,
             timeout=60,
         )
 
-    def commit(self, paths, message, check=False):
+    def commit(self, paths, message, failing=None):
         self.message.write_text(message)
         # Keep reset, explicit staging and commit in the same atomic shell chain.
         command = (
@@ -139,78 +138,120 @@ class ManagedHookEntrypointTests(unittest.TestCase):
             + " && git commit -q -F "
             + shlex.quote(str(self.message))
         )
-        return self.run_command("sh", "-c", command, check=check)
+        return self.run_command("sh", "-c", command, check=False, failing=failing)
 
-    def change_ignore(self):
+    def head(self):
+        return self.run_command("git", "rev-parse", "HEAD").stdout.strip()
+
+    def shared_calls(self):
+        calls = self.state / "hypertext-calls"
+        if not calls.exists():
+            return []
+        return [json.loads(line) for line in calls.read_text().splitlines()]
+
+    def shared_modes(self):
+        return [
+            argument
+            for call in self.shared_calls()
+            for argument in call["arguments"]
+            if argument in ("--git-precommit", "--git-message", "--git-prepush")
+        ]
+
+    def gradle_calls(self):
+        log = self.repo / ".git/gradle-invocations"
+        return log.read_text().splitlines() if log.exists() else []
+
+    def change_ignore(self, line="managed-hook-fixture-output/"):
         with (self.repo / ".gitignore").open("a") as stream:
-            stream.write("\nmanaged-hook-fixture-output/\n")
+            stream.write("\n" + line + "\n")
 
     def valid_commit(self):
         self.change_ignore()
         result = self.commit([".gitignore"], VALID_MESSAGE)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        return self.run_command("git", "rev-parse", "HEAD").stdout.strip()
+        return self.head()
 
-    def pre_push(self, transaction):
+    def replace_product_stage(self, hook, body):
+        stage = self.repo / ".hypertext/git-product" / hook
+        stage.write_text("#!/bin/sh\n" + body + "\n")
+        stage.chmod(0o755)
+
+    def pre_push(self, transaction, failing=None):
         return self.run_command(
             str(self.repo / ".githooks/pre-push"),
             "origin",
             str(self.repo / ".git/unused-destination"),
             input=transaction,
             check=False,
+            failing=failing,
         )
 
     def transaction(self, head):
         return f"refs/heads/main {head} refs/heads/main {self.base}\n"
 
-    def test_native_commit_accepts_studio_identity_and_preserves_codex_attribution(
-        self,
-    ):
+    def test_commit_runs_product_checks_then_the_shared_validator(self):
         self.valid_commit()
+        self.assertEqual(self.shared_modes(), ["--git-precommit", "--git-message"])
+        for call in self.shared_calls():
+            self.assertEqual(call["arguments"][:2], ["verify", "--repo"])
+            self.assertEqual(Path(call["arguments"][2]).resolve(), self.repo.resolve())
         message = self.run_command("git", "log", "-1", "--format=%B").stdout
-        self.assertIn(COAUTHOR, message)
         self.assertEqual(message.strip(), VALID_MESSAGE.strip())
         self.assertEqual(self.run_command("git", "diff", "--cached").stdout, "")
 
-    def test_native_commit_rejects_non_studio_identity(self):
-        self.run_command("git", "config", "user.email", "fixture@example.com")
+    def test_shared_validator_rejecting_the_message_stops_the_commit(self):
         self.change_ignore()
-        result = self.commit([".gitignore"], VALID_MESSAGE)
+        result = self.commit([".gitignore"], VALID_MESSAGE, failing="--git-message")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("outside @hypertext.studio", result.stdout + result.stderr)
-        self.assertEqual(
-            self.run_command("git", "rev-parse", "HEAD").stdout.strip(), self.base
-        )
+        self.assertIn("shared validator rejected --git-message", result.stderr)
+        self.assertEqual(self.head(), self.base)
 
-    def test_native_commit_rejects_maintenance_without_informative_body(self):
+    def test_shared_validator_rejecting_the_staged_files_stops_the_commit(self):
         self.change_ignore()
-        result = self.commit(
-            [".gitignore"],
-            "chore(dx): keep managed hooks portable\n\n" + COAUTHOR + "\n",
-        )
+        result = self.commit([".gitignore"], VALID_MESSAGE, failing="--git-precommit")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("chore needs a body", result.stdout + result.stderr)
-        self.assertEqual(
-            self.run_command("git", "rev-parse", "HEAD").stdout.strip(), self.base
-        )
+        self.assertIn("shared validator rejected --git-precommit", result.stderr)
+        self.assertEqual(self.shared_modes(), ["--git-precommit"])
+        self.assertEqual(self.head(), self.base)
 
-    def test_native_product_secret_guard_still_runs(self):
-        with (self.repo / ".gitignore").open("a") as stream:
-            stream.write("\n-----BEGIN " + "PRIVATE KEY-----\n")
+    def test_product_secret_guard_runs_before_the_shared_validator(self):
+        self.change_ignore("-----BEGIN " + "PRIVATE KEY-----")
         result = self.commit([".gitignore"], VALID_MESSAGE)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("SENSITIVE CONTENT", result.stdout + result.stderr)
+        self.assertEqual(self.shared_modes(), [])
+        self.assertEqual(self.head(), self.base)
 
-    def test_push_transaction_reaches_shared_validator_and_product_checks(self):
+    def test_failing_product_stage_keeps_its_exit_status(self):
+        self.replace_product_stage(
+            "pre-commit", "echo product-check-failed >&2; exit 23"
+        )
+        result = self.run_command(
+            "sh", str(self.repo / ".githooks/pre-commit"), check=False
+        )
+        self.assertEqual(result.returncode, 23, result.stdout + result.stderr)
+        self.assertIn("product-check-failed", result.stderr)
+        self.assertEqual(self.shared_modes(), [])
+
+    def test_push_runs_shared_validation_then_product_checks(self):
         head = self.valid_commit()
-        malformed = self.pre_push("malformed transaction\n")
-        self.assertNotEqual(malformed.returncode, 0)
-        self.assertIn("Malformed native pre-push", malformed.stdout + malformed.stderr)
-        log = self.repo / ".git/gradle-invocations"
-        self.assertFalse(log.exists(), "Product checks must follow shared validation")
-        result = self.pre_push(self.transaction(head))
+        transaction = self.transaction(head)
+        result = self.pre_push(transaction)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        calls = log.read_text().splitlines()
+        push = [c for c in self.shared_calls() if "--git-prepush" in c["arguments"]]
+        self.assertEqual(len(push), 1)
+        arguments = push[0]["arguments"]
+        self.assertEqual(
+            arguments[arguments.index("--git-remote") :],
+            [
+                "--git-remote",
+                "origin",
+                "--git-remote-url",
+                str(self.repo / ".git/unused-destination"),
+            ],
+        )
+        self.assertEqual(bytes.fromhex(push[0]["input"]), transaction.encode())
+        calls = self.gradle_calls()
         self.assertEqual(len(calls), 2, calls)
         self.assertTrue(
             all("-Djava.awt.headless=true|--no-daemon " in call for call in calls),
@@ -218,6 +259,28 @@ class ManagedHookEntrypointTests(unittest.TestCase):
         )
         self.assertIn(":app:android-main:assembleDebug", calls[0])
         self.assertIn("checkOsIntegrationScreenshotCoverage", calls[1])
+
+    def test_push_rejected_by_shared_validation_skips_product_checks(self):
+        head = self.valid_commit()
+        result = self.pre_push(self.transaction(head), failing="--git-prepush")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("shared validator rejected --git-prepush", result.stderr)
+        self.assertEqual(self.gradle_calls(), [])
+
+    def test_push_checks_receive_the_exact_native_transaction(self):
+        self.replace_product_stage("pre-push", "cat > .git/product-refs")
+        transaction = (
+            b"(delete) "
+            + b"0" * 40
+            + b" refs/heads/obsolete-\xff "
+            + b"1" * 40
+            + b"\r\n"
+        )
+        result = self.pre_push(transaction)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual((self.repo / ".git/product-refs").read_bytes(), transaction)
+        push = [c for c in self.shared_calls() if "--git-prepush" in c["arguments"]]
+        self.assertEqual(bytes.fromhex(push[0]["input"]), transaction)
 
     def test_product_push_failure_is_not_swallowed(self):
         head = self.valid_commit()
