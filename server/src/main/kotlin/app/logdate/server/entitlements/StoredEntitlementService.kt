@@ -137,9 +137,14 @@ internal object AccountEntitlementsTable : Table("account_entitlements") {
 
     // `entitlementSource` rather than `source` because Exposed's [Table] already exposes a `source`
     // member; shadowing it changes subquery-building semantics in subtle ways.
+    @Suppress("unused") // Kept: declaring the column puts it in the table Exposed creates; billing PR #240 reads it
     val entitlementSource: Column<String> = text("source")
+
+    @Suppress("unused") // Kept: declaring the column puts it in the table Exposed creates; billing PR #240 reads it
     val externalSubscriptionId = text("external_subscription_id").nullable()
     val status = text("status")
+
+    @Suppress("unused") // Kept: declaring the column puts it in the table Exposed creates; billing PR #240 reads it
     val currentPeriodEnd: Column<Instant?> = timestamp("current_period_end").nullable()
     val updatedAt: Column<Instant> = timestamp("updated_at")
 

@@ -15,6 +15,7 @@ import javax.crypto.spec.SecretKeySpec
  * Rejecting a request when signing fails is the whole point of the webhook endpoint: without this
  * check any unauthenticated caller could forge "user X upgraded to Pro" events.
  */
+@Suppress("unused") // Kept: the Stripe webhook handler in billing PR #240 verifies requests with it
 class StripeSignatureVerifier(
     private val secret: String,
     private val toleranceSeconds: Long = DEFAULT_TOLERANCE_SECONDS,
