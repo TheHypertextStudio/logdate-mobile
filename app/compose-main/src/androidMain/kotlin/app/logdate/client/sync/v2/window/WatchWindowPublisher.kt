@@ -23,15 +23,20 @@ import app.logdate.client.sync.v2.receipts.PhoneDeliveryPeers
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -135,12 +140,27 @@ class WatchWindowPublisher(
 
     private class AudienceChanged : IllegalStateException()
 
-    /** Publishes on every change to the notes, when the watch starts taking the window, and at each day start. */
-    @OptIn(FlowPreview::class)
+    /**
+     * Publishes when the watch starts or stops taking the window, and while it takes it, on every
+     * change to the notes and at each day start.
+     *
+     * Notes are watched only while the watch takes the window: this runs for the whole life of the
+     * process, and reading every note again on each journal change would otherwise compete with the
+     * screens for the database on phones that have no watch linked.
+     */
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     fun start(scope: CoroutineScope): Job =
         scope.launch {
-            merge(notes.allNotesObserved.map { }, moments.map { }, momentDeletions.map { }, active.map { }, changes, dayStarts())
-                .debounce(SETTLE_MS)
+            active
+                .distinctUntilChanged()
+                .flatMapLatest { taking ->
+                    if (taking) {
+                        merge(notes.allNotesObserved.map { }, moments.map { }, momentDeletions.map { }, changes, dayStarts())
+                            .onStart { emit(Unit) }
+                    } else {
+                        flowOf(Unit)
+                    }
+                }.debounce(SETTLE_MS)
                 .collect { publishLogged() }
         }
 
