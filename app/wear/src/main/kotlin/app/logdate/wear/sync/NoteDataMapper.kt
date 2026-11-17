@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package app.logdate.wear.sync
 
 /**

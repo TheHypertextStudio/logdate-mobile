@@ -105,6 +105,4 @@ class WearVoiceNotePlayer(
         engine.stop()
         _state.value = WearPlaybackUiState.Idle
     }
-
-    fun openBluetoothSettings() = outputs.launchBluetoothSettings()
 }

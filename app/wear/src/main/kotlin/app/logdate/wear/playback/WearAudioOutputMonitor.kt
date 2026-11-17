@@ -1,11 +1,9 @@
 package app.logdate.wear.playback
 
 import android.content.Context
-import android.content.Intent
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-import android.provider.Settings
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,14 +25,9 @@ sealed interface AudioOutputState {
     data object Unavailable : AudioOutputState
 }
 
-private const val BLUETOOTH_FILTER_TYPE_AUDIO = 1
-
 /** What playback needs to know about where audio can go. */
 interface WearAudioOutputs {
     val outputState: StateFlow<AudioOutputState>
-
-    /** Opens the system Bluetooth settings so the user can connect audio devices. */
-    fun launchBluetoothSettings()
 }
 
 /**
@@ -71,20 +64,6 @@ class WearAudioOutputMonitor(
      */
     fun unregister() {
         audioManager.unregisterAudioDeviceCallback(deviceCallback)
-    }
-
-    /**
-     * Opens the system Bluetooth settings to let the user connect audio devices.
-     */
-    override fun launchBluetoothSettings() {
-        val intent =
-            Intent(Settings.ACTION_BLUETOOTH_SETTINGS).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                putExtra("EXTRA_CONNECTION_ONLY", true)
-                putExtra("EXTRA_CLOSE_ON_CONNECT", true)
-                putExtra("android.bluetooth.devicepicker.extra.FILTER_TYPE", BLUETOOTH_FILTER_TYPE_AUDIO)
-            }
-        context.startActivity(intent)
     }
 
     private fun refreshState() {

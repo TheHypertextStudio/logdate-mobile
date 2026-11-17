@@ -52,35 +52,6 @@ class StorageSpaceChecker(
         }
 
     /**
-     * Gets the total storage capacity.
-     * Useful for debugging and logging.
-     *
-     * @return Total storage capacity in bytes
-     */
-    suspend fun getTotalStorageCapacity(): Long =
-        withContext(Dispatchers.IO) {
-            try {
-                // Check app-specific directory
-                val externalDir = context.getExternalFilesDir(null)
-                if (externalDir != null) {
-                    val stats = StatFs(externalDir.absolutePath)
-                    val totalBlocks = stats.blockCountLong
-                    val blockSize = stats.blockSizeLong
-                    return@withContext totalBlocks * blockSize
-                }
-
-                // Fall back to cache directory
-                val stats = StatFs(context.cacheDir.absolutePath)
-                val totalBlocks = stats.blockCountLong
-                val blockSize = stats.blockSizeLong
-                return@withContext totalBlocks * blockSize
-            } catch (e: Exception) {
-                Napier.e("Error checking total storage capacity", e)
-                return@withContext 0L
-            }
-        }
-
-    /**
      * Formats a byte size into a human-readable string.
      * Used for logging and debugging.
      *
@@ -94,19 +65,4 @@ class StorageSpaceChecker(
             bytes < 1024 * 1024 * 1024 -> "${String.format("%.2f", bytes / (1024.0 * 1024.0))} MB"
             else -> "${String.format("%.2f", bytes / (1024.0 * 1024.0 * 1024.0))} GB"
         }
-
-    /**
-     * Estimates recording file size based on duration and bitrate.
-     *
-     * @param durationSeconds Recording duration in seconds
-     * @param bitRate Bit rate in bits per second (default: 128000 for decent quality AAC)
-     * @return Estimated file size in bytes
-     */
-    fun estimateRecordingSize(
-        durationSeconds: Int,
-        bitRate: Int = 128000,
-    ): Long {
-        // Convert bit rate (bits per second) to bytes per second and multiply by duration
-        return (bitRate / 8L) * durationSeconds
-    }
 }

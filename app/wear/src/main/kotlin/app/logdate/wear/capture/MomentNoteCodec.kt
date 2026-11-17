@@ -26,9 +26,6 @@ object MomentNoteCodec {
     /** The text a check-in of [feeling] is saved as. */
     fun encode(feeling: Feeling): String = "${MoodNoteTag.PREFIX}${feeling.tag} Feeling ${feeling.tag}"
 
-    /** The feeling [content] records, or null when it is not a check-in or its tag is unknown. */
-    fun feelingOf(content: String): Feeling? = MoodNoteTag.tagOf(content)?.let(Feeling::fromTag)
-
     fun classify(note: JournalNote): MomentNoteKind =
         when (note) {
             is JournalNote.Text -> if (MoodNoteTag.isFeeling(note)) MomentNoteKind.FEELING else MomentNoteKind.TEXT

@@ -18,7 +18,6 @@ class WearRouteTest {
                 WearRoute.Settings,
                 WearRoute.Moment(id = Uuid.random().toString()),
                 WearRoute.CaptureSheet,
-                WearRoute.PlayOn,
                 WearRoute.Archive,
                 WearRoute.PhoneCamera,
             )

@@ -253,16 +253,6 @@ class WearVoiceNotePlayerTest {
             assertEquals(AudioOutputState.BluetoothOnly, player.outputState.value)
         }
 
-    @Test
-    fun `bluetooth settings open through the output monitor`() =
-        runTest(UnconfinedTestDispatcher()) {
-            val player = player()
-
-            player.openBluetoothSettings()
-
-            assertEquals(1, outputs.bluetoothSettingsOpened)
-        }
-
     private fun audioNote(durationMs: Long) =
         JournalNote.Audio(
             uid = Uuid.random(),

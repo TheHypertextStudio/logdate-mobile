@@ -155,9 +155,7 @@ class RecorderViewModel(
         decision = GestureDecision.NONE
         when (started) {
             // The start is still running; it discards the recording when it finishes.
-            null -> {
-                Unit
-            }
+            null -> {}
 
             true -> {
                 mutableState.value = RecorderState.Ready
@@ -270,9 +268,7 @@ class RecorderViewModel(
                 applicationScope.launch { stopAndSaveDetached() }
             }
 
-            current is RecorderState.Live -> {
-                Unit
-            }
+            current is RecorderState.Live -> {}
 
             current == RecorderState.Arming -> {
                 val decided = decision == GestureDecision.HOLD || decision == GestureDecision.LOCK || decision == GestureDecision.RELEASED
@@ -317,9 +313,7 @@ class RecorderViewModel(
                 mutableState.value = RecorderState.Ready
             }
 
-            GestureDecision.PENDING -> {
-                Unit
-            }
+            GestureDecision.PENDING -> {}
 
             GestureDecision.HOLD, GestureDecision.LOCK -> {
                 applyDecision()

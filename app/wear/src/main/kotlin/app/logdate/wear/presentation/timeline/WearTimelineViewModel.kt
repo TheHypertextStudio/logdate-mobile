@@ -124,14 +124,8 @@ class WearTimelineViewModel(
 
     fun stopPlayback() = player.stop()
 
-    fun openBluetoothSettings() = player.openBluetoothSettings()
-
     fun selectDay(date: LocalDate) {
         selectedDateFlow.value = date
-    }
-
-    fun clearSelection() {
-        selectedDateFlow.value = null
     }
 
     override fun onCleared() {

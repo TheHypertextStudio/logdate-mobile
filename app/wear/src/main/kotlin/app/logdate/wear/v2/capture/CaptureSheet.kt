@@ -130,7 +130,11 @@ fun CaptureConfirmation(
     )
 }
 
-/** What [CaptureConfirmation] shows, without the dialog window, for screenshots. */
+/**
+ * What [CaptureConfirmation] shows, without the dialog window, for screenshots. The screenshot
+ * tests render it, and SearchDeadCode does not count them as callers.
+ */
+@Suppress("unused", "FunctionName")
 @Composable
 fun CaptureConfirmationContent(result: CaptureResult) {
     val style = ConfirmationDialogDefaults.curvedTextStyle
@@ -145,8 +149,6 @@ fun CaptureConfirmationContent(result: CaptureResult) {
             FailureConfirmationDialogContent(curvedText = { confirmationDialogCurvedText(failed, style) })
         }
 
-        CaptureResult.NONE -> {
-            Unit
-        }
+        CaptureResult.NONE -> {}
     }
 }

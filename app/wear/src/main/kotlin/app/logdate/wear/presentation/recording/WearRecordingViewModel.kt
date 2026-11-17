@@ -173,9 +173,7 @@ class WearRecordingViewModel(
                 unsavedPath?.let { path -> applicationScope.launch { saver.save(path, recorder.elapsed.value) } }
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
         super.onCleared()
     }
@@ -204,9 +202,7 @@ class WearRecordingViewModel(
                 stopAndSave()
             }
 
-            RecordingPhase.STARTING, RecordingPhase.SAVING, RecordingPhase.TOO_SHORT -> {
-                Unit
-            }
+            RecordingPhase.STARTING, RecordingPhase.SAVING, RecordingPhase.TOO_SHORT -> {}
         }
     }
 

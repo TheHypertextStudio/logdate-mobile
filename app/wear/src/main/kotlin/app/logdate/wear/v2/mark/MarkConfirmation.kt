@@ -39,7 +39,12 @@ fun MarkConfirmation(
     )
 }
 
-/** What [MarkConfirmation] shows, without the dialog window, for screenshots. */
+/**
+ * What [MarkConfirmation] shows, without the dialog window, for screenshots.
+ *
+ * Rendered by app/wear screenshotTest MarkConfirmationScreenshots, which SearchDeadCode does not treat as a root.
+ */
+@Suppress("unused", "FunctionName")
 @Composable
 fun MarkConfirmationContent(feedback: MarkFeedback) {
     val style = ConfirmationDialogDefaults.curvedTextStyle
@@ -54,9 +59,7 @@ fun MarkConfirmationContent(feedback: MarkFeedback) {
             FailureConfirmationDialogContent(curvedText = { confirmationDialogCurvedText(failed, style) })
         }
 
-        MarkFeedback.NONE -> {
-            Unit
-        }
+        MarkFeedback.NONE -> {}
     }
 }
 

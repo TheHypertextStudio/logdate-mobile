@@ -34,10 +34,7 @@ import app.logdate.wear.R
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun WearSettingsScreen(
-    onNavigateBack: () -> Unit,
-    viewModel: WearSettingsViewModel = koinViewModel(),
-) {
+fun WearSettingsScreen(viewModel: WearSettingsViewModel = koinViewModel()) {
     val settingsState by viewModel.uiState.collectAsState()
 
     // The location permission can change in system settings while this screen is away.

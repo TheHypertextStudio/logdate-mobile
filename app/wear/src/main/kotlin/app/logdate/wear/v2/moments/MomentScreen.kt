@@ -552,7 +552,12 @@ private fun DeleteDialog(
     )
 }
 
-/** What [DeleteDialog] shows, without the dialog's entrance animation, for screenshots. */
+/**
+ * What [DeleteDialog] shows, without the dialog's entrance animation, for screenshots.
+ *
+ * Rendered by app/wear screenshotTest MomentScreenshots, which SearchDeadCode does not treat as a root.
+ */
+@Suppress("unused", "FunctionName")
 @Composable
 fun DeleteDialogContent(
     onDismiss: () -> Unit,
