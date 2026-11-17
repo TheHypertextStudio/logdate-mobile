@@ -25,15 +25,15 @@ those devices people expect the same input conventions as any desktop app:
 
 ### Keyboard shortcuts
 
-| Shortcut | Action | Where |
-| --- | --- | --- |
-| Ctrl+N | New entry | Anywhere |
-| Ctrl+Shift+R | Record a voice entry | Anywhere |
-| Ctrl+F | Search | Anywhere |
-| Ctrl+, | Settings | Anywhere |
-| Ctrl+S | Save entry | Editor |
-| Esc | Close the editor | Editor |
-| Ctrl+1 to Ctrl+5 | Open the first to fifth Home tab, in the order the navigation shows them | Home |
+| Shortcut         | Action                                                                   | Where    |
+| ---------------- | ------------------------------------------------------------------------ | -------- |
+| Ctrl+N           | New entry                                                                | Anywhere |
+| Ctrl+Shift+R     | Record a voice entry                                                     | Anywhere |
+| Ctrl+F           | Search                                                                   | Anywhere |
+| Ctrl+,           | Settings                                                                 | Anywhere |
+| Ctrl+S           | Save entry                                                               | Editor   |
+| Esc              | Close the editor                                                         | Editor   |
+| Ctrl+1 to Ctrl+5 | Open the first to fifth Home tab, in the order the navigation shows them | Home     |
 
 Planned: Ctrl+Shift+N for a new editor window.
 
@@ -86,21 +86,21 @@ And on an entry in a day, opened beside the timeline:
 
 A photo copied in another app and pasted from the text menu on a phone:
 
-| The text menu | Once pasted |
-| --- | --- |
+| The text menu                                                                                                                                                                           | Once pasted                                                                                                                                                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | ![A new entry with the text menu open over its empty text field, showing Paste](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/paste-menu--phone-api37.png) | ![The entry with the pasted photo of a dog wrapped in a blanket](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/paste-menu-photo--phone-api37.png) |
 
 Gboard suggests a copied image only to a field that accepts images. Tapping its suggestion sends
 the photo the same way it sends a GIF or sticker:
 
-| The keyboard's suggestion | Once sent |
-| --- | --- |
+| The keyboard's suggestion                                                                                                                                                                                | Once sent                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | ![A new entry with the keyboard open, suggesting the copied image above its keys](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/keyboard-image-suggestion--phone-api37.png) | ![The entry with the photo the keyboard sent](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/keyboard-image-inserted--phone-api37.png) |
 
 A GIF picked from Gboard's GIF panel arrives the same way, as a file in the entry:
 
-| The keyboard's GIF panel | Once sent |
-| --- | --- |
+| The keyboard's GIF panel                                                                                                                                             | Once sent                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![A new entry with Gboard's GIF panel open below it](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/keyboard-gif-panel--phone-api37.png) | ![The entry with the GIF the keyboard sent, above the still-open GIF panel](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/keyboard-gif-inserted--phone-api37.png) |
 
 The same photo pasted with Ctrl+V on a tablet with a USB keyboard:
@@ -113,15 +113,15 @@ The same photo pasted with Ctrl+V on a tablet with a USB keyboard:
 A photo dragged from the Library into a new entry in a second LogDate window on the Android 17
 desktop:
 
-| While dragging | Once dropped |
-| --- | --- |
+| While dragging                                                                                                                                                                                                                                       | Once dropped                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![The Library on the left with its photo being dragged over a new entry in an editor window on the right, which is outlined as a drop target](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/drag-out--tablet-api37.png) | ![The editor window with the photo dropped into the new entry](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/drag-out-dropped--tablet-api37.png) |
 
 A photo dragged from the Files app into a new entry, with the two side by side on the Android 17
 desktop. While it is over the editor, the editor is outlined in the theme's primary color:
 
-| While dragging | Once dropped |
-| --- | --- |
+| While dragging                                                                                                                                                                                                                                                            | Once dropped                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![The Files app on the left with a photo being dragged, its name label following the pointer, and the LogDate editor on the right outlined as a drop target](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/cross-app-drag--tablet-api37.png) | ![The editor with the dropped photo in the entry, still filed to Summer in Lisbon](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/cross-app-drop--tablet-api37.png) |
 
 ### Stylus
@@ -142,14 +142,14 @@ And once the pen lifts:
 
 A person can also start writing on two controls that open a text field rather than being one:
 
-- **The editor's "Write something" card.** Writing on it starts a text entry as soon as the pen
-  touches it, and the handwriting is typed into that entry.
+- **The entry page's Write choice.** Writing on it starts a text entry as soon as the pen touches
+  it, and the handwriting is typed into that entry.
 - **Home's search pill.** Writing on it opens search with the handwriting as the query.
 
-| While writing | Once typed |
-| --- | --- |
-| ![Writing "hello" where the Write something card was: the card opened a text entry as soon as the pen touched it, and the ink stays over the entry](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-card--tablet-api37.png) | ![A new text entry with "hello" typed in it](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-card-typed--tablet-api37.png) |
-| ![Search, opened as the pen touched Home's search bar, with "hello" handwritten over its field](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-search--tablet-api37.png) | ![Search with "hello" typed as the query and the entry it finds](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-search-typed--tablet-api37.png) |
+| While writing                                                                                                                                                                                                                                           | Once typed                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ![Writing "hello" starting on the Write choice: a text entry opened as soon as the pen touched it, and the ink stays over the choice](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-choice--tablet-api37.png) | ![A new text entry with "hello" typed in it](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-choice-typed--tablet-api37.png)               |
+| ![Search, opened as the pen touched Home's search bar, with "hello" handwritten over its field](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-search--tablet-api37.png)                                             | ![Search with "hello" typed as the query and the entry it finds](../../../screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-search-typed--tablet-api37.png) |
 
 Menus and tooltips draw in popup windows, which preview screenshots cannot render, so their
 screenshots are real captures from Android.
@@ -264,7 +264,7 @@ Handwriting needs three things on the device: a pen (or an emulator touch screen
 a keyboard that supports handwriting, and the system setting "Use stylus to write in text fields",
 which is on by default on devices that ship with a pen. Password fields never accept handwriting.
 
-Some controls only open a text field: the editor's "Write something" card and Home's search pill.
+Some controls only open a text field: the entry page's Write choice and Home's search pill.
 Writing on those uses Android's handwriting delegation. `handwritingDelegator` (client/ui) marks the
 control; when a pen starts writing on it, Android asks the keyboard to get ready for handwriting and
 calls the control's callback, which opens and focuses a text field marked `handwritingDelegate`. That
@@ -295,7 +295,7 @@ Dragging out shares only the file the person dragged, with read-only access gran
 - **Import tests:** MIME routing, partial-failure rollback, and a specific error for unreadable URIs.
 - **Stylus:** `OsSurfaceScreenshotsTest#stylusHandwriting` writes "hello" with pen events and fails
   if the keyboard does not type it into the entry, and `stylusWritingOnControls` does the same on the
-  "Write something" card and the search pill (see Updating screenshots).
+  Write choice and the search pill (see Updating screenshots).
 - **Paste and keyboard content:** `EntryDropTest` covers which Paste item the text menu offers and
   which types keyboards may send. `OsSurfaceScreenshotsTest#pastePhotoFromTextMenu` long-presses a
   new entry's text, taps Paste, and captures both steps; `#keyboardInsertsImage` taps Gboard's

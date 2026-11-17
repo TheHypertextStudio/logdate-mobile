@@ -1,2 +1,2 @@
 component=studio.hypertext.logdate.debug/app.logdate.client.EditorActivity
-app.logdate.extra.HANDOFF_DRAFT_ID=9b832096-f126-4dbb-ba99-d16e3d151078
+app.logdate.extra.HANDOFF_DRAFT_ID=c78a4fa3-ef0d-4d11-a865-d293a3bd50cb
