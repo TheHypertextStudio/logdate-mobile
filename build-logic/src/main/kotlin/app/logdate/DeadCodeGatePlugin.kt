@@ -40,18 +40,10 @@ class DeadCodeGatePlugin : Plugin<Project> {
 
 private const val DEPENDENCY_ANALYSIS = "com.autonomousapps.dependency-analysis"
 
-/**
- * Reports unused locals, never-read assignments, unused lambda parameters and discarded expressions
- * on every compilation. They are warnings until the existing ones are cleared; passing
- * `-Plogdate.deadCode.compilerErrors=true` makes them fail the compilation, which is how the gate
- * will enforce them once the code is clean.
- */
 private fun failOnUnusedLocals(project: Project) {
-    val asErrors = project.providers.gradleProperty("logdate.deadCode.compilerErrors").orNull == "true"
     project.tasks.withType(KotlinCompilationTask::class.java).configureEach {
         compilerOptions {
             extraWarnings.set(true)
-            if (!asErrors) return@compilerOptions
             freeCompilerArgs.addAll(
                 "-Xwarning-level=UNUSED_VARIABLE:error",
                 "-Xwarning-level=VARIABLE_NEVER_READ:error",
