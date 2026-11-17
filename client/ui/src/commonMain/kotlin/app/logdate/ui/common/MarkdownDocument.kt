@@ -143,9 +143,7 @@ private class MarkdownDocumentBuilder(
 
     private fun renderStructure(node: ASTNode) {
         when (node.type) {
-            MarkdownElementTypes.LINK_DEFINITION -> {
-                Unit
-            }
+            MarkdownElementTypes.LINK_DEFINITION -> {}
 
             MarkdownElementTypes.LIST_ITEM -> {
                 listItem(node)
@@ -167,14 +165,10 @@ private class MarkdownDocumentBuilder(
                 text.append('—')
             }
 
-            MarkdownTokenTypes.HARD_LINE_BREAK -> {
-                Unit
-            }
+            MarkdownTokenTypes.HARD_LINE_BREAK -> {}
 
             // The following EOL owns the newline.
-            MarkdownTokenTypes.BLOCK_QUOTE -> {
-                Unit
-            }
+            MarkdownTokenTypes.BLOCK_QUOTE -> {}
 
             GFMTokenTypes.GFM_AUTOLINK -> {
                 styled(MarkdownStyleKind.LINK, node.startOffset, node.endOffset, raw(node)) { appendRaw(node) }
@@ -264,9 +258,7 @@ private class MarkdownDocumentBuilder(
                         text.append('\n')
                     }
 
-                    else -> {
-                        Unit
-                    }
+                    else -> {}
                 }
             }
         }

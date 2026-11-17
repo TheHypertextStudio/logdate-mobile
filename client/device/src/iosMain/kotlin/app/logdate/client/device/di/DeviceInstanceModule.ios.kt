@@ -63,6 +63,6 @@ actual val deviceInstanceModule: Module =
 
         // Provide iOS-specific account manager
         single<PlatformAccountManager> {
-            IosAccountManager(KeychainWrapperImpl(serviceName = "accounts"))
+            IosAccountManager()
         }
     }

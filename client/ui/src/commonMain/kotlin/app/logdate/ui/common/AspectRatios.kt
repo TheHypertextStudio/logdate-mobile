@@ -120,11 +120,6 @@ object AspectRatios {
     val JOURNAL_COVER = RATIO_9_16
 
     /**
-     * Inverted journal ratio, used when setting height constraints.
-     */
-    val JOURNAL_COVER_INVERSE = RATIO_16_9
-
-    /**
      * Standard landscape aspect ratio for content display.
      * This ratio (16:9) is commonly used for media and widescreen content.
      */

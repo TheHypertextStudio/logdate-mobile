@@ -68,17 +68,7 @@ private fun JournalStoragePage(
         syncStatus = SyncStatus(true, baseInstant, 0, false, hasErrors = lastError != null, lastError = lastError),
         cloudArchiveStatus = CloudArchiveStatus(phase = CloudArchivePhase.COMPLETE, lastCompletedAt = baseInstant.toEpochMilliseconds()),
         isAuthenticated = true,
-        onSyncNow = {},
         onNavigateToSignIn = {},
-        quotaUsage =
-            StorageQuotaUi(
-                totalBytes = 5_000_000_000,
-                usedBytes = 1_200_000_000,
-                usagePercentage = 0.24f,
-                formattedTotal = "5 GB",
-                formattedUsed = "1.2 GB",
-            ),
-        isQuotaAvailable = true,
         snackbarHostState = remember { SnackbarHostState() },
         journalMove = journalMove,
         onUpdateApp = if (lastError != null) ({}) else null,
