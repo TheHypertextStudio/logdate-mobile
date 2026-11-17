@@ -6,7 +6,6 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -57,13 +56,6 @@ class DefaultDeviceManager(
         deviceInfo.updateAndGet {
             it.copy(id = deviceIdProvider.getDeviceId().value, lastActive = Clock.System.now())
         }
-
-    /**
-     * Updates the device's last active timestamp.
-     */
-    suspend fun updateLastActive() {
-        deviceInfo.update { it.copy(lastActive = Clock.System.now()) }
-    }
 
     /**
      * Registers this device with the cloud account.
@@ -149,7 +141,10 @@ class DefaultDeviceManager(
      * This is used for push notifications.
      *
      * @return The notification token, or null if not available
+     *
+     * App/android-main androidTest NativeInstallationTrustFixture asserts the push token is not transferred; tests are not roots
      */
+    @Suppress("unused")
     suspend fun getNotificationToken(): String? {
         val storedToken = notificationToken.value
         if (!storedToken.isNullOrEmpty()) {
@@ -166,7 +161,10 @@ class DefaultDeviceManager(
      * Updates the device notification token.
      *
      * @param token The new notification token
+     *
+     * App/android-main androidTest NativeInstallationTrustFixture seeds the source device push token; tests are not roots
      */
+    @Suppress("unused")
     suspend fun updateNotificationToken(token: String) {
         notificationToken.value = token
 

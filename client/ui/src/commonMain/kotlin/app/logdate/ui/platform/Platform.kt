@@ -23,9 +23,6 @@ enum class PlatformKind {
     ;
 
     val isApple: Boolean get() = this == Ios || this == IpadOs || this == MacCatalyst
-    val isIos: Boolean get() = this == Ios || this == IpadOs
-    val isIpad: Boolean get() = this == IpadOs
-    val isCatalyst: Boolean get() = this == MacCatalyst
 }
 
 /**

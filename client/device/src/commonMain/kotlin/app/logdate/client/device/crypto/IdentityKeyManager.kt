@@ -42,7 +42,7 @@ class IdentityKeyManager(
         combine(
             secureStorage.observeString(KEY_IDENTITY_KEY).distinctUntilChanged(),
             secureStorage.observeString(KEY_ACCOUNT_ID).distinctUntilChanged(),
-        ) { _, _ -> Unit }
+        ) { _, _ -> }
 
     /**
      * Checks if this device has already been set up with an identity key.

@@ -14,7 +14,6 @@ import org.koin.core.module.Module
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import java.net.InetAddress
-import java.util.Properties
 
 /**
  * Desktop implementation of device identity module.
@@ -39,26 +38,6 @@ actual val deviceIdentityModule: Module =
 
         // Unified device manager
         single<DefaultDeviceManager> {
-            // Create desktop-specific platform info provider
-            val platformInfoProvider = {
-                val systemProps = Properties()
-                systemProps.putAll(System.getProperties())
-
-                mapOf(
-                    "os.name" to systemProps.getProperty("os.name", "Unknown"),
-                    "os.version" to systemProps.getProperty("os.version", "Unknown"),
-                    "os.arch" to systemProps.getProperty("os.arch", "Unknown"),
-                    "java.version" to systemProps.getProperty("java.version", "Unknown"),
-                    "user.name" to systemProps.getProperty("user.name", "Unknown"),
-                    "hostname" to
-                        try {
-                            InetAddress.getLocalHost().hostName
-                        } catch (e: Exception) {
-                            "Unknown"
-                        },
-                )
-            }
-
             // Get a reasonable device name
             val deviceName =
                 try {

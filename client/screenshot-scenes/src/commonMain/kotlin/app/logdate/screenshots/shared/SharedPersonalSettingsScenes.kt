@@ -288,12 +288,8 @@ internal val personalSettingsScenes: List<SharedScreenshotSceneSpec> =
                 onRetryRestore = {},
                 onDismissRestore = {},
                 nativeBackupStatus = NativeBackupStatus.Available(),
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = remember { SnackbarHostState() },
                 isAuthenticated = true,
-                onSyncNow = {},
                 onNavigateToCloudAccountCreation = {},
                 onNavigateToSignIn = {},
             )

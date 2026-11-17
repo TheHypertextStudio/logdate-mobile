@@ -75,8 +75,6 @@ expect object PlatformIcons {
 
     @Composable fun expandMore(): Painter
 
-    @Composable fun locationOff(): Painter
-
     @Composable fun stop(): Painter
 
     @Composable fun forward10(): Painter
@@ -106,10 +104,6 @@ expect object PlatformIcons {
     @Composable fun filterOff(): Painter
 
     @Composable fun copy(): Painter
-
-    @Composable fun syncProblem(): Painter
-
-    @Composable fun chevronRight(): Painter
 
     @Composable fun checkCircle(): Painter
 

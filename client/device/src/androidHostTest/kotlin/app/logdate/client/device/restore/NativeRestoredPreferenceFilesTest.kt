@@ -432,12 +432,10 @@ class NativeRestoredPreferenceFilesTest {
         every { anyConstructed<AtomicFile>().finishWrite(any()) } answers {
             firstArg<FileOutputStream>().close()
             Files.move(temporary.toPath(), snapshot.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-            Unit
         }
         every { anyConstructed<AtomicFile>().failWrite(any()) } answers {
             firstArg<FileOutputStream>().close()
             temporary.delete()
-            Unit
         }
         return generation
     }

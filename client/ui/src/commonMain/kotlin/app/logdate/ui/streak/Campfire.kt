@@ -149,9 +149,7 @@ private fun DrawScope.drawCampfire(
             }
         }
 
-        CampfirePhase.OUT, CampfirePhase.UNLIT -> {
-            Unit
-        }
+        CampfirePhase.OUT, CampfirePhase.UNLIT -> {}
     }
 
     val backing = Stroke(width = outline * DIE_CUT_SCALE, join = StrokeJoin.Round, cap = StrokeCap.Round)

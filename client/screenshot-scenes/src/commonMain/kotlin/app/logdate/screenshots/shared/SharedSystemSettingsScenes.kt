@@ -67,19 +67,8 @@ internal val systemSettingsScenes: List<SharedScreenshotSceneSpec> =
                         hasErrors = true,
                     ),
                 isAuthenticated = true,
-                onSyncNow = {},
                 onNavigateToCloudAccountCreation = {},
                 onNavigateToSignIn = {},
-                quotaUsage =
-                    StorageQuotaUi(
-                        totalBytes = 5_000_000_000,
-                        usedBytes = 2_650_000_000,
-                        usagePercentage = 0.53f,
-                        categories = emptyList(),
-                        formattedTotal = "5.0 GB",
-                        formattedUsed = "2.65 GB",
-                    ),
-                isQuotaAvailable = true,
                 snackbarHostState = remember { SnackbarHostState() },
             )
         },

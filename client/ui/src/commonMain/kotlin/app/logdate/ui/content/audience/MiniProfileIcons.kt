@@ -26,13 +26,13 @@ fun MiniProfileIcons(people: List<PersonUiState>) {
     ) {
         val representativePeople = people.take(3)
         representativePeople.forEach {
-            MiniProfileIcon(photoUri = it.photoUri)
+            MiniProfileIcon()
         }
     }
 }
 
 @Composable
-fun MiniProfileIcon(photoUri: String?) {
+fun MiniProfileIcon() {
     Canvas(
         modifier =
             Modifier

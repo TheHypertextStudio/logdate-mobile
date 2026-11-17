@@ -31,7 +31,6 @@ private val DEFAULT_WAVEFORM_STROKE_WIDTH = 2.dp
 fun AudioWaveformComponent(
     audioLevels: List<Float>,
     modifier: Modifier = Modifier,
-    isRecording: Boolean = false,
     waveformColor: Color = MaterialTheme.colorScheme.primary,
     strokeWidth: Dp = DEFAULT_WAVEFORM_STROKE_WIDTH,
     maxBars: Int = 50,
@@ -101,18 +100,6 @@ data class AudioWaveformState(
     val isRecording: Boolean = false,
     val maxLevel: Float = 1.0f,
 ) {
-    /**
-     * Adds a new audio level to the waveform data
-     */
-    fun addLevel(
-        level: Float,
-        maxHistory: Int = 50,
-    ): AudioWaveformState {
-        val normalizedLevel = (level / maxLevel).coerceIn(0f, 1f)
-        val newLevels = (levels + normalizedLevel).takeLast(maxHistory)
-        return copy(levels = newLevels)
-    }
-
     /**
      * Clears all waveform data
      */

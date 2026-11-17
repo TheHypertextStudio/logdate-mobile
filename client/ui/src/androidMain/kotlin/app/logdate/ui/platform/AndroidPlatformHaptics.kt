@@ -193,11 +193,4 @@ internal class AndroidPlatformHaptics(
             v.vibrate(effect, touchAttributesQ)
         }
     }
-
-    /**
-     * Quick check whether the user has globally disabled touch haptics in system settings. This
-     * is consulted by the [LogDateHaptics] reduceMotion bridge — the controller itself does not
-     * gate on it (so rare safety-critical signals still vibrate even when touch is off).
-     */
-    internal fun isSystemHapticFeedbackDisabled(): Boolean = isHapticDisabled(context)
 }

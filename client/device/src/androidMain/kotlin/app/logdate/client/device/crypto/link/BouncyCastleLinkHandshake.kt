@@ -92,11 +92,6 @@ class BouncyCastleLinkHandshake(
         return shared
     }
 
-    fun publicKeyOf(privateKey: ByteArray): ByteArray {
-        if (privateKey.size != KEY_BYTES) throw LinkHandshakeException("X25519 keys are $KEY_BYTES bytes")
-        return X25519PrivateKeyParameters(privateKey, 0).generatePublicKey().encoded
-    }
-
     /** HKDF-SHA256 as RFC 5869 defines it. */
     fun hkdfSha256(
         ikm: ByteArray,

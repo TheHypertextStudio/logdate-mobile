@@ -42,17 +42,7 @@ private fun NativeBackupPage(
             ),
         nativeBackupStatus = NativeBackupStatus.Available(quotaFailure),
         isAuthenticated = authenticated,
-        onSyncNow = {},
         onNavigateToSignIn = {},
-        quotaUsage =
-            StorageQuotaUi(
-                totalBytes = 5_000_000_000,
-                usedBytes = 0,
-                usagePercentage = 0f,
-                formattedTotal = "5 GB",
-                formattedUsed = "0 GB",
-            ),
-        isQuotaAvailable = false,
         snackbarHostState = remember { SnackbarHostState() },
     )
 }

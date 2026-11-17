@@ -37,6 +37,8 @@ class PostRestoreDetector(
             }
         }
 
+    // Sets up restore state for PostRestoreDetectorTest and the androidTest restore suites, which are not roots
+    @Suppress("unused")
     fun recordRestoreCompleted() {
         runBlocking {
             AndroidNativeRestoreDeliveryGate.withLock {
@@ -271,12 +273,6 @@ class PostRestoreDetector(
             if (!isAccountRecoveryPending()) return@synchronized null
             val file = accountRecoveryFile()
             readIdentifier(file) ?: Uuid.random().toString().also { writeAtomically(file, it) }
-        }
-
-    fun markAccountRecoveryPending() =
-        synchronized(lock) {
-            if (!accountRecoveryFile().exists()) writeAtomically(accountRecoveryFile(), Uuid.random().toString())
-            deleteIfPresent(accountResolvedFile())
         }
 
     fun acknowledgeAccountRecovery(expectedId: String? = pendingAccountRecoveryId()) =

@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
  *
  * Supports:
  * - **Ctrl+click / Cmd+click**: Toggle individual item selection
- * - **Shift+click**: Select a range from the last selected item
  * - **Plain click**: Clear selection and navigate (single select)
  *
  * Use [rememberMultiSelectState] to create an instance.
@@ -36,27 +35,6 @@ class MultiSelectState {
             } else {
                 selectedIds + id
             }
-        lastSelectedId = id
-    }
-
-    fun selectRange(
-        id: String,
-        allIds: List<String>,
-    ) {
-        val anchor = lastSelectedId ?: id
-        val anchorIndex = allIds.indexOf(anchor)
-        val targetIndex = allIds.indexOf(id)
-        if (anchorIndex < 0 || targetIndex < 0) {
-            toggle(id)
-            return
-        }
-        val range =
-            if (anchorIndex <= targetIndex) {
-                allIds.subList(anchorIndex, targetIndex + 1)
-            } else {
-                allIds.subList(targetIndex, anchorIndex + 1)
-            }
-        selectedIds = selectedIds + range.toSet()
         lastSelectedId = id
     }
 

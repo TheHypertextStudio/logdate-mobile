@@ -145,7 +145,8 @@ class AndroidSecureStorage
             }
     }
 
-@Suppress("DEPRECATION")
+// Called from the AndroidSecureStorage(context) constructor delegation lambda, which createAndroidSecureStorage uses
+@Suppress("DEPRECATION", "unused")
 private fun createRealEncryptedPrefs(context: Context): SharedPreferences {
     val masterKey =
         MasterKey

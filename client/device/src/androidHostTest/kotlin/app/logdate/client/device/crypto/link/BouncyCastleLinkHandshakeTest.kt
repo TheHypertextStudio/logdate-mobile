@@ -16,8 +16,6 @@ class BouncyCastleLinkHandshakeTest {
 
     @Test
     fun `x25519 matches RFC 7748 section 6 point 1`() {
-        assertEquals(ALICE_PUBLIC, handshake.publicKeyOf(ALICE_PRIVATE.hex()).toHex())
-        assertEquals(BOB_PUBLIC, handshake.publicKeyOf(BOB_PRIVATE.hex()).toHex())
         assertEquals(SHARED_SECRET, handshake.x25519(ALICE_PRIVATE.hex(), BOB_PUBLIC.hex()).toHex())
         assertEquals(SHARED_SECRET, handshake.x25519(BOB_PRIVATE.hex(), ALICE_PUBLIC.hex()).toHex())
     }
@@ -172,11 +170,6 @@ class BouncyCastleLinkHandshakeTest {
         assertTrue(handshake.verifyConfirmation(CONFIRM_KEY.hex(), TRANSCRIPT_HASH.hex(), mac))
         assertFalse(handshake.verifyConfirmation(CONFIRM_KEY.hex(), TRANSCRIPT_HASH.hex(), mac.copyOf(16)))
         assertFalse(handshake.verifyConfirmation(CONFIRM_KEY.hex(), TRANSCRIPT_HASH.hex(), ByteArray(0)))
-    }
-
-    @Test
-    fun `a private key of the wrong length has no public key`() {
-        assertFailsWith<LinkHandshakeException> { handshake.publicKeyOf(ByteArray(31)) }
     }
 
     private fun transcript() =

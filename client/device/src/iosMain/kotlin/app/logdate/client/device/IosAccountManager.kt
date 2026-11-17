@@ -1,18 +1,13 @@
 package app.logdate.client.device
 
-import app.logdate.client.device.identity.KeychainWrapper
 import app.logdate.shared.model.LogDateAccount
-import kotlinx.serialization.json.Json
 
 /**
  * Legacy keychain account indexes can contain more than one identity. They are deliberately
  * quarantined until they can be migrated into the single canonical owner model without reading,
  * rewriting, or deleting any existing credentials.
  */
-class IosAccountManager(
-    @Suppress("unused") private val keychain: KeychainWrapper,
-    @Suppress("unused") private val json: Json = Json { ignoreUnknownKeys = true },
-) : PlatformAccountManager {
+class IosAccountManager : PlatformAccountManager {
     override suspend fun addAccount(
         account: LogDateAccount,
         accessToken: String,

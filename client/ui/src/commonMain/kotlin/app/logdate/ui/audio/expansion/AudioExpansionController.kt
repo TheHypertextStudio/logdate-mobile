@@ -26,19 +26,11 @@ class AudioExpansionController(
         private set
 
     /**
-     * The inline state to return to when dismissing an overlay.
-     * Tracks whether the user was in COLLAPSED or SPATIAL_EXPANDED
-     * before entering ELEVATED or IMMERSIVE.
-     */
-    private var inlineState: AudioExpansionState = initialState
-
-    /**
      * Called when audio playback starts.
      * If [expandOnPlayback] is true, transitions COLLAPSED → SPATIAL_EXPANDED.
      */
     fun onPlaybackStarted() {
         if (expandOnPlayback && currentState == AudioExpansionState.COLLAPSED) {
-            inlineState = AudioExpansionState.SPATIAL_EXPANDED
             currentState = AudioExpansionState.SPATIAL_EXPANDED
         }
     }
@@ -49,28 +41,7 @@ class AudioExpansionController(
      */
     fun onPlaybackCompleted() {
         if (expandOnPlayback && currentState == AudioExpansionState.SPATIAL_EXPANDED) {
-            inlineState = AudioExpansionState.COLLAPSED
             currentState = AudioExpansionState.COLLAPSED
-        }
-    }
-
-    /**
-     * Toggles between COLLAPSED and SPATIAL_EXPANDED.
-     * No-op if currently in an overlay state.
-     */
-    fun onCollapseToggle() {
-        when (currentState) {
-            AudioExpansionState.COLLAPSED -> {
-                inlineState = AudioExpansionState.SPATIAL_EXPANDED
-                currentState = AudioExpansionState.SPATIAL_EXPANDED
-            }
-
-            AudioExpansionState.SPATIAL_EXPANDED -> {
-                inlineState = AudioExpansionState.COLLAPSED
-                currentState = AudioExpansionState.COLLAPSED
-            }
-
-            else -> {} // No-op in overlay states
         }
     }
 
@@ -81,35 +52,6 @@ class AudioExpansionController(
     fun onLongPress() {
         if (currentState.isInline) {
             currentState = AudioExpansionState.ELEVATED
-        }
-    }
-
-    /**
-     * Called when the long press is released.
-     * Returns to the previous inline state unless the user explicitly
-     * kept the elevated card open or transitioned to immersive.
-     */
-    fun onLongPressRelease() {
-        if (currentState == AudioExpansionState.ELEVATED) {
-            currentState = inlineState
-        }
-    }
-
-    /**
-     * Transitions to IMMERSIVE from any state.
-     * Can be triggered from ELEVATED (swipe up) or any inline state
-     * (explicit fullscreen action).
-     */
-    fun onExpandToImmersive() {
-        currentState = AudioExpansionState.IMMERSIVE
-    }
-
-    /**
-     * Dismisses any overlay state, returning to the previous inline state.
-     */
-    fun onDismissOverlay() {
-        if (currentState.isOverlay) {
-            currentState = inlineState
         }
     }
 }
