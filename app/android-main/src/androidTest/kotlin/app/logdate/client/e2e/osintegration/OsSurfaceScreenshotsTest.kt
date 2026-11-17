@@ -13,6 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.domain.assistants.DeviceAssistantAccess
@@ -307,8 +308,7 @@ class OsSurfaceScreenshotsTest {
 
         // Writing names the new window after the entry's first line. Android 17's Alt+Tab switcher
         // reads each window out by that name, which tells two editor windows apart.
-        OsSurfaceCapture.waitForText("Write something").click()
-        OsSurfaceCapture.waitForText("What's on your mind?")
+        startWriting()
         OsSurfaceCapture.device.findObject(By.clazz("android.widget.EditText")).text = WINDOW_TITLE_ENTRY
         Thread.sleep(1_500L)
         // The switcher keeps the names it last read and reads them again when the window order
@@ -364,7 +364,7 @@ class OsSurfaceScreenshotsTest {
         val label = OsSurfaceCapture.waitForText(DRAGGED_PHOTO.substringBefore('.'), partial = true).visibleBounds
         val thumbnail = OsSurfaceCapture.device.findObject(By.res(FILES_PACKAGE, "icon_thumb"))?.visibleBounds
         val from = thumbnail?.let { Point(it.centerX(), it.centerY()) } ?: Point(label.centerX(), label.top - label.height() * 3)
-        val editor = OsSurfaceCapture.waitForText("Write something").visibleCenter
+        val editor = OsSurfaceCapture.waitForText(WRITE).visibleCenter
         // A long press selects the file in Files; dragging the selected file starts the drag.
         OsSurfaceCapture.device.swipe(from.x, from.y, from.x, from.y, LONG_PRESS_STEPS)
         Thread.sleep(1_000L)
@@ -404,7 +404,7 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.placeWindow(EDITOR_TASK_AFFINITY, Rect(screen.centerX() + top / 4, top, screen.width() - top, bottom))
 
         val photo = OsSurfaceCapture.waitForText("Photo from", partial = true).visibleCenter
-        val entry = OsSurfaceCapture.waitForText("Write something").visibleCenter
+        val entry = OsSurfaceCapture.waitForText(WRITE).visibleCenter
         OsSurfaceCapture.drag(photo, entry, durationMs = 2_000L) {
             OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "drag-out")
         }
@@ -480,8 +480,7 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.prepareOnboardedApp()
         OsSurfaceCapture.copyPhotoToClipboard()
         OsSurfaceCapture.openCapture("text")
-        OsSurfaceCapture.waitForText("Write something").click()
-        OsSurfaceCapture.waitForText("What's on your mind?")
+        startWriting()
         OsSurfaceCapture.withoutOnScreenKeyboards {
             HardwareKeyboard().use { keyboard ->
                 keyboard.press(HardwareKeyboard.KEY_LEFTCTRL, HardwareKeyboard.KEY_V)
@@ -499,8 +498,7 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.prepareOnboardedApp()
         OsSurfaceCapture.copyPhotoToClipboard()
         OsSurfaceCapture.openCapture("text")
-        OsSurfaceCapture.waitForText("Write something").click()
-        val hint = OsSurfaceCapture.waitForText("What's on your mind?")
+        val hint = startWriting()
         // A press while the keyboard is still opening moves the field under it and drops the menu.
         OsSurfaceCapture.device.wait(Until.hasObject(By.pkg(GBOARD_PACKAGE)), KEYBOARD_SUGGESTION_TIMEOUT_MS)
         Thread.sleep(1_000L)
@@ -521,8 +519,7 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.prepareOnboardedApp()
         OsSurfaceCapture.copyPhotoToClipboard()
         OsSurfaceCapture.openCapture("text")
-        OsSurfaceCapture.waitForText("Write something").click()
-        OsSurfaceCapture.waitForText("What's on your mind?")
+        startWriting()
         val suggestion =
             checkNotNull(
                 OsSurfaceCapture.device.wait(Until.findObject(By.pkg(GBOARD_PACKAGE).text("Image")), KEYBOARD_SUGGESTION_TIMEOUT_MS),
@@ -540,8 +537,7 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.prepareOnboardedApp()
         OsSurfaceCapture.clearClipboard()
         OsSurfaceCapture.openCapture("text")
-        OsSurfaceCapture.waitForText("Write something").click()
-        OsSurfaceCapture.waitForText("What's on your mind?")
+        startWriting()
         val gifTab =
             checkNotNull(
                 OsSurfaceCapture.device.wait(Until.findObject(By.pkg(GBOARD_PACKAGE).desc("GIF Keyboard")), KEYBOARD_SUGGESTION_TIMEOUT_MS),
@@ -578,8 +574,7 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.clearDrafts()
         OsSurfaceCapture.enableFlags(FeatureFlag.EDITOR_HANDOFF)
         OsSurfaceCapture.shell("am start -n ${OsSurfaceCapture.packageName}/$EDITOR_ACTIVITY -f 0x10000000")
-        OsSurfaceCapture.waitForText("Write something").click()
-        OsSurfaceCapture.waitForText("What's on your mind?")
+        startWriting()
         OsSurfaceCapture.device.findObject(By.clazz("android.widget.EditText")).text = HANDOFF_ENTRY
         val draftId = OsSurfaceCapture.awaitDraftContaining(HANDOFF_ENTRY)
 
@@ -625,9 +620,9 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.shell("settings put secure stylus_handwriting_enabled 1")
         OsSurfaceCapture.openCapture("text")
         val stylus = Stylus()
-        stylus.tap(OsSurfaceCapture.waitForText("Write something").visibleCenter)
+        stylus.tap(OsSurfaceCapture.waitForText(WRITE).visibleCenter)
         dismissStylusTutorial()
-        OsSurfaceCapture.waitForText("What's on your mind?")
+        OsSurfaceCapture.waitForText(WRITING_HINT)
         val field = OsSurfaceCapture.device.findObject(By.clazz("android.widget.EditText")).visibleBounds
         awaitHandwritingModel(stylus, field)
         dismissStylusTutorial()
@@ -645,9 +640,9 @@ class OsSurfaceScreenshotsTest {
     }
 
     /**
-     * Writing with a pen on controls that only open a text field: the editor's "Write something"
-     * card starts a text entry, and the Home search pill opens search, each with the handwriting
-     * typed in.
+     * Writing with a pen on controls that only open a text field: the entry page's Write choice
+     * starts a text entry, and the Home search pill opens search, each with the handwriting typed
+     * in.
      */
     @Test fun stylusWritingOnControls() {
         if (OsSurfaceCapture.formFactor != "tablet") return
@@ -661,8 +656,8 @@ class OsSurfaceScreenshotsTest {
                 .getInstrumentation()
                 .targetContext.resources.displayMetrics.density
 
-        // Gboard's handwriting model is fetched in the search field, which leaves the editor's
-        // "Write something" card untouched for the capture.
+        // Gboard's handwriting model is fetched in the search field, which leaves the entry page's
+        // Write choice untouched for the capture.
         OsSurfaceCapture.openMainActivity()
         OsSurfaceCapture.returnHome()
         OsSurfaceCapture.waitForText("Search your log").click()
@@ -674,17 +669,16 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.returnHome()
 
         OsSurfaceCapture.openCapture("text")
-        OsSurfaceCapture.waitForText("Write something")
-        val card = OsSurfaceCapture.device.findObject(By.clickable(true).hasDescendant(By.text("Write something"))).visibleBounds
-        // The card opens a text entry as soon as the pen touches it, so the word is centered to stay
-        // inside the entry's text area while it is written.
-        val wordWidth = Stylus.HELLO_WIDTH * HANDWRITING_X_HEIGHT_DP * density
-        val onCard = PointF(card.exactCenterX() - wordWidth / 2, card.bottom - HANDWRITING_INSET_DP * density)
-        stylus.write(Stylus.hello(origin = onCard, unit = HANDWRITING_X_HEIGHT_DP * density)) {
-            OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "stylus-write-card")
+        OsSurfaceCapture.waitForText(WRITE)
+        val write = OsSurfaceCapture.device.findObject(By.desc(WRITE)).visibleBounds
+        // Writing opens as soon as the pen touches the choice. It is as short as the search pill, so
+        // the writing is as small and starts on it; strokes may run past its edges.
+        val onWrite = PointF(write.left + HANDWRITING_INSET_DP * density, write.bottom - SEARCH_BASELINE_INSET_DP * density)
+        stylus.write(Stylus.hello(origin = onWrite, unit = SEARCH_X_HEIGHT_DP * density)) {
+            OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "stylus-write-choice")
         }
-        awaitTypedHello("stylus-write-card")
-        OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "stylus-write-card-typed")
+        awaitTypedHello("stylus-write-choice")
+        OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "stylus-write-choice-typed")
 
         OsSurfaceCapture.returnHome()
         val pill = OsSurfaceCapture.device.findObject(By.clickable(true).hasDescendant(By.text("Search your log"))).visibleBounds
@@ -695,6 +689,17 @@ class OsSurfaceScreenshotsTest {
         }
         awaitTypedHello("stylus-search")
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "stylus-search-typed")
+    }
+
+    /**
+     * Opens a piece of writing in a new entry and returns its empty field's hint. A text capture
+     * opens the writing by itself where the person's way to start an entry is writing, and choosing
+     * Write again there would replace the piece that is open.
+     */
+    private fun startWriting(): UiObject2 {
+        val hint = By.text(WRITING_HINT)
+        if (!OsSurfaceCapture.device.wait(Until.hasObject(hint), WRITING_OPENS_MS)) OsSurfaceCapture.waitForText(WRITE).click()
+        return OsSurfaceCapture.waitForText(WRITING_HINT)
     }
 
     /**
@@ -1044,6 +1049,13 @@ class OsSurfaceScreenshotsTest {
     }
 
     private companion object {
+        /** The entry page's choice that starts a piece of writing, named by what it says. */
+        const val WRITE = "Write"
+
+        /** What an empty piece of writing says, and how long a text capture gets to open one by itself. */
+        const val WRITING_HINT = "What's on your mind?"
+        const val WRITING_OPENS_MS = 3_000L
+
         /** `WindowConfiguration.WINDOWING_MODE_FREEFORM`, which `am start --windowingMode` takes. */
         const val WINDOWING_MODE_FREEFORM = 5
 

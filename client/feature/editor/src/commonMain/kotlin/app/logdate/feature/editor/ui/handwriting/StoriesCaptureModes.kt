@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.logdate.ui.common.handwritingDelegator
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import logdate.client.feature.editor.generated.resources.Res
@@ -90,11 +91,21 @@ internal fun StoriesCaptureModes(
                         enabled = enabled,
                         onCheckedChange = { onMode(item) },
                         modifier =
-                            Modifier.weight(widthShare).height(if (compact) 48.dp else 56.dp).semantics {
-                                contentDescription = itemLabel
-                                selected = active
-                                role = Role.RadioButton
-                            },
+                            Modifier
+                                .weight(widthShare)
+                                .height(if (compact) 48.dp else 56.dp)
+                                // A pen that starts writing on Write opens the writing and keeps going in it.
+                                .then(
+                                    if (item == StoryCaptureMode.Write && enabled) {
+                                        Modifier.handwritingDelegator { onMode(item) }
+                                    } else {
+                                        Modifier
+                                    },
+                                ).semantics {
+                                    contentDescription = itemLabel
+                                    selected = active
+                                    role = Role.RadioButton
+                                },
                         shapes =
                             ToggleButtonDefaults.shapes(
                                 shape = outline,

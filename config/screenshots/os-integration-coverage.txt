@@ -172,8 +172,8 @@ drag-out|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-an
 drag-out|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/drag-out-dropped--tablet-api37.png
 stylus-handwriting|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-handwriting--tablet-api37.png
 stylus-handwriting|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-handwriting-typed--tablet-api37.png
-stylus-writing-on-controls|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-card--tablet-api37.png
-stylus-writing-on-controls|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-card-typed--tablet-api37.png
+stylus-writing-on-controls|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-choice--tablet-api37.png
+stylus-writing-on-controls|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-write-choice-typed--tablet-api37.png
 stylus-writing-on-controls|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-search--tablet-api37.png
 stylus-writing-on-controls|system|docs/screenshots/android-os-integration/keyboard-pointer-drag-and-drop/stylus-search-typed--tablet-api37.png
 

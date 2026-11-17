@@ -4,7 +4,7 @@ import androidx.compose.ui.Modifier
 
 /**
  * Lets a person start writing with a pen on a control that opens a text field rather than being
- * one, such as the workspace search pill or the editor's "Write something" card.
+ * one, such as the workspace search pill or the entry page's Write choice.
  *
  * When a pen starts writing on this element, [onStart] runs and must open and focus a text field
  * marked with [handwritingDelegate]; the keyboard then types the handwriting into that field. A
