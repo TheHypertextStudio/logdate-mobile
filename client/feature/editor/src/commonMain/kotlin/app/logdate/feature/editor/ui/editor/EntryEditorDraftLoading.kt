@@ -113,11 +113,13 @@ internal fun EntryEditorViewModel.dismissExpandedBlockOrClearSingleEmptyImpl(own
 }
 
 /**
- * Opens a first entry for writing at once, then swaps in the newest saved draft when one turns up
- * and nothing has been added in the meantime.
+ * Leaves a first entry on the empty editor, which offers every way to start one, and swaps in the
+ * newest saved draft when one turns up and nothing has been added in the meantime.
+ *
+ * A first entry is not started in the person's preferred way, because they have not chosen one
+ * yet: the empty editor is where they find out that a memory can be written, spoken or pictured.
  */
 internal fun EntryEditorViewModel.resumeFirstEntryDraftImpl() {
-    openBlankThought()
     viewModelScope.launch {
         val drafts = editorState.first { !it.isLoading && !it.isLoadingDrafts }.availableDrafts
         val latest =

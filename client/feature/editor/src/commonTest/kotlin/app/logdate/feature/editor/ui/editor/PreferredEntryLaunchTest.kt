@@ -112,31 +112,19 @@ class PreferredEntryLaunchTest {
             )
         }
 
-    @Test fun `a blank thought is in place the moment it is asked for`() =
-        testScope.runTest {
-            val vm = createViewModel()
-            vm.openBlankThought()
-            val state = vm.mutableEditorState.value
-            val block = state.blocks.single()
-            assertTrue(block is TextBlockUiState)
-            assertEquals(block.id, state.expandedBlockId)
-        }
-
-    @Test fun `a first entry opens for writing before saved drafts have loaded`() =
+    @Test fun `a first entry opens on the empty editor, which offers every way to start`() =
         testScope.runTest {
             val drafts = FakeEntryDraftRepository().apply { draftListGate = CompletableDeferred() }
             val vm = createViewModel(drafts)
             vm.resumeFirstEntryDraft()
             advanceUntilIdle()
             val state = vm.editorState.value
-            val block = state.blocks.single()
-            assertTrue(block is TextBlockUiState)
-            assertEquals(block.id, state.expandedBlockId)
+            assertTrue(state.blocks.isEmpty(), "a first entry was started for the person: ${state.blocks}")
             assertFalse(state.isLoading)
             assertTrue(state.isLoadingDrafts)
         }
 
-    @Test fun `a first entry replaces its untouched block with a saved draft`() =
+    @Test fun `a first entry opens the draft it was left as`() =
         testScope.runTest {
             val gate = CompletableDeferred<Unit>()
             val drafts = FakeEntryDraftRepository().apply { draftListGate = gate }
@@ -159,9 +147,7 @@ class PreferredEntryLaunchTest {
             val vm = createViewModel(drafts)
             vm.resumeFirstEntryDraft()
             advanceUntilIdle()
-            val opened =
-                vm.editorState.value.blocks
-                    .single() as TextBlockUiState
+            val opened = vm.createNewBlock(BlockType.TEXT) as TextBlockUiState
             vm.updateBlock(opened.copy(content = "Typed first"))
             gate.complete(Unit)
             advanceUntilIdle()
