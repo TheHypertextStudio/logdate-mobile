@@ -95,7 +95,7 @@ fun MomentScreen(
 ) {
     Box(modifier = modifier.fillMaxSize().testTag(MomentTags.SCREEN)) {
         when (state) {
-            MomentUiState.Loading -> Unit
+            MomentUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center).testTag(MomentTags.LOADING))
             MomentUiState.Missing -> MissingMoment(timeSource)
             is MomentUiState.Ready -> ReadyMoment(state, actions, timeSource)
         }
@@ -129,6 +129,7 @@ fun MomentDetailsPage(
                 }
             }
             if (body != null) item { DetailText(body) }
+            if (note is JournalNote.Handwriting) item { MomentGlance(note, inkHeight = 96.dp) }
             if (place != null) item { PlaceLine(place) }
             if (onPlayOn != null && note is JournalNote.Audio) {
                 item { PlayOnButton(onPlayOn, Modifier.transformedHeight(this, spec), SurfaceTransformation(spec)) }

@@ -44,6 +44,7 @@ import androidx.wear.compose.material3.TimeTextDefaults
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.wear.R
 import app.logdate.wear.playback.AudioOutputState
+import app.logdate.wear.v2.moments.MomentGlance
 import app.logdate.wear.v2.playon.OutputPicker
 import app.logdate.wear.v2.playon.OutputPickerRoute
 import kotlinx.datetime.LocalDate
@@ -263,7 +264,7 @@ private fun NoteEntryCard(
                         ).background(MaterialTheme.colorScheme.surfaceContainerLow)
                         .padding(12.dp),
             ) {
-                Text(text = stringResource(R.string.wear_moment_handwriting), style = MaterialTheme.typography.bodySmall)
+                MomentGlance(note, inkHeight = 72.dp)
                 Text(text = timeLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
