@@ -219,8 +219,10 @@ SearchDeadCode cannot see every caller. It does not parse Swift, Gradle scripts 
 it does not treat tests as entry points. When it reports a declaration that is in fact used, record
 why, where a reviewer can read it:
 
-1. A whole kind of caller it cannot see goes in `.deadcode.yml`: a class in `entry_points`, or a
-   directory in `exclude`, with a comment above it naming the caller.
+1. A whole kind of caller it cannot see goes in `.deadcode.yml`: a class or top-level function in
+   `entry_points`, or a directory in `exclude`, with a comment above it naming the caller. An entry
+   point keeps everything it calls alive too, so use one for a composable that only screenshot tests
+   render. SearchDeadCode 0.21.0 does not match a member function there.
 2. A single declaration gets `@Suppress("unused")` with the reason on the same line, naming who uses
    it and why the tools cannot see that, for example
    `@Suppress("unused") // Kept: called from iosApp/iosApp/AppDelegate.swift`. Put it on the narrowest
@@ -228,9 +230,11 @@ why, where a reviewer can read it:
    form on some declarations, such as a top-level `fun` or `object` with no other modifier or
    annotation, or some local variables. When it still reports a declaration you suppressed, write
    `@Suppress(names = ["unused"]) // Kept: ...` instead; it means the same thing to Kotlin and detekt.
-3. `.deadcode-baseline.json` lists the findings that existed when the gate was adopted and are still
-   under review. Only remove entries from it, with
-   `searchdeadcode . --baseline .deadcode-baseline.json --baseline-prune`; never add a new finding.
+   A suppressed declaration is only hidden from the report, not treated as a root, so what it calls
+   needs its own suppression or an entry point.
+
+Every finding fails the check, so dead code is deleted, or recorded as one of the cases above,
+before it lands.
 
 ## Devices
 
