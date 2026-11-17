@@ -2,7 +2,6 @@ package app.logdate.feature.onboarding.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.logdate.client.billing.model.LogDateBackupPlanOption
 import app.logdate.client.device.crypto.IdentityKeyManager
 import app.logdate.client.domain.dayboundary.DayBoundarySettingsRepository
 import app.logdate.client.domain.dayboundary.HealthConnectStatus
@@ -19,9 +18,6 @@ import app.logdate.feature.onboarding.flow.OnboardingDeviceState
 import app.logdate.feature.onboarding.flow.OnboardingDeviceStateRepository
 import app.logdate.feature.onboarding.flow.OnboardingEntryMode
 import app.logdate.feature.onboarding.flow.OnboardingProgressSnapshot
-import app.logdate.feature.onboarding.flow.OnboardingStep
-import app.logdate.feature.onboarding.flow.canCompleteOnboarding
-import app.logdate.feature.onboarding.flow.firstIncompleteRequiredOnboardingStep
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +29,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Instant
@@ -227,15 +222,6 @@ class OnboardingViewModel(
         }
     }
 
-    /**
-     * Selects a backup plan option.
-     */
-    fun selectPlan(option: LogDateBackupPlanOption) {
-        _uiState.update {
-            it.copy(planOption = option)
-        }
-    }
-
     suspend fun markNotificationsHandled(): Result<Unit> =
         runCatching {
             onboardingDeviceStateRepository.markNotificationsHandled()
@@ -265,17 +251,6 @@ class OnboardingViewModel(
         runCatching {
             onboardingDeviceStateRepository.setActiveEntryMode(entryMode)
         }
-
-    suspend fun completeOnboardingIfEligible(): Result<Unit> =
-        runCatching {
-            require(progressSnapshot.value.canCompleteOnboarding()) {
-                "Required onboarding steps are still incomplete"
-            }
-            userStateRepository.setIsOnboardingComplete(true)
-            refreshStreakUseCase()
-        }
-
-    fun firstIncompleteRequiredOnboardingStep(): OnboardingStep? = progressSnapshot.value.firstIncompleteRequiredOnboardingStep()
 
     override fun onCleared() {
         healthStatusJob?.cancel()

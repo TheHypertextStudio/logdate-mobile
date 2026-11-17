@@ -7,8 +7,6 @@ import app.logdate.feature.core.settings.ui.watch.v2.NoWatchSetupCoordinator
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupCoordinator
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupState
 import app.logdate.feature.onboarding.flow.OnboardingEntryMode
-import app.logdate.feature.onboarding.flow.OnboardingStep
-import app.logdate.shared.model.profile.LogDateProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -194,69 +192,6 @@ class OnboardingViewModelTest {
         }
 
     @Test
-    fun `complete onboarding delegates to repository`() =
-        runTest {
-            fakeProfileRepository.setProfile(
-                LogDateProfile(
-                    displayName = "Alex",
-                    bio = "Bio",
-                ),
-            )
-            fakeUserStateRepository.setBirthday(Instant.fromEpochMilliseconds(946684800000))
-            fakeOnboardingDeviceStateRepository.markRecommendationsHandled()
-            fakeOnboardingDeviceStateRepository.markLocationHandled()
-            fakeOnboardingDeviceStateRepository.markDayBoundariesHandled()
-            fakeOnboardingDeviceStateRepository.markNotificationsHandled()
-            advanceUntilIdle()
-
-            viewModel.completeOnboardingIfEligible()
-
-            assertTrue(fakeUserStateRepository.isOnboardingComplete)
-        }
-
-    @Test
-    fun `complete onboarding if eligible fails when birthday missing`() =
-        runTest {
-            fakeProfileRepository.setProfile(
-                LogDateProfile(
-                    displayName = "Alex",
-                    bio = "Bio",
-                ),
-            )
-            fakeOnboardingDeviceStateRepository.markRecommendationsHandled()
-            fakeOnboardingDeviceStateRepository.markLocationHandled()
-            fakeOnboardingDeviceStateRepository.markDayBoundariesHandled()
-            fakeOnboardingDeviceStateRepository.markNotificationsHandled()
-
-            val result = viewModel.completeOnboardingIfEligible()
-
-            assertTrue(result.isFailure)
-            assertEquals(false, fakeUserStateRepository.isOnboardingComplete)
-        }
-
-    @Test
-    fun `complete onboarding if eligible fails when location step not handled`() =
-        runTest {
-            fakeProfileRepository.setProfile(
-                LogDateProfile(
-                    displayName = "Alex",
-                    bio = "Bio",
-                ),
-            )
-            fakeUserStateRepository.setBirthday(Instant.fromEpochMilliseconds(946684800000))
-            fakeOnboardingDeviceStateRepository.markRecommendationsHandled()
-            fakeOnboardingDeviceStateRepository.markDayBoundariesHandled()
-            fakeOnboardingDeviceStateRepository.markNotificationsHandled()
-            advanceUntilIdle()
-
-            val result = viewModel.completeOnboardingIfEligible()
-
-            assertTrue(result.isFailure)
-            assertEquals(false, fakeUserStateRepository.isOnboardingComplete)
-            assertEquals(OnboardingStep.LOCATION, viewModel.firstIncompleteRequiredOnboardingStep())
-        }
-
-    @Test
     fun `onboarding provisions an identity key when the device has none`() =
         runTest {
             // Sync encrypts every note with a key derived from this one, so it has to exist before
@@ -267,32 +202,6 @@ class OnboardingViewModelTest {
             advanceUntilIdle()
 
             assertTrue(identityKeyManager.hasIdentityKey())
-        }
-
-    @Test
-    fun `complete onboarding if eligible is never blocked on a recovery phrase`() =
-        runTest {
-            // A returning user must never be stopped by a phrase prompt: the key is provisioned
-            // for them, and the phrase is theirs to read from settings whenever they want it.
-            identityKeyManager.clearIdentityKey()
-            viewModel.provisionIdentityKey()
-            fakeProfileRepository.setProfile(
-                LogDateProfile(
-                    displayName = "Alex",
-                    bio = "Bio",
-                ),
-            )
-            fakeUserStateRepository.setBirthday(Instant.fromEpochMilliseconds(946684800000))
-            fakeOnboardingDeviceStateRepository.markRecommendationsHandled()
-            fakeOnboardingDeviceStateRepository.markLocationHandled()
-            fakeOnboardingDeviceStateRepository.markDayBoundariesHandled()
-            fakeOnboardingDeviceStateRepository.markNotificationsHandled()
-            advanceUntilIdle()
-
-            val result = viewModel.completeOnboardingIfEligible()
-
-            assertTrue(result.isSuccess)
-            assertTrue(fakeUserStateRepository.isOnboardingComplete)
         }
 
     @Test

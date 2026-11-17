@@ -54,29 +54,9 @@ internal fun buildOnboardingViewModel(
 internal fun buildOnboardingCompletionCoordinator(
     notesRepository: FakeJournalNotesRepository,
     userStateRepository: FakeUserStateRepository,
-    memoriesSettingsRepository: FakeMemoriesSettingsRepository,
-    locationSettingsRepository: FakeLocationTrackingSettingsRepository,
-    dayBoundarySettingsRepository: FakeDayBoundarySettingsRepository,
-    healthRepository: FakeLocalFirstHealthRepository,
-    profileRepository: FakeProfileRepository,
-    accountRepository: FakeAccountRepository,
-    sessionStorage: FakeSessionStorage,
     streakSettingsRepository: FakeStreakSettingsRepository,
-    onboardingDeviceStateRepository: FakeOnboardingDeviceStateRepository,
 ): OnboardingCompletionCoordinator =
     OnboardingCompletionCoordinator(
-        observeUserIdentity =
-            ObserveUserIdentityUseCase(
-                profileRepository = profileRepository,
-                userStateRepository = userStateRepository,
-                accountRepository = accountRepository,
-                sessionStorage = sessionStorage,
-            ),
-        onboardingDeviceStateRepository = onboardingDeviceStateRepository,
-        memoriesSettingsRepository = memoriesSettingsRepository,
-        locationTrackingSettingsRepository = locationSettingsRepository,
-        dayBoundarySettingsRepository = dayBoundarySettingsRepository,
-        observeHealthConnectStatus = ObserveHealthConnectStatusUseCase(healthRepository),
         userStateRepository = userStateRepository,
         refreshStreakUseCase =
             RefreshStreakUseCase(

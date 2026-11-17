@@ -25,15 +25,7 @@ class OnboardingCompletionScreenTest {
             buildOnboardingCompletionCoordinator(
                 notesRepository = fakeNotesRepository,
                 userStateRepository = FakeUserStateRepository(),
-                memoriesSettingsRepository = FakeMemoriesSettingsRepository(),
-                locationSettingsRepository = FakeLocationTrackingSettingsRepository(),
-                dayBoundarySettingsRepository = FakeDayBoundarySettingsRepository(),
-                healthRepository = FakeLocalFirstHealthRepository(),
-                profileRepository = FakeProfileRepository(),
-                accountRepository = FakeAccountRepository(),
-                sessionStorage = FakeSessionStorage(),
                 streakSettingsRepository = fakeStreakSettingsRepository,
-                onboardingDeviceStateRepository = FakeOnboardingDeviceStateRepository(),
             )
     }
 

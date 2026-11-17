@@ -558,14 +558,6 @@ class CloudAccountOnboardingViewModel(
         }
     }
 
-    fun skipOnboarding() {
-        _uiState.value =
-            _uiState.value.copy(
-                currentStep = OnboardingStep.Complete,
-                isSkipped = true,
-            )
-    }
-
     fun resetFlow() {
         _uiState.value =
             CloudAccountOnboardingUiState(
