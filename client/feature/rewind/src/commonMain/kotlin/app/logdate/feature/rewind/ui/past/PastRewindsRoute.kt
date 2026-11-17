@@ -35,20 +35,6 @@ import logdate.client.ui.generated.resources.common_back
 import org.jetbrains.compose.resources.stringResource
 import logdate.client.ui.generated.resources.Res as UiRes
 
-@Composable
-fun PastRewindsRoute(
-    onGoBack: () -> Unit,
-    onOpenRewind: RewindOpenCallback,
-) {
-    // Lives without a ViewModel today; navigation wiring threads through the empty list
-    // until callers connect this route to a real source of past rewinds.
-    PastRewindsScreen(
-        rewinds = emptyList(),
-        onGoBack = onGoBack,
-        onOpenRewind = onOpenRewind,
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PastRewindsScreen(
@@ -112,7 +98,4 @@ fun PastRewindsScreen(
             }
         }
     }
-}
-
-fun PastRewindCard() {
 }
