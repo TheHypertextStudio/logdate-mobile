@@ -77,5 +77,14 @@ fun DataUsageMode.shouldSyncMedia(): Boolean = this is DataUsageMode.Unrestricte
 /** True for Unrestricted and Conservative — text/metadata sync proceeds on cellular. */
 fun DataUsageMode.shouldSyncMetadata(): Boolean = this is DataUsageMode.Unrestricted || this is DataUsageMode.Conservative
 
+/** True only on Unrestricted — full resolution images. */
+fun DataUsageMode.shouldLoadFullResImages(): Boolean = this is DataUsageMode.Unrestricted
+
+/** True on Conservative — fetch images at reduced resolution. */
+fun DataUsageMode.shouldLoadReducedImages(): Boolean = this is DataUsageMode.Conservative
+
+/** True only on Unrestricted — prefetch nearby images. */
+fun DataUsageMode.shouldPrefetchImages(): Boolean = this is DataUsageMode.Unrestricted
+
 /** True for Unrestricted and Conservative — AI calls allowed on cellular without Data Saver. */
 fun DataUsageMode.shouldAllowAICalls(): Boolean = this is DataUsageMode.Unrestricted || this is DataUsageMode.Conservative

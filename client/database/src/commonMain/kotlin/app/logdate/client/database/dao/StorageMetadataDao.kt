@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import app.logdate.client.database.entities.StorageContentType
 import app.logdate.client.database.entities.StorageMetadataEntity
 import kotlinx.coroutines.flow.Flow
@@ -61,6 +62,12 @@ interface StorageMetadataDao {
      */
     @Query("SELECT COALESCE(SUM(sizeBytes), 0) FROM storage_metadata WHERE excludeFromQuota = 0")
     suspend fun getTotalStorageUsage(): Long
+
+    /**
+     * Inserts or updates storage metadata for a content object.
+     */
+    @Upsert
+    suspend fun upsertStorageMetadata(metadata: StorageMetadataEntity)
 
     /**
      * Inserts storage metadata, ignoring if it already exists.

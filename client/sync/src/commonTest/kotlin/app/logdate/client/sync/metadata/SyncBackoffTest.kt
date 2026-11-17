@@ -43,6 +43,7 @@ class SyncBackoffTest {
 
     @Test
     fun `jittered delay stays within the expected +- band`() {
+        val base = 10_000L // matches no exact ladder entry; only used to read the band.
         val backoff = SyncBackoff(jitterFraction = 0.2, random = Random(seed = 42))
         val samples =
             (1..100).map {

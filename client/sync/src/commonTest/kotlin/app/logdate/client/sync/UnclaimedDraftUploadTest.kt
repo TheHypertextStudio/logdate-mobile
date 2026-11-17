@@ -123,7 +123,7 @@ class UnclaimedDraftUploadTest {
                     }
                 }
             val uploader = testSyncUploader(journalRepository = repository, syncMetadataService = metadata)
-            val result = uploader.uploadDrafts()
+            val result = uploader.uploadDrafts("synthetic-token")
             assertTrue(result.success)
             assertTrue(replayed, "An empty SQL outbox must not bypass durable local intent replay")
             assertEquals(1, result.uploadedItems)

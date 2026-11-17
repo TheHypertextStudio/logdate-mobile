@@ -263,6 +263,7 @@ internal class SyncDownloader(
         tokenRefresher
             .withFreshToken(
                 { token -> cloudJournalDataSource.getJournalChanges(token, cursor, SYNC_PAGE_SIZE) },
+                "getJournalChanges",
                 requestScope,
             ).map { page ->
                 val mergeScope = requestScope?.let { JournalMergeScope(it.ownerId, it.serverOrigin) }
@@ -355,6 +356,7 @@ internal class SyncDownloader(
         tokenRefresher
             .withFreshToken(
                 { token -> cloudContentDataSource.getContentChanges(token, cursor, SYNC_PAGE_SIZE) },
+                "getContentChanges",
             ).map {
                 ChangesPage(
                     it.changes,
@@ -451,9 +453,15 @@ internal class SyncDownloader(
         return true
     }
 
-    suspend fun downloadDrafts(since: Instant): SyncResult = draftDownloader.download(since)
+    suspend fun downloadDrafts(
+        accessToken: String,
+        since: Instant,
+    ): SyncResult = draftDownloader.download(since)
 
-    suspend fun downloadAssociations(since: Instant): SyncResult = associationDownloader.download(since)
+    suspend fun downloadAssociations(
+        accessToken: String,
+        since: Instant,
+    ): SyncResult = associationDownloader.download(since)
 
     companion object {
         /**

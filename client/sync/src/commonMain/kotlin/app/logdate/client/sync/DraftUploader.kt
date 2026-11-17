@@ -101,6 +101,7 @@ internal class DraftUploader(
         val prepared =
             tokenRefresher.withFreshToken(
                 { token -> mediaTransfer.uploadDraftMediaIfNeeded(token, draft.draft) { SpaceMediaReference.parse(it) != null } },
+                "uploadDraftMedia(${draft.draft.id})",
                 expectedScope = pending.scope,
             )
         if (prepared.isSuccess) return draft.copy(draft = prepared.getOrThrow())
@@ -119,6 +120,7 @@ internal class DraftUploader(
         val result =
             tokenRefresher.withFreshToken(
                 { token -> cloudDraftDataSource.deleteDraft(token, draftId) },
+                "deleteDraft($draftId)",
                 expectedScope = pending.scope,
             )
         if (result.isSuccess) {
@@ -157,6 +159,7 @@ internal class DraftUploader(
         val result =
             tokenRefresher.withFreshToken(
                 { token -> uploadWithMedia(token, draft, deviceId) },
+                "uploadDraft(${draft.id})",
                 expectedScope = pending.scope,
             )
         if (result.isSuccess) {

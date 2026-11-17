@@ -161,6 +161,7 @@ fun MediaDetailScreen(
 
     fun toggleAudio(
         uri: String,
+        durationMs: Long,
         noteId: Uuid,
     ) {
         if (playingAudioUri == uri) {

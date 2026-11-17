@@ -85,7 +85,7 @@ class WatchDeviceLinkE2ETest {
                 val refreshError = refresh.json().getValue("error").jsonObject
                 assertEquals(DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED, refreshError.string("code"))
                 val unlink = assertIs<DeviceLinkApiException>(links.unlinkSelf(watch.tokens.accessToken).exceptionOrNull())
-                assertEquals(DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED, unlink.code)
+                assertTrue(unlink.isSessionRevoked)
 
                 assertEquals(HttpStatusCode.OK, getCapture(phoneToken, CAPTURED_BEFORE_LINK).status)
                 assertTrue(links.listDevices(phoneToken).getOrThrow().isEmpty())

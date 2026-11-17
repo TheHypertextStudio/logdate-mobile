@@ -20,6 +20,7 @@ class PhotoPresentationClientServerE2ETest {
                         .data.tokens.accessToken
                 apiClient
                     .uploadContent(
+                        token,
                         ContentUploadRequest(
                             id = "photo-style",
                             type = "IMAGE",

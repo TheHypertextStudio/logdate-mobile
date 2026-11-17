@@ -377,6 +377,35 @@ class DatabaseSyncMetadataService(
         dao.incrementRetryCount(currentOwnerId(), currentOrigin(), entityType.name, entityId)
     }
 
+    /**
+     * Adds an entity to the pending upload queue.
+     */
+    suspend fun addPendingUpload(
+        entityId: String,
+        entityType: EntityType,
+        operation: String,
+    ) {
+        enqueuePending(entityId, entityType, PendingOperation.fromStorage(operation))
+    }
+
+    /**
+     * Updates the sync cursor for a specific entity type.
+     */
+    suspend fun updateCursor(
+        entityType: EntityType,
+        timestamp: Instant,
+    ) {
+        updateCursorIfNewer(entityType, timestamp)
+    }
+
+    /**
+     * Clears all sync metadata (for logout/reset).
+     */
+    suspend fun clearAll() {
+        dao.deletePendingForOrigin(currentOwnerId(), currentOrigin())
+        resetAllCursors()
+    }
+
     override suspend fun resetAllCursors() {
         dao.deleteCursorsForOrigin(currentOwnerId(), currentOrigin())
     }

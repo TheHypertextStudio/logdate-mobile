@@ -41,9 +41,7 @@ internal val diagnosticCoreModule =
                         config.getCurrentServerDescriptor()?.hasProtocolFeature(ServerProtocolFeature.DIAGNOSTIC_REPORTS_V1) == true
                 },
                 nowMillis = { Clock.System.now().toEpochMilliseconds() },
-                ready = {
-                    sessions.hasValidSession()
-                },
+                ready = { sessions.hasValidSession() },
                 send = { scope, report -> get<DiagnosticReportGateway>().send(scope, report) },
                 deleteUploaded = { scope -> get<DiagnosticReportGateway>().deleteAll(scope) },
             )

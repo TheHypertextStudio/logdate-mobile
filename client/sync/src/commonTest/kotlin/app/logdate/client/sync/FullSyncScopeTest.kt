@@ -126,7 +126,7 @@ class FullSyncScopeTest {
                                     },
                                 )
                             } else {
-                                manager.runFullSyncPhase("test") {
+                                manager.runFullSyncPhase("test", "test") {
                                     calls++
                                     SyncResult(true)
                                 }

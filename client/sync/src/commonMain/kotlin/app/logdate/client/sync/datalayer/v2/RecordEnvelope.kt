@@ -45,7 +45,7 @@ enum class DeliveryPriority {
     BULK,
 }
 
-/** A body too large for a data item, fetched by its hash. */
+/** A body too large for a data item, sent over [WearPaths.bodyChannel]. */
 @Serializable
 data class BodyRef(
     val sha256: String,

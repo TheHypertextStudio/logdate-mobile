@@ -18,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class DeviceLinkApiClientTest {
     private val jsonHeaders = headersOf(HttpHeaders.ContentType, "application/json")
@@ -81,6 +82,7 @@ class DeviceLinkApiClientTest {
 
             assertEquals(400, failure.status)
             assertEquals(DeviceLinkErrorCodes.LINK_CODE_INVALID, failure.code)
+            assertFalse(failure.isSessionRevoked)
         }
 
     @Test
@@ -137,7 +139,7 @@ class DeviceLinkApiClientTest {
             val failure = assertIs<DeviceLinkApiException>(client.listDevices("watch-access").exceptionOrNull())
 
             assertEquals(401, failure.status)
-            assertEquals(DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED, failure.code)
+            assertTrue(failure.isSessionRevoked)
         }
 
     @Test

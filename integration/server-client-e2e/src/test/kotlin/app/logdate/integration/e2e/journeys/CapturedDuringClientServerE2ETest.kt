@@ -24,6 +24,7 @@ class CapturedDuringClientServerE2ETest {
                         .data.tokens.accessToken
                 apiClient
                     .uploadContent(
+                        token,
                         ContentUploadRequest(
                             id = "walk-capture",
                             type = "AUDIO",

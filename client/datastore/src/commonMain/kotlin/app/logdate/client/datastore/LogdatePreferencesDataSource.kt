@@ -453,8 +453,6 @@ class LogdatePreferencesDataSource(
 
     suspend fun setEventInferenceAiNamingEnabled(enabled: Boolean) = historyPreferences.setEventInferenceAiNamingEnabled(enabled)
 
-    fun observeEventInferenceStats(): Flow<EventInferenceStats> = historyPreferences.observeEventInferenceStats()
-
     suspend fun recordEventInferenceRun(
         runAt: Instant,
         createdThisRun: Int,
@@ -472,8 +470,6 @@ class LogdatePreferencesDataSource(
     suspend fun getDeviceCalendarEnabledIds(): Set<String> = historyPreferences.getDeviceCalendarEnabledIds()
 
     suspend fun setDeviceCalendarEnabledIds(ids: Set<String>) = historyPreferences.setDeviceCalendarEnabledIds(ids)
-
-    fun observeDeviceCalendarSyncStats(): Flow<DeviceCalendarSyncStats> = historyPreferences.observeDeviceCalendarSyncStats()
 
     suspend fun recordDeviceCalendarSyncRun(
         runAt: Instant,

@@ -25,6 +25,7 @@ internal class JournalCoverUpload(
         val uploaded =
             tokenRefresher.withFreshToken(
                 { token -> mediaTransfer.uploadJournalCoverIfNeeded(token, item.journal) { SpaceMediaReference.parse(it) != null } },
+                "uploadJournalCover(${item.journal.id})",
                 expectedScope = pending.scope,
             )
         if (uploaded.isSuccess) return item.copy(journal = uploaded.getOrThrow())

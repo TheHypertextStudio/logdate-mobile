@@ -37,7 +37,9 @@ object WearPaths {
     private const val TOMBSTONE_PREFIX = "/logdate/v2/p2w/tombstone/"
     private const val MEDIA_PREFIX = "/logdate/v2/w2p/media/"
     private const val RECORD_PREFIX = "/logdate/v2/w2p/record/"
+    private const val BODY_PREFIX = "/logdate/v2/body/"
     private val LINK_PATH_SEGMENT = Regex("[A-Za-z0-9_-]{43}")
+    private val SHA256_HEX = Regex("[0-9a-f]{64}")
 
     /** A record in the watch's library window, written by the phone. */
     fun windowItem(
@@ -86,6 +88,12 @@ object WearPaths {
     ): String {
         require(CaptureIdentity.of(id.toString(), operationId) != null) { "A record needs a valid operation identity" }
         return "${watchRecord(kind, id)}/${context.linkPathSegment}/op/$operationId"
+    }
+
+    /** The channel a body too large for a data item travels on. */
+    fun bodyChannel(sha256Hex: String): String {
+        require(SHA256_HEX.matches(sha256Hex)) { "A body channel is named by a lowercase hex SHA-256" }
+        return "$BODY_PREFIX$sha256Hex"
     }
 
     fun parseWindowItem(path: String): RecordPath? = parseWindow(path, WINDOW_PREFIX)

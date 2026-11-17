@@ -1,6 +1,7 @@
 package app.logdate.feature.library.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.library.ui.LibraryScreen
 import app.logdate.feature.library.ui.detail.MediaDetailScreen
@@ -18,6 +19,16 @@ data class MediaDetailRoute(
     val id: String,
 ) : NavKey {
     constructor(id: Uuid) : this(id.toString())
+}
+
+/** Pushes the Library overview onto the back stack. */
+fun NavBackStack<NavKey>.navigateToLibrary() {
+    add(LibraryOverviewRoute)
+}
+
+/** Pushes the Media detail viewer onto the back stack. */
+fun NavBackStack<NavKey>.navigateToMediaDetail(mediaId: Uuid) {
+    add(MediaDetailRoute(mediaId))
 }
 
 /** Registers the Library overview entry. */
