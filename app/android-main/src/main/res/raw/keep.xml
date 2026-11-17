@@ -2,8 +2,14 @@
 <!--
     Resources that are read without a reference Android Lint or the resource shrinker can follow:
 
+    - health_permissions: Health Connect looks this label up by name.
+    - google_maps_api_key: Gradle generates it from the Maps key. The Maps SDK reads it through the
+      com.google.android.geo.API_KEY meta-data in the location timeline's manifest, and the map
+      availability check looks it up by name.
     - android_wear_capabilities: Google Play services reads this array by name to tell the watch
       that the phone app is installed.
+    - shortcut_label_*: the launcher shortcuts Gradle generates from src/main/shortcut-templates use
+      them, and Lint does not read generated resources.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@array/android_wear_capabilities" />
+    tools:keep="@string/health_permissions,@string/google_maps_api_key,@array/android_wear_capabilities,@string/shortcut_label_*" />

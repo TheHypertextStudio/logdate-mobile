@@ -11,11 +11,6 @@
     <string name="feature_remote_display_module_title">Present on TV</string>
     <string name="feature_speech_recognition_module_title">Speech Recognition</string>
 
-    <!-- Top-level actions -->
-    <string name="action_write_in_journal">Write in journal</string>
-    <string name="action_create_journal">Create journal</string>
-    <string name="action_add_to_library">Add to library</string>
-
     <!-- Shortcuts -->
     <string name="shortcut_label_new_note_short">New entry</string>
     <string name="shortcut_label_new_note_long">Write a new entry</string>
@@ -25,19 +20,4 @@
     <string name="shortcut_label_take_photo_short">Take photo</string>
     <string name="shortcut_label_take_photo_long">Take a photo for a new entry</string>
     <string name="shortcut_label_capture_disabled">This shortcut is no longer available</string>
-
-    <!-- Settings -->
-    <string name="screen_title_settings">Settings</string>
-    <string name="settings_reset_app_title">Reset app</string>
-    <string name="action_reset_app_long">Reset App</string>
-    <string name="action_reset_app">Reset</string>
-    <string name="settings_reset_app_description">Removes all data from this device</string>
-    <string name="settings_biometric_label">Require biometrics</string>
-    <string name="settings_biometric_description">Require fingerprint or screen lock to open</string>
-    <string name="settings_export_entries_label">Export data</string>
-    <string name="settings_export_entries_description">Export all journal entries to a JSON file</string>
-
-    <!-- Dialogs -->
-    <string name="dialog_reset_app_description">This will remove all LogDate data from this device and can\'t be undone. Are you sure you want to continue?</string>
-    <string name="dialog_reset_app_title">Reset App?</string>
 </resources>

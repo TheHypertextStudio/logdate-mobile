@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Google Play services reads android_wear_capabilities by name to tell the phone that the watch app
+    is installed. Nothing references it, so Android Lint and the resource shrinker need to be told.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@array/android_wear_capabilities" />
