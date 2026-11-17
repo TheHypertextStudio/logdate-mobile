@@ -238,6 +238,38 @@ resolve_native_compile_tasks_for_modules() {
   done
 }
 
+# Reads the output of a failed Gradle run and prints each kind of check that failed, once: `native`
+# when a task only the iOS or Wasm compile runs failed, `tests` when any other task did. Gradle names
+# each failed task in its failure report. Besides the target's own tasks, the iOS compile runs the
+# Kotlin/Native download and resource and build-config tasks for the shared Apple, iOS and native
+# source sets, which carry those source sets' names. Tasks both checks share, such as the common
+# resource tasks, count as `tests`, as does a failure Gradle reports without a task, such as a build
+# script error, so a failed run always yields at least one kind.
+gradle_failure_kinds() {
+  local line=""
+  local task=""
+  local kinds=""
+
+  while IFS= read -r line; do
+    case "$line" in
+      "Execution failed for task '"* | "Could not determine the dependencies of task '"*) ;;
+      *) continue ;;
+    esac
+    task="${line#*task \'}"
+    task="${task%%\'*}"
+    case "${task##*:}" in
+      *IosSimulatorArm64* | *iosSimulatorArm64* | *WasmJs* | *wasmJs* | *KotlinNative* | \
+        *AppleMain* | *AppleTest* | *IosMain* | *IosTest* | *NativeMain* | *NativeTest* | *WebMain* | *WebTest*)
+        kinds="${kinds}native"$'\n'
+        ;;
+      *) kinds="${kinds}tests"$'\n' ;;
+    esac
+  done
+
+  [[ -n "$kinds" ]] || kinds="tests"
+  printf '%s\n' "$kinds" | uniq_non_empty_lines
+}
+
 print_error_report() {
   local title="$1"
   local footer="${2:-}"

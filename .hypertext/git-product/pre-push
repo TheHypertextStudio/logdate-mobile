@@ -85,6 +85,7 @@ if [[ -n "$kt_files" ]]; then
 
   if [[ ${#modules[@]} -gt 0 ]]; then
     resolve_test_tasks_for_modules "balanced" "${modules[@]}"
+    check_tasks=()
 
     if [[ ${#UNRESOLVED_TEST_MODULES[@]} -gt 0 ]]; then
       errors+=("TESTS: Unable to resolve test task for affected modules.")
@@ -97,23 +98,35 @@ if [[ -n "$kt_files" ]]; then
       for mod in "${RESOLVED_TEST_TASKS[@]}"; do
         echo "  $mod"
       done
-
-      if ! ./gradlew --no-daemon "${RESOLVED_TEST_TASKS[@]}" --quiet 2>&1; then
-        errors+=("TESTS: Tests failed for affected modules. Fix test failures before pushing.")
-      fi
+      check_tasks+=("${RESOLVED_TEST_TASKS[@]}")
     fi
 
-    # The JVM tests above pass code that Kotlin/Native and Kotlin/Wasm reject, such as a comma in
-    # a backticked test name, so the affected modules' tests also compile for those targets.
+    # The JVM tests pass code that Kotlin/Native and Kotlin/Wasm reject, such as a comma in a
+    # backticked test name, so the affected modules' tests also compile for those targets.
     resolve_native_compile_tasks_for_modules "${modules[@]}"
     if [[ ${#RESOLVED_NATIVE_COMPILE_TASKS[@]} -gt 0 ]]; then
       echo "Compiling affected modules' tests for iOS and Wasm:"
       for task in "${RESOLVED_NATIVE_COMPILE_TASKS[@]}"; do
         echo "  $task"
       done
-      if ! ./gradlew --no-daemon "${RESOLVED_NATIVE_COMPILE_TASKS[@]}" --quiet 2>&1; then
-        errors+=("NATIVE: Affected modules' tests do not compile for iOS or Wasm, which reject some code the JVM accepts (such as a comma in a test name). Run './gradlew <module>:compileTestKotlinIosSimulatorArm64' for details.")
+      check_tasks+=("${RESOLVED_NATIVE_COMPILE_TASKS[@]}")
+    fi
+
+    # One Gradle run for both, so a push starts Gradle once. --continue runs every check even when
+    # one fails, and the failed task names in Gradle's report say which checks to report. The plain
+    # console keeps that report free of terminal color codes whatever the user's Gradle settings.
+    if [[ ${#check_tasks[@]} -gt 0 ]]; then
+      check_output="$(mktemp "${TMPDIR:-/tmp}/logdate-pre-push.XXXXXX")"
+      if ! ./gradlew --no-daemon --continue --console=plain "${check_tasks[@]}" --quiet 2>&1 | tee "$check_output"; then
+        failed_kinds="$(gradle_failure_kinds < "$check_output")"
+        if grep -qx tests <<< "$failed_kinds"; then
+          errors+=("TESTS: Tests failed for affected modules. Fix test failures before pushing.")
+        fi
+        if grep -qx native <<< "$failed_kinds"; then
+          errors+=("NATIVE: Affected modules' tests do not compile for iOS or Wasm, which reject some code the JVM accepts (such as a comma in a test name). Run './gradlew <module>:compileTestKotlinIosSimulatorArm64' for details.")
+        fi
       fi
+      rm "$check_output"
     fi
 
     # Unused private declarations, parameters and imports, plus the size rules, in the modules this
