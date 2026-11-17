@@ -5,6 +5,7 @@
 # 1. Commit message re-validation (catches --no-verify bypasses)
 # 2. Full compile check
 # 3. Tests for affected modules
+# 4. Dead code: detekt on affected modules and SearchDeadCode across the repository
 
 set -euo pipefail
 
@@ -101,6 +102,28 @@ if [[ -n "$kt_files" ]]; then
         errors+=("TESTS: Tests failed for affected modules. Fix test failures before pushing.")
       fi
     fi
+
+    # Unused private declarations, parameters and imports, plus the size rules, in the modules this
+    # push changes. The compiler already fails on unused locals during the compile check above.
+    detekt_tasks=()
+    for mod in "${modules[@]}"; do
+      detekt_tasks+=("${mod}:detekt")
+    done
+    echo "Checking affected modules for dead code: ${modules[*]}"
+    if ! ./gradlew --no-daemon "${detekt_tasks[@]}" --quiet 2>&1; then
+      errors+=("DEAD CODE: detekt found unused or oversized code in affected modules. Run './gradlew <module>:detekt' for details.")
+    fi
+  fi
+fi
+
+# Declarations no module, entry point or platform reaches, across the whole repository.
+if [[ -n "$kt_files" ]]; then
+  if command -v searchdeadcode > /dev/null 2>&1; then
+    if ! searchdeadcode . --profile ci --unused-extras=false --write-only-dao=false --write-only-prefs=false > /dev/null 2>&1; then
+      errors+=("DEAD CODE: SearchDeadCode found declarations nothing uses. Run './run lint:deadcode' for details.")
+    fi
+  else
+    echo "Warning: SearchDeadCode is not installed, so cross-module dead code was not checked. Install it with 'hypertext setup --repo .'."
   fi
 fi
 
