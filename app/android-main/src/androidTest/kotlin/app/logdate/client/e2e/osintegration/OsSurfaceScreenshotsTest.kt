@@ -173,6 +173,8 @@ class OsSurfaceScreenshotsTest {
 
     /** Android's keyboard shortcut helper (Meta+/) listing LogDate's shortcuts. */
     @Test fun keyboardShortcutHelper() {
+        // A phone opens the helper as a sheet with every group closed, so LogDate's are not listed.
+        if (OsSurfaceCapture.formFactor != "tablet") return
         OsSurfaceCapture.prepareOnboardedApp()
         OsSurfaceCapture.openMainActivity()
         OsSurfaceCapture.withoutOnScreenKeyboards {
@@ -527,8 +529,7 @@ class OsSurfaceScreenshotsTest {
         Thread.sleep(500L)
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "keyboard-image-suggestion")
         suggestion.click()
-        Thread.sleep(4_000L)
-        check(OsSurfaceCapture.device.hasObject(By.text("Add a caption..."))) { "The keyboard's image was not added to the entry" }
+        check(awaitPhotoInEntry(4_000L)) { "The keyboard's image was not added to the entry" }
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "keyboard-image-inserted")
     }
 
@@ -557,7 +558,7 @@ class OsSurfaceScreenshotsTest {
         Thread.sleep(3_000L)
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "keyboard-gif-panel")
         firstGif.click()
-        OsSurfaceCapture.waitForText("Add a caption...", timeoutMs = GIF_PANEL_TIMEOUT_MS)
+        check(awaitPhotoInEntry(GIF_PANEL_TIMEOUT_MS)) { "The keyboard's GIF was not added to the entry" }
         Thread.sleep(2_000L)
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "keyboard-gif-inserted")
     }
@@ -690,6 +691,14 @@ class OsSurfaceScreenshotsTest {
         awaitTypedHello("stylus-search")
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "stylus-search-typed")
     }
+
+    /**
+     * Waits for a photo to be open in the entry. Its caption field is the surest sign, but on a
+     * tablet lying on its side the on-screen keyboard covers it, and there the photo's title shows.
+     */
+    private fun awaitPhotoInEntry(timeoutMs: Long): Boolean =
+        OsSurfaceCapture.device.wait(Until.hasObject(By.text(PHOTO_CAPTION_HINT)), timeoutMs) ||
+            OsSurfaceCapture.device.hasObject(By.text(PHOTO_TITLE))
 
     /**
      * Opens a piece of writing in a new entry and returns its empty field's hint. A text capture
@@ -970,7 +979,7 @@ class OsSurfaceScreenshotsTest {
 
         val pkg = OsSurfaceCapture.packageName
         OsSurfaceCapture.shell("am start -n $pkg/$EDITOR_ACTIVITY -f 0x10000000")
-        OsSurfaceCapture.waitForText("Record audio").click()
+        OsSurfaceCapture.waitForText(VOICE).click()
         // The audio block opens ready to record; recording starts from its record button.
         OsSurfaceCapture.device
             .wait(Until.findObject(By.desc("Start Recording")), 10_000L)
@@ -1049,12 +1058,17 @@ class OsSurfaceScreenshotsTest {
     }
 
     private companion object {
-        /** The entry page's choice that starts a piece of writing, named by what it says. */
+        /** The entry page's choices that start a piece of writing and a recording, named by what they say. */
         const val WRITE = "Write"
+        const val VOICE = "Voice"
 
         /** What an empty piece of writing says, and how long a text capture gets to open one by itself. */
         const val WRITING_HINT = "What's on your mind?"
         const val WRITING_OPENS_MS = 3_000L
+
+        /** What an open photo says: the hint in its empty caption, and its title in the top bar. */
+        const val PHOTO_CAPTION_HINT = "Add a caption..."
+        const val PHOTO_TITLE = "Photo"
 
         /** `WindowConfiguration.WINDOWING_MODE_FREEFORM`, which `am start --windowingMode` takes. */
         const val WINDOWING_MODE_FREEFORM = 5

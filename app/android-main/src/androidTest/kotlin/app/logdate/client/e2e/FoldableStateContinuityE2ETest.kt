@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -97,8 +98,12 @@ class FoldableStateContinuityE2ETest {
     }
 
     private fun openEditorAndType(text: String) {
-        // The new-entry editor opens with the text-entry affordance; tap it to focus the input.
-        composeRule.waitForIdle()
+        // A new entry opens on its writing, or on the row of ways to add something, which comes in
+        // once the entry has loaded. Writing is the row's Write choice.
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag(EDITOR_TEXT_INPUT_TAG).fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithContentDescription(START_TEXT_ENTRY_DESCRIPTION).fetchSemanticsNodes().isNotEmpty()
+        }
         if (composeRule.onAllNodesWithTag(EDITOR_TEXT_INPUT_TAG).fetchSemanticsNodes().isEmpty()) {
             composeRule.onNodeWithContentDescription(START_TEXT_ENTRY_DESCRIPTION).performClick()
         }
@@ -120,7 +125,7 @@ class FoldableStateContinuityE2ETest {
 
     private companion object {
         const val EDITOR_TEXT_INPUT_TAG = "editor_text_input"
-        const val START_TEXT_ENTRY_DESCRIPTION = "Start text entry"
+        const val START_TEXT_ENTRY_DESCRIPTION = "Write"
         const val DRAFT_TEXT = "Folded draft that must survive the hinge"
     }
 }
