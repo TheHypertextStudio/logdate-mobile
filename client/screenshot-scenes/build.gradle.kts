@@ -22,6 +22,7 @@ kotlin {
             implementation(projects.client.datastore)
             implementation(projects.client.domain)
             implementation(projects.client.feature.core)
+            implementation(projects.client.feature.editor)
             implementation(projects.client.feature.timeline)
             implementation(projects.client.feature.events)
             implementation(projects.client.feature.onboarding)

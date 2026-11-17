@@ -24,12 +24,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.logdate.client.datastore.EntryStartMode
+import app.logdate.feature.editor.ui.EntryEditorTopBar
 import app.logdate.feature.editor.ui.LocalSharedTransitionScope
 import app.logdate.feature.editor.ui.MainEditorContent
 import app.logdate.feature.editor.ui.common.NoteEditorToolbar
 import app.logdate.feature.editor.ui.content.EditorBottomContent
 import app.logdate.feature.editor.ui.content.blockType
 import app.logdate.feature.editor.ui.editor.AudioBlockUiState
+import app.logdate.feature.editor.ui.editor.AutoSaveStatus
 import app.logdate.feature.editor.ui.editor.BlockType
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
@@ -72,6 +74,7 @@ fun EntryStartPrototype(
     decorateHandwritingFocus: @Composable (content: @Composable () -> Unit) -> Unit = { it() },
     overviewStudyState: EntryPageOverviewState? = null,
     studyDefaultMode: EntryStartMode = EntryStartMode.TEXT,
+    pageTopBar: Boolean = false,
 ) {
     val journalTitle = stringResource(Res.string.entry_page_sample_journal)
     val journal = remember(journalTitle) { Journal(title = journalTitle) }
@@ -184,6 +187,24 @@ fun EntryStartPrototype(
             returnToOverview,
             onExit,
             chooseCapture,
+            header =
+                if (pageTopBar) {
+                    {
+                        EntryEditorTopBar(
+                            state,
+                            immersive = selected != null,
+                            autoSaveStatus = AutoSaveStatus.IDLE,
+                            onBack = onExit,
+                            onReturnToEntry = returnToOverview,
+                            onShowDrafts = {},
+                            onSave = {},
+                            onCaptureMode = chooseCapture,
+                            onJournalSelection = { selectedJournals = it },
+                        )
+                    }
+                } else {
+                    null
+                },
             focusProgress = focusProgress,
             onAddMemory = {
                 val next =

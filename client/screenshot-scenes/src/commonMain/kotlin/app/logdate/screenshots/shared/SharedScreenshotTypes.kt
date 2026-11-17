@@ -18,6 +18,8 @@ enum class SharedScreenshotSceneId(
 ) {
     OnboardingStartSplash("onboarding-start-splash"),
     OnboardingStartLanding("onboarding-start-landing"),
+    EntryPageEmpty("entry-page-empty"),
+    EntryPageWithWriting("entry-page-with-writing"),
     PersonalIntroName("personal-intro-name"),
     PersonalIntroBio("personal-intro-bio"),
     OnboardingOverview("onboarding-overview"),
@@ -130,6 +132,7 @@ enum class SharedScreenshotSceneId(
 
 enum class ScreenshotSceneGroup {
     ONBOARDING,
+    EDITOR,
     SEARCH,
     REWIND,
     SETTINGS,
