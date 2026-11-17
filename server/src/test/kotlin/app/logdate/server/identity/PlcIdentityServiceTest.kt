@@ -394,7 +394,6 @@ class PlcIdentityServiceTest {
             )
             val prepared =
                 service.prepareHostedRecoveryImport(
-                    accountId = accountId,
                     did = AtprotoDid.require(provisioned.did),
                     handle = "alice.logdate.app",
                     recoveryDidKey = recoveryDidKey,

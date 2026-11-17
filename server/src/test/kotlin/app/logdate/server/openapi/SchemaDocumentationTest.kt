@@ -113,9 +113,7 @@ class SchemaDocumentationTest {
                 element.forEach { collectRefs(it, into) }
             }
 
-            else -> {
-                Unit
-            }
+            else -> {}
         }
     }
 }

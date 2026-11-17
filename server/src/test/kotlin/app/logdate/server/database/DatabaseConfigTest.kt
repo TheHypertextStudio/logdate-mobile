@@ -102,7 +102,7 @@ class DatabaseConfigTest {
     }
 
     @Test
-    fun `createDataSource and createTestDataSource create hikari data sources`() {
+    fun `createDataSource creates hikari data sources`() {
         // No env-only invocation is exercised here: DATABASE_USER/DATABASE_PASSWORD are now required
         // and the no-arg overload would depend on the test runner's ambient environment. Each
         // explicit-arg case below covers one branch of credential resolution.
@@ -131,10 +131,6 @@ class DatabaseConfigTest {
             }
         assertTrue(createFromUrl.isSuccess)
         (createFromUrl.getOrNull() as? HikariDataSource)?.close()
-
-        val createTest = runCatching { DatabaseConfig.createTestDataSource() }
-        assertTrue(createTest.isSuccess)
-        (createTest.getOrNull() as? HikariDataSource)?.close()
     }
 
     @Test
