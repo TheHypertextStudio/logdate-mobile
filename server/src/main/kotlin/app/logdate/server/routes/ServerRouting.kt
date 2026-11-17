@@ -66,12 +66,8 @@ import app.logdate.server.transcription.cloudTranscriptionSessionProviderFromEnv
 import app.logdate.server.transfer.TransferSlots
 import io.ktor.client.HttpClient
 import io.ktor.server.application.Application
-import io.ktor.server.application.install
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
-import io.ktor.server.websocket.WebSockets
-import io.ktor.server.websocket.pingPeriod
-import io.ktor.server.websocket.timeout
 import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
 import studio.hypertext.atproto.pds.PdsBlobService
@@ -80,7 +76,6 @@ import studio.hypertext.atproto.pds.PdsRepoService
 import studio.hypertext.atproto.pds.PdsSessionService
 import studio.hypertext.atproto.pds.PdsSyncService
 import studio.hypertext.atproto.pds.SessionResponse
-import kotlin.time.Duration.Companion.seconds
 
 // The composition root: each function resolves what its routes need from Koin and hands it over
 // as explicit parameters, so the route files themselves stay container-free and testable with
@@ -189,16 +184,8 @@ private fun Application.publicReposIfEnabled(): PublicRepoAccess? {
 /** `com.atproto.sync.subscribeRepos` and `listRepos`, served only while the event stream is turned on. */
 private fun Application.firehoseRoutes(publicRepos: PublicRepoAccess) {
     val stream by inject<RepoEventStream>()
-    install(WebSockets) {
-        pingPeriod = WEBSOCKET_PING_PERIOD
-        timeout = WEBSOCKET_TIMEOUT
-        maxFrameSize = Long.MAX_VALUE
-    }
-    routing { repoEventStreamRoutes(stream, publicRepos) }
+    installRepoEventStream(stream, publicRepos)
 }
-
-private val WEBSOCKET_PING_PERIOD = 20.seconds
-private val WEBSOCKET_TIMEOUT = 60.seconds
 
 /** `app.logdate.space.*` XRPC for the owner's own LogDate devices and linked watches, answering 501 until the server flag is on. */
 private fun Application.personalSpaceRoutes() {
