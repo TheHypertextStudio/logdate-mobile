@@ -61,7 +61,6 @@ internal class SpaceMigrationMediaCheck(
                     spaceMedia.downloadMediaToFile(token, reference, cid)
                         ?: Result.failure(IllegalStateException("Not a space file"))
                 },
-                "checkMovedMedia($cid)",
                 expectedScope = scope,
             )
         val downloaded = result.getOrNull() ?: return null

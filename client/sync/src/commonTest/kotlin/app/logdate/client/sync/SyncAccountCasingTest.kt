@@ -38,7 +38,7 @@ class SyncAccountCasingTest {
                     refresher.withFreshToken({ token ->
                         seen += token
                         if (token == "expired") Result.failure(CloudApiException("EXPIRED", "expired", 401)) else Result.success("uploaded")
-                    }, "retained upload", expected)
+                    }, expected)
                 }
             assertEquals("uploaded", result.getOrThrow())
             assertEquals(listOf("expired", "new-token"), seen)
@@ -67,7 +67,7 @@ class SyncAccountCasingTest {
                 SyncTokenRefresher(sessions, accounts()).withFreshToken({
                     sessions.saveSession(captured.copy(accountId = raw))
                     Result.success("stale response")
-                }, "captured session", UploadScope(raw, origin))
+                }, UploadScope(raw, origin))
             assertTrue(result.isFailure)
             assertEquals(raw, sessions.getSession()?.accountId)
         }

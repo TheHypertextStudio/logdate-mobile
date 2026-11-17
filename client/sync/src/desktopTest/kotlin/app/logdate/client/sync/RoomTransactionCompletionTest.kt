@@ -38,15 +38,15 @@ class RoomTransactionCompletionTest {
         runTest {
             withDatabases { database, observer ->
                 val manager = RoomSyncTransactionManager(database)
-                var cleaned = false
+                val cleaned = mutableListOf<String>()
                 assertFailsWith<IllegalStateException> {
                     manager.withTransaction {
                         database.syncMetadataDao().insertPending(pending("rolled-back"))
-                        manager.afterCommit { cleaned = true }
+                        manager.afterCommit { cleaned += "rolled-back" }
                         error("Rollback fixture")
                     }
                 }
-                assertFalse(cleaned)
+                assertEquals(emptyList(), cleaned)
                 assertNull(observer.syncMetadataDao().getPending("owner", "origin", "DRAFT", "rolled-back"))
             }
         }

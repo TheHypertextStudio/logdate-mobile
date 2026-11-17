@@ -101,7 +101,6 @@ class CloudOriginPinningTest {
             kotlin.test.assertFailsWith<kotlinx.coroutines.CancellationException> {
                 refresher.withFreshToken(
                     { Result.failure<Unit>(kotlinx.coroutines.CancellationException("private-cancel-marker")) },
-                    "fixture",
                 )
             }
         }
@@ -150,7 +149,6 @@ class CloudOriginPinningTest {
                                     Result.success(Unit)
                                 }
                             },
-                            operationName = "fixture",
                             expectedScope = UploadScope("owner-a", serverA),
                         )
                     assertEquals(if (refreshFirst) 2 else 1, calls)
@@ -218,7 +216,7 @@ class CloudOriginPinningTest {
                     UploadScope("owner-b", serverA),
                     UploadScope("owner-a", serverB),
                 )) {
-                    assertTrue(refresher.withFreshToken(api::getAccountInfo, "account", expectedScope = scope).isFailure)
+                    assertTrue(refresher.withFreshToken(api::getAccountInfo, expectedScope = scope).isFailure)
                 }
             }
             assertEquals(0, requests)
@@ -310,7 +308,7 @@ class CloudOriginPinningTest {
                 val accounts =
                     DefaultCloudAccountRepository(api, InMemoryKeyValueStorage(), config, backgroundScope, sessionStorage = sessions)
 
-                SyncTokenRefresher(sessions, accounts).withFreshToken(api::getAccountInfo, "getAccountInfo")
+                SyncTokenRefresher(sessions, accounts).withFreshToken(api::getAccountInfo)
             }
 
             assertTrue(requestedHosts.isNotEmpty())
@@ -345,7 +343,7 @@ class CloudOriginPinningTest {
                     }
                 val accounts = DefaultCloudAccountRepository(api, storage, config, backgroundScope, sessionStorage = sessions)
 
-                SyncTokenRefresher(sessions, accounts).withFreshToken(api::getAccountInfo, "getAccountInfo")
+                SyncTokenRefresher(sessions, accounts).withFreshToken(api::getAccountInfo)
 
                 assertEquals("b-existing", storage.values["cloud_access_token_b_example"])
                 assertEquals("a-access", sessions.getSession()?.accessToken)
