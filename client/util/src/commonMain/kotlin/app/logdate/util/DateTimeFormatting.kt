@@ -10,7 +10,6 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -137,74 +136,6 @@ val Instant.localTime: String
                 amPmMarker("a.m.", "p.m.")
             },
         )
-    }
-
-/**
- * Returns the week of the year for this date.
- *
- * This uses the ISO 8601 definition of week number, namely that the first week of the year is the
- * week that contains the first Thursday of the year. In other words, it is the week that contains
- * a majority (4) of its days in the new year.
- *
- * Note that this may return 53 for the last week of the year for all years that have Thursday as
- * the 1st of January and on leap years that start on Wednesday the 1st
- *
- * @link https://en.wikipedia.org/wiki/ISO_week_date
- */
-val LocalDateTime.weekOfYear: Int
-    get() {
-        // Get the day of week where Monday is 1 and Sunday is 7 (ISO-8601)
-        val dayOfWeek = dayOfWeek.isoDayNumber
-
-        // Get the ordinal day of year (1-366)
-        val dayOfYear = dayOfYear
-
-        // Find the nearest Thursday (adding days if Mon-Wed, subtracting if Fri-Sun)
-        val nearestThursday = dayOfYear + (4 - dayOfWeek)
-
-        // Get the ordinal day of year for January 4th, which is always in week 1
-        val january4th = LocalDateTime(year, 1, 4, 0, 0)
-        val january4thDayOfWeek = january4th.dayOfWeek.isoDayNumber
-
-        // Find the nearest Thursday to January 4th
-        val january4thNearestThursday = 4 + (4 - january4thDayOfWeek)
-
-        // Calculate the week number
-        var weekNumber = ((nearestThursday - january4thNearestThursday) / 7) + 1
-
-        // Handle edge cases for beginning and end of year
-        if (weekNumber < 1) {
-            // If we're before the first week of this year, we're in the last week of previous year
-            val december31LastYear = LocalDateTime(year - 1, 12, 31, 0, 0)
-            return december31LastYear.weekOfYear
-        } else if (weekNumber > 52) {
-            // Check if this year has 53 weeks
-            val december31ThisYear = LocalDateTime(year, 12, 31, 0, 0)
-            val december31WeekDay = december31ThisYear.dayOfWeek.isoDayNumber
-
-            // Year has 53 weeks if December 31st is on Thursday
-            // OR if December 31st is on Wednesday in a leap year
-            if (weekNumber == 53 &&
-                (
-                    december31WeekDay != 4 &&
-                        !(december31WeekDay == 3 && isLeapYear(year))
-                )
-            ) {
-                weekNumber = 1
-            }
-        }
-
-        return weekNumber
-    }
-
-/**
- * Helper function to determine if a year is a leap year
- */
-private fun isLeapYear(year: Int): Boolean = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
-
-val Instant.weekOfYear: Int
-    get() {
-        return toLocalDateTime(TimeZone.currentSystemDefault()).weekOfYear
     }
 
 /**
