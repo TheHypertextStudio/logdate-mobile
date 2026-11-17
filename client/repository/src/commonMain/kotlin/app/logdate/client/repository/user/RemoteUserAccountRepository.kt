@@ -17,11 +17,6 @@ interface RemoteUserAccountRepository {
      */
     val currentUser: Flow<UserAccount?>
 
-    suspend fun signInWithEmail(
-        email: String,
-        password: String,
-    ): Result<UserAccount>
-
     suspend fun signInWithPasskey(
         primaryIdentifier: String,
         passkey: String,
@@ -47,17 +42,9 @@ interface RemoteUserAccountRepository {
         passkey: String,
     ): Result<Unit>
 
-    suspend fun updatePasskey(
-        primaryIdentifier: String,
-        oldPasskey: String,
-        newPasskey: String,
-    ): Result<Unit>
-
     suspend fun deletePasskey(primaryIdentifier: String): Result<Unit>
 
     suspend fun deleteAccount(): Result<Unit>
-
-    suspend fun fetchAccountDetails(): Result<UserAccount>
 }
 
 /**

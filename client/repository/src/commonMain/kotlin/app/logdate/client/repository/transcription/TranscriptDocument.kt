@@ -43,36 +43,6 @@ data class TranscriptDocument(
     val isFinal: Boolean
         get() = status == TranscriptDocumentStatus.FINAL && segments.all { it.isFinal }
 
-    /**
-     * Inserts or replaces a segment while preserving higher-priority recognition sources.
-     *
-     * Local drafts can arrive first for low latency, then cloud/live/refinement passes can replace
-     * the same segment as better hypotheses become available.
-     */
-    fun upsertSegment(segment: TranscriptSegment): TranscriptDocument {
-        val existing = segments.firstOrNull { it.segmentId == segment.segmentId }
-        if (existing != null && existing.source.priority > segment.source.priority) {
-            return this
-        }
-
-        val nextSegments =
-            if (existing == null) {
-                segments + segment
-            } else {
-                segments.map { current ->
-                    if (current.segmentId == segment.segmentId) segment else current
-                }
-            }
-
-        return copy(
-            revision = revision + 1,
-            segments =
-                nextSegments.sortedWith(
-                    compareBy<TranscriptSegment> { it.startMs }.thenBy { it.segmentId },
-                ),
-        )
-    }
-
     companion object {
         /**
          * Builds a timestamp-compatible document around legacy plain-text transcription data.
