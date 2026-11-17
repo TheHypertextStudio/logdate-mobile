@@ -20,6 +20,8 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -139,6 +141,26 @@ class WatchWindowPublisherTest {
 
             assertNull(publisher.publishIfActive("watch"))
             assertTrue(items.puts.isEmpty())
+        }
+
+    @Test
+    fun `notes are read only while the watch takes the window`() =
+        runTest {
+            active.value = false
+            publisher.start(backgroundScope)
+            runCurrent()
+            assertEquals(0, notesFlow.subscriptionCount.value)
+            advanceTimeBy(3_000)
+            runCurrent()
+            assertTrue(cancelled)
+
+            active.value = true
+            runCurrent()
+            assertEquals(1, notesFlow.subscriptionCount.value)
+
+            active.value = false
+            runCurrent()
+            assertEquals(0, notesFlow.subscriptionCount.value)
         }
 
     @Test
