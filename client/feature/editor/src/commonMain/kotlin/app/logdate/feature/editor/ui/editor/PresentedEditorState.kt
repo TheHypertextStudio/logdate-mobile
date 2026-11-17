@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  *
  * [value] is worked out from the two sources each time it is read. A shared copy trails a change
  * to the entry by one dispatch, and the editor draws its first frame from its first read, so an
- * entry opened on a blank thought would be drawn once as an empty page.
+ * entry that was given its first block as it opened would be drawn once as an empty page.
  */
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 internal class PresentedEditorState(

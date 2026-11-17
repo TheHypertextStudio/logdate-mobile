@@ -87,8 +87,6 @@ class EntryEditorViewModel(
 
     fun initializePreferredEntryMode(mode: EntryStartMode? = null) = initializePreferredEntryModeImpl(mode)
 
-    fun openBlankThought() = openBlankThoughtImpl()
-
     /**
      * Per-block finalizers bound by each block's own `AudioBlockEditor` composable, keyed by
      * block id.
