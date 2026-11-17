@@ -102,25 +102,6 @@ private fun shouldIncludeStep(
         else -> true
     }
 
-fun OnboardingProgressSnapshot.canCompleteOnboarding(): Boolean =
-    hasPersonalIntro &&
-        hasBirthday &&
-        hasResolvedRecommendations() &&
-        hasResolvedDayBoundaries() &&
-        hasResolvedLocation() &&
-        notificationsHandledOnThisDevice
-
-fun OnboardingProgressSnapshot.firstIncompleteRequiredOnboardingStep(): OnboardingStep? =
-    when {
-        !hasPersonalIntro -> OnboardingStep.PERSONAL_INTRO
-        !hasBirthday -> OnboardingStep.BIRTHDAY
-        !hasResolvedRecommendations() -> OnboardingStep.RECOMMENDATIONS
-        !hasResolvedDayBoundaries() -> OnboardingStep.DAY_BOUNDARIES
-        !hasResolvedLocation() -> OnboardingStep.LOCATION
-        !notificationsHandledOnThisDevice -> OnboardingStep.NOTIFICATIONS
-        else -> null
-    }
-
 private fun OnboardingProgressSnapshot.hasResolvedAccount(): Boolean =
     hasCloudAccount ||
         accountHandledOnThisDevice

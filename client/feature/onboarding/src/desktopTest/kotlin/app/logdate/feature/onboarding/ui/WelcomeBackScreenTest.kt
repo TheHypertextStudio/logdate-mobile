@@ -77,15 +77,7 @@ class WelcomeBackScreenTest {
                     buildOnboardingCompletionCoordinator(
                         notesRepository = fakeNotesRepository,
                         userStateRepository = fakeUserStateRepository,
-                        memoriesSettingsRepository = fakeMemoriesSettingsRepository,
-                        locationSettingsRepository = fakeLocationSettingsRepository,
-                        dayBoundarySettingsRepository = fakeDayBoundarySettingsRepository,
-                        healthRepository = fakeHealthRepository,
-                        profileRepository = fakeProfileRepository,
-                        accountRepository = fakeAccountRepository,
-                        sessionStorage = fakeSessionStorage,
                         streakSettingsRepository = fakeStreakSettingsRepository,
-                        onboardingDeviceStateRepository = fakeOnboardingDeviceStateRepository,
                     ),
             )
     }

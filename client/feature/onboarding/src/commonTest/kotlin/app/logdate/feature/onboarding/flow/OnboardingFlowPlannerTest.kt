@@ -4,7 +4,6 @@ import app.logdate.client.domain.dayboundary.HealthConnectStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
@@ -69,10 +68,6 @@ class OnboardingFlowPlannerTest {
                 entryMode = OnboardingEntryMode.FRESH,
                 snapshot = snapshot,
             ).contains(OnboardingStep.RECOVERY_PHRASE),
-        )
-        assertNotEquals(
-            OnboardingStep.RECOVERY_PHRASE,
-            snapshot.firstIncompleteRequiredOnboardingStep(),
         )
     }
 
@@ -149,31 +144,6 @@ class OnboardingFlowPlannerTest {
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = snapshot,
             ).first(),
-        )
-    }
-
-    @Test
-    fun `completion eligibility requires all canonical setup steps to be handled`() {
-        assertFalse(
-            OnboardingProgressSnapshot(
-                hasPersonalIntro = true,
-                hasBirthday = true,
-                recommendationsHandledOnThisDevice = true,
-                locationHandledOnThisDevice = true,
-                dayBoundariesHandledOnThisDevice = false,
-                notificationsHandledOnThisDevice = true,
-            ).canCompleteOnboarding(),
-        )
-
-        assertTrue(
-            OnboardingProgressSnapshot(
-                hasPersonalIntro = true,
-                hasBirthday = true,
-                recommendationsHandledOnThisDevice = true,
-                locationHandledOnThisDevice = true,
-                dayBoundariesHandledOnThisDevice = true,
-                notificationsHandledOnThisDevice = true,
-            ).canCompleteOnboarding(),
         )
     }
 
@@ -260,18 +230,6 @@ class OnboardingFlowPlannerTest {
                 entryMode = OnboardingEntryMode.CONTINUE_SETUP,
                 snapshot = neverVisited,
             ).contains(OnboardingStep.ACCOUNT),
-        )
-    }
-
-    @Test
-    fun `completion guard redirects to recommendations before notifications when unresolved`() {
-        assertEquals(
-            OnboardingStep.RECOMMENDATIONS,
-            OnboardingProgressSnapshot(
-                hasPersonalIntro = true,
-                hasBirthday = true,
-                notificationsHandledOnThisDevice = true,
-            ).firstIncompleteRequiredOnboardingStep(),
         )
     }
 

@@ -1,14 +1,8 @@
 package app.logdate.feature.onboarding.flow
 
-import app.logdate.feature.onboarding.ui.FakeAccountRepository
-import app.logdate.feature.onboarding.ui.FakeDayBoundarySettingsRepository
 import app.logdate.feature.onboarding.ui.FakeJournalNotesRepository
-import app.logdate.feature.onboarding.ui.FakeLocalFirstHealthRepository
-import app.logdate.feature.onboarding.ui.FakeLocationTrackingSettingsRepository
-import app.logdate.feature.onboarding.ui.FakeMemoriesSettingsRepository
 import app.logdate.feature.onboarding.ui.FakeOnboardingDeviceStateRepository
 import app.logdate.feature.onboarding.ui.FakeProfileRepository
-import app.logdate.feature.onboarding.ui.FakeSessionStorage
 import app.logdate.feature.onboarding.ui.FakeStreakSettingsRepository
 import app.logdate.feature.onboarding.ui.FakeUserStateRepository
 import app.logdate.feature.onboarding.ui.buildOnboardingCompletionCoordinator
@@ -36,15 +30,7 @@ class OnboardingCompletionCoordinatorTest {
         buildOnboardingCompletionCoordinator(
             notesRepository = FakeJournalNotesRepository(),
             userStateRepository = userStateRepository,
-            memoriesSettingsRepository = FakeMemoriesSettingsRepository(),
-            locationSettingsRepository = FakeLocationTrackingSettingsRepository(),
-            dayBoundarySettingsRepository = FakeDayBoundarySettingsRepository(),
-            healthRepository = FakeLocalFirstHealthRepository(),
-            profileRepository = profileRepository,
-            accountRepository = FakeAccountRepository(),
-            sessionStorage = FakeSessionStorage(),
             streakSettingsRepository = FakeStreakSettingsRepository(),
-            onboardingDeviceStateRepository = onboardingDeviceStateRepository,
         )
 
     @Test

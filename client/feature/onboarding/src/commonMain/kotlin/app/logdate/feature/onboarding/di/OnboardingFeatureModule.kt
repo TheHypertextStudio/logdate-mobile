@@ -27,7 +27,7 @@ val onboardingFeatureModule: Module =
             KeyValueOnboardingDeviceStateRepository(get<KeyValueStorage>(named("deviceKeyValueStorage")))
         }
         single<OnboardingStateResetter> { OnboardingStateResetter { get<OnboardingDeviceStateRepository>().clear() } }
-        single { OnboardingCompletionCoordinator(get(), get(), get(), get(), get(), get(), get(), get()) }
+        single { OnboardingCompletionCoordinator(get(), get()) }
         viewModel {
             val watch = get<OnboardingWatchSetup>()
             OnboardingViewModel(
