@@ -249,4 +249,98 @@ printf 'refs/heads/probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa refs/heads/pro
     bash "$REPO_ROOT/.hypertext/git-product/pre-push"
 assert_equals $'true\nretained' "$(cat "$probe_dir/result")"
 
+# Gradle's failure report names each failed task; tasks only the iOS or Wasm compile runs are native.
+gradle_failure_report() {
+  printf 'FAILURE: Build completed with %s failures.\n\n' "$#"
+  local task=""
+  for task in "$@"; do
+    printf '1: Task failed with an exception.\n-----------\n* What went wrong:\n'
+    printf "Execution failed for task '%s'.\n> Compilation finished with errors\n\n" "$task"
+  done
+  printf 'BUILD FAILED in 9s\n'
+}
+assert_equals "tests" "$(gradle_failure_report ':client:feature:editor:testAndroidHostTest' | gradle_failure_kinds)"
+assert_equals "native" "$(gradle_failure_report ':client:feature:editor:compileTestKotlinIosSimulatorArm64' | gradle_failure_kinds)"
+assert_equals "native" "$(gradle_failure_report ':client:util:compileTestKotlinWasmJs' | gradle_failure_kinds)"
+assert_equals $'tests\nnative' "$(gradle_failure_report \
+  ':client:feature:editor:desktopTest' \
+  ':client:ui:compileKotlinIosSimulatorArm64' \
+  ':client:ui:generateResourceAccessorsForIosMain' \
+  ':client:util:downloadKotlinNativeDistribution' | gradle_failure_kinds)"
+# A task both checks run blocks the tests too, so it is reported as a test failure.
+assert_equals "tests" "$(gradle_failure_report ':client:ui:generateComposeResClass' | gradle_failure_kinds)"
+assert_equals "native" "$(printf "* What went wrong:\nCould not determine the dependencies of task ':client:util:compileTestKotlinWasmJs'.\n" | gradle_failure_kinds)"
+assert_equals "tests" "$(printf "* What went wrong:\nA problem occurred configuring project ':client:ui'.\n" | gradle_failure_kinds)"
+
+# The product pre-push runs the affected module's tests and its iOS test compile in one Gradle call
+# and reports each failed check by the task that failed.
+push_fixture="$probe_dir/push-fixture"
+mkdir -p "$push_fixture/bin" "$push_fixture/repo/scripts/validation" "$push_fixture/repo/client/feature/sample"
+cp "$COMMON" "$push_fixture/repo/scripts/validation/hook-common.sh"
+touch "$push_fixture/repo/client/feature/sample/build.gradle.kts"
+cat > "$push_fixture/bin/git" << 'EOF'
+#!/usr/bin/env bash
+case "$1" in
+    rev-parse) printf '%s\n' "$PUSH_FIXTURE_ROOT" ;;
+    rev-list) printf 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n' ;;
+    diff-tree) printf 'client/feature/sample/src/commonTest/kotlin/SampleTest.kt\n' ;;
+    *) exit 1 ;;
+esac
+EOF
+printf '#!/bin/sh\nexit 0\n' > "$push_fixture/bin/searchdeadcode"
+cat > "$push_fixture/repo/gradlew" << 'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$PUSH_FIXTURE_ROOT/gradle-calls"
+case " $* " in
+    *" :client:feature:sample:tasks "*)
+        printf 'testAndroidHostTest - Runs Android host tests.\n'
+        printf "compileTestKotlinIosSimulatorArm64 - Compiles a klibrary from the 'test' compilation.\n"
+        ;;
+    *" --continue "*)
+        failed=()
+        [[ "$PUSH_FIXTURE_FAIL" == *tests* ]] && failed+=(":client:feature:sample:testAndroidHostTest")
+        [[ "$PUSH_FIXTURE_FAIL" == *native* ]] && failed+=(":client:feature:sample:compileTestKotlinIosSimulatorArm64")
+        [[ ${#failed[@]} -eq 0 ]] && exit 0
+        for task in "${failed[@]}"; do
+            printf "* What went wrong:\nExecution failed for task '%s'.\n" "$task" >&2
+        done
+        exit 1
+        ;;
+esac
+exit 0
+EOF
+chmod +x "$push_fixture/bin/git" "$push_fixture/bin/searchdeadcode" "$push_fixture/repo/gradlew"
+push_with_failures() {
+  : > "$push_fixture/repo/gradle-calls"
+  set +e
+  push_output="$(printf 'refs/heads/sample bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb refs/heads/sample %s\n' "$ZERO_SHA" \
+    | env PATH="$push_fixture/bin:$PATH" PUSH_FIXTURE_ROOT="$push_fixture/repo" PUSH_FIXTURE_FAIL="$1" \
+      bash "$REPO_ROOT/.hypertext/git-product/pre-push" 2>&1)"
+  push_status=$?
+  set -e
+}
+
+push_with_failures "none"
+assert_equals 0 "$push_status"
+check_calls="$(grep -e '--continue' "$push_fixture/repo/gradle-calls")"
+assert_equals 1 "$(printf '%s\n' "$check_calls" | grep -c .)"
+assert_contains ":client:feature:sample:testAndroidHostTest" "$check_calls"
+assert_contains ":client:feature:sample:compileTestKotlinIosSimulatorArm64" "$check_calls"
+assert_equals 1 "$(grep -c "compileTestKotlinIosSimulatorArm64" "$push_fixture/repo/gradle-calls")"
+
+push_with_failures "native"
+assert_equals 1 "$push_status"
+assert_contains "NATIVE: Affected modules' tests do not compile for iOS or Wasm" "$push_output"
+assert_exit 1 grep -q "TESTS:" <<< "$push_output"
+
+push_with_failures "tests"
+assert_equals 1 "$push_status"
+assert_contains "TESTS: Tests failed for affected modules" "$push_output"
+assert_exit 1 grep -q "NATIVE:" <<< "$push_output"
+
+push_with_failures "tests native"
+assert_equals 1 "$push_status"
+assert_contains "TESTS: Tests failed for affected modules" "$push_output"
+assert_contains "NATIVE: Affected modules' tests do not compile for iOS or Wasm" "$push_output"
+
 echo "Hook regression tests passed ($pass_count assertions)."
