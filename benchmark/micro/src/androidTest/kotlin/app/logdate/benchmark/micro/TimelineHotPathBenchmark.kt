@@ -10,17 +10,23 @@ import app.logdate.client.domain.dayboundary.DayBoundarySettingsRepository
 import app.logdate.client.domain.timeline.GetDayBoundsUseCase
 import app.logdate.client.domain.timeline.GetTimelinePageUseCase
 import app.logdate.client.domain.timeline.GroupNotesByDayBoundsUseCase
+import app.logdate.client.domain.timeline.TimelineDay
+import app.logdate.client.domain.timeline.TimelineDayBuilder
 import app.logdate.client.domain.timeline.TimelinePageRequest
 import app.logdate.client.health.HealthDataAvailability
 import app.logdate.client.health.LocalFirstHealthRepository
 import app.logdate.client.health.model.DayBounds
 import app.logdate.client.health.model.SleepSession
 import app.logdate.client.health.model.TimeOfDay
+import app.logdate.client.health.util.LogdatePreferencesDataSource
+import app.logdate.client.health.util.UserPreferences
+import app.logdate.client.repository.events.EventRepository
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.repository.journals.NoteCoordinates
 import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.client.repository.journals.NotePlace
+import app.logdate.shared.model.Event
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -95,14 +101,69 @@ private class TimelineHotPathFixture {
         GroupNotesByDayBoundsUseCase(
             getDayBoundsUseCase = getDayBoundsUseCase,
             dayBoundarySettingsRepository = dayBoundarySettingsRepository,
+            preferencesDataSource = NoPreferences,
         )
 
     val timelinePageUseCase =
         GetTimelinePageUseCase(
             notesRepository = FakeJournalNotesRepository(notes, notesByDay),
             groupNotesByDayBoundsUseCase = groupNotesByDayBoundsUseCase,
+            eventRepository = NoEvents,
+            timelineDayBuilder = EntriesOnlyTimelineDay,
         )
 }
+
+private object NoPreferences : LogdatePreferencesDataSource {
+    override suspend fun getPreferences(): UserPreferences = UserPreferences()
+}
+
+private object NoEvents : EventRepository {
+    override fun observeAllEvents(): Flow<List<Event>> = flowOf(emptyList())
+
+    override fun observeEvent(eventId: Uuid): Flow<Event?> = flowOf(null)
+
+    override fun observeEventsForDateRange(
+        start: Instant,
+        end: Instant,
+    ): Flow<List<Event>> = flowOf(emptyList())
+
+    override suspend fun getEventById(eventId: Uuid): Event? = null
+
+    override suspend fun findByExternalCalendarId(externalId: String): Event? = null
+
+    override suspend fun createEvent(event: Event): Result<Unit> = Result.success(Unit)
+
+    override suspend fun updateEvent(event: Event): Result<Unit> = Result.success(Unit)
+
+    override suspend fun deleteEvent(eventId: Uuid): Result<Unit> = Result.success(Unit)
+
+    override fun observeEventsForNote(noteId: Uuid): Flow<List<Event>> = flowOf(emptyList())
+
+    override fun observeNotesForEvent(eventId: Uuid): Flow<List<Uuid>> = flowOf(emptyList())
+
+    override suspend fun linkNoteToEvent(
+        eventId: Uuid,
+        noteId: Uuid,
+    ): Result<Unit> = Result.success(Unit)
+
+    override suspend fun unlinkNoteFromEvent(
+        eventId: Uuid,
+        noteId: Uuid,
+    ): Result<Unit> = Result.success(Unit)
+}
+
+/** Builds each day from its entries alone, so the benchmark measures paging and grouping. */
+private val EntriesOnlyTimelineDay =
+    TimelineDayBuilder { date, entries, events ->
+        TimelineDay(
+            start = entries.minOf { it.creationTimestamp },
+            end = entries.maxOf { it.creationTimestamp },
+            tldr = "",
+            date = date,
+            events = events,
+            entries = entries.sortedByDescending { it.creationTimestamp },
+        )
+    }
 
 private class FakeDayBoundarySettingsRepository : DayBoundarySettingsRepository {
     override suspend fun getSettings(): DayBoundarySettings = DayBoundarySettings(sleepBasedBoundariesEnabled = false)
@@ -301,7 +362,7 @@ private fun benchmarkInstant(
 private fun locationFor(index: Int): NoteLocation {
     val place = PLACES[index % PLACES.size]
     return NoteLocation(
-        coordinates = NoteCoordinates(latitude = place.latitude, longitude = place.longitude),
+        coordinates = NoteCoordinates(latitude = checkNotNull(place.latitude), longitude = checkNotNull(place.longitude)),
         place = place,
     )
 }

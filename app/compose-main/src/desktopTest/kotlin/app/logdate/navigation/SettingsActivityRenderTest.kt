@@ -159,9 +159,7 @@ class SettingsActivityRenderTest {
                 )
             }
 
-            FoldableSplitLayout.None -> {
-                Unit
-            }
+            FoldableSplitLayout.None -> {}
         }
         val directory = System.getenv("LOGDATE_ACTIVITY_SCREENSHOT_DIR")
         if (directory != null) {

@@ -72,47 +72,6 @@ internal suspend fun <T> importSharedAttachment(
         null
     }
 
-internal suspend fun <T> importOwnedSharedAttachments(
-    sourceUris: List<String>,
-    importAttachment: suspend (String) -> T?,
-    rollbackAttachment: suspend (T) -> Unit,
-): List<T> {
-    val ownedAttachments = mutableListOf<T>()
-    try {
-        sourceUris.forEach { sourceUri ->
-            importAttachment(sourceUri)?.let(ownedAttachments::add)
-        }
-    } catch (cancellation: CancellationException) {
-        for (attachment in ownedAttachments) {
-            rollbackAttachment(attachment)
-        }
-        throw cancellation
-    } catch (error: Exception) {
-        for (attachment in ownedAttachments) {
-            rollbackAttachment(attachment)
-        }
-        throw error
-    }
-    return ownedAttachments
-}
-
-internal suspend fun <T> handOffIncomingShareToEditor(
-    ownedAttachments: List<T>,
-    launchEditor: () -> Boolean,
-    confirmAccepted: (T) -> Unit,
-    rollbackAttachment: suspend (T) -> Unit,
-): Boolean {
-    val launched = launchEditor()
-    if (launched) {
-        ownedAttachments.forEach(confirmAccepted)
-    } else {
-        for (attachment in ownedAttachments) {
-            rollbackAttachment(attachment)
-        }
-    }
-    return launched
-}
-
 private fun Intent.parseShareToJournalShortcutId(): Uuid? {
     val shortcutId = getStringExtra(Intent.EXTRA_SHORTCUT_ID) ?: return null
     val prefix = "${DynamicShortcutDescriptor.ShareToJournal.ID_PREFIX}:"

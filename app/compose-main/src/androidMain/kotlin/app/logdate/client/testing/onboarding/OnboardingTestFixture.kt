@@ -29,6 +29,8 @@ data class OnboardingTestFixture(
     val sleepBasedDayBoundariesEnabled: Boolean = false,
 ) {
     companion object {
+        // OnboardingJourneyE2ETest in app/android-main androidTest starts from it; tests are not roots.
+        @Suppress("unused")
         val FRESH_ONBOARDING = OnboardingTestFixture()
         val ONBOARDED_HOME = OnboardingTestFixture(isOnboarded = true)
     }
@@ -47,6 +49,8 @@ internal fun selectOnboardingTestFixture(
         else -> processFixture
     }
 
+// The app/android-main androidTest suites launch past onboarding with it; tests are not roots.
+@Suppress(names = ["unused"])
 fun Intent.putOnboardingTestFixture(fixture: OnboardingTestFixture): Intent =
     apply {
         putExtra(ONBOARDING_TEST_FIXTURE_EXTRA, ONBOARDING_TEST_FIXTURE_JSON.encodeToString(OnboardingTestFixture.serializer(), fixture))

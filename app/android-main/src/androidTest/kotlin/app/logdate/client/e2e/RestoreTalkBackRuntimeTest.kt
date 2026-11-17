@@ -236,11 +236,8 @@ class RestoreTalkBackRuntimeTest {
                                     ),
                                 cloudArchiveStatus = CloudArchiveStatus(CloudArchivePhase.CHECKING),
                                 isAuthenticated = true,
-                                onSyncNow = {},
                                 onNavigateToSignIn = {},
                                 onNavigateToRecoveryPhrase = { clicked.incrementAndGet() },
-                                quotaUsage = StorageQuotaUi(0, 0, 0f, formattedTotal = "0 GB", formattedUsed = "0 GB"),
-                                isQuotaAvailable = false,
                                 snackbarHostState = SnackbarHostState(),
                             )
                         }

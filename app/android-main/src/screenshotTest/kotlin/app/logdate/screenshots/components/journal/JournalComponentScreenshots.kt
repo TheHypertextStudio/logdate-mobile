@@ -3,7 +3,6 @@ package app.logdate.screenshots.components.journal
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.feature.journals.ui.creation.JournalCreationScreenContent
-import app.logdate.feature.journals.ui.detail.ConfirmEntryDeletionDialog
 import app.logdate.feature.journals.ui.list.JournalsListDialog
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTestData.PHONE
@@ -60,20 +59,6 @@ fun JournalsListDialog_Populated() {
             journals = ScreenshotTestData.sampleJournals,
             onJournalClick = {},
             onDismiss = {},
-        )
-    }
-}
-
-// ─── Confirm Entry Deletion ─────────────────────────────────────────────────────
-
-@PreviewTest
-@Preview(showBackground = true, device = PHONE)
-@Composable
-fun ConfirmEntryDeletion_Dialog() {
-    ScreenshotTheme {
-        ConfirmEntryDeletionDialog(
-            onDismissRequest = {},
-            onConfirmation = {},
         )
     }
 }

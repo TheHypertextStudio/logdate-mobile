@@ -93,7 +93,12 @@ class LogDateApplication :
  */
 typealias LogdateApplication = LogDateApplication
 
-/** Initializes the foreground runtime when Android retained a restore-agent Application instance. */
+/**
+ * Initializes the foreground runtime when Android retained a restore-agent Application instance.
+ *
+ * The app/android-main androidTest suites start the app with it; tests are not roots.
+ */
+@Suppress(names = ["unused"])
 fun ensureLogDateApplicationStarted(application: Application) {
     ApplicationStartupCoordinator.start(application)
 }

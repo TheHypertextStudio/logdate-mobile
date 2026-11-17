@@ -4,11 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.window.layout.WindowInfoTracker
-import androidx.window.layout.WindowLayoutInfo
 import app.logdate.client.EditorActivity
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.Uuid
 
 /**
@@ -75,9 +72,4 @@ class EditorManager(
             Napier.e("Failed to open entry in new window", e)
         }
     }
-
-    fun getWindowLayoutInfo(activity: Activity): Flow<WindowLayoutInfo> =
-        WindowInfoTracker
-            .getOrCreate(activity)
-            .windowLayoutInfo(activity)
 }

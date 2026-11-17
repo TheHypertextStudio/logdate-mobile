@@ -69,9 +69,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -105,9 +102,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -138,9 +132,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -170,9 +161,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -206,9 +194,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -250,9 +235,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -292,9 +274,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -330,9 +309,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -370,9 +346,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -407,9 +380,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -442,9 +412,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -475,9 +442,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -508,9 +472,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -546,9 +507,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -597,9 +555,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -639,9 +594,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -678,9 +630,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }
@@ -719,9 +668,6 @@ class ExportFlowE2ETest {
                 onRetryRestore = {},
                 onDismissRestore = {},
                 restoreState = RestoreState.Idle,
-                integrityState = IntegrityState(),
-                onRunIntegrityCheck = {},
-                onRepairIntegrity = {},
                 snackbarHostState = SnackbarHostState(),
             )
         }

@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import app.logdate.desktop.notification.DesktopNotification
 
 /**
  * Global state for the LogDate application.
@@ -48,15 +47,9 @@ class LogDateApplicationState {
     var exitCascadeInFlight: Boolean by mutableStateOf(false)
         private set
 
-    fun openJournal(journalId: String) {
-    }
-
     fun openNoteEditor() {
         if (exitCascadeInFlight || shouldExitApplication) return
         _editorWindows.add(EntryEditorWindowState(this))
-    }
-
-    fun sendNotification(notification: DesktopNotification) {
     }
 
     /**

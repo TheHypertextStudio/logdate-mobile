@@ -12,7 +12,6 @@ import app.logdate.feature.editor.ui.audio.AudioUiState
 import app.logdate.feature.editor.ui.audio.EmptyAudioBlockContent
 import app.logdate.feature.editor.ui.audio.expansion.ImmersiveAudioScreen
 import app.logdate.feature.editor.ui.content.EmptyEditorStateContent
-import app.logdate.feature.editor.ui.dialog.alert.ExitConfirmationDialog
 import app.logdate.feature.editor.ui.editor.RecordingState
 import app.logdate.screenshots.common.ScreenshotTestData
 import app.logdate.screenshots.common.ScreenshotTestData.PHONE
@@ -266,21 +265,6 @@ fun ImmersiveAudio() {
             daylightPeriod = DaylightPeriod.GOLDEN_HOUR,
             durationMs = 185_000L,
             createdAt = mockCreatedAt,
-        )
-    }
-}
-
-// ─── Dialogs ────────────────────────────────────────────────────────────────────
-
-@PreviewTest
-@Preview(showBackground = true, device = PHONE)
-@Composable
-fun ExitConfirmation_Dialog() {
-    ScreenshotTheme {
-        ExitConfirmationDialog(
-            onDismiss = {},
-            onSaveAsDraft = {},
-            onDiscardAndExit = {},
         )
     }
 }
