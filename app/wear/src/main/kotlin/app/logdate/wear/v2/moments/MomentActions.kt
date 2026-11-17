@@ -2,6 +2,7 @@ package app.logdate.wear.v2.moments
 
 object MomentTags {
     const val SCREEN = "moment_screen"
+    const val LOADING = "moment_loading"
     const val PLAYER = "moment_player"
     const val POSITION = "moment_position"
     const val PLAY_PAUSE = "moment_play_pause"

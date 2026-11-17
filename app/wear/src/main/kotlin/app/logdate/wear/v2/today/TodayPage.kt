@@ -25,7 +25,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.AmbientMode
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -66,9 +65,9 @@ import app.logdate.wear.R
 import app.logdate.wear.capture.Feeling
 import app.logdate.wear.v2.ambient.AmbientRecordingFace
 import app.logdate.wear.v2.ambient.currentAmbientMode
+import app.logdate.wear.v2.moments.MomentGlance
 import app.logdate.wear.v2.moments.formatClockDuration
 import app.logdate.wear.v2.moments.momentClockTime
-import app.logdate.wear.v2.moments.momentLabel
 import app.logdate.wear.v2.recorder.RecordButtonAction
 import app.logdate.wear.v2.recorder.RecordEdgeButton
 import app.logdate.wear.v2.recorder.RecorderState
@@ -356,13 +355,7 @@ private fun LatestMoment(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = momentLabel(note),
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
+        MomentGlance(note)
     }
 }
 
