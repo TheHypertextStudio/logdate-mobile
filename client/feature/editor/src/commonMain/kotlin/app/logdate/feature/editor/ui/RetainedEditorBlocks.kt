@@ -246,7 +246,9 @@ private fun RetainedBlockInput(
                 onAudioResolverReady,
                 state.onPersistAudioRecordingTarget,
                 state.onPersistCameraCaptureTarget,
-                Modifier.fillMaxSize(),
+                // The same safe area as text and audio, so a photo picker or a chosen photo's
+                // controls never sit under the status bar, navigation bar or keyboard.
+                if (FocusedBlockChromePolicy.ownsWindowInsets(block)) Modifier.fillMaxSize() else focusedPadding,
             )
         }
 

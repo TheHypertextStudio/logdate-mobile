@@ -52,6 +52,7 @@ import app.logdate.feature.editor.ui.layout.EditorBlockCornerRadius
 import app.logdate.feature.editor.ui.layout.EditorBlockMinHeight
 import app.logdate.feature.editor.ui.layout.LocalEditorRecordingActive
 import app.logdate.feature.editor.ui.layout.clipEntryContentToSafeWindow
+import app.logdate.feature.editor.ui.layout.isChoosingMedia
 import app.logdate.shared.model.PhotoPresentation
 import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.platform.PlatformIcons
@@ -169,7 +170,13 @@ internal fun MemoryBlockSurface(
                 }
             Column(
                 contentInsets.then(
-                    if (block is TextBlockUiState || block is AudioBlockUiState) Modifier.clipEntryContentToSafeWindow() else Modifier,
+                    // Words, recording controls and the photo picker are controls: keep them out from
+                    // under system bars. Chosen photos and video keep painting edge to edge.
+                    if (block is TextBlockUiState || block is AudioBlockUiState || block.isChoosingMedia()) {
+                        Modifier.clipEntryContentToSafeWindow()
+                    } else {
+                        Modifier
+                    },
                 ),
             ) { content() }
             if (!recordingActive && !expanded) {

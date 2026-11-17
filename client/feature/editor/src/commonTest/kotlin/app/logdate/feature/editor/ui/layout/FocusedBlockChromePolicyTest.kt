@@ -54,9 +54,9 @@ class FocusedBlockChromePolicyTest {
     }
 
     @Test
-    fun `image and video blocks do not reserve chrome space`() {
-        val image = ImageBlockUiState()
-        val video = VideoBlockUiState()
+    fun `chosen photos and videos do not reserve chrome space`() {
+        val image = ImageBlockUiState(uri = "logdate-media://images/walk.jpg")
+        val video = VideoBlockUiState(uri = "logdate-media://videos/walk.mp4")
         assertEquals(
             FocusedBlockChromeClearance(0.dp, 0.dp),
             FocusedBlockChromePolicy.clearanceFor(image, chromeHeight, dockReserve),
@@ -65,5 +65,26 @@ class FocusedBlockChromePolicyTest {
             FocusedBlockChromeClearance(0.dp, 0.dp),
             FocusedBlockChromePolicy.clearanceFor(video, chromeHeight, dockReserve),
         )
+    }
+
+    @Test
+    fun `photo and video pickers keep their controls clear of the header and dock`() {
+        assertEquals(
+            FocusedBlockChromeClearance(chromeHeight, dockReserve),
+            FocusedBlockChromePolicy.clearanceFor(ImageBlockUiState(), chromeHeight, dockReserve),
+        )
+        assertEquals(
+            FocusedBlockChromeClearance(chromeHeight, dockReserve),
+            FocusedBlockChromePolicy.clearanceFor(VideoBlockUiState(), chromeHeight, dockReserve),
+        )
+    }
+
+    @Test
+    fun `only the live viewfinder places its own controls inside the safe area`() {
+        assertEquals(true, FocusedBlockChromePolicy.ownsWindowInsets(CameraBlockUiState()))
+        assertEquals(false, FocusedBlockChromePolicy.ownsWindowInsets(CameraBlockUiState(uri = "logdate-media://images/shot.jpg")))
+        assertEquals(false, FocusedBlockChromePolicy.ownsWindowInsets(ImageBlockUiState()))
+        assertEquals(false, FocusedBlockChromePolicy.ownsWindowInsets(VideoBlockUiState()))
+        assertEquals(false, FocusedBlockChromePolicy.ownsWindowInsets(TextBlockUiState()))
     }
 }
