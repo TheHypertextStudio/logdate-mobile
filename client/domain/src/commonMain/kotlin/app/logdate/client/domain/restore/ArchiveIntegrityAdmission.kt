@@ -42,9 +42,7 @@ internal object ArchiveIntegrityAdmission {
         }
         for ((role, bytes) in contents) {
             when (role) {
-                ArchiveRole.README, ArchiveRole.CHECKSUMS, ArchiveRole.READABLE_INDEX -> {
-                    Unit
-                }
+                ArchiveRole.README, ArchiveRole.CHECKSUMS, ArchiveRole.READABLE_INDEX -> {}
 
                 ArchiveRole.LOCATION_HISTORY -> {
                     bytes

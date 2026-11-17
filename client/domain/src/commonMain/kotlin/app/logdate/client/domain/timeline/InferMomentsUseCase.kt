@@ -43,7 +43,7 @@ class InferMomentsUseCase(
                     }
                 256L + contentLength + (note.location?.displayName?.length ?: 0)
             }
-        if (inputCharacters > MAX_AI_INPUT_CHARACTERS) return inferMomentsHeuristically(date, entries, places)
+        if (inputCharacters > MAX_AI_INPUT_CHARACTERS) return inferMomentsHeuristically(entries, places)
 
         val ambientSoundsByNote = collectAmbientSounds(entries)
         val serialized = serializeEntries(entries, ambientSoundsByNote)
@@ -56,18 +56,18 @@ class InferMomentsUseCase(
                     moments
                 } else {
                     Napier.w(tag = TAG, message = "AI returned empty moments for $date, falling back to heuristic")
-                    inferMomentsHeuristically(date, entries, places)
+                    inferMomentsHeuristically(entries, places)
                 }
             }
 
             is AIResult.Unavailable -> {
                 Napier.d(tag = TAG, message = "AI unavailable for $date, using heuristic fallback")
-                inferMomentsHeuristically(date, entries, places)
+                inferMomentsHeuristically(entries, places)
             }
 
             is AIResult.Error -> {
                 Napier.e(tag = TAG, message = "AI error for $date, using heuristic fallback")
-                inferMomentsHeuristically(date, entries, places)
+                inferMomentsHeuristically(entries, places)
             }
         }
     }
@@ -93,7 +93,6 @@ class InferMomentsUseCase(
  * Used when AI is unavailable.
  */
 internal fun inferMomentsHeuristically(
-    date: LocalDate,
     entries: List<JournalNote>,
     places: List<TimelinePlaceVisit>,
 ): List<Moment> {

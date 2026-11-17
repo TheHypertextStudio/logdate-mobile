@@ -46,9 +46,7 @@ class ObserveHealthConnectStatusUseCase(
                     return@flow
                 }
 
-                HealthDataAvailability.AVAILABLE -> {
-                    Unit
-                }
+                HealthDataAvailability.AVAILABLE -> {}
             }
 
             val hasPermissions = healthRepository.hasSleepPermissions()

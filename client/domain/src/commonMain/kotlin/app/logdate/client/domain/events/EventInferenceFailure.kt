@@ -3,7 +3,8 @@ package app.logdate.client.domain.events
 /**
  * Coarse failure category for the on-device event inference worker.
  *
- * Stored on [app.logdate.client.datastore.EventInferenceStats] as the enum name and
+ * Stored as the enum name by
+ * [app.logdate.client.datastore.LogdatePreferencesDataSource.recordEventInferenceRun] and
  * mapped to a localized string by the auto-events settings screen, so we never persist
  * raw exception messages (which would leak developer-language strings or PII into a
  * surface the user actually reads). Add new variants here when a failure mode is

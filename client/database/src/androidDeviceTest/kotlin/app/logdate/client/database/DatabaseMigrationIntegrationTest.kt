@@ -55,14 +55,13 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from5 to6`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 5).apply {
-                // Insert test data in version 5 schema
-                insertLegacyIntegerJournal(id = 1, title = "Test Journal", description = "Test Description")
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 5).apply {
+            // Insert test data in version 5 schema
+            insertLegacyIntegerJournal(id = 1, title = "Test Journal", description = "Test Description")
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 6, true, MIGRATION_5_6)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 6, true, MIGRATION_5_6)
 
         // Verify data integrity after migration
         val cursor = db.query("SELECT * FROM journals WHERE title = 'Test Journal'")
@@ -74,14 +73,13 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from6 to7`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 6).apply {
-                // Insert test data in version 6 schema
-                insertLegacyIntegerJournal(id = 1, title = "Test Journal", description = "Test Description")
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 6).apply {
+            // Insert test data in version 6 schema
+            insertLegacyIntegerJournal(id = 1, title = "Test Journal", description = "Test Description")
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 7, true, MIGRATION_6_7)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 7, true, MIGRATION_6_7)
 
         // Verify data integrity after migration
         val cursor = db.query("SELECT * FROM journals WHERE title = 'Test Journal'")
@@ -92,14 +90,13 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from7 to8`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 7).apply {
-                // Insert test data in version 7 schema
-                insertLegacyTextJournal(id = "1", title = "Test Journal", description = "Test Description")
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 7).apply {
+            // Insert test data in version 7 schema
+            insertLegacyTextJournal(id = "1", title = "Test Journal", description = "Test Description")
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 8, true, MIGRATION_7_8)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 8, true, MIGRATION_7_8)
 
         // Verify data integrity after migration
         val cursor = db.query("SELECT * FROM journals WHERE title = 'Test Journal'")
@@ -110,15 +107,14 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from8 to9`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 8).apply {
-                // Insert test data in version 8 schema
-                insertLegacyTextJournal(id = "1", title = "Test Journal", description = "Test Description")
-                insertLegacyTextNote(uid = "1", content = "Test content")
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 8).apply {
+            // Insert test data in version 8 schema
+            insertLegacyTextJournal(id = "1", title = "Test Journal", description = "Test Description")
+            insertLegacyTextNote(uid = "1", content = "Test content")
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 9, true, MIGRATION_8_9)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 9, true, MIGRATION_8_9)
 
         // Verify data integrity after migration
         val journalCursor = db.query("SELECT * FROM journals WHERE title = 'Test Journal'")
@@ -134,15 +130,14 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from9 to10`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 9).apply {
-                // Insert test data in version 9 schema
-                insertLegacyTextJournal(id = "1", title = "Test Journal", description = "Test Description")
-                insertLegacyTextNote(uid = "1", content = "Test content")
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 9).apply {
+            // Insert test data in version 9 schema
+            insertLegacyTextJournal(id = "1", title = "Test Journal", description = "Test Description")
+            insertLegacyTextNote(uid = "1", content = "Test content")
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 10, true, MIGRATION_9_10)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 10, true, MIGRATION_9_10)
 
         // Verify data integrity after migration
         val journalCursor = db.query("SELECT * FROM journals WHERE title = 'Test Journal'")
@@ -158,28 +153,27 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `complete chain migration5 to10`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 5).apply {
-                // Insert comprehensive test data in version 5 schema
-                insertLegacyIntegerJournal(
-                    id = 1,
-                    title = "Journal One",
-                    description = "First journal",
-                    created = 1640995200000,
-                    lastUpdated = 1640995200000,
-                )
-                insertLegacyIntegerJournal(
-                    id = 2,
-                    title = "Journal Two",
-                    description = "Second journal",
-                    created = 1640995300000,
-                    lastUpdated = 1640995300000,
-                )
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 5).apply {
+            // Insert comprehensive test data in version 5 schema
+            insertLegacyIntegerJournal(
+                id = 1,
+                title = "Journal One",
+                description = "First journal",
+                created = 1640995200000,
+                lastUpdated = 1640995200000,
+            )
+            insertLegacyIntegerJournal(
+                id = 2,
+                title = "Journal Two",
+                description = "Second journal",
+                created = 1640995300000,
+                lastUpdated = 1640995300000,
+            )
+            close()
+        }
 
         // Run all migrations in sequence
-        db =
+        val db =
             helper.runMigrationsAndValidate(
                 testDatabaseName,
                 10,
@@ -570,35 +564,34 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from25 to26 backfills location sample metadata`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 25).apply {
-                execSQL(
-                    """
-                    INSERT INTO location_logs (
-                        user_id,
-                        device_id,
-                        timestamp,
-                        latitude,
-                        longitude,
-                        altitude,
-                        confidence,
-                        is_genuine
-                    ) VALUES (
-                        'user-1',
-                        'device-1',
-                        1710000000000,
-                        37.7749,
-                        -122.4194,
-                        12.0,
-                        0.9,
-                        1
-                    )
-                    """.trimIndent(),
+        helper.createDatabase(testDatabaseName, 25).apply {
+            execSQL(
+                """
+                INSERT INTO location_logs (
+                    user_id,
+                    device_id,
+                    timestamp,
+                    latitude,
+                    longitude,
+                    altitude,
+                    confidence,
+                    is_genuine
+                ) VALUES (
+                    'user-1',
+                    'device-1',
+                    1710000000000,
+                    37.7749,
+                    -122.4194,
+                    12.0,
+                    0.9,
+                    1
                 )
-                close()
-            }
+                """.trimIndent(),
+            )
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 26, true, MIGRATION_25_26)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 26, true, MIGRATION_25_26)
 
         val cursor =
             db.query(
@@ -632,13 +625,12 @@ class DatabaseMigrationIntegrationTest {
 
     @Test
     fun `migration from26 to27 removes unexpected location timestamp index`() {
-        var db =
-            helper.createDatabase(testDatabaseName, 26).apply {
-                execSQL("CREATE INDEX IF NOT EXISTS index_location_logs_timestamp ON location_logs(timestamp)")
-                close()
-            }
+        helper.createDatabase(testDatabaseName, 26).apply {
+            execSQL("CREATE INDEX IF NOT EXISTS index_location_logs_timestamp ON location_logs(timestamp)")
+            close()
+        }
 
-        db = helper.runMigrationsAndValidate(testDatabaseName, 27, true, MIGRATION_26_27)
+        val db = helper.runMigrationsAndValidate(testDatabaseName, 27, true, MIGRATION_26_27)
 
         val cursor =
             db.query(

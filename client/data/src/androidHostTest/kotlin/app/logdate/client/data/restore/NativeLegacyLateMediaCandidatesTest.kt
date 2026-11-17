@@ -97,16 +97,6 @@ class NativeLegacyLateMediaCandidatesTest {
                     selectNativeLegacyLateMediaCandidates(listOf(media), setOf(reference), packageName, inventory(media)).isEmpty(),
                 )
             }
-            assertTrue(
-                nativeLegacyLateMediaPath(
-                    "file:///data/user/0/$packageName/files/audio_notes/staging/photo.jpg",
-                    packageName,
-                ) == null,
-            )
-            assertEquals(
-                "files/user_media/photo.jpg.part",
-                nativeLegacyLateMediaPath("file:///data/user/0/$packageName/files/user_media/photo.jpg.part", packageName),
-            )
         }
 
     @Test

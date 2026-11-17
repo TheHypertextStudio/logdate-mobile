@@ -67,11 +67,6 @@ class DatabasePassphraseProvider(
         secureStorage.putString(storageKey(), Base64.encode(passphrase))
     }
 
-    suspend fun clearPassphrase() {
-        secureStorage.remove(storageKey())
-        backupStore.clear()
-    }
-
     private companion object {
         const val DB_KEY_STORAGE_KEY = "db_encryption_key"
         const val KEY_LENGTH_BYTES = 32

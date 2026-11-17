@@ -27,7 +27,7 @@ class TimelineContentRetentionTest {
     @Test
     fun syncAcknowledgementsKeepMomentContextWithoutRestoringOldRawMetadata() {
         val moment =
-            inferMomentsHeuristically(loaded.date, loaded.entries, emptyList())
+            inferMomentsHeuristically(loaded.entries, emptyList())
                 .single()
                 .copy(label = "At lunch", inferenceSource = MomentInferenceSource.AI_INFERRED)
         val previous = loaded.copy(moments = listOf(moment))
@@ -36,7 +36,7 @@ class TimelineContentRetentionTest {
             loaded.copy(
                 tldr = "",
                 entries = listOf(updated),
-                moments = inferMomentsHeuristically(loaded.date, listOf(updated), emptyList()),
+                moments = inferMomentsHeuristically(listOf(updated), emptyList()),
             )
         val result = retainAvailableTimelineSummaries(Timeline(listOf(previous)), Timeline(listOf(incoming))).days.single()
         assertEquals("At lunch", result.moments.single().label)
@@ -59,7 +59,7 @@ class TimelineContentRetentionTest {
     @Test
     fun pendingRawSnapshotsKeepCompatibleAiMomentContext() {
         val moment =
-            inferMomentsHeuristically(loaded.date, loaded.entries, emptyList())
+            inferMomentsHeuristically(loaded.entries, emptyList())
                 .single()
                 .copy(label = "At lunch", people = listOf("Alex"), inferenceSource = MomentInferenceSource.AI_INFERRED)
         val previous = loaded.copy(moments = listOf(moment))
@@ -67,7 +67,7 @@ class TimelineContentRetentionTest {
             loaded.copy(
                 tldr = "",
                 people = emptyList(),
-                moments = inferMomentsHeuristically(loaded.date, loaded.entries, emptyList()),
+                moments = inferMomentsHeuristically(loaded.entries, emptyList()),
             )
         val result = retainAvailableTimelineSummaries(Timeline(listOf(previous)), Timeline(listOf(incoming))).days.single()
         assertEquals("At lunch", result.moments.single().label)

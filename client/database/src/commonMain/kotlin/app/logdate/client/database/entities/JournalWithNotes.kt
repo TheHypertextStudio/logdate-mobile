@@ -19,16 +19,6 @@ data class JournalNoteCrossRef(
 )
 
 /**
- * A data container for a note and its associated journals.
- */
-data class NoteJournals(
-    @ColumnInfo(name = "uid")
-    val noteId: Uuid,
-    @Embedded
-    val journal: JournalEntity,
-)
-
-/**
  * A data container for a journal and its associated notes.
  */
 data class JournalWithNotes(

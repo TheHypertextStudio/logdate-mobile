@@ -55,7 +55,6 @@ class RestoreDraftContinuityTest {
         coEvery { repository.saveDraft(any()) } answers { drafts[firstArg<EditorDraft>().id] = firstArg() }
         coEvery { repository.deleteDraft(any()) } answers {
             drafts.remove(firstArg())
-            Unit
         }
         coEvery { repository.compareAndSetDraftForRestore(any(), any(), any(), any(), true, any()) } coAnswers {
             currentCoroutineContext().ensureActive()

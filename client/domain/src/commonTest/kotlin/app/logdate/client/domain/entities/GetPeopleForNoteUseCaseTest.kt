@@ -71,7 +71,7 @@ class GetPeopleForNoteUseCaseTest {
                         ExtractPeopleUseCase(
                             peopleExtractor =
                                 peopleExtractor(
-                                    AIResult.Unavailable(AIUnavailableReason.ProviderDisabled),
+                                    AIResult.Unavailable(AIUnavailableReason.MissingCredentials),
                                 ),
                         ),
                     peopleRepository = repository,

@@ -65,7 +65,7 @@ class EntryDraftMediaClaimOrderingTest {
                         coroutineScope {
                             val worker =
                                 launch(Dispatchers.IO) {
-                                    RetainedJournalReconciliationLock.withDeliveryGate(gate()) {
+                                    RetainedJournalReconciliationLock.prepareThenWithDeliveryGate(gate(), prepare = {}) {
                                         RetainedJournalReconciliationLock.withMediaClaim(actualFence) {
                                             held.complete(Unit)
                                             writerRequestedClaim.await()
@@ -116,7 +116,7 @@ class EntryDraftMediaClaimOrderingTest {
                         coroutineScope {
                             val worker =
                                 launch(Dispatchers.IO) {
-                                    RetainedJournalReconciliationLock.withDeliveryGate(nativeGate) {
+                                    RetainedJournalReconciliationLock.prepareThenWithDeliveryGate(nativeGate, prepare = {}) {
                                         RetainedJournalReconciliationLock.withMediaClaim(actualFence) {
                                             held.complete(Unit)
                                             admissionRequested.await()
@@ -151,7 +151,7 @@ class EntryDraftMediaClaimOrderingTest {
                 store.saveDraft(original)
                 rejectAdmission = true
                 withTimeout(3_000) {
-                    RetainedJournalReconciliationLock.withDeliveryGate(gate()) {
+                    RetainedJournalReconciliationLock.prepareThenWithDeliveryGate(gate(), prepare = {}) {
                         RetainedJournalReconciliationLock.withMediaClaim(fence) {
                             val repository = OfflineFirstEntryDraftRepository(store, scope)
                             assertEquals(listOf(original), repository.getDraftSnapshotsForRecovery())

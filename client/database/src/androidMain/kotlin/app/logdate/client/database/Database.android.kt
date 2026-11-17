@@ -266,16 +266,6 @@ internal fun canOpenEncryptedDatabaseWithLegacySettings(
     }.isSuccess
 }
 
-private fun canOpenEncryptedDatabase(
-    encryptedFile: File,
-    passphrase: ByteArray,
-): Boolean {
-    if (canOpenEncryptedDatabaseWithCurrentSettings(encryptedFile, passphrase)) {
-        return true
-    }
-    return canOpenEncryptedDatabaseWithLegacySettings(encryptedFile, passphrase)
-}
-
 private fun openAndPingEncryptedDatabase(
     encryptedFile: File,
     passphrase: ByteArray,
@@ -302,16 +292,6 @@ private fun openAndPingEncryptedDatabase(
 
 private fun requireSupportedDatabaseVersion(version: Int) {
     if (version > DATABASE_VERSION) throw NewerDatabaseVersionException(version, DATABASE_VERSION)
-}
-
-private fun findLatestPlaintextBackup(dbFile: File): File? {
-    val directory = dbFile.parentFile ?: return null
-    val prefix = "$DATABASE_NAME.plaintext-backup-"
-    return directory
-        .listFiles()
-        ?.asSequence()
-        ?.filter { file -> file.isFile && file.name.startsWith(prefix) }
-        ?.maxByOrNull { file -> file.lastModified() }
 }
 
 internal fun createLegacySqlCipherHook(): SQLiteDatabaseHook =

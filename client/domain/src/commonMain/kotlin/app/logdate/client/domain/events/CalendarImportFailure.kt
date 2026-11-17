@@ -3,7 +3,8 @@ package app.logdate.client.domain.events
 /**
  * Coarse failure category for the device calendar import worker.
  *
- * Stored on [app.logdate.client.datastore.DeviceCalendarSyncStats] as the enum name and
+ * Stored as the enum name by
+ * [app.logdate.client.datastore.LogdatePreferencesDataSource.recordDeviceCalendarSyncRun] and
  * mapped to a localized string by the calendar sync settings screen, so the user sees
  * "Calendar permission needed" instead of a raw `SecurityException` message.
  */

@@ -31,7 +31,10 @@ abstract class BaseIndexedMediaEntity {
 
     /**
      * The timestamp when the media was indexed.
+     *
+     * IndexedImageEntity and IndexedVideoEntity store it as the indexedAt Room column in the exported schemas
      */
+    @Suppress("unused")
     abstract val indexedAt: Instant
 
     /**
@@ -41,7 +44,10 @@ abstract class BaseIndexedMediaEntity {
 
     /**
      * Size of the media file in bytes.
+     *
+     * IndexedImageEntity and IndexedVideoEntity store it as the fileSize Room column in the exported schemas
      */
+    @Suppress("unused")
     abstract val fileSize: Long
 
     /**

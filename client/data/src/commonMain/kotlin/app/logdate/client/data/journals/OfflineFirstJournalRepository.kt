@@ -63,7 +63,7 @@ class OfflineFirstJournalRepository(
     private val outbox get() = requireNotNull(database).syncMetadataDao()
     private val transactionManager get() = requireNotNull(mergeTransactionManager)
     private val mergeChanges: Flow<Unit>
-        get() = if (database == null) flowOf(Unit) else combine(mergeScopeChanges, merges.observeAll()) { _, _ -> Unit }
+        get() = if (database == null) flowOf(Unit) else combine(mergeScopeChanges, merges.observeAll()) { _, _ -> }
 
     private val syncDebouncer = SyncDebouncer(scope = externalScope) { syncManagerProvider().syncJournals() }
     private val draftSyncDebouncer = SyncDebouncer(scope = externalScope) { syncManagerProvider().syncDrafts() }

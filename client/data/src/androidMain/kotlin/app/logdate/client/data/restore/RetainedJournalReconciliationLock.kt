@@ -19,11 +19,6 @@ internal object RetainedJournalReconciliationLock {
             gate.withLock { block(dependencies) }
         }
 
-    suspend fun <T> withDeliveryGate(
-        gate: NativeRestoreDeliveryGate,
-        block: suspend () -> T,
-    ): T = withLock { gate.withLock { block() } }
-
     suspend fun <T> withLock(block: suspend () -> T): T = mutex.withLock { block() }
 
     suspend fun <T> withMediaClaim(

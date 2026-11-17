@@ -411,12 +411,11 @@ class ExportImportRoundTripTest {
                 ),
             )
 
-            val result =
-                importUseCase.restore(
-                    bundle,
-                    options = RestoreOptions(strategy = RestoreStrategy.MERGE_KEEP_NEWEST),
-                    mediaImporter = restoredMedia,
-                )
+            importUseCase.restore(
+                bundle,
+                options = RestoreOptions(strategy = RestoreStrategy.MERGE_KEEP_NEWEST),
+                mediaImporter = restoredMedia,
+            )
 
             val local = destJournalRepo.getJournalById(journalDaily)
             assertEquals("Locally Updated Title", local?.title, "Newer local title should be kept")
@@ -464,7 +463,7 @@ class ExportImportRoundTripTest {
     fun `round-trip note appears in multiple journals`() =
         runTest {
             seedSourceData()
-            val result = exportThenImport()
+            exportThenImport()
 
             // noteTextWithLocation is in both journals
             val links = destContentRepo.allLinks()

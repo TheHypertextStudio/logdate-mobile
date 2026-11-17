@@ -19,6 +19,9 @@ abstract class GenericNoteData {
     abstract val created: Instant
 
     abstract val syncVersion: Long
+
+    // Every note entity stores it as the lastSynced Room column in the exported database schemas
+    @Suppress("unused")
     abstract val lastSynced: Instant?
     abstract val deletedAt: Instant?
 

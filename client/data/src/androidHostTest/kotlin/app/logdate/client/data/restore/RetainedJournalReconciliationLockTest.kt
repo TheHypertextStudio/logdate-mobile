@@ -75,7 +75,7 @@ class RetainedJournalReconciliationLockTest {
             val events = mutableListOf<String>()
             val worker =
                 async {
-                    RetainedJournalReconciliationLock.withDeliveryGate(gate) {
+                    RetainedJournalReconciliationLock.prepareThenWithDeliveryGate(gate, prepare = {}) {
                         events += "capture"
                         delay(20)
                         events += "merge"
