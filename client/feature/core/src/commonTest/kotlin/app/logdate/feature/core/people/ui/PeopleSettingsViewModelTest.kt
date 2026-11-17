@@ -3,7 +3,6 @@ package app.logdate.feature.core.people.ui
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.repository.knowledge.DeviceContact
-import app.logdate.client.repository.knowledge.PeopleContactsAccessMode
 import app.logdate.shared.model.InferredPersonCluster
 import app.logdate.shared.model.Person
 import app.logdate.ui.platform.PlatformKind
@@ -12,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.TestScope
@@ -73,7 +71,7 @@ class PeopleSettingsViewModelTest {
         }
 
     @Test
-    fun `importing all contacts adds them and records full access and reports the result`() =
+    fun `importing all contacts adds them and reports the result`() =
         runTest(testDispatcher) {
             val store = FakePeopleStore()
             val viewModel = newViewModel(store, contacts = listOf(ava, sam))
@@ -86,7 +84,6 @@ class PeopleSettingsViewModelTest {
             assertEquals(2, state.totalPeopleCount)
             assertEquals(PeopleNotice.ContactsImported(importedCount = 2, updatedCount = 0), state.notice)
             assertFalse(state.isImporting)
-            assertEquals(PeopleContactsAccessMode.FULL.name, preferences.observePeopleContactsAccessMode().first())
             assertEquals(1, store.refreshCalls)
 
             tearDownViewModel(viewModel, collectJob)
@@ -106,7 +103,6 @@ class PeopleSettingsViewModelTest {
             assertIs<PeopleNotice.ImportContactsFailed>(state.notice)
             assertEquals(0, state.totalPeopleCount)
             assertFalse(state.isImporting)
-            assertEquals(PeopleContactsAccessMode.NONE.name, preferences.observePeopleContactsAccessMode().first())
 
             tearDownViewModel(viewModel, collectJob)
         }

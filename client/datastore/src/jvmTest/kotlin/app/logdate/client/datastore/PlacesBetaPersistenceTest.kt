@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-private val placesFlag get() = checkNotNull(FeatureFlag.forKey("places_beta_enabled"))
+private val placesFlag get() = FeatureFlag.entries.single { it.key == "places_beta_enabled" }
 
 class PlacesBetaPersistenceTest {
     @Test

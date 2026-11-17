@@ -16,7 +16,6 @@ import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -69,7 +68,7 @@ class FeatureFlagStoreTest {
     @Test
     fun `connected assistants stays unavailable with unset stored and default enabled preferences`() =
         runTest {
-            val flag = assertNotNull(FeatureFlag.forKey("connected_assistants_enabled"))
+            val flag = FeatureFlag.entries.single { it.key == "connected_assistants_enabled" }
             assertFalse(flag.defaultEnabled)
             assertFalse(flag.availableForLaunch)
             assertFalse(store.isEnabled(flag))
@@ -325,12 +324,6 @@ class FeatureFlagStoreTest {
         }
 
     @Test
-    fun `a flag can be found by key and an unknown key finds nothing`() {
-        assertEquals(FeatureFlag.LIBRARY, FeatureFlag.forKey("library_enabled"))
-        assertNull(FeatureFlag.forKey("not_a_flag"))
-    }
-
-    @Test
     fun `every flag owns a distinct key`() {
         val keys = FeatureFlag.entries.map { it.key }
 
@@ -340,7 +333,7 @@ class FeatureFlagStoreTest {
     @Test
     fun `the watch experience flag starts off and can be turned on`() =
         runTest {
-            val flag = assertNotNull(FeatureFlag.forKey("watch_experience_v2_enabled"))
+            val flag = FeatureFlag.entries.single { it.key == "watch_experience_v2_enabled" }
 
             assertFalse(store.isEnabled(flag))
 

@@ -78,8 +78,6 @@ class DataSettingsViewModel(
     private val pendingFeedback = MutableStateFlow<List<SyncFeedbackDelivery>>(emptyList())
     val syncFeedbackDelivery: StateFlow<SyncFeedbackDelivery?> =
         pendingFeedback.map { it.firstOrNull() }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-    val syncFeedback: StateFlow<SyncFeedback?> =
-        syncFeedbackDelivery.map { it?.feedback }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
     private var nextFeedbackId = 0L
     private var quotaObservation: Job? = null
     private var quotaGeneration = 0L
@@ -259,26 +257,6 @@ class DataSettingsViewModel(
         }
     }
 
-    fun repairIntegrity() {
-        if (uiState.value.integrityState.isRunning) return
-        updateIntegrity { it.copy(operation = IntegrityOperation.Repairing) }
-        viewModelScope.launch {
-            try {
-                val result = dataIntegrityService.repair()
-                updateIntegrity { it.copy(lastRepair = result) }
-                refreshIntegrityAfterRepair()
-            } catch (cancelled: CancellationException) {
-                updateIntegrity { it.copy(operation = IntegrityOperation.Idle) }
-                throw cancelled
-            } catch (error: Exception) {
-                Napier.e("Integrity repair failed", error)
-                updateIntegrity { it.copy(operation = IntegrityOperation.Failed(IntegrityFailure.REPAIR)) }
-            } finally {
-                auditRestoredDataWhenReady()
-            }
-        }
-    }
-
     fun onRestoreCompleted(operationId: Uuid) {
         if (!observedRestores.add(operationId)) return
         restoreAuditPending = true
@@ -289,18 +267,6 @@ class DataSettingsViewModel(
         if (!restoreAuditPending || uiState.value.integrityState.isRunning || !viewModelScope.isActive) return
         restoreAuditPending = false
         runIntegrityCheck()
-    }
-
-    private suspend fun refreshIntegrityAfterRepair() {
-        try {
-            val report = dataIntegrityService.audit()
-            updateIntegrity { it.copy(operation = IntegrityOperation.Idle, lastReport = report) }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            Napier.e("Could not refresh integrity report after repair", error)
-            updateIntegrity { it.copy(operation = IntegrityOperation.Failed(IntegrityFailure.REFRESH_AFTER_REPAIR)) }
-        }
     }
 
     private fun updateIntegrity(transform: (IntegrityState) -> IntegrityState) {

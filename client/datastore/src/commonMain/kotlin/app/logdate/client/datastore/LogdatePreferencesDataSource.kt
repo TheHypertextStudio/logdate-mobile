@@ -19,8 +19,6 @@ import kotlinx.datetime.DayOfWeek
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-private const val DEFAULT_PEOPLE_CONTACTS_ACCESS_MODE = "NONE"
-
 /**
  * A local data source for user preferences.
  */
@@ -188,11 +186,6 @@ class LogdatePreferencesDataSource(
             }
         }
     }
-
-    fun observePeopleContactsAccessMode(): Flow<String> =
-        userPreferences.data.map { prefs ->
-            prefs[PEOPLE_CONTACTS_ACCESS_MODE] ?: DEFAULT_PEOPLE_CONTACTS_ACCESS_MODE
-        }
 
     suspend fun setPeopleContactsAccessMode(modeName: String) {
         userPreferences.updateData { preferences ->
@@ -398,14 +391,6 @@ class LogdatePreferencesDataSource(
         }
 
     suspend fun getFirstDayOfWeek(): DayOfWeek? = observeFirstDayOfWeek().first()
-
-    suspend fun setFirstDayOfWeek(dayOfWeek: DayOfWeek) {
-        userPreferences.updateData { preferences ->
-            preferences.toMutablePreferences().apply {
-                this[FIRST_DAY_OF_WEEK] = dayOfWeek.name
-            }
-        }
-    }
 
     fun observeRewindAutoGenerationEnabled(): Flow<Boolean> = historyPreferences.observeRewindAutoGenerationEnabled()
 

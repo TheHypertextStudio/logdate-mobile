@@ -3,7 +3,6 @@ package app.logdate.feature.core.settings.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.permissions.rememberContactsPermissionState
@@ -60,11 +59,6 @@ import app.logdate.ui.navigation.ViewModelsPerVisit
 import app.logdate.ui.navigation.asMetadata
 import app.logdate.ui.navigation.taggedEntry
 import kotlin.uuid.Uuid
-
-/** Navigates to the settings overview. */
-fun NavBackStack<NavKey>.navigateToSettings() {
-    add(SettingsRoute())
-}
 
 internal data class DataSettingsNavigationCallbacks(
     val onNavigateToCloudAccountCreation: () -> Unit,
