@@ -159,9 +159,7 @@ fun EntryEditorContent(
     val handleEditorBack: () -> Unit = {
         audioCaptureStartGate.runWhenIdle {
             when {
-                editorState.isSaving || editorState.shouldExit -> {
-                    Unit
-                }
+                editorState.isSaving || editorState.shouldExit -> {}
 
                 activeCamera || activeHandwriting || editorState.expandedBlockId != null -> {
                     viewModel.dismissExpandedBlockOrClearSingleEmpty()

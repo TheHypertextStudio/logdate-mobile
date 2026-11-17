@@ -362,7 +362,6 @@ private fun RecordingWaveformBox(
         } else {
             AudioWaveformComponent(
                 audioLevels = audioLevels,
-                isRecording = recordingState == RecordingState.RECORDING,
                 waveformColor =
                     if (recordingState == RecordingState.RECORDING) {
                         MaterialTheme.colorScheme.error

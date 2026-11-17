@@ -9,7 +9,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import app.logdate.feature.editor.ui.NoteEditorScreen
@@ -57,23 +56,6 @@ data class EntryEditorRoute(
     val creationTransitionId: String? = null,
     val creationTransitionShape: EntryCreationShape = EntryCreationShape.Large,
 ) : NavKey
-
-/** Pushes the editor onto the back stack with optional entry / draft / journal context. */
-fun NavBackStack<NavKey>.navigateToEditor(
-    entryId: Uuid? = null,
-    draftId: Uuid? = null,
-    journalIds: List<Uuid> = emptyList(),
-    visitContext: VisitMemoryContext? = null,
-) {
-    add(
-        EntryEditorRoute(
-            entryId = entryId?.toString(),
-            draftId = draftId?.toString(),
-            journalIds = journalIds.map { it.toString() },
-            visitContext = visitContext,
-        ),
-    )
-}
 
 /**
  * Registers the editor entry. The hosting graph supplies callbacks for back / save so the

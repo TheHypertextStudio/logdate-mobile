@@ -85,7 +85,6 @@ fun AudioTranscriptionUi(
 
             is AudioUiState.TranscriptionState.Error -> {
                 TranscriptionErrorUi(
-                    reason = state.reason,
                     onRetry = onRequestTranscription,
                     modifier = Modifier,
                 )
@@ -299,7 +298,6 @@ private fun TranscriptionStatusCard(
 @Suppress("ktlint:standard:function-naming")
 @Composable
 private fun TranscriptionErrorUi(
-    reason: TranscriptionFailure,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

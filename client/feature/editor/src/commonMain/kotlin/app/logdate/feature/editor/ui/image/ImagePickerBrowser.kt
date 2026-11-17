@@ -103,6 +103,8 @@ sealed interface ImagePickerPreviewState {
     data object Error : ImagePickerPreviewState
 }
 
+// App/android-main screenshot tests render the internal ImagePickerBrowser through it; tests are not roots
+@Suppress("unused")
 @Composable
 fun ImagePickerPreviewContent(
     state: ImagePickerPreviewState,
@@ -162,9 +164,7 @@ internal fun ImagePickerBrowser(
         }
 
         when (importState) {
-            ManagedMediaSelectionState.Idle -> {
-                Unit
-            }
+            ManagedMediaSelectionState.Idle -> {}
 
             ManagedMediaSelectionState.Importing -> {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -332,6 +332,8 @@ internal fun ImagePickerBrowser(
     }
 }
 
+// Maps the preview state for ImagePickerPreviewContent, which the app/android-main screenshot tests use
+@Suppress("unused")
 private fun ImagePickerPreviewState.toLibraryState(): ImagePickerLibraryState =
     when (this) {
         ImagePickerPreviewState.Loading -> {

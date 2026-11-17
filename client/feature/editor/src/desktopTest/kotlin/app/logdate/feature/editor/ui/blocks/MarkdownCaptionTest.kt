@@ -14,7 +14,6 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.v2.runSkikoComposeUiTest
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
-import app.logdate.feature.editor.ui.common.MediaCaptionField
 import app.logdate.feature.editor.ui.common.OverlayCaptionField
 import app.logdate.feature.editor.ui.editor.AudioBlockUiState
 import app.logdate.feature.editor.ui.editor.AudioCaptureState
@@ -34,12 +33,6 @@ class MarkdownCaptionTest {
     fun `overlay caption preserves editable source and applies parsed emphasis`() =
         captionEditor { caption, update ->
             OverlayCaptionField(caption, update)
-        }
-
-    @Test
-    fun `outlined caption preserves editable source and applies parsed emphasis`() =
-        captionEditor { caption, update ->
-            MediaCaptionField(caption, update)
         }
 
     @Test

@@ -73,11 +73,8 @@ class ArchiveSettingsVisualAcceptanceTest {
                                         unreadableCloudCount = 1,
                                     ),
                                 isAuthenticated = true,
-                                onSyncNow = {},
                                 onNavigateToSignIn = {},
                                 onNavigateToRecoveryPhrase = { phraseOpens++ },
-                                quotaUsage = StorageQuotaUi(0, 0, 0f, formattedTotal = "0 GB", formattedUsed = "0 GB"),
-                                isQuotaAvailable = false,
                                 snackbarHostState = SnackbarHostState(),
                             )
                         }
@@ -220,10 +217,7 @@ class ArchiveSettingsVisualAcceptanceTest {
                                     onBack = {},
                                     syncStatus = null,
                                     isAuthenticated = false,
-                                    onSyncNow = {},
                                     onNavigateToSignIn = {},
-                                    quotaUsage = StorageQuotaUi(5_000_000_000, 0, 0f, formattedTotal = "5 GB", formattedUsed = "0 GB"),
-                                    isQuotaAvailable = false,
                                     snackbarHostState = SnackbarHostState(),
                                     nativeBackupStatus = NativeBackupStatus.Available(custodyStatus = custody),
                                 )
@@ -255,10 +249,7 @@ class ArchiveSettingsVisualAcceptanceTest {
                                         onBack = {},
                                         syncStatus = null,
                                         isAuthenticated = false,
-                                        onSyncNow = {},
                                         onNavigateToSignIn = {},
-                                        quotaUsage = StorageQuotaUi(5_000_000_000, 0, 0f, formattedTotal = "5 GB", formattedUsed = "0 GB"),
-                                        isQuotaAvailable = false,
                                         snackbarHostState = SnackbarHostState(),
                                         nativeBackupStatus = NativeBackupStatus.Available(NativeBackupQuotaFailure(30_000_000, 25_000_000)),
                                         onExportArchive = { exports++ },
@@ -357,9 +348,6 @@ private fun dataSettingsOverlayFixture(
         onCancelRestore = {},
         onRetryRestore = {},
         onDismissRestore = {},
-        integrityState = IntegrityState(),
-        onRunIntegrityCheck = {},
-        onRepairIntegrity = {},
         snackbarHostState = SnackbarHostState(),
         isAuthenticated = false,
     )

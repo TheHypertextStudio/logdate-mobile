@@ -72,8 +72,8 @@ import kotlin.uuid.Uuid
  * The collapsed state is a tappable [Card] rendered by [SelectorContent]. Tapping opens a
  * floating [JournalPickerList] card that rises upward from the same bottom edge via
  * [AnchoredExpandingLayout] — surrounding content is never reflowed because the expanded card
- * is placed at a higher z-layer. Animations use the MD3 Expressive motion curves defined in
- * [journalSelectorEnterTransition] and [journalSelectorExitTransition].
+ * is placed at a higher z-layer. Animations use the MD3 Expressive motion curves
+ * [EmphasizedDecelerate] and [EmphasizedAccelerate].
  *
  * [PlatformPredictiveBackHandler] tracks the system back gesture in real time, clipping
  * the journal list down via [journalListBackClip] while the "Journals" header stays fixed.

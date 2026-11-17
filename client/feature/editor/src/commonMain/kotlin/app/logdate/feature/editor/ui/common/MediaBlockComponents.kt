@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -101,25 +100,4 @@ fun MediaOverlayCaptionArea(
     ) {
         OverlayCaptionField(caption = caption, onCaptionChanged = onCaptionChanged)
     }
-}
-
-@Suppress("ktlint:standard:function-naming")
-@Composable
-fun MediaCaptionField(
-    caption: String,
-    onCaptionChanged: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    OutlinedTextField(
-        value = caption,
-        visualTransformation = rememberInlineMarkdownVisualTransformation(),
-        onValueChange = onCaptionChanged,
-        placeholder = { Text(stringResource(Res.string.add_a_caption)) },
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-        textStyle = MaterialTheme.typography.bodyMedium,
-        maxLines = 3,
-    )
 }

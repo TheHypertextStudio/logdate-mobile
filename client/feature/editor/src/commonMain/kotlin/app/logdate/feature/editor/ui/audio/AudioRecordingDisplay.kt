@@ -51,13 +51,11 @@ fun AudioRecordingDisplay(
 
                 AudioWaveformComponent(
                     audioLevels = audioLevels,
-                    isRecording = isRecording,
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {
                 AudioWaveformComponent(
                     audioLevels = audioLevels,
-                    isRecording = isRecording,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -104,7 +102,6 @@ fun AudioRecordingDisplayHorizontal(
 
             AudioWaveformComponent(
                 audioLevels = audioLevels,
-                isRecording = isRecording,
                 modifier = Modifier.weight(1f),
             )
         }

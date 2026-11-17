@@ -7,17 +7,14 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.layout
@@ -51,7 +48,7 @@ internal val JournalSelectorShape = RoundedCornerShape(16.dp)
  * MD3 Expressive *Emphasized Decelerate* easing — used for elements entering the screen.
  *
  * Cubic bézier (0.05, 0.7, 0.1, 1.0) per the Material Design motion spec. Applied in
- * [journalSelectorEnterTransition] and [journalItemCheckmarkEnterTransition].
+ * [journalItemCheckmarkEnterTransition].
  *
  * @see EmphasizedAccelerate
  */
@@ -61,7 +58,7 @@ internal val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
  * MD3 Expressive *Emphasized Accelerate* easing — used for elements leaving the screen.
  *
  * Cubic bézier (0.3, 0.0, 0.8, 0.15) per the Material Design motion spec. Applied in
- * [journalSelectorExitTransition] and [journalItemCheckmarkExitTransition].
+ * [journalItemCheckmarkExitTransition].
  *
  * @see EmphasizedDecelerate
  */
@@ -98,35 +95,6 @@ internal fun Modifier.journalListBackClip(backProgress: () -> Float): Modifier =
         }
 
 /**
- * Enter transition for the journal picker expanding upward from its anchor.
- *
- * Used by [JournalSelectorDropdown]'s [AnimatedVisibility] wrapper around the expanded card.
- * The surface grows from the bottom edge, matching the [AnchoredExpandingLayout] anchor point.
- *
- * @see journalSelectorExitTransition
- */
-internal fun journalSelectorEnterTransition(): EnterTransition =
-    expandVertically(
-        animationSpec = tween(400, easing = EmphasizedDecelerate),
-        expandFrom = Alignment.Bottom,
-    ) + fadeIn(tween(200, delayMillis = 80))
-
-/**
- * Exit transition for the journal picker collapsing back down to its anchor.
- *
- * Used by [JournalSelectorDropdown]'s [AnimatedVisibility] wrapper around the expanded card.
- * Duration is intentionally shorter than the enter transition (350ms vs 400ms) to keep
- * dismissal feeling snappy.
- *
- * @see journalSelectorEnterTransition
- */
-internal fun journalSelectorExitTransition(): ExitTransition =
-    shrinkVertically(
-        animationSpec = tween(350, easing = EmphasizedAccelerate),
-        shrinkTowards = Alignment.Bottom,
-    ) + fadeOut(tween(200))
-
-/**
  * Content transition for the [AnimatedContent][androidx.compose.animation.AnimatedContent] that
  * switches between the collapsed and expanded states of [JournalSelectorDropdown].
  *
@@ -140,8 +108,7 @@ internal fun journalSelectorContentTransition(): ContentTransform =
 /**
  * Enter transition for the trailing checkmark in a [JournalItem] row appearing on selection.
  *
- * Uses [EmphasizedDecelerate] to stay consistent with the main [journalSelectorEnterTransition],
- * so all motion within the selector follows a unified feel.
+ * Uses [EmphasizedDecelerate] so all motion within the selector follows a unified feel.
  *
  * @see journalItemCheckmarkExitTransition
  */
@@ -152,7 +119,7 @@ internal fun journalItemCheckmarkEnterTransition(): EnterTransition =
 /**
  * Exit transition for the trailing checkmark in a [JournalItem] row disappearing on deselection.
  *
- * Uses [EmphasizedAccelerate] to mirror [journalSelectorExitTransition]'s snappy dismissal feel.
+ * Uses [EmphasizedAccelerate] for a snappy dismissal feel.
  *
  * @see journalItemCheckmarkEnterTransition
  */
