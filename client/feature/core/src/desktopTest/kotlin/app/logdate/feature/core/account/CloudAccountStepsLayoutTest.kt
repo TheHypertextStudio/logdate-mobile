@@ -163,7 +163,11 @@ class CloudAccountStepsLayoutTest {
             waitForIdle()
             save("${window.name}-$name")
             assertEquals(1, lines(onNodeWithTag(STEP_TITLE_TAG)), "the title wraps on $name")
-            oneLine.forEach { text -> assertEquals(1, lines(onNodeWithText(text)), "\"$text\" wraps on $name") }
+            // Each line is measured on its own text node. A card that is selectable, or a text field,
+            // merges its texts into one node, and that node reports the layout of just one of them.
+            oneLine.forEach { text ->
+                assertEquals(1, lines(onNodeWithText(text, useUnmergedTree = true)), "\"$text\" wraps on $name")
+            }
             step = Step(name, onNodeWithTag(STEP_TITLE_TAG).getUnclippedBoundsInRoot(), action().getUnclippedBoundsInRoot())
         }
         return step

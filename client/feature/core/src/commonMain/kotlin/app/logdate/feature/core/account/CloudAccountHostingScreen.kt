@@ -142,7 +142,8 @@ fun CloudAccountHostingContent(
  *
  * The chosen place is filled with the selection color; nothing is outlined. [details] is whatever
  * the place needs once it is chosen. It opens inside the card, so it plainly belongs to that
- * choice.
+ * choice. The mark and the gaps beside it are kept small: the name and its line get only the width
+ * left between the mark and the radio button, and that line has to fit on one line on a phone.
  */
 @Composable
 private fun HostOption(
@@ -169,13 +170,13 @@ private fun HostOption(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             Box(
-                Modifier.size(48.dp).background(iconBackground, MaterialTheme.shapes.large),
+                Modifier.size(40.dp).background(iconBackground, MaterialTheme.shapes.large),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(26.dp))
+                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(24.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
