@@ -27,7 +27,17 @@ fun JournalContentCover(
     MiniContentCover(
         shape = CoverShape.JOURNAL,
         size = CoverSize.SMALL,
-    )
+        modifier = modifier,
+    ) {
+        if (imageUri != null) {
+            AsyncImage(
+                model = imageUri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
 }
 
 @Composable

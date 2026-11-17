@@ -39,8 +39,7 @@ fun JournalMetadataBlock(
 @Composable
 private fun JournalMetadata(audience: List<PersonUiState>) {
     Row {
-        MiniProfileIcons(people = listOf())
-        Text("", style = MaterialTheme.typography.labelMedium)
+        MiniProfileIcons(people = audience)
     }
 }
 
