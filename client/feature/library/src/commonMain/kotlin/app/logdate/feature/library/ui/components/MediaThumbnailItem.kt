@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.library.ui.LibraryMediaItem
 import app.logdate.ui.LocalNavAnimatedVisibilityScope
@@ -39,14 +38,15 @@ import app.logdate.ui.common.ContextMenuItem
 import app.logdate.ui.common.focusableWithRing
 import app.logdate.ui.common.mediaDragSource
 import app.logdate.ui.common.transitions.TransitionKeys
+import app.logdate.ui.notes.NoteAudioThumbnail
+import app.logdate.ui.notes.NoteMediaImage
+import app.logdate.ui.notes.NoteMediaKind
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.util.formatDateLocalized
-import coil3.compose.AsyncImage
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.library.generated.resources.Res
 import logdate.client.feature.library.generated.resources.cd_library_audio
-import logdate.client.feature.library.generated.resources.cd_library_audio_badge
 import logdate.client.feature.library.generated.resources.cd_library_photo
 import logdate.client.feature.library.generated.resources.cd_library_video
 import logdate.client.feature.library.generated.resources.cd_library_video_badge
@@ -139,23 +139,21 @@ fun MediaThumbnailItem(
                     capturedAt,
                 )
             if (item.isAudio) {
-                Box(
+                // A recording shows its own waveform and length, not a stock audio-file icon.
+                NoteAudioThumbnail(
+                    mediaRef = item.uri,
+                    durationMs = item.durationMs,
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = PlatformIcons.audioFile(),
-                        contentDescription = description,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(36.dp),
-                    )
-                }
-            } else {
-                AsyncImage(
-                    model = item.thumbnailUri ?: item.uri,
                     contentDescription = description,
-                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                NoteMediaImage(
+                    mediaRef = item.thumbnailUri ?: item.uri,
+                    kind = if (item.isVideo) NoteMediaKind.Video else NoteMediaKind.Photo,
+                    contentDescription = description,
                     modifier = Modifier.fillMaxSize(),
+                    compact = true,
+                    showVideoBadge = false,
                 )
             }
             if (item.isVideo) {
@@ -163,18 +161,6 @@ fun MediaThumbnailItem(
                     painter = PlatformIcons.playCircle(),
                     contentDescription = stringResource(Res.string.cd_library_video_badge),
                     tint = Color.White,
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(4.dp)
-                            .size(20.dp),
-                )
-            }
-            if (item.isAudio) {
-                Icon(
-                    painter = PlatformIcons.audioFile(),
-                    contentDescription = stringResource(Res.string.cd_library_audio_badge),
-                    tint = MaterialTheme.colorScheme.primary,
                     modifier =
                         Modifier
                             .align(Alignment.BottomEnd)
