@@ -43,13 +43,13 @@ class HistoryMapGeometryTest {
 
     @Test
     fun `projection keeps a single place centered and multiple places inside the canvas`() {
-        val single = mapPoint(HistoryCoordinate(36.0, -115.0), listOf(HistoryCoordinate(36.0, -115.0)), 300f, 200f)
+        val single = historyMapProjection(listOf(HistoryCoordinate(36.0, -115.0)), 300f, 200f).project(HistoryCoordinate(36.0, -115.0))
         assertEquals(150f, single.x)
         assertEquals(100f, single.y)
 
         val points = listOf(HistoryCoordinate(36.0, -115.0), HistoryCoordinate(36.01, -115.02))
         points.forEach { coordinate ->
-            val position = mapPoint(coordinate, points, 300f, 200f)
+            val position = historyMapProjection(points, 300f, 200f).project(coordinate)
             assertTrue(position.x in 16f..284f)
             assertTrue(position.y in 16f..184f)
         }
