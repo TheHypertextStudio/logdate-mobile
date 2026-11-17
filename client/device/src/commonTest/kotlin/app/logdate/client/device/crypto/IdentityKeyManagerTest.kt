@@ -238,19 +238,12 @@ class IdentityKeyManagerTest {
         }
 
     @Test
-    fun `backup recovery requires verification of this identity phrase`() =
+    fun `only this identity's phrase in its own order verifies`() =
         runTest {
             manager.ensureIdentityKey()
             val words = requireNotNull(manager.getStoredRecoveryPhrase()).words
-            assertFalse(manager.isRecoveryPhraseVerified())
             assertFalse(manager.verifyRecoveryPhrase(words.reversed()))
-            assertFalse(manager.isRecoveryPhraseVerified())
-
             assertTrue(manager.verifyRecoveryPhrase(words))
-            assertTrue(manager.isRecoveryPhraseVerified())
-
-            manager.recoverIdentity(words)
-            assertFalse(manager.isRecoveryPhraseVerified())
         }
 
     @Test

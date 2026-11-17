@@ -382,7 +382,6 @@ class CloudBackupWorkerTest : CloudArchiveWorkerFixture() {
             val cloud = FakeCloudBackupDataSource(Result.success(BackupUploadResult("unused", 1L, 1L)))
             val unverifiedIdentity =
                 mockk<IdentityKeyManager> {
-                    coEvery { isRecoveryPhraseVerified() } returns false
                     coEvery { hasIdentityKey() } returns true
                     coEvery { canUseForAccount(any()) } returns true
                     coEvery { getIdentityKey() } returns ByteArray(32) { 7 }
@@ -413,7 +412,6 @@ class CloudBackupWorkerTest : CloudArchiveWorkerFixture() {
             val cloud = FakeCloudBackupDataSource(Result.success(BackupUploadResult("unused", 1L, 1L)))
             val missingIdentity =
                 mockk<IdentityKeyManager> {
-                    coEvery { isRecoveryPhraseVerified() } returns false
                     coEvery { hasIdentityKey() } returns false
                 }
             val params = workerParameters()
