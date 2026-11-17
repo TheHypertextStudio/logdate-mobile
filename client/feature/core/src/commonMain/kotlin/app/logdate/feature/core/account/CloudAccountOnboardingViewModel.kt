@@ -22,7 +22,6 @@ import app.logdate.feature.core.settings.ui.ServerSelectionState
 import app.logdate.feature.core.settings.ui.ServerValidationState
 import app.logdate.shared.config.DefaultLogDateConfigRepository
 import app.logdate.shared.model.LogDateAccount
-import app.logdate.shared.model.ServerDescriptor
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,7 +31,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logdate.client.feature.core.generated.resources.Res
-import logdate.client.feature.core.generated.resources.account_failure_server_url_empty
 import logdate.client.feature.core.generated.resources.account_validation_display_name_required
 import logdate.client.feature.core.generated.resources.account_validation_display_name_too_long
 import logdate.client.feature.core.generated.resources.account_validation_username_characters
@@ -76,6 +74,8 @@ class CloudAccountOnboardingViewModel(
 
     private var usernameCheckJob: Job? = null
     private var entryStep: OnboardingStep = OnboardingStep.Welcome
+
+    private val serverSelection = OnboardingServerSelection(_uiState, serverConfigurationCoordinator, ::resolveStep)
 
     init {
         checkPasskeySupport()
@@ -441,7 +441,7 @@ class CloudAccountOnboardingViewModel(
         viewModelScope.launch {
             // The name says where the account lives. Point the app there before asking for the
             // passkey, and stop with that server's problem if it cannot be used.
-            if (name.server != null && !useServerNamedBy(name)) {
+            if (name.server != null && !serverSelection.useServerNamedBy(name)) {
                 _uiState.value = _uiState.value.copy(isSigningIn = false)
                 return@launch
             }
@@ -477,33 +477,6 @@ class CloudAccountOnboardingViewModel(
                 }
             }
         }
-    }
-
-    /**
-     * Points the app at the server a sign-in name belongs to, and reports whether it can be used.
-     * A server that cannot be used leaves its problem in the UI state.
-     */
-    private suspend fun useServerNamedBy(name: SignInName): Boolean {
-        val preset = if (name.isOnLogDateCloud) ServerPreset.PRODUCTION else ServerPreset.CUSTOM
-        _uiState.value =
-            _uiState.value.copy(
-                serverSelectionState =
-                    _uiState.value.serverSelectionState.copy(
-                        selectedPreset = preset,
-                        customServerUrl = if (preset == ServerPreset.CUSTOM) name.server.orEmpty() else "",
-                        validationState = ServerValidationState.Validating,
-                    ),
-            )
-        persistServerSelection(
-            nextStep = _uiState.value.currentStep,
-            failureMessage = { error -> serverSelectionFailureMessage(error, preset) },
-        ) {
-            when (preset) {
-                ServerPreset.PRODUCTION -> serverConfigurationCoordinator.saveLogDateCloudSelection()
-                ServerPreset.CUSTOM -> serverConfigurationCoordinator.validateAndSaveCustomServer(name.server.orEmpty())
-            }
-        }
-        return _uiState.value.serverSelectionState.validationState is ServerValidationState.Success
     }
 
     /**
@@ -577,29 +550,9 @@ class CloudAccountOnboardingViewModel(
         prefillFromLocalProfile()
     }
 
-    fun selectServerPreset(preset: ServerPreset) {
-        _uiState.value =
-            _uiState.value.copy(
-                serverSelectionState =
-                    _uiState.value.serverSelectionState.copy(
-                        selectedPreset = preset,
-                        validationState = ServerValidationState.Idle,
-                    ),
-                errorMessage = null,
-            )
-    }
+    fun selectServerPreset(preset: ServerPreset) = serverSelection.selectPreset(preset)
 
-    fun updateCustomServerUrl(url: String) {
-        _uiState.value =
-            _uiState.value.copy(
-                serverSelectionState =
-                    _uiState.value.serverSelectionState.copy(
-                        customServerUrl = url,
-                        validationState = ServerValidationState.Idle,
-                    ),
-                errorMessage = null,
-            )
-    }
+    fun updateCustomServerUrl(url: String) = serverSelection.updateCustomUrl(url)
 
     private fun checkPasskeySupport() {
         viewModelScope.launch {
@@ -639,90 +592,7 @@ class CloudAccountOnboardingViewModel(
             )
     }
 
-    private fun prepareServerSelection(nextStep: OnboardingStep): Job =
-        viewModelScope.launch {
-            val serverSelectionState = _uiState.value.serverSelectionState
-            when (serverSelectionState.selectedPreset) {
-                ServerPreset.PRODUCTION -> {
-                    persistServerSelection(
-                        nextStep = nextStep,
-                        failureMessage = { error -> serverSelectionFailureMessage(error, ServerPreset.PRODUCTION) },
-                    ) {
-                        serverConfigurationCoordinator.saveLogDateCloudSelection()
-                    }
-                }
-
-                ServerPreset.CUSTOM -> {
-                    val customServerUrl = serverSelectionState.customServerUrl
-                    if (customServerUrl.isBlank()) {
-                        updateServerSelectionState(
-                            validationState = ServerValidationState.Error(Res.string.account_failure_server_url_empty),
-                            errorMessage = Res.string.account_failure_server_url_empty,
-                        )
-                        return@launch
-                    }
-
-                    updateServerSelectionState(
-                        validationState = ServerValidationState.Validating,
-                        errorMessage = null,
-                    )
-
-                    persistServerSelection(
-                        nextStep = nextStep,
-                        failureMessage = { error -> serverSelectionFailureMessage(error, ServerPreset.CUSTOM) },
-                    ) {
-                        serverConfigurationCoordinator.validateAndSaveCustomServer(customServerUrl)
-                    }
-                }
-            }
-        }
-
-    private suspend fun persistServerSelection(
-        nextStep: OnboardingStep,
-        failureMessage: (Throwable) -> StringResource,
-        save: suspend () -> Result<ServerConfigurationCoordinator.SaveResult>,
-    ) {
-        save()
-            .onSuccess { result ->
-                updateServerSelectionState(
-                    validationState = ServerValidationState.Success(result.serverVersion),
-                    errorMessage = null,
-                    nextStep = resolveStep(nextStep),
-                    activeServerDescriptor = result.descriptor,
-                    customServerUrl =
-                        result.serverOrigin.takeIf {
-                            _uiState.value.serverSelectionState.selectedPreset == ServerPreset.CUSTOM
-                        },
-                )
-            }.onFailure { error ->
-                Napier.w("Server validation failed", error)
-                val message = failureMessage(error)
-                updateServerSelectionState(
-                    validationState = ServerValidationState.Error(message),
-                    errorMessage = message,
-                )
-            }
-    }
-
-    private fun updateServerSelectionState(
-        validationState: ServerValidationState,
-        errorMessage: StringResource?,
-        nextStep: OnboardingStep? = null,
-        activeServerDescriptor: ServerDescriptor? = _uiState.value.serverSelectionState.activeServerDescriptor,
-        customServerUrl: String? = null,
-    ) {
-        _uiState.value =
-            _uiState.value.copy(
-                currentStep = nextStep ?: _uiState.value.currentStep,
-                errorMessage = errorMessage,
-                serverSelectionState =
-                    _uiState.value.serverSelectionState.copy(
-                        validationState = validationState,
-                        activeServerDescriptor = activeServerDescriptor,
-                        customServerUrl = customServerUrl ?: _uiState.value.serverSelectionState.customServerUrl,
-                    ),
-            )
-    }
+    private fun prepareServerSelection(nextStep: OnboardingStep): Job = viewModelScope.launch { serverSelection.confirm(nextStep) }
 
     private fun validateInputs(): Boolean {
         val currentState = _uiState.value
