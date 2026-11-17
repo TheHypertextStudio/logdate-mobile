@@ -1,12 +1,28 @@
 {
   "version": 1,
-  "created_at": "1794873493",
+  "created_at": "1794890816",
   "issues": [
+    {
+      "file": "app/compose-main/src/androidMain/kotlin/app/logdate/client/appfunctions/LogDateAppFunctions.kt",
+      "name": "startEntry",
+      "kind": "method",
+      "line": 102,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "app/compose-main/src/desktopMain/kotlin/app/logdate/desktop/LogDateApplicationState.kt",
+      "name": "openNoteEditor",
+      "kind": "method",
+      "line": 50,
+      "fqn": null,
+      "rule": "DC001"
+    },
     {
       "file": "client/data/src/androidMain/kotlin/app/logdate/client/data/restore/NativeJournalStagedSourceIndex.kt",
       "name": "admittedMediaInventories",
       "kind": "method",
-      "line": 229,
+      "line": 278,
       "fqn": null,
       "rule": "DC001"
     },
@@ -14,7 +30,7 @@
       "file": "client/data/src/androidMain/kotlin/app/logdate/client/data/restore/NativeJournalStagedSourceIndex.kt",
       "name": "isRecoverableAuxiliary",
       "kind": "method",
-      "line": 232,
+      "line": 281,
       "fqn": null,
       "rule": "DC001"
     },
@@ -23,6 +39,14 @@
       "name": "pendingUploadRetryDao",
       "kind": "method",
       "line": 296,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/database/src/commonMain/kotlin/app/logdate/client/database/dao/StorageMetadataDao.kt",
+      "name": "upsertStorageMetadata",
+      "kind": "method",
+      "line": 69,
       "fqn": null,
       "rule": "DC001"
     },
@@ -43,10 +67,26 @@
       "rule": "DC001"
     },
     {
+      "file": "client/datastore/src/commonMain/kotlin/app/logdate/client/datastore/LogdatePreferencesDataSource.kt",
+      "name": "observePeopleContactsAccessMode",
+      "kind": "method",
+      "line": 192,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/datastore/src/commonMain/kotlin/app/logdate/client/datastore/LogdatePreferencesDataSource.kt",
+      "name": "setFirstDayOfWeek",
+      "kind": "method",
+      "line": 402,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
       "file": "client/datastore/src/commonMain/kotlin/app/logdate/client/datastore/featureflags/FeatureFlag.kt",
       "name": "forKey",
       "kind": "method",
-      "line": 152,
+      "line": 154,
       "fqn": null,
       "rule": "DC001"
     },
@@ -70,7 +110,7 @@
       "file": "client/device/src/androidMain/kotlin/app/logdate/client/device/restore/NativeJournalReplayCustody.kt",
       "name": "isPendingCohort",
       "kind": "method",
-      "line": 77,
+      "line": 78,
       "fqn": null,
       "rule": "DC001"
     },
@@ -78,7 +118,7 @@
       "file": "client/device/src/androidMain/kotlin/app/logdate/client/device/restore/NativeJournalReplayCustody.kt",
       "name": "retireReplacedStagedCohort",
       "kind": "method",
-      "line": 88,
+      "line": 89,
       "fqn": null,
       "rule": "DC001"
     },
@@ -86,7 +126,7 @@
       "file": "client/device/src/androidMain/kotlin/app/logdate/client/device/restore/NativeJournalReplayCustody.kt",
       "name": "retireInterruptedStagedCohort",
       "kind": "method",
-      "line": 113,
+      "line": 114,
       "fqn": null,
       "rule": "DC001"
     },
@@ -123,27 +163,19 @@
       "rule": "DC001"
     },
     {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "seeCapabilities",
-      "kind": "property",
-      "line": 78,
-      "fqn": "app.logdate.feature.core.assistants.seeCapabilities",
+      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/account/CloudAccountOnboardingViewModel.kt",
+      "name": "skipOnboarding",
+      "kind": "method",
+      "line": 561,
+      "fqn": null,
       "rule": "DC001"
     },
     {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "doCapabilities",
-      "kind": "property",
-      "line": 79,
-      "fqn": "app.logdate.feature.core.assistants.doCapabilities",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantPage",
+      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/activity/PhoneActivityOnboardingOffer.kt",
+      "name": "PhoneActivityOnboardingOffer",
       "kind": "function",
-      "line": 109,
-      "fqn": "app.logdate.feature.core.assistants.AssistantPage",
+      "line": 34,
+      "fqn": "app.logdate.feature.core.activity.PhoneActivityOnboardingOffer",
       "rule": "DC001"
     },
     {
@@ -152,70 +184,6 @@
       "kind": "function",
       "line": 140,
       "fqn": "app.logdate.feature.core.assistants.AssistantAvatar",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantIconBadge",
-      "kind": "function",
-      "line": 158,
-      "fqn": "app.logdate.feature.core.assistants.AssistantIconBadge",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantFact",
-      "kind": "function",
-      "line": 174,
-      "fqn": "app.logdate.feature.core.assistants.AssistantFact",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantSectionLabel",
-      "kind": "function",
-      "line": 186,
-      "fqn": "app.logdate.feature.core.assistants.AssistantSectionLabel",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "assistantAccessTiles",
-      "kind": "function",
-      "line": 200,
-      "fqn": "app.logdate.feature.core.assistants.assistantAccessTiles",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "entriesSummary",
-      "kind": "function",
-      "line": 241,
-      "fqn": "app.logdate.feature.core.assistants.entriesSummary",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantJournalPicker",
-      "kind": "function",
-      "line": 253,
-      "fqn": "app.logdate.feature.core.assistants.AssistantJournalPicker",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantCheckRow",
-      "kind": "function",
-      "line": 290,
-      "fqn": "app.logdate.feature.core.assistants.AssistantCheckRow",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantComponents.kt",
-      "name": "AssistantToggleTile",
-      "kind": "function",
-      "line": 312,
-      "fqn": "app.logdate.feature.core.assistants.AssistantToggleTile",
       "rule": "DC001"
     },
     {
@@ -260,22 +228,6 @@
     },
     {
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantModels.kt",
-      "name": "AssistantJournalOption",
-      "kind": "class",
-      "line": 17,
-      "fqn": "app.logdate.feature.core.assistants.AssistantJournalOption",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantModels.kt",
-      "name": "AssistantAccessSelection",
-      "kind": "class",
-      "line": 33,
-      "fqn": "app.logdate.feature.core.assistants.AssistantAccessSelection",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/AssistantModels.kt",
       "name": "ConnectedAssistantSummary",
       "kind": "class",
       "line": 94,
@@ -286,23 +238,15 @@
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
       "name": "ConnectedAssistantsContent",
       "kind": "function",
-      "line": 74,
+      "line": 78,
       "fqn": "app.logdate.feature.core.assistants.ConnectedAssistantsContent",
-      "rule": "DC001"
-    },
-    {
-      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
-      "name": "BackButton",
-      "kind": "function",
-      "line": 111,
-      "fqn": "app.logdate.feature.core.assistants.BackButton",
       "rule": "DC001"
     },
     {
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
       "name": "AssistantsHero",
       "kind": "function",
-      "line": 118,
+      "line": 128,
       "fqn": "app.logdate.feature.core.assistants.AssistantsHero",
       "rule": "DC001"
     },
@@ -310,15 +254,23 @@
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
       "name": "ConnectedAssistantCard",
       "kind": "function",
-      "line": 153,
+      "line": 163,
       "fqn": "app.logdate.feature.core.assistants.ConnectedAssistantCard",
+      "rule": "DC001"
+    },
+    {
+      "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
+      "name": "AndroidAssistantsCard",
+      "kind": "function",
+      "line": 196,
+      "fqn": "app.logdate.feature.core.assistants.AndroidAssistantsCard",
       "rule": "DC001"
     },
     {
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
       "name": "AssistantsAvailability",
       "kind": "function",
-      "line": 186,
+      "line": 225,
       "fqn": "app.logdate.feature.core.assistants.AssistantsAvailability",
       "rule": "DC001"
     },
@@ -326,7 +278,7 @@
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
       "name": "ConnectedAssistantContent",
       "kind": "function",
-      "line": 235,
+      "line": 274,
       "fqn": "app.logdate.feature.core.assistants.ConnectedAssistantContent",
       "rule": "DC001"
     },
@@ -334,7 +286,7 @@
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/assistants/ConnectedAssistantsContent.kt",
       "name": "AssistantActivityRow",
       "kind": "function",
-      "line": 325,
+      "line": 364,
       "fqn": "app.logdate.feature.core.assistants.AssistantActivityRow",
       "rule": "DC001"
     },
@@ -342,7 +294,7 @@
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/main/HomeViewModel.kt",
       "name": "clearSelection",
       "kind": "method",
-      "line": 388,
+      "line": 390,
       "fqn": null,
       "rule": "DC001"
     },
@@ -350,7 +302,7 @@
       "file": "client/feature/core/src/commonMain/kotlin/app/logdate/feature/core/settings/navigation/SettingsEntries.kt",
       "name": "navigateToSettings",
       "kind": "function",
-      "line": 61,
+      "line": 65,
       "fqn": "app.logdate.feature.core.settings.navigation.navigateToSettings",
       "rule": "DC001"
     },
@@ -443,6 +395,30 @@
       "rule": "DC001"
     },
     {
+      "file": "client/feature/library/src/commonMain/kotlin/app/logdate/feature/library/navigation/LibraryNavRoute.kt",
+      "name": "navigateToLibrary",
+      "kind": "function",
+      "line": 25,
+      "fqn": "app.logdate.feature.library.navigation.navigateToLibrary",
+      "rule": "DC001"
+    },
+    {
+      "file": "client/feature/library/src/commonMain/kotlin/app/logdate/feature/library/navigation/LibraryNavRoute.kt",
+      "name": "navigateToMediaDetail",
+      "kind": "function",
+      "line": 30,
+      "fqn": "app.logdate.feature.library.navigation.navigateToMediaDetail",
+      "rule": "DC001"
+    },
+    {
+      "file": "client/feature/library/src/commonMain/kotlin/app/logdate/feature/library/ui/detail/MediaDetailUiState.kt",
+      "name": "MediaViewerChromeState",
+      "kind": "class",
+      "line": 101,
+      "fqn": "app.logdate.feature.library.ui.detail.MediaViewerChromeState",
+      "rule": "DC001"
+    },
+    {
       "file": "client/feature/location-timeline/src/commonMain/kotlin/app/logdate/feature/location/timeline/ui/LocationTimelineBottomSheet.kt",
       "name": "LocationTimelineQuickPeekSheet",
       "kind": "function",
@@ -515,6 +491,14 @@
       "rule": "DC001"
     },
     {
+      "file": "client/feature/onboarding/src/commonMain/kotlin/app/logdate/feature/onboarding/ui/OnboardingStartScreen.kt",
+      "name": "OnboardingStartScreenContent",
+      "kind": "function",
+      "line": 35,
+      "fqn": "app.logdate.feature.onboarding.ui.OnboardingStartScreenContent",
+      "rule": "DC001"
+    },
+    {
       "file": "client/feature/onboarding/src/commonMain/kotlin/app/logdate/feature/onboarding/ui/OnboardingViewModel.kt",
       "name": "selectPlan",
       "kind": "method",
@@ -542,7 +526,7 @@
       "file": "client/feature/rewind/src/commonMain/kotlin/app/logdate/feature/rewind/ui/RewindScreenContent.kt",
       "name": "EmptyRewindContent",
       "kind": "function",
-      "line": 778,
+      "line": 867,
       "fqn": "app.logdate.feature.rewind.ui.EmptyRewindContent",
       "rule": "DC001"
     },
@@ -691,6 +675,54 @@
       "rule": "DC001"
     },
     {
+      "file": "client/media/src/commonMain/kotlin/app/logdate/client/media/audio/transcription/TranscriptionService.kt",
+      "name": "isOfflineModelAvailable",
+      "kind": "property",
+      "line": 181,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/networking/src/commonMain/kotlin/app/logdate/client/networking/DataUsagePolicy.kt",
+      "name": "shouldLoadFullResImages",
+      "kind": "function",
+      "line": 81,
+      "fqn": "app.logdate.client.networking.shouldLoadFullResImages",
+      "rule": "DC001"
+    },
+    {
+      "file": "client/networking/src/commonMain/kotlin/app/logdate/client/networking/DataUsagePolicy.kt",
+      "name": "shouldLoadReducedImages",
+      "kind": "function",
+      "line": 84,
+      "fqn": "app.logdate.client.networking.shouldLoadReducedImages",
+      "rule": "DC001"
+    },
+    {
+      "file": "client/networking/src/commonMain/kotlin/app/logdate/client/networking/DataUsagePolicy.kt",
+      "name": "shouldPrefetchImages",
+      "kind": "function",
+      "line": 87,
+      "fqn": "app.logdate.client.networking.shouldPrefetchImages",
+      "rule": "DC001"
+    },
+    {
+      "file": "client/networking/src/commonMain/kotlin/app/logdate/client/networking/DeviceLinkApiClient.kt",
+      "name": "isSessionRevoked",
+      "kind": "property",
+      "line": 33,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/networking/src/commonMain/kotlin/app/logdate/client/networking/saver/ConfigurableNetworkSaverModeProvider.kt",
+      "name": "setNetworkSaverState",
+      "kind": "method",
+      "line": 20,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
       "file": "client/repository/src/commonMain/kotlin/app/logdate/client/repository/assistants/AssistantProtocol.kt",
       "name": "AssistantProtocol",
       "kind": "object",
@@ -751,6 +783,86 @@
       "name": "isQueueObservationHealthy",
       "kind": "method",
       "line": 283,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/cloud/CloudRequestBinding.kt",
+      "name": "withAccessToken",
+      "kind": "method",
+      "line": 20,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/datalayer/HealthSnapshotDataMapper.kt",
+      "name": "healthIdFromPath",
+      "kind": "method",
+      "line": 46,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/datalayer/v2/WearPaths.kt",
+      "name": "SHA256_HEX",
+      "kind": "property",
+      "line": 42,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/datalayer/v2/WearPaths.kt",
+      "name": "bodyChannel",
+      "kind": "method",
+      "line": 94,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/metadata/DatabaseSyncMetadataService.kt",
+      "name": "addPendingUpload",
+      "kind": "method",
+      "line": 383,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/metadata/DatabaseSyncMetadataService.kt",
+      "name": "updateCursor",
+      "kind": "method",
+      "line": 394,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/metadata/DatabaseSyncMetadataService.kt",
+      "name": "clearAll",
+      "kind": "method",
+      "line": 404,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/migration/MigrationProgress.kt",
+      "name": "percentComplete",
+      "kind": "property",
+      "line": 37,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/peer/delivery/PeerDeliveryLedger.kt",
+      "name": "forgetAllExcept",
+      "kind": "method",
+      "line": 190,
+      "fqn": null,
+      "rule": "DC001"
+    },
+    {
+      "file": "client/sync/src/commonMain/kotlin/app/logdate/client/sync/peer/delivery/PeerDeliveryLedger.kt",
+      "name": "earliestDue",
+      "kind": "method",
+      "line": 213,
       "fqn": null,
       "rule": "DC001"
     },
@@ -931,5 +1043,5 @@
       "rule": "DC001"
     }
   ],
-  "total_at_baseline": 116
+  "total_at_baseline": 130
 }
