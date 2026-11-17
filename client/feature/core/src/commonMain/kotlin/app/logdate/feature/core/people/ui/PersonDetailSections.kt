@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import app.logdate.client.repository.journals.JournalNote
 import app.logdate.shared.model.Event
 import app.logdate.shared.model.Person
@@ -19,19 +21,18 @@ import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.common.SimpleSettingsItem
+import app.logdate.ui.notes.NoteThumbnail
+import app.logdate.ui.notes.noteWords
 import app.logdate.ui.theme.Spacing
 import app.logdate.util.toReadableDateShort
+import app.logdate.util.toReadableDateTimeShort
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.person_aliases_label
-import logdate.client.feature.core.generated.resources.person_detail_handwriting_preview
 import logdate.client.feature.core.generated.resources.person_detail_linked_entries
 import logdate.client.feature.core.generated.resources.person_detail_linked_events
 import logdate.client.feature.core.generated.resources.person_detail_load_failed
 import logdate.client.feature.core.generated.resources.person_detail_no_linked_entries
 import logdate.client.feature.core.generated.resources.person_detail_no_linked_events
-import logdate.client.feature.core.generated.resources.person_detail_photo_preview
-import logdate.client.feature.core.generated.resources.person_detail_video_preview
-import logdate.client.feature.core.generated.resources.person_detail_voice_note_preview
 import logdate.client.feature.core.generated.resources.person_remove_action
 import logdate.client.ui.generated.resources.common_loading
 import org.jetbrains.compose.resources.stringResource
@@ -39,7 +40,6 @@ import kotlin.uuid.Uuid
 import logdate.client.ui.generated.resources.Res as UiRes
 
 private const val ENTRY_PREVIEW_LENGTH = 120
-private val whitespaceRun = Regex("\\s+")
 
 /**
  * Stands in for the page while the person is loading or when they could not be loaded.
@@ -142,19 +142,26 @@ private fun PersonEntryRow(
     entry: JournalNote,
     onOpenEntry: ((Uuid) -> Unit)?,
 ) {
-    val preview = entry.previewLabel()
+    // The entry's own words lead; a photo, video, recording or page of ink with no words leads
+    // with its date. The thumbnail shows the entry itself either way.
+    val words = entry.noteWords()?.take(ENTRY_PREVIEW_LENGTH)
     val date = entry.creationTimestamp.toReadableDateShort()
+    val title = words ?: date
+    val description = if (words != null) date else entry.creationTimestamp.toReadableDateTimeShort()
+    val thumbnail: @Composable () -> Unit = { NoteThumbnail(entry, size = 40.dp, shape = RoundedCornerShape(8.dp)) }
     if (onOpenEntry == null) {
         SimpleSettingsItem(
-            title = preview,
-            description = date,
+            title = title,
+            description = description,
+            leadingContent = thumbnail,
             action = {},
         )
         return
     }
     SettingsNavigationItem(
-        title = preview,
-        description = date,
+        title = title,
+        description = description,
+        icon = thumbnail,
         onClick = { onOpenEntry(entry.uid) },
     )
 }
@@ -207,15 +214,3 @@ internal fun RemovePersonButton(
         Text(stringResource(Res.string.person_remove_action))
     }
 }
-
-@Composable
-private fun JournalNote.previewLabel(): String =
-    when (this) {
-        is JournalNote.Handwriting -> stringResource(Res.string.person_detail_handwriting_preview)
-        is JournalNote.Text -> content.toPreview()
-        is JournalNote.Audio -> stringResource(Res.string.person_detail_voice_note_preview)
-        is JournalNote.Image -> caption.ifBlank { stringResource(Res.string.person_detail_photo_preview) }.toPreview()
-        is JournalNote.Video -> caption.ifBlank { stringResource(Res.string.person_detail_video_preview) }.toPreview()
-    }
-
-private fun String.toPreview(): String = trim().replace(whitespaceRun, " ").take(ENTRY_PREVIEW_LENGTH)
