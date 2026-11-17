@@ -111,6 +111,8 @@ internal fun JournalNote.toHistoryMemory(): HistoryMemoryUi =
                 Res.string.history_memory_handwriting.toUiText(),
                 HistoryMemoryKind.Text,
                 creationTimestamp.toReadableDateShort(),
+                handwriting = document,
+                handwritingUnreadable = unreadableContent != null,
             )
         }
 

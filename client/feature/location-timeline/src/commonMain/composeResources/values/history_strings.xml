@@ -41,7 +41,6 @@
     <string name="history_no_matching_places">No places match your search</string>
     <string name="history_no_matching_places_body">Try another name or change the date filter.</string>
     <string name="history_confirm_delete">Delete</string>
-    <string name="history_preview_unavailable">Preview unavailable</string>
     <string name="history_visit_settings">Visit details</string>
     <string name="history_arrived_time_label">Arrived (24-hour time)</string>
     <string name="history_arrived_time_placeholder">10:15</string>

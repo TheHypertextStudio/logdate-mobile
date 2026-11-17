@@ -1,6 +1,7 @@
 package app.logdate.feature.location.timeline.ui.history
 
 import app.logdate.client.text.UiText
+import app.logdate.shared.model.HandwritingDocument
 import kotlin.math.roundToInt
 
 enum class HistoryTab { Day, Places }
@@ -18,6 +19,9 @@ data class HistoryMemoryUi(
     val supportingText: String = "",
     val thumbnailUri: String? = null,
     val audio: app.logdate.ui.timeline.MomentAudioUiState? = null,
+    /** The ink of a handwritten memory, so its row shows the writing itself. */
+    val handwriting: HandwritingDocument? = null,
+    val handwritingUnreadable: Boolean = false,
 )
 
 data class HistoryItemUi(
