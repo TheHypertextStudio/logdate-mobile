@@ -152,7 +152,6 @@ class MomentDurableCloudApiClientTest {
                 SyncTokenRefresher(sessions, FakeCloudAccountRepository())
                     .withFreshToken(
                         { token -> durable.getMomentChanges(token, 0) },
-                        "moment download",
                     ).getOrThrow()
             assertEquals(listOf("test-access-token", "new-token"), tokens)
             assertEquals("new-token", sessions.getSession()?.accessToken)

@@ -30,7 +30,6 @@ internal suspend fun <T> SpaceMigrationEnvironment.server(
                         Result.failure(error)
                     }
                 },
-                operation,
                 expectedScope = scope,
             )
         val error = result.exceptionOrNull() ?: return result.getOrThrow()

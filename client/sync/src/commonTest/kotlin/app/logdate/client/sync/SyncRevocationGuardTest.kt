@@ -30,7 +30,7 @@ class SyncRevocationGuardTest {
             }
             var revocations = 0
             val refresher = refresher(storage, { revocations++ })
-            val attempt = async { refresher.withFreshToken(::expiredAccess, "download") }
+            val attempt = async { refresher.withFreshToken(::expiredAccess) }
             entered.await()
             val replacement = requireNotNull(storage.getSession()).copy(accessToken = "new-login", refreshToken = "new-refresh")
             storage.saveExplicitSession(replacement)
@@ -52,7 +52,7 @@ class SyncRevocationGuardTest {
                     storage.saveExplicitSession(requireNotNull(original).session)
                 }
 
-            refresher.withFreshToken(::expiredAccess, "download")
+            refresher.withFreshToken(::expiredAccess)
 
             assertEquals(original, storage.getOriginBoundSession())
             assertEquals(0, revocations)
@@ -69,7 +69,7 @@ class SyncRevocationGuardTest {
                     storage.delegate.currentOrigin = "https://second.example"
                 }
 
-            refresher.withFreshToken(::expiredAccess, "download")
+            refresher.withFreshToken(::expiredAccess)
 
             assertEquals(OriginBoundSession("https://second.example", original), storage.getOriginBoundSession())
             assertEquals(0, revocations)
@@ -82,7 +82,7 @@ class SyncRevocationGuardTest {
             val original = storage.getSession()
             var revocations = 0
 
-            refresher(storage, { revocations++ }).withFreshToken(::expiredAccess, "download")
+            refresher(storage, { revocations++ }).withFreshToken(::expiredAccess)
 
             assertEquals(original, storage.getSession())
             assertEquals(0, revocations)
@@ -94,7 +94,7 @@ class SyncRevocationGuardTest {
             val storage = GuardedStorage()
             var revocations = 0
 
-            refresher(storage, { revocations++ }).withFreshToken(::expiredAccess, "download")
+            refresher(storage, { revocations++ }).withFreshToken(::expiredAccess)
 
             assertNull(storage.getSession())
             assertEquals(1, revocations)

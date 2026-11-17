@@ -33,7 +33,7 @@ class SessionRotationTest {
                     RotatingAccountRepository(Result.success(RefreshedSession("new-access", "new-refresh"))),
                 )
 
-            val result = refresher.withFreshToken(::rejectTheFirstToken, "probe")
+            val result = refresher.withFreshToken(::rejectTheFirstToken)
 
             assertEquals("new-access", result.getOrThrow())
             assertEquals(UserSession("new-access", "new-refresh", "test-account-id"), sessionStorage.getSession())
@@ -45,7 +45,7 @@ class SessionRotationTest {
             val sessionStorage = fakeSessionStorage()
             val refresher = SyncTokenRefresher(sessionStorage, fakeAccountRepository())
 
-            refresher.withFreshToken(::rejectTheFirstToken, "probe")
+            refresher.withFreshToken(::rejectTheFirstToken)
 
             assertEquals(UserSession("new-token", "test-refresh-token", "test-account-id"), sessionStorage.getSession())
         }
@@ -62,7 +62,7 @@ class SessionRotationTest {
                     DeviceSessionRevocationListener { revocations++ },
                 )
 
-            val result = refresher.withFreshToken(::rejectTheFirstToken, "probe")
+            val result = refresher.withFreshToken(::rejectTheFirstToken)
 
             assertEquals(REVOKED, assertIs<CloudApiException>(result.exceptionOrNull()).errorCode)
             assertNull(sessionStorage.getSession())
@@ -81,7 +81,7 @@ class SessionRotationTest {
                     DeviceSessionRevocationListener { revocations++ },
                 )
 
-            refresher.withFreshToken(::rejectTheFirstToken, "probe")
+            refresher.withFreshToken(::rejectTheFirstToken)
 
             assertNull(sessionStorage.getSession())
             assertEquals(0, revocations)
@@ -99,7 +99,7 @@ class SessionRotationTest {
                     DeviceSessionRevocationListener { revocations++ },
                 )
 
-            refresher.withFreshToken(::rejectTheFirstToken, "probe")
+            refresher.withFreshToken(::rejectTheFirstToken)
 
             assertEquals("test-refresh-token", sessionStorage.getSession()?.refreshToken)
             assertEquals(0, revocations)

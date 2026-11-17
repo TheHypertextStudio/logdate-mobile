@@ -36,7 +36,6 @@ class SyncTestFakesTest {
 
             // When: Making API calls
             apiClient.uploadContent(
-                "token",
                 ContentUploadRequest(
                     id = "test",
                     type = "TEXT",
@@ -65,7 +64,6 @@ class SyncTestFakesTest {
             // When: Making a content upload call
             val result =
                 apiClient.uploadContent(
-                    "token",
                     ContentUploadRequest(
                         id = "test",
                         type = "TEXT",
@@ -156,7 +154,7 @@ class SyncTestFakesTest {
 
             // When: Adding test notes
             val note1 = repository.addTestNote("Test note 1")
-            val note2 = repository.addTestNote("Test note 2")
+            repository.addTestNote("Test note 2")
 
             // Then: Repository should contain the notes
             // We can't easily test the flow contents without more setup,

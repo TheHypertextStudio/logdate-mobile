@@ -54,7 +54,6 @@ class BasicCloudApiClientTest {
             assertTrue(
                 client
                     .uploadContent(
-                        "token",
                         app.logdate.shared.model.sync.ContentUploadRequest(
                             id = "entry",
                             type = "TEXT",
@@ -360,7 +359,6 @@ class BasicCloudApiClientTest {
 
             val result =
                 client.uploadContent(
-                    accessToken = "bad",
                     content =
                         ContentUploadRequest(
                             id = "content-err",
@@ -405,7 +403,6 @@ class BasicCloudApiClientTest {
 
                 val result =
                     client.uploadContent(
-                        accessToken = "token",
                         content =
                             ContentUploadRequest(
                                 id = "content-err",
