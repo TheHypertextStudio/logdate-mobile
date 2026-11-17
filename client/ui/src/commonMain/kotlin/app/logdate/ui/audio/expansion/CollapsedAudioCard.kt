@@ -33,7 +33,8 @@ import app.logdate.ui.audio.waveform.BezierAudioWaveform
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.theme.Spacing
 import logdate.client.ui.generated.resources.Res
-import logdate.client.ui.generated.resources.search_type_label_voice_note
+import logdate.client.ui.generated.resources.playback_pause
+import logdate.client.ui.generated.resources.playback_play
 import org.jetbrains.compose.resources.stringResource
 
 private val COLLAPSED_WAVEFORM_HEIGHT = 40.dp
@@ -81,22 +82,15 @@ fun CollapsedAudioCard(
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             modifier = Modifier.padding(Spacing.md),
         ) {
-            when {
-                transcriptExcerpt != null -> {
-                    Text(
-                        text = transcriptExcerpt,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                else -> {
-                    Text(
-                        text = stringResource(Res.string.search_type_label_voice_note),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+            // Without a transcript the recording's waveform and length below are its content;
+            // a generic "Voice note" heading would only repeat what the card already shows.
+            if (transcriptExcerpt != null) {
+                Text(
+                    text = transcriptExcerpt,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             AudioTranscriptStatus(transcriptionStatus, transcriptExcerpt != null, isTranscribing, onRetryTranscription)
 
@@ -118,7 +112,7 @@ fun CollapsedAudioCard(
                 ) {
                     androidx.compose.material3.Icon(
                         painter = if (isPlaying) PlatformIcons.pause() else PlatformIcons.play(),
-                        contentDescription = null,
+                        contentDescription = stringResource(if (isPlaying) Res.string.playback_pause else Res.string.playback_play),
                         tint = accentColor,
                         modifier = Modifier.size(18.dp),
                     )

@@ -44,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.logdate.ui.common.formatting.LocalToday
 import app.logdate.ui.common.formatting.asRelativeDate
+import app.logdate.ui.notes.NoteMediaImage
+import app.logdate.ui.notes.NoteMediaKind
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.timeline.INITIAL_DAY_ENTRY_COUNT
 import app.logdate.ui.timeline.TimelineDayUiState
@@ -51,7 +53,6 @@ import app.logdate.ui.timeline.TimelineMediaItemUiState
 import app.logdate.ui.timeline.entryCount
 import app.logdate.ui.timeline.entryPreview
 import app.logdate.util.now
-import coil3.compose.AsyncImage
 import kotlinx.datetime.LocalDate
 import logdate.client.ui.generated.resources.Res
 import logdate.client.ui.generated.resources.a_long_time_passed
@@ -259,11 +260,12 @@ fun TimelineMediaTile(
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            AsyncImage(
-                model = media.uri,
+            NoteMediaImage(
+                mediaRef = media.uri,
+                kind = if (media.isVideo) NoteMediaKind.Video else NoteMediaKind.Photo,
                 contentDescription = description,
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
+                showVideoBadge = false,
             )
         }
         if (media.isVideo) {

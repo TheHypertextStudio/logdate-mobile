@@ -34,7 +34,6 @@ import kotlinx.datetime.toLocalDateTime
 import logdate.client.ui.generated.resources.Res
 import logdate.client.ui.generated.resources.playback_pause
 import logdate.client.ui.generated.resources.playback_play
-import logdate.client.ui.generated.resources.search_type_label_voice_note
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
@@ -75,10 +74,12 @@ fun SpatialExpandedAudioBlock(
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 // The words come first: expanding a recording is how you read all of it.
-                Text(
-                    text = transcript ?: stringResource(Res.string.search_type_label_voice_note),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                if (transcript != null) {
+                    Text(
+                        text = transcript,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
                 AudioTranscriptStatus(transcriptionStatus, transcript != null, isTranscribing, onRetryTranscription)
 
                 // Waveform
