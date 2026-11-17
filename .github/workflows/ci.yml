@@ -292,9 +292,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    # The scripts target developer Macs and use macOS tools (plutil, BSD stat). The
-    # pinned commit formatters the hook tests prepare ship only Apple Silicon builds
-    # for macOS, so this runs on the Apple Silicon image.
+    # The scripts target developer Macs and use macOS tools (plutil, BSD stat).
     runs-on: macos-15
     timeout-minutes: 15
     steps:
@@ -306,21 +304,14 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4.0.1
 
-      - name: Set up pinned formal formatter JDK
+      # The hook tests start a JVM to check that pre-push keeps Gradle headless.
+      - name: Set up JDK
         uses: actions/setup-java@v6.0.1
         with:
           distribution: jetbrains
           java-version: '21.0.10+1163.108'
           java-package: jdk
           architecture: aarch64
-
-      - name: Provision pinned formal formatter inputs
-        timeout-minutes: 5
-        run: |
-          JAVA_HOME="$(cd "$JAVA_HOME" && pwd -P)"
-          export JAVA_HOME
-          python3 scripts/ci/provision-formal-tools.py
-          printf 'JAVA_HOME=%s\n' "$JAVA_HOME" >> "$GITHUB_ENV"
 
       - name: Install script test dependencies
         env:

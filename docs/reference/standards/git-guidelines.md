@@ -198,11 +198,13 @@ If someone else is working on the same branch, agree on the rebase with them bef
 
 ### Opening a Pull Request
 
-The tracked Git hooks use `.hypertext/git-hook.py` and the locked shared validator
-shipped with the checkout. They do not depend on a globally installed Studio plugin.
-The dispatcher also checks the declared product-hook hashes and preserves their
-order, including secret scans and pre-push compile and test checks. Both shared
-and product push checks receive the same native Git ref transaction.
+The tracked Git hooks in `.githooks` run two kinds of check. LogDate's own checks live in
+`.hypertext/git-product`: the secret scans before a commit, commit message formatting, and the
+compile and test checks before a push. The Studio's shared validator, `hypertext verify`, checks
+commit messages, identity and pushes against the Studio standards, so the `hypertext` command must
+be on your PATH. Commits run LogDate's checks first, then the shared validator, then format the
+staged files with `./run format --staged`. Pushes run the shared validator first, and both checks
+receive the same Git ref transaction.
 
 1. **Rebase on latest main**: `git fetch origin && git rebase origin/main`
 2. **Verify all commits are logical**: `git log --oneline origin/main..HEAD`

@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
-# The passkey verifier venv, the Node packages of the AT Protocol reference tools (the lexicon checker
-# in scripts/tests/run-all.sh and the repository verifier in the atproto-repo JVM tests), and the
-# pinned commit formatters that the pre-commit hook and its script tests run.
+# The passkey verifier venv and the Node packages of the AT Protocol reference tools (the lexicon
+# checker in scripts/tests/run-all.sh and the repository verifier in the atproto-repo JVM tests).
+# The commit formatters need no step here: ./run format installs its pinned versions on first use.
 
 TEST_DEPS_VENV="$LOGDATE_REPO_ROOT/scripts/passkey-verify/.venv"
 TEST_DEPS_REQUIREMENTS="$LOGDATE_REPO_ROOT/scripts/passkey-verify/requirements.txt"
 TEST_DEPS_NODE_TOOLS=(tools/lexicon-check tools/atproto-repo-verify)
 # The oldest Node.js the pinned @atproto packages support.
 TEST_DEPS_NODE_MAJOR=22
-TEST_DEPS_FORMATTER_SETUP="$LOGDATE_REPO_ROOT/.hypertext/formatter-tools/setup.py"
-TEST_DEPS_FORMATTER_RUNTIME="$LOGDATE_REPO_ROOT/.hypertext/formatter-tools/runtime.json"
 
 test_deps_describe() {
-    printf 'Tests can run: the passkey verifier venv, Node.js %s or newer, the AT Protocol reference tools and the commit formatters are installed' \
+    printf 'Tests can run: the passkey verifier venv, Node.js %s or newer and the AT Protocol reference tools are installed' \
         "$TEST_DEPS_NODE_MAJOR"
 }
 
@@ -32,10 +30,6 @@ test_deps_check() {
             drift=1
         fi
     done
-    if [[ ! -f "$TEST_DEPS_FORMATTER_RUNTIME" ]]; then
-        printf 'The pinned commit formatters are not prepared\n'
-        drift=1
-    fi
     return "$drift"
 }
 
@@ -71,7 +65,6 @@ test_deps_apply() {
     for tool in "${TEST_DEPS_NODE_TOOLS[@]}"; do
         test_deps_install_node_tool "$LOGDATE_REPO_ROOT/$tool" || return
     done
-    python3 "$TEST_DEPS_FORMATTER_SETUP"
 }
 
 # Installs one tool's locked packages with the same script the atproto-repo Gradle build uses. It
