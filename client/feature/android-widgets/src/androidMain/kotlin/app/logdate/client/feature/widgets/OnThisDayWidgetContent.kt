@@ -15,6 +15,7 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.text.BidiFormatter
 import android.text.StaticLayout
@@ -737,6 +738,7 @@ fun loadScaledThumbnail(
         return try {
             val uri = Uri.parse(uriString)
             decodeBoundedThumbnail { context.contentResolver.openInputStream(uri) }
+                ?: decodeVideoFrame { setDataSource(context, uri) }
         } catch (_: Exception) {
             null
         }
@@ -752,7 +754,8 @@ fun loadScaledThumbnail(
     }
     val decoded =
         try {
-            decodeBoundedThumbnail { FileInputStream(path) }
+            // A video's file isn't an image; its frame stands in for it, as everywhere else.
+            decodeBoundedThumbnail { FileInputStream(path) } ?: decodeVideoFrame { setDataSource(path) }
         } catch (_: Exception) {
             null
         } ?: return null
@@ -783,6 +786,29 @@ private fun decodeBoundedThumbnail(open: () -> InputStream?): Bitmap? {
 }
 
 private const val MAX_WIDGET_THUMBNAIL_PX = 384
+
+/** A frame from early in the video [setSource] opens, bounded like any other widget thumbnail. */
+private fun decodeVideoFrame(setSource: MediaMetadataRetriever.() -> Unit): Bitmap? {
+    val retriever = MediaMetadataRetriever()
+    return try {
+        retriever.setSource()
+        // A second in skips the black lead-in most clips start with; a shorter clip uses its first frame.
+        listOf(VIDEO_FRAME_TIME_US, 0L).firstNotNullOfOrNull { timeUs ->
+            retriever.getScaledFrameAtTime(
+                timeUs,
+                MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                MAX_WIDGET_THUMBNAIL_PX,
+                MAX_WIDGET_THUMBNAIL_PX,
+            )
+        }
+    } catch (_: Exception) {
+        null
+    } finally {
+        retriever.release()
+    }
+}
+
+private const val VIDEO_FRAME_TIME_US = 1_000_000L
 
 private fun thumbnailCacheKey(path: String): String? =
     try {

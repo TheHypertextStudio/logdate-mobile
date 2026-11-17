@@ -23,7 +23,7 @@ fun JournalNote.toChosenEntryContent(transcript: String? = null): ChosenEntryCon
             is JournalNote.Handwriting -> Triple("Handwriting", null, WidgetEntryKind.TEXT)
             is JournalNote.Text -> Triple(content, null, WidgetEntryKind.TEXT)
             is JournalNote.Image -> Triple(caption, mediaRef, WidgetEntryKind.IMAGE)
-            is JournalNote.Video -> Triple(caption, null, WidgetEntryKind.VIDEO)
+            is JournalNote.Video -> Triple(caption, mediaRef, WidgetEntryKind.VIDEO)
             is JournalNote.Audio -> Triple(transcript.orEmpty(), null, WidgetEntryKind.AUDIO)
         }
     return ChosenEntryContent(
