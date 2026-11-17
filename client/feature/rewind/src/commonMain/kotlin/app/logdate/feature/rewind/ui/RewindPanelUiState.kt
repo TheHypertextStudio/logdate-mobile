@@ -145,7 +145,7 @@ data class ImageRewindPanelUiState(
  * this rewind was generated — the panel must render fine either way. [cachedAmplitudes]
  * is null when no waveform data was ever cached for this recording (older entries
  * predate [app.logdate.ui.audio.WaveformStorage] or transcription is still pending);
- * the renderer falls back to a static placeholder waveform in that case.
+ * the renderer reads the waveform from the recording in that case.
  *
  * @property sourceId Unique identifier of the original audio note
  * @property timestamp When the recording was made

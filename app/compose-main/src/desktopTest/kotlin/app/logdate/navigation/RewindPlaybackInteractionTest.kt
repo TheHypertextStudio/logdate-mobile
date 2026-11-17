@@ -43,6 +43,7 @@ import app.logdate.ui.theme.LogDateTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalTestApi::class)
@@ -58,6 +59,7 @@ class RewindPlaybackInteractionTest {
                             durationMs = 42000,
                             transcriptionText = "A peaceful afternoon on the walk home.",
                             dateFormatted = "Thursday, September 24",
+                            recordedAt = Instant.parse("2026-09-24T15:00:00Z"),
                             cachedAmplitudes = listOf(0.2f, 0.8f),
                             isPlaying = false,
                             playbackProgress = 0f,
