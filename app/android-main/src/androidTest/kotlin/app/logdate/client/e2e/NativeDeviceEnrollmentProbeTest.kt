@@ -224,14 +224,15 @@ class NativeDeviceEnrollmentProbeTest {
         }
 
     private suspend fun awaitExecutedWork(): List<WorkInfo> {
-        var observed = emptyList<WorkInfo>()
+        val observed = mutableListOf<WorkInfo>()
         try {
             return withTimeout(120_000) {
                 WorkManager
                     .getInstance(context)
                     .getWorkInfosForUniqueWorkFlow(AndroidLogDateSyncWorker.WORK_NAME_IMMEDIATE_SYNC)
                     .first { requests ->
-                        observed = requests
+                        observed.clear()
+                        observed.addAll(requests)
                         requests.any { request ->
                             request.id.toString() !in startupWorkIds &&
                                 request.state == WorkInfo.State.SUCCEEDED

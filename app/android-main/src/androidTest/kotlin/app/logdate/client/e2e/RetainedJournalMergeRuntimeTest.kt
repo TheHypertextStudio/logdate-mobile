@@ -224,7 +224,6 @@ class RetainedJournalMergeRuntimeTest {
 
                 val journals = koin.get<JournalRepository>()
                 val notes = koin.get<JournalNotesRepository>()
-                val media = koin.get<MediaManager>()
                 val now = Instant.fromEpochMilliseconds(state.getLong("createdAt"))
                 val journalId = Uuid.parse(state.getString("journalId"))
                 val conflictNoteId = Uuid.parse(state.getString("conflictNoteId"))
@@ -425,7 +424,6 @@ class RetainedJournalMergeRuntimeTest {
         val journals = koin.get<JournalRepository>()
         val notes = koin.get<JournalNotesRepository>()
         val journalId = Uuid.parse(state.getString("journalId"))
-        val conflictNoteId = Uuid.parse(state.getString("conflictNoteId"))
         val imageNoteId = Uuid.parse(state.getString("imageNoteId"))
         val draftId = Uuid.parse(state.getString("draftId"))
         withTimeout(RECONCILIATION_TIMEOUT_MS) {
