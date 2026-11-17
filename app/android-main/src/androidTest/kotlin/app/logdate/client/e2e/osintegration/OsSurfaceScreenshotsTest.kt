@@ -260,7 +260,9 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.createJournal("Summer in Lisbon")
         OsSurfaceCapture.openMainActivity()
         OsSurfaceCapture.waitForText("Journals").click()
-        OsSurfaceCapture.longPress(OsSurfaceCapture.waitForText("Summer in Lisbon"))
+        // The sidebar's recent journals name the journal too. Its cover is the rightmost of them.
+        OsSurfaceCapture.waitForText("Summer in Lisbon")
+        OsSurfaceCapture.longPress(OsSurfaceCapture.device.findObjects(By.text("Summer in Lisbon")).maxBy { it.visibleCenter.x })
         val newWindow = OsSurfaceCapture.waitForText("New entry in a new window")
         Thread.sleep(500L)
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "journal-context-menu")
@@ -452,22 +454,27 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.prepareOnboardedApp()
         OsSurfaceCapture.createTextEntry(entry)
         OsSurfaceCapture.openMainActivity()
-        OsSurfaceCapture.waitForText(entry).click()
-        // The day opens beside the timeline, so the entry is on screen twice; its menu is on the copy
-        // in the day, the rightmost one.
-        val deadline = System.currentTimeMillis() + 10_000L
+        OsSurfaceCapture.waitForText(entry)
+        // A day opens from its heading. Tapping an entry in the timeline opens that entry alone.
+        OsSurfaceCapture.waitForText(TODAY).click()
+        // Where there is room the day opens beside the timeline, and the entry is on screen twice.
+        // On a narrower window the day opens in the timeline's place, and it is there once.
+        val deadline = System.currentTimeMillis() + DAY_BESIDE_TIMELINE_MS
         while (OsSurfaceCapture.device.findObjects(By.text(entry)).size < 2 && System.currentTimeMillis() < deadline) {
             Thread.sleep(250L)
         }
         // Lets the day finish opening before the long-press.
         Thread.sleep(1_500L)
         val copies = OsSurfaceCapture.device.findObjects(By.text(entry))
-        val inTimeline = copies.minBy { it.visibleCenter.x }.visibleBounds
+        val inTimeline = copies.minBy { it.visibleCenter.x }.visibleBounds.takeIf { copies.size > 1 }
         OsSurfaceCapture.longPress(copies.maxBy { it.visibleCenter.x })
         val openInNewWindow = OsSurfaceCapture.waitForText("Open in new window")
-        // The menu belongs to the entry in the day, so it opens to the right of the timeline's copy.
-        check(openInNewWindow.visibleBounds.left > inTimeline.right) {
-            "The entry's menu opened at ${openInNewWindow.visibleBounds}, over the timeline at $inTimeline"
+        // Beside the timeline, the menu belongs to the entry in the day, so it opens to the right of
+        // the timeline's copy.
+        if (inTimeline != null) {
+            check(openInNewWindow.visibleBounds.left > inTimeline.right) {
+                "The entry's menu opened at ${openInNewWindow.visibleBounds}, over the timeline at $inTimeline"
+            }
         }
         Thread.sleep(500L)
         OsSurfaceCapture.capture(surface = "keyboard-pointer-drag-and-drop", state = "entry-context-menu")
@@ -693,12 +700,11 @@ class OsSurfaceScreenshotsTest {
     }
 
     /**
-     * Waits for a photo to be open in the entry. Its caption field is the surest sign, but on a
-     * tablet lying on its side the on-screen keyboard covers it, and there the photo's title shows.
+     * Waits for a photo to be open in the entry with its caption field in view. The keyboard the
+     * photo came from closes when the photo opens, so the caption is not behind it.
      */
     private fun awaitPhotoInEntry(timeoutMs: Long): Boolean =
-        OsSurfaceCapture.device.wait(Until.hasObject(By.text(PHOTO_CAPTION_HINT)), timeoutMs) ||
-            OsSurfaceCapture.device.hasObject(By.text(PHOTO_TITLE))
+        OsSurfaceCapture.device.wait(Until.hasObject(By.text(PHOTO_CAPTION_HINT)), timeoutMs)
 
     /**
      * Opens a piece of writing in a new entry and returns its empty field's hint. A text capture
@@ -978,6 +984,10 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.addQuickSettingsTile("app.logdate.client.tiles.RecordVoiceTileService")
 
         val pkg = OsSurfaceCapture.packageName
+        // Home is open before the recording starts. A main window opened while a recording is
+        // running opens on the recording, so Home has to be there already to end up in front of it.
+        OsSurfaceCapture.openMainActivity()
+        OsSurfaceCapture.waitForText("Search your log")
         OsSurfaceCapture.shell("am start -n $pkg/$EDITOR_ACTIVITY -f 0x10000000")
         OsSurfaceCapture.waitForText(VOICE).click()
         // The audio block opens ready to record; recording starts from its record button.
@@ -1062,13 +1072,18 @@ class OsSurfaceScreenshotsTest {
         const val WRITE = "Write"
         const val VOICE = "Voice"
 
+        /** The heading of today's entries in the timeline. */
+        const val TODAY = "Today"
+
+        /** How long the day is given to open beside the timeline before it is taken to have replaced it. */
+        const val DAY_BESIDE_TIMELINE_MS = 5_000L
+
         /** What an empty piece of writing says, and how long a text capture gets to open one by itself. */
         const val WRITING_HINT = "What's on your mind?"
         const val WRITING_OPENS_MS = 3_000L
 
-        /** What an open photo says: the hint in its empty caption, and its title in the top bar. */
+        /** The hint in an open photo's empty caption. */
         const val PHOTO_CAPTION_HINT = "Add a caption..."
-        const val PHOTO_TITLE = "Photo"
 
         /** `WindowConfiguration.WINDOWING_MODE_FREEFORM`, which `am start --windowingMode` takes. */
         const val WINDOWING_MODE_FREEFORM = 5
