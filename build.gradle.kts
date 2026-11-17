@@ -11,6 +11,7 @@ plugins {
     id("app.logdate.home-workspace")
     id("app.logdate.screenshot-coverage")
     id("app.logdate.coverage-reports")
+    id("app.logdate.dead-code-gate")
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
     alias(libs.plugins.kotlin.jvm) apply false
@@ -31,6 +32,9 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kover) apply false
     alias(libs.plugins.benManesVersions)
+    // Loaded here, beside the Android and Kotlin Gradle plugins it inspects; the dead-code gate
+    // applies it to every module.
+    alias(libs.plugins.dependencyAnalysis)
 }
 
 // Pins the npm `ws` package pulled in transitively by the wasmJs() browser() targets
@@ -112,9 +116,8 @@ subprojects {
         }
     }
 
-    // Size limits only (see config/detekt/detekt.yml and
-    // docs/reference/standards/entrypoint-structure.md). Only the plain `detekt` task runs;
-    // type-resolution tasks are disabled in gradle.properties.
+    // Size limits and the dead-code gate's unused-declaration rules (see config/detekt/detekt.yml).
+    // Only the plain `detekt` task runs; type-resolution tasks are disabled in gradle.properties.
     apply { plugin("dev.detekt") }
     configure<DetektExtension> {
         buildUponDefaultConfig.set(true)
@@ -147,6 +150,18 @@ subprojects {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+// buildHealth fails on every dependency issue it finds, so it gates rather than reports. See the
+// Lint section of docs/DEVELOPMENT.md.
+dependencyAnalysis {
+    issues {
+        all {
+            onAny {
+                severity("fail")
             }
         }
     }

@@ -142,6 +142,7 @@ googleServicesPlugin = '4.4.4'
 crashlyticsPlugin = '3.0.6'
 gradlePlayPublisher = '4.0.0'
 benManesVersions = '0.53.0'
+dependencyAnalysis = '3.19.2'
 ktlint = '14.2.0'
 ktlintEngine = '1.8.0'
 detekt = '2.0.0-alpha.3'
@@ -421,6 +422,7 @@ crashlytics = { id = 'com.google.firebase.crashlytics', version.ref = 'crashlyti
 gradlePlayPublisher = { id = 'com.github.triplet.play', version.ref = 'gradlePlayPublisher' }
 buildConfig = { id = 'com.github.gmazzo.buildconfig', version.ref = 'buildConfigPlugin' }
 benManesVersions = { id = 'com.github.ben-manes.versions', version.ref = 'benManesVersions' }
+dependencyAnalysis = { id = 'com.autonomousapps.dependency-analysis', version.ref = 'dependencyAnalysis' }
 
 # LogDate Conventions
 app-logdate-kmp-base = { id = 'app.logdate.kmp-base' }

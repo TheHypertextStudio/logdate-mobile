@@ -160,13 +160,74 @@ pre-push hook re-runs the tests for affected modules before code leaves your mac
 ./gradlew :integration:server-client-e2e:test                     # API and sync contract tests
 ./run test:screenshots                                            # Android, desktop, and Wear screenshot references
 ./run lint:check                                                  # ktlint
-./run lint:complexity                                             # Detekt size limits
+./run lint:complexity                                             # detekt size and unused-declaration rules
 ```
 
 Instrumented Android tests run only on Gradle Managed Devices, described in [Devices](#devices).
 Never run `connectedDebugAndroidTest`. `./run test` and `./run check` run every test and check in
 the project; they take a long time and a lot of disk, so save them for changes to shared tooling or
 configuration. The [testing guides](testing/introduction.md) explain each kind of test.
+
+## Lint
+
+Lint finds problems that compile and pass their tests anyway: formatting, oversized functions, and
+dead code. Dead code is code no shipped app, server or published library ever runs, such as a local
+variable nobody reads, a function nothing calls, a string no screen shows, or a dependency no module
+imports. It still has to be read, compiled, tested and reviewed, so LogDate runs the Studio
+[dead-code gate](https://github.com/TheHypertextStudio/product-standards/blob/main/docs/reference/android/dead-code.md)
+and new dead code fails the check instead of piling up.
+
+```bash
+./run lint:check      # ktlint formatting
+./run lint:deadcode   # every dead-code layer below
+```
+
+`./run lint:deadcode` runs these commands, and `./run check` runs them after the tests:
+
+```bash
+./gradlew detekt :app:android-main:lint :app:wear:lint buildHealth
+searchdeadcode . --profile ci --unused-extras=false --write-only-dao=false --write-only-prefs=false
+```
+
+Each layer looks at the code from a different place, so each finds something the others miss:
+
+- **The Kotlin compiler** fails every compilation, tests included, on unused local variables,
+  assignments nothing reads, unused lambda parameters (rename them to `_`), and expressions whose
+  value is thrown away. The `app.logdate.dead-code-gate` plugin in `build-logic` turns these on, so
+  they fail `assembleDebug`, every test run and the pre-push hook, not only lint.
+- **detekt** reads one file at a time and reports unused imports, unused parameters, and private
+  classes, functions and properties nothing in the file uses. Its rules are in
+  `config/detekt/detekt.yml`.
+- **Android Lint** reports Android resources and view IDs nothing references. Each app module lints
+  its library modules too (`checkDependencies`), so a string declared in one module and shown by
+  another counts as used. Lint cannot see Compose Multiplatform resources under `composeResources`.
+- **The Dependency Analysis plugin** (`buildHealth`) reports dependencies a module declares but never
+  uses, dependencies it uses without declaring, and dependencies declared on the wrong
+  configuration. Its advice is in `build/reports/dependency-analysis/build-health-report.txt`.
+- **SearchDeadCode** reads every Kotlin and Java file in the repository at once and follows calls
+  between modules from the app's entry points. It reports public and internal declarations that
+  nothing reaches, such as a screen nothing navigates to or a repository method only tests call, and
+  sealed variants nothing creates. Code only tests use counts as dead: a test that proves unused code
+  works is not a reason to keep it. `hypertext setup --repo . --apply` installs the pinned version.
+  The three flags turn off its intent-extra, preference and DAO detectors, which report data that
+  other apps read rather than declarations nothing reaches.
+
+SearchDeadCode cannot see every caller. It does not parse Swift, Gradle scripts or reflection, and
+it does not treat tests as entry points. When it reports a declaration that is in fact used, record
+why, where a reviewer can read it:
+
+1. A whole kind of caller it cannot see goes in `.deadcode.yml`: a class in `entry_points`, or a
+   directory in `exclude`, with a comment above it naming the caller.
+2. A single declaration gets `@Suppress("unused")` with the reason on the same line, naming who uses
+   it and why the tools cannot see that, for example
+   `@Suppress("unused") // Kept: called from iosApp/iosApp/AppDelegate.swift`. Put it on the narrowest
+   declaration; never suppress a whole file. SearchDeadCode 0.21.0 does not see that one-argument
+   form on some declarations, such as a top-level `fun` or `object` with no other modifier or
+   annotation, or some local variables. When it still reports a declaration you suppressed, write
+   `@Suppress(names = ["unused"]) // Kept: ...` instead; it means the same thing to Kotlin and detekt.
+3. `.deadcode-baseline.json` lists the findings that existed when the gate was adopted and are still
+   under review. Only remove entries from it, with
+   `searchdeadcode . --baseline .deadcode-baseline.json --baseline-prune`; never add a new finding.
 
 ## Devices
 

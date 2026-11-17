@@ -1,10 +1,10 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version='1.0' encoding='UTF-8' ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues/>
+  <ManuallySuppressedIssues />
   <CurrentIssues>
-    <ID>LongMethod:AndroidCameraCaptureManager.kt:AndroidCameraCaptureManager$override suspend fun switchCamera</ID>
+    <ID
+    >LongMethod:AndroidCameraCaptureManager.kt:AndroidCameraCaptureManager$override suspend fun switchCamera</ID>
     <ID>LongMethod:AutoSaveHandler.kt:AutoSaveCoordinator$suspend fun save</ID>
-    <ID>LongMethod:InlineMarkdown.kt:internal fun parseInlineMarkdown: List&lt;InlineMarkdownSpan></ID>
     <ID>LongMethod:NoteMappers.kt:fun EntryBlockUiState.toJournalNote: JournalNote?</ID>
   </CurrentIssues>
 </SmellBaseline>

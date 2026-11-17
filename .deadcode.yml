@@ -1,0 +1,98 @@
+# SearchDeadCode configuration: the cross-module layer of the dead-code gate.
+# See docs/DEVELOPMENT.md#lint and the Studio standard docs/reference/android/dead-code.md.
+targets:
+  - '.'
+exclude:
+  - '**/build/**'
+  - '**/generated/**'
+  - '**/.gradle/**'
+  # Test source sets are not entry points; code only tests use is reported.
+  # SearchDeadCode 0.21.0 ignores "**/src/*Test/**", so each one is named.
+  - '**/src/test/**'
+  - '**/src/commonTest/**'
+  - '**/src/jvmTest/**'
+  - '**/src/desktopTest/**'
+  - '**/src/iosTest/**'
+  - '**/src/androidHostTest/**'
+  - '**/src/androidTest/**'
+  - '**/src/androidDeviceTest/**'
+  - '**/src/screenshotTest/**'
+  - '**/src/screenshotTestDebug/**'
+  # Test-only modules: the server end-to-end suite, the macrobenchmark, baseline-profile and
+  # microbenchmark suites, and the screenshot scenes that only the screenshot test source sets of
+  # app/android-main and app/compose-main depend on.
+  - 'integration/**'
+  - 'benchmark/**'
+  - 'client/screenshot-scenes/**'
+  # Debug-only test hosts and probes that src/debug/AndroidManifest.xml registers for the
+  # instrumented suites. SearchDeadCode 0.21.0 reports every declaration in a debug source set as
+  # debug-only code, override parameters included.
+  - 'app/android-main/src/debug/**'
+  # Published AT Protocol libraries. Their public API is for consumers outside this repository
+  # (samples/atproto-consumer and apps that depend on studio.hypertext.atproto:*), so a declaration
+  # nothing here calls is not dead. Their internals are reviewed with --library-mode instead.
+  - 'shared/atproto-crypto/**'
+  - 'shared/atproto-syntax/**'
+  - 'shared/atproto-identity/**'
+  - 'shared/atproto-xrpc/**'
+  - 'shared/atproto-repo/**'
+  - 'shared/atproto-plc/**'
+  - 'shared/atproto-lexicon/**'
+  - 'shared/atproto-pds/**'
+  - 'shared/atproto-pds-runtime/**'
+  - 'shared/atproto-oauth-client/**'
+  - 'shared/atproto-bom/**'
+  # The ActivityPub vocabulary is kept as a parallel effort to AT Protocol federation
+  # (docs/plans/atproto-support/01-architecture.md); no module depends on it yet.
+  - 'shared/activitypub/**'
+  # The sample is a stand-alone consumer of the published libraries, built as its own included build.
+  - 'samples/**'
+entry_points:
+  # Registered by implementationClass in build-logic/build.gradle.kts.
+  - 'app.logdate.SettingsUiPlugin'
+  - 'app.logdate.HomeWorkspacePlugin'
+  - 'app.logdate.ScreenshotCoveragePlugin'
+  - 'app.logdate.AtprotoPublishedModulePlugin'
+  - 'app.logdate.SpeechModelPlugin'
+  - 'app.logdate.DynamicFeaturePlugin'
+  - 'app.logdate.TestDatabaseEnvironmentPlugin'
+  - 'app.logdate.KmpBasePlugin'
+  - 'app.logdate.KmpLibraryPlugin'
+  - 'app.logdate.ComposeFeaturePlugin'
+  - 'app.logdate.JvmServiceConventionPlugin'
+  - 'app.logdate.BenchmarkConventionPlugin'
+  - 'app.logdate.ManagedDevicesPlugin'
+  - 'app.logdate.CoverageReportsPlugin'
+  - 'app.logdate.LogDateReleasePlugin'
+  - 'app.logdate.DeadCodeGatePlugin'
+  # Registered by implementationClass in shared/atproto-lexicon-gradle-plugin/build.gradle.kts.
+  - 'studio.hypertext.atproto.lexicon.gradle.LexiconModelsPlugin'
+  # Called from iosApp/iosApp/AppDelegate.swift and iosApp/iosApp/ContentView.swift.
+  - 'app.logdate.BackgroundSyncRunner'
+  - 'app.logdate.MainViewController'
+  - 'app.logdate.HandleIosDeepLink'
+  - 'app.logdate.HandleApnsTokenRegistered'
+  - 'app.logdate.HandleApnsRegistrationFailed'
+  - 'app.logdate.HandleSilentPushSync'
+  - 'app.logdate.di.initKoinIos'
+retain_patterns:
+  # SearchDeadCode 0.21.0 reports a parameter with "debug" in its name as debug-only code, even when
+  # the function reads it; selectOnboardingTestFixture in app/compose-main reads this one.
+  - 'isDebuggable'
+detection:
+  # Only declarations nothing reaches (DC001) and sealed variants nothing creates (DC008) fail the
+  # gate: the compiler and detekt report unused locals, parameters and imports. The lint command turns
+  # off the intent-extra, preference and DAO detectors, which have no setting in this file.
+  unused_class: true
+  unused_method: true
+  unused_property: true
+  unused_import: false
+  unused_param: false
+  unused_enum_case: false
+  assign_only: false
+  dead_branch: false
+  redundant_public: false
+android:
+  parse_manifest: true
+  parse_layouts: true
+  auto_retain_components: true

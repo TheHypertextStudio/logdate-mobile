@@ -107,5 +107,9 @@ gradlePlugin {
             id = "app.logdate.android-release"
             implementationClass = "app.logdate.LogDateReleasePlugin"
         }
+        register("deadCodeGate") {
+            id = "app.logdate.dead-code-gate"
+            implementationClass = "app.logdate.DeadCodeGatePlugin"
+        }
     }
 }
