@@ -36,3 +36,29 @@ fun rememberAudioContext(
         context
     }
 }
+
+/**
+ * A recording's waveform amplitudes alone, for previews that draw bars and nothing else. Starts
+ * from the processor's memory cache so a remounted preview paints at once; empty until loaded.
+ */
+@Composable
+fun rememberWaveform(
+    audioUri: String,
+    durationMs: Long,
+    processor: AudioContextProcessor? = LocalAudioContextProcessor.current,
+): List<Float> {
+    if (processor == null) return emptyList()
+    return key(processor, audioUri, durationMs) {
+        val samples by produceState(processor.cachedAmplitudes(audioUri, durationMs).orEmpty(), processor, audioUri, durationMs) {
+            if (value.isNotEmpty()) return@produceState
+            try {
+                value = processor.amplitudes(audioUri, durationMs)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Napier.w(error) { "Unable to load the recording waveform" }
+            }
+        }
+        samples
+    }
+}

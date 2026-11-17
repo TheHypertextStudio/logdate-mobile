@@ -188,6 +188,15 @@ class AudioContextProcessor(
         }
 
     /**
+     * Loads only a recording's waveform amplitudes, from memory, disk or decoding, without the
+     * daylight, palette and segment work of [process]. For small previews that draw bars alone.
+     */
+    suspend fun amplitudes(
+        audioUri: String,
+        durationMs: Long,
+    ): List<Float> = withContext(coroutineContext) { loadOrExtractAmplitudes(audioUri, durationMs) }
+
+    /**
      * Processes an audio file progressively, emitting context updates as the waveform
      * decodes. The first emission carries the daylight period and palette plus any
      * cached amplitudes (or empty if uncached) so the UI can paint immediately; later
