@@ -175,7 +175,6 @@ internal object PlansTable : Table("plans") {
     val monthlyBytesLimit: Column<Long?> = long("monthly_bytes_limit").nullable()
     val backupCountLimit: Column<Int?> = integer("backup_count_limit").nullable()
     val features: Column<String> = text("features").default("{}")
-    val stripePriceId = text("stripe_price_id").nullable()
     val playProductId = text("play_product_id").nullable()
     val extraStorageStepBytes: Column<Long?> = long("extra_storage_step_bytes").nullable()
     val active = bool("active")

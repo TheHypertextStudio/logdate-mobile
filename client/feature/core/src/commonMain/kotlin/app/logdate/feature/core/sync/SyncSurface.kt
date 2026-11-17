@@ -337,7 +337,34 @@ private fun SyncPresentation.toBannerVisual(): BannerVisual? {
 
         is SyncPresentation.StorageError -> {
             BannerVisual(
-                message = storageRefusalMessage(cause, pendingCount),
+                // Which limit was hit, in the plan's own numbers when they are known.
+                message =
+                    when (cause) {
+                        is StorageRefusal.Full -> {
+                            val included = cause.includedBytes
+                            when {
+                                included != null && included > 0 -> {
+                                    stringResource(Res.string.sync_banner_plan_full, formatByteSize(included))
+                                }
+
+                                pendingCount > 0 -> {
+                                    pluralStringResource(Res.plurals.sync_banner_storage_full_items, pendingCount, pendingCount)
+                                }
+
+                                else -> {
+                                    stringResource(Res.string.sync_banner_storage_full)
+                                }
+                            }
+                        }
+
+                        StorageRefusal.NoPlan -> {
+                            stringResource(Res.string.sync_banner_no_plan)
+                        }
+
+                        StorageRefusal.PaymentDue -> {
+                            stringResource(Res.string.sync_banner_payment_due)
+                        }
+                    },
                 icon = Icons.Filled.Storage,
                 containerColor = scheme.errorContainer,
                 contentColor = scheme.onErrorContainer,
@@ -395,28 +422,3 @@ private fun RotatingSyncIcon(tint: Color) {
                 .graphicsLayer { rotationZ = rotation },
     )
 }
-
-/** What a storage refusal says: which limit was hit, in the plan's own numbers when they are known. */
-@Composable
-private fun storageRefusalMessage(
-    cause: StorageRefusal,
-    pendingCount: Int,
-): String =
-    when (cause) {
-        is StorageRefusal.Full -> {
-            val included = cause.includedBytes
-            when {
-                included != null && included > 0 -> stringResource(Res.string.sync_banner_plan_full, formatByteSize(included))
-                pendingCount > 0 -> pluralStringResource(Res.plurals.sync_banner_storage_full_items, pendingCount, pendingCount)
-                else -> stringResource(Res.string.sync_banner_storage_full)
-            }
-        }
-
-        StorageRefusal.NoPlan -> {
-            stringResource(Res.string.sync_banner_no_plan)
-        }
-
-        StorageRefusal.PaymentDue -> {
-            stringResource(Res.string.sync_banner_payment_due)
-        }
-    }
