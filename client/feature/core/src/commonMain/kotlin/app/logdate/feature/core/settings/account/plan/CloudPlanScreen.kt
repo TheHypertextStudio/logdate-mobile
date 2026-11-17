@@ -282,7 +282,7 @@ fun CloudPlanContent(
                 state.problem?.let { problem ->
                     item {
                         Notice(
-                            message = problemText(problem, state),
+                            message = problemText(problem),
                             action = stringResource(Res.string.cloud_plan_dismiss),
                             onAction = actions.onDismissProblem,
                             isError = true,
@@ -371,7 +371,7 @@ private fun UnavailablePlan(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = problemText(problem, state = null),
+            text = problemText(problem),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag(CLOUD_PLAN_PROBLEM_TAG),
@@ -721,9 +721,7 @@ private fun Offer(
                     }
                 }
 
-                is PlanAction.BillAt, PlanAction.None -> {
-                    Unit
-                }
+                is PlanAction.BillAt, PlanAction.None -> {}
             }
         }
     }
@@ -867,10 +865,7 @@ private fun dateText(epochSeconds: Long): String =
     formatDateLocalized(Instant.fromEpochSeconds(epochSeconds).toLocalDateTime(TimeZone.currentSystemDefault()).date)
 
 @Composable
-private fun problemText(
-    problem: CloudPlanProblem,
-    state: CloudPlanUiState.Ready?,
-): String =
+private fun problemText(problem: CloudPlanProblem): String =
     when (problem) {
         CloudPlanProblem.SignedOut -> {
             stringResource(Res.string.cloud_plan_problem_signed_out)
