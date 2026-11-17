@@ -8,26 +8,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Watch
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,25 +35,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.text.asString
-import app.logdate.feature.core.settings.ui.watch.WatchDeviceCard
+import app.logdate.feature.core.settings.ui.watch.WatchDeviceRow
 import app.logdate.feature.core.settings.ui.watch.WatchSettingsViewModel
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.ui.common.DropdownMenu
+import app.logdate.ui.common.MaterialContainer
+import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsScaffold
-import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.device_state_load_failed
 import logdate.client.feature.core.generated.resources.device_state_refreshing
 import logdate.client.feature.core.generated.resources.device_state_retry
 import logdate.client.feature.core.generated.resources.devices
-import logdate.client.feature.core.generated.resources.devices_section
+import logdate.client.feature.core.generated.resources.devices_platform_wear_os
 import logdate.client.feature.core.generated.resources.last_active_label
 import logdate.client.feature.core.generated.resources.loading_devices
 import logdate.client.feature.core.generated.resources.sync_device_options_label
@@ -217,6 +219,29 @@ fun DevicesScreenContent(
         )
     }
 
+    var confirmingLinkedRemoval by remember { mutableStateOf<LinkedDeviceUiState?>(null) }
+    confirmingLinkedRemoval?.let { device ->
+        RemoveDeviceDialog(
+            deviceName = device.name.asString(),
+            onConfirm = {
+                confirmingLinkedRemoval = null
+                onRemoveLinkedDevice(device.id)
+            },
+            onDismiss = { confirmingLinkedRemoval = null },
+            erasesData = device.erasesData,
+        )
+    }
+
+    // A dialog that is open for an operation reports its progress and failure itself.
+    val rowOperations =
+        uiState.devices
+            .mapNotNull { device ->
+                uiState.operations[device.id]
+                    ?.takeUnless {
+                        it.isReportedByDialog(device, selectedDevice, showRenameDialog, showDeleteDialog, showResetDialog)
+                    }?.let { device.id to it }
+            }.toMap()
+
     Box(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.TopCenter,
@@ -246,25 +271,19 @@ fun DevicesScreenContent(
                     item { DeviceLoadFailure(onRefresh) }
                 }
                 item {
-                    SettingsSection(
-                        title = stringResource(Res.string.devices_section),
-                        modifier = Modifier.padding(horizontal = Spacing.lg),
+                    // The page title already names this list, so it has no section heading of its own.
+                    MaterialContainer(
+                        modifier =
+                            Modifier
+                                .padding(horizontal = Spacing.lg)
+                                .then(if (uiState.linked.isShown()) Modifier.testTag(LinkedDevicesTags.SECTION) else Modifier),
                     ) {
                         uiState.devices.forEach { device ->
                             val operation = uiState.operations[device.id]
-                            val dialogOwnsFeedback =
-                                (
-                                    device.id == selectedDevice?.id &&
-                                        (
-                                            (showRenameDialog && operation?.action == DeviceAction.Rename) ||
-                                                (showDeleteDialog && operation?.action == DeviceAction.Remove)
-                                        )
-                                ) ||
-                                    (device.isCurrentDevice && showResetDialog && operation?.action == DeviceAction.ResetIdentity)
                             DeviceItem(
                                 device = device,
-                                operation = operation,
-                                showOperationFeedback = !dialogOwnsFeedback,
+                                running = rowOperations[device.id] is DeviceOperationState.Running,
+                                optionsEnabled = operation !is DeviceOperationState.Running,
                                 onRenameClick = { onRenameClick(device) },
                             )
                         }
@@ -278,12 +297,33 @@ fun DevicesScreenContent(
                         if (!pairedRowShown || onManagePairedWatch == null) watchDevice?.invoke()
                         LinkedDeviceRows(
                             state = uiState.linked,
-                            onRemove = onRemoveLinkedDevice,
+                            onRemove = { confirmingLinkedRemoval = it },
                             onRetry = onRetryLinkedDevices,
-                            onDismissNotice = onDismissLinkedDeviceNotice,
                             onManagePairedWatch = onManagePairedWatch,
                             pairedWatchStatus = pairedWatchStatus,
                         )
+                    }
+                }
+                val failures = rowOperations.values.filterIsInstance<DeviceOperationState.Failed>()
+                val linkedNotice = (uiState.linked as? LinkedDevicesUiState.Listed)?.notice
+                val linkedDevices = (uiState.linked as? LinkedDevicesUiState.Listed)?.devices.orEmpty()
+                if (failures.isNotEmpty() || linkedNotice != null) {
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = Spacing.lg),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                        ) {
+                            failures.forEach { failure ->
+                                DeviceOperationFeedback(failure, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                            }
+                            linkedNotice?.let { notice ->
+                                LinkedDeviceNoticeMessage(
+                                    notice = notice,
+                                    onRetryRemove = { id -> confirmingLinkedRemoval = linkedDevices.firstOrNull { it.id == id } },
+                                    onDismiss = onDismissLinkedDeviceNotice,
+                                )
+                            }
+                        }
                     }
                 }
                 item {
@@ -309,7 +349,13 @@ private fun CompanionDeviceInDevices(
             is WatchStatus.Unknown -> current.watchName ?: return
             else -> return
         }
-    WatchDeviceCard(status, onClick, deviceName = name)
+    WatchDeviceRow(
+        status = status,
+        onClick = onClick,
+        deviceName = name,
+        overline = stringResource(Res.string.devices_platform_wear_os),
+        icon = { Icon(Icons.Outlined.Watch, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+    )
 }
 
 @Composable
@@ -332,84 +378,102 @@ private fun LoadingState(modifier: Modifier = Modifier) {
     }
 }
 
+private fun DeviceOperationState.isReportedByDialog(
+    device: DeviceInfoUiState,
+    selectedDevice: DeviceInfoUiState?,
+    showRenameDialog: Boolean,
+    showDeleteDialog: Boolean,
+    showResetDialog: Boolean,
+): Boolean =
+    when (action) {
+        DeviceAction.Rename -> showRenameDialog && device.id == selectedDevice?.id
+        DeviceAction.Remove -> showDeleteDialog && device.id == selectedDevice?.id
+        DeviceAction.ResetIdentity -> showResetDialog && device.isCurrentDevice
+    }
+
+/**
+ * One account device as a row of the Devices list: its platform, its name, and either "This device"
+ * or when it was last active. The list's container rounds the first and last rows, so the row has no
+ * shape of its own. An operation in progress replaces the options button; a failure is reported
+ * below the list.
+ */
 @Composable
 private fun DeviceItem(
     device: DeviceInfoUiState,
+    running: Boolean,
+    optionsEnabled: Boolean,
     onRenameClick: () -> Unit,
-    operation: DeviceOperationState? = null,
-    showOperationFeedback: Boolean = true,
-    modifier: Modifier = Modifier,
 ) {
-    var showOptions by remember { mutableStateOf(false) }
-    Surface(
-        modifier = modifier.fillMaxWidth().testTag("existing-device-card"),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(Spacing.lg)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(48.dp)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Outlined.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(device.name.asString(), style = MaterialTheme.typography.titleMedium)
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(stringResource(device.platformName), style = MaterialTheme.typography.bodyMedium)
-                        if (device.isCurrentDevice) {
-                            Text(
-                                text = stringResource(Res.string.this_device),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier =
-                                    Modifier
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(50))
-                                        .padding(horizontal = 7.dp, vertical = 2.dp),
-                            )
-                        }
-                    }
-                }
-                if (device.isCurrentDevice) {
-                    Box {
-                        IconButton(onClick = { showOptions = true }, enabled = operation !is DeviceOperationState.Running) {
-                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.sync_device_options_label))
-                        }
-                        DropdownMenu(expanded = showOptions, onDismissRequest = { showOptions = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.sync_device_rename_label)) },
-                                onClick = {
-                                    showOptions = false
-                                    onRenameClick()
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-            if (showOperationFeedback && operation is DeviceOperationState.Running) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-            } else if (showOperationFeedback && operation is DeviceOperationState.Failed) {
-                DeviceOperationFeedback(operation)
-            }
-            Spacer(modifier = Modifier.height(4.dp))
+    SettingsRow(
+        overlineContent = { Text(stringResource(device.platformName)) },
+        headlineContent = { Text(device.name.asString()) },
+        supportingContent = {
             Text(
-                text = stringResource(Res.string.last_active_label, device.lastActiveFormatted.asString()),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text =
+                    if (device.isCurrentDevice) {
+                        stringResource(Res.string.this_device)
+                    } else {
+                        stringResource(Res.string.last_active_label, device.lastActiveFormatted.asString())
+                    },
                 modifier = Modifier.testTag("device-supplemental-row"),
             )
+        },
+        leadingContent = { Icon(Icons.Outlined.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        trailingContent =
+            when {
+                running -> {
+                    { DeviceActionProgress() }
+                }
+
+                device.isCurrentDevice -> {
+                    { DeviceOptions(enabled = optionsEnabled, onRenameClick = onRenameClick) }
+                }
+
+                else -> {
+                    null
+                }
+            },
+        modifier = Modifier.testTag("existing-device-card"),
+    )
+}
+
+@Composable
+private fun DeviceOptions(
+    enabled: Boolean,
+    onRenameClick: () -> Unit,
+) {
+    DeviceOptionsMenu(enabled = enabled) { close ->
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.sync_device_rename_label)) },
+            onClick = {
+                close()
+                onRenameClick()
+            },
+        )
+    }
+}
+
+/** The one trailing action of a device row: an options button that opens [items], each given a way to close the menu. */
+@Composable
+internal fun DeviceOptionsMenu(
+    enabled: Boolean = true,
+    items: @Composable (close: () -> Unit) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }, enabled = enabled) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.sync_device_options_label))
         }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            items { expanded = false }
+        }
+    }
+}
+
+/** Takes the place of a device row's options while an operation on that device runs. */
+@Composable
+internal fun DeviceActionProgress() {
+    Box(Modifier.minimumInteractiveComponentSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
     }
 }

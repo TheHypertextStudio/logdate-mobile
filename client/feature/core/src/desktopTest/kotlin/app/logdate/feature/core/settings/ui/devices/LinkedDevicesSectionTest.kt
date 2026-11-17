@@ -9,7 +9,8 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -30,20 +31,19 @@ class LinkedDevicesSectionTest {
             id = "watch-session",
             name = "Pixel Watch 3".toUiText(),
             platformName = Res.string.devices_platform_wear_os,
-            linkedAtFormatted = "Oct 3, 2026, 9:41 AM".toUiText(),
-            lastSeenFormatted = "Oct 16, 2026, 8:02 AM".toUiText(),
+            lastSeenFormatted = "Oct 16, 2026".toUiText(),
             pairedWatch = false,
             erasesData = true,
         )
 
     @Test
-    fun `a linked device shows its platform and times`() =
+    fun `a linked device shows its platform and when it was last active`() =
         runComposeUiTest {
             setContent { Section(LinkedDevicesUiState.Listed(listOf(watch))) }
 
             onNodeWithText("Pixel Watch 3").assertExists()
             onNodeWithText("Wear OS").assertExists()
-            onNodeWithText("Linked Oct 3, 2026, 9:41 AM · Last seen Oct 16, 2026, 8:02 AM").assertExists()
+            onNodeWithText("Last active: Oct 16, 2026").assertExists()
         }
 
     @Test
@@ -52,11 +52,11 @@ class LinkedDevicesSectionTest {
             val removed = mutableListOf<String>()
             setContent { Section(LinkedDevicesUiState.Listed(listOf(watch)), onRemove = { removed += it }) }
 
-            onNode(hasText("Remove") and hasClickAction()).performClick()
+            openOptions()
+            onNodeWithText("Remove watch").performClick()
             assertTrue(removed.isEmpty())
             onNodeWithText("Remove Device").assertExists()
-            onAllNodesWithText("Remove").fetchSemanticsNodes().let { assertEquals(2, it.size) }
-            clickLast("Remove")
+            onNode(hasText("Remove") and hasClickAction()).performClick()
 
             assertEquals(listOf("watch-session"), removed)
         }
@@ -66,7 +66,8 @@ class LinkedDevicesSectionTest {
         runComposeUiTest {
             setContent { Section(LinkedDevicesUiState.Listed(listOf(watch))) }
 
-            onNode(hasText("Remove") and hasClickAction()).performClick()
+            openOptions()
+            onNodeWithText("Remove watch").performClick()
 
             onNodeWithText(
                 "Remove \"Pixel Watch 3\" from your account? It stops syncing and erases its LogDate data, " +
@@ -80,7 +81,8 @@ class LinkedDevicesSectionTest {
             setContent { Section(LinkedDevicesUiState.Listed(listOf(watch.copy(pairedWatch = true)))) }
 
             onNodeWithText("Pixel Watch 3").assertExists()
-            onNode(hasText("Remove") and hasClickAction()).assertExists()
+            openOptions()
+            onNode(hasText("Remove watch") and hasClickAction()).assertExists()
         }
 
     @Test
@@ -110,11 +112,14 @@ class LinkedDevicesSectionTest {
             val notice = LinkedDeviceNotice.RemoveFailed(watch.id, "Pixel Watch 3", LinkedDevicesFailure.WatchRemovalStopped("revoke"))
             setContent { Section(LinkedDevicesUiState.Listed(listOf(watch), notice = notice), onRemove = { removed += it }) }
 
-            onNodeWithText("Pixel Watch 3 couldn’t be removed from your account.").assertExists()
+            val message = "Pixel Watch 3 couldn’t be removed from your account."
+            onNodeWithText(message).assertExists()
+            val row = onNodeWithTag(LinkedDevicesTags.DEVICE).fetchSemanticsNode().boundsInRoot
+            assertTrue(onNodeWithText(message).fetchSemanticsNode().boundsInRoot.top > row.bottom)
             onNodeWithText("Try again").performClick()
             assertTrue(removed.isEmpty())
             onNodeWithText("Remove Device").assertExists()
-            clickLast("Remove")
+            onNode(hasText("Remove") and hasClickAction()).performClick()
 
             assertEquals(listOf("watch-session"), removed)
         }
@@ -148,6 +153,7 @@ class LinkedDevicesSectionTest {
             }
 
             assertTrue(onAllNodesWithTag(LinkedDevicesTags.SECTION).fetchSemanticsNodes().isEmpty())
+            assertTrue(onAllNodesWithTag(LinkedDevicesTags.DEVICE).fetchSemanticsNodes().isEmpty())
         }
 
     @Test
@@ -167,8 +173,9 @@ class LinkedDevicesSectionTest {
                 }
             }
             onNodeWithText("Out of range").assertExists()
-            onNodeWithText("Watch").assertExists()
-            onNodeWithText("Remove").assertExists()
+            openOptions()
+            onNodeWithText("Watch settings").assertExists()
+            onNodeWithText("Remove watch").assertExists()
             onNodeWithText("Local companion card").assertDoesNotExist()
             onNodeWithText("Connected devices").assertDoesNotExist()
             onNodeWithText("Linked devices").assertDoesNotExist()
@@ -190,7 +197,8 @@ class LinkedDevicesSectionTest {
                 }
             }
             onNodeWithText("Connected").assertExists()
-            onNodeWithText("Remove").assertExists()
+            openOptions()
+            onNodeWithText("Remove watch").assertExists()
         }
 
     @Test
@@ -212,7 +220,8 @@ class LinkedDevicesSectionTest {
                 }
                 onNodeWithText("Connected").assertDoesNotExist()
                 onNodeWithText("Current companion card").assertExists()
-                onNodeWithText("Remove").assertExists()
+                openOptions()
+                onNodeWithText("Remove watch").assertExists()
             }
         }
     }
@@ -220,9 +229,8 @@ class LinkedDevicesSectionTest {
     private fun loadedWith(linked: LinkedDeviceUiState) =
         DevicesUiState(availability = DeviceListAvailability.Available, linked = LinkedDevicesUiState.Listed(listOf(linked)))
 
-    private fun SemanticsNodeInteractionsProvider.clickLast(text: String) {
-        val nodes = onAllNodesWithText(text)
-        nodes[nodes.fetchSemanticsNodes().size - 1].performClick()
+    private fun SemanticsNodeInteractionsProvider.openOptions() {
+        onNodeWithContentDescription("Device options").performClick()
     }
 
     @Composable
@@ -232,11 +240,12 @@ class LinkedDevicesSectionTest {
         onRetry: () -> Unit = {},
     ) {
         LogDateTheme {
-            LinkedDevicesSection(
-                state = state,
-                onRemove = onRemove,
-                onRetry = onRetry,
-                onDismissNotice = {},
+            DevicesScreenContent(
+                onBackClick = {},
+                uiState = DevicesUiState(availability = DeviceListAvailability.Available, linked = state),
+                connectionAction = {},
+                onRemoveLinkedDevice = onRemove,
+                onRetryLinkedDevices = onRetry,
             )
         }
     }

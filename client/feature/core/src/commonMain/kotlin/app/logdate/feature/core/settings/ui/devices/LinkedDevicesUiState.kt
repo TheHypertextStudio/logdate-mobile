@@ -37,7 +37,6 @@ data class LinkedDeviceUiState(
     val id: String,
     val name: UiText,
     val platformName: StringResource,
-    val linkedAtFormatted: UiText,
     val lastSeenFormatted: UiText,
     val pairedWatch: Boolean,
     val erasesData: Boolean,

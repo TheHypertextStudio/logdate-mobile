@@ -233,10 +233,9 @@
     <string name="sync_device_options_label">Device options</string>
     <string name="sync_device_rename_title">Rename Device</string>
     <string name="devices_wear_os">Wear OS</string>
-    <string name="linked_devices_title">Linked devices</string>
     <string name="linked_devices_loading">Loading linked devices…</string>
-    <string name="linked_device_times">Linked %1$s · Last seen %2$s</string>
     <string name="linked_device_removing">Removing…</string>
+    <string name="linked_device_watch_settings">Watch settings</string>
     <string
     name="linked_devices_error_unreachable"
   >The LogDate server couldn’t be reached to list linked devices. Check your connection.</string>
@@ -455,6 +454,4 @@
   >Your journal is stored in a way this version can’t sync. Everything on this device stays here and syncs after the update.</string>
     <string name="sync_heading_failed">Sync couldn't finish</string>
     <string name="sync_retry_automatic_detail">LogDate will try again automatically.</string>
-    <string name="devices_section">Devices</string>
-    <string name="linked_device_paired_phone">Linked to this phone</string>
 </resources>

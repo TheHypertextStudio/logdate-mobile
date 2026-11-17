@@ -147,7 +147,10 @@ fun ResetDeviceIdDialog(
 }
 
 @Composable
-internal fun DeviceOperationFeedback(operation: DeviceOperationState?) {
+internal fun DeviceOperationFeedback(
+    operation: DeviceOperationState?,
+    modifier: Modifier = Modifier,
+) {
     if (operation is DeviceOperationState.Failed) {
         Text(
             stringResource(
@@ -159,6 +162,7 @@ internal fun DeviceOperationFeedback(operation: DeviceOperationState?) {
             ),
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier,
         )
     }
 }

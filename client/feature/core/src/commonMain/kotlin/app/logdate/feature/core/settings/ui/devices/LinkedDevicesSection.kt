@@ -6,30 +6,29 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Watch
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import app.logdate.client.sync.peer.devices.LinkedDevicesFailure
 import app.logdate.client.text.asString
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.feature.core.settings.ui.watch.watchDeviceDescription
 import app.logdate.ui.common.SettingsRow
-import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.common.SimpleSettingsItem
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.last_active_label
 import logdate.client.feature.core.generated.resources.linked_device_cleared_unknown
 import logdate.client.feature.core.generated.resources.linked_device_cleared_unsent
 import logdate.client.feature.core.generated.resources.linked_device_erases_on_next_connect
-import logdate.client.feature.core.generated.resources.linked_device_paired_phone
 import logdate.client.feature.core.generated.resources.linked_device_remove_account_changed
 import logdate.client.feature.core.generated.resources.linked_device_remove_refused
 import logdate.client.feature.core.generated.resources.linked_device_remove_sign_in
@@ -42,7 +41,7 @@ import logdate.client.feature.core.generated.resources.linked_device_remove_watc
 import logdate.client.feature.core.generated.resources.linked_device_remove_watch_revoke
 import logdate.client.feature.core.generated.resources.linked_device_remove_watch_unfinished
 import logdate.client.feature.core.generated.resources.linked_device_removing
-import logdate.client.feature.core.generated.resources.linked_device_times
+import logdate.client.feature.core.generated.resources.linked_device_watch_settings
 import logdate.client.feature.core.generated.resources.linked_devices_error_account_changed
 import logdate.client.feature.core.generated.resources.linked_devices_error_refused
 import logdate.client.feature.core.generated.resources.linked_devices_error_sign_in
@@ -50,10 +49,9 @@ import logdate.client.feature.core.generated.resources.linked_devices_error_unex
 import logdate.client.feature.core.generated.resources.linked_devices_error_unreachable
 import logdate.client.feature.core.generated.resources.linked_devices_error_unreadable
 import logdate.client.feature.core.generated.resources.linked_devices_loading
-import logdate.client.feature.core.generated.resources.linked_devices_title
-import logdate.client.feature.core.generated.resources.watch_settings
+import logdate.client.feature.core.generated.resources.sync_device_remove_label
+import logdate.client.feature.core.generated.resources.watch_v2_remove
 import logdate.client.ui.generated.resources.common_dismiss
-import logdate.client.ui.generated.resources.common_remove
 import logdate.client.ui.generated.resources.common_try_again
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -66,89 +64,57 @@ object LinkedDevicesTags {
 }
 
 /**
- * The devices linked to the account with their own sessions, each with a working Remove. Nothing is
- * shown while linking is unavailable or no device is linked. Paired watches retain their removal action.
+ * The devices linked to the account with their own sessions, as rows of the Devices list. Each row
+ * is emitted directly so the list's container spaces and rounds it like every other row. Nothing is
+ * emitted while linking is unavailable or no device is linked.
+ *
+ * A row reads like an account device: its platform, its name, and one status line. Its options menu
+ * removes the device through [onRemove], which asks for confirmation first; a paired watch's menu
+ * also opens its settings. Outcomes of a removal are reported below the list by
+ * [LinkedDeviceNoticeMessage], not as rows.
  */
-@Composable
-fun LinkedDevicesSection(
-    state: LinkedDevicesUiState,
-    onRemove: (String) -> Unit,
-    onRetry: () -> Unit,
-    onDismissNotice: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (!state.isShown()) return
-    SettingsSection(title = stringResource(Res.string.linked_devices_title), modifier = modifier) {
-        LinkedDeviceRows(state, onRemove, onRetry, onDismissNotice)
-    }
-}
-
 @Composable
 fun LinkedDeviceRows(
     state: LinkedDevicesUiState,
-    onRemove: (String) -> Unit,
+    onRemove: (LinkedDeviceUiState) -> Unit,
     onRetry: () -> Unit,
-    onDismissNotice: () -> Unit,
-    modifier: Modifier = Modifier,
     onManagePairedWatch: (() -> Unit)? = null,
     pairedWatchStatus: WatchStatus? = null,
 ) {
-    if (!state.isShown()) return
-    val devices = (state as? LinkedDevicesUiState.Listed)?.devices.orEmpty()
-    var confirming by remember { mutableStateOf<LinkedDeviceUiState?>(null) }
-    confirming?.let { device ->
-        RemoveDeviceDialog(
-            deviceName = device.name.asString(),
-            onConfirm = {
-                confirming = null
-                onRemove(device.id)
-            },
-            onDismiss = { confirming = null },
-            erasesData = device.erasesData,
-        )
-    }
-    Column(modifier.testTag(LinkedDevicesTags.SECTION), verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
-        when (state) {
-            LinkedDevicesUiState.Unavailable -> {}
+    when (state) {
+        LinkedDevicesUiState.Unavailable -> {}
 
-            LinkedDevicesUiState.Loading -> {
-                SimpleSettingsItem(title = stringResource(Res.string.linked_devices_loading), description = null, action = {})
+        LinkedDevicesUiState.Loading -> {
+            SimpleSettingsItem(title = stringResource(Res.string.linked_devices_loading), description = null, action = {})
+        }
+
+        is LinkedDevicesUiState.Failed -> {
+            SimpleSettingsItem(title = loadFailureMessage(state.failure), description = null) {
+                TextButton(onClick = onRetry) { Text(stringResource(UiRes.string.common_try_again)) }
             }
+        }
 
-            is LinkedDevicesUiState.Failed -> {
-                SimpleSettingsItem(title = loadFailureMessage(state.failure), description = null) {
-                    TextButton(onClick = onRetry) { Text(stringResource(UiRes.string.common_try_again)) }
-                }
-            }
-
-            is LinkedDevicesUiState.Listed -> {
-                state.notice?.let { notice ->
-                    LinkedDeviceNoticeRow(
-                        notice = notice,
-                        onRetryRemove = { id -> confirming = state.devices.firstOrNull { it.id == id } },
-                        onDismiss = onDismissNotice,
-                    )
-                }
-                devices.forEach { device ->
-                    LinkedDeviceRow(
-                        device,
-                        removingId = state.removingId,
-                        onRemove = { confirming = device },
-                        onManage = onManagePairedWatch?.takeIf { device.pairedWatch },
-                        status =
-                            pairedWatchStatus?.takeIf {
-                                device.pairedWatch &&
-                                    device.pairedWatchNodeId != null &&
-                                    it.nodeId == device.pairedWatchNodeId
-                            },
-                    )
-                }
+        is LinkedDevicesUiState.Listed -> {
+            state.devices.forEach { device ->
+                LinkedDeviceRow(
+                    device,
+                    removing = state.removingId == device.id,
+                    removeEnabled = state.removingId == null,
+                    onRemove = { onRemove(device) },
+                    onManage = onManagePairedWatch?.takeIf { device.pairedWatch },
+                    status =
+                        pairedWatchStatus?.takeIf {
+                            device.pairedWatch &&
+                                device.pairedWatchNodeId != null &&
+                                it.nodeId == device.pairedWatchNodeId
+                        },
+                )
             }
         }
     }
 }
 
-/** Whether the section has anything to show: a load in progress, its failure, a device or a notice. */
+/** Whether the list has anything to show for linked devices: a load in progress, its failure, a device or a notice. */
 fun LinkedDevicesUiState.isShown(): Boolean =
     when (this) {
         LinkedDevicesUiState.Unavailable -> false
@@ -156,81 +122,104 @@ fun LinkedDevicesUiState.isShown(): Boolean =
         is LinkedDevicesUiState.Listed -> notice != null || devices.isNotEmpty()
     }
 
+/**
+ * What the last removal needs to tell the person, shown below the Devices list: a device that erases
+ * its data the next time it connects, or unsent work that was cleared with a removed watch, which can
+ * be dismissed, or a removal that failed, which can be tried again.
+ */
+@Composable
+fun LinkedDeviceNoticeMessage(
+    notice: LinkedDeviceNotice,
+    onRetryRemove: (String) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier.testTag(LinkedDevicesTags.NOTICE), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        when (notice) {
+            is LinkedDeviceNotice.ErasesOnNextConnect -> {
+                Text(
+                    text = stringResource(Res.string.linked_device_erases_on_next_connect, notice.deviceName),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+                TextButton(onClick = onDismiss) { Text(stringResource(UiRes.string.common_dismiss)) }
+            }
+
+            is LinkedDeviceNotice.ClearedUnsent -> {
+                Text(
+                    text =
+                        notice.count?.let { pluralStringResource(Res.plurals.linked_device_cleared_unsent, it, it, notice.deviceName) }
+                            ?: stringResource(Res.string.linked_device_cleared_unknown, notice.deviceName),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+                TextButton(onClick = onDismiss) { Text(stringResource(UiRes.string.common_dismiss)) }
+            }
+
+            is LinkedDeviceNotice.RemoveFailed -> {
+                Text(
+                    text = removeFailureMessage(notice.deviceName, notice.failure),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+                TextButton(onClick = { onRetryRemove(notice.deviceId) }) { Text(stringResource(UiRes.string.common_try_again)) }
+            }
+        }
+    }
+}
+
 @Composable
 private fun LinkedDeviceRow(
     device: LinkedDeviceUiState,
-    removingId: String?,
+    removing: Boolean,
+    removeEnabled: Boolean,
     onRemove: () -> Unit,
-    onManage: (() -> Unit)? = null,
-    status: WatchStatus? = null,
+    onManage: (() -> Unit)?,
+    status: WatchStatus?,
 ) {
     SettingsRow(
-        headlineContent = { Text(device.name.asString()) },
         overlineContent = { Text(stringResource(device.platformName)) },
+        headlineContent = { Text(device.name.asString()) },
         supportingContent = {
-            Column {
-                if (device.pairedWatch) Text(stringResource(Res.string.linked_device_paired_phone))
-                status?.let { Text(watchDeviceDescription(it)) }
-                Text(
-                    stringResource(
-                        Res.string.linked_device_times,
-                        device.linkedAtFormatted.asString(),
-                        device.lastSeenFormatted.asString(),
-                    ),
-                )
-            }
+            Text(
+                when {
+                    removing -> stringResource(Res.string.linked_device_removing)
+                    status != null -> watchDeviceDescription(status)
+                    else -> stringResource(Res.string.last_active_label, device.lastSeenFormatted.asString())
+                },
+            )
         },
         leadingContent = { Icon(Icons.Outlined.Watch, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         trailingContent = {
-            Column {
-                onManage?.let { manage -> TextButton(onClick = manage) { Text(stringResource(Res.string.watch_settings)) } }
-                if (removingId == device.id) {
-                    Text(stringResource(Res.string.linked_device_removing), style = MaterialTheme.typography.labelLarge)
-                } else {
-                    TextButton(onClick = onRemove, enabled = removingId == null) { Text(stringResource(UiRes.string.common_remove)) }
+            if (removing) {
+                DeviceActionProgress()
+            } else {
+                DeviceOptionsMenu { close ->
+                    onManage?.let { manage ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.linked_device_watch_settings)) },
+                            onClick = {
+                                close()
+                                manage()
+                            },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = {
+                            Text(stringResource(if (device.erasesData) Res.string.watch_v2_remove else Res.string.sync_device_remove_label))
+                        },
+                        enabled = removeEnabled,
+                        onClick = {
+                            close()
+                            onRemove()
+                        },
+                    )
                 }
             }
         },
         modifier = Modifier.testTag(LinkedDevicesTags.DEVICE),
     )
-}
-
-@Composable
-private fun LinkedDeviceNoticeRow(
-    notice: LinkedDeviceNotice,
-    onRetryRemove: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    when (notice) {
-        is LinkedDeviceNotice.ErasesOnNextConnect -> {
-            SettingsRow(
-                headlineContent = { Text(stringResource(Res.string.linked_device_erases_on_next_connect, notice.deviceName)) },
-                trailingContent = { TextButton(onClick = onDismiss) { Text(stringResource(UiRes.string.common_dismiss)) } },
-                modifier = Modifier.testTag(LinkedDevicesTags.NOTICE),
-            )
-        }
-
-        is LinkedDeviceNotice.ClearedUnsent -> {
-            val message =
-                notice.count?.let { pluralStringResource(Res.plurals.linked_device_cleared_unsent, it, it, notice.deviceName) }
-                    ?: stringResource(Res.string.linked_device_cleared_unknown, notice.deviceName)
-            SettingsRow(
-                headlineContent = { Text(message) },
-                trailingContent = { TextButton(onClick = onDismiss) { Text(stringResource(UiRes.string.common_dismiss)) } },
-                modifier = Modifier.testTag(LinkedDevicesTags.NOTICE),
-            )
-        }
-
-        is LinkedDeviceNotice.RemoveFailed -> {
-            SettingsRow(
-                headlineContent = { Text(removeFailureMessage(notice.deviceName, notice.failure)) },
-                trailingContent = {
-                    TextButton(onClick = { onRetryRemove(notice.deviceId) }) { Text(stringResource(UiRes.string.common_try_again)) }
-                },
-                modifier = Modifier.testTag(LinkedDevicesTags.NOTICE),
-            )
-        }
-    }
 }
 
 @Composable
