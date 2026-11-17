@@ -4,6 +4,8 @@ import app.logdate.client.datastore.featureflags.FeatureFlag
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.labs_activity_awareness_description
 import logdate.client.feature.core.generated.resources.labs_activity_awareness_title
+import logdate.client.feature.core.generated.resources.labs_cloud_plans_description
+import logdate.client.feature.core.generated.resources.labs_cloud_plans_title
 import logdate.client.feature.core.generated.resources.labs_identity_recovery_key_description
 import logdate.client.feature.core.generated.resources.labs_identity_recovery_key_title
 import logdate.client.feature.core.generated.resources.labs_people_description
@@ -53,6 +55,13 @@ internal fun FeatureFlag.labsCopy(): LabsFlagCopy? =
             LabsFlagCopy(
                 title = Res.string.labs_identity_recovery_key_title,
                 description = Res.string.labs_identity_recovery_key_description,
+            )
+        }
+
+        FeatureFlag.CLOUD_PLANS -> {
+            LabsFlagCopy(
+                title = Res.string.labs_cloud_plans_title,
+                description = Res.string.labs_cloud_plans_description,
             )
         }
 

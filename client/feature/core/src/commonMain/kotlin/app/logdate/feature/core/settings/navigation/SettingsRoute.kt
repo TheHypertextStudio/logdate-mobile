@@ -26,6 +26,10 @@ data object RecoveryPhraseRoute : NavKey
 @Serializable
 data object HostingRoute : NavKey
 
+/** The LogDate Cloud plan and how it is paid for. */
+@Serializable
+data object CloudPlanRoute : NavKey
+
 @Serializable
 data object MoveServerRoute : NavKey
 

@@ -114,6 +114,11 @@
     </plurals>
     <string name="sync_banner_review">Review</string>
     <string name="sync_banner_manage">Manage</string>
+    <string name="sync_banner_plan_full">Your %1$s of LogDate Cloud is full.</string>
+    <string name="sync_banner_no_plan">Backing up needs a LogDate Cloud plan.</string>
+    <string name="sync_banner_see_plans">See plans</string>
+    <string name="sync_banner_payment_due">A payment didn’t go through.</string>
+    <string name="sync_banner_fix_payment">Fix payment</string>
     <string
     name="sync_banner_needs_recovery"
   >Backing up is paused. Enter your recovery phrase to continue.</string>

@@ -15,10 +15,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -33,6 +35,11 @@ class SyncPresentationViewModel(
     private val syncManager: SyncManager,
     sessionStorage: SessionStorage,
     cloudArchiveStatusSource: CloudArchiveStatusSource? = null,
+    /**
+     * Reads why the server refuses to store more for this account, from its plan. Null when the
+     * plan cannot be read, in which case a storage refusal is shown as a full plan.
+     */
+    private val describeStorageRefusal: suspend () -> StorageRefusal? = { null },
 ) : ViewModel() {
     private val sessionFlow = sessionStorage.getSessionFlow()
 
@@ -82,9 +89,17 @@ class SyncPresentationViewModel(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val presentation: StateFlow<SyncPresentation> =
         observeSyncPresentation(syncManager, sessionStorage)
-            .stateIn(
+            .distinctUntilChanged()
+            .transformLatest { shown ->
+                emit(shown)
+                // A refusal is shown at once, then again with the limit that caused it.
+                if (shown is SyncPresentation.StorageError) {
+                    describeStorageRefusal()?.let { cause -> emit(shown.copy(cause = cause)) }
+                }
+            }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
                 initialValue = SyncPresentation.Hidden,

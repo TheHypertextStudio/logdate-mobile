@@ -5,12 +5,14 @@ import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.device.crypto.IdentityKeyManager
 import app.logdate.client.domain.account.EmailVerificationAvailability
 import app.logdate.client.domain.account.EnqueueAllLocalDataUseCase
+import app.logdate.client.domain.account.GetCurrentEntitlementUseCase
 import app.logdate.client.domain.account.VerifyEmailUseCase
 import app.logdate.client.domain.assistants.DeviceAssistantAccessStore
 import app.logdate.client.domain.di.accountModule
 import app.logdate.client.domain.di.domainModule
 import app.logdate.client.domain.identity.ObserveUserIdentityUseCase
 import app.logdate.client.domain.journals.GetCurrentUserJournalsUseCase
+import app.logdate.client.domain.quota.ObserveCloudQuotaUseCase
 import app.logdate.client.location.di.locationSettingsModule
 import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.repository.account.PasskeyAccountRepository
@@ -37,6 +39,7 @@ import app.logdate.feature.core.settings.account.move.LocalDataSurvey
 import app.logdate.feature.core.settings.account.move.MoveServerViewModel
 import app.logdate.feature.core.settings.account.move.ServerMove
 import app.logdate.feature.core.settings.account.move.ServerMoveStore
+import app.logdate.feature.core.settings.account.plan.CloudPlanViewModel
 import app.logdate.feature.core.settings.account.recovery.AutomaticAccountRecovery
 import app.logdate.feature.core.settings.account.recovery.IdentityAccountRecovery
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseViewModel
@@ -63,6 +66,7 @@ import app.logdate.feature.core.settings.ui.StreakSettingsViewModel
 import app.logdate.feature.core.settings.ui.TimelineSettingsViewModel
 import app.logdate.feature.core.settings.ui.VoiceNotesSettingsViewModel
 import app.logdate.feature.core.streak.CampfireViewModel
+import app.logdate.feature.core.sync.StorageRefusal
 import app.logdate.feature.core.sync.SyncPresentationViewModel
 import app.logdate.shared.config.LogDateConfigRepository
 import kotlinx.coroutines.flow.combine
@@ -133,6 +137,7 @@ val coreFeatureModule: Module =
                 recovery = get(),
             )
         }
+        viewModel { CloudPlanViewModel(billing = get(), storageUse = get<ObserveCloudQuotaUseCase>()()) }
         viewModel {
             HostingViewModel(
                 connectedServer = get(),
@@ -255,6 +260,10 @@ val coreFeatureModule: Module =
                 syncManager = get(),
                 sessionStorage = get(),
                 cloudArchiveStatusSource = getOrNull(),
+                describeStorageRefusal = {
+                    (get<GetCurrentEntitlementUseCase>()() as? GetCurrentEntitlementUseCase.Result.Success)
+                        ?.let { StorageRefusal.of(it.entitlement) }
+                },
             )
         }
         viewModel { CampfireViewModel(observeCampfire = get()) }

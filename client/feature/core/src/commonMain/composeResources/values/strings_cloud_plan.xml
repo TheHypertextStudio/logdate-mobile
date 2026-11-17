@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <!-- Settings > Account > Storage: LogDate Cloud storage, and how it is paid for. -->
+    <string name="cloud_plan_title">Storage</string>
+    <string name="cloud_plan_row_description">Plan and billing</string>
+    <string name="cloud_plan_fallback_name">LogDate Cloud</string>
+
+    <!-- How much storage is in use -->
+    <string name="cloud_plan_none">No plan</string>
+    <string name="cloud_plan_status_none">Backing up is off.</string>
+    <string name="cloud_plan_beta_title">You were here early</string>
+    <string name="cloud_plan_beta_body">Your LogDate Cloud is free for good.</string>
+    <string name="cloud_plan_storage_total">%1$s of %2$s</string>
+    <string name="cloud_plan_storage_description">Storage used: %1$s of %2$s</string>
+    <string name="cloud_plan_storage_description_unlimited">Storage used: %1$s</string>
+    <string name="storage_usage_show_details">Show details</string>
+    <string name="storage_usage_hide_details">Hide details</string>
+    <string name="storage_usage_category_description">%1$s, %2$s, %3$s</string>
+    <string name="storage_review_library">Open Library</string>
+    <string name="storage_review_recordings">Search recordings</string>
+    <string name="storage_review_entries">Search entries</string>
+
+    <!-- A payment that failed, and a checkout that is open in the browser -->
+    <string name="cloud_plan_status_past_due">A payment didn’t go through.</string>
+    <string name="cloud_plan_fix_payment">Fix payment</string>
+    <string name="cloud_plan_awaiting_payment">Finish paying in your browser.</string>
+    <string name="cloud_plan_check_again">Check again</string>
+
+    <!-- The storage on offer -->
+    <string name="cloud_plan_section_more">More storage</string>
+    <string name="cloud_plan_section_less">Less storage</string>
+    <string name="cloud_plan_interval_monthly">Monthly</string>
+    <string name="cloud_plan_interval_yearly">Yearly</string>
+    <string name="cloud_plan_storage_included">%1$s of storage</string>
+    <string name="cloud_plan_storage_unlimited">Unlimited storage</string>
+    <string name="cloud_plan_extra_storage_priced">Extra space: %1$s a month per %2$s</string>
+    <string name="cloud_plan_extra_storage">Extra space by the %1$s</string>
+    <string name="cloud_plan_price_monthly">%1$s a month</string>
+    <string name="cloud_plan_price_yearly">%1$s a year</string>
+    <string name="cloud_plan_not_on_sale">Not on sale yet</string>
+    <string name="cloud_plan_action_upgrade">Upgrade</string>
+    <string name="cloud_plan_action_subscribe">Subscribe</string>
+
+    <!-- Billing for a paid plan -->
+    <string name="cloud_plan_section_billing">Billing</string>
+    <string name="cloud_plan_status_renews_no_price">Renews %1$s.</string>
+    <string name="cloud_plan_status_ends">Ends %1$s. Nothing is deleted.</string>
+    <string name="cloud_plan_payment_details">Payment and receipts</string>
+    <string name="cloud_plan_payment_details_description">Opens in your browser</string>
+    <string name="cloud_plan_extra_in_use">Extra storage: %1$s in use.</string>
+    <string name="cloud_plan_extra_in_use_priced">Extra storage: %1$s in use, %2$s a month.</string>
+    <string name="cloud_plan_action_bill_monthly">Bill monthly</string>
+    <string name="cloud_plan_action_bill_yearly">Bill yearly</string>
+    <string name="cloud_plan_keep">Keep plan</string>
+    <string name="cloud_plan_cancel">Cancel plan</string>
+
+    <!-- Confirming a change -->
+    <string name="cloud_plan_switch_title">Switch to %1$s?</string>
+    <string
+    name="cloud_plan_switch_body_up"
+  >%1$s. The difference for this period is charged now.</string>
+    <string
+    name="cloud_plan_switch_body_down"
+  >%1$s from your next bill. Any credit goes toward it.</string>
+    <string name="cloud_plan_switch_confirm">Switch</string>
+    <string name="cloud_plan_bill_title_monthly">Bill monthly?</string>
+    <string name="cloud_plan_bill_title_yearly">Bill yearly?</string>
+    <string name="cloud_plan_bill_confirm">Change</string>
+    <string name="cloud_plan_not_now">Not now</string>
+    <string name="cloud_plan_cancel_title">Cancel %1$s?</string>
+    <string
+    name="cloud_plan_cancel_body_free_after"
+  >You keep it until %1$s. After that LogDate Cloud stays free for you, and nothing is deleted.</string>
+    <string
+    name="cloud_plan_cancel_body_none_after"
+  >You keep it until %1$s. After that backing up stops, and nothing is deleted.</string>
+
+    <!-- When something goes wrong -->
+    <string name="cloud_plan_problem_signed_out">Sign in to see your storage.</string>
+    <string name="cloud_plan_problem_no_billing">This provider has no plans.</string>
+    <string name="cloud_plan_problem_not_on_sale">That plan isn’t on sale yet.</string>
+    <string name="cloud_plan_problem_storage">You’re using %1$s. That plan holds %2$s.</string>
+    <string name="cloud_plan_problem_included">LogDate Cloud is already free for you.</string>
+    <string name="cloud_plan_problem_out_of_date">Your plan changed. It’s current now.</string>
+    <string name="cloud_plan_problem_payments_down">Payments are unavailable. Try again.</string>
+    <string name="cloud_plan_problem_offline">Can’t reach LogDate Cloud. Try again.</string>
+    <string name="cloud_plan_problem_unknown">That didn’t work. Try again.</string>
+    <string name="cloud_plan_try_again">Try again</string>
+    <string name="cloud_plan_dismiss">Dismiss</string>
+</resources>

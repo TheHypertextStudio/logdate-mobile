@@ -16,6 +16,8 @@ import app.logdate.feature.core.settings.account.AccountScreen
 import app.logdate.feature.core.settings.account.delete.DeleteAccountScreen
 import app.logdate.feature.core.settings.account.hosting.HostingScreen
 import app.logdate.feature.core.settings.account.move.MoveServerScreen
+import app.logdate.feature.core.settings.account.plan.CloudPlanScreen
+import app.logdate.feature.core.settings.account.plan.StorageReview
 import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseScreen
 import app.logdate.feature.core.settings.account.signin.SignInMethodsScreen
 import app.logdate.feature.core.settings.ui.AdvancedSettingsScreen
@@ -104,6 +106,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(
     onNavigateTo: (NavKey) -> Unit,
     onNavigateToCategory: (NavKey) -> Unit = onNavigateTo,
     onOpenLocationTimeline: (() -> Unit)? = null,
+    onReviewStorage: ((StorageReview) -> Unit)? = null,
 ) {
     val categories =
         SettingsActivityCategories { section ->
@@ -150,6 +153,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(
                     onSignInMethods = { onNavigateTo(SignInMethodsRoute) },
                     onRecoveryPhrase = { onNavigateTo(RecoveryPhraseRoute) },
                     onHosting = { onNavigateTo(HostingRoute) },
+                    onPlan = { onNavigateTo(CloudPlanRoute) },
                     onDeleteAccount = { onNavigateTo(DeleteAccountRoute) },
                     onSignIn = onNavigateToSignIn,
                     onCreateAccount = onNavigateToCloudAccountCreation,
@@ -167,6 +171,9 @@ fun EntryProviderScope<NavKey>.settingsEntries(
     }
     taggedEntry<HostingRoute>(metadata = settingsDetailMetadata(SettingsCategory.Account, categories) + ViewModelsPerVisit) {
         HostingScreen(onBack = onBack, onMoveAccount = { onNavigateTo(MoveServerRoute) })
+    }
+    taggedEntry<CloudPlanRoute>(metadata = settingsDetailMetadata(SettingsCategory.Account, categories) + ViewModelsPerVisit) {
+        CloudPlanScreen(onBack = onBack, onReview = onReviewStorage)
     }
     taggedEntry<MoveServerRoute>(metadata = settingsDetailMetadata(SettingsCategory.Account, categories) + ViewModelsPerVisit) {
         MoveServerScreen(onClose = onBack)

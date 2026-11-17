@@ -64,6 +64,8 @@ fun HomeScreen(
     onImportBackup: () -> Unit = {},
     onSignInToRestoreAccount: () -> Unit = {},
     onOpenSyncSettings: () -> Unit = {},
+    /** Where the storage-full banner's action leads. Settings, unless somewhere more specific is given. */
+    onManageStorage: (() -> Unit)? = null,
     onEnterRecoveryPhrase: () -> Unit = {},
     onOpenWatch: () -> Unit = {},
     onOpenSyncIssues: () -> Unit = {},
@@ -107,17 +109,11 @@ fun HomeScreen(
     val onSyncAction: (SyncAction) -> Unit = { action ->
         when (action) {
             SyncAction.UseMobileData -> syncPresentationViewModel.useMobileData()
-
-            SyncAction.SignIn,
-            SyncAction.ManageStorage,
-            -> onOpenSettings()
-
+            SyncAction.SignIn -> onOpenSettings()
+            SyncAction.ManageStorage -> (onManageStorage ?: onOpenSettings)()
             SyncAction.ReviewConflicts, SyncAction.ReviewIssues -> onOpenSyncIssues()
-
             SyncAction.OpenStatus -> onOpenSyncSettings()
-
             SyncAction.EnterRecoveryPhrase -> onEnterRecoveryPhrase()
-
             SyncAction.UpdateApp -> updateScope.launch { appUpdates.checkForUpdates(AppUpdateCheckTrigger.Manual) }
         }
     }
