@@ -51,11 +51,6 @@ class MemoryPeerDeliveryDao : PeerDeliveryDao {
         direction: String,
     ): Flow<List<PeerDeliveryEntity>> = rows.map { all -> all.values.filter { it.peerScope == peerScope && it.direction == direction } }
 
-    override suspend fun earliestNextAttempt(
-        peerScope: String,
-        direction: String,
-    ): Long? = all(peerScope, direction).mapNotNull { it.nextAttemptAt }.minOrNull()
-
     private fun key(
         peerScope: String,
         direction: String,

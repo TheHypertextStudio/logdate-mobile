@@ -64,11 +64,4 @@ interface PeerDeliveryDao {
         peerScope: String,
         direction: String,
     ): Flow<List<PeerDeliveryEntity>>
-
-    /** The soonest time anything for this peer and direction is due; rows with no time are not counted. */
-    @Query("SELECT MIN(nextAttemptAt) FROM peer_delivery WHERE peerScope = :peerScope AND direction = :direction")
-    suspend fun earliestNextAttempt(
-        peerScope: String,
-        direction: String,
-    ): Long?
 }

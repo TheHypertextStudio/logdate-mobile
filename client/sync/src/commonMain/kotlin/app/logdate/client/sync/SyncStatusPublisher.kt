@@ -209,11 +209,6 @@ internal class SyncStatusPublisher(
         publish()
     }
 
-    /** [beginRun] scoped to how many of [entityType] are currently pending. */
-    suspend fun beginRunForPending(entityType: EntityType) {
-        beginRun(runCatchingUnlessCancelled { syncMetadataService.getPendingUploads(entityType).size }.getOrNull()?.takeIf { it > 0 })
-    }
-
     /**
      * Advances the upload run's progress by [count] items and republishes status immediately.
      *
@@ -279,8 +274,6 @@ internal class SyncStatusPublisher(
     suspend fun backgroundWorkLimited(): Boolean =
         runCatchingUnlessCancelled { dataUsagePolicy.currentRestriction() == DataRestriction.BACKGROUND_DATA_BLOCKED }
             .getOrDefault(false)
-
-    fun isQueueObservationHealthy(): Boolean = !queueObservationFailed.value
 
     suspend fun refreshObservedQuotaFromServer(reason: String) {
         val manager = cloudQuotaManager ?: return

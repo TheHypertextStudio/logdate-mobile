@@ -88,22 +88,12 @@ class PeerDeliveryLedgerTest {
         }
 
     @Test
-    fun `records no longer queued are forgotten`() =
-        runTest {
-            track("a", version = 1)
-            track("b", version = 1)
-
-            assertEquals(1, ledger.forgetAllExcept(PeerScopes.PHONE, DeliveryDirection.TO_PHONE, EntityType.NOTE, keep = setOf("a")))
-            assertNull(get("b"))
-        }
-
-    @Test
     fun `a wait records its reason and when it is due`() =
         runTest {
             val waiting = ledger.moveTo(track("a", version = 1), DeliveryState.NEW, HoldReason.PHONE_UNREACHABLE, nextAttemptAt = 2_000)
 
             assertEquals(HoldReason.PHONE_UNREACHABLE, get("a")?.holdReason)
-            assertEquals(2_000, ledger.earliestDue(PeerScopes.PHONE, DeliveryDirection.TO_PHONE))
+            assertEquals(2_000, get("a")?.nextAttemptAt)
             assertEquals(1, ledger.recordAttempt(waiting, nextAttemptAt = 3_000).attempts)
         }
 

@@ -2,7 +2,6 @@ package app.logdate.client.sync.datalayer.v2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
@@ -72,7 +71,6 @@ class WearPathsTest {
                 WearPaths.windowItem(RecordKind.NOTE, id),
                 WearPaths.windowTombstone(RecordKind.NOTE, id),
                 WearPaths.watchRecord(RecordKind.NOTE, id),
-                WearPaths.bodyChannel("ab".repeat(32)),
             )
 
         v2Paths.forEach { path -> assertTrue(v1Prefixes.none { path.startsWith(it) }, path) }
@@ -92,13 +90,6 @@ class WearPathsTest {
         assertEquals("/logdate/presence", WearPaths.PRESENCE)
         assertEquals("/logdate/diag/ping", WearPaths.DIAG_PING)
         assertEquals("/logdate/favorites/set", WearPaths.FAVORITES_SET)
-    }
-
-    @Test
-    fun `a body channel needs a lowercase sha256`() {
-        assertEquals("/logdate/v2/body/${"0f".repeat(32)}", WearPaths.bodyChannel("0f".repeat(32)))
-        assertFailsWith<IllegalArgumentException> { WearPaths.bodyChannel("0F".repeat(32)) }
-        assertFailsWith<IllegalArgumentException> { WearPaths.bodyChannel("abc") }
     }
 
     @Test

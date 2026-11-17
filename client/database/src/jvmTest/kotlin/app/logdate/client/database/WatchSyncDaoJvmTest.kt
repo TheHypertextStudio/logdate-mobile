@@ -26,7 +26,7 @@ class WatchSyncDaoJvmTest {
     }
 
     @Test
-    fun `every delivery of a peer and direction is listed and observed with its earliest attempt`() =
+    fun `every delivery of a peer and direction is listed and observed`() =
         runTest {
             val dao = database.peerDeliveryDao()
             listOf(
@@ -37,8 +37,6 @@ class WatchSyncDaoJvmTest {
 
             assertEquals(setOf("a", "b", "c"), dao.all("phone", "TO_PHONE").map { it.entityId }.toSet())
             assertEquals(3, dao.observeAll("phone", "TO_PHONE").first().size)
-            assertEquals(100, dao.earliestNextAttempt("phone", "TO_PHONE"))
-            assertNull(dao.earliestNextAttempt("phone", "FROM_WATCH"))
         }
 
     @Test

@@ -132,8 +132,6 @@ private class FakeStorageMetadataDao(
 
     override suspend fun getTotalStorageUsage(): Long = sizes.values.sum()
 
-    override suspend fun upsertStorageMetadata(metadata: StorageMetadataEntity) = Unit
-
     override suspend fun insertStorageMetadata(metadata: StorageMetadataEntity) = Unit
 
     override suspend fun removeStorageMetadata(contentId: Uuid) = Unit
