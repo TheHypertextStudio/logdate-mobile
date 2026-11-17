@@ -79,6 +79,7 @@ class NativeIncomingJournal(
         }
 
     /** Ambiguous revisions stay in custody; they never select an arbitrary database/WAL pair. */
+    @Suppress("unused") // Kept: coherentIncomingPayloads and RetainedDatabaseCopyTest check custody with it
     fun coherentVerified(
         id: String,
         expectedHash: String,
@@ -275,6 +276,7 @@ class NativeIncomingJournal(
         require(path.substringBefore('/') in setOf("database", "files", "shared_prefs"))
     }
 
+    @Suppress("unused") // Kept: coherentVerified compares an interrupted revision with the complete one with it
     private fun prefixMatches(
         prefix: File,
         complete: File,

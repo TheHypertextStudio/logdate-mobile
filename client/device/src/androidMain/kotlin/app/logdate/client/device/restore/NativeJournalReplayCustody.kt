@@ -75,62 +75,9 @@ class NativeJournalReplayCustody(
         check(Files.isDirectory(File(root, id).toPath(), LinkOption.NOFOLLOW_LINKS))
     }
 
-    fun isPendingCohort(id: String): Boolean {
-        check(Uuid.parse(id).toString() == id)
-        return id in journal.pending()
-    }
-
     fun hasCohort(id: String): Boolean {
         check(Uuid.parse(id).toString() == id)
         return File(root, id).exists()
-    }
-
-    /** A staged path may replace only its own interrupted cohort after an exact complete copy is durable. */
-    fun retireReplacedStagedCohort(
-        oldId: String,
-        replacementId: String,
-        path: String,
-        expectedSize: Long,
-        sha256: String,
-    ) {
-        check(oldId != replacementId && Uuid.parse(oldId).toString() == oldId && Uuid.parse(replacementId).toString() == replacementId)
-        val physicalPath = NATIVE_JOURNAL_TRANSFER_PREFIX + path
-        check(
-            sealedPayloadsInCohort(replacementId).any {
-                it.complete && it.path == physicalPath && it.expectedSize == expectedSize && retainedJournalChecksum(it.file) == sha256
-            },
-        )
-        val old = File(root, oldId)
-        if (!old.exists()) return
-        check(
-            sealedPayloadsInCohort(oldId).all {
-                it.path == physicalPath && it.expectedSize == expectedSize
-            },
-        )
-        consume(old)
-    }
-
-    /** The still-immutable source proves an interrupted staging copy can be discarded before another retry. */
-    fun retireInterruptedStagedCohort(
-        oldId: String,
-        path: String,
-        source: File,
-        sha256: String,
-    ) {
-        check(Uuid.parse(oldId).toString() == oldId)
-        check(Files.isRegularFile(source.toPath(), LinkOption.NOFOLLOW_LINKS))
-        check(retainedJournalChecksum(source) == sha256)
-        val old = File(root, oldId)
-        if (!old.exists()) return
-        val physicalPath = NATIVE_JOURNAL_TRANSFER_PREFIX + path
-        check(
-            sealedPayloadsInCohort(oldId).all {
-                it.path == physicalPath &&
-                    it.expectedSize == source.length() &&
-                    prefixMatchesSource(it.file, source)
-            },
-        )
-        consume(old)
     }
 
     fun retireInterruptedStagedCohortGroup(
