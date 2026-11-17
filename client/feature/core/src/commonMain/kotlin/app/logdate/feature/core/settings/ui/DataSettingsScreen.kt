@@ -19,7 +19,6 @@ fun DataSettingsScreen(
     onNavigateToCloudAccountCreation: () -> Unit = {},
     onNavigateToSignIn: () -> Unit = {},
     onNavigateToRecoveryPhrase: () -> Unit = {},
-    onBrowseFile: (String) -> Unit = {},
     viewModel: DataSettingsViewModel = koinViewModel(),
     exportViewModel: UserDataExportViewModel = koinViewModel(),
     restoreViewModel: UserDataRestoreViewModel = koinViewModel(),

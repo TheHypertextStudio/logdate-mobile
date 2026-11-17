@@ -285,7 +285,7 @@ internal class SyncStatusPublisher(
     suspend fun refreshObservedQuotaFromServer(reason: String) {
         val manager = cloudQuotaManager ?: return
         runCatchingUnlessCancelled { manager.syncWithServer() }
-            .onFailure { Napier.w("Failed to refresh quota: ${it::class.simpleName}") }
+            .onFailure { Napier.w("Failed to refresh quota after $reason: ${it::class.simpleName}") }
     }
 
     /**

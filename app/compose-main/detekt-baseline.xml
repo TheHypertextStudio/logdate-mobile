@@ -6,6 +6,5 @@
     >LongMethod:PhoneDataLayerListenerService.kt:PhoneDataLayerListenerService$override fun onMessageReceived</ID>
     <ID
     >LongMethod:PlayInAppUpdateController.kt:PlayInAppUpdateController$override suspend fun checkForUpdates</ID>
-    <ID>UnusedParameter:MainWindow.kt:onOpenEditor: () -> Unit</ID>
   </CurrentIssues>
 </SmellBaseline>

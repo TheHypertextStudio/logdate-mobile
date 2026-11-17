@@ -38,7 +38,6 @@ import org.jetbrains.compose.resources.StringResource
  * Compose resources.
  */
 suspend fun buildLocalYearNarrative(
-    year: Int,
     weeklyRewinds: List<Rewind>,
     resolveText: suspend (UiText) -> String = { text -> text.resolve() },
 ): YearNarrative {

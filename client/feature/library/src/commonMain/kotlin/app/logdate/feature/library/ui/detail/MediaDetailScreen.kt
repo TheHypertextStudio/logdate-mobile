@@ -161,7 +161,6 @@ fun MediaDetailScreen(
 
     fun toggleAudio(
         uri: String,
-        durationMs: Long,
         noteId: Uuid,
     ) {
         if (playingAudioUri == uri) {
@@ -230,7 +229,7 @@ fun MediaDetailContent(
     onPresentItem: (Int) -> Unit = {},
     audioProgress: Float = 0f,
     isAudioPlaying: (String) -> Boolean = { false },
-    onToggleAudio: (String, Long, Uuid) -> Unit = { _, _, _ -> },
+    onToggleAudio: (String, Uuid) -> Unit = { _, _ -> },
     onSeekAudio: (String, Float, Long) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
@@ -302,7 +301,7 @@ fun MediaDetailContent(
                             state,
                             audioProgress,
                             isAudioPlaying(state.mediaRef),
-                            { onToggleAudio(state.mediaRef, state.durationMs, state.mediaId) },
+                            { onToggleAudio(state.mediaRef, state.mediaId) },
                             { onSeekAudio(state.mediaRef, it, state.durationMs) },
                         )
                     }

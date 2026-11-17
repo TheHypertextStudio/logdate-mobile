@@ -9,8 +9,5 @@
     >LongMethod:IosAmplitudeExtractor.kt:IosAmplitudeExtractor$override suspend fun extractAmplitudes: List&lt;Float></ID>
     <ID
     >LongMethod:PaletteGenerator.kt:PaletteGenerator$private fun getBasePalette: AudioPalette</ID>
-    <ID>UnusedParameter:JournalMetadataBlock.kt:audience: List&lt;PersonUiState></ID>
-    <ID>UnusedParameter:MiniContentCover.kt:imageUri: String? = null</ID>
-    <ID>UnusedParameter:MiniContentCover.kt:modifier: Modifier = Modifier</ID>
   </CurrentIssues>
 </SmellBaseline>

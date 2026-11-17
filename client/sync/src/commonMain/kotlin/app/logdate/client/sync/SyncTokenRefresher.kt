@@ -46,7 +46,7 @@ internal class SyncTokenRefresher(
         val binding = captureBinding(locationProvider).getOrElse { return Result.failure(it) }
         val currentSession = binding?.session ?: sessionStorage.getSession()
         if (currentSession == null) {
-            Napier.w("No active session for")
+            Napier.w("No active session for $operationName")
             return Result.failure(
                 CloudApiException("NO_SESSION", "No active session available", statusCode = 401),
             )

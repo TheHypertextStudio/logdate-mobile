@@ -57,7 +57,7 @@ class DraftUploadIntentRoutingTest {
                             identityKey = { TEST_IDENTITY_KEY },
                         ),
                 )
-            val result = uploader.uploadDrafts("synthetic-token")
+            val result = uploader.uploadDrafts()
             assertTrue(result.success)
             assertTrue(replayed, "Both transports must replay accepted local intent before reading SQL pending work")
             assertEquals(1, result.uploadedItems)

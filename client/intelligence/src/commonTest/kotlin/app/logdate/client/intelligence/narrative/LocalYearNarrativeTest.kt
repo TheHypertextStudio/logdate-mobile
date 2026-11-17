@@ -40,7 +40,7 @@ class LocalYearNarrativeTest {
     @Test
     fun `empty weekly rewinds produces empty chapters and no themes`() =
         runTest {
-            val narrative = buildLocalYearNarrative(year = 2026, weeklyRewinds = emptyList(), resolveText = resourceKeyText)
+            val narrative = buildLocalYearNarrative(weeklyRewinds = emptyList(), resolveText = resourceKeyText)
             assertEquals(emptyList(), narrative.chapters)
             assertEquals(emptyList(), narrative.yearThemes)
             assertEquals(NarrativeOrigin.LOCAL_HEURISTIC, narrative.origin)
@@ -51,7 +51,6 @@ class LocalYearNarrativeTest {
         runTest {
             val narrative =
                 buildLocalYearNarrative(
-                    year = 2026,
                     weeklyRewinds = listOf(weekRewind(listOf(ActivityType.TRAVEL))),
                     resolveText = resourceKeyText,
                 )
@@ -68,7 +67,7 @@ class LocalYearNarrativeTest {
                     weekRewind(listOf(ActivityType.TRAVEL), 14),
                     weekRewind(listOf(ActivityType.SOCIAL), 21),
                 )
-            val narrative = buildLocalYearNarrative(2026, rewinds, resourceKeyText)
+            val narrative = buildLocalYearNarrative(rewinds, resourceKeyText)
             assertTrue(narrative.yearThemes.isNotEmpty())
             assertEquals("travel", narrative.yearThemes.first())
             assertTrue(narrative.yearThemes.contains("social"))
@@ -78,7 +77,7 @@ class LocalYearNarrativeTest {
     fun `produces four chapters covering every weekly rewind`() =
         runTest {
             val rewinds = (0 until 12).map { weekRewind(listOf(ActivityType.MIXED), offsetDays = it * 7) }
-            val narrative = buildLocalYearNarrative(2026, rewinds, resourceKeyText)
+            val narrative = buildLocalYearNarrative(rewinds, resourceKeyText)
             assertEquals(4, narrative.chapters.size)
             // Together, the chapters' key-week indices should cover all 12 weeks.
             val coveredIndices = narrative.chapters.flatMap { it.keyWeekIndices }
@@ -89,7 +88,7 @@ class LocalYearNarrativeTest {
     fun `every overall narrative mentions the week count`() =
         runTest {
             val rewinds = (0 until 5).map { weekRewind(listOf(ActivityType.MIXED), offsetDays = it * 7) }
-            val narrative = buildLocalYearNarrative(2026, rewinds, resourceKeyText)
+            val narrative = buildLocalYearNarrative(rewinds, resourceKeyText)
             assertEquals("year_narrative_overall_with_theme[5](mixed, 5)", narrative.overallNarrative)
         }
 }

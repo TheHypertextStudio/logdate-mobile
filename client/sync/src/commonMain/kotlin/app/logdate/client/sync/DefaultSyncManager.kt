@@ -307,7 +307,7 @@ class DefaultSyncManager(
             quotaContext = "content sync",
             disabledOrUnauthenticated = ::disabledOrUnauthenticatedResult,
             download = downloader::downloadContent,
-            upload = uploader::uploadContent,
+            upload = { _ -> uploader.uploadContent() },
         )
 
     override suspend fun syncJournals(): SyncResult =
@@ -316,7 +316,7 @@ class DefaultSyncManager(
             quotaContext = "journal sync",
             disabledOrUnauthenticated = ::disabledOrUnauthenticatedResult,
             download = downloader::downloadJournals,
-            upload = uploader::uploadJournals,
+            upload = { _ -> uploader.uploadJournals() },
         )
 
     override suspend fun syncAssociations(): SyncResult =
@@ -324,8 +324,8 @@ class DefaultSyncManager(
             entityType = EntityType.ASSOCIATION,
             quotaContext = "association sync",
             disabledOrUnauthenticated = ::disabledOrUnauthenticatedResult,
-            download = downloader::downloadAssociations,
-            upload = uploader::uploadAssociations,
+            download = { _, since -> downloader.downloadAssociations(since) },
+            upload = { _ -> uploader.uploadAssociations() },
         )
 
     override suspend fun syncDrafts(): SyncResult {
@@ -336,8 +336,8 @@ class DefaultSyncManager(
             disabledOrUnauthenticated = {
                 if (!isEnabled || !tokenRefresher.isAuthenticated()) SyncResult(success = false) else null
             },
-            download = downloader::downloadDrafts,
-            upload = uploader::uploadDrafts,
+            download = { _, since -> downloader.downloadDrafts(since) },
+            upload = { _ -> uploader.uploadDrafts() },
             updatesGlobalSyncState = false,
             onException = { e ->
                 Napier.e("Draft sync failed", e)

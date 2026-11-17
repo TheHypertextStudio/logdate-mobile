@@ -40,7 +40,6 @@ private const val RESIZE_PERSIST_DEBOUNCE_MS = 300L
 @Composable
 internal fun MainWindow(
     appState: LogDateApplicationState,
-    onOpenEditor: () -> Unit,
     state: MainWindowState = rememberMainWindowState(appState),
 ) {
     val preferences = remember { DesktopWindowPreferences() }

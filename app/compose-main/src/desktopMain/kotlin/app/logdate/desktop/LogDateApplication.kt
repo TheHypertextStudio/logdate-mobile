@@ -24,7 +24,6 @@ fun ApplicationScope.LogDateApplication(state: LogDateApplicationState) {
                 is MainWindowState -> {
                     MainWindow(
                         appState = state,
-                        onOpenEditor = state::openNoteEditor,
                         state = window,
                     )
                 }
