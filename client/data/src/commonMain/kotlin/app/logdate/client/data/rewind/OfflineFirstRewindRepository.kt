@@ -7,7 +7,7 @@ import app.logdate.client.database.entities.rewind.RewindTextContentEntity
 import app.logdate.client.database.entities.rewind.RewindVideoContentEntity
 import app.logdate.client.media.storage.MediaClaimFence
 import app.logdate.client.repository.rewind.RewindRepository
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.shared.model.ActivityType
 import app.logdate.shared.model.HighlightedQuote
 import app.logdate.shared.model.LocationSummary
@@ -45,7 +45,7 @@ import app.logdate.client.database.dao.rewind.RewindContent as StoredRewindConte
  */
 class OfflineFirstRewindRepository(
     private val cachedRewindDao: CachedRewindDao,
-    private val ioDispatcher: CoroutineDispatcher = platformIODispatcher,
+    private val ioDispatcher: CoroutineDispatcher = platformDataDispatcher,
     private val mediaClaimFence: MediaClaimFence = MediaClaimFence.Disabled,
 ) : RewindRepository {
     private val contentJson = Json { ignoreUnknownKeys = true }

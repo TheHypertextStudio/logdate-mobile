@@ -22,7 +22,7 @@ import app.logdate.client.sync.SyncManager
 import app.logdate.client.sync.SyncTransactionManager
 import app.logdate.client.sync.metadata.AssociationPendingKey
 import app.logdate.client.sync.metadata.SyncMetadataService
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.shared.model.EditorDraft
 import app.logdate.shared.model.Journal
 import kotlinx.coroutines.CoroutineDispatcher
@@ -47,7 +47,7 @@ class OfflineFirstJournalRepository(
     private val draftRepository: DraftRepository,
     private val syncManagerProvider: () -> SyncManager = { NoOpSyncManager },
     private val syncMetadataService: SyncMetadataService,
-    private val dispatcher: CoroutineDispatcher = platformIODispatcher,
+    private val dispatcher: CoroutineDispatcher = platformDataDispatcher,
     private val externalScope: CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher),
     private val database: LogDateDatabase? = null,
     private val currentScope: suspend () -> JournalMergeScope = { JournalMergeScope("", "") },

@@ -5,7 +5,7 @@ import app.logdate.client.database.dao.EventNoteLinkDao
 import app.logdate.client.database.entities.EventNoteLinkEntity
 import app.logdate.client.media.storage.MediaClaimFence
 import app.logdate.client.repository.events.EventRepository
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.client.util.runCatchingUnlessCancelled
 import app.logdate.shared.model.Event
 import io.github.aakira.napier.Napier
@@ -27,7 +27,7 @@ import kotlin.uuid.Uuid
  * future iterations will plumb events through the standard sync pipeline alongside journals
  * and notes.
  *
- * Suspend methods run on the injected [dispatcher] (defaults to [platformIODispatcher]) so callers
+ * Suspend methods run on the injected [dispatcher] (defaults to [platformDataDispatcher]) so callers
  * never block the main thread on a Room write. Flow-returning observe methods don't need
  * explicit wrapping because Room's `setQueryCoroutineContext` already dispatches each emission
  * onto the configured database dispatcher.
@@ -35,7 +35,7 @@ import kotlin.uuid.Uuid
 class OfflineFirstEventRepository(
     private val eventDao: EventDao,
     private val eventNoteLinkDao: EventNoteLinkDao,
-    private val dispatcher: CoroutineDispatcher = platformIODispatcher,
+    private val dispatcher: CoroutineDispatcher = platformDataDispatcher,
     private val mediaClaimFence: MediaClaimFence = MediaClaimFence.Disabled,
 ) : EventRepository {
     override fun observeAllEvents(): Flow<List<Event>> = eventDao.observeAll().map { entities -> entities.map { it.toModel() } }

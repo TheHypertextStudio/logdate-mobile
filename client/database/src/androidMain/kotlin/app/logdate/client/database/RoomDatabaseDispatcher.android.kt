@@ -10,5 +10,5 @@ import kotlinx.coroutines.Dispatchers
  */
 internal actual val roomDatabaseDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(ROOM_QUERY_PARALLELISM)
 
-/** As many threads as [Dispatchers.IO] offers, kept separate from it. */
+/** The default size of [Dispatchers.IO], so the journal keeps as many threads as it had when it shared that pool. */
 internal const val ROOM_QUERY_PARALLELISM = 64

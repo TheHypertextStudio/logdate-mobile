@@ -20,7 +20,7 @@ import app.logdate.client.repository.knowledge.PeopleProfileRepository
 import app.logdate.client.repository.knowledge.PersonLinkRepository
 import app.logdate.client.repository.knowledge.PersonRelatedContent
 import app.logdate.client.sync.SyncTransactionManager
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.shared.model.Event
 import app.logdate.shared.model.InferredPersonCluster
 import app.logdate.shared.model.InferredPersonClusterStatus
@@ -53,7 +53,7 @@ class OfflineFirstPeopleGraphRepository(
     transactions: SyncTransactionManager,
     private val journalNotesRepository: JournalNotesRepository,
     private val eventRepository: EventRepository,
-    dispatcher: CoroutineDispatcher = platformIODispatcher,
+    dispatcher: CoroutineDispatcher = platformDataDispatcher,
 ) : InferredPeopleRepository,
     PersonLinkRepository,
     PeopleProfileRepository {

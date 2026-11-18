@@ -14,7 +14,7 @@ import app.logdate.client.sync.metadata.EntityType
 import app.logdate.client.sync.metadata.PendingOperation
 import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.client.sync.metadata.UploadScope
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.shared.model.Journal
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -35,7 +35,7 @@ class OfflineFirstJournalContentRepository(
     private val journalNotesRepository: JournalNotesRepository,
     private val syncMetadataService: SyncMetadataService,
     private val transactionManager: SyncTransactionManager = PassthroughJournalContentTransactionManager,
-    private val dispatcher: CoroutineDispatcher = platformIODispatcher,
+    private val dispatcher: CoroutineDispatcher = platformDataDispatcher,
     private val recoveryReceipts: ArchiveRecoveryReceipts = ArchiveRecoveryReceipts.None,
 ) : JournalContentRepository,
     SyncableJournalContentRepository {

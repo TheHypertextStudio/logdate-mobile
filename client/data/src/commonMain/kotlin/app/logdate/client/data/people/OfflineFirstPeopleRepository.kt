@@ -7,7 +7,7 @@ import app.logdate.client.repository.knowledge.ContactImportSummary
 import app.logdate.client.repository.knowledge.DeviceContact
 import app.logdate.client.repository.knowledge.PeopleContactsRepository
 import app.logdate.client.repository.knowledge.PeopleRepository
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.shared.model.Person
 import app.logdate.shared.model.PersonOrigin
 import io.github.aakira.napier.Napier
@@ -22,7 +22,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class OfflineFirstPeopleRepository(
     private val personDao: PersonDao,
-    private val dispatcher: CoroutineDispatcher = platformIODispatcher,
+    private val dispatcher: CoroutineDispatcher = platformDataDispatcher,
     private val mediaClaimFence: MediaClaimFence = MediaClaimFence.Disabled,
 ) : PeopleRepository,
     PeopleContactsRepository {

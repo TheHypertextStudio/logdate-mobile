@@ -27,5 +27,9 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlinx.datetime)
         }
+
+        findByName("androidHostTest")?.dependencies {
+            implementation(libs.kotlin.test.junit)
+        }
     }
 }
