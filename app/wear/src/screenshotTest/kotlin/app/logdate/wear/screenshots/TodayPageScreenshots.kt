@@ -139,6 +139,20 @@ class TodayPageScreenshots {
     fun S14_TodayWhileMoving() {
         TodayScene(ready(summary = busySummary, activity = ActivityUiState(voiceFirst = true)), controls = allControls)
     }
+
+    @PreviewTest
+    @WearScreenshotPreviewMatrix
+    @Composable
+    fun S15_TodayFinishSetUpOnPhone() {
+        TodayScene(ready(summary = TodaySummary.Empty, phoneCard = PhoneCard.SetUp(nodeId = "phone")))
+    }
+
+    @PreviewTest
+    @WearScreenshotPreviewMatrix
+    @Composable
+    fun S16_TodayFinishSetUpOnPhoneFailed() {
+        TodayScene(ready(summary = TodaySummary.Empty, phoneCard = PhoneCard.SetUp(nodeId = "phone")), handoff = HandoffState.FAILED)
+    }
 }
 
 private const val LAST_ITEM_INDEX = 3
