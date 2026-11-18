@@ -3,7 +3,7 @@ package app.logdate.client.data.rewind
 import app.logdate.client.database.dao.rewind.ReflectionPromptResponseDao
 import app.logdate.client.database.entities.rewind.ReflectionPromptResponseEntity
 import app.logdate.client.repository.rewind.ReflectionPromptResponseRepository
-import app.logdate.client.util.platformIODispatcher
+import app.logdate.client.util.platformDataDispatcher
 import app.logdate.shared.model.ReflectionPrompt
 import app.logdate.shared.model.ReflectionPromptKey
 import app.logdate.shared.model.ReflectionPromptResponse
@@ -23,7 +23,7 @@ import kotlin.uuid.Uuid
  */
 class OfflineFirstReflectionPromptResponseRepository(
     private val dao: ReflectionPromptResponseDao,
-    private val ioDispatcher: CoroutineDispatcher = platformIODispatcher,
+    private val ioDispatcher: CoroutineDispatcher = platformDataDispatcher,
     private val clock: Clock = Clock.System,
 ) : ReflectionPromptResponseRepository {
     override fun observe(rewindId: Uuid): Flow<Map<ReflectionPromptKey, ReflectionPromptResponse>> =
