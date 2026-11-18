@@ -13,9 +13,7 @@
     <string name="wear_today_voice">%1$s&#160;voice</string>
     <string name="wear_today_summary_separator">"&#160;· "</string>
     <string name="wear_today_failed">Couldn’t load today’s moments</string>
-    <string name="wear_today_get_phone_app_title">Get LogDate on your phone</string>
-    <string name="wear_today_get_phone_app_body">Opens the Play Store on your phone</string>
-    <string name="wear_today_get_phone_app_failed">Couldn’t reach your phone. Tap to try again.</string>
+    <string name="wear_today_get_phone_app_title">Get LogDate on phone</string>
     <string name="wear_today_activity_title">Record a moment</string>
     <plurals name="wear_today_activity_moving_body">
         <item quantity="one">From the last minute</item>
@@ -29,9 +27,8 @@
     <string name="wear_today_morning_body">Start the day with a voice note</string>
     <string name="wear_today_activity_dismiss">Not now</string>
     <string name="wear_today_voice_first">Record a voice note</string>
-    <string name="wear_today_setup_phone_title">Finish setting up your watch</string>
-    <string name="wear_today_setup_phone_body">Tap to finish on your phone</string>
-    <string name="wear_today_setup_phone_failed">Couldn’t reach your phone. Tap to try again.</string>
+    <string name="wear_today_setup_phone_title">Finish setup on phone</string>
+    <string name="wear_today_phone_not_reachable">Phone not reachable</string>
     <string name="wear_today_record">Record</string>
     <string name="wear_today_mark">Mark</string>
     <string name="wear_today_add">Add</string>

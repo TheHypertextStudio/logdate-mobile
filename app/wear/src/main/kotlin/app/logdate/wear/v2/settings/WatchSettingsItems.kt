@@ -57,8 +57,10 @@ fun TransformingLazyColumnScope.watchSettingsItems(
     spec: TransformationSpec,
 ) {
     statusItem(state, actions, spec)
-    item {
-        ConnectionDetailsCard(state.connection)
+    if (state.connection.hasFacts()) {
+        item {
+            ConnectionDetailsCard(state.connection)
+        }
     }
     item {
         ListHeader(modifier = Modifier.transformedHeight(this, spec), transformation = SurfaceTransformation(spec)) {
@@ -198,23 +200,20 @@ private fun SetUpFromPhoneCard(
     modifier: Modifier,
     transformation: SurfaceTransformation,
 ) {
-    TitleCard(
+    Button(
         onClick = onClick,
-        title = { Text(stringResource(R.string.wear_settings_needs_link)) },
         modifier = modifier.fillMaxWidth().testTag(WatchSettingsTags.STATUS),
         enabled = handoff != HandoffState.SENDING,
         transformation = transformation,
-    ) {
-        Text(
-            stringResource(
-                if (handoff == HandoffState.FAILED) {
-                    R.string.wear_settings_more_on_phone_failed
-                } else {
-                    R.string.wear_settings_needs_link_action
-                },
-            ),
-        )
-    }
+        icon = { Icon(imageVector = Icons.Filled.PhoneAndroid, contentDescription = null) },
+        label = { Text(stringResource(R.string.wear_settings_needs_link)) },
+        secondaryLabel =
+            if (handoff == HandoffState.FAILED) {
+                { Text(stringResource(R.string.wear_settings_phone_not_reachable)) }
+            } else {
+                null
+            },
+    )
 }
 
 @Composable
@@ -326,7 +325,7 @@ private fun MoreOnPhoneButton(
         icon = { Icon(imageVector = Icons.Filled.PhoneAndroid, contentDescription = null) },
         secondaryLabel =
             if (handoff == HandoffState.FAILED) {
-                { Text(stringResource(R.string.wear_settings_more_on_phone_failed)) }
+                { Text(stringResource(R.string.wear_settings_phone_not_reachable)) }
             } else {
                 null
             },

@@ -46,7 +46,7 @@ class WatchSettingsScreenshots {
     @WearLargeFontPreview
     @Composable
     fun S04_SettingsMoreOnPhone() {
-        SettingsScene(WatchSettingsUiState(places = true, phoneSettingsNodeId = "phone-node"), anchorItem = 5)
+        SettingsScene(WatchSettingsUiState(places = true, phoneSettingsNodeId = "phone-node"), anchorItem = 4)
     }
 
     @PreviewTest
@@ -54,7 +54,7 @@ class WatchSettingsScreenshots {
     @WearLargeFontPreview
     @Composable
     fun S05_SettingsEssentialAndPlaces() {
-        SettingsScene(WatchSettingsUiState(places = true, haptics = HapticsPreference.ESSENTIAL), anchorItem = 2)
+        SettingsScene(WatchSettingsUiState(places = true, haptics = HapticsPreference.ESSENTIAL), anchorItem = 1)
     }
 
     @PreviewTest
@@ -62,7 +62,7 @@ class WatchSettingsScreenshots {
     @WearLargeFontPreview
     @Composable
     fun S06_SettingsRemindersOn() {
-        SettingsScene(WatchSettingsUiState(reminders = RemindersSetting(enabled = true, afterWorkouts = true)), anchorItem = 4)
+        SettingsScene(WatchSettingsUiState(reminders = RemindersSetting(enabled = true, afterWorkouts = true)), anchorItem = 3)
     }
 
     @PreviewTest
@@ -70,7 +70,7 @@ class WatchSettingsScreenshots {
     @WearLargeFontPreview
     @Composable
     fun S07_SettingsRemindersOff() {
-        SettingsScene(WatchSettingsUiState(), anchorItem = 4)
+        SettingsScene(WatchSettingsUiState(), anchorItem = 3)
     }
 
     @PreviewTest
@@ -78,7 +78,7 @@ class WatchSettingsScreenshots {
     @WearLargeFontPreview
     @Composable
     fun S08_SettingsRemindersEveningOnly() {
-        SettingsScene(WatchSettingsUiState(reminders = RemindersSetting(enabled = true)), anchorItem = 4)
+        SettingsScene(WatchSettingsUiState(reminders = RemindersSetting(enabled = true)), anchorItem = 3)
     }
 
     @PreviewTest

@@ -12,11 +12,11 @@
     <string name="wear_settings_send_retry">Tap to try again</string>
     <string name="wear_settings_send_retrying">Trying again…</string>
     <string name="wear_settings_backup_failing">Some moments couldn’t back up</string>
-    <string name="wear_settings_needs_link">Set up this watch from your phone</string>
+    <string name="wear_settings_needs_link">Finish setup on phone</string>
     <string
     name="wear_settings_needs_link_body"
-  >This watch can’t sync until LogDate on your phone sets it up again</string>
-    <string name="wear_settings_needs_link_action">Tap to finish on your phone</string>
+  >Bring your phone nearby so this watch can sync</string>
+    <string name="wear_settings_phone_not_reachable">Phone not reachable</string>
     <string name="wear_settings_haptics_all">All haptics</string>
     <string name="wear_settings_haptics_all_body">Crown ticks and saves too</string>
     <string name="wear_settings_haptics_essential">Essential haptics</string>
@@ -24,14 +24,11 @@
     <string name="wear_settings_places">Places</string>
     <string name="wear_settings_places_body">Save where you are with each moment</string>
     <string name="wear_settings_more_on_phone">More on your phone</string>
-    <string
-    name="wear_settings_more_on_phone_failed"
-  >Couldn’t reach your phone. Tap to try again.</string>
     <string name="wear_settings_reminders">Reminders</string>
     <string name="wear_settings_reminders_off">A nudge to record, at most once a day</string>
     <string name="wear_settings_reminders_workouts">After workouts and in the evening</string>
     <string name="wear_settings_reminders_evening">In the evening</string>
-    <string name="wear_connection_title">Phone and LogDate</string>
+    <string name="wear_connection_title">Connection</string>
     <string name="wear_connection_phone_reachable">%1$s is reachable</string>
     <string name="wear_connection_phone_offline">Phone not reachable</string>
     <string name="wear_connection_phone_unsupported">Phone connection unavailable</string>

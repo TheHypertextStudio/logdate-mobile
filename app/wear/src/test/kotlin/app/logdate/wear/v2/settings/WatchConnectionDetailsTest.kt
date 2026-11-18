@@ -12,6 +12,12 @@ class WatchConnectionDetailsTest {
     private val phone = PhoneLink.Connected("phone", "My phone")
     private val pair = PeerDeliveryContext(LinkWire.encodeKey(ByteArray(32) { 7 }), "phone", "watch", LinkMode.PAIR)
 
+    @Test fun `a watch that knows nothing yet has no connection facts to show`() {
+        assertFalse(WatchConnectionDetails().hasFacts())
+        assertTrue(watchConnectionDetails(phone, null).hasFacts())
+        assertTrue(WatchConnectionDetails(lastSync = kotlin.time.Instant.fromEpochMilliseconds(1)).hasFacts())
+    }
+
     @Test fun `phone reachability alone proves neither peer nor account connection`() {
         val state = watchConnectionDetails(phone, null)
         assertFalse(state.verifiedPhone)

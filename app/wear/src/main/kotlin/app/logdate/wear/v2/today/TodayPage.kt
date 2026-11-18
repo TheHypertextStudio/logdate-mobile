@@ -1,6 +1,7 @@
 package app.logdate.wear.v2.today
 
 import android.text.format.DateFormat
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.ViewTimeline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -416,16 +418,13 @@ private fun GetPhoneAppCard(
     modifier: Modifier,
     transformation: SurfaceTransformation,
 ) {
-    val body = if (handoff == HandoffState.FAILED) R.string.wear_today_get_phone_app_failed else R.string.wear_today_get_phone_app_body
-    TitleCard(
+    PhoneHandoffButton(
+        label = R.string.wear_today_get_phone_app_title,
+        handoff = handoff,
         onClick = onClick,
-        title = { Text(stringResource(R.string.wear_today_get_phone_app_title)) },
-        modifier = modifier.fillMaxWidth().testTag(TodayTags.GET_PHONE_APP),
-        enabled = handoff != HandoffState.SENDING,
+        modifier = modifier.testTag(TodayTags.GET_PHONE_APP),
         transformation = transformation,
-    ) {
-        Text(stringResource(body))
-    }
+    )
 }
 
 @Composable
@@ -435,16 +434,41 @@ private fun SetUpPhoneCard(
     modifier: Modifier,
     transformation: SurfaceTransformation,
 ) {
-    val body = if (handoff == HandoffState.FAILED) R.string.wear_today_setup_phone_failed else R.string.wear_today_setup_phone_body
-    TitleCard(
+    PhoneHandoffButton(
+        label = R.string.wear_today_setup_phone_title,
+        handoff = handoff,
         onClick = onClick,
-        title = { Text(stringResource(R.string.wear_today_setup_phone_title)) },
-        modifier = modifier.fillMaxWidth().testTag(TodayTags.SET_UP_PHONE),
+        modifier = modifier.testTag(TodayTags.SET_UP_PHONE),
+        transformation = transformation,
+    )
+}
+
+/**
+ * One action that continues on the phone. The system's "Continue on phone" animation confirms a send,
+ * so the button itself only speaks up when the phone couldn't be reached.
+ */
+@Composable
+private fun PhoneHandoffButton(
+    @StringRes label: Int,
+    handoff: HandoffState,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    transformation: SurfaceTransformation,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         enabled = handoff != HandoffState.SENDING,
         transformation = transformation,
-    ) {
-        Text(stringResource(body))
-    }
+        icon = { Icon(imageVector = Icons.Filled.PhoneAndroid, contentDescription = null) },
+        label = { Text(stringResource(label)) },
+        secondaryLabel =
+            if (handoff == HandoffState.FAILED) {
+                { Text(stringResource(R.string.wear_today_phone_not_reachable)) }
+            } else {
+                null
+            },
+    )
 }
 
 @Composable
