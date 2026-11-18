@@ -141,6 +141,16 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
             } == 1
         }
 
+    override suspend fun touch(
+        sessionId: UUID,
+        now: Long,
+    ): Boolean =
+        dbQuery {
+            DeviceSessionsTable.update({ (DeviceSessionsTable.id eq sessionId) and DeviceSessionsTable.revokedAt.isNull() }) {
+                it[DeviceSessionsTable.lastRefreshedAt] = now
+            } == 1
+        }
+
     private fun spendable(
         codeHash: String,
         now: Long,
@@ -169,9 +179,9 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
     ): Int =
         DeviceSessionsTable
             .selectAll()
-            .where { active(accountId, now) }
-            .map { it.toDeviceSession() }
-            .count { !limits.isIdle(it, now) }
+            .where { active(accountId, now) and (DeviceSessionsTable.lastRefreshedAt greater (now - limits.idleAfterMs)) }
+            .count()
+            .toInt()
 }
 
 private fun ResultRow.toDeviceSession(): DeviceSession =
