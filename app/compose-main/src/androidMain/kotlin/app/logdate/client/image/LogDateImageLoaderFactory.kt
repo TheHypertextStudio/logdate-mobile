@@ -20,8 +20,12 @@ private const val IMAGE_CROSSFADE_MS = 200
 /** Threads image fetching and decoding may hold at once. */
 internal const val IMAGE_WORK_PARALLELISM = 8
 
-/** Video frames read at once; each one holds a thread and a media decoder until it finishes. */
-internal const val VIDEO_FRAME_PARALLELISM = 2
+/**
+ * Video frames read at once. Each one holds an image thread and a media decoder until it finishes, and a
+ * frame read cannot be stopped once it starts, so this leaves room for a slow file without letting video
+ * take every image thread.
+ */
+internal const val VIDEO_FRAME_PARALLELISM = 4
 
 /**
  * Creates the default Coil [ImageLoader] configured for LogDate.
