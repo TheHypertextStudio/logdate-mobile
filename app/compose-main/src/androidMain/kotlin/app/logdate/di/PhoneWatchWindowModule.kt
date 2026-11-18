@@ -123,6 +123,7 @@ val phoneWatchWindowModule =
                 preferences = { WatchWindowPreferences.from(shared.snapshot()) },
                 manifest = get(),
                 items = get(),
+                linked = links.observe().map { it.isNotEmpty() },
             )
         }
         single {

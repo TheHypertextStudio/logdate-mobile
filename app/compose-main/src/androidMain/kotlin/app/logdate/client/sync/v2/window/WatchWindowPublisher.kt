@@ -28,6 +28,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -83,6 +84,7 @@ class WatchWindowPublisher(
     private val momentDeletions: Flow<Map<Uuid, Instant>> = kotlinx.coroutines.flow.flowOf(emptyMap()),
     private val acceptsMoments: suspend (PeerDeliveryContext) -> Boolean = { false },
     private val preferences: suspend () -> WatchWindowPreferences = { WatchWindowPreferences() },
+    private val linked: Flow<Boolean> = flowOf(true),
 ) {
     private val publishing = Mutex()
 
@@ -144,14 +146,14 @@ class WatchWindowPublisher(
      * Publishes when the watch starts or stops taking the window, and while it takes it, on every
      * change to the notes and at each day start.
      *
-     * Notes are watched only while the watch takes the window: this runs for the whole life of the
-     * process, and reading every note again on each journal change would otherwise compete with the
-     * screens for the database on phones that have no watch linked.
+     * Notes are watched only while the watch takes the window and a watch is [linked]: this runs for
+     * the whole life of the process, and reading every note again on each journal change would
+     * otherwise compete with the screens for the database on phones that have no watch linked.
      */
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     fun start(scope: CoroutineScope): Job =
         scope.launch {
-            active
+            combine(active, linked) { taking, hasWatch -> taking && hasWatch }
                 .distinctUntilChanged()
                 .flatMapLatest { taking ->
                     if (taking) {
