@@ -86,6 +86,13 @@ class WatchSettingsScreenshots {
     @WearLargeFontPreview
     @Composable
     fun S09_SettingsNeedsPhoneToLink() {
+        SettingsScene(WatchSettingsUiState(status = WatchStatus.NeedsDeviceLink, phoneSettingsNodeId = "phone-node"))
+    }
+
+    @PreviewTest
+    @WearScreenshotPreviewMatrix
+    @Composable
+    fun S10_SettingsNeedsLinkPhoneAway() {
         SettingsScene(WatchSettingsUiState(status = WatchStatus.NeedsDeviceLink))
     }
 }

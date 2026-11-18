@@ -56,10 +56,10 @@ fun TransformingLazyColumnScope.watchSettingsItems(
     actions: WatchSettingsActions,
     spec: TransformationSpec,
 ) {
+    statusItem(state, actions, spec)
     item {
         ConnectionDetailsCard(state.connection)
     }
-    statusItem(state, actions, spec)
     item {
         ListHeader(modifier = Modifier.transformedHeight(this, spec), transformation = SurfaceTransformation(spec)) {
             Text(stringResource(R.string.wear_settings_title))
@@ -110,7 +110,18 @@ private fun TransformingLazyColumnScope.statusItem(
         }
 
         WatchStatus.NeedsDeviceLink -> {
-            item { NeedsDeviceLink() }
+            if (state.phoneSettingsNodeId != null) {
+                item {
+                    SetUpFromPhoneCard(
+                        state.handoff,
+                        actions.onOpenPhoneSettings,
+                        Modifier.transformedHeight(this, spec),
+                        SurfaceTransformation(spec),
+                    )
+                }
+            } else {
+                item { NeedsDeviceLink() }
+            }
         }
 
         is WatchStatus.SendFailing -> {
@@ -175,6 +186,33 @@ private fun NeedsDeviceLink() {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** Opens the phone's Watch page, where LogDate links this watch, so the fix is one tap away. */
+@Composable
+private fun SetUpFromPhoneCard(
+    handoff: HandoffState,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    transformation: SurfaceTransformation,
+) {
+    TitleCard(
+        onClick = onClick,
+        title = { Text(stringResource(R.string.wear_settings_needs_link)) },
+        modifier = modifier.fillMaxWidth().testTag(WatchSettingsTags.STATUS),
+        enabled = handoff != HandoffState.SENDING,
+        transformation = transformation,
+    ) {
+        Text(
+            stringResource(
+                if (handoff == HandoffState.FAILED) {
+                    R.string.wear_settings_more_on_phone_failed
+                } else {
+                    R.string.wear_settings_needs_link_action
+                },
+            ),
         )
     }
 }
@@ -309,47 +347,31 @@ private fun ConnectionDetailsCard(details: WatchConnectionDetails) {
                 .testTag("settings_connection_details"),
     ) {
         Text(stringResource(R.string.wear_connection_title), style = MaterialTheme.typography.titleSmall)
+        // Only facts are listed; a check that hasn't answered yet adds a line that tells the person nothing.
         Column {
-            Text(
-                when (val phone = details.phone) {
-                    is app.logdate.wear.v2.phone.PhoneLink.Connected -> {
-                        stringResource(
-                            R.string.wear_connection_phone_reachable,
-                            phone.phoneName,
-                        )
-                    }
+            when (val phone = details.phone) {
+                is app.logdate.wear.v2.phone.PhoneLink.Connected -> {
+                    Text(stringResource(R.string.wear_connection_phone_reachable, phone.phoneName))
+                }
 
-                    app.logdate.wear.v2.phone.PhoneLink.NotConnected -> {
-                        stringResource(R.string.wear_connection_phone_offline)
-                    }
+                app.logdate.wear.v2.phone.PhoneLink.NotConnected -> {
+                    Text(stringResource(R.string.wear_connection_phone_offline))
+                }
 
-                    app.logdate.wear.v2.phone.PhoneLink.Unsupported -> {
-                        stringResource(R.string.wear_connection_phone_unsupported)
-                    }
+                app.logdate.wear.v2.phone.PhoneLink.Unsupported -> {
+                    Text(stringResource(R.string.wear_connection_phone_unsupported))
+                }
 
-                    else -> {
-                        stringResource(R.string.wear_connection_phone_unknown)
-                    }
-                },
-            )
-            Text(
-                stringResource(
-                    when {
-                        details.verifiedPhone -> R.string.wear_connection_peer_verified
-                        details.linkedPhoneOffline -> R.string.wear_connection_linked_phone_offline
-                        else -> R.string.wear_connection_peer_unknown
-                    },
-                ),
-            )
-            Text(
-                stringResource(
-                    when {
-                        details.accountLinked -> R.string.wear_connection_account_linked
-                        details.pairedThroughPhone -> R.string.wear_connection_through_phone
-                        else -> R.string.wear_connection_account_unknown
-                    },
-                ),
-            )
+                else -> {}
+            }
+            when {
+                details.verifiedPhone -> Text(stringResource(R.string.wear_connection_peer_verified))
+                details.linkedPhoneOffline -> Text(stringResource(R.string.wear_connection_linked_phone_offline))
+            }
+            when {
+                details.accountLinked -> Text(stringResource(R.string.wear_connection_account_linked))
+                details.pairedThroughPhone -> Text(stringResource(R.string.wear_connection_through_phone))
+            }
             details.pending?.let { pending ->
                 Text(pluralStringResource(R.plurals.wear_connection_pending, pending, pending))
             }

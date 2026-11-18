@@ -73,6 +73,20 @@ class WatchSettingsTest {
     }
 
     @Test
+    fun a_watch_that_needs_a_link_opens_the_phone_on_tap() {
+        var opened = 0
+        show(
+            WatchSettingsUiState(status = WatchStatus.NeedsDeviceLink, phoneSettingsNodeId = "phone-node"),
+            WatchSettingsActions(onOpenPhoneSettings = { opened++ }),
+        )
+
+        composeRule.onNodeWithText("Tap to finish on your phone").assertIsDisplayed()
+        composeRule.onNodeWithTag(WatchSettingsTags.STATUS).performClick()
+
+        assertEquals(1, opened)
+    }
+
+    @Test
     fun a_failing_backup_says_so_and_retries_on_tap() {
         var retries = 0
         show(WatchSettingsUiState(status = WatchStatus.BackupFailing(1)), WatchSettingsActions(onRetrySync = { retries++ }))
