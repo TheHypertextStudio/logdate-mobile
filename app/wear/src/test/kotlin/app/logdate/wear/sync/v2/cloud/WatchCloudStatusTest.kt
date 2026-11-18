@@ -48,6 +48,13 @@ class WatchCloudStatusTest {
     }
 
     @Test
+    fun `a link that went stale after its sign-in ran out still needs linking`() {
+        val movedOn = cloudLink.copy(problem = LinkProblem.SESSION_EXPIRED.name, stale = true)
+
+        assertEquals(WatchCloudPath.NEEDS_LINK, watchCloudPathOf(newAppOn = true, link = movedOn))
+    }
+
+    @Test
     fun `the engine is not built while the cloud path does not apply`() =
         runTest {
             var built = 0

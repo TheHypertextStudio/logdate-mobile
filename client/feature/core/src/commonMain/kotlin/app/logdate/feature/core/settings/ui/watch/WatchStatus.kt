@@ -116,11 +116,14 @@ sealed interface WatchIssue {
  * @property v2Active Whether the Labs switch is on and the watch advertises the version 2 capability.
  * @property watch The watch-owned section of its latest state document, or null before one arrives.
  * @property features The version 2 features the watch lists.
+ * @property relinkFailing Whether this phone's own attempt to link the watch again failed in a way only the
+ *   person can fix, such as the device limit, so a problem the phone would otherwise repair quietly is shown.
  */
 data class WatchPeerSnapshot(
     val v2Active: Boolean,
     val watch: WatchState?,
     val features: Set<String>,
+    val relinkFailing: Boolean = false,
 ) {
     companion object {
         val Inactive = WatchPeerSnapshot(v2Active = false, watch = null, features = emptySet())

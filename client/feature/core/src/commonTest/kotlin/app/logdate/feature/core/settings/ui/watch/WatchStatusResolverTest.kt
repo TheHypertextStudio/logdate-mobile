@@ -146,6 +146,16 @@ class WatchStatusResolverTest {
     }
 
     @Test
+    fun `a watch whose sign-in ran out asks to be set up again once the phone cannot renew it`() {
+        val expired = WatchState(link = PeerLinkState.NEEDS_RELINK, linkProblem = "SESSION_EXPIRED")
+
+        assertEquals(
+            WatchStatus.NeedsAttention(watchName = NAME, nearby = true, issue = WatchIssue.SetUpAgain),
+            resolve(connected, reporting(expired, WearFeatures.LINK_CLOUD).copy(relinkFailing = true)),
+        )
+    }
+
+    @Test
     fun `moments that did not send need attention`() {
         assertEquals(
             WatchStatus.NeedsAttention(watchName = NAME, nearby = false, issue = WatchIssue.CapturesNotSent(count = 2)),

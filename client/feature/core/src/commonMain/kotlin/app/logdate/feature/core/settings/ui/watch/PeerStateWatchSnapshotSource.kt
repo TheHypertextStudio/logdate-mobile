@@ -8,6 +8,7 @@ import app.logdate.client.sync.peer.state.WatchState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Reads the watch's report from the state documents the phone received, through [StateMerger] so a
@@ -18,11 +19,12 @@ class PeerStateWatchSnapshotSource(
     private val peerStates: PeerStateStore,
     private val merger: StateMerger = StateMerger(),
     private val accepts: suspend (String, WatchState) -> Boolean = { _, _ -> true },
+    private val relinkFailing: (String) -> Flow<Boolean> = { flowOf(false) },
 ) : WatchPeerSnapshotSource {
     override fun observeFor(nodeId: String): Flow<WatchPeerSnapshot> =
-        combine(gate.isV2Active(), peerStates.documents(PeerRole.WATCH)) { active, documents ->
+        combine(gate.isV2Active(), peerStates.documents(PeerRole.WATCH), relinkFailing(nodeId)) { active, documents, failing ->
             val report = merger.merge(phone = null, watch = documents[nodeId]).watch?.takeIf { accepts(nodeId, it) }
-            WatchPeerSnapshot(active, report, report?.features.orEmpty())
+            WatchPeerSnapshot(active, report, report?.features.orEmpty(), relinkFailing = failing)
         }.distinctUntilChanged()
 
     override fun observe(): Flow<WatchPeerSnapshot> =
