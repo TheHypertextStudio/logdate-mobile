@@ -35,43 +35,43 @@
     <string name="watch_linking_retrying_title">Still connecting to %1$s</string>
     <string
     name="watch_linking_retrying_description"
-  >LogDate keeps trying by itself. If this lasts, open LogDate on your watch, then try again.</string>
+  >LogDate keeps trying on its own. Make sure LogDate is open on your watch.</string>
     <string name="watch_linking_another_account_title">%1$s uses another account</string>
     <string
     name="watch_linking_another_account_description"
-  >Remove LogDate&apos;s data on the watch, or sign in to that account on this phone, then try again.</string>
-    <string name="watch_linking_device_limit_title">Your account is at its device limit</string>
+  >Sign in to that account here, or clear LogDate&apos;s data on your watch to start fresh.</string>
+    <string name="watch_linking_device_limit_title">You&apos;ve reached your device limit</string>
     <string
     name="watch_linking_device_limit_description"
-  >Remove a device you no longer use from your account, then try again.</string>
-    <string name="watch_linking_set_up_again_title">%1$s couldn&apos;t finish setting up</string>
-    <string name="watch_linking_set_up_again_description">Open LogDate on your watch, then try again.</string>
+  >Remove a device you don&apos;t use anymore, then try again.</string>
+    <string name="watch_linking_set_up_again_title">%1$s didn&apos;t finish setting up</string>
+    <string name="watch_linking_set_up_again_description">Open LogDate on your watch, then tap Try again.</string>
     <string name="watch_linking_removed_title">LogDate is off on %1$s</string>
     <string
     name="watch_linking_removed_description"
-  >You removed this watch. Set it up again to capture moments from your wrist.</string>
+  >You turned LogDate off on this watch. Set it up again to keep capturing moments.</string>
     <string name="watch_linking_try_again">Try again</string>
     <string name="watch_linking_set_up_again_action">Set up again</string>
     <string name="watch_setup_install_title">LogDate on %1$s</string>
     <string
     name="watch_setup_install_description"
-  >Install LogDate from Play on your watch, then open it.</string>
+  >Get LogDate from Google Play on your watch, then open it.</string>
     <string name="watch_setup_install_action">Open Play</string>
-    <string name="watch_setup_sent">Check your watch for Play.</string>
+    <string name="watch_setup_sent">Check your watch to finish installing.</string>
     <string name="watch_connected">Connected</string>
     <string name="watch_out_of_range">Out of range</string>
     <string name="watch_unsupported">This device can&apos;t connect to a watch</string>
     <string name="watch_link_through_phone">Syncs through this phone</string>
     <string name="watch_link_on_its_own">Backs up on its own over Wi-Fi or mobile data</string>
     <string name="watch_window_days">%1$d days of moments on your watch</string>
-    <string name="watch_attention_set_up_again">Set up LogDate on your watch again</string>
+    <string name="watch_attention_set_up_again">Reconnect your watch</string>
     <string
     name="watch_attention_set_up_again_description"
-  >Your watch is no longer connected to your account. Open LogDate on your watch while it&apos;s near this phone.</string>
+  >Open LogDate on your watch while it&apos;s near this phone.</string>
     <string name="watch_attention_not_sent">%1$d moments on your watch didn&apos;t send</string>
     <string
     name="watch_attention_not_sent_description"
-  >Your watch tries again on its own. Bring it close to this phone with Bluetooth on.</string>
+  >Your watch keeps trying. Keep it near this phone with Bluetooth on.</string>
 
     <!-- Watch sync -->
     <string name="watch_sync">Sync</string>

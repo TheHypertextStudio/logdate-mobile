@@ -128,7 +128,7 @@ class WatchSettingsStatusTest {
         runDesktopComposeUiTest(width = 411, height = 1600) {
             setContent { WatchPage(WatchStatus.NeedsAttention(watchName = "Pixel Watch", nearby = true, issue = WatchIssue.SetUpAgain)) }
 
-            onNodeWithText("Set up LogDate on your watch again").assertExists()
+            onNodeWithText("Reconnect your watch").assertExists()
         }
 }
 
