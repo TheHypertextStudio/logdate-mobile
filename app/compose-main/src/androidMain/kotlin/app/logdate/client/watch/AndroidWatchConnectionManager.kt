@@ -100,8 +100,8 @@ class AndroidWatchConnectionManager(
 
     /**
      * Says how linking a watch that has LogDate is going, and links it at once the first time the phone
-     * sees it unlinked, instead of leaving it behind a wait from an earlier failure. A watch the person
-     * removed stays removed until they set it up again.
+     * sees it unlinked, instead of leaving it behind a wait from an earlier failure. Only a failure that passes
+     * by itself is retried this way; one that needs the person, or a watch they removed, waits for them.
      */
     private suspend fun withLinkStatus(state: WatchConnectionState): WatchConnectionState {
         if (state !is WatchConnectionState.NeedsAssociation || state.linking == null) return state
@@ -115,7 +115,8 @@ class AndroidWatchConnectionManager(
                 Napier.w("Could not read how linking ${state.watchName} is going", e)
                 WatchLinking()
             }
-        if (linking.problem != WatchLinkProblem.REMOVED && retriedNodes.add(node)) {
+        val passesByItself = linking.problem == null || linking.problem == WatchLinkProblem.RETRYING
+        if (passesByItself && retriedNodes.add(node)) {
             linkingScope?.launch {
                 try {
                     retryWatch(node)
@@ -137,7 +138,7 @@ class AndroidWatchConnectionManager(
     override suspend fun beginAssociation() {
         if (verifiedAppNodes.first() != null) {
             // Every watch running LogDate, not only a lone connected node: a second node made this return silently.
-            val watches = connectedWatches() ?: return
+            val watches = checkNotNull(connectedWatches()) { "Couldn't look up the connected watches" }
             watches.withApp.ifEmpty { watches.withoutApp }.forEach { prepareWatch(it.id) }
         } else {
             associationManager.beginAssociation()

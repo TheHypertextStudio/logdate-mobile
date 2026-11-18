@@ -40,8 +40,9 @@ fun watchCloudPathOf(
     link: WatchLinkRecord?,
 ): WatchCloudPath {
     if (!newAppOn || link == null) return WatchCloudPath.UNUSED
+    if (link.stale) return WatchCloudPath.NEEDS_LINK
     if (link.problem == LinkProblem.SESSION_EXPIRED.name) return WatchCloudPath.UNUSED
-    if (link.stale || link.problem != null) return WatchCloudPath.NEEDS_LINK
+    if (link.problem != null) return WatchCloudPath.NEEDS_LINK
     if (link.mode != LinkMode.CLOUD || link.installing) return WatchCloudPath.UNUSED
     return WatchCloudPath.ACTIVE
 }

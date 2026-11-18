@@ -74,6 +74,7 @@ object WatchStatusResolver {
         issue(
             watch,
             features,
+            peer.relinkFailing,
         )?.let { return WatchStatus.NeedsAttention(watchName = watchName, nearby = nearby, issue = it, nodeId = nodeId) }
         return WatchStatus.Ready(
             watchName = watchName,
@@ -89,11 +90,13 @@ object WatchStatusResolver {
     private fun issue(
         watch: WatchState?,
         features: Set<String>,
+        relinkFailing: Boolean,
     ): WatchIssue? {
         if (watch == null) return null
+        // A sign-in that ran out is renewed by this phone on its own, unless that renewal is failing.
         if (WearFeatures.LINK_CLOUD in features &&
             watch.link == PeerLinkState.NEEDS_RELINK &&
-            watch.linkProblem != LinkProblem.SESSION_EXPIRED.name
+            (watch.linkProblem != LinkProblem.SESSION_EXPIRED.name || relinkFailing)
         ) {
             return WatchIssue.SetUpAgain
         }

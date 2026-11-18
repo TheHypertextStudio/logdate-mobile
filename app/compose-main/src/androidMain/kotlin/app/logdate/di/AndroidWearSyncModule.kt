@@ -28,6 +28,7 @@ import app.logdate.client.sync.peer.state.PeerRole
 import app.logdate.client.sync.peer.state.PeerStateStore
 import app.logdate.client.sync.peer.state.StateDocumentChannel
 import app.logdate.client.sync.v2.PhonePeerLink
+import app.logdate.client.sync.v2.link.PhoneWatchLinkStore
 import app.logdate.client.sync.v2.receipts.PhoneDeliveryPeers
 import app.logdate.client.watch.AndroidCompanionDeviceClient
 import app.logdate.client.watch.AndroidWatchConnectionManager
@@ -52,6 +53,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -117,10 +120,18 @@ internal val androidWearSyncModule: Module =
         }
         single<WatchPeerSnapshotSource> {
             val peers = get<PhoneDeliveryPeers>()
-            PeerStateWatchSnapshotSource(gate = get(), peerStates = get(), accepts = { node, report ->
-                val current = peers.current(node)
-                current != null && report.linkId == current.linkId
-            })
+            val links = get<PhoneWatchLinkStore>()
+            PeerStateWatchSnapshotSource(
+                gate = get(),
+                peerStates = get(),
+                accepts = { node, report ->
+                    val current = peers.current(node)
+                    current != null && report.linkId == current.linkId
+                },
+                relinkFailing = { node ->
+                    links.observe().map { it[node]?.failure?.needsAttention == true }.distinctUntilChanged()
+                },
+            )
         }
 
         single<CoroutineDispatcher>(watchConnectionIoDispatcherQualifier) { Dispatchers.IO }
@@ -159,14 +170,14 @@ internal val androidWearSyncModule: Module =
                 verifiedAppNodes =
                     combine(
                         get<FeatureFlagStore>().observe(FeatureFlag.WATCH_EXPERIENCE_V2),
-                        get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>().observe(),
+                        get<PhoneWatchLinkStore>().observe(),
                         get<app.logdate.client.datastore.SessionStorage>().getSessionFlow(),
                         get<app.logdate.shared.config.LogDateConfigRepository>().backendUrl,
                     ) { enabled, links, _, _ ->
                         if (enabled) links.keys.filter { get<PhoneDeliveryPeers>().current(it) != null }.toSet() else null
                     },
                 linkStatus = { node ->
-                    val links = get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>()
+                    val links = get<PhoneWatchLinkStore>()
                     WatchLinking(
                         if (links.removalSuppressed(node)) {
                             WatchLinkProblem.REMOVED
@@ -176,13 +187,13 @@ internal val androidWearSyncModule: Module =
                     )
                 },
                 retryWatch = { node ->
-                    get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>().retryNow(node)
+                    get<PhoneWatchLinkStore>().retryNow(node)
                     get<app.logdate.client.sync.v2.link.PhoneLinkInitiator>().reconcileNow()
                 },
                 linkingScope = get<CoroutineScope>(),
                 prepareWatch = { node ->
                     get<app.logdate.client.sync.v2.PhoneStatePublisher>().refresh()
-                    val links = get<app.logdate.client.sync.v2.link.PhoneWatchLinkStore>()
+                    val links = get<PhoneWatchLinkStore>()
                     links.allowRelink(node)
                     links.retryNow(node)
                     get<app.logdate.client.sync.v2.link.PhoneLinkInitiator>().reconcileNow()

@@ -223,6 +223,26 @@ class AndroidWatchConnectionManagerTest {
         }
 
     @Test
+    fun `a failure only the person can fix is not retried just because the page opened`() =
+        runTest {
+            connected(withLogDate)
+            listening()
+            val retried = mutableListOf<String>()
+            val manager =
+                manager(
+                    verifiedAppNodes = flowOf(emptySet()),
+                    linkStatus = { WatchLinking(WatchLinkProblem.DEVICE_LIMIT) },
+                    retryWatch = { retried += it },
+                    linkingScope = backgroundScope,
+                )
+
+            manager.observeConnectionState().first()
+            runCurrent()
+
+            assertTrue(retried.isEmpty())
+        }
+
+    @Test
     fun `a watch the person removed is not linked again until they ask`() =
         runTest {
             connected(withLogDate)
