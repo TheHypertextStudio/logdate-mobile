@@ -2066,6 +2066,16 @@ private suspend fun ApplicationCall.respondDeviceRefresh(
             return false
         }
 
+        DeviceSessionRefresh.Expired -> {
+            respondApiError(
+                HttpStatusCode.Unauthorized,
+                DeviceLinkErrorCodes.DEVICE_SESSION_EXPIRED,
+                "This device's session ran out after going unused; its phone links it again",
+                metrics,
+            )
+            return false
+        }
+
         is DeviceSessionRefresh.Refreshed -> {
             respond(HttpStatusCode.OK, RefreshTokenResponseV1(true, RefreshTokenDataV1(refreshed.accessToken, refreshed.refreshToken)))
         }

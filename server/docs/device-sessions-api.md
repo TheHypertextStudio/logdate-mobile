@@ -68,7 +68,7 @@ milliseconds since the Unix epoch.
 | `device_name`       | `VARCHAR(120)`                                         | The name the device gave when it redeemed the code, shown to the account owner.                                  |
 | `platform`          | `VARCHAR(32)`                                          | A short lowercase identifier. The watch sends `wear_os`.                                                         |
 | `created_at`        | `BIGINT`                                               | When the code was redeemed.                                                                                      |
-| `last_refreshed_at` | `BIGINT`                                               | When the session's expiry was last moved. It is set at creation and on each renewal, not on every token refresh. |
+| `last_refreshed_at` | `BIGINT`                                               | When the device last showed it was in use. It is set at creation, on each renewal, and by a token refresh at most once an hour. |
 | `expires_at`        | `BIGINT`                                               | When the session stops working unless it is renewed first.                                                       |
 | `revoked_at`        | `BIGINT`, nullable                                     | When the session was removed. A removed session keeps its row.                                                   |
 
@@ -165,11 +165,11 @@ The server omits response fields that equal their default value, so `"current": 
 | ------------------------------ | -------------------------------------------------------------------- |
 | `401 INVALID_TOKEN`            | The token is missing, malformed or expired.                          |
 | `403 DEVICE_SCOPE_DENIED`      | A device token was sent. A linked device cannot link another device. |
-| `409 DEVICE_LIMIT_REACHED`     | The account already has five active device sessions.                 |
+| `409 DEVICE_LIMIT_REACHED`     | The account already has five active device sessions in use.          |
 | `429 DEVICE_LINK_RATE_LIMITED` | The account minted ten codes in the last hour.                       |
 
 The device limit is checked before the hourly limit, so an account at five devices always sees
-`409`.
+`409`. A session whose `last_refreshed_at` is 14 or more days old is idle and doesn't count here.
 
 ### Redeem a link code
 
@@ -200,8 +200,12 @@ The device limit is checked before the hourly limit, so an account at five devic
 | `400 INVALID_REQUEST`      | The body is not the expected JSON.                                                                                          |
 | `400 LINK_CODE_INVALID`    | The code is not 32 bytes of canonical Base64, is unknown, has expired, or was already spent. The server does not say which. |
 | `400 VALIDATION_ERROR`     | `deviceName` or `platform` is invalid. The code is not spent.                                                               |
-| `409 DEVICE_LIMIT_REACHED` | The account reached five active device sessions after the code was minted. The code is not spent.                           |
+| `409 DEVICE_LIMIT_REACHED` | The account reached five device sessions in use after the code was minted. The code is not spent.                           |
 | `429 RATE_LIMIT_EXCEEDED`  | More than ten redeem requests came from one client address within 60 seconds.                                               |
+
+Idle sessions (14 or more days since `last_refreshed_at`) don't count toward the five here either.
+The server never revokes an idle session to make room: an idle device stays signed in, and takes a
+place again once it refreshes.
 
 A code works exactly once. The store makes that true with a guarded update inside one transaction:
 it reads the code row, then runs an update that only matches while `redeemed_at` is null and
@@ -258,8 +262,10 @@ idempotent, so either answer means the session is ended.
 
 `POST /auth/token/refresh` accepts a device refresh token in the same request body as any other
 refresh token. For a device token the server reads the session from the store on every call; it
-never uses the cache described below. If the session is missing, removed, expired or belongs to a
-different account, the answer is `401 DEVICE_SESSION_REVOKED`. Otherwise the response carries a new
+never uses the cache described below. If the session is missing, removed or belongs to a different
+account, the answer is `401 DEVICE_SESSION_REVOKED`, and the device erases what it holds. If the
+session ran out without being removed, the answer is `401 DEVICE_SESSION_EXPIRED`: the device keeps
+its data and waits for its phone to link it again. Otherwise the response carries a new
 access token, and, only when the session had less than 15 days left, a new refresh token as well:
 
 ```json
@@ -267,8 +273,9 @@ access token, and, only when the session had less than 15 days left, a new refre
 ```
 
 A device must store `refreshToken` whenever it is present. Renewal moves `expires_at` to 30 days
-from now, so a watch that syncs at least once every 30 days stays linked indefinitely, and a watch
-that is switched off for longer has to be linked again. A refresh does not invalidate the refresh
+from now, so a watch that syncs at least once every 30 days stays linked indefinitely. A watch that
+is switched off for longer finds its session or refresh token ended, keeps its data, and is linked
+again by its phone without the person doing anything. A refresh does not invalidate the refresh
 token it used, so a response that is lost in transit leaves the watch with a token that still
 works.
 
@@ -374,6 +381,7 @@ and to treat itself as unlinked. A server or test fixture built without a sessio
 | Device name                                               | 1 to 120 characters after trimming, no control characters | `DeviceLinkService.MAX_DEVICE_NAME_LENGTH`                              |
 | Platform                                                  | `[a-z][a-z0-9_]{0,31}`                                    | `DeviceLinkService.PLATFORM`                                            |
 | Device session lifetime                                   | 30 days                                                   | `DeviceLinkService.SESSION_LIFETIME_MS`                                 |
+| Idle session, not counted toward the device limit         | 14 days without a refresh                                 | `DeviceLinkService.IDLE_DEVICE_AFTER_MS`                                |
 | Renewal window                                            | A refresh with less than 15 days left renews the session  | `DeviceLinkService.SESSION_RENEWAL_WINDOW_MS`                           |
 | Access token lifetime                                     | 1 hour                                                    | `JwtTokenService.ACCESS_TOKEN_DURATION`                                 |
 | Refresh token lifetime                                    | 30 days                                                   | `JwtTokenService.REFRESH_TOKEN_DURATION`                                |

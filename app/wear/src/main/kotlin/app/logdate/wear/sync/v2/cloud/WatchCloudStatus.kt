@@ -6,6 +6,7 @@ import app.logdate.client.sync.SyncManager
 import app.logdate.client.sync.SyncPausedReason
 import app.logdate.client.sync.SyncStatus
 import app.logdate.client.sync.datalayer.v2.LinkMode
+import app.logdate.client.sync.peer.link.LinkProblem
 import app.logdate.wear.sync.v2.link.WatchLinkRecord
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,13 +32,15 @@ enum class WatchCloudPath {
 
 /**
  * The cloud path for [link] while the new watch app is [newAppOn]. An account link that is still being
- * installed is left out: the engine has no session yet, and that is not a problem to report.
+ * installed is left out: the engine has no session yet, and that is not a problem to report. Nor is a
+ * sign-in that ran out, which the phone renews on its own.
  */
 fun watchCloudPathOf(
     newAppOn: Boolean,
     link: WatchLinkRecord?,
 ): WatchCloudPath {
     if (!newAppOn || link == null) return WatchCloudPath.UNUSED
+    if (link.problem == LinkProblem.SESSION_EXPIRED.name) return WatchCloudPath.UNUSED
     if (link.stale || link.problem != null) return WatchCloudPath.NEEDS_LINK
     if (link.mode != LinkMode.CLOUD || link.installing) return WatchCloudPath.UNUSED
     return WatchCloudPath.ACTIVE

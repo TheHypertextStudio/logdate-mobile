@@ -33,7 +33,6 @@ import app.logdate.client.sync.cloud.DefaultCloudDraftDataSource
 import app.logdate.client.sync.cloud.DefaultCloudJournalDataSource
 import app.logdate.client.sync.cloud.DefaultCloudMediaDataSource
 import app.logdate.client.sync.cloud.DefaultCloudMomentDataSource
-import app.logdate.client.sync.cloud.DeviceSessionRevocationListener
 import app.logdate.client.sync.cloud.LogDateCloudApiClient
 import app.logdate.client.sync.cloud.account.ServerAccountStorageMode
 import app.logdate.client.sync.cloud.account.ServerAccountStore
@@ -72,6 +71,8 @@ import app.logdate.shared.model.CloudAccountRepository
 import app.logdate.shared.model.ServerProtocolFeature
 import app.logdate.wear.sync.v2.cloud.WatchCloudAccountRepository
 import app.logdate.wear.sync.v2.delivery.ReleasedToCloud
+import app.logdate.wear.sync.v2.link.WatchLinkStore
+import app.logdate.wear.sync.v2.link.WatchSessionEndHandler
 import org.koin.core.qualifier.named
 import org.koin.core.scope.Scope
 import org.koin.dsl.module
@@ -210,7 +211,8 @@ private fun Scope.watchCloudEngine(): DefaultSyncManager {
         syncRouteStore = KeyValueSyncRouteStore(storage),
         downloadInbox = get(WatchCloud),
         momentSyncConfig = get(WatchCloud),
-        deviceSessionRevocationListener = DeviceSessionRevocationListener { get<app.logdate.wear.sync.v2.removal.WatchDataWiper>().wipe() },
+        deviceSessionRevocationListener =
+            WatchSessionEndHandler(get<WatchLinkStore>()) { get<app.logdate.wear.sync.v2.removal.WatchDataWiper>().wipe() },
         profile = SyncProfile.LinkedWatch(RecentCaptureFilter(RECENT_CAPTURES)),
         spaceSync = space,
     )

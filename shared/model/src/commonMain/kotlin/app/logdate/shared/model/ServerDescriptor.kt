@@ -29,8 +29,8 @@ object ServerProtocolFeature {
 
     /**
      * Devices link to an account with a one-time code and no sign-in (`/auth/devices`). Their tokens contain
-     * `sid` and `scp=sync`, refreshes check that the session still exists, and removed devices answer
-     * `401 DEVICE_SESSION_REVOKED`.
+     * `sid` and `scp=sync`, refreshes check that the session still exists, removed devices answer
+     * `401 DEVICE_SESSION_REVOKED`, and devices whose session ran out unused answer `401 DEVICE_SESSION_EXPIRED`.
      */
     const val DEVICE_LINKING_V1 = "deviceLinkingV1"
 

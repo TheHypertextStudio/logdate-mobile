@@ -34,7 +34,7 @@ private val scopeDenied =
 private val deviceLimit =
     ErrorCase(
         DeviceLinkErrorCodes.DEVICE_LIMIT_REACHED,
-        "The account already has five linked devices. Remove one, then try again.",
+        "The account already has five linked devices in use. Remove one, then try again.",
         "This account already has 5 linked devices",
     )
 private val pixelWatch =
@@ -60,7 +60,7 @@ internal object DeviceLinkDocs {
             expires at `expiresAt`, two minutes after it is minted; the server stores only a hash of it.
 
             Only a full sign-in can mint codes. An account has at most five linked devices and mints at most
-            ten codes an hour.
+            ten codes an hour. A device that hasn't refreshed for 14 days stays linked but doesn't count toward the five.
             """,
         )
         response {

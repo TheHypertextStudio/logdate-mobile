@@ -92,6 +92,21 @@ class DeviceSessionRevocationTest {
             assertEquals(HttpStatusCode.OK, client.refreshTokens(newRefresh).status)
         }
 
+    @Test
+    fun `a session that ran out unused answers expired rather than removed`() =
+        testApplication {
+            val clock = MutableClock(Instant.parse("2026-10-03T12:00:00Z"))
+            val kit = configureDeviceLinkTestApp(tokenService, clock)
+            val watch = kit.linkWatch(kit.newAccount("expire_owner"))
+
+            clock.nowValue += 31.days
+            assertApiErrorCode(
+                client.refreshTokens(watch.tokens.refreshToken),
+                HttpStatusCode.Unauthorized,
+                DeviceLinkErrorCodes.DEVICE_SESSION_EXPIRED,
+            )
+        }
+
     private suspend fun HttpClient.putNote(
         bearer: String,
         id: String,

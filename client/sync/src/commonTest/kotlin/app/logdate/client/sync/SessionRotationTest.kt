@@ -12,6 +12,7 @@ import app.logdate.client.sync.test.fakeCloudApiClient
 import app.logdate.client.sync.test.fakeSessionStorage
 import app.logdate.client.sync.test.testDefaultSyncManager
 import app.logdate.shared.model.CloudAccountRepository
+import app.logdate.shared.model.devices.DeviceLinkErrorCodes
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,7 +21,8 @@ import kotlin.test.assertNull
 
 /**
  * A linked watch's session slides forward and its refresh token rotates, so the new one has to be
- * stored; and when the session is revoked, the watch must learn it at once to stop and erase itself.
+ * stored; and when the session is revoked, the watch must learn it at once to stop and erase itself, while a
+ * session that only ran out must never be mistaken for a removal.
  */
 class SessionRotationTest {
     @Test
@@ -70,21 +72,24 @@ class SessionRotationTest {
         }
 
     @Test
-    fun `an expired refresh token signs out without reporting a revoked device`() =
+    fun `an expired refresh token or session signs out and is reported as ended and never revoked`() =
         runTest {
-            val sessionStorage = fakeSessionStorage()
-            var revocations = 0
-            val refresher =
-                SyncTokenRefresher(
-                    sessionStorage,
-                    RotatingAccountRepository(Result.failure(CloudApiException("INVALID_REFRESH_TOKEN", "expired", statusCode = 401))),
-                    DeviceSessionRevocationListener { revocations++ },
-                )
+            listOf("INVALID_REFRESH_TOKEN", DeviceLinkErrorCodes.DEVICE_SESSION_EXPIRED).forEach { code ->
+                val sessionStorage = fakeSessionStorage()
+                val listener = CountingListener()
+                val refresher =
+                    SyncTokenRefresher(
+                        sessionStorage,
+                        RotatingAccountRepository(Result.failure(CloudApiException(code, "expired", statusCode = 401))),
+                        listener,
+                    )
 
-            refresher.withFreshToken(::rejectTheFirstToken, "probe")
+                refresher.withFreshToken(::rejectTheFirstToken, "probe")
 
-            assertNull(sessionStorage.getSession())
-            assertEquals(0, revocations)
+                assertNull(sessionStorage.getSession(), code)
+                assertEquals(0, listener.revoked, code)
+                assertEquals(1, listener.ended, code)
+            }
         }
 
     @Test
@@ -135,6 +140,19 @@ class SessionRotationTest {
         } else {
             Result.success(token)
         }
+
+    private class CountingListener : DeviceSessionRevocationListener {
+        var revoked = 0
+        var ended = 0
+
+        override suspend fun onDeviceSessionRevoked() {
+            revoked++
+        }
+
+        override suspend fun onDeviceSessionEnded() {
+            ended++
+        }
+    }
 
     private class RotatingAccountRepository(
         private val result: Result<RefreshedSession>,

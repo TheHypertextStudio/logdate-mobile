@@ -35,6 +35,9 @@ enum class LinkProblem {
     NETWORK,
     INTERRUPTED,
     SESSION_REVOKED,
+
+    /** The device's own sign-in ran out unused. Nothing is wrong: its phone links it again without asking anyone. */
+    SESSION_EXPIRED,
 }
 
 /** An owner and the server its rows belong to. */

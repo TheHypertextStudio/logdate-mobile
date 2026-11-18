@@ -15,7 +15,10 @@ sealed interface PhoneLinkDecision {
     /** The watch reports the link the phone made; the phone shows its one confirmation. */
     data object Confirm : PhoneLinkDecision
 
-    /** The watch could not install the phone's last account link; the phone records why and waits. */
+    /**
+     * The watch could not install the phone's last account link; the phone records why and waits. A watch
+     * whose own sign-in only ran out is linked again at once instead, with nothing shown.
+     */
     data class WatchProblem(
         val failure: PhoneLinkFailure,
     ) : PhoneLinkDecision
@@ -41,6 +44,9 @@ sealed interface PhoneLinkDecision {
             val fresh = document != null && document.writtenAt > record.seenWatchDocAt
             val belongsToExchange = watch?.linkId == record.linkId
             val problem = watch?.linkProblem
+            if (fresh && belongsToExchange && watch.link == PeerLinkState.NEEDS_RELINK && problem == LinkProblem.SESSION_EXPIRED.name) {
+                return Exchange
+            }
             if (fresh && belongsToExchange && watch.link == PeerLinkState.NEEDS_RELINK && problem != null) {
                 return WatchProblem(failureFor(problem))
             }
