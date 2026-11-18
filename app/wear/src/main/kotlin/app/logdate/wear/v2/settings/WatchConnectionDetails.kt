@@ -14,7 +14,17 @@ data class WatchConnectionDetails(
     val pairedThroughPhone: Boolean = false,
     val pending: Int? = null,
     val lastSync: Instant? = null,
-)
+) {
+    /** False while every check is still unanswered and nothing has synced, when the card would say nothing useful. */
+    fun hasFacts(): Boolean =
+        phone != PhoneLink.Unknown ||
+            verifiedPhone ||
+            linkedPhoneOffline ||
+            accountLinked ||
+            pairedThroughPhone ||
+            pending != null ||
+            lastSync != null
+}
 
 /** [current] is supplied only by WatchDeliveryPeer.current, which checks the active identity scope. */
 fun watchConnectionDetails(

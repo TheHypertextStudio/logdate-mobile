@@ -68,8 +68,8 @@ class WatchSettingsTest {
     fun a_watch_that_needs_a_link_says_to_set_it_up_from_the_phone() {
         show(WatchSettingsUiState(status = WatchStatus.NeedsDeviceLink))
 
-        composeRule.onNodeWithText("Set up this watch from your phone").assertIsDisplayed()
-        composeRule.onNodeWithText("This watch can’t sync until LogDate on your phone sets it up again").assertIsDisplayed()
+        composeRule.onNodeWithText("Finish setup on phone").assertIsDisplayed()
+        composeRule.onNodeWithText("Bring your phone nearby so this watch can sync").assertIsDisplayed()
     }
 
     @Test
@@ -80,7 +80,7 @@ class WatchSettingsTest {
             WatchSettingsActions(onOpenPhoneSettings = { opened++ }),
         )
 
-        composeRule.onNodeWithText("Tap to finish on your phone").assertIsDisplayed()
+        composeRule.onNodeWithText("Finish setup on phone").assertIsDisplayed()
         composeRule.onNodeWithTag(WatchSettingsTags.STATUS).performClick()
 
         assertEquals(1, opened)
