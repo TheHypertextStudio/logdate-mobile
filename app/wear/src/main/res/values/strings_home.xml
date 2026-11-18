@@ -30,8 +30,8 @@
     <string name="wear_today_activity_dismiss">Not now</string>
     <string name="wear_today_voice_first">Record a voice note</string>
     <string name="wear_today_setup_phone_title">Finish setting up your watch</string>
-    <string name="wear_today_setup_phone_body">Open LogDate on your phone to sync moments from this watch.</string>
-    <string name="wear_today_setup_phone_failed">Couldn’t open LogDate on your phone. Try again.</string>
+    <string name="wear_today_setup_phone_body">Tap to finish on your phone</string>
+    <string name="wear_today_setup_phone_failed">Couldn’t reach your phone. Tap to try again.</string>
     <string name="wear_today_record">Record</string>
     <string name="wear_today_mark">Mark</string>
     <string name="wear_today_add">Add</string>

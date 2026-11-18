@@ -16,6 +16,7 @@
     <string
     name="wear_settings_needs_link_body"
   >This watch can’t sync until LogDate on your phone sets it up again</string>
+    <string name="wear_settings_needs_link_action">Tap to finish on your phone</string>
     <string name="wear_settings_haptics_all">All haptics</string>
     <string name="wear_settings_haptics_all_body">Crown ticks and saves too</string>
     <string name="wear_settings_haptics_essential">Essential haptics</string>
@@ -33,14 +34,11 @@
     <string name="wear_connection_title">Phone and LogDate</string>
     <string name="wear_connection_phone_reachable">%1$s is reachable</string>
     <string name="wear_connection_phone_offline">Phone not reachable</string>
-    <string name="wear_connection_phone_unknown">Phone connection not verified</string>
     <string name="wear_connection_phone_unsupported">Phone connection unavailable</string>
     <string name="wear_connection_peer_verified">Verified LogDate phone link</string>
     <string name="wear_connection_linked_phone_offline">Your linked phone is not reachable</string>
-    <string name="wear_connection_peer_unknown">LogDate phone link not verified</string>
     <string name="wear_connection_account_linked">Linked to your LogDate account</string>
     <string name="wear_connection_through_phone">Syncs through your phone</string>
-    <string name="wear_connection_account_unknown">LogDate account link not verified</string>
     <plurals name="wear_connection_pending">
         <item quantity="one">%d upload waiting</item>
         <item quantity="other">%d uploads waiting</item>
