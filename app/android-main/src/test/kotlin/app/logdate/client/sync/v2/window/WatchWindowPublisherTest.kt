@@ -56,6 +56,7 @@ class WatchWindowPublisherTest {
     private val storage = MemoryKeyValueStorage()
     private val items = FakeWindowItems()
     private val active = MutableStateFlow(true)
+    private val linked = MutableStateFlow(true)
     private val deadlines = mutableListOf<Long>()
     private var cancelled = false
     private val work =
@@ -84,6 +85,7 @@ class WatchWindowPublisherTest {
                 object : Clock {
                     override fun now(): Instant = now
                 },
+            linked = linked,
         )
     private val recent = text("written yesterday", start - 1.days)
     private val old = text("written long ago", start - 400.days)
@@ -159,6 +161,23 @@ class WatchWindowPublisherTest {
             assertEquals(1, notesFlow.subscriptionCount.value)
 
             active.value = false
+            runCurrent()
+            assertEquals(0, notesFlow.subscriptionCount.value)
+        }
+
+    @Test
+    fun `notes are not read while no watch is linked`() =
+        runTest {
+            linked.value = false
+            publisher.start(backgroundScope)
+            runCurrent()
+            assertEquals(0, notesFlow.subscriptionCount.value)
+
+            linked.value = true
+            runCurrent()
+            assertEquals(1, notesFlow.subscriptionCount.value)
+
+            linked.value = false
             runCurrent()
             assertEquals(0, notesFlow.subscriptionCount.value)
         }
