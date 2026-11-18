@@ -80,6 +80,14 @@ class WatchSettingsScreenshots {
     fun S08_SettingsRemindersEveningOnly() {
         SettingsScene(WatchSettingsUiState(reminders = RemindersSetting(enabled = true)), anchorItem = 4)
     }
+
+    @PreviewTest
+    @WearScreenshotPreviewMatrix
+    @WearLargeFontPreview
+    @Composable
+    fun S09_SettingsNeedsPhoneToLink() {
+        SettingsScene(WatchSettingsUiState(status = WatchStatus.NeedsDeviceLink))
+    }
 }
 
 @Composable
