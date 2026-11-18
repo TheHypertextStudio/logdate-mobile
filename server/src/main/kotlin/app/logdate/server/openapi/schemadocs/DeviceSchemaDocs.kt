@@ -116,7 +116,7 @@ internal object DeviceSchemaDocs {
                         "deviceName" to "The name the device sent when it was linked.",
                         "platform" to "The device type, such as `wear_os`.",
                         "createdAt" to "When the device was linked, in Unix epoch milliseconds.",
-                        "lastRefreshedAt" to "When its session was last renewed, in Unix epoch milliseconds.",
+                        "lastRefreshedAt" to "When the device last used its session, recorded at most hourly, in Unix epoch milliseconds.",
                         "expiresAt" to "When its session ends unless renewed, in Unix epoch milliseconds.",
                         "current" to "`true` on the entry for the device that made the request; absent otherwise.",
                     ),

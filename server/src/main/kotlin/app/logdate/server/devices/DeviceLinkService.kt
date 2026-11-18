@@ -146,7 +146,7 @@ class DeviceLinkService(
         if (!session.isActive(now)) return DeviceSessionRefresh.Expired
         val accessToken = tokenService.generateDeviceAccessToken(claims.accountId, claims.did, session.id.toString())
         if (session.expiresAt - now >= SESSION_RENEWAL_WINDOW_MS) {
-            if (now - session.lastRefreshedAt >= ACTIVITY_RECORD_INTERVAL_MS && !repository.extend(session.id, session.expiresAt, now)) {
+            if (now - session.lastRefreshedAt >= ACTIVITY_RECORD_INTERVAL_MS && !repository.touch(session.id, now)) {
                 return DeviceSessionRefresh.Revoked
             }
             return DeviceSessionRefresh.Refreshed(accessToken, refreshToken = null)

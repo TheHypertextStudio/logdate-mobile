@@ -140,7 +140,7 @@ class PostgreSQLDeviceSessionRepositoryTest {
             repository.listActive(owner, later).map(DeviceSession::id),
         )
 
-        assertTrue(repository.extend(oldest.id, oldest.expiresAt, later + 10))
+        assertTrue(repository.touch(oldest.id, later + 10))
         val pending = randomHash()
         repository.createLinkCode(DeviceLinkCode(pending, owner, later, later + 120_000), roomy)
         assertEquals(
@@ -171,6 +171,13 @@ class PostgreSQLDeviceSessionRepositoryTest {
         assertEquals(now + 60, extended?.lastRefreshedAt)
         assertEquals(listOf(live.id), repository.listActive(owner, now + 9_999_998).map(DeviceSession::id))
         assertTrue(repository.listActive(owner, now + 9_999_999).isEmpty())
+
+        assertTrue(repository.touch(live.id, now + 70))
+        val touched = repository.find(live.id)
+        assertEquals(now + 9_999_999, touched?.expiresAt, "recording activity never moves expiry")
+        assertEquals(now + 70, touched?.lastRefreshedAt)
+        repository.revoke(owner, live.id, now + 80)
+        assertFalse(repository.touch(live.id, now + 90))
     }
 
     private suspend fun redeemOne(

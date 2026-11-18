@@ -108,6 +108,15 @@ interface DeviceSessionRepository {
         expiresAt: Long,
         now: Long,
     ): Boolean
+
+    /**
+     * Records that an unrevoked session was used at [now] without touching its expiry, so it can't undo a renewal
+     * that commits at the same time; false when the session is gone or revoked.
+     */
+    suspend fun touch(
+        sessionId: UUID,
+        now: Long,
+    ): Boolean
 }
 
 class InMemoryDeviceSessionRepository : DeviceSessionRepository {
@@ -193,6 +202,16 @@ class InMemoryDeviceSessionRepository : DeviceSessionRepository {
         synchronized(lock) {
             val existing = sessions[sessionId]?.takeIf { it.revokedAt == null } ?: return@synchronized false
             sessions[sessionId] = existing.copy(expiresAt = expiresAt, lastRefreshedAt = now)
+            true
+        }
+
+    override suspend fun touch(
+        sessionId: UUID,
+        now: Long,
+    ): Boolean =
+        synchronized(lock) {
+            val existing = sessions[sessionId]?.takeIf { it.revokedAt == null } ?: return@synchronized false
+            sessions[sessionId] = existing.copy(lastRefreshedAt = now)
             true
         }
 
