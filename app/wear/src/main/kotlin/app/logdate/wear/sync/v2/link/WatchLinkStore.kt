@@ -138,6 +138,17 @@ class WatchLinkStore(
         write(record)
     }
 
+    /**
+     * Records that this watch's own sign-in ran out, so its phone links it again. False when the watch has
+     * no working account link to renew.
+     */
+    suspend fun markSessionExpired(): Boolean {
+        val record = current() ?: return false
+        if (record.mode != LinkMode.CLOUD || record.stale || record.installing || record.problem != null) return false
+        write(record.copy(problem = LinkProblem.SESSION_EXPIRED.name))
+        return true
+    }
+
     /** Marks the link with [phoneNode] stale; false when the watch is not linked with that phone. */
     suspend fun markStale(phoneNode: String): Boolean {
         val record = current() ?: return false

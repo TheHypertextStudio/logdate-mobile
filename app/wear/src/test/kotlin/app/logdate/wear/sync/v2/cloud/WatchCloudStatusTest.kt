@@ -41,6 +41,13 @@ class WatchCloudStatusTest {
     }
 
     @Test
+    fun `a sign-in that ran out is not reported as a problem while the phone renews it`() {
+        val expired = cloudLink.copy(problem = LinkProblem.SESSION_EXPIRED.name)
+
+        assertEquals(WatchCloudPath.UNUSED, watchCloudPathOf(newAppOn = true, link = expired))
+    }
+
+    @Test
     fun `the engine is not built while the cloud path does not apply`() =
         runTest {
             var built = 0

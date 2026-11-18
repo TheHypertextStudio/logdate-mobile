@@ -5,6 +5,7 @@ import app.logdate.client.sync.peer.state.PeerLinkState
 import app.logdate.client.sync.peer.state.WatchState
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 
 /**
@@ -135,6 +136,13 @@ class WatchStatusResolverTest {
             WatchStatus.Ready(watchName = NAME, nearby = true),
             resolve(connected, reporting(WatchState(link = PeerLinkState.NEEDS_RELINK))),
         )
+    }
+
+    @Test
+    fun `a watch whose sign-in ran out needs nothing from the person while the phone renews it`() {
+        val expired = WatchState(link = PeerLinkState.NEEDS_RELINK, linkProblem = "SESSION_EXPIRED")
+
+        assertIs<WatchStatus.Ready>(resolve(connected, reporting(expired, WearFeatures.LINK_CLOUD)))
     }
 
     @Test

@@ -36,10 +36,20 @@ data class NewDeviceSession(
     val expiresAt: Long,
 )
 
+/**
+ * A session unused for [idleAfterMs] (judged by its last refresh) doesn't hold one of the
+ * [maxActiveSessions] places. It stays signed in, and takes a place again once it is used.
+ */
 data class DeviceSessionLimits(
     val maxActiveSessions: Int,
     val maxCodesPerHour: Int,
-)
+    val idleAfterMs: Long = Long.MAX_VALUE,
+) {
+    fun isIdle(
+        session: DeviceSession,
+        now: Long,
+    ): Boolean = now - session.lastRefreshedAt >= idleAfterMs
+}
 
 enum class LinkCodeCreation {
     CREATED,
@@ -59,7 +69,7 @@ sealed interface LinkCodeRedemption {
 
 interface DeviceSessionRepository {
     /**
-     * Stores [code] unless its account already has [DeviceSessionLimits.maxActiveSessions] active sessions or
+     * Stores [code] unless its account already has [DeviceSessionLimits.maxActiveSessions] active sessions in use or
      * minted [DeviceSessionLimits.maxCodesPerHour] codes in the last hour.
      */
     suspend fun createLinkCode(
@@ -70,6 +80,7 @@ interface DeviceSessionRepository {
     /**
      * Spends the unexpired, unspent code with [codeHash] and creates [session] for its account in one step:
      * of any number of concurrent calls with one code, exactly one returns [LinkCodeRedemption.Redeemed].
+     * Only sessions in use count toward [DeviceSessionLimits.maxActiveSessions]; idle ones are never revoked for room.
      */
     suspend fun redeemLinkCode(
         codeHash: String,
@@ -116,7 +127,7 @@ class InMemoryDeviceSessionRepository : DeviceSessionRepository {
         synchronized(lock) {
             val windowStart = code.createdAt - LINK_CODE_RATE_WINDOW_MS
             codes.values.removeAll { it.code.expiresAt < windowStart }
-            if (activeCount(code.accountId, code.createdAt) >= limits.maxActiveSessions) {
+            if (inUseCount(code.accountId, code.createdAt, limits) >= limits.maxActiveSessions) {
                 return@synchronized LinkCodeCreation.DEVICE_LIMIT_REACHED
             }
             val recent = codes.values.count { it.code.accountId == code.accountId && it.code.createdAt > windowStart }
@@ -135,7 +146,7 @@ class InMemoryDeviceSessionRepository : DeviceSessionRepository {
             val stored =
                 codes[codeHash]?.takeIf { it.redeemedAt == null && it.code.expiresAt > now }
                     ?: return@synchronized LinkCodeRedemption.Invalid
-            if (activeCount(stored.code.accountId, now) >= limits.maxActiveSessions) {
+            if (inUseCount(stored.code.accountId, now, limits) >= limits.maxActiveSessions) {
                 return@synchronized LinkCodeRedemption.DeviceLimitReached
             }
             codes[codeHash] = stored.copy(redeemedAt = now)
@@ -185,8 +196,9 @@ class InMemoryDeviceSessionRepository : DeviceSessionRepository {
             true
         }
 
-    private fun activeCount(
+    private fun inUseCount(
         accountId: UUID,
         now: Long,
-    ): Int = sessions.values.count { it.accountId == accountId && it.isActive(now) }
+        limits: DeviceSessionLimits,
+    ): Int = sessions.values.count { it.accountId == accountId && it.isActive(now) && !limits.isIdle(it, now) }
 }

@@ -15,9 +15,16 @@ interface SessionRefreshingAccountRepository {
     suspend fun refreshSession(refreshToken: String): Result<RefreshedSession>
 }
 
-/** Told when the server says this device's session was revoked, so the device can stop and erase what it holds. */
+/**
+ * Told when the server ends this device's session. Only a revoked session means the device was removed,
+ * so only [onDeviceSessionRevoked] may erase what the device holds.
+ */
 fun interface DeviceSessionRevocationListener {
+    /** The session was removed from the account: the device stops and erases what it holds. */
     suspend fun onDeviceSessionRevoked()
+
+    /** The session or its refresh token ran out without being removed: the device keeps its data and is linked again. */
+    suspend fun onDeviceSessionEnded() {}
 
     companion object {
         val None = DeviceSessionRevocationListener { }

@@ -13,6 +13,9 @@ object DeviceLinkErrorCodes {
     /** The device's session was removed; the device must stop syncing and be linked again. */
     const val DEVICE_SESSION_REVOKED = "DEVICE_SESSION_REVOKED"
 
+    /** The device's session ran out unused but was never removed; the device keeps its data and is linked again. */
+    const val DEVICE_SESSION_EXPIRED = "DEVICE_SESSION_EXPIRED"
+
     /** A linked device asked for something only a signed-in account may do. */
     const val DEVICE_SCOPE_DENIED = "DEVICE_SCOPE_DENIED"
 

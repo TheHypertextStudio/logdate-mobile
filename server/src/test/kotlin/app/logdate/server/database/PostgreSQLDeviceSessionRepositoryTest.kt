@@ -18,6 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
@@ -41,6 +42,13 @@ class PostgreSQLDeviceSessionRepositoryTest {
         withDeviceTables { owner, _ ->
             assertLimits(PostgreSQLDeviceSessionRepository(), owner)
             assertLimits(InMemoryDeviceSessionRepository(), owner)
+        }
+
+    @Test
+    fun `both stores leave idle sessions out of the device limit without revoking them`() =
+        withDeviceTables { owner, _ ->
+            assertIdleSessionsDoNotCount(PostgreSQLDeviceSessionRepository(), owner)
+            assertIdleSessionsDoNotCount(InMemoryDeviceSessionRepository(), owner)
         }
 
     @Test
@@ -109,6 +117,40 @@ class PostgreSQLDeviceSessionRepositoryTest {
         )
     }
 
+    private suspend fun assertIdleSessionsDoNotCount(
+        repository: DeviceSessionRepository,
+        owner: UUID,
+    ) {
+        val twoDevices = DeviceSessionLimits(maxActiveSessions = 2, maxCodesPerHour = 10, idleAfterMs = 1_000)
+        val oldest = redeemOne(repository, owner, now, twoDevices)
+        val newer = redeemOne(repository, owner, now + 100, twoDevices)
+        assertEquals(
+            LinkCodeCreation.DEVICE_LIMIT_REACHED,
+            repository.createLinkCode(DeviceLinkCode(randomHash(), owner, now + 500, now + 120_500), twoDevices),
+        )
+
+        val hash = randomHash()
+        val later = now + 1_050
+        assertEquals(LinkCodeCreation.CREATED, repository.createLinkCode(DeviceLinkCode(hash, owner, later, later + 120_000), twoDevices))
+        val redeemed = assertIs<LinkCodeRedemption.Redeemed>(repository.redeemLinkCode(hash, newSession("Third", later), twoDevices))
+
+        assertNull(repository.find(oldest.id)?.revokedAt, "an idle session is never revoked to make room")
+        assertEquals(
+            listOf(oldest.id, newer.id, redeemed.session.id),
+            repository.listActive(owner, later).map(DeviceSession::id),
+        )
+
+        assertTrue(repository.extend(oldest.id, oldest.expiresAt, later + 10))
+        val pending = randomHash()
+        repository.createLinkCode(DeviceLinkCode(pending, owner, later, later + 120_000), roomy)
+        assertEquals(
+            LinkCodeRedemption.DeviceLimitReached,
+            repository.redeemLinkCode(pending, newSession("Fourth", later + 20), twoDevices),
+            "a session that is used again takes its place back",
+        )
+        repository.listActive(owner, later).forEach { repository.revoke(owner, it.id, later) }
+    }
+
     private suspend fun assertRevokeAndExtend(
         repository: DeviceSessionRepository,
         owner: UUID,
@@ -135,10 +177,11 @@ class PostgreSQLDeviceSessionRepositoryTest {
         repository: DeviceSessionRepository,
         owner: UUID,
         at: Long,
+        limits: DeviceSessionLimits = roomy,
     ): DeviceSession {
         val hash = randomHash()
-        repository.createLinkCode(DeviceLinkCode(hash, owner, at, at + 120_000), roomy)
-        return assertIs<LinkCodeRedemption.Redeemed>(repository.redeemLinkCode(hash, newSession("Pixel Watch 3", at + 1), roomy)).session
+        repository.createLinkCode(DeviceLinkCode(hash, owner, at, at + 120_000), limits)
+        return assertIs<LinkCodeRedemption.Redeemed>(repository.redeemLinkCode(hash, newSession("Pixel Watch 3", at + 1), limits)).session
     }
 
     private fun newSession(

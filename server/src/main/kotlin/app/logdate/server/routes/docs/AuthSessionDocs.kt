@@ -199,9 +199,13 @@ internal object AuthSessionDocs {
                 ),
                 ErrorCase(
                     DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED,
-                    "The linked device was removed from the account or its session expired. Stop syncing; the device " +
-                        "needs a new link from the phone.",
+                    "The linked device was removed from the account. Stop syncing and erase what the device holds.",
                     "This device was removed from the account",
+                ),
+                ErrorCase(
+                    DeviceLinkErrorCodes.DEVICE_SESSION_EXPIRED,
+                    "The linked device's session ran out after going unused. Keep the device's data; its phone links it again.",
+                    "This device's session ran out after going unused; its phone links it again",
                 ),
             )
             apiServerError()

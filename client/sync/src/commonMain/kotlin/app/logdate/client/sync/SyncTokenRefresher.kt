@@ -181,7 +181,8 @@ internal class SyncTokenRefresher(
     /**
      * Settings observes this same session. A refused or revoked refresh token must stop looking signed
      * in, while an outage must preserve credentials for the next attempt. A revoked device session is also
-     * reported, so a linked watch can stop and erase what it holds.
+     * reported, so a linked watch can stop and erase what it holds; any other ended session is reported
+     * as ended, so a linked watch keeps its data and asks its phone to link it again.
      */
     private suspend fun endSessionIfRefused(
         refreshError: Throwable,
@@ -191,7 +192,11 @@ internal class SyncTokenRefresher(
         if (refreshError.errorCode !in SESSION_ENDED_CODES) return
         val guard = authorization?.guard ?: return
         if (!sessionStorage.clearSessionIfUnchanged(guard)) return
-        if (refreshError.errorCode != DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED) return
+        if (refreshError.errorCode != DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED) {
+            Napier.w("This device's session ended without being removed (${refreshError.errorCode})")
+            revocationListener.onDeviceSessionEnded()
+            return
+        }
         Napier.w("The server revoked this device's session")
         revocationListener.onDeviceSessionRevoked()
     }
@@ -268,4 +273,5 @@ private val SESSION_ENDED_CODES =
         PasskeyApiErrorCodes.INVALID_REFRESH_TOKEN,
         PasskeyApiErrorCodes.REFRESH_TOKEN_REVOKED,
         DeviceLinkErrorCodes.DEVICE_SESSION_REVOKED,
+        DeviceLinkErrorCodes.DEVICE_SESSION_EXPIRED,
     )

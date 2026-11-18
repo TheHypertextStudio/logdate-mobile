@@ -1,6 +1,7 @@
 package app.logdate.feature.core.settings.ui.watch
 
 import app.logdate.client.sync.datalayer.v2.WearFeatures
+import app.logdate.client.sync.peer.link.LinkProblem
 import app.logdate.client.sync.peer.state.PeerLinkState
 import app.logdate.client.sync.peer.state.WatchState
 
@@ -90,7 +91,12 @@ object WatchStatusResolver {
         features: Set<String>,
     ): WatchIssue? {
         if (watch == null) return null
-        if (WearFeatures.LINK_CLOUD in features && watch.link == PeerLinkState.NEEDS_RELINK) return WatchIssue.SetUpAgain
+        if (WearFeatures.LINK_CLOUD in features &&
+            watch.link == PeerLinkState.NEEDS_RELINK &&
+            watch.linkProblem != LinkProblem.SESSION_EXPIRED.name
+        ) {
+            return WatchIssue.SetUpAgain
+        }
         if (WearFeatures.RECEIPTS in features && watch.deadLetterCount > 0) return WatchIssue.CapturesNotSent(watch.deadLetterCount)
         return null
     }

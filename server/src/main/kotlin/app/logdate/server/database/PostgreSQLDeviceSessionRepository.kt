@@ -30,7 +30,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         dbQuery {
             val windowStart = code.createdAt - LINK_CODE_RATE_WINDOW_MS
             DeviceLinkCodesTable.deleteWhere { expiresAt less windowStart }
-            if (activeSessionCount(code.accountId, code.createdAt) >= limits.maxActiveSessions) {
+            if (inUseCount(code.accountId, code.createdAt, limits) >= limits.maxActiveSessions) {
                 return@dbQuery LinkCodeCreation.DEVICE_LIMIT_REACHED
             }
             val recent =
@@ -63,7 +63,7 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
                     .singleOrNull()
                     ?.get(DeviceLinkCodesTable.accountId)
                     ?: return@dbQuery LinkCodeRedemption.Invalid
-            if (activeSessionCount(accountId, now) >= limits.maxActiveSessions) {
+            if (inUseCount(accountId, now, limits) >= limits.maxActiveSessions) {
                 return@dbQuery LinkCodeRedemption.DeviceLimitReached
             }
             // The guarded update is what makes a code single use: a concurrent redeemer re-reads
@@ -162,15 +162,16 @@ class PostgreSQLDeviceSessionRepository : DeviceSessionRepository {
         sessionId: UUID,
     ): Op<Boolean> = (DeviceSessionsTable.id eq sessionId) and (DeviceSessionsTable.accountId eq accountId)
 
-    private fun activeSessionCount(
+    private fun inUseCount(
         accountId: UUID,
         now: Long,
+        limits: DeviceSessionLimits,
     ): Int =
         DeviceSessionsTable
             .selectAll()
             .where { active(accountId, now) }
-            .count()
-            .toInt()
+            .map { it.toDeviceSession() }
+            .count { !limits.isIdle(it, now) }
 }
 
 private fun ResultRow.toDeviceSession(): DeviceSession =

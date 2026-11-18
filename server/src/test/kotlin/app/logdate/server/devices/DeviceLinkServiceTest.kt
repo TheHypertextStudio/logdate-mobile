@@ -20,6 +20,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -90,6 +91,58 @@ class DeviceLinkServiceTest {
             assertEquals(DeviceLinkMint.RateLimited, service.mint(busy))
             clock.nowValue = start + 61.minutes
             assertIs<DeviceLinkMint.Minted>(service.mint(busy))
+        }
+
+    @Test
+    fun `a device unused for two weeks stops counting toward the limit but stays linked`() =
+        runTest {
+            val owner = newAccount()
+            val linked = (1..DeviceLinkService.MAX_ACTIVE_DEVICES).map { link(owner, "Watch $it") }
+            val idle = linked.first()
+            clock.nowValue = start + 13.days
+            linked.drop(1).forEach { service.refresh(assertNotNull(tokens.decodeRefreshToken(it.tokens.refreshToken))) }
+            assertEquals(DeviceLinkMint.DeviceLimitReached, service.mint(owner), "no device has been idle for two weeks yet")
+
+            clock.nowValue = start + 14.days
+            val added = link(owner, "New watch")
+
+            val names = service.list(owner, currentSessionId = null).map { it.deviceName }
+            assertEquals(listOf("Watch 1", "Watch 2", "Watch 3", "Watch 4", "Watch 5", "New watch"), names)
+            assertTrue(guard.isActive(owner.toString(), idle.sessionId), "the idle device is never signed out to make room")
+            assertIs<DeviceSessionRefresh.Refreshed>(service.refresh(assertNotNull(tokens.decodeRefreshToken(idle.tokens.refreshToken))))
+            assertTrue(guard.isActive(owner.toString(), added.sessionId))
+            assertEquals(DeviceLinkMint.DeviceLimitReached, service.mint(owner), "the idle device counts again once it is used")
+        }
+
+    @Test
+    fun `a session that ran out unused is expired rather than revoked`() =
+        runTest {
+            val owner = newAccount()
+            val linked = link(owner)
+            val claims = assertNotNull(tokens.decodeRefreshToken(linked.tokens.refreshToken))
+
+            clock.nowValue = start + DeviceLinkService.SESSION_LIFETIME_MS.milliseconds + 1.seconds
+            assertEquals(DeviceSessionRefresh.Expired, service.refresh(claims))
+
+            assertTrue(service.revoke(owner, UUID.fromString(linked.sessionId)))
+            assertEquals(DeviceSessionRefresh.Revoked, service.refresh(claims), "a removed session is revoked even after it ran out")
+        }
+
+    @Test
+    fun `refresh records that a device is in use at most once an hour`() =
+        runTest {
+            val owner = newAccount()
+            val claims = assertNotNull(tokens.decodeRefreshToken(link(owner).tokens.refreshToken))
+
+            clock.nowValue = start + 59.minutes
+            service.refresh(claims)
+            assertEquals(start.toEpochMilliseconds(), service.list(owner, currentSessionId = null).single().lastRefreshedAt)
+
+            clock.nowValue = start + 3.days
+            assertIs<DeviceSessionRefresh.Refreshed>(service.refresh(claims))
+            val device = service.list(owner, currentSessionId = null).single()
+            assertEquals((start + 3.days).toEpochMilliseconds(), device.lastRefreshedAt)
+            assertEquals(start.toEpochMilliseconds() + DeviceLinkService.SESSION_LIFETIME_MS, device.expiresAt)
         }
 
     @Test

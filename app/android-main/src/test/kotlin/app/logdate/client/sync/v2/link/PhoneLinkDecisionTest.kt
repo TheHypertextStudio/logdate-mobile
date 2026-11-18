@@ -37,6 +37,27 @@ class PhoneLinkDecisionTest {
     }
 
     @Test
+    fun `a watch whose own sign-in ran out is linked again at once without a failure`() {
+        val cloud = linked.copy(mode = LinkMode.CLOUD, accountId = "account")
+        val expired =
+            StateDocument(
+                role = PeerRole.WATCH,
+                writtenAt = 200,
+                watch = WatchState(link = PeerLinkState.NEEDS_RELINK, linkProblem = "SESSION_EXPIRED", linkId = linked.linkId),
+            )
+
+        assertEquals(
+            PhoneLinkDecision.Exchange,
+            PhoneLinkDecision.decide(cloud, LinkPlan(LinkMode.CLOUD, "account"), expired, now = 150),
+        )
+        assertEquals(
+            PhoneLinkDecision.Wait,
+            PhoneLinkDecision.decide(cloud.copy(seenWatchDocAt = 200), LinkPlan(LinkMode.CLOUD, "account"), expired, now = 150),
+            "the same report does not start a second exchange",
+        )
+    }
+
+    @Test
     fun `a problem this phone does not know is an install failure`() {
         val failed =
             StateDocument(

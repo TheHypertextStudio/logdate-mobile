@@ -47,7 +47,11 @@ sealed interface DeviceSessionRefresh {
         val refreshToken: String?,
     ) : DeviceSessionRefresh
 
+    /** The session was removed from the account, or this server doesn't know it. The device erases what it holds. */
     data object Revoked : DeviceSessionRefresh
+
+    /** The session ran out unused but was never removed. The device keeps its data and is linked again by its phone. */
+    data object Expired : DeviceSessionRefresh
 }
 
 /**
@@ -56,7 +60,8 @@ sealed interface DeviceSessionRefresh {
  * A signed-in phone mints a one-time code and hands it to the device; the device redeems it for its own
  * session, whose tokens carry `sid` and `scp=sync`. A code works once and only for
  * [LINK_CODE_LIFETIME_MS]; the store saves only its SHA-256 hash. An account may have at most
- * [MAX_ACTIVE_DEVICES] active sessions and mints at most [MAX_LINK_CODES_PER_HOUR] codes an hour. A
+ * [MAX_ACTIVE_DEVICES] sessions in use and mints at most [MAX_LINK_CODES_PER_HOUR] codes an hour; a session that
+ * hasn't refreshed for [IDLE_DEVICE_AFTER_MS] stays signed in but doesn't count toward that limit. A
  * session lasts [SESSION_LIFETIME_MS] and is renewed by a refresh that arrives with less than
  * [SESSION_RENEWAL_WINDOW_MS] left.
  */
@@ -136,10 +141,16 @@ class DeviceLinkService(
         val sessionId = claims.sessionId?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return DeviceSessionRefresh.Revoked
         val now = nowMillis()
         val session =
-            repository.find(sessionId)?.takeIf { it.isActive(now) && it.accountId.toString() == claims.accountId }
+            repository.find(sessionId)?.takeIf { it.revokedAt == null && it.accountId.toString() == claims.accountId }
                 ?: return DeviceSessionRefresh.Revoked
+        if (!session.isActive(now)) return DeviceSessionRefresh.Expired
         val accessToken = tokenService.generateDeviceAccessToken(claims.accountId, claims.did, session.id.toString())
-        if (session.expiresAt - now >= SESSION_RENEWAL_WINDOW_MS) return DeviceSessionRefresh.Refreshed(accessToken, refreshToken = null)
+        if (session.expiresAt - now >= SESSION_RENEWAL_WINDOW_MS) {
+            if (now - session.lastRefreshedAt >= ACTIVITY_RECORD_INTERVAL_MS && !repository.extend(session.id, session.expiresAt, now)) {
+                return DeviceSessionRefresh.Revoked
+            }
+            return DeviceSessionRefresh.Refreshed(accessToken, refreshToken = null)
+        }
         if (!repository.extend(session.id, now + SESSION_LIFETIME_MS, now)) return DeviceSessionRefresh.Revoked
         val refreshToken = tokenService.generateDeviceRefreshToken(claims.accountId, claims.did, session.id.toString())
         return DeviceSessionRefresh.Refreshed(accessToken, refreshToken)
@@ -153,10 +164,16 @@ class DeviceLinkService(
         const val MAX_LINK_CODES_PER_HOUR = 10
         const val SESSION_LIFETIME_MS = 30L * 24 * 60 * 60 * 1_000
         const val SESSION_RENEWAL_WINDOW_MS = 15L * 24 * 60 * 60 * 1_000
+
+        /** A device that hasn't refreshed for this long stops counting toward [MAX_ACTIVE_DEVICES] until it is used again. */
+        const val IDLE_DEVICE_AFTER_MS = 14L * 24 * 60 * 60 * 1_000
+
+        /** How often a refresh records that its device is still in use. */
+        const val ACTIVITY_RECORD_INTERVAL_MS = 60L * 60 * 1_000
         private const val LINK_CODE_BYTES = 32
         private const val MAX_DEVICE_NAME_LENGTH = 120
         private val PLATFORM = Regex("[a-z][a-z0-9_]{0,31}")
-        private val LIMITS = DeviceSessionLimits(MAX_ACTIVE_DEVICES, MAX_LINK_CODES_PER_HOUR)
+        private val LIMITS = DeviceSessionLimits(MAX_ACTIVE_DEVICES, MAX_LINK_CODES_PER_HOUR, IDLE_DEVICE_AFTER_MS)
 
         private fun isValidDeviceName(name: String): Boolean = name.length in 1..MAX_DEVICE_NAME_LENGTH && name.none(Char::isISOControl)
     }

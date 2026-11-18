@@ -63,7 +63,9 @@ makes.
 
 ## Linked Watch Removal
 
-A removed or expired watch session is refused with `401 DEVICE_SESSION_REVOKED`. Each server instance
+A removed or expired watch session is refused with `401 DEVICE_SESSION_REVOKED`. The watch's next
+token refresh tells the two apart: only a removed session answers `DEVICE_SESSION_REVOKED` there, and
+an expired one answers `DEVICE_SESSION_EXPIRED`. Each server instance
 caches whether a session is active for 30 seconds and only the instance that handled the removal
 clears its cache at once, so a removed watch can keep reaching the sync routes and the personal space
 methods for up to 30 seconds on the other instances.

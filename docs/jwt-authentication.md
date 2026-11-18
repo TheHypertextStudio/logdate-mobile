@@ -123,16 +123,19 @@ token the response may also carry a new `refreshToken`, which the device must
 store. The server issues one only when the device session is close to the end
 of its lifetime and extends the session at the same time.
 
-The refresh endpoint answers `401` in three ways:
+The refresh endpoint answers `401` in four ways:
 
 | Code                     | Meaning                                                                                  |
 | ------------------------ | ---------------------------------------------------------------------------------------- |
 | `INVALID_REFRESH_TOKEN`  | The token is missing, malformed, expired, signed by another secret, or of the wrong type |
 | `REFRESH_TOKEN_REVOKED`  | The token was revoked by a sign-out, see [Sign-out](#sign-out)                           |
-| `DEVICE_SESSION_REVOKED` | A device token whose session was removed or has expired                                  |
+| `DEVICE_SESSION_REVOKED` | A device token whose session was removed from the account                                |
+| `DEVICE_SESSION_EXPIRED` | A device token whose session ran out unused but was never removed                        |
 
-All three mean the credential will never work again, and the client should
-clear local session state and ask for a sign-in.
+All four mean the credential will never work again, and the client should
+clear local session state. A phone asks for a sign-in. A linked watch erases
+what it holds only for `DEVICE_SESSION_REVOKED`; for the others it keeps its
+data and waits for its phone to link it again.
 
 ### Protected endpoint example
 
@@ -326,8 +329,9 @@ client:
    the response carries one) and retries the original request once.
 3. If the server answers that the refresh credential is itself finished
    (`INVALID_REFRESH_TOKEN` or `REFRESH_TOKEN_REVOKED`, and for a linked
-   device also `DEVICE_SESSION_REVOKED`), clears the local session so the
-   person is asked to sign in again.
+   device also `DEVICE_SESSION_REVOKED` or `DEVICE_SESSION_EXPIRED`), clears
+   the local session so the person is asked to sign in again, or, on a linked
+   watch, so its phone links it again.
 4. For any other failure, such as a network error or a 5xx, keeps the
    session and reports the failure. A flaky connection must not sign anyone
    out.
