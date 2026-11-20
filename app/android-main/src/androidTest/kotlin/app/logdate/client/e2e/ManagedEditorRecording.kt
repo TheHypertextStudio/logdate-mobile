@@ -12,13 +12,14 @@ import kotlin.uuid.Uuid
 internal class ManagedEditorRecording(
     private val device: UiDevice,
     private val output: File,
+    fileName: String = "home-pull-editor-real-time.mp4",
 ) : AutoCloseable {
     private val token = Uuid.random().toString()
     private val remoteVideo = "/sdcard/logdate-entry-switch-$token.mp4"
     private val remotePid = "/sdcard/logdate-entry-switch-$token.pid"
     private val executor = Executors.newSingleThreadExecutor()
     private val reader: java.util.concurrent.Future<*>
-    val file = File(output, "home-pull-editor-real-time.mp4")
+    val file = File(output, fileName)
 
     init {
         val script = File(output, "record-$token.sh")
@@ -33,7 +34,7 @@ internal class ManagedEditorRecording(
                     File(output, "screenrecord.log").outputStream().use { stream -> input.copyTo(stream) }
                 }
             }
-        val deadline = android.os.SystemClock.elapsedRealtime() + 5_000
+        val deadline = android.os.SystemClock.elapsedRealtime() + 15_000
         while (device.executeShellCommand("cat $remotePid").trim().toIntOrNull() == null) {
             check(android.os.SystemClock.elapsedRealtime() < deadline) { "Owned screen recorder did not start" }
             android.os.SystemClock.sleep(40)
