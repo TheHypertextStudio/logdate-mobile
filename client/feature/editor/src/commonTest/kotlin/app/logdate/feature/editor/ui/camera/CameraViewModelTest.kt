@@ -2,6 +2,7 @@ package app.logdate.feature.editor.ui.camera
 
 import app.logdate.client.media.device.DefaultMediaDevices
 import app.logdate.client.text.toUiText
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.test.Test
@@ -145,6 +146,9 @@ class FakeCameraCaptureManager : CameraCaptureManager {
         private set
 
     var photoResultUri: String? = null
+
+    /** When set, recording starts only once this completes, like CameraX's asynchronous start. */
+    var startGate: CompletableDeferred<Unit>? = null
     var videoResultUri: String? = null
 
     override suspend fun startPreview(facing: CameraFacing) {
@@ -168,6 +172,7 @@ class FakeCameraCaptureManager : CameraCaptureManager {
 
     override suspend fun startVideoRecording() {
         startVideoRecordingCalled = true
+        startGate?.await()
         _state.value = _state.value.copy(isRecording = true)
     }
 

@@ -8,35 +8,37 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -45,12 +47,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.FiberManualRecord
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,39 +69,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.logdate.client.media.MediaManager
-import app.logdate.client.media.device.AudioRouteRepository
-import app.logdate.client.media.device.MediaDeviceCategory
-import app.logdate.client.media.device.asSystemControlledSelection
+import app.logdate.client.media.device.MediaDeviceSelectionUiState
 import app.logdate.client.text.asString
 import app.logdate.client.text.resolve
-import app.logdate.client.text.toUiText
 import app.logdate.feature.editor.ui.audio.expansion.ImmersiveSystemBarEffect
+import app.logdate.feature.editor.ui.layout.LocalEntryCreationReserve
+import app.logdate.feature.editor.ui.layout.LocalEntryHeaderReserve
 import app.logdate.ui.adaptive.FoldableTabletopLayout
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import coil3.video.videoFramePercent
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import io.github.aakira.napier.Napier
@@ -112,41 +105,38 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.camera
-import logdate.client.feature.editor.generated.resources.camera_microphone_route_message
-import logdate.client.feature.editor.generated.resources.captured_photo
-import logdate.client.feature.editor.generated.resources.captured_video
-import logdate.client.feature.editor.generated.resources.editor_action_record_video
-import logdate.client.feature.editor.generated.resources.microphone
-import logdate.client.feature.editor.generated.resources.stop_recording
+import logdate.client.feature.editor.generated.resources.camera_close
 import logdate.client.feature.editor.generated.resources.switch_camera
-import logdate.client.feature.editor.generated.resources.take_photo
 import logdate.client.feature.editor.generated.resources.tap_to_enable_camera
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
- * Android implementation of the camera capture content.
- * Shows an inline camera with controls for capturing photos/videos.
+ * States the capture screen can be rendered in without a camera, for previews and screenshots.
  */
 sealed interface CameraCapturePreviewState {
     data object PermissionRequired : CameraCapturePreviewState
 
     data class LiveCapture(
-        val aspectRatio: CameraAspectRatio = CameraAspectRatio.STANDARD,
-        val captureMode: CaptureMode = CaptureMode.PHOTO,
         val isRecording: Boolean = false,
-    ) : CameraCapturePreviewState
-
-    data class Review(
-        val uri: String,
-        val mediaType: CapturedMediaType,
+        val showCameraPicker: Boolean = false,
     ) : CameraCapturePreviewState
 }
 
 private const val CAMERA_SWITCH_PREVIEW_TIMEOUT_MS = 2_000L
+private const val MAX_ZOOM = 10f
 
-@Suppress("ktlint:standard:function-naming")
+/** Captures always use the full 3:4 sensor; framing happens where the shot is used. */
+private val CaptureRatio = CameraAspectRatio.STANDARD.ratio
+
+/** Room the shutter takes at the bottom of the panel, above the dock. */
+private val ShutterZoneHeight = 112.dp
+private val ViewfinderCorner = 24.dp
+private val SwipeDownToClose = 96.dp
+
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 actual fun CameraCaptureContent(
@@ -168,6 +158,7 @@ actual fun CameraCaptureContent(
 
     val viewModel: CameraViewModel = koinViewModel()
     LaunchedEffect(viewModel, initialCaptureMode) {
+        // The mode only matters to the watch remote, whose single button toggles recording.
         if (initialCaptureMode != CaptureMode.PHOTO) viewModel.setCaptureMode(initialCaptureMode)
     }
     val uiState by viewModel.uiState.collectAsState()
@@ -206,16 +197,14 @@ actual fun CameraCaptureContent(
     val hasPermissions = cameraPermissions.allPermissionsGranted
     if (hasPermissions) ImmersiveSystemBarEffect()
 
+    // Every shot goes straight into the entry. The block that receives it offers retake.
     LaunchedEffect(uiState.capturedMediaUri) {
-        uiState.capturedMediaUri?.let { uri ->
-            val mediaType = uiState.capturedMediaType ?: CapturedMediaType.PHOTO
-            val duration = if (mediaType == CapturedMediaType.VIDEO) uiState.recordingDurationMs else 0L
-            if (remoteControl.autoAcceptCapturedMedia) {
-                currentOnMediaCaptured(uri, mediaType, duration)
-                remoteControl.onCaptureCompleted(uri, mediaType)
-                viewModel.clearCapturedMedia()
-            }
-        }
+        val uri = uiState.capturedMediaUri ?: return@LaunchedEffect
+        val mediaType = uiState.capturedMediaType ?: CapturedMediaType.PHOTO
+        val duration = if (mediaType == CapturedMediaType.VIDEO) uiState.recordingDurationMs else 0L
+        currentOnMediaCaptured(uri, mediaType, duration)
+        remoteControl.onCaptureCompleted(uri, mediaType)
+        viewModel.clearCapturedMedia()
     }
 
     LaunchedEffect(uiState.error) {
@@ -267,25 +256,12 @@ actual fun CameraCaptureContent(
             onRequestPermission = { cameraPermissions.launchMultiplePermissionRequest() },
             modifier = modifier,
         )
-    } else if (uiState.capturedMediaUri != null) {
-        val reviewUri = uiState.capturedMediaUri!!
-        val reviewMediaType = uiState.capturedMediaType ?: CapturedMediaType.PHOTO
-        val reviewDuration = if (reviewMediaType == CapturedMediaType.VIDEO) uiState.recordingDurationMs else 0L
-        MediaReviewContent(
-            uri = reviewUri,
-            mediaType = reviewMediaType,
-            onRetake = { viewModel.clearCapturedMedia() },
-            onUse = {
-                onMediaCaptured(reviewUri, reviewMediaType, reviewDuration)
-                viewModel.clearCapturedMedia()
-            },
-            modifier = modifier,
-        )
     } else {
         InlineCameraCapture(
             viewModel = viewModel,
             uiState = uiState,
             onPrepareCaptureTarget = currentOnPrepareCaptureTarget,
+            onClose = currentOnClose,
             modifier = modifier,
         )
     }
@@ -305,293 +281,360 @@ fun CameraCapturePreviewContent(
         }
 
         is CameraCapturePreviewState.LiveCapture -> {
-            PreviewInlineCameraCapture(
-                aspectRatio = state.aspectRatio,
-                captureMode = state.captureMode,
+            CameraCaptureLayout(
                 isRecording = state.isRecording,
+                recordingDuration = "0:12",
+                error = null,
                 modifier = modifier,
-            )
-        }
-
-        is CameraCapturePreviewState.Review -> {
-            MediaReviewContent(
-                uri = state.uri,
-                mediaType = state.mediaType,
-                onRetake = {},
-                onUse = {},
-                modifier = modifier,
+                viewfinder = { viewfinderModifier ->
+                    Box(
+                        modifier =
+                            viewfinderModifier.background(
+                                Brush.verticalGradient(listOf(Color(0xFF3A4652), Color(0xFF1B2128), Color(0xFF2D2620))),
+                            ),
+                    )
+                },
+                cornerControls = {
+                    CameraCornerCluster(
+                        controls = CameraCornerControls(showFlip = true, showCameraPicker = state.showCameraPicker),
+                        selection = defaultCameraSelection(CameraFacing.BACK),
+                        enabled = !state.isRecording,
+                        onFlip = {},
+                        onDeviceSelected = {},
+                    )
+                },
+                shutter = {
+                    CaptureShutter(
+                        isRecording = state.isRecording,
+                        enabled = true,
+                        baseZoom = 1f,
+                        onAction = {},
+                    )
+                },
             )
         }
     }
 }
 
 /**
- * Displays a request UI when camera permissions are not granted.
+ * Shown before the camera can open. It reads as the camera page, so granting access feels like
+ * continuing rather than answering a system prompt out of nowhere.
  */
-@Suppress("ktlint:standard:function-naming")
 @Composable
 private fun CameraPermissionRequest(
     onRequestPermission: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        onClick = onRequestPermission,
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 200.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            ),
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = Color.Black,
+        contentColor = Color.White,
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(Res.string.tap_to_enable_camera),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.12f),
+                    contentColor = Color.White,
+                    modifier = Modifier.size(72.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(32.dp))
+                    }
+                }
+                Button(onClick = onRequestPermission, modifier = Modifier.defaultMinSize(minHeight = 48.dp)) {
+                    Text(stringResource(Res.string.tap_to_enable_camera))
+                }
             }
         }
     }
 }
 
+/**
+ * The capture screen's layout, shared by the live camera and its previews.
+ *
+ * Content anchors to the top, near the lens; controls anchor to the bottom, near the thumb.
+ * When the 3:4 image fits between the entry header and the shutter it sits in a card with nothing
+ * on it. When it doesn't, it fills the panel and the controls float on a scrim.
+ */
 @Composable
-private fun PreviewInlineCameraCapture(
-    aspectRatio: CameraAspectRatio = CameraAspectRatio.STANDARD,
-    captureMode: CaptureMode = CaptureMode.PHOTO,
-    isRecording: Boolean = false,
+private fun CameraCaptureLayout(
+    isRecording: Boolean,
+    recordingDuration: String,
+    error: String?,
+    viewfinder: @Composable BoxScope.(Modifier) -> Unit,
+    cornerControls: @Composable () -> Unit,
+    shutter: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
         color = Color.Black,
+        contentColor = Color.White,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Viewfinder placeholder
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.Center)
-                        .aspectRatio(aspectRatio.ratio)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFF101318)),
-            )
-
-            // Top controls — recording indicator
-            if (isRecording) {
-                Surface(
+        FoldableTabletopLayout(
+            modifier = Modifier.fillMaxSize(),
+            minPaneHeight = 220.dp,
+            topPane = {
+                viewfinder(Modifier.fillMaxSize())
+                ViewfinderOverlays(
+                    isRecording = isRecording,
+                    recordingDuration = recordingDuration,
+                    error = error,
+                    cornerControls = cornerControls,
+                    topInset = 0.dp,
+                )
+            },
+            bottomPane = {
+                Box(
                     modifier =
                         Modifier
-                            .align(Alignment.TopEnd)
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                            .statusBarsPadding()
-                            .cameraHeaderClearance()
-                            .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.errorContainer,
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+                            .cameraCreationClearance(),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FiberManualRecord,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.size(12.dp),
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "01:45",
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.labelMedium,
-                        )
-                    }
+                    shutter()
                 }
-            }
+            },
+            standardContent = {
+                StandardCaptureLayout(
+                    isRecording = isRecording,
+                    recordingDuration = recordingDuration,
+                    error = error,
+                    viewfinder = viewfinder,
+                    cornerControls = cornerControls,
+                    shutter = shutter,
+                )
+            },
+        )
+    }
+}
 
-            // Bottom controls
-            Column(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                        .navigationBarsPadding()
-                        .cameraCreationClearance()
-                        .padding(bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                if (!isRecording) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        AspectRatioSelector(
-                            selected = aspectRatio,
-                            onSelected = {},
-                        )
+@Composable
+private fun StandardCaptureLayout(
+    isRecording: Boolean,
+    recordingDuration: String,
+    error: String?,
+    viewfinder: @Composable BoxScope.(Modifier) -> Unit,
+    cornerControls: @Composable () -> Unit,
+    shutter: @Composable () -> Unit,
+) {
+    val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navigationBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val headerReserve = LocalEntryHeaderReserve.current
+    val creationReserve = LocalEntryCreationReserve.current
+    val topReserve = statusTop + headerReserve
+    val shutterBottom = navigationBottom + creationReserve
 
-                        PhotoVideoToggle(
-                            currentMode = captureMode,
-                            onModeChanged = {},
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Shutter row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
+    BoxWithConstraints(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+    ) {
+        val fit =
+            cameraViewfinderFit(
+                panelWidth = maxWidth,
+                panelHeight = maxHeight,
+                topReserve = topReserve,
+                bottomReserve = shutterBottom + ShutterZoneHeight,
+                ratio = CaptureRatio,
+            )
+        when (fit) {
+            is CameraViewfinderFit.Card -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = fit.top)
+                            .size(fit.width, fit.height)
+                            .clip(RoundedCornerShape(ViewfinderCorner)),
                 ) {
-                    Spacer(modifier = Modifier.size(48.dp))
-
-                    ShutterButton(
+                    viewfinder(Modifier.fillMaxSize())
+                    ViewfinderOverlays(
                         isRecording = isRecording,
-                        captureMode = captureMode,
-                        isCapturing = false,
-                        onClick = {},
+                        recordingDuration = recordingDuration,
+                        error = error,
+                        cornerControls = cornerControls,
+                        topInset = 0.dp,
                     )
-
-                    IconButton(
-                        onClick = {},
-                        enabled = !isRecording,
-                        modifier =
-                            Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.7f),
-                                    CircleShape,
-                                ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Cameraswitch,
-                            contentDescription = stringResource(Res.string.switch_camera),
-                            tint =
-                                if (isRecording) {
-                                    MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.38f)
-                                } else {
-                                    MaterialTheme.colorScheme.inverseOnSurface
-                                },
-                        )
-                    }
                 }
             }
+
+            CameraViewfinderFit.Overlay -> {
+                viewfinder(Modifier.fillMaxSize())
+                // Scrims only where controls sit on the image, so text stays readable on snow or sky.
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(topReserve + 72.dp)
+                            .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.45f), Color.Transparent))),
+                )
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(shutterBottom + ShutterZoneHeight + 48.dp)
+                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)))),
+                )
+                ViewfinderOverlays(
+                    isRecording = isRecording,
+                    recordingDuration = recordingDuration,
+                    error = error,
+                    cornerControls = cornerControls,
+                    topInset = topReserve,
+                )
+            }
+        }
+
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = shutterBottom)
+                    .fillMaxWidth()
+                    .height(ShutterZoneHeight),
+            contentAlignment = Alignment.Center,
+        ) {
+            shutter()
         }
     }
 }
 
-/**
- * Review screen shown after capturing media.
- * Lets the user retake or confirm before committing to the journal entry.
- */
-@Suppress("ktlint:standard:function-naming")
+/** What sits on the image: the corner cluster, the recording time and any error. */
 @Composable
-private fun MediaReviewContent(
-    uri: String,
-    mediaType: CapturedMediaType,
-    onRetake: () -> Unit,
-    onUse: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun BoxScope.ViewfinderOverlays(
+    isRecording: Boolean,
+    recordingDuration: String,
+    error: String?,
+    cornerControls: @Composable () -> Unit,
+    topInset: Dp,
 ) {
-    val contentDesc =
-        stringResource(
-            when (mediaType) {
-                CapturedMediaType.PHOTO -> Res.string.captured_photo
-                CapturedMediaType.VIDEO -> Res.string.captured_video
-            },
-        )
-
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = Color.Black,
+    AnimatedVisibility(
+        visible = !isRecording,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier =
+            Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = topInset + 12.dp, end = 12.dp),
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AsyncImage(
-                    model =
-                        ImageRequest
-                            .Builder(LocalPlatformContext.current)
-                            .data(uri)
-                            .crossfade(true)
-                            .apply {
-                                if (mediaType == CapturedMediaType.VIDEO) {
-                                    videoFramePercent(0.1)
-                                }
-                            }.build(),
-                    contentDescription = contentDesc,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                )
+        cornerControls()
+    }
 
-                // Play icon overlay for video captures
-                if (mediaType == CapturedMediaType.VIDEO) {
-                    Surface(
-                        shape = CircleShape,
-                        color = Color.White.copy(alpha = 0.9f),
-                        modifier =
-                            Modifier
-                                .size(64.dp)
-                                .align(Alignment.Center),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Videocam,
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp),
-                                tint = Color.Black,
-                            )
-                        }
-                    }
-                }
-            }
+    RecordingIndicator(
+        visible = isRecording,
+        duration = recordingDuration,
+        modifier =
+            Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = topInset + 16.dp),
+    )
 
-            CameraReviewActions(
-                mediaType,
-                onRetake,
-                onUse,
-                Modifier.align(Alignment.BottomCenter),
+    if (error != null) {
+        Surface(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ) {
+            Text(
+                text = error,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
 }
 
 /**
- * First-class inline camera capture interface with live preview and controls.
- * Uses an attached [PreviewView] so the UI can wait for CameraX's streaming signal.
+ * The only control on the image. Front and back cameras need just a flip; an external camera adds
+ * a picker beside it.
  */
-@Suppress("ktlint:standard:function-naming")
+@Composable
+private fun CameraCornerCluster(
+    controls: CameraCornerControls,
+    selection: MediaDeviceSelectionUiState,
+    enabled: Boolean,
+    onFlip: () -> Unit,
+    onDeviceSelected: (String) -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (controls.showCameraPicker) {
+            CameraRouteSelector(
+                selection = selection,
+                onDeviceSelected = onDeviceSelected,
+                label = stringResource(Res.string.camera),
+                enabled = enabled,
+            )
+        }
+        if (controls.showFlip) {
+            IconButton(
+                onClick = onFlip,
+                enabled = enabled,
+                colors =
+                    IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Black.copy(alpha = 0.4f),
+                        contentColor = Color.White,
+                    ),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Cameraswitch,
+                    contentDescription = stringResource(Res.string.switch_camera),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The live camera. Uses an attached [PreviewView] so the UI can wait for CameraX's streaming
+ * signal.
+ *
+ * Gestures on the image: tap to focus, double-tap to flip, pinch to zoom and swipe down to return
+ * to the entry. A sideways swipe does nothing, so mode switching stays on the dock as it does
+ * everywhere else in the editor.
+ */
 @Composable
 private fun InlineCameraCapture(
     viewModel: CameraViewModel,
     uiState: CameraUiState,
     onPrepareCaptureTarget: suspend (String, CapturedMediaType) -> Boolean,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val haptic = LocalHapticFeedback.current
+    val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    val audioRouteRepository: AudioRouteRepository = koinInject()
-    val inputSelection by audioRouteRepository.inputDevices.collectAsState()
 
     val manager = viewModel.getCaptureManager() as? AndroidCameraCaptureManager
     val previewStreaming by manager?.previewStreaming?.collectAsState()
         ?: remember { mutableStateOf(false) }
     val currentPreviewStreaming by rememberUpdatedState(previewStreaming)
+    val currentOnClose by rememberUpdatedState(onClose)
+    val currentIsRecording by rememberUpdatedState(uiState.isRecording)
     val previewView =
         remember(context) {
             PreviewView(context).apply {
@@ -600,14 +643,12 @@ private fun InlineCameraCapture(
             }
         }
 
-    // Start preview every time this composable enters composition with the attached PreviewView.
     LaunchedEffect(manager, lifecycleOwner, previewView) {
         manager?.attachPreviewView(previewView)
         manager?.setLifecycleOwner(lifecycleOwner)
         viewModel.startPreview()
     }
 
-    // Stop preview when this composable leaves composition (review screen, block delete, etc.)
     DisposableEffect(manager, previewView) {
         onDispose {
             viewModel.stopPreview()
@@ -615,11 +656,9 @@ private fun InlineCameraCapture(
         }
     }
 
-    // Camera switch overlay — smooth fade to black, switch, then fade out.
+    // Camera switch overlay: fade to black, switch, wait for the new feed, fade out.
     val switchOverlayAlpha = remember { Animatable(0f) }
     var isSwitchingCamera by remember { mutableStateOf(false) }
-
-    // Capture flash state
     var showFlash by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.isCapturing) {
         if (!uiState.isCapturing && showFlash) {
@@ -628,13 +667,10 @@ private fun InlineCameraCapture(
         }
     }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
-
-    // Focus ring state
+    val focusColor = Color.White
     var focusPoint by remember { mutableStateOf<Offset?>(null) }
     val focusRingAlpha = remember { Animatable(0f) }
     val focusRingScale = remember { Animatable(0f) }
-
     val currentFocusPoint = focusPoint
     LaunchedEffect(currentFocusPoint) {
         if (currentFocusPoint != null) {
@@ -646,7 +682,21 @@ private fun InlineCameraCapture(
         }
     }
 
-    // Orchestrate camera switch: fade to black → switch → wait for new feed → fade out
+    var currentZoom by remember { mutableFloatStateOf(1f) }
+    var pinchCentroid by remember { mutableStateOf<Offset?>(null) }
+
+    fun applyZoom(ratio: Float) {
+        val requested = ratio.coerceIn(1f, MAX_ZOOM)
+        currentZoom = manager?.setZoomRatio(requested)?.coerceAtLeast(1f) ?: requested
+    }
+
+    fun flip() {
+        if (currentIsRecording || isSwitchingCamera) return
+        isSwitchingCamera = true
+        currentZoom = 1f
+        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+    }
+
     LaunchedEffect(isSwitchingCamera) {
         if (isSwitchingCamera) {
             val previewManager = manager
@@ -682,45 +732,66 @@ private fun InlineCameraCapture(
         }
     }
 
-    // Zoom state
-    var currentZoom by remember { mutableFloatStateOf(1f) }
+    val cornerControls = cameraCornerControls(uiState.cameraSelection)
+    val closeLabel = stringResource(Res.string.camera_close)
+    val flipLabel = stringResource(Res.string.switch_camera)
+    val swipeToClosePx = with(density) { SwipeDownToClose.toPx() }
 
-    val animatedAspectRatio by animateFloatAsState(
-        targetValue = uiState.aspectRatio.ratio,
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-        label = "viewfinderAspectRatio",
-    )
-    val showCameraSwitchShortcut =
-        uiState.cameraSelection.devices.count { device ->
-            device.category == MediaDeviceCategory.FRONT_CAMERA ||
-                device.category == MediaDeviceCategory.BACK_CAMERA
-        } >= 2
-
-    @Composable
-    fun PreviewPane(modifier: Modifier = Modifier) {
-        Box(modifier = modifier) {
+    CameraCaptureLayout(
+        isRecording = uiState.isRecording,
+        recordingDuration = uiState.formattedDuration,
+        error = uiState.error?.asString(),
+        modifier = modifier,
+        viewfinder = { viewfinderModifier ->
             Box(
                 modifier =
-                    Modifier
-                        .align(Alignment.Center)
-                        .aspectRatio(animatedAspectRatio)
-                        .clip(RoundedCornerShape(20.dp))
+                    viewfinderModifier
                         .background(Color.Black)
-                        .pointerInput(Unit) {
-                            detectTransformGestures { _, _, zoom, _ ->
-                                currentZoom = (currentZoom * zoom).coerceIn(1f, 10f)
-                                manager?.setZoomRatio(currentZoom)
+                        .semantics {
+                            customActions =
+                                listOf(
+                                    CustomAccessibilityAction(closeLabel) {
+                                        currentOnClose()
+                                        true
+                                    },
+                                    CustomAccessibilityAction(flipLabel) {
+                                        flip()
+                                        true
+                                    },
+                                )
+                        }.pointerInput(manager) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                var pinching = false
+                                var travel = Offset.Zero
+                                do {
+                                    val event = awaitPointerEvent()
+                                    val pressedCount = event.changes.count { it.pressed }
+                                    if (pressedCount >= 2) {
+                                        pinching = true
+                                        val zoom = event.calculateZoom()
+                                        if (zoom != 1f) {
+                                            applyZoom(currentZoom * zoom)
+                                            pinchCentroid = event.calculateCentroid(useCurrent = true)
+                                            event.changes.forEach { it.consume() }
+                                        }
+                                    } else if (!pinching) {
+                                        val change = event.changes.firstOrNull { it.id == down.id }
+                                        if (change != null) travel += change.positionChange()
+                                    }
+                                } while (event.changes.any { it.pressed })
+                                pinchCentroid = null
+                                val swipedDown = travel.y > swipeToClosePx && abs(travel.y) > abs(travel.x) * 2
+                                if (!pinching && swipedDown && !currentIsRecording) currentOnClose()
                             }
-                        }.pointerInput(Unit) {
+                        }.pointerInput(manager) {
                             detectTapGestures(
                                 onTap = { offset ->
-                                    if (!currentPreviewStreaming) {
-                                        return@detectTapGestures
-                                    }
-
+                                    if (!currentPreviewStreaming) return@detectTapGestures
                                     focusPoint = offset
                                     manager?.tapToFocus(offset.x, offset.y)
                                 },
+                                onDoubleTap = { flip() },
                             )
                         },
             ) {
@@ -735,245 +806,92 @@ private fun InlineCameraCapture(
 
                 currentFocusPoint?.let { point ->
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val ringSize = 80f * focusRingScale.value
+                        val ringSize = 72.dp.toPx() * focusRingScale.value
                         drawCircle(
-                            color = primaryColor.copy(alpha = focusRingAlpha.value),
+                            color = focusColor.copy(alpha = focusRingAlpha.value),
                             radius = ringSize / 2,
                             center = point,
-                            style = Stroke(width = 2f),
+                            style = Stroke(width = 1.5.dp.toPx()),
                         )
                     }
                 }
+
+                pinchCentroid?.let { centroid ->
+                    ZoomReadout(
+                        zoom = currentZoom,
+                        modifier =
+                            Modifier.offset {
+                                IntOffset(
+                                    (centroid.x - 28.dp.toPx()).roundToInt(),
+                                    (centroid.y - 64.dp.toPx()).roundToInt(),
+                                )
+                            },
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = showFlash,
+                    enter = fadeIn(tween(50)),
+                    exit = fadeOut(tween(100)),
+                ) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color.White))
+                }
+
+                if (switchOverlayAlpha.value > 0f) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = switchOverlayAlpha.value)),
+                    )
+                }
             }
-
-            AnimatedVisibility(
-                visible = showFlash,
-                enter = fadeIn(tween(50)),
-                exit = fadeOut(tween(100)),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(Color.White),
-                )
-            }
-
-            if (switchOverlayAlpha.value > 0f) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = switchOverlayAlpha.value)),
-                )
-            }
-
-            RecordingIndicator(
-                visible = uiState.isRecording,
-                duration = uiState.formattedDuration,
-                modifier =
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                        .statusBarsPadding()
-                        .cameraHeaderClearance()
-                        .padding(16.dp),
-            )
-        }
-    }
-
-    @Composable
-    fun CameraDeviceControls(modifier: Modifier = Modifier) {
-        Column(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            CameraRouteSelector(
+        },
+        cornerControls = {
+            CameraCornerCluster(
+                controls = cornerControls,
                 selection = uiState.cameraSelection,
+                enabled = !uiState.isRecording && !isSwitchingCamera,
+                onFlip = ::flip,
                 onDeviceSelected = { deviceId ->
                     if (!uiState.isRecording) {
                         scope.launch { viewModel.selectCameraDevice(deviceId) }
                     }
                 },
-                label = stringResource(Res.string.camera),
-                enabled = !uiState.isRecording,
             )
-
-            if (uiState.captureMode == CaptureMode.VIDEO) {
-                CameraRouteSelector(
-                    selection =
-                        inputSelection.asSystemControlledSelection(
-                            routeControlMessage = Res.string.camera_microphone_route_message.toUiText(),
-                        ),
-                    onDeviceSelected = {},
-                    label = stringResource(Res.string.microphone),
-                    enabled = !uiState.isRecording,
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun CaptureControls(modifier: Modifier = Modifier) {
-        Column(
-            modifier = modifier,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            AnimatedVisibility(
-                visible = !uiState.isRecording,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    AspectRatioSelector(
-                        selected = uiState.aspectRatio,
-                        onSelected = { viewModel.setAspectRatio(it) },
-                    )
-
-                    PhotoVideoToggle(
-                        currentMode = uiState.captureMode,
-                        onModeChanged = { viewModel.setCaptureMode(it) },
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(modifier = Modifier.size(48.dp))
-
-                ShutterButton(
-                    isRecording = uiState.isRecording,
-                    captureMode = uiState.captureMode,
-                    isCapturing = uiState.isCapturing,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        if (uiState.captureMode == CaptureMode.PHOTO) {
+        },
+        shutter = {
+            CaptureShutter(
+                isRecording = uiState.isRecording,
+                enabled = !uiState.isCapturing && !isSwitchingCamera,
+                baseZoom = currentZoom,
+                onAction = { action ->
+                    when (action) {
+                        ShutterAction.TakePhoto -> {
                             showFlash = true
+                            viewModel.takePhoto(onPrepareCaptureTarget)
                         }
-                        viewModel.capture(onPrepareCaptureTarget)
-                    },
-                )
 
-                if (showCameraSwitchShortcut) {
-                    IconButton(
-                        onClick = {
-                            if (!isSwitchingCamera) {
-                                isSwitchingCamera = true
-                                currentZoom = 1f
-                            }
-                        },
-                        enabled = !uiState.isRecording && !isSwitchingCamera,
-                        modifier =
-                            Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.7f),
-                                    CircleShape,
-                                ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Cameraswitch,
-                            contentDescription = stringResource(Res.string.switch_camera),
-                            tint =
-                                if (uiState.isRecording) {
-                                    MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.38f)
-                                } else {
-                                    MaterialTheme.colorScheme.inverseOnSurface
-                                },
-                        )
+                        ShutterAction.StartRecording -> {
+                            viewModel.startRecording(onPrepareCaptureTarget)
+                        }
+
+                        ShutterAction.StopRecording -> {
+                            viewModel.stopRecording()
+                        }
+
+                        ShutterAction.LockRecording -> {
+                            // The recording is already running; locking only changes the shutter.
+                        }
+
+                        is ShutterAction.Zoom -> {
+                            applyZoom(action.factor)
+                        }
                     }
-                } else {
-                    Spacer(modifier = Modifier.size(48.dp))
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun ErrorMessage(modifier: Modifier = Modifier) {
-        uiState.error?.let { error ->
-            Surface(
-                modifier = modifier,
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.errorContainer,
-            ) {
-                Text(
-                    text = error.asString(),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-    }
-
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = Color.Black,
-    ) {
-        FoldableTabletopLayout(
-            modifier = Modifier.fillMaxSize(),
-            minPaneHeight = 220.dp,
-            topPane = {
-                PreviewPane(modifier = Modifier.fillMaxSize())
-            },
-            bottomPane = {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                            .navigationBarsPadding()
-                            .cameraCreationClearance()
-                            .padding(horizontal = 16.dp, vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CameraDeviceControls(modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(16.dp))
-                    CaptureControls(modifier = Modifier.fillMaxWidth())
-                    ErrorMessage(modifier = Modifier.padding(top = 16.dp))
-                }
-            },
-            standardContent = {
-                PreviewPane(modifier = Modifier.fillMaxSize())
-                CameraDeviceControls(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopStart)
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                            .statusBarsPadding()
-                            .cameraHeaderClearance()
-                            .padding(16.dp),
-                )
-                CaptureControls(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                            .navigationBarsPadding()
-                            .cameraCreationClearance()
-                            .padding(bottom = 24.dp),
-                )
-                ErrorMessage(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopCenter)
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-                            .statusBarsPadding()
-                            .cameraHeaderClearance()
-                            .padding(top = 16.dp),
-                )
-            },
-        )
-    }
+                },
+            )
+        },
+    )
 }
 
 @Composable
@@ -989,8 +907,9 @@ private fun RecordingIndicator(
         modifier = modifier,
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.errorContainer,
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.5f),
+            contentColor = Color.White,
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -999,152 +918,15 @@ private fun RecordingIndicator(
                 Icon(
                     imageVector = Icons.Default.FiberManualRecord,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(10.dp),
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = duration,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
     }
-}
-
-/**
- * Shutter button for capturing photos or starting/stopping video recording.
- */
-@Suppress("ktlint:standard:function-naming")
-@Composable
-private fun ShutterButton(
-    isRecording: Boolean,
-    captureMode: CaptureMode,
-    isCapturing: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val label =
-        stringResource(
-            when {
-                isRecording -> Res.string.stop_recording
-                captureMode == CaptureMode.PHOTO -> Res.string.take_photo
-                else -> Res.string.editor_action_record_video
-            },
-        )
-    val buttonSize = 72.dp
-    val innerSize = if (isRecording) 24.dp else 56.dp
-
-    Surface(
-        modifier =
-            modifier
-                .size(buttonSize)
-                .semantics { contentDescription = label }
-                .clickable(enabled = !isCapturing, role = Role.Button) { onClick() },
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Surface(
-                modifier = Modifier.size(innerSize),
-                shape = if (isRecording) RoundedCornerShape(4.dp) else CircleShape,
-                color =
-                    if (captureMode == CaptureMode.VIDEO || isRecording) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-            ) {}
-        }
-    }
-}
-
-/**
- * MD3 Expressive sliding-pill aspect ratio selector.
- *
- * A compact rounded container with three ratio labels. A filled indicator pill
- * slides behind the selected label with a smooth ease-out transition.
- */
-@Suppress("ktlint:standard:function-naming")
-@Composable
-private fun AspectRatioSelector(
-    selected: CameraAspectRatio,
-    onSelected: (CameraAspectRatio) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val options = CameraAspectRatio.entries
-    val selectedIndex = options.indexOf(selected)
-
-    // Track each slot's x-offset and width so the indicator can slide to the right position.
-    val slotOffsets = remember { mutableMapOf<Int, Float>() }
-    val slotWidths = remember { mutableMapOf<Int, Float>() }
-
-    val indicatorOffset by animateDpAsState(
-        targetValue = (slotOffsets[selectedIndex] ?: 0f).pxToDp(),
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-        label = "indicatorOffset",
-    )
-    val indicatorWidth by animateDpAsState(
-        targetValue = (slotWidths[selectedIndex] ?: 0f).pxToDp(),
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-        label = "indicatorWidth",
-    )
-
-    Surface(
-        modifier = modifier,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.3f),
-    ) {
-        Box {
-            // Sliding indicator pill
-            if (indicatorWidth > 0.dp) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .offset(x = indicatorOffset)
-                            .size(width = indicatorWidth, height = 36.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.85f),
-                ) {}
-            }
-
-            // Label slots
-            Row {
-                options.forEachIndexed { index, ratio ->
-                    Box(
-                        modifier =
-                            Modifier
-                                .clickable { onSelected(ratio) }
-                                .onSizeChanged { size ->
-                                    slotWidths[index] = size.width.toFloat()
-                                }.onGloballyPositioned { coordinates ->
-                                    slotOffsets[index] = coordinates.positionInParent().x
-                                }.padding(horizontal = 16.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = ratio.displayName,
-                            style = MaterialTheme.typography.labelMedium,
-                            color =
-                                if (ratio == selected) {
-                                    MaterialTheme.colorScheme.inverseOnSurface
-                                } else {
-                                    MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.6f)
-                                },
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Converts a pixel value to [Dp] in a composable context.
- */
-@Composable
-private fun Float.pxToDp(): Dp {
-    val density = LocalDensity.current
-    return with(density) { this@pxToDp.toDp() }
 }

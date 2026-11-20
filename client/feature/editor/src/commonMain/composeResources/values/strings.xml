@@ -76,7 +76,6 @@
     <string name="pause_audio">Pause audio</string>
     <string name="pause_video">Pause video</string>
     <string name="enter_picture_in_picture">Enter picture-in-picture</string>
-    <string name="photo">Photo</string>
     <string name="photo_library">Photo Library</string>
     <string
     name="pick_from_your_library_or_browse_all_your_photos"
@@ -88,7 +87,6 @@
     <string name="clear_all">Clear all</string>
     <string name="recent_photos">Recent photos</string>
     <string name="record">Record</string>
-    <string name="retake">Retake</string>
     <string name="record_audio">Record audio</string>
     <string name="remove_block">Remove Block</string>
     <string name="restart">Restart</string>
@@ -131,8 +129,6 @@
     <string
     name="transcription_ready_description"
   >Text is ready to save with this recording.</string>
-    <string name="use_photo">Use Photo</string>
-    <string name="use_video">Use Video</string>
     <string name="undo">Undo</string>
     <string name="paste_as_attachment">Paste as attachment</string>
     <string
@@ -281,4 +277,7 @@
     name="editor_entry_changed"
   >This entry changed elsewhere. Your version is saved in Drafts.</string>
     <string name="editor_save_separately">Save separately</string>
+    <string name="camera_start_recording">Start recording</string>
+    <string name="camera_close">Close camera</string>
+    <string name="camera_recording_locked">Recording hands-free</string>
 </resources>

@@ -112,11 +112,12 @@ class AndroidCameraCaptureManager(
      * Sets the camera zoom ratio.
      * @param ratio Zoom ratio where 1.0 is no zoom. Clamped to the camera's supported range.
      */
-    fun setZoomRatio(ratio: Float) {
-        val cam = camera ?: return
-        val zoomState = cam.cameraInfo.zoomState.value ?: return
+    fun setZoomRatio(ratio: Float): Float {
+        val cam = camera ?: return ratio
+        val zoomState = cam.cameraInfo.zoomState.value ?: return ratio
         val clamped = ratio.coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
         cam.cameraControl.setZoomRatio(clamped)
+        return clamped
     }
 
     /**
