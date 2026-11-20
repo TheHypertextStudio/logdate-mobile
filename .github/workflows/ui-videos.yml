@@ -1,0 +1,88 @@
+name: UI videos
+run-name: UI videos for ${{ github.sha }}
+
+# Records each named UI flow in UiFlowRecordingTest of the real app on a Gradle Managed
+# Device and uploads one video per flow. The Apple apps record the same flow names in logdate-apple.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'app/android-main/src/androidTest/**/UiFlowRecordingTest.kt'
+      - 'app/android-main/src/androidTest/**/ManagedEditorRecording.kt'
+      - '.github/workflows/ui-videos.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-videos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Record Android flows
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+        with:
+          lfs: true
+      - name: Materialize debug configuration
+        uses: ./.github/actions/setup-firebase-configs
+        with:
+          android-google-services-json-base64: ${{ secrets.LOGDATE_ANDROID_GOOGLE_SERVICES_JSON_DEBUG_BASE64 }}
+          android-maps-api-key: ${{ secrets.LOGDATE_CI_GOOGLE_MAPS_API_KEY }}
+          google-server-client-id: ${{ vars.LOGDATE_GOOGLE_SERVER_CLIENT_ID_DEBUG }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install the dedicated CI debug signer
+        env:
+          LOGDATE_CI_DEBUG_KEYSTORE_BASE64: ${{ secrets.LOGDATE_CI_DEBUG_KEYSTORE_BASE64 }}
+          LOGDATE_CI_DEBUG_CERT_SHA1: ${{ vars.LOGDATE_CI_DEBUG_CERT_SHA1 }}
+        run: python3 scripts/materialize-ci-debug-keystore.py "$HOME/.android/debug.keystore"
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - name: Fit Gradle to the runner
+        uses: ./.github/actions/fit-gradle-to-runner
+      - name: Record flows on the managed target phone
+        run: >-
+          ./gradlew :app:android-main:flagshipPhoneApi37DebugAndroidTest
+          -Plogdate.androidTestOrchestrator=false
+          -Plogdate.androidTestClass=app.logdate.client.e2e.UiFlowRecordingTest
+          --max-workers=2 --continue --console=plain
+      - name: Collect one video per flow
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/ui-videos/android"
+          find app/android-main/build -path '*ui-flows/*' -name '*.mp4' -exec cp {} "$RUNNER_TEMP/ui-videos/android/" \;
+          {
+            echo "### Android UI flows"
+            echo
+            for video in "$RUNNER_TEMP"/ui-videos/android/*.mp4; do
+              [ -e "$video" ] && echo "- $(basename "$video" .mp4)"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload videos and results
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: ui-videos-android-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/ui-videos/android/
+            app/android-main/build/outputs/androidTest-results/managedDevice/debug/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 30
