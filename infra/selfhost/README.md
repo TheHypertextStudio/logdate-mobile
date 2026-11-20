@@ -27,10 +27,12 @@ secrets, a missing health token, or passkey origins outside `logdate.app`.
 - Docker with Compose v2.
 - At least 2 CPU cores, 4 GB of memory, and disk for everyone's media. An Oracle Cloud
   Always Free Ampere A1 instance (4 cores, 24 GB, 200 GB) fits.
-- Ports 80 and 443 reachable from the internet, so Caddy can get a certificate.
-- A DNS record for `cloud.logdate.app` that points straight at the machine, with Cloudflare's
+- With Caddy (`LOGDATE_EDGE=caddy`, the default): ports 80 and 443 reachable from the internet,
+  and a DNS record for `cloud.logdate.app` that points straight at the machine with Cloudflare's
   proxy **off** (DNS only, grey cloud). Through Cloudflare's proxy, uploads over 100 MB fail on
   the free plan, and Caddy cannot complete its certificate challenge.
+- With a Cloudflare Tunnel (`LOGDATE_EDGE=tunnel`): no open ports; see
+  [On a Mac at home](#on-a-mac-at-home-through-cloudflare-tunnel).
 
 ## First start
 
@@ -86,11 +88,85 @@ Cloudflare R2 bucket with `rclone`:
 To restore, stop the server, `pg_restore --clean` the dump into the `postgres` container, and
 extract the media archive into the `blob-data` volume.
 
-## Behind Cloudflare Tunnel instead
+## On a Mac at home, through Cloudflare Tunnel
 
-On a machine without public ports, such as a Mac at home, run
-[`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
-in place of Caddy: remove the `caddy` service's `ports`, point the tunnel at `http://server:8080`
-on the `internal` network, and set `TRUSTED_PROXY_HOPS=1` in `logdate.env`. Uploads through the
-tunnel are capped at 100 MB on Cloudflare's free plan, so large backups fail, and the server is
-down whenever the machine or its connection is.
+A [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+lets a machine with no open ports serve `cloud.logdate.app`: `cloudflared` on the Mac opens an
+outbound connection to Cloudflare, and Cloudflare sends the domain's requests down it. Your home
+address stays hidden and the router needs no changes. Set `LOGDATE_EDGE=tunnel` in `logdate.env`
+and Caddy is not started.
+
+What it costs:
+
+- **Uploads over 100 MB fail.** Cloudflare's free plan rejects larger request bodies before they
+  reach the Mac. Journal sync sends each file in its own request, up to 100 MiB, so only files
+  within a few megabytes of that limit fail. Android's cloud archive backups send the whole
+  archive in one request and fail once an archive passes 100 MB. Downloads are not limited.
+- **The server is down whenever the Mac or the home connection is.** That includes macOS updates
+  that restart the Mac, and power cuts until it has started again.
+
+### Set up the tunnel (Cloudflare dashboard)
+
+1. Open Cloudflare Zero Trust, then **Networks → Tunnels → Create a tunnel**, choose
+   **Cloudflared**, and name it `logdate`. Copy the token from the install command it shows (the
+   long string after `--token`).
+2. Under **Public hostnames**, add `cloud.logdate.app` with service type `HTTP` and URL
+   `server:8080`. If Cloudflare says a DNS record already exists, delete the old
+   `cloud` CNAME to `ghs.googlehosted.com` under **DNS → Records** first.
+3. On the Mac, create `tunnel.env` in this directory containing `TUNNEL_TOKEN=<the token>`, and
+   `chmod 600 tunnel.env`.
+
+### Prepare the Mac
+
+Run these once in Terminal. They keep the Mac awake, start it again after a power cut, and keep
+its network up while the display sleeps:
+
+```bash
+sudo pmset -a sleep 0 disksleep 0 autorestart 1 womp 1 networkoversleep 1
+sudo pmset -a powernap 0
+```
+
+Then install Docker Desktop and, in its settings, turn on **Start Docker Desktop when you sign
+in**. Docker restarts the LogDate containers whenever it starts. Docker Desktop runs only while
+you are signed in, so after a restart the server comes back once someone signs in. With FileVault
+on, macOS cannot sign in by itself after a power cut; with FileVault off, turn on automatic
+sign-in in **System Settings → Users & Groups** so it comes back unattended. That trade is yours
+to make.
+
+Give Docker at least 4 GB of memory under **Settings → Resources**.
+
+### Start it
+
+```bash
+git clone https://github.com/TheHypertextStudio/logdate-mobile.git ~/logdate-mobile
+cd ~/logdate-mobile/infra/selfhost
+./generate-secrets.sh
+sed -i '' 's/^LOGDATE_EDGE=caddy/LOGDATE_EDGE=tunnel/' logdate.env
+./deploy.sh
+curl https://cloud.logdate.app/api/v1/server/info
+```
+
+### Daily backups on the Mac
+
+Save this as `~/Library/LaunchAgents/app.logdate.backup.plist`, replacing `YOU` with your
+account name, then run `launchctl load ~/Library/LaunchAgents/app.logdate.backup.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>app.logdate.backup</string>
+  <key>ProgramArguments</key>
+  <array><string>/Users/YOU/logdate-mobile/infra/selfhost/backup.sh</string></array>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string></dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>15</integer></dict>
+  <key>StandardErrorPath</key><string>/tmp/logdate-backup.log</string>
+</dict>
+</plist>
+```
+
+`backups/` sits on the same disk as the server, so also copy it somewhere else, such as
+another drive with Time Machine.

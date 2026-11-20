@@ -10,15 +10,31 @@ if [[ -n "$(git status --porcelain -- ../../server ../../shared)" ]]; then
     exit 1
 fi
 
+edge="$(sed -n 's/^LOGDATE_EDGE=//p' logdate.env)"
+case "${edge:=caddy}" in
+caddy) ;;
+tunnel)
+    grep -q '^TUNNEL_TOKEN=.' tunnel.env 2>/dev/null ||
+        { echo "LOGDATE_EDGE=tunnel needs TUNNEL_TOKEN=<token> in tunnel.env (see README.md)." >&2; exit 1; }
+    ;;
+*) echo "LOGDATE_EDGE must be caddy or tunnel, not '$edge'." >&2; exit 1 ;;
+esac
+
 # Compose reads .env for every later command too (logs, exec, backup.sh), not only this one.
-echo "RELEASE_VERSION=logdate-server@$(git rev-parse HEAD)" >.env
+{
+    echo "RELEASE_VERSION=logdate-server@$(git rev-parse HEAD)"
+    echo "COMPOSE_PROFILES=$edge"
+} >.env
 HEALTH_INTERNAL_TOKEN="$(sed -n 's/^HEALTH_INTERNAL_TOKEN=//p' secrets.env)"
 
 docker compose up -d --build --remove-orphans
+# Services of the edge not chosen belong to an inactive profile, which --remove-orphans skips.
+if [[ "$edge" == caddy ]]; then unused=cloudflared; unused_profile=tunnel; else unused=caddy; unused_profile=caddy; fi
+COMPOSE_PROFILES="$unused_profile" docker compose rm --stop --force "$unused" >/dev/null 2>&1 || true
 
 echo "Waiting for the server to report a healthy database..."
 for _ in $(seq 1 60); do
-    if docker compose exec -T caddy wget -qO- \
+    if docker compose run --rm --no-deps -T blob-permissions wget -qO- \
         --header "X-Forwarded-Proto: https" \
         --header "X-LogDate-Health-Token: ${HEALTH_INTERNAL_TOKEN}" \
         http://server:8080/health 2>/dev/null | grep -q '"db_connected":true'; then
