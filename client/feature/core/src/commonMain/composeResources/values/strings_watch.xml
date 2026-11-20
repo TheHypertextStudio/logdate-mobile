@@ -220,29 +220,37 @@
     <string name="watch_v2_video">Video</string>
     <string name="watch_v2_campfire">Campfire</string>
     <string name="watch_v2_mark">Mark</string>
-    <string name="watch_remove_loading">Checking the linked watch…</string>
+    <string name="watch_remove_loading">Checking your watch…</string>
     <string name="watch_remove_review">Remove %1$s?</string>
+    <plurals name="watch_remove_unsent">
+        <item quantity="one">%1$d moment on this watch hasn&apos;t synced yet. LogDate tries to save it first. If it can&apos;t, it&apos;s cleared with the watch.</item>
+        <item quantity="other">%1$d moments on this watch haven&apos;t synced yet. LogDate tries to save them first. Any it can&apos;t save are cleared with the watch.</item>
+    </plurals>
     <string
-    name="watch_remove_pending"
-  >Last reported unsent moments: %1$s. If the watch is offline, these and any newer unsent moments may be lost.</string>
-    <string name="watch_remove_count_unknown">unavailable</string>
+    name="watch_remove_unsent_unknown"
+  >LogDate can&apos;t check this watch right now. Anything on it that hasn&apos;t synced is cleared with it.</string>
     <string
     name="watch_remove_consequence"
-  >When the watch is nearby, LogDate syncs its moments before removing it. If it is offline, LogDate revokes its access now and queues erasure for its next connection. Unsent moments on the watch may be lost. Your phone journal and backed-up moments stay safe.</string>
+  >LogDate is cleared from the watch. Your journal on this phone and your backups aren&apos;t affected.</string>
     <string name="watch_remove_confirm">Remove watch</string>
-    <string name="watch_remove_busy">Removing the watch…</string>
+    <string name="watch_remove_busy">Saving and removing…</string>
     <string
     name="watch_remove_unavailable"
-  >No verified watch link is available. Set up the watch again before removing it securely.</string>
+  >This watch isn&apos;t linked to this phone. Set it up again to remove it here.</string>
+    <string name="watch_remove_done">Watch removed.</string>
+    <plurals name="watch_remove_discarded">
+        <item quantity="one">%1$d moment that couldn&apos;t sync was cleared with it.</item>
+        <item quantity="other">%1$d moments that couldn&apos;t sync were cleared with it.</item>
+    </plurals>
     <string
-    name="watch_remove_done"
-  >Watch removed. Its retained LogDate data has been erased.</string>
+    name="watch_remove_discarded_unknown"
+  >Anything that hadn&apos;t synced was cleared with it.</string>
     <string
     name="watch_remove_deferred"
-  >Watch access revoked. LogDate will erase its local data when it reconnects. Unsent moments on that watch may be lost.</string>
+  >Watch removed. LogDate clears it, along with anything that hasn&apos;t synced, the next time it connects.</string>
     <string
     name="watch_remove_failed"
-  >Removal isn’t complete. Keep the watch nearby and try again. Recording on the watch may pause until this finishes.</string>
+  >Couldn&apos;t remove the watch. Check your connection and try again.</string>
     <string name="watch_remove_retry">Check again</string>
     <string name="watch_audio_wifi_or_charging">Wi-Fi or while charging</string>
     <string name="watch_audio_wifi_only">Wi-Fi only</string>

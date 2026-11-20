@@ -456,7 +456,7 @@ class DevicesViewModelTest {
             advanceUntilIdle()
             assertEquals(LinkedDevicesUiState.Listed(listOf(linkedWatchUi), removingId = linkedWatch.id), viewModel.uiState.value.linked)
 
-            removal.complete(LinkedDeviceRemoval.Removed)
+            removal.complete(LinkedDeviceRemoval.Removed())
             advanceUntilIdle()
             assertEquals(LinkedDevicesUiState.Listed(emptyList()), viewModel.uiState.value.linked)
             assertEquals(listOf(linkedWatch), linked.removed)
@@ -480,7 +480,7 @@ class DevicesViewModelTest {
             assertEquals(LinkedDevicesUiState.Listed(listOf(linkedWatchUi), removingId = linkedWatch.id), viewModel.uiState.value.linked)
             assertTrue(linked.removalActive)
 
-            removal.complete(LinkedDeviceRemoval.Removed)
+            removal.complete(LinkedDeviceRemoval.Removed())
             advanceUntilIdle()
             assertEquals(LinkedDevicesUiState.Listed(emptyList()), viewModel.uiState.value.linked)
             assertTrue(linked.removalFinished)
@@ -498,7 +498,7 @@ class DevicesViewModelTest {
             advanceUntilIdle()
 
             viewModel.viewModelScope.cancel()
-            removal.complete(LinkedDeviceRemoval.Removed)
+            removal.complete(LinkedDeviceRemoval.Removed())
             advanceUntilIdle()
 
             assertTrue(linked.removalFinished)
@@ -525,9 +525,27 @@ class DevicesViewModelTest {
         }
 
     @Test
+    fun `a watch removed with unsynced moments says they were cleared`() =
+        testScope.runTest {
+            linked.answers += LinkedDevicesLoad.Loaded(listOf(linkedWatch))
+            linked.answers += LinkedDevicesLoad.Loaded(emptyList())
+            linked.removal = CompletableDeferred(LinkedDeviceRemoval.Removed(discarded = 2))
+            viewModel.loadDevices()
+            advanceUntilIdle()
+
+            viewModel.removeLinkedDevice(linkedWatch.id)
+            advanceUntilIdle()
+
+            assertEquals(
+                LinkedDevicesUiState.Listed(emptyList(), notice = LinkedDeviceNotice.ClearedUnsent("Pixel Watch 3", 2)),
+                viewModel.uiState.value.linked,
+            )
+        }
+
+    @Test
     fun `a failed removal keeps the device and says why`() =
         testScope.runTest {
-            val failure = LinkedDevicesFailure.WatchRemovalStopped("sync")
+            val failure = LinkedDevicesFailure.WatchRemovalStopped("revoke")
             linked.answers += LinkedDevicesLoad.Loaded(listOf(linkedWatch))
             linked.removal = CompletableDeferred(LinkedDeviceRemoval.Failed(failure))
             viewModel.loadDevices()
@@ -570,7 +588,7 @@ class DevicesViewModelTest {
         var isAvailable = true
         val answers = ArrayDeque<LinkedDevicesLoad>()
         var pending: CompletableDeferred<LinkedDevicesLoad>? = null
-        var removal = CompletableDeferred<LinkedDeviceRemoval>(LinkedDeviceRemoval.Removed)
+        var removal = CompletableDeferred<LinkedDeviceRemoval>(LinkedDeviceRemoval.Removed())
         val removed = mutableListOf<LinkedDeviceSession>()
         var loads = 0
 

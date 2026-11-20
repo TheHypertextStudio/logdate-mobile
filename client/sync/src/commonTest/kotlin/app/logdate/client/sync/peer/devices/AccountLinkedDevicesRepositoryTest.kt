@@ -210,7 +210,7 @@ class AccountLinkedDevicesRepositoryTest {
         runTest {
             val repository = repository { respond("", HttpStatusCode.NoContent) }
 
-            assertEquals(LinkedDeviceRemoval.Removed, repository.remove(watch()))
+            assertEquals(LinkedDeviceRemoval.Removed(), repository.remove(watch()))
             assertEquals(listOf("DELETE /api/v1/auth/devices/watch-session Bearer phone-access"), requests)
         }
 
@@ -222,7 +222,7 @@ class AccountLinkedDevicesRepositoryTest {
                     if (request.method == HttpMethod.Delete) respondError(HttpStatusCode.NotFound, "DEVICE_NOT_FOUND") else respondList()
                 }
 
-            assertEquals(LinkedDeviceRemoval.Removed, repository.remove(watch()))
+            assertEquals(LinkedDeviceRemoval.Removed(), repository.remove(watch()))
         }
 
     @Test
@@ -264,13 +264,24 @@ class AccountLinkedDevicesRepositoryTest {
         }
 
     @Test
-    fun `a watch removal that stops names its step`() =
+    fun `moments a watch could not sync are reported with its removal`() =
         runTest {
-            val removal = FakeWatchRemoval(bySession = target(sessionId = "watch-session"), result = WatchRemovalResult.Failed("sync"))
+            val removal =
+                FakeWatchRemoval(bySession = target(sessionId = "watch-session"), result = WatchRemovalResult.Removed(discarded = 3))
 
             val removed = repository(watchRemoval = removal) { respondList() }.remove(watch())
 
-            assertEquals(LinkedDeviceRemoval.Failed(LinkedDevicesFailure.WatchRemovalStopped("sync")), removed)
+            assertEquals(LinkedDeviceRemoval.Removed(discarded = 3), removed)
+        }
+
+    @Test
+    fun `a watch removal that stops names its step`() =
+        runTest {
+            val removal = FakeWatchRemoval(bySession = target(sessionId = "watch-session"), result = WatchRemovalResult.Failed("revoke"))
+
+            val removed = repository(watchRemoval = removal) { respondList() }.remove(watch())
+
+            assertEquals(LinkedDeviceRemoval.Failed(LinkedDevicesFailure.WatchRemovalStopped("revoke")), removed)
         }
 
     private fun watch() =
@@ -362,7 +373,7 @@ class AccountLinkedDevicesRepositoryTest {
     private class FakeWatchRemoval(
         private val paired: WatchRemovalTarget? = null,
         private val bySession: WatchRemovalTarget? = null,
-        private val result: WatchRemovalResult = WatchRemovalResult.Removed,
+        private val result: WatchRemovalResult = WatchRemovalResult.Removed(),
         private val answersTarget: Boolean = true,
     ) : WatchRemovalAccess {
         val removed = mutableListOf<WatchRemovalTarget>()

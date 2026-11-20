@@ -26,6 +26,8 @@ import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.common.SimpleSettingsItem
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
+import logdate.client.feature.core.generated.resources.linked_device_cleared_unknown
+import logdate.client.feature.core.generated.resources.linked_device_cleared_unsent
 import logdate.client.feature.core.generated.resources.linked_device_erases_on_next_connect
 import logdate.client.feature.core.generated.resources.linked_device_paired_phone
 import logdate.client.feature.core.generated.resources.linked_device_remove_account_changed
@@ -38,7 +40,6 @@ import logdate.client.feature.core.generated.resources.linked_device_remove_watc
 import logdate.client.feature.core.generated.resources.linked_device_remove_watch_erase
 import logdate.client.feature.core.generated.resources.linked_device_remove_watch_forget
 import logdate.client.feature.core.generated.resources.linked_device_remove_watch_revoke
-import logdate.client.feature.core.generated.resources.linked_device_remove_watch_sync
 import logdate.client.feature.core.generated.resources.linked_device_remove_watch_unfinished
 import logdate.client.feature.core.generated.resources.linked_device_removing
 import logdate.client.feature.core.generated.resources.linked_device_times
@@ -54,6 +55,7 @@ import logdate.client.feature.core.generated.resources.watch_settings
 import logdate.client.ui.generated.resources.common_dismiss
 import logdate.client.ui.generated.resources.common_remove
 import logdate.client.ui.generated.resources.common_try_again
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import logdate.client.ui.generated.resources.Res as UiRes
 
@@ -208,6 +210,17 @@ private fun LinkedDeviceNoticeRow(
             )
         }
 
+        is LinkedDeviceNotice.ClearedUnsent -> {
+            val message =
+                notice.count?.let { pluralStringResource(Res.plurals.linked_device_cleared_unsent, it, it, notice.deviceName) }
+                    ?: stringResource(Res.string.linked_device_cleared_unknown, notice.deviceName)
+            SettingsRow(
+                headlineContent = { Text(message) },
+                trailingContent = { TextButton(onClick = onDismiss) { Text(stringResource(UiRes.string.common_dismiss)) } },
+                modifier = Modifier.testTag(LinkedDevicesTags.NOTICE),
+            )
+        }
+
         is LinkedDeviceNotice.RemoveFailed -> {
             SettingsRow(
                 headlineContent = { Text(removeFailureMessage(notice.deviceName, notice.failure)) },
@@ -280,7 +293,6 @@ private fun removeFailureMessage(
 
         is LinkedDevicesFailure.WatchRemovalStopped -> {
             when (failure.step) {
-                "sync" -> stringResource(Res.string.linked_device_remove_watch_sync, name)
                 "revoke" -> stringResource(Res.string.linked_device_remove_watch_revoke, name)
                 "wipe", "queue wipe" -> stringResource(Res.string.linked_device_remove_watch_erase, name)
                 "disassociate", "clear link" -> stringResource(Res.string.linked_device_remove_watch_forget, name)

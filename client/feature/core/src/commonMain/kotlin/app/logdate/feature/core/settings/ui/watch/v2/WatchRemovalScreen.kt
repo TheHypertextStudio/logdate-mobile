@@ -30,16 +30,19 @@ import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_remove_busy
 import logdate.client.feature.core.generated.resources.watch_remove_confirm
 import logdate.client.feature.core.generated.resources.watch_remove_consequence
-import logdate.client.feature.core.generated.resources.watch_remove_count_unknown
 import logdate.client.feature.core.generated.resources.watch_remove_deferred
+import logdate.client.feature.core.generated.resources.watch_remove_discarded
+import logdate.client.feature.core.generated.resources.watch_remove_discarded_unknown
 import logdate.client.feature.core.generated.resources.watch_remove_done
 import logdate.client.feature.core.generated.resources.watch_remove_failed
 import logdate.client.feature.core.generated.resources.watch_remove_loading
-import logdate.client.feature.core.generated.resources.watch_remove_pending
 import logdate.client.feature.core.generated.resources.watch_remove_retry
 import logdate.client.feature.core.generated.resources.watch_remove_review
 import logdate.client.feature.core.generated.resources.watch_remove_unavailable
+import logdate.client.feature.core.generated.resources.watch_remove_unsent
+import logdate.client.feature.core.generated.resources.watch_remove_unsent_unknown
 import logdate.client.feature.core.generated.resources.watch_v2_remove
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -121,12 +124,11 @@ fun WatchRemovalContent(
                                 stringResource(Res.string.watch_remove_review, value.target.displayName),
                                 style = MaterialTheme.typography.headlineSmall,
                             )
-                            Text(
-                                stringResource(
-                                    Res.string.watch_remove_pending,
-                                    value.target.pending?.toString() ?: stringResource(Res.string.watch_remove_count_unknown),
-                                ),
-                            )
+                            when (val unsent = value.target.pending) {
+                                null -> Text(stringResource(Res.string.watch_remove_unsent_unknown))
+                                0 -> Unit
+                                else -> Text(pluralStringResource(Res.plurals.watch_remove_unsent, unsent, unsent))
+                            }
                             Text(stringResource(Res.string.watch_remove_consequence))
                             Button(
                                 onClick = onRemove,
@@ -148,8 +150,13 @@ fun WatchRemovalContent(
 
                         is WatchRemovalState.Finished -> {
                             when (val result = value.result) {
-                                WatchRemovalResult.Removed -> {
+                                is WatchRemovalResult.Removed -> {
                                     Text(stringResource(Res.string.watch_remove_done))
+                                    when (val discarded = result.discarded) {
+                                        null -> Text(stringResource(Res.string.watch_remove_discarded_unknown))
+                                        0 -> Unit
+                                        else -> Text(pluralStringResource(Res.plurals.watch_remove_discarded, discarded, discarded))
+                                    }
                                 }
 
                                 WatchRemovalResult.RemovedWillWipeOnNextConnect -> {

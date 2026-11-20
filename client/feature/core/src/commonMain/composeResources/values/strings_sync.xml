@@ -268,9 +268,6 @@
   >The account on this phone changed while %1$s was being removed.</string>
     <string name="linked_device_remove_unexpected">%1$s couldn’t be removed.</string>
     <string
-    name="linked_device_remove_watch_sync"
-  >%1$s still has moments to send. Bring it near your phone and try again.</string>
-    <string
     name="linked_device_remove_watch_revoke"
   >%1$s couldn’t be removed from your account.</string>
     <string
@@ -283,6 +280,13 @@
     name="linked_device_remove_watch_changed"
   >The link with %1$s changed while it was being removed.</string>
     <string name="linked_device_remove_watch_unfinished">Removing %1$s didn’t finish.</string>
+    <plurals name="linked_device_cleared_unsent">
+        <item quantity="one">%2$s was removed. %1$d moment that couldn’t sync was cleared with it.</item>
+        <item quantity="other">%2$s was removed. %1$d moments that couldn’t sync were cleared with it.</item>
+    </plurals>
+    <string
+    name="linked_device_cleared_unknown"
+  >%1$s was removed. Anything on it that hadn’t synced was cleared with it.</string>
     <string
     name="linked_device_erases_on_next_connect"
   >%1$s was removed. It erases its LogDate data the next time it connects to this phone.</string>

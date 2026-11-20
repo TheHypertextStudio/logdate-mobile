@@ -124,9 +124,9 @@ class WatchDeviceLinkE2ETest {
                 assertTrue(linked.linkedAt.toEpochMilliseconds() >= before - CLOCK_SKEW_MS)
                 assertTrue(linked.lastSeenAt >= linked.linkedAt)
 
-                assertEquals(LinkedDeviceRemoval.Removed, repository.remove(linked))
+                assertEquals(LinkedDeviceRemoval.Removed(), repository.remove(linked))
                 assertEquals(LinkedDevicesLoad.Loaded(emptyList()), repository.load())
-                assertEquals(LinkedDeviceRemoval.Removed, repository.remove(linked))
+                assertEquals(LinkedDeviceRemoval.Removed(), repository.remove(linked))
                 assertEquals(HttpStatusCode.Unauthorized, putCapture(watch.tokens.accessToken, CAPTURED_AFTER_REMOVAL).status)
             }
         }

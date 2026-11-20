@@ -17,18 +17,34 @@ class WatchRemovalCoordinatorTest {
     private var queued = true
     private var pendingAfterDrain = 0
     private var wipeReachable = true
+    private var forcedReachable = true
+    private var recording = false
+    private var drainSchema = 1
     private val subject =
         WatchRemovalCoordinator(
             current = { it == peer },
             request = { request ->
                 calls += request.action.name
-                if (reachable && (request.action != RemovalAction.WIPE || wipeReachable)) {
-                    val reportedPending = if (request.action == RemovalAction.WIPE) pendingAfterDrain else pending
+                val answers =
+                    when (request.action) {
+                        RemovalAction.DRAIN -> reachable
+                        RemovalAction.WIPE -> reachable && wipeReachable
+                        RemovalAction.REVOKED_WIPE -> reachable && forcedReachable
+                    }
+                if (answers) {
+                    val reportedPending =
+                        when (request.action) {
+                            RemovalAction.DRAIN -> pending
+                            RemovalAction.WIPE -> pendingAfterDrain
+                            RemovalAction.REVOKED_WIPE -> 0
+                        }
+                    val busy = recording && request.action != RemovalAction.REVOKED_WIPE
                     WatchRemovalReply(
+                        schema = if (request.action == RemovalAction.DRAIN) drainSchema else 1,
                         context = peer,
                         action = request.action,
                         pending = reportedPending,
-                        completed = reportedPending == 0,
+                        completed = reportedPending == 0 && !busy,
                     )
                 } else {
                     null
@@ -55,16 +71,25 @@ class WatchRemovalCoordinatorTest {
     @Test
     fun `reachable watch drains before wiping and only then clears phone link`() =
         runTest {
-            assertEquals(WatchRemovalResult.Removed, subject.remove(target))
+            assertEquals(WatchRemovalResult.Removed(), subject.remove(target))
             assertEquals(listOf("DRAIN", "revoke", "WIPE", "disassociate", "forget"), calls)
         }
 
     @Test
-    fun `pending captures prevent wiping and revocation`() =
+    fun `moments that could not sync are dropped instead of blocking removal`() =
         runTest {
             pending = 2
-            assertEquals(WatchRemovalResult.Failed("sync"), subject.remove(target))
-            assertEquals(listOf("DRAIN"), calls)
+            assertEquals(WatchRemovalResult.Removed(discarded = 2), subject.remove(target))
+            assertEquals(listOf("DRAIN", "revoke", "REVOKED_WIPE", "disassociate", "forget"), calls)
+        }
+
+    @Test
+    fun `a watch that stops answering before dropping its moments erases itself when it reconnects`() =
+        runTest {
+            pending = 2
+            forcedReachable = false
+            assertEquals(WatchRemovalResult.RemovedWillWipeOnNextConnect, subject.remove(target))
+            assertEquals(listOf("DRAIN", "revoke", "REVOKED_WIPE", "queue wipe", "forget"), calls)
         }
 
     @Test
@@ -101,10 +126,26 @@ class WatchRemovalCoordinatorTest {
         }
 
     @Test
-    fun `newly pending capture stops removal without deferring a reachable wipe`() =
+    fun `a moment captured after syncing is dropped with the rest of the watch`() =
         runTest {
             pendingAfterDrain = 1
-            assertEquals(WatchRemovalResult.Failed("sync"), subject.remove(target))
-            assertEquals(listOf("DRAIN", "revoke", "WIPE"), calls)
+            assertEquals(WatchRemovalResult.Removed(discarded = 1), subject.remove(target))
+            assertEquals(listOf("DRAIN", "revoke", "WIPE", "REVOKED_WIPE", "disassociate", "forget"), calls)
+        }
+
+    @Test
+    fun `a recording in progress is dropped without claiming nothing was lost`() =
+        runTest {
+            recording = true
+            assertEquals(WatchRemovalResult.Removed(discarded = null), subject.remove(target))
+            assertEquals(listOf("DRAIN", "revoke", "REVOKED_WIPE", "disassociate", "forget"), calls)
+        }
+
+    @Test
+    fun `an unreadable drain reply still erases the watch without inventing a count`() =
+        runTest {
+            drainSchema = 2
+            assertEquals(WatchRemovalResult.Removed(discarded = null), subject.remove(target))
+            assertEquals(listOf("DRAIN", "revoke", "REVOKED_WIPE", "disassociate", "forget"), calls)
         }
 }

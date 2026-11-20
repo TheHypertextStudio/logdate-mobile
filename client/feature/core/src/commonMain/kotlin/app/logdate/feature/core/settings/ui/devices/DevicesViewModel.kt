@@ -121,8 +121,10 @@ class DevicesViewModel(
         removalJob =
             viewModelScope.launch {
                 when (val result = withContext(NonCancellable) { linkedDevices.remove(device) }) {
-                    LinkedDeviceRemoval.Removed -> {
-                        refreshLinkedDevices(notice = null)
+                    is LinkedDeviceRemoval.Removed -> {
+                        val cleared = result.discarded != 0
+                        val notice = if (cleared) LinkedDeviceNotice.ClearedUnsent(device.name, result.discarded) else null
+                        refreshLinkedDevices(notice = notice)
                     }
 
                     LinkedDeviceRemoval.RemovedWillWipeOnNextConnect -> {

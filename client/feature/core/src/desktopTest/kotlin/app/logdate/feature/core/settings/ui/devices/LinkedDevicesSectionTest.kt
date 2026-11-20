@@ -104,19 +104,39 @@ class LinkedDevicesSectionTest {
         }
 
     @Test
-    fun `a watch that still has moments to send says so and asks again before retrying`() =
+    fun `a watch the account could not release says so and asks again before retrying`() =
         runComposeUiTest {
             val removed = mutableListOf<String>()
-            val notice = LinkedDeviceNotice.RemoveFailed(watch.id, "Pixel Watch 3", LinkedDevicesFailure.WatchRemovalStopped("sync"))
+            val notice = LinkedDeviceNotice.RemoveFailed(watch.id, "Pixel Watch 3", LinkedDevicesFailure.WatchRemovalStopped("revoke"))
             setContent { Section(LinkedDevicesUiState.Listed(listOf(watch), notice = notice), onRemove = { removed += it }) }
 
-            onNodeWithText("Pixel Watch 3 still has moments to send. Bring it near your phone and try again.").assertExists()
+            onNodeWithText("Pixel Watch 3 couldn’t be removed from your account.").assertExists()
             onNodeWithText("Try again").performClick()
             assertTrue(removed.isEmpty())
             onNodeWithText("Remove Device").assertExists()
             clickLast("Remove")
 
             assertEquals(listOf("watch-session"), removed)
+        }
+
+    @Test
+    fun `a removed watch says how many unsynced moments were cleared with it`() =
+        runComposeUiTest {
+            setContent {
+                Section(LinkedDevicesUiState.Listed(emptyList(), notice = LinkedDeviceNotice.ClearedUnsent("Pixel Watch 3", 2)))
+            }
+
+            onNodeWithText("Pixel Watch 3 was removed. 2 moments that couldn’t sync were cleared with it.").assertExists()
+        }
+
+    @Test
+    fun `a removed watch that could not count its moments still says they were cleared`() =
+        runComposeUiTest {
+            setContent {
+                Section(LinkedDevicesUiState.Listed(emptyList(), notice = LinkedDeviceNotice.ClearedUnsent("Pixel Watch 3", null)))
+            }
+
+            onNodeWithText("Pixel Watch 3 was removed. Anything on it that hadn’t synced was cleared with it.").assertExists()
         }
 
     @Test

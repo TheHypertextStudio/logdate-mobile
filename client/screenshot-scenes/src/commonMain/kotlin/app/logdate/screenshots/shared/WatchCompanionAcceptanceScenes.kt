@@ -21,7 +21,7 @@ import app.logdate.feature.core.settings.ui.watch.v2.WatchRemovalContent
 import app.logdate.feature.core.settings.ui.watch.v2.WatchRemovalState
 
 /** Actual companion content shared by Android goldens and the interactive desktop matrix. */
-enum class WatchCompanionAcceptanceScene { COMPANION, DIAGNOSTICS, REMOVE_REVIEW, REMOVE_SYNC_FAILED }
+enum class WatchCompanionAcceptanceScene { COMPANION, DIAGNOSTICS, REMOVE_REVIEW, REMOVED_WITH_UNSENT, REMOVE_FAILED }
 
 @Composable
 fun WatchCompanionAcceptanceContent(scene: WatchCompanionAcceptanceScene) {
@@ -29,7 +29,8 @@ fun WatchCompanionAcceptanceContent(scene: WatchCompanionAcceptanceScene) {
         WatchCompanionAcceptanceScene.COMPANION -> PopulatedCompanion()
         WatchCompanionAcceptanceScene.DIAGNOSTICS -> CompanionDiagnostics()
         WatchCompanionAcceptanceScene.REMOVE_REVIEW -> CompanionRemovalReview()
-        WatchCompanionAcceptanceScene.REMOVE_SYNC_FAILED -> CompanionRemovalSyncFailed()
+        WatchCompanionAcceptanceScene.REMOVED_WITH_UNSENT -> CompanionRemovedWithUnsent()
+        WatchCompanionAcceptanceScene.REMOVE_FAILED -> CompanionRemovalFailed()
     }
 }
 
@@ -116,9 +117,19 @@ private fun CompanionRemovalReview() {
 }
 
 @Composable
-private fun CompanionRemovalSyncFailed() {
+private fun CompanionRemovedWithUnsent() {
     WatchRemovalContent(
-        WatchRemovalState.Finished(WatchRemovalResult.Failed("sync")),
+        WatchRemovalState.Finished(WatchRemovalResult.Removed(discarded = 2)),
+        onRemove = {},
+        onRetry = {},
+        onBack = {},
+    )
+}
+
+@Composable
+private fun CompanionRemovalFailed() {
+    WatchRemovalContent(
+        WatchRemovalState.Finished(WatchRemovalResult.Failed("revoke")),
         onRemove = {},
         onRetry = {},
         onBack = {},
