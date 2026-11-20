@@ -12,10 +12,10 @@
     <string
     name="watch_needs_association_description"
   >%1$s is connected, but LogDate still needs permission to manage the watch relationship on this phone.</string>
-    <string name="watch_association_pending">Finish pairing on this phone</string>
+    <string name="watch_association_pending">Allow the connection</string>
     <string
     name="watch_association_pending_description"
-  >Complete the system pairing prompt, then LogDate will reconnect to your watch automatically.</string>
+  >Tap Allow on the prompt. Your watch connects right after.</string>
     <string name="watch_pair_watch">Pair Watch</string>
     <string name="watch_app_not_installed">Install LogDate on your watch</string>
     <string
@@ -26,37 +26,37 @@
     <string
     name="watch_setup_pair_description"
   >Record voice notes, mark moments, and replay memories on a Wear OS watch. Your moments appear in the timeline on this phone.</string>
-    <string name="watch_setup_start_action">Set up LogDate</string>
+    <string name="watch_setup_start_action">Set up watch</string>
     <string name="watch_setup_associate_title">Connect %1$s</string>
-    <string name="watch_setup_associate_description">Let LogDate connect to your watch.</string>
-    <string name="watch_setup_associate_action">Continue on phone</string>
+    <string name="watch_setup_associate_description">Your phone asks you to allow the connection.</string>
+    <string name="watch_setup_associate_action">Connect</string>
     <string name="watch_linking_title">Connecting to %1$s</string>
     <string name="watch_linking_description">Keep your watch nearby. This takes a few seconds.</string>
     <string name="watch_linking_retrying_title">Still connecting to %1$s</string>
     <string
     name="watch_linking_retrying_description"
-  >LogDate keeps trying on its own. Make sure LogDate is open on your watch.</string>
+  >Open LogDate on your watch and keep it close. We&apos;ll keep trying.</string>
     <string name="watch_linking_another_account_title">%1$s uses another account</string>
     <string
     name="watch_linking_another_account_description"
-  >Sign in to that account here, or clear LogDate&apos;s data on your watch to start fresh.</string>
+  >Sign in to that account on this phone, or reset LogDate on your watch to start fresh.</string>
     <string name="watch_linking_device_limit_title">You&apos;ve reached your device limit</string>
     <string
     name="watch_linking_device_limit_description"
   >Remove a device you don&apos;t use anymore, then try again.</string>
     <string name="watch_linking_set_up_again_title">%1$s didn&apos;t finish setting up</string>
     <string name="watch_linking_set_up_again_description">Open LogDate on your watch, then tap Try again.</string>
-    <string name="watch_linking_removed_title">LogDate is off on %1$s</string>
+    <string name="watch_linking_removed_title">%1$s isn&apos;t set up</string>
     <string
     name="watch_linking_removed_description"
-  >You turned LogDate off on this watch. Set it up again to keep capturing moments.</string>
+  >Set it up again to capture moments from your wrist.</string>
     <string name="watch_linking_try_again">Try again</string>
     <string name="watch_linking_set_up_again_action">Set up again</string>
-    <string name="watch_setup_install_title">LogDate on %1$s</string>
+    <string name="watch_setup_install_title">Add LogDate to %1$s</string>
     <string
     name="watch_setup_install_description"
-  >Get LogDate from Google Play on your watch, then open it.</string>
-    <string name="watch_setup_install_action">Open Play</string>
+  >Install it from Google Play on your watch, then open it.</string>
+    <string name="watch_setup_install_action">Install on watch</string>
     <string name="watch_setup_sent">Check your watch to finish installing.</string>
     <string name="watch_connected">Connected</string>
     <string name="watch_out_of_range">Out of range</string>
@@ -223,12 +223,12 @@
     <string name="watch_remove_loading">Checking your watch…</string>
     <string name="watch_remove_review">Remove %1$s?</string>
     <plurals name="watch_remove_unsent">
-        <item quantity="one">%1$d moment on this watch hasn&apos;t synced yet. LogDate tries to save it first. If it can&apos;t, it&apos;s cleared with the watch.</item>
-        <item quantity="other">%1$d moments on this watch haven&apos;t synced yet. LogDate tries to save them first. Any it can&apos;t save are cleared with the watch.</item>
+        <item quantity="one">%1$d moment on this watch hasn&apos;t synced yet. We&apos;ll try to save it first. If we can&apos;t, it&apos;s cleared with the watch.</item>
+        <item quantity="other">%1$d moments on this watch haven&apos;t synced yet. We&apos;ll try to save them first. Any we can&apos;t save are cleared with the watch.</item>
     </plurals>
     <string
     name="watch_remove_unsent_unknown"
-  >LogDate can&apos;t check this watch right now. Anything on it that hasn&apos;t synced is cleared with it.</string>
+  >We can&apos;t check this watch right now. Anything on it that hasn&apos;t synced is cleared with it.</string>
     <string
     name="watch_remove_consequence"
   >LogDate is cleared from the watch. Your journal on this phone and your backups aren&apos;t affected.</string>
@@ -247,7 +247,7 @@
   >Anything that hadn&apos;t synced was cleared with it.</string>
     <string
     name="watch_remove_deferred"
-  >Watch removed. LogDate clears it, along with anything that hasn&apos;t synced, the next time it connects.</string>
+  >Watch removed. It&apos;s cleared, along with anything that hasn&apos;t synced, the next time it connects.</string>
     <string
     name="watch_remove_failed"
   >Couldn&apos;t remove the watch. Check your connection and try again.</string>

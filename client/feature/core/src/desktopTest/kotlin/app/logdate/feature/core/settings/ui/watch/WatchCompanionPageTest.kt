@@ -57,8 +57,8 @@ class WatchCompanionPageTest {
                     }
                 }
             }
-            onNodeWithText("Open Play").performScrollTo()
-            val action = onNodeWithText("Open Play").fetchSemanticsNode().boundsInRoot
+            onNodeWithText("Install on watch").performScrollTo()
+            val action = onNodeWithText("Install on watch").fetchSemanticsNode().boundsInRoot
             assertTrue(action.left >= 0f && action.right <= 320f, "Setup action overflows compact width: $action")
             saveScreenshot(onRoot().captureToImage(), "watch-setup-compact-large-text.png")
         }
@@ -85,7 +85,7 @@ class WatchCompanionPageTest {
                 }
             }
             onNodeWithText("Connecting to Pixel Watch").assertExists()
-            onNodeWithText("Continue on phone").assertDoesNotExist()
+            onNodeWithText("Connect").assertDoesNotExist()
             onNodeWithText("Try again").assertDoesNotExist()
 
             step = WatchSetupStep.Linking("Pixel Watch", WatchLinkProblem.ANOTHER_ACCOUNT)
@@ -122,20 +122,23 @@ class WatchCompanionPageTest {
             }
             onNodeWithText("LogDate on your wrist").assertExists()
             onNodeWithText("Record voice notes, mark moments, and replay memories on a Wear OS watch", substring = true).assertExists()
-            onNodeWithText("Set up LogDate").assertExists()
-            onNodeWithText("Set up LogDate").assertIsEnabled()
+            onNodeWithText("Set up watch").assertExists()
+            onNodeWithText("Set up watch").assertIsEnabled()
             val art = onNodeWithTag("watch_setup_art").fetchSemanticsNode().boundsInRoot
             val title = onNodeWithText("LogDate on your wrist").fetchSemanticsNode().boundsInRoot
-            assertTrue(art.bottom <= title.top, "Compact setup artwork should lead into the action: $art $title")
-            assertTrue(art.height > 300f, "The compact setup should use the available pane: $art")
-            assertTrue(title.top > 500f, "The action should anchor the lower part of the compact pane: $title")
+            val action = onNodeWithText("Set up watch").fetchSemanticsNode().boundsInRoot
+            assertTrue(title.top < 200f, "The words should start at the top of the pane: $title")
+            assertTrue(title.bottom <= art.top, "The picture should sit under the words: $art $title")
+            assertTrue(art.bottom <= action.top, "The action should sit under the picture: $art $action")
+            assertTrue(art.height > 300f, "The picture should use the room between the words and the action: $art")
+            assertTrue(action.bottom > 800f, "The action should end the pane: $action")
             onNodeWithText("Check connection").assertDoesNotExist()
             onNodeWithText("Timeline history").assertDoesNotExist()
             onNodeWithText("Reminders").assertDoesNotExist()
             saveScreenshot(onRoot().captureToImage(), "watch-setup-no-watch.png")
         }
 
-    @Test fun `wide unpaired setup uses the second pane for watch artwork`() =
+    @Test fun `wide unpaired setup keeps the words, picture and action in one column`() =
         runDesktopComposeUiTest(width = 1100, height = 800) {
             setContent {
                 LogDateTheme(dynamicColor = false) {
@@ -157,8 +160,11 @@ class WatchCompanionPageTest {
             }
             val art = onNodeWithTag("watch_setup_art").fetchSemanticsNode().boundsInRoot
             val title = onNodeWithText("LogDate on your wrist").fetchSemanticsNode().boundsInRoot
-            assertTrue(art.left > title.right, "Wide setup should use its second pane: $art $title")
-            assertTrue(art.height > 400f, "Wide setup artwork should fill its pane: $art")
+            val action = onNodeWithText("Set up watch").fetchSemanticsNode().boundsInRoot
+            assertTrue(title.bottom <= art.top, "The picture should sit under the words: $art $title")
+            assertTrue(art.bottom <= action.top, "The action should sit under the picture: $art $action")
+            assertTrue(action.width <= 560f, "A wide window should not stretch the step across itself: $action")
+            assertTrue(art.height > 300f, "The picture should use the room between the words and the action: $art")
             onNodeWithText("Check connection").assertDoesNotExist()
             saveScreenshot(onRoot().captureToImage(), "watch-setup-no-watch-wide.png")
         }
@@ -187,7 +193,7 @@ class WatchCompanionPageTest {
                     )
                 }
             }
-            onNodeWithText("Set up LogDate").performClick()
+            onNodeWithText("Set up watch").performClick()
             onNodeWithText("Google Pixel Watch").performClick()
             assertEquals(WatchSetupProvider.PIXEL, selected)
         }
@@ -213,7 +219,7 @@ class WatchCompanionPageTest {
                     )
                 }
             }
-            onNodeWithText("Open Play").performClick()
+            onNodeWithText("Install on watch").performClick()
             assertEquals(1, installRequests)
             onNodeWithText("Check your watch", substring = true).assertExists()
             onNodeWithText("Already installed", substring = true).assertDoesNotExist()
@@ -332,11 +338,11 @@ class WatchCompanionPageTest {
                     )
                 }
             }
-            onNodeWithText("Open Play").assertDoesNotExist()
+            onNodeWithText("Install on watch").assertDoesNotExist()
             onNodeWithText("LogDate isn’t on this watch").performClick()
             assertTrue(confirmed.isEmpty())
             onNodeWithText("Install LogDate on this watch?").assertExists()
-            onNodeWithText("Open Play").performClick()
+            onNodeWithText("Install on watch").performClick()
             assertEquals(listOf("watch-a"), confirmed)
             saveScreenshot(onRoot().captureToImage(), "watch-connection-unknown-phone.png")
         }
@@ -365,7 +371,7 @@ class WatchCompanionPageTest {
                     }
                 }
                 onNodeWithText("LogDate isn’t on this watch").assertDoesNotExist()
-                onNodeWithText("Open Play").assertDoesNotExist()
+                onNodeWithText("Install on watch").assertDoesNotExist()
                 onNodeWithText("Install on Watch").assertDoesNotExist()
                 onNodeWithTag("watch_setup_art").assertDoesNotExist()
                 onNodeWithText("Microphone").assertDoesNotExist()

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_app_not_installed
@@ -418,10 +419,16 @@ fun WatchUnknownActions(
     status: WatchStatus.Unknown,
     onRetry: () -> Unit,
     onConfirmMissing: (String) -> Unit,
+    /** Whether checking again is the page's main action, as on a setup step, and so matches the other steps' button. */
+    prominent: Boolean = false,
 ) {
     var confirming by remember(status.nodeId) { mutableStateOf(false) }
     status.watchName?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-    Button(onClick = onRetry) { Text(stringResource(Res.string.watch_v2_check_again)) }
+    if (prominent) {
+        StepPrimaryButton(text = stringResource(Res.string.watch_v2_check_again), onClick = onRetry)
+    } else {
+        Button(onClick = onRetry) { Text(stringResource(Res.string.watch_v2_check_again)) }
+    }
     val nodeId = status.nodeId
     if (nodeId != null && !status.knownInstalled) {
         TextButton(onClick = { confirming = true }) { Text(stringResource(Res.string.watch_missing_confirm_action)) }

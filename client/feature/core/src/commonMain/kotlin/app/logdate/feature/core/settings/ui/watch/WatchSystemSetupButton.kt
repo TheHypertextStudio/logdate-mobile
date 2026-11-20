@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.SimpleSettingsItem
+import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.watch.WatchSetupProvider
 import app.logdate.ui.watch.rememberWatchSetupLauncher
 import logdate.client.feature.core.generated.resources.Res
@@ -31,12 +32,18 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun WatchSystemSetupButton(
     label: String? = null,
+    prominent: Boolean = false,
     launcher: ((WatchSetupProvider) -> Boolean)? = rememberWatchSetupLauncher(),
 ) {
     var choosing by remember { mutableStateOf(false) }
     var manufacturerHelp by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
-    Button(onClick = { choosing = true }, enabled = launcher != null) { Text(label ?: stringResource(Res.string.watch_system_setup)) }
+    val text = label ?: stringResource(Res.string.watch_system_setup)
+    if (prominent) {
+        StepPrimaryButton(text, onClick = { choosing = true }, enabled = launcher != null)
+    } else {
+        Button(onClick = { choosing = true }, enabled = launcher != null) { Text(text) }
+    }
     if (choosing) {
         AlertDialog(
             onDismissRequest = { choosing = false },

@@ -112,10 +112,10 @@ class WatchPairingSettingsE2ETest {
     fun `watch settings pending association state is rendered`() {
         fakeConnectionManager.updateState(WatchConnectionState.AssociationPending)
 
-        composeRule.onNodeWithText("Finish pairing on this phone").assertIsDisplayed()
+        composeRule.onNodeWithText("Allow the connection").assertIsDisplayed()
         composeRule
             .onNodeWithText(
-                "Complete the system pairing prompt, then LogDate will reconnect to your watch automatically.",
+                "Tap Allow on the prompt. Your watch connects right after.",
             ).assertIsDisplayed()
     }
 
