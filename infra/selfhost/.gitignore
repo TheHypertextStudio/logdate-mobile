@@ -1,4 +1,5 @@
 logdate.env
 secrets.env
+tunnel.env
 .env
 backups/

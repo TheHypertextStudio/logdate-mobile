@@ -1,4 +1,6 @@
-# LogDate server on one machine: PostgreSQL, the server, and Caddy for HTTPS.
+# LogDate server on one machine: PostgreSQL, the server, and one way in from the internet:
+# Caddy serving HTTPS on ports 80 and 443 (the "caddy" profile), or a Cloudflare Tunnel that
+# needs no open ports (the "tunnel" profile). LOGDATE_EDGE in logdate.env picks one.
 # Start it with ./deploy.sh, which records RELEASE_VERSION for the checked-out commit in .env.
 # README.md in this directory is the runbook.
 
@@ -58,6 +60,7 @@ services:
 
   caddy:
     image: caddy:2.10-alpine
+    profiles: [caddy]
     restart: unless-stopped
     depends_on: [server]
     ports:
@@ -70,6 +73,16 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
+    networks: [internal]
+
+  cloudflared:
+    image: cloudflare/cloudflared:2025.11.1
+    profiles: [tunnel]
+    restart: unless-stopped
+    depends_on: [server]
+    command: ['tunnel', '--no-autoupdate', 'run']
+    # tunnel.env holds only TUNNEL_TOKEN, so the tunnel never sees the server's secrets.
+    env_file: [tunnel.env]
     networks: [internal]
 
 volumes:
