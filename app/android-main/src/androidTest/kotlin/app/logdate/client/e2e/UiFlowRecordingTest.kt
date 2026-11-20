@@ -37,8 +37,10 @@ class UiFlowRecordingTest {
     @Test(timeout = 120_000)
     fun flowFirstRun() =
         record("first_run", skipOnboarding = false) {
-            await(By.textContains("Welcome to LogDate"), "the welcome screen")
+            await(By.textContains("Meet LogDate"), "the opening screen")
             hold(4_000)
+            await(By.text("See how it works"), "the opening action").click()
+            hold(3_000)
         }
 
     @Test(timeout = 120_000)
