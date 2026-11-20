@@ -111,6 +111,23 @@ internal class ApplicationStartup(
     }
 }
 
+/**
+ * Suspends until [dependenciesStarted] is true. Startup starts Koin on the main thread before it opens
+ * the journal, so code that needs Koin right after [ApplicationStartup.start] waits here. If this
+ * attempt fails before Koin starts, throws with the failure as the cause instead of waiting forever.
+ */
+internal suspend fun ApplicationStartup.awaitDependencies(dependenciesStarted: StateFlow<Boolean>) {
+    val (started, current) =
+        combine(dependenciesStarted, state) { started, current -> started to current }
+            .first { (started, current) -> started || current is ApplicationStartupState.Failed }
+    if (!started) {
+        throw IllegalStateException(
+            "LogDate startup failed before Koin started",
+            (current as ApplicationStartupState.Failed).cause,
+        )
+    }
+}
+
 /** Keeps a native restore completion token pending until startup reaches a terminal state. */
 internal fun observeNativeRestoreDeliveryCompletions(
     scope: CoroutineScope,

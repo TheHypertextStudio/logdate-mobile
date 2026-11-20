@@ -2,6 +2,7 @@ package app.logdate.client
 
 import android.app.Application
 import android.content.Context
+import android.os.Looper
 import androidx.work.Configuration
 import app.logdate.client.data.restore.discardAbandonedNativeIosTransfer
 import app.logdate.client.data.restore.resumeNativeAccountRecovery
@@ -15,10 +16,12 @@ import app.logdate.client.launch.AndroidApplicationRuntime
 import app.logdate.client.launch.ApplicationStartup
 import app.logdate.client.launch.ApplicationStartupCoordinator
 import app.logdate.client.launch.awaitAndroidUserUnlock
+import app.logdate.client.launch.awaitDependencies
 import app.logdate.client.launch.initializeLoggingAndKoin
 import app.logdate.client.launch.installStrictModeIfDebuggable
 import app.logdate.client.launch.observeNativeRestoreDeliveryCompletions
 import app.logdate.client.launch.openJournalStorage
+import app.logdate.client.launch.processDependenciesStarted
 import app.logdate.di.logDateWorkManagerConfiguration
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
@@ -27,9 +30,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.koin.core.component.KoinComponent
 import org.koin.core.context.GlobalContext
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Application class for the LogDate Android app.
@@ -105,11 +111,18 @@ class LogDateApplication :
 typealias LogdateApplication = LogDateApplication
 
 /**
- * Initializes the foreground runtime when Android retained a restore-agent Application instance.
+ * Starts the foreground runtime, including in a restore-agent Application instance Android retained,
+ * and blocks until Koin has started so the caller can read `GlobalContext` right away. The journal may
+ * still be opening when it returns. Call it off the main thread, which starts Koin.
  *
  * The app/android-main androidTest suites start the app with it; tests are not roots.
  */
 @Suppress(names = ["unused"])
 fun ensureLogDateApplicationStarted(application: Application) {
-    ApplicationStartupCoordinator.start(application)
+    val startup = ApplicationStartupCoordinator.start(application)
+    if (GlobalContext.getOrNull() != null) return
+    check(Looper.myLooper() != Looper.getMainLooper()) {
+        "ensureLogDateApplicationStarted waits for the main thread to start Koin; call it from another thread"
+    }
+    runBlocking { withTimeout(2.minutes) { startup.awaitDependencies(processDependenciesStarted) } }
 }
