@@ -27,6 +27,42 @@ import kotlin.test.assertTrue
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class ApplicationStartupTest {
     @Test
+    fun `waiting for dependencies returns once Koin starts even if the journal is still opening`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val journal = CompletableDeferred<Unit>()
+            val dependencies = MutableStateFlow(false)
+            val startup = ApplicationStartup(backgroundScope) { journal.await() }
+            startup.start()
+            val waiting = async { startup.awaitDependencies(dependencies) }
+            runCurrent()
+            assertFalse(waiting.isCompleted, "Callers that read Koin must wait until it starts")
+            dependencies.value = true
+            runCurrent()
+            assertTrue(waiting.isCompleted)
+            assertIs<ApplicationStartupState.Loading>(startup.state.value)
+            journal.complete(Unit)
+        }
+
+    @Test
+    fun `waiting for dependencies reports a startup that fails before Koin starts`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val startup = ApplicationStartup(backgroundScope) { error("Device still locked") }
+            startup.start()
+            val failure = runCatching { startup.awaitDependencies(MutableStateFlow(false)) }.exceptionOrNull()
+            assertIs<IllegalStateException>(failure)
+            assertEquals("Device still locked", failure.cause?.message)
+        }
+
+    @Test
+    fun `waiting for dependencies ignores a later journal failure once Koin started`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val startup = ApplicationStartup(backgroundScope) { error("Journal key missing") }
+            startup.start()
+            startup.awaitDependencies(MutableStateFlow(true))
+            assertIs<ApplicationStartupState.Failed>(startup.state.value)
+        }
+
+    @Test
     fun `optional device work cannot delay opening a validated journal`() =
         runTest {
             val content = CompletableDeferred<Unit>()

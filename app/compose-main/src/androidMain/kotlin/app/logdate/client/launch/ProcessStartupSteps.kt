@@ -12,9 +12,17 @@ import app.logdate.client.restore.NativeMediaQuarantineScheduler
 import app.logdate.client.restore.awaitNativeMediaQuarantine
 import app.logdate.di.initializeKoin
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.koin.core.context.GlobalContext
 
 internal const val APP_STARTUP_TAG = "LogDateStartup"
+
+private val mutableProcessDependenciesStarted = MutableStateFlow(false)
+
+/** Becomes true once [initializeLoggingAndKoin] has started Koin in this process. */
+internal val processDependenciesStarted: StateFlow<Boolean> = mutableProcessDependenciesStarted.asStateFlow()
 
 /**
  * Installs logging and starts Koin, once per process.
@@ -26,10 +34,12 @@ internal const val APP_STARTUP_TAG = "LogDateStartup"
  * builds: without them a failing release install produces no on-device output at all.
  */
 internal fun Application.initializeLoggingAndKoin() {
-    if (GlobalContext.getOrNull() != null) return
-    Napier.base(LogcatAntilog(isDebuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0))
-    Napier.base(CrashlyticsAntilog())
-    initializeKoin()
+    if (GlobalContext.getOrNull() == null) {
+        Napier.base(LogcatAntilog(isDebuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0))
+        Napier.base(CrashlyticsAntilog())
+        initializeKoin()
+    }
+    mutableProcessDependenciesStarted.value = true
 }
 
 /**
