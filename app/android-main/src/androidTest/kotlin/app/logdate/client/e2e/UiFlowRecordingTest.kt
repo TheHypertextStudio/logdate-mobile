@@ -19,6 +19,7 @@ import app.logdate.client.testing.onboarding.OnboardingTestFixture
 import app.logdate.client.testing.onboarding.putOnboardingTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 /**
@@ -131,7 +132,23 @@ class UiFlowRecordingTest {
         selector: BySelector,
         what: String,
         timeoutMillis: Long = 15_000,
-    ): UiObject2 = checkNotNull(device.wait(Until.findObject(selector), timeoutMillis)) { "Timed out waiting for $what" }
+    ): UiObject2 =
+        checkNotNull(device.wait(Until.findObject(selector), timeoutMillis)) {
+            "Timed out waiting for $what. ${visibleLabels()}"
+        }
+
+    /** Names what the screen shows, so a timeout explains where the flow stopped. */
+    private fun visibleLabels(): String {
+        val hierarchy = ByteArrayOutputStream().also { device.dumpWindowHierarchy(it) }.toString(Charsets.UTF_8.name())
+        val labels =
+            Regex("""(?:text|content-desc)="([^"]+)"""")
+                .findAll(hierarchy)
+                .map { it.groupValues[1] }
+                .distinct()
+                .take(40)
+                .toList()
+        return "Package ${device.currentPackageName} shows: ${labels.joinToString(" | ")}"
+    }
 
     /** Holds the screen still long enough for a viewer to read it. */
     private fun hold(millis: Long = 1_200) = SystemClock.sleep(millis)
