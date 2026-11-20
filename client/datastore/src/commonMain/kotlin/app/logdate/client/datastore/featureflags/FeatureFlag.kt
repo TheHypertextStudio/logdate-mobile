@@ -172,4 +172,13 @@ enum class FeatureFlag(
      * opens the Library and search instead.
      */
     STORAGE_CLEANUP(key = "storage_cleanup_enabled", defaultEnabled = false),
+
+    /**
+     * A second copy of the journal key in Google Block Store, next to the Auto Backup copy, so the
+     * key survives a lost phone even when app data is over Auto Backup's 25 MB quota or the app
+     * was reinstalled before a backup ran.
+     *
+     * Off until a restore onto a Managed Device signed into a Google account has been verified.
+     */
+    PLATFORM_KEY_BACKUP(key = "platform_key_backup_enabled", defaultEnabled = false),
 }

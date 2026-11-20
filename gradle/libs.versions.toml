@@ -76,6 +76,7 @@ healthConnect = '1.2.0-alpha03'
 healthServicesClient = '1.1.0'
 media3 = '1.10.0'
 vlcj = '4.8.2'
+playServicesAuthBlockstore = '16.4.0'
 playServicesLocation = '21.3.0'
 playServicesMaps = '20.0.0'
 googleMapsCompose = '8.3.0'
@@ -298,6 +299,7 @@ media3-session = { group = 'androidx.media3', name = 'media3-session', version.r
 media3-ui = { group = 'androidx.media3', name = 'media3-ui', version.ref = 'media3' }
 play-app-update-ktx = { group = 'com.google.android.play', name = 'app-update-ktx', version.ref = 'playAppUpdate' }
 play-feature-delivery-ktx = { group = 'com.google.android.play', name = 'feature-delivery-ktx', version.ref = 'playFeatureDelivery' }
+play-services-auth-blockstore = { group = 'com.google.android.gms', name = 'play-services-auth-blockstore', version.ref = 'playServicesAuthBlockstore' }
 play-services-location = { group = 'com.google.android.gms', name = 'play-services-location', version.ref = 'playServicesLocation' }
 play-services-maps = { group = 'com.google.android.gms', name = 'play-services-maps', version.ref = 'playServicesMaps' }
 vlcj = { group = 'uk.co.caprica', name = 'vlcj', version.ref = 'vlcj' }

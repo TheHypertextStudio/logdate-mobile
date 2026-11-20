@@ -46,6 +46,8 @@ kotlin {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.installations)
             implementation(libs.koin.android)
+            implementation(libs.play.services.auth.blockstore)
+            implementation(libs.kotlinx.coroutines.play.services)
         }
         desktopMain.dependencies {
             implementation(libs.bouncycastle.bcprov)
