@@ -39,7 +39,14 @@ TRANSPORT = "com.android.localtransport/.LocalTransport"
 TRANSPORT_FILES = "/data/user/0/com.android.localtransport/files"
 # Managed guests can spend several minutes compiling the first instrumentation APK.
 INSTRUMENTATION_TIMEOUT_SECONDS = 600
-RUNTIME_ONLY_PREFERENCES = {"android_platform_search_index_generation"}
+# Values the running app rewrites on its own, so a snapshot comparison cannot attribute them to the
+# backup agent. Sync saves its last error category whenever a background sync fails, which happens on
+# every attempt while the LogDate servers are unreachable.
+RUNTIME_ONLY_PREFERENCES = {
+    "android_platform_search_index_generation",
+    "sync_last_error_type",
+    "sync_last_error_message",
+}
 RUNTIME_ONLY_SNAPSHOT_PREFIXES = ("files/datastore/FirebaseHeartBeat",)
 
 

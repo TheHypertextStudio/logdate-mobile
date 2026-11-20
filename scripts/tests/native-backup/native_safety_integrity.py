@@ -79,7 +79,7 @@ class NativeIntegritySafety:
                 ):
                     HARNESS.assert_snapshot_preserved(retained, changed)
 
-    def test_preference_snapshot_ignores_only_runtime_search_index_generation(self):
+    def test_preference_snapshot_ignores_runtime_search_index_generation(self):
         def field(number, value):
             tag = bytes([(number << 3) | 2])
             return tag + bytes([len(value)]) + value
@@ -104,6 +104,30 @@ class NativeIntegritySafety:
 
         self.assertEqual(
             HARNESS.canonical_preferences(before), HARNESS.canonical_preferences(after)
+        )
+        self.assertNotEqual(
+            HARNESS.canonical_preferences(before),
+            HARNESS.canonical_preferences(changed_setting),
+        )
+
+    def test_preference_snapshot_ignores_sync_status_written_by_background_sync(self):
+        def field(number, value):
+            return bytes([(number << 3) | 2, len(value)]) + value
+
+        def preference(name, value):
+            return field(1, field(1, name.encode()) + field(2, field(5, value.encode())))
+
+        before = preference("theme", "dark")
+        after_failed_sync = preference("sync_last_error_type", "NETWORK") + before
+        changed_setting = preference("sync_last_error_type", "NETWORK") + preference("theme", "light")
+
+        self.assertEqual(
+            HARNESS.canonical_preferences(before),
+            HARNESS.canonical_preferences(after_failed_sync),
+        )
+        self.assertEqual(
+            {"added": [], "removed": [], "changed": []},
+            HARNESS.preference_changes(before, after_failed_sync),
         )
         self.assertNotEqual(
             HARNESS.canonical_preferences(before),
