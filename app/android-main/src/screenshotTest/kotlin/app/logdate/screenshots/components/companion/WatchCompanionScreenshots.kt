@@ -37,8 +37,15 @@ fun CompanionRemovalReviewWithUnsentMoments() {
 @PreviewTest
 @OsIntegrationPreviewMatrix
 @Composable
-fun CompanionRemovalSyncFailed() {
-    ScreenshotTheme { WatchCompanionAcceptanceContent(WatchCompanionAcceptanceScene.REMOVE_SYNC_FAILED) }
+fun CompanionRemovedWithUnsentMoments() {
+    ScreenshotTheme { WatchCompanionAcceptanceContent(WatchCompanionAcceptanceScene.REMOVED_WITH_UNSENT) }
+}
+
+@PreviewTest
+@OsIntegrationPreviewMatrix
+@Composable
+fun CompanionRemovalFailed() {
+    ScreenshotTheme { WatchCompanionAcceptanceContent(WatchCompanionAcceptanceScene.REMOVE_FAILED) }
 }
 
 @PreviewTest

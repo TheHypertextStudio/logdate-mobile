@@ -79,7 +79,10 @@ sealed interface LinkedDevicesLoad {
 }
 
 sealed interface LinkedDeviceRemoval {
-    data object Removed : LinkedDeviceRemoval
+    /** [discarded] moments the device couldn't sync were cleared with it, or null when it couldn't say how many. */
+    data class Removed(
+        val discarded: Int? = 0,
+    ) : LinkedDeviceRemoval
 
     /** The device can no longer sync; it erases its LogDate data the next time it connects to this phone. */
     data object RemovedWillWipeOnNextConnect : LinkedDeviceRemoval
@@ -175,7 +178,7 @@ class AccountLinkedDevicesRepository(
             }
         if (watch != null) {
             return when (val result = checkNotNull(watchRemoval).remove(watch)) {
-                WatchRemovalResult.Removed -> LinkedDeviceRemoval.Removed
+                is WatchRemovalResult.Removed -> LinkedDeviceRemoval.Removed(result.discarded)
                 WatchRemovalResult.RemovedWillWipeOnNextConnect -> LinkedDeviceRemoval.RemovedWillWipeOnNextConnect
                 is WatchRemovalResult.Failed -> LinkedDeviceRemoval.Failed(LinkedDevicesFailure.WatchRemovalStopped(result.step))
             }
@@ -190,7 +193,7 @@ class AccountLinkedDevicesRepository(
             }
 
             is Call.Success -> {
-                LinkedDeviceRemoval.Removed
+                LinkedDeviceRemoval.Removed()
             }
 
             is Call.Failure -> {
@@ -215,7 +218,7 @@ class AccountLinkedDevicesRepository(
 
             is Call.Success -> {
                 if (call.value.none { it.id == id }) {
-                    LinkedDeviceRemoval.Removed
+                    LinkedDeviceRemoval.Removed()
                 } else {
                     LinkedDeviceRemoval.Failed(LinkedDevicesFailure.Refused(HTTP_NOT_FOUND))
                 }

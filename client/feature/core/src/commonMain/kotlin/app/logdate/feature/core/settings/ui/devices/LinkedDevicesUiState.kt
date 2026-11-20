@@ -53,6 +53,12 @@ sealed interface LinkedDeviceNotice {
         override val deviceName: String,
     ) : LinkedDeviceNotice
 
+    /** The device was erased, and [count] moments it couldn't sync were cleared with it; null when it couldn't say how many. */
+    data class ClearedUnsent(
+        override val deviceName: String,
+        val count: Int?,
+    ) : LinkedDeviceNotice
+
     /** Removing [deviceId] failed; it is still linked unless [failure] says otherwise. */
     data class RemoveFailed(
         val deviceId: String,

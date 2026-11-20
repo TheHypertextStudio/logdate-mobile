@@ -27,7 +27,13 @@ data class WatchRemovalReply(
 )
 
 sealed interface WatchRemovalResult {
-    data object Removed : WatchRemovalResult
+    /**
+     * The watch was erased while in reach. [discarded] moments it couldn't sync first were dropped with it, or
+     * null when the watch couldn't say how many, such as while it was recording.
+     */
+    data class Removed(
+        val discarded: Int? = 0,
+    ) : WatchRemovalResult
 
     data object RemovedWillWipeOnNextConnect : WatchRemovalResult
 

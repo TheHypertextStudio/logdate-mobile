@@ -148,24 +148,20 @@ class WatchCompanionVisualAcceptanceTest {
                         WatchCompanionAcceptanceScene.COMPANION -> "Remove watch"
                         WatchCompanionAcceptanceScene.DIAGNOSTICS -> "Watch notifications"
                         WatchCompanionAcceptanceScene.REMOVE_REVIEW -> "Remove watch"
-                        WatchCompanionAcceptanceScene.REMOVE_SYNC_FAILED -> "Check again"
+                        WatchCompanionAcceptanceScene.REMOVED_WITH_UNSENT -> "2 moments that couldn't sync were cleared with it."
+                        WatchCompanionAcceptanceScene.REMOVE_FAILED -> "Check again"
                     }
-                if (terminal != null) {
-                    val terminalMatcher =
-                        if (scene == WatchCompanionAcceptanceScene.DIAGNOSTICS) {
-                            hasText(terminal)
-                        } else {
-                            hasText(terminal) and hasClickAction()
-                        }
-                    onNode(
-                        hasScrollAction() and hasAnyAncestor(hasTestTag("companion_visual_detail")),
-                    ).performScrollToNode(terminalMatcher)
-                    onNode(terminalMatcher).assertIsDisplayed()
-                    if (scene != WatchCompanionAcceptanceScene.DIAGNOSTICS) onNode(terminalMatcher).assertHasClickAction()
-                    val target = onNode(terminalMatcher).fetchSemanticsNode().boundsInRoot
-                    assertTrue(target.left >= bounds.left && target.right <= bounds.right, "$terminal overflows $variant")
-                    saveImage("${scene.name.lowercase()}-$variant-bottom", onRoot().captureToImage())
-                }
+                val actionable =
+                    scene != WatchCompanionAcceptanceScene.DIAGNOSTICS && scene != WatchCompanionAcceptanceScene.REMOVED_WITH_UNSENT
+                val terminalMatcher = if (actionable) hasText(terminal) and hasClickAction() else hasText(terminal)
+                onNode(
+                    hasScrollAction() and hasAnyAncestor(hasTestTag("companion_visual_detail")),
+                ).performScrollToNode(terminalMatcher)
+                onNode(terminalMatcher).assertIsDisplayed()
+                if (actionable) onNode(terminalMatcher).assertHasClickAction()
+                val target = onNode(terminalMatcher).fetchSemanticsNode().boundsInRoot
+                assertTrue(target.left >= bounds.left && target.right <= bounds.right, "$terminal overflows $variant")
+                saveImage("${scene.name.lowercase()}-$variant-bottom", onRoot().captureToImage())
             }
         }
     }
