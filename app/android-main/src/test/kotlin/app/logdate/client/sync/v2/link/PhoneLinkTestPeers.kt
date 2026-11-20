@@ -106,6 +106,26 @@ internal class TestCloudLinkBundleSource(
     override suspend fun bundle(plan: LinkPlan) = LinkBundleResult.Ready(LinkBundle(mode = LinkMode.CLOUD, accountId = account))
 }
 
+/** An account whose server can give no answer, as when it is down or out of reach, or refuse the link. */
+internal class UnsteadyCloudLinkBundleSource(
+    private val account: String,
+) : LinkBundleSource {
+    var signedIn = true
+    var serverAnswers = false
+    var serverRefuses = false
+
+    override fun changes() = kotlinx.coroutines.flow.flowOf(Unit)
+
+    override suspend fun plan(watchFeatures: Set<String>) = if (signedIn) LinkPlan(LinkMode.CLOUD, account) else LinkPlan(LinkMode.PAIR)
+
+    override suspend fun bundle(plan: LinkPlan): LinkBundleResult =
+        when {
+            plan.mode == LinkMode.PAIR -> LinkBundleResult.Ready(LinkBundle(mode = LinkMode.PAIR))
+            serverAnswers -> LinkBundleResult.Ready(LinkBundle(mode = LinkMode.CLOUD, accountId = account))
+            else -> LinkBundleResult.Unavailable(PhoneLinkFailure.LINK_CODE_UNAVAILABLE, serverUnreachable = !serverRefuses)
+        }
+}
+
 internal const val PHONE_LINK_TEST_ACCOUNT = "5f0c3a52-0000-4000-8000-000000000001"
 internal const val PHONE_LINK_TEST_PHONE = "phone-node"
 internal const val PHONE_LINK_TEST_WATCH = "watch-node"

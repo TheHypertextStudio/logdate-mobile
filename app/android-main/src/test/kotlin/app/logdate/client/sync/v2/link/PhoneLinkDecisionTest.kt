@@ -207,6 +207,37 @@ class PhoneLinkDecisionTest {
         assertEquals(PhoneLinkDecision.Wait, PhoneLinkDecision.decide(linked, pair, report, 1_000))
     }
 
+    @Test
+    fun `a pairing that stands in for an account link waits before the account is tried again`() {
+        val standIn = linked.copy(accountWait = AccountLinkWait("account", null, attempts = 1, nextAttemptAt = 5_000))
+        val account = LinkPlan(LinkMode.CLOUD, "account")
+        assertEquals(PhoneLinkDecision.Wait, PhoneLinkDecision.decide(standIn, account, null, now = 4_999))
+        assertEquals(PhoneLinkDecision.Exchange, PhoneLinkDecision.decide(standIn, account, null, now = 5_000))
+    }
+
+    @Test
+    fun `a wait for one account does not hold back another account or server`() {
+        val standIn = linked.copy(accountWait = AccountLinkWait("account", "https://first.test", attempts = 3, nextAttemptAt = 5_000))
+        val others =
+            listOf(LinkPlan(LinkMode.CLOUD, "other", "https://first.test"), LinkPlan(LinkMode.CLOUD, "account", "https://second.test"))
+        for (plan in others) {
+            assertEquals(PhoneLinkDecision.Exchange, PhoneLinkDecision.decide(standIn, plan, null, now = 1_000))
+        }
+    }
+
+    @Test
+    fun `a failed pairing does not wait on an account link`() {
+        val failed =
+            linked.copy(
+                failure = PhoneLinkFailure.WATCH_UNREACHABLE,
+                accountWait = AccountLinkWait("account", null, attempts = 1, nextAttemptAt = 5_000),
+            )
+        assertEquals(
+            PhoneLinkDecision.Exchange,
+            PhoneLinkDecision.decide(failed, LinkPlan(LinkMode.CLOUD, "account"), null, now = 1_000),
+        )
+    }
+
     private fun document(
         link: PeerLinkState,
         at: Long,

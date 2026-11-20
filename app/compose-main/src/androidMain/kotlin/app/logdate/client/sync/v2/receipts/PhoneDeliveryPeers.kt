@@ -70,8 +70,14 @@ class PhoneDeliveryPeers(
         if (!context.isValid()) return null
         val accountMatches =
             when (record.mode) {
+                // A pairing serves a phone with no account, or stands in for this account's link while its
+                // server cannot be reached.
                 LinkMode.PAIR -> {
-                    bound == null && session == null
+                    (bound == null && session == null) ||
+                        (bound != null &&
+                            bound.session == session &&
+                            bound.origin == backend &&
+                            record.standsInFor(bound.session.accountId, bound.origin))
                 }
 
                 LinkMode.CLOUD -> {

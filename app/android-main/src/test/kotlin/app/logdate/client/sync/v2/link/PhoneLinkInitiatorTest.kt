@@ -39,6 +39,7 @@ import app.logdate.client.sync.v2.link.PHONE_LINK_TEST_WATCH as WATCH
 @OptIn(ExperimentalCoroutinesApi::class)
 class PhoneLinkInitiatorTest {
     private val cloud = TestCloudLinkBundleSource(ACCOUNT)
+    private val unsteady = UnsteadyCloudLinkBundleSource(ACCOUNT)
 
     @Test
     fun `a restored linked record without its local pair key starts a fresh exchange`() =
@@ -522,6 +523,212 @@ class PhoneLinkInitiatorTest {
             assertTrue(interrupted)
             assertNull(store.get(WATCH))
             assertNull(pairKeys.keys[WATCH])
+        }
+
+    @Test
+    fun `a watch is paired with this phone when the account's server cannot be reached`() =
+        runTest {
+            initiator(bundles = unsteady).reconcile(emptyMap())
+
+            assertEquals(listOf(WearPaths.LINK_OFFER, WearPaths.LINK_OFFER, WearPaths.LINK_BUNDLE), watch.requests)
+            val record = assertNotNull(store.get(WATCH))
+            assertTrue(record.isWorkingPair)
+            assertEquals(AccountLinkWait(ACCOUNT, null, attempts = 1, nextAttemptAt = clock.millis + 60_000), record.accountWait)
+            assertContentEquals(assertNotNull(watch.pairKey), pairKeys.keys[WATCH])
+            assertEquals(listOf("linked Pixel Watch 3 PAIR"), notifier.events)
+        }
+
+    @Test
+    fun `a paired watch keeps its pairing while the account is tried again after longer waits`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            val paired = assertNotNull(store.get(WATCH))
+
+            initiator.reconcile(emptyMap())
+            assertEquals(3, watch.requests.size)
+            clock.millis += 60_000
+            initiator.reconcile(emptyMap())
+
+            assertEquals(4, watch.requests.size)
+            val record = assertNotNull(store.get(WATCH))
+            assertTrue(record.isWorkingPair)
+            assertEquals(paired.linkId, record.linkId)
+            assertEquals(AccountLinkWait(ACCOUNT, null, attempts = 2, nextAttemptAt = clock.millis + 120_000), record.accountWait)
+            assertEquals(listOf("linked Pixel Watch 3 PAIR"), notifier.events)
+        }
+
+    @Test
+    fun `a paired watch is linked to the account once the server answers`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            unsteady.serverAnswers = true
+            clock.millis += 60_000
+
+            initiator.reconcile(emptyMap())
+            initiator.reconcile(mapOf(WATCH to watchDocument(PeerLinkState.LINKED, problem = null, at = clock.millis + 1)))
+
+            val record = assertNotNull(store.get(WATCH))
+            assertEquals(LinkMode.CLOUD, record.mode)
+            assertNull(record.failure)
+            assertNull(record.accountWait)
+            assertEquals(listOf("linked Pixel Watch 3 PAIR", "linked Pixel Watch 3 CLOUD"), notifier.events)
+        }
+
+    @Test
+    fun `a watch paired before signing in stays paired while the account's server cannot be reached`() =
+        runTest {
+            unsteady.signedIn = false
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            val paired = assertNotNull(store.get(WATCH))
+            unsteady.signedIn = true
+
+            initiator.reconcile(emptyMap())
+
+            assertEquals(3, watch.requests.size)
+            val record = assertNotNull(store.get(WATCH))
+            assertTrue(record.isWorkingPair)
+            assertEquals(paired.linkId, record.linkId)
+            assertNotNull(pairKeys.keys[WATCH])
+        }
+
+    @Test
+    fun `a paired watch that lost its link is paired again while the account waits`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            val first = assertNotNull(store.get(WATCH)?.linkId)
+            clock.millis += PhoneLinkDecision.RELINK_GRACE_MS
+
+            initiator.reconcile(mapOf(WATCH to unlinkedDocument(at = clock.millis)))
+
+            assertEquals(6, watch.requests.size)
+            val record = assertNotNull(store.get(WATCH))
+            assertTrue(record.isWorkingPair)
+            assertTrue(first != record.linkId)
+            assertEquals(watch.linkId, record.linkId)
+        }
+
+    @Test
+    fun `a paired watch's account is tried again when its wait ends with no other change`() =
+        runTest {
+            initiator(bundles = unsteady).start(backgroundScope)
+            runCurrent()
+            assertEquals(3, watch.requests.size)
+
+            clock.millis += 60_000
+            advanceTimeBy(60_000)
+            runCurrent()
+
+            assertEquals(4, watch.requests.size)
+            assertEquals(2, store.get(WATCH)?.accountWait?.attempts)
+        }
+
+    @Test
+    fun `a server that refuses the link is recorded as a failure and the watch is not paired instead`() =
+        runTest {
+            unsteady.serverRefuses = true
+
+            initiator(bundles = unsteady).reconcile(emptyMap())
+
+            assertEquals(listOf(WearPaths.LINK_OFFER), watch.requests)
+            assertEquals(PhoneLinkFailure.LINK_CODE_UNAVAILABLE, store.get(WATCH)?.failure)
+            assertTrue(notifier.events.isEmpty())
+        }
+
+    @Test
+    fun `asking to set up the watch again tries the account at once`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            unsteady.serverAnswers = true
+
+            store.retryNow(WATCH)
+            initiator.reconcile(emptyMap())
+
+            assertEquals(LinkMode.CLOUD, store.get(WATCH)?.mode)
+        }
+
+    @Test
+    fun `a watch out of reach when the account is tried again keeps its pairing`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            val paired = assertNotNull(store.get(WATCH))
+            watch.reachable = false
+            clock.millis += 60_000
+
+            initiator.reconcile(emptyMap())
+
+            val record = assertNotNull(store.get(WATCH))
+            assertTrue(record.isWorkingPair)
+            assertEquals(paired.linkId, record.linkId)
+            assertEquals(2, record.accountWait?.attempts)
+        }
+
+    @Test
+    fun `signing out ends the wait so signing in again tries the account at once`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            unsteady.signedIn = false
+            initiator.reconcile(emptyMap())
+            assertNull(store.get(WATCH)?.accountWait)
+            unsteady.signedIn = true
+            unsteady.serverAnswers = true
+
+            initiator.reconcile(emptyMap())
+
+            assertEquals(LinkMode.CLOUD, store.get(WATCH)?.mode)
+        }
+
+    @Test
+    fun `pairing again while the account waits keeps counting the account's attempts`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            clock.millis += PhoneLinkDecision.RELINK_GRACE_MS
+
+            initiator.reconcile(mapOf(WATCH to unlinkedDocument(at = clock.millis)))
+
+            assertEquals(2, store.get(WATCH)?.accountWait?.attempts)
+        }
+
+    @Test
+    fun `a put off account link does not delay pairing a watch that lost its link`() =
+        runTest {
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            clock.millis += PhoneLinkDecision.RELINK_GRACE_MS
+            initiator.reconcile(emptyMap())
+            assertEquals(4, watch.requests.size)
+
+            clock.millis += 1_000
+            initiator.reconcile(mapOf(WATCH to unlinkedDocument(at = clock.millis)))
+
+            assertEquals(6, watch.requests.size)
+            val record = assertNotNull(store.get(WATCH))
+            assertTrue(record.isWorkingPair)
+            assertEquals(watch.linkId, record.linkId)
+            assertEquals(2, record.accountWait?.attempts)
+        }
+
+    @Test
+    fun `a watch whose account link cannot be renewed is not paired instead`() =
+        runTest {
+            unsteady.serverAnswers = true
+            val initiator = initiator(bundles = unsteady)
+            initiator.reconcile(emptyMap())
+            unsteady.serverAnswers = false
+
+            initiator.reconcile(mapOf(WATCH to watchDocument(PeerLinkState.NEEDS_RELINK, "SESSION_EXPIRED", clock.millis + 1)))
+
+            assertEquals(3, watch.requests.size)
+            val record = assertNotNull(store.get(WATCH))
+            assertEquals(LinkMode.CLOUD, record.mode)
+            assertEquals(PhoneLinkFailure.LINK_CODE_UNAVAILABLE, record.failure)
         }
 
     private fun unlinkedDocument(at: Long) =

@@ -65,8 +65,10 @@ class PhoneLinkInitiator(
             val linkId: String,
         ) : ExchangeOutcome
 
+        /** @property serverUnreachable The account's server gave no answer; the watch and the account are fine. */
         data class Failed(
             val failure: PhoneLinkFailure,
+            val serverUnreachable: Boolean = false,
         ) : ExchangeOutcome
     }
 
@@ -100,8 +102,7 @@ class PhoneLinkInitiator(
                     }.collectLatest { records ->
                         val dueTimes =
                             records.values
-                                .filter { it.failure != null }
-                                .map { it.nextAttemptAt }
+                                .mapNotNull { if (it.failure != null) it.nextAttemptAt else it.accountWait?.nextAttemptAt }
                                 .distinct()
                                 .sorted()
                         dueTimes.forEach { due ->
@@ -170,15 +171,28 @@ class PhoneLinkInitiator(
         val generation = store.generation(target.nodeId)
         if (store.removalSuppressed(target.nodeId)) return
         val now = clock.now().toEpochMilliseconds()
-        val record = store.getForReconciliation(target.nodeId)
+        val plan = bundles.plan(document?.watch?.features.orEmpty())
+        val stored = store.getForReconciliation(target.nodeId)
+        val waitIsStale = stored?.accountWait != null && !stored.standsInFor(plan.accountId, plan.serverOrigin)
+        val record = if (waitIsStale) store.clearAccountWait(target.nodeId) else stored
         val watch = document?.watch
         if (record?.linkId != null && watch?.linkId == record.linkId) {
             watch.sessionId?.let { store.recordSession(target.nodeId, record.linkId, it) }
         }
-        val plan = bundles.plan(document?.watch?.features.orEmpty())
         when (val decision = PhoneLinkDecision.decide(record, plan, document, now)) {
             PhoneLinkDecision.Wait -> Unit
-            PhoneLinkDecision.Exchange -> runExchange(target, plan, document, now, generation)
+            PhoneLinkDecision.Exchange -> {
+                // The watch needs its pairing made again before the account's wait ends; the wait goes on.
+                if (record?.waitsForAccount(plan, now) == true) {
+                    pairAgain(target, record, document, now, generation)
+                    return
+                }
+                // The pairing stands when only the account link is due: as a pairing it needs nothing done.
+                val pairStands =
+                    record?.isWorkingPair == true &&
+                        PhoneLinkDecision.decide(record, LinkPlan(LinkMode.PAIR), document, now) != PhoneLinkDecision.Exchange
+                runExchange(target, plan, record, pairStands, document, now, generation)
+            }
             PhoneLinkDecision.Confirm -> confirm(target, checkNotNull(record), checkNotNull(document), now)
             is PhoneLinkDecision.WatchProblem -> recordWatchProblem(target, plan, decision.failure, checkNotNull(document), now, generation)
         }
@@ -201,6 +215,8 @@ class PhoneLinkInitiator(
     private suspend fun runExchange(
         target: LinkTarget,
         plan: LinkPlan,
+        previous: PhoneWatchLink?,
+        pairStands: Boolean,
         document: StateDocument?,
         now: Long,
         generation: Long,
@@ -209,6 +225,11 @@ class PhoneLinkInitiator(
         val seen = document?.writtenAt ?: 0L
         val outcome = exchangeWith(target, plan, generation)
         if (!isActive()) return
+        if (outcome is ExchangeOutcome.Failed &&
+            pairUntilAccountLinks(target, plan, outcome, previous, pairStands, document, now, generation)
+        ) {
+            return
+        }
         when (outcome) {
             is ExchangeOutcome.Linked -> {
                 val record =
@@ -237,6 +258,101 @@ class PhoneLinkInitiator(
                 }
             }
         }
+    }
+
+    private suspend fun pairAgain(
+        target: LinkTarget,
+        previous: PhoneWatchLink,
+        document: StateDocument?,
+        now: Long,
+        generation: Long,
+    ) {
+        if (!store.isAttemptCurrent(target.nodeId, generation)) return
+        val pairPlan = LinkPlan(LinkMode.PAIR)
+        val seen = document?.writtenAt ?: 0L
+        val outcome = exchangeWith(target, pairPlan, generation)
+        if (!isActive()) return
+        when (outcome) {
+            is ExchangeOutcome.Linked -> {
+                val record =
+                    store.recordSuccess(
+                        target,
+                        pairPlan,
+                        outcome.pairKey,
+                        at = now,
+                        seenWatchDocAt = seen,
+                        linkId = outcome.linkId,
+                        generation = generation,
+                        accountWait = previous.accountWait,
+                    ) ?: return
+                Napier.i("Paired ${target.displayName} again while its account link waits")
+                confirm(target, record, document, now)
+            }
+
+            is ExchangeOutcome.Failed -> {
+                val record =
+                    store.recordFailure(target, pairPlan, outcome.failure, at = now, seenWatchDocAt = seen, generation = generation)
+                        ?: return
+                Napier.w("Pairing ${target.displayName} again failed with ${outcome.failure}; next try after ${record.nextAttemptAt}")
+            }
+        }
+    }
+
+    /**
+     * [plan]'s account link failed for a reason that passes by itself. A watch works with this phone without the
+     * server, so a pairing that stands is kept, and when the server gave no answer a watch with no link is paired
+     * now. The account link is tried again later. Returns false when the failure is to be recorded as usual.
+     */
+    private suspend fun pairUntilAccountLinks(
+        target: LinkTarget,
+        plan: LinkPlan,
+        failed: ExchangeOutcome.Failed,
+        previous: PhoneWatchLink?,
+        pairStands: Boolean,
+        document: StateDocument?,
+        now: Long,
+        generation: Long,
+    ): Boolean {
+        if (plan.mode != LinkMode.CLOUD) return false
+        if (pairStands) {
+            if (!failed.serverUnreachable && failed.failure !in PASSING_FAILURES) return false
+            val waiting = store.deferAccountLink(target.nodeId, plan, at = now, generation = generation)
+            if (waiting != null) logAccountWait(target, waiting, failed.failure)
+            return true
+        }
+        if (!failed.serverUnreachable) return false
+        // A watch that already holds an account link refuses a pairing, and its failed renewal must stay visible.
+        if (previous?.mode == LinkMode.CLOUD && previous.linkedAt != null) return false
+        val pairPlan = LinkPlan(LinkMode.PAIR)
+        val pairing = exchangeWith(target, pairPlan, generation)
+        if (!isActive()) return true
+        val paired = pairing as? ExchangeOutcome.Linked ?: return false
+        val record =
+            store.recordSuccess(
+                target,
+                pairPlan,
+                paired.pairKey,
+                at = now,
+                seenWatchDocAt = document?.writtenAt ?: 0L,
+                linkId = paired.linkId,
+                generation = generation,
+            ) ?: return true
+        store
+            .deferAccountLink(target.nodeId, plan, at = now, generation = generation, carried = previous?.accountWait)
+            ?.let { logAccountWait(target, it, failed.failure) }
+        confirm(target, record, document, now)
+        return true
+    }
+
+    private fun logAccountWait(
+        target: LinkTarget,
+        record: PhoneWatchLink,
+        failure: PhoneLinkFailure,
+    ) {
+        Napier.w(
+            "Linking ${target.displayName} to the account failed with $failure; it stays paired with this phone " +
+                "and the account is tried again after ${record.accountWait?.nextAttemptAt}",
+        )
     }
 
     private suspend fun confirm(
@@ -281,7 +397,7 @@ class PhoneLinkInitiator(
         val bundle =
             when (val result = bundles.bundle(plan)) {
                 is LinkBundleResult.Ready -> result.bundle
-                is LinkBundleResult.Unavailable -> return ExchangeOutcome.Failed(result.failure)
+                is LinkBundleResult.Unavailable -> return ExchangeOutcome.Failed(result.failure, result.serverUnreachable)
             }
         val sealed =
             when (val step = exchange.seal(started, accept, target.nodeId, bundle)) {
@@ -336,4 +452,15 @@ class PhoneLinkInitiator(
             LinkExchangeFailure.EXPIRED_OFFER, LinkExchangeFailure.REPLAYED_NONCE -> PhoneLinkFailure.OFFER_EXPIRED
             else -> PhoneLinkFailure.ANSWER_UNREADABLE
         }
+
+    private companion object {
+        /** Failures of one attempt to reach the watch, which say nothing about the pairing it already has. */
+        val PASSING_FAILURES =
+            setOf(
+                PhoneLinkFailure.PHONE_NODE_UNKNOWN,
+                PhoneLinkFailure.WATCH_UNREACHABLE,
+                PhoneLinkFailure.OFFER_EXPIRED,
+                PhoneLinkFailure.ANSWER_UNREADABLE,
+            )
+    }
 }

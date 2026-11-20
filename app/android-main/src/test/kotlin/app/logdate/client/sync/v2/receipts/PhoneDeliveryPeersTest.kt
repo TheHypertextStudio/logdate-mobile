@@ -132,6 +132,25 @@ class PhoneDeliveryPeersTest {
         }
 
     @Test
+    fun `a pairing that stands in for this account's link resolves while signed in`() =
+        runTest {
+            link(plan = LinkPlan(LinkMode.PAIR))
+            links.deferAccountLink("watch", plan, at = 2)
+            assertEquals(context.copy(mode = LinkMode.PAIR, accountId = null, serverOrigin = null), peers.current("watch"))
+        }
+
+    @Test
+    fun `a pairing that stands in for one account cannot serve another account or server`() =
+        runTest {
+            link(plan = LinkPlan(LinkMode.PAIR))
+            links.deferAccountLink("watch", plan, at = 2)
+            sessions.bound = OriginBoundSession(ORIGIN, UserSession("other", "refresh", "different-account"))
+            assertNull(peers.current("watch"))
+            sessions.bound = OriginBoundSession("https://other.test", UserSession("access", "refresh", "account"))
+            assertNull(peers.current("watch"))
+        }
+
+    @Test
     fun `originless and pre identity links cannot authorize delivery`() =
         runTest {
             link(id = null)

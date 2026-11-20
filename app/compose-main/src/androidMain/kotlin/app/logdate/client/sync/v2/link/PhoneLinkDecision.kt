@@ -36,7 +36,9 @@ sealed interface PhoneLinkDecision {
             now: Long,
         ): PhoneLinkDecision {
             if (record == null) return Exchange
-            if (record.mode != plan.mode || record.accountId != plan.accountId || record.serverOrigin != plan.serverOrigin) return Exchange
+            val planChanged = record.mode != plan.mode || record.accountId != plan.accountId || record.serverOrigin != plan.serverOrigin
+            // A pairing that stands in for an account link the server could not start is kept until its wait ends.
+            if (planChanged && !record.waitsForAccount(plan, now)) return Exchange
             if (record.failure != null) return if (now >= record.nextAttemptAt) Exchange else Wait
             val hash = record.linkId?.let(LinkWire::decodeKey)
             if (hash == null || hash.size != 32 || LinkWire.encodeKey(hash) != record.linkId) return Exchange

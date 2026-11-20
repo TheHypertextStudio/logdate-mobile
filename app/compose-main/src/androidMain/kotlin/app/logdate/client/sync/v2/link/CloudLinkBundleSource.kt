@@ -20,6 +20,7 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.io.IOException
 
 /** The account keys a phone hands to a watch it links. Never the recovery phrase. */
 interface AccountKeySource {
@@ -102,7 +103,7 @@ class CloudLinkBundleSource(
         if (sessions.getOriginBoundSession() != bound || config.getCurrentBackendUrl() != origin) {
             return LinkBundleResult.Unavailable(PhoneLinkFailure.SIGNED_OUT)
         }
-        val code = minter.mint().getOrElse { error -> return LinkBundleResult.Unavailable(mintFailure(error)) }
+        val code = minter.mint().getOrElse { error -> return mintFailure(error) }
         val current = sessions.getOriginBoundSession()
         if (current?.origin != bound.origin ||
             current.session.accountId != bound.session.accountId ||
@@ -151,12 +152,19 @@ class CloudLinkBundleSource(
     private fun serverLinksDevices(): Boolean =
         config.getCurrentServerDescriptor()?.hasProtocolFeature(ServerProtocolFeature.DEVICE_LINKING_V1) == true
 
-    private fun mintFailure(error: Throwable): PhoneLinkFailure {
+    private fun mintFailure(error: Throwable): LinkBundleResult.Unavailable {
         if (error is CancellationException) throw error
         Napier.w("A link code could not be minted for the watch", error)
-        return when ((error as? DeviceLinkApiException)?.code) {
-            DeviceLinkErrorCodes.DEVICE_LIMIT_REACHED -> PhoneLinkFailure.DEVICE_LIMIT_REACHED
-            else -> PhoneLinkFailure.LINK_CODE_UNAVAILABLE
+        val refused = error as? DeviceLinkApiException
+        if (refused?.code == DeviceLinkErrorCodes.DEVICE_LIMIT_REACHED) {
+            return LinkBundleResult.Unavailable(PhoneLinkFailure.DEVICE_LIMIT_REACHED)
         }
+        // No answer, or an answer that the server itself is failing; a refusal is the server working.
+        val unreachable = error is IOException || (refused != null && refused.status >= HTTP_SERVER_ERROR)
+        return LinkBundleResult.Unavailable(PhoneLinkFailure.LINK_CODE_UNAVAILABLE, serverUnreachable = unreachable)
+    }
+
+    private companion object {
+        const val HTTP_SERVER_ERROR = 500
     }
 }
