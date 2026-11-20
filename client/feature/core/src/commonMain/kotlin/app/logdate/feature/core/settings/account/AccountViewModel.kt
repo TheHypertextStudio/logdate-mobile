@@ -8,6 +8,7 @@ import app.logdate.client.repository.account.LinkedSignInProvider
 import app.logdate.client.repository.account.PasskeyAccountRepository
 import app.logdate.feature.core.settings.account.recovery.AccountRecoveryUiState
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -42,7 +43,33 @@ sealed interface AccountUiState {
         val email: EmailRow?,
         val server: ServerRow,
         val isSigningOut: Boolean,
+        /** What signing out does to a linked watch, so the confirmation can say so. */
+        val watch: WatchAtSignOut = WatchAtSignOut.None,
     ) : AccountUiState
+}
+
+/** A linked watch is erased when the person signs out; this is what that costs them. */
+sealed interface WatchAtSignOut {
+    /** No watch is linked. */
+    data object None : WatchAtSignOut
+
+    /** A watch is linked and everything on it has synced. */
+    data object Synced : WatchAtSignOut
+
+    /** [count] moments on the watch haven't synced; any it can't send first are cleared. */
+    data class Unsent(
+        val count: Int,
+    ) : WatchAtSignOut
+
+    /** A watch is linked but couldn't say whether anything on it is unsynced. */
+    data object Unknown : WatchAtSignOut
+}
+
+/** Sums what each linked watch last reported as [unsent]; one watch with no report makes the total unknown. */
+fun watchAtSignOut(unsent: List<Int?>): WatchAtSignOut {
+    if (unsent.isEmpty()) return WatchAtSignOut.None
+    val total = unsent.fold(0) { sum, count -> sum + (count ?: return WatchAtSignOut.Unknown) }
+    return if (total == 0) WatchAtSignOut.Synced else WatchAtSignOut.Unsent(total)
 }
 
 data class AccountHeader(
@@ -99,6 +126,7 @@ class AccountViewModel(
     private val isEmailVerificationAvailable: suspend () -> Boolean,
     private val verifyEmail: suspend () -> EmailVerificationOutcome,
     private val accountRecovery: Flow<AccountRecoveryUiState?> = flowOf(null),
+    private val linkedWatch: suspend () -> WatchAtSignOut = { WatchAtSignOut.None },
 ) : ViewModel() {
     private val details = MutableStateFlow(AccountDetails())
     private var loadJob: Job? = null
@@ -147,6 +175,7 @@ class AccountViewModel(
                     },
                 server = ServerRow(name = server.displayName, host = server.host, isLogDateCloud = server.isLogDateCloud),
                 isSigningOut = loaded.isSigningOut,
+                watch = loaded.watch,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, AccountUiState.Loading)
 
@@ -204,6 +233,25 @@ class AccountViewModel(
         }
     }
 
+    /** Rereads the linked watch as the sign-out confirmation opens, so it counts moments recorded since the screen did. */
+    fun checkWatch() {
+        viewModelScope.launch { loadWatch() }
+    }
+
+    /** A check that fails warns as if a watch could lose moments, since signing out erases one either way. */
+    private suspend fun loadWatch() {
+        val watch =
+            try {
+                linkedWatch()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Napier.w("Could not check the linked watch for unsynced moments", error)
+                WatchAtSignOut.Unknown
+            }
+        details.update { it.copy(watch = watch) }
+    }
+
     /** Each part is shown as soon as it is known, so the local checks don't wait on the network. */
     private suspend fun loadDetails() =
         coroutineScope {
@@ -221,6 +269,7 @@ class AccountViewModel(
                         .getOrDefault(false)
                 details.update { it.copy(canVerifyEmail = canVerify) }
             }
+            launch { loadWatch() }
             launch {
                 val signIn = loadSignInSummary()
                 details.update { it.copy(signIn = signIn) }
@@ -251,6 +300,7 @@ class AccountViewModel(
         val canVerifyEmail: Boolean = false,
         val isSigningOut: Boolean = false,
         val accountRecovery: AccountRecoveryUiState? = null,
+        val watch: WatchAtSignOut = WatchAtSignOut.None,
     )
 }
 

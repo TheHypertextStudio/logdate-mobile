@@ -59,4 +59,10 @@ interface WatchRemovalAccess {
     suspend fun remove(target: WatchRemovalTarget): WatchRemovalResult
 
     suspend fun removeAll(): Boolean = false
+
+    /**
+     * Unsynced moments on each watch [removeAll] would erase, in reach or not, as each watch last reported; null
+     * where a watch's count isn't known.
+     */
+    suspend fun unsentOnLinkedWatches(): List<Int?> = emptyList()
 }

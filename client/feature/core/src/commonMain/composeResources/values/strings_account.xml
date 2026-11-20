@@ -124,7 +124,15 @@
     <string name="account_sign_out_row_description">Your journal stays on this device</string>
     <string
     name="account_sign_out_confirm_message"
-  >Your journal stays on this device. New entries won’t sync to %1$s until you sign in again. Signing out removes linked watches’ access and erases their LogDate data. Bring them nearby to sync first. An offline watch is erased when it reconnects; unsent moments on it may be lost.</string>
+  >Your journal stays on this device. New entries won’t sync to %1$s until you sign in again.</string>
+    <string name="account_sign_out_watch_synced">LogDate is also cleared from your watch.</string>
+    <plurals name="account_sign_out_watch_unsent">
+        <item quantity="one">%1$d moment on your watch hasn’t synced. LogDate tries to save it first. If it can’t, it’s cleared with the watch.</item>
+        <item quantity="other">%1$d moments on your watch haven’t synced. LogDate tries to save them first. Any it can’t save are cleared with the watch.</item>
+    </plurals>
+    <string
+    name="account_sign_out_watch_unknown"
+  >LogDate is also cleared from your watch, along with anything on it that hasn’t synced.</string>
     <string
     name="account_sign_out_failed"
   >Couldn’t sign out. Check your connection and try again.</string>

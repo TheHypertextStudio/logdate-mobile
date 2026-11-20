@@ -62,6 +62,30 @@ class AccountViewModelTest {
         }
 
     @Test
+    fun `signing out names the unsynced moments a linked watch would lose`() =
+        runTest {
+            val state = signedIn(viewModel(linkedWatch = { WatchAtSignOut.Unsent(3) }))
+
+            assertEquals(WatchAtSignOut.Unsent(3), state.watch)
+        }
+
+    @Test
+    fun `a watch that cannot be checked is warned about as if it had unsynced moments`() =
+        runTest {
+            val state = signedIn(viewModel(linkedWatch = { error("Watch unreachable") }))
+
+            assertEquals(WatchAtSignOut.Unknown, state.watch)
+        }
+
+    @Test
+    fun `every linked watch counts toward what signing out would lose`() {
+        assertEquals(WatchAtSignOut.None, watchAtSignOut(emptyList()))
+        assertEquals(WatchAtSignOut.Synced, watchAtSignOut(listOf(0, 0)))
+        assertEquals(WatchAtSignOut.Unsent(5), watchAtSignOut(listOf(2, 3)))
+        assertEquals(WatchAtSignOut.Unknown, watchAtSignOut(listOf(2, null)))
+    }
+
+    @Test
     fun `sign-in methods are summarised by count and linked account`() =
         runTest {
             val repository =
@@ -231,6 +255,7 @@ class AccountViewModelTest {
         isEmailVerificationAvailable: Boolean = false,
         verifyEmail: suspend () -> EmailVerificationOutcome = { EmailVerificationOutcome.Unsupported },
         accountRecovery: Flow<AccountRecoveryUiState?> = MutableStateFlow(null),
+        linkedWatch: suspend () -> WatchAtSignOut = { WatchAtSignOut.None },
     ) = AccountViewModel(
         accountRepository = repository,
         userIdentity = MutableStateFlow(identity),
@@ -239,6 +264,7 @@ class AccountViewModelTest {
         isEmailVerificationAvailable = { isEmailVerificationAvailable },
         verifyEmail = verifyEmail,
         accountRecovery = accountRecovery,
+        linkedWatch = linkedWatch,
     )
 
     private fun identity(

@@ -82,6 +82,13 @@ class AndroidWatchRemovalAccess(
         return true
     }
 
+    override suspend fun unsentOnLinkedWatches(): List<Int?> =
+        links
+            .observe()
+            .first()
+            .keys
+            .map { node -> linkedTarget(node)?.pending }
+
     /** The removal target for the watch linked as [node], whether or not it is in reach. */
     private suspend fun linkedTarget(node: String): WatchRemovalTarget? {
         val peer = peers.forRemoval(node) ?: return null
