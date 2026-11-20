@@ -85,6 +85,28 @@ class LayeredIdentityKeyBackupStoreTest {
         }
 
     @Test
+    fun `a corrupt mirror is rewritten from the primary`() =
+        runTest {
+            primary.writePhrase("alpha beta")
+            var corrupt = true
+            val damaged =
+                object : IdentityKeyBackupStore by mirror {
+                    override suspend fun readAccountIdentity(): AccountIdentityBackup? =
+                        if (corrupt) error("The identity backup mirror could not be read") else mirror.readAccountIdentity()
+
+                    override suspend fun writePhrase(phrase: String) {
+                        mirror.writePhrase(phrase)
+                        corrupt = false
+                    }
+                }
+            val layered = LayeredIdentityKeyBackupStore(primary, damaged)
+
+            assertEquals("alpha beta", layered.readPhrase())
+            assertFalse(corrupt)
+            assertEquals("alpha beta", mirror.readPhrase())
+        }
+
+    @Test
     fun `a failing mirror never blocks reads or writes`() =
         runTest {
             val broken =
