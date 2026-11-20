@@ -17,8 +17,10 @@ sealed interface LinkBundleResult {
         val bundle: LinkBundle,
     ) : LinkBundleResult
 
+    /** @property serverUnreachable The account's server gave no answer, so nothing is wrong with the account or the watch. */
     data class Unavailable(
         val failure: PhoneLinkFailure,
+        val serverUnreachable: Boolean = false,
     ) : LinkBundleResult
 }
 

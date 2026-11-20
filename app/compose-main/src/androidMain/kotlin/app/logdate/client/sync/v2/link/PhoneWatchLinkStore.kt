@@ -37,9 +37,22 @@ enum class PhoneLinkFailure(
 }
 
 /**
+ * A paired watch whose account link is put off because the account's server could not be reached. The pairing
+ * keeps working; the phone tries the account again from [nextAttemptAt].
+ */
+@Serializable
+data class AccountLinkWait(
+    val accountId: String? = null,
+    val serverOrigin: String? = null,
+    val attempts: Int = 1,
+    val nextAttemptAt: Long = 0,
+)
+
+/**
  * What the phone knows about linking one watch.
  *
  * @property seenWatchDocAt The `writtenAt` of the watch's state document the phone last acted on.
+ * @property accountWait Set while a working pairing stands in for an account link the server could not start.
  */
 @Serializable
 data class PhoneWatchLink(
@@ -59,7 +72,27 @@ data class PhoneWatchLink(
     val seenWatchDocAt: Long = 0,
     val linkId: String? = null,
     val sessionId: String? = null,
-)
+    val accountWait: AccountLinkWait? = null,
+) {
+    /** Whether this is a working pairing: linked, with no failed attempt on record. */
+    val isWorkingPair: Boolean get() = mode == LinkMode.PAIR && failure == null && linkedAt != null
+
+    /** Whether this pairing stands in for an account link to [accountId] on [serverOrigin]. */
+    fun standsInFor(
+        accountId: String?,
+        serverOrigin: String?,
+    ): Boolean = isWorkingPair && accountWait != null && accountWait.accountId == accountId && accountWait.serverOrigin == serverOrigin
+
+    /** Whether this pairing stands in for [plan]'s account link and it is not yet time to try that again. */
+    fun waitsForAccount(
+        plan: LinkPlan,
+        now: Long,
+    ): Boolean =
+        plan.mode == LinkMode.CLOUD &&
+            standsInFor(plan.accountId, plan.serverOrigin) &&
+            accountWait != null &&
+            now < accountWait.nextAttemptAt
+}
 
 /** One record per watch, as one JSON value, and each watch's pair key in secure storage. */
 class PhoneWatchLinkStore(
@@ -104,6 +137,7 @@ class PhoneWatchLinkStore(
         seenWatchDocAt: Long,
         linkId: String? = null,
         generation: Long? = null,
+        accountWait: AccountLinkWait? = null,
     ): PhoneWatchLink? =
         mutex.withLock {
             if (removalSuppressed(target.nodeId) ||
@@ -134,6 +168,7 @@ class PhoneWatchLinkStore(
                     lastAttemptAt = at,
                     seenWatchDocAt = seenWatchDocAt,
                     linkId = linkId,
+                    accountWait = accountWait.takeIf { plan.mode == LinkMode.PAIR },
                 )
             updateUnderLock(target.nodeId) {
                 success.copy(
@@ -194,6 +229,37 @@ class PhoneWatchLinkStore(
             }
         }
 
+    /**
+     * Keeps [nodeId]'s working pairing and puts off [plan]'s account link, waiting longer after each attempt
+     * for the same account. Returns null when the watch has no working pairing or the attempt is out of date.
+     *
+     * @param carried The wait a pairing made again just now replaced, so the attempts go on counting.
+     */
+    suspend fun deferAccountLink(
+        nodeId: String,
+        plan: LinkPlan,
+        at: Long,
+        generation: Long? = null,
+        carried: AccountLinkWait? = null,
+    ): PhoneWatchLink? =
+        mutex.withLock {
+            if (removalSuppressed(nodeId) || (generation != null && (generations[nodeId] ?: 0L) != generation)) return@withLock null
+            val previous = decode(storage.getStringOrThrow(KEY))[nodeId]?.takeIf { it.isWorkingPair } ?: return@withLock null
+            val earlier =
+                (previous.accountWait ?: carried)?.takeIf { it.accountId == plan.accountId && it.serverOrigin == plan.serverOrigin }
+            val attempts = (earlier?.attempts ?: 0) + 1
+            updateUnderLock(nodeId) {
+                previous.copy(accountWait = AccountLinkWait(plan.accountId, plan.serverOrigin, attempts, at + backoffMs(attempts)))
+            }
+        }
+
+    /** Drops a wait that no longer belongs to the phone's plan, such as after signing out. */
+    suspend fun clearAccountWait(nodeId: String): PhoneWatchLink? =
+        mutex.withLock {
+            val previous = decode(storage.getStringOrThrow(KEY))[nodeId] ?: return@withLock null
+            if (previous.accountWait == null) previous else updateUnderLock(nodeId) { previous.copy(accountWait = null) }
+        }
+
     suspend fun markConfirmed(
         nodeId: String,
         at: Long,
@@ -239,12 +305,18 @@ class PhoneWatchLinkStore(
         }
 
     /**
-     * Ends the wait after a failed attempt, so the next reconciliation links [nodeId] again at once. The
-     * person asked to set the watch up, and a retry they ask for must not sit behind a wait of up to six hours.
+     * Ends the wait after a failed attempt or a put-off account link, so the next reconciliation links [nodeId]
+     * again at once. The person asked to set the watch up, and a retry they ask for must not sit behind a wait of
+     * up to six hours.
      */
     suspend fun retryNow(nodeId: String) =
         mutex.withLock {
             val record = decode(storage.getStringOrThrow(KEY))[nodeId] ?: return@withLock
+            val wait = record.accountWait
+            if (record.failure == null && wait != null && wait.nextAttemptAt != 0L) {
+                updateUnderLock(nodeId) { record.copy(accountWait = wait.copy(nextAttemptAt = 0L)) }
+                return@withLock
+            }
             if (record.failure == null || record.nextAttemptAt == 0L) return@withLock
             updateUnderLock(nodeId) { record.copy(nextAttemptAt = 0L) }
         }

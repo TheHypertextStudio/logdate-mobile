@@ -106,6 +106,21 @@ class CloudLinkBundleSourceTest {
         }
 
     @Test
+    fun `a server that gives no answer or fails is told apart from one that refuses`() =
+        runTest {
+            val plan = LinkPlan(LinkMode.CLOUD, ACCOUNT, ORIGIN)
+            for (error in listOf(java.io.IOException("No route to host"), DeviceLinkApiException(503))) {
+                links.result = Result.failure(error)
+                assertEquals(
+                    LinkBundleResult.Unavailable(PhoneLinkFailure.LINK_CODE_UNAVAILABLE, serverUnreachable = true),
+                    source.bundle(plan),
+                )
+            }
+            links.result = Result.failure(DeviceLinkApiException(403))
+            assertEquals(LinkBundleResult.Unavailable(PhoneLinkFailure.LINK_CODE_UNAVAILABLE), source.bundle(plan))
+        }
+
+    @Test
     fun `a phone that signed out since the plan sends nothing`() =
         runTest {
             sessions.bound = null
