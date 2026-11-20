@@ -135,6 +135,24 @@ internal suspend fun LogDateCloudApiClient.requestDownloadMedia(
 internal suspend fun LogDateCloudApiClient.requestUploadBackupFile(
     accessToken: String,
     backup: BackupUploadFileRequest,
+): Result<BackupUploadResponse> {
+    if (backup.sizeBytes > PARTED_BACKUP_THRESHOLD_BYTES) {
+        val parted =
+            try {
+                requestUploadBackupInParts(accessToken, backup)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Result.failure(CloudApiException("NETWORK_ERROR", "Backup upload failed", cause = error))
+            }
+        if (parted.exceptionOrNull() !is PartedBackupUploadUnsupported) return parted
+    }
+    return requestUploadBackupFileInOneRequest(accessToken, backup)
+}
+
+private suspend fun LogDateCloudApiClient.requestUploadBackupFileInOneRequest(
+    accessToken: String,
+    backup: BackupUploadFileRequest,
 ): Result<BackupUploadResponse> =
     try {
         val response =

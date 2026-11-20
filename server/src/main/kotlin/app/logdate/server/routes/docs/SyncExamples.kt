@@ -11,6 +11,7 @@ internal object SyncExamples {
     const val DRAFT_ID = "01J7Q30C7D8E9F0G1H2J3K4M5N"
     const val MEDIA_ID = "6f1c2a8e-3b4d-3c5e-9f0a-1b2c3d4e5f60"
     const val BACKUP_ID = "b7e4d2c1-9a8f-4e6d-b5c4-a3f2e1d0c9b8"
+    const val BACKUP_UPLOAD_ID = "5b1d9a7e-3c2f-4e8a-9b6d-0f4c2e7a1d93"
 
     /** The moment the entry was written on the device. */
     const val CREATED_AT = DocExamples.EPOCH_NOW

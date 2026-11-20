@@ -18,6 +18,7 @@ import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -249,6 +250,12 @@ class GcsMediaStorage(
             false
         }
     }
+
+    override fun storagePathFor(
+        ownerId: UUID,
+        namespace: LogDateBlobNamespace,
+        blobId: String,
+    ): String = buildStoragePath(LogDateBlobWriteRequest(ownerId, namespace, blobId, null, "application/octet-stream", ByteArray(0)))
 
     private fun buildStoragePath(request: LogDateBlobWriteRequest): String =
         when (request.namespace) {

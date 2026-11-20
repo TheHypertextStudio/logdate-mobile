@@ -100,8 +100,12 @@ What it costs:
 
 - **Uploads over 100 MB fail.** Cloudflare's free plan rejects larger request bodies before they
   reach the Mac. Journal sync sends each file in its own request, up to 100 MiB, so only files
-  within a few megabytes of that limit fail. Android's cloud archive backups send the whole
-  archive in one request and fail once an archive passes 100 MB. Downloads are not limited.
+  within a few megabytes of that limit fail. Android's cloud archive backups over 32 MiB go up
+  in 32 MiB parts, so they get through; an app version from before parted uploads sends the whole
+  archive in one request and fails once it passes 100 MB. Downloads are not limited.
+- **Finishing a large backup has 100 seconds.** Cloudflare drops a response that takes longer.
+  Joining and encrypting a 2 GiB backup on an SSD takes well under that, but a slow external
+  disk may not.
 - **The server is down whenever the Mac or the home connection is.** That includes macOS updates
   that restart the Mac, and power cuts until it has started again.
 
