@@ -205,6 +205,15 @@ Startup, sync provisioning, and the full-backup callback backfill existing insta
 minting new identities. These copies use app-private filesystem protection, Android file-based encryption, and the
 additional native cloud encryption requirement described above.
 
+Behind the `PLATFORM_KEY_BACKUP` flag (off), the root record (the phrase, or the account key with
+its paired media key) is also mirrored into Google Block Store by `LayeredIdentityKeyBackupStore`.
+Block Store survives an uninstall and is not subject to the 25 MB cloud backup quota, so the root
+survives a lost phone even when the app data is too large for a new cloud backup. The file stays
+authoritative: a missing or different mirror is rewritten from it, and a missing file is restored
+from the mirror. The mirror asks for cloud backup only when Block Store reports end-to-end
+encryption is available, and it is cleared before the file on sign-out. Unpaired media keys are
+not mirrored, because Block Store entries are limited to 4 KB.
+
 A retained database without a valid passphrase enters database recovery instead of generating a
 replacement key. A malformed identity backup or an account-key backup belonging to another retained
 owner cannot mint an unrelated replacement identity. Account-key backups validate a checksum

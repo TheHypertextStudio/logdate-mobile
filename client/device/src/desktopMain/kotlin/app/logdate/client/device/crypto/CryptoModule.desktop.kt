@@ -10,4 +10,5 @@ actual fun platformCryptoModule(): Module =
         // No cloud backup or device-transfer mechanism exists for desktop today, so there is
         // nothing to mirror the recovery phrase into.
         single<IdentityKeyBackupStore> { NoOpIdentityKeyBackupStore }
+        single<KeyBackupStatusSource> { UnsupportedKeyBackupStatusSource }
     }
