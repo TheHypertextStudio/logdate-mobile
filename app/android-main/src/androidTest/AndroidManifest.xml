@@ -8,4 +8,14 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
     </application>
+
+    <!-- AndroidJUnitRunner reads its arguments from this meta-data as well as from the command line,
+         so the startup wait applies to Gradle and am instrument runs alike. -->
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        tools:node="merge">
+        <meta-data
+            android:name="listener"
+            android:value="app.logdate.client.e2e.LogDateStartupRunListener" />
+    </instrumentation>
 </manifest>

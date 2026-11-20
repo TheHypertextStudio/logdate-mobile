@@ -29,10 +29,12 @@ import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.context.GlobalContext
 import kotlin.time.Duration.Companion.minutes
@@ -125,4 +127,20 @@ fun ensureLogDateApplicationStarted(application: Application) {
         "ensureLogDateApplicationStarted waits for the main thread to start Koin; call it from another thread"
     }
     runBlocking { withTimeout(2.minutes) { startup.awaitDependencies(processDependenciesStarted) } }
+}
+
+/**
+ * Blocks until this process's own startup has started Koin, without starting anything itself, and
+ * says whether it did within [timeoutMillis]. [LogDateApplication] starts Koin on the main thread a
+ * moment after the process starts. Call it off the main thread.
+ *
+ * The app/android-main androidTest suites wait with it before any test runs; tests are not roots.
+ */
+@Suppress(names = ["unused"])
+fun awaitLogDateDependencies(timeoutMillis: Long): Boolean {
+    if (GlobalContext.getOrNull() != null) return true
+    check(Looper.myLooper() != Looper.getMainLooper()) {
+        "awaitLogDateDependencies waits for the main thread to start Koin; call it from another thread"
+    }
+    return runBlocking { withTimeoutOrNull(timeoutMillis) { processDependenciesStarted.first { it } } } != null
 }
