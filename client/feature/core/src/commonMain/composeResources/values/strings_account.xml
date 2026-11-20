@@ -127,8 +127,8 @@
   >Your journal stays on this device. New entries won’t sync to %1$s until you sign in again.</string>
     <string name="account_sign_out_watch_synced">LogDate is also cleared from your watch.</string>
     <plurals name="account_sign_out_watch_unsent">
-        <item quantity="one">%1$d moment on your watch hasn’t synced. LogDate tries to save it first. If it can’t, it’s cleared with the watch.</item>
-        <item quantity="other">%1$d moments on your watch haven’t synced. LogDate tries to save them first. Any it can’t save are cleared with the watch.</item>
+        <item quantity="one">%1$d moment on your watch hasn’t synced. We’ll try to save it first. If we can’t, it’s cleared with the watch.</item>
+        <item quantity="other">%1$d moments on your watch haven’t synced. We’ll try to save them first. Any we can’t save are cleared with the watch.</item>
     </plurals>
     <string
     name="account_sign_out_watch_unknown"
