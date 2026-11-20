@@ -21,6 +21,7 @@ import app.logdate.client.permissions.PasskeyManager
 import app.logdate.client.repository.account.PasskeyAccountRepository
 import app.logdate.client.repository.account.PasskeyConfirmations
 import app.logdate.client.sync.diagnostics.DiagnosticReportingController
+import app.logdate.client.sync.peer.removal.WatchRemovalAccess
 import app.logdate.feature.core.AppViewModel
 import app.logdate.feature.core.account.CloudAccountOnboardingViewModel
 import app.logdate.feature.core.assistants.AndroidAssistantsViewModel
@@ -50,6 +51,7 @@ import app.logdate.feature.core.settings.account.recovery.RecoveryPhraseViewMode
 import app.logdate.feature.core.settings.account.recovery.accountRecoveryOffered
 import app.logdate.feature.core.settings.account.recovery.passkeysSupported
 import app.logdate.feature.core.settings.account.signin.SignInMethodsViewModel
+import app.logdate.feature.core.settings.account.watchAtSignOut
 import app.logdate.feature.core.settings.ui.AdvancedSettingsViewModel
 import app.logdate.feature.core.settings.ui.AutomaticDiagnosticReportingViewModel
 import app.logdate.feature.core.settings.ui.DangerZoneSettingsViewModel
@@ -132,6 +134,7 @@ val coreFeatureModule: Module =
                 isEmailVerificationAvailable = { get<EmailVerificationAvailability>().isAvailable() },
                 verifyEmail = { get<VerifyEmailUseCase>()() },
                 accountRecovery = get<AutomaticAccountRecovery>().state,
+                linkedWatch = { watchAtSignOut(getOrNull<WatchRemovalAccess>()?.unsentOnLinkedWatches().orEmpty()) },
             )
         }
         viewModel {

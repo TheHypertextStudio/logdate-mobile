@@ -79,6 +79,9 @@ import logdate.client.feature.core.generated.resources.account_sign_out_confirm_
 import logdate.client.feature.core.generated.resources.account_sign_out_dialog_title
 import logdate.client.feature.core.generated.resources.account_sign_out_failed
 import logdate.client.feature.core.generated.resources.account_sign_out_row_description
+import logdate.client.feature.core.generated.resources.account_sign_out_watch_synced
+import logdate.client.feature.core.generated.resources.account_sign_out_watch_unknown
+import logdate.client.feature.core.generated.resources.account_sign_out_watch_unsent
 import logdate.client.feature.core.generated.resources.account_signed_out_body
 import logdate.client.feature.core.generated.resources.account_signed_out_create
 import logdate.client.feature.core.generated.resources.account_signed_out_sign_in
@@ -141,6 +144,7 @@ fun AccountScreen(
         destinations = destinations,
         onOpenEmailVerification = { showEmailVerification = true },
         onSignOut = viewModel::signOut,
+        onConfirmingSignOut = viewModel::checkWatch,
         snackbarHostState = snackbarHostState,
         showPlan = cloudPlans,
     )
@@ -167,8 +171,14 @@ fun AccountContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     /** Whether to offer the LogDate Cloud plan. It is only ever shown for an account on LogDate Cloud. */
     showPlan: Boolean = false,
+    /** Called as the sign-out confirmation opens, before the person has agreed to anything. */
+    onConfirmingSignOut: () -> Unit = {},
 ) {
     var confirmSignOut by remember { mutableStateOf(false) }
+    val askToSignOut = {
+        onConfirmingSignOut()
+        confirmSignOut = true
+    }
 
     val title = stringResource(Res.string.account_title)
     when (state) {
@@ -211,7 +221,7 @@ fun AccountContent(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = Spacing.lg),
                         verticalArrangement = Arrangement.spacedBy(Spacing.lg),
                     ) {
-                        HostingAndSessionSections(state, destinations, showPlan = showPlan, onSignOut = { confirmSignOut = true })
+                        HostingAndSessionSections(state, destinations, showPlan = showPlan, onSignOut = askToSignOut)
                     }
                 },
                 standardContent = {
@@ -220,7 +230,7 @@ fun AccountContent(
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
                                 SignInAndRecoverySection(state, destinations, onOpenEmailVerification)
-                                HostingAndSessionSections(state, destinations, showPlan = showPlan, onSignOut = { confirmSignOut = true })
+                                HostingAndSessionSections(state, destinations, showPlan = showPlan, onSignOut = askToSignOut)
                             }
                         }
                     }
@@ -234,7 +244,27 @@ fun AccountContent(
         AlertDialog(
             onDismissRequest = { confirmSignOut = false },
             title = { Text(stringResource(Res.string.account_sign_out_dialog_title)) },
-            text = { Text(stringResource(Res.string.account_sign_out_confirm_message, signedIn.server.displayName())) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    Text(stringResource(Res.string.account_sign_out_confirm_message, signedIn.server.displayName()))
+                    when (val watch = signedIn.watch) {
+                        WatchAtSignOut.None -> {}
+
+                        WatchAtSignOut.Synced -> {
+                            Text(stringResource(Res.string.account_sign_out_watch_synced))
+                        }
+
+                        is WatchAtSignOut.Unsent -> {
+                            val count = watch.count
+                            Text(pluralStringResource(Res.plurals.account_sign_out_watch_unsent, count, count))
+                        }
+
+                        WatchAtSignOut.Unknown -> {
+                            Text(stringResource(Res.string.account_sign_out_watch_unknown))
+                        }
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
