@@ -1,0 +1,4 @@
+logdate.env
+secrets.env
+.env
+backups/
