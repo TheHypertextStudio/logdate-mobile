@@ -3,7 +3,6 @@ package app.logdate.client.e2e
 import android.content.pm.ActivityInfo
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import androidx.camera.view.PreviewView
@@ -17,7 +16,6 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
@@ -64,26 +62,6 @@ internal class ManagedEditorWindowCaptures(
                     "Camera controls share the safe scene center",
                 )
             }
-        }
-
-    fun captureReviewSizes() =
-        captureSizes("review", ::awaitReviewImage) {
-            val panel = compose.onNodeWithTag("camera_review_surface").fetchSemanticsNode().boundsInRoot
-            scenario.onActivity {
-                val view = it.window.decorView
-                val density = it.resources.displayMetrics.density
-                val safe =
-                    WindowInsetsCompat
-                        .toWindowInsetsCompat(view.rootWindowInsets)
-                        .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-                assertTrue(panel.width <= min(view.width.toFloat() - safe.left - safe.right, 640 * density) - 32 * density + 1f)
-                assertTrue(panel.bottom <= view.height - safe.bottom - 16 * density + 1f)
-                assertTrue(panel.left >= safe.left + 16 * density - 1f)
-                assertTrue(panel.right <= view.width - safe.right - 16 * density + 1f)
-                assertEquals((view.width + safe.left - safe.right) / 2f, panel.center.x, 1f)
-            }
-            compose.onNodeWithText("Retake").assertIsDisplayed().assertIsEnabled()
-            compose.onNodeWithText("Use Photo").assertIsDisplayed().assertIsEnabled()
         }
 
     fun captureWritingSizes() =
@@ -169,33 +147,6 @@ internal class ManagedEditorWindowCaptures(
                 assertTrue(memory.bottom + 16 * density <= dock.top + 1f, "Memory and Add retain the same 16dp design clearance")
             }
         }
-
-    fun awaitReviewImage() {
-        compose.onNodeWithContentDescription("Captured photo").assertIsDisplayed()
-        var lastSample = 0L
-        var samples = 0
-        compose.waitUntil(10_000) {
-            val now = SystemClock.elapsedRealtime()
-            if (now - lastSample < 500 || samples >= 20) return@waitUntil false
-            lastSample = now
-            samples++
-            val image = File(output, "review-image-pixels.png")
-            check(device.takeScreenshot(image))
-            val bitmap = checkNotNull(BitmapFactory.decodeFile(image.absolutePath))
-            try {
-                var visible = 0
-                for (y in 3..5) {
-                    for (x in 2..6) {
-                        val color = bitmap.getPixel(bitmap.width * x / 8, bitmap.height * y / 8)
-                        if (Color.red(color) + Color.green(color) + Color.blue(color) > 120) visible++
-                    }
-                }
-                visible >= 5
-            } finally {
-                bitmap.recycle()
-            }
-        }
-    }
 
     private fun captureSizes(
         stage: String,

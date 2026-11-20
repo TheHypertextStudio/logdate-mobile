@@ -24,11 +24,9 @@ import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -60,7 +58,7 @@ class EditorCameraCreationControlsTest {
     @get:Rule val permissions = GrantPermissionRule.grant(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
 
     @Test(timeout = 180_000)
-    fun physicalCameraCaptureAndReviewStayClearOfCreationChoicesAndTransparentBars() {
+    fun physicalCameraCaptureStaysClearOfCreationChoicesAndTransparentBars() {
         check(Build.HARDWARE in setOf("ranchu", "goldfish"))
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
@@ -118,15 +116,11 @@ class EditorCameraCreationControlsTest {
                             ).fetchSemanticsNodes()
                             .single()
                             .config[SemanticsProperties.TestTag]
-                    val route = compose.onNodeWithTag(MediaDeviceSelectorTags.chip("Camera")).assertIsDisplayed().assertIsEnabled()
+                    // Front and back cameras get a flip in the viewfinder's corner, not a picker sheet.
+                    val flip = compose.onNodeWithContentDescription("Switch camera").assertIsDisplayed().assertIsEnabled()
                     val backBounds = compose.onNodeWithContentDescription("Return to entry").fetchSemanticsNode().boundsInRoot
-                    assertTrue(route.fetchSemanticsNode().boundsInRoot.top >= backBounds.bottom, "Camera route must clear Return to entry")
-                    tap(device, scenario, route)
-                    compose.onNodeWithTag(MediaDeviceSelectorTags.sheet("Camera")).assertIsDisplayed()
-                    device.pressBack()
-                    compose.waitUntil(10_000) {
-                        compose.onAllNodesWithTag(MediaDeviceSelectorTags.sheet("Camera")).fetchSemanticsNodes().isEmpty()
-                    }
+                    assertTrue(flip.fetchSemanticsNode().boundsInRoot.top >= backBounds.bottom, "Camera flip must clear Return to entry")
+                    assertTrue(compose.onAllNodesWithTag(MediaDeviceSelectorTags.chip("Camera")).fetchSemanticsNodes().isEmpty())
                     val shutter = compose.onNodeWithContentDescription("Take Photo").assertIsDisplayed().assertIsEnabled()
                     val shutterBounds = shutter.fetchSemanticsNode().boundsInRoot
                     compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
@@ -152,11 +146,6 @@ class EditorCameraCreationControlsTest {
                             }
                         }
                     windowSizes.captureCameraSizes()
-                    tap(device, scenario, compose.onNodeWithContentDescription("Take Photo"))
-                    compose.waitUntil(20_000) { compose.onAllNodesWithText("Use Photo").fetchSemanticsNodes().isNotEmpty() }
-                    windowSizes.awaitReviewImage()
-                    var safeBottom = 0
-                    var windowHeight = 0
                     scenario.onActivity {
                         val window = it.window
                         assertEquals(0, Color.alpha(window.statusBarColor))
@@ -166,26 +155,13 @@ class EditorCameraCreationControlsTest {
                         val icons = WindowInsetsControllerCompat(window, window.decorView)
                         assertFalse(icons.isAppearanceLightStatusBars, "Camera status icons must be light over its dark preview")
                         assertFalse(icons.isAppearanceLightNavigationBars)
-                        safeBottom =
-                            WindowInsetsCompat
-                                .toWindowInsetsCompat(window.decorView.rootWindowInsets)
-                                .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-                                .bottom
-                        windowHeight = window.decorView.height
                     }
-                    for (label in listOf("Retake", "Use Photo")) {
-                        val action = compose.onNodeWithText(label).assertIsDisplayed().assertIsEnabled()
-                        val bounds = action.fetchSemanticsNode().boundsInRoot
-                        assertTrue(bounds.bottom <= windowHeight - safeBottom, "$label must clear navigation UI")
-                        val dock = compose.onNodeWithTag("entry_creation_actions").fetchSemanticsNode().boundsInRoot
-                        if (dock.height > 0f) assertTrue(bounds.bottom <= dock.top, "$label must clear an exiting creation surface")
-                    }
-                    check(device.takeScreenshot(File(output, "mobile-camera-review.png")))
-                    windowSizes.captureReviewSizes()
-                    tap(device, scenario, compose.onNodeWithText("Use Photo"))
+                    // A tap goes straight into the entry; there is no review step to get past.
+                    tap(device, scenario, compose.onNodeWithContentDescription("Take Photo"))
                     compose.waitUntil(
-                        15_000,
+                        20_000,
                     ) { compose.onAllNodesWithContentDescription("Captured photo").fetchSemanticsNodes().isNotEmpty() }
+                    check(device.takeScreenshot(File(output, "mobile-camera-captured.png")))
                     compose.onNodeWithTag(focused).assertIsDisplayed()
                     compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
                     val back = ManagedEditorBackGesture(device)

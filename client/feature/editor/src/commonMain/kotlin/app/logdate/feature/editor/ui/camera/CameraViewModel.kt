@@ -34,6 +34,8 @@ class CameraViewModel(
     val uiState: StateFlow<CameraUiState> = _uiState.asStateFlow()
 
     private var previewJob: Job? = null
+    private var recordingStartJob: Job? = null
+    private var stopRequestedWhileStarting = false
 
     init {
         viewModelScope.launch {
@@ -46,7 +48,9 @@ class CameraViewModel(
                         aspectRatio = captureState.aspectRatio,
                         isRecording = captureState.isRecording,
                         recordingDurationMs = captureState.recordingDurationMs,
-                        capturedMediaUri = captureState.lastCapturedUri,
+                        // A capture handed back by the manager call wins over a state update
+                        // that hasn't caught up yet; clearCapturedMedia clears both.
+                        capturedMediaUri = captureState.lastCapturedUri ?: current.capturedMediaUri,
                         error = captureState.error?.toErrorMessage(),
                         cameraSelection = captureState.cameraSelection,
                     )
@@ -135,6 +139,55 @@ class CameraViewModel(
     }
 
     /**
+     * Takes a photo regardless of [CaptureMode]. The shutter decides between a photo and a
+     * recording from the gesture, so the mode no longer gates what a press does.
+     */
+    fun takePhoto(onPrepareTarget: suspend (String, CapturedMediaType) -> Boolean = { _, _ -> false }) {
+        viewModelScope.launch { capturePhoto(onPrepareTarget) }
+    }
+
+    /**
+     * Starts a video recording without changing [CaptureMode]. Does nothing while a recording is
+     * already running.
+     */
+    fun startRecording(onPrepareTarget: suspend (String, CapturedMediaType) -> Boolean = { _, _ -> false }) {
+        if (_uiState.value.isRecording || recordingStartJob?.isActive == true) return
+        stopRequestedWhileStarting = false
+        recordingStartJob =
+            viewModelScope.launch {
+                cameraCaptureManager.startVideoRecording { path -> onPrepareTarget(path, CapturedMediaType.VIDEO) }
+                if (stopRequestedWhileStarting) {
+                    stopRequestedWhileStarting = false
+                    finishRecording()
+                }
+            }
+    }
+
+    /**
+     * Stops the running recording and hands back the clip. A stop that arrives while the recording
+     * is still starting, such as a hold released right away, ends it as soon as it starts. Does
+     * nothing when nothing is recording.
+     */
+    fun stopRecording() {
+        if (recordingStartJob?.isActive == true) {
+            stopRequestedWhileStarting = true
+            return
+        }
+        if (!_uiState.value.isRecording) return
+        viewModelScope.launch { finishRecording() }
+    }
+
+    private suspend fun finishRecording() {
+        val uri = cameraCaptureManager.stopVideoRecording()
+        _uiState.update {
+            it.copy(
+                capturedMediaUri = uri,
+                capturedMediaType = if (uri != null) CapturedMediaType.VIDEO else null,
+            )
+        }
+    }
+
+    /**
      * Captures a photo.
      */
     private suspend fun capturePhoto(onPrepareTarget: suspend (String, CapturedMediaType) -> Boolean) {
@@ -160,13 +213,7 @@ class CameraViewModel(
      */
     private suspend fun toggleVideoRecording(onPrepareTarget: suspend (String, CapturedMediaType) -> Boolean) {
         if (_uiState.value.isRecording) {
-            val uri = cameraCaptureManager.stopVideoRecording()
-            _uiState.update {
-                it.copy(
-                    capturedMediaUri = uri,
-                    capturedMediaType = if (uri != null) CapturedMediaType.VIDEO else null,
-                )
-            }
+            finishRecording()
         } else {
             cameraCaptureManager.startVideoRecording { path -> onPrepareTarget(path, CapturedMediaType.VIDEO) }
         }

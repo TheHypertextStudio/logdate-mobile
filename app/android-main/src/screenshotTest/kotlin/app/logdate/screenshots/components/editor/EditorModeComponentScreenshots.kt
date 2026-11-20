@@ -8,11 +8,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.R
 import app.logdate.feature.editor.ui.audio.ActiveRecordingDisplay
 import app.logdate.feature.editor.ui.audio.AudioRecordingControls
-import app.logdate.feature.editor.ui.camera.CameraAspectRatio
 import app.logdate.feature.editor.ui.camera.CameraCapturePreviewContent
 import app.logdate.feature.editor.ui.camera.CameraCapturePreviewState
-import app.logdate.feature.editor.ui.camera.CaptureMode
-import app.logdate.feature.editor.ui.camera.CapturedMediaType
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.RecordingState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
@@ -277,44 +274,10 @@ fun EditorMode_CameraCapture_TabletopPosture() {
 @ScreenshotPreviewMatrix
 @LargeScreenAuditPreviewMatrix
 @Composable
-fun EditorMode_CameraCapture_Full() {
+fun EditorMode_CameraCapture_ExternalCamera() {
     EditorModeFrame(isImmersiveBlockActive = true) {
         CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.LiveCapture(
-                    aspectRatio = CameraAspectRatio.FULL,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@LargeScreenAuditPreviewMatrix
-@Composable
-fun EditorMode_CameraCapture_Square() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.LiveCapture(
-                    aspectRatio = CameraAspectRatio.SQUARE,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@Composable
-fun EditorMode_CameraCapture_VideoMode() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.LiveCapture(
-                    captureMode = CaptureMode.VIDEO,
-                ),
+            state = CameraCapturePreviewState.LiveCapture(showCameraPicker = true),
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -327,11 +290,7 @@ fun EditorMode_CameraCapture_VideoMode() {
 fun EditorMode_CameraCapture_Recording() {
     EditorModeFrame(isImmersiveBlockActive = true) {
         CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.LiveCapture(
-                    captureMode = CaptureMode.VIDEO,
-                    isRecording = true,
-                ),
+            state = CameraCapturePreviewState.LiveCapture(isRecording = true),
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -344,103 +303,6 @@ fun EditorMode_CameraPermission() {
     EditorModeFrame {
         CameraCapturePreviewContent(
             state = CameraCapturePreviewState.PermissionRequired,
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@LargeScreenAuditPreviewMatrix
-@Composable
-fun EditorMode_CameraReviewPhoto() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.Review(
-                    uri = SAMPLE_IMAGE_URI,
-                    mediaType = CapturedMediaType.PHOTO,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, device = BOOK_FOLDABLE)
-@Composable
-fun EditorMode_CameraReviewPhoto_BookPosture() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.Review(
-                    uri = SAMPLE_IMAGE_URI,
-                    mediaType = CapturedMediaType.PHOTO,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, device = TABLETOP_FOLDABLE)
-@Composable
-fun EditorMode_CameraReviewPhoto_TabletopPosture() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.Review(
-                    uri = SAMPLE_IMAGE_URI,
-                    mediaType = CapturedMediaType.PHOTO,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@ScreenshotPreviewMatrix
-@Composable
-fun EditorMode_CameraReviewVideo() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.Review(
-                    uri = SAMPLE_IMAGE_URI,
-                    mediaType = CapturedMediaType.VIDEO,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, device = BOOK_FOLDABLE)
-@Composable
-fun EditorMode_CameraReviewVideo_BookPosture() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.Review(
-                    uri = SAMPLE_IMAGE_URI,
-                    mediaType = CapturedMediaType.VIDEO,
-                ),
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@PreviewTest
-@Preview(showBackground = true, device = TABLETOP_FOLDABLE)
-@Composable
-fun EditorMode_CameraReviewVideo_TabletopPosture() {
-    EditorModeFrame(isImmersiveBlockActive = true) {
-        CameraCapturePreviewContent(
-            state =
-                CameraCapturePreviewState.Review(
-                    uri = SAMPLE_IMAGE_URI,
-                    mediaType = CapturedMediaType.VIDEO,
-                ),
             modifier = Modifier.fillMaxSize(),
         )
     }
