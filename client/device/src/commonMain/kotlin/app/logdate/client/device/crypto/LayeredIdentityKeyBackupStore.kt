@@ -73,7 +73,8 @@ class LayeredIdentityKeyBackupStore(
         val primaryRoot = primary.readRoot()
         if (primaryRoot != null) {
             mirrorSafely {
-                if (mirror.readRoot() != primaryRoot) primaryRoot.writeTo(mirror)
+                // A mirror that can't be read is as good as missing, so it is rewritten too.
+                if (mirrorRoot() != primaryRoot) primaryRoot.writeTo(mirror)
             }
             return primaryRoot
         }
