@@ -1,0 +1,82 @@
+# LogDate server on one machine: PostgreSQL, the server, and Caddy for HTTPS.
+# Start it with ./deploy.sh, which records RELEASE_VERSION for the checked-out commit in .env.
+# README.md in this directory is the runbook.
+
+name: logdate
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # secrets.env carries POSTGRES_PASSWORD, the same value as the server's DATABASE_PASSWORD.
+    env_file: [secrets.env]
+    environment:
+      POSTGRES_DB: logdate
+      POSTGRES_USER: logdate
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U logdate -d logdate']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  # The server image runs as the distroless nonroot user (65532), and Docker creates a new named
+  # volume owned by root, so this hands the media directory to that user before the server starts.
+  blob-permissions:
+    image: busybox:1.37
+    command: ['sh', '-c', 'mkdir -p /var/lib/logdate/blobs && chown -R 65532:65532 /var/lib/logdate']
+    volumes:
+      - blob-data:/var/lib/logdate
+    networks: [internal]
+
+  server:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: production
+    image: logdate-server:selfhost
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      blob-permissions:
+        condition: service_completed_successfully
+    env_file:
+      - logdate.env
+      - secrets.env
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/logdate
+      DATABASE_USER: logdate
+      LOGDATE_BLOB_STORAGE_DIR: /var/lib/logdate/blobs
+      RELEASE_VERSION: ${RELEASE_VERSION:?run ./deploy.sh, which sets it}
+    volumes:
+      - blob-data:/var/lib/logdate
+    mem_limit: ${SERVER_MEMORY_LIMIT:-4g}
+    networks: [internal]
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on: [server]
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      LOGDATE_DOMAIN: ${LOGDATE_DOMAIN:-cloud.logdate.app}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [internal]
+
+volumes:
+  postgres-data:
+  blob-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  internal:

@@ -1,0 +1,13 @@
+# Caddy obtains and renews the certificate for the domain itself, so ports 80 and 443 must
+# reach this machine and the domain's DNS record must point at it without a proxy in between.
+{$LOGDATE_DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy server:8080 {
+		# Backups stream for minutes; don't cut them off.
+		transport http {
+			read_timeout 30m
+			write_timeout 30m
+		}
+	}
+}
