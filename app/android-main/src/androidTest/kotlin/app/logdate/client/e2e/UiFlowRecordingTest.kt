@@ -13,13 +13,20 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import app.logdate.client.MainActivity
 import app.logdate.client.ensureLogDateApplicationStarted
+import app.logdate.client.repository.journals.JournalNote
+import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.testing.onboarding.DEBUG_SKIP_ONBOARDING_EXTRA
 import app.logdate.client.testing.onboarding.OnboardingTestFixture
 import app.logdate.client.testing.onboarding.putOnboardingTestFixture
 import org.junit.Test
+import kotlinx.coroutines.runBlocking
 import org.junit.runner.RunWith
+import org.koin.java.KoinJavaComponent
 import java.io.ByteArrayOutputStream
 import java.io.File
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Records named UI flows of the real app at a human pace, one video per flow, so the same flows
@@ -77,8 +84,11 @@ class UiFlowRecordingTest {
     fun flowSearch() =
         record("search") {
             await(By.text("Search your log"), "the workspace search bar").click()
-            hold()
-            device.executeShellCommand("input text park")
+            await(By.focused(true), "the focused search field")
+            for (letter in "park") {
+                device.executeShellCommand("input text $letter")
+                SystemClock.sleep(250)
+            }
             hold(3_000)
         }
 
@@ -112,14 +122,37 @@ class UiFlowRecordingTest {
                     putOnboardingTestFixture(OnboardingTestFixture.FRESH_ONBOARDING)
                 }
             }
-        ActivityScenario.launch<MainActivity>(intent).use {
-            if (skipOnboarding) create()
-            ManagedEditorRecording(device, output, "$flow.mp4").use { recording ->
-                hold(700)
-                steps()
-                recording.assertStillRecording()
+        val samples = if (skipOnboarding) seedSampleEntries() else emptyList()
+        try {
+            ActivityScenario.launch<MainActivity>(intent).use {
+                if (skipOnboarding) create()
+                ManagedEditorRecording(device, output, "$flow.mp4").use { recording ->
+                    hold(700)
+                    steps()
+                    recording.assertStillRecording()
+                }
             }
+        } finally {
+            val notes = KoinJavaComponent.getKoin().get<JournalNotesRepository>()
+            runBlocking { samples.forEach { notes.removeById(it.uid) } }
         }
+    }
+
+    /**
+     * Adds the same kind of synthetic entries the Apple apps show with `--preview-data`, so every
+     * platform's flows show a populated timeline and search has something to find.
+     */
+    private fun seedSampleEntries(): List<JournalNote> {
+        val now = Clock.System.now()
+        val samples =
+            listOf(
+                now - 1.hours to "The light hit the kitchen wall before I left, and the apartment felt quiet.",
+                now - 3.hours to "A quiet morning walk through the park. Wrote this down to remember the light.",
+                now - 1.days to "Made coffee and sorted through photos from the weekend.",
+            ).map { (time, text) -> JournalNote.Text(creationTimestamp = time, lastUpdated = time, content = text) }
+        val notes = KoinJavaComponent.getKoin().get<JournalNotesRepository>()
+        runBlocking { samples.forEach { notes.create(it) } }
+        return samples
     }
 
     /** The Home creation action, which proves the workspace has loaded. */
