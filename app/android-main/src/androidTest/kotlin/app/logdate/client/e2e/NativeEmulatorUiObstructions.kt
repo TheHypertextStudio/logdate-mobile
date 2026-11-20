@@ -16,6 +16,7 @@ internal fun dismissNativeEmulatorPlatformDialog(
             "Digital Wellbeing isn't responding" to "android:id/aerr_close",
             "System UI isn't responding" to "android:id/aerr_wait",
             "Process system isn't responding" to "android:id/aerr_wait",
+            "Pixel Launcher isn't responding" to "android:id/aerr_wait",
         ).map { (text, action) -> By.pkg("android").res("android:id/alertTitle").text(text) to action }
             .firstOrNull { (title, _) -> device.hasObject(title) } ?: return false
     val action = checkNotNull(device.findObject(By.pkg("android").res(obstruction.second)))

@@ -11,7 +11,6 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
-import androidx.test.uiautomator.Until
 import app.logdate.client.MainActivity
 import app.logdate.client.ensureLogDateApplicationStarted
 import app.logdate.client.testing.onboarding.DEBUG_SKIP_ONBOARDING_EXTRA
@@ -124,18 +123,28 @@ class UiFlowRecordingTest {
     }
 
     /** The Home creation action, which proves the workspace has loaded. */
-    private fun create(): UiObject2 =
-        device.wait(Until.findObject(By.desc("Add a memory")), 25_000)
-            ?: await(By.text("Create Entry"), "the Home creation action")
+    private fun create(): UiObject2 = await("the Home creation action", 40_000, By.desc("Add a memory"), By.text("Create Entry"))
 
     private fun await(
         selector: BySelector,
         what: String,
         timeoutMillis: Long = 15_000,
-    ): UiObject2 =
-        checkNotNull(device.wait(Until.findObject(selector), timeoutMillis)) {
-            "Timed out waiting for $what. ${visibleLabels()}"
+    ): UiObject2 = await(what, timeoutMillis, selector)
+
+    /** Waits for any of [selectors], clearing the emulator's own "isn't responding" dialogs while it waits. */
+    private fun await(
+        what: String,
+        timeoutMillis: Long,
+        vararg selectors: BySelector,
+    ): UiObject2 {
+        val deadline = SystemClock.elapsedRealtime() + timeoutMillis
+        while (SystemClock.elapsedRealtime() < deadline) {
+            dismissNativeEmulatorPlatformDialog(device)
+            selectors.firstNotNullOfOrNull { device.findObject(it) }?.let { return it }
+            SystemClock.sleep(500)
         }
+        error("Timed out waiting for $what. ${visibleLabels()}")
+    }
 
     /** Names what the screen shows, so a timeout explains where the flow stopped. */
     private fun visibleLabels(): String {
