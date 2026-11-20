@@ -370,6 +370,31 @@ data class BackupUploadResponse(
     val sizeBytes: Long,
 )
 
+/**
+ * Starts a backup sent in parts, for when one request can't carry the whole archive: a proxy in
+ * front of the server may refuse large request bodies.
+ */
+@Serializable
+data class BackupPartUploadStartRequest(
+    val sizeBytes: Long,
+)
+
+/** Where to send a backup's parts: each is [partSizeBytes] long except the last. */
+@Serializable
+data class BackupPartUploadStartResponse(
+    val uploadId: String,
+    val partSizeBytes: Long,
+    val partCount: Int,
+)
+
+/** Finishes a backup sent in parts, once every part has been accepted. */
+@Serializable
+data class BackupPartUploadCompleteRequest(
+    val deviceId: String,
+    val manifest: String,
+    val sizeBytes: Long,
+)
+
 @Serializable
 data class BackupInfoResponse(
     val id: String,

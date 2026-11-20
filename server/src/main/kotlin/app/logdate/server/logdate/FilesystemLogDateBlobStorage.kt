@@ -160,6 +160,12 @@ class FilesystemLogDateBlobStorage(
             }
         }
 
+    override fun storagePathFor(
+        ownerId: java.util.UUID,
+        namespace: LogDateBlobNamespace,
+        blobId: String,
+    ): String = relativePath(namespace, ownerId.toString(), blobId)
+
     override fun getSignedDownloadUrl(
         storagePath: String,
         expirationHours: Long,

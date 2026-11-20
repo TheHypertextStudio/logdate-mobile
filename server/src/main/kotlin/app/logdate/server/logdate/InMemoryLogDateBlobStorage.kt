@@ -2,6 +2,7 @@ package app.logdate.server.logdate
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -131,6 +132,12 @@ class InMemoryLogDateBlobStorage : LogDateBlobStorage {
         storagePath: String,
         expirationHours: Long,
     ): String = "https://logdate.test/download/$storagePath?expiresInHours=$expirationHours"
+
+    override fun storagePathFor(
+        ownerId: UUID,
+        namespace: LogDateBlobNamespace,
+        blobId: String,
+    ): String = storagePathFor(LogDateBlobWriteRequest(ownerId, namespace, blobId, null, "application/octet-stream", ByteArray(0)))
 
     private fun storagePathFor(request: LogDateBlobWriteRequest): String =
         when (request.namespace) {

@@ -79,6 +79,16 @@ interface LogDateBlobStorage {
     /** Exact owner namespace only; enumeration failures must propagate to the cleanup queue. */
     fun listOwnerBlobPaths(ownerId: UUID): List<String> = error("Owner enumeration is unavailable")
 
+    /**
+     * The path an object written as [blobId] in [ownerId]'s [namespace] is stored at, so a later
+     * request can find an object an earlier one wrote without the client naming a path.
+     */
+    fun storagePathFor(
+        ownerId: UUID,
+        namespace: LogDateBlobNamespace,
+        blobId: String,
+    ): String = error("Storage paths cannot be derived for this storage")
+
     fun getSignedDownloadUrl(
         storagePath: String,
         expirationHours: Long = 1,
