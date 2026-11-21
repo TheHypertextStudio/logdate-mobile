@@ -29,6 +29,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import app.logdate.feature.editor.ui.LocalEditorBlockContinuity
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
+import app.logdate.feature.editor.ui.layout.LocalEntryCreationReserve
 import app.logdate.feature.editor.ui.rememberRetainedEditorBlocks
 import app.logdate.feature.editor.ui.state.EditorBlockPresentation
 import app.logdate.feature.editor.ui.state.rememberBlocksUiState
@@ -174,10 +176,41 @@ class EntryCreationDockSurfaceTest {
         }
 
     @Test
-    fun focusedCameraOwnsItsControlsWithoutVisibleOrInteractiveEntryModes() =
+    fun focusedCameraShowsTheModesAsWordsInsteadOfPills() =
         runDesktopComposeUiTest(width = 360, height = 800) {
             val camera = CameraBlockUiState()
+            val taps = mutableListOf<StoryCaptureMode>()
+            setContent {
+                MaterialTheme {
+                    EntryPageChrome(
+                        EditorState(
+                            blocks = listOf(camera),
+                            expandedBlockId = camera.id,
+                        ),
+                        EntryPageOverviewState(false),
+                        EntryStartMode.TEXT,
+                        {
+                        },
+                        {},
+                        { taps += it },
+                        header = {},
+                    ) {
+                        Box(Modifier.fillMaxSize())
+                    }
+                }
+            }
+            onNodeWithTag("entry_capture_word_row").assertIsDisplayed()
+            onNodeWithContentDescription("Write").assertDoesNotExist()
+            onNodeWithTag("entry_capture_word_Handwrite").performClick()
+            assertEquals(listOf(StoryCaptureMode.Handwrite), taps)
+        }
+
+    @Test
+    fun aCaptureInProgressHidesTheWordsWithoutMovingTheShutterSpace() =
+        runDesktopComposeUiTest(width = 360, height = 800) {
+            val camera = CameraBlockUiState(pendingFilePath = "/captures/clip.mp4")
             var modeTaps = 0
+            var reserve = 0.dp
             setContent {
                 MaterialTheme {
                     EntryPageChrome(
@@ -193,14 +226,17 @@ class EntryCreationDockSurfaceTest {
                         { modeTaps++ },
                         header = {},
                     ) {
+                        reserve = LocalEntryCreationReserve.current
                         Box(Modifier.fillMaxSize())
                     }
                 }
             }
-            onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
-            onNodeWithContentDescription("Write").assertIsNotDisplayed()
-            onRoot().performTouchInput { click(Offset(40f, 760f)) }
+            onNodeWithTag("entry_capture_word_row", useUnmergedTree = true)
+                .assert(hasAnyAncestor(SemanticsMatcher.keyIsDefined(SemanticsProperties.HideFromAccessibility)))
+            onNodeWithTag("entry_capture_word_Handwrite", useUnmergedTree = true).performClick()
+            onRoot().performTouchInput { click(Offset(180f, 760f)) }
             assertEquals(0, modeTaps)
+            assertTrue(reserve > 0.dp, "The camera should keep the word row's space while capturing")
         }
 
     @Test

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -123,8 +124,15 @@ class EditorCameraCreationControlsTest {
                     assertTrue(compose.onAllNodesWithTag(MediaDeviceSelectorTags.chip("Camera")).fetchSemanticsNodes().isEmpty())
                     val shutter = compose.onNodeWithContentDescription("Take Photo").assertIsDisplayed().assertIsEnabled()
                     val shutterBounds = shutter.fetchSemanticsNode().boundsInRoot
-                    compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
-                    compose.onNodeWithContentDescription("Write").assertIsNotDisplayed()
+                    // In Camera mode the dock reads as a row of words under the shutter.
+                    val wordRow =
+                        compose
+                            .onNodeWithTag("entry_capture_word_row")
+                            .assertIsDisplayed()
+                            .fetchSemanticsNode()
+                            .boundsInRoot
+                    assertTrue(shutterBounds.bottom <= wordRow.top, "The shutter must sit above the word row")
+                    compose.onNodeWithTag("entry_capture_word_Camera").assertIsSelected()
                     scenario.onActivity {
                         val view = it.window.decorView
                         val insets =

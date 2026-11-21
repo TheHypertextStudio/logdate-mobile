@@ -159,7 +159,7 @@ internal fun StoriesCaptureModes(
 }
 
 @Composable
-private fun captureChoiceLabel(mode: StoryCaptureMode): String =
+internal fun captureChoiceLabel(mode: StoryCaptureMode): String =
     stringResource(
         when (mode) {
             StoryCaptureMode.Write -> Res.string.memory_write
