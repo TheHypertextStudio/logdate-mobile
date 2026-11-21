@@ -45,5 +45,6 @@ internal fun EntryEditorTopBar(
         floating = true,
         draftCount = state.availableDrafts.size,
         autoSaveStatus = autoSaveStatus,
+        entryBlocks = state.blocks,
     )
 }
