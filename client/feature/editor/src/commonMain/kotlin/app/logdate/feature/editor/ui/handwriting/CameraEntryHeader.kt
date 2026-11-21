@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
@@ -68,6 +67,7 @@ import app.logdate.feature.editor.ui.editor.TextBlockUiState
 import app.logdate.feature.editor.ui.editor.VideoBlockUiState
 import app.logdate.feature.editor.ui.editor.isEmptyCreationBlock
 import app.logdate.feature.editor.ui.layout.LocalEntryChromeHeight
+import app.logdate.ui.common.DropdownMenu
 import app.logdate.ui.common.IconTooltip
 import app.logdate.ui.platform.PlatformIcons
 import app.logdate.ui.platform.rememberSystemReduceMotion
