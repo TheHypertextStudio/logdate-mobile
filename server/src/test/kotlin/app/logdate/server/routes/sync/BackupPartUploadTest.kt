@@ -10,6 +10,8 @@ import app.logdate.server.routes.syncRoutes
 import app.logdate.server.sync.InMemorySyncRepository
 import app.logdate.server.sync.MediaAccessPolicy
 import app.logdate.server.sync.SyncMetricsRegistry
+import app.logdate.server.transfer.TransferLimits
+import app.logdate.server.transfer.TransferSlots
 import app.logdate.shared.model.sync.BackupPartUploadCompleteRequest
 import app.logdate.shared.model.sync.BackupPartUploadStartRequest
 import app.logdate.shared.model.sync.BackupPartUploadStartResponse
@@ -52,8 +54,11 @@ class BackupPartUploadTest {
     private val tokenService = JwtTokenService("backup-part-secret")
     private val auth = "Bearer ${tokenService.generateAccessToken(UUID.randomUUID().toString())}"
 
+    /** Small parts keep the test's memory low; the server's real parts are [BACKUP_PART_BYTES]. */
+    private val partBytes = 64L * 1024
+
     /** Two full parts and a short third, so ordering and the last part's length both matter. */
-    private val payload = Random(7).nextBytes((2 * BACKUP_PART_BYTES + 1234).toInt())
+    private val payload = Random(7).nextBytes((2 * partBytes + 1234).toInt())
 
     @AfterTest
     fun cleanUp() {
@@ -64,7 +69,7 @@ class BackupPartUploadTest {
     fun `a backup sent in parts out of order is stored whole and its parts are deleted`() =
         withServer { client ->
             val upload = client.start(payload.size.toLong())
-            assertEquals(BACKUP_PART_BYTES, upload.partSizeBytes)
+            assertEquals(partBytes, upload.partSizeBytes)
             assertEquals(3, upload.partCount)
 
             for (index in listOf(2, 0, 1)) {
@@ -117,7 +122,7 @@ class BackupPartUploadTest {
             val oversized =
                 client.put("/api/v1/backups/uploads/${upload.uploadId}/parts/0") {
                     header(HttpHeaders.Authorization, auth)
-                    setBody(ByteArray((BACKUP_PART_BYTES + 1).toInt()))
+                    setBody(ByteArray((partBytes + 1).toInt()))
                 }
             assertEquals(HttpStatusCode.BadRequest, oversized.status)
 
@@ -188,6 +193,7 @@ class BackupPartUploadTest {
                             mediaBlobRepository = repository.asLogDateMediaRepository().asLogDateMediaBlobRepository(),
                             backupRepository = repository.asLogDateBackupRepository(),
                             rateLimiter = null,
+                            transfers = TransferSlots(TransferLimits(backupPartBytes = partBytes)),
                         )
                     }
                 }
@@ -210,8 +216,8 @@ class BackupPartUploadTest {
         uploadId: String,
         index: Int,
     ): HttpResponse {
-        val from = (index * BACKUP_PART_BYTES).toInt().coerceAtMost(payload.size)
-        val to = ((index + 1) * BACKUP_PART_BYTES).toInt().coerceAtMost(payload.size)
+        val from = (index * partBytes).toInt().coerceAtMost(payload.size)
+        val to = ((index + 1) * partBytes).toInt().coerceAtMost(payload.size)
         return put("/api/v1/backups/uploads/$uploadId/parts/$index") {
             header(HttpHeaders.Authorization, auth)
             setBody(payload.copyOfRange(from, to))

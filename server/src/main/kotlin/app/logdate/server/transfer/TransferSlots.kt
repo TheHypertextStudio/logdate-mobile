@@ -29,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
  * @property bufferedTransfers uploads and downloads that pass through temporary files.
  * @property idleTimeout how long a transfer waits for its client to send or accept more bytes.
  * @property retryAfterSeconds the `Retry-After` given with a refused transfer.
+ * @property backupPartBytes the length of every part but the last of a backup sent in parts.
  */
 data class TransferLimits(
     val streamedUploads: Int = 8,
@@ -36,6 +37,7 @@ data class TransferLimits(
     val bufferedTransfers: Int = 1,
     val idleTimeout: Duration = 20.seconds,
     val retryAfterSeconds: Long = 5,
+    val backupPartBytes: Long = 32L * 1024 * 1024,
 )
 
 /** The transfer slots of one server instance, shared by every route that moves files. */

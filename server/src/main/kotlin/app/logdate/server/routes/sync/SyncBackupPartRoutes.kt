@@ -14,6 +14,7 @@ import app.logdate.server.ratelimit.SlidingWindowRateLimiter
 import app.logdate.server.responses.error
 import app.logdate.server.routes.docs.BackupPartUploadDocs
 import app.logdate.server.sync.SyncMetricsRegistry
+import app.logdate.server.transfer.TransferLimits
 import app.logdate.server.transfer.TransferSlots
 import app.logdate.shared.model.sync.BackupPartUploadCompleteRequest
 import app.logdate.shared.model.sync.BackupPartUploadStartRequest
@@ -42,20 +43,37 @@ import java.nio.file.Files
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
-/** Each part but the last is exactly this long: well under the 100 MB a proxy in front may allow. */
-internal const val BACKUP_PART_BYTES: Long = 32L * 1024 * 1024
+/** Each part but the last is this long by default: well under the 100 MB a proxy in front may allow. */
+internal val BACKUP_PART_BYTES: Long = TransferLimits().backupPartBytes
+
+/** The most parts one backup is sent in. */
+internal const val MAX_BACKUP_PARTS = 64
 
 /** The same ceiling as a backup sent in one request. */
 internal const val MAX_PARTED_BACKUP_BYTES: Long = 2L * 1024 * 1024 * 1024
 
 /** Enough for one backup of the largest size to send every part twice in an hour. */
 internal val BACKUP_PART_RATE_LIMIT =
-    RateLimitPolicy(maxRequests = 2 * (MAX_PARTED_BACKUP_BYTES / BACKUP_PART_BYTES).toInt(), windowSeconds = 60 * 60)
+    RateLimitPolicy(maxRequests = 2 * MAX_BACKUP_PARTS, windowSeconds = 60 * 60)
 
 private const val PART_READ_BYTES = 64 * 1024
 
-/** How many parts a backup of [sizeBytes] is sent in. */
-internal fun backupPartCount(sizeBytes: Long): Int = ((sizeBytes + BACKUP_PART_BYTES - 1) / BACKUP_PART_BYTES).toInt()
+/** How a backup is cut into parts of [partBytes]. */
+internal class BackupPartLayout(
+    val partBytes: Long,
+) {
+    /** The largest backup that fits in [MAX_BACKUP_PARTS] parts, and never more than [MAX_PARTED_BACKUP_BYTES]. */
+    val maxBytes: Long = minOf(MAX_PARTED_BACKUP_BYTES, partBytes * MAX_BACKUP_PARTS)
+
+    /** How many parts a backup of [sizeBytes] is sent in. */
+    fun partCount(sizeBytes: Long): Int = ((sizeBytes + partBytes - 1) / partBytes).toInt()
+
+    /** How long part [index] of a backup of [sizeBytes] must be. */
+    fun partLength(
+        index: Int,
+        sizeBytes: Long,
+    ): Long = minOf(partBytes, sizeBytes - partBytes * index)
+}
 
 /** The blob each part is staged under; derived again at completion, so the client never names a path. */
 internal fun backupPartBlobId(
@@ -82,8 +100,9 @@ internal fun Route.syncBackupPartRoutes(
     rateLimiter: SlidingWindowRateLimiter?,
     transfers: TransferSlots,
 ) {
+    val layout = BackupPartLayout(transfers.limits.backupPartBytes)
     route("/uploads") {
-        startBackupPartUploadRoute(tokenService, mediaStorage, entitlementEnforcer, rateLimiter)
+        startBackupPartUploadRoute(tokenService, mediaStorage, entitlementEnforcer, rateLimiter, layout)
         uploadBackupPartRoute(tokenService, mediaStorage, metrics, rateLimiter, transfers)
         completeBackupPartUploadRoute(
             tokenService,
@@ -96,7 +115,7 @@ internal fun Route.syncBackupPartRoutes(
             val userId = extractUserId(call, tokenService) ?: return@delete
             val uploadId = call.parseUploadId() ?: return@delete
             val storage = mediaStorage ?: return@delete call.respondBackupStorageUnavailable()
-            withContext(Dispatchers.IO) { deleteBackupParts(storage, userId, uploadId, backupPartCount(MAX_PARTED_BACKUP_BYTES)) }
+            withContext(Dispatchers.IO) { deleteBackupParts(storage, userId, uploadId, MAX_BACKUP_PARTS) }
             call.respond(HttpStatusCode.NoContent)
         }
     }
@@ -114,6 +133,7 @@ private fun Route.startBackupPartUploadRoute(
     mediaStorage: LogDateBlobStorage?,
     entitlementEnforcer: EntitlementEnforcer?,
     rateLimiter: SlidingWindowRateLimiter?,
+    layout: BackupPartLayout,
 ) {
     post(BackupPartUploadDocs.startBackupPartUpload) {
         val userId = extractUserId(call, tokenService) ?: return@post
@@ -123,8 +143,8 @@ private fun Route.startBackupPartUploadRoute(
         val request =
             runCatching { call.receive<BackupPartUploadStartRequest>() }.getOrNull()
                 ?: return@post call.respondPartInvalid("Body must be JSON with sizeBytes")
-        if (request.sizeBytes !in 1..MAX_PARTED_BACKUP_BYTES) {
-            return@post call.respondPartInvalid("sizeBytes must be between 1 and $MAX_PARTED_BACKUP_BYTES")
+        if (request.sizeBytes !in 1..layout.maxBytes) {
+            return@post call.respondPartInvalid("sizeBytes must be between 1 and ${layout.maxBytes}")
         }
         if (mediaStorage == null) return@post call.respondBackupStorageUnavailable()
         if (entitlementEnforcer != null) {
@@ -135,8 +155,8 @@ private fun Route.startBackupPartUploadRoute(
             HttpStatusCode.OK,
             BackupPartUploadStartResponse(
                 uploadId = UUID.randomUUID().toString(),
-                partSizeBytes = BACKUP_PART_BYTES,
-                partCount = backupPartCount(request.sizeBytes),
+                partSizeBytes = layout.partBytes,
+                partCount = layout.partCount(request.sizeBytes),
             ),
         )
     }
@@ -156,13 +176,13 @@ private fun Route.uploadBackupPartRoute(
             val userId = extractUserId(call, tokenService) ?: return@put
             val uploadId = call.parseUploadId() ?: return@put
             val index =
-                call.parameters["index"]?.toIntOrNull()?.takeIf { it in 0 until backupPartCount(MAX_PARTED_BACKUP_BYTES) }
+                call.parameters["index"]?.toIntOrNull()?.takeIf { it in 0 until MAX_BACKUP_PARTS }
                     ?: return@put call.respondPartInvalid("index must be a part number from 0")
             val declared =
                 call.request.headers[HttpHeaders.ContentLength]
                     ?.toLongOrNull()
-                    ?.takeIf { it in 1..BACKUP_PART_BYTES }
-                    ?: return@put call.respondPartInvalid("Content-Length must be between 1 and $BACKUP_PART_BYTES")
+                    ?.takeIf { it in 1..transfers.limits.backupPartBytes }
+                    ?: return@put call.respondPartInvalid("Content-Length must be between 1 and ${transfers.limits.backupPartBytes}")
             val storage = mediaStorage ?: return@put call.respondBackupStorageUnavailable()
             val slot = transfers.tryStreamedUpload() ?: return@put call.respondTransferBusy(transfers.limits)
             try {
@@ -231,12 +251,13 @@ private fun Route.completeBackupPartUploadRoute(
         try {
             val userId = extractUserId(call, tokenService) ?: return@post
             val uploadId = call.parseUploadId() ?: return@post
-            val request = call.receiveCompleteRequest() ?: return@post
+            val layout = BackupPartLayout(transfers.limits.backupPartBytes)
+            val request = call.receiveCompleteRequest(layout.maxBytes) ?: return@post
             val storage = mediaStorage ?: return@post call.respondBackupStorageUnavailable()
             val slot = transfers.tryBuffered() ?: return@post call.respondTransferBusy(transfers.limits)
             try {
                 bytes = request.sizeBytes
-                success = call.storeBackupParts(storage, store, userId, uploadId, request, checkActive)
+                success = call.storeBackupParts(storage, store, layout, userId, uploadId, request, checkActive)
             } finally {
                 slot.release()
             }
@@ -247,7 +268,7 @@ private fun Route.completeBackupPartUploadRoute(
 }
 
 /** Reads and checks the completion body, answering `400` and returning null when it is unusable. */
-private suspend fun ApplicationCall.receiveCompleteRequest(): BackupPartUploadCompleteRequest? {
+private suspend fun ApplicationCall.receiveCompleteRequest(maxBytes: Long): BackupPartUploadCompleteRequest? {
     val request = runCatching { receive<BackupPartUploadCompleteRequest>() }.getOrNull()
     if (request == null) {
         respondPartInvalid("Body must be JSON with deviceId, manifest and sizeBytes")
@@ -264,8 +285,8 @@ private suspend fun ApplicationCall.receiveCompleteRequest(): BackupPartUploadCo
                 "manifest must be present and at most 256 KiB"
             }
 
-            request.sizeBytes !in 1..MAX_PARTED_BACKUP_BYTES -> {
-                "sizeBytes must be between 1 and $MAX_PARTED_BACKUP_BYTES"
+            request.sizeBytes !in 1..maxBytes -> {
+                "sizeBytes must be between 1 and $maxBytes"
             }
 
             else -> {
@@ -283,13 +304,14 @@ private suspend fun ApplicationCall.receiveCompleteRequest(): BackupPartUploadCo
 private suspend fun ApplicationCall.storeBackupParts(
     storage: LogDateBlobStorage,
     store: BackupStoreDependencies,
+    layout: BackupPartLayout,
     userId: UUID,
     uploadId: UUID,
     request: BackupPartUploadCompleteRequest,
     checkActive: () -> Unit,
 ): Boolean {
     val assembled =
-        when (val result = assembleBackupParts(storage, userId, uploadId, request.sizeBytes, checkActive)) {
+        when (val result = assembleBackupParts(storage, layout, userId, uploadId, request.sizeBytes, checkActive)) {
             is PartAssembly.Missing -> {
                 respond(
                     HttpStatusCode.Conflict,
@@ -318,7 +340,7 @@ private suspend fun ApplicationCall.storeBackupParts(
         }
     if (stored) {
         withContext(NonCancellable + Dispatchers.IO) {
-            deleteBackupParts(storage, userId, uploadId, backupPartCount(request.sizeBytes))
+            deleteBackupParts(storage, userId, uploadId, layout.partCount(request.sizeBytes))
         }
     }
     return stored
@@ -359,20 +381,21 @@ private sealed interface PartAssembly {
 /** Reads every part back in order into one private temporary file, checking each part's length. */
 private suspend fun assembleBackupParts(
     storage: LogDateBlobStorage,
+    layout: BackupPartLayout,
     userId: UUID,
     uploadId: UUID,
     sizeBytes: Long,
     checkActive: () -> Unit,
 ): PartAssembly =
     withContext(Dispatchers.IO) {
-        val partCount = backupPartCount(sizeBytes)
+        val partCount = layout.partCount(sizeBytes)
         val target = createPrivateBackupTempFile("logdate-backup-upload-", ".bin")
         var assembled = false
         try {
             Files.newOutputStream(target).buffered().use { output ->
                 for (index in 0 until partCount) {
                     checkActive()
-                    val expected = if (index < partCount - 1) BACKUP_PART_BYTES else sizeBytes - BACKUP_PART_BYTES * (partCount - 1)
+                    val expected = layout.partLength(index, sizeBytes)
                     val path = storage.storagePathFor(userId, LogDateBlobNamespace.BACKUP, backupPartBlobId(uploadId, index))
                     val stream = storage.openBlob(path) ?: return@withContext PartAssembly.Missing(index)
                     stream.use {
