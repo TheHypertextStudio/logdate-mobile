@@ -50,7 +50,7 @@ internal class NativeDraftProbeTrace(
             thread === probeThread || thread.name == "main" -> 0
             !includeRuntimeWorkers -> 4
             stack.any { it.className.startsWith("app.logdate.") } -> 1
-            stack.any { it.className.startsWith("androidx.datastore.") } -> 2
+            stack.any { it.className.startsWith("androidx.datastore.") || it.className.startsWith("androidx.room.") } -> 2
             thread.name.startsWith("DefaultDispatcher-worker-") -> 3
             else -> 4
         }

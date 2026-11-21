@@ -9,12 +9,17 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.SupportSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteStatement
+import io.github.aakira.napier.Napier
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+
+private const val STALL_REPORT_SECONDS = 15L
+private const val STALL_REPORT_FRAMES = 48
+private const val STALL_TAG = "JournalDatabaseFence"
 
 private val nativeJournalFences = ConcurrentHashMap<String, NativeJournalDatabaseFence>()
 
@@ -69,14 +74,44 @@ internal fun nativeJournalOpenHelperFactory(
     }
 }
 
+/** Exposes the owner so a stalled journal can say which thread is holding it. */
+private class OwnedFenceLock : ReentrantLock(true) {
+    val holder: Thread? get() = owner
+}
+
 private class NativeJournalDatabaseFence {
-    private val lock = ReentrantLock(true)
+    private val lock = OwnedFenceLock()
     private val transactionDepth = ThreadLocal.withInitial { 0 }
 
-    fun <T> run(action: () -> T): T = lock.withLock(action)
+    /** Waits for the fence, and reports the holder once if the wait passes [STALL_REPORT_SECONDS]. */
+    private fun acquire() {
+        if (lock.tryLock(STALL_REPORT_SECONDS, TimeUnit.SECONDS)) return
+        val holder = lock.holder
+        val trace =
+            holder
+                ?.stackTrace
+                ?.take(STALL_REPORT_FRAMES)
+                ?.joinToString(separator = "\n  at ", prefix = "\n  at ")
+                .orEmpty()
+        Napier.w(
+            "Journal database has been held for over ${STALL_REPORT_SECONDS}s by ${holder?.name} " +
+                "(${holder?.state}); ${Thread.currentThread().name} is waiting$trace",
+            tag = STALL_TAG,
+        )
+        lock.lock()
+    }
+
+    fun <T> run(action: () -> T): T {
+        acquire()
+        try {
+            return action()
+        } finally {
+            lock.unlock()
+        }
+    }
 
     fun <T> begin(action: () -> T): T {
-        lock.lock()
+        acquire()
         try {
             return action().also { transactionDepth.set(transactionDepth.get() + 1) }
         } catch (error: Throwable) {
@@ -108,7 +143,7 @@ private class NativeJournalDatabaseFence {
 
     /** Room consumes and closes these cursors on its SQL thread before suspending. */
     fun query(action: () -> Cursor): Cursor {
-        lock.lock()
+        acquire()
         try {
             val cursor = action()
             return object : Cursor by cursor {
