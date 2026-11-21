@@ -395,6 +395,29 @@ internal object SyncSchemaDocs {
                     ),
                 ),
             // ---- Backups ----------------------------------------------------------------------------
+            "BackupPartUploadStartRequest" to
+                SchemaDoc(
+                    "Starts a backup sent in parts.",
+                    mapOf("sizeBytes" to "The archive's total length in bytes, at most 2 GiB."),
+                ),
+            "BackupPartUploadStartResponse" to
+                SchemaDoc(
+                    "How to send a backup in parts.",
+                    mapOf(
+                        "uploadId" to "The upload's ID, a UUID. Every later call for this upload names it.",
+                        "partSizeBytes" to "The length of every part but the last, which holds the rest.",
+                        "partCount" to "How many parts to send, numbered from 0.",
+                    ),
+                ),
+            "BackupPartUploadCompleteRequest" to
+                SchemaDoc(
+                    "Finishes a backup sent in parts once every part has been sent.",
+                    mapOf(
+                        "deviceId" to "The device the backup came from, 1 to 256 characters.",
+                        "manifest" to "The backup's manifest as JSON text, at most 256 KiB.",
+                        "sizeBytes" to "The archive's total length in bytes; must match the length given at the start.",
+                    ),
+                ),
             "BackupUploadResponse" to
                 SchemaDoc(
                     "Confirmation that a backup was stored.",
