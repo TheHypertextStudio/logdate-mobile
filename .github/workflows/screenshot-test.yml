@@ -19,6 +19,9 @@ on:
       - 'gradle/**'
   pull_request:
     branches: [main, develop]
+    # Closing a pull request (including merging it) starts a run that only cancels the one still
+    # holding macOS runners for it. Every job skips on that event.
+    types: [opened, synchronize, reopened, closed]
     paths:
       - 'app/android-main/**'
       - 'app/wear/**'
@@ -35,10 +38,13 @@ on:
       - 'gradle.properties'
   merge_group:
     types: [checks_requested]
+  workflow_dispatch:
 
-# A newer push to the same pull request makes the older run moot, and every
-# lane holds a scarce macOS runner. Runs on main are never cancelled once they
-# start, so each merged change gets its own screenshot result.
+# A newer push to the same pull request, or closing it, makes the older run moot, and every
+# lane holds a scarce macOS runner. The organization shares five macOS runners across all of
+# its repositories, so a lane left running for a merged pull request delays every other one.
+# Runs on main are never cancelled once they start, so each merged change gets its own
+# screenshot result.
 # A pull request run is grouped by its number, not its ref: an event that arrives after the pull
 # request merged reports main as its ref, and would otherwise join main's group and cancel main's run.
 concurrency:
@@ -51,6 +57,7 @@ permissions:
 jobs:
   android-screenshot-compile:
     name: Compile shared Android screenshot inputs
+    if: github.event.action != 'closed'
     runs-on: macos-latest
     timeout-minutes: 35
     env:
@@ -240,6 +247,7 @@ jobs:
 
   wear-screenshots:
     name: Wear screenshots
+    if: github.event.action != 'closed'
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -319,6 +327,7 @@ jobs:
 
   desktop-screenshots:
     name: Desktop screenshots
+    if: github.event.action != 'closed'
     # Desktop references use macOS 27 text rasterization.
     runs-on: xcode-27
     # Cold compilation and rendering need independent budgets; leave time for setup/reports.
@@ -365,6 +374,10 @@ jobs:
 
   ios-screenshot-validation:
     name: iOS screenshot lane
+    # Runs only when started by hand. The lane has run past its 60-minute limit on nearly every
+    # run since 2026-11-20, which held a shared macOS runner for an hour without a result. Bring it
+    # back to pull requests once it finishes inside its limit.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
