@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -27,24 +25,22 @@ class DatabaseSyncMetadataService(
     private val configRepository: LogDateConfigRepository,
     private val canonicalOwnerProvider: CanonicalOwnerProvider,
 ) : SyncMetadataService {
-    private val metadataMutex = Mutex()
-
-    override suspend fun getPendingUploads(entityType: EntityType): List<PendingUpload> =
-        metadataMutex.withLock {
-            val serverOrigin = currentOrigin()
-            val ownerId = currentOwnerId()
-            promoteLegacyPendingIfNeeded(ownerId, serverOrigin, entityType)
-            dao.getPendingByType(ownerId, serverOrigin, entityType.name).map { entity ->
-                PendingUpload(
-                    entityId = entity.entityId,
-                    operation = PendingOperation.fromStorage(entity.operation),
-                    retryCount = entity.retryCount,
-                    expectedServerVersion = entity.expectedServerVersion,
-                    scope = UploadScope(entity.ownerId, entity.serverOrigin),
-                    operationId = entity.operationId,
-                )
-            }
+    // The queue is guarded by Room transactions only. An app-level lock here was taken both inside
+    // callers' Room transactions and around reads that wait for Room, which deadlocked the two.
+    override suspend fun getPendingUploads(entityType: EntityType): List<PendingUpload> {
+        val serverOrigin = currentOrigin()
+        val ownerId = currentOwnerId()
+        return dao.getPendingByTypePromotingLegacy(ownerId, serverOrigin, entityType.name).map { entity ->
+            PendingUpload(
+                entityId = entity.entityId,
+                operation = PendingOperation.fromStorage(entity.operation),
+                retryCount = entity.retryCount,
+                expectedServerVersion = entity.expectedServerVersion,
+                scope = UploadScope(entity.ownerId, entity.serverOrigin),
+                operationId = entity.operationId,
+            )
         }
+    }
 
     override suspend fun getPendingUploadForScope(
         entityType: EntityType,
@@ -68,7 +64,7 @@ class DatabaseSyncMetadataService(
     ): Boolean {
         val origin = currentOrigin()
         val owner = currentOwnerId()
-        // A read inside a Room apply transaction must not invert the metadataMutex/Room lock order.
+        // Two plain reads; callers inside a Room apply transaction join it without another lock.
         return dao.getPending(owner, origin, entityType.name, entityId) != null ||
             dao.getPending(LEGACY_OWNER_ID, origin, entityType.name, entityId) != null
     }
@@ -79,15 +75,11 @@ class DatabaseSyncMetadataService(
         syncedAt: Instant,
         version: Long,
     ) {
-        metadataMutex.withLock {
-            val serverOrigin = currentOrigin()
-            dao.deletePending(currentOwnerId(), serverOrigin, entityType.name, entityId)
-            // Promotion copies a legacy row forward instead of moving it, so the owner-less original
-            // outlives the copy. Left behind, it is promoted again the next time this entity type is
-            // read -- refilling the outbox after every successful sync, forever. Settling the entity
-            // has to retire both.
-            dao.deletePending(LEGACY_OWNER_ID, serverOrigin, entityType.name, entityId)
-        }
+        // Promotion copies a legacy row forward instead of moving it, so the owner-less original
+        // outlives the copy. Left behind, it is promoted again the next time this entity type is
+        // read -- refilling the outbox after every successful sync, forever. Settling the entity
+        // has to retire both.
+        dao.deletePendingWithLegacy(currentOwnerId(), currentOrigin(), entityType.name, entityId)
     }
 
     override suspend fun settleIfCurrent(
@@ -323,12 +315,7 @@ class DatabaseSyncMetadataService(
     }
 
     override suspend fun getPendingCount(): Int =
-        metadataMutex.withLock {
-            val ownerId = currentOwnerId()
-            val serverOrigin = currentOrigin()
-            EntityType.entries.forEach { promoteLegacyPendingIfNeeded(ownerId, serverOrigin, it) }
-            dao.getPendingCount(ownerId, serverOrigin)
-        }
+        dao.getPendingCountPromotingLegacy(currentOwnerId(), currentOrigin(), EntityType.entries.map { it.name })
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observePendingCount(): Flow<Int> =
@@ -417,25 +404,6 @@ class DatabaseSyncMetadataService(
 
         val legacyCursor = dao.getLegacyCursor(serverOrigin, entityType.name) ?: return
         dao.upsertCursor(legacyCursor.copy(ownerId = ownerId))
-    }
-
-    private suspend fun promoteLegacyPendingIfNeeded(
-        ownerId: String,
-        serverOrigin: String,
-        entityType: EntityType,
-    ) {
-        if (dao.getPendingByType(ownerId, serverOrigin, entityType.name).isNotEmpty()) {
-            return
-        }
-
-        val legacyPending = dao.getLegacyPendingByType(serverOrigin, entityType.name)
-        if (legacyPending.isEmpty()) {
-            return
-        }
-
-        legacyPending.forEach { pending ->
-            dao.promotePendingIfAbsent(pending.copy(ownerId = ownerId))
-        }
     }
 
     private companion object {

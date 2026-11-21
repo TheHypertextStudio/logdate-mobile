@@ -61,7 +61,7 @@ class TranscriptOutboxIntegrationTest {
         }
 
     @Test
-    fun `transcript transaction completes while pending read owns metadata mutex and waits for Room writer`() =
+    fun `transcript transaction completes while a pending read waits for the Room writer`() =
         withDatabase { database ->
             val readerEntered = CompletableDeferred<Unit>()
             val writerEntered = CompletableDeferred<Unit>()
@@ -71,7 +71,7 @@ class TranscriptOutboxIntegrationTest {
             val metadata =
                 metadata(
                     object : SyncMetadataDao by syncDao {
-                        override suspend fun getPendingByType(
+                        override suspend fun getPendingByTypePromotingLegacy(
                             ownerId: String,
                             serverOrigin: String,
                             entityType: String,
@@ -80,10 +80,10 @@ class TranscriptOutboxIntegrationTest {
                                 readerEntered.complete(Unit)
                                 writerEntered.await()
                                 readerNeedsWriter.complete(Unit)
-                                // Legacy promotion also needs the writer while holding metadataMutex.
+                                // Legacy promotion also needs the writer while the read is in progress.
                                 syncDao.insertPending(pending("probe", "UPDATE"))
                             }
-                            return syncDao.getPendingByType(ownerId, serverOrigin, entityType)
+                            return syncDao.getPendingByTypePromotingLegacy(ownerId, serverOrigin, entityType)
                         }
                     },
                 )
