@@ -1,5 +1,6 @@
 package app.logdate.feature.editor.ui.editor
 
+import app.logdate.client.repository.journals.NoteLocation
 import app.logdate.client.repository.journals.SystemCaptureTimeZone
 import app.logdate.feature.editor.ui.camera.CaptureMode
 import app.logdate.feature.editor.ui.camera.CapturedMediaType
@@ -68,6 +69,8 @@ data class ImageBlockUiState(
     override val caption: String = "",
     val presentation: PhotoPresentation = PhotoPresentation.EdgeToEdge,
     override val timeZoneId: String? = SystemCaptureTimeZone.currentTimeZoneId(),
+    /** Where the media was captured, as saved with the note: coordinates and, when known, the person's place. */
+    val noteLocation: NoteLocation? = null,
 ) : MediaBlockUiState {
     override fun hasContent(): Boolean = uri != null
 }
@@ -96,6 +99,8 @@ data class CameraBlockUiState(
     override val timeZoneId: String? = SystemCaptureTimeZone.currentTimeZoneId(),
     /** Whether the live camera starts ready for photos or video, before anything is captured. */
     val initialCaptureMode: CaptureMode = CaptureMode.PHOTO,
+    /** Where the media was captured, as saved with the note: coordinates and, when known, the person's place. */
+    val noteLocation: NoteLocation? = null,
 ) : MediaBlockUiState {
     override fun hasContent(): Boolean = uri != null
 
@@ -130,6 +135,8 @@ data class VideoBlockUiState(
     override val caption: String = "",
     val durationMs: Long = 0,
     override val timeZoneId: String? = SystemCaptureTimeZone.currentTimeZoneId(),
+    /** Where the media was captured, as saved with the note: coordinates and, when known, the person's place. */
+    val noteLocation: NoteLocation? = null,
 ) : MediaBlockUiState {
     override fun hasContent(): Boolean = uri != null
 

@@ -226,6 +226,7 @@ internal fun EntryEditorViewModel.applyBlockChanges(
                 uri = changed(existing.uri, updated.uri, base.uri),
                 caption = changed(existing.caption, updated.caption, base.caption),
                 presentation = changed(existing.presentation, updated.presentation, base.presentation),
+                noteLocation = changed(existing.noteLocation, updated.noteLocation, base.noteLocation),
             )
         }
 
@@ -239,6 +240,7 @@ internal fun EntryEditorViewModel.applyBlockChanges(
                 uri = changed(existing.uri, updated.uri, base.uri),
                 caption = changed(existing.caption, updated.caption, base.caption),
                 durationMs = changed(existing.durationMs, updated.durationMs, base.durationMs),
+                noteLocation = changed(existing.noteLocation, updated.noteLocation, base.noteLocation),
             )
         }
 
@@ -254,6 +256,7 @@ internal fun EntryEditorViewModel.applyBlockChanges(
                 caption = changed(existing.caption, updated.caption, base.caption),
                 mediaType = changed(existing.mediaType, updated.mediaType, base.mediaType),
                 durationMs = changed(existing.durationMs, updated.durationMs, base.durationMs),
+                noteLocation = changed(existing.noteLocation, updated.noteLocation, base.noteLocation),
             )
         }
 

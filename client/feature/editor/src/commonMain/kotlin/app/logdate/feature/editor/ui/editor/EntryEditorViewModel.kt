@@ -8,6 +8,8 @@ import app.logdate.client.datastore.LogdatePreferencesDataSource
 import app.logdate.client.domain.editor.EditorData
 import app.logdate.client.domain.editor.ObserveEditorDataUseCase
 import app.logdate.client.domain.editor.SaveEntryUseCase
+import app.logdate.client.domain.places.CapturePlace
+import app.logdate.client.domain.places.ObserveCapturePlaceUseCase
 import app.logdate.client.media.audio.AudioDurationResolver
 import app.logdate.feature.editor.navigation.EditorLaunchMode
 import app.logdate.feature.editor.ui.camera.CapturedMediaType
@@ -72,6 +74,7 @@ class EntryEditorViewModel(
     internal val audioDurationResolver: AudioDurationResolver? = null,
     internal val preferences: LogdatePreferencesDataSource? = null,
     internal val savedStateHandle: SavedStateHandle = SavedStateHandle(),
+    observeCapturePlace: ObserveCapturePlaceUseCase? = null,
 ) : ViewModel() {
     /** Draft identity restored before launch-mode effects, so process recreation cannot start another take. */
     val recoverableDraftId: Uuid? get() = savedStateHandle.get<String>("editor.draftId")?.let { runCatching { Uuid.parse(it) }.getOrNull() }
@@ -187,6 +190,18 @@ class EntryEditorViewModel(
 
     val editorState: StateFlow<EditorState> = PresentedEditorState(mutableEditorState, editorData, ::presentEditorState)
 
+    private val cameraPlaceSession =
+        CameraPlaceSession(viewModelScope, mutableEditorState, observeCapturePlace?.let { use -> { use() } })
+
+    /** The named place the live camera shows; shots are saved with it while [cameraPlaceTagging] is on. */
+    val cameraPlace: StateFlow<CapturePlace?> get() = cameraPlaceSession.place
+
+    /** Whether shots taken now are saved with [cameraPlace]. */
+    val cameraPlaceTagging: StateFlow<Boolean> get() = cameraPlaceSession.tagging
+
+    /** Chooses whether shots taken while the camera stays open are saved with [cameraPlace]. */
+    fun setCameraPlaceTagging(tag: Boolean) = cameraPlaceSession.setTagging(tag)
+
     private fun presentEditorState(
         currentState: EditorState,
         data: EditorData?,
@@ -245,13 +260,16 @@ class EntryEditorViewModel(
     fun updateBlock(
         updatedBlock: EntryBlockUiState,
         baseBlock: EntryBlockUiState? = null,
-    ) = updateBlockImpl(updatedBlock, baseBlock)
+    ) = updateBlockImpl(tagCameraPlace(updatedBlock), baseBlock)
 
     internal fun updateBlockFromInput(
         updatedBlock: EntryBlockUiState,
         baseBlock: EntryBlockUiState?,
         inputToken: Uuid?,
-    ) = updateBlockImpl(updatedBlock, baseBlock, inputToken, fromInput = true)
+    ) = updateBlockImpl(tagCameraPlace(updatedBlock), baseBlock, inputToken, fromInput = true)
+
+    private fun tagCameraPlace(updated: EntryBlockUiState): EntryBlockUiState =
+        cameraPlaceSession.tag(mutableEditorState.value.blocks.firstOrNull { it.id == updated.id }, updated)
 
     fun chooseCreationType(
         targetId: Uuid?,

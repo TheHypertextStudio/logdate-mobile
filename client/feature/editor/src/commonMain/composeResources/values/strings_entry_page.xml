@@ -25,4 +25,8 @@
     <string name="entry_page_draft_saving">Saving draft…</string>
     <string name="entry_page_draft_saved">Draft saved</string>
     <string name="entry_page_draft_error">Draft not saved</string>
+    <string name="camera_place_saved">Shots are saved at %1$s</string>
+    <string name="camera_place_not_saved">Shots are saved without a place</string>
+    <string name="camera_place_keep">Save shots with this place</string>
+    <string name="camera_place_leave_out">Save shots without a place</string>
 </resources>

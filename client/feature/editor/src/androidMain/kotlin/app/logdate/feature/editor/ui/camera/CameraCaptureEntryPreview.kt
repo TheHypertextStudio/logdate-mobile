@@ -14,9 +14,11 @@ import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
 import app.logdate.feature.editor.ui.editor.TextBlockUiState
+import app.logdate.feature.editor.ui.handwriting.CameraPlaceUi
 import app.logdate.feature.editor.ui.handwriting.EntryPageChrome
 import app.logdate.feature.editor.ui.handwriting.EntryPageOverviewState
 import app.logdate.feature.editor.ui.handwriting.LocalCameraHeaderClock
+import app.logdate.feature.editor.ui.handwriting.LocalCameraPlace
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -29,20 +31,24 @@ private val PreviewNow = Instant.parse("2026-11-21T00:12:00Z")
  * screenshot references. A recording camera block holds its pending clip, as it does in the app.
  *
  * With [memoryPhotoUri], the entry already holds a few memories, so the header's filmstrip has
- * photos, a note and a voice recording in it.
+ * photos, a note and a voice recording in it. With [placeName], the header shows where the shots are
+ * saved, or that they're saved without a place when [placeSaved] is false.
  */
 @Composable
 fun CameraCaptureEntryPreview(
     state: CameraCapturePreviewState,
     modifier: Modifier = Modifier,
     memoryPhotoUri: String? = null,
+    placeName: String? = null,
+    placeSaved: Boolean = true,
 ) {
     val recording = state is CameraCapturePreviewState.LiveCapture && state.isRecording
     val camera = remember(recording) { CameraBlockUiState(pendingFilePath = if (recording) "preview://clip.mp4" else null) }
     val memories = remember(memoryPhotoUri) { memoryPhotoUri?.let(::previewMemories).orEmpty() }
     val overview = remember { EntryPageOverviewState(false) }
     val clock = remember { FixedClock(PreviewNow) }
-    CompositionLocalProvider(LocalCameraHeaderClock provides clock) {
+    val place = placeName?.let { CameraPlaceUi(it, placeSaved) {} }
+    CompositionLocalProvider(LocalCameraHeaderClock provides clock, LocalCameraPlace provides place) {
         EntryPageChrome(
             editor = EditorState(blocks = memories + camera, expandedBlockId = camera.id),
             overview = overview,

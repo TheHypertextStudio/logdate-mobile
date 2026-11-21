@@ -5,6 +5,7 @@ package app.logdate.feature.editor.ui.handwriting
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.LocationOff
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -27,7 +32,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,13 +43,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.logdate.feature.editor.ui.LocalEditorInputFocusBookmarks
 import app.logdate.feature.editor.ui.blockFocusSpring
 import app.logdate.feature.editor.ui.blocks.memoryBlockLabel
@@ -63,6 +74,10 @@ import app.logdate.util.localTime
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import logdate.client.feature.editor.generated.resources.Res
+import logdate.client.feature.editor.generated.resources.camera_place_keep
+import logdate.client.feature.editor.generated.resources.camera_place_leave_out
+import logdate.client.feature.editor.generated.resources.camera_place_not_saved
+import logdate.client.feature.editor.generated.resources.camera_place_saved
 import logdate.client.feature.editor.generated.resources.entry_page_block_focus
 import logdate.client.feature.editor.generated.resources.entry_page_return_to_entry
 import org.jetbrains.compose.resources.stringResource
@@ -137,16 +152,98 @@ internal fun CameraEntryHeader(
                 .then(if (busy) Modifier.semantics { hideFromAccessibility() } else Modifier),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LocalCameraPlace.current?.let { place ->
+                    CameraPlaceLine(place, enabled = !busy, modifier = Modifier.weight(1f, fill = false))
+                    Text(" · ", style = MaterialTheme.typography.labelMedium, color = CameraHeaderMuted)
+                }
+                Text(
+                    // The time is formatted in Latin script; isolate it so right-to-left text keeps its order.
+                    "\u2068${now.localTime}\u2069",
+                    Modifier.testTag("entry_camera_header_time"),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = CameraHeaderMuted,
+                    maxLines = 1,
+                    softWrap = false,
+                )
+            }
+            if (memories.isNotEmpty()) CameraFilmstrip(memories)
+        }
+    }
+}
+
+/**
+ * The place shown over the camera, and whether shots taken now are saved with it.
+ *
+ * The host provides it only when location is on and the place has a name, so the header never shows a
+ * permission prompt or an error in its place.
+ */
+internal class CameraPlaceUi(
+    val name: String,
+    val saving: Boolean,
+    val onSavingChange: (Boolean) -> Unit,
+)
+
+internal val LocalCameraPlace = staticCompositionLocalOf<CameraPlaceUi?> { null }
+
+/** A quiet pin and the place name; tapping it chooses whether shots are saved with the place. */
+@Composable
+private fun CameraPlaceLine(
+    place: CameraPlaceUi,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    val description =
+        if (place.saving) {
+            stringResource(Res.string.camera_place_saved, place.name)
+        } else {
+            stringResource(Res.string.camera_place_not_saved)
+        }
+    Box(modifier) {
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .clickable(enabled = enabled, role = Role.Button) { menuOpen = true }
+                .testTag("entry_camera_place")
+                .semantics(mergeDescendants = true) { contentDescription = description },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Icon(
+                if (place.saving) Icons.Outlined.Place else Icons.Outlined.LocationOff,
+                null,
+                // Sized in text units so the pin grows with the place name at larger text sizes.
+                Modifier.size(with(LocalDensity.current) { 14.sp.toDp() }),
+                tint = CameraHeaderMuted,
+            )
             Text(
-                // The time is formatted in Latin script; isolate it so right-to-left text keeps its order.
-                "\u2068${now.localTime}\u2069",
-                Modifier.testTag("entry_camera_header_time"),
+                place.name,
                 style = MaterialTheme.typography.labelMedium,
-                color = CameraHeaderMuted,
+                color = if (place.saving) CameraHeaderMuted else CameraHeaderMuted.copy(alpha = 0.5f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (memories.isNotEmpty()) CameraFilmstrip(memories)
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.camera_place_keep)) },
+                leadingIcon = { Icon(Icons.Outlined.Place, null) },
+                trailingIcon = { if (place.saving) Icon(Icons.Outlined.Check, null) },
+                onClick = {
+                    place.onSavingChange(true)
+                    menuOpen = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.camera_place_leave_out)) },
+                leadingIcon = { Icon(Icons.Outlined.LocationOff, null) },
+                trailingIcon = { if (!place.saving) Icon(Icons.Outlined.Check, null) },
+                onClick = {
+                    place.onSavingChange(false)
+                    menuOpen = false
+                },
+            )
         }
     }
 }

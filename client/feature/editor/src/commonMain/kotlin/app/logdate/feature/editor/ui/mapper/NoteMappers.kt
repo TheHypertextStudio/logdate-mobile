@@ -53,6 +53,7 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 caption = caption,
                 presentation = presentation,
                 timeZoneId = timeZoneId,
+                noteLocation = location,
             )
         }
 
@@ -64,6 +65,7 @@ fun JournalNote.toDomainBlock(): EntryBlockUiState =
                 uri = mediaRef,
                 caption = caption,
                 timeZoneId = timeZoneId,
+                noteLocation = location,
             )
         }
 
@@ -123,6 +125,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                 caption = caption,
                 presentation = presentation,
                 timeZoneId = timeZoneId,
+                location = noteLocation,
             )
         }
 
@@ -138,6 +141,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                         mediaRef = mediaRef,
                         caption = caption,
                         timeZoneId = timeZoneId,
+                        location = noteLocation,
                     )
                 }
 
@@ -149,6 +153,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                         mediaRef = mediaRef,
                         caption = caption,
                         timeZoneId = timeZoneId,
+                        location = noteLocation,
                     )
                 }
             }
@@ -163,6 +168,7 @@ fun EntryBlockUiState.toJournalNote(): JournalNote? {
                 mediaRef = uri ?: return null,
                 caption = caption,
                 timeZoneId = timeZoneId,
+                location = noteLocation,
             )
         }
 
