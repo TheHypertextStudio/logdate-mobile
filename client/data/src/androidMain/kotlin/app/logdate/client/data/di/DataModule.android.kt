@@ -124,7 +124,6 @@ import app.logdate.client.repository.timeline.ActivityTimelineRepository
 import app.logdate.client.repository.transcription.TranscriptionRepository
 import app.logdate.client.repository.user.UserStateRepository
 import app.logdate.client.repository.user.devices.UserDeviceRepository
-import app.logdate.client.sync.RoomSyncTransactionManager
 import app.logdate.client.sync.conflict.SyncConflictStore
 import app.logdate.client.sync.conflict.retainedMediaReferences
 import app.logdate.shared.config.DefaultLogDateConfigRepository
@@ -335,7 +334,7 @@ actual val dataModule: Module =
             )
         }
         single<MarkedMomentRepository> {
-            OfflineFirstMarkedMomentRepository(get(), RoomSyncTransactionManager(get<app.logdate.client.database.LogDateDatabase>()), get())
+            OfflineFirstMarkedMomentRepository(get(), get(), get())
         }
         single<app.logdate.client.repository.moments.SyncableMarkedMomentRepository> {
             get<MarkedMomentRepository>() as app.logdate.client.repository.moments.SyncableMarkedMomentRepository
