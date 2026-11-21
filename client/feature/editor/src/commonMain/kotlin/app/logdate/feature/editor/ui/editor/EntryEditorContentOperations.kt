@@ -200,6 +200,23 @@ internal fun EntryEditorViewModel.updateBlockImpl(
     }
 }
 
+private fun EntryEditorViewModel.applyCameraChanges(
+    existing: CameraBlockUiState,
+    updated: CameraBlockUiState,
+    base: CameraBlockUiState,
+): CameraBlockUiState =
+    existing.copy(
+        timestamp = changed(existing.timestamp, updated.timestamp, base.timestamp),
+        location = changed(existing.location, updated.location, base.location),
+        timeZoneId = changed(existing.timeZoneId, updated.timeZoneId, base.timeZoneId),
+        uri = changed(existing.uri, updated.uri, base.uri),
+        pendingFilePath = changed(existing.pendingFilePath, updated.pendingFilePath, base.pendingFilePath),
+        caption = changed(existing.caption, updated.caption, base.caption),
+        mediaType = changed(existing.mediaType, updated.mediaType, base.mediaType),
+        durationMs = changed(existing.durationMs, updated.durationMs, base.durationMs),
+        noteLocation = changed(existing.noteLocation, updated.noteLocation, base.noteLocation),
+    )
+
 internal fun EntryEditorViewModel.applyBlockChanges(
     existing: EntryBlockUiState,
     updated: EntryBlockUiState,
@@ -226,6 +243,7 @@ internal fun EntryEditorViewModel.applyBlockChanges(
                 uri = changed(existing.uri, updated.uri, base.uri),
                 caption = changed(existing.caption, updated.caption, base.caption),
                 presentation = changed(existing.presentation, updated.presentation, base.presentation),
+                noteLocation = changed(existing.noteLocation, updated.noteLocation, base.noteLocation),
             )
         }
 
@@ -239,22 +257,12 @@ internal fun EntryEditorViewModel.applyBlockChanges(
                 uri = changed(existing.uri, updated.uri, base.uri),
                 caption = changed(existing.caption, updated.caption, base.caption),
                 durationMs = changed(existing.durationMs, updated.durationMs, base.durationMs),
+                noteLocation = changed(existing.noteLocation, updated.noteLocation, base.noteLocation),
             )
         }
 
         is CameraBlockUiState -> {
-            existing as CameraBlockUiState
-            base as CameraBlockUiState
-            existing.copy(
-                timestamp = changed(existing.timestamp, updated.timestamp, base.timestamp),
-                location = changed(existing.location, updated.location, base.location),
-                timeZoneId = changed(existing.timeZoneId, updated.timeZoneId, base.timeZoneId),
-                uri = changed(existing.uri, updated.uri, base.uri),
-                pendingFilePath = changed(existing.pendingFilePath, updated.pendingFilePath, base.pendingFilePath),
-                caption = changed(existing.caption, updated.caption, base.caption),
-                mediaType = changed(existing.mediaType, updated.mediaType, base.mediaType),
-                durationMs = changed(existing.durationMs, updated.durationMs, base.durationMs),
-            )
+            applyCameraChanges(existing as CameraBlockUiState, updated, base as CameraBlockUiState)
         }
 
         is AudioBlockUiState -> {

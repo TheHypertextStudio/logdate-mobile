@@ -56,6 +56,7 @@ import app.logdate.client.domain.notes.drafts.FetchMostRecentDraftUseCase
 import app.logdate.client.domain.notes.drafts.GetAllDraftsUseCase
 import app.logdate.client.domain.notes.drafts.UpdateEntryDraftUseCase
 import app.logdate.client.domain.onboarding.ProcessPersonalIntroductionUseCase
+import app.logdate.client.domain.places.ObserveCapturePlaceUseCase
 import app.logdate.client.domain.places.PlaceResolutionCache
 import app.logdate.client.domain.places.ResolveLocationToPlaceUseCase
 import app.logdate.client.domain.profile.UpdateProfileUseCase
@@ -313,6 +314,10 @@ val domainModule: Module =
         // Places
         factory { ResolveLocationToPlaceUseCase(get(), get(), get()) }
         single { PlaceResolutionCache(get()) }
+        factory {
+            val placeResolutionCache: PlaceResolutionCache = get()
+            ObserveCapturePlaceUseCase(get(), placeResolutionCache::resolve, get())
+        }
 
         // Profile
         factory { UpdateProfileUseCase(get()) }

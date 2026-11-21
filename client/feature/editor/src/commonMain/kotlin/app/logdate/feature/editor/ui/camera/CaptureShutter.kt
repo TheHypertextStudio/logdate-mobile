@@ -3,14 +3,13 @@
 package app.logdate.feature.editor.ui.camera
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -18,10 +17,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,9 +35,15 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
@@ -55,6 +61,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.CornerRounding
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.rectangle
 import kotlinx.coroutines.CancellationException
 import logdate.client.feature.editor.generated.resources.Res
 import logdate.client.feature.editor.generated.resources.camera_recording_locked
@@ -83,7 +93,10 @@ private val ZoomDoublingDistance = 160.dp
  * @param isRecording whether the camera is recording, from the view model. A recording that ends
  *   elsewhere resets the gesture.
  * @param onAction receives every [ShutterAction]; zoom factors are relative to [baseZoom].
+ * @param recordingProgress how far through the current minute the recording is, 0 to 1, traced
+ *   around the shutter while it records.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun CaptureShutter(
     isRecording: Boolean,
@@ -91,6 +104,7 @@ internal fun CaptureShutter(
     baseZoom: Float,
     onAction: (ShutterAction) -> Unit,
     modifier: Modifier = Modifier,
+    recordingProgress: Float = 0f,
 ) {
     val density = LocalDensity.current
     val haptic = LocalHapticFeedback.current
@@ -170,31 +184,16 @@ internal fun CaptureShutter(
     val recordingNow = isRecording || holding || locked
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        val innerSize by animateDpAsState(
-            targetValue =
-                when {
-                    locked -> 30.dp
-                    recordingNow -> 58.dp
-                    else -> 64.dp
-                },
-            animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f),
-            label = "shutterInner",
-        )
-        val innerCorner by animateDpAsState(
-            targetValue = if (locked) 8.dp else 32.dp,
-            animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f),
-            label = "shutterCorner",
-        )
         val pressScale by animateFloatAsState(
             targetValue =
                 if (pressed && !recordingNow) {
-                    0.9f
+                    0.88f
                 } else if (holding && !locked) {
-                    1.12f
+                    1.1f
                 } else {
                     1f
                 },
-            animationSpec = spring(dampingRatio = 0.6f, stiffness = 600f),
+            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
             label = "shutterScale",
         )
 
@@ -293,21 +292,131 @@ internal fun CaptureShutter(
                     },
             contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(ShutterSize)
-                        .border(width = 4.dp, color = Color.White, shape = CircleShape),
-            )
-            Surface(
-                modifier = Modifier.size(innerSize).clip(RoundedCornerShape(innerCorner)),
-                shape = RoundedCornerShape(innerCorner),
-                color = if (recordingNow) MaterialTheme.colorScheme.error else Color.White,
-                content = {},
+            ShutterFace(
+                recording = recordingNow,
+                locked = locked,
+                pressed = pressed,
+                recordingProgress = recordingProgress,
+                modifier = Modifier.size(ShutterSize),
             )
         }
     }
 }
+
+/**
+ * The shutter's face: a scalloped cookie in the theme's primary color, ready for a photo. It
+ * squishes and turns a little under the finger, and while recording it morphs into a rounded
+ * square in the error color with the recording's progress traced around it.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ShutterFace(
+    recording: Boolean,
+    locked: Boolean,
+    pressed: Boolean,
+    recordingProgress: Float,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val morph by animateFloatAsState(if (recording) 1f else 0f, spatial, label = "shutterMorph")
+    val faceScale by animateFloatAsState(
+        targetValue =
+            when {
+                locked -> 0.5f
+                recording -> 0.7f
+                else -> 1f
+            },
+        animationSpec = spatial,
+        label = "shutterFaceScale",
+    )
+    var turns by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(pressed) { if (pressed) turns += SHUTTER_PRESS_TURN_DEGREES }
+    val rotation by animateFloatAsState(turns, MaterialTheme.motionScheme.slowSpatialSpec(), label = "shutterTurn")
+    val fill by animateColorAsState(
+        if (recording) colors.error else colors.primaryFixed,
+        MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "shutterFill",
+    )
+    val ringAlpha by animateFloatAsState(if (recording) 1f else 0f, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "shutterRing")
+    val sweep by animateFloatAsState(
+        recordingProgress.coerceIn(0f, 1f),
+        MaterialTheme.motionScheme.slowEffectsSpec(),
+        label = "shutterSweep",
+    )
+    val path = remember { Path() }
+    val ringColor = colors.primaryFixed
+
+    Canvas(modifier) {
+        val stroke = 4.dp.toPx()
+        if (ringAlpha > 0f) {
+            val inset = stroke / 2
+            drawCircle(
+                color = Color.White.copy(alpha = 0.28f * ringAlpha),
+                radius = size.minDimension / 2 - inset,
+                style = Stroke(stroke),
+            )
+            drawArc(
+                color = ringColor.copy(alpha = ringAlpha),
+                startAngle = -90f,
+                sweepAngle = 360f * sweep,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = Size(size.width - stroke, size.height - stroke),
+                style = Stroke(stroke, cap = StrokeCap.Round),
+            )
+        }
+        val face = size.minDimension * faceScale
+        rotate(rotation * (1f - morph)) {
+            translate((size.width - face) / 2, (size.height - face) / 2) {
+                drawPath(ShutterShape.outline(morph, face, path), fill)
+            }
+        }
+    }
+}
+
+/** The cookie the shutter rests as, and the rounded square it records as, in a unit box. */
+private object ShutterShape {
+    private val stop =
+        RoundedPolygon.rectangle(
+            width = 0.74f,
+            height = 0.74f,
+            rounding = CornerRounding(radius = 0.2f),
+            centerX = 0.5f,
+            centerY = 0.5f,
+        )
+
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    private val morph = Morph(MaterialShapes.Cookie9Sided, stop)
+
+    fun outline(
+        progress: Float,
+        size: Float,
+        path: Path,
+    ): Path {
+        path.rewind()
+        var started = false
+        morph.forEachCubic(progress.coerceIn(0f, 1f)) { cubic ->
+            if (!started) {
+                path.moveTo(cubic.anchor0X * size, cubic.anchor0Y * size)
+                started = true
+            }
+            path.cubicTo(
+                cubic.control0X * size,
+                cubic.control0Y * size,
+                cubic.control1X * size,
+                cubic.control1Y * size,
+                cubic.anchor1X * size,
+                cubic.anchor1Y * size,
+            )
+        }
+        path.close()
+        return path
+    }
+}
+
+/** How far the cookie turns each time it's pressed, so it reads as alive under the finger. */
+private const val SHUTTER_PRESS_TURN_DEGREES = 40f
 
 @Composable
 private fun LockTarget(pull: Float) {

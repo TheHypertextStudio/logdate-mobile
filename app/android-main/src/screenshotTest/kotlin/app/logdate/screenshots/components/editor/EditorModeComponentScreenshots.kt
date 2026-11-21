@@ -1,8 +1,12 @@
 package app.logdate.screenshots.components.editor
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.R
@@ -33,6 +37,9 @@ import app.logdate.screenshots.common.ScreenshotTestData.TABLET_PORTRAIT
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.ui.audio.expansion.SpatialExpandedAudioBlock
 import app.logdate.ui.audio.model.AudioPalette
+import coil3.asImage
+import coil3.compose.AsyncImagePreviewHandler
+import coil3.compose.LocalAsyncImagePreviewHandler
 import com.android.tools.screenshot.PreviewTest
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -309,7 +316,36 @@ fun EditorMode_CameraCapture_Recording() {
 @Preview(name = "Large Text", showBackground = true, device = PHONE, fontScale = 2f)
 @Composable
 fun EditorMode_CameraInEntry() {
-    ScreenshotTheme {
+    CameraInEntryFrame {
+        CameraCaptureEntryPreview(
+            CameraCapturePreviewState.LiveCapture(),
+            Modifier.fillMaxSize(),
+            memoryPhotoUri = SAMPLE_PHOTO_URI,
+            placeName = "Zilker Park",
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Phone", showBackground = true, device = PHONE)
+@Composable
+fun EditorMode_CameraInEntry_PlaceLeftOut() {
+    CameraInEntryFrame {
+        CameraCaptureEntryPreview(
+            CameraCapturePreviewState.LiveCapture(),
+            Modifier.fillMaxSize(),
+            memoryPhotoUri = SAMPLE_PHOTO_URI,
+            placeName = "Zilker Park",
+            placeSaved = false,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Phone", showBackground = true, device = PHONE)
+@Composable
+fun EditorMode_CameraInEntry_NewEntry() {
+    CameraInEntryFrame {
         CameraCaptureEntryPreview(CameraCapturePreviewState.LiveCapture(), Modifier.fillMaxSize())
     }
 }
@@ -318,8 +354,25 @@ fun EditorMode_CameraInEntry() {
 @Preview(name = "Phone", showBackground = true, device = PHONE)
 @Composable
 fun EditorMode_CameraInEntry_Recording() {
+    CameraInEntryFrame {
+        CameraCaptureEntryPreview(
+            CameraCapturePreviewState.LiveCapture(isRecording = true),
+            Modifier.fillMaxSize(),
+            memoryPhotoUri = SAMPLE_PHOTO_URI,
+        )
+    }
+}
+
+private const val SAMPLE_PHOTO_URI = "android.resource://studio.hypertext.logdate.debug/drawable/workspace_sample_photo"
+
+/** Serves the sample photo for every image the camera header's filmstrip asks for. */
+@Composable
+private fun CameraInEntryFrame(content: @Composable () -> Unit) {
+    val context = LocalContext.current
+    val image = remember { BitmapFactory.decodeResource(context.resources, R.drawable.workspace_sample_photo).asImage() }
+    val handler = remember(image) { AsyncImagePreviewHandler { image } }
     ScreenshotTheme {
-        CameraCaptureEntryPreview(CameraCapturePreviewState.LiveCapture(isRecording = true), Modifier.fillMaxSize())
+        CompositionLocalProvider(LocalAsyncImagePreviewHandler provides handler) { content() }
     }
 }
 

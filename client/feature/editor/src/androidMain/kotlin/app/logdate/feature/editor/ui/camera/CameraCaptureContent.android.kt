@@ -8,9 +8,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -48,6 +51,8 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -72,6 +77,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -129,12 +135,16 @@ sealed interface CameraCapturePreviewState {
 private const val CAMERA_SWITCH_PREVIEW_TIMEOUT_MS = 2_000L
 private const val MAX_ZOOM = 10f
 
-/** Captures always use the full 3:4 sensor; framing happens where the shot is used. */
-private val CaptureRatio = CameraAspectRatio.STANDARD.ratio
+/** The shutter's progress ring laps once a minute while recording. */
+private const val RECORDING_LAP_MS = 60_000L
+private const val PREVIEW_RECORDING_PROGRESS = 0.2f
 
-/** Room the shutter takes at the bottom of the panel, above the dock. */
-private val ShutterZoneHeight = 112.dp
-private val ViewfinderCorner = 24.dp
+/** Room the shutter row takes at the bottom of the image, above the dock. */
+private val ShutterZoneHeight = 96.dp
+
+/** How far the shutter row sits up from the image's bottom edge. */
+private val ShutterLift = 12.dp
+private val ViewfinderCorner = 28.dp
 private val SwipeDownToClose = 96.dp
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -294,21 +304,24 @@ fun CameraCapturePreviewContent(
                             ),
                     )
                 },
-                cornerControls = {
-                    CameraCornerCluster(
-                        controls = CameraCornerControls(showFlip = true, showCameraPicker = state.showCameraPicker),
-                        selection = defaultCameraSelection(CameraFacing.BACK),
-                        enabled = !state.isRecording,
-                        onFlip = {},
-                        onDeviceSelected = {},
-                    )
+                leadingControl = {
+                    if (state.showCameraPicker) {
+                        CameraRouteSelector(
+                            selection = defaultCameraSelection(CameraFacing.BACK),
+                            onDeviceSelected = {},
+                            label = stringResource(Res.string.camera),
+                            enabled = !state.isRecording,
+                        )
+                    }
                 },
+                trailingControl = { FlipCameraButton(enabled = !state.isRecording, onFlip = {}) },
                 shutter = {
                     CaptureShutter(
                         isRecording = state.isRecording,
                         enabled = true,
                         baseZoom = 1f,
                         onAction = {},
+                        recordingProgress = if (state.isRecording) PREVIEW_RECORDING_PROGRESS else 0f,
                     )
                 },
             )
@@ -373,7 +386,8 @@ private fun CameraCaptureLayout(
     recordingDuration: String,
     error: String?,
     viewfinder: @Composable BoxScope.(Modifier) -> Unit,
-    cornerControls: @Composable () -> Unit,
+    leadingControl: @Composable () -> Unit,
+    trailingControl: @Composable () -> Unit,
     shutter: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -391,7 +405,6 @@ private fun CameraCaptureLayout(
                     isRecording = isRecording,
                     recordingDuration = recordingDuration,
                     error = error,
-                    cornerControls = cornerControls,
                     topInset = 0.dp,
                 )
             },
@@ -404,7 +417,12 @@ private fun CameraCaptureLayout(
                             .cameraCreationClearance(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    shutter()
+                    ShutterRow(
+                        isRecording = isRecording,
+                        leadingControl = leadingControl,
+                        trailingControl = trailingControl,
+                        shutter = shutter,
+                    )
                 }
             },
             standardContent = {
@@ -413,7 +431,8 @@ private fun CameraCaptureLayout(
                     recordingDuration = recordingDuration,
                     error = error,
                     viewfinder = viewfinder,
-                    cornerControls = cornerControls,
+                    leadingControl = leadingControl,
+                    trailingControl = trailingControl,
                     shutter = shutter,
                 )
             },
@@ -421,13 +440,18 @@ private fun CameraCaptureLayout(
     }
 }
 
+/**
+ * The image fills everything between the header and the dock, so there's no empty band anywhere,
+ * and the shutter row sits on the image's bottom edge where the thumb rests.
+ */
 @Composable
 private fun StandardCaptureLayout(
     isRecording: Boolean,
     recordingDuration: String,
     error: String?,
     viewfinder: @Composable BoxScope.(Modifier) -> Unit,
-    cornerControls: @Composable () -> Unit,
+    leadingControl: @Composable () -> Unit,
+    trailingControl: @Composable () -> Unit,
     shutter: @Composable () -> Unit,
 ) {
     val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -435,7 +459,7 @@ private fun StandardCaptureLayout(
     val headerReserve = LocalEntryHeaderReserve.current
     val creationReserve = LocalEntryCreationReserve.current
     val topReserve = statusTop + headerReserve
-    val shutterBottom = navigationBottom + creationReserve
+    val dockTop = navigationBottom + creationReserve
 
     BoxWithConstraints(
         modifier =
@@ -448,8 +472,7 @@ private fun StandardCaptureLayout(
                 panelWidth = maxWidth,
                 panelHeight = maxHeight,
                 topReserve = topReserve,
-                bottomReserve = shutterBottom + ShutterZoneHeight,
-                ratio = CaptureRatio,
+                bottomReserve = dockTop,
             )
         when (fit) {
             is CameraViewfinderFit.Card -> {
@@ -462,11 +485,11 @@ private fun StandardCaptureLayout(
                             .clip(RoundedCornerShape(ViewfinderCorner)),
                 ) {
                     viewfinder(Modifier.fillMaxSize())
+                    ShutterScrim(Modifier.align(Alignment.BottomCenter).height(ShutterZoneHeight + ShutterLift + 48.dp))
                     ViewfinderOverlays(
                         isRecording = isRecording,
                         recordingDuration = recordingDuration,
                         error = error,
-                        cornerControls = cornerControls,
                         topInset = 0.dp,
                     )
                 }
@@ -483,59 +506,81 @@ private fun StandardCaptureLayout(
                             .height(topReserve + 72.dp)
                             .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.45f), Color.Transparent))),
                 )
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .height(shutterBottom + ShutterZoneHeight + 48.dp)
-                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)))),
-                )
+                ShutterScrim(Modifier.align(Alignment.BottomCenter).height(dockTop + ShutterZoneHeight + ShutterLift + 48.dp))
                 ViewfinderOverlays(
                     isRecording = isRecording,
                     recordingDuration = recordingDuration,
                     error = error,
-                    cornerControls = cornerControls,
                     topInset = topReserve,
                 )
             }
         }
 
-        Box(
+        ShutterRow(
+            isRecording = isRecording,
+            leadingControl = leadingControl,
+            trailingControl = trailingControl,
+            shutter = shutter,
             modifier =
                 Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = shutterBottom)
-                    .fillMaxWidth()
+                    .padding(bottom = dockTop + ViewfinderCardGap + ShutterLift)
                     .height(ShutterZoneHeight),
-            contentAlignment = Alignment.Center,
-        ) {
-            shutter()
-        }
+        )
     }
 }
 
-/** What sits on the image: the corner cluster, the recording time and any error. */
+@Composable
+private fun ShutterScrim(modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.4f)))),
+    )
+}
+
+/**
+ * The shutter, centered, with the flip button in the thumb's reach beside it and an external camera
+ * picker on the other side when one is connected. The side controls step aside while recording.
+ */
+@Composable
+private fun ShutterRow(
+    isRecording: Boolean,
+    leadingControl: @Composable () -> Unit,
+    trailingControl: @Composable () -> Unit,
+    shutter: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SideControl(visible = !isRecording, modifier = Modifier.weight(1f), content = leadingControl)
+        shutter()
+        SideControl(visible = !isRecording, modifier = Modifier.weight(1f), content = trailingControl)
+    }
+}
+
+@Composable
+private fun SideControl(
+    visible: Boolean,
+    modifier: Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier, contentAlignment = Alignment.Center) {
+        AnimatedVisibility(visible = visible, enter = fadeIn() + scaleIn(), exit = fadeOut() + scaleOut()) { content() }
+    }
+}
+
+/** What sits on the image: the recording time and any error. */
 @Composable
 private fun BoxScope.ViewfinderOverlays(
     isRecording: Boolean,
     recordingDuration: String,
     error: String?,
-    cornerControls: @Composable () -> Unit,
     topInset: Dp,
 ) {
-    AnimatedVisibility(
-        visible = !isRecording,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier =
-            Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = topInset + 12.dp, end = 12.dp),
-    ) {
-        cornerControls()
-    }
-
     RecordingIndicator(
         visible = isRecording,
         duration = recordingDuration,
@@ -549,8 +594,8 @@ private fun BoxScope.ViewfinderOverlays(
         Surface(
             modifier =
                 Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .align(Alignment.TopCenter)
+                    .padding(top = topInset + 56.dp, start = 16.dp, end = 16.dp),
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -565,45 +610,36 @@ private fun BoxScope.ViewfinderOverlays(
 }
 
 /**
- * The only control on the image. Front and back cameras need just a flip; an external camera adds
- * a picker beside it.
+ * Flips between the front and back cameras. It sits beside the shutter, morphs its shape when
+ * pressed, and spins its glyph each time so the flip reads before the new feed arrives.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun CameraCornerCluster(
-    controls: CameraCornerControls,
-    selection: MediaDeviceSelectionUiState,
+private fun FlipCameraButton(
     enabled: Boolean,
     onFlip: () -> Unit,
-    onDeviceSelected: (String) -> Unit,
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    var turns by remember { mutableFloatStateOf(0f) }
+    val rotation by animateFloatAsState(turns, MaterialTheme.motionScheme.defaultSpatialSpec(), label = "flipTurn")
+    FilledTonalIconButton(
+        onClick = {
+            turns -= 180f
+            onFlip()
+        },
+        enabled = enabled,
+        shapes = IconButtonDefaults.shapes(),
+        colors =
+            IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = Color.White.copy(alpha = 0.18f),
+                contentColor = Color.White,
+            ),
+        modifier = Modifier.size(IconButtonDefaults.mediumContainerSize()),
     ) {
-        if (controls.showCameraPicker) {
-            CameraRouteSelector(
-                selection = selection,
-                onDeviceSelected = onDeviceSelected,
-                label = stringResource(Res.string.camera),
-                enabled = enabled,
-            )
-        }
-        if (controls.showFlip) {
-            IconButton(
-                onClick = onFlip,
-                enabled = enabled,
-                colors =
-                    IconButtonDefaults.iconButtonColors(
-                        containerColor = Color.Black.copy(alpha = 0.4f),
-                        contentColor = Color.White,
-                    ),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Cameraswitch,
-                    contentDescription = stringResource(Res.string.switch_camera),
-                )
-            }
-        }
+        Icon(
+            imageVector = Icons.Default.Cameraswitch,
+            contentDescription = stringResource(Res.string.switch_camera),
+            modifier = Modifier.size(28.dp).graphicsLayer { rotationZ = rotation },
+        )
     }
 }
 
@@ -732,7 +768,7 @@ private fun InlineCameraCapture(
         }
     }
 
-    val cornerControls = cameraCornerControls(uiState.cameraSelection)
+    val sideControls = cameraCornerControls(uiState.cameraSelection)
     val closeLabel = stringResource(Res.string.camera_close)
     val flipLabel = stringResource(Res.string.switch_camera)
     val swipeToClosePx = with(density) { SwipeDownToClose.toPx() }
@@ -847,24 +883,29 @@ private fun InlineCameraCapture(
                 }
             }
         },
-        cornerControls = {
-            CameraCornerCluster(
-                controls = cornerControls,
-                selection = uiState.cameraSelection,
-                enabled = !uiState.isRecording && !isSwitchingCamera,
-                onFlip = ::flip,
-                onDeviceSelected = { deviceId ->
-                    if (!uiState.isRecording) {
-                        scope.launch { viewModel.selectCameraDevice(deviceId) }
-                    }
-                },
-            )
+        leadingControl = {
+            if (sideControls.showCameraPicker) {
+                CameraRouteSelector(
+                    selection = uiState.cameraSelection,
+                    onDeviceSelected = { deviceId ->
+                        if (!uiState.isRecording) {
+                            scope.launch { viewModel.selectCameraDevice(deviceId) }
+                        }
+                    },
+                    label = stringResource(Res.string.camera),
+                    enabled = !uiState.isRecording && !isSwitchingCamera,
+                )
+            }
+        },
+        trailingControl = {
+            if (sideControls.showFlip) FlipCameraButton(enabled = !uiState.isRecording && !isSwitchingCamera, onFlip = ::flip)
         },
         shutter = {
             CaptureShutter(
                 isRecording = uiState.isRecording,
                 enabled = !uiState.isCapturing && !isSwitchingCamera,
                 baseZoom = currentZoom,
+                recordingProgress = (uiState.recordingDurationMs % RECORDING_LAP_MS) / RECORDING_LAP_MS.toFloat(),
                 onAction = { action ->
                     when (action) {
                         ShutterAction.TakePhoto -> {
