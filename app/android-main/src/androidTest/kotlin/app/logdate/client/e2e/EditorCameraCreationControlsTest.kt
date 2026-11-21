@@ -117,7 +117,7 @@ class EditorCameraCreationControlsTest {
                             ).fetchSemanticsNodes()
                             .single()
                             .config[SemanticsProperties.TestTag]
-                    // Front and back cameras get a flip in the viewfinder's corner, not a picker sheet.
+                    // Front and back cameras get a flip beside the shutter, not a picker sheet.
                     val flip = compose.onNodeWithContentDescription("Switch camera").assertIsDisplayed().assertIsEnabled()
                     val backBounds = compose.onNodeWithContentDescription("Return to entry").fetchSemanticsNode().boundsInRoot
                     assertTrue(flip.fetchSemanticsNode().boundsInRoot.top >= backBounds.bottom, "Camera flip must clear Return to entry")
@@ -132,6 +132,11 @@ class EditorCameraCreationControlsTest {
                             .fetchSemanticsNode()
                             .boundsInRoot
                     assertTrue(shutterBounds.bottom <= wordRow.top, "The shutter must sit above the word row")
+                    val flipBounds = flip.fetchSemanticsNode().boundsInRoot
+                    assertTrue(
+                        flipBounds.center.y in shutterBounds.top..shutterBounds.bottom,
+                        "The flip button must sit beside the shutter, in the thumb's reach",
+                    )
                     compose.onNodeWithTag("entry_capture_word_Camera").assertIsSelected()
                     scenario.onActivity {
                         val view = it.window.decorView

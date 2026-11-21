@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.LocationOff
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -103,6 +104,7 @@ internal fun cameraFilmstripMemories(
  * It answers "where is this going?" without leaving the camera. While a capture is in progress it steps
  * aside, so only the image, the timer and the shutter stay.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun CameraEntryHeader(
     camera: CameraBlockUiState,
@@ -139,10 +141,11 @@ internal fun CameraEntryHeader(
                     onDone()
                 },
                 enabled = !recording && !busy,
-                modifier = Modifier.size(48.dp).semantics { contentDescription = returnDescription },
-                colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = StoryChrome),
+                shapes = IconButtonDefaults.shapes(),
+                modifier = Modifier.size(HeaderButtonSize).semantics { contentDescription = returnDescription },
+                colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = CameraHeaderGlass, contentColor = Color.White),
             ) {
-                Icon(Icons.Outlined.Check, null, Modifier.size(24.dp))
+                Icon(Icons.Outlined.Check, null, Modifier.size(HeaderIconSize))
             }
         }
         Column(
@@ -250,6 +253,7 @@ private fun CameraPlaceLine(
 
 /** The camera page is always dark, whatever the theme, so its header text is light. */
 private val CameraHeaderMuted = Color.White.copy(alpha = 0.72f)
+private val CameraHeaderGlass = Color.White.copy(alpha = 0.18f)
 private val CameraFilmstripTile = Color.White.copy(alpha = 0.16f)
 private val CameraFilmstripSize = 28.dp
 

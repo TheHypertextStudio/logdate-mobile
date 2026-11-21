@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -47,6 +48,11 @@ import logdate.client.feature.editor.generated.resources.entry_page_return_to_en
 import logdate.client.feature.editor.generated.resources.save_entry
 import org.jetbrains.compose.resources.stringResource
 
+/** Header buttons draw a small container inside the full 48dp touch target, as Material 3 does. */
+internal val HeaderButtonSize = 32.dp
+internal val HeaderIconSize = 20.dp
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FocusedEntryHeader(
     block: EntryBlockUiState,
@@ -86,10 +92,11 @@ internal fun FocusedEntryHeader(
                     onDone()
                 },
                 enabled = !recording && !saving,
-                modifier = Modifier.size(48.dp).semantics { contentDescription = returnDescription },
+                shapes = IconButtonDefaults.shapes(),
+                modifier = Modifier.size(HeaderButtonSize).semantics { contentDescription = returnDescription },
                 colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = StoryChrome),
             ) {
-                Icon(Icons.Outlined.Check, null, Modifier.size(24.dp))
+                Icon(Icons.Outlined.Check, null, Modifier.size(HeaderIconSize))
             }
         }
         Column(Modifier.weight(1f)) {
@@ -117,11 +124,12 @@ internal fun FocusedEntryHeader(
                 FilledIconButton(
                     onClick = onSave,
                     enabled = saveEnabled && !saving,
-                    modifier = Modifier.size(48.dp).semantics { contentDescription = saveDescription },
+                    shapes = IconButtonDefaults.shapes(),
+                    modifier = Modifier.size(HeaderButtonSize).semantics { contentDescription = saveDescription },
                 ) {
                     when {
-                        saving -> CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                        else -> Icon(Icons.Outlined.Save, null, Modifier.size(24.dp))
+                        saving -> CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                        else -> Icon(Icons.Outlined.Save, null, Modifier.size(HeaderIconSize))
                     }
                 }
             }
