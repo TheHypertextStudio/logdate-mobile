@@ -8,6 +8,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import app.logdate.client.R
 import app.logdate.feature.editor.ui.audio.ActiveRecordingDisplay
 import app.logdate.feature.editor.ui.audio.AudioRecordingControls
+import app.logdate.feature.editor.ui.camera.CameraCaptureEntryPreview
 import app.logdate.feature.editor.ui.camera.CameraCapturePreviewContent
 import app.logdate.feature.editor.ui.camera.CameraCapturePreviewState
 import app.logdate.feature.editor.ui.editor.ImageBlockUiState
@@ -25,7 +26,10 @@ import app.logdate.feature.editor.ui.video.VideoPickerPreviewContent
 import app.logdate.screenshots.common.LargeScreenAuditPreviewMatrix
 import app.logdate.screenshots.common.ScreenshotPreviewMatrix
 import app.logdate.screenshots.common.ScreenshotTestData
+import app.logdate.screenshots.common.ScreenshotTestData.COMPACT_PHONE
 import app.logdate.screenshots.common.ScreenshotTestData.PHONE
+import app.logdate.screenshots.common.ScreenshotTestData.PHONE_LANDSCAPE
+import app.logdate.screenshots.common.ScreenshotTestData.TABLET_PORTRAIT
 import app.logdate.screenshots.common.ScreenshotTheme
 import app.logdate.ui.audio.expansion.SpatialExpandedAudioBlock
 import app.logdate.ui.audio.model.AudioPalette
@@ -293,6 +297,29 @@ fun EditorMode_CameraCapture_Recording() {
             state = CameraCapturePreviewState.LiveCapture(isRecording = true),
             modifier = Modifier.fillMaxSize(),
         )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Phone", showBackground = true, device = PHONE)
+@Preview(name = "Compact Phone", showBackground = true, device = COMPACT_PHONE)
+@Preview(name = "Landscape", showBackground = true, device = PHONE_LANDSCAPE)
+@Preview(name = "Tablet", showBackground = true, device = TABLET_PORTRAIT)
+@Preview(name = "RTL", showBackground = true, device = PHONE, locale = "ar")
+@Preview(name = "Large Text", showBackground = true, device = PHONE, fontScale = 2f)
+@Composable
+fun EditorMode_CameraInEntry() {
+    ScreenshotTheme {
+        CameraCaptureEntryPreview(CameraCapturePreviewState.LiveCapture(), Modifier.fillMaxSize())
+    }
+}
+
+@PreviewTest
+@Preview(name = "Phone", showBackground = true, device = PHONE)
+@Composable
+fun EditorMode_CameraInEntry_Recording() {
+    ScreenshotTheme {
+        CameraCaptureEntryPreview(CameraCapturePreviewState.LiveCapture(isRecording = true), Modifier.fillMaxSize())
     }
 }
 

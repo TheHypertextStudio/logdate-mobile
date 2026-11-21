@@ -10,7 +10,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -46,8 +46,15 @@ internal class ManagedEditorWindowCaptures(
                     .assertIsEnabled()
                     .fetchSemanticsNode()
                     .boundsInRoot
-            compose.onNodeWithTag("entry_capture_tools").assertIsNotDisplayed()
-            compose.onNodeWithContentDescription("Write").assertIsNotDisplayed()
+            // In Camera mode the dock reads as a row of words under the shutter.
+            val wordRow =
+                compose
+                    .onNodeWithTag("entry_capture_word_row")
+                    .assertIsDisplayed()
+                    .fetchSemanticsNode()
+                    .boundsInRoot
+            assertTrue(shutter.bottom <= wordRow.top, "The shutter must sit above the word row")
+            compose.onNodeWithTag("entry_capture_word_Camera").assertIsSelected()
             scenario.onActivity {
                 val view = it.window.decorView
                 val safe =

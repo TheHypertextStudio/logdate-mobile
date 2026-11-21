@@ -25,10 +25,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
@@ -45,13 +48,16 @@ internal fun rememberCreationDockProgress(
     showAdd: Boolean,
     reduceMotion: Boolean,
 ): CreationDockProgress {
-    val state = remember { MutableTransitionState(CreationDockRole.Hidden) }
-    state.targetState =
+    val target =
         when {
             showModes -> CreationDockRole.Modes
             showAdd -> CreationDockRole.Add
             else -> CreationDockRole.Hidden
         }
+    // Previews render one frame, so they start settled instead of at the first frame of the entrance.
+    val inspection = LocalInspectionMode.current
+    val state = remember { MutableTransitionState(if (inspection) target else CreationDockRole.Hidden) }
+    state.targetState = target
     val transition = rememberTransition(state, label = "entryCreationDock")
     val visible by transition.animateFloat(transitionSpec = { if (reduceMotion) snap() else blockFocusSpring() }, label = "visible") {
         if (it == CreationDockRole.Hidden) 0f else 1f
@@ -86,6 +92,7 @@ internal fun EntryCreationDock(
     visibilityProgress: Float,
     chromeHeight: Dp,
     modifier: Modifier = Modifier,
+    wordRowProgress: Float = 0f,
 ) {
     val progress = visibilityProgress.coerceIn(0f, 1f)
     val tonal = ButtonDefaults.filledTonalButtonColors()
@@ -93,11 +100,16 @@ internal fun EntryCreationDock(
     Surface(
         modifier.testTag("entry_creation_actions").clipToBounds(),
         shape = RoundedCornerShape(8.dp + 20.dp * progress + 4.dp * addProgress),
+        // In Camera mode the dock drops its surface so the only solid object at the bottom is the shutter.
         color =
             lerp(
-                lerp(MaterialTheme.colorScheme.surfaceDim, MaterialTheme.colorScheme.surfaceContainerHigh, progress),
-                tonal.containerColor,
-                addProgress,
+                lerp(
+                    lerp(MaterialTheme.colorScheme.surfaceDim, MaterialTheme.colorScheme.surfaceContainerHigh, progress),
+                    tonal.containerColor,
+                    addProgress,
+                ),
+                Color.Transparent,
+                wordRowProgress,
             ),
         contentColor = content,
         tonalElevation = 1.dp,
@@ -113,7 +125,25 @@ internal fun EntryCreationDock(
                     .testTag("entry_capture_tools")
                     .padding(horizontal = 8.dp, vertical = if (chromeHeight >= 64.dp) 8.dp else 0.dp),
             ) {
-                StoriesCaptureModes(mode, onMode, compact = true, horizontalInset = 0.dp, enabled = modeEligible && modeProgress >= 0.99f)
+                if (wordRowProgress < 1f) {
+                    Box(Modifier.graphicsLayer { alpha = 1f - wordRowProgress }) {
+                        StoriesCaptureModes(
+                            mode,
+                            onMode,
+                            compact = true,
+                            horizontalInset = 0.dp,
+                            enabled = modeEligible && modeProgress >= 0.99f && wordRowProgress == 0f,
+                        )
+                    }
+                }
+                if (wordRowProgress > 0f) {
+                    StoriesCaptureWordRow(
+                        mode = mode,
+                        onMode = onMode,
+                        enabled = modeEligible && modeProgress >= 0.99f && wordRowProgress >= 0.99f,
+                        modifier = Modifier.align(Alignment.Center).graphicsLayer { alpha = wordRowProgress },
+                    )
+                }
             }
             Box(
                 Modifier

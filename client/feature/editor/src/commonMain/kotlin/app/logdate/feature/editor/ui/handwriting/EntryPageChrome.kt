@@ -2,6 +2,8 @@
 
 package app.logdate.feature.editor.ui.handwriting
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.lerp
 import app.logdate.client.datastore.EntryStartMode
 import app.logdate.feature.editor.ui.EditorInputFocusBookmarks
 import app.logdate.feature.editor.ui.LocalEditorInputFocusBookmarks
+import app.logdate.feature.editor.ui.blockFocusSpring
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
 import app.logdate.feature.editor.ui.editor.EditorState
 import app.logdate.feature.editor.ui.editor.isEmptyCreationBlock
@@ -114,20 +117,32 @@ internal fun EntryPageChrome(
             !editor.disableEmptyBlockCreation &&
             (block == null || !editor.isReadOnly(block.id))
     val cameraOwnsInput = block is CameraBlockUiState
+    // A capture in progress makes the camera block non-empty; the words step aside but keep their place,
+    // so the shutter above them never moves under the finger.
+    val cameraBusy = cameraOwnsInput && block?.isEmptyCreationBlock() != true
     val showModes =
         creationAllowed &&
-            !cameraOwnsInput &&
             !overview.earlierExpanded &&
-            (block?.isEmptyCreationBlock() == true || editor.blocks.isEmpty())
+            (cameraOwnsInput || block?.isEmptyCreationBlock() == true || editor.blocks.isEmpty())
     val showAdd = creationAllowed && !overview.earlierExpanded && !focused && editor.blocks.isNotEmpty()
     val reduceMotion = rememberSystemReduceMotion().value
     val routeProgress = LocalEntryCreationProgress.current
     val routeReady = routeProgress >= 0.999f
     val routeReveal = entryCreationBarProgress(routeProgress)
     val dock = rememberCreationDockProgress(showModes, showAdd, reduceMotion)
-    val modeProgress = if (cameraOwnsInput) 0f else dock.modes * routeReveal
+    val modeProgress = dock.modes * routeReveal
     val addProgress = if (cameraOwnsInput) 0f else dock.add * routeReveal
-    val dockProgress = if (cameraOwnsInput) 0f else dock.visible * routeReveal
+    val dockProgress = dock.visible * routeReveal
+    val wordRowProgress by animateFloatAsState(
+        if (cameraOwnsInput) 1f else 0f,
+        if (reduceMotion) snap() else blockFocusSpring(),
+        label = "entryCameraWordRow",
+    )
+    val wordRowAlpha by animateFloatAsState(
+        if (cameraBusy) 0f else 1f,
+        if (reduceMotion) snap() else blockFocusSpring(),
+        label = "entryCameraWordRowAlpha",
+    )
     val defaultCapture =
         when (defaultMode) {
             EntryStartMode.TEXT -> StoryCaptureMode.Write
@@ -180,14 +195,15 @@ internal fun EntryPageChrome(
         val barWidth = lerp(overviewWidth, focusWidth, progress)
         val writingTop = lerp(overviewTop, focusTop, progress)
         val barTop = lerp(writingTop, maxHeight + 80.dp, overview.browsingProgress)
-        val barAlpha = (1f - overview.browsingProgress) * dockProgress
+        val barAlpha = (1f - overview.browsingProgress) * dockProgress * (1f + (wordRowAlpha - 1f) * wordRowProgress)
         val pullProgress = (-overview.pull / with(density) { 112.dp.toPx() }).coerceIn(0f, 1f)
         CompositionLocalProvider(
             LocalEditorInputFocusBookmarks provides focusBookmarks,
             LocalEntryChromeHeight provides chromeHeight,
             LocalEntryHeaderReserve provides chromeHeight,
             LocalEntryContentInsets provides safeInsets,
-            LocalEntryCreationReserve provides (chromeHeight + Spacing.lg) * modeProgress,
+            // The camera keeps the word row's space even while the words fade, so the shutter stays put.
+            LocalEntryCreationReserve provides (chromeHeight + Spacing.lg) * maxOf(modeProgress, wordRowProgress),
         ) {
             CompositionLocalProvider(
                 LocalEditorFocusPresentation provides
@@ -261,12 +277,13 @@ internal fun EntryPageChrome(
                 mode = captureModeForBlock(block) ?: defaultCapture,
                 onMode = onCapture,
                 onAddMemory = { onAddMemory?.invoke() ?: onCapture(defaultCapture) },
-                modeEligible = showModes && routeReady && overview.browsingProgress == 0f,
+                modeEligible = showModes && !cameraBusy && routeReady && overview.browsingProgress == 0f,
                 addEligible = showAdd && routeReady && overview.browsingProgress == 0f,
                 modeProgress = modeProgress,
                 addProgress = addProgress,
                 visibilityProgress = dockProgress,
                 chromeHeight = chromeHeight,
+                wordRowProgress = wordRowProgress,
                 modifier =
                     Modifier
                         .align(AbsoluteAlignment.TopLeft)
@@ -277,7 +294,7 @@ internal fun EntryPageChrome(
                         .onGloballyPositioned { overview.dockTop = if (dockProgress > 0f) it.positionInWindow().y else null }
                         .captureBarPullGestures(overview, enabled = routeReady && !focused && !overview.earlierExpanded)
                         .then(
-                            if (showModes && routeReady && modeProgress >= 0.99f && overview.browsingProgress == 0f) {
+                            if (showModes && !cameraBusy && routeReady && modeProgress >= 0.99f && overview.browsingProgress == 0f) {
                                 Modifier.captureModeSwipes(
                                     captureModeForBlock(block) ?: defaultCapture,
                                     onCapture,
