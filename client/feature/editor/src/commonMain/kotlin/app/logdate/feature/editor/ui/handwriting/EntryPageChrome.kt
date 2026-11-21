@@ -249,6 +249,7 @@ internal fun EntryPageChrome(
                                 onJournalSelection = {},
                                 onCaptureMode = onCapture,
                                 floating = true,
+                                entryBlocks = editor.blocks,
                             )
                         }
                     }

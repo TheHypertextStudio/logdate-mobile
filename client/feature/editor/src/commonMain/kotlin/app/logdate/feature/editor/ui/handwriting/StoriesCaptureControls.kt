@@ -60,10 +60,13 @@ internal fun EntryFocusPrototypeHeader(
     draftCount: Int = 0,
     floating: Boolean = false,
     autoSaveStatus: app.logdate.feature.editor.ui.editor.AutoSaveStatus = app.logdate.feature.editor.ui.editor.AutoSaveStatus.IDLE,
+    entryBlocks: List<EntryBlockUiState> = emptyList(),
 ) {
     val focused = block != null
     val header: @Composable () -> Unit = {
-        if (block != null) {
+        if (block is CameraBlockUiState && block.uri == null) {
+            CameraEntryHeader(block, entryBlocks, recording, onReturnToEntry)
+        } else if (block != null) {
             FocusedEntryHeader(block, recording, onReturnToEntry, onSave, saveEnabled, saveInProgress, autoSaveStatus)
         }
     }
