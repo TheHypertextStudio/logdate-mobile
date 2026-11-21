@@ -2,6 +2,8 @@ package app.logdate.feature.editor.ui.handwriting
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTouchHeightIsEqualTo
+import androidx.compose.ui.test.assertTouchWidthIsEqualTo
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -45,10 +47,12 @@ class EntryFocusAffordanceTest {
             onNodeWithText("Save entry").assertDoesNotExist()
             onNodeWithText("Text").assertDoesNotExist()
             onNodeWithText("Editing memory").assertDoesNotExist()
-            val doneBounds = onNodeWithContentDescription("Return to entry").getUnclippedBoundsInRoot()
-            val saveBounds = onNodeWithContentDescription("Save entry").getUnclippedBoundsInRoot()
-            assertTrue(doneBounds.right - doneBounds.left >= 48.dp && doneBounds.bottom - doneBounds.top >= 48.dp)
-            assertTrue(saveBounds.right - saveBounds.left >= 48.dp && saveBounds.bottom - saveBounds.top >= 48.dp)
+            // The buttons draw a small container, but each keeps a full 48dp touch target.
+            listOf("Return to entry", "Save entry").forEach { label ->
+                onNodeWithContentDescription(label).assertTouchWidthIsEqualTo(48.dp).assertTouchHeightIsEqualTo(48.dp)
+                val drawn = onNodeWithContentDescription(label).getUnclippedBoundsInRoot()
+                assertTrue(drawn.right - drawn.left < 48.dp, "$label should draw smaller than its touch target")
+            }
             onNodeWithContentDescription("Return to entry").performClick()
             assertEquals(1, returns)
             assertEquals(0, saves, "Done must not pretend to commit the entry")

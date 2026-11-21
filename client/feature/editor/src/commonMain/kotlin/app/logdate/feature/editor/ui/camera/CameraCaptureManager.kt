@@ -92,7 +92,7 @@ data class CameraCaptureState(
     val isPreviewActive: Boolean = false,
     val cameraFacing: CameraFacing = CameraFacing.BACK,
     val captureMode: CaptureMode = CaptureMode.PHOTO,
-    val aspectRatio: CameraAspectRatio = CameraAspectRatio.STANDARD,
+    val aspectRatio: CameraAspectRatio = CameraAspectRatio.FULL,
     val isRecording: Boolean = false,
     val recordingDurationMs: Long = 0L,
     val lastCapturedUri: String? = null,
