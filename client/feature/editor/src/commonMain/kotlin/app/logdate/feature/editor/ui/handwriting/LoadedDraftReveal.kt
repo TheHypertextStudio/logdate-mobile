@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
@@ -47,7 +48,8 @@ internal fun revealLoadedDraft(
     val gap = with(LocalDensity.current) { Spacing.lg.roundToPx() }
     val safeTop = maxOf(page.viewportTop + headerReserve, (page.headerBottom ?: page.viewportTop) + gap)
     val safeBottom = minOf(page.viewportTop + viewportHeight - dockReserve, (page.dockTop ?: Float.POSITIVE_INFINITY) - gap)
-    LaunchedEffect(request, placed, heading, ui.expandedBlockId, page.earlierExpanded, moving, safeTop, safeBottom) {
+    val contextLoading = ui.draftRevealContextLoading
+    LaunchedEffect(request, placed, heading, ui.expandedBlockId, page.earlierExpanded, moving, safeTop, safeBottom, contextLoading) {
         if (request == null) {
             page.draftRevealPlacement = null
             page.draftRevealHeading = null
@@ -57,16 +59,23 @@ internal fun revealLoadedDraft(
             consume(request)
             return@LaunchedEffect
         }
-        if (moving || placed?.request != request || heading?.request != request) return@LaunchedEffect
+        // Today's earlier notes load separately and are laid out above the draft. Revealing before
+        // they arrive leaves the draft pushed below the screen once they do.
+        if (contextLoading) return@LaunchedEffect
+        // Notes that just arrived are laid out after this effect starts, so measure on the next frame.
+        withFrameNanos {}
+        val measured = page.draftRevealPlacement
+        val measuredHeading = page.draftRevealHeading
+        if (moving || measured?.request != request || measuredHeading?.request != request) return@LaunchedEffect
         if (!consume(request)) return@LaunchedEffect
         page.focusedAnchor = null
         page.focusScrollBookmark = null
         val top = safeTop
         val bottom = safeBottom
-        val beginning = minOf(heading.top, placed.top)
+        val beginning = minOf(measuredHeading.top, measured.top)
         val visibleBeginning =
             minOf(
-                (placed.top - beginning).roundToInt() + minOf(placed.height, minimum),
+                (measured.top - beginning).roundToInt() + minOf(measured.height, minimum),
                 (bottom - top).roundToInt().coerceAtLeast(1),
             )
         if (beginning < top || beginning + visibleBeginning > bottom) {
