@@ -2,6 +2,7 @@ package app.logdate.client.e2e
 
 import android.content.Context
 import android.util.AtomicFile
+import android.util.Log
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import app.logdate.client.database.LogDateDatabase
@@ -14,6 +15,7 @@ import app.logdate.client.sync.BackupRequestState
 import app.logdate.client.sync.SyncManager
 import app.logdate.client.sync.metadata.MediaSyncRefStore
 import app.logdate.client.sync.metadata.UploadScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -171,7 +173,8 @@ internal class NativeOriginalMediaProbe(
         assertEquals(checkpoint.getString("operationId"), row.operationId)
         assertEquals("APPLIED", row.state)
         val prior = checkpoint.getJSONArray("priorWorkIds").let { ids -> (0 until ids.length()).map { ids.getString(it) }.toSet() }
-        withTimeout(60_000) {
+        val completion = checkpoint.optString("completionWorkId")
+        withTimeoutReporting({ reportImmediateSyncWork(prior, completion, scope) }) {
             WorkManager
                 .getInstance(context)
                 .getWorkInfosForUniqueWorkFlow(AndroidLogDateSyncWorker.WORK_NAME_IMMEDIATE_SYNC)
@@ -208,8 +211,43 @@ internal class NativeOriginalMediaProbe(
         }
     }
 
+    /** Runs [block] under the 60s completion deadline, logging the immediate sync chain if it expires. */
+    private suspend fun <T> withTimeoutReporting(
+        report: suspend () -> Unit,
+        block: suspend () -> T,
+    ): T =
+        try {
+            withTimeout(60_000) { block() }
+        } catch (timeout: TimeoutCancellationException) {
+            runCatching { report() }.onFailure { Log.w(TAG, "Immediate sync state unavailable: ${it.javaClass.name}") }
+            throw timeout
+        }
+
+    private suspend fun reportImmediateSyncWork(
+        prior: Set<String>,
+        completion: String,
+        scope: UploadScope,
+    ) {
+        val work =
+            WorkManager
+                .getInstance(context)
+                .getWorkInfosForUniqueWorkFlow(AndroidLogDateSyncWorker.WORK_NAME_IMMEDIATE_SYNC)
+                .first()
+        Log.i(TAG, "immediate_sync_work=${work.size} prior=${prior.size} completion=${completion.ifEmpty { "none" }}")
+        work.forEach {
+            Log.i(
+                TAG,
+                "work=${it.id} state=${it.state} attempts=${it.runAttemptCount} prior=${it.id.toString() in prior} " +
+                    "completed_media=${completedMediaForScope(it, scope)} output=${it.outputData.keyValueMap.keys.sorted()} " +
+                    "tags=${it.tags.filterNot { tag -> tag.startsWith("app.logdate") }.sorted()}",
+            )
+        }
+    }
+
     private fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 }
+
+private const val TAG = "NativeOriginalMediaProbe"
 
 internal fun completedMediaForScope(
     work: WorkInfo,
