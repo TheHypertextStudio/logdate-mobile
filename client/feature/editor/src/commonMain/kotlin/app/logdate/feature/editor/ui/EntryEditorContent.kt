@@ -58,8 +58,10 @@ import app.logdate.feature.editor.ui.editor.consumeDraftReveal
 import app.logdate.feature.editor.ui.editor.delegate.DefaultAudioBlockFinalizer
 import app.logdate.feature.editor.ui.editor.dismissOwnedEditorFocus
 import app.logdate.feature.editor.ui.editor.rememberEditorAutoSave
+import app.logdate.feature.editor.ui.handwriting.CameraPlaceUi
 import app.logdate.feature.editor.ui.handwriting.EntryPageChrome
 import app.logdate.feature.editor.ui.handwriting.EntryPageOverview
+import app.logdate.feature.editor.ui.handwriting.LocalCameraPlace
 import app.logdate.feature.editor.ui.handwriting.StoryCaptureMode
 import app.logdate.feature.editor.ui.handwriting.blockType
 import app.logdate.feature.editor.ui.handwriting.rememberEntryPageState
@@ -323,12 +325,19 @@ fun EntryEditorContent(
     val chooseCapture: (StoryCaptureMode) -> Unit = { mode ->
         viewModel.chooseCreationType(focusedBlock?.id, mode.blockType())
     }
+    val capturePlace by viewModel.cameraPlace.collectAsState()
+    val capturePlaceSaving by viewModel.cameraPlaceTagging.collectAsState()
+    val cameraPlace =
+        capturePlace?.name?.let { name ->
+            remember(name, capturePlaceSaving) { CameraPlaceUi(name, capturePlaceSaving, viewModel::setCameraPlaceTagging) }
+        }
     SharedTransitionLayout {
         CompositionLocalProvider(
             LocalSharedTransitionScope provides this,
             LocalAudioCaptureStartGate provides audioCaptureStartGate,
             LocalEditorInputTokens provides renderedInputTokens,
             LocalEditorTextInputSession provides editorTextInputSession(viewModel, editorState.contentRevision),
+            LocalCameraPlace provides cameraPlace,
         ) {
             EntryKeyboardContentReceiver(onMediaImported = onMediaImport) {
                 EntryPageChrome(

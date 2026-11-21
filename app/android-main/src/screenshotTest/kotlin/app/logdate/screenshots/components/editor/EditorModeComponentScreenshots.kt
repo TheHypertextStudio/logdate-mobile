@@ -317,7 +317,27 @@ fun EditorMode_CameraCapture_Recording() {
 @Composable
 fun EditorMode_CameraInEntry() {
     CameraInEntryFrame {
-        CameraCaptureEntryPreview(CameraCapturePreviewState.LiveCapture(), Modifier.fillMaxSize(), memoryPhotoUri = SAMPLE_PHOTO_URI)
+        CameraCaptureEntryPreview(
+            CameraCapturePreviewState.LiveCapture(),
+            Modifier.fillMaxSize(),
+            memoryPhotoUri = SAMPLE_PHOTO_URI,
+            placeName = "Zilker Park",
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Phone", showBackground = true, device = PHONE)
+@Composable
+fun EditorMode_CameraInEntry_PlaceLeftOut() {
+    CameraInEntryFrame {
+        CameraCaptureEntryPreview(
+            CameraCapturePreviewState.LiveCapture(),
+            Modifier.fillMaxSize(),
+            memoryPhotoUri = SAMPLE_PHOTO_URI,
+            placeName = "Zilker Park",
+            placeSaved = false,
+        )
     }
 }
 

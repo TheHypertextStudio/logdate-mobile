@@ -60,6 +60,7 @@ val editorFeatureModule: Module =
                 pendingAudioRecoverer = get(),
                 audioDurationResolver = get(),
                 captureUsage = getOrNull<CaptureUsageReporter>() ?: CaptureUsageReporter.None,
+                observeCapturePlace = getOrNull(),
             )
         }
     }

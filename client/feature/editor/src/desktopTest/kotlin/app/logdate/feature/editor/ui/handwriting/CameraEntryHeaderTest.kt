@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import app.logdate.client.datastore.EntryStartMode
 import app.logdate.feature.editor.ui.editor.CameraBlockUiState
@@ -88,6 +89,36 @@ class CameraEntryHeaderTest {
 
             onAllNodesWithTag("entry_camera_header").assertCountEquals(0)
             onNodeWithTag("entry_mode_focus").assertIsDisplayed()
+        }
+
+    @Test
+    fun thePlaceSitsBesideTheTimeAndCanBeLeftOutOfShots() =
+        runDesktopComposeUiTest(width = 412, height = 915) {
+            val camera = CameraBlockUiState()
+            var saving by mutableStateOf(true)
+            setContent {
+                val place = CameraPlaceUi("Zilker Park", saving) { saving = it }
+                CompositionLocalProvider(LocalCameraPlace provides place) {
+                    CameraPage(EditorState(blocks = listOf(camera), expandedBlockId = camera.id))
+                }
+            }
+            onNodeWithContentDescription("Shots are saved at Zilker Park").assertIsDisplayed().performClick()
+            onNodeWithText("Save shots without a place").performClick()
+            waitForIdle()
+
+            onNodeWithContentDescription("Shots are saved without a place").assertIsDisplayed().performClick()
+            onNodeWithText("Save shots with this place").performClick()
+            waitForIdle()
+            onNodeWithContentDescription("Shots are saved at Zilker Park").assertIsDisplayed()
+        }
+
+    @Test
+    fun withoutAPlaceTheHeaderShowsNoPinAndNoPrompt() =
+        runDesktopComposeUiTest(width = 412, height = 915) {
+            val camera = CameraBlockUiState()
+            setContent { CameraPage(EditorState(blocks = listOf(camera), expandedBlockId = camera.id)) }
+
+            onAllNodesWithTag("entry_camera_place").assertCountEquals(0)
         }
 
     @androidx.compose.runtime.Composable
