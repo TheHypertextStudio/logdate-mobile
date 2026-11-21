@@ -30,10 +30,12 @@ internal class NativeDraftProbeTrace(
     private fun captureThreads() {
         runCatching(sampleRuntime).onFailure { Log.w(tag, "Runtime state unavailable: ${it.javaClass.name}") }
         val all = Thread.getAllStackTraces()
+        val holders = journalFenceHolders()
+        if (includeRuntimeWorkers) Log.i(tag, "journal_fence_holders=${holders.joinToString { "${it.name}:${it.state}" }}")
         val selected =
             all.entries
-                .filter { (thread, stack) -> priority(thread, stack) < 4 }
-                .sortedBy { (thread, stack) -> "${priority(thread, stack)}-${thread.name}" }
+                .filter { (thread, stack) -> thread in holders || priority(thread, stack) < 4 }
+                .sortedBy { (thread, stack) -> "${if (thread in holders) 0 else priority(thread, stack)}-${thread.name}" }
                 .take(48)
         if (includeRuntimeWorkers) Log.i(tag, "thread_count=${all.size} captured=${selected.size}")
         selected.forEach { (thread, stack) ->
@@ -41,6 +43,30 @@ internal class NativeDraftProbeTrace(
             stack.take(64).forEach { Log.i(tag, it.toString()) }
         }
     }
+
+    /** Threads holding the journal database fence, read by reflection; empty when unavailable. */
+    private fun journalFenceHolders(): Set<Thread> =
+        runCatching {
+            val fences =
+                Class
+                    .forName("app.logdate.client.database.NativeJournalDatabaseFence_androidKt")
+                    .getDeclaredField("nativeJournalFences")
+                    .apply { isAccessible = true }
+                    .get(null) as Map<*, *>
+            fences.values
+                .mapNotNull { fence ->
+                    val lock =
+                        fence!!
+                            .javaClass
+                            .getDeclaredField("lock")
+                            .apply { isAccessible = true }
+                            .get(fence)
+                    lock.javaClass.getMethod("getHolder").invoke(lock) as Thread?
+                }.toSet()
+        }.getOrElse {
+            Log.w(tag, "Journal fence holder unavailable: ${it.javaClass.name}")
+            emptySet()
+        }
 
     private fun priority(
         thread: Thread,
