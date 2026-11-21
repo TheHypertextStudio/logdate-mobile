@@ -1,7 +1,11 @@
 package app.logdate.client.media.storage
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -10,6 +14,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -43,6 +48,75 @@ class AndroidMediaClaimFenceTest {
                 release.complete(Unit)
                 withTimeout(5_000) { claim.await() }
                 assertTrue(withTimeout(5_000) { collector.await() })
+            } finally {
+                root.deleteRecursively()
+            }
+        }
+
+    @Test
+    fun `a claim waiting on another claim's work does not freeze`() =
+        runBlocking {
+            val root = Files.createTempDirectory("media-claim-fence-").toFile()
+            val unrelatedScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            try {
+                val result =
+                    withTimeoutOrNull(5_000) {
+                        AndroidMediaClaimFence(root).withClaim {
+                            unrelatedScope.async { AndroidMediaClaimFence(root).withClaim { true } }.await()
+                        }
+                    }
+                assertEquals(true, result)
+            } finally {
+                unrelatedScope.cancel()
+                root.deleteRecursively()
+            }
+        }
+
+    @Test
+    fun `reclamation waits for every overlapping claim and then blocks new ones`() =
+        runBlocking {
+            val root = Files.createTempDirectory("media-claim-fence-").toFile()
+            try {
+                val firstEntered = CompletableDeferred<Unit>()
+                val secondEntered = CompletableDeferred<Unit>()
+                val releaseFirst = CompletableDeferred<Unit>()
+                val releaseSecond = CompletableDeferred<Unit>()
+                val first =
+                    async {
+                        AndroidMediaClaimFence(root).withClaim {
+                            firstEntered.complete(Unit)
+                            releaseFirst.await()
+                        }
+                    }
+                firstEntered.await()
+                val second =
+                    async {
+                        AndroidMediaClaimFence(root).withClaim {
+                            secondEntered.complete(Unit)
+                            releaseSecond.await()
+                        }
+                    }
+                withTimeout(5_000) { secondEntered.await() }
+                val collectorEntered = CompletableDeferred<Unit>()
+                val releaseCollector = CompletableDeferred<Unit>()
+                val collector =
+                    async {
+                        AndroidMediaClaimFence(root).withExclusiveReclamation {
+                            collectorEntered.complete(Unit)
+                            releaseCollector.await()
+                        }
+                    }
+                releaseFirst.complete(Unit)
+                withTimeout(5_000) { first.await() }
+                assertNull(withTimeoutOrNull(100) { collectorEntered.await() })
+                releaseSecond.complete(Unit)
+                withTimeout(5_000) { second.await() }
+                withTimeout(5_000) { collectorEntered.await() }
+                val blockedClaim = async { AndroidMediaClaimFence(root).withClaim { true } }
+                assertNull(withTimeoutOrNull(100) { blockedClaim.await() })
+                releaseCollector.complete(Unit)
+                withTimeout(5_000) { collector.await() }
+                assertTrue(withTimeout(5_000) { blockedClaim.await() })
             } finally {
                 root.deleteRecursively()
             }

@@ -35,19 +35,11 @@ import kotlin.uuid.Uuid
 /** Deterministic lock-order regression, independent of any enrollment timeout attribution. */
 class EntryDraftMediaClaimOrderingTest {
     @Test
-    fun `retained worker reads the draft while an editor save waits for its real media claim`() =
+    fun `retained worker reads the draft while an editor save waits to claim its media`() =
         runBlocking {
             fixture { root, scope ->
                 val actualFence = AndroidMediaClaimFence(File(root, "private"))
-                val writerRequestedClaim = CompletableDeferred<Unit>()
-                var observeWriter = false
-                val writerFence =
-                    object : MediaClaimFence by actualFence {
-                        override suspend fun <T> withClaim(block: suspend () -> T): T {
-                            if (observeWriter) writerRequestedClaim.complete(Unit)
-                            return actualFence.withClaim(block)
-                        }
-                    }
+                val writerFence = ParkedClaimFence(actualFence)
                 val store =
                     AndroidLocalEntryDraftStore(
                         PreferenceDataStoreFactory.create(scope = scope) { File(root, "entry.preferences_pb") },
@@ -59,7 +51,7 @@ class EntryDraftMediaClaimOrderingTest {
                 assertEquals(listOf(original), repository.getDraftSnapshotsForRecovery())
                 val held = CompletableDeferred<Unit>()
                 val edited = original.copy(markId = "writer edit")
-                observeWriter = true
+                writerFence.observe = true
                 val completed =
                     withTimeoutOrNull(3_000) {
                         coroutineScope {
@@ -68,8 +60,9 @@ class EntryDraftMediaClaimOrderingTest {
                                     RetainedJournalReconciliationLock.prepareThenWithDeliveryGate(gate(), prepare = {}) {
                                         RetainedJournalReconciliationLock.withMediaClaim(actualFence) {
                                             held.complete(Unit)
-                                            writerRequestedClaim.await()
+                                            writerFence.requested.await()
                                             assertEquals(listOf(original), repository.getDraftSnapshotsForRecovery())
+                                            writerFence.release.complete(Unit)
                                         }
                                     }
                                 }
@@ -85,6 +78,32 @@ class EntryDraftMediaClaimOrderingTest {
                 assertEquals("writer edit", saved.markId)
                 assertEquals(saved, store.getDraft(saved.id), "The edit must reach real persistent DataStore")
                 actualFence.withExclusiveReclamation { assertEquals(saved, store.getDraft(saved.id)) }
+            }
+        }
+
+    @Test
+    fun `an editor save finishes while the retained worker still holds its media claim`() =
+        runBlocking {
+            fixture { root, scope ->
+                val fence = AndroidMediaClaimFence(File(root, "private"))
+                val store =
+                    AndroidLocalEntryDraftStore(
+                        PreferenceDataStoreFactory.create(scope = scope) { File(root, "entry.preferences_pb") },
+                        claimFence = fence,
+                    )
+                val original = draft()
+                store.saveDraft(original)
+                val repository = OfflineFirstEntryDraftRepository(store, scope)
+                val edited = original.copy(markId = "saved during reconciliation")
+                val completed =
+                    withTimeoutOrNull(3_000) {
+                        RetainedJournalReconciliationLock.withMediaClaim(fence) {
+                            // The independent fixture scope keeps the save from inheriting the worker's claim.
+                            scope.async { repository.saveDraftSnapshot(edited) }.await()
+                        }
+                    }
+                assertNotNull(completed, "A long reconciliation claim must not freeze editor saves")
+                assertEquals("saved during reconciliation", store.getDraft(original.id)?.markId)
             }
         }
 
@@ -172,34 +191,24 @@ class EntryDraftMediaClaimOrderingTest {
         runBlocking {
             fixture { root, scope ->
                 val fence = AndroidMediaClaimFence(File(root, "private"))
-                val requested = CompletableDeferred<Unit>()
-                var observe = false
-                val observedFence =
-                    object : MediaClaimFence by fence {
-                        override suspend fun <T> withClaim(block: suspend () -> T): T {
-                            if (observe) requested.complete(Unit)
-                            return fence.withClaim(block)
-                        }
-                    }
+                val parked = ParkedClaimFence(fence)
                 val store =
                     AndroidLocalEntryDraftStore(
                         PreferenceDataStoreFactory.create(scope = scope) { File(root, "entry.preferences_pb") },
-                        claimFence = observedFence,
+                        claimFence = parked,
                     )
                 val original = draft()
                 store.saveDraft(original)
                 val repository = OfflineFirstEntryDraftRepository(store, scope)
                 repository.getDraftSnapshotsForRecovery()
-                observe = true
+                parked.observe = true
                 withTimeout(3_000) {
-                    fence.withClaim {
-                        // Use the independent fixture scope so this writer cannot inherit HeldFence.
-                        val writer = scope.launch { repository.saveDraftSnapshot(original.copy(markId = "cancelled")) }
-                        requested.await()
-                        writer.cancelAndJoin()
-                        assertEquals(listOf(original), repository.getDraftSnapshotsForRecovery())
-                        assertEquals(original, store.getDraft(original.id))
-                    }
+                    val writer = scope.launch { repository.saveDraftSnapshot(original.copy(markId = "cancelled")) }
+                    parked.requested.await()
+                    writer.cancelAndJoin()
+                    assertEquals(listOf(original), repository.getDraftSnapshotsForRecovery())
+                    assertEquals(original, store.getDraft(original.id))
+                    parked.observe = false
                     repository.saveDraftSnapshot(original.copy(markId = "later edit"))
                     assertEquals("later edit", store.getDraft(original.id)?.markId)
                 }
@@ -245,16 +254,7 @@ class EntryDraftMediaClaimOrderingTest {
                 )
             mutations.forEachIndexed { index, mutate ->
                 fixture { root, scope ->
-                    val fence = AndroidMediaClaimFence(File(root, "private"))
-                    val requested = CompletableDeferred<Unit>()
-                    var observe = false
-                    val observed =
-                        object : MediaClaimFence by fence {
-                            override suspend fun <T> withClaim(block: suspend () -> T): T {
-                                if (observe) requested.complete(Unit)
-                                return fence.withClaim(block)
-                            }
-                        }
+                    val observed = ParkedClaimFence(AndroidMediaClaimFence(File(root, "private")))
                     val store =
                         AndroidLocalEntryDraftStore(
                             PreferenceDataStoreFactory.create(scope = scope) { File(root, "entry.preferences_pb") },
@@ -274,24 +274,39 @@ class EntryDraftMediaClaimOrderingTest {
                     store.saveDraft(original)
                     val repository = OfflineFirstEntryDraftRepository(store, scope)
                     repository.getDraftSnapshotsForRecovery()
-                    observe = true
+                    observed.observe = true
                     withTimeout(3_000) {
-                        fence
-                            .withClaim {
-                                val writer = scope.async { mutate(repository, original, block) }
-                                requested.await()
-                                assertEquals(
-                                    listOf(original),
-                                    repository.getDraftSnapshotsForRecovery(),
-                                    "Mutation $index must wait before taking draft mutex",
-                                )
-                                writer
-                            }.await()
+                        val writer = scope.async { mutate(repository, original, block) }
+                        observed.requested.await()
+                        assertEquals(
+                            listOf(original),
+                            repository.getDraftSnapshotsForRecovery(),
+                            "Mutation $index must wait before taking draft mutex",
+                        )
+                        observed.release.complete(Unit)
+                        writer.await()
                         assertEquals(store.getAllDrafts().toSet(), repository.getDraftSnapshotsForRecovery().toSet())
                     }
                 }
             }
         }
+
+    /** Parks a writer at its claim request, before the real fence, so lock order is observable. */
+    private class ParkedClaimFence(
+        private val fence: MediaClaimFence,
+    ) : MediaClaimFence by fence {
+        @Volatile var observe = false
+        val requested = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+
+        override suspend fun <T> withClaim(block: suspend () -> T): T {
+            if (observe) {
+                requested.complete(Unit)
+                release.await()
+            }
+            return fence.withClaim(block)
+        }
+    }
 
     private suspend fun fixture(block: suspend (File, CoroutineScope) -> Unit) {
         val directory = Files.createTempDirectory("draft-media-order").toFile()
