@@ -113,6 +113,38 @@ class LoadedDraftRevealTest {
         }
 
     @Test
+    fun draftOpenedBeforeEarlierNotesLoadStaysVisibleOnceTheyArrive() =
+        runDesktopComposeUiTest(width = 360, height = 800) {
+            val block = TextBlockUiState(content = "Opened from a shortcut")
+            val request = EditorDraftReveal(block.id, Uuid.random())
+            var editor by mutableStateOf(EditorState(blocks = listOf(block), pendingDraftReveal = request, isLoadingDrafts = true))
+            var earlier by mutableStateOf(0)
+            val page = EntryPageOverviewState(false)
+            var consumes = 0
+            setContent {
+                document(editor, page, {}, earlierCount = earlier, consume = {
+                    consumes++
+                    editor = editor.copy(pendingDraftReveal = null)
+                    true
+                })
+            }
+            waitForIdle()
+            assertEquals(0, consumes, "The reveal must wait for the notes laid out above the draft")
+            runOnIdle {
+                earlier = 12
+                editor = editor.copy(isLoadingDrafts = false)
+            }
+            waitForIdle()
+            assertEquals(1, consumes)
+            val memory = onNodeWithTag("memory_block_${block.id}").getUnclippedBoundsInRoot()
+            val header = onNodeWithTag("test_header").getUnclippedBoundsInRoot()
+            val dock = onNodeWithTag("entry_add_memory").getUnclippedBoundsInRoot()
+            assertTrue(memory.top.value >= header.bottom.value + 16f, "Draft must clear the header: $memory / $header")
+            assertTrue(memory.top.value + 120f <= dock.top.value, "Draft must stay above Add to entry: $memory / $dock")
+            onAllNodesWithTag("editor_text_input").onFirst().assertIsNotFocused()
+        }
+
+    @Test
     fun overviewWithoutAnAcceptedLoadPreservesItsExistingScroll() =
         runDesktopComposeUiTest(width = 360, height = 800) {
             val page = EntryPageOverviewState(false)

@@ -34,6 +34,8 @@ class BlocksUiState(
     val allowHandwritingCreation: Boolean = false,
     val blockPresentations: Map<Uuid, EditorBlockPresentation> = emptyMap(),
     val draftReveal: EditorDraftReveal? = null,
+    /** True while today's earlier notes, shown above the draft, are still loading. */
+    val draftRevealContextLoading: Boolean = false,
     val onConsumeDraftReveal: (EditorDraftReveal) -> Boolean = { false },
     val onCancelDraftReveal: () -> Unit = {},
 ) {
@@ -72,6 +74,7 @@ fun rememberBlocksUiState(
         BlocksUiState(
             blocks = editorState.blocks,
             draftReveal = editorState.pendingDraftReveal,
+            draftRevealContextLoading = editorState.isLoadingDrafts,
             onConsumeDraftReveal = onConsumeDraftReveal,
             onCancelDraftReveal = onCancelDraftReveal,
             blockPresentations = blockPresentations,
