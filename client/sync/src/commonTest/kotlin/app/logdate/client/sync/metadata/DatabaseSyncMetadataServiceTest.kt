@@ -5,11 +5,14 @@ import app.logdate.client.database.entities.sync.PendingUploadEntity
 import app.logdate.client.database.entities.sync.SyncCursorEntity
 import app.logdate.client.device.identity.CanonicalOwnerProvider
 import app.logdate.shared.config.DefaultLogDateConfigRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -260,6 +263,30 @@ class DatabaseSyncMetadataServiceTest {
             assertEquals(0, dao.typeReads)
         }
 
+    @Test
+    fun `a queue read waiting on the database never blocks settlement inside a transaction`() =
+        runTest {
+            // A transaction owns the database while it settles an upload. Another caller is
+            // already reading the queue and waits for that database. Settling and counting must
+            // not wait on an app lock that the waiting reader holds, or neither can finish.
+            val dao = InMemorySyncMetadataDao()
+            val metadata = service(dao, "owner", "https://sync.example")
+            metadata.enqueuePending("note", EntityType.NOTE, PendingOperation.UPDATE)
+            val databaseReleased = CompletableDeferred<Unit>()
+            dao.typeReadGate = databaseReleased
+            val waitingReader = launch { metadata.getPendingUploads(EntityType.NOTE) }
+            testScheduler.runCurrent()
+            assertTrue(waitingReader.isActive, "The reader must be waiting on the database")
+
+            withTimeout(1_000) {
+                metadata.markAsSynced("note", EntityType.NOTE, Instant.fromEpochMilliseconds(10), 1)
+                assertEquals(0, metadata.getPendingCount())
+            }
+
+            databaseReleased.complete(Unit)
+            waitingReader.join()
+        }
+
     private fun service(
         dao: SyncMetadataDao,
         ownerId: String,
@@ -326,12 +353,16 @@ class DatabaseSyncMetadataServiceTest {
 
         var typeReads = 0
 
+        /** The next owner queue read waits here, as a read waits for a database another caller owns. */
+        var typeReadGate: CompletableDeferred<Unit>? = null
+
         override suspend fun getPendingByType(
             ownerId: String,
             serverOrigin: String,
             entityType: String,
         ): List<PendingUploadEntity> {
             if (ownerId.isNotEmpty()) typeReads++
+            if (ownerId.isNotEmpty()) typeReadGate?.also { typeReadGate = null }?.await()
             return pendingRows.filter { it.ownerId == ownerId && it.serverOrigin == serverOrigin && it.entityType == entityType }
         }
 

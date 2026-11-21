@@ -118,6 +118,54 @@ interface SyncMetadataDao {
         }
     }
 
+    /**
+     * Returns the owner's queue for a type, first copying any legacy owner-less rows forward when the
+     * owner has none. One Room transaction makes the check and copy atomic, so callers inside another
+     * transaction join it instead of waiting on a separate lock.
+     */
+    @Transaction
+    suspend fun getPendingByTypePromotingLegacy(
+        ownerId: String,
+        serverOrigin: String,
+        entityType: String,
+    ): List<PendingUploadEntity> {
+        promoteLegacyPendingOfType(ownerId, serverOrigin, entityType)
+        return getPendingByType(ownerId, serverOrigin, entityType)
+    }
+
+    /** Counts the owner's queue after promoting legacy rows for each of [entityTypes], in one transaction. */
+    @Transaction
+    suspend fun getPendingCountPromotingLegacy(
+        ownerId: String,
+        serverOrigin: String,
+        entityTypes: List<String>,
+    ): Int {
+        entityTypes.forEach { promoteLegacyPendingOfType(ownerId, serverOrigin, it) }
+        return getPendingCount(ownerId, serverOrigin)
+    }
+
+    /** Settles an entity for its owner and retires its legacy owner-less row with it. */
+    @Transaction
+    suspend fun deletePendingWithLegacy(
+        ownerId: String,
+        serverOrigin: String,
+        entityType: String,
+        entityId: String,
+    ) {
+        deletePending(ownerId, serverOrigin, entityType, entityId)
+        deletePending("", serverOrigin, entityType, entityId)
+    }
+
+    @Transaction
+    suspend fun promoteLegacyPendingOfType(
+        ownerId: String,
+        serverOrigin: String,
+        entityType: String,
+    ) {
+        if (getPendingByType(ownerId, serverOrigin, entityType).isNotEmpty()) return
+        getLegacyPendingByType(serverOrigin, entityType).forEach { promotePendingIfAbsent(it.copy(ownerId = ownerId)) }
+    }
+
     /** Joins transcript persistence without taking a service mutex while Room owns the writer. */
     @Transaction
     suspend fun enqueueTranscriptMutation(
