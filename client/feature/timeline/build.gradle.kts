@@ -43,6 +43,14 @@ kotlin {
             implementation(libs.coil.network.ktor3)
         }
 
+        val desktopTest by getting
+        desktopTest.dependencies {
+            // Lays out timeline panels headlessly on the JVM.
+            implementation(libs.kotlin.test)
+            implementation(libs.compose.ui.test)
+            implementation(compose.desktop.currentOs)
+        }
+
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.koin.android)

@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,6 +27,8 @@ import app.logdate.ui.common.ContextMenuItem
 import app.logdate.ui.common.EditorWindows
 import app.logdate.ui.common.LocalEditorWindows
 import app.logdate.ui.common.noteDragSource
+import app.logdate.ui.notes.NoteMediaKind
+import app.logdate.ui.notes.ProportionalNoteMedia
 import app.logdate.ui.provenance.CaptureTimeLabel
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.timeline.AudioNoteUiState
@@ -38,7 +39,6 @@ import app.logdate.ui.timeline.TextNoteUiState
 import app.logdate.ui.timeline.VideoNoteUiState
 import app.logdate.util.toReadableDateShort
 import app.logdate.util.toReadableDateTimeShort
-import coil3.compose.AsyncImage
 import logdate.client.feature.timeline.generated.resources.*
 import logdate.client.feature.timeline.generated.resources.Res
 import org.jetbrains.compose.resources.stringResource
@@ -158,11 +158,12 @@ private fun ImageNoteSnippet(uiState: ImageNoteUiState) {
         ) {
             if (uiState.presentation == PhotoPresentation.Framed) {
                 Column(Modifier.background(Color.White).padding(12.dp)) {
-                    AsyncImage(
-                        model = uiState.uri,
+                    ProportionalNoteMedia(
+                        mediaRef = uiState.uri,
+                        kind = NoteMediaKind.Photo,
+                        maxHeight = TimelineMediaMaxHeight,
                         contentDescription = uiState.caption,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(AspectRatios.TRADITIONAL),
                     )
                     if (uiState.caption.isNotBlank()) {
                         Text(
@@ -175,18 +176,15 @@ private fun ImageNoteSnippet(uiState: ImageNoteUiState) {
                 }
             } else {
                 Box {
-                    AsyncImage(
-                        model = uiState.uri,
+                    ProportionalNoteMedia(
+                        mediaRef = uiState.uri,
+                        kind = NoteMediaKind.Photo,
+                        maxHeight = TimelineMediaMaxHeight,
                         contentDescription =
                             stringResource(
                                 Res.string.cd_photo_from_date,
                                 uiState.timestamp.toReadableDateShort(),
                             ),
-                        contentScale = ContentScale.Crop,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(AspectRatios.TRADITIONAL),
                     )
                     if (uiState.caption.isNotBlank()) {
                         Box(
@@ -230,14 +228,12 @@ private fun VideoNoteSnippet(uiState: VideoNoteUiState) {
             modifier = Modifier.fillMaxWidth().noteDragSource(uiState.noteId.toString()),
         ) {
             Box {
-                AsyncImage(
-                    model = uiState.thumbnailUri ?: uiState.uri,
+                ProportionalNoteMedia(
+                    mediaRef = uiState.thumbnailUri ?: uiState.uri,
+                    kind = NoteMediaKind.Video,
+                    maxHeight = TimelineMediaMaxHeight,
                     contentDescription = stringResource(Res.string.video_recording),
-                    contentScale = ContentScale.Crop,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(AspectRatios.WIDESCREEN),
+                    initialRatio = AspectRatios.WIDESCREEN,
                 )
                 if (uiState.caption.isNotBlank()) {
                     Box(
@@ -262,3 +258,6 @@ private fun VideoNoteSnippet(uiState: VideoNoteUiState) {
         }
     }
 }
+
+/** Tall enough for a phone-width portrait at 3:4, so camera shots aren't squared off. */
+private val TimelineMediaMaxHeight = 480.dp
