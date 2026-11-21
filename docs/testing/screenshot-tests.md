@@ -630,6 +630,11 @@ that touch app, feature, UI, theme, or build code. It runs three jobs:
 | `desktop-screenshots`       | macOS                                                                                           | `./gradlew validateDesktopScreenshots --continue`                |
 | `ios-screenshot-validation` | macOS                                                                                           | `./gradlew validateIosScreenshots --continue`                    |
 
+The iOS lane runs only when the workflow is started by hand (`workflow_dispatch`), because it has been
+running past its 60-minute limit. Closing or merging a pull request cancels that pull request's
+screenshot run: the organization's macOS runners are shared, and a run left going for a merged pull
+request delays every other repository's macOS jobs.
+
 Android rendering results, XML, and HTML diagnostics upload even when validation fails; the runner change does not relax image thresholds or regenerate baselines. Each job uploads its results (rendered images and diffs) as a build artifact. When a job fails,
 download the artifact and compare the `diffs/` images with the references.
 
