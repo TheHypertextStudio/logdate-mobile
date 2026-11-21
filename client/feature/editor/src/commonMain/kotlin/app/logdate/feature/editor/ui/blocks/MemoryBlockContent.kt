@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -134,7 +133,7 @@ internal fun MemoryBlockContent(
                         Modifier.fillMaxWidth().height(220.dp),
                     )
                 } else {
-                    VideoPlayerContent(block.uri, Modifier.fillMaxWidth().aspectRatio(16f / 9f))
+                    EntryVideo(block.uri)
                 }
             }
 
@@ -161,7 +160,7 @@ internal fun MemoryBlockContent(
 
             is CameraBlockUiState -> {
                 if (block.mediaType == CapturedMediaType.VIDEO && block.uri != null) {
-                    VideoPlayerContent(block.uri, Modifier.fillMaxWidth().aspectRatio(16f / 9f))
+                    EntryVideo(block.uri)
                 } else {
                     Box(Modifier.fillMaxWidth()) {
                         ImageBlockPreview(
@@ -263,3 +262,17 @@ internal fun MemoryCaptionField(
         },
     )
 }
+
+/**
+ * A clip at its own proportions: the player sizes itself to the video, so a vertical camera clip
+ * stands upright, centered, instead of shrinking inside a widescreen box. Tall clips stop at
+ * [EntryVideoMaxHeight] so one clip can't fill the page.
+ */
+@Composable
+private fun EntryVideo(uri: String) {
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        VideoPlayerContent(uri, Modifier.heightIn(max = EntryVideoMaxHeight))
+    }
+}
+
+private val EntryVideoMaxHeight = 480.dp
