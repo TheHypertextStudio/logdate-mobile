@@ -70,12 +70,14 @@ class PlayServicesBlockStoreBytes(
  * not subject to Auto Backup's 25 MB app-data quota. Each write asks for cloud backup only when
  * Block Store can encrypt it end to end (Android 9+ with a screen lock). A write without it keeps
  * the copy on this device, and Block Store deletes any older cloud copy on its next sync, so the
- * key never reaches Google readable.
+ * key never reaches Google readable. A write also stays on this device while
+ * [cloudBackupAllowed] is false, which is how the person keeps the key off Google's servers.
  *
  * Media identities are not mirrored: Block Store entries are limited to 4 KB.
  */
 class BlockStoreIdentityKeyBackupStore(
     private val bytes: BlockStoreBytes,
+    private val cloudBackupAllowed: suspend () -> Boolean = { true },
 ) : IdentityKeyBackupStore {
     override suspend fun hasRootBackup(): Boolean = bytes.read(KEY) != null
 
@@ -113,10 +115,18 @@ class BlockStoreIdentityKeyBackupStore(
 
     override suspend fun clear() = bytes.delete(KEY)
 
+    /** Writes the stored entry again so a change to [cloudBackupAllowed] reaches Block Store. */
+    suspend fun reapplyCloudChoice() {
+        val encoded = bytes.read(KEY) ?: return
+        bytes.write(KEY, encoded, backUpToCloud())
+    }
+
+    private suspend fun backUpToCloud(): Boolean = cloudBackupAllowed() && bytes.isEndToEndEncryptionAvailable()
+
     private suspend fun write(record: StoredRoot) {
         val encoded = Json.encodeToString(record).encodeToByteArray()
         check(encoded.size <= MAX_ENTRY_BYTES) { "The identity backup mirror record is too large" }
-        bytes.write(KEY, encoded, backUpToCloud = bytes.isEndToEndEncryptionAvailable())
+        bytes.write(KEY, encoded, backUpToCloud())
     }
 
     private suspend fun readRecord(): StoredRoot? {

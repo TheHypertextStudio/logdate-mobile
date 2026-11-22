@@ -21,6 +21,7 @@ internal fun hasRetainedNativeContent(
             "watch_incoming",
             "db_recovery",
             "identity_recovery",
+            "identity_recovery_device",
             "datastore",
         ).any {
             // An unreadable directory is retained content, too; background recovery cannot prove it empty.

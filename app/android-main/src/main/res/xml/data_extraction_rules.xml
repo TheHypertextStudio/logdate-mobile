@@ -6,7 +6,8 @@
    Cloud backup (Google Drive, 25 MB limit):
      Includes the encrypted database and the recoverable database-passphrase and
      identity-recovery-phrase backups so small databases and the user's identity key
-     survive cloud restore. Exceeding the quota prevents a new cloud backup;
+     survive cloud restore. A key the person keeps on this device lives in
+     identity_recovery_device/, which only device-to-device transfer carries. Exceeding the quota prevents a new cloud backup;
      it does not selectively omit large files. Recovery secrets require an
      encrypted cloud transport. Original media is covered by direct transfer,
      LogDate Cloud, or a user-created archive.
@@ -44,6 +45,7 @@
         <include domain="file" path="archive_recovery/records/" />
         <include domain="file" path="db_recovery/" />
         <include domain="file" path="identity_recovery/" />
+        <include domain="file" path="identity_recovery_device/" />
         <include domain="file" path="retained_journals/" />
         <include domain="file" path="native_journal_transfer/current/" />
         <include domain="file" path="archive_recovery/sources/" />
@@ -54,5 +56,9 @@
         <exclude domain="file" path="identity_recovery/phrase_backup.part" />
         <exclude domain="file" path="identity_recovery/account_key_backup.part" />
         <exclude domain="file" path="identity_recovery/media_key_backup.part" />
+        <exclude domain="file" path="identity_recovery_device/phrase_backup.part" />
+        <exclude domain="file" path="identity_recovery_device/account_key_backup.part" />
+        <exclude domain="file" path="identity_recovery_device/media_key_backup.part" />
+        <exclude domain="file" path="identity_recovery_device/keep_on_device.part" />
     </device-transfer>
 </data-extraction-rules>

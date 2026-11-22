@@ -1,6 +1,7 @@
 package app.logdate.client.device.crypto
 
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -47,6 +48,42 @@ class BlockStoreIdentityKeyBackupStoreTest {
             bytes.endToEnd = true
             store.writePhrase("alpha beta gamma")
             assertTrue(bytes.backedUp)
+        }
+
+    @Test
+    fun `the key stays on this device when the person keeps it there`() =
+        runTest {
+            var allowed = true
+            val store = BlockStoreIdentityKeyBackupStore(bytes) { allowed }
+            store.writePhrase("alpha beta gamma")
+            assertTrue(bytes.backedUp)
+
+            allowed = false
+            store.reapplyCloudChoice()
+            assertFalse(bytes.backedUp)
+            assertEquals("alpha beta gamma", store.readPhrase())
+
+            store.writePhrase("alpha beta gamma")
+            assertFalse(bytes.backedUp)
+        }
+
+    @Test
+    fun `reapplying the cloud choice with no entry writes nothing`() =
+        runTest {
+            BlockStoreIdentityKeyBackupStore(bytes) { false }.reapplyCloudChoice()
+
+            assertNull(bytes.stored)
+        }
+
+    @Test
+    fun `status says the person kept the key on this device`() =
+        runTest {
+            bytes.endToEnd = true
+
+            assertEquals(
+                KeyBackupStatus.DeviceOnly(DeviceOnlyReason.USER_OPTED_OUT),
+                AndroidKeyBackupStatusSource(bytes, flowOf(false)) { true }.observe().first(),
+            )
         }
 
     @Test

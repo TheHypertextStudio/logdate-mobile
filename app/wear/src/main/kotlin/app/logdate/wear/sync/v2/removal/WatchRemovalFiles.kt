@@ -6,7 +6,7 @@ internal fun clearWatchFiles(
     filesDir: File,
     cacheDir: File,
 ) {
-    listOf("audio_notes", "media", "synced_audio", "user_media", "identity_recovery").forEach { name ->
+    listOf("audio_notes", "media", "synced_audio", "user_media", "identity_recovery", "identity_recovery_device").forEach { name ->
         val directory = File(filesDir, name)
         check(!directory.exists() || directory.deleteRecursively()) { "Watch media or recovery data could not be erased" }
     }

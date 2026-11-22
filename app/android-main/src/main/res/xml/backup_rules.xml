@@ -43,6 +43,11 @@
     <include domain="file" path="datastore/" requireFlags="deviceToDeviceTransfer" />
     <include domain="file" path="db_recovery/" requireFlags="deviceToDeviceTransfer" />
     <include domain="file" path="identity_recovery/" requireFlags="deviceToDeviceTransfer" />
+    <include
+    domain="file"
+    path="identity_recovery_device/"
+    requireFlags="deviceToDeviceTransfer"
+  />
     <include domain="database" path="logdate" requireFlags="deviceToDeviceTransfer" />
     <include domain="database" path="logdate-wal" requireFlags="deviceToDeviceTransfer" />
     <include domain="database" path="logdate-shm" requireFlags="deviceToDeviceTransfer" />
@@ -51,4 +56,8 @@
     <exclude domain="file" path="identity_recovery/phrase_backup.part" />
     <exclude domain="file" path="identity_recovery/account_key_backup.part" />
     <exclude domain="file" path="identity_recovery/media_key_backup.part" />
+    <exclude domain="file" path="identity_recovery_device/phrase_backup.part" />
+    <exclude domain="file" path="identity_recovery_device/account_key_backup.part" />
+    <exclude domain="file" path="identity_recovery_device/media_key_backup.part" />
+    <exclude domain="file" path="identity_recovery_device/keep_on_device.part" />
 </full-backup-content>

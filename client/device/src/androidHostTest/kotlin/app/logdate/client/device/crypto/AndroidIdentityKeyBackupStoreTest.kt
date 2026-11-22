@@ -351,4 +351,55 @@ class AndroidIdentityKeyBackupStoreTest {
 
             assertNull(store.readPhrase())
         }
+
+    @Test
+    fun `keeping the key on this device moves every file out of the cloud backup directory and back`() =
+        runTest {
+            val binding = Base64.encode(ByteArray(32) { 2 })
+            store.writeAccountIdentity(AccountIdentityBackup("owner", ByteArray(32) { 1 }, ByteArray(32) { 3 }))
+            store.writeMediaIdentity(MediaIdentityBackup(binding, ByteArray(32) { 4 }))
+
+            store.keepOnDevice(true)
+
+            assertTrue(store.isKeptOnDevice())
+            assertTrue(File(tempDir, "identity_recovery").listFiles().orEmpty().isEmpty())
+            assertTrue(File(tempDir, "identity_recovery_device/account_key_backup").exists())
+            assertEquals("owner", AndroidIdentityKeyBackupStore(context).readAccountIdentity()?.accountId)
+            assertContentEquals(ByteArray(32) { 4 }, store.readMediaIdentity(binding)?.key)
+
+            store.writePhrase("alpha beta")
+            assertTrue(File(tempDir, "identity_recovery_device/phrase_backup").exists())
+            assertTrue(!File(tempDir, "identity_recovery/phrase_backup").exists())
+
+            store.keepOnDevice(false)
+
+            assertEquals(false, store.isKeptOnDevice())
+            assertEquals("alpha beta", store.readPhrase())
+            assertTrue(File(tempDir, "identity_recovery/phrase_backup").exists())
+            assertTrue(File(tempDir, "identity_recovery_device").listFiles().orEmpty().isEmpty())
+        }
+
+    @Test
+    fun `a move interrupted by a crash finishes on the next read`() =
+        runTest {
+            store.writePhrase("alpha beta")
+            File(tempDir, "identity_recovery_device").mkdirs()
+            File(tempDir, "identity_recovery_device/keep_on_device").writeBytes(byteArrayOf())
+
+            assertEquals("alpha beta", AndroidIdentityKeyBackupStore(context).readPhrase())
+            assertTrue(!File(tempDir, "identity_recovery/phrase_backup").exists())
+        }
+
+    @Test
+    fun `clearing a key kept on this device removes it`() =
+        runTest {
+            store.keepOnDevice(true)
+            store.writePhrase("alpha beta")
+
+            store.clear()
+
+            assertEquals(false, store.hasBackup())
+            assertTrue(!File(tempDir, "identity_recovery_device/phrase_backup").exists())
+            assertTrue(store.isKeptOnDevice())
+        }
 }

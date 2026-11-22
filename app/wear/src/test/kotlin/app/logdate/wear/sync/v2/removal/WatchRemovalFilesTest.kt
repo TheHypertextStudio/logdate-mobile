@@ -19,6 +19,7 @@ class WatchRemovalFilesTest {
                     "synced_audio/playback.m4a",
                     "user_media/legacy.jpg",
                     "identity_recovery/phrase_backup",
+                    "identity_recovery_device/account_key_backup",
                 ).map { name ->
                     files.resolve(name).apply {
                         parentFile.mkdirs()
