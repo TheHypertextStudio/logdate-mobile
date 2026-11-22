@@ -61,7 +61,11 @@ class BlockStoreIdentityKeyBackupStoreTest {
     fun `a tampered entry is reported as unreadable rather than returned`() =
         runTest {
             store.writeAccountIdentity(AccountIdentityBackup("owner", ByteArray(32) { 1 }))
-            bytes.stored = bytes.stored!!.decodeToString().replace("owner", "other").encodeToByteArray()
+            bytes.stored =
+                bytes.stored!!
+                    .decodeToString()
+                    .replace("owner", "other")
+                    .encodeToByteArray()
 
             assertFailsWith<IllegalStateException> { store.readAccountIdentity() }
             assertTrue(store.hasRootBackup())

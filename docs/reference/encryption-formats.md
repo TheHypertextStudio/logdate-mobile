@@ -587,10 +587,14 @@ of its own to it. When dependency injection creates the database object, the app
 | Files covered                   | `logdate` only. The `-wal` and `-shm` files beside it are not set.                                  |
 | File missing when the call runs | The attribute is set only if `logdate` exists when the call runs.                                   |
 
-The recovery phrase is also stored in a second Keychain item, under the service
-`app.logdate.identity-recovery`, that is marked synchronizable so that iCloud Keychain carries it to
-the person's other devices
-([`IosIdentityKeyBackupStore`](../../client/device/src/iosMain/kotlin/app/logdate/client/device/crypto/IosIdentityKeyBackupStore.kt)).
+The identity backup is also stored in synchronizable Keychain items, under the service
+`app.logdate.identity-recovery`, so that iCloud Keychain carries it to the person's other devices
+([`ICloudKeychainIdentityBackupItems`](../../client/device/src/iosMain/kotlin/app/logdate/client/device/crypto/ICloudKeychainIdentityBackupItems.kt)).
+The account `identity_recovery_phrase_backup_v1` holds the recovery phrase, and
+`identity_account_key_backup_v1` holds an account key with its paired media key. Only one of those
+two exists at a time. `identity_media_key_backup_v1` holds up to 64 media keys. The account and
+media records use the same checksummed JSON as Android's backup files
+([`RetainedIdentityRecords`](../../client/device/src/commonMain/kotlin/app/logdate/client/device/crypto/RetainedIdentityRecords.kt)).
 
 ### Desktop database
 
