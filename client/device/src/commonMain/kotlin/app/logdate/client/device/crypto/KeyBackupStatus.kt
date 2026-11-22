@@ -47,3 +47,16 @@ interface KeyBackupStatusSource {
 object UnsupportedKeyBackupStatusSource : KeyBackupStatusSource {
     override fun observe(): Flow<KeyBackupStatus> = flowOf(KeyBackupStatus.DeviceOnly(DeviceOnlyReason.UNSUPPORTED))
 }
+
+/**
+ * The person's choice to keep the journal key out of cloud backup ("Keep my key on this device
+ * only"). Cloud backup is allowed by default. Turning it off removes the cloud copy at the
+ * platform's next backup and keeps the copy on this device, plus device-to-device transfer.
+ *
+ * Only platforms that can honor the choice provide one.
+ */
+interface KeyBackupPreference {
+    val cloudBackupAllowed: Flow<Boolean>
+
+    suspend fun setCloudBackupAllowed(allowed: Boolean)
+}

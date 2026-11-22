@@ -11,16 +11,25 @@ actual fun platformCryptoModule(): Module =
         single<CryptoManager> { AndroidCryptoManager() }
         single<PlcRecoveryKeyManager> { DeterministicPlcRecoveryKeyManager(get(), platformPlcRecoveryKeySupport()) }
         single<BlockStoreBytes> { PlayServicesBlockStoreBytes(androidContext()) }
+        single { AndroidIdentityKeyBackupStore(androidContext()) }
+        single {
+            val files = get<AndroidIdentityKeyBackupStore>()
+            BlockStoreIdentityKeyBackupStore(get()) { !files.isKeptOnDevice() }
+        }
+        single { AndroidKeyBackupPreference(get(), get()) }
+        single<KeyBackupPreference> { get<AndroidKeyBackupPreference>() }
         single<IdentityKeyBackupStore> {
             val flags = getOrNull<FeatureFlagStore>()
             LayeredIdentityKeyBackupStore(
-                primary = AndroidIdentityKeyBackupStore(androidContext()),
-                mirror = BlockStoreIdentityKeyBackupStore(get()),
+                primary = get<AndroidIdentityKeyBackupStore>(),
+                mirror = get<BlockStoreIdentityKeyBackupStore>(),
                 mirrorEnabled = { flags?.isEnabled(FeatureFlag.PLATFORM_KEY_BACKUP) == true },
             )
         }
         single<KeyBackupStatusSource> {
             val flags = getOrNull<FeatureFlagStore>()
-            AndroidKeyBackupStatusSource(get()) { flags?.isEnabled(FeatureFlag.PLATFORM_KEY_BACKUP) == true }
+            AndroidKeyBackupStatusSource(get(), get<KeyBackupPreference>().cloudBackupAllowed) {
+                flags?.isEnabled(FeatureFlag.PLATFORM_KEY_BACKUP) == true
+            }
         }
     }

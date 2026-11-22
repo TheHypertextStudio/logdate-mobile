@@ -21,6 +21,9 @@ import java.nio.file.StandardCopyOption
  * phrase store a versioned account-bound key instead. Both representations require the
  * encrypted cloud transport configured by the app's native backup rules.
  *
+ * When the person chooses to keep the key on this device, the files move to a directory that
+ * only device-to-device transfer carries (see [keepOnDevice]).
+ *
  * ## Security model
  *
  * Protected the same way as the database passphrase backup:
@@ -35,10 +38,10 @@ import java.nio.file.StandardCopyOption
 class AndroidIdentityKeyBackupStore(
     private val context: Context,
 ) : IdentityKeyBackupStore {
-    override suspend fun hasMediaBackup(): Boolean = backupFileMutex.withLock { mediaFile().exists() }
+    override suspend fun hasMediaBackup(): Boolean = locked { mediaFile().exists() }
 
     override suspend fun readMediaIdentity(identityBinding: String): MediaIdentityBackup? =
-        backupFileMutex.withLock { readMediaIdentities().firstOrNull { it.identityBinding == identityBinding } }
+        locked { readMediaIdentities().firstOrNull { it.identityBinding == identityBinding } }
 
     private fun readMediaIdentities(): List<MediaIdentityBackup> {
         val file = mediaFile()
@@ -54,21 +57,20 @@ class AndroidIdentityKeyBackupStore(
     }
 
     override suspend fun writeMediaIdentity(identity: MediaIdentityBackup) {
-        backupFileMutex.withLock {
-            val updated = RetainedIdentityRecords.addMedia(readMediaIdentities(), identity) ?: return@withLock
+        locked {
+            val updated = RetainedIdentityRecords.addMedia(readMediaIdentities(), identity) ?: return@locked
             writeAtomically(mediaFile(), RetainedIdentityRecords.encodeMedia(updated))
         }
     }
 
-    override suspend fun hasRootBackup(): Boolean = backupFileMutex.withLock { backupFile().exists() || accountFile().exists() }
+    override suspend fun hasRootBackup(): Boolean = locked { backupFile().exists() || accountFile().exists() }
 
-    override suspend fun hasBackup(): Boolean =
-        backupFileMutex.withLock { backupFile().exists() || accountFile().exists() || mediaFile().exists() }
+    override suspend fun hasBackup(): Boolean = locked { backupFile().exists() || accountFile().exists() || mediaFile().exists() }
 
     override suspend fun readAccountIdentity(): AccountIdentityBackup? =
-        backupFileMutex.withLock {
+        locked {
             val file = accountFile()
-            if (!file.exists()) return@withLock null
+            if (!file.exists()) return@locked null
             try {
                 check(file.length() <= RetainedIdentityRecords.MAX_ACCOUNT_BYTES) { "Invalid account identity backup size" }
                 RetainedIdentityRecords.decodeAccount(file.readBytes())
@@ -79,16 +81,16 @@ class AndroidIdentityKeyBackupStore(
         }
 
     override suspend fun writeAccountIdentity(identity: AccountIdentityBackup) {
-        backupFileMutex.withLock {
+        locked {
             writeAtomically(accountFile(), RetainedIdentityRecords.encodeAccount(identity))
             deleteIfPresent(backupFile())
         }
     }
 
     override suspend fun readPhrase(): String? =
-        backupFileMutex.withLock {
+        locked {
             val file = backupFile()
-            if (!file.exists()) return@withLock null
+            if (!file.exists()) return@locked null
             runCatching {
                 val phrase = file.readText().trim()
                 phrase.ifEmpty { null }
@@ -99,25 +101,77 @@ class AndroidIdentityKeyBackupStore(
         }
 
     override suspend fun writePhrase(phrase: String) {
-        backupFileMutex.withLock {
+        locked {
             writeAtomically(backupFile(), phrase.encodeToByteArray())
             deleteIfPresent(accountFile())
         }
     }
 
     override suspend fun clear() {
-        backupFileMutex.withLock {
+        locked {
             deleteIfPresent(backupFile())
             deleteIfPresent(accountFile())
             deleteIfPresent(mediaFile())
         }
     }
 
-    private fun backupFile(): File = File(context.filesDir, BACKUP_PATH)
+    /** Whether the person chose to keep these files out of cloud backup. */
+    suspend fun isKeptOnDevice(): Boolean = locked { keptOnDevice() }
 
-    private fun mediaFile(): File = File(context.filesDir, "identity_recovery/media_key_backup")
+    /**
+     * Moves the backup files between the directory that cloud backup and device transfer carry and
+     * the one only device transfer carries. Cloud backup drops the files from its copy on its next
+     * run, because each run replaces the app's whole backup set.
+     */
+    suspend fun keepOnDevice(onDevice: Boolean) {
+        locked {
+            if (onDevice) {
+                writeAtomically(markerFile(), byteArrayOf())
+            } else {
+                deleteIfPresent(markerFile())
+            }
+            settle()
+        }
+    }
 
-    private fun accountFile(): File = File(context.filesDir, "identity_recovery/account_key_backup")
+    private suspend fun <T> locked(block: suspend () -> T): T =
+        backupFileMutex.withLock {
+            settle()
+            block()
+        }
+
+    /**
+     * Brings every file into the directory the current choice names. A move interrupted by a crash
+     * finishes here on the next call. A file already present at the target is the newer one, since
+     * every write goes to the target, so the leftover is removed.
+     */
+    private fun settle() {
+        val target = activeDirectory()
+        val other = if (target == DEVICE_ONLY_DIRECTORY) SHARED_DIRECTORY else DEVICE_ONLY_DIRECTORY
+        FILE_NAMES.forEach { name ->
+            val source = File(context.filesDir, "$other/$name")
+            if (!source.exists()) return@forEach
+            val destination = File(context.filesDir, "$target/$name")
+            if (destination.exists()) {
+                deleteIfPresent(source)
+            } else {
+                destination.parentFile?.mkdirs()
+                Files.move(source.toPath(), destination.toPath(), StandardCopyOption.ATOMIC_MOVE)
+            }
+        }
+    }
+
+    private fun keptOnDevice(): Boolean = markerFile().exists()
+
+    private fun activeDirectory(): String = if (keptOnDevice()) DEVICE_ONLY_DIRECTORY else SHARED_DIRECTORY
+
+    private fun markerFile(): File = File(context.filesDir, "$DEVICE_ONLY_DIRECTORY/$MARKER")
+
+    private fun backupFile(): File = File(context.filesDir, "${activeDirectory()}/$PHRASE")
+
+    private fun mediaFile(): File = File(context.filesDir, "${activeDirectory()}/$MEDIA")
+
+    private fun accountFile(): File = File(context.filesDir, "${activeDirectory()}/$ACCOUNT")
 
     private fun writeAtomically(
         file: File,
@@ -137,7 +191,15 @@ class AndroidIdentityKeyBackupStore(
     }
 
     private companion object {
-        const val BACKUP_PATH = "identity_recovery/phrase_backup"
+        // Both directories are named in the app's backup rules: cloud backup carries only the
+        // first, and device-to-device transfer carries both.
+        const val SHARED_DIRECTORY = "identity_recovery"
+        const val DEVICE_ONLY_DIRECTORY = "identity_recovery_device"
+        const val MARKER = "keep_on_device"
+        const val PHRASE = "phrase_backup"
+        const val ACCOUNT = "account_key_backup"
+        const val MEDIA = "media_key_backup"
+        val FILE_NAMES = listOf(PHRASE, ACCOUNT, MEDIA)
         val backupFileMutex = Mutex()
     }
 }

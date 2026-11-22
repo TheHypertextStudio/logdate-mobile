@@ -118,6 +118,28 @@ class NativeBackupPolicyTest(unittest.TestCase):
                         )
                     )
 
+    def test_a_key_kept_on_device_skips_cloud_backup_but_moves_with_transfer(self):
+        for modern in (False, True):
+            for name in (
+                "phrase_backup",
+                "account_key_backup",
+                "media_key_backup",
+                "keep_on_device",
+            ):
+                path = f"identity_recovery_device/{name}"
+                with self.subTest(modern=modern, path=path):
+                    self.assertFalse(
+                        included("file", path, modern=modern, transfer=False)
+                    )
+                    self.assertTrue(
+                        included("file", path, modern=modern, transfer=True)
+                    )
+                    self.assertFalse(
+                        included(
+                            "file", path + ".part", modern=modern, transfer=True
+                        )
+                    )
+
     def test_direct_transfer_requires_agent_selection_for_original_media(self):
         # XML default traversal omits originals; the pinned agent selection emits them.
         for modern in (False, True):

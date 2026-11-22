@@ -14,7 +14,16 @@ class RetainedNativeContentTest {
         try {
             val database = root.resolve("databases/logdate")
             assertFalse(hasRetainedNativeContent(root, database, preferencesOf()))
-            for (name in listOf("media", "user_media", "audio_notes", "camera-captures", "db_recovery", "identity_recovery", "datastore")) {
+            for (name in listOf(
+                "media",
+                "user_media",
+                "audio_notes",
+                "camera-captures",
+                "db_recovery",
+                "identity_recovery",
+                "identity_recovery_device",
+                "datastore",
+            )) {
                 val retained = root.resolve(name)
                 retained.mkdir()
                 assertTrue(hasRetainedNativeContent(root, database, preferencesOf()), name)
