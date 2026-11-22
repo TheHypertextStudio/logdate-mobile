@@ -261,6 +261,38 @@ class AndroidIdentityKeyBackupStoreTest {
             assertContentEquals(original, file.readBytes())
         }
 
+    @Test
+    fun `account and media records written on Android read the same in the iCloud Keychain store`() =
+        runTest {
+            val binding = Base64.encode(ByteArray(32) { 9 })
+            store.writeAccountIdentity(AccountIdentityBackup("owner", ByteArray(32) { 5 }, ByteArray(32) { 6 }))
+            store.writeMediaIdentity(MediaIdentityBackup(binding, ByteArray(32) { 4 }))
+            val items =
+                object : IdentityBackupItems {
+                    val values =
+                        mapOf(
+                            "identity_account_key_backup_v1" to File(tempDir, "identity_recovery/account_key_backup").readBytes(),
+                            "identity_media_key_backup_v1" to File(tempDir, "identity_recovery/media_key_backup").readBytes(),
+                        )
+
+                    override suspend fun read(name: String): ByteArray? = values[name]
+
+                    override suspend fun write(
+                        name: String,
+                        value: ByteArray,
+                    ) = error("read only")
+
+                    override suspend fun delete(name: String) = error("read only")
+                }
+            val keychain = ItemIdentityKeyBackupStore(items)
+
+            val account = keychain.readAccountIdentity()
+            assertEquals("owner", account?.accountId)
+            assertContentEquals(ByteArray(32) { 5 }, account?.key)
+            assertContentEquals(ByteArray(32) { 6 }, account?.mediaKey)
+            assertContentEquals(ByteArray(32) { 4 }, keychain.readMediaIdentity(binding)?.key)
+        }
+
     @AfterTest
     fun cleanup() {
         tempDir.deleteRecursively()
