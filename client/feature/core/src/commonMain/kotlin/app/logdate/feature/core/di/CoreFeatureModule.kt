@@ -3,6 +3,7 @@ package app.logdate.feature.core.di
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.device.crypto.IdentityKeyManager
+import app.logdate.client.device.crypto.KeyBackupPreference
 import app.logdate.client.domain.account.EmailVerificationAvailability
 import app.logdate.client.domain.account.EnqueueAllLocalDataUseCase
 import app.logdate.client.domain.account.GetCurrentEntitlementUseCase
@@ -58,6 +59,7 @@ import app.logdate.feature.core.settings.ui.DangerZoneSettingsViewModel
 import app.logdate.feature.core.settings.ui.DataSettingsViewModel
 import app.logdate.feature.core.settings.ui.DayBoundarySettingsViewModel
 import app.logdate.feature.core.settings.ui.DeviceEraser
+import app.logdate.feature.core.settings.ui.KeyBackupChoiceViewModel
 import app.logdate.feature.core.settings.ui.LibrarySettingsViewModel
 import app.logdate.feature.core.settings.ui.LocalDiagnosticsViewModel
 import app.logdate.feature.core.settings.ui.LocationSettingsViewModel
@@ -238,6 +240,7 @@ val coreFeatureModule: Module =
                 get(),
             )
         }
+        viewModel { KeyBackupChoiceViewModel(getOrNull<KeyBackupPreference>(), getOrNull<FeatureFlagStore>()) }
         viewModel { UserDataExportViewModel(get(), get()) }
         viewModel { UserDataRestoreViewModel(get(), get()) }
         viewModel { AdvancedSettingsViewModel(appUpdateController = get(), preferences = get()) }

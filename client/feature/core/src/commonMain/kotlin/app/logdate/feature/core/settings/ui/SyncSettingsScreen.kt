@@ -45,6 +45,7 @@ fun SyncSettingsScreen(
     onRecoverJournalMerge: (JournalMergeOperation) -> Unit = {},
     onReviewSavedEdits: () -> Unit = {},
     viewModel: DataSettingsViewModel = koinViewModel(),
+    keyBackupChoiceViewModel: KeyBackupChoiceViewModel = koinViewModel(),
     mergeJournals: MergeJournalsUseCase = koinInject(),
     journalStorage: JournalStorageMove = koinInject(),
     appUpdates: AppUpdateController = koinInject(),
@@ -57,6 +58,7 @@ fun SyncSettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val reviewableIssueCount by viewModel.reviewableIssueCount.collectAsStateWithLifecycle()
     val nativeBackupStatus by viewModel.nativeBackupStatus.collectAsStateWithLifecycle()
+    val keyBackupChoice by keyBackupChoiceViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     SyncFeedbackEffect(viewModel, snackbarHostState, onNavigateToSignIn)
@@ -81,6 +83,8 @@ fun SyncSettingsScreen(
         nativeBackupStatus = nativeBackupStatus,
         onExportArchive = onNavigateToExport,
         onRetryNativeRecovery = viewModel::retryNativeRecovery,
+        keyBackupChoice = keyBackupChoice,
+        onKeepKeyOnDeviceChange = keyBackupChoiceViewModel::setKeepOnDevice,
         isAuthenticated = uiState.isAuthenticated,
         accountLoadFailed = uiState.accountLoadFailed,
         onRetryAccount = viewModel::observeAccount,
@@ -103,6 +107,8 @@ fun SyncSettingsContent(
     nativeBackupStatus: NativeBackupStatus = NativeBackupStatus.Unsupported,
     onExportArchive: () -> Unit = {},
     onRetryNativeRecovery: () -> Unit = {},
+    keyBackupChoice: KeyBackupChoiceState? = null,
+    onKeepKeyOnDeviceChange: (Boolean) -> Unit = {},
     isAuthenticated: Boolean?,
     accountLoadFailed: Boolean = false,
     onRetryAccount: () -> Unit = {},
@@ -182,6 +188,11 @@ fun SyncSettingsContent(
                     onRetryRecovery = onRetryNativeRecovery,
                     onOpenArchive = onExportArchive,
                 )
+            }
+        }
+        keyBackupChoice?.let { choice ->
+            item {
+                KeyBackupChoiceSection(choice, onKeepKeyOnDeviceChange, Modifier.padding(horizontal = Spacing.lg))
             }
         }
         if (isAuthenticated == true) {

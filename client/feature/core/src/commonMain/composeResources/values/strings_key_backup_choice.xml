@@ -1,0 +1,13 @@
+<resources>
+    <string name="key_backup_choice_section">Journal key</string>
+    <string name="key_backup_choice_title">Keep my key on this device only</string>
+    <string
+    name="key_backup_choice_shared"
+  >When backup is on, your phone's backup keeps an encrypted copy of your journal key. Without it, a lost phone needs your recovery phrase or LogDate account.</string>
+    <string
+    name="key_backup_choice_kept"
+  >Your journal key stays out of your phone's backup. A lost phone needs your recovery phrase or LogDate account. Moving directly to a new phone still works.</string>
+    <string
+    name="key_backup_choice_failed"
+  >Google Play services didn't confirm this change, so your key's backup copy may not match it yet. Switch it again to retry.</string>
+</resources>

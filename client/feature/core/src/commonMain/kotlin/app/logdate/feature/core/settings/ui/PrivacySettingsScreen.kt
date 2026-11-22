@@ -68,8 +68,10 @@ fun PrivacySettingsScreen(
     onNavigateToLocationSettings: () -> Unit = {},
     onNavigateToAndroidAssistants: () -> Unit = {},
     viewModel: PrivacySettingsViewModel = koinViewModel(),
+    keyBackupChoiceViewModel: KeyBackupChoiceViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val keyBackupChoice by keyBackupChoiceViewModel.state.collectAsStateWithLifecycle()
     val prompt =
         PrivacyAuthenticationPrompt(
             title = stringResource(Res.string.privacy_auth_title),
@@ -91,6 +93,8 @@ fun PrivacySettingsScreen(
         onRetrySystemSearchVisibility = viewModel::retrySystemSearchVisibility,
         onNavigateToLocationSettings = onNavigateToLocationSettings,
         onNavigateToAndroidAssistants = onNavigateToAndroidAssistants,
+        keyBackupChoice = keyBackupChoice,
+        onKeepKeyOnDeviceChange = keyBackupChoiceViewModel::setKeepOnDevice,
     )
 }
 
@@ -128,6 +132,8 @@ fun PrivacySettingsContent(
     onRetrySystemSearchVisibility: () -> Unit = {},
     onNavigateToLocationSettings: () -> Unit = {},
     onNavigateToAndroidAssistants: () -> Unit = {},
+    keyBackupChoice: KeyBackupChoiceState? = null,
+    onKeepKeyOnDeviceChange: (Boolean) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showDisableBiometricsDialog by remember { mutableStateOf(false) }
@@ -172,6 +178,12 @@ fun PrivacySettingsContent(
                         onCheckedChange = onSetSystemSearchVisibilityEnabled,
                     )
                 }
+            }
+        }
+
+        keyBackupChoice?.let { choice ->
+            item {
+                KeyBackupChoiceSection(choice, onKeepKeyOnDeviceChange, Modifier.padding(horizontal = Spacing.lg))
             }
         }
 
