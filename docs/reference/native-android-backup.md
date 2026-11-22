@@ -200,6 +200,10 @@ records. Root changes, media selection, and backfill share a lock so startup can
 previously cached media key to the recovered identity.
 Account backup version 2 stores the root and independent media key together, so interruption
 between primary key writes leaves both recoverable. Version 1 account backups remain readable.
+When the person turns on "Keep my key on this device only", these files move to
+`identity_recovery_device/`, which only device-to-device transfer carries, and the Block Store mirror
+is written again without cloud backup. A `keep_on_device` marker in that directory records the
+choice, so a direct transfer keeps it, and an interrupted move finishes on the next read.
 Phrase recovery preserves a paired media key before replacing the account backup representation.
 Startup, sync provisioning, and the full-backup callback backfill existing installations without
 minting new identities. These copies use app-private filesystem protection, Android file-based encryption, and the
