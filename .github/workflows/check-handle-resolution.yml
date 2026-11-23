@@ -19,6 +19,12 @@ permissions:
   contents: read
 
 jobs:
+  route:
+    uses: ./.github/workflows/studio-route.yml
+    permissions:
+      actions: read
+      contents: read
+
   staging:
     name: Resolve the staging canary handle
     # The job is skipped, not failed, until the repository variable names a staging canary account.
@@ -27,7 +33,8 @@ jobs:
         vars.LOGDATE_STAGING_RESOLUTION_HANDLE != '' &&
         (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
       }}
-    runs-on: ubuntu-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
     timeout-minutes: 5
     steps:
       - name: Check out repository

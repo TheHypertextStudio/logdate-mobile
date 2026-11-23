@@ -55,10 +55,18 @@ permissions:
   contents: read
 
 jobs:
+  route:
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/studio-route.yml
+    permissions:
+      actions: read
+      contents: read
+
   android-screenshot-compile:
     name: Compile shared Android screenshot inputs
     if: github.event.action != 'closed'
-    runs-on: macos-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.macos == 'studio' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || 'macos-latest' }}
     timeout-minutes: 35
     env:
       LOGDATE_CI_BUILD_CACHE_DIR: ${{ github.workspace }}/ci-screenshot-build-cache
@@ -123,8 +131,9 @@ jobs:
 
   android-wear-screenshots:
     name: ${{ matrix.platform }} screenshots${{ matrix.shard && format(' ({0})', matrix.shard) || '' }}
-    runs-on: ${{ matrix.runner }}
-    needs: android-screenshot-compile
+    # Match the rendering host used for the committed pixel-exact references.
+    runs-on: ${{ needs.route.outputs.macos == 'studio' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || 'macos-latest' }}
+    needs: [route, android-screenshot-compile]
     env:
       LOGDATE_CI_BUILD_CACHE_DIR: ${{ github.workspace }}/ci-screenshot-build-cache
     timeout-minutes: 45
@@ -139,22 +148,18 @@ jobs:
             shard: audit
             module: android-main
             include: app.logdate.screenshots.audit.*
-            # Match the rendering host used for the committed pixel-exact references.
-            runner: macos-latest
             distribution: jetbrains
             java-version: '21'
           - platform: Android
             shard: components
             module: android-main
             include: app.logdate.screenshots.components.*
-            runner: macos-latest
             distribution: jetbrains
             java-version: '21'
           - platform: Android
             shard: remaining
             module: android-main
             exclude: app.logdate.screenshots.audit.*,app.logdate.screenshots.components.*
-            runner: macos-latest
             distribution: jetbrains
             java-version: '21'
     steps:
@@ -248,7 +253,8 @@ jobs:
   wear-screenshots:
     name: Wear screenshots
     if: github.event.action != 'closed'
-    runs-on: macos-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.macos == 'studio' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || 'macos-latest' }}
     timeout-minutes: 45
     steps:
       - name: Check out repository
@@ -329,7 +335,8 @@ jobs:
     name: Desktop screenshots
     if: github.event.action != 'closed'
     # Desktop references use macOS 27 text rasterization.
-    runs-on: xcode-27
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.macos == 'studio' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || 'xcode-27' }}
     # Cold compilation and rendering need independent budgets; leave time for setup/reports.
     timeout-minutes: 60
     steps:
@@ -378,7 +385,8 @@ jobs:
     # run since 2026-11-20, which held a shared macOS runner for an hour without a result. Bring it
     # back to pull requests once it finishes inside its limit.
     if: github.event_name == 'workflow_dispatch'
-    runs-on: macos-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.macos == 'studio' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || 'macos-latest' }}
     timeout-minutes: 60
     steps:
       - name: Check out repository

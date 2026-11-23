@@ -20,10 +20,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  route:
+    uses: ./.github/workflows/studio-route.yml
+    permissions:
+      actions: read
+      contents: read
+
   verify-staging:
     name: Verify staging before production
     if: startsWith(github.ref, 'refs/tags/server-v')
-    runs-on: ubuntu-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       - name: Check out production tag
