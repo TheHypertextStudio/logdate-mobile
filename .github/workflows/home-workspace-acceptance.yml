@@ -19,6 +19,7 @@ permissions:
 jobs:
   native-map:
     name: Native map on managed phone and tablet
+    # Studio platform gap (logdate-web docs/ci.md): x86_64 Android emulators need KVM and sudo.
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

@@ -46,6 +46,7 @@ jobs:
     name: Publish Android internal release
     if: ${{ vars.LOGDATE_PLAY_INTERNAL_PUBLISH_ENABLED == 'true' && inputs.stage == 'internal' }}
     environment: production
+    # Studio platform gap (logdate-web docs/ci.md): the Android toolchain has no Linux ARM64 build.
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -160,6 +161,7 @@ jobs:
     name: Promote Android release to production
     if: ${{ vars.LOGDATE_PLAY_PRODUCTION_PUBLISH_ENABLED == 'true' && github.event_name == 'workflow_dispatch' && inputs.stage != 'internal' }}
     environment: production
+    # Studio platform gap (logdate-web docs/ci.md): the Android toolchain has no Linux ARM64 build.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

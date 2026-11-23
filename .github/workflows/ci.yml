@@ -23,8 +23,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  route:
+    uses: ./.github/workflows/studio-route.yml
+    permissions:
+      actions: read
+      contents: read
+
   test:
     name: Unit tests and coverage
+    # Studio platform gap (logdate-web docs/ci.md): the Android toolchain has no Linux ARM64 build.
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
@@ -139,7 +146,8 @@ jobs:
 
   multiplatform-tests:
     name: iOS compile and Wasm tests
-    runs-on: ubuntu-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
     timeout-minutes: 30
     steps:
       - name: Check out repository
@@ -200,7 +208,8 @@ jobs:
 
   e2e-tests:
     name: Server / client e2e
-    runs-on: ubuntu-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -244,6 +253,7 @@ jobs:
 
   lint:
     name: Static analysis
+    # Studio platform gap (logdate-web docs/ci.md): the Android toolchain has no Linux ARM64 build.
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -293,7 +303,8 @@ jobs:
       contents: read
       packages: read
     # The scripts target developer Macs and use macOS tools (plutil, BSD stat).
-    runs-on: macos-15
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.macos == 'studio' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || 'macos-15' }}
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -328,6 +339,7 @@ jobs:
 
   android-release:
     name: Android release artifact
+    # Studio platform gap (logdate-web docs/ci.md): the Android toolchain has no Linux ARM64 build.
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -388,7 +400,8 @@ jobs:
 
   build:
     name: Server artifact
-    runs-on: ubuntu-latest
+    needs: [route]
+    runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
     timeout-minutes: 15
     steps:
       - name: Check out repository

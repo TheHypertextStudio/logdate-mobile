@@ -24,6 +24,7 @@ jobs:
   android:
     name: Record Android flows
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    # Studio platform gap (logdate-web docs/ci.md): x86_64 Android emulators need KVM and sudo.
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
