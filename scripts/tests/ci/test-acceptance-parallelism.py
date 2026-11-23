@@ -36,7 +36,7 @@ class AcceptanceParallelismTest(unittest.TestCase):
         self.assertIn(":app:android-main:compileDebugScreenshotTestKotlin", producer)
         self.assertIn("actions/upload-artifact@", producer)
         shards = job(self.screenshots, "android-wear-screenshots")
-        self.assertIn("needs: android-screenshot-compile", shards)
+        self.assertRegex(shards, r"needs: \[route, android-screenshot-compile\]")
         self.assertIn("actions/download-artifact@", shards)
         self.assertIn("validateDebugScreenshotTest --continue", shards)
         self.assertIn("app.logdate.screenshots.audit.*", shards)
@@ -55,7 +55,8 @@ class AcceptanceParallelismTest(unittest.TestCase):
         self.assertIn(":app:compose-main:compileTestKotlinDesktop", compile_step)
         self.assertIn("./gradlew validateDesktopScreenshots --continue", validation)
         self.assertIn("LOGDATE_REQUIRE_DESKTOP_SCREENSHOTS: 'true'", validation)
-        self.assertIn("runs-on: xcode-27", body)
+        # The Studio route job may choose studio-macos; the hosted fallback stays Xcode 27.
+        self.assertIn("|| 'xcode-27' }}", body)
         compile_budget = int(
             re.search(r"timeout-minutes: (\d+)", compile_step).group(1)
         )
@@ -85,7 +86,7 @@ class AcceptanceParallelismTest(unittest.TestCase):
             "native-transfer-api-36-1",
         ]:
             body = job(self.native, name)
-            self.assertIn("needs: native-apks", body)
+            self.assertRegex(body, r"needs: (\[route, )?native-apks\]?")
             self.assertIn("actions/download-artifact@", body)
             self.assertIn('/init.d"', body)
             self.assertIn("$init_dir/logdate-shared-native.gradle.kts", body)
@@ -119,7 +120,7 @@ class AcceptanceParallelismTest(unittest.TestCase):
         self.assertIn("writeAndroidHistoryHarnessClasspath", body)
         aggregate = job(self.native, "native-transfer")
         self.assertIn("if: always()", aggregate)
-        self.assertIn("needs: native-transfer-scenarios", aggregate)
+        self.assertIn("needs: [route, native-transfer-scenarios]", aggregate)
         self.assertIn('test "$RESULT" = success', aggregate)
 
     def test_managed_oracles_and_lifecycle_cannot_be_replaced_by_raw_emulators(self):
