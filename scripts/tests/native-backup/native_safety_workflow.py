@@ -64,7 +64,7 @@ class NativeWorkflowSafety:
             "enrollment",
         ):
             self.assertIn(f"{scenario})", workflow)
-        self.assertIn("needs: native-transfer-scenarios", workflow)
+        self.assertIn("needs: [route, native-transfer-scenarios]", workflow)
         self.assertIn('test "$RESULT" = success', workflow)
 
     def test_native_restore_workflow_runs_separate_gms_d2d_test_mode(self):
