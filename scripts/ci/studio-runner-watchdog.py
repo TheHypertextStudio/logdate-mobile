@@ -7,27 +7,43 @@ always start, and for every watched repository:
 
 * cancels any run that has a job waiting on a Studio pool for longer than the
   allowed queue time, so the check fails within minutes instead of hours;
+* reruns that run when its repository is public. The route job sends a rerun to
+  GitHub-hosted runners, so the work still finishes;
 * reports each Studio pool that has no online runner;
-* opens one issue while anything is wrong and closes it once all is well.
+* keeps one issue open while anything is wrong and closes it once all is well.
 
-It needs STUDIO_WATCHDOG_TOKEN: a token that can read the organization's
-self-hosted runners, cancel runs in the watched repositories and write issues in
-this one. GITHUB_TOKEN can see none of the other repositories.
+With STUDIO_WATCHDOG_TOKEN (organization self-hosted runners: read, Actions:
+read and write on every watched repository) it watches every repository and
+reads the runners' status. Without it, GITHUB_TOKEN only reaches this
+repository, so it watches this one and judges each pool by this repository's
+Studio heartbeat. Issues are always written with GITHUB_TOKEN, so the issue
+notifies the repository's watchers, including the token's owner.
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import importlib.util
 import json
 import os
+import pathlib
 import sys
+import time
 import urllib.error
 import urllib.request
 
 API = "https://api.github.com"
 POOLS = ("studio-macos", "studio-linux")
 ISSUE_TITLE = "Studio runner pool needs attention"
+HEARTBEAT_PATH = ".github/workflows/studio-heartbeat.yml"
+WAITING = ("queued", "waiting", "pending")
+
+_route_spec = importlib.util.spec_from_file_location(
+    "studio_route", pathlib.Path(__file__).resolve().parent / "studio-route.py"
+)
+studio_route = importlib.util.module_from_spec(_route_spec)
+_route_spec.loader.exec_module(studio_route)
 
 
 def parse_time(value: str) -> dt.datetime:
@@ -55,13 +71,39 @@ def online_pools(runners: list[dict]) -> set[str]:
     return online
 
 
+def beating_pools(beats: dict[str, dt.datetime], now: dt.datetime, max_age: dt.timedelta) -> set[str]:
+    """Returns the Studio pools whose heartbeat finished within max_age."""
+    return {pool for pool, finished in beats.items() if pool in POOLS and now - finished <= max_age}
+
+
 def stalled(job: dict, now: dt.datetime, limit: dt.timedelta) -> bool:
     """Is this job waiting on a Studio pool for longer than the limit?"""
-    if job.get("status") not in ("queued", "waiting", "pending"):
+    if job.get("status") not in WAITING:
         return False
     if not pool_of(job.get("labels", [])):
         return False
     return now - parse_time(job["created_at"]) > limit
+
+
+def is_heartbeat(run: dict) -> bool:
+    return run.get("path", "").split("@")[0] == HEARTBEAT_PATH
+
+
+def should_rerun(run: dict) -> bool:
+    """A cancelled run is rerun once, in a public repository, unless it is a heartbeat."""
+    public = not (run.get("repository") or {}).get("private", True)
+    return public and run.get("run_attempt", 1) == 1 and not is_heartbeat(run)
+
+
+def issue_body(offline: list[str], basis: str, now: dt.datetime) -> str:
+    lines = [f"- No `{pool}` runner is online ({basis})." for pool in offline]
+    lines.append("")
+    lines.append(
+        f"Checked {now:%Y-%m-%d %H:%M} UTC. While a pool is offline, public repositories run on "
+        "GitHub-hosted runners and private repositories wait. Inspect the pool with the Studio "
+        "`self-hosted-runner` skill's `doctor`."
+    )
+    return "\n".join(lines)
 
 
 class GitHub:
@@ -84,15 +126,30 @@ class GitHub:
             raw = response.read()
         return json.loads(raw) if raw else None
 
-    def paged(self, path: str, key: str) -> list[dict]:
+    def paged(self, path: str, key: str | None) -> list[dict]:
         items, page = [], 1
         while True:
             sep = "&" if "?" in path else "?"
-            chunk = self.request("GET", f"{path}{sep}per_page=100&page={page}")[key]
+            response = self.request("GET", f"{path}{sep}per_page=100&page={page}")
+            chunk = response[key] if key else response
             items += chunk
             if len(chunk) < 100:
                 return items
             page += 1
+
+
+def cancel_and_rerun(gh: GitHub, org: str, repo: str, run: dict) -> bool:
+    """Cancels the run, then reruns it if it should be. Returns True if it was rerun."""
+    gh.request("POST", f"/repos/{org}/{repo}/actions/runs/{run['id']}/cancel")
+    if not should_rerun(run):
+        return False
+    for _ in range(18):
+        time.sleep(5)
+        if gh.request("GET", f"/repos/{org}/{repo}/actions/runs/{run['id']}")["status"] == "completed":
+            gh.request("POST", f"/repos/{org}/{repo}/actions/runs/{run['id']}/rerun")
+            return True
+    print(f"::warning::{repo} run {run['id']} didn't finish cancelling, so it wasn't rerun")
+    return False
 
 
 def main() -> int:
@@ -101,67 +158,84 @@ def main() -> int:
     parser.add_argument("--repos", required=True, help="space-separated repository names")
     parser.add_argument("--issue-repo", required=True)
     parser.add_argument("--max-queue-minutes", type=int, default=10)
+    parser.add_argument("--heartbeat-max-age-minutes", type=int, default=30)
     args = parser.parse_args()
 
-    token = os.environ.get("STUDIO_WATCHDOG_TOKEN")
-    if not token:
-        print("::error::STUDIO_WATCHDOG_TOKEN is not set, so stalled Studio jobs can't be found")
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if not github_token:
+        print("::error::GITHUB_TOKEN is not set")
         return 1
-    gh = GitHub(token)
+    studio_token = os.environ.get("STUDIO_WATCHDOG_TOKEN")
+    issues = GitHub(github_token)
+    reader = GitHub(studio_token or github_token)
+    repos = args.repos.split() if studio_token else [args.issue_repo]
+    if not studio_token:
+        print(
+            "::warning::STUDIO_WATCHDOG_TOKEN is not set, so only this repository is watched and "
+            "pools are judged by its Studio heartbeat"
+        )
+
     now = dt.datetime.now(dt.timezone.utc)
     limit = dt.timedelta(minutes=args.max_queue_minutes)
-    problems: list[str] = []
 
-    try:
-        runners = gh.paged(f"/orgs/{args.org}/actions/runners", "runners")
-    except urllib.error.HTTPError as error:
-        print(f"::error::Couldn't list the organization's runners ({error.code})")
-        return 1
-    online = online_pools(runners)
-    for pool in POOLS:
-        if pool not in online:
-            problems.append(f"No `{pool}` runner is online.")
+    online: set[str] | None = None
+    basis = "organization runner list"
+    if studio_token:
+        try:
+            online = online_pools(reader.paged(f"/orgs/{args.org}/actions/runners", "runners"))
+        except urllib.error.HTTPError as error:
+            print(f"::warning::Couldn't list the organization's runners ({error.code}); using the heartbeat")
+    if online is None:
+        basis = f"no heartbeat in {args.heartbeat_max_age_minutes} minutes"
+        beats = studio_route.read_beats(f"{args.org}/{args.issue_repo}", github_token, 6) or {}
+        online = beating_pools(beats, now, dt.timedelta(minutes=args.heartbeat_max_age_minutes))
+    offline = [pool for pool in POOLS if pool not in online]
 
-    for repo in args.repos.split():
-        for status in ("queued", "waiting", "pending"):
-            runs = gh.paged(f"/repos/{args.org}/{repo}/actions/runs?status={status}", "workflow_runs")
+    events: list[str] = []
+    for repo in repos:
+        seen: set[int] = set()
+        for status in WAITING:
+            runs = reader.paged(f"/repos/{args.org}/{repo}/actions/runs?status={status}", "workflow_runs")
             for run in runs:
-                jobs = gh.paged(f"/repos/{args.org}/{repo}/actions/runs/{run['id']}/jobs", "jobs")
+                if run["id"] in seen:
+                    continue
+                seen.add(run["id"])
+                jobs = reader.paged(f"/repos/{args.org}/{repo}/actions/runs/{run['id']}/jobs", "jobs")
                 waiting = [job for job in jobs if stalled(job, now, limit)]
                 if not waiting:
                     continue
                 pool = pool_of(waiting[0]["labels"])
-                gh.request("POST", f"/repos/{args.org}/{repo}/actions/runs/{run['id']}/cancel")
-                problems.append(
+                rerun = cancel_and_rerun(reader, args.org, repo, run)
+                if is_heartbeat(run):
+                    continue
+                event = (
                     f"Cancelled [{repo} {run['name']}]({run['html_url']}): it waited more than "
                     f"{args.max_queue_minutes} minutes for `{pool}`."
                 )
-                print(f"::error::{problems[-1]}")
+                event += " Rerunning it on GitHub-hosted runners." if rerun else ""
+                events.append(event)
+                print(f"::warning::{event}")
 
-    issues = gh.request(
-        "GET", f"/repos/{args.org}/{args.issue_repo}/issues?state=open&labels=studio-runner-watchdog"
-    )
-    issue = next((i for i in issues if i["title"] == ISSUE_TITLE), None)
-    if problems:
-        body = "\n".join(f"- {p}" for p in problems)
-        body += f"\n\nChecked {now:%Y-%m-%d %H:%M} UTC. Inspect the pool with the Studio `self-hosted-runner` skill's `doctor`."
-        if issue:
-            gh.request("POST", f"/repos/{args.org}/{args.issue_repo}/issues/{issue['number']}/comments", {"body": body})
+    open_issues = issues.paged(f"/repos/{args.org}/{args.issue_repo}/issues?state=open", None)
+    issue = next((i for i in open_issues if i["title"] == ISSUE_TITLE and "pull_request" not in i), None)
+    base = f"/repos/{args.org}/{args.issue_repo}/issues"
+
+    if offline or events:
+        body = issue_body(offline, basis, now)
+        if not issue:
+            issue = issues.request("POST", base, {"title": ISSUE_TITLE, "body": body + "\n\n" + "\n".join(events)})
         else:
-            gh.request(
-                "POST",
-                f"/repos/{args.org}/{args.issue_repo}/issues",
-                {"title": ISSUE_TITLE, "body": body, "labels": ["studio-runner-watchdog"]},
-            )
-        for problem in problems:
-            print(f"::error::{problem}")
-        return 1
+            # Editing the body keeps the current state without notifying anyone each tick.
+            issues.request("PATCH", f"{base}/{issue['number']}", {"body": body})
+            if events:
+                issues.request("POST", f"{base}/{issue['number']}/comments", {"body": "\n".join(f"- {e}" for e in events)})
+        for pool in offline:
+            print(f"::warning::No {pool} runner is online ({basis}).")
+        return 0
+
     if issue:
-        gh.request(
-            "PATCH",
-            f"/repos/{args.org}/{args.issue_repo}/issues/{issue['number']}",
-            {"state": "closed", "state_reason": "completed"},
-        )
+        issues.request("POST", f"{base}/{issue['number']}/comments", {"body": "Every Studio pool is online again."})
+        issues.request("PATCH", f"{base}/{issue['number']}", {"state": "closed", "state_reason": "completed"})
     print("Every Studio pool has an online runner and no job is stalled.")
     return 0
 
