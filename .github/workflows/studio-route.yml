@@ -1,12 +1,21 @@
 name: Studio runner route
+run-name: Studio runner route for ${{ github.ref_name }}
 
 # Runs first in every CI workflow and decides where its jobs run. See logdate-web docs/ci.md and
 # scripts/ci/studio-route.py. Each job then picks its runner from these outputs:
 #
 #   needs: [route]
 #   runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
+#
+# A private repository runs the route job itself on a Studio pool. A repository whose jobs all use
+# macOS passes `with: { pool: macos }`, so it never waits on the Linux pool.
 on:
   workflow_call:
+    inputs:
+      pool:
+        description: "`linux` or `macos`: the Studio pool that runs this job in a private repository"
+        type: string
+        default: linux
     outputs:
       linux:
         description: "`studio` or `hosted` for Linux jobs"
@@ -24,7 +33,7 @@ jobs:
     name: Choose runners
     # A private repository can only start jobs on the Studio pool. Everything else, including a
     # fork's pull request, decides on a GitHub-hosted runner.
-    runs-on: ${{ github.event.repository.private && !(startsWith(github.event_name, 'pull_request') && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
+    runs-on: ${{ github.event.repository.private && !(startsWith(github.event_name, 'pull_request') && github.event.pull_request.head.repo.full_name != github.repository) && (inputs.pool == 'macos' && fromJSON('{"group":"studio-macos","labels":["self-hosted","macOS","ARM64","studio-macos"]}') || fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}')) || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       linux: ${{ steps.route.outputs.linux }}
