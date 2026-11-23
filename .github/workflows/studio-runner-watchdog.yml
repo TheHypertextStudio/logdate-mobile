@@ -1,4 +1,5 @@
 name: Studio runner watchdog
+run-name: Studio runner watchdog
 
 # A self-hosted job can otherwise wait up to 24 hours for a Studio runner. This public repository's
 # hosted runners always start, so it checks the LogDate repositories every 5 minutes: it cancels any
@@ -27,7 +28,8 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v7.0.1
+      - name: Check out the watchdog
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: scripts/ci
