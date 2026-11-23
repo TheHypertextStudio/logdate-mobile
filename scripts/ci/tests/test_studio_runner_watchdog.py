@@ -41,5 +41,33 @@ class OnlinePoolTests(unittest.TestCase):
         self.assertEqual(watchdog.online_pools(runners), {"studio-linux"})
 
 
+class HeartbeatPoolTests(unittest.TestCase):
+    def test_only_recent_beats_count(self):
+        beats = {
+            "studio-linux": NOW - dt.timedelta(minutes=5),
+            "studio-macos": NOW - dt.timedelta(minutes=45),
+        }
+        self.assertEqual(watchdog.beating_pools(beats, NOW, dt.timedelta(minutes=30)), {"studio-linux"})
+
+
+def run(private=False, attempt=1, path=".github/workflows/ci.yml"):
+    return {"repository": {"private": private}, "run_attempt": attempt, "path": path}
+
+
+class RerunTests(unittest.TestCase):
+    def test_a_public_first_attempt_is_rerun(self):
+        self.assertTrue(watchdog.should_rerun(run()))
+
+    def test_a_private_run_is_not_rerun(self):
+        # Hosted runners don't start in private repositories, so a rerun would wait again.
+        self.assertFalse(watchdog.should_rerun(run(private=True)))
+
+    def test_a_rerun_is_not_rerun_again(self):
+        self.assertFalse(watchdog.should_rerun(run(attempt=2)))
+
+    def test_a_heartbeat_is_not_rerun(self):
+        self.assertFalse(watchdog.should_rerun(run(path=".github/workflows/studio-heartbeat.yml@refs/heads/main")))
+
+
 if __name__ == "__main__":
     unittest.main()

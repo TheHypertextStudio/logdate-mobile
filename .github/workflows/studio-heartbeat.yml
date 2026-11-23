@@ -1,0 +1,40 @@
+name: Studio heartbeat
+
+# Proves that each Studio pool is online and admits this repository. The route job
+# (studio-route.yml) sends jobs to a pool only while its heartbeat is recent, and the Studio
+# runner watchdog cancels a beat that waits too long. See logdate-web docs/ci.md.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  studio-linux:
+    name: studio-linux
+    if: ${{ github.repository_owner == 'TheHypertextStudio' }}
+    runs-on:
+      group: studio-linux
+      labels: [self-hosted, Linux, ARM64, studio-linux]
+    timeout-minutes: 2
+    # A newer beat replaces one still waiting for a runner.
+    concurrency:
+      group: studio-heartbeat-linux
+      cancel-in-progress: true
+    steps:
+      - run: echo "studio-linux answered on $(uname -sm)"
+
+  studio-macos:
+    name: studio-macos
+    if: ${{ github.repository_owner == 'TheHypertextStudio' }}
+    runs-on:
+      group: studio-macos
+      labels: [self-hosted, macOS, ARM64, studio-macos]
+    timeout-minutes: 2
+    concurrency:
+      group: studio-heartbeat-macos
+      cancel-in-progress: true
+    steps:
+      - run: echo "studio-macos answered on $(uname -sm)"

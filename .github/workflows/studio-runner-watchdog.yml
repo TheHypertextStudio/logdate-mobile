@@ -1,8 +1,10 @@
 name: Studio runner watchdog
 
 # A self-hosted job can otherwise wait up to 24 hours for a Studio runner. This public repository's
-# hosted runners always start, so it checks every LogDate repository: it cancels any run waiting on
-# a Studio pool for more than 10 minutes and keeps one issue open while a pool has no online runner.
+# hosted runners always start, so it checks the LogDate repositories every 5 minutes: it cancels any
+# run waiting on a Studio pool for more than 10 minutes, reruns it on hosted runners where the
+# repository is public, and keeps one issue open while a pool has no online runner.
+# See logdate-web docs/ci.md and scripts/ci/studio-runner-watchdog.py.
 on:
   schedule:
     - cron: "*/5 * * * *"
@@ -19,15 +21,21 @@ jobs:
   watch:
     if: ${{ github.repository == 'TheHypertextStudio/logdate-mobile' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    permissions:
+      actions: write
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+          sparse-checkout: scripts/ci
       - name: Check unit tests
-        run: python3 -m unittest scripts/ci/tests/test_studio_runner_watchdog.py
+        run: python3 -m unittest scripts/ci/tests/test_studio_runner_watchdog.py scripts/ci/tests/test_studio_route.py
       - name: Cancel stalled Studio jobs and report offline pools
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           STUDIO_WATCHDOG_TOKEN: ${{ secrets.STUDIO_WATCHDOG_TOKEN }}
         run: >
           python3 scripts/ci/studio-runner-watchdog.py

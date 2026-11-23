@@ -1,0 +1,43 @@
+name: Studio runner route
+
+# Runs first in every CI workflow and decides where its jobs run. See logdate-web docs/ci.md and
+# scripts/ci/studio-route.py. Each job then picks its runner from these outputs:
+#
+#   needs: [route]
+#   runs-on: ${{ needs.route.outputs.linux == 'studio' && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
+on:
+  workflow_call:
+    outputs:
+      linux:
+        description: "`studio` or `hosted` for Linux jobs"
+        value: ${{ jobs.route.outputs.linux }}
+      macos:
+        description: "`studio` or `hosted` for macOS jobs"
+        value: ${{ jobs.route.outputs.macos }}
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  route:
+    name: Choose runners
+    # A private repository can only start jobs on the Studio pool. Everything else, including a
+    # fork's pull request, decides on a GitHub-hosted runner.
+    runs-on: ${{ github.event.repository.private && !(startsWith(github.event_name, 'pull_request') && github.event.pull_request.head.repo.full_name != github.repository) && fromJSON('{"group":"studio-linux","labels":["self-hosted","Linux","ARM64","studio-linux"]}') || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    outputs:
+      linux: ${{ steps.route.outputs.linux }}
+      macos: ${{ steps.route.outputs.macos }}
+    steps:
+      - name: Check out the route script
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci/studio-route.py
+          sparse-checkout-cone-mode: false
+      - name: Choose runners
+        id: route
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/studio-route.py
