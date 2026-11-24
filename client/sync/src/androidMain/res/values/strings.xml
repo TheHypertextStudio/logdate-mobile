@@ -2,5 +2,6 @@
 <resources>
     <string name="sync_notification_title">Backing up your journal</string>
     <string name="sync_notification_starting">Starting…</string>
+    <string name="sync_notification_checking">Checking for changes…</string>
     <string name="sync_notification_progress">Backing up %1$d of %2$d</string>
 </resources>

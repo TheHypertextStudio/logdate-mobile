@@ -1,11 +1,13 @@
 package app.logdate.client.sync
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
 import androidx.work.ForegroundInfo
 import app.logdate.client.notifications.LogDateNotificationChannelKey
+import io.github.aakira.napier.Napier
 
 /**
  * The notification that keeps a backup alive while the app is not on screen.
@@ -17,14 +19,14 @@ import app.logdate.client.notifications.LogDateNotificationChannelKey
  */
 internal object SyncForegroundNotification {
     private val channel = LogDateNotificationChannelKey.CLOUD_SYNC
-    private val notificationId = channel.notificationId ?: 1004
+    val notificationId: Int = channel.notificationId ?: 1004
 
-    fun info(
+    fun buildNotification(
         context: Context,
         text: String,
         completed: Int? = null,
         total: Int? = null,
-    ): ForegroundInfo {
+    ): Notification {
         val builder =
             NotificationCompat
                 .Builder(context, channel.id)
@@ -42,10 +44,44 @@ internal object SyncForegroundNotification {
             builder.setProgress(0, 0, true)
         }
 
-        return ForegroundInfo(
+        return builder.build()
+    }
+
+    fun info(
+        context: Context,
+        text: String,
+        completed: Int? = null,
+        total: Int? = null,
+    ): ForegroundInfo =
+        ForegroundInfo(
             notificationId,
-            builder.build(),
+            buildNotification(context, text, completed, total),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
         )
-    }
+
+    /**
+     * Updates the active foreground notification directly without calling WorkManager's
+     * `setForeground()`, avoiding `ACTION_NOTIFY` races against `SystemForegroundService` shutdown.
+     */
+    fun updateProgress(
+        context: Context,
+        text: String,
+        completed: Int? = null,
+        total: Int? = null,
+    ): Boolean =
+        try {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            if (manager == null) {
+                false
+            } else {
+                manager.notify(notificationId, buildNotification(context, text, completed, total))
+                true
+            }
+        } catch (e: SecurityException) {
+            Napier.w("Missing permission to update backup progress notification", e)
+            false
+        } catch (e: Exception) {
+            Napier.w("Could not update backup progress notification", e)
+            false
+        }
 }

@@ -135,7 +135,7 @@ class ExportWorker(
                 Napier.e("Could not open the export destination")
                 null
             } ?: run {
-                trySetForeground(notificationHelper.createErrorInfo(ARCHIVE_WRITE_FAILED_MESSAGE))
+                notificationHelper.showErrorNotification(ARCHIVE_WRITE_FAILED_MESSAGE)
                 return failureResult(ARCHIVE_WRITE_FAILED_MESSAGE)
             }
         var finished = false
@@ -163,7 +163,7 @@ class ExportWorker(
             val completed = summary
             if (failure != null || completed == null) {
                 val message = failure ?: EXPORT_FAILED_MESSAGE
-                trySetForeground(notificationHelper.createErrorInfo(message))
+                notificationHelper.showErrorNotification(message)
                 return failureResult(message)
             }
 
@@ -174,7 +174,7 @@ class ExportWorker(
             throw cancellation
         } catch (exception: Throwable) {
             Napier.e("Archive export failed")
-            trySetForeground(notificationHelper.createErrorInfo(ARCHIVE_WRITE_FAILED_MESSAGE))
+            notificationHelper.showErrorNotification(ARCHIVE_WRITE_FAILED_MESSAGE)
             return failureResult(ARCHIVE_WRITE_FAILED_MESSAGE)
         } finally {
             // ZipOutputStream.close() skips closing the stream under it when finishing the zip fails.
@@ -187,7 +187,7 @@ class ExportWorker(
         target: ArchiveTarget,
         summary: ArchiveExportSummary,
     ): Result {
-        trySetForeground(notificationHelper.createCompletionInfo(target.path))
+        notificationHelper.showCompletionNotification(target.path)
         exportLauncher.updateProgress(
             ExportProgressInfo(
                 isActive = false,
@@ -231,6 +231,8 @@ class ExportWorker(
     private suspend fun trySetForeground(foregroundInfo: ForegroundInfo) {
         try {
             setForeground(foregroundInfo)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.w("Could not show foreground notification, export continues without it")
         }

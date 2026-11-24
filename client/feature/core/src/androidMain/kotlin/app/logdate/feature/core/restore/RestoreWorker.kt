@@ -146,7 +146,7 @@ class RestoreWorker(
 
             val summary = result.toSummary(source = sourceLabel)
 
-            trySetForeground(notificationHelper.createCompletionInfo())
+            notificationHelper.showCompletionNotification()
             completeRestore(RestoreOutcome.Success(summary))
             reportDiagnostic(DiagnosticOutcome.SUCCEEDED, source, attemptId)
 
@@ -161,7 +161,7 @@ class RestoreWorker(
                 throw e
             }
             Napier.e("Restore failed")
-            trySetForeground(notificationHelper.createErrorInfo("Unable to restore this archive"))
+            notificationHelper.showErrorNotification("Unable to restore this archive")
             completeRestore(RestoreOutcome.Failure(RestoreError.RESTORE_FAILED))
             reportDiagnostic(DiagnosticOutcome.FAILED, source, attemptId, DiagnosticReason.UNKNOWN)
             failure(RestoreError.RESTORE_FAILED)
@@ -226,6 +226,8 @@ class RestoreWorker(
     private suspend fun trySetForeground(foregroundInfo: ForegroundInfo) {
         try {
             setForeground(foregroundInfo)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.w("Could not show foreground notification, restore continues without it")
         }

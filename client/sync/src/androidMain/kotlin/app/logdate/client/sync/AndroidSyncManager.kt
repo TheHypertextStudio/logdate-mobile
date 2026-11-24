@@ -91,7 +91,9 @@ class AndroidSyncManager(
                         is PeriodicSyncScheduleChange.Enable -> {
                             try {
                                 setupPeriodicSync(change.requirement)
-                                resumeScheduledSync()
+                                if (defaultSyncManager.hasDueWork() || defaultSyncManager.hasRemoteRefreshDue()) {
+                                    resumeScheduledSync()
+                                }
                             } catch (cancelled: CancellationException) {
                                 throw cancelled
                             } catch (_: Exception) {
@@ -187,10 +189,13 @@ class AndroidSyncManager(
         } catch (_: Exception) {
             Napier.e("Could not release upload backoff for a manual backup")
         }
-        return resumeScheduledSync(consent)
+        return resumeScheduledSync(consent, userInitiated = true)
     }
 
-    private suspend fun resumeScheduledSync(consent: UploadScope? = null): Operation {
+    private suspend fun resumeScheduledSync(
+        consent: UploadScope? = null,
+        userInitiated: Boolean = false,
+    ): Operation {
         val policy =
             try {
                 val work =
@@ -208,7 +213,12 @@ class AndroidSyncManager(
                 Napier.e("Could not inspect scheduled sync; preserving any active request")
                 if (consent != null) ExistingWorkPolicy.APPEND_OR_REPLACE else ExistingWorkPolicy.KEEP
             }
-        return scheduleImmediateSync(AndroidLogDateSyncWorker.SYNC_TYPE_FULL, policy = policy, consent = consent)
+        return scheduleImmediateSync(
+            AndroidLogDateSyncWorker.SYNC_TYPE_FULL,
+            policy = policy,
+            consent = consent,
+            userInitiated = userInitiated,
+        )
     }
 
     /**
@@ -218,6 +228,7 @@ class AndroidSyncManager(
         syncType: String = AndroidLogDateSyncWorker.SYNC_TYPE_FULL,
         policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
         consent: UploadScope? = null,
+        userInitiated: Boolean = false,
     ): Operation {
         val constraints =
             Constraints
@@ -230,6 +241,7 @@ class AndroidSyncManager(
                 .Builder()
                 .putAll(mobileDataSyncInput(consent))
                 .putString(AndroidLogDateSyncWorker.KEY_SYNC_TYPE, syncType)
+                .putBoolean(AndroidLogDateSyncWorker.KEY_USER_INITIATED, userInitiated)
                 .build()
 
         val request =

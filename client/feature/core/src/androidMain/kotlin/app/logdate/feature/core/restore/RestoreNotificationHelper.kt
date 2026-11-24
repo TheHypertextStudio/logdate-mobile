@@ -28,7 +28,9 @@ class RestoreNotificationHelper(
             message = resolveStageMessage(stage),
         )
 
-    fun createCompletionInfo(): ForegroundInfo = createCompletionInfo(context.getString(R.string.restore_notification_complete_message))
+    fun showCompletionNotification() {
+        super.showCompletionNotification(context.getString(R.string.restore_notification_complete_message))
+    }
 
     private fun resolveStageMessage(stage: RestoreStage): String =
         when (stage) {

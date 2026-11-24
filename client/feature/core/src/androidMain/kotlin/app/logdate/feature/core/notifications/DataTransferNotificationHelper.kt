@@ -39,6 +39,9 @@ abstract class DataTransferNotificationHelper(
     protected val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    protected open val terminalNotificationId: Int
+        get() = notificationId + TERMINAL_NOTIFICATION_ID_OFFSET
+
     /**
      * Builds a foreground-service notification with a progress bar and cancel action.
      *
@@ -79,11 +82,10 @@ abstract class DataTransferNotificationHelper(
     }
 
     /**
-     * Builds a completion notification. Auto-cancels on tap.
-     *
-     * @param contentText Localized description of the completed operation.
+     * Posts a completion notification via [NotificationManager] on a non-foreground notification ID
+     * so WorkManager teardown never races with or cancels it.
      */
-    open fun createCompletionInfo(contentText: String): ForegroundInfo {
+    open fun showCompletionNotification(contentText: String) {
         val notification =
             NotificationCompat
                 .Builder(context, channelId)
@@ -94,18 +96,13 @@ abstract class DataTransferNotificationHelper(
                 .setAutoCancel(true)
                 .setSilent(true)
                 .build()
-
-        return ForegroundInfo(
-            notificationId,
-            notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-        )
+        postTerminalNotification(notification)
     }
 
     /**
-     * Builds an error notification. Auto-cancels on tap, stays silent.
+     * Posts an error notification via [NotificationManager] on a non-foreground notification ID.
      */
-    fun createErrorInfo(errorMessage: String): ForegroundInfo {
+    fun showErrorNotification(errorMessage: String) {
         val notification =
             NotificationCompat
                 .Builder(context, channelId)
@@ -116,12 +113,17 @@ abstract class DataTransferNotificationHelper(
                 .setAutoCancel(true)
                 .setSilent(true)
                 .build()
+        postTerminalNotification(notification)
+    }
 
-        return ForegroundInfo(
-            notificationId,
-            notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-        )
+    private fun postTerminalNotification(notification: android.app.Notification) {
+        runCatching {
+            notificationManager.notify(terminalNotificationId, notification)
+        }
+    }
+
+    companion object {
+        private const val TERMINAL_NOTIFICATION_ID_OFFSET = 10_000
     }
 
     protected open fun createContentIntent(): PendingIntent? {
