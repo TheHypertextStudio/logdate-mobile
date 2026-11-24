@@ -1,6 +1,8 @@
 package app.logdate.client.sync
 
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +12,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
 /** Quiet polls stay ordinary; eligible transfers retain foreground protection when a run lasts. */
@@ -60,7 +63,12 @@ internal suspend fun <T> withSyncForegroundRun(
         try {
             run()
         } finally {
-            updates.cancel()
-            keepAlive.cancel()
+            withContext(NonCancellable) {
+                notificationMutex.withLock {
+                    notificationsAllowed = false
+                }
+                updates.cancelAndJoin()
+                keepAlive.cancelAndJoin()
+            }
         }
     }

@@ -24,6 +24,7 @@ internal fun immediateSyncRequest(
             .Builder()
             .putAll(mobileDataSyncInput(consent))
             .putString(AndroidLogDateSyncWorker.KEY_SYNC_TYPE, syncType)
+            .putBoolean(AndroidLogDateSyncWorker.KEY_USER_INITIATED, expedited)
             .build()
 
     val request =

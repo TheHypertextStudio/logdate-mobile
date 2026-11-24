@@ -204,8 +204,8 @@ class OsSurfaceScreenshotsTest {
         OsSurfaceCapture.openNotifications()
         OsSurfaceCapture.waitForText("Restoring data")
         OsSurfaceCapture.capture(surface = "live-updates", state = "transfer-progress")
-        OsSurfaceCapture.postTransferNotification(restore.createCompletionInfo())
-        OsSurfaceCapture.postTransferNotification(export.createErrorInfo("The folder you chose is no longer available."))
+        restore.showCompletionNotification()
+        export.showErrorNotification("The folder you chose is no longer available.")
         OsSurfaceCapture.waitForText("Export failed")
         OsSurfaceCapture.capture(surface = "live-updates", state = "transfer-finished")
     }

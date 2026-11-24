@@ -194,7 +194,7 @@ class ExportWorker(
         target: ArchiveTarget,
         summary: ArchiveExportSummary,
     ): Result {
-        trySetForeground(notificationHelper.createCompletionInfo(target.path))
+        notificationHelper.showCompletionNotification(target.path)
         exportLauncher.updateProgress(
             ExportProgressInfo(
                 isActive = false,
@@ -214,7 +214,7 @@ class ExportWorker(
      */
     private suspend fun archiveFailed(reason: StringResource): Result {
         val message = getString(reason)
-        trySetForeground(notificationHelper.createErrorInfo(message))
+        notificationHelper.showErrorNotification(message)
         return failureResult(message)
     }
 
@@ -249,6 +249,8 @@ class ExportWorker(
     private suspend fun trySetForeground(foregroundInfo: ForegroundInfo) {
         try {
             setForeground(foregroundInfo)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Napier.w("Could not show foreground notification, export continues without it")
         }
