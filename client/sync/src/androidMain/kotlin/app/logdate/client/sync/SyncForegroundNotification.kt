@@ -1,6 +1,7 @@
 package app.logdate.client.sync
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
@@ -9,6 +10,7 @@ import app.logdate.client.notifications.LogDateNotificationChannelKey
 import app.logdate.client.notifications.applyTransferLiveUpdate
 import app.logdate.client.notifications.currentLiveUpdatesSwitch
 import app.logdate.client.notifications.transferLiveUpdate
+import io.github.aakira.napier.Napier
 
 /**
  * The notification that keeps a backup alive while the app is not on screen.
@@ -20,14 +22,14 @@ import app.logdate.client.notifications.transferLiveUpdate
  */
 object SyncForegroundNotification {
     private val channel = LogDateNotificationChannelKey.CLOUD_SYNC
-    private val notificationId = channel.notificationId ?: 1004
+    val notificationId: Int = channel.notificationId ?: 1004
 
-    fun info(
+    fun buildNotification(
         context: Context,
         text: String,
         completed: Int? = null,
         total: Int? = null,
-    ): ForegroundInfo {
+    ): Notification {
         val builder =
             NotificationCompat
                 .Builder(context, channel.id)
@@ -67,10 +69,44 @@ object SyncForegroundNotification {
             builder.applyTransferLiveUpdate(transferLiveUpdate(currentLiveUpdatesSwitch().enabled, percent), percent)
         }
 
-        return ForegroundInfo(
+        return builder.build()
+    }
+
+    fun info(
+        context: Context,
+        text: String,
+        completed: Int? = null,
+        total: Int? = null,
+    ): ForegroundInfo =
+        ForegroundInfo(
             notificationId,
-            builder.build(),
+            buildNotification(context, text, completed, total),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
         )
-    }
+
+    /**
+     * Updates an active foreground notification directly via [NotificationManager] rather than
+     * calling `setForeground()`, preventing `ACTION_NOTIFY` from racing past `SystemForegroundService` shutdown.
+     */
+    fun updateProgress(
+        context: Context,
+        text: String,
+        completed: Int? = null,
+        total: Int? = null,
+    ): Boolean =
+        try {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            if (manager == null) {
+                false
+            } else {
+                manager.notify(notificationId, buildNotification(context, text, completed, total))
+                true
+            }
+        } catch (e: SecurityException) {
+            Napier.w("Missing permission to update backup progress notification", e)
+            false
+        } catch (e: Exception) {
+            Napier.w("Could not update backup progress notification: ${e::class.simpleName}")
+            false
+        }
 }

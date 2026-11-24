@@ -48,6 +48,9 @@ abstract class DataTransferNotificationHelper(
     protected val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    protected open val terminalNotificationId: Int
+        get() = notificationId + TERMINAL_NOTIFICATION_ID_OFFSET
+
     /**
      * Builds a foreground-service notification with a progress bar and cancel action.
      *
@@ -92,49 +95,50 @@ abstract class DataTransferNotificationHelper(
     }
 
     /**
-     * Builds a completion notification. Auto-cancels on tap.
-     *
-     * @param contentText Localized description of the completed operation.
+     * Posts a completion notification via [NotificationManager] on a non-foreground notification ID
+     * so WorkManager teardown never races with or cancels it.
      */
-    open fun createCompletionInfo(contentText: String): ForegroundInfo {
-        val notification =
-            NotificationCompat
-                .Builder(context, channelId)
-                .setContentTitle(context.getString(completeTitleResId))
-                .setContentText(contentText)
-                .setContentIntent(createContentIntent())
-                .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setAutoCancel(true)
-                .setSilent(true)
-                .build()
-
-        return ForegroundInfo(
-            notificationId,
-            notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-        )
+    open fun showCompletionNotification(contentText: String) {
+        postTerminalNotification(buildCompletionNotification(contentText))
     }
 
     /**
-     * Builds an error notification. Auto-cancels on tap, stays silent.
+     * Posts an error notification via [NotificationManager] on a non-foreground notification ID.
      */
-    fun createErrorInfo(errorMessage: String): ForegroundInfo {
-        val notification =
-            NotificationCompat
-                .Builder(context, channelId)
-                .setContentTitle(context.getString(failedTitleResId))
-                .setContentText(context.getString(R.string.error_with_message, errorMessage))
-                .setContentIntent(createContentIntent())
-                .setSmallIcon(android.R.drawable.stat_notify_error)
-                .setAutoCancel(true)
-                .setSilent(true)
-                .build()
+    fun showErrorNotification(errorMessage: String) {
+        postTerminalNotification(buildErrorNotification(errorMessage))
+    }
 
-        return ForegroundInfo(
-            notificationId,
-            notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-        )
+    private fun buildCompletionNotification(contentText: String): android.app.Notification =
+        NotificationCompat
+            .Builder(context, channelId)
+            .setContentTitle(context.getString(completeTitleResId))
+            .setContentText(contentText)
+            .setContentIntent(createContentIntent())
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setAutoCancel(true)
+            .setSilent(true)
+            .build()
+
+    private fun buildErrorNotification(errorMessage: String): android.app.Notification =
+        NotificationCompat
+            .Builder(context, channelId)
+            .setContentTitle(context.getString(failedTitleResId))
+            .setContentText(context.getString(R.string.error_with_message, errorMessage))
+            .setContentIntent(createContentIntent())
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setAutoCancel(true)
+            .setSilent(true)
+            .build()
+
+    private fun postTerminalNotification(notification: android.app.Notification) {
+        runCatching {
+            notificationManager.notify(terminalNotificationId, notification)
+        }
+    }
+
+    companion object {
+        private const val TERMINAL_NOTIFICATION_ID_OFFSET = 10_000
     }
 
     protected open fun createContentIntent(): PendingIntent? {

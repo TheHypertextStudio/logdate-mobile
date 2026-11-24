@@ -30,9 +30,9 @@ class RestoreNotificationHelper(
             message = resolveStageMessage(stage),
         )
 
-    fun createCompletionInfo(unavailable: Int = 0): ForegroundInfo {
+    fun showCompletionNotification(unavailable: Int = 0) {
         incompleteMedia = unavailable > 0
-        return createCompletionInfo(
+        super.showCompletionNotification(
             context.getString(
                 if (incompleteMedia) R.string.restore_notification_partial_message else R.string.restore_notification_complete_message,
             ),

@@ -236,7 +236,7 @@ class RestoreWorker(
             )
         }
         if (!attempt.native.complete()) return Result.retry()
-        trySetForeground(notificationHelper.createCompletionInfo(summary.unavailableOriginals + summary.unavailablePreviews))
+        notificationHelper.showCompletionNotification(summary.unavailableOriginals + summary.unavailablePreviews)
         completeRestore(RestoreOutcome.Success(summary))
         reportDiagnostic(DiagnosticOutcome.SUCCEEDED, attempt.source, attempt.diagnosticId)
         return Result.success(workDataOf(SUMMARY_JSON_KEY to json.encodeToString(summary.forWorkData())))
