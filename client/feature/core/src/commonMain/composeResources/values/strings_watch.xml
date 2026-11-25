@@ -310,6 +310,18 @@
     <string name="watch_v2_handwriting">Handwriting</string>
     <string name="watch_discovery_unavailable">Can’t check your watch right now</string>
     <string name="watch_installation_unknown">Check LogDate on your watch</string>
+    <string name="watch_unknown_title">Finish connecting %1$s</string>
+    <string
+    name="watch_unknown_description"
+  >Open LogDate on your watch to wake it up. Linking finishes automatically once it responds.</string>
+    <string name="watch_setup_open_on_watch">Open LogDate on watch</string>
+    <string name="watch_setup_diagnostics_action">Connection details</string>
+    <string name="watch_setup_step_paired">%1$s connected to this phone</string>
+    <string name="watch_setup_step_app">Waiting for LogDate on watch</string>
+    <string name="watch_setup_step_link">Link to your LogDate account</string>
+    <string name="watch_v2_experience_section">On your watch</string>
+    <string name="watch_v2_library">Timeline &amp; audio</string>
+    <string name="watch_v2_library_description">History window, Rewind, and offline audio</string>
     <string
     name="watch_check_on_watch"
   >Open LogDate on your watch and keep it near your phone with Bluetooth on. Then check again.</string>
@@ -322,7 +334,7 @@
     <string
     name="watch_request_failed_open"
   >Couldn’t open LogDate on your watch. Open it on the watch, then try again.</string>
-    <string name="watch_missing_confirm_action">LogDate isn’t on this watch</string>
+    <string name="watch_missing_confirm_action">Install from Google Play</string>
     <string name="watch_missing_confirm_title">Install LogDate on this watch?</string>
     <string
     name="watch_missing_confirm_description"

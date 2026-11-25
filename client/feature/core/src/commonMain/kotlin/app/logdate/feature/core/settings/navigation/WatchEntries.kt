@@ -10,6 +10,7 @@ import app.logdate.feature.core.settings.ui.watch.WatchSettingsScreen
 import app.logdate.feature.core.settings.ui.watch.WatchSettingsViewModel
 import app.logdate.feature.core.settings.ui.watch.WatchTroubleshootingScreen
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCheckConnectionScreen
+import app.logdate.feature.core.settings.ui.watch.v2.WatchLibraryScreen
 import app.logdate.feature.core.settings.ui.watch.v2.WatchMicrophoneScreen
 import app.logdate.feature.core.settings.ui.watch.v2.WatchTilesScreen
 import app.logdate.ui.navigation.taggedEntry
@@ -47,9 +48,13 @@ fun EntryProviderScope<NavKey>.watchEntries(
             onNavigateToReminders = { onNavigateToDetail(RecommendationSettingsRoute) },
             onNavigateToTiles = { onNavigateToDetail(WatchTilesRoute) },
             onNavigateToMicrophone = { onNavigateToDetail(WatchMicrophoneRoute) },
+            onNavigateToLibrary = { onNavigateToDetail(WatchLibraryRoute) },
             onNavigateToConnectionCheck = { onNavigateToDetail(WatchCheckConnectionRoute) },
             onNavigateToRemove = { onNavigateToDetail(WatchRemovalRoute) },
         )
+    }
+    taggedEntry<WatchLibraryRoute>(metadata = settingsDetailMetadata(SettingsCategory.Watch, categories)) {
+        WatchLibraryScreen(onBack)
     }
     taggedEntry<WatchNotificationSettingsRoute>(metadata = settingsDetailMetadata(SettingsCategory.Watch, categories)) {
         val viewModel: WatchSettingsViewModel = koinViewModel()

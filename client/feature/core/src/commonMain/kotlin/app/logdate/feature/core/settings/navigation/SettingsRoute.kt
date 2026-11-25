@@ -176,3 +176,6 @@ data object WatchMicrophoneRoute : NavKey
 
 @kotlinx.serialization.Serializable
 data object WatchRemovalRoute : NavKey
+
+@Serializable
+data object WatchLibraryRoute : NavKey
