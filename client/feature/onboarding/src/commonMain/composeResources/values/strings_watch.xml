@@ -11,4 +11,10 @@
     <string name="watch_setup_linking">Setting up the connection to your watch</string>
     <string name="watch_setup_failed">Couldn’t set up your watch. Keep it nearby and try again, or do this later in Settings.</string>
     <string name="watch_setup_save_failed">Couldn’t save your setup progress. Try again.</string>
+    <string name="watch_setup_open_action">Open on watch</string>
+    <string name="watch_setup_try_again_action">Try again</string>
+    <string name="watch_setup_not_installed_link">Don’t have it on your watch?</string>
+    <string name="watch_setup_install_action">Install on watch</string>
+    <string name="watch_setup_back_action">Back</string>
+    <string name="watch_setup_confirm_install_description">Open Google Play on your watch to install LogDate, then return here to finish connecting.</string>
 </resources>

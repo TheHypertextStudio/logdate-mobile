@@ -17,29 +17,34 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
-import app.logdate.feature.core.settings.ui.watch.WatchStatus
-import app.logdate.feature.core.settings.ui.watch.WatchUnknownActions
 import app.logdate.feature.core.settings.ui.watch.v2.WatchSetupState
 import app.logdate.ui.step.StepHeroIcon
 import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepScaffold
+import app.logdate.ui.step.StepSecondaryButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import logdate.client.feature.onboarding.generated.resources.Res
 import logdate.client.feature.onboarding.generated.resources.watch_setup_add
+import logdate.client.feature.onboarding.generated.resources.watch_setup_back_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_check
 import logdate.client.feature.onboarding.generated.resources.watch_setup_check_known
 import logdate.client.feature.onboarding.generated.resources.watch_setup_confirm
+import logdate.client.feature.onboarding.generated.resources.watch_setup_confirm_install_description
 import logdate.client.feature.onboarding.generated.resources.watch_setup_continue
 import logdate.client.feature.onboarding.generated.resources.watch_setup_description
 import logdate.client.feature.onboarding.generated.resources.watch_setup_failed
+import logdate.client.feature.onboarding.generated.resources.watch_setup_install_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_linking
+import logdate.client.feature.onboarding.generated.resources.watch_setup_not_installed_link
+import logdate.client.feature.onboarding.generated.resources.watch_setup_open_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_opening
 import logdate.client.feature.onboarding.generated.resources.watch_setup_ready
 import logdate.client.feature.onboarding.generated.resources.watch_setup_save_failed
 import logdate.client.feature.onboarding.generated.resources.watch_setup_skip
 import logdate.client.feature.onboarding.generated.resources.watch_setup_title
+import logdate.client.feature.onboarding.generated.resources.watch_setup_try_again_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_waiting
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -164,41 +169,47 @@ internal fun OnboardingWatchStepContent(
     onOpenOnWatch: () -> Unit = {},
 ) {
     val installed = connection is WatchConnectionState.Connected || connection is WatchConnectionState.OutOfRange
+    val checking = state as? WatchSetupState.CheckOnWatch
+    var confirmingMissing by remember(checking?.nodeId) { mutableStateOf(false) }
     val message =
-        when (state) {
-            WatchSetupState.Ready -> {
+        when {
+            checking != null && confirmingMissing -> {
+                Res.string.watch_setup_confirm_install_description
+            }
+
+            state == WatchSetupState.Ready -> {
                 Res.string.watch_setup_ready
             }
 
-            WatchSetupState.ConfirmingOnPhone -> {
+            state == WatchSetupState.ConfirmingOnPhone -> {
                 Res.string.watch_setup_confirm
             }
 
-            WatchSetupState.OpeningPlayOnWatch -> {
+            state == WatchSetupState.OpeningPlayOnWatch -> {
                 Res.string.watch_setup_opening
             }
 
-            WatchSetupState.WaitingForInstall -> {
+            state == WatchSetupState.WaitingForInstall -> {
                 Res.string.watch_setup_waiting
             }
 
-            WatchSetupState.SettingUp -> {
+            state == WatchSetupState.SettingUp -> {
                 Res.string.watch_setup_linking
             }
 
-            WatchSetupState.Failed -> {
+            state == WatchSetupState.Failed -> {
                 Res.string.watch_setup_failed
             }
 
-            is WatchSetupState.CheckOnWatch -> {
-                if (state.knownInstalled) {
+            checking != null -> {
+                if (checking.knownInstalled) {
                     Res.string.watch_setup_check_known
                 } else {
                     Res.string.watch_setup_check
                 }
             }
 
-            null -> {
+            else -> {
                 Res.string.watch_setup_description
             }
         }
@@ -208,15 +219,43 @@ internal fun OnboardingWatchStepContent(
         onBack = onBack,
         hero = { StepHeroIcon(Icons.Rounded.Watch) },
         actions = {
-            val checking = state as? WatchSetupState.CheckOnWatch
             if (checking != null) {
-                WatchUnknownActions(
-                    WatchStatus.Unknown(checking.watchName, checking.nodeId, checking.knownInstalled),
-                    onPrimary,
-                    onConfirmMissing,
-                    prominent = true,
-                    onOpenOnWatch = onOpenOnWatch,
-                )
+                val nodeId = checking.nodeId
+                if (confirmingMissing && nodeId != null && !checking.knownInstalled) {
+                    StepPrimaryButton(
+                        text = stringResource(Res.string.watch_setup_install_action),
+                        onClick = {
+                            confirmingMissing = false
+                            onConfirmMissing(nodeId)
+                        },
+                        enabled = !busy,
+                        busy = busy,
+                    )
+                    StepSecondaryButton(
+                        text = stringResource(Res.string.watch_setup_back_action),
+                        onClick = { confirmingMissing = false },
+                        enabled = !busy,
+                        quiet = true,
+                    )
+                } else {
+                    StepPrimaryButton(
+                        text =
+                            stringResource(
+                                if (nodeId != null) Res.string.watch_setup_open_action else Res.string.watch_setup_try_again_action,
+                            ),
+                        onClick = if (nodeId != null) onOpenOnWatch else onPrimary,
+                        enabled = !busy,
+                        busy = busy,
+                    )
+                    if (nodeId != null && !checking.knownInstalled) {
+                        StepSecondaryButton(
+                            text = stringResource(Res.string.watch_setup_not_installed_link),
+                            onClick = { confirmingMissing = true },
+                            enabled = !busy,
+                            quiet = true,
+                        )
+                    }
+                }
             } else {
                 StepPrimaryButton(
                     onClick = onPrimary,

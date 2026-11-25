@@ -3,6 +3,13 @@
 
 package app.logdate.feature.core.settings.ui.watch.v2
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +36,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Link
@@ -46,6 +54,7 @@ import androidx.compose.material.icons.rounded.WatchOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -53,9 +62,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -72,37 +86,71 @@ import app.logdate.feature.core.settings.ui.watch.WatchRequestFailureMessage
 import app.logdate.feature.core.settings.ui.watch.WatchSetupStep
 import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
-import app.logdate.feature.core.settings.ui.watch.WatchUnknownActions
 import app.logdate.feature.core.settings.ui.watch.watchLinkingCopy
 import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.step.StepPrimaryButton
+import app.logdate.ui.step.StepSecondaryButton
 import app.logdate.ui.theme.Spacing
 import app.logdate.ui.watch.WatchSetupProvider
 import app.logdate.ui.watch.rememberWatchSetupLauncher
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_association_pending
 import logdate.client.feature.core.generated.resources.watch_association_pending_description
-import logdate.client.feature.core.generated.resources.watch_check_on_watch
 import logdate.client.feature.core.generated.resources.watch_discovery_unavailable
-import logdate.client.feature.core.generated.resources.watch_installation_unknown
+import logdate.client.feature.core.generated.resources.watch_handoff_retry
 import logdate.client.feature.core.generated.resources.watch_loading
+import logdate.client.feature.core.generated.resources.watch_setup_already_open_action
 import logdate.client.feature.core.generated.resources.watch_setup_associate_action
 import logdate.client.feature.core.generated.resources.watch_setup_associate_description
 import logdate.client.feature.core.generated.resources.watch_setup_associate_title
+import logdate.client.feature.core.generated.resources.watch_setup_back_action
+import logdate.client.feature.core.generated.resources.watch_setup_complete_action
+import logdate.client.feature.core.generated.resources.watch_setup_complete_description
+import logdate.client.feature.core.generated.resources.watch_setup_complete_title
+import logdate.client.feature.core.generated.resources.watch_setup_confirm_install_description
+import logdate.client.feature.core.generated.resources.watch_setup_confirm_install_title
 import logdate.client.feature.core.generated.resources.watch_setup_install_action
 import logdate.client.feature.core.generated.resources.watch_setup_install_description
 import logdate.client.feature.core.generated.resources.watch_setup_install_title
+import logdate.client.feature.core.generated.resources.watch_setup_not_installed_link
+import logdate.client.feature.core.generated.resources.watch_setup_open_action
+import logdate.client.feature.core.generated.resources.watch_setup_open_description
+import logdate.client.feature.core.generated.resources.watch_setup_open_sent
+import logdate.client.feature.core.generated.resources.watch_setup_open_title
 import logdate.client.feature.core.generated.resources.watch_setup_pair_description
 import logdate.client.feature.core.generated.resources.watch_setup_pair_title
 import logdate.client.feature.core.generated.resources.watch_setup_sent
 import logdate.client.feature.core.generated.resources.watch_setup_start_action
+import logdate.client.feature.core.generated.resources.watch_setup_troubleshoot_action
 import logdate.client.feature.core.generated.resources.watch_unknown_description
-import logdate.client.feature.core.generated.resources.watch_unknown_title
 import logdate.client.feature.core.generated.resources.watch_unsupported
 import org.jetbrains.compose.resources.stringResource
 
 /** The colour family a problem or quiet step is drawn in, so its kind reads before any text does. */
 private enum class WatchSetupTone { PROBLEM, QUIET }
+
+private enum class WatchSetupVisualStep {
+    LOADING,
+    UNSUPPORTED,
+    NO_WATCH,
+    DISCOVERY_UNAVAILABLE,
+    OPEN_WATCH,
+    CONFIRM_INSTALL,
+    PAIR_PHONE,
+    CONFIRM_PHONE,
+    NOT_INSTALLED,
+    LINKING,
+    COMPLETE,
+}
+
+private data class SetupStepProgress(
+    val current: Int,
+    val total: Int,
+) {
+    val fraction: Float get() = current.toFloat() / total.toFloat()
+}
+
+private const val SETUP_TOTAL_STEPS = 3
 
 /**
  * First use has one next action and no controls for a watch LogDate cannot yet reach.
@@ -123,126 +171,277 @@ internal fun WatchSetupContent(
     onConfirmMissing: (String) -> Unit = {},
     onOpenOnWatch: (() -> Unit)? = null,
     onDiagnostics: (() -> Unit)? = null,
+    onCompleteDone: (() -> Unit)? = null,
 ) {
-    when (status) {
-        null -> {
-            WatchSetupStepLayout(
-                title = stringResource(Res.string.watch_loading),
-                description = null,
-                modifier = modifier,
-                picture = { SearchingPicture(it) },
-            ) {}
-        }
+    val unknownStatus = status as? WatchStatus.Unknown
+    var confirmingInstall by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
+    var openSent by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
+    LaunchedEffect(requestFailure) {
+        if (requestFailure != null) openSent = false
+    }
+    val visualStep =
+        when (status) {
+            null -> {
+                WatchSetupVisualStep.LOADING
+            }
 
-        WatchStatus.Unsupported -> {
-            WatchSetupStepLayout(
-                title = stringResource(Res.string.watch_unsupported),
-                description = null,
-                modifier = modifier,
-                picture = { StoppedPicture(it, MaterialShapes.Slanted.toShape(), WatchSetupTone.QUIET, Icons.Rounded.WatchOff) },
-            ) {}
-        }
+            WatchStatus.Unsupported -> {
+                WatchSetupVisualStep.UNSUPPORTED
+            }
 
-        is WatchStatus.Unknown -> {
-            WatchSetupStepLayout(
-                title =
-                    status.watchName?.let { stringResource(Res.string.watch_unknown_title, it) }
-                        ?: stringResource(Res.string.watch_discovery_unavailable),
-                description = stringResource(Res.string.watch_unknown_description),
-                modifier = modifier,
-                picture = {
-                    StoppedPicture(
-                        it,
-                        MaterialShapes.Pentagon.toShape(),
-                        WatchSetupTone.QUIET,
-                        Icons.Rounded.QuestionMark,
-                        badge = Icons.Rounded.Watch,
+            WatchStatus.NoWatch -> {
+                WatchSetupVisualStep.NO_WATCH
+            }
+
+            is WatchStatus.Unknown -> {
+                when {
+                    status.nodeId == null -> WatchSetupVisualStep.DISCOVERY_UNAVAILABLE
+                    confirmingInstall && !status.knownInstalled -> WatchSetupVisualStep.CONFIRM_INSTALL
+                    else -> WatchSetupVisualStep.OPEN_WATCH
+                }
+            }
+
+            is WatchStatus.SettingUp -> {
+                when (status.step) {
+                    is WatchSetupStep.PairWithPhone -> WatchSetupVisualStep.PAIR_PHONE
+                    WatchSetupStep.ConfirmOnPhone -> WatchSetupVisualStep.CONFIRM_PHONE
+                    is WatchSetupStep.Linking -> WatchSetupVisualStep.LINKING
+                }
+            }
+
+            is WatchStatus.NotInstalled -> {
+                WatchSetupVisualStep.NOT_INSTALLED
+            }
+
+            is WatchStatus.Ready -> {
+                WatchSetupVisualStep.COMPLETE
+            }
+
+            is WatchStatus.NeedsAttention -> {
+                WatchSetupVisualStep.LINKING
+            }
+        }
+    val reduceMotion by rememberSystemReduceMotion()
+    AnimatedContent(
+        targetState = visualStep,
+        modifier = modifier,
+        transitionSpec = {
+            if (reduceMotion) {
+                fadeIn() togetherWith fadeOut()
+            } else {
+                (fadeIn() + slideInHorizontally { it / 6 }) togetherWith (fadeOut() + slideOutHorizontally { -it / 6 })
+            }
+        },
+        label = "watch_setup_step",
+    ) { step ->
+        when (step) {
+            WatchSetupVisualStep.LOADING -> {
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_loading),
+                    description = null,
+                    modifier = Modifier.fillMaxSize(),
+                    picture = { SearchingPicture(it) },
+                ) {}
+            }
+
+            WatchSetupVisualStep.UNSUPPORTED -> {
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_unsupported),
+                    description = null,
+                    modifier = Modifier.fillMaxSize(),
+                    picture = { StoppedPicture(it, MaterialShapes.Slanted.toShape(), WatchSetupTone.QUIET, Icons.Rounded.WatchOff) },
+                ) {}
+            }
+
+            WatchSetupVisualStep.NO_WATCH -> {
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_setup_pair_title),
+                    description = stringResource(Res.string.watch_setup_pair_description),
+                    modifier = Modifier.fillMaxSize(),
+                    picture = { IntroPicture(it) },
+                ) {
+                    WatchSystemSetupButton(
+                        launcher = setupLauncher ?: rememberWatchSetupLauncher(),
+                        label = stringResource(Res.string.watch_setup_start_action),
+                        prominent = true,
                     )
-                },
-            ) {
-                WatchUnknownActions(
-                    status = status,
-                    onRetry = onRetry,
-                    onConfirmMissing = onConfirmMissing,
-                    prominent = true,
-                    onOpenOnWatch = onOpenOnWatch,
-                    onDiagnostics = onDiagnostics,
-                )
-                requestFailure?.let { WatchRequestFailureMessage(it) }
-            }
-        }
-
-        WatchStatus.NoWatch -> {
-            WatchSetupStepLayout(
-                title = stringResource(Res.string.watch_setup_pair_title),
-                description = stringResource(Res.string.watch_setup_pair_description),
-                modifier = modifier,
-                picture = { IntroPicture(it) },
-            ) {
-                WatchSystemSetupButton(
-                    launcher = setupLauncher ?: rememberWatchSetupLauncher(),
-                    label = stringResource(Res.string.watch_setup_start_action),
-                    prominent = true,
-                )
-            }
-        }
-
-        is WatchStatus.SettingUp -> {
-            when (val step = status.step) {
-                is WatchSetupStep.PairWithPhone -> {
-                    WatchSetupStepLayout(
-                        title = stringResource(Res.string.watch_setup_associate_title, step.watchName),
-                        description = stringResource(Res.string.watch_setup_associate_description),
-                        modifier = modifier,
-                        picture = { ConnectPicture(it) },
-                    ) { WatchSetupAction(stringResource(Res.string.watch_setup_associate_action), onAssociate) }
                 }
+            }
 
-                WatchSetupStep.ConfirmOnPhone -> {
-                    WatchSetupStepLayout(
-                        title = stringResource(Res.string.watch_association_pending),
-                        description = stringResource(Res.string.watch_association_pending_description),
-                        modifier = modifier,
-                        announce = true,
-                        picture = { AllowPicture(it) },
-                    ) {}
+            WatchSetupVisualStep.DISCOVERY_UNAVAILABLE -> {
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_discovery_unavailable),
+                    description = stringResource(Res.string.watch_unknown_description),
+                    modifier = Modifier.fillMaxSize(),
+                    picture = {
+                        StoppedPicture(
+                            it,
+                            MaterialShapes.Pentagon.toShape(),
+                            WatchSetupTone.QUIET,
+                            Icons.Rounded.QuestionMark,
+                            badge = Icons.Rounded.Watch,
+                        )
+                    },
+                ) {
+                    WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onRetry)
+                    requestFailure?.let { WatchRequestFailureMessage(it) }
                 }
+            }
 
-                is WatchSetupStep.Linking -> {
-                    val copy = watchLinkingCopy(step)
-                    WatchSetupStepLayout(
-                        title = copy.title,
-                        description = copy.description,
-                        modifier = modifier,
-                        announce = true,
-                        picture = { LinkingPicture(it, step.problem) },
-                    ) {
-                        copy.action?.let { WatchSetupAction(it, onAssociate) }
+            WatchSetupVisualStep.CONFIRM_INSTALL -> {
+                val unknown = unknownStatus ?: return@AnimatedContent
+                val nodeId = unknown.nodeId ?: return@AnimatedContent
+                val watchName = unknown.watchName ?: ""
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_setup_confirm_install_title, watchName),
+                    description = stringResource(Res.string.watch_setup_confirm_install_description),
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
+                    picture = { InstallPicture(it) },
+                ) {
+                    WatchSetupAction(stringResource(Res.string.watch_setup_install_action)) {
+                        confirmingInstall = false
+                        onConfirmMissing(nodeId)
+                    }
+                    StepSecondaryButton(
+                        text = stringResource(Res.string.watch_setup_back_action),
+                        onClick = { confirmingInstall = false },
+                        quiet = true,
+                    )
+                }
+            }
+
+            WatchSetupVisualStep.OPEN_WATCH -> {
+                val unknown = unknownStatus ?: return@AnimatedContent
+                val watchName = unknown.watchName ?: ""
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_setup_open_title, watchName),
+                    description = stringResource(Res.string.watch_setup_open_description),
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
+                    picture = { WakeWatchPicture(it) },
+                ) {
+                    if (onOpenOnWatch != null) {
+                        WatchSetupAction(stringResource(Res.string.watch_setup_open_action)) {
+                            openSent = true
+                            onOpenOnWatch()
+                        }
+                    } else {
+                        WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onRetry)
+                    }
+                    if (requestFailure != null) {
+                        WatchRequestFailureMessage(requestFailure)
+                    } else if (openSent) {
+                        Text(
+                            stringResource(Res.string.watch_setup_open_sent),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                    }
+                    when {
+                        !unknown.knownInstalled && unknown.nodeId != null -> {
+                            StepSecondaryButton(
+                                text = stringResource(Res.string.watch_setup_not_installed_link),
+                                onClick = { confirmingInstall = true },
+                                quiet = true,
+                            )
+                        }
+
+                        requestFailure != null && onDiagnostics != null -> {
+                            StepSecondaryButton(
+                                text = stringResource(Res.string.watch_setup_troubleshoot_action),
+                                onClick = onDiagnostics,
+                                quiet = true,
+                            )
+                        }
+
+                        onOpenOnWatch != null -> {
+                            StepSecondaryButton(
+                                text = stringResource(Res.string.watch_setup_already_open_action),
+                                onClick = onRetry,
+                                quiet = true,
+                            )
+                        }
+                    }
+                }
+            }
+
+            WatchSetupVisualStep.PAIR_PHONE -> {
+                val settingUp = status as? WatchStatus.SettingUp ?: return@AnimatedContent
+                val pair = settingUp.step as? WatchSetupStep.PairWithPhone ?: return@AnimatedContent
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_setup_associate_title, pair.watchName),
+                    description = stringResource(Res.string.watch_setup_associate_description),
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(1, SETUP_TOTAL_STEPS),
+                    picture = { ConnectPicture(it) },
+                ) { WatchSetupAction(stringResource(Res.string.watch_setup_associate_action), onAssociate) }
+            }
+
+            WatchSetupVisualStep.CONFIRM_PHONE -> {
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_association_pending),
+                    description = stringResource(Res.string.watch_association_pending_description),
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(1, SETUP_TOTAL_STEPS),
+                    announce = true,
+                    picture = { AllowPicture(it) },
+                ) {}
+            }
+
+            WatchSetupVisualStep.NOT_INSTALLED -> {
+                val missing = status as? WatchStatus.NotInstalled ?: return@AnimatedContent
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_setup_install_title, missing.watchName),
+                    description = stringResource(Res.string.watch_setup_install_description),
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
+                    picture = { InstallPicture(it) },
+                ) {
+                    WatchSetupAction(stringResource(Res.string.watch_setup_install_action), onInstall)
+                    if (installRequestSent) {
+                        Text(
+                            stringResource(Res.string.watch_setup_sent),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                    }
+                    requestFailure?.let { WatchRequestFailureMessage(it) }
+                }
+            }
+
+            WatchSetupVisualStep.LINKING -> {
+                val settingUp = status as? WatchStatus.SettingUp ?: return@AnimatedContent
+                val linking = settingUp.step as? WatchSetupStep.Linking ?: return@AnimatedContent
+                val copy = watchLinkingCopy(linking)
+                WatchSetupStepLayout(
+                    title = copy.title,
+                    description = copy.description,
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(3, SETUP_TOTAL_STEPS),
+                    announce = true,
+                    picture = { LinkingPicture(it, linking.problem) },
+                ) {
+                    copy.action?.let { WatchSetupAction(it, onAssociate) }
+                }
+            }
+
+            WatchSetupVisualStep.COMPLETE -> {
+                val ready = status as? WatchStatus.Ready ?: return@AnimatedContent
+                WatchSetupStepLayout(
+                    title = stringResource(Res.string.watch_setup_complete_title, ready.watchName),
+                    description = stringResource(Res.string.watch_setup_complete_description),
+                    modifier = Modifier.fillMaxSize(),
+                    progress = SetupStepProgress(3, SETUP_TOTAL_STEPS),
+                    announce = true,
+                    picture = { ReadyPicture(it) },
+                ) {
+                    onCompleteDone?.let { done ->
+                        WatchSetupAction(stringResource(Res.string.watch_setup_complete_action), done)
                     }
                 }
             }
         }
-
-        is WatchStatus.NotInstalled -> {
-            WatchSetupStepLayout(
-                title = stringResource(Res.string.watch_setup_install_title, status.watchName),
-                description = stringResource(Res.string.watch_setup_install_description),
-                modifier = modifier,
-                picture = { InstallPicture(it) },
-            ) {
-                WatchSetupAction(stringResource(Res.string.watch_setup_install_action), onInstall)
-                if (installRequestSent) {
-                    Text(
-                        stringResource(Res.string.watch_setup_sent),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                    )
-                }
-                requestFailure?.let { WatchRequestFailureMessage(it) }
-            }
-        }
-
-        is WatchStatus.Ready, is WatchStatus.NeedsAttention -> {}
     }
 }
 
@@ -269,6 +468,7 @@ private fun WatchSetupStepLayout(
     description: String?,
     modifier: Modifier,
     picture: @Composable (Dp) -> Unit,
+    progress: SetupStepProgress? = null,
     announce: Boolean = false,
     action: @Composable ColumnScope.() -> Unit,
 ) {
@@ -280,7 +480,7 @@ private fun WatchSetupStepLayout(
                 modifier = Modifier.fillMaxSize().padding(horizontal = Spacing.xl, vertical = Spacing.lg),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.xl),
             ) {
-                WatchSetupWords(title, description, announce, Modifier.weight(1f).verticalScroll(rememberScrollState()))
+                WatchSetupWords(title, description, progress, announce, Modifier.weight(1f).verticalScroll(rememberScrollState()))
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
                     WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
                     WatchSetupActions(action)
@@ -297,7 +497,7 @@ private fun WatchSetupStepLayout(
                         .padding(Spacing.xl),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                WatchSetupWords(title, description, announce)
+                WatchSetupWords(title, description, progress, announce)
                 Spacer(Modifier.weight(1f))
                 WatchSetupPicture(picture, Modifier.fillMaxWidth().height(180.dp))
                 Spacer(Modifier.weight(1f))
@@ -316,7 +516,7 @@ private fun WatchSetupStepLayout(
                         .padding(horizontal = Spacing.xl, vertical = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg),
             ) {
-                WatchSetupWords(title, description, announce)
+                WatchSetupWords(title, description, progress, announce)
                 WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
                 WatchSetupActions(action)
             }
@@ -328,10 +528,22 @@ private fun WatchSetupStepLayout(
 private fun WatchSetupWords(
     title: String,
     description: String?,
+    progress: SetupStepProgress?,
     announce: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        if (progress != null) {
+            val reduceMotion by rememberSystemReduceMotion()
+            val target = progress.fraction.coerceIn(0f, 1f)
+            val animated = if (reduceMotion) target else animateFloatAsState(target, label = "watch_setup_progress").value
+            LinearProgressIndicator(
+                progress = { animated },
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                drawStopIndicator = {},
+            )
+        }
         Text(
             title,
             style = MaterialTheme.typography.headlineLarge,
@@ -358,6 +570,7 @@ private fun WatchSetupPicture(
 private fun WatchSetupActions(action: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         content = action,
     )
@@ -618,5 +831,57 @@ private fun StoppedPicture(
                 Modifier.align(Alignment.BottomEnd),
             )
         }
+    }
+}
+
+/** The phone signalling the watch to open LogDate and finish connecting. */
+@Composable
+private fun WakeWatchPicture(side: Dp) {
+    val colors = MaterialTheme.colorScheme
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(side * 0.05f)) {
+        Mark(Icons.Rounded.Smartphone, side * 0.24f, CircleShape, colors.surfaceContainerHighest, colors.onSurfaceVariant)
+        repeat(3) { Box(Modifier.size(side * 0.035f).background(colors.primary, CircleShape)) }
+        Box(Modifier.size(side * 0.48f)) {
+            Mark(
+                Icons.Rounded.Watch,
+                side * 0.44f,
+                MaterialShapes.Clover4Leaf.toShape(),
+                colors.tertiaryContainer,
+                colors.onTertiaryContainer,
+                Modifier.align(Alignment.Center),
+            )
+            Mark(
+                Icons.Rounded.TouchApp,
+                side * 0.17f,
+                CircleShape,
+                colors.primary,
+                colors.onPrimary,
+                Modifier.align(Alignment.BottomEnd),
+            )
+        }
+    }
+}
+
+/** Celebrates a paired, linked watch before entering Watch Settings. */
+@Composable
+private fun ReadyPicture(side: Dp) {
+    val colors = MaterialTheme.colorScheme
+    Box(Modifier.size(side * 0.78f)) {
+        Mark(
+            Icons.Rounded.Watch,
+            side * 0.7f,
+            MaterialShapes.Flower.toShape(),
+            colors.primaryContainer,
+            colors.onPrimaryContainer,
+            Modifier.align(Alignment.TopStart),
+        )
+        Mark(
+            Icons.Rounded.Check,
+            side * 0.26f,
+            CircleShape,
+            colors.primary,
+            colors.onPrimary,
+            Modifier.align(Alignment.BottomEnd),
+        )
     }
 }

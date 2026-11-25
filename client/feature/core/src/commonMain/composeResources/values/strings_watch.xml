@@ -313,12 +313,27 @@
     <string name="watch_unknown_title">Finish connecting %1$s</string>
     <string
     name="watch_unknown_description"
-  >Open LogDate on your watch to wake it up. Linking finishes automatically once it responds.</string>
+  >Open LogDate on your watch and keep it nearby to finish connecting.</string>
+    <string name="watch_setup_open_title">Open LogDate on %1$s</string>
+    <string
+    name="watch_setup_open_description"
+  >Open LogDate on your watch and keep it nearby to finish connecting.</string>
+    <string name="watch_setup_open_action">Open on watch</string>
     <string name="watch_setup_open_on_watch">Open LogDate on watch</string>
-    <string name="watch_setup_diagnostics_action">Connection details</string>
-    <string name="watch_setup_step_paired">%1$s connected to this phone</string>
-    <string name="watch_setup_step_app">Waiting for LogDate on watch</string>
-    <string name="watch_setup_step_link">Link to your LogDate account</string>
+    <string name="watch_setup_open_sent">Opening LogDate on your watch…</string>
+    <string name="watch_setup_not_installed_link">Don’t have it on your watch?</string>
+    <string name="watch_setup_already_open_action">I already opened it</string>
+    <string name="watch_setup_troubleshoot_action">Troubleshoot connection</string>
+    <string name="watch_setup_confirm_install_title">Install LogDate on %1$s?</string>
+    <string
+    name="watch_setup_confirm_install_description"
+  >This opens LogDate in Google Play on your watch. Return here once it finishes installing.</string>
+    <string name="watch_setup_back_action">Back</string>
+    <string name="watch_setup_complete_title">%1$s is ready</string>
+    <string
+    name="watch_setup_complete_description"
+  >Voice notes and moments you capture on your wrist now sync automatically.</string>
+    <string name="watch_setup_complete_action">Done</string>
     <string name="watch_v2_experience_section">On your watch</string>
     <string name="watch_v2_library">Timeline &amp; audio</string>
     <string name="watch_v2_library_description">History window, Rewind, and offline audio</string>

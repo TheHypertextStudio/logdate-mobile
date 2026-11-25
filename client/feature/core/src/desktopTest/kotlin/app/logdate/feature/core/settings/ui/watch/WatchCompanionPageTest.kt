@@ -21,6 +21,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.Density
+import app.logdate.feature.core.settings.ui.watch.WatchLinkLine
+import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
+import app.logdate.feature.core.settings.ui.watch.WatchSetupStep
+import app.logdate.feature.core.settings.ui.watch.WatchStatus
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPage
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPreferences
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionSections
@@ -341,9 +345,10 @@ class WatchCompanionPageTest {
         }
 
     @Test
-    fun `unknown installation offers an explicit targeted confirmation before Play`() =
+    fun `unknown installation steps smoothly from open-on-watch to inline install confirmation without checklist clutter`() =
         runDesktopComposeUiTest(width = 411, height = 891) {
             val confirmed = mutableListOf<String>()
+            var opened = 0
             setContent {
                 LogDateTheme(dynamicColor = false) {
                     WatchCompanionPage(
@@ -359,27 +364,33 @@ class WatchCompanionPageTest {
                         onDiagnostics = {},
                         onRemove = {},
                         onConfirmMissing = { confirmed += it },
-                        onOpenOnWatch = {},
+                        onOpenOnWatch = { opened++ },
                     )
                 }
             }
+            onNodeWithTag("watch_setup_art").assertExists()
+            onNodeWithText("Open LogDate on Pixel Watch").assertExists()
             onNodeWithText("Install on watch").assertDoesNotExist()
-            onNodeWithText("Pixel Watch connected to this phone").assertExists()
-            onNodeWithText("Open LogDate on watch").assertExists()
-            onNodeWithText("Connection details").assertExists()
-            onNodeWithText("Install from Google Play").performClick()
+            onNodeWithText("Check connection").assertDoesNotExist()
+            onNodeWithText("Connection details").assertDoesNotExist()
+            onNodeWithText("Open on watch").performClick()
+            assertEquals(1, opened)
+            onNodeWithText("Opening LogDate on your watch…").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-open-watch.png")
+
+            onNodeWithText("Don’t have it on your watch?").performClick()
             assertTrue(confirmed.isEmpty())
-            onNodeWithText("Install LogDate on this watch?").assertExists()
+            onNodeWithText("Install LogDate on Pixel Watch?").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-confirm-install.png")
             onNodeWithText("Install on watch").performClick()
             assertEquals(listOf("watch-a"), confirmed)
-            saveScreenshot(onRoot().captureToImage(), "watch-connection-unknown-phone.png")
         }
 
     @Test
-    fun `known installed unresponsive watch never instructs installation at any width`() {
+    fun `known installed unresponsive watch stays inside focused setup without install or duplicate diagnostics`() {
         for ((width, height) in listOf(411 to 891, 1000 to 800, 1280 to 800)) {
             runDesktopComposeUiTest(width = width, height = height) {
-                var retries = 0
+                var diagnostics = 0
                 setContent {
                     LogDateTheme(dynamicColor = false) {
                         WatchCompanionPage(
@@ -392,24 +403,63 @@ class WatchCompanionPageTest {
                             onTiles = {},
                             onMicrophone = {},
                             onNotifications = {},
-                            onDiagnostics = {},
+                            onDiagnostics = { diagnostics++ },
                             onRemove = {},
-                            onRetry = { retries++ },
+                            onOpenOnWatch = {},
                         )
                     }
                 }
-                onNodeWithText("Install from Google Play").assertDoesNotExist()
+                onNodeWithTag("watch_setup_art").assertExists()
+                onNodeWithText("Don’t have it on your watch?").assertDoesNotExist()
                 onNodeWithText("Install on watch").assertDoesNotExist()
-                onNodeWithText("Install on Watch").assertDoesNotExist()
-                onNodeWithTag("watch_setup_art").assertDoesNotExist()
+                onNodeWithText("Check connection").assertDoesNotExist()
                 onNodeWithText("Microphone").assertDoesNotExist()
                 onNodeWithText("Remove watch").assertDoesNotExist()
-                onNodeWithText("Check again").performClick()
-                assertEquals(1, retries)
-                saveScreenshot(onRoot().captureToImage(), "watch-connection-installed-$width-$height.png")
+                onNodeWithText("Open on watch").assertExists()
+                saveScreenshot(onRoot().captureToImage(), "watch-setup-open-installed-$width-$height.png")
+                onNodeWithText("Troubleshoot connection").performClick()
+                assertEquals(1, diagnostics)
             }
         }
     }
+
+    @Test
+    fun `setup progression captures pairing, linking, and celebratory completion before companion settings`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            var status by mutableStateOf<WatchStatus>(WatchStatus.SettingUp(WatchSetupStep.PairWithPhone("Pixel Watch")))
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = status,
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                    )
+                }
+            }
+            onNodeWithTag("watch_setup_art").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-pair.png")
+
+            status = WatchStatus.SettingUp(WatchSetupStep.Linking("Pixel Watch"))
+            waitForIdle()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-linking.png")
+
+            status = WatchStatus.Ready("Pixel Watch", nearby = true, link = WatchLinkLine.ON_ITS_OWN)
+            waitForIdle()
+            onNodeWithText("Pixel Watch is ready").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-complete.png")
+
+            onNodeWithText("Done").performClick()
+            waitForIdle()
+            onNodeWithText("Check connection").assertExists()
+        }
 
     private fun saveScreenshot(
         image: ImageBitmap,
