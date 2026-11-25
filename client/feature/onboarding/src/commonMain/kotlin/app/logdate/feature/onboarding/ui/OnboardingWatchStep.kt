@@ -27,6 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import logdate.client.feature.onboarding.generated.resources.Res
 import logdate.client.feature.onboarding.generated.resources.watch_setup_add
+import logdate.client.feature.onboarding.generated.resources.watch_setup_already_installed_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_check
 import logdate.client.feature.onboarding.generated.resources.watch_setup_check_known
 import logdate.client.feature.onboarding.generated.resources.watch_setup_confirm
@@ -36,7 +37,6 @@ import logdate.client.feature.onboarding.generated.resources.watch_setup_descrip
 import logdate.client.feature.onboarding.generated.resources.watch_setup_failed
 import logdate.client.feature.onboarding.generated.resources.watch_setup_install_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_linking
-import logdate.client.feature.onboarding.generated.resources.watch_setup_not_installed_link
 import logdate.client.feature.onboarding.generated.resources.watch_setup_open_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_opening
 import logdate.client.feature.onboarding.generated.resources.watch_setup_ready
@@ -169,13 +169,8 @@ internal fun OnboardingWatchStepContent(
 ) {
     val installed = connection is WatchConnectionState.Connected || connection is WatchConnectionState.OutOfRange
     val checking = state as? WatchSetupState.CheckOnWatch
-    var confirmingMissing by remember(checking?.nodeId) { mutableStateOf(false) }
     val message =
         when {
-            checking != null && confirmingMissing -> {
-                Res.string.watch_setup_confirm_install_description
-            }
-
             state == WatchSetupState.Ready -> {
                 Res.string.watch_setup_ready
             }
@@ -204,7 +199,7 @@ internal fun OnboardingWatchStepContent(
                 if (checking.knownInstalled) {
                     Res.string.watch_setup_check_known
                 } else {
-                    Res.string.watch_setup_check
+                    Res.string.watch_setup_confirm_install_description
                 }
             }
 
@@ -215,26 +210,23 @@ internal fun OnboardingWatchStepContent(
     StepScaffold(
         title = stringResource(Res.string.watch_setup_title),
         supportingText = stringResource(message),
-        onBack = {
-            if (confirmingMissing) {
-                confirmingMissing = false
-            } else {
-                onBack()
-            }
-        },
+        onBack = onBack,
         hero = { StepHeroIcon(Icons.Rounded.Watch) },
         actions = {
             if (checking != null) {
                 val nodeId = checking.nodeId
-                if (confirmingMissing && nodeId != null && !checking.knownInstalled) {
+                if (nodeId != null && !checking.knownInstalled) {
                     StepPrimaryButton(
                         text = stringResource(Res.string.watch_setup_install_action),
-                        onClick = {
-                            confirmingMissing = false
-                            onConfirmMissing(nodeId)
-                        },
+                        onClick = { onConfirmMissing(nodeId) },
                         enabled = !busy,
                         busy = busy,
+                    )
+                    StepSecondaryButton(
+                        text = stringResource(Res.string.watch_setup_already_installed_action),
+                        onClick = onOpenOnWatch,
+                        enabled = !busy,
+                        quiet = true,
                     )
                 } else {
                     StepPrimaryButton(
@@ -246,14 +238,6 @@ internal fun OnboardingWatchStepContent(
                         enabled = !busy,
                         busy = busy,
                     )
-                    if (nodeId != null && !checking.knownInstalled) {
-                        StepSecondaryButton(
-                            text = stringResource(Res.string.watch_setup_not_installed_link),
-                            onClick = { confirmingMissing = true },
-                            enabled = !busy,
-                            quiet = true,
-                        )
-                    }
                 }
             } else {
                 StepPrimaryButton(

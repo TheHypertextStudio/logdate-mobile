@@ -1,5 +1,5 @@
 @file:Suppress("ktlint:standard:function-naming")
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
 package app.logdate.feature.core.settings.ui.watch.v2
 
@@ -8,14 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.ExpandLess
@@ -25,17 +22,14 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material.icons.rounded.WatchOff
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -52,7 +46,6 @@ import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsScaffold
-import app.logdate.ui.common.applyScreenStyles
 import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepSecondaryButton
 import app.logdate.ui.theme.Spacing
@@ -85,11 +78,9 @@ import logdate.client.feature.core.generated.resources.watch_v2_fix_pair
 import logdate.client.feature.core.generated.resources.watch_v2_fix_sync
 import logdate.client.feature.core.generated.resources.watch_v2_fix_update
 import logdate.client.feature.core.generated.resources.watch_v2_notifications_fix
-import logdate.client.ui.generated.resources.common_back
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import logdate.client.ui.generated.resources.Res as UiRes
 
 @Composable
 fun WatchCheckConnectionScreen(
@@ -111,59 +102,55 @@ fun WatchDiagnosticsContent(
 ) {
     when (val current = state) {
         WatchDiagnosticsState.Checking -> {
-            DiagnosticsStepHost(onBack = onBack) {
-                WatchFlowStepLayout(
-                    title = stringResource(Res.string.watch_v2_check_running),
-                    description = null,
-                    modifier = Modifier.fillMaxSize(),
-                    picture = { SearchingPicture(it) },
-                ) {}
-            }
+            WatchFlowScaffold(
+                title = stringResource(Res.string.watch_v2_check_running),
+                onBack = onBack,
+                modifier = Modifier.fillMaxSize(),
+                picture = { SearchingPicture(it) },
+            ) {}
         }
 
         WatchDiagnosticsState.NeedsWatch -> {
-            DiagnosticsStepHost(onBack = onBack) {
-                WatchFlowStepLayout(
-                    title = stringResource(Res.string.watch_setup_pair_title),
-                    description = stringResource(Res.string.watch_diagnostics_prerequisite),
-                    modifier = Modifier.fillMaxSize(),
-                    picture = { IntroPicture(it) },
-                ) {
-                    WatchSystemSetupButton(prominent = true)
-                    StepSecondaryButton(
-                        text = stringResource(Res.string.watch_v2_check_again),
-                        onClick = onCheck,
-                        enabled = !busy,
-                        quiet = true,
-                    )
-                }
+            WatchFlowScaffold(
+                title = stringResource(Res.string.watch_setup_pair_title),
+                description = stringResource(Res.string.watch_diagnostics_prerequisite),
+                onBack = onBack,
+                modifier = Modifier.fillMaxSize(),
+                picture = { IntroPicture(it) },
+            ) {
+                WatchSystemSetupButton(prominent = true)
+                StepSecondaryButton(
+                    text = stringResource(Res.string.watch_v2_check_again),
+                    onClick = onCheck,
+                    enabled = !busy,
+                    quiet = true,
+                )
             }
         }
 
         WatchDiagnosticsState.Failed -> {
-            DiagnosticsStepHost(onBack = onBack) {
-                WatchFlowStepLayout(
-                    title = stringResource(Res.string.watch_v2_check_error_title),
-                    description = stringResource(Res.string.watch_v2_check_error),
-                    modifier = Modifier.fillMaxSize(),
-                    announce = true,
-                    picture = {
-                        StoppedPicture(
-                            side = it,
-                            shape = MaterialShapes.SoftBurst.toShape(),
-                            tone = WatchSetupTone.PROBLEM,
-                            symbol = Icons.Rounded.WatchOff,
-                            badge = Icons.Rounded.PriorityHigh,
-                        )
-                    },
-                ) {
-                    StepPrimaryButton(
-                        text = stringResource(Res.string.watch_v2_check_again),
-                        onClick = onCheck,
-                        enabled = !busy,
-                        busy = busy,
+            WatchFlowScaffold(
+                title = stringResource(Res.string.watch_v2_check_error_title),
+                description = stringResource(Res.string.watch_v2_check_error),
+                onBack = onBack,
+                modifier = Modifier.fillMaxSize(),
+                announce = true,
+                picture = {
+                    StoppedPicture(
+                        side = it,
+                        shape = MaterialShapes.SoftBurst.toShape(),
+                        tone = WatchSetupTone.PROBLEM,
+                        symbol = Icons.Rounded.WatchOff,
+                        badge = Icons.Rounded.PriorityHigh,
                     )
-                }
+                },
+            ) {
+                StepPrimaryButton(
+                    text = stringResource(Res.string.watch_v2_check_again),
+                    onClick = onCheck,
+                    enabled = !busy,
+                    busy = busy,
+                )
             }
         }
 
@@ -171,25 +158,24 @@ fun WatchDiagnosticsContent(
             val attentionSteps = current.steps.filter { it.outcome != WatchDiagnosticOutcome.PASSED }
             val passedSteps = current.steps.filter { it.outcome == WatchDiagnosticOutcome.PASSED }
             if (attentionSteps.isEmpty()) {
-                DiagnosticsStepHost(onBack = onBack) {
-                    WatchFlowStepLayout(
-                        title = stringResource(Res.string.watch_v2_diagnostics_all_good),
-                        description = stringResource(Res.string.watch_v2_diagnostics_all_passed_summary, current.steps.size),
-                        modifier = Modifier.fillMaxSize(),
-                        announce = true,
-                        picture = { ReadyPicture(it) },
-                    ) {
-                        StepPrimaryButton(
-                            text = stringResource(Res.string.watch_setup_complete_action),
-                            onClick = onBack,
-                        )
-                        StepSecondaryButton(
-                            text = stringResource(Res.string.watch_v2_check_again),
-                            onClick = onCheck,
-                            enabled = !busy,
-                            quiet = true,
-                        )
-                    }
+                WatchFlowScaffold(
+                    title = stringResource(Res.string.watch_v2_diagnostics_all_good),
+                    description = stringResource(Res.string.watch_v2_diagnostics_all_passed_summary, current.steps.size),
+                    onBack = onBack,
+                    modifier = Modifier.fillMaxSize(),
+                    announce = true,
+                    picture = { ReadyPicture(it) },
+                ) {
+                    StepPrimaryButton(
+                        text = stringResource(Res.string.watch_setup_complete_action),
+                        onClick = onBack,
+                    )
+                    StepSecondaryButton(
+                        text = stringResource(Res.string.watch_v2_check_again),
+                        onClick = onCheck,
+                        enabled = !busy,
+                        quiet = true,
+                    )
                 }
             } else {
                 var showPassed by remember { mutableStateOf(false) }
@@ -260,31 +246,6 @@ fun WatchDiagnosticsContent(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DiagnosticsStepHost(
-    onBack: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize().applyScreenStyles(),
-        contentWindowInsets = WindowInsets.navigationBars,
-        topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(UiRes.string.common_back))
-                    }
-                },
-            )
-        },
-    ) { insets ->
-        Box(Modifier.fillMaxSize().padding(insets)) {
-            content()
         }
     }
 }

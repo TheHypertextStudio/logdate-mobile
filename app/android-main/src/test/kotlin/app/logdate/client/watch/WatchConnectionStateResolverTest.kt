@@ -1,5 +1,6 @@
 package app.logdate.client.watch
 
+import app.logdate.feature.core.settings.ui.watch.DiscoveredWatch
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -66,7 +67,11 @@ class WatchConnectionStateResolverTest {
             )
 
         assertEquals(
-            WatchConnectionState.NeedsAssociation("Galaxy Watch", nodeId = "watch-1"),
+            WatchConnectionState.NeedsAssociation(
+                "Galaxy Watch",
+                nodeId = "watch-1",
+                availableWatches = listOf(DiscoveredWatch("watch-1", "Galaxy Watch", isNearby = true, appInstalled = false)),
+            ),
             state,
         )
     }
@@ -105,7 +110,37 @@ class WatchConnectionStateResolverTest {
             )
 
         assertEquals(
-            WatchConnectionState.AppUnknown("Pixel Watch", nodeId = "watch-1"),
+            WatchConnectionState.AppUnknown(
+                "Pixel Watch",
+                nodeId = "watch-1",
+                availableWatches = listOf(DiscoveredWatch("watch-1", "Pixel Watch", isNearby = true, appInstalled = false)),
+            ),
+            state,
+        )
+    }
+
+    @Test
+    fun `selecting a second watch targets that watch and preserves full discovery list`() {
+        val first = WatchNodeSnapshot("watch-a", "Pixel Watch", true)
+        val second = WatchNodeSnapshot("watch-b", "Galaxy Watch", false)
+        val state =
+            resolveWearAppConnection(
+                WatchTransportSnapshot(listOf(first, second), listOf(first)),
+                verifiedNodes = emptySet(),
+                selectedNodeId = "watch-b",
+            )
+        assertEquals(
+            WatchConnectionState.AppUnknown(
+                watchName = "Galaxy Watch",
+                nodeId = "watch-b",
+                knownInstalled = false,
+                isNearby = false,
+                availableWatches =
+                    listOf(
+                        DiscoveredWatch("watch-a", "Pixel Watch", isNearby = true, appInstalled = true),
+                        DiscoveredWatch("watch-b", "Galaxy Watch", isNearby = false, appInstalled = false),
+                    ),
+            ),
             state,
         )
     }

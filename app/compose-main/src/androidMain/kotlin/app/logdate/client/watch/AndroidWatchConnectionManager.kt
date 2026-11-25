@@ -26,6 +26,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
@@ -96,9 +97,15 @@ class AndroidWatchConnectionManager(
     },
 ) : WatchConnectionManager {
     private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val selectedNodeId = MutableStateFlow<String?>(null)
     private val snapshots = Mutex()
     private val knownAppNodes = ConcurrentHashMap<String, WatchNodeSnapshot>()
     private val retriedNodes = ConcurrentHashMap.newKeySet<String>()
+
+    override fun selectWatch(nodeId: String) {
+        selectedNodeId.value = nodeId
+        refreshes.tryEmit(Unit)
+    }
 
     override suspend fun refresh() {
         refreshes.emit(Unit)
@@ -109,11 +116,12 @@ class AndroidWatchConnectionManager(
             associationManager.observeAssociationState(),
             observeTransportSnapshot(),
             verifiedAppNodes,
-        ) { associationState, transportSnapshot, appNodes ->
+            selectedNodeId,
+        ) { associationState, transportSnapshot, appNodes, selected ->
             if (appNodes != null) {
-                withLinkStatus(resolveWearAppConnection(transportSnapshot, appNodes))
+                withLinkStatus(resolveWearAppConnection(transportSnapshot, appNodes, selected))
             } else {
-                resolveWatchConnectionState(associationState, transportSnapshot)
+                resolveWatchConnectionState(associationState, transportSnapshot, selected)
             }
         }
 
@@ -158,9 +166,15 @@ class AndroidWatchConnectionManager(
         if (verifiedAppNodes.first() != null) {
             // Every watch running LogDate, not only a lone connected node: a second node made this return silently.
             val watches = checkNotNull(connectedWatches()) { "Couldn't look up the connected watches" }
-            watches.withApp.ifEmpty { watches.withoutApp }.forEach { prepareWatch(it.id) }
+            val chosen = selectedNodeId.value
+            val targets =
+                chosen
+                    ?.let { id -> (watches.withApp + watches.withoutApp).filter { it.id == id } }
+                    ?.ifEmpty { null }
+                    ?: watches.withApp.ifEmpty { watches.withoutApp }
+            targets.forEach { prepareWatch(it.id) }
         } else {
-            associationManager.beginAssociation()
+            associationManager.beginAssociation(selectedNodeId.value)
         }
     }
 
@@ -191,7 +205,11 @@ class AndroidWatchConnectionManager(
     override suspend fun openAppOnWatch(): WatchRequestResult {
         val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
         if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        val target = watches.withApp.firstOrNull() ?: watches.withoutApp.first()
+        val chosen = selectedNodeId.value
+        val target =
+            chosen?.let { id -> (watches.withApp + watches.withoutApp).firstOrNull { it.id == id } }
+                ?: watches.withApp.firstOrNull()
+                ?: watches.withoutApp.first()
         return openAndPrepare(target)
     }
 

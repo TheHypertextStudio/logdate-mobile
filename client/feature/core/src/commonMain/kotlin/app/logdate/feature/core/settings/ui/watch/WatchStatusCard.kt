@@ -23,19 +23,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.step.StepPrimaryButton
@@ -56,17 +50,14 @@ import logdate.client.feature.core.generated.resources.watch_install_on_watch
 import logdate.client.feature.core.generated.resources.watch_link_on_its_own
 import logdate.client.feature.core.generated.resources.watch_link_through_phone
 import logdate.client.feature.core.generated.resources.watch_loading
-import logdate.client.feature.core.generated.resources.watch_missing_confirm_cancel
-import logdate.client.feature.core.generated.resources.watch_missing_confirm_description
-import logdate.client.feature.core.generated.resources.watch_missing_confirm_title
 import logdate.client.feature.core.generated.resources.watch_needs_association
 import logdate.client.feature.core.generated.resources.watch_needs_association_description
 import logdate.client.feature.core.generated.resources.watch_no_paired
 import logdate.client.feature.core.generated.resources.watch_no_paired_description
 import logdate.client.feature.core.generated.resources.watch_out_of_range
 import logdate.client.feature.core.generated.resources.watch_pair_watch
+import logdate.client.feature.core.generated.resources.watch_setup_already_installed_action
 import logdate.client.feature.core.generated.resources.watch_setup_install_action
-import logdate.client.feature.core.generated.resources.watch_setup_not_installed_link
 import logdate.client.feature.core.generated.resources.watch_setup_open_action
 import logdate.client.feature.core.generated.resources.watch_setup_troubleshoot_action
 import logdate.client.feature.core.generated.resources.watch_sync_now
@@ -202,7 +193,7 @@ private fun SettingUpStatus(
             }
         }
 
-        WatchSetupStep.ConfirmOnPhone -> {
+        is WatchSetupStep.ConfirmOnPhone -> {
             Column(
                 modifier =
                     Modifier
@@ -434,14 +425,28 @@ fun WatchUnknownActions(
     onOpenOnWatch: (() -> Unit)? = null,
     onDiagnostics: (() -> Unit)? = null,
 ) {
-    var confirming by remember(status.nodeId) { mutableStateOf(false) }
-    val primaryAction = if (status.nodeId != null && onOpenOnWatch != null) onOpenOnWatch else onRetry
+    val nodeId = status.nodeId
+    val offerInstallFirst = nodeId != null && !status.knownInstalled
+    val primaryAction: () -> Unit =
+        when {
+            offerInstallFirst -> {
+                { onConfirmMissing(nodeId) }
+            }
+
+            nodeId != null && onOpenOnWatch != null -> {
+                onOpenOnWatch
+            }
+
+            else -> {
+                onRetry
+            }
+        }
     val primaryLabel =
         stringResource(
-            if (status.nodeId != null && onOpenOnWatch != null) {
-                Res.string.watch_setup_open_action
-            } else {
-                Res.string.watch_v2_check_again
+            when {
+                offerInstallFirst -> Res.string.watch_setup_install_action
+                nodeId != null && onOpenOnWatch != null -> Res.string.watch_setup_open_action
+                else -> Res.string.watch_v2_check_again
             },
         )
     if (prominent) {
@@ -449,12 +454,10 @@ fun WatchUnknownActions(
     } else {
         Button(onClick = primaryAction, modifier = Modifier.fillMaxWidth()) { Text(primaryLabel) }
     }
-    val nodeId = status.nodeId
-    val showConfirmMissing = nodeId != null && !status.knownInstalled
-    if (showConfirmMissing) {
+    if (offerInstallFirst && onOpenOnWatch != null) {
         StepSecondaryButton(
-            text = stringResource(Res.string.watch_setup_not_installed_link),
-            onClick = { confirming = true },
+            text = stringResource(Res.string.watch_setup_already_installed_action),
+            onClick = onOpenOnWatch,
             modifier = Modifier.fillMaxWidth(),
             quiet = true,
         )
@@ -464,24 +467,6 @@ fun WatchUnknownActions(
             onClick = onDiagnostics,
             modifier = Modifier.fillMaxWidth(),
             quiet = true,
-        )
-    }
-    if (showConfirmMissing && confirming) {
-        AlertDialog(
-            onDismissRequest = { confirming = false },
-            title = { Text(stringResource(Res.string.watch_missing_confirm_title)) },
-            text = { Text(stringResource(Res.string.watch_missing_confirm_description)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirming = false
-                    onConfirmMissing(nodeId)
-                }) {
-                    Text(stringResource(Res.string.watch_setup_install_action))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.watch_missing_confirm_cancel)) }
-            },
         )
     }
 }

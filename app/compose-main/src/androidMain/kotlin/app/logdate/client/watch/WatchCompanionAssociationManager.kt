@@ -24,7 +24,7 @@ interface WatchCompanionAssociationManager {
     fun observeAssociationState(): StateFlow<WatchAssociationSnapshot>
 
     /** Starts the system companion association flow when supported. */
-    suspend fun beginAssociation()
+    suspend fun beginAssociation(preferredNodeId: String? = null)
 
     /** Attaches the launcher used to show the system-owned association chooser UI. */
     fun attachLauncher(launcher: ActivityResultLauncher<IntentSenderRequest>)
@@ -49,7 +49,7 @@ class DefaultWatchCompanionAssociationManager(
 
     override fun observeAssociationState(): StateFlow<WatchAssociationSnapshot> = associationState.asStateFlow()
 
-    override suspend fun beginAssociation() {
+    override suspend fun beginAssociation(preferredNodeId: String?) {
         if (!companionDeviceClient.isSupported()) {
             associationState.value = WatchAssociationSnapshot.Unsupported
             return
@@ -62,7 +62,7 @@ class DefaultWatchCompanionAssociationManager(
             return
         }
 
-        val target = companionDeviceClient.associationTarget()
+        val target = companionDeviceClient.associationTarget(preferredNodeId)
         if (target == null) {
             refreshAssociationState()
             return
@@ -181,7 +181,7 @@ interface CompanionDeviceClient {
     /** Returns the current LogDate watch association snapshot, if any. */
     suspend fun currentAssociation(): WatchAssociationSnapshot
 
-    suspend fun associationTarget(): WatchNodeSnapshot? = null
+    suspend fun associationTarget(preferredNodeId: String? = null): WatchNodeSnapshot? = null
 
     suspend fun rememberAssociation(
         info: AssociationInfo,
@@ -232,10 +232,11 @@ class AndroidCompanionDeviceClient(
         return association ?: WatchAssociationSnapshot.Unassociated
     }
 
-    override suspend fun associationTarget(): WatchNodeSnapshot? =
-        Wearable.getNodeClient(context).connectedNodes.await().singleOrNull()?.let {
-            WatchNodeSnapshot(it.id, it.displayName, it.isNearby)
-        }
+    override suspend fun associationTarget(preferredNodeId: String?): WatchNodeSnapshot? {
+        val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+        val chosen = preferredNodeId?.let { id -> nodes.firstOrNull { it.id == id } } ?: nodes.singleOrNull()
+        return chosen?.let { WatchNodeSnapshot(it.id, it.displayName, it.isNearby) }
+    }
 
     override suspend fun rememberAssociation(
         info: AssociationInfo,

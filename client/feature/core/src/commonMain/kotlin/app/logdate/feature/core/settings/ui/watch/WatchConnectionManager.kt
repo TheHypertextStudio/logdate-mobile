@@ -14,6 +14,9 @@ interface WatchConnectionManager {
      */
     fun observeConnectionState(): Flow<WatchConnectionState>
 
+    /** Chooses which reachable watch setup targets when more than one watch is paired. */
+    fun selectWatch(nodeId: String) = Unit
+
     suspend fun refresh() = Unit
 
     /**

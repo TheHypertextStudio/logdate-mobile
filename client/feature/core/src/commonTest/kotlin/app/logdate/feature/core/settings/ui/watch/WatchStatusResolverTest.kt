@@ -43,7 +43,7 @@ class WatchStatusResolverTest {
             WatchStatus.SettingUp(WatchSetupStep.PairWithPhone(NAME)),
             resolve(WatchConnectionState.NeedsAssociation(NAME)),
         )
-        assertEquals(WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone), resolve(WatchConnectionState.AssociationPending))
+        assertEquals(WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone()), resolve(WatchConnectionState.AssociationPending))
     }
 
     @Test

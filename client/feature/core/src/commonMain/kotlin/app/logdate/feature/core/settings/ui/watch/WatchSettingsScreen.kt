@@ -81,6 +81,7 @@ fun WatchSettingsScreen(
             onRetry = viewModel::refresh,
             onConfirmMissing = viewModel::confirmMissingAppAndInstall,
             onOpenOnWatch = viewModel::openAppOnWatch,
+            onSelectWatch = viewModel::selectWatch,
             onLibrary = onNavigateToLibrary,
         )
         return

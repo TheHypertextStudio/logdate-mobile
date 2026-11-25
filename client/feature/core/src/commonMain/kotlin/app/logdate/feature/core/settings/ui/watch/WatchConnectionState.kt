@@ -1,6 +1,16 @@
 package app.logdate.feature.core.settings.ui.watch
 
 /**
+ * A Wear OS watch visible to this phone over Bluetooth or Wear cloud sync.
+ */
+data class DiscoveredWatch(
+    val nodeId: String,
+    val displayName: String,
+    val isNearby: Boolean = true,
+    val appInstalled: Boolean = false,
+)
+
+/**
  * Describes the current connection state between the phone and a Wear OS watch.
  */
 sealed interface WatchConnectionState {
@@ -21,6 +31,8 @@ sealed interface WatchConnectionState {
         val watchName: String,
         override val nodeId: String? = null,
         val linking: WatchLinking? = null,
+        val isNearby: Boolean = true,
+        val availableWatches: List<DiscoveredWatch> = emptyList(),
     ) : WatchConnectionState
 
     /**
@@ -34,6 +46,8 @@ sealed interface WatchConnectionState {
     data class AppNotInstalled(
         val watchName: String,
         override val nodeId: String? = null,
+        val isNearby: Boolean = true,
+        val availableWatches: List<DiscoveredWatch> = emptyList(),
     ) : WatchConnectionState
 
     /**
@@ -65,6 +79,8 @@ sealed interface WatchConnectionState {
         val watchName: String,
         override val nodeId: String? = null,
         val knownInstalled: Boolean = false,
+        val isNearby: Boolean = true,
+        val availableWatches: List<DiscoveredWatch> = emptyList(),
     ) : WatchConnectionState
 }
 

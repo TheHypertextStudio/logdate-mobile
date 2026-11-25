@@ -1,6 +1,7 @@
 package app.logdate.client.watch
 
 import app.logdate.client.sync.v2.link.PhoneLinkFailure
+import app.logdate.feature.core.settings.ui.watch.DiscoveredWatch
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.WatchLinking
@@ -45,13 +46,14 @@ sealed interface WatchAssociationSnapshot {
 fun resolveWatchConnectionState(
     association: WatchAssociationSnapshot,
     transport: WatchTransportSnapshot,
+    selectedNodeId: String? = null,
 ): WatchConnectionState =
     if (!transport.available) {
         WatchConnectionState.Unavailable
     } else {
         when (association) {
             WatchAssociationSnapshot.Unsupported -> {
-                resolveLegacyWatchConnectionState(transport)
+                resolveLegacyWatchConnectionState(transport, selectedNodeId)
             }
 
             WatchAssociationSnapshot.Pending -> {
@@ -63,31 +65,46 @@ fun resolveWatchConnectionState(
             }
 
             WatchAssociationSnapshot.Unassociated -> {
-                val connectedWatch = transport.connectedNodes.firstOrNull()
+                val discovered = transport.discoveredWatches()
+                val connectedWatch = selectedOrFirst(transport.connectedNodes, selectedNodeId)
                 if (connectedWatch == null) {
                     WatchConnectionState.NoPairedWatch
                 } else {
-                    WatchConnectionState.NeedsAssociation(connectedWatch.displayName, connectedWatch.id)
+                    WatchConnectionState.NeedsAssociation(
+                        watchName = connectedWatch.displayName,
+                        nodeId = connectedWatch.id,
+                        isNearby = connectedWatch.isNearby,
+                        availableWatches = discovered,
+                    )
                 }
             }
         }
     }
 
-private fun resolveLegacyWatchConnectionState(transport: WatchTransportSnapshot): WatchConnectionState {
-    val connectedWatch = transport.connectedNodes.firstOrNull() ?: return WatchConnectionState.NoPairedWatch
+private fun resolveLegacyWatchConnectionState(
+    transport: WatchTransportSnapshot,
+    selectedNodeId: String?,
+): WatchConnectionState {
     val installedNodes = installedConnectedNodes(transport)
-    if (installedNodes.isEmpty()) {
-        return WatchConnectionState.AppUnknown(
-            connectedWatch.displayName,
-            connectedWatch.id,
-            transport.knownAppNodes.any {
-                it.id ==
-                    connectedWatch.id
-            },
-        )
+    val connectedWatch =
+        selectedOrFirst(transport.connectedNodes, selectedNodeId)
+            ?: return WatchConnectionState.NoPairedWatch
+    val discovered = transport.discoveredWatches()
+    val installedWatch = installedNodes.firstOrNull { it.id == connectedWatch.id }
+    if (installedWatch != null) {
+        return WatchConnectionState.Connected(installedWatch.displayName, installedWatch.id)
     }
-    val watch = installedNodes.first()
-    return WatchConnectionState.Connected(watch.displayName, watch.id)
+    if (installedNodes.isNotEmpty() && selectedNodeId == null) {
+        val watch = installedNodes.first()
+        return WatchConnectionState.Connected(watch.displayName, watch.id)
+    }
+    return WatchConnectionState.AppUnknown(
+        watchName = connectedWatch.displayName,
+        nodeId = connectedWatch.id,
+        knownInstalled = transport.knownAppNodes.any { it.id == connectedWatch.id },
+        isNearby = connectedWatch.isNearby,
+        availableWatches = discovered,
+    )
 }
 
 /** Resolves watch state once LogDate already has an app-level companion association. */
@@ -107,12 +124,11 @@ private fun resolveAssociatedWatchConnectionState(
     if (connectedWatch == null) return WatchConnectionState.OutOfRange(watchName, association.nodeId)
     if (installedNodes.isEmpty()) {
         return WatchConnectionState.AppUnknown(
-            watchName,
-            connectedWatch.id,
-            transport.knownAppNodes.any {
-                it.id ==
-                    connectedWatch.id
-            },
+            watchName = watchName,
+            nodeId = connectedWatch.id,
+            knownInstalled = transport.knownAppNodes.any { it.id == connectedWatch.id },
+            isNearby = connectedWatch.isNearby,
+            availableWatches = transport.discoveredWatches(),
         )
     }
     val watch = installedNodes.first()
@@ -125,14 +141,35 @@ private fun installedConnectedNodes(transport: WatchTransportSnapshot): List<Wat
     return transport.connectedNodes.filter { it.id in installedNodeIds }
 }
 
+private fun WatchTransportSnapshot.discoveredWatches(): List<DiscoveredWatch> {
+    val knownIds = (appNodes + knownAppNodes).mapTo(mutableSetOf()) { it.id }
+    return connectedNodes.map { node ->
+        DiscoveredWatch(
+            nodeId = node.id,
+            displayName = node.displayName,
+            isNearby = node.isNearby,
+            appInstalled = node.id in knownIds,
+        )
+    }
+}
+
+private fun selectedOrFirst(
+    nodes: List<WatchNodeSnapshot>,
+    selectedNodeId: String?,
+): WatchNodeSnapshot? = selectedNodeId?.let { id -> nodes.firstOrNull { it.id == id } } ?: nodes.firstOrNull()
+
 /** Wear app pairing is verified by the same exact peer audience used for captures and playback. */
 fun resolveWearAppConnection(
     transport: WatchTransportSnapshot,
     verifiedNodes: Set<String>,
+    selectedNodeId: String? = null,
 ): WatchConnectionState {
     if (!transport.available) return WatchConnectionState.Unavailable
+    val discovered = transport.discoveredWatches()
+    val preferred = selectedNodeId?.let { id -> transport.connectedNodes.firstOrNull { it.id == id } }
     val watch =
-        transport.connectedNodes.firstOrNull { it.id in verifiedNodes }
+        preferred
+            ?: transport.connectedNodes.firstOrNull { it.id in verifiedNodes }
             ?: transport.connectedNodes.firstOrNull()
     if (watch == null) {
         val known = (transport.appNodes + transport.knownAppNodes).firstOrNull { it.id in verifiedNodes }
@@ -146,16 +183,21 @@ fun resolveWearAppConnection(
     if (watch.id in verifiedNodes) return WatchConnectionState.Connected(watch.displayName, watch.id)
     if (transport.appNodes.none { it.id == watch.id }) {
         return WatchConnectionState.AppUnknown(
-            watch.displayName,
-            watch.id,
-            transport.knownAppNodes.any {
-                it.id ==
-                    watch.id
-            },
+            watchName = watch.displayName,
+            nodeId = watch.id,
+            knownInstalled = transport.knownAppNodes.any { it.id == watch.id },
+            isNearby = watch.isNearby,
+            availableWatches = discovered,
         )
     }
     // LogDate links a watch that has the app by itself; the system's pairing prompt is never needed.
-    return WatchConnectionState.NeedsAssociation(watch.displayName, watch.id, WatchLinking())
+    return WatchConnectionState.NeedsAssociation(
+        watchName = watch.displayName,
+        nodeId = watch.id,
+        linking = WatchLinking(),
+        isNearby = watch.isNearby,
+        availableWatches = discovered,
+    )
 }
 
 /** What the Watch page can say about a failed link, in terms of what the person can do about it. */

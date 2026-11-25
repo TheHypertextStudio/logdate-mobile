@@ -29,7 +29,13 @@ object WatchStatusResolver {
             }
 
             is WatchConnectionState.AppUnknown -> {
-                WatchStatus.Unknown(connection.watchName, connection.nodeId, connection.knownInstalled)
+                WatchStatus.Unknown(
+                    watchName = connection.watchName,
+                    nodeId = connection.nodeId,
+                    knownInstalled = connection.knownInstalled,
+                    nearby = connection.isNearby,
+                    availableWatches = connection.availableWatches,
+                )
             }
 
             WatchConnectionState.NoPairedWatch -> {
@@ -38,18 +44,26 @@ object WatchStatusResolver {
 
             is WatchConnectionState.NeedsAssociation -> {
                 WatchStatus.SettingUp(
-                    connection.linking?.let { WatchSetupStep.Linking(connection.watchName, it.problem) }
-                        ?: WatchSetupStep.PairWithPhone(connection.watchName),
-                    connection.nodeId,
+                    step =
+                        connection.linking?.let { WatchSetupStep.Linking(connection.watchName, it.problem) }
+                            ?: WatchSetupStep.PairWithPhone(connection.watchName),
+                    nodeId = connection.nodeId,
+                    nearby = connection.isNearby,
+                    availableWatches = connection.availableWatches,
                 )
             }
 
             WatchConnectionState.AssociationPending -> {
-                WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone)
+                WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone())
             }
 
             is WatchConnectionState.AppNotInstalled -> {
-                WatchStatus.NotInstalled(connection.watchName, connection.nodeId)
+                WatchStatus.NotInstalled(
+                    watchName = connection.watchName,
+                    nodeId = connection.nodeId,
+                    nearby = connection.isNearby,
+                    availableWatches = connection.availableWatches,
+                )
             }
 
             is WatchConnectionState.Connected -> {

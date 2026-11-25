@@ -52,7 +52,7 @@
   >Set it up again to capture moments from your wrist.</string>
     <string name="watch_linking_try_again">Try again</string>
     <string name="watch_linking_set_up_again_action">Set up again</string>
-    <string name="watch_setup_install_title">Add LogDate to %1$s</string>
+    <string name="watch_setup_install_title">Install LogDate on %1$s</string>
     <string
     name="watch_setup_install_description"
   >Install it from Google Play on your watch, then open it.</string>
@@ -330,6 +330,23 @@
   >Open LogDate on your watch and keep it nearby to finish connecting.</string>
     <string name="watch_setup_open_action">Open on watch</string>
     <string name="watch_setup_open_on_watch">Open LogDate on watch</string>
+    <string name="watch_setup_already_installed_action">Already installed</string>
+    <string name="watch_setup_choose_watch_title">Choose your watch</string>
+    <string
+    name="watch_setup_choose_watch_description"
+  >Pick the Wear OS watch you want to connect with LogDate.</string>
+    <string name="watch_setup_choose_watch_continue">Continue</string>
+    <string name="watch_setup_switch_watch">Switch</string>
+    <string name="watch_setup_device_nearby">Nearby via Bluetooth</string>
+    <string name="watch_setup_device_out_of_range">Out of range</string>
+    <string name="watch_setup_device_installed_tag">LogDate installed</string>
+    <string name="watch_setup_device_ready_to_install_tag">Ready to install</string>
+    <string name="watch_setup_device_status_pair">Ready to connect</string>
+    <string name="watch_setup_device_status_confirm_phone">Allow prompt on phone</string>
+    <string name="watch_setup_device_status_open">Waiting for watch</string>
+    <string name="watch_setup_device_status_install_sent">Google Play opened</string>
+    <string name="watch_setup_device_status_linking">Linking your account</string>
+    <string name="watch_setup_device_status_connected">Syncing automatically</string>
     <string name="watch_setup_open_sent">Opening LogDate on your watch…</string>
     <string name="watch_setup_opening_title">Opening LogDate on %1$s</string>
     <string
@@ -341,14 +358,8 @@
     name="watch_setup_install_sent_description"
   >Check your watch to finish installing LogDate from Google Play, then open it.</string>
     <string name="watch_setup_send_install_again">Send install prompt again</string>
-    <string name="watch_setup_not_installed_link">Don’t have it on your watch?</string>
     <string name="watch_setup_already_open_action">I already opened it</string>
     <string name="watch_setup_troubleshoot_action">Troubleshoot connection</string>
-    <string name="watch_setup_confirm_install_title">Install LogDate on %1$s?</string>
-    <string
-    name="watch_setup_confirm_install_description"
-  >This opens LogDate in Google Play on your watch. Return here once it finishes installing.</string>
-    <string name="watch_setup_back_action">Back</string>
     <string name="watch_setup_complete_title">%1$s is ready</string>
     <string
     name="watch_setup_complete_description"

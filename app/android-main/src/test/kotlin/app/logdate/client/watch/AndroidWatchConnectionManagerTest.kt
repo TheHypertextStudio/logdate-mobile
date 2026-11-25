@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import app.logdate.client.sync.WatchMessageSender
 import app.logdate.client.sync.datalayer.WearAudioRequestPaths
+import app.logdate.feature.core.settings.ui.watch.DiscoveredWatch
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.WatchLinking
@@ -227,7 +228,12 @@ class AndroidWatchConnectionManagerTest {
             runCurrent()
 
             val expected =
-                WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-with-logdate", WatchLinking(WatchLinkProblem.RETRYING))
+                WatchConnectionState.NeedsAssociation(
+                    "Pixel Watch",
+                    "watch-with-logdate",
+                    WatchLinking(WatchLinkProblem.RETRYING),
+                    availableWatches = listOf(DiscoveredWatch("watch-with-logdate", "Pixel Watch", isNearby = true, appInstalled = true)),
+                )
             assertEquals(expected, first)
             assertEquals(expected, again)
             assertEquals(listOf("watch-with-logdate"), retried)
@@ -293,7 +299,20 @@ class AndroidWatchConnectionManagerTest {
             runCurrent()
 
             assertEquals(
-                WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-without-logdate", WatchLinking()),
+                WatchConnectionState.NeedsAssociation(
+                    "Pixel Watch",
+                    "watch-without-logdate",
+                    WatchLinking(),
+                    availableWatches =
+                        listOf(
+                            DiscoveredWatch(
+                                "watch-without-logdate",
+                                "Pixel Watch",
+                                isNearby = true,
+                                appInstalled = true,
+                            ),
+                        ),
+                ),
                 state,
             )
             assertEquals(listOf("watch-without-logdate"), retried)
