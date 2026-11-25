@@ -12,6 +12,10 @@ android {
         libs.versions.android.compileSdk
             .get()
             .toInt()
+    compileSdkMinor =
+        libs.versions.android.compileSdkMinor
+            .get()
+            .toInt()
 
     defaultConfig {
         minSdk = 30

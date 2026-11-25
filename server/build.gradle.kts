@@ -154,6 +154,7 @@ tasks.named<Jar>("jar") {
 
 tasks.named<Jar>("shadowJar") {
     archiveFileName.set("logdate-server-all.jar")
+    isZip64 = true
 }
 
 val openApiOutputDir = layout.buildDirectory.dir("openapi")

@@ -19,6 +19,12 @@ class DynamicFeaturePlugin : Plugin<Project> {
 
             extensions.configure(DynamicFeatureExtension::class.java) {
                 compileSdk = libs.intVersion("android-compileSdk")
+                libs
+                    .findVersion("android-compileSdkMinor")
+                    .orElse(null)
+                    ?.requiredVersion
+                    ?.toInt()
+                    ?.let { compileSdkMinor = it }
 
                 defaultConfig {
                     minSdk = libs.intVersion("android-minSdk")
