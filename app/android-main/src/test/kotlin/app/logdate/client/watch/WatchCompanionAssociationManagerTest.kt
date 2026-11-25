@@ -150,7 +150,7 @@ class WatchCompanionAssociationManagerTest {
 
         override suspend fun currentAssociation(): WatchAssociationSnapshot = currentAssociation
 
-        override suspend fun associationTarget() = WatchNodeSnapshot("watch-a", "Pixel Watch", true)
+        override suspend fun associationTarget(preferredNodeId: String?) = WatchNodeSnapshot("watch-a", "Pixel Watch", true)
 
         override suspend fun rememberAssociation(
             info: AssociationInfo,

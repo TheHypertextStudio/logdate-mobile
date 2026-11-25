@@ -24,18 +24,24 @@ sealed interface WatchStatus {
         val watchName: String? = null,
         override val nodeId: String? = null,
         val knownInstalled: Boolean = false,
+        val nearby: Boolean = true,
+        val availableWatches: List<DiscoveredWatch> = emptyList(),
     ) : WatchStatus
 
     /** A watch is paired, and LogDate is not installed on it. */
     data class NotInstalled(
         val watchName: String,
         override val nodeId: String? = null,
+        val nearby: Boolean = true,
+        val availableWatches: List<DiscoveredWatch> = emptyList(),
     ) : WatchStatus
 
     /** LogDate is being linked with a paired watch. */
     data class SettingUp(
         val step: WatchSetupStep,
         override val nodeId: String? = null,
+        val nearby: Boolean = true,
+        val availableWatches: List<DiscoveredWatch> = emptyList(),
     ) : WatchStatus
 
     /**
@@ -69,7 +75,9 @@ sealed interface WatchSetupStep {
     ) : WatchSetupStep
 
     /** The system pairing prompt is open on this phone. */
-    data object ConfirmOnPhone : WatchSetupStep
+    data class ConfirmOnPhone(
+        val watchName: String? = null,
+    ) : WatchSetupStep
 
     /**
      * LogDate is linking [watchName] by itself, with no prompt for the person.

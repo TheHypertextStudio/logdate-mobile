@@ -69,6 +69,10 @@ class WatchSettingsViewModel(
         viewModelScope.launch { connectionManager.refresh() }
     }
 
+    fun selectWatch(nodeId: String) {
+        connectionManager.selectWatch(nodeId)
+    }
+
     fun beginAssociation() {
         viewModelScope.launch {
             try {

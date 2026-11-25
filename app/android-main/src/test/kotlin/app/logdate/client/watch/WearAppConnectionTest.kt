@@ -1,6 +1,7 @@
 package app.logdate.client.watch
 
 import app.logdate.client.sync.v2.link.PhoneLinkFailure
+import app.logdate.feature.core.settings.ui.watch.DiscoveredWatch
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.WatchLinking
@@ -10,12 +11,13 @@ import kotlin.test.assertFalse
 
 class WearAppConnectionTest {
     private val watch = WatchNodeSnapshot("watch-a", "Pixel Watch", true)
+    private val discovered = listOf(DiscoveredWatch("watch-a", "Pixel Watch", isNearby = true, appInstalled = true))
     private val transport = WatchTransportSnapshot(listOf(watch), listOf(watch))
 
     @Test
     fun `reachable installed app still requires verified link`() {
         assertEquals(
-            WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-a", WatchLinking()),
+            WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-a", WatchLinking(), availableWatches = discovered),
             resolveWearAppConnection(transport, emptySet()),
         )
     }
@@ -28,7 +30,7 @@ class WearAppConnectionTest {
     @Test
     fun `another watch cannot satisfy selected peers link`() {
         assertEquals(
-            WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-a", WatchLinking()),
+            WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-a", WatchLinking(), availableWatches = discovered),
             resolveWearAppConnection(transport, setOf("watch-b")),
         )
     }

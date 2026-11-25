@@ -19,7 +19,7 @@ enum class WatchLinkingAcceptanceScene(
     NO_WATCH(WatchStatus.NoWatch),
     NOT_INSTALLED(WatchStatus.NotInstalled("Pixel Watch 3")),
     ALLOW_PAIRING(WatchStatus.SettingUp(WatchSetupStep.PairWithPhone("Pixel Watch 3"))),
-    CONFIRM_ON_PHONE(WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone)),
+    CONFIRM_ON_PHONE(WatchStatus.SettingUp(WatchSetupStep.ConfirmOnPhone("Pixel Watch 3"))),
     LINKING(WatchStatus.SettingUp(WatchSetupStep.Linking("Pixel Watch 3"))),
     LINKING_RETRYING(WatchStatus.SettingUp(WatchSetupStep.Linking("Pixel Watch 3", WatchLinkProblem.RETRYING))),
     LINKING_DEVICE_LIMIT(WatchStatus.SettingUp(WatchSetupStep.Linking("Pixel Watch 3", WatchLinkProblem.DEVICE_LIMIT))),
