@@ -162,7 +162,9 @@ fun resolveWearAppConnection(
 fun PhoneLinkFailure.toWatchLinkProblem(): WatchLinkProblem =
     when (this) {
         PhoneLinkFailure.WATCH_BOUND_TO_ANOTHER_ACCOUNT -> WatchLinkProblem.ANOTHER_ACCOUNT
+
         PhoneLinkFailure.DEVICE_LIMIT_REACHED -> WatchLinkProblem.DEVICE_LIMIT
+
         PhoneLinkFailure.WATCH_KEY_CONFLICT, PhoneLinkFailure.WATCH_INSTALL_FAILED -> WatchLinkProblem.SET_UP_AGAIN
 
         // SIGNED_OUT means the phone's account changed or signed out while a link was being prepared; the next

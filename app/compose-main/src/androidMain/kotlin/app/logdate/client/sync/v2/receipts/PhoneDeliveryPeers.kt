@@ -74,10 +74,12 @@ class PhoneDeliveryPeers(
                 // server cannot be reached.
                 LinkMode.PAIR -> {
                     (bound == null && session == null) ||
-                        (bound != null &&
-                            bound.session == session &&
-                            bound.origin == backend &&
-                            record.standsInFor(bound.session.accountId, bound.origin))
+                        (
+                            bound != null &&
+                                bound.session == session &&
+                                bound.origin == backend &&
+                                record.standsInFor(bound.session.accountId, bound.origin)
+                        )
                 }
 
                 LinkMode.CLOUD -> {

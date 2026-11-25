@@ -180,7 +180,8 @@ class PhoneLinkInitiator(
             watch.sessionId?.let { store.recordSession(target.nodeId, record.linkId, it) }
         }
         when (val decision = PhoneLinkDecision.decide(record, plan, document, now)) {
-            PhoneLinkDecision.Wait -> Unit
+            PhoneLinkDecision.Wait -> {}
+
             PhoneLinkDecision.Exchange -> {
                 // The watch needs its pairing made again before the account's wait ends; the wait goes on.
                 if (record?.waitsForAccount(plan, now) == true) {
@@ -193,8 +194,14 @@ class PhoneLinkInitiator(
                         PhoneLinkDecision.decide(record, LinkPlan(LinkMode.PAIR), document, now) != PhoneLinkDecision.Exchange
                 runExchange(target, plan, record, pairStands, document, now, generation)
             }
-            PhoneLinkDecision.Confirm -> confirm(target, checkNotNull(record), checkNotNull(document), now)
-            is PhoneLinkDecision.WatchProblem -> recordWatchProblem(target, plan, decision.failure, checkNotNull(document), now, generation)
+
+            PhoneLinkDecision.Confirm -> {
+                confirm(target, checkNotNull(record), checkNotNull(document), now)
+            }
+
+            is PhoneLinkDecision.WatchProblem -> {
+                recordWatchProblem(target, plan, decision.failure, checkNotNull(document), now, generation)
+            }
         }
     }
 
