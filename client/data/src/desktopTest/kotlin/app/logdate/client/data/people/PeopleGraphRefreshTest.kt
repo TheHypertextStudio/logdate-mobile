@@ -9,8 +9,8 @@ import app.logdate.client.sync.RoomSyncTransactionManager
 import app.logdate.shared.model.Person
 import app.logdate.shared.model.PersonLinkTargetType
 import app.logdate.shared.model.PersonOrigin
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay

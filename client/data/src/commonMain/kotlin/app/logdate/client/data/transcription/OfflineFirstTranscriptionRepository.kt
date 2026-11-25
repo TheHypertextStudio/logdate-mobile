@@ -101,8 +101,7 @@ class OfflineFirstTranscriptionRepository(
                                 val isRecovery =
                                     recovery ||
                                         previousAttempt != null ||
-                                        matchesMedia &&
-                                        existing?.status == DbTranscriptionStatus.IN_PROGRESS
+                                        (matchesMedia && existing?.status == DbTranscriptionStatus.IN_PROGRESS)
                                 val priority = if (isRecovery) TranscriptionPriority.RECOVERY else TranscriptionPriority.FOREGROUND
                                 requestTranscription(
                                     note.uid,

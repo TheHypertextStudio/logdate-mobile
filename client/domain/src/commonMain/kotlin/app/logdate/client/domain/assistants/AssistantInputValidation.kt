@@ -36,7 +36,8 @@ class AssistantInputValidation {
         return AssistantInputDecision.Valid
     }
 
-    @Suppress("unused") // Kept: the connected-assistants gateway (CONNECTED_ASSISTANTS flag) validates source reads with it; that gateway is not built yet
+    // Kept: the connected-assistants gateway (CONNECTED_ASSISTANTS flag) validates source reads with it; that gateway is not built yet
+    @Suppress("unused")
     fun sourceRead(request: AssistantSourceReadRequest): AssistantInputDecision {
         if (request.limit !in 1..AssistantProtocolLimits.SOURCE_CODE_POINTS) return invalid(AssistantInputError.INVALID_LIMIT)
         if (!validCursor(request.cursor)) return invalid(AssistantInputError.INVALID_CURSOR)

@@ -18,8 +18,8 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.testing.onboarding.DEBUG_SKIP_ONBOARDING_EXTRA
 import app.logdate.client.testing.onboarding.OnboardingTestFixture
 import app.logdate.client.testing.onboarding.putOnboardingTestFixture
-import org.junit.Test
 import kotlinx.coroutines.runBlocking
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.java.KoinJavaComponent
 import java.io.ByteArrayOutputStream

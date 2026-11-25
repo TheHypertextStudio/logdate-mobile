@@ -36,7 +36,11 @@ fun MomentGlance(
     if (note is JournalNote.Handwriting && note.unreadableContent == null) {
         HandwritingPreview(
             note.document,
-            modifier.fillMaxWidth().height(inkHeight).clip(MaterialTheme.shapes.small).testTag(MomentGlanceTags.INK),
+            modifier
+                .fillMaxWidth()
+                .height(inkHeight)
+                .clip(MaterialTheme.shapes.small)
+                .testTag(MomentGlanceTags.INK),
         )
         return
     }
