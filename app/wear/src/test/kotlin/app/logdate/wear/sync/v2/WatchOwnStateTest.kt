@@ -1,9 +1,14 @@
 package app.logdate.wear.sync.v2
 
 import app.logdate.client.sync.datalayer.v2.LinkMode
+import app.logdate.client.sync.metadata.SyncDeadLetterRecord
+import app.logdate.client.sync.metadata.SyncDeadLetterStore
+import app.logdate.client.sync.metadata.SyncMetadataService
 import app.logdate.client.sync.peer.state.PeerLinkState
 import app.logdate.client.sync.peer.state.WatchState
 import app.logdate.wear.sync.v2.link.WatchLinkRecord
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -73,5 +78,37 @@ class WatchOwnStateTest {
             val own = WatchOwnState(links = flowOf(null), counts = flowOf(WatchCounts(outbox = 3, deadLetters = 1, freeBytes = 9)))
 
             assertEquals(WatchState(outboxCount = 3, deadLetterCount = 1, freeBytes = 9), own.observe().first())
+        }
+
+    @Test
+    fun `watchCounts combines pending count, dead letters, and positive free space`() =
+        runTest {
+            val pending = MutableStateFlow(2)
+            val deadLetters =
+                MutableStateFlow(
+                    listOf(
+                        SyncDeadLetterRecord(
+                            id = "dl-1",
+                            entityType = "NOTE",
+                            entityId = "n1",
+                            operation = "CREATE",
+                            retryCount = 3,
+                            lastError = "err",
+                            failedAt = 1L,
+                        ),
+                    ),
+                )
+            val metadata = mockk<SyncMetadataService>()
+            val deadLetterStore = mockk<SyncDeadLetterStore>()
+            every { metadata.observePendingCount() } returns pending
+            every { deadLetterStore.observe() } returns deadLetters
+
+            val counts = watchCounts(metadata, deadLetterStore) { 4096L }
+            assertEquals(WatchCounts(outbox = 2, deadLetters = 1, freeBytes = 4096L), counts.first())
+
+            pending.value = 0
+            deadLetters.value = emptyList<SyncDeadLetterRecord>()
+            val degraded = watchCounts(metadata, deadLetterStore) { throw IllegalStateException("statfs") }
+            assertEquals(WatchCounts(outbox = 0, deadLetters = 0, freeBytes = null), degraded.first())
         }
 }

@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.logdate.client.ui.navigation.LocationTimelineRoute
 import app.logdate.client.ui.navigation.SearchRoute
+import app.logdate.feature.core.settings.navigation.SettingsRoute
+import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
 import app.logdate.feature.core.watch.continuity.WatchHandoffRoute
 import app.logdate.feature.events.navigation.EventDetailRoute
 import app.logdate.feature.journals.navigation.JournalDetailsRoute
@@ -47,6 +49,23 @@ class DeepLinkResolverTest {
             NoteDetailRoute(noteId),
             resolveDeepLinkUri(Uri.parse("https://alice.logdate.app/note/$noteId")),
         )
+    }
+
+    @Test
+    fun `watch settings deep link opens watch settings`() {
+        assertEquals(
+            WatchSettingsRoute,
+            resolveDeepLinkUri(Uri.parse("studio.hypertext.logdate://settings/watch")),
+        )
+        assertEquals(
+            WatchSettingsRoute,
+            resolveDeepLinkUri(Uri.parse("logdate://settings/watch")),
+        )
+        assertEquals(
+            SettingsRoute(),
+            resolveDeepLinkUri(Uri.parse("studio.hypertext.logdate://settings")),
+        )
+        assertNull(resolveDeepLinkUri(Uri.parse("studio.hypertext.logdate://settings/unknown")))
     }
 
     @Test

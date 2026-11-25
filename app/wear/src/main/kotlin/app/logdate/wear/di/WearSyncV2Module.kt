@@ -18,6 +18,7 @@ import app.logdate.client.sync.peer.link.PairKeyVault
 import app.logdate.client.sync.peer.link.SecureStoragePairKeyVault
 import app.logdate.client.sync.peer.link.WatchLinkExchange
 import app.logdate.shared.model.ServerProtocolFeature
+import app.logdate.wear.data.storage.StorageSpaceChecker
 import app.logdate.wear.sync.v2.WatchOwnState
 import app.logdate.wear.sync.v2.delivery.CloudRelease
 import app.logdate.wear.sync.v2.delivery.LinkedDataLayerTransportV2
@@ -34,6 +35,7 @@ import app.logdate.wear.sync.v2.link.WatchLinkCoordinator
 import app.logdate.wear.sync.v2.link.WatchLinkStore
 import app.logdate.wear.sync.v2.localNodeIdOrNull
 import app.logdate.wear.sync.v2.media.GoogleMediaRangeSource
+import app.logdate.wear.sync.v2.watchCounts
 import com.google.android.gms.wearable.Wearable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -177,6 +179,12 @@ val wearSyncV2Module =
             WatchOwnState(
                 links = get<WatchLinkStore>().observe(),
                 features = watchSyncFeatures,
+                counts =
+                    watchCounts(
+                        syncMetadataService = get(),
+                        deadLetterStore = get(),
+                        freeBytes = get<StorageSpaceChecker>()::getAvailableStorageSpace,
+                    ),
                 activity =
                     combine(get<FeatureFlagStore>().observe(FeatureFlag.ACTIVITY_AWARENESS), get<ActivityTracker>().local) { on, log ->
                         log.toSnapshot().takeIf { on }
@@ -185,10 +193,7 @@ val wearSyncV2Module =
         }
     }
 
-/**
- * What this watch build implements. It reads the activity reminder triggers; reminders reach the watch
- * only once it also lists [WearFeatures.REMINDERS], which waits for paired delivery to be verified.
- */
+/** What this watch build implements and advertises in its state document. */
 internal val watchSyncFeatures =
     setOf(
         WearFeatures.ACTIVITY_REMINDERS,
@@ -197,6 +202,7 @@ internal val watchSyncFeatures =
         WearFeatures.RECEIPTS,
         WearFeatures.OPERATION_RECEIPTS,
         WearFeatures.MOMENTS,
+        WearFeatures.REMINDERS,
         WearFeatures.WINDOW,
         WearFeatures.MEDIA_RANGE,
     )

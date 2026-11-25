@@ -194,7 +194,7 @@ moment by its note ID as a string, because the back stack is restored after proc
 | `Flow`         | Voice and text moments of the last 7 days, with Memories, Settings and Earlier                                                                                                             | `v2/flow`                   | Today's Moments button |
 | `Memories`     | On this day and this week's Rewind                                                                                                                                                         | `v2/memories`               | Flow                   |
 | `Archive`      | Older moments on the watch, starred first, then by day                                                                                                                                     | `v2/archive`                | Flow's Earlier         |
-| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone (only when the phone advertises `phone.settingsLink.v1`, which no phone build does)                                            | `v2/settings`               | Flow                   |
+| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone (shown when the phone advertises `phone.settingsLink.v1`)                                                                      | `v2/settings`               | Flow                   |
 | `Moment(id)`   | Player with crown scrubbing; transcript, place and actions one swipe up                                                                                                                    | `v2/moments`, `v2/playback` | Any list               |
 | `CaptureSheet` | Write, Mood, Phone camera                                                                                                                                                                  | `v2/capture`                | Today's +              |
 | `PhoneCamera`  | The remote camera screen, reused from `presentation/camera`                                                                                                                                | `presentation/camera`       | The capture sheet      |
@@ -309,11 +309,12 @@ OFF until chosen. The phone publishes learned waking hours for offline watch sch
 fallback when sleep access is unavailable. Each device posts at most one reminder per streak day.
 
 Claiming the day's reminder from the other device, and posting on the watch when it is the device
-being worn, both require the other device to list the protocol feature `reminders.v1`, and neither
-`phoneWatchFeatures` nor `watchSyncFeatures` lists it. The phone therefore posts its own reminders,
-the watch posts only the ones its own rules produce, and the phone's reminders are kept off the
-watch by excluding their tag from notification bridging. The walk, ride and trip triggers also need activity
-awareness; see [the flag section](#two-experiences-and-the-switch-between-them).
+being worn, both require the other device to list the protocol feature `reminders.v1`, which both
+`phoneWatchFeatures` and `watchSyncFeatures` advertise. When `reminders.v1` is active, the phone
+delivers due reminders to a worn watch and the watch claims the day with the phone first, while
+also keeping the phone's `logdate.reminder` notification tag excluded from notification bridging.
+The walk, ride and trip triggers also need activity awareness; see
+[the flag section](#two-experiences-and-the-switch-between-them).
 [Reminders](../../docs/explanation/wear-companion.md#reminders) in the explanation has the rules.
 
 Watch reminders post on the `MOMENT_REMINDERS` notification channel (id `moment_reminders`,

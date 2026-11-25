@@ -315,11 +315,13 @@ val phoneWatchFeatures =
     setOf(
         WearFeatures.LIVE,
         WearFeatures.PHONE_PLAYBACK,
+        WearFeatures.PHONE_SETTINGS_LINK,
         WearFeatures.PREFS,
         WearFeatures.LINK_CLOUD,
         WearFeatures.RECEIPTS,
         WearFeatures.OPERATION_RECEIPTS,
         WearFeatures.MOMENTS,
+        WearFeatures.REMINDERS,
         WearFeatures.WINDOW,
         WearFeatures.MEDIA_RANGE,
     )
