@@ -263,17 +263,50 @@ class AndroidWatchConnectionManagerTest {
             assertTrue(retried.isEmpty())
         }
 
+    @Test
+    fun `active watch ping links a connected watch even when capability advertisement is empty`() =
+        runTest {
+            connected(withoutLogDate)
+            listening()
+            val retried = mutableListOf<String>()
+            val manager =
+                manager(
+                    verifiedAppNodes = flowOf(emptySet()),
+                    linkStatus = { WatchLinking() },
+                    retryWatch = { retried += it },
+                    linkingScope = backgroundScope,
+                    pingWatch = { it == "watch-without-logdate" },
+                )
+
+            val state = manager.observeConnectionState().first()
+            runCurrent()
+
+            assertEquals(
+                WatchConnectionState.NeedsAssociation("Pixel Watch", "watch-without-logdate", WatchLinking()),
+                state,
+            )
+            assertEquals(listOf("watch-without-logdate"), retried)
+        }
+
+    @Test
+    fun `active watch ping reports already installed instead of unknown`() =
+        runTest {
+            connected(withoutLogDate)
+            val manager = manager(pingWatch = { it == "watch-without-logdate" })
+
+            assertEquals(
+                WatchRequestResult.Failed(WatchRequestFailure.ALREADY_INSTALLED),
+                manager.installAppOnWatch("watch-without-logdate"),
+            )
+        }
+
     private fun listening() {
-        mockkStatic(Uri::class)
-        every { Uri.parse(any()) } returns mockk()
-        every { capabilityClient.addListener(any(), any<Uri>(), any()) } returns Tasks.forResult(null)
-        every { capabilityClient.removeListener(any()) } returns Tasks.forResult(true)
+        every { capabilityClient.addListener(any(), any<String>()) } returns Tasks.forResult(null)
+        every { capabilityClient.removeListener(any(), any<String>()) } returns Tasks.forResult(true)
     }
 
     @AfterTest
-    fun tearDown() {
-        unmockkStatic(Uri::class)
-    }
+    fun tearDown() = Unit
 
     private fun manager(
         verifiedAppNodes: Flow<Set<String>?> = flowOf(null),
@@ -281,32 +314,33 @@ class AndroidWatchConnectionManagerTest {
         linkStatus: suspend (String) -> WatchLinking = { WatchLinking() },
         retryWatch: suspend (String) -> Unit = {},
         linkingScope: CoroutineScope? = null,
-    ) =
-        AndroidWatchConnectionManager(
-            context = mockk<Context> { every { packageName } returns "studio.hypertext.logdate" },
-            associationManager =
-                mockk(relaxed = true) {
-                    every { observeAssociationState() } returns MutableStateFlow(WatchAssociationSnapshot.Unsupported)
-                },
-            verifiedAppNodes = verifiedAppNodes,
-            prepareWatch = prepareWatch,
-            linkStatus = linkStatus,
-            retryWatch = retryWatch,
-            linkingScope = linkingScope,
-            ioDispatcher = Dispatchers.Unconfined,
-            nodeClient = nodeClient,
-            capabilityClient = capabilityClient,
-            messageSender =
-                WatchMessageSender { path, _ ->
-                    sentMessages += path
-                    messageDelivered
-                },
-            remoteActivityHelper = remoteActivityHelper,
-            linkIntent = { link ->
-                sentLinks += link
-                linkIntent
+        pingWatch: suspend (String) -> Boolean = { false },
+    ) = AndroidWatchConnectionManager(
+        context = mockk<Context> { every { packageName } returns "studio.hypertext.logdate" },
+        associationManager =
+            mockk(relaxed = true) {
+                every { observeAssociationState() } returns MutableStateFlow(WatchAssociationSnapshot.Unsupported)
             },
-        )
+        verifiedAppNodes = verifiedAppNodes,
+        prepareWatch = prepareWatch,
+        linkStatus = linkStatus,
+        retryWatch = retryWatch,
+        linkingScope = linkingScope,
+        pingWatch = pingWatch,
+        ioDispatcher = Dispatchers.Unconfined,
+        nodeClient = nodeClient,
+        capabilityClient = capabilityClient,
+        messageSender =
+            WatchMessageSender { path, _ ->
+                sentMessages += path
+                messageDelivered
+            },
+        remoteActivityHelper = remoteActivityHelper,
+        linkIntent = { link ->
+            sentLinks += link
+            linkIntent
+        },
+    )
 
     private fun watch(nodeId: String) =
         mockk<Node> {

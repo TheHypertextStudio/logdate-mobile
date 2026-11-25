@@ -72,7 +72,7 @@ class WearManifestFiltersTest {
 
     @Test
     fun `every request the phone sends reaches the listener`() {
-        listOf(WearPaths.LINK_OFFER, WearPaths.LINK_BUNDLE, WearPaths.PRESENCE).forEach { path ->
+        listOf(WearPaths.LINK_OFFER, WearPaths.LINK_BUNDLE, WearPaths.PRESENCE, WearPaths.WATCH_PING).forEach { path ->
             assertResolvesToListener(MessageClient.ACTION_REQUEST_RECEIVED, path)
         }
     }

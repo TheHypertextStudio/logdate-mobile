@@ -69,6 +69,13 @@ extensions.configure<ApplicationExtension> {
             matchingFallbacks += listOf("release")
             isProfileable = true
         }
+        create("dogfood") {
+            initWith(getByName("debug"))
+            matchingFallbacks += listOf("debug")
+            // Match app/android-main's dogfood identity so phone and watch share Data Layer signing and package.
+            applicationIdSuffix = null
+            versionNameSuffix = null
+        }
     }
     buildFeatures {
         compose = true
