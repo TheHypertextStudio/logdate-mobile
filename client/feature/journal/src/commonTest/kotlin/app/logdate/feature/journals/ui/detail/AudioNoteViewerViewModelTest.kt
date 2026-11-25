@@ -116,6 +116,7 @@ class AudioNoteViewerViewModelTest {
                     audioPlaybackManager = audioPlaybackManager,
                     getJournalMembership = GetJournalMembershipUseCase(FakeDetailJournalContentRepository()),
                     audioTagRepository = FakeAudioTagRepository(),
+                    formatAudioLabel = { "Morning recording" },
                 )
 
             advanceUntilIdle()
@@ -126,6 +127,7 @@ class AudioNoteViewerViewModelTest {
             assertEquals(1, audioPlaybackManager.startCalls)
             assertEquals("audio://test", audioPlaybackManager.lastUri)
             assertEquals(noteId, audioPlaybackManager.lastMetadata?.noteId)
+            assertEquals("Morning recording", audioPlaybackManager.lastMetadata?.title)
         }
 
     @Test
