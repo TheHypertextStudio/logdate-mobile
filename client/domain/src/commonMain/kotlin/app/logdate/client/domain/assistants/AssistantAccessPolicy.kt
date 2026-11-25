@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package app.logdate.client.domain.assistants
 
 import app.logdate.client.repository.assistants.AssistantAccessSnapshot
@@ -7,11 +5,11 @@ import app.logdate.client.repository.assistants.AssistantCapability
 import app.logdate.client.repository.assistants.AssistantDeviceAuthority
 import app.logdate.client.repository.assistants.AssistantGrant
 import app.logdate.client.repository.assistants.AssistantRequestAuthority
-import kotlinx.datetime.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 enum class AssistantAccessDenial {
     UNAVAILABLE,

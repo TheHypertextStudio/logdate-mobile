@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package app.logdate.client.domain.assistants
 
 import app.logdate.client.repository.assistants.AssistantAccessSnapshot
@@ -8,7 +6,7 @@ import app.logdate.client.repository.assistants.AssistantGrant
 import app.logdate.client.repository.assistants.AssistantRequestAuthority
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 sealed interface AssistantReadResult<out T> {

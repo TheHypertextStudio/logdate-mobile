@@ -1,13 +1,11 @@
-@file:Suppress("DEPRECATION")
-
 package app.logdate.client.repository.assistants
 
 import app.logdate.util.UuidSerializer
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -108,7 +106,8 @@ data class AssistantOperationFailure(
     val reason: AssistantOperationError,
 )
 
-@Suppress(names = ["unused"]) // Kept: the connected-assistants gateway (CONNECTED_ASSISTANTS flag) decodes and encodes its requests with it; that gateway is not built yet
+// Kept: the connected-assistants gateway (CONNECTED_ASSISTANTS flag) decodes and encodes its requests with it; that gateway is not built yet
+@Suppress(names = ["unused"])
 object AssistantProtocol {
     private val json =
         Json {

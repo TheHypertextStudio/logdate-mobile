@@ -1,6 +1,9 @@
 package app.logdate.feature.editor.ui.audio
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
 import app.logdate.client.media.audio.AudioDurationResolver
 import app.logdate.client.media.audio.AudioPlaybackManager
 import app.logdate.client.media.audio.AudioPlaybackMetadata
@@ -22,6 +25,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -58,10 +62,18 @@ class BackgroundRecordingEditorTest {
                     )
                 model.startRecording(Uuid.random())
                 advanceUntilIdle()
-                ViewModelStore().apply {
-                    put("audio", model)
-                    clear()
-                }
+                val store = ViewModelStore()
+                ViewModelProvider.create(
+                    store,
+                    object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(
+                            modelClass: KClass<T>,
+                            extras: CreationExtras,
+                        ): T = model as T
+                    },
+                )["audio", AudioViewModel::class]
+                store.clear()
                 assertEquals(if (durable) 0 else 1, manager.requestStopCalls)
             }
         }

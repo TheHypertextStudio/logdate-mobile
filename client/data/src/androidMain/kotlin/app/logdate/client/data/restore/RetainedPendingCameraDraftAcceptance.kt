@@ -15,16 +15,14 @@ internal class RetainedPendingCameraDraftAcceptance(
         source: EntryDraft,
         sourcePath: String,
         recoveredReference: String,
-        canCommit: () -> Boolean = { true },
-        scopeFence: suspend (commit: suspend () -> Boolean) -> Boolean = ::runCommit,
-    ): Uuid? = accept(generation, source, mapOf(sourcePath to recoveredReference), canCommit, scopeFence)
+    ): Uuid? = accept(generation, source, mapOf(sourcePath to recoveredReference), { true }) { commit -> commit() }
 
     suspend fun accept(
         generation: String,
         source: EntryDraft,
         recoveredReferences: Map<String, String>,
-        canCommit: () -> Boolean = { true },
-        scopeFence: suspend (commit: suspend () -> Boolean) -> Boolean = ::runCommit,
+        canCommit: () -> Boolean,
+        scopeFence: suspend (commit: suspend () -> Boolean) -> Boolean,
     ): Uuid? {
         val cameraRecords =
             source.pendingMedia.filter {
@@ -54,8 +52,6 @@ internal class RetainedPendingCameraDraftAcceptance(
         return if (inserted) importedId else null
     }
 }
-
-private suspend fun runCommit(commit: suspend () -> Boolean): Boolean = commit()
 
 private fun sourceWithCameraReferences(
     source: EntryDraft,
