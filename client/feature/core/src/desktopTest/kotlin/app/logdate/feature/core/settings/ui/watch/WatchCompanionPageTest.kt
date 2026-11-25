@@ -235,7 +235,7 @@ class WatchCompanionPageTest {
             waitForIdle()
             onNodeWithText("Finish installing on Pixel Watch").assertExists()
             onNodeWithText("Check your watch", substring = true).assertExists()
-            onNodeWithText("Already installed", substring = true).assertDoesNotExist()
+            onNodeWithText("Open on watch instead", substring = true).assertDoesNotExist()
             onNodeWithText("Check connection").assertDoesNotExist()
             onNodeWithText("Timeline history").assertDoesNotExist()
             saveScreenshot(onRoot().captureToImage(), "watch-setup-install-sent.png")
@@ -392,7 +392,44 @@ class WatchCompanionPageTest {
         }
 
     @Test
-    fun `unverified watch leads with Install LogDate directly and supports Already installed fallback`() =
+    fun `many discovered watches scroll smoothly to the bottom device and continue button`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val watches =
+                (1..6).map { index ->
+                    DiscoveredWatch(
+                        nodeId = "watch-$index",
+                        displayName = "Watch $index",
+                        isNearby = index <= 4,
+                        appInstalled = index % 2 == 0,
+                    )
+                }
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = WatchStatus.Unknown("Watch 1", "watch-1", knownInstalled = false, availableWatches = watches),
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                    )
+                }
+            }
+            onNodeWithText("Choose your watch").assertExists()
+            onNodeWithText("Watch 6").performScrollTo()
+            onNodeWithText("Watch 6").assertExists()
+            onNodeWithText("Continue").performScrollTo()
+            onNodeWithText("Continue").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-choose-watch-many.png")
+        }
+
+    @Test
+    fun `unverified watch leads with Install LogDate directly and supports Open on watch instead fallback`() =
         runDesktopComposeUiTest(width = 411, height = 891) {
             val confirmed = mutableListOf<String>()
             var opened = 0
@@ -423,7 +460,7 @@ class WatchCompanionPageTest {
             onNodeWithText("Connection details").assertDoesNotExist()
             saveScreenshot(onRoot().captureToImage(), "watch-setup-open-watch.png")
 
-            onNodeWithText("Already installed").performClick()
+            onNodeWithText("Open on watch instead").performClick()
             assertEquals(1, opened)
             waitForIdle()
             onNodeWithText("Opening LogDate on Pixel Watch").assertExists()

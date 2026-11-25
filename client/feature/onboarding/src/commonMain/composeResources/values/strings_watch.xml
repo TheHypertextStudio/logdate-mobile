@@ -13,7 +13,7 @@
     <string name="watch_setup_save_failed">Couldn’t save your setup progress. Try again.</string>
     <string name="watch_setup_open_action">Open on watch</string>
     <string name="watch_setup_try_again_action">Try again</string>
-    <string name="watch_setup_already_installed_action">Already installed</string>
+    <string name="watch_setup_already_installed_action">Open on watch instead</string>
     <string name="watch_setup_install_action">Install on watch</string>
     <string name="watch_setup_confirm_install_description">Open Google Play on your watch to install LogDate, then return here to finish connecting.</string>
 </resources>

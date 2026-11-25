@@ -330,23 +330,18 @@
   >Open LogDate on your watch and keep it nearby to finish connecting.</string>
     <string name="watch_setup_open_action">Open on watch</string>
     <string name="watch_setup_open_on_watch">Open LogDate on watch</string>
-    <string name="watch_setup_already_installed_action">Already installed</string>
+    <string name="watch_setup_already_installed_action">Open on watch instead</string>
     <string name="watch_setup_choose_watch_title">Choose your watch</string>
     <string
     name="watch_setup_choose_watch_description"
   >Pick the Wear OS watch you want to connect with LogDate.</string>
     <string name="watch_setup_choose_watch_continue">Continue</string>
     <string name="watch_setup_switch_watch">Switch</string>
-    <string name="watch_setup_device_nearby">Nearby via Bluetooth</string>
+    <string name="watch_setup_device_nearby">Nearby</string>
     <string name="watch_setup_device_out_of_range">Out of range</string>
+    <string name="watch_setup_device_connected">Connected</string>
     <string name="watch_setup_device_installed_tag">LogDate installed</string>
-    <string name="watch_setup_device_ready_to_install_tag">Ready to install</string>
-    <string name="watch_setup_device_status_pair">Ready to connect</string>
-    <string name="watch_setup_device_status_confirm_phone">Allow prompt on phone</string>
-    <string name="watch_setup_device_status_open">Waiting for watch</string>
-    <string name="watch_setup_device_status_install_sent">Google Play opened</string>
-    <string name="watch_setup_device_status_linking">Linking your account</string>
-    <string name="watch_setup_device_status_connected">Syncing automatically</string>
+    <string name="watch_setup_device_ready_to_install_tag">Needs LogDate</string>
     <string name="watch_setup_open_sent">Opening LogDate on your watch…</string>
     <string name="watch_setup_opening_title">Opening LogDate on %1$s</string>
     <string
