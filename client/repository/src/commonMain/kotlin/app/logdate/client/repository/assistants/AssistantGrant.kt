@@ -1,10 +1,8 @@
-@file:Suppress("DEPRECATION")
-
 package app.logdate.client.repository.assistants
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /**

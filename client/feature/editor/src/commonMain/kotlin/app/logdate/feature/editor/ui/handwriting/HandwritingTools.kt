@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -144,9 +145,14 @@ private fun DrawingToolButton(
     ToggleButton(
         checked = active,
         onCheckedChange = { onClick() },
-        shapes = ToggleButtonDefaults.shapes(checkedShape = CircleShape),
+        shapes =
+            ToggleButtonShapes(
+                shape = ToggleButtonDefaults.shape,
+                pressedShape = ToggleButtonDefaults.pressedShape,
+                checkedShape = CircleShape,
+            ),
         colors =
-            ToggleButtonDefaults.toggleButtonColors(
+            ToggleButtonDefaults.colors(
                 containerColor = Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ),

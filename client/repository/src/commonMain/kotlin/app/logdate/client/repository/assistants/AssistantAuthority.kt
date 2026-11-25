@@ -1,9 +1,7 @@
-@file:Suppress("DEPRECATION")
-
 package app.logdate.client.repository.assistants
 
-import kotlinx.datetime.Instant
 import kotlin.time.Duration
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 /** Verified credential claims, constructed by the device issuer, never from tool arguments. */

@@ -22,6 +22,7 @@ import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -107,13 +108,13 @@ internal fun StoriesCaptureModes(
                                     role = Role.RadioButton
                                 },
                         shapes =
-                            ToggleButtonDefaults.shapes(
+                            ToggleButtonShapes(
                                 shape = outline,
                                 pressedShape = RoundedCornerShape(16.dp),
                                 checkedShape = RoundedCornerShape(24.dp),
                             ),
                         colors =
-                            ToggleButtonDefaults.toggleButtonColors(
+                            ToggleButtonDefaults.colors(
                                 containerColor = StoryChrome,
                                 contentColor = StoryMuted,
                                 checkedContainerColor = StoryAccent,
