@@ -21,9 +21,12 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -115,16 +118,25 @@ internal fun CompletedAudioTransport(
                     .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 if (onProgressChanged != null) {
+                    val sliderState = remember(onProgressChanged) { SliderState(value = safeProgress) }
+                    LaunchedEffect(safeProgress) {
+                        if (!sliderState.isDragging) {
+                            sliderState.value = safeProgress
+                        }
+                    }
                     Slider(
-                        value = safeProgress,
-                        onValueChange = onProgressChanged,
+                        state = sliderState,
+                        onValueChange = { value ->
+                            sliderState.value = value
+                            onProgressChanged(value)
+                        },
                         enabled = durationMs > 0,
                         modifier =
                             Modifier.fillMaxSize().testTag("completed_audio_waveform").semantics {
                                 contentDescription = playbackPositionDescription
                                 stateDescription = "$elapsed / $total"
                             },
-                        thumb = {
+                        thumb = { _ ->
                             Box(
                                 Modifier
                                     .width(3.dp)
