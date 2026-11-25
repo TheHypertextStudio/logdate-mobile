@@ -1,7 +1,9 @@
 package app.logdate.server.logging
 
 import io.sentry.Hint
-import io.sentry.Hub
+import io.sentry.Scope
+import io.sentry.Scopes
+import io.sentry.SentryClient
 import io.sentry.SentryEnvelope
 import io.sentry.SentryEvent
 import io.sentry.SentryOptions
@@ -46,17 +48,18 @@ class SentryTransportPrivacyTest {
                 }
                 configureSentryPrivacy(this, release!!, environment!!)
             }
-        val hub = Hub(options)
+        val globalScope = Scope(options).apply { bindClient(SentryClient(options)) }
+        val scopes = Scopes(Scope(options), Scope(options), globalScope, "test")
         try {
-            hub.setUser(
+            scopes.setUser(
                 User().apply {
                     id = marker
                     email = marker
-                    segment = marker
+                    username = marker
                 },
             )
-            hub.setTag(marker, marker)
-            hub.captureEvent(
+            scopes.setTag(marker, marker)
+            scopes.captureEvent(
                 SentryEvent(IllegalStateException(marker, RuntimeException(marker))).apply {
                     request =
                         Request().apply {
@@ -74,7 +77,7 @@ class SentryTransportPrivacyTest {
             assertTrue(payload.contains("SERVER_UNEXPECTED_FAILURE"))
             assertTrue(payload.contains("logdate-server@abc1234"))
         } finally {
-            hub.close()
+            scopes.close()
         }
     }
 }
