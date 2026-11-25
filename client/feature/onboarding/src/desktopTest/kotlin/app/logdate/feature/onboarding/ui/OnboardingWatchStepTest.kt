@@ -55,7 +55,7 @@ class OnboardingWatchStepTest {
             onNodeWithText("Not now").assertIsEnabled()
         }
 
-    @Test fun `unknown watch leads with Install on watch and offers Already installed fallback`() =
+    @Test fun `unknown watch leads with Install on watch and offers Open on watch instead fallback`() =
         runDesktopComposeUiTest(width = 411, height = 900) {
             var opened = 0
             val confirmed = mutableListOf<String>()
@@ -76,7 +76,7 @@ class OnboardingWatchStepTest {
             }
             onNodeWithText("Install on watch").performClick()
             assertEquals(listOf("watch-node"), confirmed)
-            onNodeWithText("Already installed").performClick()
+            onNodeWithText("Open on watch instead").performClick()
             assertEquals(1, opened)
         }
 }

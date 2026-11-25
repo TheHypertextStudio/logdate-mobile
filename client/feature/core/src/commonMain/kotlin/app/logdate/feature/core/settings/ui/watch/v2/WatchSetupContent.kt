@@ -135,16 +135,11 @@ import logdate.client.feature.core.generated.resources.watch_setup_choose_watch_
 import logdate.client.feature.core.generated.resources.watch_setup_complete_action
 import logdate.client.feature.core.generated.resources.watch_setup_complete_description
 import logdate.client.feature.core.generated.resources.watch_setup_complete_title
+import logdate.client.feature.core.generated.resources.watch_setup_device_connected
 import logdate.client.feature.core.generated.resources.watch_setup_device_installed_tag
 import logdate.client.feature.core.generated.resources.watch_setup_device_nearby
 import logdate.client.feature.core.generated.resources.watch_setup_device_out_of_range
 import logdate.client.feature.core.generated.resources.watch_setup_device_ready_to_install_tag
-import logdate.client.feature.core.generated.resources.watch_setup_device_status_confirm_phone
-import logdate.client.feature.core.generated.resources.watch_setup_device_status_connected
-import logdate.client.feature.core.generated.resources.watch_setup_device_status_install_sent
-import logdate.client.feature.core.generated.resources.watch_setup_device_status_linking
-import logdate.client.feature.core.generated.resources.watch_setup_device_status_open
-import logdate.client.feature.core.generated.resources.watch_setup_device_status_pair
 import logdate.client.feature.core.generated.resources.watch_setup_install_action
 import logdate.client.feature.core.generated.resources.watch_setup_install_description
 import logdate.client.feature.core.generated.resources.watch_setup_install_sent_description
@@ -384,8 +379,14 @@ internal fun WatchSetupContent(
                     onBack = stepBack,
                     progress = SetupStepProgress(1, SETUP_TOTAL_STEPS),
                     modifier = Modifier.fillMaxSize(),
+                    picture =
+                        if (availableWatches.size <= 3) {
+                            { ChooseWatchPicture(it) }
+                        } else {
+                            null
+                        },
                     bodyContent = {
-                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
                             availableWatches.forEach { watch ->
                                 WatchChoiceCard(
                                     watch = watch,
@@ -434,11 +435,10 @@ internal fun WatchSetupContent(
                     modifier = Modifier.fillMaxSize(),
                     progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
                     picture = { WakeWatchPicture(it) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = watchName,
                             nearby = unknown.nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_installed_tag),
                             onSwitch = switchAction,
                         )
                     },
@@ -470,11 +470,10 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
                     announce = true,
                     picture = { WorkingPicture(it, MaterialShapes.Cookie9Sided.toShape(), waiting = false) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = watchName,
                             nearby = unknown.nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_status_open),
                             onSwitch = switchAction,
                         )
                     },
@@ -499,11 +498,10 @@ internal fun WatchSetupContent(
                     modifier = Modifier.fillMaxSize(),
                     progress = SetupStepProgress(1, SETUP_TOTAL_STEPS),
                     picture = { ConnectPicture(it) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = pair.watchName,
                             nearby = settingUp.nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_status_pair),
                             onSwitch = switchAction,
                         )
                     },
@@ -522,13 +520,12 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(1, SETUP_TOTAL_STEPS),
                     announce = true,
                     picture = { AllowPicture(it) },
-                    bodyContent =
+                    devicePill =
                         watchName?.let { name ->
                             {
-                                WatchDeviceInfoCard(
+                                WatchPresencePill(
                                     watchName = name,
                                     nearby = settingUp?.nearby ?: true,
-                                    statusLine = stringResource(Res.string.watch_setup_device_status_confirm_phone),
                                 )
                             }
                         },
@@ -563,11 +560,10 @@ internal fun WatchSetupContent(
                     modifier = Modifier.fillMaxSize(),
                     progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
                     picture = { InstallPicture(it) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = watchName,
                             nearby = nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_ready_to_install_tag),
                             onSwitch = switchAction,
                         )
                     },
@@ -608,11 +604,10 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
                     announce = true,
                     picture = { WorkingPicture(it, MaterialShapes.Cookie7Sided.toShape(), waiting = true) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = watchName,
                             nearby = nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_status_install_sent),
                             onSwitch = switchAction,
                         )
                     },
@@ -668,13 +663,12 @@ internal fun WatchSetupContent(
                             badge = Icons.Rounded.PriorityHigh,
                         )
                     },
-                    bodyContent =
+                    devicePill =
                         watchName?.let { name ->
                             {
-                                WatchDeviceInfoCard(
+                                WatchPresencePill(
                                     watchName = name,
                                     nearby = nearby,
-                                    statusLine = stringResource(Res.string.watch_setup_device_status_open),
                                     onSwitch = switchAction,
                                 )
                             }
@@ -727,11 +721,10 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(3, SETUP_TOTAL_STEPS),
                     announce = true,
                     picture = { LinkingPicture(it, linking.problem) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = linking.watchName,
                             nearby = settingUp.nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_status_linking),
                             onSwitch = switchAction,
                         )
                     },
@@ -750,12 +743,11 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(3, SETUP_TOTAL_STEPS),
                     announce = true,
                     picture = { ReadyPicture(it) },
-                    bodyContent = {
-                        WatchDeviceInfoCard(
+                    devicePill = {
+                        WatchPresencePill(
                             watchName = ready.watchName,
                             nearby = ready.nearby,
-                            statusLine = stringResource(Res.string.watch_setup_device_status_connected),
-                            confirmed = true,
+                            connected = true,
                         )
                     },
                 ) {
@@ -835,6 +827,7 @@ internal fun WatchFlowScaffold(
     progress: SetupStepProgress? = null,
     announce: Boolean = false,
     picture: (@Composable (Dp) -> Unit)? = null,
+    devicePill: (@Composable () -> Unit)? = null,
     bodyContent: (@Composable ColumnScope.() -> Unit)? = null,
     action: @Composable ColumnScope.() -> Unit,
 ) {
@@ -911,16 +904,34 @@ internal fun WatchFlowScaffold(
                             verticalArrangement = Arrangement.spacedBy(Spacing.md),
                         ) {
                             WatchStepWords(description, progress)
+                            if (picture == null) {
+                                devicePill?.invoke()
+                            }
                             bodyContent?.invoke(this)
                         }
                         Column(
                             modifier = Modifier.weight(1f).heightIn(min = (availableHeight - Spacing.md * 2).coerceAtLeast(0.dp)),
                             verticalArrangement = Arrangement.spacedBy(Spacing.md),
                         ) {
-                            if (picture != null) {
-                                WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
-                            } else {
-                                Spacer(Modifier.weight(1f))
+                            when {
+                                picture != null && devicePill != null -> {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth().weight(1f),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically),
+                                    ) {
+                                        WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
+                                        devicePill()
+                                    }
+                                }
+
+                                picture != null -> {
+                                    WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
+                                }
+
+                                else -> {
+                                    Spacer(Modifier.weight(1f))
+                                }
                             }
                             WatchSetupActions(action)
                         }
@@ -933,14 +944,21 @@ internal fun WatchFlowScaffold(
                                 .fillMaxSize()
                                 .verticalScroll(rememberScrollState())
                                 .heightIn(min = availableHeight)
-                                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.xs, bottom = Spacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.sm, bottom = Spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
                     ) {
                         WatchStepWords(description, progress)
                         bodyContent?.invoke(this)
                         Spacer(Modifier.weight(1f))
                         if (picture != null) {
                             WatchSetupPicture(picture, Modifier.fillMaxWidth().height(160.dp))
+                        }
+                        devicePill?.let { pill ->
+                            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                pill()
+                            }
+                        }
+                        if (picture != null || devicePill != null) {
                             Spacer(Modifier.weight(1f))
                         }
                         WatchSetupActions(action)
@@ -954,16 +972,42 @@ internal fun WatchFlowScaffold(
                                 .fillMaxWidth()
                                 .verticalScroll(rememberScrollState())
                                 .heightIn(min = panelHeight)
-                                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.xs, bottom = Spacing.xl),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+                                .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.md, bottom = Spacing.xl),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.xl),
                     ) {
                         WatchStepWords(description, progress)
-                        if (picture != null) {
-                            WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
-                        }
-                        bodyContent?.invoke(this)
-                        if (picture == null) {
-                            Spacer(Modifier.weight(1f))
+                        when {
+                            picture != null && devicePill != null -> {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(Spacing.lg, Alignment.CenterVertically),
+                                ) {
+                                    WatchSetupPicture(picture, Modifier.fillMaxWidth().heightIn(min = 180.dp, max = 260.dp))
+                                    devicePill()
+                                }
+                            }
+
+                            picture != null && bodyContent != null -> {
+                                Spacer(Modifier.weight(0.5f))
+                                WatchSetupPicture(picture, Modifier.fillMaxWidth().height(148.dp))
+                                bodyContent(this)
+                                Spacer(Modifier.weight(1f))
+                            }
+
+                            picture != null -> {
+                                WatchSetupPicture(picture, Modifier.fillMaxWidth().weight(1f))
+                            }
+
+                            else -> {
+                                devicePill?.let { pill ->
+                                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                        pill()
+                                    }
+                                }
+                                bodyContent?.invoke(this)
+                                Spacer(Modifier.weight(1f))
+                            }
                         }
                         WatchSetupActions(action)
                     }
@@ -980,7 +1024,7 @@ private fun WatchStepWords(
     modifier: Modifier = Modifier,
 ) {
     if (progress == null && description == null) return
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
         if (progress != null) {
             val reduceMotion by rememberSystemReduceMotion()
             val target = progress.fraction.coerceIn(0f, 1f)
@@ -1003,78 +1047,73 @@ private fun WatchStepWords(
 }
 
 @Composable
-private fun WatchDeviceInfoCard(
+private fun WatchPresencePill(
     watchName: String,
     nearby: Boolean,
-    statusLine: String,
-    confirmed: Boolean = false,
+    connected: Boolean = false,
     onSwitch: (() -> Unit)? = null,
 ) {
+    val stateText =
+        stringResource(
+            when {
+                connected -> Res.string.watch_setup_device_connected
+                nearby -> Res.string.watch_setup_device_nearby
+                else -> Res.string.watch_setup_device_out_of_range
+            },
+        )
     val containerColor =
-        if (confirmed) {
+        if (connected) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
             MaterialTheme.colorScheme.surfaceContainerLow
         }
     val contentColor =
-        if (confirmed) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
-    val secondaryText =
-        if (confirmed) {
+        if (connected) {
             MaterialTheme.colorScheme.onSecondaryContainer
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         }
-    val availability =
-        stringResource(
-            if (nearby) Res.string.watch_setup_device_nearby else Res.string.watch_setup_device_out_of_range,
-        )
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = containerColor,
-        contentColor = contentColor,
+    val dotColor =
+        when {
+            connected -> MaterialTheme.colorScheme.onSecondaryContainer
+            nearby -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.outline
+        }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = Spacing.md, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-            verticalAlignment = Alignment.CenterVertically,
+        Surface(
+            shape = CircleShape,
+            color = containerColor,
+            contentColor = contentColor,
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = CircleShape,
-                color = if (confirmed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = if (confirmed) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer,
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                if (connected) {
                     Icon(
-                        imageVector = if (confirmed) Icons.Rounded.Check else Icons.Rounded.Watch,
+                        imageVector = Icons.Rounded.Check,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(16.dp),
+                        tint = contentColor,
                     )
+                } else {
+                    Box(Modifier.size(8.dp).background(dotColor, CircleShape))
                 }
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = watchName,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
+                    text = "$watchName · $stateText",
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                WatchPresenceLine(
-                    text = "$availability · $statusLine",
-                    nearby = nearby,
-                    emphasized = confirmed,
-                    textColor = secondaryText,
-                )
             }
-            onSwitch?.let { switch ->
-                TextButton(onClick = switch) {
-                    Text(stringResource(Res.string.watch_setup_switch_watch))
-                }
+        }
+        onSwitch?.let { switch ->
+            TextButton(onClick = switch) {
+                Text(stringResource(Res.string.watch_setup_switch_watch))
             }
         }
     }
@@ -1116,20 +1155,20 @@ private fun WatchChoiceCard(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(24.dp))
                 .clickable(role = Role.RadioButton, onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         color = containerColor,
         contentColor = contentColor,
         border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = Spacing.md, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(48.dp),
                 shape = CircleShape,
                 color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1138,11 +1177,11 @@ private fun WatchChoiceCard(
                     Icon(
                         imageVector = Icons.Rounded.Watch,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = watch.displayName,
                     style = MaterialTheme.typography.titleMedium,
@@ -1182,7 +1221,7 @@ private fun WatchPresenceLine(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(Modifier.padding(top = 5.dp).size(8.dp).background(dotColor, CircleShape))
+        Box(Modifier.padding(top = 4.dp).size(8.dp).background(dotColor, CircleShape))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
@@ -1270,19 +1309,50 @@ internal fun IntroPicture(side: Dp) {
     }
 }
 
-/** The app travelling from the phone to the watch. */
+/** Installing LogDate onto the paired watch. */
 @Composable
 private fun InstallPicture(side: Dp) {
     val colors = MaterialTheme.colorScheme
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(side * 0.05f)) {
-        Mark(Icons.Rounded.Smartphone, side * 0.24f, CircleShape, colors.surfaceContainerHighest, colors.onSurfaceVariant)
-        repeat(3) { Box(Modifier.size(side * 0.035f).background(colors.tertiary, CircleShape)) }
+    Box(Modifier.size(side * 0.78f)) {
         Mark(
-            Icons.Rounded.Download,
-            side * 0.44f,
+            Icons.Rounded.Watch,
+            side * 0.7f,
             MaterialShapes.Cookie7Sided.toShape(),
             colors.tertiaryContainer,
             colors.onTertiaryContainer,
+            Modifier.align(Alignment.TopStart),
+        )
+        Mark(
+            Icons.Rounded.Download,
+            side * 0.26f,
+            CircleShape,
+            colors.primary,
+            colors.onPrimary,
+            Modifier.align(Alignment.BottomEnd),
+        )
+    }
+}
+
+/** Multiple paired watches ready to pick from before connecting. */
+@Composable
+private fun ChooseWatchPicture(side: Dp) {
+    val colors = MaterialTheme.colorScheme
+    Box(Modifier.size(width = side * 1.05f, height = side * 0.78f)) {
+        Mark(
+            Icons.Rounded.Watch,
+            side * 0.64f,
+            MaterialShapes.Flower.toShape(),
+            colors.primaryContainer,
+            colors.onPrimaryContainer,
+            Modifier.align(Alignment.CenterStart),
+        )
+        Mark(
+            Icons.Rounded.Watch,
+            side * 0.44f,
+            CircleShape,
+            colors.tertiaryContainer,
+            colors.onTertiaryContainer,
+            Modifier.align(Alignment.BottomEnd),
         )
     }
 }
