@@ -184,6 +184,17 @@
     <string name="watch_v2_check_notifications">Watch notifications</string>
     <string name="watch_v2_check_again">Check again</string>
     <string name="watch_v2_check_running">Checking your watch…</string>
+    <string name="watch_v2_diagnostics_all_good">Everything looks good</string>
+    <plurals name="watch_v2_diagnostics_issues_found">
+        <item quantity="one">%1$d item needs attention</item>
+        <item quantity="other">%1$d items need attention</item>
+    </plurals>
+    <string name="watch_v2_diagnostics_all_passed_summary">All %1$d connection checks passed.</string>
+    <string
+    name="watch_v2_diagnostics_issues_summary"
+  >Fix the highlighted items below, then check again.</string>
+    <string name="watch_v2_diagnostics_attention_section">Action needed</string>
+    <string name="watch_v2_diagnostics_passing_section">Passing checks</string>
     <string
     name="watch_v2_check_error"
   >Couldn’t check your watch. Keep it nearby and try again.</string>

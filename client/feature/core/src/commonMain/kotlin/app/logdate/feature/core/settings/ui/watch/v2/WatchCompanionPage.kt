@@ -119,6 +119,8 @@ fun WatchCompanionPage(
             null
         }
     if (!verified || showCompletion) {
+        val unknownStatus = status as? WatchStatus.Unknown
+        var confirmingInstall by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
         Scaffold(
             modifier = modifier.fillMaxSize().applyScreenStyles(),
             contentWindowInsets = WindowInsets.navigationBars,
@@ -126,7 +128,15 @@ fun WatchCompanionPage(
                 TopAppBar(
                     title = { Text(stringResource(Res.string.watch_settings)) },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
+                        IconButton(
+                            onClick = {
+                                if (confirmingInstall && unknownStatus?.knownInstalled == false) {
+                                    confirmingInstall = false
+                                } else {
+                                    onBack()
+                                }
+                            },
+                        ) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(UiRes.string.common_back))
                         }
                     },
@@ -141,6 +151,8 @@ fun WatchCompanionPage(
                 onInstall = onInstall,
                 setupLauncher = setupLauncher,
                 modifier = Modifier.fillMaxSize().padding(insets),
+                confirmingInstall = confirmingInstall,
+                onConfirmingInstallChange = { confirmingInstall = it },
                 onRetry = onRetry,
                 onConfirmMissing = onConfirmMissing,
                 onOpenOnWatch = onOpenOnWatch,

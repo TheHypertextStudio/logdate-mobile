@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -25,11 +26,12 @@ import org.jetbrains.compose.resources.stringResource
 internal fun WatchRequestFailureMessage(
     failure: WatchRequestFailure,
     modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.error,
 ) {
     Text(
         text = stringResource(failure.message),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.error,
+        color = color,
         modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
     )
 }

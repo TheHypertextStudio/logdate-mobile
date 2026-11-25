@@ -37,8 +37,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -52,6 +54,7 @@ import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.Watch
 import androidx.compose.material.icons.rounded.WatchOff
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -103,7 +106,6 @@ import logdate.client.feature.core.generated.resources.watch_setup_already_open_
 import logdate.client.feature.core.generated.resources.watch_setup_associate_action
 import logdate.client.feature.core.generated.resources.watch_setup_associate_description
 import logdate.client.feature.core.generated.resources.watch_setup_associate_title
-import logdate.client.feature.core.generated.resources.watch_setup_back_action
 import logdate.client.feature.core.generated.resources.watch_setup_complete_action
 import logdate.client.feature.core.generated.resources.watch_setup_complete_description
 import logdate.client.feature.core.generated.resources.watch_setup_complete_title
@@ -167,6 +169,8 @@ internal fun WatchSetupContent(
     onInstall: () -> Unit,
     setupLauncher: ((WatchSetupProvider) -> Boolean)?,
     modifier: Modifier = Modifier,
+    confirmingInstall: Boolean = false,
+    onConfirmingInstallChange: (Boolean) -> Unit = {},
     onRetry: () -> Unit = {},
     onConfirmMissing: (String) -> Unit = {},
     onOpenOnWatch: (() -> Unit)? = null,
@@ -174,7 +178,6 @@ internal fun WatchSetupContent(
     onCompleteDone: (() -> Unit)? = null,
 ) {
     val unknownStatus = status as? WatchStatus.Unknown
-    var confirmingInstall by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
     var openSent by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
     LaunchedEffect(requestFailure) {
         if (requestFailure != null) openSent = false
@@ -283,8 +286,8 @@ internal fun WatchSetupContent(
                         )
                     },
                 ) {
+                    requestFailure?.let { WatchSetupErrorNotice(it) }
                     WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onRetry)
-                    requestFailure?.let { WatchRequestFailureMessage(it) }
                 }
             }
 
@@ -300,14 +303,9 @@ internal fun WatchSetupContent(
                     picture = { InstallPicture(it) },
                 ) {
                     WatchSetupAction(stringResource(Res.string.watch_setup_install_action)) {
-                        confirmingInstall = false
+                        onConfirmingInstallChange(false)
                         onConfirmMissing(nodeId)
                     }
-                    StepSecondaryButton(
-                        text = stringResource(Res.string.watch_setup_back_action),
-                        onClick = { confirmingInstall = false },
-                        quiet = true,
-                    )
                 }
             }
 
@@ -321,6 +319,14 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
                     picture = { WakeWatchPicture(it) },
                 ) {
+                    if (requestFailure != null) {
+                        WatchSetupErrorNotice(requestFailure)
+                    } else if (openSent) {
+                        WatchSetupStatusNotice(
+                            message = stringResource(Res.string.watch_setup_open_sent),
+                            inProgress = true,
+                        )
+                    }
                     if (onOpenOnWatch != null) {
                         WatchSetupAction(stringResource(Res.string.watch_setup_open_action)) {
                             openSent = true
@@ -329,20 +335,11 @@ internal fun WatchSetupContent(
                     } else {
                         WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onRetry)
                     }
-                    if (requestFailure != null) {
-                        WatchRequestFailureMessage(requestFailure)
-                    } else if (openSent) {
-                        Text(
-                            stringResource(Res.string.watch_setup_open_sent),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                        )
-                    }
                     when {
                         !unknown.knownInstalled && unknown.nodeId != null -> {
                             StepSecondaryButton(
                                 text = stringResource(Res.string.watch_setup_not_installed_link),
-                                onClick = { confirmingInstall = true },
+                                onClick = { onConfirmingInstallChange(true) },
                                 quiet = true,
                             )
                         }
@@ -398,15 +395,15 @@ internal fun WatchSetupContent(
                     progress = SetupStepProgress(2, SETUP_TOTAL_STEPS),
                     picture = { InstallPicture(it) },
                 ) {
-                    WatchSetupAction(stringResource(Res.string.watch_setup_install_action), onInstall)
-                    if (installRequestSent) {
-                        Text(
-                            stringResource(Res.string.watch_setup_sent),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    if (requestFailure != null) {
+                        WatchSetupErrorNotice(requestFailure)
+                    } else if (installRequestSent) {
+                        WatchSetupStatusNotice(
+                            message = stringResource(Res.string.watch_setup_sent),
+                            inProgress = false,
                         )
                     }
-                    requestFailure?.let { WatchRequestFailureMessage(it) }
+                    WatchSetupAction(stringResource(Res.string.watch_setup_install_action), onInstall)
                 }
             }
 
@@ -574,6 +571,73 @@ private fun WatchSetupActions(action: @Composable ColumnScope.() -> Unit) {
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         content = action,
     )
+}
+
+@Composable
+private fun WatchSetupErrorNotice(failure: WatchRequestFailure) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.xs),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.md, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ErrorOutline,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            WatchRequestFailureMessage(
+                failure = failure,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WatchSetupStatusNotice(
+    message: String,
+    inProgress: Boolean,
+) {
+    val reduceMotion by rememberSystemReduceMotion()
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.xs),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = Spacing.md, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (inProgress && !reduceMotion) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            } else {
+                Icon(
+                    imageVector = if (inProgress) Icons.Rounded.Watch else Icons.Rounded.CheckCircleOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
+    }
 }
 
 /** One filled shape holding one symbol: the piece every setup picture is built from. */

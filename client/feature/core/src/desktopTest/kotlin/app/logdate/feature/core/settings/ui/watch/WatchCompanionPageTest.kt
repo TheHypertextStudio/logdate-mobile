@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -349,12 +350,13 @@ class WatchCompanionPageTest {
         runDesktopComposeUiTest(width = 411, height = 891) {
             val confirmed = mutableListOf<String>()
             var opened = 0
+            var backs = 0
             setContent {
                 LogDateTheme(dynamicColor = false) {
                     WatchCompanionPage(
                         status = WatchStatus.Unknown("Pixel Watch", "watch-a"),
                         requestFailure = null,
-                        onBack = {},
+                        onBack = { backs++ },
                         onAssociate = {},
                         onInstall = {},
                         onReminders = {},
@@ -382,6 +384,12 @@ class WatchCompanionPageTest {
             assertTrue(confirmed.isEmpty())
             onNodeWithText("Install LogDate on Pixel Watch?").assertExists()
             saveScreenshot(onRoot().captureToImage(), "watch-setup-confirm-install.png")
+
+            onNodeWithContentDescription("Back").performClick()
+            assertEquals(0, backs)
+            onNodeWithText("Open LogDate on Pixel Watch").assertExists()
+
+            onNodeWithText("Don’t have it on your watch?").performClick()
             onNodeWithText("Install on watch").performClick()
             assertEquals(listOf("watch-a"), confirmed)
         }
