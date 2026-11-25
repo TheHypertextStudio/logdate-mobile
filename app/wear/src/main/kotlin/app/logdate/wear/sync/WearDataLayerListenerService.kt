@@ -103,6 +103,10 @@ class WearDataLayerListenerService : WearableListenerService() {
         path: String,
         request: ByteArray,
     ): ByteArray? {
+        // Lightweight presence ping: proves LogDate is installed and reachable without waiting on Koin or SQLCipher.
+        if (path == WearPaths.WATCH_PING) {
+            return byteArrayOf(1)
+        }
         if (!WatchLinkCoordinator.handles(path) &&
             path != WearPaths.LIVE_RECORDING_COMMAND &&
             path != WearPaths.LIVE_PLAYBACK_COMMAND &&

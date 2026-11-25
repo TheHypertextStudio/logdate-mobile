@@ -212,6 +212,7 @@
           android:pathPrefix="/logdate/link"
         />
                 <data android:path="/logdate/presence" />
+                <data android:path="/logdate/watch/ping" />
                 <data android:path="/logdate/diag/ping" />
                 <data android:path="/logdate/v2/device/removal" />
                 <data android:path="/logdate/reminders/claim" />

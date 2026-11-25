@@ -6,6 +6,8 @@ import android.net.Uri
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import app.logdate.client.sync.WatchMessageSender
 import app.logdate.client.sync.datalayer.WearAudioRequestPaths
+import app.logdate.client.sync.datalayer.v2.WearPaths
+import app.logdate.client.sync.datalayer.v2.WearProtocol
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
@@ -41,6 +43,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 private const val REMOTE_START_TIMEOUT_SECONDS = 15L
+private const val WATCH_PING_TIMEOUT_MS = 2_000L
 
 /** Opens LogDate on the watch at Today. The watch's MainActivity declares a matching VIEW filter. */
 const val WATCH_TODAY_LINK = "studio.hypertext.logdate://watch/today"
@@ -75,6 +78,22 @@ class AndroidWatchConnectionManager(
     private val linkStatus: suspend (String) -> WatchLinking = { WatchLinking() },
     private val retryWatch: suspend (String) -> Unit = {},
     private val linkingScope: CoroutineScope? = null,
+    private val pingWatch: suspend (String) -> Boolean = { nodeId ->
+        withTimeoutOrNull(WATCH_PING_TIMEOUT_MS) {
+            try {
+                Wearable
+                    .getMessageClient(context)
+                    .sendRequest(nodeId, WearPaths.WATCH_PING, byteArrayOf())
+                    .await()
+                    .isNotEmpty()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Napier.d(e) { "Watch presence ping did not reach $nodeId" }
+                false
+            }
+        } ?: false
+    },
 ) : WatchConnectionManager {
     private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val snapshots = Mutex()
@@ -173,7 +192,9 @@ class AndroidWatchConnectionManager(
         val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
         if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
         val target = watches.withApp.firstOrNull() ?: watches.withoutApp.first()
-        return startOnWatch(WATCH_TODAY_LINK, target)
+        return startOnWatch(WATCH_TODAY_LINK, target).also { result ->
+            if (result == WatchRequestResult.Sent) refresh()
+        }
     }
 
     override suspend fun installAppOnWatch(nodeId: String?): WatchRequestResult {
@@ -197,7 +218,9 @@ class AndroidWatchConnectionManager(
         val target =
             (watches.withApp + watches.withoutApp).firstOrNull { it.id == nodeId }
                 ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        return startOnWatch(WATCH_TODAY_LINK, target)
+        return startOnWatch(WATCH_TODAY_LINK, target).also { result ->
+            if (result == WatchRequestResult.Sent) refresh()
+        }
     }
 
     override suspend fun requestSync(nodeId: String?) {
@@ -244,7 +267,8 @@ class AndroidWatchConnectionManager(
                     connected.partition {
                         it.id in withAppIds ||
                             it.id in verified ||
-                            knownAppNodes.containsKey(it.id)
+                            knownAppNodes.containsKey(it.id) ||
+                            pingWatch(it.id)
                     }
                 ConnectedWatches(withApp = withApp, withoutApp = withoutApp)
             } catch (e: CancellationException) {
@@ -275,11 +299,8 @@ class AndroidWatchConnectionManager(
                         emitSnapshot()
                     }
                 }
-            capabilityClient.addListener(
-                capabilityListener,
-                Uri.parse("wear://*/${WatchNodeSelector.WATCH_CAPABILITY}"),
-                CapabilityClient.FILTER_LITERAL,
-            )
+            capabilityClient.addListener(capabilityListener, WatchNodeSelector.WATCH_CAPABILITY)
+            capabilityClient.addListener(capabilityListener, WearProtocol.WATCH_CAPABILITY_V2)
             // Node reachability can change without an app capability changing. Stop with the collector.
             val polling =
                 launch {
@@ -293,7 +314,8 @@ class AndroidWatchConnectionManager(
             awaitClose {
                 polling.cancel()
                 requested.cancel()
-                capabilityClient.removeListener(capabilityListener)
+                capabilityClient.removeListener(capabilityListener, WatchNodeSelector.WATCH_CAPABILITY)
+                capabilityClient.removeListener(capabilityListener, WearProtocol.WATCH_CAPABILITY_V2)
             }
         }
 
@@ -323,10 +345,16 @@ class AndroidWatchConnectionManager(
                                 )
                             }
 
-                    appNodes.forEach { knownAppNodes[it.id] = it }
+                    val advertisedIds = appNodes.mapTo(mutableSetOf()) { it.id }
+                    val probedNodes =
+                        connectedNodes.filter { node ->
+                            node.id !in advertisedIds && pingWatch(node.id)
+                        }
+                    val detectedAppNodes = (appNodes + probedNodes).distinctBy { it.id }
+                    detectedAppNodes.forEach { knownAppNodes[it.id] = it }
                     WatchTransportSnapshot(
                         connectedNodes = connectedNodes,
-                        appNodes = appNodes,
+                        appNodes = detectedAppNodes,
                         knownAppNodes = knownAppNodes.values.toList(),
                     )
                 } catch (e: CancellationException) {

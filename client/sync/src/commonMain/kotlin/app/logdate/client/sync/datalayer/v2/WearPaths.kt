@@ -30,6 +30,7 @@ object WearPaths {
     const val REMINDERS_DELIVER = "/logdate/reminders/deliver"
     const val REMINDERS_CLAIM = "/logdate/reminders/claim"
     const val PRESENCE = "/logdate/presence"
+    const val WATCH_PING = "/logdate/watch/ping"
     const val DIAG_PING = "/logdate/diag/ping"
     const val FAVORITES_SET = "/logdate/favorites/set"
 
