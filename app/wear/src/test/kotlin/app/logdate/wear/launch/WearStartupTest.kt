@@ -3,6 +3,8 @@ package app.logdate.wear.launch
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -10,6 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WearStartupTest {
@@ -188,5 +191,55 @@ class WearStartupTest {
             startup.start()
             runCurrent()
             assertEquals(1, opens)
+        }
+
+    @Test
+    fun stalledStorageTransitionsToFailedAfterTimeoutAndAllowsRetry() =
+        runTest {
+            var opens = 0
+            val startup =
+                WearStartup(
+                    backgroundScope,
+                    openStorage = {
+                        opens++
+                        if (opens == 1) awaitCancellation()
+                    },
+                    restoreRemoval = {},
+                    recoverRecording = {},
+                    startObservers = {},
+                    startupTimeout = 5.seconds,
+                )
+
+            startup.start()
+            runCurrent()
+            assertIs<WearStartupState.Loading>(startup.state.value)
+
+            advanceTimeBy(5_001)
+            runCurrent()
+            assertIs<WearStartupState.Failed>(startup.state.value)
+
+            startup.start()
+            runCurrent()
+            assertIs<WearStartupState.Ready>(startup.state.value)
+            assertEquals(2, opens)
+        }
+
+    @Test
+    fun stalledRemovalTransitionsToFailedAfterTimeout() =
+        runTest {
+            val startup =
+                WearStartup(
+                    backgroundScope,
+                    openStorage = {},
+                    restoreRemoval = { awaitCancellation() },
+                    recoverRecording = {},
+                    startObservers = {},
+                    startupTimeout = 5.seconds,
+                )
+
+            startup.start()
+            advanceTimeBy(5_001)
+            runCurrent()
+            assertIs<WearStartupState.Failed>(startup.state.value)
         }
 }

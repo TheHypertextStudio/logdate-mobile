@@ -13,7 +13,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.CircularProgressIndicator
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import app.logdate.wear.R
 import app.logdate.wear.launch.WearStartupState
@@ -35,11 +34,6 @@ internal fun WearStartupScreen(
                 Button(onClick = onRetry) { Text(stringResource(R.string.wear_startup_retry)) }
             } else {
                 CircularProgressIndicator(modifier = Modifier.size(32.dp))
-                Text(
-                    stringResource(R.string.wear_startup_opening),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
             }
         }
     }
