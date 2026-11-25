@@ -116,7 +116,15 @@ class WearDataLayerListenerService : WearableListenerService() {
             return null
         }
         val playbackRequest = path == WearPaths.LIVE_PLAYBACK_COMMAND
-        val koin = resolveWearServiceKoin(if (playbackRequest) 8_000L else 1_000L)
+        // Presence and diagnostics read preferences/permissions only and must still respond while storage warms up.
+        val lightweightRequest = path == WearPaths.PRESENCE || path == WatchDiagnosticsProtocol.PATH
+        val koin =
+            if (lightweightRequest) {
+                org.koin.core.context.GlobalContext
+                    .getOrNull()
+            } else {
+                resolveWearServiceKoin(if (playbackRequest) 8_000L else 1_000L)
+            }
         if (koin == null) {
             if (playbackRequest) return playbackFailure(HandoffFailure.WATCH_STARTING)
             Napier.e("Koin unavailable while encrypted storage is not ready; the phone's link request fails and is tried again")

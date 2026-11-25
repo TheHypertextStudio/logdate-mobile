@@ -16,8 +16,8 @@ import app.logdate.wear.launch.WearStartupState
 import app.logdate.wear.launch.resolveWearExperience
 import app.logdate.wear.launch.toWearLaunchRequest
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -34,15 +34,22 @@ class MainActivity : ComponentActivity() {
     private val experience = MutableStateFlow<WearExperience?>(null)
     private val launchRequests = Channel<WearLaunchRequest>(Channel.CONFLATED)
 
+    @Volatile
+    private var splashHoldExpired = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         setTheme(android.R.style.Theme_DeviceDefault)
-        splashScreen.setKeepOnScreenCondition { false }
         val startup = (application as LogDateWearApplication).startup
+        // Resolve the experience flag in parallel with storage startup; it reads DataStore only.
+        resolveExperience(savedInstanceState)
         lifecycleScope.launch {
-            startup.state.first { it is WearStartupState.Ready }
-            resolveExperience(savedInstanceState)
+            delay(SPLASH_HOLD_TIMEOUT_MS)
+            splashHoldExpired = true
+        }
+        splashScreen.setKeepOnScreenCondition {
+            !splashHoldExpired && (startup.state.value is WearStartupState.Loading || experience.value == null)
         }
 
         val initialRequest = intent.toWearLaunchRequest()
@@ -94,5 +101,6 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val STATE_EXPERIENCE = "wear_experience"
+        const val SPLASH_HOLD_TIMEOUT_MS = 1_500L
     }
 }
