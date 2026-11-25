@@ -68,6 +68,17 @@ class AndroidWatchConnectionManagerTest {
         }
 
     @Test
+    fun `open prepares watch link after opening LogDate on the watch`() =
+        runTest {
+            connected(withoutLogDate, withLogDate)
+            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
+            val prepared = mutableListOf<String>()
+
+            assertEquals(WatchRequestResult.Sent, manager(prepareWatch = { prepared += it }).openAppOnWatch("watch-without-logdate"))
+            assertEquals(listOf("watch-without-logdate"), prepared)
+        }
+
+    @Test
     fun `an unconfirmed advertisement never opens the store`() =
         runTest {
             connected(withoutLogDate)

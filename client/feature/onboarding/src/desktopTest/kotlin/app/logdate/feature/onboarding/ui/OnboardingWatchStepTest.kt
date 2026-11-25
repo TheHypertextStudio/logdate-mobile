@@ -54,4 +54,28 @@ class OnboardingWatchStepTest {
             onNodeWithText("Add to watch").assertIsNotEnabled()
             onNodeWithText("Not now").assertIsEnabled()
         }
+
+    @Test fun `unknown watch offers Open LogDate on watch when node id is present`() =
+        runDesktopComposeUiTest(width = 411, height = 900) {
+            var opened = 0
+            var retried = 0
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    OnboardingWatchStepContent(
+                        WatchConnectionState.AppUnknown("Pixel Watch", "watch-node"),
+                        WatchSetupState.CheckOnWatch("Pixel Watch", "watch-node", false),
+                        false,
+                        false,
+                        {},
+                        { retried++ },
+                        {},
+                        onOpenOnWatch = { opened++ },
+                    )
+                }
+            }
+            onNodeWithText("Open LogDate on watch").performClick()
+            onNodeWithText("Check again").performClick()
+            assertEquals(1, opened)
+            assertEquals(1, retried)
+        }
 }

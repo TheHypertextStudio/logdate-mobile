@@ -65,6 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.koin.core.context.GlobalContext
 
 /** Applies peer changes through sync repositories and resumes a retained watch removal. */
 class WearDataLayerListenerService : WearableListenerService() {
@@ -307,9 +308,9 @@ class WearDataLayerListenerService : WearableListenerService() {
             Napier.w("A state document arrived without the node that wrote it; ignoring it")
             return
         }
-        val koin = resolveKoin()
+        val koin = GlobalContext.getOrNull()
         if (koin == null) {
-            Napier.e("Koin unavailable while encrypted storage is not ready; the phone's state is read again when LogDate next starts")
+            Napier.w("Koin is not ready to mirror phone state yet; the phone's state is read again when LogDate next starts")
             return
         }
         withContext(NonCancellable) {

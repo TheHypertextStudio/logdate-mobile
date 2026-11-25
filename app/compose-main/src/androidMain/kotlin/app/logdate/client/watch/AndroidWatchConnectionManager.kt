@@ -192,9 +192,7 @@ class AndroidWatchConnectionManager(
         val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
         if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
         val target = watches.withApp.firstOrNull() ?: watches.withoutApp.first()
-        return startOnWatch(WATCH_TODAY_LINK, target).also { result ->
-            if (result == WatchRequestResult.Sent) refresh()
-        }
+        return openAndPrepare(target)
     }
 
     override suspend fun installAppOnWatch(nodeId: String?): WatchRequestResult {
@@ -218,10 +216,22 @@ class AndroidWatchConnectionManager(
         val target =
             (watches.withApp + watches.withoutApp).firstOrNull { it.id == nodeId }
                 ?: return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
-        return startOnWatch(WATCH_TODAY_LINK, target).also { result ->
-            if (result == WatchRequestResult.Sent) refresh()
-        }
+        return openAndPrepare(target)
     }
+
+    private suspend fun openAndPrepare(target: Node): WatchRequestResult =
+        startOnWatch(WATCH_TODAY_LINK, target).also { result ->
+            if (result == WatchRequestResult.Sent) {
+                try {
+                    prepareWatch(target.id)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Napier.w(e) { "Opened LogDate on ${target.displayName}, but preparing the watch link failed" }
+                }
+                refresh()
+            }
+        }
 
     override suspend fun requestSync(nodeId: String?) {
         checkNotNull(nodeId) { "No watch selected" }

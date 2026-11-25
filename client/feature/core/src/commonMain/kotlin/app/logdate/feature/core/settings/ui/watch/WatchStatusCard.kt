@@ -5,6 +5,8 @@ package app.logdate.feature.core.settings.ui.watch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -456,17 +458,30 @@ fun WatchUnknownActions(
     if (prominent) {
         StepPrimaryButton(text = primaryLabel, onClick = primaryAction)
     } else {
-        Button(onClick = primaryAction) { Text(primaryLabel) }
+        Button(onClick = primaryAction, modifier = Modifier.fillMaxWidth()) { Text(primaryLabel) }
     }
     if (status.nodeId != null && onOpenOnWatch != null) {
-        OutlinedButton(onClick = onRetry) { Text(stringResource(Res.string.watch_v2_check_again)) }
-    }
-    onDiagnostics?.let { openDiagnostics ->
-        TextButton(onClick = openDiagnostics) { Text(stringResource(Res.string.watch_setup_diagnostics_action)) }
+        OutlinedButton(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(Res.string.watch_v2_check_again))
+        }
     }
     val nodeId = status.nodeId
+    val showConfirmMissing = nodeId != null && !status.knownInstalled
+    if (onDiagnostics != null || showConfirmMissing) {
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm, Alignment.CenterHorizontally),
+        ) {
+            onDiagnostics?.let { openDiagnostics ->
+                TextButton(onClick = openDiagnostics) { Text(stringResource(Res.string.watch_setup_diagnostics_action)) }
+            }
+            if (showConfirmMissing) {
+                TextButton(onClick = { confirming = true }) { Text(stringResource(Res.string.watch_missing_confirm_action)) }
+            }
+        }
+    }
     if (nodeId != null && !status.knownInstalled) {
-        TextButton(onClick = { confirming = true }) { Text(stringResource(Res.string.watch_missing_confirm_action)) }
         if (confirming) {
             AlertDialog(
                 onDismissRequest = { confirming = false },

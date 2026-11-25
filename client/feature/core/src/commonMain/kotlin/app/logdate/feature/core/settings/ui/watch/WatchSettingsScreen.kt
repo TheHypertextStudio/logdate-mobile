@@ -4,23 +4,16 @@ package app.logdate.feature.core.settings.ui.watch
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Watch
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
@@ -38,8 +31,6 @@ import logdate.client.feature.core.generated.resources.watch_help
 import logdate.client.feature.core.generated.resources.watch_notifications
 import logdate.client.feature.core.generated.resources.watch_notifications_description
 import logdate.client.feature.core.generated.resources.watch_notifications_title
-import logdate.client.feature.core.generated.resources.watch_privacy_description
-import logdate.client.feature.core.generated.resources.watch_privacy_title
 import logdate.client.feature.core.generated.resources.watch_settings
 import logdate.client.feature.core.generated.resources.watch_troubleshooting
 import logdate.client.feature.core.generated.resources.watch_troubleshooting_description
@@ -66,6 +57,11 @@ fun WatchSettingsScreen(
     val status by viewModel.status.collectAsStateWithLifecycle()
     val requestFailure by viewModel.requestFailure.collectAsStateWithLifecycle()
     val installRequestSent by viewModel.installRequestSent.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(viewModel) {
+        viewModel.refresh()
+        onPauseOrDispose {}
+    }
 
     if (redesign) {
         WatchCompanionPage(
@@ -98,6 +94,7 @@ fun WatchSettingsScreen(
         onInstallOnWatch = viewModel::installAppOnWatch,
         onRetry = viewModel::refresh,
         onConfirmMissing = viewModel::confirmMissingAppAndInstall,
+        onOpenOnWatch = viewModel::openAppOnWatch,
         onNavigateToNotifications = onNavigateToNotifications,
         onNavigateToTroubleshooting = onNavigateToTroubleshooting,
         modifier = modifier,
@@ -146,6 +143,7 @@ fun WatchSettingsContent(
     companionSettings: (@Composable () -> Unit)? = null,
     onRetry: () -> Unit = {},
     onConfirmMissing: (String) -> Unit = {},
+    onOpenOnWatch: (() -> Unit)? = null,
 ) {
     FoldableBookLayout(
         modifier = modifier.fillMaxSize(),
@@ -168,8 +166,9 @@ fun WatchSettingsContent(
                     onRequestSync = onRequestSync,
                     onRetry = onRetry,
                     onConfirmMissing = onConfirmMissing,
+                    onOpenOnWatch = onOpenOnWatch,
+                    onDiagnostics = onNavigateToTroubleshooting,
                 )
-                WatchPrivacyNote()
             }
         },
         endPane = {
@@ -202,6 +201,8 @@ fun WatchSettingsContent(
                         onRequestSync = onRequestSync,
                         onRetry = onRetry,
                         onConfirmMissing = onConfirmMissing,
+                        onOpenOnWatch = onOpenOnWatch,
+                        onDiagnostics = onNavigateToTroubleshooting,
                     )
                 }
                 if (status.hasLogDate()) {
@@ -246,34 +247,5 @@ private fun WatchTroubleshootingSection(onNavigateToTroubleshooting: () -> Unit)
             description = stringResource(Res.string.watch_troubleshooting_description),
             onClick = onNavigateToTroubleshooting,
         )
-    }
-}
-
-@Composable
-private fun WatchPrivacyNote() {
-    Surface {
-        Column(
-            modifier = Modifier.padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.md),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            ) {
-                Icon(
-                    Icons.Default.Watch,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = stringResource(Res.string.watch_privacy_title),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-            }
-            Text(
-                text = stringResource(Res.string.watch_privacy_description),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
     }
 }
