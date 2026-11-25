@@ -24,6 +24,12 @@ class BenchmarkConventionPlugin : Plugin<Project> {
             pluginManager.apply("com.android.test")
             extensions.configure(TestExtension::class.java) {
                 compileSdk = libs.intVersion("android-compileSdk")
+                libs
+                    .findVersion("android-compileSdkMinor")
+                    .orElse(null)
+                    ?.requiredVersion
+                    ?.toInt()
+                    ?.let { compileSdkMinor = it }
                 defaultConfig {
                     minSdk = libs.intVersion("android-minSdk")
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

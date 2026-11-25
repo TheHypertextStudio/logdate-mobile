@@ -29,7 +29,21 @@ class KmpLibraryPlugin : Plugin<Project> {
                 (this as ExtensionAware).extensions.configure(
                     "android",
                     Action<KotlinMultiplatformAndroidLibraryTarget> {
-                        compileSdk = catalog.intVersion("android-compileSdk")
+                        val compileSdkMajor = catalog.intVersion("android-compileSdk")
+                        val compileSdkMinorVersion =
+                            catalog
+                                .findVersion("android-compileSdkMinor")
+                                .orElse(null)
+                                ?.requiredVersion
+                                ?.toInt()
+                        compileSdk {
+                            version =
+                                release(compileSdkMajor) {
+                                    if (compileSdkMinorVersion != null) {
+                                        minorApiLevel = compileSdkMinorVersion
+                                    }
+                                }
+                        }
                         minSdk = catalog.intVersion("android-minSdk")
                         withHostTestBuilder {}
                         compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
