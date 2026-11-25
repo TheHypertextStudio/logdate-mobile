@@ -185,16 +185,12 @@
     <string name="watch_v2_check_again">Check again</string>
     <string name="watch_v2_check_running">Checking your watch…</string>
     <string name="watch_v2_diagnostics_all_good">Everything looks good</string>
-    <plurals name="watch_v2_diagnostics_issues_found">
-        <item quantity="one">%1$d item needs attention</item>
-        <item quantity="other">%1$d items need attention</item>
-    </plurals>
     <string name="watch_v2_diagnostics_all_passed_summary">All %1$d connection checks passed.</string>
-    <string
-    name="watch_v2_diagnostics_issues_summary"
-  >Fix the highlighted items below, then check again.</string>
-    <string name="watch_v2_diagnostics_attention_section">Action needed</string>
-    <string name="watch_v2_diagnostics_passing_section">Passing checks</string>
+    <plurals name="watch_v2_diagnostics_passed_count">
+        <item quantity="one">%1$d check passed</item>
+        <item quantity="other">%1$d checks passed</item>
+    </plurals>
+    <string name="watch_v2_check_error_title">Couldn’t check your watch</string>
     <string
     name="watch_v2_check_error"
   >Couldn’t check your watch. Keep it nearby and try again.</string>
@@ -248,7 +244,9 @@
     <string
     name="watch_remove_unavailable"
   >This watch isn&apos;t linked to this phone. Set it up again to remove it here.</string>
+    <string name="watch_remove_unavailable_title">No linked watch</string>
     <string name="watch_remove_done">Watch removed.</string>
+    <string name="watch_remove_done_clean">LogDate has been cleared from your watch.</string>
     <plurals name="watch_remove_discarded">
         <item quantity="one">%1$d moment that couldn&apos;t sync was cleared with it.</item>
         <item quantity="other">%1$d moments that couldn&apos;t sync were cleared with it.</item>
@@ -262,6 +260,7 @@
     <string
     name="watch_remove_failed"
   >Couldn&apos;t remove the watch. Check your connection and try again.</string>
+    <string name="watch_remove_failed_title">Couldn&apos;t remove your watch</string>
     <string name="watch_remove_retry">Check again</string>
     <string name="watch_audio_wifi_or_charging">Wi-Fi or while charging</string>
     <string name="watch_audio_wifi_only">Wi-Fi only</string>
@@ -332,6 +331,16 @@
     <string name="watch_setup_open_action">Open on watch</string>
     <string name="watch_setup_open_on_watch">Open LogDate on watch</string>
     <string name="watch_setup_open_sent">Opening LogDate on your watch…</string>
+    <string name="watch_setup_opening_title">Opening LogDate on %1$s</string>
+    <string
+    name="watch_setup_opening_description"
+  >Check your watch and keep it unlocked nearby to finish connecting.</string>
+    <string name="watch_setup_send_again">Send again</string>
+    <string name="watch_setup_install_sent_title">Finish installing on %1$s</string>
+    <string
+    name="watch_setup_install_sent_description"
+  >Check your watch to finish installing LogDate from Google Play, then open it.</string>
+    <string name="watch_setup_send_install_again">Send install prompt again</string>
     <string name="watch_setup_not_installed_link">Don’t have it on your watch?</string>
     <string name="watch_setup_already_open_action">I already opened it</string>
     <string name="watch_setup_troubleshoot_action">Troubleshoot connection</string>
@@ -351,15 +360,20 @@
     <string
     name="watch_check_on_watch"
   >Open LogDate on your watch and keep it near your phone with Bluetooth on. Then check again.</string>
+    <string name="watch_request_failed_installed_title">LogDate is already on %1$s</string>
     <string
     name="watch_request_failed_installed"
   >LogDate is already on your watch. Open it there to continue.</string>
     <string
     name="watch_request_failed_unknown"
   >The phone can’t confirm whether LogDate is on this watch. Check on your watch, then try again.</string>
+    <string name="watch_request_failed_open_title">Couldn’t open LogDate on %1$s</string>
     <string
     name="watch_request_failed_open"
   >Couldn’t open LogDate on your watch. Open it on the watch, then try again.</string>
+    <string name="watch_request_failed_no_watch_title">No watch nearby</string>
+    <string name="watch_request_failed_not_installed_title">LogDate isn’t on %1$s</string>
+    <string name="watch_request_failed_no_response_title">%1$s didn’t respond</string>
     <string name="watch_missing_confirm_action">Install from Google Play</string>
     <string name="watch_missing_confirm_title">Install LogDate on this watch?</string>
     <string

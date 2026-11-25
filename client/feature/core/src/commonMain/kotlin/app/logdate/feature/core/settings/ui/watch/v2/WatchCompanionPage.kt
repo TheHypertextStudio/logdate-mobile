@@ -121,6 +121,10 @@ fun WatchCompanionPage(
     if (!verified || showCompletion) {
         val unknownStatus = status as? WatchStatus.Unknown
         var confirmingInstall by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
+        var openSent by remember(unknownStatus?.nodeId) { mutableStateOf(false) }
+        LaunchedEffect(requestFailure) {
+            if (requestFailure != null) openSent = false
+        }
         Scaffold(
             modifier = modifier.fillMaxSize().applyScreenStyles(),
             contentWindowInsets = WindowInsets.navigationBars,
@@ -132,6 +136,8 @@ fun WatchCompanionPage(
                             onClick = {
                                 if (confirmingInstall && unknownStatus?.knownInstalled == false) {
                                     confirmingInstall = false
+                                } else if (openSent && requestFailure == null && unknownStatus?.nodeId != null) {
+                                    openSent = false
                                 } else {
                                     onBack()
                                 }
@@ -153,6 +159,8 @@ fun WatchCompanionPage(
                 modifier = Modifier.fillMaxSize().padding(insets),
                 confirmingInstall = confirmingInstall,
                 onConfirmingInstallChange = { confirmingInstall = it },
+                openSent = openSent,
+                onOpenSentChange = { openSent = it },
                 onRetry = onRetry,
                 onConfirmMissing = onConfirmMissing,
                 onOpenOnWatch = onOpenOnWatch,
