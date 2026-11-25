@@ -90,7 +90,6 @@ extensions.configure<ApplicationExtension> {
         libs.versions.android.compileSdk
             .get()
             .toInt()
-    compileSdkMinor = 2
 
     dynamicFeatures +=
         setOf(

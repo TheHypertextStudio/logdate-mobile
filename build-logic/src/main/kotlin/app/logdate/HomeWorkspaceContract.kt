@@ -1,16 +1,12 @@
 package app.logdate
 
-import org.jetbrains.kotlin.CoreEnvironmentDeprecation
-import org.jetbrains.kotlin.cli.extensionsStorage
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.legacy.pipeline.createProjectEnvironment
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.CompilerConfiguration.Internals
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -18,26 +14,18 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 
 /** Parses Kotlin, including import aliases, and inspects every statement of each scoped Home root. */
 object HomeWorkspaceContract {
-    @OptIn(
-        ExperimentalCompilerApi::class,
-        CoreEnvironmentDeprecation::class,
-        Internals::class,
-    )
     fun inspect(
         source: String,
         roots: Set<String>,
     ): List<String> {
         val disposable = Disposer.newDisposable()
         try {
-            val configuration =
-                CompilerConfiguration().apply {
-                    extensionsStorage = CompilerPluginRegistrar.ExtensionStorage()
-                }
             val environment =
-                KotlinCoreEnvironment.createForProduction(
+                createProjectEnvironment(
+                    CompilerConfiguration(),
                     disposable,
-                    configuration,
                     EnvironmentConfigFiles.JVM_CONFIG_FILES,
+                    MessageCollector.NONE,
                 )
             val file = KtPsiFactory(environment.project).createFile(source)
             val aliases =
