@@ -1,51 +1,70 @@
 @file:Suppress("ktlint:standard:function-naming")
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package app.logdate.feature.core.settings.ui.watch.v2
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.PriorityHigh
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material.icons.rounded.WatchOff
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
+import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.common.SettingsScaffold
-import app.logdate.ui.common.SettingsSection
+import app.logdate.ui.common.applyScreenStyles
 import app.logdate.ui.step.StepPrimaryButton
 import app.logdate.ui.step.StepSecondaryButton
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_diagnostics_prerequisite
+import logdate.client.feature.core.generated.resources.watch_setup_complete_action
+import logdate.client.feature.core.generated.resources.watch_setup_pair_title
 import logdate.client.feature.core.generated.resources.watch_v2_check_again
 import logdate.client.feature.core.generated.resources.watch_v2_check_app
 import logdate.client.feature.core.generated.resources.watch_v2_check_association
 import logdate.client.feature.core.generated.resources.watch_v2_check_error
+import logdate.client.feature.core.generated.resources.watch_v2_check_error_title
 import logdate.client.feature.core.generated.resources.watch_v2_check_failed
 import logdate.client.feature.core.generated.resources.watch_v2_check_fixable
 import logdate.client.feature.core.generated.resources.watch_v2_check_link
@@ -59,19 +78,18 @@ import logdate.client.feature.core.generated.resources.watch_v2_check_watch
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_all_good
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_all_passed_summary
-import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_attention_section
-import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_issues_found
-import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_issues_summary
-import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_passing_section
+import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_passed_count
 import logdate.client.feature.core.generated.resources.watch_v2_fix_install
 import logdate.client.feature.core.generated.resources.watch_v2_fix_open
 import logdate.client.feature.core.generated.resources.watch_v2_fix_pair
 import logdate.client.feature.core.generated.resources.watch_v2_fix_sync
 import logdate.client.feature.core.generated.resources.watch_v2_fix_update
 import logdate.client.feature.core.generated.resources.watch_v2_notifications_fix
+import logdate.client.ui.generated.resources.common_back
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import logdate.client.ui.generated.resources.Res as UiRes
 
 @Composable
 fun WatchCheckConnectionScreen(
@@ -91,143 +109,152 @@ fun WatchDiagnosticsContent(
     onFix: (WatchDiagnosticFix) -> Unit,
     onBack: () -> Unit,
 ) {
-    SettingsScaffold(title = stringResource(Res.string.watch_v2_diagnostics), onBack = onBack) {
-        when (val current = state) {
-            WatchDiagnosticsState.Checking -> {
-                item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
-                        shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(Spacing.lg),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                            )
-                            Text(
-                                text = stringResource(Res.string.watch_v2_check_running),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
-                    }
+    when (val current = state) {
+        WatchDiagnosticsState.Checking -> {
+            DiagnosticsStepHost(onBack = onBack) {
+                WatchFlowStepLayout(
+                    title = stringResource(Res.string.watch_v2_check_running),
+                    description = null,
+                    modifier = Modifier.fillMaxSize(),
+                    picture = { SearchingPicture(it) },
+                ) {}
+            }
+        }
+
+        WatchDiagnosticsState.NeedsWatch -> {
+            DiagnosticsStepHost(onBack = onBack) {
+                WatchFlowStepLayout(
+                    title = stringResource(Res.string.watch_setup_pair_title),
+                    description = stringResource(Res.string.watch_diagnostics_prerequisite),
+                    modifier = Modifier.fillMaxSize(),
+                    picture = { IntroPicture(it) },
+                ) {
+                    WatchSystemSetupButton(prominent = true)
+                    StepSecondaryButton(
+                        text = stringResource(Res.string.watch_v2_check_again),
+                        onClick = onCheck,
+                        enabled = !busy,
+                        quiet = true,
+                    )
                 }
             }
+        }
 
-            WatchDiagnosticsState.NeedsWatch -> {
-                item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
-                        shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(Spacing.lg),
-                            verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.WatchOff,
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                text = stringResource(Res.string.watch_diagnostics_prerequisite),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            WatchSystemSetupButton(prominent = true)
-                            StepSecondaryButton(
-                                text = stringResource(Res.string.watch_v2_check_again),
-                                onClick = onCheck,
-                                enabled = !busy,
-                                quiet = true,
-                            )
-                        }
-                    }
+        WatchDiagnosticsState.Failed -> {
+            DiagnosticsStepHost(onBack = onBack) {
+                WatchFlowStepLayout(
+                    title = stringResource(Res.string.watch_v2_check_error_title),
+                    description = stringResource(Res.string.watch_v2_check_error),
+                    modifier = Modifier.fillMaxSize(),
+                    announce = true,
+                    picture = {
+                        StoppedPicture(
+                            side = it,
+                            shape = MaterialShapes.SoftBurst.toShape(),
+                            tone = WatchSetupTone.PROBLEM,
+                            symbol = Icons.Rounded.WatchOff,
+                            badge = Icons.Rounded.PriorityHigh,
+                        )
+                    },
+                ) {
+                    StepPrimaryButton(
+                        text = stringResource(Res.string.watch_v2_check_again),
+                        onClick = onCheck,
+                        enabled = !busy,
+                        busy = busy,
+                    )
                 }
             }
+        }
 
-            WatchDiagnosticsState.Failed -> {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        is WatchDiagnosticsState.Ready -> {
+            val attentionSteps = current.steps.filter { it.outcome != WatchDiagnosticOutcome.PASSED }
+            val passedSteps = current.steps.filter { it.outcome == WatchDiagnosticOutcome.PASSED }
+            if (attentionSteps.isEmpty()) {
+                DiagnosticsStepHost(onBack = onBack) {
+                    WatchFlowStepLayout(
+                        title = stringResource(Res.string.watch_v2_diagnostics_all_good),
+                        description = stringResource(Res.string.watch_v2_diagnostics_all_passed_summary, current.steps.size),
+                        modifier = Modifier.fillMaxSize(),
+                        announce = true,
+                        picture = { ReadyPicture(it) },
                     ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(24.dp),
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(Spacing.lg),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.ErrorOutline,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                )
-                                Text(
-                                    text = stringResource(Res.string.watch_v2_check_error),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                            }
-                        }
                         StepPrimaryButton(
-                            text = stringResource(if (busy) Res.string.watch_v2_check_running else Res.string.watch_v2_check_again),
+                            text = stringResource(Res.string.watch_setup_complete_action),
+                            onClick = onBack,
+                        )
+                        StepSecondaryButton(
+                            text = stringResource(Res.string.watch_v2_check_again),
                             onClick = onCheck,
                             enabled = !busy,
-                            busy = busy,
+                            quiet = true,
                         )
                     }
                 }
-            }
-
-            is WatchDiagnosticsState.Ready -> {
-                val attentionSteps = current.steps.filter { it.outcome != WatchDiagnosticOutcome.PASSED }
-                val passedSteps = current.steps.filter { it.outcome == WatchDiagnosticOutcome.PASSED }
-                item {
-                    DiagnosticsSummaryCard(
-                        total = current.steps.size,
-                        attentionCount = attentionSteps.size,
-                        busy = busy,
-                        onCheck = onCheck,
-                    )
-                }
-                if (attentionSteps.isNotEmpty()) {
+            } else {
+                var showPassed by remember { mutableStateOf(false) }
+                SettingsScaffold(
+                    title = stringResource(Res.string.watch_v2_diagnostics),
+                    onBack = onBack,
+                    actions = {
+                        if (busy) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(end = Spacing.md).size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            IconButton(onClick = onCheck) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Refresh,
+                                    contentDescription = stringResource(Res.string.watch_v2_check_again),
+                                )
+                            }
+                        }
+                    },
+                ) {
                     item {
-                        SettingsSection(
-                            title = stringResource(Res.string.watch_v2_diagnostics_attention_section),
-                            modifier = Modifier.padding(horizontal = Spacing.lg),
-                        ) {
+                        MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                             attentionSteps.forEach { step ->
                                 WatchDiagnosticRow(step = step, busy = busy, onFix = onFix)
                             }
                         }
                     }
-                    if (attentionSteps.any { it.check == WatchDiagnosticCheck.NOTIFICATIONS }) {
+                    if (passedSteps.isNotEmpty()) {
                         item {
-                            DiagnosticsNotificationsTip(Modifier.padding(horizontal = Spacing.lg))
-                        }
-                    }
-                }
-                if (passedSteps.isNotEmpty()) {
-                    item {
-                        SettingsSection(
-                            title = stringResource(Res.string.watch_v2_diagnostics_passing_section),
-                            modifier = Modifier.padding(horizontal = Spacing.lg),
-                        ) {
-                            passedSteps.forEach { step ->
-                                WatchDiagnosticRow(step = step, busy = busy, onFix = onFix)
+                            MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
+                                SettingsRow(
+                                    leadingContent = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.CheckCircle,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                        )
+                                    },
+                                    headlineContent = {
+                                        Text(
+                                            pluralStringResource(
+                                                Res.plurals.watch_v2_diagnostics_passed_count,
+                                                passedSteps.size,
+                                                passedSteps.size,
+                                            ),
+                                        )
+                                    },
+                                    trailingContent = {
+                                        Icon(
+                                            imageVector = if (showPassed) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    modifier =
+                                        Modifier.clickable(role = Role.Button) {
+                                            showPassed = !showPassed
+                                        },
+                                )
+                                if (showPassed) {
+                                    passedSteps.forEach { step ->
+                                        WatchDiagnosticRow(step = step, busy = busy, onFix = onFix)
+                                    }
+                                }
                             }
                         }
                     }
@@ -238,104 +265,27 @@ fun WatchDiagnosticsContent(
 }
 
 @Composable
-private fun DiagnosticsSummaryCard(
-    total: Int,
-    attentionCount: Int,
-    busy: Boolean,
-    onCheck: () -> Unit,
+private fun DiagnosticsStepHost(
+    onBack: () -> Unit,
+    content: @Composable () -> Unit,
 ) {
-    val hasIssues = attentionCount > 0
-    val largeText = LocalDensity.current.fontScale >= 1.6f
-    Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
-        shape = RoundedCornerShape(24.dp),
-        color = if (hasIssues) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = if (hasIssues) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.md),
-        ) {
-            if (largeText) {
-                DiagnosticsSummaryBadge(hasIssues = hasIssues, busy = busy)
-                DiagnosticsSummaryCopy(total = total, attentionCount = attentionCount)
-            } else {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    DiagnosticsSummaryBadge(hasIssues = hasIssues, busy = busy)
-                    DiagnosticsSummaryCopy(total = total, attentionCount = attentionCount)
-                }
-            }
-            FilledTonalButton(
-                onClick = onCheck,
-                enabled = !busy,
-                modifier = Modifier.fillMaxWidth(),
-                colors =
-                    ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-            ) {
-                if (!busy) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(Spacing.sm))
-                }
-                Text(stringResource(if (busy) Res.string.watch_v2_check_running else Res.string.watch_v2_check_again))
-            }
+    Scaffold(
+        modifier = Modifier.fillMaxSize().applyScreenStyles(),
+        contentWindowInsets = WindowInsets.navigationBars,
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(UiRes.string.common_back))
+                    }
+                },
+            )
+        },
+    ) { insets ->
+        Box(Modifier.fillMaxSize().padding(insets)) {
+            content()
         }
-    }
-}
-
-@Composable
-private fun DiagnosticsSummaryBadge(
-    hasIssues: Boolean,
-    busy: Boolean,
-) {
-    if (busy) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(24.dp),
-            strokeWidth = 2.dp,
-        )
-    } else {
-        Icon(
-            imageVector = if (hasIssues) Icons.Rounded.WarningAmber else Icons.Rounded.CheckCircle,
-            contentDescription = null,
-            modifier = Modifier.size(28.dp),
-        )
-    }
-}
-
-@Composable
-private fun DiagnosticsSummaryCopy(
-    total: Int,
-    attentionCount: Int,
-) {
-    val hasIssues = attentionCount > 0
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        Text(
-            text =
-                if (hasIssues) {
-                    pluralStringResource(Res.plurals.watch_v2_diagnostics_issues_found, attentionCount, attentionCount)
-                } else {
-                    stringResource(Res.string.watch_v2_diagnostics_all_good)
-                },
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Text(
-            text =
-                if (hasIssues) {
-                    stringResource(Res.string.watch_v2_diagnostics_issues_summary)
-                } else {
-                    stringResource(Res.string.watch_v2_diagnostics_all_passed_summary, total)
-                },
-            style = MaterialTheme.typography.bodyMedium,
-        )
     }
 }
 
@@ -346,51 +296,31 @@ private fun WatchDiagnosticRow(
     onFix: (WatchDiagnosticFix) -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 1.6f
-    val statusIcon =
-        when (step.outcome) {
-            WatchDiagnosticOutcome.PASSED -> Icons.Rounded.CheckCircle
-            WatchDiagnosticOutcome.FIXABLE -> Icons.Rounded.WarningAmber
-            WatchDiagnosticOutcome.FAILED -> Icons.Rounded.ErrorOutline
-        }
-    val statusTint =
-        when (step.outcome) {
-            WatchDiagnosticOutcome.PASSED -> MaterialTheme.colorScheme.primary
-            WatchDiagnosticOutcome.FIXABLE -> MaterialTheme.colorScheme.error
-            WatchDiagnosticOutcome.FAILED -> MaterialTheme.colorScheme.error
-        }
     val statusText =
-        stringResource(
-            when (step.outcome) {
-                WatchDiagnosticOutcome.PASSED -> Res.string.watch_v2_check_passed
-                WatchDiagnosticOutcome.FIXABLE -> Res.string.watch_v2_check_fixable
-                WatchDiagnosticOutcome.FAILED -> Res.string.watch_v2_check_failed
-            },
-        )
+        if (step.check == WatchDiagnosticCheck.NOTIFICATIONS && step.outcome != WatchDiagnosticOutcome.PASSED) {
+            stringResource(Res.string.watch_v2_notifications_fix)
+        } else {
+            stringResource(
+                when (step.outcome) {
+                    WatchDiagnosticOutcome.PASSED -> Res.string.watch_v2_check_passed
+                    WatchDiagnosticOutcome.FIXABLE -> Res.string.watch_v2_check_fixable
+                    WatchDiagnosticOutcome.FAILED -> Res.string.watch_v2_check_failed
+                },
+            )
+        }
     val fix = step.fix
     SettingsRow(
         enabled = !busy,
-        leadingContent = {
-            Icon(
-                imageVector = statusIcon,
-                contentDescription = null,
-                tint = statusTint,
-            )
-        },
+        leadingContent = { DiagnosticStatusBadge(step.outcome) },
         headlineContent = { Text(stringResource(step.check.title())) },
         supportingContent = {
-            val subtitleColor =
-                if (step.outcome == WatchDiagnosticOutcome.PASSED) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.error
-                }
             if (largeText && fix != null) {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    Text(statusText, color = subtitleColor)
+                    Text(statusText)
                     DiagnosticFixButton(fix = fix, busy = busy, onFix = onFix)
                 }
             } else {
-                Text(statusText, color = subtitleColor)
+                Text(statusText)
             }
         },
         trailingContent =
@@ -400,6 +330,44 @@ private fun WatchDiagnosticRow(
                 null
             },
     )
+}
+
+@Composable
+private fun DiagnosticStatusBadge(outcome: WatchDiagnosticOutcome) {
+    when (outcome) {
+        WatchDiagnosticOutcome.PASSED -> {
+            Icon(
+                imageVector = Icons.Rounded.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        WatchDiagnosticOutcome.FIXABLE,
+        WatchDiagnosticOutcome.FAILED,
+        -> {
+            Surface(
+                modifier = Modifier.size(36.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    val icon =
+                        if (outcome == WatchDiagnosticOutcome.FAILED) {
+                            Icons.Rounded.ErrorOutline
+                        } else {
+                            Icons.Rounded.WarningAmber
+                        }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -414,33 +382,6 @@ private fun DiagnosticFixButton(
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
     ) {
         Text(stringResource(fix.label()))
-    }
-}
-
-@Composable
-private fun DiagnosticsNotificationsTip(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Row(
-            modifier = Modifier.padding(Spacing.md),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Info,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(Res.string.watch_v2_notifications_fix),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 

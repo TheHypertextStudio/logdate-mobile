@@ -1,48 +1,50 @@
 @file:Suppress("ktlint:standard:function-naming")
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package app.logdate.feature.core.settings.ui.watch.v2
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.PriorityHigh
 import androidx.compose.material.icons.rounded.WatchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.logdate.client.sync.peer.removal.WatchRemovalAccess
 import app.logdate.client.sync.peer.removal.WatchRemovalResult
 import app.logdate.client.sync.peer.removal.WatchRemovalTarget
-import app.logdate.ui.common.SettingsScaffold
+import app.logdate.ui.common.applyScreenStyles
+import app.logdate.ui.platform.rememberSystemReduceMotion
 import app.logdate.ui.step.StepPrimaryButton
-import app.logdate.ui.theme.Spacing
+import app.logdate.ui.step.StepSecondaryButton
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,17 +58,23 @@ import logdate.client.feature.core.generated.resources.watch_remove_deferred
 import logdate.client.feature.core.generated.resources.watch_remove_discarded
 import logdate.client.feature.core.generated.resources.watch_remove_discarded_unknown
 import logdate.client.feature.core.generated.resources.watch_remove_done
+import logdate.client.feature.core.generated.resources.watch_remove_done_clean
 import logdate.client.feature.core.generated.resources.watch_remove_failed
+import logdate.client.feature.core.generated.resources.watch_remove_failed_title
 import logdate.client.feature.core.generated.resources.watch_remove_loading
 import logdate.client.feature.core.generated.resources.watch_remove_retry
 import logdate.client.feature.core.generated.resources.watch_remove_review
 import logdate.client.feature.core.generated.resources.watch_remove_unavailable
+import logdate.client.feature.core.generated.resources.watch_remove_unavailable_title
 import logdate.client.feature.core.generated.resources.watch_remove_unsent
 import logdate.client.feature.core.generated.resources.watch_remove_unsent_unknown
-import logdate.client.feature.core.generated.resources.watch_v2_remove
+import logdate.client.feature.core.generated.resources.watch_setup_complete_action
+import logdate.client.ui.generated.resources.common_back
+import logdate.client.ui.generated.resources.common_cancel
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import logdate.client.ui.generated.resources.Res as UiRes
 
 sealed interface WatchRemovalState {
     data object Loading : WatchRemovalState
@@ -132,83 +140,67 @@ fun WatchRemovalContent(
     onRetry: () -> Unit,
     onBack: () -> Unit,
 ) {
-    SettingsScaffold(title = stringResource(Res.string.watch_v2_remove), onBack = onBack) {
-        item {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg),
-            ) {
-                when (val value = state) {
-                    WatchRemovalState.Loading -> {
-                        RemovalStatusCard(message = stringResource(Res.string.watch_remove_loading))
+    val reduceMotion by rememberSystemReduceMotion()
+    Scaffold(
+        modifier = Modifier.fillMaxSize().applyScreenStyles(),
+        contentWindowInsets = WindowInsets.navigationBars,
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    if (state != WatchRemovalState.Removing) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(UiRes.string.common_back))
+                        }
                     }
+                },
+            )
+        },
+    ) { insets ->
+        AnimatedContent(
+            targetState = state,
+            modifier = Modifier.fillMaxSize().padding(insets),
+            transitionSpec = {
+                if (reduceMotion) {
+                    fadeIn() togetherWith fadeOut()
+                } else {
+                    (fadeIn() + slideInHorizontally { it / 6 }) togetherWith (fadeOut() + slideOutHorizontally { -it / 6 })
+                }
+            },
+            label = "watch_removal_step",
+        ) { current ->
+            when (current) {
+                WatchRemovalState.Loading -> {
+                    WatchFlowStepLayout(
+                        title = stringResource(Res.string.watch_remove_loading),
+                        description = null,
+                        modifier = Modifier.fillMaxSize(),
+                        picture = { SearchingPicture(it) },
+                    ) {}
+                }
 
-                    is WatchRemovalState.Review -> {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(24.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(Spacing.lg),
-                                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                            ) {
-                                val largeText = LocalDensity.current.fontScale >= 1.6f
-                                if (largeText) {
-                                    RemovalWatchBadge()
-                                    Text(
-                                        text = stringResource(Res.string.watch_remove_review, value.target.displayName),
-                                        style = MaterialTheme.typography.titleLarge,
-                                    )
-                                } else {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        RemovalWatchBadge()
-                                        Text(
-                                            text = stringResource(Res.string.watch_remove_review, value.target.displayName),
-                                            style = MaterialTheme.typography.titleLarge,
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = stringResource(Res.string.watch_remove_consequence),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                is WatchRemovalState.Review -> {
+                    val unsent = current.target.pending
+                    val consequence = stringResource(Res.string.watch_remove_consequence)
+                    val description =
+                        when (unsent) {
+                            null -> "${stringResource(Res.string.watch_remove_unsent_unknown)}\n\n$consequence"
+                            0 -> consequence
+                            else -> "${pluralStringResource(Res.plurals.watch_remove_unsent, unsent, unsent)}\n\n$consequence"
                         }
-                        val unsent = value.target.pending
-                        if (unsent == null || unsent > 0) {
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(20.dp),
-                                color = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(Spacing.md),
-                                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                    verticalAlignment = Alignment.Top,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.WarningAmber,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(22.dp),
-                                    )
-                                    Text(
-                                        text =
-                                            if (unsent == null) {
-                                                stringResource(Res.string.watch_remove_unsent_unknown)
-                                            } else {
-                                                pluralStringResource(Res.plurals.watch_remove_unsent, unsent, unsent)
-                                            },
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
-                            }
-                        }
+                    WatchFlowStepLayout(
+                        title = stringResource(Res.string.watch_remove_review, current.target.displayName),
+                        description = description,
+                        modifier = Modifier.fillMaxSize(),
+                        picture = {
+                            StoppedPicture(
+                                side = it,
+                                shape = MaterialShapes.Slanted.toShape(),
+                                tone = WatchSetupTone.PROBLEM,
+                                symbol = Icons.Rounded.WatchOff,
+                            )
+                        },
+                    ) {
                         val height = ButtonDefaults.MediumContainerHeight
                         Button(
                             onClick = onRemove,
@@ -227,144 +219,106 @@ fun WatchRemovalContent(
                                 textAlign = TextAlign.Center,
                             )
                         }
+                        StepSecondaryButton(
+                            text = stringResource(UiRes.string.common_cancel),
+                            onClick = onBack,
+                            quiet = true,
+                        )
                     }
+                }
 
-                    WatchRemovalState.Removing -> {
-                        RemovalStatusCard(message = stringResource(Res.string.watch_remove_busy))
+                WatchRemovalState.Removing -> {
+                    WatchFlowStepLayout(
+                        title = stringResource(Res.string.watch_remove_busy),
+                        description = null,
+                        modifier = Modifier.fillMaxSize(),
+                        announce = true,
+                        picture = {
+                            WorkingPicture(
+                                side = it,
+                                shape = MaterialShapes.Cookie9Sided.toShape(),
+                                waiting = false,
+                            )
+                        },
+                    ) {}
+                }
+
+                WatchRemovalState.Unavailable -> {
+                    WatchFlowStepLayout(
+                        title = stringResource(Res.string.watch_remove_unavailable_title),
+                        description = stringResource(Res.string.watch_remove_unavailable),
+                        modifier = Modifier.fillMaxSize(),
+                        picture = {
+                            StoppedPicture(
+                                side = it,
+                                shape = MaterialShapes.Slanted.toShape(),
+                                tone = WatchSetupTone.QUIET,
+                                symbol = Icons.Rounded.WatchOff,
+                            )
+                        },
+                    ) {
+                        StepPrimaryButton(
+                            text = stringResource(Res.string.watch_setup_complete_action),
+                            onClick = onBack,
+                        )
                     }
+                }
 
-                    WatchRemovalState.Unavailable -> {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(24.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(Spacing.lg),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                verticalAlignment = Alignment.Top,
+                is WatchRemovalState.Finished -> {
+                    when (val result = current.result) {
+                        is WatchRemovalResult.Removed -> {
+                            val discarded = result.discarded
+                            val description =
+                                when (discarded) {
+                                    null -> stringResource(Res.string.watch_remove_discarded_unknown)
+                                    0 -> stringResource(Res.string.watch_remove_done_clean)
+                                    else -> pluralStringResource(Res.plurals.watch_remove_discarded, discarded, discarded)
+                                }
+                            WatchFlowStepLayout(
+                                title = stringResource(Res.string.watch_remove_done),
+                                description = description,
+                                modifier = Modifier.fillMaxSize(),
+                                announce = true,
+                                picture = { ReadyPicture(it) },
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.WatchOff,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    text = stringResource(Res.string.watch_remove_unavailable),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                StepPrimaryButton(
+                                    text = stringResource(Res.string.watch_setup_complete_action),
+                                    onClick = onBack,
                                 )
                             }
                         }
-                    }
 
-                    is WatchRemovalState.Finished -> {
-                        when (val result = value.result) {
-                            is WatchRemovalResult.Removed -> {
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(24.dp),
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(Spacing.lg),
-                                        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.CheckCircle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.watch_remove_done),
-                                            style = MaterialTheme.typography.titleMedium,
-                                        )
-                                    }
-                                }
-                                val discarded = result.discarded
-                                if (discarded == null || discarded > 0) {
-                                    Surface(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(20.dp),
-                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(Spacing.md),
-                                            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                            verticalAlignment = Alignment.Top,
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Info,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(20.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                            Text(
-                                                text =
-                                                    if (discarded == null) {
-                                                        stringResource(Res.string.watch_remove_discarded_unknown)
-                                                    } else {
-                                                        pluralStringResource(Res.plurals.watch_remove_discarded, discarded, discarded)
-                                                    },
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    }
-                                }
+                        WatchRemovalResult.RemovedWillWipeOnNextConnect -> {
+                            WatchFlowStepLayout(
+                                title = stringResource(Res.string.watch_remove_done),
+                                description = stringResource(Res.string.watch_remove_deferred),
+                                modifier = Modifier.fillMaxSize(),
+                                announce = true,
+                                picture = { ReadyPicture(it) },
+                            ) {
+                                StepPrimaryButton(
+                                    text = stringResource(Res.string.watch_setup_complete_action),
+                                    onClick = onBack,
+                                )
                             }
+                        }
 
-                            WatchRemovalResult.RemovedWillWipeOnNextConnect -> {
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(24.dp),
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(Spacing.lg),
-                                        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                        verticalAlignment = Alignment.Top,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.CheckCircle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.watch_remove_deferred),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                        )
-                                    }
-                                }
-                            }
-
-                            is WatchRemovalResult.Failed -> {
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(24.dp),
-                                    color = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(Spacing.lg),
-                                        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                                        verticalAlignment = Alignment.Top,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.ErrorOutline,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.watch_remove_failed),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                        )
-                                    }
-                                }
+                        is WatchRemovalResult.Failed -> {
+                            WatchFlowStepLayout(
+                                title = stringResource(Res.string.watch_remove_failed_title),
+                                description = stringResource(Res.string.watch_remove_failed),
+                                modifier = Modifier.fillMaxSize(),
+                                announce = true,
+                                picture = {
+                                    StoppedPicture(
+                                        side = it,
+                                        shape = MaterialShapes.SoftBurst.toShape(),
+                                        tone = WatchSetupTone.PROBLEM,
+                                        symbol = Icons.Rounded.WatchOff,
+                                        badge = Icons.Rounded.PriorityHigh,
+                                    )
+                                },
+                            ) {
                                 StepPrimaryButton(
                                     text = stringResource(Res.string.watch_remove_retry),
                                     onClick = onRetry,
@@ -374,48 +328,6 @@ fun WatchRemovalContent(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun RemovalWatchBadge() {
-    Surface(
-        modifier = Modifier.size(48.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.Rounded.WatchOff,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun RemovalStatusCard(message: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Row(
-            modifier = Modifier.padding(Spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-            )
         }
     }
 }

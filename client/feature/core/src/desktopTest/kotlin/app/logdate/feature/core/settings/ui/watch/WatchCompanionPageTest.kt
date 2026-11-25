@@ -206,6 +206,7 @@ class WatchCompanionPageTest {
     @Test fun `watch install confirms a sent Play request without extra setup copy`() =
         runDesktopComposeUiTest(width = 411, height = 900) {
             var installRequests = 0
+            var installSent by mutableStateOf(false)
             setContent {
                 LogDateTheme(dynamicColor = false) {
                     WatchCompanionPage(
@@ -213,24 +214,30 @@ class WatchCompanionPageTest {
                         requestFailure = null,
                         onBack = {},
                         onAssociate = {},
-                        onInstall = { installRequests++ },
+                        onInstall = {
+                            installRequests++
+                            installSent = true
+                        },
                         onReminders = {},
                         onTiles = {},
                         onMicrophone = {},
                         onNotifications = {},
                         onDiagnostics = {},
                         onRemove = {},
-                        installRequestSent = true,
+                        installRequestSent = installSent,
                     )
                 }
             }
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-install.png")
             onNodeWithText("Install on watch").performClick()
             assertEquals(1, installRequests)
+            waitForIdle()
+            onNodeWithText("Finish installing on Pixel Watch").assertExists()
             onNodeWithText("Check your watch", substring = true).assertExists()
             onNodeWithText("Already installed", substring = true).assertDoesNotExist()
             onNodeWithText("Check connection").assertDoesNotExist()
             onNodeWithText("Timeline history").assertDoesNotExist()
-            saveScreenshot(onRoot().captureToImage(), "watch-setup-install.png")
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-install-sent.png")
         }
 
     @Test fun `wide companion keeps watch identity beside settings`() =
@@ -375,10 +382,12 @@ class WatchCompanionPageTest {
             onNodeWithText("Install on watch").assertDoesNotExist()
             onNodeWithText("Check connection").assertDoesNotExist()
             onNodeWithText("Connection details").assertDoesNotExist()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-open-watch.png")
             onNodeWithText("Open on watch").performClick()
             assertEquals(1, opened)
-            onNodeWithText("Opening LogDate on your watch…").assertExists()
-            saveScreenshot(onRoot().captureToImage(), "watch-setup-open-watch.png")
+            waitForIdle()
+            onNodeWithText("Opening LogDate on Pixel Watch").assertExists()
+            saveScreenshot(onRoot().captureToImage(), "watch-setup-opening-watch.png")
 
             onNodeWithText("Don’t have it on your watch?").performClick()
             assertTrue(confirmed.isEmpty())
