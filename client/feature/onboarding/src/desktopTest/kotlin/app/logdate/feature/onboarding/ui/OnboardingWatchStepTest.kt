@@ -55,10 +55,10 @@ class OnboardingWatchStepTest {
             onNodeWithText("Not now").assertIsEnabled()
         }
 
-    @Test fun `unknown watch offers Open LogDate on watch when node id is present`() =
+    @Test fun `unknown watch offers Open on watch when node id is present`() =
         runDesktopComposeUiTest(width = 411, height = 900) {
             var opened = 0
-            var retried = 0
+            val confirmed = mutableListOf<String>()
             setContent {
                 LogDateTheme(dynamicColor = false) {
                     OnboardingWatchStepContent(
@@ -67,15 +67,17 @@ class OnboardingWatchStepTest {
                         false,
                         false,
                         {},
-                        { retried++ },
                         {},
+                        {},
+                        onConfirmMissing = { confirmed += it },
                         onOpenOnWatch = { opened++ },
                     )
                 }
             }
-            onNodeWithText("Open LogDate on watch").performClick()
-            onNodeWithText("Check again").performClick()
+            onNodeWithText("Open on watch").performClick()
             assertEquals(1, opened)
-            assertEquals(1, retried)
+            onNodeWithText("Don’t have it on your watch?").performClick()
+            onNodeWithText("Install on watch").performClick()
+            assertEquals(listOf("watch-node"), confirmed)
         }
 }

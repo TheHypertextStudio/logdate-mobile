@@ -5,8 +5,6 @@ package app.logdate.feature.core.settings.ui.watch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,9 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.outlined.Watch
@@ -43,6 +39,7 @@ import app.logdate.ui.common.AlertDialog
 import app.logdate.ui.common.MaterialContainer
 import app.logdate.ui.common.SettingsRow
 import app.logdate.ui.step.StepPrimaryButton
+import app.logdate.ui.step.StepSecondaryButton
 import app.logdate.ui.theme.Spacing
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_app_not_installed
@@ -53,15 +50,12 @@ import logdate.client.feature.core.generated.resources.watch_attention_not_sent
 import logdate.client.feature.core.generated.resources.watch_attention_not_sent_description
 import logdate.client.feature.core.generated.resources.watch_attention_set_up_again
 import logdate.client.feature.core.generated.resources.watch_attention_set_up_again_description
-import logdate.client.feature.core.generated.resources.watch_check_on_watch
 import logdate.client.feature.core.generated.resources.watch_connected
 import logdate.client.feature.core.generated.resources.watch_discovery_unavailable
 import logdate.client.feature.core.generated.resources.watch_install_on_watch
-import logdate.client.feature.core.generated.resources.watch_installation_unknown
 import logdate.client.feature.core.generated.resources.watch_link_on_its_own
 import logdate.client.feature.core.generated.resources.watch_link_through_phone
 import logdate.client.feature.core.generated.resources.watch_loading
-import logdate.client.feature.core.generated.resources.watch_missing_confirm_action
 import logdate.client.feature.core.generated.resources.watch_missing_confirm_cancel
 import logdate.client.feature.core.generated.resources.watch_missing_confirm_description
 import logdate.client.feature.core.generated.resources.watch_missing_confirm_title
@@ -71,12 +65,10 @@ import logdate.client.feature.core.generated.resources.watch_no_paired
 import logdate.client.feature.core.generated.resources.watch_no_paired_description
 import logdate.client.feature.core.generated.resources.watch_out_of_range
 import logdate.client.feature.core.generated.resources.watch_pair_watch
-import logdate.client.feature.core.generated.resources.watch_setup_diagnostics_action
 import logdate.client.feature.core.generated.resources.watch_setup_install_action
-import logdate.client.feature.core.generated.resources.watch_setup_open_on_watch
-import logdate.client.feature.core.generated.resources.watch_setup_step_app
-import logdate.client.feature.core.generated.resources.watch_setup_step_link
-import logdate.client.feature.core.generated.resources.watch_setup_step_paired
+import logdate.client.feature.core.generated.resources.watch_setup_not_installed_link
+import logdate.client.feature.core.generated.resources.watch_setup_open_action
+import logdate.client.feature.core.generated.resources.watch_setup_troubleshoot_action
 import logdate.client.feature.core.generated.resources.watch_sync_now
 import logdate.client.feature.core.generated.resources.watch_sync_pending
 import logdate.client.feature.core.generated.resources.watch_sync_up_to_date
@@ -443,14 +435,11 @@ fun WatchUnknownActions(
     onDiagnostics: (() -> Unit)? = null,
 ) {
     var confirming by remember(status.nodeId) { mutableStateOf(false) }
-    status.watchName?.let { watchName ->
-        WatchConnectionChecklist(watchName = watchName)
-    }
     val primaryAction = if (status.nodeId != null && onOpenOnWatch != null) onOpenOnWatch else onRetry
     val primaryLabel =
         stringResource(
             if (status.nodeId != null && onOpenOnWatch != null) {
-                Res.string.watch_setup_open_on_watch
+                Res.string.watch_setup_open_action
             } else {
                 Res.string.watch_v2_check_again
             },
@@ -460,80 +449,39 @@ fun WatchUnknownActions(
     } else {
         Button(onClick = primaryAction, modifier = Modifier.fillMaxWidth()) { Text(primaryLabel) }
     }
-    if (status.nodeId != null && onOpenOnWatch != null) {
-        OutlinedButton(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(Res.string.watch_v2_check_again))
-        }
-    }
     val nodeId = status.nodeId
     val showConfirmMissing = nodeId != null && !status.knownInstalled
-    if (onDiagnostics != null || showConfirmMissing) {
-        @OptIn(ExperimentalLayoutApi::class)
-        FlowRow(
+    if (showConfirmMissing) {
+        StepSecondaryButton(
+            text = stringResource(Res.string.watch_setup_not_installed_link),
+            onClick = { confirming = true },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm, Alignment.CenterHorizontally),
-        ) {
-            onDiagnostics?.let { openDiagnostics ->
-                TextButton(onClick = openDiagnostics) { Text(stringResource(Res.string.watch_setup_diagnostics_action)) }
-            }
-            if (showConfirmMissing) {
-                TextButton(onClick = { confirming = true }) { Text(stringResource(Res.string.watch_missing_confirm_action)) }
-            }
-        }
-    }
-    if (nodeId != null && !status.knownInstalled) {
-        if (confirming) {
-            AlertDialog(
-                onDismissRequest = { confirming = false },
-                title = { Text(stringResource(Res.string.watch_missing_confirm_title)) },
-                text = { Text(stringResource(Res.string.watch_missing_confirm_description)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        confirming = false
-                        onConfirmMissing(nodeId)
-                    }) {
-                        Text(stringResource(Res.string.watch_setup_install_action))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.watch_missing_confirm_cancel)) }
-                },
-            )
-        }
-    }
-}
-
-@Composable
-private fun WatchConnectionChecklist(watchName: String) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.xs),
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-    ) {
-        WatchChecklistStep(label = stringResource(Res.string.watch_setup_step_paired, watchName), completed = true)
-        WatchChecklistStep(label = stringResource(Res.string.watch_setup_step_app), completed = false)
-        WatchChecklistStep(label = stringResource(Res.string.watch_setup_step_link), completed = false)
-    }
-}
-
-@Composable
-private fun WatchChecklistStep(
-    label: String,
-    completed: Boolean,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-    ) {
-        Icon(
-            imageVector = if (completed) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = if (completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            quiet = true,
         )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (completed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+    } else if (onDiagnostics != null) {
+        StepSecondaryButton(
+            text = stringResource(Res.string.watch_setup_troubleshoot_action),
+            onClick = onDiagnostics,
+            modifier = Modifier.fillMaxWidth(),
+            quiet = true,
+        )
+    }
+    if (showConfirmMissing && confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text(stringResource(Res.string.watch_missing_confirm_title)) },
+            text = { Text(stringResource(Res.string.watch_missing_confirm_description)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirming = false
+                    onConfirmMissing(nodeId)
+                }) {
+                    Text(stringResource(Res.string.watch_setup_install_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.watch_missing_confirm_cancel)) }
+            },
         )
     }
 }

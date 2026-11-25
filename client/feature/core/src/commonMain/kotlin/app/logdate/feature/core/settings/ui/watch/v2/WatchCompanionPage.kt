@@ -31,6 +31,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -98,8 +103,22 @@ fun WatchCompanionPage(
     preferences: (@Composable (captureActions: @Composable () -> Unit) -> Unit)? = null,
 ) {
     val verified = status is WatchStatus.Ready || status is WatchStatus.NeedsAttention
-    val installed = verified || (status is WatchStatus.Unknown && status.knownInstalled)
-    if (!installed) {
+    var startedInSetup by remember { mutableStateOf(status != null && !verified) }
+    var completionDismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(status) {
+        if (status != null && !verified) {
+            startedInSetup = true
+            completionDismissed = false
+        }
+    }
+    val showCompletion = status is WatchStatus.Ready && startedInSetup && !completionDismissed
+    val onCompleteDone: (() -> Unit)? =
+        if (showCompletion) {
+            { completionDismissed = true }
+        } else {
+            null
+        }
+    if (!verified || showCompletion) {
         Scaffold(
             modifier = modifier.fillMaxSize().applyScreenStyles(),
             contentWindowInsets = WindowInsets.navigationBars,
@@ -126,6 +145,7 @@ fun WatchCompanionPage(
                 onConfirmMissing = onConfirmMissing,
                 onOpenOnWatch = onOpenOnWatch,
                 onDiagnostics = onDiagnostics,
+                onCompleteDone = onCompleteDone,
             )
         }
         return
