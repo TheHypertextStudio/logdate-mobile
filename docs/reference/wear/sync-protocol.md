@@ -126,20 +126,20 @@ The names are constants in [`WearFeatures`][WearProtocol]. The lists each build 
 `phoneWatchFeatures` in [`PhoneWatchSyncV2Module.kt`][PhoneWatchSyncV2Module] and
 `watchSyncFeatures` in [`WearSyncV2Module.kt`][WearSyncV2Module].
 
-| Feature                  | Phone lists it | Watch lists it | What depends on it                                                                                                                                                                                                  |
-| ------------------------ | -------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `receipts.v1`            | Yes            | Yes            | The phone accepts version 2 captures, answers receipt queries and pushes receipts only for a watch that lists it.                                                                                                   |
-| `receipts.operations.v1` | Yes            | Yes            | The watch sends notes over version 2 only to a phone that lists it. Marked moments need it too.                                                                                                                     |
-| `window.v1`              | Yes            | Yes            | The phone publishes the library window to a watch that lists it, and the watch applies a window only from a phone that lists it.                                                                                    |
-| `media.range.v1`         | Yes            | Yes            | The watch asks for audio by byte range only from a phone that lists it.                                                                                                                                             |
-| `moments.v1`             | Yes            | Yes            | Marked moments cross only when the other device lists this and `receipts.operations.v1`.                                                                                                                            |
-| `live.v1`                | Yes            | Yes            | The phone offers playback continuity only to a watch that lists it.                                                                                                                                                 |
-| `link.cloud.v1`          | Yes            | Yes            | The phone links a watch to its account only if the watch lists it; otherwise it pairs without an account.                                                                                                           |
-| `phone.playback.v1`      | Yes            | No             | The watch offers "play on phone" only when the phone lists it.                                                                                                                                                      |
-| `prefs.v1`               | Yes            | No             | Listed by the phone; no code checks it.                                                                                                                                                                             |
-| `reminders.activity.v1`  | No             | Yes            | Tells the phone the watch can read the reminder triggers for an activity that just ended.                                                                                                                           |
-| `reminders.v1`           | No             | No             | Coordinating the day's reminder between the two devices. The phone delivers a reminder on a watch, and the watch claims the day's reminder with the phone, only when the other device lists it. Neither build does. |
-| `phone.settingsLink.v1`  | No             | No             | The watch setting that opens the phone's watch page uses the phone node only while the phone lists this. The phone does not list it.                                                                                |
+| Feature                  | Phone lists it | Watch lists it | What depends on it                                                                                                                                                                         |
+| ------------------------ | -------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `receipts.v1`            | Yes            | Yes            | The phone accepts version 2 captures, answers receipt queries and pushes receipts only for a watch that lists it.                                                                          |
+| `receipts.operations.v1` | Yes            | Yes            | The watch sends notes over version 2 only to a phone that lists it. Marked moments need it too.                                                                                            |
+| `window.v1`              | Yes            | Yes            | The phone publishes the library window to a watch that lists it, and the watch applies a window only from a phone that lists it.                                                           |
+| `media.range.v1`         | Yes            | Yes            | The watch asks for audio by byte range only from a phone that lists it.                                                                                                                    |
+| `moments.v1`             | Yes            | Yes            | Marked moments cross only when the other device lists this and `receipts.operations.v1`.                                                                                                   |
+| `live.v1`                | Yes            | Yes            | The phone offers playback continuity only to a watch that lists it.                                                                                                                        |
+| `link.cloud.v1`          | Yes            | Yes            | The phone links a watch to its account only if the watch lists it; otherwise it pairs without an account.                                                                                  |
+| `phone.playback.v1`      | Yes            | No             | The watch offers "play on phone" only when the phone lists it.                                                                                                                             |
+| `prefs.v1`               | Yes            | No             | Listed by the phone; no code checks it.                                                                                                                                                    |
+| `reminders.activity.v1`  | No             | Yes            | Tells the phone the watch can read the reminder triggers for an activity that just ended.                                                                                                  |
+| `reminders.v1`           | Yes            | Yes            | Coordinating the day's reminder between the two devices. The phone delivers a reminder on a watch, and the watch claims the day's reminder with the phone, when the other device lists it. |
+| `phone.settingsLink.v1`  | Yes            | No             | The watch setting that opens the phone's watch page uses the phone node while the phone lists this.                                                                                        |
 
 A feature name is added to a list only when that build implements the feature, because the other
 device treats the name as a promise. Reading the name from the latest state document rather than
@@ -1066,11 +1066,11 @@ These paths belong to features described in
 - **The pair key authenticates nothing.** Both devices store the pair key, and the phone treats
   a link without a 32-byte pair key as unusable, but no message is signed or verified with it.
   Later messages are authorized by the node id Play services reports and by the link context.
-- **Some watch state fields are not filled in.** The watch's state document declares `outboxCount`,
-  `deadLetterCount`, `freeBytes` and `presence`, but the installed watch does not supply them, so
-  they are published as `0`, `0`, absent and `UNKNOWN`. The phone asks for presence with a
-  `/logdate/presence` request instead. Likewise the phone's `openMarks` is always `0` in the
-  document.
+- **Watch presence in the state document stays unset.** The watch's state document declares
+  `presence`, which the watch leaves `UNKNOWN`; the phone asks for presence with a
+  `/logdate/presence` request instead. The watch populates `outboxCount`, `deadLetterCount` and
+  `freeBytes` from its outbox, dead-letter store and storage space checker. The phone's
+  `openMarks` is always `0` in the document.
 - **State documents are remembered in memory.** `PeerStateStore` stores the other device's latest
   readable document only while the process runs. Each app reads the stored documents again when it
   starts.

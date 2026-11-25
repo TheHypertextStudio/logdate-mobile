@@ -45,6 +45,7 @@ import app.logdate.client.ui.navigation.searchRouteFromParams
 import app.logdate.feature.core.notifications.NAV_SOURCE_DATA_TRANSFER
 import app.logdate.feature.core.settings.navigation.ExportSettingsRoute
 import app.logdate.feature.core.settings.navigation.SettingsRoute
+import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
 import app.logdate.feature.core.watch.continuity.WatchHandoffRoute
 import app.logdate.feature.editor.navigation.EntryEditorRoute
 import app.logdate.feature.events.navigation.EventDetailRoute
@@ -67,6 +68,8 @@ private const val PATH_REWIND = "rewind"
 private const val PATH_LOCATION = "location"
 private const val PATH_EVENT = "event"
 private const val PATH_SEARCH = "search"
+private const val PATH_SETTINGS = "settings"
+private const val PATH_WATCH = "watch"
 private const val SEARCH_QUERY_PARAM = "q"
 private const val SEARCH_TYPE_PARAM = "type"
 private const val SEARCH_DATE_PARAM = "date"
@@ -149,6 +152,14 @@ private fun resolveCustomSchemeHost(
                 mode = segments.firstOrNull() ?: uri.getQueryParameter(EXTRA_CAPTURE_MODE),
                 journalId = uri.getQueryParameter(CAPTURE_JOURNAL_PARAM),
             )
+        }
+
+        PATH_SETTINGS -> {
+            when (segments.firstOrNull()) {
+                null -> SettingsRoute()
+                PATH_WATCH -> WatchSettingsRoute
+                else -> null
+            }
         }
 
         else -> {

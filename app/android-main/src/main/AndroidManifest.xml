@@ -124,6 +124,7 @@
                 <data android:host="search" />
                 <data android:host="capture" />
                 <data android:host="handoff" />
+                <data android:host="settings" />
             </intent-filter>
 
             <!--
@@ -152,6 +153,7 @@
                 <data android:host="search" />
                 <data android:host="capture" />
                 <data android:host="handoff" />
+                <data android:host="settings" />
             </intent-filter>
 
             <intent-filter>

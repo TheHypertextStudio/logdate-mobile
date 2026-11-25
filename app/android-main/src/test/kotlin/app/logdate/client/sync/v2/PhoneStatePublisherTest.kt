@@ -48,6 +48,8 @@ class PhoneStatePublisherTest {
                     .features
             kotlin.test.assertTrue(WearFeatures.MOMENTS in features)
             kotlin.test.assertTrue(WearFeatures.OPERATION_RECEIPTS in features)
+            kotlin.test.assertTrue(WearFeatures.PHONE_SETTINGS_LINK in features)
+            kotlin.test.assertTrue(WearFeatures.REMINDERS in features)
         }
 
     @Test

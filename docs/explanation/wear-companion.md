@@ -169,16 +169,16 @@ Navigation is a back stack of routes
 ([`WearRoute`](../../app/wear/src/main/kotlin/app/logdate/wear/v2/navigation/WearRoute.kt)), and
 swiping right dismisses the top screen:
 
-| Route          | Screen                                                                                                                                                | Reached from           |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `Home`         | Today                                                                                                                                                 | App launch             |
-| `Flow`         | Voice and text moments from the last 7 days                                                                                                           | Today's Moments button |
-| `Memories`     | On this day and this week's Rewind                                                                                                                    | Flow                   |
-| `Archive`      | Moments older than 7 days that are on the watch, starred first                                                                                        | Flow's Earlier button  |
-| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone (shown only when the phone advertises `phone.settingsLink.v1`, which no phone build does) | Flow                   |
-| `Moment(id)`   | One moment: player, transcript, place, actions                                                                                                        | Any list               |
-| `CaptureSheet` | Write, Mood, Phone camera                                                                                                                             | Today's +              |
-| `PhoneCamera`  | The phone's camera, driven from the watch                                                                                                             | The capture sheet      |
+| Route          | Screen                                                                                                                | Reached from           |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `Home`         | Today                                                                                                                 | App launch             |
+| `Flow`         | Voice and text moments from the last 7 days                                                                           | Today's Moments button |
+| `Memories`     | On this day and this week's Rewind                                                                                    | Flow                   |
+| `Archive`      | Moments older than 7 days that are on the watch, starred first                                                        | Flow's Earlier button  |
+| `Settings`     | Status card, Haptics, Places, Reminders, More on your phone (shown when the phone advertises `phone.settingsLink.v1`) | Flow                   |
+| `Moment(id)`   | One moment: player, transcript, place, actions                                                                        | Any list               |
+| `CaptureSheet` | Write, Mood, Phone camera                                                                                             | Today's +              |
+| `PhoneCamera`  | The phone's camera, driven from the watch                                                                             | The capture sheet      |
 
 An edge button reaches its full size only at the end of a scrolling list, so Today is a short list
 of its own and Flow, the moment list, is a second route opened by a button. While a recording runs, the recorder's own items take the place of
@@ -355,10 +355,10 @@ notification bridging, so a reminder never rings on both. A watch that cannot te
 worn sends reminders to the phone.
 
 **The claim and the hand-off to the watch run only when the other device advertises the protocol
-feature `reminders.v1`.** Neither the phone build nor the watch build advertises it, so the phone
-always posts its own reminders, the watch never claims the day from the phone, and each device
-applies the daily limit by itself. The times the two devices publish to each other are the only
-thing that connects their limits. The
+feature `reminders.v1`.** Both the current phone build and the current watch build advertise it,
+so the watch claims the day from the phone before posting, and the phone hands due reminders off
+to a worn watch when reachable. If either peer is an older build without `reminders.v1`, that
+device falls back to applying its own daily limit using the published last-reminder times. The
 [sync protocol reference](../reference/wear/sync-protocol.md#features) lists which features each
 build advertises.
 
@@ -525,9 +525,8 @@ two paths
 ([`WatchRemovalCoordinator`](../../client/sync/src/commonMain/kotlin/app/logdate/client/sync/peer/removal/WatchRemovalCoordinator.kt)).
 
 Before either, the phone shows a review screen with the watch's last reported count of unsent
-moments, so the person decides knowing what is at stake. The count comes from the watch's state
-document, and the watch does not fill that field in, so
-the drain step below is what protects captures, not the number on the screen.
+moments from the watch's state document, so the person decides knowing what is at stake. The drain
+step below still checks and drains live pending captures when the watch is reachable.
 
 - **The watch is reachable.** The phone asks it to drain: send every pending capture. Removal
   continues only when the watch reports nothing pending. The phone then revokes the watch's server

@@ -3,7 +3,6 @@ package app.logdate.wear.sync.v2
 import app.logdate.client.sync.datalayer.v2.WearFeatures
 import app.logdate.wear.di.watchSyncFeatures
 import kotlin.test.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class WatchImplementedFeaturesTest {
@@ -14,8 +13,8 @@ class WatchImplementedFeaturesTest {
     }
 
     @Test
-    fun `the watch reads activity triggers but reminders are not delegated to it yet`() {
+    fun `the watch advertises reminders and activity triggers`() {
         assertTrue(WearFeatures.ACTIVITY_REMINDERS in watchSyncFeatures)
-        assertFalse(WearFeatures.REMINDERS in watchSyncFeatures)
+        assertTrue(WearFeatures.REMINDERS in watchSyncFeatures)
     }
 }
