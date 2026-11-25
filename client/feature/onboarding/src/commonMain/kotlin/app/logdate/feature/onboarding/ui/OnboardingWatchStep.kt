@@ -27,7 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import logdate.client.feature.onboarding.generated.resources.Res
 import logdate.client.feature.onboarding.generated.resources.watch_setup_add
-import logdate.client.feature.onboarding.generated.resources.watch_setup_back_action
 import logdate.client.feature.onboarding.generated.resources.watch_setup_check
 import logdate.client.feature.onboarding.generated.resources.watch_setup_check_known
 import logdate.client.feature.onboarding.generated.resources.watch_setup_confirm
@@ -216,7 +215,13 @@ internal fun OnboardingWatchStepContent(
     StepScaffold(
         title = stringResource(Res.string.watch_setup_title),
         supportingText = stringResource(message),
-        onBack = onBack,
+        onBack = {
+            if (confirmingMissing) {
+                confirmingMissing = false
+            } else {
+                onBack()
+            }
+        },
         hero = { StepHeroIcon(Icons.Rounded.Watch) },
         actions = {
             if (checking != null) {
@@ -230,12 +235,6 @@ internal fun OnboardingWatchStepContent(
                         },
                         enabled = !busy,
                         busy = busy,
-                    )
-                    StepSecondaryButton(
-                        text = stringResource(Res.string.watch_setup_back_action),
-                        onClick = { confirmingMissing = false },
-                        enabled = !busy,
-                        quiet = true,
                     )
                 } else {
                     StepPrimaryButton(
