@@ -13,6 +13,7 @@ import app.logdate.client.repository.journals.JournalNotesRepository
 import app.logdate.client.text.UiText
 import app.logdate.client.text.toUiText
 import app.logdate.feature.editor.audio.AudioLabelResolver
+import app.logdate.feature.editor.audio.AudioLabelResult
 import app.logdate.feature.editor.audio.formatAudioLabelAsync
 import app.logdate.ui.audio.AudioContext
 import app.logdate.ui.audio.AudioContextProcessor
@@ -48,6 +49,7 @@ class AudioNoteViewerViewModel(
     private val audioPlaybackManager: AudioPlaybackManager,
     private val getJournalMembership: GetJournalMembershipUseCase,
     private val audioTagRepository: AudioTagRepository,
+    private val formatAudioLabel: suspend (AudioLabelResult) -> String = ::formatAudioLabelAsync,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<AudioNoteViewerUiState>(AudioNoteViewerUiState.Loading)
     val uiState: StateFlow<AudioNoteViewerUiState> = _uiState.asStateFlow()
@@ -325,7 +327,7 @@ class AudioNoteViewerViewModel(
                 latitude = cachedLatitude,
                 longitude = cachedLongitude,
             )
-        val title = formatAudioLabelAsync(labelResult)
+        val title = formatAudioLabel(labelResult)
         val palette = content.context.palette
         val metadata =
             AudioPlaybackMetadata(
