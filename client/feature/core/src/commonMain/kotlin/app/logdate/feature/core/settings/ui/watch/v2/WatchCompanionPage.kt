@@ -57,6 +57,9 @@ import logdate.client.feature.core.generated.resources.watch_v2_access_section
 import logdate.client.feature.core.generated.resources.watch_v2_connection_section
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics
 import logdate.client.feature.core.generated.resources.watch_v2_diagnostics_description
+import logdate.client.feature.core.generated.resources.watch_v2_experience_section
+import logdate.client.feature.core.generated.resources.watch_v2_library
+import logdate.client.feature.core.generated.resources.watch_v2_library_description
 import logdate.client.feature.core.generated.resources.watch_v2_microphone
 import logdate.client.feature.core.generated.resources.watch_v2_microphone_description
 import logdate.client.feature.core.generated.resources.watch_v2_notifications_description
@@ -90,7 +93,9 @@ fun WatchCompanionPage(
     setupLauncher: ((WatchSetupProvider) -> Boolean)? = null,
     onRetry: () -> Unit = {},
     onConfirmMissing: (String) -> Unit = {},
-    preferences: @Composable (captureActions: @Composable () -> Unit) -> Unit = {},
+    onOpenOnWatch: (() -> Unit)? = null,
+    onLibrary: (() -> Unit)? = null,
+    preferences: (@Composable (captureActions: @Composable () -> Unit) -> Unit)? = null,
 ) {
     val verified = status is WatchStatus.Ready || status is WatchStatus.NeedsAttention
     val installed = verified || (status is WatchStatus.Unknown && status.knownInstalled)
@@ -119,6 +124,8 @@ fun WatchCompanionPage(
                 modifier = Modifier.fillMaxSize().padding(insets),
                 onRetry = onRetry,
                 onConfirmMissing = onConfirmMissing,
+                onOpenOnWatch = onOpenOnWatch,
+                onDiagnostics = onDiagnostics,
             )
         }
         return
@@ -134,40 +141,81 @@ fun WatchCompanionPage(
                 onInstall,
                 onRetry = onRetry,
                 onConfirmMissing = onConfirmMissing,
+                onOpenOnWatch = onOpenOnWatch,
+                onDiagnostics = onDiagnostics,
             )
         }
     }
     val settings: @Composable () -> Unit = {
         if (verified) {
-            preferences {
-                SettingsNavigationItem(
-                    stringResource(Res.string.watch_v2_microphone),
-                    stringResource(Res.string.watch_v2_microphone_description),
-                    icon = { Icon(Icons.Default.Mic, null) },
-                    onClick = onMicrophone,
-                )
+            if (preferences != null) {
+                preferences {
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_v2_microphone),
+                        stringResource(Res.string.watch_v2_microphone_description),
+                        icon = { Icon(Icons.Default.Mic, null) },
+                        onClick = onMicrophone,
+                    )
+                }
+            } else {
+                SettingsSection(stringResource(Res.string.watch_v2_experience_section)) {
+                    onLibrary?.let { openLibrary ->
+                        SettingsNavigationItem(
+                            stringResource(Res.string.watch_v2_library),
+                            stringResource(Res.string.watch_v2_library_description),
+                            icon = { Icon(Icons.Default.Watch, null) },
+                            onClick = openLibrary,
+                        )
+                    }
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_v2_microphone),
+                        stringResource(Res.string.watch_v2_microphone_description),
+                        icon = { Icon(Icons.Default.Mic, null) },
+                        onClick = onMicrophone,
+                    )
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_v2_tiles),
+                        stringResource(Res.string.watch_v2_tiles_description),
+                        icon = { Icon(Icons.Default.Widgets, null) },
+                        onClick = onTiles,
+                    )
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_v2_reminders),
+                        stringResource(Res.string.watch_v2_reminders_description),
+                        icon = { Icon(Icons.Default.Schedule, null) },
+                        onClick = onReminders,
+                    )
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_notifications),
+                        stringResource(Res.string.watch_v2_notifications_description),
+                        icon = { Icon(Icons.Default.Notifications, null) },
+                        onClick = onNotifications,
+                    )
+                }
             }
-            SettingsSection(stringResource(Res.string.watch_v2_access_section)) {
-                SettingsNavigationItem(
-                    stringResource(Res.string.watch_v2_tiles),
-                    stringResource(Res.string.watch_v2_tiles_description),
-                    icon = { Icon(Icons.Default.Widgets, null) },
-                    onClick = onTiles,
-                )
-            }
-            SettingsSection(stringResource(Res.string.watch_v2_prompt_section)) {
-                SettingsNavigationItem(
-                    stringResource(Res.string.watch_v2_reminders),
-                    stringResource(Res.string.watch_v2_reminders_description),
-                    icon = { Icon(Icons.Default.Schedule, null) },
-                    onClick = onReminders,
-                )
-                SettingsNavigationItem(
-                    stringResource(Res.string.watch_notifications),
-                    stringResource(Res.string.watch_v2_notifications_description),
-                    icon = { Icon(Icons.Default.Notifications, null) },
-                    onClick = onNotifications,
-                )
+            if (preferences != null) {
+                SettingsSection(stringResource(Res.string.watch_v2_access_section)) {
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_v2_tiles),
+                        stringResource(Res.string.watch_v2_tiles_description),
+                        icon = { Icon(Icons.Default.Widgets, null) },
+                        onClick = onTiles,
+                    )
+                }
+                SettingsSection(stringResource(Res.string.watch_v2_prompt_section)) {
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_v2_reminders),
+                        stringResource(Res.string.watch_v2_reminders_description),
+                        icon = { Icon(Icons.Default.Schedule, null) },
+                        onClick = onReminders,
+                    )
+                    SettingsNavigationItem(
+                        stringResource(Res.string.watch_notifications),
+                        stringResource(Res.string.watch_v2_notifications_description),
+                        icon = { Icon(Icons.Default.Notifications, null) },
+                        onClick = onNotifications,
+                    )
+                }
             }
         }
     }

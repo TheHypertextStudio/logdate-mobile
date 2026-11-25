@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.outlined.Watch
@@ -67,10 +69,17 @@ import logdate.client.feature.core.generated.resources.watch_no_paired
 import logdate.client.feature.core.generated.resources.watch_no_paired_description
 import logdate.client.feature.core.generated.resources.watch_out_of_range
 import logdate.client.feature.core.generated.resources.watch_pair_watch
+import logdate.client.feature.core.generated.resources.watch_setup_diagnostics_action
 import logdate.client.feature.core.generated.resources.watch_setup_install_action
+import logdate.client.feature.core.generated.resources.watch_setup_open_on_watch
+import logdate.client.feature.core.generated.resources.watch_setup_step_app
+import logdate.client.feature.core.generated.resources.watch_setup_step_link
+import logdate.client.feature.core.generated.resources.watch_setup_step_paired
 import logdate.client.feature.core.generated.resources.watch_sync_now
 import logdate.client.feature.core.generated.resources.watch_sync_pending
 import logdate.client.feature.core.generated.resources.watch_sync_up_to_date
+import logdate.client.feature.core.generated.resources.watch_unknown_description
+import logdate.client.feature.core.generated.resources.watch_unknown_title
 import logdate.client.feature.core.generated.resources.watch_unsupported
 import logdate.client.feature.core.generated.resources.watch_v2_check_again
 import logdate.client.feature.core.generated.resources.watch_window_days
@@ -87,6 +96,8 @@ internal fun WatchStatusCard(
     onRequestSync: (() -> Unit)? = null,
     onRetry: () -> Unit = {},
     onConfirmMissing: (String) -> Unit = {},
+    onOpenOnWatch: (() -> Unit)? = null,
+    onDiagnostics: (() -> Unit)? = null,
 ) {
     MaterialContainer(modifier = modifier.testTag("watch_status_card")) {
         when (status) {
@@ -107,12 +118,17 @@ internal fun WatchStatusCard(
                     icon = Icons.Outlined.Watch,
                     iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                     title =
-                        stringResource(
-                            status.watchName?.let { Res.string.watch_installation_unknown } ?: Res.string.watch_discovery_unavailable,
-                        ),
-                    description = stringResource(Res.string.watch_check_on_watch),
+                        status.watchName?.let { stringResource(Res.string.watch_unknown_title, it) }
+                            ?: stringResource(Res.string.watch_discovery_unavailable),
+                    description = stringResource(Res.string.watch_unknown_description),
                 ) {
-                    WatchUnknownActions(status, onRetry, onConfirmMissing)
+                    WatchUnknownActions(
+                        status = status,
+                        onRetry = onRetry,
+                        onConfirmMissing = onConfirmMissing,
+                        onOpenOnWatch = onOpenOnWatch,
+                        onDiagnostics = onDiagnostics,
+                    )
                     requestFailure?.let { WatchRequestFailureMessage(it) }
                 }
             }
@@ -421,13 +437,32 @@ fun WatchUnknownActions(
     onConfirmMissing: (String) -> Unit,
     /** Whether checking again is the page's main action, as on a setup step, and so matches the other steps' button. */
     prominent: Boolean = false,
+    onOpenOnWatch: (() -> Unit)? = null,
+    onDiagnostics: (() -> Unit)? = null,
 ) {
     var confirming by remember(status.nodeId) { mutableStateOf(false) }
-    status.watchName?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+    status.watchName?.let { watchName ->
+        WatchConnectionChecklist(watchName = watchName)
+    }
+    val primaryAction = if (status.nodeId != null && onOpenOnWatch != null) onOpenOnWatch else onRetry
+    val primaryLabel =
+        stringResource(
+            if (status.nodeId != null && onOpenOnWatch != null) {
+                Res.string.watch_setup_open_on_watch
+            } else {
+                Res.string.watch_v2_check_again
+            },
+        )
     if (prominent) {
-        StepPrimaryButton(text = stringResource(Res.string.watch_v2_check_again), onClick = onRetry)
+        StepPrimaryButton(text = primaryLabel, onClick = primaryAction)
     } else {
-        Button(onClick = onRetry) { Text(stringResource(Res.string.watch_v2_check_again)) }
+        Button(onClick = primaryAction) { Text(primaryLabel) }
+    }
+    if (status.nodeId != null && onOpenOnWatch != null) {
+        OutlinedButton(onClick = onRetry) { Text(stringResource(Res.string.watch_v2_check_again)) }
+    }
+    onDiagnostics?.let { openDiagnostics ->
+        TextButton(onClick = openDiagnostics) { Text(stringResource(Res.string.watch_setup_diagnostics_action)) }
     }
     val nodeId = status.nodeId
     if (nodeId != null && !status.knownInstalled) {
@@ -450,5 +485,40 @@ fun WatchUnknownActions(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun WatchConnectionChecklist(watchName: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.xs),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        WatchChecklistStep(label = stringResource(Res.string.watch_setup_step_paired, watchName), completed = true)
+        WatchChecklistStep(label = stringResource(Res.string.watch_setup_step_app), completed = false)
+        WatchChecklistStep(label = stringResource(Res.string.watch_setup_step_link), completed = false)
+    }
+}
+
+@Composable
+private fun WatchChecklistStep(
+    label: String,
+    completed: Boolean,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        Icon(
+            imageVector = if (completed) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = if (completed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (completed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

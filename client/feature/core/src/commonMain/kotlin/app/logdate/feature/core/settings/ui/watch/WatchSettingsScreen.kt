@@ -57,6 +57,7 @@ fun WatchSettingsScreen(
     onNavigateToReminders: () -> Unit = {},
     onNavigateToTiles: () -> Unit = {},
     onNavigateToMicrophone: () -> Unit = {},
+    onNavigateToLibrary: () -> Unit = {},
     onNavigateToRemove: () -> Unit = {},
     onNavigateToConnectionCheck: () -> Unit = onNavigateToTroubleshooting,
 ) {
@@ -83,7 +84,9 @@ fun WatchSettingsScreen(
             installRequestSent,
             onRetry = viewModel::refresh,
             onConfirmMissing = viewModel::confirmMissingAppAndInstall,
-        ) { captureActions -> WatchCompanionSettings(captureActions = captureActions) }
+            onOpenOnWatch = viewModel::openAppOnWatch,
+            onLibrary = onNavigateToLibrary,
+        )
         return
     }
     WatchSettingsContent(
@@ -209,9 +212,6 @@ fun WatchSettingsContent(
                 }
                 item {
                     WatchTroubleshootingSection(onNavigateToTroubleshooting)
-                }
-                item {
-                    WatchPrivacyNote()
                 }
             }
         },

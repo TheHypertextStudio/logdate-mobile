@@ -269,6 +269,30 @@ class WatchCompanionPageTest {
             assertTrue(abs(title.left - leadingSection.left) <= 1f, "Settings title $title should align with content $leadingSection")
         }
 
+    @Test fun `wide companion renders cleanly with onLibrary`() =
+        runDesktopComposeUiTest(width = 1100, height = 900) {
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = WatchStatus.Ready("Pixel Watch", true),
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = {},
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        onLibrary = {},
+                    )
+                }
+            }
+            onNodeWithText("Timeline & audio").assertExists()
+            onNodeWithText("On your watch").assertExists()
+        }
+
     @Test fun `companion destinations are actionable through shared settings rows`() =
         runDesktopComposeUiTest(width = 411, height = 1600) {
             val actions = mutableListOf<String>()
@@ -335,11 +359,15 @@ class WatchCompanionPageTest {
                         onDiagnostics = {},
                         onRemove = {},
                         onConfirmMissing = { confirmed += it },
+                        onOpenOnWatch = {},
                     )
                 }
             }
             onNodeWithText("Install on watch").assertDoesNotExist()
-            onNodeWithText("LogDate isn’t on this watch").performClick()
+            onNodeWithText("Pixel Watch connected to this phone").assertExists()
+            onNodeWithText("Open LogDate on watch").assertExists()
+            onNodeWithText("Connection details").assertExists()
+            onNodeWithText("Install from Google Play").performClick()
             assertTrue(confirmed.isEmpty())
             onNodeWithText("Install LogDate on this watch?").assertExists()
             onNodeWithText("Install on watch").performClick()
@@ -370,7 +398,7 @@ class WatchCompanionPageTest {
                         )
                     }
                 }
-                onNodeWithText("LogDate isn’t on this watch").assertDoesNotExist()
+                onNodeWithText("Install from Google Play").assertDoesNotExist()
                 onNodeWithText("Install on watch").assertDoesNotExist()
                 onNodeWithText("Install on Watch").assertDoesNotExist()
                 onNodeWithTag("watch_setup_art").assertDoesNotExist()

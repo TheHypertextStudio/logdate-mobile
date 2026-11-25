@@ -96,6 +96,8 @@ import logdate.client.feature.core.generated.resources.watch_setup_pair_descript
 import logdate.client.feature.core.generated.resources.watch_setup_pair_title
 import logdate.client.feature.core.generated.resources.watch_setup_sent
 import logdate.client.feature.core.generated.resources.watch_setup_start_action
+import logdate.client.feature.core.generated.resources.watch_unknown_description
+import logdate.client.feature.core.generated.resources.watch_unknown_title
 import logdate.client.feature.core.generated.resources.watch_unsupported
 import org.jetbrains.compose.resources.stringResource
 
@@ -119,6 +121,8 @@ internal fun WatchSetupContent(
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
     onConfirmMissing: (String) -> Unit = {},
+    onOpenOnWatch: (() -> Unit)? = null,
+    onDiagnostics: (() -> Unit)? = null,
 ) {
     when (status) {
         null -> {
@@ -142,14 +146,9 @@ internal fun WatchSetupContent(
         is WatchStatus.Unknown -> {
             WatchSetupStepLayout(
                 title =
-                    stringResource(
-                        if (status.watchName == null) {
-                            Res.string.watch_discovery_unavailable
-                        } else {
-                            Res.string.watch_installation_unknown
-                        },
-                    ),
-                description = stringResource(Res.string.watch_check_on_watch),
+                    status.watchName?.let { stringResource(Res.string.watch_unknown_title, it) }
+                        ?: stringResource(Res.string.watch_discovery_unavailable),
+                description = stringResource(Res.string.watch_unknown_description),
                 modifier = modifier,
                 picture = {
                     StoppedPicture(
@@ -161,7 +160,14 @@ internal fun WatchSetupContent(
                     )
                 },
             ) {
-                WatchUnknownActions(status, onRetry, onConfirmMissing, prominent = true)
+                WatchUnknownActions(
+                    status = status,
+                    onRetry = onRetry,
+                    onConfirmMissing = onConfirmMissing,
+                    prominent = true,
+                    onOpenOnWatch = onOpenOnWatch,
+                    onDiagnostics = onDiagnostics,
+                )
                 requestFailure?.let { WatchRequestFailureMessage(it) }
             }
         }

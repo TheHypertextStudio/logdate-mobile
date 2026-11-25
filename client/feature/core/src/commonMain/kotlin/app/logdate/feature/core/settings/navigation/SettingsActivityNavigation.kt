@@ -80,6 +80,7 @@ fun NavKey.settingsCategory(): SettingsCategory? =
         WatchTilesRoute,
         WatchCheckConnectionRoute,
         WatchMicrophoneRoute,
+        WatchLibraryRoute,
         -> SettingsCategory.Watch
 
         SyncSettingsRoute, DataSettingsRoute -> SettingsCategory.Backup
