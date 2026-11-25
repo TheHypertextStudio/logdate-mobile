@@ -164,11 +164,21 @@ class WatchSetupCoordinatorTest {
             assertEquals(0, manager.installCalls)
         }
 
+    @Test
+    fun openOnWatchDelegatesToConnectionManager() =
+        runTest {
+            val manager = Manager(WatchConnectionState.AppUnknown("Watch", "watch-node"))
+            val result = DefaultWatchSetupCoordinator(manager) { true }.openOnWatch("watch-node")
+            assertEquals(WatchRequestResult.Sent, result)
+            assertEquals(listOf<String?>("watch-node"), manager.openedNodes)
+        }
+
     private class Manager(
         initial: WatchConnectionState,
     ) : WatchConnectionManager {
         val state = MutableStateFlow(initial)
         val preparedNodes = mutableListOf<String?>()
+        val openedNodes = mutableListOf<String?>()
         var installCalls = 0
         var associationCalls = 0
         var installResult: WatchRequestResult = WatchRequestResult.Sent
@@ -191,5 +201,10 @@ class WatchSetupCoordinatorTest {
         }
 
         override suspend fun openAppOnWatch() = WatchRequestResult.Sent
+
+        override suspend fun openAppOnWatch(nodeId: String?): WatchRequestResult {
+            openedNodes += nodeId
+            return WatchRequestResult.Sent
+        }
     }
 }

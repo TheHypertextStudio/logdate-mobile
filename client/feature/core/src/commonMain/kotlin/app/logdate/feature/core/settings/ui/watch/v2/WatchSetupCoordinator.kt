@@ -2,6 +2,7 @@ package app.logdate.feature.core.settings.ui.watch.v2
 
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
+import app.logdate.feature.core.settings.ui.watch.WatchRequestFailure
 import app.logdate.feature.core.settings.ui.watch.WatchRequestResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -40,6 +41,8 @@ interface WatchSetupCoordinator {
 
     fun addAfterMissingConfirmation(nodeId: String): Flow<WatchSetupState> = flowOf(WatchSetupState.Failed)
 
+    suspend fun openOnWatch(nodeId: String?): WatchRequestResult = WatchRequestResult.Failed(WatchRequestFailure.OPEN_FAILED)
+
     suspend fun isReady(connection: WatchConnectionState): Boolean = false
 }
 
@@ -54,6 +57,8 @@ class DefaultWatchSetupCoordinator(
     override fun addToWatch(): Flow<WatchSetupState> = setup(null)
 
     override fun addAfterMissingConfirmation(nodeId: String): Flow<WatchSetupState> = setup(nodeId)
+
+    override suspend fun openOnWatch(nodeId: String?): WatchRequestResult = manager.openAppOnWatch(nodeId)
 
     private fun setup(confirmedNodeId: String?): Flow<WatchSetupState> =
         flow {

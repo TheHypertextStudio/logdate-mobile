@@ -71,6 +71,7 @@ fun OnboardingWatchStep(
         onSkip = actions::skip,
         saving = actions.saving,
         onConfirmMissing = actions::confirmMissing,
+        onOpenOnWatch = { actions.openOnWatch(checkingNodeId = (actions.state as? WatchSetupState.CheckOnWatch)?.nodeId) },
     )
 }
 
@@ -101,6 +102,12 @@ internal class WatchOnboardingActions(
         launch {
             viewModel.watchSetup.addAfterMissingConfirmation(nodeId).collect { state = it }
             if (state == WatchSetupState.Ready) finish()
+        }
+
+    fun openOnWatch(checkingNodeId: String?) =
+        launch {
+            viewModel.watchSetup.openOnWatch(checkingNodeId)
+            setup(advance = true)
         }
 
     fun skip() {
@@ -154,6 +161,7 @@ internal fun OnboardingWatchStepContent(
     onSkip: () -> Unit,
     saving: Boolean = false,
     onConfirmMissing: (String) -> Unit = {},
+    onOpenOnWatch: () -> Unit = {},
 ) {
     val installed = connection is WatchConnectionState.Connected || connection is WatchConnectionState.OutOfRange
     val message =
@@ -206,6 +214,8 @@ internal fun OnboardingWatchStepContent(
                     WatchStatus.Unknown(checking.watchName, checking.nodeId, checking.knownInstalled),
                     onPrimary,
                     onConfirmMissing,
+                    prominent = true,
+                    onOpenOnWatch = onOpenOnWatch,
                 )
             } else {
                 StepPrimaryButton(
