@@ -51,6 +51,15 @@ interface LocationHistoryRepository {
         limit: Int = 500,
     ): List<LocationHistoryItem> = emptyList()
 
+    /** Reads one owner/device page strictly after the monotonic ingestion sequence watermark. */
+    suspend fun getLocationHistoryPageBySequence(
+        userId: String,
+        deviceId: String,
+        afterSequence: Long,
+        afterSampleId: String,
+        limit: Int = 500,
+    ): List<LocationHistoryItem> = emptyList()
+
     /**
      * Gets recent location history with a limit.
      */
@@ -164,6 +173,10 @@ data class LocationLogRecord(
     val isMock: Boolean = false,
     val activityType: String? = null,
     val timeZoneId: String? = null,
+    val provider: String? = null,
+    val speedAccuracyMetersPerSecond: Float? = null,
+    val verticalAccuracyMeters: Float? = null,
+    val elapsedRealtimeNanos: Long? = null,
 )
 
 /**
@@ -186,4 +199,9 @@ data class LocationHistoryItem(
     val isMock: Boolean = false,
     val activityType: String? = null,
     val timeZoneId: String? = null,
+    val provider: String? = null,
+    val speedAccuracyMetersPerSecond: Float? = null,
+    val verticalAccuracyMeters: Float? = null,
+    val elapsedRealtimeNanos: Long? = null,
+    val ingestionSeq: Long = 0L,
 )

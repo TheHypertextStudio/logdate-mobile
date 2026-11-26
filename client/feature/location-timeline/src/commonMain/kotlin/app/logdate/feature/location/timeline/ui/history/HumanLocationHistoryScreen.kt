@@ -369,6 +369,12 @@ fun HumanLocationHistoryScreen(
                                 HistoryField.START -> stringResource(Res.string.history_conflict_arrival)
                                 HistoryField.END -> stringResource(Res.string.history_conflict_departure)
                                 HistoryField.DELETE -> stringResource(Res.string.history_conflict_deleted_visit)
+                                HistoryField.SUGGESTED_PLACE -> "Suggested place"
+                                HistoryField.RADIUS -> "Place radius"
+                                HistoryField.CATEGORY -> "Place category"
+                                HistoryField.MERGE_WITH -> "Merged visit"
+                                HistoryField.SPLIT_AT -> "Split visit"
+                                HistoryField.UNKNOWN -> "Other change"
                             },
                         )
                         edits.distinctBy { it.value }.forEach { edit ->

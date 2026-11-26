@@ -28,6 +28,7 @@ import app.logdate.client.database.dao.LocationActivityDao
 import app.logdate.client.database.dao.LocationHistoryDao
 import app.logdate.client.database.dao.MediaCaptionDao
 import app.logdate.client.database.dao.PlaceDao
+import app.logdate.client.database.dao.PlaceResolutionCacheDao
 import app.logdate.client.database.dao.PostcardDao
 import app.logdate.client.database.dao.SearchDao
 import app.logdate.client.database.dao.SearchDetailsDao
@@ -71,6 +72,7 @@ import app.logdate.client.database.entities.LocationActivityEntity
 import app.logdate.client.database.entities.LocationLogEntity
 import app.logdate.client.database.entities.MediaCaptionEntity
 import app.logdate.client.database.entities.PlaceEntity
+import app.logdate.client.database.entities.PlaceResolutionCacheEntity
 import app.logdate.client.database.entities.PostcardEntity
 import app.logdate.client.database.entities.SearchIndexMetadataEntity
 import app.logdate.client.database.entities.StickerEntity
@@ -162,6 +164,7 @@ import app.logdate.client.database.migrations.MIGRATION_59_60
 import app.logdate.client.database.migrations.MIGRATION_5_6
 import app.logdate.client.database.migrations.MIGRATION_60_61
 import app.logdate.client.database.migrations.MIGRATION_61_62
+import app.logdate.client.database.migrations.MIGRATION_62_63
 import app.logdate.client.database.migrations.MIGRATION_6_7
 import app.logdate.client.database.migrations.MIGRATION_7_8
 import app.logdate.client.database.migrations.MIGRATION_8_9
@@ -237,6 +240,7 @@ import kotlinx.coroutines.CoroutineDispatcher
         PersonResolutionDecisionEntity::class,
         // Moments marked on the watch
         MarkedMomentEntity::class,
+        PlaceResolutionCacheEntity::class,
     ],
     version = DATABASE_VERSION,
     exportSchema = true,
@@ -336,13 +340,15 @@ abstract class LogDateDatabase : RoomDatabase() {
     abstract fun personLinkDao(): PersonLinkDao
 
     abstract fun personResolutionDecisionDao(): PersonResolutionDecisionDao
+
+    abstract fun placeResolutionCacheDao(): PlaceResolutionCacheDao
 }
 
 /**
  * The name of the [LogDateDatabase] file.
  */
 internal const val DATABASE_NAME = "logdate"
-internal const val DATABASE_VERSION = 62
+internal const val DATABASE_VERSION = 63
 
 internal expect val roomDatabaseDispatcher: CoroutineDispatcher
 
@@ -461,4 +467,5 @@ private val DATABASE_MIGRATIONS =
         MIGRATION_59_60,
         MIGRATION_60_61,
         MIGRATION_61_62,
+        MIGRATION_62_63,
     )

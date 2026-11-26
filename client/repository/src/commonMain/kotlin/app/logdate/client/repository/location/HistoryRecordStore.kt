@@ -103,6 +103,20 @@ interface HistoryRecordStore {
         endMillis: Long,
     ): List<HistoryRecord> = emptyList()
 
+    suspend fun latestActivityBefore(
+        ownerId: String,
+        origin: String,
+        deviceId: String,
+        beforeMillis: Long,
+    ): HistoryRecord? = null
+
+    suspend fun recordedObservationTimestamps(
+        ownerId: String,
+        origin: String,
+        startMillis: Long,
+        endMillis: Long,
+    ): List<Long> = emptyList()
+
     suspend fun pending(
         ownerId: String,
         origin: String,

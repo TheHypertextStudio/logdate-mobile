@@ -1,6 +1,12 @@
 package app.logdate.shared.model.location
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.time.Instant
 
 @Serializable
@@ -19,6 +25,10 @@ data class LocationObservation(
     val source: String = "UNKNOWN",
     val isMock: Boolean = false,
     val altitudeMeters: Double? = null,
+    val provider: String? = null,
+    val speedAccuracyMetersPerSecond: Float? = null,
+    val verticalAccuracyMeters: Float? = null,
+    val elapsedRealtimeNanos: Long? = null,
 )
 
 @Serializable
@@ -45,6 +55,22 @@ data class ActivityObservation(
     val timeZoneId: String? = null,
 )
 
+@Serializable
+enum class PlaceCategory {
+    HOME,
+    WORK,
+    FOOD,
+    COFFEE,
+    SHOPPING,
+    OUTDOORS,
+    FITNESS,
+    TRANSIT,
+    LODGING,
+    HEALTH,
+    ENTERTAINMENT,
+    OTHER,
+}
+
 /**
  * A named place a visit is matched to.
  *
@@ -64,6 +90,8 @@ data class SemanticPlace(
     val externalId: String? = null,
     val userConfirmed: Boolean = false,
     val nameQualifier: PlaceNameQualifier? = null,
+    val radiusMeters: Double = 75.0,
+    val category: String? = null,
 )
 
 /** How a visit relates to the name of the [SemanticPlace] it is matched to. */
@@ -93,6 +121,13 @@ data class PlaceVisit(
     val confirmedStay: Boolean,
     val place: SemanticPlace? = null,
     val memoryIds: List<String> = emptyList(),
+    val uncertaintyRadiusMeters: Float = 50f,
+    val confidence: Float = 1f,
+    val sampleCount: Int = 0,
+    val candidatePlaceIds: List<String> = emptyList(),
+    val needsDisambiguation: Boolean = false,
+    val displayZoneId: String? = null,
+    val sourceDeviceId: String? = null,
 ) : LocationDayItem
 
 data class JourneyLeg(
@@ -103,6 +138,11 @@ data class JourneyLeg(
     val mode: TravelMode,
     val route: List<LocationObservation>,
     val userConfirmed: Boolean = false,
+    val smoothedRoute: List<LocationObservation> = route,
+    val distanceMeters: Double = 0.0,
+    val endpointCoordinates: Pair<Pair<Double, Double>, Pair<Double, Double>>? = null,
+    val displayZoneId: String? = null,
+    val sourceDeviceId: String? = null,
 ) : LocationDayItem
 
 data class HistoryGap(
@@ -112,7 +152,7 @@ data class HistoryGap(
     override val evidenceIds: List<String> = emptyList(),
 ) : LocationDayItem
 
-@Serializable
+@Serializable(with = HistoryFieldSerializer::class)
 enum class HistoryField {
     LABEL,
     PLACE,
@@ -120,6 +160,28 @@ enum class HistoryField {
     START,
     END,
     DELETE,
+    SUGGESTED_PLACE,
+    RADIUS,
+    CATEGORY,
+    MERGE_WITH,
+    SPLIT_AT,
+    UNKNOWN,
+}
+
+object HistoryFieldSerializer : KSerializer<HistoryField> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("HistoryField", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: HistoryField,
+    ) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): HistoryField {
+        val raw = decoder.decodeString()
+        return HistoryField.entries.firstOrNull { it.name == raw } ?: HistoryField.UNKNOWN
+    }
 }
 
 /**

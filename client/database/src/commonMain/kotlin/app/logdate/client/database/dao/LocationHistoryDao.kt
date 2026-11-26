@@ -3,6 +3,7 @@ package app.logdate.client.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import app.logdate.client.database.entities.LocationLogEntity
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
@@ -51,6 +52,44 @@ interface LocationHistoryDao {
         afterSampleId: String,
         limit: Int,
     ): List<LocationLogEntity>
+
+    @Query(
+        "SELECT * FROM location_logs WHERE user_id = :userId AND device_id = :deviceId " +
+            "AND (ingestion_seq > :afterSequence OR (ingestion_seq = :afterSequence AND sample_id > :afterSampleId)) " +
+            "ORDER BY ingestion_seq, sample_id LIMIT :limit",
+    )
+    suspend fun getPageBySequence(
+        userId: String,
+        deviceId: String,
+        afterSequence: Long,
+        afterSampleId: String,
+        limit: Int,
+    ): List<LocationLogEntity>
+
+    @Query("SELECT COALESCE(MAX(ingestion_seq), 0) FROM location_logs")
+    suspend fun maxIngestionSeq(): Long
+
+    @Transaction
+    suspend fun addLocationLogWithSequence(locationLog: LocationLogEntity): Long {
+        val nextSeq = if (locationLog.ingestionSeq > 0L) locationLog.ingestionSeq else maxIngestionSeq() + 1L
+        addLocationLog(locationLog.copy(ingestionSeq = nextSeq))
+        return nextSeq
+    }
+
+    @Transaction
+    suspend fun addLocationLogsWithSequence(locationLogs: List<LocationLogEntity>) {
+        var nextSeq = maxIngestionSeq()
+        addLocationLogs(
+            locationLogs.map { log ->
+                if (log.ingestionSeq > 0L) {
+                    log
+                } else {
+                    nextSeq += 1L
+                    log.copy(ingestionSeq = nextSeq)
+                }
+            },
+        )
+    }
 
     @Query(
         "SELECT * FROM location_logs WHERE user_id = :userId AND device_id = :deviceId " +

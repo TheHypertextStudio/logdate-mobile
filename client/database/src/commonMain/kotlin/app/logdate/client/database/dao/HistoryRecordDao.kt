@@ -89,6 +89,30 @@ abstract class HistoryRecordDao {
         end: Long,
     ): List<HistoryRecordEntity>
 
+    @Query(
+        "SELECT * FROM history_records WHERE ownerId = :owner AND origin = :origin AND deviceId = :device " +
+            "AND recordType = 'activity' AND deleted = 0 AND observedAt IS NOT NULL AND observedAt < :before " +
+            "ORDER BY observedAt DESC, id DESC LIMIT 1",
+    )
+    abstract suspend fun latestActivityBefore(
+        owner: String,
+        origin: String,
+        device: String,
+        before: Long,
+    ): HistoryRecordEntity?
+
+    @Query(
+        "SELECT observedAt FROM history_records WHERE ownerId = :owner AND origin = :origin " +
+            "AND recordType = 'observation' AND deleted = 0 AND observedAt IS NOT NULL " +
+            "AND observedAt >= :start AND observedAt < :end",
+    )
+    abstract suspend fun recordedObservationTimestamps(
+        owner: String,
+        origin: String,
+        start: Long,
+        end: Long,
+    ): List<Long>
+
     @Upsert
     abstract suspend fun upsert(record: HistoryRecordEntity)
 

@@ -92,6 +92,20 @@ class RoomHistoryRecordStore(
         endMillis: Long,
     ): List<HistoryRecord> = dao.activitiesBetween(ownerId, origin, deviceId, startMillis, endMillis).map { it.toRecord() }
 
+    override suspend fun latestActivityBefore(
+        ownerId: String,
+        origin: String,
+        deviceId: String,
+        beforeMillis: Long,
+    ): HistoryRecord? = dao.latestActivityBefore(ownerId, origin, deviceId, beforeMillis)?.toRecord()
+
+    override suspend fun recordedObservationTimestamps(
+        ownerId: String,
+        origin: String,
+        startMillis: Long,
+        endMillis: Long,
+    ): List<Long> = dao.recordedObservationTimestamps(ownerId, origin, startMillis, endMillis)
+
     override suspend fun pending(
         ownerId: String,
         origin: String,

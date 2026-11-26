@@ -77,6 +77,7 @@ class ExportCoverageTest {
             "media_exif_metadata" to derived("EXIF cache for the device library; exported images contain their own EXIF."),
             "inferred_person_clusters" to derived("Name mentions the app inferred and the user has not confirmed."),
             "inferred_person_evidence" to derived("Evidence behind an inferred person cluster."),
+            "place_resolution_cache" to derived("Rebuildable local cache of external and coarse place lookups by grid cell."),
             "journal_notes" to bookkeeping("Legacy link table replaced by journal_content_links; nothing reads it."),
             "media_images" to bookkeeping("Legacy media table; nothing reads it."),
             "sync_cursors" to bookkeeping("Sync progress markers."),

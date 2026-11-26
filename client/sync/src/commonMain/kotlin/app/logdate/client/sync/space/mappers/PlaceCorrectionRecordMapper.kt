@@ -82,6 +82,18 @@ object PlaceCorrectionRecordMapper : SpaceRecordMapper<HistoryCorrection> {
                     if (value.value != DELETE_VALUE) throw SpaceRecordMappingException("$owner: a delete has no value to keep")
                     base
                 }
+
+                // The place correction lexicon has no field for these yet, so they stay on the
+                // device's own sync rather than being written as a record that drops their value.
+                HistoryField.SUGGESTED_PLACE,
+                HistoryField.RADIUS,
+                HistoryField.CATEGORY,
+                HistoryField.MERGE_WITH,
+                HistoryField.SPLIT_AT,
+                HistoryField.UNKNOWN,
+                -> {
+                    throw SpaceRecordMappingException("$owner: the record has no field for a ${value.field.name} change")
+                }
             }
         return encodeRecord(Correction.serializer(), record)
     }

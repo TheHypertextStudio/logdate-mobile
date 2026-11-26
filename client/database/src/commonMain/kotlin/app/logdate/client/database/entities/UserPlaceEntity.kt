@@ -23,4 +23,6 @@ data class UserPlaceEntity(
     val createdAt: Long,
     @ColumnInfo(name = "updated_at")
     val updatedAt: Long,
+    @ColumnInfo(name = "category")
+    val category: String? = null,
 )

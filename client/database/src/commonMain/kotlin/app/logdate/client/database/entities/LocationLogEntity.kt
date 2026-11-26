@@ -25,7 +25,10 @@ import kotlin.time.Instant
     indices = [
         Index(
             value = ["user_id", "device_id", "timestamp", "sample_id"],
-        ), Index(value = ["timestamp"]), Index(value = ["user_id", "device_id", "logged_at", "sample_id"]),
+        ),
+        Index(value = ["timestamp"]),
+        Index(value = ["user_id", "device_id", "logged_at", "sample_id"]),
+        Index(value = ["user_id", "device_id", "ingestion_seq", "sample_id"]),
     ],
 )
 data class LocationLogEntity(
@@ -95,6 +98,16 @@ data class LocationLogEntity(
     val activityType: String? = null,
     @ColumnInfo(name = "time_zone_id")
     val timeZoneId: String? = null,
+    @ColumnInfo(name = "provider")
+    val provider: String? = null,
+    @ColumnInfo(name = "speed_accuracy_mps")
+    val speedAccuracyMetersPerSecond: Float? = null,
+    @ColumnInfo(name = "vertical_accuracy_meters")
+    val verticalAccuracyMeters: Float? = null,
+    @ColumnInfo(name = "elapsed_realtime_nanos")
+    val elapsedRealtimeNanos: Long? = null,
+    @ColumnInfo(name = "ingestion_seq", defaultValue = "0")
+    val ingestionSeq: Long = 0L,
 )
 
 /**
