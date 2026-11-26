@@ -8,8 +8,10 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
@@ -754,6 +756,128 @@ class WatchCompanionPageTest {
             waitForIdle()
             onNodeWithText("Finish installing on Pixel Watch 5").assertExists()
         }
+
+    @Test
+    fun `progress bar visibly advances on every step and retreats cleanly on back`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val watches =
+                listOf(
+                    DiscoveredWatch("watch-a", "Pixel Watch 5", isNearby = true, appInstalled = false),
+                    DiscoveredWatch("watch-b", "Galaxy Watch 7", isNearby = true, appInstalled = false),
+                )
+            var status by mutableStateOf<WatchStatus>(
+                WatchStatus.NotInstalled("Pixel Watch 5", "watch-a", availableWatches = watches),
+            )
+            var installSent by mutableStateOf(false)
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = status,
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = { installSent = true },
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        installRequestSent = installSent,
+                        onClearInstallRequestSent = { installSent = false },
+                    )
+                }
+            }
+
+            assertEquals(0.20f, progressFraction(), 0.01f)
+            onNodeWithText("Continue").performClick()
+            waitForIdle()
+            assertEquals(0.40f, progressFraction(), 0.01f)
+
+            onNodeWithText("Install on watch").performClick()
+            waitForIdle()
+            assertEquals(0.60f, progressFraction(), 0.01f)
+
+            // Back retreats cleanly through each recorded progress step.
+            onNodeWithContentDescription("Back").performClick()
+            waitForIdle()
+            assertEquals(0.40f, progressFraction(), 0.01f)
+            onNodeWithContentDescription("Back").performClick()
+            waitForIdle()
+            assertEquals(0.20f, progressFraction(), 0.01f)
+
+            // Advancing all the way keeps Linking below 100% until Ready reaches 100%.
+            onNodeWithText("Continue").performClick()
+            waitForIdle()
+            onNodeWithText("Install on watch").performClick()
+            waitForIdle()
+            status = WatchStatus.SettingUp(WatchSetupStep.Linking("Pixel Watch 5"), "watch-a", availableWatches = watches)
+            waitForIdle()
+            assertEquals(0.80f, progressFraction(), 0.01f)
+
+            status = WatchStatus.Ready("Pixel Watch 5", nearby = true, nodeId = "watch-a")
+            waitForIdle()
+            assertEquals(1.00f, progressFraction(), 0.01f)
+        }
+
+    @Test
+    fun `resending on install sent stays on step and reordered watches preserve confirmation`() =
+        runDesktopComposeUiTest(width = 411, height = 891) {
+            val watchA = DiscoveredWatch("watch-a", "Pixel Watch 5", isNearby = true, appInstalled = false)
+            val watchB = DiscoveredWatch("watch-b", "Galaxy Watch 7", isNearby = true, appInstalled = false)
+            var sending by mutableStateOf(false)
+            var status by mutableStateOf<WatchStatus>(
+                WatchStatus.NotInstalled("Pixel Watch 5", "watch-a", availableWatches = listOf(watchA, watchB)),
+            )
+            setContent {
+                LogDateTheme(dynamicColor = false) {
+                    WatchCompanionPage(
+                        status = status,
+                        requestFailure = null,
+                        onBack = {},
+                        onAssociate = {},
+                        onInstall = { sending = true },
+                        onReminders = {},
+                        onTiles = {},
+                        onMicrophone = {},
+                        onNotifications = {},
+                        onDiagnostics = {},
+                        onRemove = {},
+                        sendingRequest = sending,
+                    )
+                }
+            }
+
+            onNodeWithText("Continue").performClick()
+            waitForIdle()
+            onNodeWithText("Install LogDate on Pixel Watch 5").assertExists()
+
+            // Reordering availableWatches must not reset the user back to the chooser.
+            status = WatchStatus.NotInstalled("Pixel Watch 5", "watch-a", availableWatches = listOf(watchB, watchA))
+            waitForIdle()
+            onNodeWithText("Install LogDate on Pixel Watch 5").assertExists()
+
+            onNodeWithText("Install on watch").performClick()
+            waitForIdle()
+            sending = false
+            waitForIdle()
+            onNodeWithText("Finish installing on Pixel Watch 5").assertExists()
+
+            // Tapping Send install prompt again keeps the UI on INSTALL_SENT while busy.
+            onNodeWithText("Send install prompt again").performClick()
+            waitForIdle()
+            onNodeWithText("Finish installing on Pixel Watch 5").assertExists()
+            onNodeWithText("Send install prompt again").assertIsNotEnabled()
+        }
+
+    private fun androidx.compose.ui.test.ComposeUiTest.progressFraction(): Float {
+        mainClock.advanceTimeBy(1_000)
+        waitForIdle()
+        return onNodeWithTag("watch_setup_progress")
+            .fetchSemanticsNode()
+            .config[SemanticsProperties.ProgressBarRangeInfo]
+            .current
+    }
 
     private fun saveScreenshot(
         image: ImageBitmap,

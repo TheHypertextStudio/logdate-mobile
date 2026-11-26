@@ -288,7 +288,7 @@ fun LogDateNavDisplay(
                                             onOpenSyncSettings = { backStack.add(SyncSettingsRoute) },
                                             onManageStorage = { backStack.add(if (cloudPlansEnabled) CloudPlanRoute else SettingsRoute()) },
                                             onEnterRecoveryPhrase = { backStack.add(RecoveryPhraseEntrySettingsRoute) },
-                                            onOpenWatch = { backStack.add(WatchSettingsRoute) },
+                                            onOpenWatch = { backStack.pushIfNotTop(WatchSettingsRoute) },
                                             onOpenSyncIssues = { backStack.add(SyncIssuesRoute) },
                                             onOpenDay = { date -> backStack.add(TimelineDetailRoute(date.toString())) },
                                             onOpenTextNote = { backStack.navigateToNoteDetail(it) },
@@ -395,7 +395,7 @@ fun LogDateNavDisplay(
                                         onNavigateToEvent = { backStack.add(EventDetailRoute(it.toString())) },
                                         onNavigateToWatch =
                                             if (isWatchSupported) {
-                                                { backStack.add(WatchSettingsRoute) }
+                                                { backStack.pushIfNotTop(WatchSettingsRoute) }
                                             } else {
                                                 null
                                             },
@@ -422,12 +422,12 @@ fun LogDateNavDisplay(
                                     )
                                     if (isWatchSupported) {
                                         watchEntries(
-                                            onNavigateToDetail = { backStack.add(it) },
+                                            onNavigateToDetail = { backStack.pushIfNotTop(it) },
                                             onNavigateToCategory = { backStack.navigateToSettingsCategory(it) },
                                             onNavigateToProfile = { backStack.add(ProfileRoute) },
                                             onBack = { backStack.removeLastOrNull() },
-                                            onNavigateToNotifications = { backStack.add(WatchNotificationSettingsRoute) },
-                                            onNavigateToTroubleshooting = { backStack.add(WatchTroubleshootingRoute) },
+                                            onNavigateToNotifications = { backStack.pushIfNotTop(WatchNotificationSettingsRoute) },
+                                            onNavigateToTroubleshooting = { backStack.pushIfNotTop(WatchTroubleshootingRoute) },
                                         )
                                     }
                                     watchHandoffEntries(
@@ -551,3 +551,7 @@ private fun <T : Any> rememberNavAnimatedVisibilityScopeEntryDecorator(): NavEnt
             }
         }
     }
+
+private fun MutableList<NavKey>.pushIfNotTop(route: NavKey) {
+    if (lastOrNull() != route) add(route)
+}

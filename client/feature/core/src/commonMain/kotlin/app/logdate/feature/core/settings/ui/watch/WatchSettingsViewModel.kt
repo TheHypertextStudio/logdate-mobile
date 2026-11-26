@@ -194,6 +194,7 @@ class WatchSettingsViewModel(
                         }
 
                         is WatchRequestResult.Failed -> {
+                            _installRequestSent.value = false
                             result.reason
                         }
                     }
