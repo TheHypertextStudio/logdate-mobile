@@ -1,7 +1,10 @@
 package app.logdate.feature.core.settings.ui.watch
 
 import app.logdate.client.sync.datalayer.v2.Decoded
+import app.logdate.client.sync.datalayer.v2.WatchPingInfo
+import app.logdate.client.sync.datalayer.v2.WearCompatibility
 import app.logdate.client.sync.datalayer.v2.WearFeatures
+import app.logdate.client.sync.datalayer.v2.WearProtocol
 import app.logdate.client.sync.datalayer.v2.WearProtocolGate
 import app.logdate.client.sync.peer.state.PeerRole
 import app.logdate.client.sync.peer.state.PeerStateStore
@@ -9,6 +12,7 @@ import app.logdate.client.sync.peer.state.StateDocument
 import app.logdate.client.sync.peer.state.WatchState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -98,5 +102,39 @@ class PeerStateWatchSnapshotSourceTest {
                 )
             assertNull(scoped.observeFor("selected").first().watch)
             assertEquals(emptySet(), scoped.observeFor("selected").first().features)
+        }
+
+    @Test
+    fun `live ping overrides stale cached version and unsupported schema in peer state`() =
+        runTest {
+            val staleWatch = WatchState(appVersionName = "0.1.0", protocolVersion = 1, minPeerProtocolVersion = 1)
+            peerStates.accept(
+                "selected",
+                Decoded.Supported(StateDocument(role = PeerRole.WATCH, writtenAt = 1, watch = staleWatch)),
+                PeerRole.WATCH,
+            )
+            peerStates.accept("selected", Decoded.Unsupported(schema = 99, reason = "newer"), PeerRole.WATCH)
+            val liveSource =
+                PeerStateWatchSnapshotSource(
+                    gate = WearProtocolGate(flag, MutableStateFlow(true), peerStates.features(PeerRole.WATCH)),
+                    peerStates = peerStates,
+                    phoneVersion = "0.2.0",
+                    pingProbe = {
+                        flowOf(
+                            WatchPingProbe.Supported(
+                                WatchPingInfo(
+                                    appVersionName = "0.2.0",
+                                    protocolVersion = WearProtocol.PROTOCOL_VERSION,
+                                    minPeerProtocolVersion = WearProtocol.MIN_COMPATIBLE_PROTOCOL_VERSION,
+                                ),
+                            ),
+                        )
+                    },
+                )
+
+            val snapshot = liveSource.observeFor("selected").first()
+
+            assertEquals("0.2.0", snapshot.watchVersion)
+            assertEquals(WearCompatibility.Compatible("0.2.0", "0.2.0", versionsDiffer = false), snapshot.compatibility)
         }
 }

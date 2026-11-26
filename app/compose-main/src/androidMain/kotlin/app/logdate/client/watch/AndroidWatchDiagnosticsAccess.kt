@@ -52,15 +52,17 @@ class AndroidWatchDiagnosticsAccess(
         val reply = audience?.let { ping(it) }
         val rawWatch = rawDocument?.watch
         val pingInfo = (pingProbe as? WatchPingProbe.Supported)?.info
-        val watchVersion = rawWatch?.appVersionName ?: reply?.appVersionName ?: pingInfo?.appVersionName
+        val watchVersion = reply?.appVersionName ?: pingInfo?.appVersionName ?: rawWatch?.appVersionName
+        val schemaUnsupported =
+            nodeId?.let { states.currentUnsupportedSchema(it) != null } == true && reply == null && pingInfo == null
         val compatibility =
             evaluateWearCompatibility(
                 localAppVersion = phoneVersion,
                 peerAppVersion = watchVersion,
-                peerProtocolVersion = rawWatch?.protocolVersion ?: reply?.protocolVersion ?: pingInfo?.protocolVersion,
+                peerProtocolVersion = reply?.protocolVersion ?: pingInfo?.protocolVersion ?: rawWatch?.protocolVersion,
                 peerMinPeerProtocolVersion =
-                    rawWatch?.minPeerProtocolVersion ?: reply?.minPeerProtocolVersion ?: pingInfo?.minPeerProtocolVersion,
-                peerSchemaUnsupported = nodeId?.let { states.currentUnsupportedSchema(it) != null } == true,
+                    reply?.minPeerProtocolVersion ?: pingInfo?.minPeerProtocolVersion ?: rawWatch?.minPeerProtocolVersion,
+                peerSchemaUnsupported = schemaUnsupported,
                 legacyPeerPing = pingProbe is WatchPingProbe.LegacyAck,
             )
         val peer =

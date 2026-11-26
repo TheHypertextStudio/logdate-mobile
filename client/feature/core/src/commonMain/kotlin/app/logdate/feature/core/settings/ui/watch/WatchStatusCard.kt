@@ -49,6 +49,7 @@ import logdate.client.feature.core.generated.resources.watch_discovery_unavailab
 import logdate.client.feature.core.generated.resources.watch_install_on_watch
 import logdate.client.feature.core.generated.resources.watch_link_on_its_own
 import logdate.client.feature.core.generated.resources.watch_link_through_phone
+import logdate.client.feature.core.generated.resources.watch_linking_set_up_again_action
 import logdate.client.feature.core.generated.resources.watch_loading
 import logdate.client.feature.core.generated.resources.watch_needs_association
 import logdate.client.feature.core.generated.resources.watch_needs_association_description
@@ -154,7 +155,7 @@ internal fun WatchStatusCard(
             }
 
             is WatchStatus.NeedsAttention -> {
-                AttentionStatus(status, onRequestSync)
+                AttentionStatus(status, onRequestSync, onBeginAssociation, onDiagnostics)
             }
         }
     }
@@ -330,6 +331,8 @@ private fun ReadyStatus(
 private fun AttentionStatus(
     status: WatchStatus.NeedsAttention,
     onRequestSync: (() -> Unit)?,
+    onBeginAssociation: () -> Unit = {},
+    onDiagnostics: (() -> Unit)? = null,
 ) {
     val (title, description) =
         when (val issue = status.issue) {
@@ -361,8 +364,42 @@ private fun AttentionStatus(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
         )
-        if (status.issue is WatchIssue.CapturesNotSent && onRequestSync != null) {
-            WatchSyncAction(statusText = null, enabled = status.nearby, onClick = onRequestSync)
+        when (status.issue) {
+            WatchIssue.SetUpAgain -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                ) {
+                    Button(onClick = onBeginAssociation, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(Res.string.watch_linking_set_up_again_action))
+                    }
+                    onDiagnostics?.let { diagnostics ->
+                        StepSecondaryButton(
+                            text = stringResource(Res.string.watch_setup_troubleshoot_action),
+                            onClick = diagnostics,
+                            modifier = Modifier.fillMaxWidth(),
+                            quiet = true,
+                        )
+                    }
+                }
+            }
+
+            is WatchIssue.CapturesNotSent -> {
+                onRequestSync?.let { WatchSyncAction(statusText = null, enabled = status.nearby, onClick = it) }
+            }
+
+            is WatchIssue.WatchUpdateRequired,
+            is WatchIssue.PhoneUpdateRequired,
+            -> {
+                onDiagnostics?.let { diagnostics ->
+                    StepSecondaryButton(
+                        text = stringResource(Res.string.watch_setup_troubleshoot_action),
+                        onClick = diagnostics,
+                        modifier = Modifier.fillMaxWidth().padding(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
+                        quiet = true,
+                    )
+                }
+            }
         }
     }
 }

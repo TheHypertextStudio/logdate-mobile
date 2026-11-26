@@ -112,6 +112,7 @@
     <string name="wear_settings_background_location_detail">Logs periodic location samples from the watch.</string>
     <string name="wear_settings_activity_aware_location">Activity-aware mode</string>
     <string name="wear_settings_activity_aware_location_detail">Uses higher accuracy while moving; passive is gentler on battery.</string>
+    <string name="wear_settings_version">LogDate %1$s</string>
 
     <!-- Mood Check-in -->
     <string name="wear_mood_title">How are you feeling?</string>

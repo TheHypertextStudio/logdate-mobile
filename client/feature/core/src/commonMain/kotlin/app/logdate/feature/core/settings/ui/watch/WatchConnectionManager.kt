@@ -39,6 +39,9 @@ interface WatchConnectionManager {
 
     suspend fun refresh() = Unit
 
+    /** Clears cached presence and selection for a watch that was just removed. */
+    suspend fun onWatchRemoved(nodeId: String) = Unit
+
     /**
      * Starts the system flow to associate LogDate with a watch.
      */

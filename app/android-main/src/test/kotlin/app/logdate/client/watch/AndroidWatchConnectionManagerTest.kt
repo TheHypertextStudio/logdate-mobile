@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import java.util.concurrent.ExecutionException
@@ -375,6 +376,39 @@ class AndroidWatchConnectionManagerTest {
             assertEquals(WatchRequestResult.Sent, manager().updateAppOnWatch(withLogDate.id))
             assertEquals(listOf("market://details?id=studio.hypertext.logdate"), sentLinks)
             verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
+        }
+
+    @Test
+    fun `refresh updates active observers synchronously and onWatchRemoved evicts stale cached state`() =
+        runTest {
+            var installedOnWatch = true
+            every { nodeClient.connectedNodes } returns Tasks.forResult(listOf(withLogDate))
+            every { capabilityClient.getCapability("logdate_watch_app", CapabilityClient.FILTER_ALL) } answers {
+                val nodes = if (installedOnWatch) setOf(withLogDate) else emptySet()
+                Tasks.forResult(mockk<CapabilityInfo> { every { this@mockk.nodes } returns nodes })
+            }
+            listening()
+            val states = mutableListOf<WatchConnectionState>()
+            val manager = manager(verifiedAppNodes = flowOf(setOf(withLogDate.id)))
+            val collector = launch(Dispatchers.Unconfined) { manager.observeConnectionState().collect { states += it } }
+            runCurrent()
+            assertEquals(WatchConnectionState.Connected("Pixel Watch", withLogDate.id), states.last())
+
+            installedOnWatch = false
+            manager.onWatchRemoved(withLogDate.id)
+            runCurrent()
+
+            assertEquals(
+                WatchConnectionState.AppUnknown(
+                    watchName = "Pixel Watch",
+                    nodeId = withLogDate.id,
+                    knownInstalled = false,
+                    isNearby = true,
+                    availableWatches = listOf(DiscoveredWatch(withLogDate.id, "Pixel Watch", isNearby = true, appInstalled = false)),
+                ),
+                states.last(),
+            )
+            collector.cancel()
         }
 
     private fun listening() {

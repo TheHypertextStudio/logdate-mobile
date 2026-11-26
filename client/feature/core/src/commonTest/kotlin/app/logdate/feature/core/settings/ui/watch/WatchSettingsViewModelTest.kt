@@ -4,6 +4,7 @@ import app.logdate.client.domain.watch.WatchNotificationSettings
 import app.logdate.client.domain.watch.WatchSettingsRepository
 import app.logdate.client.sync.datalayer.v2.WearFeatures
 import app.logdate.client.sync.peer.state.WatchState
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -201,14 +203,56 @@ class WatchSettingsViewModelTest {
             assertNull(viewModel.requestFailure.value)
         }
 
+    @Test
+    fun `sendingRequest and refreshing reflect in-flight calls and block duplicate taps`() =
+        runTest {
+            val installGate = CompletableDeferred<WatchRequestResult>()
+            val refreshGate = CompletableDeferred<Unit>()
+            val connectionManager =
+                FakeWatchConnectionManager(
+                    installAction = { installGate.await() },
+                    refreshAction = { refreshGate.await() },
+                )
+            val viewModel =
+                WatchSettingsViewModel(
+                    connectionManager = connectionManager,
+                    settingsRepository = FakeWatchSettingsRepository(),
+                )
+
+            viewModel.installAppOnWatch()
+            viewModel.installAppOnWatch()
+            runCurrent()
+            assertEquals(true, viewModel.sendingRequest.value)
+            assertEquals(1, connectionManager.installRequests)
+
+            installGate.complete(WatchRequestResult.Failed(WatchRequestFailure.WATCH_DID_NOT_RESPOND))
+            advanceUntilIdle()
+            assertEquals(false, viewModel.sendingRequest.value)
+            assertEquals(WatchRequestFailure.WATCH_DID_NOT_RESPOND, viewModel.requestFailure.value)
+
+            viewModel.refresh()
+            viewModel.refresh()
+            runCurrent()
+            assertEquals(true, viewModel.refreshing.value)
+            assertEquals(1, connectionManager.refreshCalls)
+
+            refreshGate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(false, viewModel.refreshing.value)
+        }
+
     private class FakeWatchConnectionManager(
         initialState: WatchConnectionState = WatchConnectionState.Loading,
         private val installResult: WatchRequestResult = WatchRequestResult.Sent,
         private val openResult: WatchRequestResult = WatchRequestResult.Sent,
+        private val installAction: (suspend () -> WatchRequestResult)? = null,
+        private val refreshAction: (suspend () -> Unit)? = null,
     ) : WatchConnectionManager {
         private val state = MutableStateFlow(initialState)
 
         var beginAssociationCalls: Int = 0
+        var installRequests: Int = 0
+        var refreshCalls: Int = 0
         val updateRequests = mutableListOf<String?>()
 
         fun emit(newState: WatchConnectionState) {
@@ -217,6 +261,11 @@ class WatchSettingsViewModelTest {
 
         override fun observeConnectionState(): Flow<WatchConnectionState> = state.asStateFlow()
 
+        override suspend fun refresh() {
+            refreshCalls++
+            refreshAction?.invoke()
+        }
+
         override suspend fun beginAssociation() {
             beginAssociationCalls++
         }
@@ -224,7 +273,10 @@ class WatchSettingsViewModelTest {
         override suspend fun requestSync() {
         }
 
-        override suspend fun installAppOnWatch(): WatchRequestResult = installResult
+        override suspend fun installAppOnWatch(): WatchRequestResult {
+            installRequests++
+            return installAction?.invoke() ?: installResult
+        }
 
         override suspend fun updateAppOnWatch(nodeId: String?): WatchRequestResult {
             updateRequests += nodeId

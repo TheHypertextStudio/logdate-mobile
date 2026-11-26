@@ -88,8 +88,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -233,7 +235,9 @@ internal fun WatchSetupContent(
     onUpdateOnPhone: (() -> Unit)? = null,
     onClearRequestFailure: () -> Unit = {},
     onClearInstallRequestSent: () -> Unit = {},
+    sendingRequest: Boolean = false,
 ) {
+    val haptic = LocalHapticFeedback.current
     val availableWatches = status.availableWatches()
     var watchChoiceConfirmed by rememberSaveable(availableWatches.map { it.nodeId }) {
         mutableStateOf(availableWatches.size <= 1)
@@ -243,6 +247,12 @@ internal fun WatchSetupContent(
     var localInstallSent by rememberSaveable(status?.nodeId) { mutableStateOf(false) }
     var failureDismissed by remember(requestFailure) { mutableStateOf(false) }
     var navigatingBack by remember { mutableStateOf(false) }
+    val prepareAction = {
+        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+        navigatingBack = false
+        failureDismissed = false
+        onClearRequestFailure()
+    }
     LaunchedEffect(requestFailure) {
         if (requestFailure != null) {
             openSent = false
@@ -251,7 +261,8 @@ internal fun WatchSetupContent(
         }
     }
     val activeFailure = requestFailure.takeUnless { failureDismissed }
-    val effectiveInstallSent = installRequestSent || localInstallSent
+    val effectiveOpenSent = openSent && !sendingRequest
+    val effectiveInstallSent = (installRequestSent || localInstallSent) && !sendingRequest
     val showChooser = availableWatches.size > 1 && (!watchChoiceConfirmed || switchingWatch)
 
     val visualStep =
@@ -284,7 +295,7 @@ internal fun WatchSetupContent(
                                 WatchSetupVisualStep.REQUEST_FAILED
                             }
 
-                            openSent && status.nodeId != null -> {
+                            effectiveOpenSent && status.nodeId != null -> {
                                 WatchSetupVisualStep.OPENING_WATCH
                             }
 
@@ -388,6 +399,11 @@ internal fun WatchSetupContent(
         }
     }
     PlatformBackHandler(enabled = canStepBack, onBack = stepBack)
+    LaunchedEffect(visualStep) {
+        if (visualStep == WatchSetupVisualStep.COMPLETE) {
+            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+        }
+    }
 
     val switchAction: (() -> Unit)? =
         if (availableWatches.size > 1) {
@@ -474,18 +490,25 @@ internal fun WatchSetupContent(
                                 WatchChoiceCard(
                                     watch = watch,
                                     selected = watch.nodeId == selectedNodeId,
-                                    onClick = { selectedNodeId = watch.nodeId },
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        selectedNodeId = watch.nodeId
+                                    },
                                 )
                             }
                         }
                     },
                 ) {
-                    WatchSetupAction(stringResource(Res.string.watch_setup_choose_watch_continue)) {
-                        navigatingBack = false
-                        selectedNodeId?.let(onSelectWatch)
-                        watchChoiceConfirmed = true
-                        switchingWatch = false
-                    }
+                    WatchSetupAction(
+                        label = stringResource(Res.string.watch_setup_choose_watch_continue),
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                            navigatingBack = false
+                            selectedNodeId?.let(onSelectWatch)
+                            watchChoiceConfirmed = true
+                            switchingWatch = false
+                        },
+                    )
                 }
             }
 
@@ -528,18 +551,24 @@ internal fun WatchSetupContent(
                     },
                 ) {
                     if (onOpenOnWatch != null) {
-                        WatchSetupAction(stringResource(Res.string.watch_setup_open_action)) {
-                            navigatingBack = false
-                            openSent = true
-                            onOpenOnWatch()
-                        }
+                        WatchSetupAction(
+                            label = stringResource(Res.string.watch_setup_open_action),
+                            onClick = {
+                                prepareAction()
+                                openSent = true
+                                onOpenOnWatch()
+                            },
+                            enabled = !sendingRequest,
+                            busy = sendingRequest,
+                        )
                         StepSecondaryButton(
                             text = stringResource(Res.string.watch_setup_already_open_action),
                             onClick = onRetry,
+                            enabled = !sendingRequest,
                             quiet = true,
                         )
                     } else {
-                        WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onRetry)
+                        WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onClick = onRetry)
                     }
                 }
             }
@@ -653,23 +682,29 @@ internal fun WatchSetupContent(
                         )
                     },
                 ) {
-                    WatchSetupAction(stringResource(Res.string.watch_setup_install_action)) {
-                        navigatingBack = false
-                        if (status is WatchStatus.Unknown && nodeId != null) {
+                    WatchSetupAction(
+                        label = stringResource(Res.string.watch_setup_install_action),
+                        onClick = {
+                            prepareAction()
                             localInstallSent = true
-                            onConfirmMissing(nodeId)
-                        } else {
-                            onInstall()
-                        }
-                    }
+                            if (status is WatchStatus.Unknown && nodeId != null) {
+                                onConfirmMissing(nodeId)
+                            } else {
+                                onInstall()
+                            }
+                        },
+                        enabled = !sendingRequest,
+                        busy = sendingRequest,
+                    )
                     if (status is WatchStatus.Unknown && onOpenOnWatch != null) {
                         StepSecondaryButton(
                             text = stringResource(Res.string.watch_setup_already_installed_action),
                             onClick = {
-                                navigatingBack = false
+                                prepareAction()
                                 openSent = true
                                 onOpenOnWatch()
                             },
+                            enabled = !sendingRequest,
                             quiet = true,
                         )
                     }
@@ -742,11 +777,16 @@ internal fun WatchSetupContent(
                         )
                     },
                 ) {
-                    WatchSetupAction(stringResource(Res.string.watch_setup_update_watch_action)) {
-                        navigatingBack = false
-                        localInstallSent = true
-                        onUpdateOnWatch()
-                    }
+                    WatchSetupAction(
+                        label = stringResource(Res.string.watch_setup_update_watch_action),
+                        onClick = {
+                            prepareAction()
+                            localInstallSent = true
+                            onUpdateOnWatch()
+                        },
+                        enabled = !sendingRequest,
+                        busy = sendingRequest,
+                    )
                     if (onDiagnostics != null) {
                         StepSecondaryButton(
                             text = stringResource(Res.string.watch_setup_troubleshoot_action),
@@ -890,35 +930,65 @@ internal fun WatchSetupContent(
                 ) {
                     when {
                         status is WatchStatus.NeedsAttention && status.issue is WatchIssue.WatchUpdateRequired -> {
-                            WatchSetupAction(stringResource(Res.string.watch_setup_update_watch_action)) {
-                                navigatingBack = false
-                                localInstallSent = true
-                                onUpdateOnWatch()
-                            }
+                            WatchSetupAction(
+                                label = stringResource(Res.string.watch_setup_update_watch_action),
+                                onClick = {
+                                    prepareAction()
+                                    localInstallSent = true
+                                    onUpdateOnWatch()
+                                },
+                                enabled = !sendingRequest,
+                                busy = sendingRequest,
+                            )
                         }
 
                         status is WatchStatus.Unknown && !status.knownInstalled && status.nodeId != null -> {
-                            WatchSetupAction(stringResource(Res.string.watch_setup_install_action)) {
-                                navigatingBack = false
-                                localInstallSent = true
-                                onConfirmMissing(status.nodeId)
-                            }
+                            WatchSetupAction(
+                                label = stringResource(Res.string.watch_setup_install_action),
+                                onClick = {
+                                    prepareAction()
+                                    localInstallSent = true
+                                    onConfirmMissing(status.nodeId)
+                                },
+                                enabled = !sendingRequest,
+                                busy = sendingRequest,
+                            )
                         }
 
                         status is WatchStatus.Unknown && status.nodeId != null && onOpenOnWatch != null -> {
-                            WatchSetupAction(stringResource(Res.string.watch_setup_open_action)) {
-                                navigatingBack = false
-                                openSent = true
-                                onOpenOnWatch()
-                            }
+                            WatchSetupAction(
+                                label = stringResource(Res.string.watch_setup_open_action),
+                                onClick = {
+                                    prepareAction()
+                                    openSent = true
+                                    onOpenOnWatch()
+                                },
+                                enabled = !sendingRequest,
+                                busy = sendingRequest,
+                            )
                         }
 
                         status is WatchStatus.NotInstalled -> {
-                            WatchSetupAction(stringResource(Res.string.watch_setup_install_action), onInstall)
+                            WatchSetupAction(
+                                label = stringResource(Res.string.watch_setup_install_action),
+                                onClick = {
+                                    prepareAction()
+                                    localInstallSent = true
+                                    onInstall()
+                                },
+                                enabled = !sendingRequest,
+                                busy = sendingRequest,
+                            )
                         }
 
                         else -> {
-                            WatchSetupAction(stringResource(Res.string.watch_handoff_retry), onRetry)
+                            WatchSetupAction(
+                                label = stringResource(Res.string.watch_handoff_retry),
+                                onClick = {
+                                    prepareAction()
+                                    onRetry()
+                                },
+                            )
                         }
                     }
                     when {
@@ -1034,8 +1104,10 @@ private fun watchRequestFailureTitle(
 private fun WatchSetupAction(
     label: String,
     onClick: () -> Unit,
+    enabled: Boolean = true,
+    busy: Boolean = false,
 ) {
-    StepPrimaryButton(text = label, onClick = onClick)
+    StepPrimaryButton(text = label, onClick = onClick, enabled = enabled, busy = busy)
 }
 
 /**

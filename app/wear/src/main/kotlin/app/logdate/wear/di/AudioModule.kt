@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.VibratorManager
 import androidx.core.content.ContextCompat
+import app.logdate.client.device.AndroidAppInfoProvider
 import app.logdate.client.media.audio.AdtsToM4aRemuxer
 import app.logdate.client.media.audio.AndroidAudioDurationResolver
 import app.logdate.client.media.audio.AndroidAudioPlaybackManager
@@ -220,6 +221,7 @@ val wearAudioModule =
                 get(),
                 get(),
                 get(),
+                appVersion = runCatching { AndroidAppInfoProvider(get()).getAppInfo().versionName }.getOrNull(),
             )
         }
     }

@@ -31,6 +31,7 @@ class WearSettingsViewModel(
     private val locationSettingsRepository: LocationTrackingSettingsRepository,
     private val permissionManager: PermissionManager,
     private val locationTrackingManager: LocationTrackingManager,
+    private val appVersion: String? = null,
 ) : ViewModel() {
     private val locationPermissionGranted = MutableStateFlow(permissionManager.isPermissionGranted(PermissionType.LOCATION))
     private val isSyncingNow = MutableStateFlow(false)
@@ -54,6 +55,7 @@ class WearSettingsViewModel(
                 autoTagJournalEntries = location.autoTrackForJournalEntries,
                 backgroundLocationEnabled = location.backgroundTrackingEnabled,
                 locationCaptureMode = location.captureMode,
+                appVersion = appVersion,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WearSettingsUiState())
 
@@ -117,4 +119,5 @@ data class WearSettingsUiState(
     val autoTagJournalEntries: Boolean = true,
     val backgroundLocationEnabled: Boolean = false,
     val locationCaptureMode: LocationCaptureMode = LocationCaptureMode.PASSIVE,
+    val appVersion: String? = null,
 )

@@ -36,14 +36,14 @@ class PeerStateWatchSnapshotSource(
             val report = merger.merge(phone = null, watch = rawDocument).watch?.takeIf { accepts(nodeId, it) }
             val rawWatch = rawDocument?.watch
             val pingInfo = (ping as? WatchPingProbe.Supported)?.info
-            val watchVersion = rawWatch?.appVersionName ?: pingInfo?.appVersionName
+            val watchVersion = pingInfo?.appVersionName ?: rawWatch?.appVersionName
             val compatibility =
                 evaluateWearCompatibility(
                     localAppVersion = phoneVersion,
                     peerAppVersion = watchVersion,
-                    peerProtocolVersion = rawWatch?.protocolVersion ?: pingInfo?.protocolVersion,
-                    peerMinPeerProtocolVersion = rawWatch?.minPeerProtocolVersion ?: pingInfo?.minPeerProtocolVersion,
-                    peerSchemaUnsupported = unsupportedSchema != null,
+                    peerProtocolVersion = pingInfo?.protocolVersion ?: rawWatch?.protocolVersion,
+                    peerMinPeerProtocolVersion = pingInfo?.minPeerProtocolVersion ?: rawWatch?.minPeerProtocolVersion,
+                    peerSchemaUnsupported = unsupportedSchema != null && pingInfo == null,
                     legacyPeerPing = ping is WatchPingProbe.LegacyAck,
                 )
             WatchPeerSnapshot(

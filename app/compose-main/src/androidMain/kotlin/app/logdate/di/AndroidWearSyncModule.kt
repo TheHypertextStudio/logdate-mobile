@@ -163,7 +163,16 @@ internal val androidWearSyncModule: Module =
 
         single<app.logdate.client.sync.peer.removal.WatchRemovalAccess> {
             app.logdate.client.sync.v2.removal
-                .AndroidWatchRemovalAccess(androidContext(), get(), get(), get(), get(), get(), get())
+                .AndroidWatchRemovalAccess(
+                    context = androidContext(),
+                    manager = get(),
+                    peers = get(),
+                    states = get(),
+                    links = get(),
+                    sessions = get(),
+                    associations = get(),
+                    onRemoved = { nodeId -> get<WatchConnectionManager>().onWatchRemoved(nodeId) },
+                )
         }
         single<WatchDiagnosticsAccess> {
             val phoneVersion = runCatching { get<AppInfoProvider>().getAppInfo().versionName }.getOrNull()
