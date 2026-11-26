@@ -5,6 +5,7 @@ import app.logdate.shared.model.location.JourneyLeg
 import app.logdate.shared.model.location.LocationDayItem
 import app.logdate.shared.model.location.LocationObservation
 import app.logdate.shared.model.location.PlaceVisit
+import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.shared.model.location.TravelMode
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -26,20 +27,30 @@ import kotlin.math.sqrt
  * the same recordings always produce the same ids, and edits keyed to a sample keep finding it.
  */
 class ReconstructLocationDay(
-    private val inference: TravelModeInferenceProvider = RecordedTravelModeInferenceProvider(),
+    private val inference: TravelModeInferenceProvider = HybridTravelModeInferenceProvider(),
     private val parameters: HistoryReconstructionParameters = HistoryReconstructionParameters(),
 ) {
-    private val assembler = SegmentAssembler(parameters)
-
     operator fun invoke(observations: List<LocationObservation>): List<LocationDayItem> =
-        observations
-            .filter { it.hasValidCoordinates() }
+        invoke(observations, savedPlaces = emptyList(), includeMock = false)
+
+    operator fun invoke(
+        observations: List<LocationObservation>,
+        savedPlaces: List<SemanticPlace> = emptyList(),
+        includeMock: Boolean = false,
+    ): List<LocationDayItem> {
+        val assembler = SegmentAssembler(parameters, savedPlaces)
+        return observations
+            .filter { it.hasValidCoordinates() && (includeMock || !it.isMock) }
             .distinctBy { Triple(it.ownerId, it.deviceId, it.id) }
             .groupBy { it.ownerId to it.deviceId }
-            .flatMap { (_, source) -> reconstructSource(source.sortedWith(compareBy({ it.timestamp }, { it.id }))) }
+            .flatMap { (_, source) -> reconstructSource(source.sortedWith(compareBy({ it.timestamp }, { it.id })), assembler) }
             .sortedWith(compareBy({ it.start }, { it.id }))
+    }
 
-    private fun reconstructSource(source: List<LocationObservation>): List<LocationDayItem> {
+    private fun reconstructSource(
+        source: List<LocationObservation>,
+        assembler: SegmentAssembler,
+    ): List<LocationDayItem> {
         val preciseIds = preciseSamples(source, parameters)
         val segments = splitAtGaps(source)
         return buildList {
@@ -84,14 +95,97 @@ class ReconstructLocationDay(
         val timed = part.timed
         val first = timed.first()
         val id = "${first.ownerId}:${first.deviceId}:${first.id}"
-        val evidence = (part.precise + part.vague).map { it.id }
+        val allObs = part.precise + part.vague
+        val evidence = allObs.map { it.id }
+        val dominantZone = dominantTimeZoneId(allObs)
         if (!part.isVisit) {
             val route = part.precise.ifEmpty { part.vague }
             val mode = inference.infer(route).firstOrNull()?.mode ?: TravelMode.UNKNOWN
-            return JourneyLeg(id, first.timestamp, timed.last().timestamp, evidence, mode, route)
+            val smoothed = RouteSmoother.smooth(route, mode, parameters.routeSimplificationEpsilonMeters)
+            val distance = RouteSmoother.pathLengthMeters(smoothed)
+            return JourneyLeg(
+                id = id,
+                start = first.timestamp,
+                end = timed.last().timestamp,
+                evidenceIds = evidence,
+                mode = mode,
+                route = route,
+                smoothedRoute = smoothed,
+                distanceMeters = distance,
+                displayZoneId = dominantZone,
+                sourceDeviceId = first.deviceId,
+            )
         }
         val (latitude, longitude) = weightedCenter(part.anchors)
-        return PlaceVisit(id, first.timestamp, timed.last().timestamp, evidence, latitude, longitude, part.confirmed)
+        val uncertainty = computeUncertaintyRadiusMeters(part.anchors, latitude, longitude)
+        val confidence = computeVisitConfidence(first.timestamp, timed.last().timestamp, part.anchors, allObs)
+        return PlaceVisit(
+            id = id,
+            start = first.timestamp,
+            end = timed.last().timestamp,
+            evidenceIds = evidence,
+            latitude = latitude,
+            longitude = longitude,
+            confirmedStay = part.confirmed,
+            uncertaintyRadiusMeters = uncertainty,
+            confidence = confidence,
+            sampleCount = allObs.size,
+            displayZoneId = dominantZone,
+            sourceDeviceId = first.deviceId,
+        )
+    }
+
+    private fun dominantTimeZoneId(observations: List<LocationObservation>): String? =
+        observations
+            .mapNotNull { it.timeZoneId?.takeIf { zoneId -> zoneId.isNotBlank() } }
+            .groupingBy { it }
+            .eachCount()
+            .maxByOrNull { it.value }
+            ?.key
+
+    private fun computeUncertaintyRadiusMeters(
+        anchors: List<LocationObservation>,
+        centerLat: Double,
+        centerLon: Double,
+    ): Float {
+        val accuracies = anchors.mapNotNull { it.accuracyMeters }.sorted()
+        val medianAcc = accuracies.getOrNull(accuracies.size / 2) ?: 100f
+        val rmsSpread =
+            if (anchors.isEmpty()) {
+                0f
+            } else {
+                val meanSq =
+                    anchors.sumOf {
+                        val d = geographicDistance(centerLat, centerLon, it.latitude, it.longitude)
+                        d * d
+                    } / anchors.size
+                sqrt(meanSq).toFloat()
+            }
+        return maxOf(medianAcc, rmsSpread).coerceIn(10f, 1500f)
+    }
+
+    private fun computeVisitConfidence(
+        start: kotlin.time.Instant,
+        end: kotlin.time.Instant,
+        anchors: List<LocationObservation>,
+        allObs: List<LocationObservation>,
+    ): Float {
+        val durationMinutes = ((end - start).inWholeSeconds / 60.0).coerceAtLeast(0.0)
+        val durationScore = (durationMinutes / 30.0).coerceIn(0.0, 1.0)
+        val densityScore = (allObs.size / 8.0).coerceIn(0.0, 1.0)
+        val accuracies = anchors.mapNotNull { it.accuracyMeters }.sorted()
+        val medianAcc = accuracies.getOrNull(accuracies.size / 2)?.toDouble() ?: 100.0
+        val accuracyScore = (1.0 - ((medianAcc - 10.0) / 140.0)).coerceIn(0.0, 1.0)
+        val labelled = allObs.map { it.activity }.filter { it != TravelMode.UNKNOWN }
+        val stillnessAgreement =
+            if (labelled.isEmpty()) {
+                0.5
+            } else {
+                labelled.count { it == TravelMode.STILL }.toDouble() / labelled.size
+            }
+        return (0.30 * durationScore + 0.25 * densityScore + 0.30 * accuracyScore + 0.15 * stillnessAgreement)
+            .toFloat()
+            .coerceIn(0f, 1f)
     }
 
     /** Two visits with nothing recorded between them were still joined by some trip. */
@@ -106,9 +200,9 @@ class ReconstructLocationDay(
                     part.isVisit &&
                     previousItem is PlaceVisit &&
                     item is PlaceVisit &&
-                    previousItem.distanceTo(item) > parameters.stayRadiusMeters
+                    previousItem.distanceTo(item) > parameters.minimumCoreStayRadiusMeters
                 ) {
-                    add(connector(previous.timed.last(), part.timed.first()))
+                    add(connector(previous.timed.last(), part.timed.first(), previousItem, item))
                 }
                 add(item)
             }
@@ -117,16 +211,30 @@ class ReconstructLocationDay(
     private fun connector(
         previous: LocationObservation,
         next: LocationObservation,
+        previousVisit: PlaceVisit,
+        nextVisit: PlaceVisit,
     ): JourneyLeg {
         val connectorId = "journey:${previous.ownerId}:${previous.deviceId}:${previous.id}:${next.id}"
         // The inferred relation is editable without editing either endpoint visit.
-        return JourneyLeg(connectorId, previous.timestamp, next.timestamp, listOf("derived:$connectorId"), TravelMode.UNKNOWN, emptyList())
+        return JourneyLeg(
+            id = connectorId,
+            start = previous.timestamp,
+            end = next.timestamp,
+            evidenceIds = listOf("derived:$connectorId"),
+            mode = TravelMode.UNKNOWN,
+            route = emptyList(),
+            endpointCoordinates =
+                (previousVisit.latitude to previousVisit.longitude) to
+                    (nextVisit.latitude to nextVisit.longitude),
+            displayZoneId = previousVisit.displayZoneId ?: nextVisit.displayZoneId,
+            sourceDeviceId = previous.deviceId,
+        )
     }
 
     private fun PlaceVisit.distanceTo(other: PlaceVisit): Double = geographicDistance(latitude, longitude, other.latitude, other.longitude)
 
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
     }
 }
 

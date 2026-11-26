@@ -2,12 +2,22 @@ package app.logdate.client.domain.location.history.replay
 
 import app.logdate.client.domain.location.history.ReconstructLocationDay
 import app.logdate.client.domain.location.history.applyActivityEvidence
+import app.logdate.client.domain.location.history.fuseMultiDeviceItems
+import app.logdate.client.domain.location.history.geographicDistance
+import app.logdate.client.domain.location.history.resolveCaptureZone
+import app.logdate.shared.model.location.JourneyLeg
+import app.logdate.shared.model.location.LocationDayItem
+import app.logdate.shared.model.location.PlaceVisit
+import app.logdate.shared.model.location.TravelMode
+import kotlinx.datetime.TimeZone
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
 
 class GoldenLocationBenchmarkTest {
     private val json =
@@ -18,22 +28,92 @@ class GoldenLocationBenchmarkTest {
         }
 
     @Test
-    fun `v3 baseline benchmark measures current deficits across B01-B10`() {
+    fun `v4 reconstruction meets accuracy and mode thresholds across B01-B10`() {
         val scenarios = GoldenLocationCorpus.allScenarios()
         val reconstruct = ReconstructLocationDay()
+        val scenarioOutputs = mutableMapOf<String, List<LocationDayItem>>()
         val scores =
             scenarios.map { scenario ->
                 val enriched = applyActivityEvidence(scenario.observations, scenario.activities)
-                val items = reconstruct(enriched)
+                val reconstructed = reconstruct(enriched, savedPlaces = scenario.places)
+                val items =
+                    if (scenario.sourceDeviceId == "all") {
+                        val byDevice =
+                            reconstructed.groupBy { item ->
+                                when (item) {
+                                    is PlaceVisit -> item.sourceDeviceId ?: "phone-1"
+                                    is JourneyLeg -> item.sourceDeviceId ?: "phone-1"
+                                    else -> "phone-1"
+                                }
+                            }
+                        val windowStart = scenario.observations.minOf { it.timestamp } - 1.hours
+                        val windowEnd = scenario.observations.maxOf { it.timestamp } + 1.hours
+                        fuseMultiDeviceItems(byDevice, "phone-1", windowStart, windowEnd)
+                    } else {
+                        reconstructed
+                    }
+                scenarioOutputs[scenario.scenarioId] = items
                 scoreGoldenScenario(scenario, items)
             }
-        val report = BenchmarkSuiteReport("v3-baseline", scores)
+        val report = BenchmarkSuiteReport("v4-reconstruction", scores)
         println(formatBenchmarkReport(report))
 
         assertEquals(10, report.scenarios.size)
-        // Baseline metrics prove v3 drops accuracy on burst jumps (B01), 10m activity expiry (B02),
-        // quick coffee stops (B04), campus envelopes (B05), kinematic commute (B06), and mock GPS (B10).
-        assertTrue(report.stayPrecision < 1.0 || report.travelModeAccuracy < 0.9 || report.totalFalseBurstSplits > 0)
+        assertTrue(report.stayPrecision >= 0.95, "Expected stayPrecision >= 0.95, was ${report.stayPrecision}")
+        assertTrue(report.stayRecall >= 0.92, "Expected stayRecall >= 0.92, was ${report.stayRecall}")
+        assertTrue(report.boundaryMaeSeconds <= 90.0, "Expected boundaryMaeSeconds <= 90.0, was ${report.boundaryMaeSeconds}")
+        assertTrue(
+            report.medianCentroidErrorMeters <= 25.0,
+            "Expected medianCentroidErrorMeters <= 25.0, was ${report.medianCentroidErrorMeters}",
+        )
+        assertEquals(0, report.totalFalseBurstSplits, "Expected 0 false burst splits")
+        assertTrue(report.travelModeAccuracy >= 0.90, "Expected travelModeAccuracy >= 0.90, was ${report.travelModeAccuracy}")
+        assertTrue(
+            report.meanDistanceErrorFraction <= 0.08,
+            "Expected meanDistanceErrorFraction <= 0.08, was ${report.meanDistanceErrorFraction}",
+        )
+
+        val b01 = scores.first { it.scenarioId == "B01" }
+        assertEquals(1, b01.predictedStays)
+        assertTrue(b01.medianCentroidErrorMeters <= 20.0)
+
+        val b02 = scores.first { it.scenarioId == "B02" }
+        assertEquals(1, b02.matchedModes)
+        assertTrue(b02.journeyDistanceErrorsFraction.single() <= 0.05)
+
+        assertEquals(2, scores.first { it.scenarioId == "B03" }.predictedStays)
+
+        val b04Items = scenarioOutputs.getValue("B04")
+        assertEquals(1, b04Items.filterIsInstance<PlaceVisit>().count { it.confirmedStay })
+        assertEquals(listOf(TravelMode.WALKING, TravelMode.WALKING), b04Items.filterIsInstance<JourneyLeg>().map { it.mode })
+
+        assertEquals(1, scores.first { it.scenarioId == "B05" }.predictedStays)
+
+        val b06Modes = scenarioOutputs.getValue("B06").filterIsInstance<JourneyLeg>().map { it.mode }
+        assertEquals(listOf(TravelMode.WALKING, TravelMode.VEHICLE, TravelMode.WALKING), b06Modes)
+
+        val b07Scenario = scenarios.first { it.scenarioId == "B07" }
+        val (resolvedZone, multiZone) =
+            resolveCaptureZone(
+                b07Scenario.observations,
+                Instant.parse("2026-10-12T07:00:00Z"),
+                Instant.parse("2026-10-13T07:00:00Z"),
+                TimeZone.UTC,
+            )
+        assertEquals("America/Los_Angeles", resolvedZone.id)
+        assertTrue(multiZone)
+
+        assertEquals(3, scores.first { it.scenarioId == "B08" }.matchedStays)
+
+        val b09Visit = scenarioOutputs.getValue("B09").filterIsInstance<PlaceVisit>().single()
+        assertTrue(b09Visit.confirmedStay)
+        assertTrue(
+            geographicDistance(b09Visit.latitude, b09Visit.longitude, 37.7749, -122.4194) <= b09Visit.uncertaintyRadiusMeters,
+        )
+
+        val b10Visits = scenarioOutputs.getValue("B10").filterIsInstance<PlaceVisit>()
+        assertEquals(1, b10Visits.size)
+        assertTrue(b10Visits.single().evidenceIds.none { it.contains("mock") })
     }
 
     @Test

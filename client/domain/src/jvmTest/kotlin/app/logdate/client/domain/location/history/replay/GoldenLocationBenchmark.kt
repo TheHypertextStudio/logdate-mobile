@@ -256,8 +256,8 @@ internal object GoldenLocationCorpus {
     private fun b03AdjacentUrbanStops(): GoldenLocationVector {
         val (cafeLat, cafeLon) = offset(ORIGIN_LAT, ORIGIN_LON, 0.0, 0.0)
         val (bookLat, bookLon) = offset(ORIGIN_LAT, ORIGIN_LON, 0.0, 65.0)
-        val cafe = SemanticPlace("place-cafe", "Cedar Street Coffee", cafeLat, cafeLon, userConfirmed = true)
-        val bookstore = SemanticPlace("place-book", "Harbor Books", bookLat, bookLon, userConfirmed = true)
+        val cafe = SemanticPlace("place-cafe", "Cedar Street Coffee", cafeLat, cafeLon, userConfirmed = true, radiusMeters = 35.0)
+        val bookstore = SemanticPlace("place-book", "Harbor Books", bookLat, bookLon, userConfirmed = true, radiusMeters = 35.0)
 
         val cafeObs =
             (0..14).map { i ->
@@ -393,7 +393,7 @@ internal object GoldenLocationCorpus {
     }
 
     private fun b05CampusEnvelopeWalk(): GoldenLocationVector {
-        val campus = SemanticPlace("place-campus", "North Campus", ORIGIN_LAT, ORIGIN_LON, userConfirmed = true)
+        val campus = SemanticPlace("place-campus", "North Campus", ORIGIN_LAT, ORIGIN_LON, userConfirmed = true, radiusMeters = 350.0)
         val observations =
             (0..30).map { i ->
                 val angle = i * (2 * PI / 15.0)
@@ -758,7 +758,7 @@ internal fun scoreGoldenScenario(
         if (dominant != null && dominant.mode == expected.mode) {
             matchedModes++
         }
-        val actualDistance = overlapping.sumOf { leg -> pathLengthMeters(leg.route) }
+        val actualDistance = overlapping.sumOf { leg -> leg.distanceMeters.takeIf { it > 0.0 } ?: pathLengthMeters(leg.smoothedRoute) }
         if (expected.expectedDistanceMeters > 0.0 && overlapping.isNotEmpty()) {
             distanceErrors += abs(actualDistance - expected.expectedDistanceMeters) / expected.expectedDistanceMeters
         }

@@ -48,13 +48,19 @@ internal fun HistoryReconstructionParameters.isRecordingGap(
     return !placeable || distanceMeters(previous, next) > stayRadiusMeters + accuracyAllowanceMeters
 }
 
-internal fun LocationObservation.hasValidCoordinates(): Boolean =
-    latitude.isFinite() && longitude.isFinite() && latitude in -90.0..90.0 && longitude in -180.0..180.0
+internal fun LocationObservation.hasValidCoordinates(): Boolean {
+    val accuracy = accuracyMeters
+    return latitude.isFinite() &&
+        longitude.isFinite() &&
+        latitude in -90.0..90.0 &&
+        longitude in -180.0..180.0 &&
+        !(latitude == 0.0 && longitude == 0.0 && (accuracy == null || accuracy > 100f))
+}
 
 /**
  * Splits samples into precise ones, which may decide where someone was, and the rest. Unrated and
  * coarse fixes still count as evidence of when the phone was recording, but never move a visit.
- * A precise-looking fix that jumps away and straight back is a spike and is demoted as well.
+ * Precise-looking 1-to-3 sample bursts that jump away and straight back are demoted as well.
  *
  * With [acceptUnrated], fixes that never reported an accuracy count as precise. That is only for
  * recordings with nothing better, such as periodic background captures that kept no accuracy.
@@ -65,28 +71,59 @@ internal fun preciseSamples(
     acceptUnrated: Boolean = false,
 ): Set<String> {
     val candidates = samples.filter { parameters.isPrecise(it, acceptUnrated) }
-    return candidates
-        .filterIndexed { index, sample ->
-            val previous = candidates.getOrNull(index - 1)
-            val next = candidates.getOrNull(index + 1)
-            previous == null || next == null || !isSpike(previous, sample, next, parameters)
-        }.mapTo(mutableSetOf()) { it.id }
+    val excludedIds = mutableSetOf<String>()
+    for (windowSize in 3 downTo 1) {
+        var i = 1
+        while (i + windowSize < candidates.size) {
+            val pre = candidates[i - 1]
+            val post = candidates[i + windowSize]
+            val burst = candidates.subList(i, i + windowSize)
+            if (pre.id !in excludedIds &&
+                post.id !in excludedIds &&
+                burst.none { it.id in excludedIds } &&
+                isBurstOutlier(pre, burst, post, parameters)
+            ) {
+                burst.forEach { excludedIds += it.id }
+                i += windowSize
+            } else {
+                i++
+            }
+        }
+    }
+    return candidates.filterNot { it.id in excludedIds }.mapTo(mutableSetOf()) { it.id }
 }
 
-private fun isSpike(
+private fun isBurstOutlier(
     previous: LocationObservation,
-    sample: LocationObservation,
+    burst: List<LocationObservation>,
     next: LocationObservation,
     parameters: HistoryReconstructionParameters,
 ): Boolean {
-    if (sample.timestamp - previous.timestamp > parameters.maximumGap) return false
-    if (next.timestamp - sample.timestamp > parameters.maximumGap) return false
-    val away = distanceMeters(previous, sample)
-    val back = distanceMeters(sample, next)
-    val farFromBoth = maxOf(MINIMUM_SPIKE_METERS, 2.0 * (sample.accuracyMeters ?: 0f))
-    if (away > farFromBoth && back > farFromBoth && distanceMeters(previous, next) <= parameters.stayRadiusMeters) return true
-    return impliedSpeed(previous, sample) > parameters.implausibleSpeedMetersPerSecond &&
-        impliedSpeed(sample, next) > parameters.implausibleSpeedMetersPerSecond
+    val span = listOf(previous) + burst + listOf(next)
+    if (span.zipWithNext().any { (a, b) -> b.timestamp - a.timestamp > parameters.maximumGap }) return false
+    if (burst.last().timestamp - burst.first().timestamp > parameters.excursionTolerance) return false
+
+    val implausibleSpeed =
+        impliedSpeed(previous, burst.first()) > parameters.implausibleSpeedMetersPerSecond &&
+            impliedSpeed(burst.last(), next) > parameters.implausibleSpeedMetersPerSecond
+
+    if (distanceMeters(previous, next) > parameters.stayRadiusMeters) {
+        return burst.size == 1 && implausibleSpeed
+    }
+
+    val allFar =
+        burst.all { sample ->
+            val farFromBoth = maxOf(MINIMUM_SPIKE_METERS, 2.0 * (sample.accuracyMeters ?: 0f))
+            distanceMeters(previous, sample) > farFromBoth && distanceMeters(sample, next) > farFromBoth
+        }
+    if (!allFar) return false
+    if (burst.size == 1 || implausibleSpeed) return true
+
+    val anchorBaselineAccuracy = maxOf(previous.accuracyMeters ?: 15f, next.accuracyMeters ?: 15f)
+    return burst.all { sample ->
+        val sampleAccuracy = sample.accuracyMeters ?: 0f
+        sampleAccuracy >= 2.5f * anchorBaselineAccuracy && sample.activity !in MOVING_MODES
+    }
 }
 
 private fun impliedSpeed(

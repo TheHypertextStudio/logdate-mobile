@@ -33,4 +33,18 @@ data class HistoryReconstructionParameters(
     val neighborhoodMeters: Double = 250.0,
     /** A fix that implies travelling faster than this to get there and back is a measurement error. */
     val implausibleSpeedMetersPerSecond: Double = 70.0,
+    /** Shorter duration confirmed only when at least [quickStayMinimumSamples] precise fixes exist. */
+    val minimumQuickStay: Duration = 3.minutes,
+    /** Minimum anchor count to promote a [minimumQuickStay] stop into a confirmed visit. */
+    val quickStayMinimumSamples: Int = 3,
+    /** Maximum median GPS accuracy allowed when promoting a quick stay under [minimumStay]. */
+    val quickStayMaxAccuracyMeters: Float = 25f,
+    /** Floor for dynamic accuracy-scaled stay clustering radius. */
+    val minimumCoreStayRadiusMeters: Double = 55.0,
+    /** Upper cap when adopting a user-confirmed place's custom radius as a stay envelope. */
+    val maximumSavedPlaceRadiusMeters: Double = 500.0,
+    /** Straightness ratio above which a drifting stay candidate splits into a journey. */
+    val driftStraightnessThreshold: Double = 0.65,
+    /** Tolerance in meters used by Douglas-Peucker polyline simplification on smoothed routes. */
+    val routeSimplificationEpsilonMeters: Double = 5.0,
 )

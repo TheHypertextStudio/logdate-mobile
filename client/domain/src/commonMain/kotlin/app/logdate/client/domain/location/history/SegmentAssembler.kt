@@ -1,6 +1,7 @@
 package app.logdate.client.domain.location.history
 
 import app.logdate.shared.model.location.LocationObservation
+import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.shared.model.location.TravelMode
 import kotlin.time.Duration
 
@@ -27,8 +28,9 @@ internal data class SegmentPart(
  */
 internal class SegmentAssembler(
     private val parameters: HistoryReconstructionParameters,
+    savedPlaces: List<SemanticPlace> = emptyList(),
 ) {
-    private val detector = StayDetector(parameters)
+    private val detector = StayDetector(parameters, savedPlaces)
 
     fun assemble(
         segment: List<LocationObservation>,
@@ -47,8 +49,28 @@ internal class SegmentAssembler(
         precise: Boolean,
     ): SegmentPart {
         val center = weightedCenter(samples)
-        val compact = samples.all { detector.belongs(center, it) || (!precise && center.distanceTo(it) <= (it.accuracyMeters ?: 0f)) }
-        val lasting = samples.size >= 2 && samples.last().timestamp - samples.first().timestamp >= parameters.minimumStay
+        val effectiveRadius =
+            if (precise) {
+                detector.effectiveRadius(samples, center)
+            } else {
+                parameters.stayRadiusMeters
+            }
+        val envelope = detector.matchingEnvelope(center)
+        val compact =
+            samples.all {
+                detector.belongs(center, it, effectiveRadius, envelope) ||
+                    (!precise && center.distanceTo(it) <= (it.accuracyMeters ?: 0f))
+            }
+        val duration = if (samples.size >= 2) samples.last().timestamp - samples.first().timestamp else Duration.ZERO
+        val medianAcc = samples.mapNotNull { it.accuracyMeters }.sorted().let { it.getOrNull(it.size / 2) }
+        val lasting =
+            (samples.size >= 2 && duration >= parameters.minimumStay) ||
+                (
+                    duration >= parameters.minimumQuickStay &&
+                        samples.size >= parameters.quickStayMinimumSamples &&
+                        medianAcc != null &&
+                        medianAcc <= parameters.quickStayMaxAccuracyMeters
+                )
         val isVisit = compact && !showsMovement(samples)
         return when {
             precise -> SegmentPart(isVisit, samples, confirmed = isVisit && lasting)
@@ -65,11 +87,14 @@ internal class SegmentAssembler(
         var first = 0
         while (first < stays.size) {
             val center = stays[first].center(points)
+            val firstAnchors = stays[first].anchors.map(points::get)
+            val effectiveRadius = detector.effectiveRadius(firstAnchors, center)
+            val neighborhood = maxOf(parameters.neighborhoodMeters, effectiveRadius * 1.5)
             val sameSpot = mutableListOf(stays[first])
             for (index in first + 1 until stays.size) {
                 val between = points.subList(sameSpot.last().range.last + 1, stays[index].range.first)
-                if (between.any { center.distanceTo(it) > parameters.neighborhoodMeters }) break
-                if (center.distanceTo(stays[index].center(points)) <= parameters.stayRadiusMeters) sameSpot += stays[index]
+                if (between.any { center.distanceTo(it) > neighborhood }) break
+                if (center.distanceTo(stays[index].center(points)) <= effectiveRadius) sameSpot += stays[index]
             }
             joined += DetectedStay(sameSpot.first().range.first..sameSpot.last().range.last, sameSpot.flatMap { it.anchors })
             first = stays.indexOf(sameSpot.last()) + 1
@@ -108,8 +133,10 @@ internal class SegmentAssembler(
         fromStart: Boolean,
     ): Pair<List<LocationObservation>, List<LocationObservation>> {
         val center = weightedCenter(visit.anchors)
+        val radius = detector.effectiveRadius(visit.anchors, center)
+        val envelope = detector.matchingEnvelope(center)
         val ordered = if (fromStart) samples else samples.asReversed()
-        val kept = ordered.takeWhile { detector.belongs(center, it) }
+        val kept = ordered.takeWhile { detector.belongs(center, it, radius, envelope) }
         val rest = ordered.drop(kept.size)
         return if (fromStart) kept to rest else kept.asReversed() to rest.asReversed()
     }
@@ -125,8 +152,15 @@ internal class SegmentAssembler(
         before: Boolean,
     ): Pair<SegmentPart, List<LocationObservation>> {
         val center = weightedCenter(visit.anchors)
+        val radius = detector.effectiveRadius(visit.anchors, center)
+        val neighborhood = maxOf(parameters.neighborhoodMeters, radius * 1.5)
         val (kept, rest) = peel(edge, visit, fromStart = !before)
-        val stayedNearby = rest.all { center.distanceTo(it) <= parameters.neighborhoodMeters } && !showsMovement(rest)
+        val insideBuilding =
+            rest.all { center.distanceTo(it) <= parameters.stayRadiusMeters } &&
+                rest.size <= 3
+        val stayedNearby =
+            insideBuilding ||
+                (rest.all { center.distanceTo(it) <= neighborhood } && !showsMovement(rest))
         val stray = rest.size == 1 && !showsMovement(rest)
         val joined = if (stayedNearby) edge else kept
         val precise = if (before) joined + visit.precise else visit.precise + joined
@@ -134,18 +168,69 @@ internal class SegmentAssembler(
         return joinedVisit to if (stayedNearby || stray) emptyList() else rest
     }
 
-    /** Splits a journey where the recorded way of travelling changes, such as walking to the car. */
+    /** Splits a journey where the recorded way of travelling or sustained kinematic speed regime changes. */
     private fun splitJourney(part: SegmentPart): List<SegmentPart> {
-        if (part.isVisit || part.precise.isEmpty()) return listOf(part)
-        val legs = mutableListOf(mutableListOf<LocationObservation>())
-        var mode: TravelMode? = null
-        part.precise.forEach { sample ->
-            val moving = sample.activity.takeIf { it in MOVING_MODES }
-            if (moving != null && mode != null && moving != mode && legs.last().isNotEmpty()) legs += mutableListOf<LocationObservation>()
-            if (moving != null) mode = moving
-            legs.last() += sample
+        if (part.isVisit || part.precise.size < 2) return listOf(part)
+        val hasLabelledTransitions =
+            part.precise
+                .mapNotNull { it.activity.takeIf { mode -> mode in MOVING_MODES } }
+                .distinct()
+                .size > 1 ||
+                part.precise.any { it.activity in MOVING_MODES }
+        if (hasLabelledTransitions) {
+            val legs = mutableListOf(mutableListOf<LocationObservation>())
+            var mode: TravelMode? = null
+            part.precise.forEach { sample ->
+                val moving = sample.activity.takeIf { it in MOVING_MODES }
+                if (moving != null && mode != null && moving != mode && legs.last().isNotEmpty()) {
+                    legs += mutableListOf<LocationObservation>()
+                }
+                if (moving != null) mode = moving
+                legs.last() += sample
+            }
+            return legs.map { SegmentPart(false, it) }
         }
-        return legs.map { SegmentPart(false, it) }
+        return splitByKinematicSpeed(part.precise)
+    }
+
+    private fun splitByKinematicSpeed(samples: List<LocationObservation>): List<SegmentPart> {
+        if (samples.size < 6) return listOf(SegmentPart(false, samples))
+        val instantModes =
+            samples.indices.map { index ->
+                val sampleSpeed = samples[index].speedMetersPerSecond?.toDouble()
+                val speed =
+                    sampleSpeed ?: run {
+                        val a = samples.getOrNull(index - 1) ?: samples[index]
+                        val b = samples.getOrNull(index + 1) ?: samples[index]
+                        val dt = (b.timestamp - a.timestamp).inWholeMilliseconds / 1000.0
+                        if (dt >= 2.0) distanceMeters(a, b) / dt else 0.0
+                    }
+                when {
+                    speed >= 8.0 -> TravelMode.VEHICLE
+                    speed in 3.5..<8.0 -> TravelMode.CYCLING
+                    speed in 0.4..<3.5 -> TravelMode.WALKING
+                    else -> null
+                }
+            }
+        val legs = mutableListOf(mutableListOf<LocationObservation>())
+        var activeMode: TravelMode? = null
+        var i = 0
+        while (i < samples.size) {
+            val mode = instantModes[i]
+            if (activeMode == null && mode != null) {
+                activeMode = mode
+            } else if (mode != null && mode != activeMode && legs.last().size >= 3) {
+                // Split only when at least 3 consecutive points sustain the new speed regime.
+                val upcoming = instantModes.drop(i).take(3)
+                if (upcoming.size == 3 && upcoming.all { it == mode }) {
+                    legs += mutableListOf<LocationObservation>()
+                    activeMode = mode
+                }
+            }
+            legs.last() += samples[i]
+            i++
+        }
+        return legs.filter { it.isNotEmpty() }.map { SegmentPart(false, it) }
     }
 
     /** Hands each imprecise sample to the part it was recorded during, or the nearest one in time. */

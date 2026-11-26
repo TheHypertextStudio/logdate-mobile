@@ -50,6 +50,22 @@ internal class HistoryBoundaryReader(
         for ((device, points) in observations.groupBy { it.deviceId }) {
             val validPoints = points.filter { it.validCoordinates() }
             if (validPoints.isEmpty()) continue
+            val earliestObservation = validPoints.minBy { it.timestamp }
+            try {
+                allActivities +=
+                    readPrecedingActivityCarryIn(
+                        owner = owner,
+                        origin = origin,
+                        localDevice = localDevice,
+                        device = device,
+                        before = earliestObservation.timestamp + 1.milliseconds,
+                        deletedActivities = deletedActivities,
+                    )
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                activityFailed = true
+                Napier.w("Preceding activity carry-in is unavailable", error)
+            }
             var next = applyActivityEvidence(validPoints, allActivities).minWith(compareBy({ it.timestamp }, { it.id }))
             val continuity = ContinuityTracker(parameters, next)
             var cursorTime = next.timestamp
@@ -116,6 +132,40 @@ internal class HistoryBoundaryReader(
             .distinctBy { it.id }
             .sortedWith(compareByDescending<LocationObservation> { it.timestamp }.thenByDescending { it.id })
             .take(PAGE_SIZE)
+    }
+
+    private suspend fun readPrecedingActivityCarryIn(
+        owner: String,
+        origin: String,
+        localDevice: String,
+        device: String,
+        before: Instant,
+        deletedActivities: Set<String>,
+    ): List<ActivityObservation> {
+        val localLatest =
+            listOfNotNull(
+                activity?.latestBefore(owner, device, before),
+                if (device == localDevice) activity?.latestBefore("default_user", device, before) else null,
+            ).maxByOrNull { it.timestamp }?.let {
+                ActivityObservation(
+                    it.id,
+                    owner,
+                    it.deviceId,
+                    it.timestamp,
+                    it.activityType,
+                    it.transitionType,
+                    it.timeZoneId,
+                )
+            }
+        val remoteLatest =
+            store
+                .latestActivityBefore(owner, origin, device, before.toEpochMilliseconds())
+                ?.let { (decode(it) as? HistoryPayload.Activity)?.value }
+        return listOfNotNull(localLatest, remoteLatest)
+            .filter { it.ownerId == owner && it.deviceId == device && activityHistoryRecordId(it.id) !in deletedActivities }
+            .distinctBy { Triple(it.ownerId, it.deviceId, it.id) }
+            .sortedBy { it.timestamp }
+            .takeLast(1)
     }
 
     private suspend fun readActivities(

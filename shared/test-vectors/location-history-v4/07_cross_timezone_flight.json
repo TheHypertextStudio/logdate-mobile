@@ -21,7 +21,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-1",
@@ -36,7 +40,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-2",
@@ -51,7 +59,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-3",
@@ -66,7 +78,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-4",
@@ -81,7 +97,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-5",
@@ -96,7 +116,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-6",
@@ -111,7 +135,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-7",
@@ -126,7 +154,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-8",
@@ -141,7 +173,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-9",
@@ -156,7 +192,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-10",
@@ -171,7 +211,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-11",
@@ -186,7 +230,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-la-12",
@@ -201,7 +249,11 @@
             "activity": "STILL",
             "timeZoneId": "America/Los_Angeles",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-0",
@@ -216,7 +268,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-1",
@@ -231,7 +287,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-2",
@@ -246,7 +306,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-3",
@@ -261,7 +325,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-4",
@@ -276,7 +344,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-5",
@@ -291,7 +363,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-6",
@@ -306,7 +382,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-7",
@@ -321,7 +401,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-8",
@@ -336,7 +420,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-9",
@@ -351,7 +439,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-10",
@@ -366,7 +458,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-11",
@@ -381,7 +477,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         },
         {
             "id": "b07-ny-12",
@@ -396,7 +496,11 @@
             "activity": "STILL",
             "timeZoneId": "America/New_York",
             "source": "FOREGROUND_STREAM",
-            "isMock": false
+            "isMock": false,
+            "provider": null,
+            "speedAccuracyMetersPerSecond": null,
+            "verticalAccuracyMeters": null,
+            "elapsedRealtimeNanos": null
         }
     ],
     "corrections": [],
