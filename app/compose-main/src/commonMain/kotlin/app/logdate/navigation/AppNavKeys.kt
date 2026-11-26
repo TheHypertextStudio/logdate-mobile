@@ -55,8 +55,10 @@ import app.logdate.feature.core.settings.navigation.TimelineSettingsRoute
 import app.logdate.feature.core.settings.navigation.TranscriptionSettingsRoute
 import app.logdate.feature.core.settings.navigation.VoiceNotesSettingsRoute
 import app.logdate.feature.core.settings.navigation.WatchCheckConnectionRoute
+import app.logdate.feature.core.settings.navigation.WatchLibraryRoute
 import app.logdate.feature.core.settings.navigation.WatchMicrophoneRoute
 import app.logdate.feature.core.settings.navigation.WatchNotificationSettingsRoute
+import app.logdate.feature.core.settings.navigation.WatchRemovalRoute
 import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
 import app.logdate.feature.core.settings.navigation.WatchTilesRoute
 import app.logdate.feature.core.settings.navigation.WatchTroubleshootingRoute
@@ -192,11 +194,8 @@ val appNavSavedStateConfiguration: SavedStateConfiguration =
                     subclass(PersonDetailRoute::class, PersonDetailRoute.serializer())
                     subclass(WatchSettingsRoute::class, WatchSettingsRoute.serializer())
                     subclass(WatchTilesRoute::class, WatchTilesRoute.serializer())
-                    subclass(
-                        app.logdate.feature.core.settings.navigation.WatchRemovalRoute::class,
-                        app.logdate.feature.core.settings.navigation.WatchRemovalRoute
-                            .serializer(),
-                    )
+                    subclass(WatchRemovalRoute::class, WatchRemovalRoute.serializer())
+                    subclass(WatchLibraryRoute::class, WatchLibraryRoute.serializer())
                     subclass(WatchCheckConnectionRoute::class, WatchCheckConnectionRoute.serializer())
                     subclass(WatchMicrophoneRoute::class, WatchMicrophoneRoute.serializer())
                     subclass(WatchHandoffRoute::class, WatchHandoffRoute.serializer())

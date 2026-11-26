@@ -18,6 +18,14 @@ import app.logdate.feature.core.settings.navigation.SignInMethodsRoute
 import app.logdate.feature.core.settings.navigation.SoundRecognitionSettingsRoute
 import app.logdate.feature.core.settings.navigation.TranscriptionSettingsRoute
 import app.logdate.feature.core.settings.navigation.VoiceNotesSettingsRoute
+import app.logdate.feature.core.settings.navigation.WatchCheckConnectionRoute
+import app.logdate.feature.core.settings.navigation.WatchLibraryRoute
+import app.logdate.feature.core.settings.navigation.WatchMicrophoneRoute
+import app.logdate.feature.core.settings.navigation.WatchNotificationSettingsRoute
+import app.logdate.feature.core.settings.navigation.WatchRemovalRoute
+import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
+import app.logdate.feature.core.settings.navigation.WatchTilesRoute
+import app.logdate.feature.core.settings.navigation.WatchTroubleshootingRoute
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlin.test.Test
@@ -77,5 +85,28 @@ abstract class SettingsNavigationStateTest {
         val restored = decodeFromSavedState(serializer, saved, appNavSavedStateConfiguration)
 
         assertEquals(stack, restored)
+    }
+
+    @Test
+    fun `watch settings back stacks survive saved state restoration`() {
+        val destinations =
+            listOf(
+                WatchTilesRoute,
+                WatchRemovalRoute,
+                WatchLibraryRoute,
+                WatchCheckConnectionRoute,
+                WatchMicrophoneRoute,
+                WatchNotificationSettingsRoute,
+                WatchTroubleshootingRoute,
+            )
+        for (destination in destinations) {
+            val stack: List<NavKey> = listOf(HomeRoute, SettingsRoute(), WatchSettingsRoute, destination)
+            val serializer = ListSerializer(PolymorphicSerializer(NavKey::class))
+
+            val saved = encodeToSavedState(serializer, stack, appNavSavedStateConfiguration)
+            val restored = decodeFromSavedState(serializer, saved, appNavSavedStateConfiguration)
+
+            assertEquals(stack, restored, destination.toString())
+        }
     }
 }

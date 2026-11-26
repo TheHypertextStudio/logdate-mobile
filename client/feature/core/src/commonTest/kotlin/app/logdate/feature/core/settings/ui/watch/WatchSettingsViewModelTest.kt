@@ -241,6 +241,36 @@ class WatchSettingsViewModelTest {
             assertEquals(false, viewModel.refreshing.value)
         }
 
+    @Test
+    fun `failed retry after sent install clears installRequestSent`() =
+        runTest {
+            var calls = 0
+            val viewModel =
+                WatchSettingsViewModel(
+                    connectionManager =
+                        FakeWatchConnectionManager(
+                            installAction = {
+                                calls++
+                                if (calls == 1) {
+                                    WatchRequestResult.Sent
+                                } else {
+                                    WatchRequestResult.Failed(WatchRequestFailure.WATCH_DID_NOT_RESPOND)
+                                }
+                            },
+                        ),
+                    settingsRepository = FakeWatchSettingsRepository(),
+                )
+
+            viewModel.installAppOnWatch()
+            advanceUntilIdle()
+            assertEquals(true, viewModel.installRequestSent.value)
+
+            viewModel.installAppOnWatch()
+            advanceUntilIdle()
+            assertEquals(false, viewModel.installRequestSent.value)
+            assertEquals(WatchRequestFailure.WATCH_DID_NOT_RESPOND, viewModel.requestFailure.value)
+        }
+
     private class FakeWatchConnectionManager(
         initialState: WatchConnectionState = WatchConnectionState.Loading,
         private val installResult: WatchRequestResult = WatchRequestResult.Sent,

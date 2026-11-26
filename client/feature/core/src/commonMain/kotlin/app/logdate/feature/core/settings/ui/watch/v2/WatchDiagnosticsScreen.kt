@@ -45,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,6 +56,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.logdate.feature.core.settings.ui.watch.WatchSystemSetupButton
 import app.logdate.feature.core.settings.ui.watch.messageResource
 import app.logdate.ui.common.MaterialContainer
@@ -127,6 +129,11 @@ fun WatchCheckConnectionScreen(
     val state by model.state.collectAsState()
     val busy by model.busy.collectAsState()
     val phoneStoreLauncher = rememberPhonePlayStoreLauncher()
+    var hasPaused by remember { mutableStateOf(false) }
+    LifecycleResumeEffect(model) {
+        if (hasPaused) model.check()
+        onPauseOrDispose { hasPaused = true }
+    }
     WatchDiagnosticsContent(
         state = state,
         busy = busy,

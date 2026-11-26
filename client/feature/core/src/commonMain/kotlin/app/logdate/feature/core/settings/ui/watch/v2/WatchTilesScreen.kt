@@ -213,12 +213,13 @@ fun WatchMicrophoneScreen(
     onBack: () -> Unit,
     onOpenWatch: () -> Unit,
     requestFailure: WatchRequestFailure? = null,
+    sendingRequest: Boolean = false,
 ) {
     SettingsScaffold(title = stringResource(Res.string.watch_v2_microphone), onBack = onBack) {
         item {
             MaterialContainer(Modifier.padding(horizontal = Spacing.lg)) {
                 Text(stringResource(Res.string.watch_v2_microphone_fix), Modifier.padding(Spacing.md))
-                TextButton(onClick = onOpenWatch) { Text(stringResource(Res.string.watch_v2_fix_open)) }
+                TextButton(onClick = onOpenWatch, enabled = !sendingRequest) { Text(stringResource(Res.string.watch_v2_fix_open)) }
                 requestFailure?.let { WatchRequestFailureMessage(it, Modifier.padding(Spacing.md)) }
             }
         }

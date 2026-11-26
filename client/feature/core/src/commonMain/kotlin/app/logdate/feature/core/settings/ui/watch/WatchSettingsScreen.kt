@@ -18,9 +18,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.domain.watch.SharedPreferenceKey
+import app.logdate.feature.core.settings.ui.watch.v2.SearchingPicture
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPage
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionPreferencesViewModel
 import app.logdate.feature.core.settings.ui.watch.v2.WatchCompanionSections
+import app.logdate.feature.core.settings.ui.watch.v2.WatchFlowScaffold
 import app.logdate.ui.adaptive.FoldableBookLayout
 import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold
@@ -29,6 +31,7 @@ import app.logdate.ui.theme.Spacing
 import app.logdate.ui.watch.rememberPhonePlayStoreLauncher
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_help
+import logdate.client.feature.core.generated.resources.watch_loading
 import logdate.client.feature.core.generated.resources.watch_notifications
 import logdate.client.feature.core.generated.resources.watch_notifications_description
 import logdate.client.feature.core.generated.resources.watch_notifications_title
@@ -67,7 +70,16 @@ fun WatchSettingsScreen(
         onPauseOrDispose {}
     }
 
-    val useRedesign = redesign ?: return
+    val useRedesign = redesign
+    if (useRedesign == null) {
+        WatchFlowScaffold(
+            title = stringResource(Res.string.watch_loading),
+            onBack = onBack,
+            modifier = modifier.fillMaxSize(),
+            picture = { SearchingPicture(it) },
+        ) {}
+        return
+    }
     if (useRedesign) {
         WatchCompanionPage(
             status,

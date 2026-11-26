@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.NavKey
 import app.logdate.feature.core.navigation.BaseRoute
+import app.logdate.feature.core.settings.navigation.WatchSettingsRoute
 import app.logdate.feature.editor.navigation.EntryEditorRoute
 import app.logdate.feature.editor.navigation.RecordingEditorDestination
 import app.logdate.feature.onboarding.navigation.OnboardingStart
@@ -59,6 +60,7 @@ private fun openPendingTarget(
     backStack: MutableList<NavKey>,
     target: NavKey,
 ) {
+    if (target is WatchSettingsRoute && backStack.lastOrNull() == WatchSettingsRoute) return
     if (target is EntryEditorRoute && target.resumeRecording) {
         RecordingEditorDestination.open(backStack, target)
     } else {

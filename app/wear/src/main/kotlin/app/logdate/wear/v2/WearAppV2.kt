@@ -113,6 +113,9 @@ fun WearAppV2(
         }
     }
     val open: (WearRoute) -> Unit = { route -> if (backStack.lastOrNull() != route) backStack.add(route) }
+    val close: (WearRoute) -> Unit = { route ->
+        if (backStack.size > 1 && backStack.lastOrNull() == route) backStack.removeAt(backStack.lastIndex)
+    }
     PermissionRequests(recorder, marker)
     WatchAmbientScope(enabled = recorderState is RecorderState.Live) {
         LogDateWearTheme {
@@ -120,7 +123,7 @@ fun WearAppV2(
                 AppScaffold(modifier = Modifier.testTag(WearAppV2Tags.SHELL)) {
                     NavDisplay(
                         backStack = backStack,
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
                         entryDecorators =
                             listOf(
                                 rememberSaveableStateHolderNavEntryDecorator<NavKey>(),
@@ -135,15 +138,15 @@ fun WearAppV2(
                                 entry<WearRoute.Flow> { FlowEntry(navigate = open) }
                                 entry<WearRoute.Memories> { MemoriesEntry(navigate = open) }
                                 entry<WearRoute.Settings> { SettingsEntry() }
-                                entry<WearRoute.Moment> { route -> MomentEntry(route.id, onClose = { backStack.removeLastOrNull() }) }
+                                entry<WearRoute.Moment> { route -> MomentEntry(route.id, onClose = { close(route) }) }
                                 entry<WearRoute.Archive> { ArchiveEntry(navigate = open) }
                                 entry<WearRoute.CaptureSheet> {
                                     CaptureSheetEntry(
                                         onOpenPhoneCamera = { open(WearRoute.PhoneCamera) },
-                                        onDone = { backStack.removeLastOrNull() },
+                                        onDone = { close(WearRoute.CaptureSheet) },
                                     )
                                 }
-                                entry<WearRoute.PhoneCamera> { PhoneCameraEntry(onDone = { backStack.removeLastOrNull() }) }
+                                entry<WearRoute.PhoneCamera> { PhoneCameraEntry(onDone = { close(WearRoute.PhoneCamera) }) }
                             },
                     )
                 }
