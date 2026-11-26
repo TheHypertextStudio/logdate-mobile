@@ -10,9 +10,12 @@ import app.logdate.shared.model.location.PlaceVisit
 import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.shared.model.location.TravelMode
 import app.logdate.ui.timeline.MomentAudioUiState
-import app.logdate.util.localTime
 import app.logdate.util.toReadableDateShort
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.Padding
+import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import logdate.client.feature.location.timeline.generated.resources.Res
 import logdate.client.feature.location.timeline.generated.resources.history_add_missing_visit_hint
@@ -42,16 +45,25 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.time.Instant
 
-internal fun LocationDayItem.toHistoryUi(notes: List<JournalNote>): HistoryItemUi =
+internal fun LocationDayItem.toHistoryUi(
+    notes: List<JournalNote>,
+    fallbackZone: TimeZone = TimeZone.currentSystemDefault(),
+): HistoryItemUi =
     when (this) {
         is PlaceVisit -> {
+            val zone = resolveZone(displayZoneId, fallbackZone)
             HistoryItemUi(
                 id,
                 HistoryItemKind.Visit,
                 place?.name?.toUiText()
                     ?: (if (confirmedStay) Res.string.history_place_you_visited else Res.string.history_location_recorded).toUiText(),
-                if (confirmedStay) historyTimeRange().toUiText() else Res.string.history_around_time.toUiText(start.localTime),
+                if (confirmedStay) {
+                    historyTimeRange(zone).toUiText()
+                } else {
+                    Res.string.history_around_time.toUiText(start.formatLocalTime(zone))
+                },
                 place?.locality.orEmpty().toUiText(),
                 notes.filter { it.uid.toString() in memoryIds }.map { it.toHistoryMemory() },
                 isApproximate = !confirmedStay,
@@ -59,15 +71,16 @@ internal fun LocationDayItem.toHistoryUi(notes: List<JournalNote>): HistoryItemU
         }
 
         is JourneyLeg -> {
+            val zone = resolveZone(displayZoneId, fallbackZone)
             HistoryItemUi(
                 id,
                 HistoryItemKind.Journey,
                 mode.humanName().toUiText(),
-                historyTimeRange().toUiText(),
+                historyTimeRange(zone).toUiText(),
                 if (end > start) {
                     Res.string.history_journey_minutes.toUiText((end - start).inWholeMinutes)
                 } else {
-                    Res.string.history_around_time.toUiText(start.localTime)
+                    Res.string.history_around_time.toUiText(start.formatLocalTime(zone))
                 },
             )
         }
@@ -77,20 +90,35 @@ internal fun LocationDayItem.toHistoryUi(notes: List<JournalNote>): HistoryItemU
                 id,
                 HistoryItemKind.Gap,
                 Res.string.history_not_recorded.toUiText(),
-                historyTimeRange().toUiText(),
+                historyTimeRange(fallbackZone).toUiText(),
                 Res.string.history_add_missing_visit_hint.toUiText(),
             )
         }
     }
 
-private fun LocationDayItem.historyTimeRange(): String {
-    val zone = TimeZone.currentSystemDefault()
-    return if (start.toLocalDateTime(zone).date == end.toLocalDateTime(zone).date) {
-        "${start.localTime}–${end.localTime}"
+private fun resolveZone(
+    zoneId: String?,
+    fallback: TimeZone,
+): TimeZone = zoneId?.let { runCatching { TimeZone.of(it) }.getOrNull() } ?: fallback
+
+// Matches app.logdate.util.localTime, but in the visit's own zone rather than the device's.
+private fun Instant.formatLocalTime(zone: TimeZone): String =
+    toLocalDateTime(zone).time.format(
+        LocalTime.Format {
+            amPmHour(padding = Padding.ZERO)
+            char(':')
+            minute()
+            char(' ')
+            amPmMarker("a.m.", "p.m.")
+        },
+    )
+
+private fun LocationDayItem.historyTimeRange(zone: TimeZone): String =
+    if (start.toLocalDateTime(zone).date == end.toLocalDateTime(zone).date) {
+        "${start.formatLocalTime(zone)}–${end.formatLocalTime(zone)}"
     } else {
-        "${start.toReadableDateShort()}, ${start.localTime}–${end.toReadableDateShort()}, ${end.localTime}"
+        "${start.toReadableDateShort()}, ${start.formatLocalTime(zone)}–${end.toReadableDateShort()}, ${end.formatLocalTime(zone)}"
     }
-}
 
 internal fun TravelMode.humanName(): StringResource =
     when (this) {

@@ -41,12 +41,14 @@ class ApplyHistoryEdits {
             val end = unique[HistoryField.END]?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: item.end
             val validStart = if (start <= end) start else item.start
             val validEnd = if (start <= end) end else item.end
+            val explicitPlace = unique[HistoryField.PLACE]?.let { id -> places.firstOrNull { it.id == id } }
+            val suggestedPlace = unique[HistoryField.SUGGESTED_PLACE]?.let { id -> places.firstOrNull { it.id == id } }
             when (item) {
                 is PlaceVisit -> {
                     item.copy(
                         start = validStart,
                         end = validEnd,
-                        place = places.firstOrNull { it.id == unique[HistoryField.PLACE] } ?: item.place,
+                        place = explicitPlace ?: item.place ?: suggestedPlace,
                     )
                 }
 

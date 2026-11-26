@@ -60,14 +60,26 @@ class HumanLocationHistoryViewModel(
     private val savedState: SavedStateHandle = SavedStateHandle(),
     private val nearbyPlaces: SuggestNearbyHistoryPlacesUseCase? = null,
 ) : ViewModel() {
-    private val zone = TimeZone.currentSystemDefault()
+    private fun currentZone(): TimeZone = TimeZone.currentSystemDefault()
+
     var date: LocalDate =
         savedState.get<String>("historyDate")?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
             ?: Clock.System
                 .now()
-                .toLocalDateTime(zone)
+                .toLocalDateTime(currentZone())
                 .date
         private set
+
+    private var observedZoneId: String = currentZone().id
+
+    fun refreshTimeZoneIfChanged() {
+        val activeZone = currentZone()
+        if (activeZone.id != observedZoneId) {
+            observedZoneId = activeZone.id
+            observe()
+        }
+    }
+
     private val mutableState =
         MutableStateFlow(
             HumanLocationHistoryState(
@@ -331,6 +343,8 @@ class HumanLocationHistoryViewModel(
             viewModelScope.launch {
                 try {
                     val first = if (state.value.tab == HistoryTab.Places) date.minus(DatePeriod(days = rangeDays - 1)) else date
+                    val zone = currentZone()
+                    observedZoneId = zone.id
                     combine(history.observeRange(first, date, selectedSource, zone), settings.observeSettings()) { data, tracking ->
                         data to
                             tracking
@@ -355,6 +369,11 @@ class HumanLocationHistoryViewModel(
     }
 
     private fun selectedDateLabel(): String {
+        val zone =
+            snapshot.value
+                ?.effectiveZoneId
+                ?.let { runCatching { TimeZone.of(it) }.getOrNull() }
+                ?: currentZone()
         val label = date.atStartOfDayIn(zone).toReadableDateShort()
         return if (date.year ==
             Clock.System

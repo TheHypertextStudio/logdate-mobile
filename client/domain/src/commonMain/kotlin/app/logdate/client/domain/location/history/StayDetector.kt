@@ -1,6 +1,7 @@
 package app.logdate.client.domain.location.history
 
 import app.logdate.shared.model.location.LocationObservation
+import app.logdate.shared.model.location.SemanticPlace
 import app.logdate.shared.model.location.TravelMode
 
 /**
@@ -16,17 +17,31 @@ internal data class DetectedStay(
     fun center(points: List<LocationObservation>): Pair<Double, Double> = weightedCenter(anchors.map(points::get))
 }
 
+internal fun dynamicCoreRadius(
+    anchors: List<LocationObservation>,
+    parameters: HistoryReconstructionParameters,
+): Double {
+    val accuracies = anchors.mapNotNull { it.accuracyMeters }.sorted()
+    val medianAcc = accuracies.getOrNull(accuracies.size / 2)?.toDouble() ?: return parameters.stayRadiusMeters
+    val lower = minOf(parameters.minimumCoreStayRadiusMeters, parameters.stayRadiusMeters)
+    return (lower + 0.75 * maxOf(0.0, medianAcc - 15.0)).coerceIn(lower, parameters.stayRadiusMeters)
+}
+
 /**
  * Finds stays in a time-ordered run of precise samples with no recording gaps.
  *
  * A stay grows from a starting sample while new samples land near its centre. Samples that wander
  * off and come back after at most [HistoryReconstructionParameters.excursionTolerance] are kept as drift.
- * A candidate only counts when it lasts [HistoryReconstructionParameters.minimumStay], its centre
- * holds still (a slow walk keeps moving it), and the recorded activity is not a vehicle.
+ * A candidate only counts when it meets the standard or high-confidence quick stay duration, its
+ * centre holds still, and the recorded activity is not a vehicle.
  */
 internal class StayDetector(
     private val parameters: HistoryReconstructionParameters,
+    savedPlaces: List<SemanticPlace> = emptyList(),
 ) {
+    private val envelopePlaces =
+        savedPlaces.filter { it.userConfirmed && it.radiusMeters > parameters.minimumCoreStayRadiusMeters }
+
     fun detect(points: List<LocationObservation>): List<DetectedStay> {
         val stays = mutableListOf<DetectedStay>()
         var start = 0
@@ -51,9 +66,37 @@ internal class StayDetector(
     fun belongs(
         center: Pair<Double, Double>,
         sample: LocationObservation,
-    ): Boolean =
-        center.distanceTo(sample) <=
-            parameters.stayRadiusMeters + minOf(sample.accuracyMeters?.toDouble() ?: 0.0, parameters.accuracyAllowanceMeters)
+        radius: Double = parameters.stayRadiusMeters,
+        envelope: SemanticPlace? = matchingEnvelope(center),
+    ): Boolean {
+        if (envelope != null) {
+            val envelopeRadius = minOf(envelope.radiusMeters, parameters.maximumSavedPlaceRadiusMeters)
+            val distFromPlace = geographicDistance(envelope.latitude, envelope.longitude, sample.latitude, sample.longitude)
+            if (distFromPlace <= envelopeRadius) return true
+        }
+        val excessAccuracy =
+            sample.accuracyMeters?.let { maxOf(0.0, it.toDouble() - 15.0).coerceAtMost(parameters.accuracyAllowanceMeters) }
+                ?: parameters.accuracyAllowanceMeters
+        return center.distanceTo(sample) <= radius + excessAccuracy
+    }
+
+    internal fun effectiveRadius(
+        anchors: List<LocationObservation>,
+        center: Pair<Double, Double>,
+    ): Double {
+        val core = dynamicCoreRadius(anchors, parameters)
+        val envelope = matchingEnvelope(center) ?: return core
+        return maxOf(core, minOf(envelope.radiusMeters, parameters.maximumSavedPlaceRadiusMeters))
+    }
+
+    internal fun matchingEnvelope(center: Pair<Double, Double>): SemanticPlace? =
+        envelopePlaces
+            .filter { place ->
+                val cap = minOf(place.radiusMeters, parameters.maximumSavedPlaceRadiusMeters)
+                center.distanceTo(place.latitude to place.longitude) <= cap
+            }.minByOrNull { place ->
+                center.distanceTo(place.latitude to place.longitude)
+            }
 
     private fun grow(
         points: List<LocationObservation>,
@@ -61,20 +104,34 @@ internal class StayDetector(
     ): DetectedStay? {
         val anchors = mutableListOf(start)
         val center = CenterAccumulator().apply { add(points[start]) }
+        val seedEnvelope = matchingEnvelope(center.value)
         // Fixed once the stay first lasts long enough, so a centre that creeps with a slow drift
         // ends the stay instead of following the drift until the whole stretch is rejected.
         var settled: Pair<Double, Double>? = null
-        val fits = { sample: LocationObservation -> belongs(center.value, sample) && settled?.let { belongs(it, sample) } != false }
+        val fits = { sample: LocationObservation ->
+            val currentAnchors = anchors.map(points::get)
+            val currentCenter = center.value
+            val currentRadius = effectiveRadius(currentAnchors, currentCenter)
+            val envelope = matchingEnvelope(currentCenter) ?: seedEnvelope
+            belongs(currentCenter, sample, currentRadius, envelope) &&
+                settled?.let { settledCenter ->
+                    belongs(settledCenter, sample, effectiveRadius(currentAnchors, settledCenter), envelope)
+                } != false
+        }
         var index = start + 1
         while (index < points.size) {
             if (fits(points[index])) {
                 anchors += index
                 center.add(points[index])
-                if (settled == null && points[index].timestamp - points[start].timestamp >= parameters.minimumStay) settled = center.value
+                if (settled == null && points[index].timestamp - points[start].timestamp >= parameters.minimumQuickStay) {
+                    settled = center.value
+                }
                 index++
                 continue
             }
-            index = returnAfterDrift(points, center.value, index, fits) ?: break
+            val currentRadius = effectiveRadius(anchors.map(points::get), center.value)
+            val maxNeighborhood = maxOf(parameters.neighborhoodMeters, currentRadius * 1.5)
+            index = returnAfterDrift(points, center.value, index, maxNeighborhood, fits) ?: break
         }
         return DetectedStay(start..anchors.last(), anchors).takeIf { lasts(points, it) }
     }
@@ -89,6 +146,7 @@ internal class StayDetector(
         points: List<LocationObservation>,
         center: Pair<Double, Double>,
         firstAway: Int,
+        maxNeighborhoodMeters: Double,
         fits: (LocationObservation) -> Boolean,
     ): Int? {
         val leftAt = points[firstAway].timestamp
@@ -98,7 +156,7 @@ internal class StayDetector(
             val sample = points[index]
             if (index > firstAway && fits(sample)) return index
             if (sample.timestamp - leftAt > parameters.excursionTolerance || sample.activity in RIDING_MODES) return null
-            if (center.distanceTo(sample) > parameters.neighborhoodMeters && ++farAway > 1) return null
+            if (center.distanceTo(sample) > maxNeighborhoodMeters && ++farAway > 1) return null
             index++
         }
         return null
@@ -109,8 +167,14 @@ internal class StayDetector(
         points: List<LocationObservation>,
         stay: DetectedStay,
     ): DetectedStay? {
+        val anchorObs = stay.anchors.map(points::get)
         val center = stay.center(points)
-        val anchors = stay.anchors.dropWhile { !belongs(center, points[it]) }.dropLastWhile { !belongs(center, points[it]) }
+        val radius = effectiveRadius(anchorObs, center)
+        val envelope = matchingEnvelope(center)
+        val anchors =
+            stay.anchors
+                .dropWhile { !belongs(center, points[it], radius, envelope) }
+                .dropLastWhile { !belongs(center, points[it], radius, envelope) }
         if (anchors.isEmpty()) return null
         return DetectedStay(anchors.first()..anchors.last(), anchors)
     }
@@ -123,7 +187,17 @@ internal class StayDetector(
     private fun lasts(
         points: List<LocationObservation>,
         stay: DetectedStay,
-    ): Boolean = points[stay.anchors.last()].timestamp - points[stay.anchors.first()].timestamp >= parameters.minimumStay
+    ): Boolean {
+        val duration = points[stay.anchors.last()].timestamp - points[stay.anchors.first()].timestamp
+        if (stay.anchors.size >= 2 && duration >= parameters.minimumStay) return true
+        if (duration < parameters.minimumQuickStay || stay.anchors.size < parameters.quickStayMinimumSamples) return false
+        val accuracies = stay.anchors.mapNotNull { points[it].accuracyMeters }.sorted()
+        val medianAcc = accuracies.getOrNull(accuracies.size / 2) ?: return false
+        if (medianAcc > parameters.quickStayMaxAccuracyMeters || riding(points, stay)) return false
+        val speeds = stay.anchors.mapNotNull { points[it].speedMetersPerSecond }.sorted()
+        val medianSpeed = speeds.getOrNull(speeds.size / 2)
+        return medianSpeed == null || medianSpeed < 0.5f
+    }
 
     private fun riding(
         points: List<LocationObservation>,
@@ -133,16 +207,28 @@ internal class StayDetector(
         return activities.isNotEmpty() && activities.count { it in RIDING_MODES } * 2 > activities.size
     }
 
-    /** A slow walk keeps a "stay" centred on the walker; its early and late samples sit apart. */
+    /** A slow walk keeps a "stay" centred on the walker; its early and late samples sit apart with high straightness. */
     private fun drifting(
         points: List<LocationObservation>,
         stay: DetectedStay,
     ): Boolean {
         if (stay.anchors.size < MINIMUM_SAMPLES_FOR_DRIFT) return false
+        val anchorObs = stay.anchors.map(points::get)
+        val center = weightedCenter(anchorObs)
+        if (matchingEnvelope(center) != null && !riding(points, stay)) return false
+        val labelled = anchorObs.map { it.activity }.filter { it != TravelMode.UNKNOWN }
+        if (labelled.isNotEmpty() && labelled.count { it == TravelMode.STILL } * 2 > labelled.size) return false
+
         val third = stay.anchors.size / 3
         val early = weightedCenter(stay.anchors.take(third).map(points::get))
         val late = weightedCenter(stay.anchors.takeLast(third).map(points::get))
-        return early.distanceTo(late) > parameters.stayRadiusMeters
+        val radius = effectiveRadius(anchorObs, center)
+        if (early.distanceTo(late) <= radius) return false
+
+        val totalPath = anchorObs.zipWithNext().sumOf { (a, b) -> distanceMeters(a, b) }
+        if (totalPath <= 1.0) return false
+        val netDisplacement = distanceMeters(anchorObs.first(), anchorObs.last())
+        return (netDisplacement / totalPath) > parameters.driftStraightnessThreshold
     }
 
     private companion object {

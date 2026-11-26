@@ -570,7 +570,7 @@ class LocationHistoryServiceTest {
         runTest {
             val invalid =
                 listOf(
-                    listOf(activity(start + 40.minutes, "WALKING", "ENTER")),
+                    listOf(activity(start + 20.minutes, "WALKING", "ENTER")),
                     listOf(
                         activity(start + 59.minutes, "WALKING", "ENTER"),
                         activity(start + 59.minutes, "WALKING", "EXIT").copy(id = "exit"),
@@ -584,6 +584,38 @@ class LocationHistoryServiceTest {
                 events.forEach { fixture.save(it.id, HistoryPayload.Activity(it)) }
                 assertTrue(fixture.snapshot().items.single() is PlaceVisit)
             }
+
+            // A continuous trip carried past the old 10-minute cutoff stays IN_VEHICLE across 60 minutes.
+            val continuous = Fixture()
+            continuous.save("enter", HistoryPayload.Activity(activity(start, "IN_VEHICLE", "ENTER")))
+            for (m in 0..60 step 10) {
+                continuous.save("s$m", HistoryPayload.Observation(observation("s$m", start + m.minutes)))
+            }
+            val carriedLeg =
+                continuous
+                    .snapshot()
+                    .items
+                    .filterIsInstance<JourneyLeg>()
+                    .single()
+            assertEquals(TravelMode.VEHICLE, carriedLeg.mode)
+            assertEquals(7, carriedLeg.evidenceIds.size)
+            // With >30m silence before first fix an orphaned ENTER expires, while continuous fixes keep IN_VEHICLE.
+            val expiredProjected =
+                applyActivityEvidence(
+                    listOf(observation("late", start + 60.minutes)),
+                    listOf(activity(start, "IN_VEHICLE", "ENTER")),
+                )
+            val continuousProjected =
+                applyActivityEvidence(
+                    listOf(
+                        observation("s1", start + 15.minutes),
+                        observation("s2", start + 40.minutes),
+                        observation("s3", start + 60.minutes),
+                    ),
+                    listOf(activity(start, "IN_VEHICLE", "ENTER")),
+                )
+            assertEquals(TravelMode.UNKNOWN, expiredProjected.single().activity)
+            assertTrue(continuousProjected.all { it.activity == TravelMode.VEHICLE })
         }
 
     @Test
@@ -613,7 +645,7 @@ class LocationHistoryServiceTest {
         }
 
     @Test
-    fun locallyKnownMockFlagIsRetainedOnJourneyEvidence() =
+    fun mockSamplesAreExcludedByDefaultAndRetainedWhenExplicitlyIncluded() =
         runTest {
             val raw =
                 LocationHistoryItem(
@@ -628,7 +660,9 @@ class LocationHistoryServiceTest {
                     isMock = true,
                 )
             val fixture = Fixture(raw = listOf(raw))
-            assertTrue((fixture.snapshot().items.single() as JourneyLeg).route.single().isMock)
+            assertTrue(fixture.snapshot().items.isEmpty())
+            val included = ReconstructLocationDay()(listOf(raw.toObservation("owner")), includeMock = true)
+            assertTrue((included.single() as JourneyLeg).route.single().isMock)
         }
 
     @Test
@@ -866,7 +900,25 @@ class LocationHistoryServiceTest {
                 device = proxy<DeviceIdProvider> { MutableStateFlow(Uuid.parse(phone)) },
                 config = proxy<LogDateConfigRepository> { "https://example.test" },
                 userPlaces = proxy<UserPlacesRepository> { placesFlow ?: flowOf(savedPlaces) },
-                activityHistory = proxy<ActivityHistoryRepository> { activityFlow ?: flowOf(activities) },
+                activityHistory =
+                    object : ActivityHistoryRepository by proxy<ActivityHistoryRepository>({ activityFlow ?: flowOf(activities) }) {
+                        override suspend fun latestBefore(
+                            userId: String,
+                            deviceId: String,
+                            before: Instant,
+                        ): ActivityHistoryItem? =
+                            activities
+                                .filter { it.userId == userId && it.deviceId == deviceId && it.timestamp < before }
+                                .maxByOrNull { it.timestamp }
+
+                        override suspend fun latestForDevice(
+                            deviceId: String,
+                            since: Instant,
+                        ): ActivityHistoryItem? =
+                            activities
+                                .filter { it.deviceId == deviceId && it.timestamp >= since }
+                                .maxByOrNull { it.timestamp }
+                    },
                 reconstructionDispatcher = Dispatchers.Unconfined,
             )
 

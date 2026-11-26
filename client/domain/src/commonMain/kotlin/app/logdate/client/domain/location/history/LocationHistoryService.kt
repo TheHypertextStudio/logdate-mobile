@@ -12,9 +12,11 @@ import app.logdate.client.repository.location.LocationHistoryItem
 import app.logdate.client.repository.location.LocationHistoryRepository
 import app.logdate.client.repository.places.UserPlacesRepository
 import app.logdate.shared.config.LogDateConfigRepository
+import app.logdate.shared.model.Place
 import app.logdate.shared.model.location.ActivityObservation
 import app.logdate.shared.model.location.HistoryCorrection
 import app.logdate.shared.model.location.HistoryField
+import app.logdate.shared.model.location.HistoryGap
 import app.logdate.shared.model.location.HistoryPayload
 import app.logdate.shared.model.location.LocationDayItem
 import app.logdate.shared.model.location.LocationObservation
@@ -40,8 +42,10 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.offsetAt
 import kotlinx.datetime.plus
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -59,6 +63,8 @@ data class LocationHistorySnapshot(
     val conflicts: List<HistoryCorrection>,
     val placeAliases: Map<String, String> = emptyMap(),
     val failedSections: Set<HistoryFailedSection> = emptySet(),
+    val effectiveZoneId: String? = null,
+    val isMultiZoneDay: Boolean = false,
 )
 
 /** Local-first history; opening a day never requires current-location permission or a network call. */
@@ -125,8 +131,20 @@ class LocationHistoryService(
                     val payloads = evidence.payloads
                     val key = Triple(localSource.second, recordSource.second, activitySource.revision)
                     val carried = boundaryCache.read(key, evidence)
+                    val (effectiveZone, isMultiZoneDay) = resolveCaptureZone(carried.observations, start, end, zone)
+                    val framedStart = first.atStartOfDayIn(effectiveZone)
+                    val framedEnd = last.plus(DatePeriod(days = 1)).atStartOfDayIn(effectiveZone)
                     val enriched = applyActivityEvidence(carried.observations, carried.activities)
-                    val inferredByDevice = enriched.groupBy { it.deviceId }.mapValues { (_, samples) -> ReconstructLocationDay()(samples) }
+                    val edits = payloads.filterIsInstance<HistoryPayload.Correction>().map { it.value }
+                    val confirmedPlaces =
+                        applyPlaceLabels(
+                            payloads.filterIsInstance<HistoryPayload.Place>().map { it.value }.distinctBy { it.id },
+                            edits,
+                        ).filter { it.userConfirmed }
+                    val inferredByDevice =
+                        enriched
+                            .groupBy { it.deviceId }
+                            .mapValues { (_, samples) -> ReconstructLocationDay()(samples, savedPlaces = confirmedPlaces) }
                     val memories =
                         memoryCache.resolve(
                             inferredByDevice,
@@ -137,8 +155,10 @@ class LocationHistoryService(
                             contextEnd,
                         )
 
-                    val selection = selectDaySources(inferredByDevice, payloads, first, last, zone, sourceDeviceId, localDevice)
-                    buildSnapshot(selection.items, payloads, memories, selection.devices, selection.preferred, start, end).copy(
+                    val selection = selectDaySources(inferredByDevice, payloads, first, last, effectiveZone, sourceDeviceId, localDevice)
+                    buildSnapshot(selection.items, payloads, memories, selection.devices, selection.preferred, framedStart, framedEnd).copy(
+                        effectiveZoneId = effectiveZone.id,
+                        isMultiZoneDay = isMultiZoneDay,
                         failedSections =
                             listOfNotNull(
                                 memorySource.failure,
@@ -261,8 +281,17 @@ class LocationHistoryService(
                 savedPlaces
                     .filterNot { it.uid.toString() in deletedPlaces }
                     .map {
+                        val userPlace = it as? Place.UserDefined
                         HistoryPayload.Place(
-                            SemanticPlace(it.uid.toString(), it.name, it.latitude, it.longitude, userConfirmed = true),
+                            SemanticPlace(
+                                id = it.uid.toString(),
+                                name = it.name,
+                                latitude = it.latitude,
+                                longitude = it.longitude,
+                                userConfirmed = true,
+                                radiusMeters = userPlace?.radiusMeters ?: 75.0,
+                                category = userPlace?.category,
+                            ),
                         )
                     }
         val deletedSamples =
@@ -337,18 +366,24 @@ class LocationHistoryService(
                     }.keys
                     .sorted()
             availableDevices.addAll(available)
-            preferred = sourceDeviceId?.takeIf { it in available }
-                ?: localDevice.takeIf { it in available } ?: available.firstOrNull().orEmpty()
-            val selectedIds =
-                correctedByDevice[preferred]
-                    .orEmpty()
-                    .filter { it.overlaps(dayStart, dayEnd) }
-                    .map { it.id }
-                    .toSet()
-            inferredByDevice[preferred].orEmpty().filter { it.id in selectedIds }.forEach { selectedItems[it.id] = it }
+            if (sourceDeviceId == ALL_DEVICES_SOURCE && available.isNotEmpty()) {
+                val primary = localDevice.takeIf { it in available } ?: available.first()
+                preferred = ALL_DEVICES_SOURCE
+                fuseMultiDeviceItems(inferredByDevice, primary, dayStart, dayEnd).forEach { selectedItems[it.id] = it }
+            } else {
+                preferred = sourceDeviceId?.takeIf { it in available }
+                    ?: localDevice.takeIf { it in available } ?: available.firstOrNull().orEmpty()
+                val selectedIds =
+                    correctedByDevice[preferred]
+                        .orEmpty()
+                        .filter { it.overlaps(dayStart, dayEnd) }
+                        .map { it.id }
+                        .toSet()
+                inferredByDevice[preferred].orEmpty().filter { it.id in selectedIds }.forEach { selectedItems[it.id] = it }
+            }
             day = nextDay
         }
-        return DaySources(selectedItems.values.toList(), availableDevices.sorted(), preferred)
+        return DaySources(selectedItems.values.sortedBy { it.start }, availableDevices.sorted(), preferred)
     }
 
     private fun buildSnapshot(
@@ -434,7 +469,16 @@ class LocationHistoryService(
         val previous =
             payloads.filterIsInstance<HistoryPayload.Place>().firstOrNull { it.value.id == place.id }?.value
                 ?: userPlaces.observeAllPlaces().first().firstOrNull { it.uid.toString() == place.id }?.let {
-                    SemanticPlace(it.uid.toString(), it.name, it.latitude, it.longitude, userConfirmed = true)
+                    val userPlace = it as? Place.UserDefined
+                    SemanticPlace(
+                        id = it.uid.toString(),
+                        name = it.name,
+                        latitude = it.latitude,
+                        longitude = it.longitude,
+                        userConfirmed = true,
+                        radiusMeters = userPlace?.radiusMeters ?: 75.0,
+                        category = userPlace?.category,
+                    )
                 }
         if (previous == null) {
             put(place.id, "place", HistoryPayload.Place(place))
@@ -588,57 +632,260 @@ class LocationHistoryService(
         record.payload?.let {
             runCatching { json.decodeFromString(HistoryPayload.serializer(), it) }.getOrNull()
         }
+
+    private companion object {
+        const val ALL_DEVICES_SOURCE = "all"
+    }
 }
 
-private fun LocationDayItem.overlaps(
+private const val ACTIVITY_GAP_EXPIRY_MINUTES = 30
+private const val GPS_OVERRIDE_MIN_SAMPLES = 3
+private const val GPS_OVERRIDE_MIN_SPAN_METERS = 150.0
+private const val GPS_OVERRIDE_MIN_SPEED_MPS = 3.0
+private const val GPS_OVERRIDE_MAX_ACCURACY_METERS = 50f
+
+internal fun LocationDayItem.overlaps(
     start: Instant,
     end: Instant,
 ): Boolean = this.start < end && (this.end > start || (this.start == this.end && this.start >= start))
+
+internal fun resolveCaptureZone(
+    observations: List<LocationObservation>,
+    windowStart: Instant,
+    windowEnd: Instant,
+    fallbackZone: TimeZone,
+): Pair<TimeZone, Boolean> {
+    val windowObservations =
+        observations.filter {
+            it.timestamp >= windowStart - 14.hours && it.timestamp < windowEnd + 14.hours
+        }
+    val validZones =
+        windowObservations.mapNotNull { obs ->
+            obs.timeZoneId?.let { id -> runCatching { TimeZone.of(id) }.getOrNull()?.let { obs to it } }
+        }
+    val effective =
+        validZones
+            .groupingBy { (_, tz) -> tz.id }
+            .eachCount()
+            .maxByOrNull { it.value }
+            ?.key
+            ?.let { runCatching { TimeZone.of(it) }.getOrNull() }
+            ?: fallbackZone
+    val distinctOffsets =
+        validZones
+            .map { (obs, tz) -> tz.offsetAt(obs.timestamp).totalSeconds }
+            .distinct()
+    return effective to (distinctOffsets.size >= 2)
+}
+
+internal fun fuseMultiDeviceItems(
+    byDevice: Map<String, List<LocationDayItem>>,
+    primaryDevice: String,
+    dayStart: Instant,
+    dayEnd: Instant,
+    maximumGap: Duration = 10.minutes,
+): List<LocationDayItem> {
+    val primaryAll =
+        byDevice[primaryDevice]
+            .orEmpty()
+            .filter { it.overlaps(dayStart, dayEnd) }
+            .sortedBy { it.start }
+    val primaryItems = primaryAll.filterNot { it is HistoryGap }
+    if (primaryItems.isEmpty()) {
+        return byDevice.values
+            .flatten()
+            .filter { it.overlaps(dayStart, dayEnd) }
+            .sortedBy { it.start }
+    }
+    val gaps = mutableListOf<Pair<Instant, Instant>>()
+    if (primaryItems.first().start - dayStart > maximumGap) {
+        gaps += dayStart to primaryItems.first().start
+    }
+    primaryItems.zipWithNext().forEach { (prev, next) ->
+        if (next.start - prev.end > maximumGap) {
+            gaps += prev.end to next.start
+        }
+    }
+    if (dayEnd - primaryItems.last().end > maximumGap) {
+        gaps += primaryItems.last().end to dayEnd
+    }
+    val spliced = mutableListOf<LocationDayItem>()
+    spliced += primaryItems
+    val secondary =
+        byDevice
+            .filterKeys { it != primaryDevice }
+            .values
+            .flatten()
+            .filter { it !is HistoryGap && it.overlaps(dayStart, dayEnd) }
+            .sortedBy { it.start }
+    for (candidate in secondary) {
+        val fitsInGap = gaps.any { (gapStart, gapEnd) -> candidate.start >= gapStart && candidate.end <= gapEnd }
+        val overlapsAlreadyAdded = spliced.any { existing -> candidate.start < existing.end && candidate.end > existing.start }
+        if (fitsInGap && !overlapsAlreadyAdded) {
+            spliced += candidate
+        }
+    }
+    // Preserve primary HistoryGaps only when no secondary item fills them.
+    primaryAll.filterIsInstance<HistoryGap>().forEach { gap ->
+        val coveredBySecondary = spliced.any { it.start < gap.end && it.end > gap.start }
+        if (!coveredBySecondary) {
+            spliced += gap
+        }
+    }
+    return spliced.sortedBy { it.start }
+}
+
+private data class ActivityInterval(
+    val mode: TravelMode,
+    val start: Instant,
+    val end: Instant,
+)
 
 internal fun applyActivityEvidence(
     observations: List<LocationObservation>,
     activities: List<ActivityObservation>,
 ): List<LocationObservation> {
-    val byDevice =
+    val intervalsByDevice =
         activities
             .distinctBy { Triple(it.ownerId, it.deviceId, it.id) }
             .groupBy { it.ownerId to it.deviceId }
-            .mapValues { (_, values) -> values.sortedBy { it.timestamp } }
-    return observations.map { point ->
-        if (point.activity != TravelMode.UNKNOWN) return@map point
-        val events = byDevice[point.ownerId to point.deviceId] ?: return@map point
-        var low = 0
-        var high = events.size
-        while (low < high) {
-            val middle = (low + high) / 2
-            if (events[middle].timestamp <= point.timestamp) low = middle + 1 else high = middle
+            .mapValues { (_, values) -> buildActivityIntervals(values) }
+
+    val groupedIndices =
+        observations
+            .withIndex()
+            .groupBy { it.value.ownerId to it.value.deviceId }
+
+    val projected = observations.toMutableList()
+    groupedIndices.forEach { (deviceKey, indexedPoints) ->
+        val intervals = intervalsByDevice[deviceKey].orEmpty()
+        if (intervals.isEmpty()) return@forEach
+
+        val sortedPoints = indexedPoints.sortedWith(compareBy({ it.value.timestamp }, { it.value.id }))
+        var lastEvidenceAt: Instant? = null
+        val activeIntervalStartSeen = mutableSetOf<Int>()
+
+        for (entry in sortedPoints) {
+            val point = entry.value
+            val prevEvidenceAt = lastEvidenceAt
+            lastEvidenceAt = point.timestamp
+            if (point.activity != TravelMode.UNKNOWN) continue
+
+            val intervalIdx =
+                intervals.indexOfFirst { interval ->
+                    point.timestamp >= interval.start && point.timestamp < interval.end
+                }
+            if (intervalIdx < 0) continue
+
+            val interval = intervals[intervalIdx]
+            val referenceTime =
+                if (intervalIdx in activeIntervalStartSeen && prevEvidenceAt != null && prevEvidenceAt >= interval.start) {
+                    prevEvidenceAt
+                } else {
+                    interval.start
+                }
+            activeIntervalStartSeen += intervalIdx
+            // Orphaned transitions across long silence gaps > 30m must expire instead of projecting indefinitely.
+            if (point.timestamp - referenceTime <= ACTIVITY_GAP_EXPIRY_MINUTES.minutes) {
+                projected[entry.index] = point.copy(activity = interval.mode)
+            }
         }
-        if (low == 0) return@map point
-        val latest = events[low - 1]
-        if (point.timestamp - latest.timestamp > 10.minutes) return@map point
-        var firstAtTime = low - 1
-        while (firstAtTime > 0 && events[firstAtTime - 1].timestamp == latest.timestamp) firstAtTime--
-        val atTime = events.subList(firstAtTime, low).distinctBy { it.activityType to it.transitionType }
-        if (atTime.size != 1 || latest.transitionType != "ENTER") return@map point
-        point.copy(activity = latest.activityType.toTravelMode())
+
+        // Override stale STILL projection when precise GPS fixes prove sustained movement.
+        var runStart = 0
+        while (runStart < sortedPoints.size) {
+            val curr = projected[sortedPoints[runStart].index]
+            val currAcc = curr.accuracyMeters
+            if (curr.activity != TravelMode.STILL || currAcc == null || currAcc > GPS_OVERRIDE_MAX_ACCURACY_METERS) {
+                runStart++
+                continue
+            }
+            var runEnd = runStart + 1
+            while (runEnd < sortedPoints.size) {
+                val next = projected[sortedPoints[runEnd].index]
+                val nextAcc = next.accuracyMeters
+                if (next.activity != TravelMode.STILL || nextAcc == null || nextAcc > GPS_OVERRIDE_MAX_ACCURACY_METERS) break
+                val prev = projected[sortedPoints[runEnd - 1].index]
+                val dt = (next.timestamp - prev.timestamp).inWholeMilliseconds / 1000.0
+                val segSpeed = if (dt > 0.0) distanceMeters(prev, next) / dt else 0.0
+                if (segSpeed < GPS_OVERRIDE_MIN_SPEED_MPS) break
+                runEnd++
+            }
+            val runCount = runEnd - runStart
+            if (runCount >= GPS_OVERRIDE_MIN_SAMPLES) {
+                val span = distanceMeters(projected[sortedPoints[runStart].index], projected[sortedPoints[runEnd - 1].index])
+                if (span >= GPS_OVERRIDE_MIN_SPAN_METERS) {
+                    for (k in runStart until runEnd) {
+                        val origIndex = sortedPoints[k].index
+                        if (observations[origIndex].activity == TravelMode.UNKNOWN) {
+                            projected[origIndex] = projected[origIndex].copy(activity = TravelMode.UNKNOWN)
+                        }
+                    }
+                }
+            }
+            runStart = if (runEnd == runStart + 1) runStart + 1 else runEnd
+        }
     }
+    return projected
+}
+
+private fun buildActivityIntervals(events: List<ActivityObservation>): List<ActivityInterval> {
+    if (events.isEmpty()) return emptyList()
+    val byTimestamp = events.groupBy { it.timestamp }.toSortedMap()
+    val intervals = mutableListOf<ActivityInterval>()
+    var activeType: String? = null
+    var activeStart: Instant? = null
+    for ((timestamp, atTime) in byTimestamp) {
+        val exits = atTime.filter { it.transitionType == "EXIT" }
+        val enters = atTime.filter { it.transitionType == "ENTER" }
+        // Close an already-open activity if its matching EXIT arrived at this timestamp.
+        if (activeType != null && activeStart != null && exits.any { it.activityType == activeType }) {
+            if (timestamp > activeStart) {
+                intervals += ActivityInterval(activeType.toTravelMode(), activeStart, timestamp)
+            }
+            activeType = null
+            activeStart = null
+        }
+        // Only leave an ENTER active when not immediately cancelled by a same-timestamp EXIT of the same type.
+        for (enter in enters) {
+            val sameTimeExit = exits.any { it.activityType == enter.activityType }
+            if (activeType != null && activeStart != null && timestamp > activeStart) {
+                intervals += ActivityInterval(activeType.toTravelMode(), activeStart, timestamp)
+            }
+            if (sameTimeExit) {
+                activeType = null
+                activeStart = null
+            } else {
+                activeType = enter.activityType
+                activeStart = timestamp
+            }
+        }
+    }
+    if (activeType != null && activeStart != null) {
+        intervals += ActivityInterval(activeType.toTravelMode(), activeStart, Instant.DISTANT_FUTURE)
+    }
+    return intervals
 }
 
 internal fun LocationHistoryItem.toObservation(owner: String) =
     LocationObservation(
-        sampleId,
-        owner,
-        deviceId,
-        timestamp,
-        location.latitude,
-        location.longitude,
-        accuracyMeters,
-        speedMetersPerSecond,
-        bearingDegrees,
-        activityType.toTravelMode(),
-        timeZoneId,
-        captureSource.name,
-        isMock,
+        id = sampleId,
+        ownerId = owner,
+        deviceId = deviceId,
+        timestamp = timestamp,
+        latitude = location.latitude,
+        longitude = location.longitude,
+        accuracyMeters = accuracyMeters,
+        speedMetersPerSecond = speedMetersPerSecond,
+        bearingDegrees = bearingDegrees,
+        activity = activityType.toTravelMode(),
+        timeZoneId = timeZoneId,
+        source = captureSource.name,
+        isMock = isMock,
+        provider = provider,
+        speedAccuracyMetersPerSecond = speedAccuracyMetersPerSecond,
+        verticalAccuracyMeters = verticalAccuracyMeters,
+        elapsedRealtimeNanos = elapsedRealtimeNanos,
     )
 
 private fun String?.toTravelMode(): TravelMode =
@@ -681,18 +928,37 @@ private fun applyPlaceLabels(
     edits: List<HistoryCorrection>,
 ): List<SemanticPlace> {
     val superseded = edits.flatMap { it.supersedes }.toSet()
-    val labels =
+    val byPlace =
         edits
-            .filter { it.id !in superseded && it.field == HistoryField.LABEL }
+            .filter { it.id !in superseded }
             .groupBy { it.targetEvidenceId }
     return places.map { place ->
+        val placeEdits = byPlace["place:${place.id}"].orEmpty().groupBy { it.field }
         val label =
-            labels["place:${place.id}"]
+            placeEdits[HistoryField.LABEL]
                 .orEmpty()
                 .map { it.value }
                 .distinct()
                 .singleOrNull()
-        if (label == null) place else place.copy(name = label, userConfirmed = true)
+        val radius =
+            placeEdits[HistoryField.RADIUS]
+                .orEmpty()
+                .map { it.value }
+                .distinct()
+                .singleOrNull()
+                ?.toDoubleOrNull()
+        val category =
+            placeEdits[HistoryField.CATEGORY]
+                .orEmpty()
+                .map { it.value }
+                .distinct()
+                .singleOrNull()
+        place.copy(
+            name = label ?: place.name,
+            userConfirmed = place.userConfirmed || label != null,
+            radiusMeters = radius ?: place.radiusMeters,
+            category = category ?: place.category,
+        )
     }
 }
 
