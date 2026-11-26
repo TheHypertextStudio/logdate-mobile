@@ -330,6 +330,53 @@ class AndroidWatchConnectionManagerTest {
             )
         }
 
+    @Test
+    fun `uninstalling LogDate on a previously linked watch evicts stale install state and lets install reopen Play`() =
+        runTest {
+            var installedOnWatch = true
+            every { nodeClient.connectedNodes } returns Tasks.forResult(listOf(withLogDate))
+            every { capabilityClient.getCapability("logdate_watch_app", CapabilityClient.FILTER_ALL) } answers {
+                val nodes = if (installedOnWatch) setOf(withLogDate) else emptySet()
+                Tasks.forResult(mockk<CapabilityInfo> { every { this@mockk.nodes } returns nodes })
+            }
+            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
+            listening()
+            val manager =
+                manager(
+                    verifiedAppNodes = flowOf(setOf(withLogDate.id)),
+                    pingWatch = { installedOnWatch },
+                )
+
+            assertEquals(WatchConnectionState.Connected("Pixel Watch", withLogDate.id), manager.observeConnectionState().first())
+
+            installedOnWatch = false
+            manager.refresh()
+
+            assertEquals(
+                WatchConnectionState.AppUnknown(
+                    watchName = "Pixel Watch",
+                    nodeId = withLogDate.id,
+                    knownInstalled = false,
+                    isNearby = true,
+                    availableWatches = listOf(DiscoveredWatch(withLogDate.id, "Pixel Watch", isNearby = true, appInstalled = false)),
+                ),
+                manager.observeConnectionState().first(),
+            )
+            assertEquals(WatchRequestResult.Sent, manager.confirmMissingAppAndInstall(withLogDate.id))
+            verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
+        }
+
+    @Test
+    fun `updateAppOnWatch opens Play listing on a connected watch that already has LogDate`() =
+        runTest {
+            connected(withLogDate)
+            every { remoteActivityHelper.startRemoteActivity(linkIntent, any()) } returns accepted
+
+            assertEquals(WatchRequestResult.Sent, manager().updateAppOnWatch(withLogDate.id))
+            assertEquals(listOf("market://details?id=studio.hypertext.logdate"), sentLinks)
+            verify(exactly = 1) { remoteActivityHelper.startRemoteActivity(linkIntent, "watch-with-logdate") }
+        }
+
     private fun listening() {
         every { capabilityClient.addListener(any(), any<String>()) } returns Tasks.forResult(null)
         every { capabilityClient.removeListener(any(), any<String>()) } returns Tasks.forResult(true)

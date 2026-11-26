@@ -36,11 +36,17 @@ class WearAppConnectionTest {
     }
 
     @Test
-    fun `installed watch never becomes an install prompt when capability disappears`() {
-        val missingAdvertisement = WatchTransportSnapshot(connectedNodes = listOf(watch))
+    fun `previously verified connected watch leaves Connected when LogDate is no longer detected`() {
+        val missingApp = WatchTransportSnapshot(connectedNodes = listOf(watch))
         assertEquals(
-            WatchConnectionState.Connected("Pixel Watch", "watch-a"),
-            resolveWearAppConnection(missingAdvertisement, setOf("watch-a")),
+            WatchConnectionState.AppUnknown(
+                watchName = "Pixel Watch",
+                nodeId = "watch-a",
+                knownInstalled = false,
+                isNearby = true,
+                availableWatches = listOf(DiscoveredWatch("watch-a", "Pixel Watch", isNearby = true, appInstalled = false)),
+            ),
+            resolveWearAppConnection(missingApp, setOf("watch-a")),
         )
     }
 

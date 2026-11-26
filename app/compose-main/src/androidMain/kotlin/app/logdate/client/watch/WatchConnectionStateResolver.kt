@@ -142,13 +142,16 @@ private fun installedConnectedNodes(transport: WatchTransportSnapshot): List<Wat
 }
 
 private fun WatchTransportSnapshot.discoveredWatches(): List<DiscoveredWatch> {
+    val liveAppIds = appNodes.mapTo(mutableSetOf()) { it.id }
     val knownIds = (appNodes + knownAppNodes).mapTo(mutableSetOf()) { it.id }
+    val connectedIds = connectedNodes.mapTo(mutableSetOf()) { it.id }
     return connectedNodes.map { node ->
         DiscoveredWatch(
             nodeId = node.id,
             displayName = node.displayName,
             isNearby = node.isNearby,
-            appInstalled = node.id in knownIds,
+            // For connected nodes, trust live capability/ping truth rather than stale cached presence.
+            appInstalled = if (node.id in connectedIds) node.id in liveAppIds else node.id in knownIds,
         )
     }
 }
@@ -166,9 +169,11 @@ fun resolveWearAppConnection(
 ): WatchConnectionState {
     if (!transport.available) return WatchConnectionState.Unavailable
     val discovered = transport.discoveredWatches()
+    val appNodeIds = transport.appNodes.mapTo(mutableSetOf()) { it.id }
     val preferred = selectedNodeId?.let { id -> transport.connectedNodes.firstOrNull { it.id == id } }
     val watch =
         preferred
+            ?: transport.connectedNodes.firstOrNull { it.id in verifiedNodes && it.id in appNodeIds }
             ?: transport.connectedNodes.firstOrNull { it.id in verifiedNodes }
             ?: transport.connectedNodes.firstOrNull()
     if (watch == null) {
@@ -180,8 +185,9 @@ fun resolveWearAppConnection(
             WatchConnectionState.NoPairedWatch
         }
     }
-    if (watch.id in verifiedNodes) return WatchConnectionState.Connected(watch.displayName, watch.id)
-    if (transport.appNodes.none { it.id == watch.id }) {
+    // Check live watch app presence before trusting persisted link verification, so uninstalling LogDate
+    // on the watch immediately leaves Connected instead of showing stale setup/companion state.
+    if (watch.id !in appNodeIds) {
         return WatchConnectionState.AppUnknown(
             watchName = watch.displayName,
             nodeId = watch.id,
@@ -190,6 +196,7 @@ fun resolveWearAppConnection(
             availableWatches = discovered,
         )
     }
+    if (watch.id in verifiedNodes) return WatchConnectionState.Connected(watch.displayName, watch.id)
     // LogDate links a watch that has the app by itself; the system's pairing prompt is never needed.
     return WatchConnectionState.NeedsAssociation(
         watchName = watch.displayName,

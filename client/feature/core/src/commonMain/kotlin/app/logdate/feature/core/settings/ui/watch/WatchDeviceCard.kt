@@ -22,6 +22,8 @@ import logdate.client.feature.core.generated.resources.watch_needs_association
 import logdate.client.feature.core.generated.resources.watch_no_paired
 import logdate.client.feature.core.generated.resources.watch_out_of_range
 import logdate.client.feature.core.generated.resources.watch_settings
+import logdate.client.feature.core.generated.resources.watch_setup_update_phone_title
+import logdate.client.feature.core.generated.resources.watch_setup_update_watch_title
 import logdate.client.feature.core.generated.resources.watch_sync_pending
 import logdate.client.feature.core.generated.resources.watch_sync_up_to_date
 import logdate.client.feature.core.generated.resources.watch_unsupported
@@ -102,6 +104,8 @@ internal fun watchDeviceDescription(status: WatchStatus?): String =
             when (val issue = status.issue) {
                 WatchIssue.SetUpAgain -> stringResource(Res.string.watch_attention_set_up_again)
                 is WatchIssue.CapturesNotSent -> stringResource(Res.string.watch_attention_not_sent, issue.count)
+                is WatchIssue.WatchUpdateRequired -> stringResource(Res.string.watch_setup_update_watch_title, status.watchName)
+                is WatchIssue.PhoneUpdateRequired -> stringResource(Res.string.watch_setup_update_phone_title)
             }
         }
 

@@ -1,5 +1,6 @@
 package app.logdate.feature.core.settings.ui.watch
 
+import app.logdate.client.sync.datalayer.v2.WearCompatibility
 import app.logdate.client.sync.peer.state.WatchState
 import kotlinx.coroutines.flow.Flow
 
@@ -57,6 +58,8 @@ sealed interface WatchStatus {
         val window: WatchWindowLine? = null,
         val capabilities: Set<String> = emptySet(),
         override val nodeId: String? = null,
+        val watchVersion: String? = null,
+        val phoneVersion: String? = null,
     ) : WatchStatus
 
     /** The watch reported a problem the person needs to know about. */
@@ -116,6 +119,18 @@ sealed interface WatchIssue {
     data class CapturesNotSent(
         val count: Int,
     ) : WatchIssue
+
+    /** The watch build uses an older protocol than this phone requires. */
+    data class WatchUpdateRequired(
+        val watchVersion: String? = null,
+        val phoneVersion: String? = null,
+    ) : WatchIssue
+
+    /** This phone build is older than what the watch build requires. */
+    data class PhoneUpdateRequired(
+        val watchVersion: String? = null,
+        val phoneVersion: String? = null,
+    ) : WatchIssue
 }
 
 /**
@@ -132,6 +147,9 @@ data class WatchPeerSnapshot(
     val watch: WatchState?,
     val features: Set<String>,
     val relinkFailing: Boolean = false,
+    val phoneVersion: String? = null,
+    val watchVersion: String? = null,
+    val compatibility: WearCompatibility = WearCompatibility.Compatible(),
 ) {
     companion object {
         val Inactive = WatchPeerSnapshot(v2Active = false, watch = null, features = emptySet())

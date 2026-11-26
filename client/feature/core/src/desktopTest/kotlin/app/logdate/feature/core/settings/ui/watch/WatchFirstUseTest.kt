@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticCheck
+import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticDetail
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticFix
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticOutcome
 import app.logdate.feature.core.settings.ui.watch.v2.WatchDiagnosticStep
@@ -72,10 +73,16 @@ class WatchFirstUseTest {
                     WatchDiagnosticsContent(
                         WatchDiagnosticsState.Ready(
                             listOf(
-                                WatchDiagnosticStep(WatchDiagnosticCheck.SYNC, WatchDiagnosticOutcome.FIXABLE, WatchDiagnosticFix.SYNC),
+                                WatchDiagnosticStep(
+                                    WatchDiagnosticCheck.SYNC,
+                                    WatchDiagnosticOutcome.NEEDS_ACTION,
+                                    WatchDiagnosticDetail.SyncPending(2),
+                                    WatchDiagnosticFix.SYNC,
+                                ),
                                 WatchDiagnosticStep(
                                     WatchDiagnosticCheck.NOTIFICATIONS,
-                                    WatchDiagnosticOutcome.FIXABLE,
+                                    WatchDiagnosticOutcome.NEEDS_ACTION,
+                                    WatchDiagnosticDetail.NotificationsDisabled,
                                     WatchDiagnosticFix.OPEN_WATCH,
                                 ),
                             ),
@@ -87,9 +94,9 @@ class WatchFirstUseTest {
                     )
                 }
             }
-            onNodeWithText("Watch sync").assertExists()
+            onNodeWithText("Moments sync").assertExists()
             onNodeWithText("Watch notifications").assertExists()
-            onNodeWithText("Nothing is waiting to sync").assertDoesNotExist()
-            onNodeWithText("Watch notifications are allowed").assertDoesNotExist()
+            onNodeWithText("All watch moments are synced to this phone.").assertDoesNotExist()
+            onNodeWithText("Notifications are allowed on your watch.").assertDoesNotExist()
         }
 }

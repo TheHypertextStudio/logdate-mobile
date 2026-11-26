@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 /** The latest readable state document each peer node wrote, for as long as this process runs. */
 class PeerStateStore {
     private val documents = MutableStateFlow<Map<String, StateDocument>>(emptyMap())
+    private val unsupportedSchemas = MutableStateFlow<Map<String, Int>>(emptyMap())
 
     /**
      * Stores [decoded] as [nodeId]'s document when it is readable and written by [expectedRole], and
@@ -28,6 +29,7 @@ class PeerStateStore {
                 }
 
                 is Decoded.Unsupported -> {
+                    unsupportedSchemas.update { it + (nodeId to decoded.schema) }
                     Napier.w("A $expectedRole state document uses schema ${decoded.schema}; it is ignored until this device updates")
                     return null
                 }
@@ -41,13 +43,19 @@ class PeerStateStore {
             Napier.w("Ignoring a ${document.role} state document where a $expectedRole one was expected")
             return null
         }
+        unsupportedSchemas.update { it - nodeId }
         documents.update { it + (nodeId to document) }
         return document
     }
 
     fun clear() {
         documents.value = emptyMap()
+        unsupportedSchemas.value = emptyMap()
     }
+
+    fun unsupportedSchema(nodeId: String): Flow<Int?> = unsupportedSchemas.map { it[nodeId] }.distinctUntilChanged()
+
+    fun currentUnsupportedSchema(nodeId: String): Int? = unsupportedSchemas.value[nodeId]
 
     fun latest(role: PeerRole): Flow<StateDocument?> =
         documents

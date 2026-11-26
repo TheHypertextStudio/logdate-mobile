@@ -60,6 +60,10 @@ import logdate.client.feature.core.generated.resources.watch_setup_already_insta
 import logdate.client.feature.core.generated.resources.watch_setup_install_action
 import logdate.client.feature.core.generated.resources.watch_setup_open_action
 import logdate.client.feature.core.generated.resources.watch_setup_troubleshoot_action
+import logdate.client.feature.core.generated.resources.watch_setup_update_phone_description
+import logdate.client.feature.core.generated.resources.watch_setup_update_phone_title
+import logdate.client.feature.core.generated.resources.watch_setup_update_watch_description
+import logdate.client.feature.core.generated.resources.watch_setup_update_watch_title
 import logdate.client.feature.core.generated.resources.watch_sync_now
 import logdate.client.feature.core.generated.resources.watch_sync_pending
 import logdate.client.feature.core.generated.resources.watch_sync_up_to_date
@@ -337,6 +341,16 @@ private fun AttentionStatus(
             is WatchIssue.CapturesNotSent -> {
                 stringResource(Res.string.watch_attention_not_sent, issue.count) to
                     stringResource(Res.string.watch_attention_not_sent_description)
+            }
+
+            is WatchIssue.WatchUpdateRequired -> {
+                stringResource(Res.string.watch_setup_update_watch_title, status.watchName) to
+                    stringResource(Res.string.watch_setup_update_watch_description)
+            }
+
+            is WatchIssue.PhoneUpdateRequired -> {
+                stringResource(Res.string.watch_setup_update_phone_title) to
+                    stringResource(Res.string.watch_setup_update_phone_description)
             }
         }
     WatchReportSurface {

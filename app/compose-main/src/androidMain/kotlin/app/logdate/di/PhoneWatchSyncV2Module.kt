@@ -8,6 +8,7 @@ import app.logdate.client.datastore.UserSession
 import app.logdate.client.datastore.featureflags.FeatureFlag
 import app.logdate.client.datastore.featureflags.FeatureFlagStore
 import app.logdate.client.datastore.featureflags.PHONE_ACTIVITY_CONSENT_STORE
+import app.logdate.client.device.AppInfoProvider
 import app.logdate.client.device.crypto.link.BouncyCastleLinkHandshake
 import app.logdate.client.device.restore.createAndroidInstallationWatchStorage
 import app.logdate.client.domain.activity.ActivityTracker
@@ -114,6 +115,7 @@ val phoneWatchSyncV2Module =
             val peers = get<PhoneDeliveryPeers>()
             val history = get<ReminderPostedHistory>()
             val hours = get<LearnedReminderHours>()
+            val appInfo = runCatching { get<AppInfoProvider>().getAppInfo() }.getOrNull()
             val phoneActivity =
                 combine(
                     get<FeatureFlagStore>(named(PHONE_ACTIVITY_CONSENT_STORE)).observe(FeatureFlag.ACTIVITY_AWARENESS),
@@ -153,6 +155,10 @@ val phoneWatchSyncV2Module =
                             activity = activity,
                         )
                     },
+                appVersionName = appInfo?.versionName,
+                appVersionCode = appInfo?.versionCode,
+                protocolVersion = WearProtocol.PROTOCOL_VERSION,
+                minPeerProtocolVersion = WearProtocol.MIN_COMPATIBLE_PROTOCOL_VERSION,
             )
         }
         single<PairKeyVault> { SecureStoragePairKeyVault(get(), prefix = "phone.watch_link.pair_key.") }

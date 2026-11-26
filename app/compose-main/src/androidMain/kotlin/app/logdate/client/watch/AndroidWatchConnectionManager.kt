@@ -6,12 +6,14 @@ import android.net.Uri
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import app.logdate.client.sync.WatchMessageSender
 import app.logdate.client.sync.datalayer.WearAudioRequestPaths
+import app.logdate.client.sync.datalayer.v2.WatchPingInfo
 import app.logdate.client.sync.datalayer.v2.WearPaths
 import app.logdate.client.sync.datalayer.v2.WearProtocol
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionManager
 import app.logdate.feature.core.settings.ui.watch.WatchConnectionState
 import app.logdate.feature.core.settings.ui.watch.WatchLinkProblem
 import app.logdate.feature.core.settings.ui.watch.WatchLinking
+import app.logdate.feature.core.settings.ui.watch.WatchPingProbe
 import app.logdate.feature.core.settings.ui.watch.WatchRequestFailure
 import app.logdate.feature.core.settings.ui.watch.WatchRequestResult
 import com.google.android.gms.wearable.CapabilityClient
@@ -30,8 +32,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -95,12 +100,16 @@ class AndroidWatchConnectionManager(
             }
         } ?: false
     },
+    private val probeWatchInfo: (suspend (String) -> WatchPingProbe)? = null,
 ) : WatchConnectionManager {
     private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val selectedNodeId = MutableStateFlow<String?>(null)
     private val snapshots = Mutex()
     private val knownAppNodes = ConcurrentHashMap<String, WatchNodeSnapshot>()
     private val retriedNodes = ConcurrentHashMap.newKeySet<String>()
+    private val peerPings = MutableStateFlow<Map<String, WatchPingProbe>>(emptyMap())
+
+    override fun observePeerPing(nodeId: String): Flow<WatchPingProbe?> = peerPings.map { it[nodeId] }.distinctUntilChanged()
 
     override fun selectWatch(nodeId: String) {
         selectedNodeId.value = nodeId
@@ -202,6 +211,17 @@ class AndroidWatchConnectionManager(
         return startOnWatch(playListingLink(context.packageName), target)
     }
 
+    override suspend fun updateAppOnWatch(nodeId: String?): WatchRequestResult {
+        val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
+        if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
+        val chosen = nodeId ?: selectedNodeId.value
+        val target =
+            chosen?.let { id -> (watches.withApp + watches.withoutApp).firstOrNull { it.id == id } }
+                ?: watches.withApp.firstOrNull()
+                ?: watches.withoutApp.first()
+        return startOnWatch(playListingLink(context.packageName), target)
+    }
+
     override suspend fun openAppOnWatch(): WatchRequestResult {
         val watches = connectedWatches() ?: return WatchRequestResult.Failed(WatchRequestFailure.LOOKUP_UNAVAILABLE)
         if (watches.isEmpty()) return WatchRequestResult.Failed(WatchRequestFailure.NO_WATCH_CONNECTED)
@@ -278,7 +298,7 @@ class AndroidWatchConnectionManager(
             WatchRequestResult.Failed(WatchRequestFailure.OPEN_FAILED)
         }
 
-    /** The connected watches, split by whether they have LogDate, or null when the Wearable API failed. */
+    /** The connected watches, split by live capability/ping truth, never stale cached verification. */
     private suspend fun connectedWatches(): ConnectedWatches? =
         withTimeoutOrNull(5_000) {
             try {
@@ -290,14 +310,25 @@ class AndroidWatchConnectionManager(
                         .nodes
                         .map { it.id }
                         .toSet()
-                val verified = verifiedAppNodes.first().orEmpty()
                 val (withApp, withoutApp) =
-                    connected.partition {
-                        it.id in withAppIds ||
-                            it.id in verified ||
-                            knownAppNodes.containsKey(it.id) ||
-                            pingWatch(it.id)
+                    connected.partition { node ->
+                        if (node.id in withAppIds) {
+                            true
+                        } else {
+                            val probe = probeNode(node.id)
+                            val reachable = probe.isInstalled()
+                            if (reachable) {
+                                peerPings.update { it + (node.id to probe) }
+                            } else {
+                                evictNode(node.id)
+                            }
+                            reachable
+                        }
                     }
+                withApp.forEach { node ->
+                    knownAppNodes[node.id] = WatchNodeSnapshot(node.id, node.displayName, node.isNearby)
+                }
+                withoutApp.forEach { node -> evictNode(node.id) }
                 ConnectedWatches(withApp = withApp, withoutApp = withoutApp)
             } catch (e: CancellationException) {
                 throw e
@@ -374,12 +405,31 @@ class AndroidWatchConnectionManager(
                             }
 
                     val advertisedIds = appNodes.mapTo(mutableSetOf()) { it.id }
-                    val probedNodes =
-                        connectedNodes.filter { node ->
-                            node.id !in advertisedIds && pingWatch(node.id)
+                    val probedNodes = mutableListOf<WatchNodeSnapshot>()
+                    connectedNodes.forEach { node ->
+                        val hasCapability = node.id in advertisedIds
+                        val existingProbe = peerPings.value[node.id]
+                        // Probe nodes missing capability (fallback detection) and connected capability nodes without cached version info.
+                        if (!hasCapability || existingProbe == null || existingProbe is WatchPingProbe.Unreachable) {
+                            val probe = probeNode(node.id)
+                            if (probe.isInstalled()) {
+                                peerPings.update { it + (node.id to probe) }
+                                if (!hasCapability) probedNodes += node
+                            } else if (!hasCapability) {
+                                evictNode(node.id)
+                            }
                         }
+                    }
                     val detectedAppNodes = (appNodes + probedNodes).distinctBy { it.id }
+                    val detectedIds = detectedAppNodes.mapTo(mutableSetOf()) { it.id }
                     detectedAppNodes.forEach { knownAppNodes[it.id] = it }
+                    // Evict connected nodes that stopped reporting LogDate (e.g. after uninstall), while keeping
+                    // out-of-range node metadata intact until that watch reconnects.
+                    connectedNodes.forEach { node ->
+                        if (node.id !in detectedIds) {
+                            evictNode(node.id)
+                        }
+                    }
                     WatchTransportSnapshot(
                         connectedNodes = connectedNodes,
                         appNodes = detectedAppNodes,
@@ -392,5 +442,30 @@ class AndroidWatchConnectionManager(
                     WatchTransportSnapshot(available = false)
                 }
             } ?: WatchTransportSnapshot(available = false)
+        }
+
+    private suspend fun probeNode(nodeId: String): WatchPingProbe =
+        if (probeWatchInfo != null) {
+            probeWatchInfo(nodeId)
+        } else if (pingWatch(nodeId)) {
+            WatchPingProbe.ReachableUnknown
+        } else {
+            WatchPingProbe.Unreachable
+        }
+
+    private fun evictNode(nodeId: String) {
+        knownAppNodes.remove(nodeId)
+        retriedNodes.remove(nodeId)
+        peerPings.update { it - nodeId }
+    }
+
+    private fun WatchPingProbe.isInstalled(): Boolean =
+        when (this) {
+            is WatchPingProbe.Supported,
+            WatchPingProbe.LegacyAck,
+            WatchPingProbe.ReachableUnknown,
+            -> true
+
+            WatchPingProbe.Unreachable -> false
         }
 }

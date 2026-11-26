@@ -189,4 +189,30 @@ class WatchConnectionStateResolverTest {
 
         assertEquals(WatchConnectionState.AssociationPending, state)
     }
+
+    @Test
+    fun `uninstalling LogDate from a previously verified watch leaves Connected immediately`() {
+        val watch = WatchNodeSnapshot(id = "pixel-watch-5", displayName = "Pixel Watch 5", isNearby = true)
+        val state =
+            resolveWearAppConnection(
+                transport =
+                    WatchTransportSnapshot(
+                        connectedNodes = listOf(watch),
+                        appNodes = emptyList(),
+                        knownAppNodes = emptyList(),
+                    ),
+                verifiedNodes = setOf("pixel-watch-5"),
+            )
+
+        assertEquals(
+            WatchConnectionState.AppUnknown(
+                watchName = "Pixel Watch 5",
+                nodeId = "pixel-watch-5",
+                knownInstalled = false,
+                isNearby = true,
+                availableWatches = listOf(DiscoveredWatch("pixel-watch-5", "Pixel Watch 5", isNearby = true, appInstalled = false)),
+            ),
+            state,
+        )
+    }
 }

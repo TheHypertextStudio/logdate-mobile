@@ -26,6 +26,7 @@ import app.logdate.ui.common.SettingsNavigationItem
 import app.logdate.ui.common.SettingsScaffold
 import app.logdate.ui.common.SettingsSection
 import app.logdate.ui.theme.Spacing
+import app.logdate.ui.watch.rememberPhonePlayStoreLauncher
 import logdate.client.feature.core.generated.resources.Res
 import logdate.client.feature.core.generated.resources.watch_help
 import logdate.client.feature.core.generated.resources.watch_notifications
@@ -53,17 +54,19 @@ fun WatchSettingsScreen(
     onNavigateToConnectionCheck: () -> Unit = onNavigateToTroubleshooting,
 ) {
     val flags = koinInject<FeatureFlagStore>()
-    val redesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(false)
+    val redesign by remember(flags) { flags.observe(FeatureFlag.WATCH_EXPERIENCE_V2) }.collectAsStateWithLifecycle(null)
     val status by viewModel.status.collectAsStateWithLifecycle()
     val requestFailure by viewModel.requestFailure.collectAsStateWithLifecycle()
     val installRequestSent by viewModel.installRequestSent.collectAsStateWithLifecycle()
+    val phonePlayStoreLauncher = rememberPhonePlayStoreLauncher()
 
     LifecycleResumeEffect(viewModel) {
         viewModel.refresh()
         onPauseOrDispose {}
     }
 
-    if (redesign) {
+    val useRedesign = redesign ?: return
+    if (useRedesign) {
         WatchCompanionPage(
             status,
             requestFailure,
@@ -83,6 +86,10 @@ fun WatchSettingsScreen(
             onOpenOnWatch = viewModel::openAppOnWatch,
             onSelectWatch = viewModel::selectWatch,
             onLibrary = onNavigateToLibrary,
+            onUpdateOnWatch = viewModel::updateAppOnWatch,
+            onUpdateOnPhone = { phonePlayStoreLauncher?.invoke() },
+            onClearRequestFailure = viewModel::clearRequestFailure,
+            onClearInstallRequestSent = viewModel::clearInstallRequestSent,
         )
         return
     }
@@ -100,7 +107,7 @@ fun WatchSettingsScreen(
         onNavigateToTroubleshooting = onNavigateToTroubleshooting,
         modifier = modifier,
         companionSettings =
-            if (redesign) {
+            if (useRedesign) {
                 { WatchCompanionSettings() }
             } else {
                 null

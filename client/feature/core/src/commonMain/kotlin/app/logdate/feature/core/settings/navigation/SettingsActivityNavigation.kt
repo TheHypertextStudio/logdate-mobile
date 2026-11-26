@@ -77,6 +77,7 @@ fun NavKey.settingsCategory(): SettingsCategory? =
         WatchSettingsRoute,
         WatchNotificationSettingsRoute,
         WatchTroubleshootingRoute,
+        WatchRemovalRoute,
         WatchTilesRoute,
         WatchCheckConnectionRoute,
         WatchMicrophoneRoute,
